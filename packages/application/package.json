@@ -1,0 +1,20 @@
+{
+    "name": "@dosfilos/application",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "./src/index.ts",
+    "scripts": {
+        "type-check": "tsc --noEmit",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "dependencies": {
+        "@dosfilos/domain": "file:../domain",
+        "@dosfilos/infrastructure": "file:../infrastructure"
+    },
+    "devDependencies": {
+        "typescript": "^5.3.0",
+        "vitest": "^1.1.0"
+    }
+}

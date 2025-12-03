@@ -1,0 +1,379 @@
+import { useState, useEffect } from 'react';
+import { useWizard } from './WizardContext';
+import { WizardLayout } from './WizardLayout';
+import { PromptSettings } from './PromptSettings';
+import { GenerationProgress } from '@/components/sermons/GenerationProgress';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
+import { sermonGeneratorService } from '@dosfilos/application';
+import { toast } from 'sonner';
+import { WorkflowPhase } from '@dosfilos/domain';
+import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
+import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
+
+export function StepExegesis() {
+    const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
+    const [loading, setLoading] = useState(false);
+    const [messages, setMessages] = useState<any[]>([]);
+    const [selectedText, setSelectedText] = useState('');
+    const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
+    const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
+
+
+    useEffect(() => {
+        console.log('StepExegesis: exegesis changed:', exegesis ? 'present' : 'null');
+    }, [exegesis]);
+
+    const handleGenerate = async () => {
+        if (!passage.trim()) {
+            toast.error('Por favor ingresa un pasaje bíblico');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const exegesisConfig = config ? config[WorkflowPhase.EXEGESIS] : undefined;
+            const result = await sermonGeneratorService.generateExegesis(passage, rules, exegesisConfig);
+            setExegesis(result);
+            toast.success('Estudio exegético generado');
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.message || 'Error al generar exégesis');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSendMessage = async (message: string, role: 'user' | 'assistant' = 'user') => {
+        const newMessage = {
+            id: Date.now().toString(),
+            role,
+            content: message,
+            timestamp: new Date()
+        };
+        setMessages(prev => [...prev, newMessage]);
+
+        // If it's a user message and we have an expanded section, refine that section
+        if (role === 'user' && expandedSectionId && exegesis) {
+            try {
+                const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
+                const { getValueByPath, setValueByPath } = await import('@/utils/path-utils');
+                const { GeminiAIService } = await import('@dosfilos/infrastructure');
+                
+                // Get the section config
+                const sectionConfig = getSectionConfig('exegesis', expandedSectionId);
+                if (!sectionConfig) {
+                    throw new Error('Section configuration not found');
+                }
+                
+                // Get current section content
+                let currentContent = getValueByPath(exegesis, sectionConfig.path);
+                
+                // If currentContent is a string that looks like JSON, try to parse it first
+                if (typeof currentContent === 'string') {
+                    const trimmed = currentContent.trim();
+                    if (trimmed.startsWith('[') || trimmed.startsWith('{') || trimmed.startsWith('```')) {
+                        try {
+                            let cleaned = trimmed;
+                            // Remove markdown code blocks
+                            cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
+                            cleaned = cleaned.replace(/\s*```$/, '');
+                            cleaned = cleaned.trim();
+                            currentContent = JSON.parse(cleaned);
+                            console.log('📦 Parsed stored content from string to:', Array.isArray(currentContent) ? 'array' : 'object');
+                        } catch (e) {
+                            console.log('⚠️ Could not parse stored content, treating as string');
+                        }
+                    }
+                }
+                
+                const contentString = typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent, null, 2);
+
+                
+                // Create instruction for AI
+                const instruction = `Refina el contenido de la sección "${sectionConfig.label}" según esta instrucción: ${message}
+
+IMPORTANTE: 
+- Devuelve SOLO el contenido refinado, sin explicaciones adicionales
+- Mantén el mismo formato que el contenido original
+- NO agregues prefijos como "Aquí está..." o "El contenido refinado es..."`;
+
+                // Call AI service
+                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+                if (!apiKey) {
+                    throw new Error('API key not configured');
+                }
+                
+                const aiService = new GeminiAIService(apiKey);
+                const aiResponse = await aiService.refineContent(contentString, instruction);
+                
+                console.log('🔍 Before refinement:', typeof currentContent === 'string' ? currentContent.substring(0, 100) : currentContent);
+                console.log('🔍 After refinement:', aiResponse.substring(0, 100));
+                
+                // Parse the refined content based on the original type
+                let parsedContent;
+                if (Array.isArray(currentContent)) {
+                    // For arrays, try to parse JSON
+                    try {
+                        // Clean up the response (remove markdown code blocks if present)
+                        let cleanedResponse = aiResponse.trim();
+                        // Remove ```json or ``` markers at start and end
+                        cleanedResponse = cleanedResponse.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
+                        cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
+                        cleanedResponse = cleanedResponse.trim();
+                        
+                        console.log('🧹 Cleaned response:', cleanedResponse.substring(0, 100));
+                        
+                        parsedContent = JSON.parse(cleanedResponse);
+                        
+                        // Ensure it's an array
+                        if (!Array.isArray(parsedContent)) {
+                            throw new Error('Expected array but got object');
+                        }
+                    } catch (parseError) {
+                        console.error('Failed to parse array response:', parseError);
+                        console.error('Raw response:', aiResponse);
+                        toast.error('Error al parsear la respuesta de la IA');
+                        throw new Error('La IA no devolvió un array válido');
+                    }
+                } else if (typeof currentContent === 'object') {
+                    // For objects, try to parse JSON
+                    try {
+                        let cleanedResponse = aiResponse.trim();
+                        cleanedResponse = cleanedResponse.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
+                        cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
+                        cleanedResponse = cleanedResponse.trim();
+                        parsedContent = JSON.parse(cleanedResponse);
+                    } catch (parseError) {
+                        console.error('Failed to parse object response:', parseError);
+                        parsedContent = aiResponse; // Fallback to string
+                    }
+                } else {
+                    // For strings, use as-is
+                    parsedContent = aiResponse.trim();
+                }
+                
+                console.log('🔍 Parsed content:', parsedContent);
+                
+                // Update only this section in the exegesis
+                const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
+                setValueByPath(updatedExegesis, sectionConfig.path, parsedContent);
+
+                
+                setExegesis(updatedExegesis);
+                setModifiedSections(prev => new Set(prev).add(expandedSectionId));
+                
+                // Add AI response to chat
+                const aiMessage = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant' as const,
+                    content: `✅ Sección "${sectionConfig.label}" refinada exitosamente.`,
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, aiMessage]);
+                
+                console.log('✅ Section updated successfully!');
+                toast.success('Sección refinada exitosamente');
+            } catch (error: any) {
+                console.error('Error refining section:', error);
+                toast.error(error.message || 'Error al refinar la sección');
+                
+                const errorMessage = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant' as const,
+                    content: `Error: ${error.message || 'No se pudo procesar la solicitud'}`,
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, errorMessage]);
+            }
+        }
+    };
+
+    const handleApplyChange = (messageId: string, newContent: any) => {
+        setExegesis(newContent);
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === messageId ? { ...msg, appliedChange: true } : msg
+            )
+        );
+    };
+
+    const handleContentUpdate = (newContent: any) => {
+        setExegesis(newContent);
+    };
+
+
+
+    const hasContext = config && config[WorkflowPhase.EXEGESIS]?.documents?.length > 0;
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+                <GenerationProgress phase={WorkflowPhase.EXEGESIS} />
+            </div>
+        );
+    }
+
+    // Left Panel Content
+    const leftPanel = !exegesis ? (
+        <div className="h-full flex flex-col">
+            <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-2">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                    <h2 className="text-2xl font-bold">Estudio Exegético</h2>
+                </div>
+                <p className="text-muted-foreground">
+                    Analiza el texto original y define la base bíblica de tu sermón.
+                </p>
+                {hasContext && (
+                    <div className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-md text-sm flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        <span>
+                            Contexto Experto Activo: {config[WorkflowPhase.EXEGESIS].documents.length} documentos cargados
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            <Card className="p-6 space-y-6">
+                <div className="space-y-2">
+                    <Label htmlFor="passage">Pasaje Bíblico</Label>
+                    <Input
+                        id="passage"
+                        value={passage}
+                        onChange={(e) => setPassage(e.target.value)}
+                        placeholder="Ej: 1 Pedro 2:1-10"
+                        className="text-lg"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleGenerate();
+                            }
+                        }}
+                    />
+                </div>
+
+                <PromptSettings />
+
+                <Button
+                    onClick={handleGenerate}
+                    disabled={loading || !passage.trim()}
+                    className="w-full"
+                    size="lg"
+                >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generar Estudio Exegético
+                </Button>
+            </Card>
+        </div>
+    ) : (
+        <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
+            <div className="flex-1 min-h-0 flex gap-4">
+                {/* Left: Content Canvas */}
+                <div className="flex-1 min-w-0 flex flex-col">
+                    <div className="mb-4 flex-shrink-0">
+                        <h3 className="text-lg font-semibold">Análisis Exegético: {exegesis.passage}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            {expandedSectionId 
+                                ? 'Refinando sección. Usa el chat para hacer cambios.'
+                                : 'Haz clic en "Refinar" para expandir una sección, o usa el chat para consultas generales.'
+                            }
+                        </p>
+                    </div>
+                    <div className="flex-1 min-h-0">
+                        <ContentCanvas
+                            content={exegesis}
+                            contentType="exegesis"
+                            expandedSectionId={expandedSectionId}
+                            onSectionExpand={(sectionId) => {
+                                setExpandedSectionId(sectionId);
+                                setMessages([]); // Clear chat when expanding section
+                            }}
+                            onSectionClose={() => setExpandedSectionId(null)}
+                            modifiedSections={modifiedSections}
+                        />
+                    </div>
+                </div>
+
+                {/* Right: Chat Interface */}
+                <div className="w-96 flex-shrink-0">
+                    <ChatInterface
+                        messages={messages}
+                        contentType="exegesis"
+                        content={exegesis}
+                        selectedText=""
+                        onSendMessage={handleSendMessage}
+                        onApplyChange={handleApplyChange}
+                        onContentUpdate={handleContentUpdate}
+                        focusedSection={expandedSectionId}
+                    />
+                </div>
+            </div>
+
+            {/* Continue Button */}
+            <div className="flex-shrink-0">
+                <Button onClick={() => setStep(2)} size="lg" className="w-full">
+                    Continuar a Homilética
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+    );
+
+
+    // Right Panel Content - Only show when no exegesis
+    const rightPanel = !exegesis ? (
+        <Card className="p-6 h-full flex flex-col justify-center">
+            <div className="text-center space-y-4">
+                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <BookOpen className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                    <h3 className="font-semibold mb-2">¿Qué es la Exégesis?</h3>
+                    <p className="text-sm text-muted-foreground">
+                        La exégesis es el análisis crítico del texto bíblico en su idioma original,
+                        considerando el contexto histórico, literario y cultural.
+                    </p>
+                </div>
+                <div className="pt-4 space-y-2 text-left">
+                    <h4 className="font-medium text-sm">Incluye:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Análisis del contexto histórico y cultural</li>
+                        <li>• Estudio del género literario</li>
+                        <li>• Identificación de la audiencia original</li>
+                        <li>• Análisis de palabras clave</li>
+                        <li>• Proposición exegética</li>
+                    </ul>
+                </div>
+            </div>
+        </Card>
+    ) : null; // No right panel when exegesis exists (chat is integrated in main view)
+
+
+    return (
+        <>
+            {/* Saving Indicator */}
+            {saving && (
+                <div className="fixed top-4 right-4 flex items-center gap-2 bg-background border rounded-lg px-3 py-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Guardado</span>
+                </div>
+            )}
+            
+            {/* Render layout based on whether exegesis exists */}
+            {exegesis ? (
+                // When exegesis exists, render integrated layout directly
+                leftPanel
+            ) : (
+                // When no exegesis, use WizardLayout with two panels
+                <WizardLayout
+                    leftPanel={leftPanel}
+                    rightPanel={rightPanel}
+                />
+            )}
+        </>
+    );
+}

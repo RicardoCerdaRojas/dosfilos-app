@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidFileSize() {
+      // Max 10MB for sermon attachments
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+    
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidDocumentType() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    }
+    
+    // User uploads (sermons, attachments)
+    match /users/{userId}/sermons/{sermonId}/{allPaths=**} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && 
+                      isValidFileSize() &&
+                      (isValidImageType() || isValidDocumentType());
+    }
+
+    // Configuration documents (extracted text)
+    match /users/{userId}/configs/{configId}/docs/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && 
+                      request.resource.size <= 20 * 1024 * 1024 && // 20MB max for text/books
+                      (request.resource.contentType.matches('text/plain') || isValidDocumentType());
+    }
+    
+    // User profile images
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && 
+                      isValidImageType() &&
+                      request.resource.size <= 2 * 1024 * 1024; // 2MB max
+    }
+  }
+}

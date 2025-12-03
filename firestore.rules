@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidSermon() {
+      let sermon = request.resource.data;
+      let isDraft = sermon.status == 'draft';
+      return sermon.title is string &&
+             sermon.title.size() >= 5 &&
+             sermon.title.size() <= 200 &&
+             sermon.content is string &&
+             (isDraft || sermon.content.size() > 0) && // Allow empty content for drafts
+             sermon.userId is string &&
+             sermon.createdAt is timestamp;
+    }
+    
+    // Sermons collection
+    match /sermons/{sermonId} {
+      allow read: if isOwner(resource.data.userId) || resource.data.isShared == true;
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == request.resource.data.userId &&
+                       isValidSermon();
+      allow update: if isOwner(resource.data.userId) && isValidSermon();
+      allow delete: if isOwner(resource.data.userId);
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+    
+    // Tags collection (shared across users)
+    match /tags/{tagId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only created by cloud functions
+    }
+
+    // Workflow Configurations
+    match /workflow_configs/{configId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+  }
+}
