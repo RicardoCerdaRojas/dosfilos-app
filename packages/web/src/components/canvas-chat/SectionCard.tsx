@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronRight, Maximize2 } from 'lucide-react';
 import { SectionConfig } from './section-configs';
 import { cn } from '@/lib/utils';
+import { MarkdownRenderer } from './MarkdownRenderer';
+
 
 /**
  * Props for SectionCard component
@@ -83,9 +85,13 @@ export function SectionCard({
     if (section.type === 'text') {
       const text = content || 'Sin contenido';
       
-      // If collapsed, show preview
+      console.log(`📋 SectionCard [${section.id}] isCollapsed:`, isCollapsed);
+      
+      // If collapsed, show preview (plain text)
       if (isCollapsed) {
-        const preview = text.length > 150 ? text.substring(0, 150) + '...' : text;
+        // Remove markdown for preview
+        const plainText = text.replace(/[*_#`]/g, '');
+        const preview = plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
         return (
           <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">
             {preview}
@@ -93,12 +99,8 @@ export function SectionCard({
         );
       }
       
-      // If expanded, show full content
-      return (
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <p className="text-sm whitespace-pre-wrap">{text}</p>
-        </div>
-      );
+      // If expanded, render markdown
+      return <MarkdownRenderer content={text} />;
     }
 
     if (section.type === 'array') {

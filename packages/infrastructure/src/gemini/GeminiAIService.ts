@@ -11,6 +11,7 @@ import {
     buildBibleReferencesPrompt,
     buildRefineContentPrompt,
     buildTitleSuggestionsPrompt,
+    buildContextValidationPrompt,
 } from './prompts';
 
 import { GEMINI_CONFIG } from './config';
@@ -165,6 +166,32 @@ export class GeminiAIService implements IAIService {
             throw this.handleError(error);
         }
     }
+
+    async validateContext(message: string, context?: string): Promise<{ isValid: boolean; refusalMessage?: string }> {
+        try {
+            console.log('[GeminiAI] Validating context for message:', message);
+            const prompt = buildContextValidationPrompt(message, context);
+            const result = await this.model.generateContent(prompt);
+            const response = result.response;
+            const text = response.text();
+            console.log('[GeminiAI] Validation raw response:', text);
+
+            const cleanedText = this.cleanJsonResponse(text);
+            const validation = JSON.parse(cleanedText);
+            console.log('[GeminiAI] Validation parsed result:', validation);
+
+            return {
+                isValid: validation.isValid,
+                refusalMessage: validation.refusalMessage
+            };
+        } catch (error: any) {
+            console.error('[GeminiAI] Error validating context:', error);
+            // If validation fails, default to allowing the message but log the error
+            // This prevents blocking the user due to AI service errors
+            return { isValid: true };
+        }
+    }
+
 
     /**
      * Clean JSON response by removing markdown code blocks and extra whitespace

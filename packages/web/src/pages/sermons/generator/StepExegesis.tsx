@@ -13,14 +13,29 @@ import { toast } from 'sonner';
 import { WorkflowPhase } from '@dosfilos/domain';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
+
+interface ExegesisContent {
+    historical: string;
+    literary: string;
+    theological: string;
+    pastoral: string;
+    keywords: any[];
+}
+
+interface StepExegesisProps {
+    passage: string;
+    onNext: () => void;
+    onBack: () => void;
+}
+
 import { useContentHistory } from '@/hooks/useContentHistory';
 
 export function StepExegesis() {
     const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState<any[]>([]);
-    const [selectedText, setSelectedText] = useState('');
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
+    const [selectedText, setSelectedText] = useState<string>('');
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
     
     // Initialize content history hook
@@ -80,6 +95,8 @@ export function StepExegesis() {
         }
     };
 
+    const [isAiProcessing, setIsAiProcessing] = useState(false);
+
     const handleSendMessage = async (message: string, role: 'user' | 'assistant' = 'user') => {
         const newMessage = {
             id: Date.now().toString(),
@@ -89,14 +106,69 @@ export function StepExegesis() {
         };
         setMessages(prev => [...prev, newMessage]);
 
+        // Context Validation for ALL user messages
+        if (role === 'user') {
+            setIsAiProcessing(true);
+            try {
+                const { GeminiAIService } = await import('@dosfilos/infrastructure');
+                const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
+                const { getValueByPath } = await import('@/utils/path-utils');
+
+                // Initialize AI Service
+                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+                if (!apiKey) {
+                    throw new Error('API key not configured');
+                }
+                const aiService = new GeminiAIService(apiKey);
+
+                // Get context if available
+                let currentContextStr = "";
+                if (expandedSectionId && exegesis) {
+                    const sectionConfig = getSectionConfig('exegesis', expandedSectionId);
+                    if (sectionConfig) {
+                        const currentContent = getValueByPath(exegesis, sectionConfig.path);
+                        currentContextStr = typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent);
+                    }
+                }
+
+                // console.log('🛡️ Starting context validation for:', message);
+                const validation = await aiService.validateContext(message, currentContextStr.substring(0, 500));
+                // console.log('🛡️ Validation result:', validation);
+
+                if (!validation.isValid) {
+                    // console.log('⛔ Message rejected by validation');
+                    const refusalMessage = {
+                        id: (Date.now() + 1).toString(),
+                        role: 'assistant' as const,
+                        content: validation.refusalMessage || "Entiendo tu mensaje, pero como experto en exégesis bíblica, mi enfoque está en ayudarte a profundizar en el estudio de este pasaje. ¿Podrías reformular tu solicitud relacionándola con el texto?",
+                        timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, refusalMessage]);
+                    setIsAiProcessing(false);
+                    return; // Stop processing if invalid
+                }
+            } catch (error) {
+                console.error('Error in context validation:', error);
+                // Continue if validation fails to avoid blocking the user
+            }
+        }
+
         // If it's a user message and we have an expanded section, refine that section
         if (role === 'user' && expandedSectionId && exegesis) {
             try {
                 const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
                 const { getValueByPath, setValueByPath } = await import('@/utils/path-utils');
                 const { GeminiAIService } = await import('@dosfilos/infrastructure');
+
+                // Initialize AI Service
+                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+                if (!apiKey) {
+                    throw new Error('API key not configured');
+                }
+                const aiService = new GeminiAIService(apiKey);
                 
                 // Get the section config
+                // sectionConfig is already declared above
                 const sectionConfig = getSectionConfig('exegesis', expandedSectionId);
                 if (!sectionConfig) {
                     throw new Error('Section configuration not found');
@@ -125,22 +197,70 @@ export function StepExegesis() {
                 
                 const contentString = typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent, null, 2);
 
+                // Get markdown formatting instructions based on section type
+                const getFormattingInstructions = (sectionId: string): string => {
+                    switch (sectionId) {
+                        case 'literary':
+                        case 'historical':
+                        case 'theological':
+                            return `
+FORMATO REQUERIDO (usa markdown):
+- Usa **negritas** para conceptos clave y términos importantes
+- Separa ideas en párrafos distintos (línea en blanco entre párrafos)
+- Si mencionas múltiples puntos, usa listas con guiones (-)
+- Para subtemas, usa **Subtítulo:** seguido del contenido
+Ejemplo:
+**Contexto Político:** [descripción]
+
+**Contexto Social:** [descripción]
+
+- Punto importante 1
+- Punto importante 2`;
+
+                        case 'pastoral':
+                            return `
+FORMATO REQUERIDO (usa markdown):
+- Cada insight debe empezar con **[Título del Insight]:** en negrita
+- Separa cada insight en un párrafo distinto
+- Usa listas con guiones (-) para enumerar aplicaciones prácticas
+Ejemplo:
+**La identidad precede a la acción:** Jesús primero declara "Vosotros sois la luz" antes de mandar "Dejad que vuestra luz brille".
+
+**Equilibrio entre visibilidad y motivación:** El pasaje presenta una tensión...`;
+
+                        case 'keywords':
+                            return `
+FORMATO: Devuelve un array JSON de objetos con esta estructura exacta:
+[
+  {
+    "original": "palabra en griego/hebreo",
+    "transliteration": "transliteración",
+    "significance": "significado teológico",
+    "morphology": "análisis morfológico",
+    "syntacticFunction": "función sintáctica"
+  }
+]`;
+
+                        default:
+                            return `
+FORMATO: Usa markdown para mejor legibilidad:
+- **Negritas** para énfasis
+- Párrafos separados para ideas distintas
+- Listas con guiones (-) cuando sea apropiado`;
+                    }
+                };
                 
                 // Create instruction for AI
                 const instruction = `Refina el contenido de la sección "${sectionConfig.label}" según esta instrucción: ${message}
 
 IMPORTANTE: 
 - Devuelve SOLO el contenido refinado, sin explicaciones adicionales
-- Mantén el mismo formato que el contenido original
-- NO agregues prefijos como "Aquí está..." o "El contenido refinado es..."`;
+- NO agregues prefijos como "Aquí está..." o "El contenido refinado es..."
+${getFormattingInstructions(sectionConfig.id)}`;
+
 
                 // Call AI service
-                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    throw new Error('API key not configured');
-                }
-                
-                const aiService = new GeminiAIService(apiKey);
+                // apiKey and aiService are already initialized above
                 const aiResponse = await aiService.refineContent(contentString, instruction);
                 
                 console.log('🔍 Before refinement:', typeof currentContent === 'string' ? currentContent.substring(0, 100) : currentContent);
@@ -241,6 +361,73 @@ IMPORTANTE:
                     timestamp: new Date()
                 };
                 setMessages(prev => [...prev, errorMessage]);
+            } finally {
+                setIsAiProcessing(false);
+            }
+        } 
+        // General Chat (No section expanded)
+        else if (role === 'user' && !expandedSectionId) {
+            try {
+                const { contentRefinementService } = await import('@dosfilos/application');
+                
+                const response = await contentRefinementService.refineContent(
+                    exegesis,
+                    'exegesis',
+                    {
+                        instruction: message,
+                        selectedText: selectedText
+                    }
+                );
+
+                let suggestion = 'Sugerencia procesada';
+                const aiText = response.explanation || '';
+                
+                if (aiText) {
+                    try {
+                        let cleanedResponse = aiText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                        // Try to parse if it looks like JSON
+                        if (cleanedResponse.startsWith('{')) {
+                             const parsed = JSON.parse(cleanedResponse);
+                             if (parsed.suggestion) {
+                                 suggestion = parsed.suggestion;
+                             } else if (typeof parsed === 'string') {
+                                 suggestion = parsed;
+                             } else {
+                                 suggestion = aiText; // Fallback
+                             }
+                        } else {
+                            suggestion = aiText;
+                        }
+                    } catch (parseError) {
+                         suggestion = aiText;
+                    }
+                }
+
+                const aiMessage = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant' as const,
+                    content: suggestion,
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, aiMessage]);
+
+                if (response.refinedContent) {
+                    // If general chat somehow returns refined content (unlikely but possible)
+                    // We might want to update it, but for now let's just show the message
+                    // setExegesis(response.refinedContent);
+                }
+
+            } catch (error: any) {
+                console.error('Error in general chat:', error);
+                const errorMessage = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant' as const,
+                    content: `Error: ${error.message || 'No se pudo procesar la solicitud'}`,
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, errorMessage]);
+            } finally {
+                setIsAiProcessing(false);
             }
         }
     };
@@ -405,6 +592,8 @@ IMPORTANTE:
                         onApplyChange={handleApplyChange}
                         onContentUpdate={handleContentUpdate}
                         focusedSection={expandedSectionId}
+                        disableDefaultAI={true}
+                        externalIsLoading={isAiProcessing}
                     />
                 </div>
             </div>

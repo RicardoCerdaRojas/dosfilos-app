@@ -15,6 +15,8 @@ import { SectionVersion } from '@/hooks/useContentHistory';
 import { DiffViewer } from './DiffViewer';
 import { SectionConfig } from './section-configs';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MarkdownRenderer } from './MarkdownRenderer';
+
 
 /**
  * Props for HistoryModal component
@@ -81,13 +83,7 @@ export function HistoryModal({
 
   const renderContent = (content: any) => {
     if (section.type === 'text') {
-      return (
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">
-            {content || 'Sin contenido'}
-          </p>
-        </div>
-      );
+      return <MarkdownRenderer content={content || 'Sin contenido'} />;
     }
     
     if (section.type === 'array') {

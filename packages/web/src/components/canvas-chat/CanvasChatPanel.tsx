@@ -10,8 +10,9 @@ export function CanvasChatPanel<T>({
   content,
   contentType,
   onContentUpdate,
-  contextData
-}: CanvasChatProps<T>) {
+  contextData,
+  isProcessing = false
+}: CanvasChatProps<T> & { isProcessing?: boolean }) {
   const [messages, setMessages] = useState<CanvasChatMessage[]>([]);
   const [selectedText, setSelectedText] = useState<string>('');
   const [showChat, setShowChat] = useState(false);
@@ -64,6 +65,8 @@ export function CanvasChatPanel<T>({
           onSendMessage={handleSendMessage}
           onApplyChange={(msgId, newContent) => handleApplyChange(msgId, newContent as T)}
           onContentUpdate={onContentUpdate}
+          disableDefaultAI={true}
+          externalIsLoading={isProcessing}
         />
       </div>
 

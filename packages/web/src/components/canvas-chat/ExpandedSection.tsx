@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { X, History, Undo2, Redo2 } from 'lucide-react';
 import { SectionConfig } from './section-configs';
 import { HistoryModal } from './HistoryModal';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import { SectionVersion } from '@/hooks/useContentHistory';
 
 /**
@@ -92,12 +93,11 @@ export function ExpandedSection({
   };
 
   const renderFullContent = () => {
+    console.log(`🎯 ExpandedSection [${section.id}] rendering, type:`, section.type);
+    
     if (section.type === 'text') {
-      return (
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <p className="whitespace-pre-wrap">{content || 'Sin contenido'}</p>
-        </div>
-      );
+      console.log(`📝 Text content preview:`, content?.substring(0, 100));
+      return <MarkdownRenderer content={content || 'Sin contenido'} />;
     }
 
     if (section.type === 'array') {
@@ -117,19 +117,23 @@ export function ExpandedSection({
                           <span className="font-semibold text-sm text-primary">
                             {translateFieldName(key)}
                           </span>
-                          <p className="text-sm mt-1 text-foreground">
-                            {typeof value === 'string' ? value : JSON.stringify(value)}
-                          </p>
+                          {typeof value === 'string' ? (
+                            <MarkdownRenderer content={value} className="mt-1" />
+                          ) : (
+                            <p className="text-sm mt-1 text-foreground">
+                              {JSON.stringify(value)}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
                   </Card>
                 );
               }
-              // If item is a string, render it as a list item
+              // If item is a string, render it as a list item with markdown
               return (
-                <div key={i} className="text-sm pl-4 border-l-2 border-primary/30 py-2">
-                  {item}
+                <div key={i} className="pl-4 border-l-2 border-primary/30 py-2">
+                  <MarkdownRenderer content={item} />
                 </div>
               );
             })

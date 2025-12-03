@@ -187,3 +187,33 @@ REQUISITOS:
 FORMATO DE SALIDA: Responde ÚNICAMENTE con un array JSON (sin markdown):
 ["Título 1", "Título 2", "Título 3"]`;
 }
+
+export const buildContextValidationPrompt = (message: string, context?: string): string => {
+    return `
+Actúa como un filtro de relevancia para un asistente de exégesis bíblica.
+Tu tarea es determinar si el siguiente mensaje del usuario es relevante para el contexto de estudio bíblico, teología, o el pasaje en cuestión.
+
+Contexto actual (si existe): "${context || 'Estudio bíblico general'}"
+
+Mensaje del usuario: "${message}"
+
+Reglas de validación:
+1. RECHAZAR saludos simples como "hola", "buenos días", etc., a menos que vayan seguidos de una pregunta relevante.
+2. RECHAZAR preguntas sobre temas cotidianos no relacionados (cocina, deportes, clima, chistes).
+3. RECHAZAR pruebas obvias como "test", "prueba", "di algo".
+4. ACEPTAR cualquier pregunta teológica, bíblica, histórica, o sobre el texto.
+5. ACEPTAR preguntas sobre la fe, la iglesia, o la vida cristiana.
+6. ACEPTAR peticiones de ayuda para entender el texto.
+
+Responde EXCLUSIVAMENTE con un objeto JSON con este formato:
+{
+  "isValid": boolean,
+  "refusalMessage": string | null
+}
+
+Si isValid es false, refusalMessage debe ser una respuesta amable y MUY BREVE (máximo 10 palabras) indicando que solo respondes sobre el estudio bíblico.
+NO des consejos, NO hagas sugerencias, NO expliques el contexto. Solo rechaza amablemente.
+Ejemplo de refusalMessage: "Hola. Por favor, hazme una pregunta relacionada con el estudio bíblico."
+Si isValid es true, refusalMessage debe ser null.
+`;
+};

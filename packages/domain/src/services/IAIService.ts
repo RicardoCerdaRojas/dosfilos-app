@@ -67,4 +67,9 @@ export interface IAIService {
      * Generate sermon title suggestions
      */
     generateTitleSuggestions(topic: string, count?: number): Promise<string[]>;
+
+    /**
+     * Validate if a user message is relevant to the context
+     */
+    validateContext(message: string, context?: string): Promise<{ isValid: boolean; refusalMessage?: string }>;
 }
