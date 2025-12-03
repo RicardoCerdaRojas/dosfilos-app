@@ -16,6 +16,14 @@ interface ContentCanvasProps<T = any> {
   onSectionExpand: (sectionId: string) => void;
   onSectionClose: () => void;
   onSectionViewHistory?: (sectionId: string) => void;
+  onSectionUndo?: (sectionId: string) => void;
+  onSectionRedo?: (sectionId: string) => void;
+  canUndo?: (sectionId: string) => boolean;
+  canRedo?: (sectionId: string) => boolean;
+  // History modal props
+  getSectionVersions?: (sectionId: string) => any[];
+  getCurrentVersionId?: (sectionId: string) => string | undefined;
+  onRestoreVersion?: (sectionId: string, versionId: string) => void;
   modifiedSections?: Set<string>;
 }
 
@@ -34,6 +42,13 @@ export function ContentCanvas<T = any>({
   onSectionExpand,
   onSectionClose,
   onSectionViewHistory,
+  onSectionUndo,
+  onSectionRedo,
+  canUndo,
+  canRedo,
+  getSectionVersions,
+  getCurrentVersionId,
+  onRestoreVersion,
   modifiedSections = new Set()
 }: ContentCanvasProps<T>) {
   const sections = getSectionsForType(contentType);
@@ -66,6 +81,25 @@ export function ContentCanvas<T = any>({
           onViewHistory={
             onSectionViewHistory
               ? () => onSectionViewHistory(section.id)
+              : undefined
+          }
+          onUndo={
+            onSectionUndo
+              ? () => onSectionUndo(section.id)
+              : undefined
+          }
+          onRedo={
+            onSectionRedo
+              ? () => onSectionRedo(section.id)
+              : undefined
+          }
+          canUndo={canUndo ? canUndo(section.id) : false}
+          canRedo={canRedo ? canRedo(section.id) : false}
+          versions={getSectionVersions ? getSectionVersions(section.id) : []}
+          currentVersionId={getCurrentVersionId ? getCurrentVersionId(section.id) : undefined}
+          onRestoreVersion={
+            onRestoreVersion
+              ? (versionId) => onRestoreVersion(section.id, versionId)
               : undefined
           }
           isModified={isModified}

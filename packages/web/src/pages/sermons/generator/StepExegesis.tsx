@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { WorkflowPhase } from '@dosfilos/domain';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
+import { useContentHistory } from '@/hooks/useContentHistory';
 
 export function StepExegesis() {
     const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
@@ -21,10 +22,16 @@ export function StepExegesis() {
     const [selectedText, setSelectedText] = useState('');
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
-
+    
+    // Initialize content history hook
+    const contentHistory = useContentHistory('exegesis', config?.id);
 
     useEffect(() => {
-        console.log('StepExegesis: exegesis changed:', exegesis ? 'present' : 'null');
+        
+    }, [config?.id, contentHistory.history]);
+
+    useEffect(() => {
+        
     }, [exegesis]);
 
     const handleGenerate = async () => {
@@ -44,6 +51,32 @@ export function StepExegesis() {
             toast.error(error.message || 'Error al generar exégesis');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Version getters for history modal
+    const getSectionVersions = (sectionId: string) => {
+        return contentHistory.getVersions(sectionId);
+    };
+
+    const getCurrentVersionId = (sectionId: string) => {
+        const currentVersion = contentHistory.getCurrentVersion(sectionId);
+        return currentVersion?.id;
+    };
+
+    const handleRestoreVersion = async (sectionId: string, versionId: string) => {
+        const version = contentHistory.goToVersion(sectionId, versionId);
+        if (version && exegesis) {
+            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
+            const { setValueByPath } = await import('@/utils/path-utils');
+            
+            const sectionConfig = getSectionConfig('exegesis', sectionId);
+            if (sectionConfig) {
+                const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
+                setValueByPath(updatedExegesis, sectionConfig.path, version.content);
+                setExegesis(updatedExegesis);
+                toast.success('Versión restaurada');
+            }
         }
     };
 
@@ -158,6 +191,16 @@ IMPORTANTE:
                 
                 console.log('🔍 Parsed content:', parsedContent);
                 
+                // Save version BEFORE updating (for undo)
+                if (expandedSectionId) {
+                    contentHistory.saveVersion(
+                        expandedSectionId,
+                        currentContent,
+                        `Antes de: ${message.substring(0, 50)}...`,
+                        undefined
+                    );
+                }
+                
                 // Update only this section in the exegesis
                 const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
                 setValueByPath(updatedExegesis, sectionConfig.path, parsedContent);
@@ -165,6 +208,16 @@ IMPORTANTE:
                 
                 setExegesis(updatedExegesis);
                 setModifiedSections(prev => new Set(prev).add(expandedSectionId));
+                
+                // Save version AFTER updating (the new refined content)
+                if (expandedSectionId) {
+                    contentHistory.saveVersion(
+                        expandedSectionId,
+                        parsedContent,
+                        message.substring(0, 100),
+                        `✅ Sección "${sectionConfig.label}" refinada exitosamente.`
+                    );
+                }
                 
                 // Add AI response to chat
                 const aiMessage = {
@@ -203,6 +256,39 @@ IMPORTANTE:
 
     const handleContentUpdate = (newContent: any) => {
         setExegesis(newContent);
+    };
+
+    // Undo/Redo handlers
+    const handleUndo = async (sectionId: string) => {
+        const previousVersion = contentHistory.undo(sectionId);
+        if (previousVersion && exegesis) {
+            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
+            const { setValueByPath } = await import('@/utils/path-utils');
+            
+            const sectionConfig = getSectionConfig('exegesis', sectionId);
+            if (sectionConfig) {
+                const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
+                setValueByPath(updatedExegesis, sectionConfig.path, previousVersion.content);
+                setExegesis(updatedExegesis);
+                toast.success('Cambio deshecho');
+            }
+        }
+    };
+
+    const handleRedo = async (sectionId: string) => {
+        const nextVersion = contentHistory.redo(sectionId);
+        if (nextVersion && exegesis) {
+            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
+            const { setValueByPath } = await import('@/utils/path-utils');
+            
+            const sectionConfig = getSectionConfig('exegesis', sectionId);
+            if (sectionConfig) {
+                const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
+                setValueByPath(updatedExegesis, sectionConfig.path, nextVersion.content);
+                setExegesis(updatedExegesis);
+                toast.success('Cambio rehecho');
+            }
+        }
     };
 
 
@@ -292,7 +378,17 @@ IMPORTANTE:
                                 setExpandedSectionId(sectionId);
                                 setMessages([]); // Clear chat when expanding section
                             }}
-                            onSectionClose={() => setExpandedSectionId(null)}
+                            onSectionClose={() => {
+                                setExpandedSectionId(null);
+                                setMessages([]); // Clear chat when closing section
+                            }}
+                            onSectionUndo={handleUndo}
+                            onSectionRedo={handleRedo}
+                            canUndo={(sectionId) => contentHistory.canUndo(sectionId)}
+                            canRedo={(sectionId) => contentHistory.canRedo(sectionId)}
+                            getSectionVersions={getSectionVersions}
+                            getCurrentVersionId={getCurrentVersionId}
+                            onRestoreVersion={handleRestoreVersion}
                             modifiedSections={modifiedSections}
                         />
                     </div>

@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, History } from 'lucide-react';
+import { X, History, Undo2, Redo2 } from 'lucide-react';
 import { SectionConfig } from './section-configs';
+import { HistoryModal } from './HistoryModal';
+import { SectionVersion } from '@/hooks/useContentHistory';
 
 /**
  * Props for ExpandedSection component
@@ -12,7 +15,15 @@ interface ExpandedSectionProps {
   content: any;
   onClose: () => void;
   onViewHistory?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   isModified?: boolean;
+  // History modal props
+  versions?: SectionVersion[];
+  currentVersionId?: string;
+  onRestoreVersion?: (versionId: string) => void;
 }
 
 /**
@@ -26,8 +37,17 @@ export function ExpandedSection({
   content,
   onClose,
   onViewHistory,
-  isModified = false
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  isModified = false,
+  versions = [],
+  currentVersionId,
+  onRestoreVersion
 }: ExpandedSectionProps) {
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+
   // Translation map for common field names
   const fieldTranslations: Record<string, string> = {
     original: 'Original',
@@ -161,15 +181,41 @@ export function ExpandedSection({
             </Badge>
           )}
 
-          {onViewHistory && (
+          {/* Undo/Redo buttons */}
+          <div className="flex gap-1 flex-shrink-0">
+            {onUndo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onUndo}
+                disabled={!canUndo}
+                title="Deshacer"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+            )}
+            {onRedo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRedo}
+                disabled={!canRedo}
+                title="Rehacer"
+              >
+                <Redo2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {versions.length > 0 && onRestoreVersion && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onViewHistory}
+              onClick={() => setShowHistoryModal(true)}
               className="flex-shrink-0"
             >
               <History className="h-3 w-3 mr-1" />
-              Historial
+              Historial ({versions.length})
             </Button>
           )}
         </div>
@@ -179,6 +225,18 @@ export function ExpandedSection({
       <div className="flex-1 overflow-y-auto p-6 min-h-0">
         {renderFullContent()}
       </div>
+
+      {/* History Modal */}
+      {onRestoreVersion && (
+        <HistoryModal
+          open={showHistoryModal}
+          onOpenChange={setShowHistoryModal}
+          section={section}
+          versions={versions}
+          currentVersionId={currentVersionId}
+          onRestore={onRestoreVersion}
+        />
+      )}
     </div>
   );
 }
