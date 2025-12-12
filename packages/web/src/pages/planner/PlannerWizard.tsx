@@ -152,7 +152,7 @@ export function PlannerWizard() {
                 sermons: proposedPlan.sermons
             });
             toast.success('Plan de predicación creado exitosamente');
-            navigate('/series');
+            navigate('/plans');
         } catch (error: any) {
             toast.error(error.message);
             setLoading(false);

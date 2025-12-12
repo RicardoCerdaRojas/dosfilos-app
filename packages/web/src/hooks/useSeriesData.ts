@@ -30,7 +30,7 @@ export function useSeriesData(seriesId: string | undefined) {
         try {
             const seriesData = await seriesService.getSeries(seriesId);
             if (!seriesData) {
-                navigate('/series');
+                navigate('/plans');
                 return;
             }
             setSeries(seriesData);

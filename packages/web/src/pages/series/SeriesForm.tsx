@@ -77,7 +77,7 @@ export function SeriesForm() {
         });
         toast.success('Serie creada correctamente');
       }
-      navigate('/series');
+      navigate('/plans');
     } catch (error) {
       console.error('Error saving series:', error);
       toast.error('Error al guardar la serie');
@@ -97,7 +97,7 @@ export function SeriesForm() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/series')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/plans')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">

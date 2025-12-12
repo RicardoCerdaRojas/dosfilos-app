@@ -40,7 +40,7 @@ export function SeriesDetail() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-4">
-        <Button variant="ghost" className="pl-0" onClick={() => navigate('/series')}>
+        <Button variant="ghost" className="pl-0" onClick={() => navigate('/plans')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver a Planes
         </Button>
@@ -77,7 +77,7 @@ export function SeriesDetail() {
               )}
             </div>
           </div>
-          <Button onClick={() => navigate(`/series/${series.id}/edit`)}>
+          <Button onClick={() => navigate(`/plans/${series.id}/edit`)}>
             Editar Planes
           </Button>
         </div>

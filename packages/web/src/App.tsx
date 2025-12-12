@@ -54,12 +54,12 @@ function App() {
               <Route path=":id/preach" element={<PreachModePage />} />
             </Route>
 
-            {/* Series Management */}
-            <Route path="series">
+            {/* Preaching Plans Management */}
+            <Route path="plans">
               <Route index element={<SeriesList />} />
               <Route path="new" element={<SeriesForm />} />
               <Route path=":id" element={<SeriesDetail />} />
-              <Route path="/series/:id/edit" element={<SeriesForm />} />
+              <Route path=":id/edit" element={<SeriesForm />} />
             </Route>
             <Route path="/planner" element={<PlannerWizard />} />
           <Route path="/library" element={<LibraryManager />} />

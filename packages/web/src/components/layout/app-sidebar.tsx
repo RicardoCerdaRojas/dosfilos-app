@@ -31,7 +31,7 @@ import { ThemeToggleMenu } from '@/components/theme-toggle';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Sermones', href: '/sermons', icon: FileText },
-  { name: 'Planes de Predicación', href: '/series', icon: BookMarked },
+  { name: 'Planes de Predicación', href: '/plans', icon: BookMarked },
   { name: 'Biblioteca', href: '/library', icon: Library },
   { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
   { name: 'Configuración', href: '/settings', icon: Settings },

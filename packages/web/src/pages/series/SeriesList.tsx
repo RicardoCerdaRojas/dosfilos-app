@@ -88,7 +88,7 @@ export function SeriesList() {
             <Wand2 className="mr-2 h-5 w-5" />
             Planificador con IA
           </Button>
-          <Button onClick={() => navigate('/series/new')} size="lg">
+          <Button onClick={() => navigate('/plans/new')} size="lg">
             <Plus className="mr-2 h-5 w-5" />
             Crear Primer Plan
           </Button>
@@ -110,7 +110,7 @@ export function SeriesList() {
             <Wand2 className="mr-2 h-4 w-4" />
             Planificador con IA
           </Button>
-          <Button onClick={() => navigate('/series/new')}>
+          <Button onClick={() => navigate('/plans/new')}>
             <Plus className="mr-2 h-4 w-4" />
             Nuevo Plan
           </Button>
@@ -148,7 +148,7 @@ export function SeriesList() {
               <div className="space-y-2">
                 <h3 
                   className="text-xl font-bold font-serif leading-tight cursor-pointer group-hover:text-primary transition-colors"
-                  onClick={() => navigate(`/series/${item.id}`)}
+                  onClick={() => navigate(`/plans/${item.id}`)}
                 >
                   {item.title}
                 </h3>
@@ -171,7 +171,7 @@ export function SeriesList() {
                 variant="ghost" 
                 size="sm" 
                 className="h-8 w-8 p-0 hover:text-primary"
-                onClick={() => navigate(`/series/${item.id}/edit`)}
+                onClick={() => navigate(`/plans/${item.id}/edit`)}
               >
                 <Pencil className="h-4 w-4" />
               </Button>

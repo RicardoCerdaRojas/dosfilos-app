@@ -338,14 +338,14 @@ export function SermonDetailPage() {
                 <h3>Parte de la Serie</h3>
               </div>
               <div>
-                <h4 className="font-bold text-lg cursor-pointer hover:underline" onClick={() => navigate(`/series/${series.id}`)}>
+                <h4 className="font-bold text-lg cursor-pointer hover:underline" onClick={() => navigate(`/plans/${series.id}`)}>
                   {series.title}
                 </h4>
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                   {series.description}
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/series/${series.id}`)}>
+              <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/plans/${series.id}`)}>
                 Ver Serie Completa
               </Button>
             </Card>
