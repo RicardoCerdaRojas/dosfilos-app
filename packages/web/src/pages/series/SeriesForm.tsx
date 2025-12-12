@@ -161,7 +161,7 @@ export function SeriesForm() {
           </div>
 
           <div className="flex justify-end gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={() => navigate('/series')}>
+            <Button type="button" variant="outline" onClick={() => navigate('/plans')}>
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
