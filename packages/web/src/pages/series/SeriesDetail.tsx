@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Plus, Trash2, Wand2, CalendarDays, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, Plus, Trash2, Wand2, CalendarDays, FileText, Target, Edit, CheckCircle, LayoutDashboard, List } from 'lucide-react';
 import { SermonSeriesEntity, SermonEntity, PlannedSermon } from '@dosfilos/domain';
 import { seriesService, sermonService } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,10 @@ import { AlertDialog,
 } from '@/components/ui/alert-dialog';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
+import { StatCard } from '@/components/plan/StatCard';
+import { UpcomingSermonsList } from '@/components/plan/UpcomingSermonsList';
+import { AlertsPanel } from '@/components/plan/AlertsPanel';
+
 
 // Unified sermon item (can be planned, in progress, or complete)
 interface SermonItem {
@@ -69,7 +73,11 @@ export function SeriesDetail() {
   const [addingSermon, setAddingSermon] = useState(false);
   const [newDraftTitle, setNewDraftTitle] = useState('');
   const [newDraftDescription, setNewDraftDescription] = useState('');
+  const [newDraftPassage, setNewDraftPassage] = useState(''); // 📌 NUEVO: Campo obligatorio
   const [newDraftDate, setNewDraftDate] = useState('');
+  
+  // View mode state
+  const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
   
   // Reschedule dialog state
   const [rescheduleItem, setRescheduleItem] = useState<SermonItem | null>(null);
@@ -276,7 +284,7 @@ export function SeriesDetail() {
   };
 
   const handleAddNewPlanned = async () => {
-    if (!series || !newDraftTitle.trim()) return;
+    if (!series || !newDraftTitle.trim() || !newDraftPassage.trim()) return;
     setAddingSermon(true);
     try {
       const plannedSermons = series.metadata?.plannedSermons || [];
@@ -285,6 +293,7 @@ export function SeriesDetail() {
         week: plannedSermons.length + 1,
         title: newDraftTitle.trim(),
         description: newDraftDescription.trim(),
+        passage: newDraftPassage.trim(), // 📌 Campo obligatorio
         scheduledDate: newDraftDate ? new Date(newDraftDate) : undefined
       };
 
@@ -298,6 +307,7 @@ export function SeriesDetail() {
       await loadData();
       setNewDraftTitle('');
       setNewDraftDescription('');
+      setNewDraftPassage(''); // 📌 Limpiar
       setNewDraftDate('');
       setIsAddDialogOpen(false);
       toast.success('Sermón planificado agregado');
@@ -510,6 +520,15 @@ export function SeriesDetail() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="passage">Pasaje Bíblico *</Label>
+                    <Input 
+                      id="passage"
+                      value={newDraftPassage}
+                      onChange={(e) => setNewDraftPassage(e.target.value)}
+                      placeholder="Ej: Romanos 8:28-39"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="date">Fecha Programada</Label>
                     <Input 
                       id="date"
@@ -519,7 +538,10 @@ export function SeriesDetail() {
                     />
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleAddNewPlanned} disabled={!newDraftTitle.trim() || addingSermon}>
+                    <Button 
+                      onClick={handleAddNewPlanned} 
+                      disabled={!newDraftTitle.trim() || !newDraftPassage.trim() || addingSermon}
+                    >
                       {addingSermon ? 'Agregando...' : 'Agregar'}
                     </Button>
                   </DialogFooter>

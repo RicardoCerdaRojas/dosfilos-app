@@ -6,7 +6,7 @@ export interface PlannedSermon {
     week: number;         // Week number in the series
     title: string;
     description: string;
-    passage?: string;     // Biblical passage for this sermon (e.g. "Romanos 8:28-39")
+    passage: string;      // 📌 REQUIRED: Biblical passage (e.g. "Romanos 8:28-39")
     scheduledDate?: Date;
     draftId?: string;     // Links to actual draft once started
 }
