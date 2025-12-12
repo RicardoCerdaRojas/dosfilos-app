@@ -1,25 +1,47 @@
 import { useState, useRef, useEffect } from 'react';
-import { ContentType, CanvasChatMessage } from '@dosfilos/domain';
+import { ContentType, CanvasChatMessage, CoachingStyle } from '@dosfilos/domain';
+import { SourceReference } from '@dosfilos/application';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Send, Sparkles } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Loader2, Send, Sparkles, BookOpen, ChevronDown, ChevronRight, Library, Zap, Search } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { getSectionConfig } from './section-configs';
 
+interface MessageWithMetadata extends CanvasChatMessage {
+  sources?: SourceReference[];
+  strategyUsed?: CoachingStyle;
+}
+
+export interface ActiveContext {
+    isCached: boolean;
+    lastRefresh?: Date | null;
+    resources: Array<{ title: string; author: string }>;
+    totalAvailableResources?: number; // 🎯 Total docs configured for this step
+}
+
 interface ChatInterfaceProps<T = any> {
-  messages: CanvasChatMessage[];
+  messages: CanvasChatMessage[] | MessageWithMetadata[];
   contentType: ContentType;
   content: T;
   selectedText?: string;
   onSendMessage: (message: string, role?: 'user' | 'assistant') => void;
   onApplyChange: (messageId: string, newContent: any) => void;
   onContentUpdate: (content: T) => void;
-  focusedSection?: string | null; // ID of currently expanded section
-  disableDefaultAI?: boolean; // If true, ChatInterface won't trigger AI automatically
-  externalIsLoading?: boolean; // If true, forces loading state
+  focusedSection?: string | null;
+  disableDefaultAI?: boolean;
+  externalIsLoading?: boolean;
+  // New: Coaching style support
+  selectedStyle?: CoachingStyle | 'auto';
+  onStyleChange?: (style: CoachingStyle | 'auto') => void;
+  showStyleSelector?: boolean;
+  activeContext?: ActiveContext;
+  onRefreshContext?: () => void;
 }
+
 
 export function ChatInterface<T = any>({
   messages,
@@ -31,15 +53,43 @@ export function ChatInterface<T = any>({
   onContentUpdate,
   focusedSection = null,
   disableDefaultAI = false,
-  externalIsLoading = false
+  externalIsLoading = false,
+  selectedStyle = 'auto',
+  onStyleChange,
+  showStyleSelector = false,
+  activeContext,
+  onRefreshContext
 }: ChatInterfaceProps<T>) {
   const [userInput, setUserInput] = useState('');
   const [internalIsLoading, setInternalIsLoading] = useState(false);
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
   
   // Combine internal and external loading states
   const isLoading = internalIsLoading || externalIsLoading;
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const toggleSources = (messageId: string) => {
+    setExpandedSources(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const getStrategyLabel = (style: CoachingStyle): string => {
+    switch (style) {
+      case CoachingStyle.SOCRATIC: return '🧠 Socrático';
+      case CoachingStyle.DIRECT: return '⚡ Directo';
+      case CoachingStyle.EXPLORATORY: return '🔍 Exploratorio';
+      case CoachingStyle.DIDACTIC: return '📚 Didáctico';
+      default: return style;
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -149,7 +199,14 @@ export function ChatInterface<T = any>({
             <Sparkles className="h-5 w-5 text-primary" />
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold truncate">
-                {focusedSection ? `Refinando: ${getSectionName()}` : 'Asistente de Exégesis'}
+                {focusedSection 
+                  ? `Refinando: ${getSectionName()}` 
+                  : contentType === 'homiletics' 
+                    ? 'Asistente de Homilética' 
+                    : contentType === 'sermon'
+                      ? 'Asistente de Redacción'
+                      : 'Asistente de Exégesis'
+                }
               </h3>
               <p className="text-xs text-muted-foreground truncate">
                 {focusedSection 
@@ -158,6 +215,103 @@ export function ChatInterface<T = any>({
                 }
               </p>
             </div>
+            
+            {/* Context Info Button */}
+            {activeContext && (
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Ver contexto activo">
+                            <Library className="h-4 w-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="end">
+                        <div className="p-3 border-b bg-muted/30">
+                            <h4 className="font-medium text-sm flex items-center gap-2">
+                                {activeContext.isCached ? (
+                                    <><Zap className="h-4 w-4 text-yellow-500 fill-yellow-500" /> Contexto Completo (Cache)</>
+                                ) : activeContext.resources.length > 0 ? (
+                                    <><Library className="h-4 w-4 text-blue-600" /> Contexto: Archivos Directos</>
+                                ) : (
+                                    <><Search className="h-4 w-4 text-blue-500" /> Búsqueda Manual (RAG)</>
+                                )}
+                            </h4>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {activeContext.isCached 
+                                    ? "El asistente tiene acceso al contenido completo de estos recursos:"
+                                    : activeContext.resources.length > 0
+                                        ? "El asistente usa estos archivos directamente en el prompt (Modo Directo):"
+                                        : "El asistente buscará fragmentos relevantes en estos recursos:"}
+                            </p>
+                            {activeContext.lastRefresh && (
+                                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                                    <span>Última actualización:</span>
+                                    <span className="font-medium">
+                                        {new Date(activeContext.lastRefresh).toLocaleTimeString('es-ES', { 
+                                            hour: '2-digit', 
+                                            minute: '2-digit' 
+                                        })}
+                                    </span>
+                                </p>
+                            )}
+                        </div>
+                        
+                        {/* Refresh Button - Moved to top for visibility */}
+                        <div className="p-2 border-b bg-muted/10 flex justify-center">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full text-xs h-7" 
+                                onClick={() => {
+                                    console.log('Refresh clicked', { onRefreshContext });
+                                    onRefreshContext?.();
+                                }}
+                                disabled={isLoading || !onRefreshContext || (activeContext.totalAvailableResources === 0)}
+                            >
+                                <Zap className="h-3 w-3 mr-2" />
+                                {onRefreshContext 
+                                    ? (activeContext.totalAvailableResources === 0 ? 'Sin documentos para cachear' : 'Regenerar Contexto (Cache)') 
+                                    : 'Regenerar no disponible'}
+                            </Button>
+                        </div>
+
+                        <div className="max-h-60 overflow-y-auto p-2">
+                            {activeContext.resources.length > 0 ? (
+                                <div className="space-y-1">
+                                    {activeContext.resources.map((r, i) => (
+                                        <div key={i} className="text-xs px-2 py-1.5 rounded hover:bg-muted/50 flex flex-col">
+                                            <span className="font-medium truncate">{r.title}</span>
+                                            <span className="text-muted-foreground text-[10px]">{r.author}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-xs text-muted-foreground p-2 text-center">
+                                    {activeContext.totalAvailableResources === 0 
+                                        ? "No hay documentos configurados para este paso." 
+                                        : "No hay recursos seleccionados en RAG."
+                                    }
+                                </div>
+                            )}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            )}
+
+            {/* Coaching Style Selector */}
+            {showStyleSelector && onStyleChange && (
+              <Select value={selectedStyle} onValueChange={(v) => onStyleChange(v as CoachingStyle | 'auto')}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <SelectValue placeholder="Modo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">🤖 Automático</SelectItem>
+                  <SelectItem value={CoachingStyle.SOCRATIC}>🧠 Socrático</SelectItem>
+                  <SelectItem value={CoachingStyle.DIRECT}>⚡ Directo</SelectItem>
+                  <SelectItem value={CoachingStyle.EXPLORATORY}>🔍 Exploratorio</SelectItem>
+                  <SelectItem value={CoachingStyle.DIDACTIC}>📚 Didáctico</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
@@ -172,17 +326,64 @@ export function ChatInterface<T = any>({
               }
             </div>
           ) : (
-            messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                onApply={
-                  message.role === 'assistant' && !message.appliedChange
-                    ? (content: any) => onApplyChange(message.id, content)
-                    : undefined
-                }
-              />
-            ))
+            messages.map((message) => {
+              const msgWithMeta = message as MessageWithMetadata;
+              return (
+                <div key={message.id} className="space-y-1">
+                  <MessageBubble
+                    message={message}
+                    onApply={
+                      message.role === 'assistant' && !message.appliedChange
+                        ? (content: any) => onApplyChange(message.id, content)
+                        : undefined
+                    }
+                  />
+                  {/* Strategy badge and sources for assistant messages */}
+                  {message.role === 'assistant' && (msgWithMeta.sources?.length || msgWithMeta.strategyUsed) && (
+                    <div className="flex items-center gap-2 ml-11 flex-wrap">
+                      {/* Strategy Badge */}
+                      {msgWithMeta.strategyUsed && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {getStrategyLabel(msgWithMeta.strategyUsed)}
+                        </span>
+                      )}
+                      {/* Collapsible Sources */}
+                      {msgWithMeta.sources && msgWithMeta.sources.length > 0 && (
+                        <Collapsible 
+                          open={expandedSources.has(message.id)}
+                          onOpenChange={() => toggleSources(message.id)}
+                        >
+                          <CollapsibleTrigger asChild>
+                            <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-2 rounded hover:bg-muted/50">
+                              <BookOpen className="h-3 w-3" />
+                              <span>Fuentes ({msgWithMeta.sources.length})</span>
+                              {expandedSources.has(message.id) ? (
+                                <ChevronDown className="h-3 w-3" />
+                              ) : (
+                                <ChevronRight className="h-3 w-3" />
+                              )}
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-2 space-y-1">
+                            {msgWithMeta.sources.map((source, idx) => (
+                              <div key={idx} className="text-xs bg-muted/50 rounded p-2 ml-2">
+                                <div className="font-medium">{source.title}</div>
+                                <div className="text-muted-foreground">
+                                  {source.author}{source.page ? ` — Pág. ${source.page}` : ''}
+                                </div>
+                                <div className="text-muted-foreground mt-1 italic line-clamp-2">
+                                  "{source.snippet}"
+                                </div>
+                              </div>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
           
           {/* Loading indicator - Typing animation */}
