@@ -4,7 +4,7 @@ import { ArrowLeft, LayoutDashboard, List, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlanDashboard } from '@/components/plan/PlanDashboard';
-import { PlanListView } from '@/components/plan/PlanListView';
+import { CalendarView } from '@/components/plan/CalendarView';
 import { AddSermonDialog } from '@/components/plan/AddSermonDialog';
 import { useSeriesData } from '@/hooks/useSeriesData';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 export function SeriesDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
+  const [viewMode, setViewMode] = useState<'dashboard' | 'calendar'>('dashboard');
   
   const {
     series,
@@ -85,16 +85,16 @@ export function SeriesDetail() {
       </div>
 
       {/* View Tabs */}
-      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'dashboard' | 'list')}>
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'dashboard' | 'calendar')}>
         <div className="flex items-center justify-between border-b pb-4">
           <TabsList>
             <TabsTrigger value="dashboard">
               <LayoutDashboard className="h-4 w-4 mr-2" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="list">
-              <List className="h-4 w-4 mr-2" />
-              Lista
+            <TabsTrigger value="calendar">
+              <Calendar className="h-4 w-4 mr-2" />
+              Calendario
             </TabsTrigger>
           </TabsList>
           
@@ -112,19 +112,18 @@ export function SeriesDetail() {
             onContinue={handleContinueEditing}
             onFixAlert={(type) => {
               if (type === 'without-date' || type === 'urgent') {
-                setViewMode('list');
+                setViewMode('calendar');
               }
             }}
           />
         </TabsContent>
 
-        {/* List View */}
-        <TabsContent value="list" className="mt-6">
-          <PlanListView
+        {/* Calendar View */}
+        <TabsContent value="calendar" className="mt-6">
+          <CalendarView
             sermons={sermonItems}
             onStartDraft={handleStartDraft}
             onContinue={handleContinueEditing}
-            onView={(draftId) => navigate(`/sermons/${draftId}`)}
           />
         </TabsContent>
       </Tabs>
