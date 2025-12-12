@@ -6,11 +6,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, FileText, Wand2, Trash2, Eye } from 'lucide-react';
+import { Calendar, FileText, Wand2, Trash2, Eye, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +58,7 @@ export function SermonDetailModal({
 }: SermonDetailModalProps) {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [dateValue, setDateValue] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!sermon) return null;
 
@@ -70,6 +81,7 @@ export function SermonDetailModal({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -197,12 +209,7 @@ export function SermonDetailModal({
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => {
-                if (confirm(`¿Eliminar "${sermon.title}" del plan?`)) {
-                  onDelete(sermon.id);
-                  onClose();
-                }
-              }}
+              onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Eliminar
@@ -211,5 +218,43 @@ export function SermonDetailModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+
+    {/* Delete Confirmation Dialog */}
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-destructive/10 rounded-full">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            </div>
+            <AlertDialogTitle>¿Eliminar sermón del plan?</AlertDialogTitle>
+          </div>
+          <AlertDialogDescription className="text-base">
+            Estás a punto de eliminar <span className="font-semibold">"{sermon?.title}"</span> de este plan de predicación.
+            {sermon?.draftId && (
+              <p className="mt-2 text-sm">
+                ℹ️ El borrador del sermón se mantendrá en tu biblioteca personal.
+              </p>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => {
+              if (sermon && onDelete) {
+                onDelete(sermon.id);
+                onClose();
+                setShowDeleteConfirm(false);
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Eliminar del Plan
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>  );
 }

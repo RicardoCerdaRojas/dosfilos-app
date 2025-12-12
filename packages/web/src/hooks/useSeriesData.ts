@@ -180,6 +180,52 @@ export function useSeriesData(seriesId: string | undefined) {
         navigate(`/sermons/generate?id=${draftId}`);
     };
 
+    const handleUpdateSermonDate = async (sermonId: string, newDate: Date | null) => {
+        if (!series) return;
+
+        try {
+            const plannedSermons = series.metadata?.plannedSermons || [];
+            const updatedPlanned = plannedSermons.map(p =>
+                p.id === sermonId ? { ...p, scheduledDate: newDate } : p
+            );
+
+            await seriesService.updateSeries(series.id, {
+                metadata: {
+                    ...series.metadata,
+                    plannedSermons: updatedPlanned
+                }
+            } as any);
+
+            toast.success('Fecha actualizada');
+            await loadData();
+        } catch (error) {
+            console.error('Error updating sermon date:', error);
+            toast.error('Error al actualizar fecha');
+        }
+    };
+
+    const handleDeleteSermon = async (sermonId: string) => {
+        if (!series) return;
+
+        try {
+            const plannedSermons = series.metadata?.plannedSermons || [];
+            const updatedPlanned = plannedSermons.filter(p => p.id !== sermonId);
+
+            await seriesService.updateSeries(series.id, {
+                metadata: {
+                    ...series.metadata,
+                    plannedSermons: updatedPlanned
+                }
+            } as any);
+
+            toast.success('Sermón eliminado del plan');
+            await loadData();
+        } catch (error) {
+            console.error('Error deleting sermon:', error);
+            toast.error('Error al eliminar sermón');
+        }
+    };
+
     useEffect(() => {
         loadData();
     }, [seriesId]);
@@ -190,6 +236,8 @@ export function useSeriesData(seriesId: string | undefined) {
         loading,
         handleStartDraft,
         handleContinueEditing,
+        handleUpdateSermonDate,
+        handleDeleteSermon,
         reloadData: loadData
     };
 }

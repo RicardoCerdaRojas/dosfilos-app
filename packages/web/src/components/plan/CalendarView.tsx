@@ -12,6 +12,7 @@ interface CalendarViewProps {
   onStartDraft: (sermon: SermonItem) => void;
   onContinue: (draftId: string) => void;
   onUpdateDate?: (sermonId: string, newDate: Date | null) => void;
+  onDelete?: (sermonId: string) => void;
 }
 
 const DAYS_OF_WEEK = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -51,7 +52,7 @@ function isSameDay(date1: Date, date2: Date): boolean {
          date1.getFullYear() === date2.getFullYear();
 }
 
-export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }: CalendarViewProps) {
+export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, onDelete }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -202,7 +203,10 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
       {/* Sidebar - Sermon List */}
       <div className="lg:col-span-1">
         <Card className="p-0 sticky top-6 max-h-[calc(100vh-8rem)] flex flex-col">
-          <Tabs defaultValue="unscheduled" className="flex flex-col h-full">
+          <Tabs 
+            defaultValue={sermonsWithoutDate.length > 0 ? "unscheduled" : "all"} 
+            className="flex flex-col h-full"
+          >
             <div className="p-4 pb-0">
               <TabsList className="w-full grid grid-cols-2">
                 <TabsTrigger value="unscheduled" className="text-xs">
@@ -341,6 +345,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
       onStartDraft={onStartDraft}
       onContinue={onContinue}
       onUpdateDate={onUpdateDate}
+      onDelete={onDelete}
     />
     </>
   );

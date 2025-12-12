@@ -20,6 +20,8 @@ export function SeriesDetail() {
     loading,
     handleStartDraft,
     handleContinueEditing,
+    handleUpdateSermonDate,
+    handleDeleteSermon,
     reloadData
   } = useSeriesData(id);
 
@@ -124,6 +126,8 @@ export function SeriesDetail() {
             sermons={sermonItems}
             onStartDraft={handleStartDraft}
             onContinue={handleContinueEditing}
+            onUpdateDate={handleUpdateSermonDate}
+            onDelete={handleDeleteSermon}
           />
         </TabsContent>
       </Tabs>
