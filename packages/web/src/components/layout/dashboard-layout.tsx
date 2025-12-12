@@ -1,10 +1,14 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggleButtons } from '@/components/theme-toggle-buttons';
+import { cn } from '@/lib/utils';
 
 export function DashboardLayout() {
+  const location = useLocation();
+  const isPlanner = location.pathname.startsWith('/planner');
+
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
@@ -19,7 +23,10 @@ export function DashboardLayout() {
         </header>
         
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto bg-muted/40 p-4 pl-6">
+        <main className={cn(
+          "flex-1 overflow-y-auto",
+          !isPlanner && "bg-muted/40 p-4 pl-6"
+        )}>
           <Outlet />
         </main>
       </SidebarInset>

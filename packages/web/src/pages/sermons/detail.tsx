@@ -1,14 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Pencil, Archive, Trash2, FileText, 
-  Download, Share2, Copy, Check, MoreVertical, Globe, Eye, BookOpen,
-  Minus, Plus, Type
+  BookOpen, MapPin, Clock, History, Plus,
+  Share2, MoreVertical, Download, Globe, Eye, Check, Copy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,36 +33,40 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useSermon, useDeleteSermon, usePublishSermon, useArchiveSermon } from '@/hooks/use-sermons';
 import { useState, useEffect } from 'react';
-import { exportService, sermonService } from '@dosfilos/application';
+import { exportService, sermonService, seriesService } from '@dosfilos/application';
+import { SermonSeriesEntity, PreachingLog } from '@dosfilos/domain';
 import { toast } from 'sonner';
-import ReactMarkdown from 'react-markdown';
-import { LocalBibleService } from '@/services/LocalBibleService';
+import { SermonPreview } from '@/components/sermons/SermonPreview';
 
 export function SermonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { sermon, loading } = useSermon(id);
+  const { sermon, loading, mutate } = useSermon(id);
   const { deleteSermon, loading: deleting } = useDeleteSermon();
   const { publishSermon, loading: publishing } = usePublishSermon();
   const { archiveSermon, loading: archiving } = useArchiveSermon();
+  
+  const [series, setSeries] = useState<SermonSeriesEntity | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showLogDialog, setShowLogDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
-
   const [isScrolled, setIsScrolled] = useState(false);
-  const [fontSize, setFontSize] = useState(18); // Default font size for reading
 
-  // Bible Viewer State
-  const [selectedReference, setSelectedReference] = useState<string | null>(null);
-  const [bibleText, setBibleText] = useState<string | null>(null);
-  const [loadingBible, setLoadingBible] = useState(false);
+  // Preaching Log State
+  const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
+  const [logLocation, setLogLocation] = useState('');
+  const [logDuration, setLogDuration] = useState('45');
+  const [logNotes, setLogNotes] = useState('');
+  const [logging, setLogging] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,57 +76,18 @@ export function SermonDetailPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Bible Fetching Logic
-  const fetchBibleText = async (ref: string) => {
-    setLoadingBible(true);
-    setBibleText(null);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const text = LocalBibleService.getVerses(ref);
-      if (text) {
-        setBibleText(text);
-      } else {
-        setBibleText('No se pudo encontrar el texto. Verifique la referencia.');
-      }
-    } catch (error) {
-      console.error('Error fetching bible text:', error);
-      setBibleText('Error al cargar el texto bíblico.');
-    } finally {
-      setLoadingBible(false);
-    }
-  };
-
   useEffect(() => {
-    if (selectedReference) {
-      fetchBibleText(selectedReference);
+    if (sermon?.seriesId) {
+      loadSeries(sermon.seriesId);
     }
-  }, [selectedReference]);
+  }, [sermon?.seriesId]);
 
-  // Markdown Processing for Bible Links
-  const processContent = (content: string) => {
-    const bibleRegex = /\b((?:[1-3]\s)?[A-Z][a-zá-ú]+\s\d+:\d+(?:-\d+)?)\b/g;
-    return content.replace(bibleRegex, (match) => `[${match}](#bible-${encodeURIComponent(match)})`);
-  };
-
-  const components = {
-    a: ({ node, ...props }: any) => {
-      const href = props.href || '';
-      if (href.startsWith('#bible-')) {
-        const ref = decodeURIComponent(href.replace('#bible-', ''));
-        return (
-          <span 
-            className="text-primary font-semibold cursor-pointer hover:underline decoration-dotted underline-offset-4"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setSelectedReference(ref);
-            }}
-          >
-            {props.children}
-          </span>
-        );
-      }
-      return <a {...props} className="text-blue-500 underline" />;
+  const loadSeries = async (seriesId: string) => {
+    try {
+      const data = await seriesService.getSeries(seriesId);
+      setSeries(data);
+    } catch (error) {
+      console.error('Error loading series:', error);
     }
   };
 
@@ -133,13 +100,13 @@ export function SermonDetailPage() {
   const handlePublish = async () => {
     if (!id) return;
     await publishSermon(id);
-    window.location.reload();
+    mutate();
   };
 
   const handleArchive = async () => {
     if (!id) return;
     await archiveSermon(id);
-    window.location.reload();
+    mutate();
   };
 
   const handleExport = async () => {
@@ -167,12 +134,42 @@ export function SermonDetailPage() {
         await sermonService.unshareSermon(id);
         toast.success('Sermón dejado de compartir');
       }
-      window.location.reload();
+      mutate();
     } catch (error) {
       console.error('Error sharing sermon:', error);
       toast.error('Error al cambiar estado de compartir');
     } finally {
       setSharing(false);
+    }
+  };
+
+  const handleLogPreaching = async () => {
+    if (!sermon || !id) return;
+    setLogging(true);
+    try {
+      const newLog: PreachingLog = {
+        date: new Date(logDate),
+        location: logLocation,
+        durationMinutes: parseInt(logDuration) || 0,
+        notes: logNotes
+      };
+
+      const updatedHistory = [...(sermon.preachingHistory || []), newLog];
+      
+      await sermonService.updateSermon(id, {
+        preachingHistory: updatedHistory
+      } as any);
+
+      toast.success('Predicación registrada');
+      setShowLogDialog(false);
+      setLogLocation('');
+      setLogNotes('');
+      mutate();
+    } catch (error) {
+      console.error('Error logging preaching:', error);
+      toast.error('Error al registrar predicación');
+    } finally {
+      setLogging(false);
     }
   };
 
@@ -224,7 +221,7 @@ export function SermonDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header Toolbar */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 transition-all duration-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -249,18 +246,6 @@ export function SermonDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Font Size Controls */}
-            <div className="hidden sm:flex items-center gap-1 mr-2 bg-muted/30 rounded-full px-2 py-1 border">
-              <Type className="h-3 w-3 text-muted-foreground ml-1" />
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.max(14, s - 1))}>
-                <Minus className="h-3 w-3" />
-              </Button>
-              <span className="text-xs w-6 text-center tabular-nums">{fontSize}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.min(24, s + 1))}>
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-
             <Button 
               onClick={() => setShowShareDialog(true)} 
               variant="ghost" 
@@ -328,74 +313,83 @@ export function SermonDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Document Header */}
-        <div className="text-center space-y-8 pb-8 border-b">
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-[0.2em]">
-              <span>{new Date(sermon.updatedAt).toLocaleDateString('es-ES', { dateStyle: 'long' })}</span>
-              <span className="text-border">•</span>
-              <span>{sermon.authorName || 'Pastor'}</span>
-            </div>
-            <h1 className="text-4xl sm:text-6xl font-bold tracking-tight font-serif text-foreground leading-tight">
-              {sermon.title}
-            </h1>
-            {!isScrolled && (
-              <div className="flex justify-center pt-2">
-                {getStatusBadge(sermon.status)}
-              </div>
-            )}
-          </div>
-          
-          {/* Bible References - Improved Styling */}
-          {sermon.bibleReferences.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-              {sermon.bibleReferences.map((ref, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-sm font-medium shadow-sm cursor-pointer hover:bg-amber-100 transition-colors"
-                  onClick={() => setSelectedReference(ref)}
-                >
-                  <BookOpen className="h-3.5 w-3.5 text-amber-600" />
-                  {ref}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
-        <div 
-          className="prose prose-lg max-w-none dark:prose-invert sermon-content transition-all duration-200"
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          <ReactMarkdown components={components}>
-            {processContent(sermon.content)}
-          </ReactMarkdown>
+        <div className="lg:col-span-2 space-y-8">
+          <SermonPreview
+            title={sermon.title}
+            content={sermon.content}
+            authorName={sermon.authorName}
+            date={new Date(sermon.updatedAt || new Date())}
+            bibleReferences={sermon.bibleReferences}
+            tags={sermon.tags}
+            category={sermon.category}
+            status={sermon.status}
+          />
         </div>
 
-        {/* Footer Info - Tags Moved Here */}
-        {(sermon.tags.length > 0 || sermon.category) && (
-          <div className="pt-8 border-t">
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Etiquetas y Categoría
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {sermon.category && (
-                  <Badge variant="outline" className="text-sm py-1 px-3 border-primary/20 bg-primary/5">
-                    {sermon.category}
-                  </Badge>
-                )}
-                {sermon.tags.map((tag, i) => (
-                  <Badge key={i} variant="outline" className="text-sm py-1 px-3">
-                    {tag}
-                  </Badge>
-                ))}
+        {/* Sidebar Info */}
+        <div className="space-y-6">
+          {/* Series Card */}
+          {series && (
+            <Card className="p-4 space-y-3">
+              <div className="flex items-center gap-2 text-primary font-medium">
+                <BookOpen className="h-4 w-4" />
+                <h3>Parte de la Serie</h3>
               </div>
+              <div>
+                <h4 className="font-bold text-lg cursor-pointer hover:underline" onClick={() => navigate(`/series/${series.id}`)}>
+                  {series.title}
+                </h4>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {series.description}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/series/${series.id}`)}>
+                Ver Serie Completa
+              </Button>
+            </Card>
+          )}
+
+          {/* Preaching History */}
+          <Card className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-medium">
+                <History className="h-4 w-4" />
+                <h3>Historial</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowLogDialog(true)}>
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-          </div>
-        )}
+
+            <div className="space-y-4">
+              {(!sermon.preachingHistory || sermon.preachingHistory.length === 0) ? (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                  No hay registros de predicación.
+                </p>
+              ) : (
+                sermon.preachingHistory.map((log, index) => (
+                  <div key={index} className="text-sm border-l-2 border-muted pl-3 space-y-1">
+                    <div className="font-medium flex items-center justify-between">
+                      <span>{new Date(log.date || new Date()).toLocaleDateString()}</span>
+                      <span className="text-xs text-muted-foreground">{log.durationMinutes} min</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{log.location}</span>
+                    </div>
+                    {log.notes && (
+                      <p className="text-xs text-muted-foreground italic mt-1">
+                        "{log.notes}"
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -470,29 +464,70 @@ export function SermonDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Bible Verse Dialog */}
-      <Dialog open={!!selectedReference} onOpenChange={(open) => !open && setSelectedReference(null)}>
-        <DialogContent className="sm:max-w-lg">
+      {/* Log Preaching Dialog */}
+      <Dialog open={showLogDialog} onOpenChange={setShowLogDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
-              {selectedReference}
-            </DialogTitle>
+            <DialogTitle>Registrar Predicación</DialogTitle>
+            <DialogDescription>
+              Guarda un registro de cuándo y dónde predicaste este sermón.
+            </DialogDescription>
           </DialogHeader>
-          <div className="py-4 min-h-[100px]">
-            {loadingBible ? (
-              <div className="flex justify-center py-8">
-                <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="log-date">Fecha</Label>
+                <Input
+                  id="log-date"
+                  type="date"
+                  value={logDate}
+                  onChange={(e) => setLogDate(e.target.value)}
+                />
               </div>
-            ) : (
-              <div className="text-lg leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
-                {bibleText}
+              <div className="space-y-2">
+                <Label htmlFor="log-duration">Duración (min)</Label>
+                <div className="relative">
+                  <Input
+                    id="log-duration"
+                    type="number"
+                    value={logDuration}
+                    onChange={(e) => setLogDuration(e.target.value)}
+                    className="pl-8"
+                  />
+                  <Clock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                </div>
               </div>
-            )}
-            <div className="mt-4 text-xs text-muted-foreground text-right">
-              Fuente: Reina Valera 1960
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="log-location">Lugar / Iglesia</Label>
+              <div className="relative">
+                <Input
+                  id="log-location"
+                  value={logLocation}
+                  onChange={(e) => setLogLocation(e.target.value)}
+                  placeholder="Ej: Iglesia Central"
+                  className="pl-8"
+                />
+                <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="log-notes">Notas (Opcional)</Label>
+              <Textarea
+                id="log-notes"
+                value={logNotes}
+                onChange={(e) => setLogNotes(e.target.value)}
+                placeholder="Reacciones, puntos a mejorar, etc."
+                rows={3}
+              />
             </div>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLogDialog(false)}>Cancelar</Button>
+            <Button onClick={handleLogPreaching} disabled={logging || !logLocation}>
+              {logging ? 'Guardando...' : 'Guardar Registro'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -38,30 +38,29 @@ export function useSermon(id: string | undefined) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const fetchSermon = async () => {
         if (!id) {
             setLoading(false);
             return;
         }
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await sermonService.getSermon(id);
+            setSermon(data);
+        } catch (err: any) {
+            setError(err.message);
+            toast.error(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        const fetchSermon = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const data = await sermonService.getSermon(id);
-                setSermon(data);
-            } catch (err: any) {
-                setError(err.message);
-                toast.error(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
+    useEffect(() => {
         fetchSermon();
     }, [id]);
 
-    return { sermon, loading, error };
+    return { sermon, loading, error, mutate: fetchSermon };
 }
 
 export function useCreateSermon() {

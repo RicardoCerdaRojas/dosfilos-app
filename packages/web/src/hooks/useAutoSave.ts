@@ -8,6 +8,8 @@ interface WizardState {
     exegesis: ExegeticalStudy | null;
     homiletics: HomileticalAnalysis | null;
     draft: SermonContent | null;
+    cacheName: string | null;
+    selectedResourceIds: string[];
 }
 
 export function useAutoSave(
@@ -36,7 +38,9 @@ export function useAutoSave(
             const progress: any = {
                 currentStep: wizardState.step,
                 passage: wizardState.passage,
-                lastSaved: new Date()
+                lastSaved: new Date(),
+                cacheName: wizardState.cacheName || undefined,
+                selectedResourceIds: wizardState.selectedResourceIds
             };
 
             if (wizardState.exegesis) progress.exegesis = wizardState.exegesis;

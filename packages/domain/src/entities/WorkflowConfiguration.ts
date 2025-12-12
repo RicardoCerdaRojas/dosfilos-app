@@ -12,6 +12,8 @@ export interface PhaseConfiguration {
     basePrompt?: string; // The core "Expert Persona" prompt
     userPrompts: string[]; // Additional specific instructions
     documents: PhaseDocument[]; // Knowledge base documents
+    libraryDocIds?: string[]; // IDs of library documents to include
+    cachedResources?: Array<{ title: string; author: string }>; // Metadata of cached resources
     temperature?: number; // Creativity level
 }
 

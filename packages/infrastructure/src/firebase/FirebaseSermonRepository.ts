@@ -21,9 +21,25 @@ export class FirebaseSermonRepository implements ISermonRepository {
     private collectionName = 'sermons';
 
     async create(sermon: SermonEntity): Promise<SermonEntity> {
+        console.log('📝 FirebaseSermonRepository.create called');
+        console.log('📌 Sermon ID:', sermon.id);
+        console.log('📌 Sermon userId:', sermon.userId);
+
         const sermonRef = doc(db, this.collectionName, sermon.id);
-        await setDoc(sermonRef, this.sermonToFirestore(sermon));
-        return sermon;
+        const firestoreData = this.sermonToFirestore(sermon);
+
+        console.log('📌 Firestore data:', firestoreData);
+
+        try {
+            await setDoc(sermonRef, firestoreData);
+            console.log('✅ Sermon saved to Firestore successfully');
+            return sermon;
+        } catch (error: any) {
+            console.error('❌ Firestore setDoc error:', error);
+            console.error('❌ Error code:', error.code);
+            console.error('❌ Error message:', error.message);
+            throw error;
+        }
     }
 
     async update(sermon: SermonEntity): Promise<SermonEntity> {
@@ -38,14 +54,25 @@ export class FirebaseSermonRepository implements ISermonRepository {
     }
 
     async findById(id: string): Promise<SermonEntity | null> {
-        const sermonRef = doc(db, this.collectionName, id);
-        const snapshot = await getDoc(sermonRef);
+        console.log('🔍 FirebaseSermonRepository.findById called with id:', id);
 
-        if (!snapshot.exists()) {
-            return null;
+        try {
+            const sermonRef = doc(db, this.collectionName, id);
+            const snapshot = await getDoc(sermonRef);
+
+            if (!snapshot.exists()) {
+                console.warn('⚠️ FirebaseSermonRepository: Document does not exist');
+                return null;
+            }
+
+            console.log('✅ FirebaseSermonRepository: Document found');
+            return this.firestoreToSermon(snapshot.id, snapshot.data());
+        } catch (error: any) {
+            console.error('❌ FirebaseSermonRepository.findById error:', error);
+            console.error('❌ Error code:', error.code);
+            console.error('❌ Error message:', error.message);
+            throw error;
         }
-
-        return this.firestoreToSermon(snapshot.id, snapshot.data());
     }
 
     async findByShareToken(token: string): Promise<SermonEntity | null> {
@@ -61,7 +88,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             return null;
         }
 
-        const doc = snapshot.docs[0];
+        const doc = snapshot.docs[0]!;
         return this.firestoreToSermon(doc.id, doc.data());
     }
 
@@ -130,6 +157,12 @@ export class FirebaseSermonRepository implements ISermonRepository {
             shareToken: sermon.shareToken ?? null,
             isShared: sermon.isShared,
             authorName: sermon.authorName,
+            seriesId: sermon.seriesId ?? null,
+            scheduledDate: sermon.scheduledDate ? Timestamp.fromDate(sermon.scheduledDate) : null,
+            preachingHistory: sermon.preachingHistory.map(log => ({
+                ...log,
+                date: Timestamp.fromDate(log.date)
+            })),
             wizardProgress: sermon.wizardProgress ? {
                 ...sermon.wizardProgress,
                 lastSaved: Timestamp.fromDate(sermon.wizardProgress.lastSaved)
@@ -152,6 +185,12 @@ export class FirebaseSermonRepository implements ISermonRepository {
             shareToken: d.shareToken,
             isShared: d.isShared,
             authorName: d.authorName,
+            seriesId: d.seriesId,
+            scheduledDate: d.scheduledDate?.toDate(),
+            preachingHistory: (d.preachingHistory ?? []).map((log: any) => ({
+                ...log,
+                date: log.date?.toDate() || new Date()
+            })),
             wizardProgress: d.wizardProgress ? {
                 ...d.wizardProgress,
                 lastSaved: d.wizardProgress.lastSaved?.toDate() || new Date()

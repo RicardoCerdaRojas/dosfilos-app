@@ -98,11 +98,11 @@ export const SECTION_CONFIGS: Record<ContentType, SectionConfig[]> = {
         {
             id: 'approach',
             label: 'Enfoque Homilético',
-            path: 'homileticalApproach',
+            path: 'selectedApproachId', // We'll use this to find the selected approach
             description: 'Enfoque homilético seleccionado',
             type: 'text',
             required: true,
-            version: 1
+            version: 2 // Bumped version for new multi-approach feature
         },
         {
             id: 'proposition',

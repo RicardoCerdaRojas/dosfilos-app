@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 // Helper to format time
 const formatTime = (seconds: number) => {
@@ -212,7 +213,10 @@ export function PreachModePage() {
           className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200"
           style={{ fontSize: `${fontSize}px` }}
         >
-          <ReactMarkdown components={components}>
+          <ReactMarkdown 
+            components={components}
+            rehypePlugins={[rehypeRaw]}
+          >
             {processContent(sermon.content)}
           </ReactMarkdown>
         </div>
