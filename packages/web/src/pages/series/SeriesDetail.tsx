@@ -77,7 +77,7 @@ export function SeriesDetail() {
             </div>
           </div>
           <Button onClick={() => navigate(`/series/${series.id}/edit`)}>
-            Editar Plan
+            Editar Planes
           </Button>
         </div>
       </div>

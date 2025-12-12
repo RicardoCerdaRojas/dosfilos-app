@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, Library, ChevronUp, User2, Bell 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell 
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -31,7 +31,7 @@ import { ThemeToggleMenu } from '@/components/theme-toggle';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Sermones', href: '/sermons', icon: FileText },
-  { name: 'Series', href: '/series', icon: BookOpen },
+  { name: 'Planes de Predicación', href: '/series', icon: BookMarked },
   { name: 'Biblioteca', href: '/library', icon: Library },
   { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
   { name: 'Configuración', href: '/settings', icon: Settings },

@@ -69,7 +69,7 @@ export function SeriesList() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center space-y-4">
           <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Cargando series...</p>
+          <p className="text-muted-foreground">Cargando planes...</p>
         </div>
       </div>
     );
@@ -79,9 +79,9 @@ export function SeriesList() {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <BookOpen className="h-16 w-16 text-muted-foreground" />
-        <h2 className="text-2xl font-semibold">No tienes series aún</h2>
+        <h2 className="text-2xl font-semibold">No tienes planes aún</h2>
         <p className="text-muted-foreground text-center max-w-md">
-          Organiza tus sermones en series temáticas o expositivas.
+          Crea planes de predicación para organizar tus sermones.
         </p>
         <div className="flex gap-4">
           <Button variant="outline" onClick={() => navigate('/planner')}>
@@ -90,7 +90,7 @@ export function SeriesList() {
           </Button>
           <Button onClick={() => navigate('/series/new')} size="lg">
             <Plus className="mr-2 h-5 w-5" />
-            Crear Primera Serie
+            Crear Primer Plan
           </Button>
         </div>
       </div>
@@ -102,8 +102,8 @@ export function SeriesList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Series de Sermones</h1>
-          <p className="text-muted-foreground">Gestiona tus colecciones de sermones</p>
+          <h1 className="text-3xl font-bold">Planes de Predicación</h1>
+          <p className="text-muted-foreground">Organiza y planifica tus sermones</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/planner')} className="hidden sm:flex">
@@ -112,7 +112,7 @@ export function SeriesList() {
           </Button>
           <Button onClick={() => navigate('/series/new')}>
             <Plus className="mr-2 h-4 w-4" />
-            Nueva Serie
+            Nuevo Plan
           </Button>
         </div>
       </div>
@@ -202,7 +202,7 @@ export function SeriesList() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará la serie, pero los sermones asociados se mantendrán.
+              Esta acción eliminará el plan, pero los sermones asociados se mantendrán.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
