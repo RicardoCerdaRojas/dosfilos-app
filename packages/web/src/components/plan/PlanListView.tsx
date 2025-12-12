@@ -92,9 +92,9 @@ export function PlanListView({
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 className="font-medium truncate">{item.title}</h3>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-start gap-2 mb-1 flex-wrap">
+                <h3 className="font-medium text-left truncate">{item.title}</h3>
                 {getStatusBadge(item.status)}
               </div>
 
