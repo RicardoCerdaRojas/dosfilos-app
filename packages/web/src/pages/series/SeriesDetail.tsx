@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, LayoutDashboard, List, Plus } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, List, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlanDashboard } from '@/components/plan/PlanDashboard';
+import { AddSermonDialog } from '@/components/plan/AddSermonDialog';
 import { useSeriesData } from '@/hooks/useSeriesData';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from 'lucide-react';
 
 export function SeriesDetail() {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +18,8 @@ export function SeriesDetail() {
     sermonItems,
     loading,
     handleStartDraft,
-    handleContinueEditing
+    handleContinueEditing,
+    reloadData
   } = useSeriesData(id);
 
   if (loading) {
@@ -96,10 +97,7 @@ export function SeriesDetail() {
             </TabsTrigger>
           </TabsList>
           
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Agregar Sermón
-          </Button>
+          <AddSermonDialog series={series} onSermonAdded={reloadData} />
         </div>
 
         {/* Dashboard View */}
