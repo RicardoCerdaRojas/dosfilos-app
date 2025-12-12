@@ -192,63 +192,134 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
         </Card>
       </div>
 
-      {/* Sidebar - Unscheduled Sermons */}
+      {/* Sidebar - Sermon List */}
       <div className="lg:col-span-1">
-        <Card className="p-4 sticky top-6">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            Sin Fecha ({sermonsWithoutDate.length})
-          </h3>
-          
-          {sermonsWithoutDate.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Todos los sermones tienen fecha programada
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {sermonsWithoutDate.map(sermon => (
-                <Card
-                  key={sermon.id}
-                  className={cn(
-                    'p-3 cursor-move border-l-4',
-                    sermon.status === 'planned' && 'border-l-slate-400',
-                    sermon.status === 'in_progress' && 'border-l-amber-500',
-                    sermon.status === 'complete' && 'border-l-green-500'
-                  )}
-                >
-                  <div className="text-sm font-medium mb-1 line-clamp-2">
-                    {sermon.title}
-                  </div>
-                  {sermon.passage && (
-                    <div className="text-xs text-muted-foreground mb-2">
-                      {sermon.passage}
-                    </div>
-                  )}
-                  {sermon.status === 'planned' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() => onStartDraft(sermon)}
-                    >
-                      <Wand2 className="h-3 w-3 mr-1" />
-                      Desarrollar
-                    </Button>
-                  )}
-                  {sermon.status === 'in_progress' && sermon.draftId && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() => onContinue(sermon.draftId!)}
-                    >
-                      Continuar
-                    </Button>
-                  )}
-                </Card>
-              ))}
+        <Card className="p-0 sticky top-6 max-h-[calc(100vh-8rem)] flex flex-col">
+          <Tabs defaultValue="unscheduled" className="flex flex-col h-full">
+            <div className="p-4 pb-0">
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="unscheduled" className="text-xs">
+                  Sin Fecha ({sermonsWithoutDate.length})
+                </TabsTrigger>
+                <TabsTrigger value="all" className="text-xs">
+                  Todos ({sermons.length})
+                </TabsTrigger>
+              </TabsList>
             </div>
-          )}
+
+            {/* Sin Fecha Tab */}
+            <TabsContent value="unscheduled" className="flex-1 overflow-hidden p-4 pt-3 m-0">
+              {sermonsWithoutDate.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Todos los sermones tienen fecha programada
+                </p>
+              ) : (
+                <div className="space-y-2 overflow-y-auto h-full">
+                  {sermonsWithoutDate.map(sermon => (
+                    <Card
+                      key={sermon.id}
+                      className={cn(
+                        'p-3 cursor-pointer hover:shadow-md transition-all border-l-4',
+                        sermon.status === 'planned' && 'border-l-slate-400',
+                        sermon.status === 'in_progress' && 'border-l-amber-500',
+                        sermon.status === 'complete' && 'border-l-green-500'
+                      )}
+                    >
+                      <div className="text-sm font-medium mb-1 line-clamp-2">
+                        {sermon.title}
+                      </div>
+                      {sermon.passage && (
+                        <div className="text-xs text-muted-foreground mb-2">
+                          {sermon.passage}
+                        </div>
+                      )}
+                      <div className="flex gap-1">
+                        {sermon.status === 'planned' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs h-7"
+                            onClick={() => onStartDraft(sermon)}
+                          >
+                            <Wand2 className="h-3 w-3 mr-1" />
+                            Desarrollar
+                          </Button>
+                        )}
+                        {sermon.status === 'in_progress' && sermon.draftId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs h-7"
+                            onClick={() => onContinue(sermon.draftId!)}
+                          >
+                            Continuar
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Todos Tab */}
+            <TabsContent value="all" className="flex-1 overflow-hidden p-4 pt-3 m-0 flex flex-col">
+              {/* Search */}
+              <div className="mb-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar sermón..."
+                    className="w-full px-3 py-2 text-sm border rounded-md pr-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* All Sermons List */}
+              <div className="space-y-1 overflow-y-auto flex-1">
+                {filteredSermons.map(sermon => (
+                  <div
+                    key={sermon.id}
+                    className={cn(
+                      'p-2 rounded-md cursor-pointer hover:bg-accent transition-colors border-l-2',
+                      sermon.status === 'planned' && 'border-l-slate-400',
+                      sermon.status === 'in_progress' && 'border-l-amber-500',
+                      sermon.status === 'complete' && 'border-l-green-500'
+                    )}
+                  >
+                    <div className="text-sm font-medium line-clamp-1 mb-0.5">
+                      {sermon.title}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        {sermon.scheduledDate ? (
+                          new Date(sermon.scheduledDate).toLocaleDateString('es-ES', {
+                            day: 'numeric',
+                            month: 'short'
+                          })
+                        ) : (
+                          <span className="text-amber-600">Sin fecha</span>
+                        )}
+                      </span>
+                      {sermon.passage && (
+                        <span className="text-xs truncate ml-2">{sermon.passage}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         </Card>
       </div>
     </div>
