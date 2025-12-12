@@ -4,6 +4,7 @@ import { ArrowLeft, LayoutDashboard, List, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlanDashboard } from '@/components/plan/PlanDashboard';
+import { PlanListView } from '@/components/plan/PlanListView';
 import { AddSermonDialog } from '@/components/plan/AddSermonDialog';
 import { useSeriesData } from '@/hooks/useSeriesData';
 import { Badge } from '@/components/ui/badge';
@@ -119,10 +120,12 @@ export function SeriesDetail() {
 
         {/* List View */}
         <TabsContent value="list" className="mt-6">
-          <div className="text-center text-muted-foreground py-12">
-            Vista de lista - Por implementar
-            <p className="text-sm mt-2">La vista actual de lista se mantendrá aquí</p>
-          </div>
+          <PlanListView
+            sermons={sermonItems}
+            onStartDraft={handleStartDraft}
+            onContinue={handleContinueEditing}
+            onView={(draftId) => navigate(`/sermons/${draftId}`)}
+          />
         </TabsContent>
       </Tabs>
     </div>
