@@ -53,12 +53,23 @@ function isSameDay(date1: Date, date2: Date): boolean {
 export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
   const days = getDaysInMonth(currentYear, currentMonth);
   const today = new Date();
   
+
+  // Filter sermons by  search term
+  const filteredSermons = useMemo(() => {
+    if (!searchTerm.trim()) return sermons;
+    const lower = searchTerm.toLowerCase();
+    return sermons.filter(sermon => 
+      sermon.title.toLowerCase().includes(lower) ||
+      (sermon.passage && sermon.passage.toLowerCase().includes(lower))
+    );
+  }, [sermons, searchTerm]);
   // Group sermons by date
   const sermonsByDate = new Map<string, SermonItem[]>();
   const sermonsWithoutDate: SermonItem[] = [];
