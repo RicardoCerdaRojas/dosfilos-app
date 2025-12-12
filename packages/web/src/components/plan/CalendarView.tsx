@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SermonDetailModal } from './SermonDetailModal';
 
 interface CalendarViewProps {
   sermons: SermonItem[];
@@ -54,6 +55,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSermon, setSelectedSermon] = useState<SermonItem | null>(null);
   
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -107,6 +109,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
   };
 
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Calendar - Main Area */}
       <div className="lg:col-span-3">
@@ -171,10 +174,14 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
                       <div
                         key={sermon.id}
                         className={cn(
-                          'text-xs p-1 rounded border truncate',
+                          'text-xs p-1 rounded border truncate cursor-pointer hover:shadow-sm transition-all',
                           getStatusColor(sermon.status)
                         )}
                         title={sermon.title}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSermon(sermon);
+                        }}
                       >
                         {sermon.title}
                       </div>
@@ -224,6 +231,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
                         sermon.status === 'in_progress' && 'border-l-amber-500',
                         sermon.status === 'complete' && 'border-l-green-500'
                       )}
+                      onClick={() => setSelectedSermon(sermon)}
                     >
                       <div className="text-sm font-medium mb-1 line-clamp-2">
                         {sermon.title}
@@ -296,6 +304,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
                       sermon.status === 'in_progress' && 'border-l-amber-500',
                       sermon.status === 'complete' && 'border-l-green-500'
                     )}
+                    onClick={() => setSelectedSermon(sermon)}
                   >
                     <div className="text-sm font-medium line-clamp-1 mb-0.5">
                       {sermon.title}
@@ -323,5 +332,16 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
         </Card>
       </div>
     </div>
+
+    {/* Sermon Detail Modal */}
+    <SermonDetailModal
+      sermon={selectedSermon}
+      isOpen={!!selectedSermon}
+      onClose={() => setSelectedSermon(null)}
+      onStartDraft={onStartDraft}
+      onContinue={onContinue}
+      onUpdateDate={onUpdateDate}
+    />
+      </>;
   );
 }
