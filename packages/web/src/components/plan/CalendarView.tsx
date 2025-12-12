@@ -342,6 +342,6 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate }
       onContinue={onContinue}
       onUpdateDate={onUpdateDate}
     />
-      </>;
+    </>
   );
 }
