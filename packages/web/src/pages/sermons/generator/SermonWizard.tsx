@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useWizard, WizardProvider } from './WizardContext';
 import { WizardHeader } from './WizardHeader';
+import { StepPassage } from './StepPassage';
 import { StepExegesis } from './StepExegesis';
 import { StepHomiletics } from './StepHomiletics';
 import { StepDraft } from './StepDraft';
@@ -9,21 +11,70 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { sermonService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import { SermonEntity, WorkflowPhase } from '@dosfilos/domain';
+import { SermonEntity } from '@dosfilos/domain';
 
 function WizardContent() {
-    const { step, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, reset } = useWizard();
+    const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, reset, setCacheName, setSelectedResourceIds } = useWizard();
     const { user } = useFirebase();
+    const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
     const [showResumePrompt, setShowResumePrompt] = useState(false);
     const [loading, setLoading] = useState(true);
+    const location = useLocation();
 
-    // Check for in-progress sermons on mount
+    // Check for in-progress sermons on mount or when location key changes (navigation)
     useEffect(() => {
         const checkForInProgress = async () => {
             if (!user) {
                 setLoading(false);
                 return;
+            }
+
+            // Check if we're resuming a specific sermon via URL param
+            const sermonIdParam = searchParams.get('id');
+
+            
+            if (sermonIdParam) {
+                try {
+
+                    const sermon = await sermonService.getSermon(sermonIdParam);
+
+                    
+                    if (sermon && sermon.wizardProgress) {
+                        // Resume this specific sermon
+                        setSermonId(sermon.id);
+                        
+                        const progress = sermon.wizardProgress;
+                        setPassage(progress.passage || '');
+                        if (progress.exegesis) setExegesis(progress.exegesis);
+                        if (progress.homiletics) setHomiletics(progress.homiletics);
+                        if (progress.draft) setDraft(progress.draft);
+                        if (progress.cacheName) setCacheName(progress.cacheName);
+                        if (progress.selectedResourceIds) setSelectedResourceIds(progress.selectedResourceIds);
+                        
+                        // If no passage, go to step 0 (passage selection)
+                        if (!progress.passage) {
+                            setStep(0);
+                        } else if (progress.currentStep) {
+                            setStep(progress.currentStep);
+                        } else if (progress.draft) {
+                            setStep(3);
+                        } else if (progress.homiletics) {
+                            setStep(2);
+                        } else {
+                            setStep(1);
+                        }
+                        
+                        setLoading(false);
+                        return;
+                    } else {
+                        console.warn('⚠️ SermonWizard: Sermon not found or no wizardProgress');
+                    }
+                } catch (error: any) {
+                    console.error('❌ SermonWizard: Error loading sermon from URL param:', error);
+                    console.error('❌ Error message:', error.message);
+                    console.error('❌ Error code:', error.code);
+                }
             }
 
             try {
@@ -40,7 +91,7 @@ function WizardContent() {
         };
 
         checkForInProgress();
-    }, [user]);
+    }, [user, location.key, searchParams]);
 
     const handleContinue = (sermon: SermonEntity) => {
         if (!sermon.wizardProgress) return;
@@ -53,14 +104,25 @@ function WizardContent() {
         if (progress.exegesis) setExegesis(progress.exegesis);
         if (progress.homiletics) setHomiletics(progress.homiletics);
         if (progress.draft) setDraft(progress.draft);
+        if (progress.cacheName) setCacheName(progress.cacheName);
+        if (progress.selectedResourceIds) setSelectedResourceIds(progress.selectedResourceIds);
+        
+        // Restore step if available, otherwise infer from content
+        if (progress.currentStep) {
+            setStep(progress.currentStep);
+        } else if (progress.draft) {
+            setStep(3);
+        } else if (progress.homiletics) {
+            setStep(2);
+        }
 
         setShowResumePrompt(false);
     };
 
-    const handleDiscard = async (sermonId: string) => {
+    const handleDiscard = async (sermon: SermonEntity) => {
         try {
-            await sermonService.deleteSermon(sermonId);
-            setInProgressSermons(prev => prev.filter(s => s.id !== sermonId));
+            await sermonService.deleteSermon(sermon.id);
+            setInProgressSermons(prev => prev.filter(s => s.id !== sermon.id));
             
             if (inProgressSermons.length === 1) {
                 setShowResumePrompt(false);
@@ -75,13 +137,23 @@ function WizardContent() {
         setShowResumePrompt(false);
     };
 
-    // Get current phase based on step
-    const getCurrentPhase = (): WorkflowPhase => {
-        switch (step) {
-            case 1: return WorkflowPhase.EXEGESIS;
-            case 2: return WorkflowPhase.HOMILETICS;
-            case 3: return WorkflowPhase.SERMON_DRAFT;
-            default: return WorkflowPhase.EXEGESIS;
+    const handleExit = async () => {
+        setLoading(true);
+        reset();
+        if (user) {
+            try {
+                const sermons = await sermonService.getInProgressSermons(user.uid);
+                setInProgressSermons(sermons);
+                if (sermons.length > 0) {
+                    setShowResumePrompt(true);
+                }
+            } catch (error) {
+                console.error('Error refreshing sermons on exit:', error);
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setLoading(false);
         }
     };
 
@@ -98,7 +170,7 @@ function WizardContent() {
 
     if (showResumePrompt) {
         return (
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="space-y-6">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold mb-2">Generador de Sermones</h1>
                     <p className="text-muted-foreground">
@@ -125,10 +197,11 @@ function WizardContent() {
     return (
         <div className="h-full flex flex-col overflow-hidden">
             {/* Compact Header */}
-            <WizardHeader currentStep={step} phase={getCurrentPhase()} />
+            <WizardHeader currentStep={step} onExit={handleExit} />
 
             {/* Step Content - Full height with fixed layout */}
             <div className="flex-1 overflow-hidden px-4 py-2">
+                {step === 0 && <StepPassage />}
                 {step === 1 && <StepExegesis />}
                 {step === 2 && <StepHomiletics />}
                 {step === 3 && <StepDraft />}

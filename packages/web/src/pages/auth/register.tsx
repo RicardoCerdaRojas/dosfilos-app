@@ -48,7 +48,7 @@ export function RegisterPage() {
     try {
       await authService.register(data.email, data.password, data.displayName);
       toast.success('¡Cuenta creada exitosamente!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Error al crear la cuenta');
     } finally {
@@ -61,7 +61,7 @@ export function RegisterPage() {
     try {
       await authService.loginWithGoogle();
       toast.success('¡Cuenta creada exitosamente!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Error al registrarse con Google');
     } finally {
@@ -72,7 +72,7 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Crear Cuenta"
-      subtitle="Únete a DosFilos.app y potencia tu ministerio"
+      subtitle="Únete a DosFilos.Preach y potencia tu ministerio"
     >
       <div className="space-y-6">
         {/* Google Sign-In Button */}

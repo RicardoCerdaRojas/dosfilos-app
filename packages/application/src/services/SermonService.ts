@@ -17,6 +17,9 @@ export class SermonService {
         category?: string;
         status?: 'draft' | 'published' | 'archived';
         authorName?: string;
+        seriesId?: string;
+        scheduledDate?: Date;
+        wizardProgress?: Sermon['wizardProgress'];
     }): Promise<SermonEntity> {
         try {
             const sermon = SermonEntity.create({
@@ -29,6 +32,9 @@ export class SermonService {
                 status: data.status || 'draft',
                 isShared: false,
                 authorName: data.authorName || 'Pastor',
+                seriesId: data.seriesId,
+                scheduledDate: data.scheduledDate,
+                wizardProgress: data.wizardProgress,
             });
             return await this.sermonRepository.create(sermon);
         } catch (error: any) {
@@ -45,6 +51,10 @@ export class SermonService {
             tags: string[];
             category: string;
             status: 'draft' | 'published' | 'archived';
+            seriesId: string;
+            scheduledDate: Date;
+            wizardProgress: any;
+            preachingHistory: any[];
         }>
     ): Promise<SermonEntity> {
         try {
@@ -198,11 +208,72 @@ export class SermonService {
             if (!sermon) {
                 throw new Error('Sermón no encontrado');
             }
-            const updated = sermon.update({ wizardProgress: progress });
+
+            // 🎯 Clean undefined values from progress (Firestore doesn't accept undefined)
+            const cleanedProgress = this.removeUndefinedFields(progress);
+
+            const updated = sermon.update({ wizardProgress: cleanedProgress });
             await this.sermonRepository.update(updated);
         } catch (error: any) {
             throw new Error(error.message || 'Error al actualizar progreso del wizard');
         }
+    }
+
+    /**
+     * Recursively removes undefined fields from an object and handles Date conversion
+     * Firestore doesn't accept undefined values and needs proper Date objects
+     */
+    private removeUndefinedFields(obj: any): any {
+        if (obj === null || obj === undefined) {
+            return obj;
+        }
+
+        // Handle Date objects - convert to JavaScript Date
+        if (obj instanceof Date) {
+            return obj;
+        }
+
+        // Handle Date-like objects (with seconds/nanoseconds from Firestore)
+        if (obj && typeof obj === 'object' && 'seconds' in obj && 'nanoseconds' in obj) {
+            return new Date(obj.seconds * 1000);
+        }
+
+        // Handle string dates
+        if (typeof obj === 'string') {
+            const dateTest = new Date(obj);
+            if (!isNaN(dateTest.getTime()) && obj.includes('T')) {
+                return dateTest;
+            }
+            return obj;
+        }
+
+        if (Array.isArray(obj)) {
+            return obj.map(item => this.removeUndefinedFields(item));
+        }
+
+        if (typeof obj === 'object') {
+            const cleaned: any = {};
+            for (const key in obj) {
+                const value = obj[key];
+                if (value !== undefined) {
+                    // Special handling for lastSaved field
+                    if (key === 'lastSaved' && value) {
+                        if (value instanceof Date) {
+                            cleaned[key] = value;
+                        } else if (typeof value === 'object' && 'seconds' in value) {
+                            cleaned[key] = new Date(value.seconds * 1000);
+                        } else {
+                            cleaned[key] = new Date(value);
+                        }
+                    } else {
+                        cleaned[key] = this.removeUndefinedFields(value);
+                    }
+                }
+            }
+            return cleaned;
+        }
+
+        return obj;
     }
 }
 

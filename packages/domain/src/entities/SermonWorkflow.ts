@@ -1,4 +1,5 @@
 export enum WorkflowPhase {
+    PLANNING = 'planning',
     EXEGESIS = 'exegesis',
     HOMILETICS = 'homiletics',
     DRAFTING = 'drafting',

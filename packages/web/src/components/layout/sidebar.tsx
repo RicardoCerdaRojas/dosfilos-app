@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { BookOpen, FileText, Sparkles, Home, Settings, LogOut, Bell } from 'lucide-react';
+import { BookOpen, FileText, Sparkles, Home, Settings, LogOut, Bell, Calendar, BookMarked } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,11 +16,22 @@ import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
 import { toast } from 'sonner';
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Sermones', href: '/sermons', icon: FileText },
-  { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
-  { name: 'Configuración', href: '/settings', icon: Settings },
+const navigationGroups = [
+  // Group 1: Main
+  [
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Sermones', href: '/dashboard/sermons', icon: FileText },
+  ],
+  // Group 2: Planning
+  [
+    { name: 'Planes de Predicación', href: '/dashboard/plans', icon: Calendar },
+    { name: 'Generar Sermón', href: '/dashboard/generate-sermon', icon: Sparkles },
+  ],
+  // Group 3: Resources
+  [
+    { name: 'Biblioteca', href: '/dashboard/library', icon: BookMarked },
+    { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
+  ],
 ];
 
 export function Sidebar() {
@@ -53,29 +64,37 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b px-6">
         <BookOpen className="h-8 w-8 text-primary" />
-        <span className="text-xl font-bold">DosFilos.app</span>
+        <span className="text-xl font-bold">DosFilos.Preach</span>
       </div>
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-1">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link key={item.name} to={item.href}>
-                <Button
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  className={cn(
-                    'w-full justify-start gap-3',
-                    isActive && 'bg-secondary text-secondary-foreground'
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Button>
-              </Link>
-            );
-          })}
+          {navigationGroups.map((group, groupIndex) => (
+            <div key={groupIndex}>
+              {group.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link key={item.name} to={item.href}>
+                    <Button
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      className={cn(
+                        'w-full justify-start gap-3',
+                        isActive && 'bg-secondary text-secondary-foreground'
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.name}
+                    </Button>
+                  </Link>
+                );
+              })}
+              {/* Separator between groups (except after last group) */}
+              {groupIndex < navigationGroups.length - 1 && (
+                <div className="my-2 border-t" />
+              )}
+            </div>
+          ))}
         </nav>
       </ScrollArea>
 
@@ -134,7 +153,7 @@ export function Sidebar() {
         </div>
         
         <div className="text-xs text-muted-foreground text-center mt-2">
-          DosFilos.app v0.1.0
+          DosFilos.Preach v0.1.0
         </div>
       </div>
     </div>

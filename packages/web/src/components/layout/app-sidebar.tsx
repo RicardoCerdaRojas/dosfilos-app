@@ -1,5 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, FileText, Sparkles, Home, Settings, LogOut, Bell, ChevronUp, User2 } from 'lucide-react';
+import { 
+  Home, FileText, Sparkles, Settings, LogOut, 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell 
+} from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
 import { toast } from 'sonner';
@@ -13,6 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -25,11 +29,22 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggleMenu } from '@/components/theme-toggle';
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Sermones', href: '/sermons', icon: FileText },
-  { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
-  { name: 'Configuración', href: '/settings', icon: Settings },
+const navigationGroups = [
+  // Group 1: Main
+  [
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Sermones', href: '/dashboard/sermons', icon: FileText },
+  ],
+  // Group 2: Planning
+  [
+    { name: 'Planes de Predicación', href: '/dashboard/plans', icon: BookMarked },
+    { name: 'Generar Sermón', href: '/dashboard/generate-sermon', icon: Sparkles },
+  ],
+  // Group 3: Resources
+  [
+    { name: 'Biblioteca', href: '/dashboard/library', icon: Library },
+    { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
+  ],
 ];
 
 export function AppSidebar() {
@@ -58,38 +73,44 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="offcanvas" className="peer border-0">
+    <Sidebar collapsible="icon">
       {/* Header */}
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
+        <div className="flex items-center gap-3 px-1 py-3">
+          <div className="p-1 rounded-lg bg-gradient-to-br from-primary to-primary/80">
             <BookOpen className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">DosFilos.app</span>
+          <span className="text-xl font-bold group-data-[collapsible=icon]:hidden">DosFilos.Preach</span>
         </div>
       </SidebarHeader>
 
       {/* Navigation */}
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link to={item.href}>
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navigationGroups.map((group, groupIndex) => (
+          <div key={groupIndex}>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.href}>
+                            <item.icon className="h-5 w-5" />
+                            <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            {/* Add separator between groups (except after last group) */}
+            {groupIndex < navigationGroups.length - 1 && <SidebarSeparator />}
+          </div>
+        ))}
       </SidebarContent>
 
       {/* Footer with User Menu */}
@@ -158,7 +179,7 @@ export function AppSidebar() {
         </SidebarMenu>
         
         <div className="text-xs text-muted-foreground text-center py-2">
-          DosFilos.app v0.1.0
+          DosFilos.Preach v0.1.0
         </div>
       </SidebarFooter>
     </Sidebar>

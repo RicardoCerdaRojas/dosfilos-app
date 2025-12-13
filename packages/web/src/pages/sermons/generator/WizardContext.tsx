@@ -14,6 +14,8 @@ interface WizardState {
     homiletics: HomileticalAnalysis | null;
     draft: SermonContent | null;
     config: WorkflowConfiguration | null;
+    cacheName: string | null;
+    selectedResourceIds: string[];
 }
 
 interface WizardContextType extends WizardState {
@@ -24,6 +26,9 @@ interface WizardContextType extends WizardState {
     setHomiletics: (homiletics: HomileticalAnalysis) => void;
     setDraft: (draft: SermonContent) => void;
     setSermonId: (id: string | null) => void;
+    setCacheName: (name: string | null) => void;
+    setSelectedResourceIds: (ids: string[]) => void;
+    selectHomileticalApproach: (approachId: string) => void;  // 🎯 NEW
     reset: () => void;
     saving: boolean;
     lastSaved: Date | null;
@@ -44,11 +49,13 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [draft, setDraft] = useState<SermonContent | null>(null);
     const [config, setConfig] = useState<WorkflowConfiguration | null>(null);
     const [sermonId, setSermonId] = useState<string | null>(null);
+    const [cacheName, setCacheName] = useState<string | null>(null);
+    const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
 
     // Auto-save hook
     const { saving, lastSaved } = useAutoSave(
         sermonId,
-        { step, passage, exegesis, homiletics, draft },
+        { step, passage, exegesis, homiletics, draft, cacheName, selectedResourceIds },
         user?.uid || ''
     );
 
@@ -80,7 +87,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         const createDraftSermon = async () => {
             if (exegesis && !sermonId && user && passage) {
                 try {
-                    console.log('Creating draft sermon...', { passage, exegesis });
+
                     const newSermonId = await sermonService.createDraft({
                         userId: user.uid,
                         passage,
@@ -91,7 +98,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
                             lastSaved: new Date()
                         }
                     });
-                    console.log('Draft sermon created with ID:', newSermonId);
+
                     setSermonId(newSermonId);
                 } catch (error) {
                     console.error('Error creating draft sermon:', error);
@@ -109,6 +116,39 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics(null);
         setDraft(null);
         setSermonId(null);
+        setCacheName(null);
+        setSelectedResourceIds([]);
+    };
+
+    // 🎯 NEW: Select homiletical approach and update derived fields
+    const selectHomileticalApproach = (approachId: string) => {
+        if (!homiletics || !homiletics.homileticalApproaches) {
+            console.warn('Cannot select approach: no approaches available');
+            return;
+        }
+
+        const selectedApproach = homiletics.homileticalApproaches.find(
+            a => a.id === approachId
+        );
+
+        if (!selectedApproach) {
+            console.warn('Selected approach not found:', approachId);
+            return;
+        }
+
+        // Update homiletics with selected approach
+        setHomiletics({
+            ...homiletics,
+            selectedApproachId: approachId,
+            // Update legacy fields from selected approach
+            homileticalApproach: selectedApproach.type as any,
+            contemporaryApplication: selectedApproach.contemporaryApplication,
+            homileticalProposition: selectedApproach.homileticalProposition,
+            outlinePreview: selectedApproach.outlinePreview, // 🎯 NEW: Include outline preview
+            outline: selectedApproach.outline
+        });
+
+
     };
 
     const contextValue = useMemo(() => ({
@@ -119,6 +159,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         homiletics,
         draft,
         config,
+        cacheName,
+        selectedResourceIds,
         setStep,
         setPassage,
         setRules,
@@ -126,10 +168,13 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics,
         setDraft,
         setSermonId,
+        setCacheName,
+        setSelectedResourceIds,
+        selectHomileticalApproach,  // 🎯 NEW
         reset,
         saving,
         lastSaved
-    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved]);
+    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved, cacheName, selectedResourceIds]);
 
     return (
         <WizardContext.Provider value={contextValue}>

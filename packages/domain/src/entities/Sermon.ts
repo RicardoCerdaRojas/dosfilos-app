@@ -1,5 +1,12 @@
 import { ExegeticalStudy, HomileticalAnalysis, SermonContent } from './SermonGenerator';
 
+export interface PreachingLog {
+    date: Date;
+    location: string;
+    durationMinutes: number;
+    notes?: string;
+}
+
 export interface Sermon {
     id: string;
     userId: string;
@@ -11,9 +18,15 @@ export interface Sermon {
     status: 'draft' | 'published' | 'archived';
     createdAt: Date;
     updatedAt: Date;
-    shareToken?: string;
+    publishedAt?: Date | undefined;
+    shareToken?: string | undefined;
     isShared: boolean;
     authorName: string;
+
+    // Series and History
+    seriesId?: string | undefined;
+    scheduledDate?: Date | undefined;  // Planned preaching date from planner
+    preachingHistory: PreachingLog[];
 
     // Wizard progress for in-progress sermons
     wizardProgress?: {
@@ -23,7 +36,9 @@ export interface Sermon {
         homiletics?: HomileticalAnalysis;
         draft?: SermonContent;
         lastSaved: Date;
-    };
+        cacheName?: string;
+        selectedResourceIds?: string[];
+    } | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -42,7 +57,10 @@ export class SermonEntity implements Sermon {
         public shareToken: string | undefined = undefined,
         public isShared: boolean = false,
         public authorName: string = 'Pastor',
-        public wizardProgress?: Sermon['wizardProgress']
+        public wizardProgress?: Sermon['wizardProgress'],
+        public seriesId?: string,
+        public scheduledDate?: Date,
+        public preachingHistory: PreachingLog[] = []
     ) {
         this.validate();
     }
@@ -64,7 +82,7 @@ export class SermonEntity implements Sermon {
     }
 
     static create(
-        data: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+        data: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt' | 'preachingHistory'> & { id?: string, preachingHistory?: PreachingLog[] }
     ): SermonEntity {
         const d = data as any;
         return new SermonEntity(
@@ -82,7 +100,10 @@ export class SermonEntity implements Sermon {
             d.shareToken,
             d.isShared ?? false,
             d.authorName ?? 'Pastor',
-            data.wizardProgress
+            data.wizardProgress,
+            data.seriesId,
+            data.scheduledDate,
+            data.preachingHistory ?? []
         );
     }
 
@@ -103,7 +124,10 @@ export class SermonEntity implements Sermon {
             d.shareToken ?? this.shareToken,
             d.isShared ?? this.isShared,
             d.authorName ?? this.authorName,
-            data.wizardProgress ?? this.wizardProgress
+            data.wizardProgress ?? this.wizardProgress,
+            data.seriesId ?? this.seriesId,
+            data.scheduledDate ?? this.scheduledDate,
+            data.preachingHistory ?? this.preachingHistory
         );
     }
 
@@ -122,7 +146,11 @@ export class SermonEntity implements Sermon {
             new Date(),
             this.shareToken,
             this.isShared,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory
         );
     }
 
@@ -141,7 +169,11 @@ export class SermonEntity implements Sermon {
             this.publishedAt,
             this.shareToken,
             this.isShared,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory
         );
     }
 
@@ -160,7 +192,11 @@ export class SermonEntity implements Sermon {
             this.publishedAt,
             this.shareToken ?? crypto.randomUUID(),
             true,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory
         );
     }
 
@@ -179,7 +215,25 @@ export class SermonEntity implements Sermon {
             this.publishedAt,
             this.shareToken,
             false,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory
         );
+    }
+
+    addPreachingLog(log: PreachingLog): SermonEntity {
+        return this.update({
+            preachingHistory: [...this.preachingHistory, log]
+        });
+    }
+
+    assignToSeries(seriesId: string): SermonEntity {
+        return this.update({ seriesId });
+    }
+
+    removeFromSeries(): SermonEntity {
+        return this.update({ seriesId: undefined } as any);
     }
 }

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWizard } from './WizardContext';
+import { useFirebase } from '@/context/firebase-context'; // 🎯 NEW
+import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { WizardLayout } from './WizardLayout';
 import { PromptSettings } from './PromptSettings';
 import { GenerationProgress } from '@/components/sermons/GenerationProgress';
@@ -10,9 +12,11 @@ import { Card } from '@/components/ui/card';
 import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
 import { sermonGeneratorService } from '@dosfilos/application';
 import { toast } from 'sonner';
-import { WorkflowPhase } from '@dosfilos/domain';
+import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
+import { generatorChatService } from '@dosfilos/application';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
+import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel';
 
 interface ExegesisContent {
     historical: string;
@@ -31,15 +35,39 @@ interface StepExegesisProps {
 import { useContentHistory } from '@/hooks/useContentHistory';
 
 export function StepExegesis() {
-    const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
+    const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving, cacheName, setCacheName } = useWizard();
+    const { user } = useFirebase(); // 🎯 NEW
+    const contentHistory = useContentHistory('exegesis', config?.id);
+
+    // 🎯 NEW: Unified Chat Hook
+    const {
+        messages,
+        setMessages, // Needed for local state updates (refinement)
+        isLoading: isChatLoading,
+        activeContext,
+        refreshContext: handleRefreshContext,
+        handleSendMessage: sendGeneralMessage,
+        libraryResources,
+        cacheName: activeCacheName
+    } = useGeneratorChat({
+        phase: 'exegesis',
+        content: exegesis,
+        config,
+        user,
+        initialCacheName: null, // 🎯 Step 1: Force isolated cache history (don't inherit "future" caches)
+        selectedResourceIds: [] // TODO: Add resource selector to Exegesis if needed
+    });
+
+
     const [loading, setLoading] = useState(false);
-    const [messages, setMessages] = useState<any[]>([]);
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
     const [selectedText, setSelectedText] = useState<string>('');
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
+    const [isAiProcessing, setIsAiProcessing] = useState(false);
+    const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
     
-    // Initialize content history hook
-    const contentHistory = useContentHistory('exegesis', config?.id);
+    // Combine loading states
+    const isTotalAiLoading = isAiProcessing || isChatLoading;
 
     useEffect(() => {
         
@@ -58,8 +86,11 @@ export function StepExegesis() {
         setLoading(true);
         try {
             const exegesisConfig = config ? config[WorkflowPhase.EXEGESIS] : undefined;
-            const result = await sermonGeneratorService.generateExegesis(passage, rules, exegesisConfig);
-            setExegesis(result);
+            const result = await sermonGeneratorService.generateExegesis(passage, rules, exegesisConfig, user?.uid);
+            setExegesis(result.exegesis);
+            if (result.cacheName && setCacheName) {
+                setCacheName(result.cacheName); // 🎯 Update cache name
+            }
             toast.success('Estudio exegético generado');
         } catch (error: any) {
             console.error(error);
@@ -95,63 +126,24 @@ export function StepExegesis() {
         }
     };
 
-    const [isAiProcessing, setIsAiProcessing] = useState(false);
+
 
     const handleSendMessage = async (message: string, role: 'user' | 'assistant' = 'user') => {
-        const newMessage = {
-            id: Date.now().toString(),
-            role,
-            content: message,
-            timestamp: new Date()
-        };
-        setMessages(prev => [...prev, newMessage]);
-
-        // Context Validation for ALL user messages
-        if (role === 'user') {
-            setIsAiProcessing(true);
-            try {
-                const { GeminiAIService } = await import('@dosfilos/infrastructure');
-                const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
-                const { getValueByPath } = await import('@/utils/path-utils');
-
-                // Initialize AI Service
-                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    throw new Error('API key not configured');
-                }
-                const aiService = new GeminiAIService(apiKey);
-
-                // Get context if available
-                let currentContextStr = "";
-                if (expandedSectionId && exegesis) {
-                    const sectionConfig = getSectionConfig('exegesis', expandedSectionId);
-                    if (sectionConfig) {
-                        const currentContent = getValueByPath(exegesis, sectionConfig.path);
-                        currentContextStr = typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent);
-                    }
-                }
-
-                // console.log('🛡️ Starting context validation for:', message);
-                const validation = await aiService.validateContext(message, currentContextStr.substring(0, 500));
-                // console.log('🛡️ Validation result:', validation);
-
-                if (!validation.isValid) {
-                    // console.log('⛔ Message rejected by validation');
-                    const refusalMessage = {
-                        id: (Date.now() + 1).toString(),
-                        role: 'assistant' as const,
-                        content: validation.refusalMessage || "Entiendo tu mensaje, pero como experto en exégesis bíblica, mi enfoque está en ayudarte a profundizar en el estudio de este pasaje. ¿Podrías reformular tu solicitud relacionándola con el texto?",
-                        timestamp: new Date()
-                    };
-                    setMessages(prev => [...prev, refusalMessage]);
-                    setIsAiProcessing(false);
-                    return; // Stop processing if invalid
-                }
-            } catch (error) {
-                console.error('Error in context validation:', error);
-                // Continue if validation fails to avoid blocking the user
-            }
+        // 🎯 NEW: Only add to state manually if NOT using hook's sendGeneralMessage
+        if (expandedSectionId || role === 'assistant') {
+            const newMessage = {
+                id: Date.now().toString(),
+                role,
+                content: message,
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, newMessage]);
         }
+
+
+        // 🎯 REMOVED: Manual Validation Logic (handled by Service now if needed, or skipped)
+        // Since useGeneratorChat handles the general flow, we rely on it.
+        // For strict validation of "Is this related to Exegesis?", the AutomaticStrategySelector in Service handles it contextually.
 
         // If it's a user message and we have an expanded section, refine that section
         if (role === 'user' && expandedSectionId && exegesis) {
@@ -188,7 +180,7 @@ export function StepExegesis() {
                             cleaned = cleaned.replace(/\s*```$/, '');
                             cleaned = cleaned.trim();
                             currentContent = JSON.parse(cleaned);
-                            console.log('📦 Parsed stored content from string to:', Array.isArray(currentContent) ? 'array' : 'object');
+
                         } catch (e) {
                             console.log('⚠️ Could not parse stored content, treating as string');
                         }
@@ -263,8 +255,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 // apiKey and aiService are already initialized above
                 const aiResponse = await aiService.refineContent(contentString, instruction);
                 
-                console.log('🔍 Before refinement:', typeof currentContent === 'string' ? currentContent.substring(0, 100) : currentContent);
-                console.log('🔍 After refinement:', aiResponse.substring(0, 100));
+
                 
                 // Parse the refined content based on the original type
                 let parsedContent;
@@ -278,7 +269,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
                         cleanedResponse = cleanedResponse.trim();
                         
-                        console.log('🧹 Cleaned response:', cleanedResponse.substring(0, 100));
+
                         
                         parsedContent = JSON.parse(cleanedResponse);
                         
@@ -309,7 +300,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     parsedContent = aiResponse.trim();
                 }
                 
-                console.log('🔍 Parsed content:', parsedContent);
+
                 
                 // Save version BEFORE updating (for undo)
                 if (expandedSectionId) {
@@ -348,7 +339,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 };
                 setMessages(prev => [...prev, aiMessage]);
                 
-                console.log('✅ Section updated successfully!');
+
                 toast.success('Sección refinada exitosamente');
             } catch (error: any) {
                 console.error('Error refining section:', error);
@@ -365,70 +356,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 setIsAiProcessing(false);
             }
         } 
-        // General Chat (No section expanded)
+        // General Chat (No section expanded) - Use Hook
         else if (role === 'user' && !expandedSectionId) {
-            try {
-                const { contentRefinementService } = await import('@dosfilos/application');
-                
-                const response = await contentRefinementService.refineContent(
-                    exegesis,
-                    'exegesis',
-                    {
-                        instruction: message,
-                        selectedText: selectedText
-                    }
-                );
-
-                let suggestion = 'Sugerencia procesada';
-                const aiText = response.explanation || '';
-                
-                if (aiText) {
-                    try {
-                        let cleanedResponse = aiText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-                        // Try to parse if it looks like JSON
-                        if (cleanedResponse.startsWith('{')) {
-                             const parsed = JSON.parse(cleanedResponse);
-                             if (parsed.suggestion) {
-                                 suggestion = parsed.suggestion;
-                             } else if (typeof parsed === 'string') {
-                                 suggestion = parsed;
-                             } else {
-                                 suggestion = aiText; // Fallback
-                             }
-                        } else {
-                            suggestion = aiText;
-                        }
-                    } catch (parseError) {
-                         suggestion = aiText;
-                    }
-                }
-
-                const aiMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant' as const,
-                    content: suggestion,
-                    timestamp: new Date()
-                };
-                setMessages(prev => [...prev, aiMessage]);
-
-                if (response.refinedContent) {
-                    // If general chat somehow returns refined content (unlikely but possible)
-                    // We might want to update it, but for now let's just show the message
-                    // setExegesis(response.refinedContent);
-                }
-
-            } catch (error: any) {
-                console.error('Error in general chat:', error);
-                const errorMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant' as const,
-                    content: `Error: ${error.message || 'No se pudo procesar la solicitud'}`,
-                    timestamp: new Date()
-                };
-                setMessages(prev => [...prev, errorMessage]);
-            } finally {
-                setIsAiProcessing(false);
-            }
+             await sendGeneralMessage(message, role);
         }
     };
 
@@ -475,6 +405,48 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 setExegesis(updatedExegesis);
                 toast.success('Cambio rehecho');
             }
+        }
+    };
+
+    const handleSectionUpdate = async (sectionId: string, newContent: any) => {
+        if (!exegesis) return;
+
+        try {
+            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
+            const { setValueByPath, getValueByPath } = await import('@/utils/path-utils');
+            
+            const sectionConfig = getSectionConfig('exegesis', sectionId);
+            if (sectionConfig) {
+                // Get current content for history
+                const currentContent = getValueByPath(exegesis, sectionConfig.path);
+                
+                // Save version BEFORE updating
+                contentHistory.saveVersion(
+                    sectionId,
+                    currentContent,
+                    'Antes de edición manual',
+                    undefined
+                );
+
+                // Update content
+                const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
+                setValueByPath(updatedExegesis, sectionConfig.path, newContent);
+                setExegesis(updatedExegesis);
+                setModifiedSections(prev => new Set(prev).add(sectionId));
+
+                // Save version AFTER updating
+                contentHistory.saveVersion(
+                    sectionId,
+                    newContent,
+                    'Edición manual',
+                    'Cambios guardados manualmente'
+                );
+
+                toast.success('Sección actualizada');
+            }
+        } catch (error) {
+            console.error('Error updating section:', error);
+            toast.error('Error al actualizar la sección');
         }
     };
 
@@ -576,13 +548,14 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                             getSectionVersions={getSectionVersions}
                             getCurrentVersionId={getCurrentVersionId}
                             onRestoreVersion={handleRestoreVersion}
+                            onSectionUpdate={handleSectionUpdate}
                             modifiedSections={modifiedSections}
                         />
                     </div>
                 </div>
 
-                {/* Right: Chat Interface */}
-                <div className="w-96 flex-shrink-0">
+                {/* Right: Resizable Chat Interface */}
+                <ResizableChatPanel storageKey="exegesisChatWidth">
                     <ChatInterface
                         messages={messages}
                         contentType="exegesis"
@@ -593,9 +566,17 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         onContentUpdate={handleContentUpdate}
                         focusedSection={expandedSectionId}
                         disableDefaultAI={true}
-                        externalIsLoading={isAiProcessing}
+                        externalIsLoading={isTotalAiLoading}
+                        showStyleSelector={true}
+                        selectedStyle={selectedStyle}
+                        onStyleChange={(style) => {
+                            setSelectedStyle(style);
+                            generatorChatService.setCoachingStyle(style);
+                        }}
+                        activeContext={activeContext}
+                        onRefreshContext={handleRefreshContext}
                     />
-                </div>
+                </ResizableChatPanel>
             </div>
 
             {/* Continue Button */}

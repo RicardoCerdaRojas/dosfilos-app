@@ -82,7 +82,6 @@ export function useContentHistory(
     // Save history to localStorage whenever it changes (but only after initial load)
     useEffect(() => {
         if (!isLoaded) {
-            console.log('⏸️ Skipping save - not loaded yet');
             return;
         }
 

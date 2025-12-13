@@ -25,6 +25,8 @@ interface ContentCanvasProps<T = any> {
   getCurrentVersionId?: (sectionId: string) => string | undefined;
   onRestoreVersion?: (sectionId: string, versionId: string) => void;
   modifiedSections?: Set<string>;
+  onSectionUpdate?: (sectionId: string, newContent: any) => void;
+  onRegenerate?: (sectionId: string, itemIndex?: number) => void;
 }
 
 /**
@@ -49,7 +51,9 @@ export function ContentCanvas<T = any>({
   getSectionVersions,
   getCurrentVersionId,
   onRestoreVersion,
-  modifiedSections = new Set()
+  modifiedSections = new Set(),
+  onSectionUpdate,
+  onRegenerate
 }: ContentCanvasProps<T>) {
   const sections = getSectionsForType(contentType);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -102,6 +106,16 @@ export function ContentCanvas<T = any>({
               ? (versionId) => onRestoreVersion(section.id, versionId)
               : undefined
           }
+          onSave={
+            onSectionUpdate
+              ? (newContent) => onSectionUpdate(section.id, newContent)
+              : undefined
+          }
+          onRegenerate={
+            onRegenerate
+              ? (itemIndex) => onRegenerate(section.id, itemIndex)
+              : undefined
+          }
           isModified={isModified}
         />
       );
@@ -122,6 +136,8 @@ export function ContentCanvas<T = any>({
               key={section.id}
               section={section}
               content={sectionContent}
+              fullContent={content} // 🎯 NEW: Pass full content for related fields
+              contentType={contentType} // 🎯 NEW: Pass content type
               onExpand={() => onSectionExpand(section.id)}
               isModified={isModified}
               isCollapsed={isCollapsed}
