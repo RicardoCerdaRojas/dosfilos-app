@@ -21,12 +21,16 @@ import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
 import { PublicSermonPage } from '@/pages/public/sermon';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import { GeminiTest } from '@/pages/GeminiTest';
+import { Landing } from '@/pages/Landing';
 
 function App() {
   return (
     <FirebaseProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public Landing Page */}
+          <Route path="/landing" element={<Landing />} />
+          
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

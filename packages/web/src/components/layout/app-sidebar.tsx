@@ -16,6 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -28,13 +29,22 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggleMenu } from '@/components/theme-toggle';
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Sermones', href: '/sermons', icon: FileText },
-  { name: 'Planes de Predicación', href: '/plans', icon: BookMarked },
-  { name: 'Biblioteca', href: '/library', icon: Library },
-  { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
-  { name: 'Configuración', href: '/settings', icon: Settings },
+const navigationGroups = [
+  // Group 1: Main
+  [
+    { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Sermones', href: '/sermons', icon: FileText },
+  ],
+  // Group 2: Planning
+  [
+    { name: 'Planes de Predicación', href: '/plans', icon: BookMarked },
+    { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
+  ],
+  // Group 3: Resources
+  [
+    { name: 'Biblioteca', href: '/library', icon: Library },
+    { name: 'Configuración', href: '/settings', icon: Settings },
+  ],
 ];
 
 export function AppSidebar() {
@@ -76,25 +86,31 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link to={item.href}>
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navigationGroups.map((group, groupIndex) => (
+          <div key={groupIndex}>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.href}>
+                            <item.icon className="h-5 w-5" />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            {/* Add separator between groups (except after last group) */}
+            {groupIndex < navigationGroups.length - 1 && <SidebarSeparator />}
+          </div>
+        ))}
       </SidebarContent>
 
       {/* Footer with User Menu */}

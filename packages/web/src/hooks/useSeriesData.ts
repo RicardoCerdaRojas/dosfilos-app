@@ -183,24 +183,38 @@ export function useSeriesData(seriesId: string | undefined) {
     const handleUpdateSermonDate = async (sermonId: string, newDate: Date | null) => {
         if (!series) return;
 
+        // Optimistic update - actualiza UI inmediatamente
+        setSermonItems(prevItems =>
+            prevItems.map(item =>
+                item.id === sermonId ? { ...item, scheduledDate: newDate || undefined } : item
+            )
+        );
+
         try {
             const plannedSermons = series.metadata?.plannedSermons || [];
             const updatedPlanned = plannedSermons.map(p =>
                 p.id === sermonId ? { ...p, scheduledDate: newDate } : p
             );
 
-            await seriesService.updateSeries(series.id, {
+            // Guarda en background sin esperar
+            seriesService.updateSeries(series.id, {
                 metadata: {
                     ...series.metadata,
                     plannedSermons: updatedPlanned
                 }
-            } as any);
-
-            toast.success('Fecha actualizada');
-            await loadData();
+            } as any).then(() => {
+                toast.success('Fecha actualizada');
+            }).catch((error) => {
+                console.error('Error updating sermon date:', error);
+                toast.error('Error al actualizar fecha');
+                // Si falla, recarga para revertir
+                loadData();
+            });
         } catch (error) {
             console.error('Error updating sermon date:', error);
             toast.error('Error al actualizar fecha');
+            // Recarga para revertir el cambio optimista
+            await loadData();
         }
     };
 

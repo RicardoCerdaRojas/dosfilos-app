@@ -58,6 +58,8 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSermon, setSelectedSermon] = useState<SermonItem | null>(null);
   const [statusFilter, setStatusFilter] = useState<SermonItem['status'] | 'all'>('all');
+  const [draggedSermon, setDraggedSermon] = useState<SermonItem | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
   
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -113,6 +115,37 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
     setCurrentDate(new Date());
   };
   
+  // Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent, sermon: SermonItem) => {
+    setDraggedSermon(sermon);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverDate(dateKey);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDate(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetDate: Date) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    
+    if (draggedSermon && onUpdateDate) {
+      onUpdateDate(draggedSermon.id, targetDate);
+    }
+    setDraggedSermon(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedSermon(null);
+    setDragOverDate(null);
+  };
+  
   const getStatusColor = (status: SermonItem['status']) => {
     switch (status) {
       case 'planned': return 'bg-slate-100 border-slate-300 text-slate-700';
@@ -132,6 +165,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
             <h2 className="text-2xl font-bold">
               {MONTHS[currentMonth]} {currentYear}
             </h2>
+            
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={goToToday}>
                 Hoy
@@ -169,9 +203,13 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
                     'min-h-[100px] p-2 rounded-lg border transition-all',
                     isCurrentMonth ? 'bg-background' : 'bg-muted/30',
                     isToday && 'ring-2 ring-primary',
-                    'hover:shadow-md cursor-pointer'
+                    'hover:shadow-md cursor-pointer',
+                    dragOverDate === dateKey && 'ring-2 ring-blue-400 bg-blue-50'
                   )}
                   onClick={() => setSelectedDate(day)}
+                  onDragOver={(e) => handleDragOver(e, dateKey)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, day)}
                 >
                   <div className={cn(
                     'text-sm font-medium mb-1',
@@ -186,11 +224,15 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
                     {daySermons.slice(0, 3).map(sermon => (
                       <div
                         key={sermon.id}
+                        draggable
                         className={cn(
-                          'text-xs p-1 rounded border truncate cursor-pointer hover:shadow-sm transition-all',
-                          getStatusColor(sermon.status)
+                          'text-xs p-1 rounded border truncate cursor-move hover:shadow-sm transition-all',
+                          getStatusColor(sermon.status),
+                          draggedSermon?.id === sermon.id && 'opacity-50'
                         )}
                         title={sermon.title}
+                        onDragStart={(e) => handleDragStart(e, sermon)}
+                        onDragEnd={handleDragEnd}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedSermon(sermon);
@@ -241,12 +283,16 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
                   {sermonsWithoutDate.map(sermon => (
                     <Card
                       key={sermon.id}
+                      draggable
                       className={cn(
-                        'p-3 cursor-pointer hover:shadow-md transition-all border-l-4',
+                        'p-3 cursor-move hover:shadow-md transition-all border-l-4',
                         sermon.status === 'planned' && 'border-l-slate-400',
                         sermon.status === 'in_progress' && 'border-l-amber-500',
-                        sermon.status === 'complete' && 'border-l-green-500'
+                        sermon.status === 'complete' && 'border-l-green-500',
+                        draggedSermon?.id === sermon.id && 'opacity-50'
                       )}
+                      onDragStart={(e) => handleDragStart(e, sermon)}
+                      onDragEnd={handleDragEnd}
                       onClick={() => setSelectedSermon(sermon)}
                     >
                       <div className="text-sm font-medium mb-1 line-clamp-2">
