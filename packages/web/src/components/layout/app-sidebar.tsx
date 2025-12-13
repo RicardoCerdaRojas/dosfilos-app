@@ -33,17 +33,17 @@ const navigationGroups = [
   // Group 1: Main
   [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Sermones', href: '/sermons', icon: FileText },
+    { name: 'Sermones', href: '/dashboard/sermons', icon: FileText },
   ],
   // Group 2: Planning
   [
-    { name: 'Planes de Predicación', href: '/plans', icon: BookMarked },
-    { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
+    { name: 'Planes de Predicación', href: '/dashboard/plans', icon: BookMarked },
+    { name: 'Generar Sermón', href: '/dashboard/generate-sermon', icon: Sparkles },
   ],
   // Group 3: Resources
   [
-    { name: 'Biblioteca', href: '/library', icon: Library },
-    { name: 'Configuración', href: '/settings', icon: Settings },
+    { name: 'Biblioteca', href: '/dashboard/library', icon: Library },
+    { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
   ],
 ];
 

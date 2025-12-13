@@ -20,17 +20,17 @@ const navigationGroups = [
   // Group 1: Main
   [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Sermones', href: '/sermons', icon: FileText },
+    { name: 'Sermones', href: '/dashboard/sermons', icon: FileText },
   ],
   // Group 2: Planning
   [
-    { name: 'Planes de Predicación', href: '/plans', icon: Calendar },
-    { name: 'Generar Sermón', href: '/generate-sermon', icon: Sparkles },
+    { name: 'Planes de Predicación', href: '/dashboard/plans', icon: Calendar },
+    { name: 'Generar Sermón', href: '/dashboard/generate-sermon', icon: Sparkles },
   ],
   // Group 3: Resources
   [
-    { name: 'Biblioteca', href: '/library', icon: BookMarked },
-    { name: 'Configuración', href: '/settings', icon: Settings },
+    { name: 'Biblioteca', href: '/dashboard/library', icon: BookMarked },
+    { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
   ],
 ];
 

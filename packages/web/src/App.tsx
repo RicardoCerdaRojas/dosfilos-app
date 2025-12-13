@@ -65,13 +65,12 @@ function App() {
               <Route path=":id" element={<SeriesDetail />} />
               <Route path=":id/edit" element={<SeriesForm />} />
             </Route>
-            <Route path="/planner" element={<PlannerWizard />} />
-          <Route path="/library" element={<LibraryManager />} />
+            <Route path="planner" element={<PlannerWizard />} />
+            <Route path="library" element={<LibraryManager />} />
 
             {/* AI Sermon Generator */}
             <Route path="generate-sermon" element={<SermonWizard />} />
 
-            {/* Settings */}
             {/* Settings */}
             <Route path="settings" element={<GeneratorSettings />} />
             
