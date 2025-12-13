@@ -552,8 +552,6 @@ export function LibraryManager() {
                             onIndex={() => handleIndexResource(resource)}
                             onReindex={() => handleReindexResource(resource)}
                             onPreview={() => handlePreview(resource)}
-                            onReindex={() => handleReindexResource(resource)}
-                            onPreview={() => handlePreview(resource)}
                             onSetPhases={() => handleSetPhases(resource)}
                             onSync={() => handleSyncResource(resource)}
                             isSyncing={syncingResource === resource.id}

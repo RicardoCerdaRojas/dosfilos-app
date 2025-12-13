@@ -26,7 +26,7 @@ const DEFAULT_TTL_DAYS = 7;
 export class GeneratorChatService {
     private generator: GeminiSermonGenerator;
     private documentProcessor: DocumentProcessingService;
-    private fileSearch: GeminiFileSearchService;
+    private fileSearch: GeminiFileSearchService | null = null; // Lazy loaded
     private strategySelector: AutomaticStrategySelector;
     private history: ChatMessage[] = [];
     private sourcesPerMessage: Map<string, SourceReference[]> = new Map();
@@ -40,7 +40,8 @@ export class GeneratorChatService {
         if (!apiKey) throw new Error('Gemini API Key not found');
         this.generator = new GeminiSermonGenerator(apiKey);
         this.documentProcessor = new DocumentProcessingService(apiKey);
-        this.fileSearch = new GeminiFileSearchService(apiKey);
+        // Don't instantiate fileSearch here - it uses server-side APIs
+        // this.fileSearch = new GeminiFileSearchService(apiKey);
         this.strategySelector = new AutomaticStrategySelector();
 
         // Clean up expired histories on initialization
@@ -48,6 +49,11 @@ export class GeneratorChatService {
     }
 
     async testGeminiSearch(message: string, storeName: string): Promise<string> {
+        // Lazy load fileSearch only when needed (POC method)
+        if (!this.fileSearch) {
+            const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+            this.fileSearch = new GeminiFileSearchService(apiKey);
+        }
         return this.fileSearch.chatWithStore(message, storeName);
     }
 

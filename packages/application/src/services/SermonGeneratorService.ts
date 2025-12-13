@@ -36,7 +36,8 @@ export class SermonGeneratorService {
         // Initialize services
         if (apiKey) {
             this.documentProcessor = new DocumentProcessingService(apiKey);
-            this.geminiFileSearch = new GeminiFileSearchService(apiKey);
+            // Don't instantiate geminiFileSearch here - it uses server-side APIs
+            // this.geminiFileSearch = new GeminiFileSearchService(apiKey);
         }
     }
 

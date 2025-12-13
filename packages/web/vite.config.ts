@@ -8,6 +8,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Fix for @google/generative-ai server imports in browser
+      '@google/generative-ai/server': path.resolve(__dirname, 'src/lib/empty-module.ts'),
     },
+  },
+  optimizeDeps: {
+    exclude: ['@google/generative-ai/server'],
   },
 });
