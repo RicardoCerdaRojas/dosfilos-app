@@ -22,6 +22,11 @@ export function Landing() {
       src: 'dashboard_overview_ui_1765599370568.png',
       alt: 'DosFilos.app - Dashboard pastoral con métricas y calendario de predicación',
       title: 'Dashboard Pastoral'
+    },
+    {
+      src: 'preach_mode_ui_es_1765600946529.png',
+      alt: 'DosFilos.app - Modo de predicación con timer, notas y controles útiles',
+      title: 'Modo Predicación'
     }
   ];
 
