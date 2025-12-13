@@ -87,7 +87,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         const createDraftSermon = async () => {
             if (exegesis && !sermonId && user && passage) {
                 try {
-                    console.log('Creating draft sermon...', { passage, exegesis });
+
                     const newSermonId = await sermonService.createDraft({
                         userId: user.uid,
                         passage,
@@ -98,7 +98,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
                             lastSaved: new Date()
                         }
                     });
-                    console.log('Draft sermon created with ID:', newSermonId);
+
                     setSermonId(newSermonId);
                 } catch (error) {
                     console.error('Error creating draft sermon:', error);
@@ -148,8 +148,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
             outline: selectedApproach.outline
         });
 
-        console.log('✅ Homiletical approach selected:', approachId);
-        console.log('📋 Homiletics outlinePreview:', selectedApproach.outlinePreview);
+
     };
 
     const contextValue = useMemo(() => ({

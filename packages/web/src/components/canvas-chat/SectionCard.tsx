@@ -195,7 +195,6 @@ export function SectionCard({
     if (section.type === 'text') {
       const text = content || 'Sin contenido';
       
-      console.log(`📋 SectionCard [${section.id}] isCollapsed:`, isCollapsed);
       
       // If collapsed, show preview (plain text)
       if (isCollapsed) {

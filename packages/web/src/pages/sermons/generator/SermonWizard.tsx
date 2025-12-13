@@ -32,13 +32,13 @@ function WizardContent() {
 
             // Check if we're resuming a specific sermon via URL param
             const sermonIdParam = searchParams.get('id');
-            console.log('🔍 SermonWizard: Checking for sermon ID in URL:', sermonIdParam);
+
             
             if (sermonIdParam) {
                 try {
-                    console.log('📝 SermonWizard: Loading sermon with ID:', sermonIdParam);
+
                     const sermon = await sermonService.getSermon(sermonIdParam);
-                    console.log('📌 SermonWizard: Sermon loaded:', sermon);
+
                     
                     if (sermon && sermon.wizardProgress) {
                         // Resume this specific sermon

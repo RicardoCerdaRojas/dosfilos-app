@@ -137,7 +137,7 @@ export function StepHomiletics() {
                     : baseConfig.documents?.map(d => d.id).filter(Boolean)
             } : undefined;
 
-            console.log('📋 [Phase 1] Generating approach previews...');
+
             
             // 🎯 NEW: Use two-phase generation
             const { previews, cacheName: newCacheName, cachedResources } = 
@@ -153,7 +153,7 @@ export function StepHomiletics() {
                 return 0;
             });
             
-            console.log('🎯 Sorted previews:', sortedPreviews.map((p: any) => `${p.type} - ${p.direction?.substring(0, 30)}...`));
+
             
             // Save previews
             setApproachPreviews(sortedPreviews);
@@ -173,7 +173,7 @@ export function StepHomiletics() {
                 //     resources: cachedResources || [] // 🎯 NEW: Store hydrated resources
                 // });
                 
-                console.log(`✅ Homiletics cache created: ${newCacheName} (${(homileticsConfig?.libraryDocIds || []).length} docs)`);
+
             }
             
             toast.success(`${sortedPreviews.length || 0} enfoques generados. Selecciona el mejor para tu contexto.`);
@@ -208,7 +208,7 @@ export function StepHomiletics() {
         setDevelopingApproach(true);
         
         try {
-            console.log(`🎨 [Phase 2] Developing approach: ${selectedPreview.id}`);
+
             
             const baseConfig = config ? config[WorkflowPhase.HOMILETICS] : undefined;
             

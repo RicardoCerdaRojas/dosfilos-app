@@ -180,7 +180,7 @@ export function StepExegesis() {
                             cleaned = cleaned.replace(/\s*```$/, '');
                             cleaned = cleaned.trim();
                             currentContent = JSON.parse(cleaned);
-                            console.log('📦 Parsed stored content from string to:', Array.isArray(currentContent) ? 'array' : 'object');
+
                         } catch (e) {
                             console.log('⚠️ Could not parse stored content, treating as string');
                         }
@@ -255,8 +255,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 // apiKey and aiService are already initialized above
                 const aiResponse = await aiService.refineContent(contentString, instruction);
                 
-                console.log('🔍 Before refinement:', typeof currentContent === 'string' ? currentContent.substring(0, 100) : currentContent);
-                console.log('🔍 After refinement:', aiResponse.substring(0, 100));
+
                 
                 // Parse the refined content based on the original type
                 let parsedContent;
@@ -270,7 +269,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
                         cleanedResponse = cleanedResponse.trim();
                         
-                        console.log('🧹 Cleaned response:', cleanedResponse.substring(0, 100));
+
                         
                         parsedContent = JSON.parse(cleanedResponse);
                         
@@ -301,7 +300,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     parsedContent = aiResponse.trim();
                 }
                 
-                console.log('🔍 Parsed content:', parsedContent);
+
                 
                 // Save version BEFORE updating (for undo)
                 if (expandedSectionId) {
@@ -340,7 +339,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 };
                 setMessages(prev => [...prev, aiMessage]);
                 
-                console.log('✅ Section updated successfully!');
+
                 toast.success('Sección refinada exitosamente');
             } catch (error: any) {
                 console.error('Error refining section:', error);

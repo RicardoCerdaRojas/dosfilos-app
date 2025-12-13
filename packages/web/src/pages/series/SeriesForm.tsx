@@ -70,14 +70,14 @@ export function SeriesForm() {
       if (id) {
         await seriesService.updateSeries(id, payload as any); // Cast to any because updateSeries expects Partial<...> but types might mismatch slightly on Date vs string
         toast.success('Plan actualizado correctamente');
-        navigate(`/plans/${id}`); // Volver al plan específico
+        navigate(`/dashboard/plans/${id}`); // Volver al plan específico
       } else {
         const newSeries = await seriesService.createSeries({
           userId: user.uid,
           ...payload
         });
         toast.success('Plan creado correctamente');
-        navigate(`/plans/${newSeries.id}`); // Ir al plan recién creado
+        navigate(`/dashboard/plans/${newSeries.id}`); // Ir al plan recién creado
       }
     } catch (error) {
       console.error('Error saving series:', error);
@@ -98,7 +98,7 @@ export function SeriesForm() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(id ? `/plans/${id}` : '/plans')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(id ? `/dashboard/plans/${id}` : '/dashboard/plans')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">
@@ -162,7 +162,7 @@ export function SeriesForm() {
           </div>
 
           <div className="flex justify-end gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={() => navigate(id ? `/plans/${id}` : '/plans')}>
+            <Button type="button" variant="outline" onClick={() => navigate(id ? `/dashboard/plans/${id}` : '/dashboard/plans')}>
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>

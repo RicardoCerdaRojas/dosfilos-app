@@ -43,7 +43,7 @@ export function useSermonSectionRefinement({
     ): Promise<{ refinedContent: any; sources: Array<{ author: string; title: string; page?: number; snippet: string }> }> => {
 
         if (cacheName) {
-            console.log('🚀 Using Gemini Cache for refinement:', cacheName);
+
 
             const effectiveResourceIds = getEffectiveResourceIds();
 
@@ -117,7 +117,7 @@ ${formattingInstructions}`;
 
         } else {
             // FALLBACK: Manual RAG
-            console.log('⚠️ No cache available. Falling back to Manual RAG for refinement.');
+
 
             const { GeminiAIService } = await import('@dosfilos/infrastructure');
             const { DocumentProcessingService } = await import('@dosfilos/infrastructure');

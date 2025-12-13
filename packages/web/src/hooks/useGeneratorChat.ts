@@ -76,7 +76,7 @@ export function useGeneratorChat({
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (parsed?.cacheName && parsed?.metadata) {
-                    console.log(`♻️ [useGeneratorChat] Restoring cache from localStorage on mount: ${parsed.cacheName}`);
+
 
                     setCacheName(parsed.cacheName);
                     setCacheMetadata({
@@ -104,10 +104,10 @@ export function useGeneratorChat({
     // Hydrate Resources for RAG fallback
     useEffect(() => {
         const hydrateResources = async () => {
-            console.log(`🔍 [useGeneratorChat] Hydration check - Phase: ${phase}, User: ${user?.uid ? 'YES' : 'NO'}, Config: ${config ? 'YES' : 'NO'}`);
+
 
             if (!config || !user?.uid) {
-                console.log(`⏭️ [useGeneratorChat] Skipping hydration - missing ${!config ? 'config' : 'user'}`);
+
                 return;
             }
 
@@ -119,21 +119,13 @@ export function useGeneratorChat({
             const libIds = phaseConfig?.libraryDocIds || [];
             const configDocIds = docsIds.length > 0 ? docsIds : libIds;
 
-            console.log(`📋 [useGeneratorChat] Phase config for ${phase}:`, {
-                hasDocuments: !!phaseConfig?.documents,
-                documentsLength: phaseConfig?.documents?.length || 0,
-                hasLibraryDocIds: !!phaseConfig?.libraryDocIds,
-                libraryDocIdsLength: phaseConfig?.libraryDocIds?.length || 0,
-                configDocIds,
-                source: docsIds.length > 0 ? 'documents' : 'libraryDocIds'
-            });
 
             const activeIds = selectedResourceIds.length > 0
                 ? selectedResourceIds
                 : configDocIds;
 
             if (activeIds.length === 0) {
-                console.log(`⏭️ [useGeneratorChat] No resource IDs to hydrate`);
+
 
                 // Clear hydrated resources if we have none configured
                 if (hydratedResources.length > 0) {
@@ -147,36 +139,36 @@ export function useGeneratorChat({
             const targetIdsKey = [...activeIds].sort().join(',');
 
             if (lastAttemptedIdsRef.current === targetIdsKey) {
-                console.log(`⏭️ [useGeneratorChat] Already attempted hydration for these IDs, skipping`);
+
                 return;
             }
 
             // Mark these IDs as attempted BEFORE starting hydration
             lastAttemptedIdsRef.current = targetIdsKey;
-            console.log(`💧 [useGeneratorChat] Starting hydration for ${activeIds.length} resources:`, activeIds);
+
 
             try {
                 // Method 1: Bulk Fetch from local user cache
                 const userLib = await libraryService.getUserResources(user.uid);
-                console.log(`📚 [useGeneratorChat] User library has ${userLib.length} total resources`);
+
 
                 let resources = activeIds.map((id: string) =>
                     userLib.find((r: any) => r.id === id)
                 ).filter(Boolean);
 
-                console.log(`✅ [useGeneratorChat] Found ${resources.length}/${activeIds.length} resources in bulk fetch`);
+
 
                 // Method 2: Fallback - Fetch individually if missing (e.g. stale list)
                 if (resources.length < activeIds.length) {
                     const missingIds = activeIds.filter((id: string) => !resources.find((r: any) => r?.id === id));
-                    console.log(`⚠️ [useGeneratorChat] Fetching ${missingIds.length} missing resources individually:`, missingIds);
+
 
                     const extraResources = await Promise.all(
                         missingIds.map((id: string) => libraryService.getResource(id).catch(() => null))
                     );
 
                     const foundExtra = extraResources.filter(Boolean);
-                    console.log(`✅ [useGeneratorChat] Found ${foundExtra.length}/${missingIds.length} via individual fetch`);
+
 
                     resources = [...resources, ...foundExtra];
                 }
@@ -190,7 +182,7 @@ export function useGeneratorChat({
                     textExtractionStatus: r.textExtractionStatus
                 }));
 
-                console.log(`🎉 [useGeneratorChat] Hydration complete - ${finalResources.length} resources ready`);
+
                 setHydratedResources(finalResources);
             } catch (error) {
                 console.error('❌ [useGeneratorChat] Error hydrating resources:', error);
@@ -271,7 +263,7 @@ export function useGeneratorChat({
                         };
 
                         if (saved.cacheName !== cacheName) {
-                            console.log(`♻️ [useGeneratorChat] Restoring newer cache from LS: ${saved.cacheName}`);
+
                             setCacheName(saved.cacheName); // Local update
                             onCacheUpdate?.(saved.cacheName); // Notify parent
                         }

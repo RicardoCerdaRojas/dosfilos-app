@@ -96,7 +96,7 @@ export function StepDraft() {
             // Save cacheName for future chat interactions
             if (newCacheName) {
                 setCacheName(newCacheName);
-                console.log('✅ Draft cache created:', newCacheName);
+
             }
             
             toast.success('Borrador del sermón generado');
@@ -598,9 +598,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 
                 {/* Outline Preview */}
                 {(() => {
-                    console.log('🔍 [StepDraft] homiletics.outlinePreview:', homiletics.outlinePreview);
-                    console.log('🔍 [StepDraft] has outlinePreview?', !!homiletics.outlinePreview);
-                    console.log('🔍 [StepDraft] outlinePreview length:', homiletics.outlinePreview?.length || 0);
+
                     return null;
                 })()}
                 {homiletics.outlinePreview && homiletics.outlinePreview.length > 0 && (

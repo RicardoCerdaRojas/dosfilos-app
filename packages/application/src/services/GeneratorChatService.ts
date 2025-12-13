@@ -63,11 +63,11 @@ export class GeneratorChatService {
         if (stored) {
             this.history = stored.messages;
             this.sourcesPerMessage = new Map(Object.entries(stored.sourcesPerMessage));
-            console.log(`📜 [GeneratorChat] Restored ${this.history.length} messages for ${sermonId}/${phase}`);
+
         } else {
             this.history = [];
             this.sourcesPerMessage.clear();
-            console.log(`🆕 [GeneratorChat] New session for ${sermonId}/${phase}`);
+
         }
 
         this.notifyListeners();
@@ -78,7 +78,7 @@ export class GeneratorChatService {
      */
     setCoachingStyle(style: CoachingStyle | 'auto'): void {
         this.userPreferredStyle = style;
-        console.log(`🎯 [GeneratorChat] Coaching style set to: ${style}`);
+
     }
 
     /**
@@ -168,7 +168,7 @@ export class GeneratorChatService {
                 this.userPreferredStyle
             );
             const strategyPromptAdditions = strategy.buildSystemPromptAdditions();
-            console.log(`🧠 [GeneratorChat] Using ${strategy.getStyle()} strategy`);
+
 
             // Collect all resource IDs for RAG search
             // Priority: phase-specific + entire library
@@ -192,7 +192,7 @@ export class GeneratorChatService {
 
             // DECISION: Use Gemini Cache if available, otherwise fallback to Manual RAG
             if (context.cacheName) {
-                console.log(`🚀 [GeneratorChat] Using Gemini Cache: ${context.cacheName} (skipping RAG search)`);
+
 
                 // When using cache, we populate sources with the cached resources for display
                 // The actual content is already available to the model via the cache
@@ -205,10 +205,10 @@ export class GeneratorChatService {
                     snippet: '(Contenido completo disponible en caché)'
                 }));
 
-                console.log(`✅ [GeneratorChat] Cache provides access to ${cachedResources.length} complete resources`);
+
             } else {
                 // FALLBACK: Manual RAG search
-                console.log(`📚 [GeneratorChat] No cache available. Performing RAG search on ${resourceIds.length} resources`);
+
 
                 if (resourceIds.length > 0) {
                     // Build search query from message + context
@@ -223,7 +223,7 @@ export class GeneratorChatService {
                             5 // Top 5 chunks
                         );
                         relevantChunks = searchResults.map(r => r.chunk);
-                        console.log(`✅ [GeneratorChat] Found ${relevantChunks.length} relevant chunks via RAG`);
+
 
                         // Convert to source references
                         sources = relevantChunks.map(chunk => ({
@@ -428,7 +428,7 @@ export class GeneratorChatService {
             // Check TTL
             const ttlMs = DEFAULT_TTL_DAYS * 24 * 60 * 60 * 1000;
             if (Date.now() - parsed.updatedAt > ttlMs) {
-                console.log(`🗑️ [GeneratorChat] History expired for ${sermonId}/${phase}`);
+
                 storage.removeItem(key);
                 return null;
             }
@@ -487,7 +487,7 @@ export class GeneratorChatService {
 
             keysToRemove.forEach(key => storage.removeItem(key));
             if (keysToRemove.length > 0) {
-                console.log(`🧹 [GeneratorChat] Cleaned up ${keysToRemove.length} expired histories`);
+
             }
         } catch (error) {
             console.warn('⚠️ [GeneratorChat] Cleanup failed:', error);

@@ -21,18 +21,13 @@ export class FirebaseSermonRepository implements ISermonRepository {
     private collectionName = 'sermons';
 
     async create(sermon: SermonEntity): Promise<SermonEntity> {
-        console.log('📝 FirebaseSermonRepository.create called');
-        console.log('📌 Sermon ID:', sermon.id);
-        console.log('📌 Sermon userId:', sermon.userId);
-
         const sermonRef = doc(db, this.collectionName, sermon.id);
         const firestoreData = this.sermonToFirestore(sermon);
 
-        console.log('📌 Firestore data:', firestoreData);
 
         try {
             await setDoc(sermonRef, firestoreData);
-            console.log('✅ Sermon saved to Firestore successfully');
+
             return sermon;
         } catch (error: any) {
             console.error('❌ Firestore setDoc error:', error);
@@ -54,18 +49,18 @@ export class FirebaseSermonRepository implements ISermonRepository {
     }
 
     async findById(id: string): Promise<SermonEntity | null> {
-        console.log('🔍 FirebaseSermonRepository.findById called with id:', id);
+
 
         try {
             const sermonRef = doc(db, this.collectionName, id);
             const snapshot = await getDoc(sermonRef);
 
             if (!snapshot.exists()) {
-                console.warn('⚠️ FirebaseSermonRepository: Document does not exist');
+
                 return null;
             }
 
-            console.log('✅ FirebaseSermonRepository: Document found');
+
             return this.firestoreToSermon(snapshot.id, snapshot.data());
         } catch (error: any) {
             console.error('❌ FirebaseSermonRepository.findById error:', error);
