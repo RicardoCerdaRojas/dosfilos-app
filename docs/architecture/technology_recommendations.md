@@ -1,8 +1,8 @@
-# Recomendaciones Tecnológicas - DosFilos.app
+# Recomendaciones Tecnológicas - DosFilos.Preach
 
 ## Resumen Ejecutivo
 
-Basado en la investigación y los requisitos del proyecto, estas son las recomendaciones tecnológicas para DosFilos.app.
+Basado en la investigación y los requisitos del proyecto, estas son las recomendaciones tecnológicas para DosFilos.Preach.
 
 ## 🎨 Template de Dashboard
 

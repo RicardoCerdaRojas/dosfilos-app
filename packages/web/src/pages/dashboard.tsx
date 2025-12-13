@@ -129,7 +129,7 @@ export function DashboardPage() {
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">
-          Resumen de tu actividad en DosFilos.app
+          Resumen de tu actividad en DosFilos.Preach
         </p>
       </div>
 

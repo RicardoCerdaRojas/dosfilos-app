@@ -148,4 +148,4 @@ Una vez configurado Firebase:
 3. ✅ Crear un sermón de prueba
 4. ✅ Verificar que se guarde en Firestore
 
-¡Tu proyecto DosFilos.app está listo para comenzar a desarrollar features! 🚀
+¡Tu proyecto DosFilos.Preach está listo para comenzar a desarrollar features! 🚀

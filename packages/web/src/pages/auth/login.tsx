@@ -35,7 +35,7 @@ export function LoginPage() {
     try {
       await authService.login(data.email, data.password);
       toast.success('¡Bienvenido!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Error al iniciar sesión');
     } finally {
@@ -48,7 +48,7 @@ export function LoginPage() {
     try {
       await authService.loginWithGoogle();
       toast.success('¡Bienvenido!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Error al iniciar sesión con Google');
     } finally {
@@ -59,7 +59,7 @@ export function LoginPage() {
   return (
     <AuthLayout
       title="Iniciar Sesión"
-      subtitle="Ingresa a tu cuenta de DosFilos.app"
+      subtitle="Ingresa a tu cuenta de DosFilos.Preach"
     >
       <div className="space-y-6">
         {/* Google Sign-In Button */}

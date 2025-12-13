@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  BookOpen, Check, ChevronRight, Play, Star, Users, 
-  Clock, Shield, Sparkles, BookMarked, MessageSquare,
+  BookOpen, Check, ChevronRight, Play, Star, 
+  Shield, Sparkles, BookMarked, MessageSquare,
   ArrowRight, Menu, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,28 @@ import { Card } from '@/components/ui/card';
 
 export function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const heroImages = [
+    {
+      src: 'sermon_generator_ui_1765598945966.png',
+      alt: 'DosFilos.app - Interfaz de análisis bíblico con griego y estructura expositiva',
+      title: 'Generador de Sermones'
+    },
+    {
+      src: 'dashboard_overview_ui_1765599370568.png',
+      alt: 'DosFilos.app - Dashboard pastoral con métricas y calendario de predicación',
+      title: 'Dashboard Pastoral'
+    }
+  ];
+
+  // Auto-rotate carousel every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -22,7 +44,7 @@ export function Landing() {
               <div className="p-2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-slate-900">DosFilos.app</span>
+              <span className="text-xl font-bold text-slate-900">DosFilos.Preach</span>
             </div>
 
             {/* Desktop Menu */}
@@ -159,14 +181,39 @@ export function Landing() {
               </div>
             </div>
 
-            {/* Right Column - Hero Image */}
+            {/* Right Column - Hero Image Carousel */}
             <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <div className="aspect-[4/3] bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <BookOpen className="h-32 w-32 text-blue-600 mx-auto mb-4" />
-                    <p className="text-slate-600">Demo Screenshot Placeholder</p>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
+                {/* Carousel Images */}
+                {heroImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`transition-opacity duration-1000 ${
+                      index === currentImageIndex ? 'opacity-100' : 'opacity-0 absolute inset-0'
+                    }`}
+                  >
+                    <img 
+                      src={image.src} 
+                      alt={image.alt}
+                      className="w-full h-auto"
+                    />
                   </div>
+                ))}
+                
+                {/* Carousel Indicators */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                  {heroImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentImageIndex 
+                          ? 'bg-blue-600 w-8' 
+                          : 'bg-white/50 hover:bg-white/75'
+                      }`}
+                      aria-label={`Ver imagen ${index + 1}`}
+                    />
+                  ))}
                 </div>
               </div>
               {/* Floating Cards */}
@@ -285,7 +332,7 @@ export function Landing() {
                 Diseñado para el Ministerio Pastoral
               </h3>
               <p className="text-lg text-slate-700 mb-6">
-                DosFilos.app no es una herramienta genérica de IA. Es una plataforma especializada que entiende 
+                DosFilos.Preach no es una herramienta genérica de IA. Es una plataforma especializada que entiende 
                 las demandas del ministerio pastoral y el compromiso con la predicación fiel de la Palabra.
               </p>
               <div className="grid md:grid-cols-2 gap-6 text-left">
@@ -415,7 +462,7 @@ export function Landing() {
       <section className="py-20 bg-slate-50">
         <div className="max-w-5xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-slate-900 text-center mb-12">
-            ¿Por qué DosFilos.app?
+            ¿Por qué DosFilos.Preach?
           </h2>
           
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -424,7 +471,7 @@ export function Landing() {
                 <tr>
                   <th className="p-6 text-left">Característica</th>
                   <th className="p-6 text-center">Otras IA Genéricas</th>
-                  <th className="p-6 text-center bg-blue-600">DosFilos.app</th>
+                  <th className="p-6 text-center bg-blue-600">DosFilos.Preach</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -628,7 +675,7 @@ export function Landing() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <BookOpen className="h-6 w-6 text-blue-400" />
-                <span className="text-white font-bold">DosFilos.app</span>
+                <span className="text-white font-bold">DosFilos.Preach</span>
               </div>
               <p className="text-sm">
                 Herramienta de estudio bíblico profesional para pastores.
@@ -660,7 +707,7 @@ export function Landing() {
             </div>
           </div>
           <div className="border-t border-slate-800 pt-8 text-center text-sm">
-            <p>&copy; 2025 DosFilos.app. Todos los derechos reservados.</p>
+            <p>&copy; 2025 DosFilos.Preach. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

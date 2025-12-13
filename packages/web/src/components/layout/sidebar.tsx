@@ -64,7 +64,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b px-6">
         <BookOpen className="h-8 w-8 text-primary" />
-        <span className="text-xl font-bold">DosFilos.app</span>
+        <span className="text-xl font-bold">DosFilos.Preach</span>
       </div>
 
       {/* Navigation */}
@@ -153,7 +153,7 @@ export function Sidebar() {
         </div>
         
         <div className="text-xs text-muted-foreground text-center mt-2">
-          DosFilos.app v0.1.0
+          DosFilos.Preach v0.1.0
         </div>
       </div>
     </div>

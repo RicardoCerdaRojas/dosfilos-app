@@ -15,7 +15,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         <div className="max-w-md space-y-6">
           <div className="flex items-center gap-3">
             <BookOpen className="h-12 w-12" />
-            <h1 className="text-4xl font-bold">DosFilos.app</h1>
+            <h1 className="text-4xl font-bold">DosFilos.Preach</h1>
           </div>
           <p className="text-xl opacity-90">
             Herramientas para el Ministerio Pastoral
@@ -32,7 +32,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 justify-center">
             <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">DosFilos.app</span>
+            <span className="text-2xl font-bold">DosFilos.Preach</span>
           </div>
 
           {/* Title */}

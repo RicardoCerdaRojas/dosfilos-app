@@ -80,7 +80,7 @@ export function AppSidebar() {
           <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
             <BookOpen className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">DosFilos.app</span>
+          <span className="text-xl font-bold">DosFilos.Preach</span>
         </div>
       </SidebarHeader>
 
@@ -179,7 +179,7 @@ export function AppSidebar() {
         </SidebarMenu>
         
         <div className="text-xs text-muted-foreground text-center py-2">
-          DosFilos.app v0.1.0
+          DosFilos.Preach v0.1.0
         </div>
       </SidebarFooter>
     </Sidebar>

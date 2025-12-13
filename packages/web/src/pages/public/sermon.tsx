@@ -228,7 +228,7 @@ export function PublicSermonPage() {
                     )}
                     
                     <div className="text-center text-sm text-muted-foreground">
-                        <p>Generado con <span className="font-semibold text-primary">DosFilos.app</span></p>
+                        <p>Generado con <span className="font-semibold text-primary">DosFilos.Preach</span></p>
                     </div>
                 </div>
             </div>
