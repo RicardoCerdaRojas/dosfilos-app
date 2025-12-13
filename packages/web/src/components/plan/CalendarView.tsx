@@ -57,6 +57,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSermon, setSelectedSermon] = useState<SermonItem | null>(null);
+  const [statusFilter, setStatusFilter] = useState<SermonItem['status'] | 'all'>('all');
   
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -64,15 +65,26 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
   const today = new Date();
   
 
-  // Filter sermons by  search term
+  // Filter sermons by search term and status
   const filteredSermons = useMemo(() => {
-    if (!searchTerm.trim()) return sermons;
-    const lower = searchTerm.toLowerCase();
-    return sermons.filter(sermon => 
-      sermon.title.toLowerCase().includes(lower) ||
-      (sermon.passage && sermon.passage.toLowerCase().includes(lower))
-    );
-  }, [sermons, searchTerm]);
+    let filtered = sermons;
+    
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(sermon => sermon.status === statusFilter);
+    }
+    
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const lower = searchTerm.toLowerCase();
+      filtered = filtered.filter(sermon => 
+        sermon.title.toLowerCase().includes(lower) ||
+        (sermon.passage && sermon.passage.toLowerCase().includes(lower))
+      );
+    }
+    
+    return filtered;
+  }, [sermons, searchTerm, statusFilter]);
   // Group sermons by date
   const sermonsByDate = new Map<string, SermonItem[]>();
   const sermonsWithoutDate: SermonItem[] = [];
@@ -111,9 +123,9 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
 
   return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Calendar - Main Area */}
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-2">
         <Card className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -295,6 +307,54 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Status Filters */}
+              <div className="mb-3 flex gap-1 flex-wrap">
+                <button
+                  className={cn(
+                    "px-3 py-1 text-xs rounded-full transition-all",
+                    statusFilter === 'all' 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-secondary hover:bg-secondary/80"
+                  )}
+                  onClick={() => setStatusFilter('all')}
+                >
+                  Todos
+                </button>
+                <button
+                  className={cn(
+                    "px-3 py-1 text-xs rounded-full transition-all",
+                    statusFilter === 'planned' 
+                      ? "bg-slate-400 text-white" 
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                  )}
+                  onClick={() => setStatusFilter('planned')}
+                >
+                  Planificado
+                </button>
+                <button
+                  className={cn(
+                    "px-3 py-1 text-xs rounded-full transition-all",
+                    statusFilter === 'in_progress' 
+                      ? "bg-amber-500 text-white" 
+                      : "bg-amber-100 hover:bg-amber-200 text-amber-600"
+                  )}
+                  onClick={() => setStatusFilter('in_progress')}
+                >
+                  En Desarrollo
+                </button>
+                <button
+                  className={cn(
+                    "px-3 py-1 text-xs rounded-full transition-all",
+                    statusFilter === 'complete' 
+                      ? "bg-green-500 text-white" 
+                      : "bg-green-100 hover:bg-green-200 text-green-600"
+                  )}
+                  onClick={() => setStatusFilter('complete')}
+                >
+                  Listo
+                </button>
               </div>
 
               {/* All Sermons List */}
