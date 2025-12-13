@@ -96,18 +96,34 @@ export function Landing() {
             <div className="space-y-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
                 <Sparkles className="h-4 w-4" />
-                Herramienta de Estudio Bíblico Profesional
+                Especializada en Ministerio Pastoral
               </div>
               
               <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
-                Estudia más profundo.
-                <span className="block text-blue-600">Predica con confianza.</span>
+                Exégesis profunda.
+                <span className="block text-blue-600">Predicación fiel.</span>
               </h1>
               
               <p className="text-xl text-slate-600 leading-relaxed">
-                La herramienta de estudio bíblico que respeta tu teología y multiplica 
-                tu tiempo de preparación. No reemplazamos tu estudio, lo potenciamos.
+                La herramienta de estudio bíblico que combina <strong>hermenéutica histórico-literal-gramatical</strong> con 
+                análisis de idiomas originales. Diseñada para pastores comprometidos con la <strong>predicación expositiva</strong>.
               </p>
+
+              {/* Trust Badges */}
+              <div className="flex flex-wrap gap-4 text-sm">
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="font-medium">Hermenéutica Histórico-Literal</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="font-medium">Análisis Hebreo/Griego</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="font-medium">Enfoque Expositivo</span>
+                </div>
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/register">
@@ -160,19 +176,19 @@ export function Landing() {
                     <Check className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold">Análisis Completo</div>
-                    <div className="text-xs text-slate-600">Efesios 2:1-10</div>
+                    <div className="text-sm font-semibold">Análisis Griego</div>
+                    <div className="text-xs text-slate-600">χάρις - Efesios 2:8</div>
                   </div>
                 </div>
               </div>
               <div className="absolute -top-6 -right-6 bg-white p-4 rounded-xl shadow-lg">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 rounded-lg">
-                    <Clock className="h-5 w-5 text-blue-600" />
+                    <BookMarked className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold">Ahorra 4 horas</div>
-                    <div className="text-xs text-slate-600">por sermón</div>
+                    <div className="text-sm font-semibold">Expositivo</div>
+                    <div className="text-xs text-slate-600">Verso por verso</div>
                   </div>
                 </div>
               </div>
@@ -186,14 +202,17 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h2 className="text-3xl lg:text-4xl font-bold">
-              Sabemos que preparar sermones fieles a la Escritura requiere tiempo
+              La predicación expositiva fiel requiere exégesis rigurosa
             </h2>
+            <p className="text-lg text-slate-300">
+              Como pastor comprometido con la hermenéutica histórico-literal-gramatical, sabes que preparar sermones fieles requiere:
+            </p>
             <div className="grid md:grid-cols-2 gap-6 text-left mt-12">
               {[
-                'Horas de estudio del texto original',
-                'Consultar múltiples comentarios',
-                'Estructurar ideas coherentemente',
-                'Aplicar con relevancia cultural'
+                'Análisis del texto en hebreo y griego',
+                'Estudio del contexto histórico-cultural',
+                'Consulta de comentarios exegéticos',
+                'Estructura expositiva clara y fiel al texto'
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <Check className="h-6 w-6 text-blue-400 flex-shrink-0 mt-1" />
@@ -202,7 +221,7 @@ export function Landing() {
               ))}
             </div>
             <p className="text-xl text-blue-300 pt-8">
-              ¿Y si pudieras hacer todo esto en la mitad del tiempo, sin sacrificar profundidad?
+              ¿Y si pudieras profundizar tu exégesis en la mitad del tiempo, sin comprometer la fidelidad al texto?
             </p>
           </div>
         </div>
@@ -213,10 +232,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              No es IA genérica. Es tu asistente de estudio bíblico.
+              Fundamento Teológico Sólido
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Diseñado específicamente para pastores que valoran la profundidad teológica
+              No es IA genérica. Es una herramienta diseñada por pastores, para pastores comprometidos con la fidelidad bíblica.
             </p>
           </div>
 
@@ -224,21 +243,21 @@ export function Landing() {
             {[
               {
                 icon: BookMarked,
-                title: 'Fundamento Académico',
-                description: 'Basado en principios de homilética clásica. Integra comentarios de eruditos reformados y evangélicos.',
-                features: ['Haddon Robinson', 'Bryan Chapell', 'Análisis exegético']
+                title: 'Hermenéutica Histórico-Literal-Gramatical',
+                description: 'Nuestra plataforma se fundamenta en la interpretación histórico-literal-gramatical, respetando el significado original del texto en su contexto.',
+                features: ['Contexto histórico', 'Análisis gramatical', 'Significado literal']
               },
               {
                 icon: Shield,
-                title: 'Respeta tu Teología',
-                description: 'Entrenado en literatura teológica específica. Tú configuras tu tradición interpretativa.',
-                features: ['Personalizable', 'Contextual', 'Fiel al texto']
+                title: 'Idiomas Originales',
+                description: 'Análisis profundo de hebreo y griego bíblicos. Accede a la riqueza del texto original sin necesidad de años de estudio lingüístico.',
+                features: ['Hebreo bíblico', 'Griego koiné', 'Análisis morfológico']
               },
               {
-                icon: Clock,
-                title: 'Multiplica tu Tiempo',
-                description: 'De 8 horas de preparación a 4 horas. Más tiempo para oración y cuidado pastoral.',
-                features: ['Ahorra 50%', 'Automatiza investigación', 'Enfócate en lo importante']
+                icon: Sparkles,
+                title: 'Predicación Expositiva Personalizable',
+                description: 'Enfoque principal en predicación expositiva verso por verso, pero totalmente adaptable a tu estilo y preferencias ministeriales.',
+                features: ['Expositivo (predeterminado)', 'Textual', 'Temático']
               }
             ].map((feature, i) => (
               <Card key={i} className="p-8 hover:shadow-xl transition-shadow border-2 border-slate-100">
@@ -257,6 +276,34 @@ export function Landing() {
                 </ul>
               </Card>
             ))}
+          </div>
+
+          {/* Additional Trust Section */}
+          <div className="mt-16 bg-blue-50 rounded-2xl p-8 md:p-12">
+            <div className="max-w-3xl mx-auto text-center">
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Diseñado para el Ministerio Pastoral
+              </h3>
+              <p className="text-lg text-slate-700 mb-6">
+                DosFilos.app no es una herramienta genérica de IA. Es una plataforma especializada que entiende 
+                las demandas del ministerio pastoral y el compromiso con la predicación fiel de la Palabra.
+              </p>
+              <div className="grid md:grid-cols-2 gap-6 text-left">
+                {[
+                  'Respeta tu tradición teológica',
+                  'Prioriza la fidelidad al texto',
+                  'Ahorra tiempo sin sacrificar profundidad',
+                  'Multiplica tu capacidad de estudio'
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="p-1 bg-blue-600 rounded-full">
+                      <Check className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="font-medium text-slate-900">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
