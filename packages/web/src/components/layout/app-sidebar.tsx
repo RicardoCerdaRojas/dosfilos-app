@@ -32,7 +32,7 @@ import { ThemeToggleMenu } from '@/components/theme-toggle';
 const navigationGroups = [
   // Group 1: Main
   [
-    { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Sermones', href: '/sermons', icon: FileText },
   ],
   // Group 2: Planning

@@ -28,8 +28,8 @@ function App() {
     <FirebaseProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Landing Page */}
-          <Route path="/landing" element={<Landing />} />
+          {/* Public Landing Page - Root */}
+          <Route path="/" element={<Landing />} />
           
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -39,7 +39,7 @@ function App() {
 
           {/* Protected Dashboard Routes */}
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <DashboardLayout />
