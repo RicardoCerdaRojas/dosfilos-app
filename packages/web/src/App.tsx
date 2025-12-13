@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { FirebaseProvider } from '@/context/firebase-context';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -22,6 +22,21 @@ import { PublicSermonPage } from '@/pages/public/sermon';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import { GeminiTest } from '@/pages/GeminiTest';
 import { Landing } from '@/pages/Landing';
+import { useEffect } from 'react';
+
+// Redirect component for old sermon routes
+function RedirectToSermon({ suffix = '' }: { suffix?: string }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (id) {
+      navigate(`/dashboard/sermons/${id}${suffix}`, { replace: true });
+    }
+  }, [id, suffix, navigate]);
+  
+  return null;
+}
 
 function App() {
   return (
@@ -36,6 +51,14 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/share/:token" element={<PublicSermonPage />} />
+
+          {/* Redirect old sermon routes to new dashboard routes */}
+          <Route path="/sermons" element={<Navigate to="/dashboard/sermons" replace />} />
+          <Route path="/sermons/new" element={<Navigate to="/dashboard/sermons/new" replace />} />
+          <Route path="/sermons/generate" element={<Navigate to="/dashboard/generate-sermon" replace />} />
+          <Route path="/sermons/:id" element={<RedirectToSermon />} />
+          <Route path="/sermons/:id/edit" element={<RedirectToSermon suffix="/edit" />} />
+          <Route path="/sermons/:id/preach" element={<RedirectToSermon suffix="/preach" />} />
 
           {/* Protected Dashboard Routes */}
           <Route

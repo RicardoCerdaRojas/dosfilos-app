@@ -169,7 +169,7 @@ export function useSeriesData(seriesId: string | undefined) {
             } as any);
 
             toast.success('Sermón iniciado');
-            navigate(`/sermons/generate?id=${newSermon.id}`);
+            navigate(`/dashboard/sermons/generate?id=${newSermon.id}`);
         } catch (error) {
             console.error('Error starting draft:', error);
             toast.error('Error al iniciar sermón');
@@ -177,7 +177,7 @@ export function useSeriesData(seriesId: string | undefined) {
     };
 
     const handleContinueEditing = (draftId: string) => {
-        navigate(`/sermons/generate?id=${draftId}`);
+        navigate(`/dashboard/sermons/generate?id=${draftId}`);
     };
 
     const handleUpdateSermonDate = async (sermonId: string, newDate: Date | null) => {

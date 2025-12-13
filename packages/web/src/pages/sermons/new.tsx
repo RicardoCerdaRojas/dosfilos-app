@@ -12,7 +12,7 @@ export function SermonNewPage() {
   const handleSubmit = async (data: SermonFormData) => {
     try {
       const sermon = await createSermon(data);
-      navigate(`/sermons/${sermon.id}`);
+      navigate(`/dashboard/sermons/${sermon.id}`);
     } catch (error) {
       // Error already handled by hook with toast
     }
@@ -25,7 +25,7 @@ export function SermonNewPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate('/sermons')}
+          onClick={() => navigate('/dashboard/sermons')}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>

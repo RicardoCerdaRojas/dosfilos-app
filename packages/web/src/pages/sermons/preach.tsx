@@ -145,7 +145,7 @@ export function PreachModePage() {
         !showControls && "-translate-y-full"
       )}>
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate(`/sermons/${id}`)}>
+          <Button variant="ghost" onClick={() => navigate(`/dashboard/sermons/${id}`)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Salir
           </Button>

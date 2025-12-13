@@ -149,7 +149,7 @@ ${draft.callToAction ? `
             });
 
             toast.success('Sermón guardado exitosamente');
-            navigate(`/sermons/${sermon.id}`);
+            navigate(`/dashboard/sermons/${sermon.id}`);
         } catch (error: any) {
             console.error(error);
             toast.error('Error al guardar el sermón');

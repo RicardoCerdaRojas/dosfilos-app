@@ -90,7 +90,7 @@ export function SermonsPage() {
         <p className="text-muted-foreground text-center max-w-md">
           Comienza creando tu primer sermón y gestiona todo tu contenido pastoral en un solo lugar.
         </p>
-        <Button onClick={() => navigate('/sermons/new')} size="lg">
+        <Button onClick={() => navigate('/dashboard/sermons/new')} size="lg">
           <Plus className="mr-2 h-5 w-5" />
           Crear Primer Sermón
         </Button>
@@ -106,7 +106,7 @@ export function SermonsPage() {
           <h1 className="text-3xl font-bold">Sermones</h1>
           <p className="text-muted-foreground">Gestiona tus sermones y contenido pastoral</p>
         </div>
-        <Button onClick={() => navigate('/sermons/new')}>
+        <Button onClick={() => navigate('/dashboard/sermons/new')}>
           <Plus className="mr-2 h-4 w-4" />
           Nuevo Sermón
         </Button>
@@ -163,7 +163,7 @@ export function SermonsPage() {
                 <div className="space-y-2">
                   <h3
                     className="text-xl font-bold font-serif leading-tight cursor-pointer group-hover:text-primary transition-colors line-clamp-2"
-                    onClick={() => navigate(`/sermons/${sermon.id}`)}
+                    onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
                   >
                     {sermon.title}
                   </h3>
@@ -208,7 +208,7 @@ export function SermonsPage() {
                     variant="ghost" 
                     size="sm" 
                     className="h-8 w-8 p-0 hover:text-primary"
-                    onClick={() => navigate(`/sermons/${sermon.id}`)}
+                    onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -216,7 +216,7 @@ export function SermonsPage() {
                     variant="ghost" 
                     size="sm" 
                     className="h-8 w-8 p-0 hover:text-primary"
-                    onClick={() => navigate(`/sermons/${sermon.id}/edit`)}
+                    onClick={() => navigate(`/dashboard/sermons/${sermon.id}/edit`)}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>

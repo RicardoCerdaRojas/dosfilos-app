@@ -47,11 +47,18 @@ import { SermonPreview } from '@/components/sermons/SermonPreview';
 export function SermonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  // Validate ID - if it's a route param placeholder, redirect
+  if (!id || id === ':id' || id.startsWith(':')) {
+    navigate('/dashboard/sermons', { replace: true });
+    return null;
+  }
+
   const { sermon, loading, mutate } = useSermon(id);
   const { deleteSermon, loading: deleting } = useDeleteSermon();
   const { publishSermon, loading: publishing } = usePublishSermon();
   const { archiveSermon, loading: archiving } = useArchiveSermon();
-  
+
   const [series, setSeries] = useState<SermonSeriesEntity | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -94,7 +101,7 @@ export function SermonDetailPage() {
   const handleDelete = async () => {
     if (!id) return;
     await deleteSermon(id);
-    navigate('/sermons');
+    navigate('/dashboard/sermons');
   };
 
   const handlePublish = async () => {
@@ -198,7 +205,7 @@ export function SermonDetailPage() {
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <FileText className="h-16 w-16 text-muted-foreground" />
         <h2 className="text-2xl font-semibold">Sermón no encontrado</h2>
-        <Button onClick={() => navigate('/sermons')}>
+        <Button onClick={() => navigate('/dashboard/sermons')}>
           Volver a sermones
         </Button>
       </div>
@@ -229,7 +236,7 @@ export function SermonDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/sermons')}
+              onClick={() => navigate('/dashboard/sermons')}
               className="text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -256,14 +263,14 @@ export function SermonDetailPage() {
               <span className="hidden sm:inline">Compartir</span>
             </Button>
             
-            <Button onClick={() => navigate(`/sermons/${id}/edit`)} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+            <Button onClick={() => navigate(`/dashboard/sermons/${id}/edit`)} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
               <Pencil className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Editar</span>
             </Button>
 
             <div className="h-6 w-px bg-border mx-2" />
 
-            <Button onClick={() => navigate(`/sermons/${id}/preach`)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+            <Button onClick={() => navigate(`/dashboard/sermons/${id}/preach`)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
               <BookOpen className="mr-2 h-4 w-4" />
               Predicar
             </Button>

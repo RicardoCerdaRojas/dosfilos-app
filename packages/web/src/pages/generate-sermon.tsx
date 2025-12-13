@@ -93,7 +93,7 @@ ${generatedSermon.callToAction ? `\n**Llamado a la acción:** ${generatedSermon.
       });
 
       toast.success('Sermón guardado como borrador');
-      navigate('/sermons');
+      navigate('/dashboard/sermons');
     } catch (error: any) {
       console.error('Error saving sermon:', error);
       toast.error('Error al guardar el sermón');
