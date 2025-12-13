@@ -73,14 +73,14 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="offcanvas" className="peer border-0">
+    <Sidebar collapsible="icon">
       {/* Header */}
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
+        <div className="flex items-center gap-3 px-1 py-3">
+          <div className="p-1 rounded-lg bg-gradient-to-br from-primary to-primary/80">
             <BookOpen className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">DosFilos.Preach</span>
+          <span className="text-xl font-bold group-data-[collapsible=icon]:hidden">DosFilos.Preach</span>
         </div>
       </SidebarHeader>
 
@@ -98,7 +98,7 @@ export function AppSidebar() {
                         <SidebarMenuButton asChild isActive={isActive}>
                           <Link to={item.href}>
                             <item.icon className="h-5 w-5" />
-                            <span>{item.name}</span>
+                            <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

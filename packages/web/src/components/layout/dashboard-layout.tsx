@@ -10,22 +10,22 @@ export function DashboardLayout() {
   const isPlanner = location.pathname.startsWith('/planner');
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="h-svh overflow-hidden flex flex-col transition-[margin-left] duration-300 ease-in-out md:ml-[var(--sidebar-width)] md:peer-data-[state=collapsed]:ml-0">
+      <SidebarInset>
         {/* Header with toggle button */}
-        <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="ml-auto">
+            <ThemeToggleButtons />
           </div>
-          <ThemeToggleButtons />
         </header>
         
         {/* Main content */}
         <main className={cn(
           "flex-1 overflow-y-auto",
-          !isPlanner && "bg-muted/40 p-4 pl-6"
+          !isPlanner && "bg-muted/40 p-4 md:p-6"
         )}>
           <Outlet />
         </main>

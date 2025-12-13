@@ -55,6 +55,8 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-width: 14rem;
+    --sidebar-width-icon: 3rem;
   }
 
   .dark {
@@ -222,4 +224,21 @@
       background-position: 0% 50%;
     }
   }
+}
+/* Sidebar width utilities for shadcn/ui */
+.w-\(--sidebar-width\) {
+  width: var(--sidebar-width);
+}
+
+.w-\(--sidebar-width-icon\) {
+  width: var(--sidebar-width-icon);
+}
+
+/* Group data modifiers for sidebar collapse */
+.group-data-\[collapsible\=icon\]\:w-\(--sidebar-width-icon\)[data-collapsible="icon"] {
+  width: var(--sidebar-width-icon);
+}
+
+.group[data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:w-\(--sidebar-width-icon\) {
+  width: var(--sidebar-width-icon);
 }
