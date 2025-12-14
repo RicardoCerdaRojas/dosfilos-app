@@ -240,6 +240,31 @@ export function useSeriesData(seriesId: string | undefined) {
         }
     };
 
+    const handleMarkComplete = async (sermonId: string) => {
+        // Find the sermon item to get its draftId
+        const item = sermonItems.find(s => s.id === sermonId);
+        if (!item?.draftId) {
+            toast.error('Este sermón no tiene un borrador asociado');
+            return;
+        }
+
+        try {
+            // Update sermon wizardProgress to step 4 (complete)
+            await sermonService.updateSermon(item.draftId, {
+                wizardProgress: {
+                    currentStep: 4,
+                    lastSaved: new Date()
+                }
+            } as any);
+
+            toast.success('Sermón marcado como completado');
+            await loadData(); // Reload to update status
+        } catch (error) {
+            console.error('Error marking sermon as complete:', error);
+            toast.error('Error al marcar como completado');
+        }
+    };
+
     useEffect(() => {
         loadData();
     }, [seriesId]);
@@ -252,6 +277,7 @@ export function useSeriesData(seriesId: string | undefined) {
         handleContinueEditing,
         handleUpdateSermonDate,
         handleDeleteSermon,
+        handleMarkComplete,
         reloadData: loadData
     };
 }

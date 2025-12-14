@@ -22,6 +22,7 @@ export function SeriesDetail() {
     handleContinueEditing,
     handleUpdateSermonDate,
     handleDeleteSermon,
+    handleMarkComplete,
     reloadData
   } = useSeriesData(id);
 
@@ -128,6 +129,7 @@ export function SeriesDetail() {
             onContinue={handleContinueEditing}
             onUpdateDate={handleUpdateSermonDate}
             onDelete={handleDeleteSermon}
+            onMarkComplete={handleMarkComplete}
           />
         </TabsContent>
       </Tabs>

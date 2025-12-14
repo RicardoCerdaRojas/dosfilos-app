@@ -13,6 +13,7 @@ interface CalendarViewProps {
   onContinue: (draftId: string) => void;
   onUpdateDate?: (sermonId: string, newDate: Date | null) => void;
   onDelete?: (sermonId: string) => void;
+  onMarkComplete?: (sermonId: string) => void;
 }
 
 const DAYS_OF_WEEK = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -52,7 +53,7 @@ function isSameDay(date1: Date, date2: Date): boolean {
          date1.getFullYear() === date2.getFullYear();
 }
 
-export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, onDelete }: CalendarViewProps) {
+export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, onDelete, onMarkComplete }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -452,6 +453,7 @@ export function CalendarView({ sermons, onStartDraft, onContinue, onUpdateDate, 
       onContinue={onContinue}
       onUpdateDate={onUpdateDate}
       onDelete={onDelete}
+      onMarkComplete={onMarkComplete}
     />
     </>
   );

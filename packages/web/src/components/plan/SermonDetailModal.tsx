@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, FileText, Wand2, Trash2, Eye, AlertTriangle } from 'lucide-react';
+import { Calendar, FileText, Wand2, Trash2, Eye, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SermonDetailModalProps {
@@ -33,6 +33,7 @@ interface SermonDetailModalProps {
   onView?: (draftId: string) => void;
   onUpdateDate?: (sermonId: string, newDate: Date | null) => void;
   onDelete?: (sermonId: string) => void;
+  onMarkComplete?: (sermonId: string) => void;
 }
 
 const getStatusBadge = (status: SermonItem['status']) => {
@@ -54,7 +55,8 @@ export function SermonDetailModal({
   onContinue,
   onView,
   onUpdateDate,
-  onDelete
+  onDelete,
+  onMarkComplete
 }: SermonDetailModalProps) {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [dateValue, setDateValue] = useState('');
@@ -102,7 +104,7 @@ export function SermonDetailModal({
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -210,6 +212,20 @@ export function SermonDetailModal({
               }}>
                 <Wand2 className="h-4 w-4 mr-2" />
                 Continuar Desarrollo
+              </Button>
+            )}
+
+            {sermon.status === 'in_progress' && sermon.draftId && onMarkComplete && (
+              <Button 
+                variant="outline"
+                className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 hover:border-green-600"
+                onClick={() => {
+                  onMarkComplete(sermon.id);
+                  onClose();
+                }}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Completar
               </Button>
             )}
             

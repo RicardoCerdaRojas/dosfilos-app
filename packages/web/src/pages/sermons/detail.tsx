@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Pencil, Archive, Trash2, FileText, 
   BookOpen, MapPin, Clock, History, Plus,
-  Share2, MoreVertical, Download, Globe, Eye, Check, Copy
+  Share2, MoreVertical, Download, Globe, Eye, Check, Copy, CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +74,7 @@ export function SermonDetailPage() {
   const [logDuration, setLogDuration] = useState('45');
   const [logNotes, setLogNotes] = useState('');
   const [logging, setLogging] = useState(false);
+  const [markingComplete, setMarkingComplete] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -187,6 +188,26 @@ export function SermonDetailPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast.success('Enlace copiado al portapapeles');
+  };
+
+  const handleMarkComplete = async () => {
+    if (!id || !sermon) return;
+    setMarkingComplete(true);
+    try {
+      await sermonService.updateSermon(id, {
+        wizardProgress: {
+          currentStep: 4,
+          lastSaved: new Date()
+        }
+      } as any);
+      toast.success('Sermón marcado como completado');
+      mutate();
+    } catch (error) {
+      console.error('Error marking sermon as complete:', error);
+      toast.error('Error al marcar como completado');
+    } finally {
+      setMarkingComplete(false);
+    }
   };
 
   if (loading) {
@@ -304,6 +325,12 @@ export function SermonDetailPage() {
                   <DropdownMenuItem onClick={handleArchive} disabled={archiving}>
                     <Archive className="mr-2 h-4 w-4" />
                     Archivar
+                  </DropdownMenuItem>
+                )}
+                {sermon.status === 'draft' && (!sermon.wizardProgress || (sermon.wizardProgress.currentStep ?? 0) < 4) && (
+                  <DropdownMenuItem onClick={handleMarkComplete} disabled={markingComplete}>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    {markingComplete ? 'Marcando...' : 'Marcar Completado'}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />

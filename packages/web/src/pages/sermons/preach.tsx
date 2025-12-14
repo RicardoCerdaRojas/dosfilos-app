@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 // Helper to format time
 const formatTime = (seconds: number) => {
@@ -90,17 +91,65 @@ export function PreachModePage() {
     }
   }, [selectedReference]);
 
-  // Custom Markdown Renderer to detect Bible References
-  // Strategy: We will pre-process the content to wrap potential references in a custom link format
-  // or just use a custom paragraph renderer that scans for patterns.
-  // For simplicity and robustness in this MVP, let's try to identify links that start with 'bible://'
-  // The user would need to format them or we auto-format.
-  // AUTO-FORMATTING:
+  // Bible Reference Pattern (Robust) - Same as SermonPreview
+  const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
+
+  // Helper to replace refs in plain text only
+  const replaceRefsInText = (text: string) => {
+    return text.replace(BIBLE_REF_PATTERN, (match, ref) => {
+      const prefix = match.slice(0, match.length - ref.length);
+      return `${prefix}<a href="#bible-${encodeURIComponent(ref.trim())}">${ref.trim()}</a>`;
+    });
+  };
+
+  // Helper to replace markdown bold with HTML strong
+  const replaceBoldWithStrong = (text: string) => {
+    return text.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
+  };
+
+  // Markdown Processing for Bible Links (Smart) - Same as SermonPreview
   const processContent = (content: string) => {
-    // Regex for common Spanish bible references: e.g., "Juan 3:16", "1 Pedro 2:1", "Gn 1:1"
-    // Matches: (Number optional) (Word) (Chapter):(Verse)
-    const bibleRegex = /\b((?:[1-3]\s)?[A-Z][a-zá-ú]+\s\d+:\d+(?:-\d+)?)\b/g;
-    return content.replace(bibleRegex, (match) => `[${match}](#bible-${encodeURIComponent(match)})`);
+    if (!content) return '';
+
+    // Split by existing HTML tags (especially anchors) and markdown links
+    const linkRegex = /(<a\s+[^>]*>.*?<\/a>|\[[^\]]+\]\s*\([^)]+\))/g;
+    const parts = content.split(linkRegex);
+    
+    // Phase 1: Bible Refs (inside plain text chunks only)
+    const textWithRefs = parts.map(part => {
+      if (part.match(/^(<a\s+[^>]*>.*?<\/a>|\[[^\]]+\]\s*\([^)]+\))$/)) {
+        return part;
+      }
+      return replaceRefsInText(part);
+    }).join('');
+
+    // Phase 2: Markdown Block/Span Syntax (on the full string)
+    let finalContent = textWithRefs;
+    
+    // Bold
+    finalContent = replaceBoldWithStrong(finalContent);
+    
+    // Headers (## Title) - Add Tailwind classes for styling
+    finalContent = finalContent.replace(/^(#{1,6})\s+(.+)$/gm, (match, hashes, content) => {
+      const level = hashes.length;
+      const sizes: Record<number, string> = {
+        1: 'text-3xl',
+        2: 'text-2xl',
+        3: 'text-xl',
+        4: 'text-lg',
+        5: 'text-base',
+        6: 'text-sm'
+      };
+      const sizeClass = sizes[level] || 'text-lg';
+      return `<h${level} class="${sizeClass} font-bold text-foreground mt-8 mb-4">${content}</h${level}>`;
+    });
+
+    // Blockquotes (> Text) - Add Tailwind classes for styling
+    finalContent = finalContent.replace(/^>\s+(.+)$/gm, (match, content) => {
+      return `<blockquote class="border-l-4 border-primary/30 pl-4 italic my-6 text-muted-foreground bg-muted/10 py-3 pr-4 rounded-r">${content}</blockquote>`;
+    });
+
+    return finalContent;
   };
 
   const components = {
@@ -110,13 +159,14 @@ export function PreachModePage() {
         const ref = decodeURIComponent(href.replace('#bible-', ''));
         return (
           <span 
-            className="text-primary font-semibold cursor-pointer hover:underline decoration-dotted underline-offset-4"
+            className="text-primary font-semibold cursor-pointer hover:underline decoration-dotted underline-offset-4 inline-flex items-center gap-1"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setSelectedReference(ref);
             }}
           >
+            <BookOpen className="h-4 w-4" />
             {props.children}
           </span>
         );
@@ -150,7 +200,7 @@ export function PreachModePage() {
             Salir
           </Button>
           <div className="h-6 w-px bg-border" />
-          <h1 className="font-semibold truncate max-w-[200px]">{sermon.title}</h1>
+          <h1 className="font-semibold truncate max-w-[400px] md:max-w-[600px]">{sermon.title}</h1>
         </div>
 
         <div className="flex items-center gap-6">
@@ -209,18 +259,65 @@ export function PreachModePage() {
         className="flex-1 max-w-4xl mx-auto w-full p-8 pt-24 pb-32 focus:outline-none"
         onClick={() => setShowControls(!showControls)}
       >
+        {/* Sermon Title - Discrete */}
+        <div className="text-center mb-12">
+          <h1 
+            className="font-serif font-bold text-muted-foreground/70"
+            style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
+          >
+            {sermon.title}
+          </h1>
+          {sermon.bibleReferences && sermon.bibleReferences.length > 0 && (
+            <p className="text-muted-foreground mt-2" style={{ fontSize: `${fontSize * 0.7}px` }}>
+              {sermon.bibleReferences.join(' • ')}
+            </p>
+          )}
+        </div>
+
         <div 
-          className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200"
+          className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
           style={{ fontSize: `${fontSize}px` }}
         >
           <ReactMarkdown 
             components={components}
             rehypePlugins={[rehypeRaw]}
+            remarkPlugins={[remarkGfm]}
           >
             {processContent(sermon.content)}
           </ReactMarkdown>
         </div>
       </div>
+
+      {/* Floating Timer - Visible when running and controls are hidden */}
+      {isRunning && !showControls && (
+        <div 
+          className={cn(
+            "fixed bottom-8 right-8 z-50 px-6 py-3 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300",
+            timeLeft <= 5 * 60 
+              ? "bg-red-500/90 text-white animate-pulse" 
+              : timeLeft <= 10 * 60 
+                ? "bg-amber-500/90 text-white"
+                : "bg-background/90 border"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowControls(true);
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Clock className={cn("h-5 w-5", timeLeft <= 10 * 60 ? "text-white" : "text-muted-foreground")} />
+            <span className={cn(
+              "font-mono text-2xl font-bold tabular-nums",
+              timeLeft <= 10 * 60 ? "text-white" : "text-foreground"
+            )}>
+              {formatTime(timeLeft)}
+            </span>
+            {timeLeft <= 5 * 60 && (
+              <span className="text-xs font-medium opacity-80">¡Tiempo!</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Timer Settings Dialog */}
       <Dialog open={showTimerSettings} onOpenChange={setShowTimerSettings}>
