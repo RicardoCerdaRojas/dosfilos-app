@@ -387,19 +387,56 @@ REGLAS:
             JSON.parse(cleaned);
             return cleaned;
         } catch (e) {
-            // If it fails, it might be truncated or have trailing text
+            // If it fails, it might have trailing text after valid JSON
+            // Use bracket balancing to find where the JSON actually ends
 
-            // 1. Try to find the last '}'
-            const lastBrace = cleaned.lastIndexOf('}');
-            if (lastBrace !== -1) {
-                const candidate = cleaned.substring(0, lastBrace + 1);
+            let depth = 0;
+            let inStr = false;
+            let esc = false;
+            let jsonEnd = -1;
+
+            for (let i = 0; i < cleaned.length; i++) {
+                const char = cleaned[i];
+
+                if (esc) {
+                    esc = false;
+                    continue;
+                }
+
+                if (char === '\\' && inStr) {
+                    esc = true;
+                    continue;
+                }
+
+                if (char === '"') {
+                    inStr = !inStr;
+                    continue;
+                }
+
+                if (!inStr) {
+                    if (char === '{') {
+                        depth++;
+                    } else if (char === '}') {
+                        depth--;
+                        if (depth === 0) {
+                            jsonEnd = i;
+                            break; // Found the end of the root object
+                        }
+                    }
+                }
+            }
+
+            if (jsonEnd !== -1) {
+                const candidate = cleaned.substring(0, jsonEnd + 1);
                 try {
                     JSON.parse(candidate);
                     return candidate;
-                } catch (e) {
-                    // Continue to repair attempts
+                } catch (e2) {
+                    // Continue to fallback
                 }
             }
+
+            // Fallback: Try to find the last '}'
 
             // 2. Simple repair for truncated JSON (common in large generations)
             // This is a basic heuristic: try closing open braces/brackets

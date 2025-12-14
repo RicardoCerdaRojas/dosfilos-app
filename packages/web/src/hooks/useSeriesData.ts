@@ -41,7 +41,14 @@ export function useSeriesData(seriesId: string | undefined) {
             const plannedSermons = seriesData.metadata?.plannedSermons || [];
             for (const planned of plannedSermons) {
                 if (planned.draftId) {
-                    const draft = await sermonService.getSermon(planned.draftId);
+                    let draft = null;
+                    try {
+                        draft = await sermonService.getSermon(planned.draftId);
+                    } catch (error) {
+                        // Draft may have been deleted or permissions changed - treat as no draft
+                        console.warn(`Could not load draft ${planned.draftId}, treating as planned:`, error);
+                    }
+
                     if (draft) {
                         const isComplete = draft.content && draft.content.length > 100 &&
                             (!draft.wizardProgress || draft.wizardProgress.currentStep >= 4);
@@ -57,6 +64,7 @@ export function useSeriesData(seriesId: string | undefined) {
                             wizardProgress: draft.wizardProgress
                         });
                     } else {
+                        // Draft was deleted or doesn't exist - show as planned
                         items.push({
                             id: planned.id,
                             title: planned.title,
@@ -84,33 +92,41 @@ export function useSeriesData(seriesId: string | undefined) {
             const linkedDraftIds = new Set(plannedSermons.map(p => p.draftId).filter(Boolean));
             for (const draftId of (seriesData.draftIds || [])) {
                 if (!linkedDraftIds.has(draftId)) {
-                    const draft = await sermonService.getSermon(draftId);
-                    if (draft) {
-                        items.push({
-                            id: draft.id,
-                            title: draft.title,
-                            description: draft.content || '',
-                            scheduledDate: draft.scheduledDate,
-                            status: 'in_progress',
-                            draftId: draft.id,
-                            wizardProgress: draft.wizardProgress
-                        });
+                    try {
+                        const draft = await sermonService.getSermon(draftId);
+                        if (draft) {
+                            items.push({
+                                id: draft.id,
+                                title: draft.title,
+                                description: draft.content || '',
+                                scheduledDate: draft.scheduledDate,
+                                status: 'in_progress',
+                                draftId: draft.id,
+                                wizardProgress: draft.wizardProgress
+                            });
+                        }
+                    } catch (error) {
+                        console.warn(`Could not load additional draft ${draftId}, skipping:`, error);
                     }
                 }
             }
 
             // Load completed sermons
             for (const sermonId of seriesData.sermonIds) {
-                const sermon = await sermonService.getSermon(sermonId);
-                if (sermon) {
-                    items.push({
-                        id: sermon.id,
-                        title: sermon.title,
-                        description: sermon.content?.substring(0, 200) || '',
-                        scheduledDate: sermon.scheduledDate,
-                        status: 'complete',
-                        draftId: sermon.id
-                    });
+                try {
+                    const sermon = await sermonService.getSermon(sermonId);
+                    if (sermon) {
+                        items.push({
+                            id: sermon.id,
+                            title: sermon.title,
+                            description: sermon.content?.substring(0, 200) || '',
+                            scheduledDate: sermon.scheduledDate,
+                            status: 'complete',
+                            draftId: sermon.id
+                        });
+                    }
+                } catch (error) {
+                    console.warn(`Could not load completed sermon ${sermonId}, skipping:`, error);
                 }
             }
 
@@ -141,7 +157,7 @@ export function useSeriesData(seriesId: string | undefined) {
                 userId: user.uid,
                 title: item.title,
                 content: item.description,
-                status: 'draft' as const,
+                status: 'published' as const,
                 tags: [series.title],
                 seriesId: series.id,
                 scheduledDate: item.scheduledDate,

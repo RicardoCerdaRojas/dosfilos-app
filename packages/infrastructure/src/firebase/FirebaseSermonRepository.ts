@@ -63,9 +63,12 @@ export class FirebaseSermonRepository implements ISermonRepository {
 
             return this.firestoreToSermon(snapshot.id, snapshot.data());
         } catch (error: any) {
-            console.error('❌ FirebaseSermonRepository.findById error:', error);
-            console.error('❌ Error code:', error.code);
-            console.error('❌ Error message:', error.message);
+            // Only log unexpected errors, not permission-denied (common when doc was deleted)
+            if (error.code !== 'permission-denied') {
+                console.error('❌ FirebaseSermonRepository.findById error:', error);
+                console.error('❌ Error code:', error.code);
+                console.error('❌ Error message:', error.message);
+            }
             throw error;
         }
     }

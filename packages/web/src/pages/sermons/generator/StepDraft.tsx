@@ -146,7 +146,7 @@ ${draft.callToAction ? `
                 content,
                 bibleReferences: [exegesis.passage],
                 tags: exegesis.keyWords.map(kw => kw.original),
-                status: 'draft',
+                status: 'published',
                 authorName: user.displayName || 'Pastor',
             });
 
