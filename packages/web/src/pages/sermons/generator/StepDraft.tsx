@@ -15,9 +15,11 @@ import { RAGSourcesDisplay } from '@/components/sermon/RAGSourcesDisplay';
 import { useContentHistory } from '@/hooks/useContentHistory';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat'; // 🎯 NEW
 import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { WorkflowPhase, CoachingStyle, LibraryResourceEntity } from '@dosfilos/domain';
+import { PassageQuickView } from '@/components/sermons/PassageQuickView';
 
 export function StepDraft() {
     const navigate = useNavigate();
@@ -643,18 +645,41 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             </Card>
         </div>
     ) : (
-        <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
-            <div className="flex-1 min-h-0 flex gap-4">
+        <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+            <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 {/* Left: Content Canvas */}
-                <div className="flex-1 min-w-0 flex flex-col">
-                    <div className="mb-4 flex-shrink-0">
-                        <h3 className="text-lg font-semibold">{draft.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                            {expandedSectionId 
-                                ? 'Refinando sección. Usa el chat para hacer cambios.'
-                                : 'Haz clic en "Refinar" para expandir una sección, o usa el chat para consultas generales.'
-                            }
-                        </p>
+                <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+                    <div className="mb-4 flex-shrink-0 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-semibold">{draft.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                                {expandedSectionId 
+                                    ? 'Refinando sección. Usa el chat para hacer cambios.'
+                                    : 'Haz clic en "Refinar" para expandir una sección, o usa el chat para consultas generales.'
+                                }
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <PassageQuickView passage={passage} variant="badge" />
+                            <Button
+                                onClick={handleGenerate}
+                                variant="outline"
+                                size="sm"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Generando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                        Regenerar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </div>
                     <div className="flex-1 min-h-0">
                         <ContentCanvas
@@ -721,10 +746,11 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         />
                     </div>
                     
-                    {/* RAG Sources */}
-                    {draft?.ragSources && draft.ragSources.length > 0 && (
+                    {/* RAG Sources - Temporarily hidden: AI-generated sources are not verified against real library */}
+                    {/* TODO: Implement verified bibliography from RAG chunks when available */}
+                    {/* {draft?.ragSources && draft.ragSources.length > 0 && (
                         <RAGSourcesDisplay sources={draft.ragSources} className="mx-0 mt-3" />
-                    )}
+                    )} */}
                 </div>
 
                 {/* Right: Resizable Chat Interface */}
@@ -843,6 +869,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             {/* Preview Dialog */}
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="!max-w-[95vw] !w-full sm:!w-[1200px] lg:!w-[1600px] h-[90vh] max-h-[90vh] flex flex-col p-0 overflow-hidden">
+                    <VisuallyHidden>
+                        <DialogTitle>Vista Previa del Sermón</DialogTitle>
+                    </VisuallyHidden>
                     <div className="flex-1 overflow-y-auto">
                         {draft && exegesis && (
                             <SermonPreview

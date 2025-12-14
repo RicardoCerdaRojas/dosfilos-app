@@ -62,7 +62,7 @@ export class GeminiFileSearchService {
             throw new Error(`Failed to upload file content: ${uploadResponse.statusText}`);
         }
 
-        const result = await uploadResponse.json();
+        const result = await uploadResponse.json() as { file: { uri: string; name: string } };
         const fileUri = result.file.uri;
         console.log('✅ Gemini Upload Complete:', fileUri);
 
@@ -82,7 +82,7 @@ export class GeminiFileSearchService {
             );
 
             if (stateResponse.ok) {
-                const fileState = await stateResponse.json();
+                const fileState = await stateResponse.json() as { state: string };
                 if (fileState.state === 'ACTIVE') {
                     isActive = true;
                     console.log('✅ File is ACTIVE and ready.');
@@ -100,7 +100,7 @@ export class GeminiFileSearchService {
         return fileUri;
     }
 
-    async createCache(fileUris: string[], ttlSeconds: number = 3600): Promise<string> {
+    async createCache(fileUris: string[], ttlSeconds: number = 3600): Promise<{ name: string; expireTime: Date }> {
         console.log(`📦 GeminiFileSearch: Creating cache for ${fileUris.length} files...`);
         try {
             // Use fetch directly to avoid Server SDK issues in Browser
@@ -133,9 +133,14 @@ export class GeminiFileSearchService {
                 throw new Error(`Gemini Cache Creation Failed (${response.status}): ${errorBody}`);
             }
 
-            const cache = await response.json();
-            console.log('✅ Cache created:', cache.name);
-            return cache.name;
+            const cache = await response.json() as { name: string; expireTime: string };
+            console.log('✅ Cache created:', cache.name, 'Expires:', cache.expireTime);
+
+            // Return both name and expireTime for proper tracking
+            return {
+                name: cache.name,
+                expireTime: new Date(cache.expireTime)
+            };
 
         } catch (error: any) {
             // Check for permission/expiration errors (403/404)

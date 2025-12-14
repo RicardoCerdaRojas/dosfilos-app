@@ -16,6 +16,7 @@ import { useGeneratorChat } from '@/hooks/useGeneratorChat'; // 🎯 NEW
 // 🎯 NEW: Sub-step components
 import { ApproachSelectionView } from './homiletics/ApproachSelectionView';
 import { ApproachSelectionInfo } from './homiletics/ApproachSelectionInfo';
+import { PassageQuickView } from '@/components/sermons/PassageQuickView';
 
 /**
  * Sub-steps within Homiletics phase
@@ -833,7 +834,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         Revisa y refina el contenido usando el chat
                     </p>
                 </div>
-                {/* 🎯 Regenerate Button */}
+                <div className="flex items-center gap-2">
+                    <PassageQuickView passage={passage} variant="badge" />
                 <Button
                     onClick={handleGenerate}
                     variant="outline"
@@ -852,8 +854,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         </>
                     )}
                 </Button>
+                </div>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0">
                 <ContentCanvas
                     content={formattedHomiletics}
                     contentType="homiletics"
@@ -960,8 +963,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 />
             ) : (
                 // Phase 3 (homiletics exists): Custom flex layout like Exegesis
-                <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
-                    <div className="flex-1 min-h-0 flex gap-4">
+                <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+                    <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                         {/* Left: Content */}
                         {leftPanel}
                         

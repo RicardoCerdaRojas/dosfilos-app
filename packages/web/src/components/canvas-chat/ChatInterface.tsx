@@ -18,7 +18,8 @@ interface MessageWithMetadata extends CanvasChatMessage {
 
 export interface ActiveContext {
     isCached: boolean;
-    lastRefresh?: Date | null;
+    createdAt?: Date | null;
+    expiresAt?: Date | null;
     resources: Array<{ title: string; author: string }>;
     totalAvailableResources?: number; // 🎯 Total docs configured for this step
 }
@@ -242,16 +243,42 @@ export function ChatInterface<T = any>({
                                         ? "El asistente usa estos archivos directamente en el prompt (Modo Directo):"
                                         : "El asistente buscará fragmentos relevantes en estos recursos:"}
                             </p>
-                            {activeContext.lastRefresh && (
-                                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                                    <span>Última actualización:</span>
-                                    <span className="font-medium">
-                                        {new Date(activeContext.lastRefresh).toLocaleTimeString('es-ES', { 
-                                            hour: '2-digit', 
-                                            minute: '2-digit' 
-                                        })}
-                                    </span>
-                                </p>
+                            {/* Cache Status with Date and Expiration */}
+                            {activeContext.createdAt && (
+                                <div className="text-[10px] text-muted-foreground mt-2 space-y-0.5">
+                                    <p className="flex items-center gap-1">
+                                        <span>Creado:</span>
+                                        <span className="font-medium">
+                                            {new Date(activeContext.createdAt).toLocaleDateString('es-ES', { 
+                                                day: '2-digit', 
+                                                month: 'short',
+                                                year: 'numeric'
+                                            })}{', '}
+                                            {new Date(activeContext.createdAt).toLocaleTimeString('es-ES', { 
+                                                hour: '2-digit', 
+                                                minute: '2-digit' 
+                                            })}
+                                        </span>
+                                    </p>
+                                    {activeContext.expiresAt && (() => {
+                                        const now = new Date();
+                                        const expiresAt = new Date(activeContext.expiresAt);
+                                        const isExpired = now >= expiresAt;
+                                        const timeRemaining = expiresAt.getTime() - now.getTime();
+                                        const minutesRemaining = Math.max(0, Math.floor(timeRemaining / 60000));
+                                        
+                                        return (
+                                            <p className={`flex items-center gap-1 ${isExpired ? 'text-orange-500' : 'text-emerald-600'}`}>
+                                                <span>{isExpired ? '⚠️ Expirado' : '✓ Activo'}</span>
+                                                {!isExpired && (
+                                                    <span className="text-muted-foreground">
+                                                        ({minutesRemaining} min restantes)
+                                                    </span>
+                                                )}
+                                            </p>
+                                        );
+                                    })()}
+                                </div>
                             )}
                         </div>
                         

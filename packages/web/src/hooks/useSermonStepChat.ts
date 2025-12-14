@@ -19,7 +19,8 @@ export interface UseSermonStepChatProps {
 
 export interface ActiveContext {
     isCached: boolean;
-    lastRefresh?: Date | null;
+    createdAt?: Date | null;
+    expiresAt?: Date | null;
     resources: Array<{ title: string; author: string }>;
 }
 
@@ -106,7 +107,8 @@ export function useSermonStepChat({
     // Build active context for ChatInterface
     const activeContext: ActiveContext = {
         isCached: !!cacheName,
-        lastRefresh: lastContextRefresh,
+        createdAt: lastContextRefresh,
+        expiresAt: lastContextRefresh ? new Date(lastContextRefresh.getTime() + 3600000) : null, // 1 hour TTL
         resources: getEffectiveResources().map(r => ({ title: r.title, author: r.author }))
     };
 

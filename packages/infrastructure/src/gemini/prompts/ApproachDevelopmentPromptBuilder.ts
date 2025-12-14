@@ -177,8 +177,6 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
         const preview = this.selectedPreview!;
         const isExpository = preview.type?.toLowerCase().includes('expositiv');
 
-        console.log(`🎯 Building instructions for approach: ${preview.type} (Expository: ${isExpository})`);
-
         // Use imported MD files directly
         const propositionGuidelines = propositionGuidelinesMD;
         const outlineInstructions = outlineInstructionsMD;
@@ -186,16 +184,6 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
         const toneConsistency = toneConsistencyMD;
         const scriptureCriteria = scriptureReferencesMD;
         const expositoryExamples = isExpository ? expositoryExamplesMD : '';
-
-        console.log(`📊 Loaded MD files:`);
-        console.log(`  - Proposition: ${propositionGuidelines.length} chars`);
-        console.log(`  - Outline: ${outlineInstructions.length} chars`);
-        console.log(`  - Application: ${applicationTemplate.length} chars`);
-        console.log(`  - Tone: ${toneConsistency.length} chars`);
-        console.log(`  - Scripture: ${scriptureCriteria.length} chars`);
-        if (isExpository) {
-            console.log(`  - Expository Examples: ${expositoryExamples.length} chars`);
-        }
 
         // Build comprehensive instructions
         const sections = [

@@ -17,6 +17,7 @@ import { generatorChatService } from '@dosfilos/application';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
 import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel';
+import { PassageQuickView } from '@/components/sermons/PassageQuickView';
 
 interface ExegesisContent {
     historical: string;
@@ -147,6 +148,7 @@ export function StepExegesis() {
 
         // If it's a user message and we have an expanded section, refine that section
         if (role === 'user' && expandedSectionId && exegesis) {
+            setIsAiProcessing(true); // 🎯 Activate loading indicator
             try {
                 const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
                 const { getValueByPath, setValueByPath } = await import('@/utils/path-utils');
@@ -515,43 +517,47 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             </Card>
         </div>
     ) : (
-        <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
-            <div className="flex-1 min-h-0 flex gap-4">
-                {/* Left: Content Canvas */}
-                <div className="flex-1 min-w-0 flex flex-col">
-                    <div className="mb-4 flex-shrink-0">
-                        <h3 className="text-lg font-semibold">Análisis Exegético: {exegesis.passage}</h3>
-                        <p className="text-sm text-muted-foreground">
-                            {expandedSectionId 
-                                ? 'Refinando sección. Usa el chat para hacer cambios.'
-                                : 'Haz clic en "Refinar" para expandir una sección, o usa el chat para consultas generales.'
-                            }
-                        </p>
-                    </div>
-                    <div className="flex-1 min-h-0">
-                        <ContentCanvas
-                            content={exegesis}
-                            contentType="exegesis"
-                            expandedSectionId={expandedSectionId}
-                            onSectionExpand={(sectionId) => {
-                                setExpandedSectionId(sectionId);
-                                setMessages([]); // Clear chat when expanding section
-                            }}
-                            onSectionClose={() => {
-                                setExpandedSectionId(null);
-                                setMessages([]); // Clear chat when closing section
-                            }}
-                            onSectionUndo={handleUndo}
-                            onSectionRedo={handleRedo}
-                            canUndo={(sectionId) => contentHistory.canUndo(sectionId)}
-                            canRedo={(sectionId) => contentHistory.canRedo(sectionId)}
-                            getSectionVersions={getSectionVersions}
-                            getCurrentVersionId={getCurrentVersionId}
-                            onRestoreVersion={handleRestoreVersion}
-                            onSectionUpdate={handleSectionUpdate}
-                            modifiedSections={modifiedSections}
-                        />
-                    </div>
+        <div className="flex flex-col p-4" style={{ height: 'calc(100vh - 130px)' }}>
+            {/* Header - fixed height */}
+            <div className="mb-4 flex-shrink-0 flex items-center justify-between">
+                <div>
+                    <h3 className="text-lg font-semibold">Análisis Exegético: {exegesis.passage}</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {expandedSectionId 
+                            ? 'Refinando sección. Usa el chat para hacer cambios.'
+                            : 'Haz clic en "Refinar" para expandir una sección, o usa el chat para consultas generales.'
+                        }
+                    </p>
+                </div>
+                <PassageQuickView passage={passage} variant="badge" />
+            </div>
+
+            {/* Main content area - fixed height for scroll to work */}
+            <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
+                {/* Left: Content Canvas - uses internal ScrollArea */}
+                <div className="flex-1 min-w-0 h-full">
+                    <ContentCanvas
+                        content={exegesis}
+                        contentType="exegesis"
+                        expandedSectionId={expandedSectionId}
+                        onSectionExpand={(sectionId) => {
+                            setExpandedSectionId(sectionId);
+                            setMessages([]); // Clear chat when expanding section
+                        }}
+                        onSectionClose={() => {
+                            setExpandedSectionId(null);
+                            setMessages([]); // Clear chat when closing section
+                        }}
+                        onSectionUndo={handleUndo}
+                        onSectionRedo={handleRedo}
+                        canUndo={(sectionId) => contentHistory.canUndo(sectionId)}
+                        canRedo={(sectionId) => contentHistory.canRedo(sectionId)}
+                        getSectionVersions={getSectionVersions}
+                        getCurrentVersionId={getCurrentVersionId}
+                        onRestoreVersion={handleRestoreVersion}
+                        onSectionUpdate={handleSectionUpdate}
+                        modifiedSections={modifiedSections}
+                    />
                 </div>
 
                 {/* Right: Resizable Chat Interface */}
@@ -580,7 +586,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             </div>
 
             {/* Continue Button */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 pt-4">
                 <Button onClick={() => setStep(2)} size="lg" className="w-full">
                     Continuar a Homilética
                     <ArrowRight className="ml-2 h-4 w-4" />

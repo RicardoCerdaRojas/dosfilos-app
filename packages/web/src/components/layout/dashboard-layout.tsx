@@ -8,11 +8,12 @@ import { cn } from '@/lib/utils';
 export function DashboardLayout() {
   const location = useLocation();
   const isPlanner = location.pathname.startsWith('/planner');
+  const isGenerator = location.pathname.includes('/sermons/generate');
 
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="overflow-hidden">
         {/* Header with toggle button */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
@@ -24,8 +25,10 @@ export function DashboardLayout() {
         
         {/* Main content */}
         <main className={cn(
-          "flex-1 overflow-y-auto",
-          !isPlanner && "bg-muted/40 p-4 md:p-6"
+          "flex-1",
+          // Generator needs fixed height with no scroll (scroll is internal)
+          isGenerator ? "overflow-hidden h-[calc(100vh-4rem)]" : "overflow-y-auto",
+          !isPlanner && !isGenerator && "bg-muted/40 p-4 md:p-6"
         )}>
           <Outlet />
         </main>

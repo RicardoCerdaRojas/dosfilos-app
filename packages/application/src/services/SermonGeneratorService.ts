@@ -87,7 +87,7 @@ export class SermonGeneratorService {
      */
     async refreshContext(
         config: ExtendedPhaseConfiguration
-    ): Promise<{ cacheName?: string; remainingDocIds: string[]; cachedResources?: Array<{ title: string; author: string }>; geminiUris?: string[] }> {
+    ): Promise<{ cacheName?: string; cacheExpireTime?: Date; remainingDocIds: string[]; cachedResources?: Array<{ title: string; author: string }>; geminiUris?: string[] }> {
         return this.prepareGeminiContext(config);
     }
 
@@ -98,7 +98,7 @@ export class SermonGeneratorService {
     private async prepareGeminiContext(
         config: ExtendedPhaseConfiguration,
         retry: boolean = true // 🎯 NEW: Retry flag for self-healing
-    ): Promise<{ cacheName?: string; remainingDocIds: string[]; cachedResources?: Array<{ title: string; author: string }>; geminiUris?: string[] }> {
+    ): Promise<{ cacheName?: string; cacheExpireTime?: Date; remainingDocIds: string[]; cachedResources?: Array<{ title: string; author: string }>; geminiUris?: string[] }> {
         if (!this.geminiFileSearch || !config.libraryDocIds || config.libraryDocIds.length === 0) {
             return { remainingDocIds: config.libraryDocIds || [] };
         }
@@ -115,11 +115,14 @@ export class SermonGeneratorService {
             const geminiUris = aiReadyResources.map(r => r!.metadata!.geminiUri);
 
             let cacheName: string | undefined;
+            let cacheExpireTime: Date | undefined;
 
             // 3. Create Cache if we have AI Ready resources
             if (geminiUris.length > 0) {
                 // Create a cache with 1 hour TTL (3600 seconds)
-                cacheName = await this.geminiFileSearch.createCache(geminiUris, 3600);
+                const cacheResult = await this.geminiFileSearch.createCache(geminiUris, 3600);
+                cacheName = cacheResult.name;
+                cacheExpireTime = cacheResult.expireTime;
             }
 
             // 4. Filter out cached resources from RAG list to avoid redundancy
@@ -132,7 +135,7 @@ export class SermonGeneratorService {
                 author: r!.author
             }));
 
-            return { cacheName, remainingDocIds, cachedResources, geminiUris }; // 🎯 NEW: Return geminiUris
+            return { cacheName, cacheExpireTime, remainingDocIds, cachedResources, geminiUris }; // 🎯 NEW: Return cacheExpireTime
 
         } catch (error: any) {
             // Handle specific Gemini limits and permission errors gracefully

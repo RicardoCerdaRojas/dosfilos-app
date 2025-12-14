@@ -32,12 +32,12 @@ export const createGeminiStore = onCall<CreateStoreRequest>({ cors: true }, asyn
         const { resourceIds } = request.data;
         console.log('Request data:', JSON.stringify(request.data));
 
-        // TODO: Use defineSecret or .env for production. Hardcoded for PoC stability.
-        const apiKey = "AIzaSyBCu_Qn3o5gEbT8amV4tki5_fsQycYYVoc";
+        // Use environment variable for API key (set in Firebase Functions config)
+        const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            console.error('❌ GEMINI_API_KEY not set');
-            throw new Error('GEMINI_API_KEY not set');
+            console.error('❌ GEMINI_API_KEY environment variable is not set');
+            throw new Error('GEMINI_API_KEY environment variable is not set');
         }
 
         if (!resourceIds || resourceIds.length === 0) {

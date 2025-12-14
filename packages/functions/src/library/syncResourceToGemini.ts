@@ -31,11 +31,11 @@ export const syncResourceToGemini = onCall<SyncResourceRequest>({
     try {
         const { resourceId } = request.data;
 
-        // TODO: Use defineSecret or .env for production. Hardcoded for PoC stability.
-        const apiKey = "AIzaSyBCu_Qn3o5gEbT8amV4tki5_fsQycYYVoc";
+        // Use environment variable for API key (set in Firebase Functions config)
+        const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            throw new Error('GEMINI_API_KEY not set');
+            throw new Error('GEMINI_API_KEY environment variable is not set');
         }
 
         if (!resourceId) {

@@ -84,5 +84,14 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.userId);
       allow delete: if isAuthenticated(); // Allow delete for batch operations
     }
+
+    // Contact Leads collection (from landing page)
+    // Anyone can create a lead (for contact form)
+    // Only admin (rdocerda@gmail.com) can read all leads
+    match /contact_leads/{leadId} {
+      allow create: if true; // Public form submission
+      allow read: if isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com';
+      allow update, delete: if isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com';
+    }
   }
 }

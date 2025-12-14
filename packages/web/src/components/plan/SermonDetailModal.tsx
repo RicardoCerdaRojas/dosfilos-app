@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { SermonItem } from '@/hooks/useSeriesData';
 import {
   Dialog,
@@ -21,7 +22,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, FileText, Wand2, Trash2, Eye, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SermonDetailModalProps {
@@ -59,22 +59,41 @@ export function SermonDetailModal({
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [dateValue, setDateValue] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // Local display date that updates immediately
+  const [displayDate, setDisplayDate] = useState<Date | undefined>(sermon?.scheduledDate);
+
+  // Sync displayDate when sermon prop changes
+  useEffect(() => {
+    if (sermon) {
+      setDisplayDate(sermon.scheduledDate);
+    }
+  }, [sermon, sermon?.scheduledDate]);
+
+  // Reset editing state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsEditingDate(false);
+    }
+  }, [isOpen]);
 
   if (!sermon) return null;
 
   const handleDateSave = () => {
-    if (onUpdateDate && dateValue) {
-      onUpdateDate(sermon.id, new Date(dateValue));
-    } else if (onUpdateDate && !dateValue) {
-      onUpdateDate(sermon.id, null);
+    // Add T12:00:00 to avoid timezone issues (creates date at noon local time)
+    const newDate = dateValue ? new Date(dateValue + 'T12:00:00') : null;
+    // Update local display immediately
+    setDisplayDate(newDate || undefined);
+    // Call parent handler
+    if (onUpdateDate) {
+      onUpdateDate(sermon.id, newDate);
     }
     setIsEditingDate(false);
   };
 
   const handleDateEdit = () => {
     setIsEditingDate(true);
-    if (sermon.scheduledDate) {
-      setDateValue(new Date(sermon.scheduledDate).toISOString().split('T')[0]);
+    if (displayDate) {
+      setDateValue(new Date(displayDate).toISOString().split('T')[0]);
     } else {
       setDateValue('');
     }
@@ -144,10 +163,10 @@ export function SermonDetailModal({
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <span className={cn(
                   "text-sm",
-                  !sermon.scheduledDate && "text-muted-foreground italic"
+                  !displayDate && "text-muted-foreground italic"
                 )}>
-                  {sermon.scheduledDate ? (
-                    new Date(sermon.scheduledDate).toLocaleDateString('es-ES', {
+                  {displayDate ? (
+                    new Date(displayDate).toLocaleDateString('es-ES', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',

@@ -22,6 +22,7 @@ import { PublicSermonPage } from '@/pages/public/sermon';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import { GeminiTest } from '@/pages/GeminiTest';
 import { Landing } from '@/pages/Landing';
+import { AdminLeads } from '@/pages/admin/AdminLeads';
 import { useEffect } from 'react';
 
 // Redirect component for old sermon routes
@@ -59,6 +60,13 @@ function App() {
           <Route path="/sermons/:id" element={<RedirectToSermon />} />
           <Route path="/sermons/:id/edit" element={<RedirectToSermon suffix="/edit" />} />
           <Route path="/sermons/:id/preach" element={<RedirectToSermon suffix="/preach" />} />
+
+          {/* Admin Routes (Protected by component) */}
+          <Route path="/admin/leads" element={
+            <ProtectedRoute>
+              <AdminLeads />
+            </ProtectedRoute>
+          } />
 
           {/* Protected Dashboard Routes */}
           <Route

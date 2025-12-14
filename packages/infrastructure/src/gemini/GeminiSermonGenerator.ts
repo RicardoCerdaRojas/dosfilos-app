@@ -37,7 +37,6 @@ export class GeminiSermonGenerator implements ISermonGenerator {
 
     private getModel(cacheName?: string): GenerativeModel {
         if (cacheName) {
-            console.log(`🚀 Using Cached Content: ${cacheName}`);
             return this.genAI.getGenerativeModel({
                 model: GEMINI_CONFIG.MODEL_NAME,
                 // @ts-ignore
@@ -79,7 +78,6 @@ export class GeminiSermonGenerator implements ISermonGenerator {
 
         // If no cache but we have geminiUris (fallback mode), send them!
         if (config?.geminiUris && Array.isArray(config.geminiUris) && config.geminiUris.length > 0) {
-            console.log(`📎 attaching ${config.geminiUris.length} file URIs directly to prompt (Fallback Mode)`);
             return [
                 prompt,
                 ...config.geminiUris.map((uri: string) => ({
@@ -312,7 +310,6 @@ FORMATO JSON REQUERIDO:
             // Note: In chat, we can pass parts to sendMessage
             let contentToSend: any = messageToSend;
             if (!context?.cacheName && context?.geminiUris && context.geminiUris.length > 0) {
-                console.log(`📎 attaching ${context.geminiUris.length} file URIs to chat message`);
                 contentToSend = [
                     messageToSend,
                     ...context.geminiUris.map((uri: string) => ({
@@ -471,7 +468,6 @@ REGLAS:
         _config?: any
     ): Promise<import('@dosfilos/domain').HomileticalApproachPreview[]> {
         try {
-            console.log('📋 [Phase 1] Generating homiletical approach previews...');
             const { HomileticsPreviewPromptBuilder } = await import('./prompts/HomileticsPreviewPromptBuilder');
             const prompt = new HomileticsPreviewPromptBuilder()
                 .withExegesis(exegesis)
@@ -499,7 +495,6 @@ REGLAS:
                 : [];
 
             if (previews.length === 0) throw new Error('No se generaron vistas previas de enfoques válidos');
-            console.log(`✅ [Phase 1] Generated ${previews.length} approach previews`);
             return previews;
         } catch (error: any) {
             console.error('❌ [Phase 1] Error generating approach previews:', error);
@@ -514,7 +509,6 @@ REGLAS:
         _config?: any
     ): Promise<import('@dosfilos/domain').HomileticalApproach> {
         try {
-            console.log(`🎨 [Phase 2] Developing selected approach: ${selectedPreview.id}`);
             const { ApproachDevelopmentPromptBuilder } = await import('./prompts/ApproachDevelopmentPromptBuilder');
             const prompt = new ApproachDevelopmentPromptBuilder()
                 .withExegesis(exegesis)
@@ -527,7 +521,6 @@ REGLAS:
             // I should respect that, but if _config has files, I must attach them!
             // Wait, existing code said: `const model = this.getModel(); // No cacheName = fresh model`
             // So I should pass the files if available!
-            console.log('⚠️  NOT using cache for Phase 2 (Fresh Model) - but using Files if available');
             const model = this.getModel(); // Fresh model
             const content = this.prepareContent(prompt, _config); // 🎯 Use prepared content (attach files again)
 
@@ -555,7 +548,6 @@ REGLAS:
             if (!fullApproach.homileticalProposition || !fullApproach.outline.mainPoints || fullApproach.outline.mainPoints.length === 0) {
                 throw new Error('El enfoque desarrollado está incompleto');
             }
-            console.log(`✅ [Phase 2] Successfully developed approach: ${selectedPreview.id}`);
             return fullApproach;
         } catch (error: any) {
             console.error(`❌ [Phase 2] Error developing approach ${selectedPreview.id}:`, error);

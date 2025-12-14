@@ -41,6 +41,7 @@ export function useGeneratorChat({
     const [cacheName, setCacheName] = useState<string | null>(initialCacheName);
     const [cacheMetadata, setCacheMetadata] = useState<{
         createdAt: Date;
+        expiresAt: Date;
         resources: Array<{ title: string; author: string }>;
     } | null>(null);
     const [hydratedResources, setHydratedResources] = useState<LibraryResourceEntity[]>([]);
@@ -81,7 +82,8 @@ export function useGeneratorChat({
                     setCacheName(parsed.cacheName);
                     setCacheMetadata({
                         ...parsed.metadata,
-                        createdAt: new Date(parsed.metadata.createdAt)
+                        createdAt: new Date(parsed.metadata.createdAt),
+                        expiresAt: parsed.metadata.expiresAt ? new Date(parsed.metadata.expiresAt) : new Date(Date.now() + 3600000) // 1hr fallback
                     });
 
                     // Notify parent if callback exists
@@ -206,7 +208,8 @@ export function useGeneratorChat({
         if (cacheName && cacheMetadata) {
             return {
                 isCached: true,
-                lastRefresh: cacheMetadata.createdAt,
+                createdAt: cacheMetadata.createdAt,
+                expiresAt: cacheMetadata.expiresAt,
                 resources: cacheMetadata.resources,
                 totalAvailableResources: totalDocs
             };
@@ -319,9 +322,10 @@ export function useGeneratorChat({
                 setCacheName(result.cacheName);
                 onCacheUpdate?.(result.cacheName);
 
-                // Update Metadata
+                // Update Metadata with expireTime from service
                 const newMetadata = {
                     createdAt: new Date(),
+                    expiresAt: result.cacheExpireTime || new Date(Date.now() + 3600000), // Fallback: 1 hour from now
                     resources: result.cachedResources || hydratedResources.map(r => ({ title: r.title, author: r.author }))
                 };
                 setCacheMetadata(newMetadata);

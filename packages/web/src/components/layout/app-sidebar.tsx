@@ -1,11 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users 
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
 import { toast } from 'sonner';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@dosfilos/infrastructure';
 import {
   Sidebar,
   SidebarContent,
@@ -47,10 +50,35 @@ const navigationGroups = [
   ],
 ];
 
+const adminNavigation = [
+  { name: 'Leads de Contacto', href: '/admin/leads', icon: Users },
+];
+
+const ADMIN_EMAIL = 'rdocerda@gmail.com';
+
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const [newLeadsCount, setNewLeadsCount] = useState(0);
+
+  // Subscribe to new leads count for admin
+  useEffect(() => {
+    if (!user || user.email !== ADMIN_EMAIL) return;
+
+    const q = query(
+      collection(db, 'contact_leads'),
+      where('status', '==', 'new')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setNewLeadsCount(snapshot.size);
+    }, (error) => {
+      console.error('Error counting new leads:', error);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -111,6 +139,51 @@ export function AppSidebar() {
             {groupIndex < navigationGroups.length - 1 && <SidebarSeparator />}
           </div>
         ))}
+
+        {/* Admin Section - Only visible for admin users */}
+        {user?.email === ADMIN_EMAIL && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <div className="px-2 py-1 text-xs font-semibold text-amber-600 group-data-[collapsible=icon]:hidden">
+                    ⚡ Admin
+                  </div>
+                  {adminNavigation.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    const isLeadsItem = item.href === '/admin/leads';
+                    return (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.href} className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                              <item.icon className="h-5 w-5" />
+                              <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
+                            </div>
+                            {isLeadsItem && newLeadsCount > 0 && (
+                              <span 
+                                className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full group-data-[collapsible=icon]:hidden"
+                                style={{ 
+                                  backgroundColor: '#ef4444', 
+                                  color: 'white',
+                                  minWidth: '20px',
+                                  textAlign: 'center'
+                                }}
+                              >
+                                {newLeadsCount > 99 ? '99+' : newLeadsCount}
+                              </span>
+                            )}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
 
       {/* Footer with User Menu */}
