@@ -1,4 +1,4 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent, PhaseDocument } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent, PhaseDocument, LibraryResourceEntity } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService, GeminiFileSearchService } from '@dosfilos/infrastructure';
 import { libraryService } from './LibraryService';
 
@@ -81,37 +81,61 @@ export class SermonGeneratorService {
             return [];
         }
     }
-
     /**
      * Public method to manually refresh the Gemini Context Cache
+     * @param config - Phase configuration with libraryDocIds
+     * @param preloadedResources - Optional: Already loaded resources to avoid re-fetching from Firestore
      */
     async refreshContext(
-        config: ExtendedPhaseConfiguration
+        config: ExtendedPhaseConfiguration,
+        preloadedResources?: LibraryResourceEntity[]
     ): Promise<{ cacheName?: string; cacheExpireTime?: Date; remainingDocIds: string[]; cachedResources?: Array<{ title: string; author: string }>; geminiUris?: string[] }> {
-        return this.prepareGeminiContext(config);
+        return this.prepareGeminiContext(config, true, preloadedResources);
     }
 
     /**
      * Prepare Gemini Context Cache for AI Ready resources
      * Returns the cache name (if created) and the list of remaining doc IDs for RAG
+     * @param preloadedResources - If provided, use these instead of fetching from Firestore
      */
     private async prepareGeminiContext(
         config: ExtendedPhaseConfiguration,
-        retry: boolean = true // 🎯 NEW: Retry flag for self-healing
+        retry: boolean = true, // 🎯 NEW: Retry flag for self-healing
+        preloadedResources?: LibraryResourceEntity[]
     ): Promise<{ cacheName?: string; cacheExpireTime?: Date; remainingDocIds: string[]; cachedResources?: Array<{ title: string; author: string }>; geminiUris?: string[] }> {
         if (!this.geminiFileSearch || !config.libraryDocIds || config.libraryDocIds.length === 0) {
             return { remainingDocIds: config.libraryDocIds || [] };
         }
 
         try {
-            // 1. Fetch full resource details to check for geminiUri
-            // We use Promise.all to fetch them in parallel
-            const resources = await Promise.all(
-                config.libraryDocIds.map(id => libraryService.getResource(id).catch(() => null))
+            // 1. Use preloaded resources OR fetch from Firestore
+            let resources: (LibraryResourceEntity | null)[];
+
+            if (preloadedResources && preloadedResources.length > 0) {
+                console.log('🔍 prepareGeminiContext: Using PRELOADED resources');
+                // Filter to only include resources that match the libraryDocIds
+                resources = config.libraryDocIds.map(id =>
+                    preloadedResources.find(r => r.id === id) || null
+                );
+            } else {
+                console.log('🔍 prepareGeminiContext: Fetching resources from Firestore...');
+                resources = await Promise.all(
+                    config.libraryDocIds.map(id => libraryService.getResource(id).catch(() => null))
+                );
+            }
+
+            // 🔍 DEBUG: Log what we got
+            console.log('🔍 prepareGeminiContext: Resources:',
+                resources.map(r => r ? {
+                    id: r.id,
+                    title: r.title?.substring(0, 30),
+                    geminiUri: r.metadata?.geminiUri?.substring(0, 50) || 'NOT FOUND'
+                } : 'NULL')
             );
 
             // 2. Identify AI Ready resources (those with geminiUri)
             const aiReadyResources = resources.filter(r => r && r.metadata?.geminiUri);
+            console.log('🔍 prepareGeminiContext: AI Ready resources count:', aiReadyResources.length);
             const geminiUris = aiReadyResources.map(r => r!.metadata!.geminiUri);
 
             let cacheName: string | undefined;

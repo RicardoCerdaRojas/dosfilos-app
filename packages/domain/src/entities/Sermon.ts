@@ -15,7 +15,7 @@ export interface Sermon {
     bibleReferences: string[];
     tags: string[];
     category?: string | undefined;
-    status: 'draft' | 'published' | 'archived';
+    status: 'working' | 'draft' | 'published' | 'archived';
     createdAt: Date;
     updatedAt: Date;
     publishedAt?: Date | undefined;
@@ -39,6 +39,9 @@ export interface Sermon {
         cacheName?: string;
         selectedResourceIds?: string[];
     } | undefined;
+
+    // If this is a published copy, references the original draft sermon
+    sourceSermonId?: string | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -50,7 +53,7 @@ export class SermonEntity implements Sermon {
         public bibleReferences: string[] = [],
         public tags: string[] = [],
         public category: string | undefined = undefined,
-        public status: 'draft' | 'published' | 'archived' = 'draft',
+        public status: 'working' | 'draft' | 'published' | 'archived' = 'working',
         public createdAt: Date = new Date(),
         public updatedAt: Date = new Date(),
         public publishedAt: Date | undefined = undefined,
@@ -60,7 +63,8 @@ export class SermonEntity implements Sermon {
         public wizardProgress?: Sermon['wizardProgress'],
         public seriesId?: string,
         public scheduledDate?: Date,
-        public preachingHistory: PreachingLog[] = []
+        public preachingHistory: PreachingLog[] = [],
+        public sourceSermonId?: string
     ) {
         this.validate();
     }
@@ -93,7 +97,7 @@ export class SermonEntity implements Sermon {
             data.bibleReferences ?? [],
             data.tags ?? [],
             data.category,
-            data.status ?? 'draft',
+            data.status ?? 'working',
             new Date(),
             new Date(),
             d.publishedAt,
@@ -103,7 +107,8 @@ export class SermonEntity implements Sermon {
             data.wizardProgress,
             data.seriesId,
             data.scheduledDate,
-            data.preachingHistory ?? []
+            data.preachingHistory ?? [],
+            data.sourceSermonId
         );
     }
 
@@ -127,7 +132,8 @@ export class SermonEntity implements Sermon {
             data.wizardProgress ?? this.wizardProgress,
             data.seriesId ?? this.seriesId,
             data.scheduledDate ?? this.scheduledDate,
-            data.preachingHistory ?? this.preachingHistory
+            data.preachingHistory ?? this.preachingHistory,
+            d.sourceSermonId ?? this.sourceSermonId
         );
     }
 
@@ -150,7 +156,37 @@ export class SermonEntity implements Sermon {
             this.wizardProgress,
             this.seriesId,
             this.scheduledDate,
-            this.preachingHistory
+            this.preachingHistory,
+            this.sourceSermonId
+        );
+    }
+
+    /**
+     * Creates a published COPY of this sermon with a new ID.
+     * The copy references this sermon as the source (sourceSermonId).
+     * Used when publishing from the wizard without losing the draft.
+     */
+    publishAsCopy(): SermonEntity {
+        return new SermonEntity(
+            crypto.randomUUID(), // New ID for the copy
+            this.userId,
+            this.title,
+            this.content,
+            this.bibleReferences,
+            this.tags,
+            this.category,
+            'published',
+            new Date(), // New creation date
+            new Date(),
+            new Date(), // Published now
+            undefined, // No share token yet
+            false,
+            this.authorName,
+            undefined, // Don't copy wizardProgress to published version
+            this.seriesId,
+            this.scheduledDate,
+            [],
+            this.id // Link back to the source draft
         );
     }
 
@@ -173,7 +209,8 @@ export class SermonEntity implements Sermon {
             this.wizardProgress,
             this.seriesId,
             this.scheduledDate,
-            this.preachingHistory
+            this.preachingHistory,
+            this.sourceSermonId
         );
     }
 
@@ -196,7 +233,8 @@ export class SermonEntity implements Sermon {
             this.wizardProgress,
             this.seriesId,
             this.scheduledDate,
-            this.preachingHistory
+            this.preachingHistory,
+            this.sourceSermonId
         );
     }
 
@@ -219,7 +257,8 @@ export class SermonEntity implements Sermon {
             this.wizardProgress,
             this.seriesId,
             this.scheduledDate,
-            this.preachingHistory
+            this.preachingHistory,
+            this.sourceSermonId
         );
     }
 

@@ -15,7 +15,7 @@ export class SermonService {
         bibleReferences?: string[];
         tags?: string[];
         category?: string;
-        status?: 'draft' | 'published' | 'archived';
+        status?: 'working' | 'draft' | 'published' | 'archived';
         authorName?: string;
         seriesId?: string;
         scheduledDate?: Date;
@@ -50,7 +50,7 @@ export class SermonService {
             bibleReferences: string[];
             tags: string[];
             category: string;
-            status: 'draft' | 'published' | 'archived';
+            status: 'working' | 'draft' | 'published' | 'archived';
             seriesId: string;
             scheduledDate: Date;
             wizardProgress: any;
@@ -101,6 +101,29 @@ export class SermonService {
             }
             const publishedSermon = sermon.publish();
             return await this.sermonRepository.update(publishedSermon);
+        } catch (error: any) {
+            throw new Error(error.message || 'Error al publicar el sermón');
+        }
+    }
+
+    /**
+     * Creates a published COPY of the draft sermon.
+     * The original draft remains untouched (status='working').
+     * The copy has a new ID and status='published'.
+     * @returns The newly created published sermon copy
+     */
+    async publishSermonAsCopy(draftId: string): Promise<SermonEntity> {
+        try {
+            const draft = await this.sermonRepository.findById(draftId);
+            if (!draft) {
+                throw new Error('Borrador no encontrado');
+            }
+
+            // Create a published copy using the entity method
+            const publishedCopy = draft.publishAsCopy();
+
+            // Save the copy as a new sermon
+            return await this.sermonRepository.create(publishedCopy);
         } catch (error: any) {
             throw new Error(error.message || 'Error al publicar el sermón');
         }
@@ -167,7 +190,7 @@ export class SermonService {
                 content: '', // Empty until final draft
                 bibleReferences: [data.passage],
                 tags: [],
-                status: 'draft',
+                status: 'draft', // 🎯 Using 'draft' for wizard in-progress sermons
                 isShared: false,
                 authorName: 'Pastor',
                 wizardProgress: data.wizardProgress || {
@@ -185,6 +208,7 @@ export class SermonService {
 
     async getInProgressSermons(userId: string): Promise<SermonEntity[]> {
         try {
+            // 🎯 FIX: Changed from 'working' to 'draft' to match actual Firestore values
             const sermons = await this.sermonRepository.findByUserId(userId, {
                 status: 'draft',
                 limit: 20,

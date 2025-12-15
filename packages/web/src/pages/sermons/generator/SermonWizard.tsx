@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useWizard, WizardProvider } from './WizardContext';
 import { WizardHeader } from './WizardHeader';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { sermonService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { SermonEntity } from '@dosfilos/domain';
+import { LibraryContextProvider } from '@/context/library-context';
 
 function WizardContent() {
     const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, reset, setCacheName, setSelectedResourceIds } = useWizard();
@@ -210,10 +211,48 @@ function WizardContent() {
     );
 }
 
+// Wrapper to connect LibraryContextProvider with WizardContext
+function LibraryContextWrapper({ children }: { children: React.ReactNode }) {
+    const { user } = useFirebase();
+    const { selectedResourceIds, config, step } = useWizard();
+    
+    // Map step to phase config key
+    const phaseConfigKey = useMemo(() => {
+        switch (step) {
+            case 1: return 'exegesis';
+            case 2: return 'homiletics';
+            case 3: return 'drafting';
+            default: return 'exegesis';
+        }
+    }, [step]);
+    
+    // Get resource IDs from config based on current phase
+    const effectiveResourceIds = useMemo(() => {
+        // If explicitly selected resources, use those
+        if (selectedResourceIds.length > 0) return selectedResourceIds;
+        
+        // Get from phase-specific config
+        const phaseConfig = config?.[phaseConfigKey as keyof typeof config] as any;
+        return phaseConfig?.libraryDocIds || phaseConfig?.documents?.map((d: any) => d.id) || [];
+    }, [selectedResourceIds, config, phaseConfigKey]);
+    
+    return (
+        <LibraryContextProvider 
+            user={user} 
+            initialResourceIds={effectiveResourceIds}
+            phaseKey={phaseConfigKey}
+        >
+            {children}
+        </LibraryContextProvider>
+    );
+}
+
 export function SermonWizard() {
     return (
         <WizardProvider>
-            <WizardContent />
+            <LibraryContextWrapper>
+                <WizardContent />
+            </LibraryContextWrapper>
         </WizardProvider>
     );
 }

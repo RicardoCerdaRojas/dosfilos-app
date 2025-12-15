@@ -12,7 +12,8 @@ import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel'
 import { useFirebase } from '@/context/firebase-context';
 import { WorkflowPhase, HomileticalAnalysis, CoachingStyle } from '@dosfilos/domain';
 import { useContentHistory } from '@/hooks/useContentHistory';
-import { useGeneratorChat } from '@/hooks/useGeneratorChat'; // 🎯 NEW
+import { useGeneratorChat } from '@/hooks/useGeneratorChat';
+import { useLibraryContext } from '@/context/library-context';
 // 🎯 NEW: Sub-step components
 import { ApproachSelectionView } from './homiletics/ApproachSelectionView';
 import { ApproachSelectionInfo } from './homiletics/ApproachSelectionInfo';
@@ -66,8 +67,11 @@ export function StepHomiletics() {
         user,
         initialCacheName: cacheName,
         selectedResourceIds,
-        onCacheUpdate: setCacheName // Sync back to WizardContext
+        onCacheUpdate: setCacheName
     });
+
+    // 🎯 NEW: Use LibraryContext for sync/cache
+    const { ensureReady } = useLibraryContext();
 
 
     
@@ -128,6 +132,12 @@ export function StepHomiletics() {
         setApproachPreviews([]);
         
         try {
+            // 🎯 Use LibraryContext for sync/cache
+            console.log('🔍 handleGenerate (Homiletics) - Ensuring library context is ready');
+            toast.loading('Preparando contexto de biblioteca...', { id: 'context-prep' });
+            await ensureReady();
+            toast.dismiss('context-prep');
+            
             const baseConfig = config ? config[WorkflowPhase.HOMILETICS] : undefined;
             
             // Merge session config with global config
@@ -260,7 +270,7 @@ export function StepHomiletics() {
         }
     };
 
-    // 🎯 Handle continuing to next step
+    // 🎯 REFACTORED: Navigation is instant - context prep happens in handleGenerate only
     const handleContinue = () => {
         setStep(3);
     };

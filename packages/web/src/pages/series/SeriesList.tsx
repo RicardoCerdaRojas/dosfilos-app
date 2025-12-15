@@ -140,8 +140,8 @@ export function SeriesList() {
                   })}
                 </div>
                 <Badge variant="secondary">
-                  {/* Count: plannedSermons without draftId + draftIds + sermonIds */}
-                  {((item.metadata?.plannedSermons?.filter(p => !p.draftId)?.length || 0) + (item.draftIds?.length || 0) + item.sermonIds.length) || 0} sermones
+                  {/* Count only plannedSermons as source of truth for the plan */}
+                  {item.metadata?.plannedSermons?.length || 0} sermones
                 </Badge>
               </div>
 

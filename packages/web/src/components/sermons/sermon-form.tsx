@@ -17,7 +17,7 @@ export type SermonFormData = {
   content: string;
   bibleReferences: string[];
   tags: string[];
-  status: 'draft' | 'published' | 'archived';
+  status: 'working' | 'draft' | 'published' | 'archived';
 };
 
 interface SermonFormProps {
@@ -38,7 +38,7 @@ export function SermonForm({
   const [content, setContent] = useState(defaultValues?.content || '');
   const [bibleReferences, setBibleReferences] = useState<string[]>(defaultValues?.bibleReferences || []);
   const [tags, setTags] = useState<string[]>(defaultValues?.tags || []);
-  const [status, setStatus] = useState<'draft' | 'published' | 'archived'>(defaultValues?.status || 'draft');
+  const [status, setStatus] = useState<'working' | 'draft' | 'published' | 'archived'>(defaultValues?.status || 'draft');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -45,8 +45,7 @@ export function useSeriesData(seriesId: string | undefined) {
                     try {
                         draft = await sermonService.getSermon(planned.draftId);
                     } catch (error) {
-                        // Draft may have been deleted or permissions changed - treat as no draft
-                        console.warn(`Could not load draft ${planned.draftId}, treating as planned:`, error);
+                        // Draft may have been deleted or permissions changed - treat as no draft (expected for orphaned references)
                     }
 
                     if (draft) {
@@ -106,7 +105,7 @@ export function useSeriesData(seriesId: string | undefined) {
                             });
                         }
                     } catch (error) {
-                        console.warn(`Could not load additional draft ${draftId}, skipping:`, error);
+                        // Draft may have been deleted or permissions changed - skip (expected for orphaned references)
                     }
                 }
             }

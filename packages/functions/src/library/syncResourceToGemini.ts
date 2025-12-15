@@ -24,7 +24,8 @@ interface SyncResourceRequest {
 export const syncResourceToGemini = onCall<SyncResourceRequest>({
     cors: true,
     memory: '1GiB',
-    timeoutSeconds: 300
+    timeoutSeconds: 300,
+    secrets: ['GEMINI_API_KEY']
 }, async (request) => {
     console.log('🚀 syncResourceToGemini function started');
 

@@ -15,7 +15,7 @@ export interface FindOptions {
     offset?: number;
     orderBy?: 'createdAt' | 'updatedAt' | 'title';
     order?: 'asc' | 'desc';
-    status?: 'draft' | 'published' | 'archived';
+    status?: 'working' | 'draft' | 'published' | 'archived';
     tags?: string[];
     category?: string;
 }

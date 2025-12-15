@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWizard } from './WizardContext';
 import { useFirebase } from '@/context/firebase-context'; // 🎯 NEW
+import { useLibraryContext } from '@/context/library-context';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { WizardLayout } from './WizardLayout';
 import { PromptSettings } from './PromptSettings';
@@ -55,9 +56,12 @@ export function StepExegesis() {
         content: exegesis,
         config,
         user,
-        initialCacheName: null, // 🎯 Step 1: Force isolated cache history (don't inherit "future" caches)
-        selectedResourceIds: [] // TODO: Add resource selector to Exegesis if needed
+        initialCacheName: null,
+        selectedResourceIds: []
     });
+
+    // 🎯 NEW: Use LibraryContext for sync/cache
+    const { ensureReady } = useLibraryContext();
 
 
     const [loading, setLoading] = useState(false);
@@ -86,6 +90,12 @@ export function StepExegesis() {
 
         setLoading(true);
         try {
+            // 🎯 Use LibraryContext for sync/cache
+            console.log('🔍 handleGenerate - Ensuring library context is ready');
+            toast.loading('Preparando contexto de biblioteca...', { id: 'context-prep' });
+            await ensureReady();
+            toast.dismiss('context-prep');
+            
             const exegesisConfig = config ? config[WorkflowPhase.EXEGESIS] : undefined;
             const result = await sermonGeneratorService.generateExegesis(passage, rules, exegesisConfig, user?.uid);
             setExegesis(result.exegesis);
@@ -100,6 +110,8 @@ export function StepExegesis() {
             setLoading(false);
         }
     };
+
+    // 🎯 REFACTORED: Navigation is now instant - context prep happens in handleGenerate only
 
     // Version getters for history modal
     const getSectionVersions = (sectionId: string) => {

@@ -73,7 +73,7 @@ export function useCreateSermon() {
         bibleReferences?: string[];
         tags?: string[];
         category?: string;
-        status?: 'draft' | 'published' | 'archived';
+        status?: 'working' | 'draft' | 'published' | 'archived';
     }) => {
         if (!user) throw new Error('Usuario no autenticado');
 
@@ -108,7 +108,7 @@ export function useUpdateSermon() {
             bibleReferences: string[];
             tags: string[];
             category: string;
-            status: 'draft' | 'published' | 'archived';
+            status: 'working' | 'draft' | 'published' | 'archived';
         }>
     ) => {
         setLoading(true);

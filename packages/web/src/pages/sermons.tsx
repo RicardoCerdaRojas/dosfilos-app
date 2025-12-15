@@ -80,8 +80,15 @@ export function SermonsPage() {
     loadSeries();
   }, [user]);
 
-  // Filter sermons
+  // Filter sermons - exclude wizard drafts from the list
   const filteredSermons = sermons.filter((sermon) => {
+    // Never show 'working' status sermons in the list
+    if (sermon.status === 'working') return false;
+    
+    // Also hide sermons that are wizard drafts (have wizardProgress but no sourceSermonId)
+    // These are drafts that were published before our refactoring
+    if (sermon.wizardProgress && !sermon.sourceSermonId) return false;
+    
     const matchesSearch = sermon.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlan = planFilter === 'all' 
       ? true 

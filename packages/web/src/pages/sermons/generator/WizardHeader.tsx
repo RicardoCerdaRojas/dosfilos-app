@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { BookOpen, Mic2, FileText, Check, LogOut } from 'lucide-react';
 import { useWizard } from './WizardContext';
 import { Button } from '@/components/ui/button';
+import { LibraryStatusBadge } from '@/components/library/LibraryStatusBadge';
 
 interface WizardHeaderProps {
   currentStep: number;
@@ -92,6 +93,7 @@ export function WizardHeader({ currentStep, onExit }: WizardHeaderProps) {
             <div className="text-sm font-medium text-muted-foreground hidden md:block">
               Paso {currentStep} de 3
             </div>
+            <LibraryStatusBadge />
             {onExit && (
               <Button 
                 variant="ghost" 

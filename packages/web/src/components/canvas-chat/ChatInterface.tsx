@@ -20,8 +20,17 @@ export interface ActiveContext {
     isCached: boolean;
     createdAt?: Date | null;
     expiresAt?: Date | null;
-    resources: Array<{ title: string; author: string }>;
+    resources: Array<{ 
+        title: string; 
+        author: string;
+        hasGeminiUri?: boolean;
+        geminiSyncedAt?: Date | null;
+        isGeminiExpired?: boolean;
+    }>;
     totalAvailableResources?: number; // 🎯 Total docs configured for this step
+    // Computed stats for header indicators
+    syncedResourceCount?: number;
+    expiredResourceCount?: number;
 }
 
 interface ChatInterfaceProps<T = any> {
@@ -41,6 +50,8 @@ interface ChatInterfaceProps<T = any> {
   showStyleSelector?: boolean;
   activeContext?: ActiveContext;
   onRefreshContext?: () => void;
+  onSyncDocuments?: () => Promise<void>; // 🎯 NEW: Sync expired documents
+  isSyncingDocuments?: boolean; // 🎯 NEW: Sync loading state
 }
 
 
@@ -59,7 +70,9 @@ export function ChatInterface<T = any>({
   onStyleChange,
   showStyleSelector = false,
   activeContext,
-  onRefreshContext
+  onRefreshContext,
+  onSyncDocuments,
+  isSyncingDocuments = false
 }: ChatInterfaceProps<T>) {
   const [userInput, setUserInput] = useState('');
   const [internalIsLoading, setInternalIsLoading] = useState(false);
@@ -217,6 +230,48 @@ export function ChatInterface<T = any>({
               </p>
             </div>
             
+            {/* 🎯 Always Visible Context Indicators */}
+            {activeContext && (
+                <div className="flex items-center gap-1.5 text-[10px] flex-shrink-0">
+                    {/* Documents Indicator */}
+                    <span 
+                        className={`px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                            activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0
+                                ? 'bg-amber-100 text-amber-700'
+                                : activeContext.syncedResourceCount && activeContext.syncedResourceCount > 0
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : 'bg-gray-100 text-gray-500'
+                        }`}
+                        title={
+                            activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0
+                                ? `${activeContext.expiredResourceCount} documentos expirados`
+                                : `${activeContext.syncedResourceCount || 0} documentos sincronizados`
+                        }
+                    >
+                        📚 {activeContext.syncedResourceCount || 0}/{activeContext.totalAvailableResources || 0}
+                        {activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0 ? ' ⚠️' : ' ✓'}
+                    </span>
+                    
+                    {/* Cache Indicator */}
+                    <span 
+                        className={`px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                            activeContext.isCached && activeContext.expiresAt && new Date(activeContext.expiresAt) > new Date()
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-500'
+                        }`}
+                        title={
+                            activeContext.isCached 
+                                ? activeContext.expiresAt && new Date(activeContext.expiresAt) > new Date()
+                                    ? `Cache activo hasta ${new Date(activeContext.expiresAt).toLocaleTimeString()}`
+                                    : 'Cache expirado'
+                                : 'Sin cache'
+                        }
+                    >
+                        🗃️ {activeContext.isCached && activeContext.expiresAt && new Date(activeContext.expiresAt) > new Date() ? '✓' : '✗'}
+                    </span>
+                </div>
+            )}
+            
             {/* Context Info Button */}
             {activeContext && (
                 <Popover>
@@ -282,8 +337,26 @@ export function ChatInterface<T = any>({
                             )}
                         </div>
                         
-                        {/* Refresh Button - Moved to top for visibility */}
-                        <div className="p-2 border-b bg-muted/10 flex justify-center">
+                        {/* Action Buttons */}
+                        <div className="p-2 border-b bg-muted/10 space-y-1.5">
+                            {/* Sync Documents Button - Show if documents expired */}
+                            {(activeContext.expiredResourceCount ?? 0) > 0 && onSyncDocuments ? (
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="w-full text-xs h-7 border-amber-300 text-amber-700 hover:bg-amber-50" 
+                                    onClick={onSyncDocuments}
+                                    disabled={isSyncingDocuments || isLoading}
+                                >
+                                    {isSyncingDocuments ? (
+                                        <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Sincronizando...</>
+                                    ) : (
+                                        <><BookOpen className="h-3 w-3 mr-2" /> Sincronizar {activeContext.expiredResourceCount} Documentos</>
+                                    )}
+                                </Button>
+                            ) : null}
+                            
+                            {/* Regenerate Cache Button */}
                             <Button 
                                 variant="outline" 
                                 size="sm" 
@@ -292,12 +365,23 @@ export function ChatInterface<T = any>({
                                     console.log('Refresh clicked', { onRefreshContext });
                                     onRefreshContext?.();
                                 }}
-                                disabled={isLoading || !onRefreshContext || (activeContext.totalAvailableResources === 0)}
+                                disabled={
+                                    isLoading || 
+                                    isSyncingDocuments ||
+                                    !onRefreshContext || 
+                                    (activeContext.totalAvailableResources === 0) ||
+                                    !!(activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0)
+                                }
                             >
                                 <Zap className="h-3 w-3 mr-2" />
-                                {onRefreshContext 
-                                    ? (activeContext.totalAvailableResources === 0 ? 'Sin documentos para cachear' : 'Regenerar Contexto (Cache)') 
-                                    : 'Regenerar no disponible'}
+                                {!onRefreshContext 
+                                    ? 'Regenerar no disponible'
+                                    : activeContext.totalAvailableResources === 0 
+                                        ? 'Sin documentos para cachear' 
+                                        : activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0
+                                            ? 'Sincronizar documentos primero'
+                                            : 'Regenerar Contexto (Cache)'
+                                }
                             </Button>
                         </div>
 
@@ -305,9 +389,15 @@ export function ChatInterface<T = any>({
                             {activeContext.resources.length > 0 ? (
                                 <div className="space-y-1">
                                     {activeContext.resources.map((r, i) => (
-                                        <div key={i} className="text-xs px-2 py-1.5 rounded hover:bg-muted/50 flex flex-col">
-                                            <span className="font-medium truncate">{r.title}</span>
-                                            <span className="text-muted-foreground text-[10px]">{r.author}</span>
+                                        <div key={i} className="text-xs px-2 py-1.5 rounded hover:bg-muted/50 flex items-center gap-2">
+                                            {/* Status indicator */}
+                                            <span className="flex-shrink-0">
+                                                {r.isGeminiExpired ? '⚠️' : r.hasGeminiUri ? '✅' : '❌'}
+                                            </span>
+                                            <div className="flex-1 min-w-0">
+                                                <span className="font-medium truncate block">{r.title}</span>
+                                                <span className="text-muted-foreground text-[10px]">{r.author}</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

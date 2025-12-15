@@ -32,6 +32,7 @@ interface WizardContextType extends WizardState {
     reset: () => void;
     saving: boolean;
     lastSaved: Date | null;
+    sermonId: string | null; // 🎯 Expose to allow publishing
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -161,6 +162,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         config,
         cacheName,
         selectedResourceIds,
+        sermonId, // 🎯 Expose to allow publishing
         setStep,
         setPassage,
         setRules,
@@ -174,7 +176,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         reset,
         saving,
         lastSaved
-    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved, cacheName, selectedResourceIds]);
+    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved, cacheName, selectedResourceIds, sermonId]);
 
     return (
         <WizardContext.Provider value={contextValue}>

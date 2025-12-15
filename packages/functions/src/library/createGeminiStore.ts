@@ -25,7 +25,10 @@ interface CreateStoreRequest {
     resourceIds: string[];
 }
 
-export const createGeminiStore = onCall<CreateStoreRequest>({ cors: true }, async (request) => {
+export const createGeminiStore = onCall<CreateStoreRequest>({
+    cors: true,
+    secrets: ['GEMINI_API_KEY']
+}, async (request) => {
     console.log('🚀 createGeminiStore function started');
 
     try {

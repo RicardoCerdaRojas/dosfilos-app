@@ -64,6 +64,15 @@ export function ResourceCard({
     const Icon = iconMap[category?.icon || 'FileQuestion'] || FileQuestion;
     const fileSizeMB = (resource.sizeBytes / (1024 * 1024)).toFixed(2);
     const isGeminiReady = !!resource.metadata?.geminiUri;
+    
+    // Calculate Gemini URI expiration (44h margin from 48h TTL)
+    const GEMINI_TTL_HOURS = 44;
+    const geminiSyncedAt = resource.metadata?.geminiSyncedAt 
+        ? new Date(resource.metadata.geminiSyncedAt) 
+        : null;
+    const isGeminiExpired = geminiSyncedAt 
+        ? (Date.now() - geminiSyncedAt.getTime()) > (GEMINI_TTL_HOURS * 60 * 60 * 1000)
+        : false;
 
     const getStatusBadge = () => {
         switch (indexStatus) {
@@ -88,6 +97,31 @@ export function ResourceCard({
             default:
                 return null;
         }
+    };
+
+    // Get AI Ready badge with expiration state
+    const getAIReadyBadge = () => {
+        if (!isGeminiReady) return null;
+        
+        if (isGeminiExpired) {
+            return (
+                <span 
+                    className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1" 
+                    title="Sincronización expirada - Re-sincronizar"
+                >
+                    <AlertCircle className="h-3 w-3" /> AI Expirado
+                </span>
+            );
+        }
+        
+        return (
+            <span 
+                className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex items-center gap-1" 
+                title={geminiSyncedAt ? `Sincronizado: ${geminiSyncedAt.toLocaleString()}` : "Listo para IA"}
+            >
+                <Sparkles className="h-3 w-3" /> AI Ready
+            </span>
+        );
     };
 
     const getExtractionBadge = () => {
@@ -155,11 +189,7 @@ export function ResourceCard({
                     </span>
                     {getExtractionBadge()}
                     {resource.textExtractionStatus === 'ready' && getStatusBadge()}
-                    {isGeminiReady && (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex items-center gap-1" title="Listo para IA">
-                            <Sparkles className="h-3 w-3" /> AI Ready
-                        </span>
-                    )}
+                    {getAIReadyBadge()}
                 </div>
 
                 {/* Phase Preference Badges */}

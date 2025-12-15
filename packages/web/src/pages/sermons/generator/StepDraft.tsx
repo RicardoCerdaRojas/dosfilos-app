@@ -4,7 +4,7 @@ import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload } from 'lucide-react';
 import { sermonGeneratorService, sermonService, generatorChatService, libraryService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
@@ -13,7 +13,8 @@ import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
 import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel';
 import { RAGSourcesDisplay } from '@/components/sermon/RAGSourcesDisplay';
 import { useContentHistory } from '@/hooks/useContentHistory';
-import { useGeneratorChat } from '@/hooks/useGeneratorChat'; // 🎯 NEW
+import { useGeneratorChat } from '@/hooks/useGeneratorChat';
+import { useLibraryContext } from '@/context/library-context';
 import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -24,10 +25,9 @@ import { PassageQuickView } from '@/components/sermons/PassageQuickView';
 export function StepDraft() {
     const navigate = useNavigate();
     const { user } = useFirebase();
-    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, selectedResourceIds, cacheName, setCacheName } = useWizard();
+    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, selectedResourceIds, cacheName, setCacheName, sermonId, reset, saving } = useWizard();
     const [loading, setLoading] = useState(false);
-    const [saving, setSaving] = useState(false);
-    // 🎯 NEW: Unified Chat Hook
+    const [publishing, setPublishing] = useState(false);
     const {
         messages,
         setMessages,
@@ -46,6 +46,13 @@ export function StepDraft() {
         selectedResourceIds,
         onCacheUpdate: setCacheName
     });
+
+    // 🎯 NEW: Use LibraryContext for sync/cache
+    const { 
+        ensureReady, 
+        syncExpiredDocuments: syncDocuments, 
+        isLoading: isSyncingDocuments 
+    } = useLibraryContext();
 
     const [isAiProcessing, setIsAiProcessing] = useState(false);
     
@@ -79,6 +86,12 @@ export function StepDraft() {
 
         setLoading(true);
         try {
+            // 🎯 Use LibraryContext for sync/cache
+            console.log('🔍 handleGenerate (Draft) - Ensuring library context is ready');
+            toast.loading('Preparando contexto de biblioteca...', { id: 'context-prep' });
+            await ensureReady();
+            toast.dismiss('context-prep');
+            
             const baseConfig = config ? config[WorkflowPhase.DRAFTING] : undefined;
             
             // Merge session config with global config
@@ -133,30 +146,42 @@ ${draft.callToAction ? `
         `.trim();
     };
 
-    const handleSave = async () => {
-        if (!draft || !user || !exegesis) return;
+    // Save and exit - just navigate back without publishing
+    const handleSaveAndExit = async () => {
+        // Auto-save is already handling the save
+        toast.success('Borrador guardado');
+        navigate('/dashboard');
+    };
 
-        setSaving(true);
+    // Publish as copy - creates a published version without losing the draft
+    const handlePublish = async () => {
+        if (!draft || !user || !exegesis || !sermonId) {
+            toast.error('No hay borrador para publicar');
+            return;
+        }
+
+        setPublishing(true);
         try {
+            // First update the draft with the final content
             const content = getFullContent();
-
-            const sermon = await sermonService.createSermon({
-                userId: user.uid,
+            await sermonService.updateSermon(sermonId, {
                 title: draft.title,
                 content,
                 bibleReferences: [exegesis.passage],
                 tags: exegesis.keyWords.map(kw => kw.original),
-                status: 'published',
-                authorName: user.displayName || 'Pastor',
             });
 
-            toast.success('Sermón guardado exitosamente');
-            navigate(`/dashboard/sermons/${sermon.id}`);
+            // Then publish as copy
+            const publishedSermon = await sermonService.publishSermonAsCopy(sermonId);
+
+            toast.success('Sermón publicado exitosamente');
+            reset(); // Clear wizard state
+            navigate(`/dashboard/sermons/${publishedSermon.id}`);
         } catch (error: any) {
             console.error(error);
-            toast.error('Error al guardar el sermón');
+            toast.error('Error al publicar el sermón');
         } finally {
-            setSaving(false);
+            setPublishing(false);
         }
     };
 
@@ -774,6 +799,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         }}
                         activeContext={activeContext}
                         onRefreshContext={handleRefreshContext}
+                        onSyncDocuments={syncDocuments}
+                        isSyncingDocuments={isSyncingDocuments}
                     />
                 </ResizableChatPanel>
             </div>
@@ -796,20 +823,30 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 </Button>
                 
                 <Button 
-                    onClick={handleSave} 
-                    disabled={saving}
+                    onClick={handleSaveAndExit} 
+                    variant="secondary"
                     size="lg" 
                     className="flex-1"
                 >
-                    {saving ? (
+                    <Save className="mr-2 h-4 w-4" />
+                    Guardar y Salir
+                </Button>
+                
+                <Button 
+                    onClick={handlePublish} 
+                    disabled={publishing || !sermonId}
+                    size="lg" 
+                    className="flex-1"
+                >
+                    {publishing ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Guardando...
+                            Publicando...
                         </>
                     ) : (
                         <>
-                            <Save className="mr-2 h-4 w-4" />
-                            Guardar Sermón
+                            <Upload className="mr-2 h-4 w-4" />
+                            Publicar Sermón
                         </>
                     )}
                 </Button>
