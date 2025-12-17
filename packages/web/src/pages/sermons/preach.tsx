@@ -17,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
 // Helper to format time
@@ -91,21 +90,8 @@ export function PreachModePage() {
     }
   }, [selectedReference]);
 
-  // Bible Reference Pattern (Robust) - Same as SermonPreview
+  // Bible Reference Pattern (Robust)
   const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
-
-  // Helper to replace refs in plain text only
-  const replaceRefsInText = (text: string) => {
-    return text.replace(BIBLE_REF_PATTERN, (match, ref) => {
-      const prefix = match.slice(0, match.length - ref.length);
-      return `${prefix}<a href="#bible-${encodeURIComponent(ref.trim())}">${ref.trim()}</a>`;
-    });
-  };
-
-  // Helper to replace markdown bold with HTML strong
-  const replaceBoldWithStrong = (text: string) => {
-    return text.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
-  };
 
   // Markdown Processing for Bible Links
   const processContent = (content: string) => {
@@ -127,7 +113,7 @@ export function PreachModePage() {
     processed = processed.replace(BIBLE_REF_PATTERN, (match, ref) => {
       const prefix = match.slice(0, match.length - ref.length);
       const trimmedRef = ref.trim();
-      return `${prefix}[📖 ${trimmedRef}](# bible-${encodeURIComponent(trimmedRef)})`;
+      return `${prefix}[📖 ${trimmedRef}](#bible-${encodeURIComponent(trimmedRef)})`;
     });
     
     return processed;
