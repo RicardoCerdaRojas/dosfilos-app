@@ -172,7 +172,15 @@ export default function SubscriptionPage() {
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map((plan) => {
+        {plans
+          .filter(plan => {
+            // Hide free plan if user has any paid subscription (active or cancelled)
+            if (plan.id === 'free' && userProfile?.subscription?.planId && userProfile.subscription.planId !== 'free') {
+              return false;
+            }
+            return true;
+          })
+          .map((plan) => {
           const isCurrent = plan.id === currentPlanId;
           const isPopular = plan.id === 'starter';
 
