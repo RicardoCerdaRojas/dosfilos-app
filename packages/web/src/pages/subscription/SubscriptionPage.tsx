@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { getFeatureLabel } from '@/utils/featureLabels';
 import { CancelSubscriptionDialog } from '@/components/subscription/dialogs/CancelSubscriptionDialog';
 import { PlanChangeDialog } from '@/components/subscription/dialogs/PlanChangeDialog';
+import { ReactivateSubscriptionDialog } from '@/components/subscription/dialogs/ReactivateSubscriptionDialog';
 
 export default function SubscriptionPage() {
   const { user } = useFirebase();
@@ -22,6 +23,7 @@ export default function SubscriptionPage() {
   // Dialog states
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [planChangeDialogOpen, setPlanChangeDialogOpen] = useState(false);
+  const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
   // Load user profile with subscription
@@ -96,6 +98,7 @@ export default function SubscriptionPage() {
 
   const currentPlanId = userProfile?.subscription?.planId || 'free';
   const isSubscriptionActive = userProfile?.subscription?.status === 'active';
+  const isSubscriptionCancelled = userProfile?.subscription?.status === 'cancelled';
   const currentPlan = plans.find(p => p.id === currentPlanId);
 
   return (
@@ -116,6 +119,11 @@ export default function SubscriptionPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-amber-500" />
                   Plan Actual: {currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
+                  {isSubscriptionCancelled && (
+                    <Badge variant="outline" className="ml-2 text-orange-600">
+                      Cancelada
+                    </Badge>
+                  )}
                 </CardTitle>
                 <CardDescription className="mt-2">
                   {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
@@ -124,6 +132,14 @@ export default function SubscriptionPage() {
                         userProfile.subscription.currentPeriodEnd.seconds 
                           ? userProfile.subscription.currentPeriodEnd.seconds * 1000 
                           : userProfile.subscription.currentPeriodEnd
+                      ).toLocaleDateString()}
+                    </>
+                  ) : isSubscriptionCancelled && userProfile.subscription.endsAt ? (
+                    <>
+                      🎁 Mantienes acceso hasta: {new Date(
+                        userProfile.subscription.endsAt.seconds 
+                          ? userProfile.subscription.endsAt.seconds * 1000 
+                          : userProfile.subscription.endsAt
                       ).toLocaleDateString()}
                     </>
                   ) : (
@@ -138,6 +154,15 @@ export default function SubscriptionPage() {
                   onClick={() => setCancelDialogOpen(true)}
                 >
                   Cancelar Suscripción
+                </Button>
+              )}
+              {isSubscriptionCancelled && (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => setReactivateDialogOpen(true)}
+                >
+                  Reactivar Suscripción
                 </Button>
               )}
             </div>
@@ -231,6 +256,21 @@ export default function SubscriptionPage() {
         onSuccess={handleDialogSuccess}
         currentPlan={currentPlan}
         newPlan={selectedPlan}
+      />
+
+      <ReactivateSubscriptionDialog
+        open={reactivateDialogOpen}
+        onOpenChange={setReactivateDialogOpen}
+        onSuccess={handleDialogSuccess}
+        currentPeriodEnd={
+          userProfile?.subscription?.endsAt 
+            ? new Date(
+                userProfile.subscription.endsAt.seconds 
+                  ? userProfile.subscription.endsAt.seconds * 1000 
+                  : userProfile.subscription.endsAt
+              )
+            : undefined
+        }
       />
     </div>
   );
