@@ -20,6 +20,7 @@ import { RegisterPage } from '@/pages/auth/register';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
 import { PublicSermonPage } from '@/pages/public/sermon';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
+import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
 import { GeminiTest } from '@/pages/GeminiTest';
 import { Landing } from '@/pages/Landing';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
@@ -98,6 +99,7 @@ function App() {
             </Route>
             <Route path="planner" element={<PlannerWizard />} />
             <Route path="library" element={<LibraryManager />} />
+            <Route path="subscription" element={<SubscriptionPage />} />
 
             {/* AI Sermon Generator */}
             <Route path="generate-sermon" element={<SermonWizard />} />
