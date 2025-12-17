@@ -519,9 +519,16 @@ export function ExpandedSection({
                               ))}
                             </ul>
                           ) : typeof value === 'string' ? (
-                            <div className="mt-1 text-sm leading-relaxed">
-                              {renderTextWithBibleLinks(value)}
-                            </div>
+                            // Use MarkdownRenderer for content, illustration, and other long text fields
+                            (key === 'content' || key === 'illustration' || key === 'significance' || value.length > 100) ? (
+                              <div className="mt-1">
+                                <MarkdownRenderer content={value} />
+                              </div>
+                            ) : (
+                              <div className="mt-1 text-sm leading-relaxed">
+                                {renderTextWithBibleLinks(value)}
+                              </div>
+                            )
                           ) : (
                             <p className="text-sm mt-1 text-foreground">
                               {JSON.stringify(value)}
