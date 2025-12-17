@@ -17,13 +17,13 @@ export class AuthorizationService {
     /**
      * Check if user has access to a specific module
      */
-    hasModule(user: User | null, module: Module): boolean {
+    async hasModule(user: User | null, module: Module): Promise<boolean> {
         if (!user) return false;
 
         // Admin has all modules
         if (this.isAdmin(user)) return true;
 
-        const plan = this.getActivePlan(user);
+        const plan = await this.getActivePlan(user);
         if (!plan) {
             // Free plan - default modules
             return this.isFreeModule(module);
@@ -35,13 +35,13 @@ export class AuthorizationService {
     /**
      * Check if user has a specific feature capability
      */
-    hasFeature(user: User | null, feature: Feature): boolean {
+    async hasFeature(user: User | null, feature: Feature): Promise<boolean> {
         if (!user) return false;
 
         // Admin has all features
         if (this.isAdmin(user)) return true;
 
-        const plan = this.getActivePlan(user);
+        const plan = await this.getActivePlan(user);
         if (!plan) {
             // Free plan - basic features only
             return this.isFreeFeature(feature);
@@ -53,7 +53,7 @@ export class AuthorizationService {
     /**
      * Check if user has admin permission
      */
-    hasAdminPermission(user: User | null, permission: AdminPermission): boolean {
+    hasAdminPermission(user: User | null, _permission: AdminPermission): boolean {
         if (!user) return false;
         return this.isAdmin(user);
     }
