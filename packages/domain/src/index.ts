@@ -1,5 +1,9 @@
 // Entities
 export * from './entities/User';
+export * from './entities/Feature';
+export * from './entities/Subscription';
+export * from './entities/PlanDefinition';
+export * from './entities/Organization';
 export * from './entities/Sermon';
 export * from './entities/SermonSeries';
 export * from './entities/LibraryResource';
@@ -13,6 +17,9 @@ export * from './repositories/IAuthRepository';
 export * from './repositories/ISermonRepository';
 export * from './repositories/ISeriesRepository';
 export * from './repositories/IVectorRepository';
+export * from './repositories/IUserProfileRepository';
+export * from './repositories/IPlanRepository';
+export * from './repositories/IOrganizationRepository';
 
 // Services
 export * from './services/IAIService';

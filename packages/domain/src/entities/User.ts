@@ -1,8 +1,15 @@
+import { Subscription } from './Subscription';
+
 export interface User {
     id: string;
     email: string;
     displayName: string | null;
     photoURL: string | null;
+
+    // Subscription fields
+    stripeCustomerId?: string;    // Stripe customer ID (at root level)
+    subscription?: Subscription;  // Current subscription details
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -13,6 +20,8 @@ export class UserEntity implements User {
         public email: string,
         public displayName: string | null = null,
         public photoURL: string | null = null,
+        public stripeCustomerId?: string,
+        public subscription?: Subscription,
         public createdAt: Date = new Date(),
         public updatedAt: Date = new Date()
     ) { }
@@ -23,6 +32,8 @@ export class UserEntity implements User {
             data.email,
             data.displayName ?? null,
             data.photoURL ?? null,
+            data.stripeCustomerId,
+            data.subscription,
             data.createdAt ?? new Date(),
             data.updatedAt ?? new Date()
         );
@@ -34,6 +45,8 @@ export class UserEntity implements User {
             this.email,
             displayName,
             photoURL ?? this.photoURL,
+            this.stripeCustomerId,
+            this.subscription,
             this.createdAt,
             new Date()
         );
