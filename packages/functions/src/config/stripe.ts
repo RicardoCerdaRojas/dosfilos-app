@@ -7,7 +7,7 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(STRIPE_SECRET_KEY || 'dummy_key', {
-    apiVersion: '2024-12-18.acacia',
+    apiVersion: '2025-02-24.acacia',
     typescript: true,
 });
 

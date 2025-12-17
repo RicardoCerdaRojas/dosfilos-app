@@ -131,8 +131,6 @@ async function handleSubscriptionUpdated(
         return;
     }
 
-    const priceId = subscription.items.data[0].price.id;
-
     await db.collection('users').doc(firebaseUID).update({
         'subscription.status': subscription.status,
         'subscription.currentPeriodStart': new Date(subscription.current_period_start * 1000),
