@@ -101,6 +101,13 @@ export default function SubscriptionPage() {
   const isSubscriptionCancelled = userProfile?.subscription?.status === 'cancelled';
   const currentPlan = plans.find(p => p.id === currentPlanId);
 
+  // Debug: log subscription to see what fields we have
+  if (userProfile?.subscription && isSubscriptionCancelled) {
+    console.log('🔍 Cancelled subscription data:', userProfile.subscription);
+    console.log('📅 endDate field:', userProfile.subscription.endDate);
+    console.log('📅 currentPeriodEnd field:', userProfile.subscription.currentPeriodEnd);
+  }
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="mb-8">
@@ -134,12 +141,12 @@ export default function SubscriptionPage() {
                           : userProfile.subscription.currentPeriodEnd
                       ).toLocaleDateString()}
                     </>
-                  ) : isSubscriptionCancelled && userProfile.subscription.endsAt ? (
+                  ) : isSubscriptionCancelled && userProfile.subscription.endDate ? (
                     <>
                       🎁 Mantienes acceso hasta: {new Date(
-                        userProfile.subscription.endsAt.seconds 
-                          ? userProfile.subscription.endsAt.seconds * 1000 
-                          : userProfile.subscription.endsAt
+                        userProfile.subscription.endDate.seconds 
+                          ? userProfile.subscription.endDate.seconds * 1000 
+                          : userProfile.subscription.endDate
                       ).toLocaleDateString()}
                     </>
                   ) : (
@@ -263,11 +270,11 @@ export default function SubscriptionPage() {
         onOpenChange={setReactivateDialogOpen}
         onSuccess={handleDialogSuccess}
         currentPeriodEnd={
-          userProfile?.subscription?.endsAt 
+          userProfile?.subscription?.endDate 
             ? new Date(
-                userProfile.subscription.endsAt.seconds 
-                  ? userProfile.subscription.endsAt.seconds * 1000 
-                  : userProfile.subscription.endsAt
+                userProfile.subscription.endDate.seconds 
+                  ? userProfile.subscription.endDate.seconds * 1000 
+                  : userProfile.subscription.endDate
               )
             : undefined
         }
