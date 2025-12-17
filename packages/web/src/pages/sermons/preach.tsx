@@ -4,7 +4,7 @@ import { useSermon } from '@/hooks/use-sermons';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, Minus, Plus, Clock, Play, Pause, RotateCcw, 
-  Settings, BookOpen 
+  Settings, BookOpen, Maximize, Minimize
 } from 'lucide-react';
 import {
   Dialog,
@@ -35,6 +35,11 @@ export function PreachModePage() {
   const [fontSize, setFontSize] = useState(24); // Base font size in px
   const [showControls, setShowControls] = useState(true);
   
+  // Fullscreen & Focus State
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isBlackout, setIsBlackout] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  
   // Timer State
   const [targetDuration, setTargetDuration] = useState(30); // minutes
   const [timeLeft, setTimeLeft] = useState(30 * 60);
@@ -45,6 +50,77 @@ export function PreachModePage() {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
   const [bibleText, setBibleText] = useState<string | null>(null);
   const [loadingBible, setLoadingBible] = useState(false);
+
+  // Fullscreen API handlers
+  const enterFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } catch (err) {
+      console.error('Error entering fullscreen:', err);
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    } catch (err) {
+      console.error('Error exiting fullscreen:', err);
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Scroll progress tracker
+  useEffect(() => {
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const progress = (scrollTop / (documentHeight - windowHeight)) * 100;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // B = Blackout toggle
+      if (e.key === 'b' || e.key === 'B') {
+        setIsBlackout(prev => !prev);
+      }
+      // F or F11 = Fullscreen toggle
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        if (isFullscreen) {
+          exitFullscreen();
+        } else {
+          enterFullscreen();
+        }
+      }
+      // Escape = Exit fullscreen and blackout
+      if (e.key === 'Escape') {
+        setIsBlackout(false);
+        if (isFullscreen) {
+          exitFullscreen();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isFullscreen]);
 
   // Timer Logic
   useEffect(() => {
@@ -58,8 +134,6 @@ export function PreachModePage() {
     }
     return () => clearInterval(interval);
   }, [isRunning, timeLeft]);
-
-  // Hide controls on scroll/inactivity could be added here
   
   // Bible Fetching Logic
   const fetchBibleText = async (ref: string) => {
@@ -217,6 +291,26 @@ export function PreachModePage() {
             </div>
           </div>
 
+          {/* Fullscreen Toggle Button */}
+          <Button 
+            variant={isFullscreen ? "default" : "outline"} 
+            size="sm"
+            onClick={() => isFullscreen ? exitFullscreen() : enterFullscreen()}
+            className="gap-2"
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize className="h-4 w-4" />
+                Salir Full Screen
+              </>
+            ) : (
+              <>
+                <Maximize className="h-4 w-4" />
+                Full Screen
+              </>
+            )}
+          </Button>
+
           {/* Font Controls */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => setFontSize(s => Math.max(16, s - 2))}>
@@ -354,6 +448,38 @@ export function PreachModePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Blackout Overlay - Press B to toggle */}
+      {isBlackout && (
+        <div 
+          className="fixed inset-0 bg-black z-[100] flex items-center justify-center cursor-pointer"
+          onClick={() => setIsBlackout(false)}
+        >
+          <div className="text-white/50 text-sm">Presiona B o haz clic para continuar</div>
+        </div>
+      )}
+
+      {/* Scroll Progress Indicator */}
+      {scrollProgress > 0 && (
+        <div className="fixed top-0 left-0 right-0 h-2 bg-muted/40 z-[60] shadow-lg">
+          <div 
+            className="h-full bg-primary shadow-lg transition-all duration-300"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Help - Only in fullscreen */}
+      {isFullscreen && (
+        <div className="fixed bottom-4 left-4 bg-background/90 backdrop-blur border rounded-lg px-4 py-3 text-xs text-muted-foreground z-50 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"
+          style={{ animationDelay: '500ms' }}
+        >
+          <div className="space-y-1">
+            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">B</kbd> = Pantalla negra</div>
+            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">ESC</kbd> = Salir fullscreen</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
