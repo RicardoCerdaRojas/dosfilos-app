@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard 
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -46,6 +46,7 @@ const navigationGroups = [
   // Group 3: Resources
   [
     { name: 'Biblioteca', href: '/dashboard/library', icon: Library },
+    { name: 'Mi Suscripción', href: '/dashboard/subscription', icon: CreditCard },
     { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
   ],
 ];
