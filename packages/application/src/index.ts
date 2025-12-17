@@ -13,3 +13,7 @@ export * from './services/WorkflowService';
 export * from './services/ConfigService';
 export * from './services/ContentRefinementService';
 export * from './services/RAGService';
+
+// Subscription services
+export * from './services/AuthorizationService';
+export * from './services/SubscriptionService';
