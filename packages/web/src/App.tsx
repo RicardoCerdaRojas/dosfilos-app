@@ -20,6 +20,7 @@ import { RegisterPage } from '@/pages/auth/register';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
 import { PublicSermonPage } from '@/pages/public/sermon';
 import { PricingPage } from '@/pages/public/pricing';
+import { WelcomePage } from '@/pages/onboarding/WelcomePage';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
 import { GeminiTest } from '@/pages/GeminiTest';
@@ -51,6 +52,9 @@ function App() {
           
           {/* Public Pricing Page */}
           <Route path="/pricing" element={<PricingPage />} />
+          
+          {/* Onboarding - Welcome/Plan Selection */}
+          <Route path="/welcome" element={<WelcomePage />} />
           
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />

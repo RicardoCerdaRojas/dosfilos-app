@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
 import { authService } from '../../../../application/src/services/AuthService';
 import { getPlanMetadata, isPaidPlan, isValidPlan } from '@dosfilos/domain';
 import { httpsCallable } from 'firebase/functions';
@@ -40,7 +39,6 @@ export function RegisterPage() {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Get selected plan from URL parameter (default to free)
   const selectedPlanId = searchParams.get('plan') || 'free';
@@ -72,13 +70,8 @@ export function RegisterPage() {
     } catch (error: any) {
       console.error('Checkout error:', error);
       toast.error('Error al crear sesión de pago. Por favor intenta de nuevo.');
-      // Navigate to dashboard anyway (user can subscribe later)
       navigate('/dashboard');
     }
-  };
-
-  const handleWelcomeModalSkip = () => {
-    navigate('/dashboard');
   };
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -91,8 +84,8 @@ export function RegisterPage() {
       if (needsCheckout) {
         await redirectToCheckout();
       } else {
-        // Show welcome modal for plan selection
-        setShowWelcomeModal(true);
+        // Navigate to welcome page for plan selection
+        navigate('/welcome');
       }
     } catch (error: any) {
       toast.error(error.message || 'Error al crear la cuenta');
@@ -111,8 +104,8 @@ export function RegisterPage() {
       if (needsCheckout) {
         await redirectToCheckout();
       } else {
-        // Show welcome modal for plan selection
-        setShowWelcomeModal(true);
+        // Navigate to welcome page for plan selection
+        navigate('/welcome');
       }
     } catch (error: any) {
       toast.error(error.message || 'Error al registrarse con Google');
@@ -268,13 +261,6 @@ export function RegisterPage() {
           </Link>
         </p>
       </div>
-
-      {/* Welcome Modal - Shows after successful registration */}
-      <WelcomeModal
-        open={showWelcomeModal}
-        onOpenChange={setShowWelcomeModal}
-        onSkip={handleWelcomeModalSkip}
-      />
     </AuthLayout>
   );
 }
