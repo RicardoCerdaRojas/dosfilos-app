@@ -1,20 +1,27 @@
 import { useNavigate } from 'react-router-dom';
-import { getPublicPlans, isPaidPlan } from '@dosfilos/domain';
 import { PlanCard } from '@/components/subscription/PlanCard';
+import { usePlans, getPlanPriceId } from '@/hooks/usePlans';
 
 /**
  * Public Pricing Page
- * Accessible without authentication
+ * Loads plans from Firestore (single source of truth)
  * Responsibility: Display plans and route to registration
  */
 export function PricingPage() {
   const navigate = useNavigate();
-  const plans = getPublicPlans();
+  const { plans, loading } = usePlans();
 
   const handlePlanSelect = (planId: string) => {
-    // Navigate to registration with plan parameter
     navigate(`/register?plan=${planId}`);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Cargando planes...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,21 +39,32 @@ export function PricingPage() {
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {plans.map((plan) => {
-            const isPopular = plan.id === 'starter';
-            const isPaid = isPaidPlan(plan.id);
+          {plans
+            .filter(p => p.isPublic)
+            .map((plan) => {
+              const isPopular = plan.highlightText === 'Más Popular';
+              const isPaid = plan.id !== 'free';
 
-            return (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                isPopular={isPopular}
-                ctaLabel={isPaid ? 'Suscribirse' : 'Empezar Gratis'}
-                onCtaClick={() => handlePlanSelect(plan.id)}
-                ctaVariant={isPaid ? 'default' : 'outline'}
-              />
-            );
-          })}
+              return (
+                <PlanCard
+                  key={plan.id}
+                  plan={{
+                    id: plan.id,
+                    name: plan.name,
+                    description: plan.description,
+                    priceMonthly: plan.pricing.monthly,
+                    stripePriceId: getPlanPriceId(plan),
+                    features: plan.features,
+                    sortOrder: plan.sortOrder,
+                    isPublic: plan.isPublic,
+                  }}
+                  isPopular={isPopular}
+                  ctaLabel={isPaid ? 'Suscribirse' : 'Empezar Gratis'}
+                  onCtaClick={() => handlePlanSelect(plan.id)}
+                  ctaVariant={isPaid ? 'default' : 'outline'}
+                />
+              );
+            })}
         </div>
 
         {/* Footer Note */}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { authService } from '../../../../application/src/services/AuthService';
-import { getPlanMetadata, isPaidPlan, isValidPlan } from '@dosfilos/domain';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '@dosfilos/infrastructure';
+import { functions, db } from '@dosfilos/infrastructure';
+import { doc, getDoc } from 'firebase/firestore';
+import { FirestorePlan, getPlanPriceId } from '@/hooks/usePlans';
 
 const registerSchema = z.object({
   displayName: z
@@ -39,14 +40,55 @@ export function RegisterPage() {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<FirestorePlan | null>(null);
 
-  // Get selected plan from URL parameter (default to free)
+  // Get selected plan ID from URL parameter
   const selectedPlanId = searchParams.get('plan') || 'free';
-  
-  // Validate plan and get metadata
-  const validPlanId = isValidPlan(selectedPlanId) ? selectedPlanId : 'free';
-  const selectedPlan = getPlanMetadata(validPlanId);
-  const needsCheckout = isPaidPlan(validPlanId);
+  const needsCheckout = selectedPlanId !== 'free';
+
+  // Load plan from Firestore
+  useEffect(() => {
+    const loadPlan = async () => {
+      if (selectedPlanId === 'free') {
+        setSelectedPlan({
+          id: 'free',
+          name: 'Gratis',
+          description: 'Plan gratuito',
+          pricing: { currency: 'USD', monthly: 0 },
+          stripeProductIds: [],
+          features: [],
+          isActive: true,
+          isPublic: true,
+          sortOrder: 0,
+        });
+        return;
+      }
+
+      try {
+        const planDoc = await getDoc(doc(db, 'plans', selectedPlanId));
+        if (planDoc.exists()) {
+          setSelectedPlan({ id: planDoc.id, ...planDoc.data() } as FirestorePlan);
+        } else {
+          // Fallback to free if plan not found
+          setSelectedPlan({
+            id: 'free',
+            name: 'Gratis',
+            description: 'Plan gratuito',
+            pricing: { currency: 'USD', monthly: 0 },
+            stripeProductIds: [],
+            features: [],
+            isActive: true,
+            isPublic: true,
+            sortOrder: 0,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading plan:', error);
+      }
+    };
+
+    loadPlan();
+  }, [selectedPlanId]);
 
   const {
     register,
@@ -57,10 +99,19 @@ export function RegisterPage() {
   });
 
   const redirectToCheckout = async () => {
+    if (!selectedPlan) return;
+    
+    const priceId = getPlanPriceId(selectedPlan);
+    if (!priceId) {
+      toast.error('Plan no disponible. Por favor intenta más tarde.');
+      navigate('/dashboard');
+      return;
+    }
+
     try {
       const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
       const result = await createCheckoutSession({
-        priceId: selectedPlan.stripePriceId,
+        priceId,
         successUrl: `${window.location.origin}/dashboard?welcome=true`,
         cancelUrl: `${window.location.origin}/pricing`,
       });
@@ -146,13 +197,13 @@ export function RegisterPage() {
     >
       <div className="space-y-6">
         {/* Plan Selection Indicator */}
-        {validPlanId !== 'free' && (
+        {selectedPlan && selectedPlan.id !== 'free' && (
           <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Plan seleccionado:</p>
                 <p className="text-lg font-bold text-primary">{selectedPlan.name}</p>
-                <p className="text-sm text-muted-foreground">${selectedPlan.priceMonthly}/mes</p>
+                <p className="text-sm text-muted-foreground">${selectedPlan.pricing.monthly}/mes</p>
               </div>
               <Badge variant="outline" className="bg-background">
                 {needsCheckout ? 'Checkout después del registro' : 'Gratis'}

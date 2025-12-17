@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, PartyPopper } from 'lucide-react';
-import { getPublicPlans, isPaidPlan } from '@dosfilos/domain';
+import { usePlans, getPlanPriceId } from '@/hooks/usePlans';
 import { getFeatureLabel } from '@/utils/featureLabels';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
@@ -11,23 +11,32 @@ import { toast } from 'sonner';
 
 /**
  * Welcome page - Post registration plan selection
+ * Loads plans from Firestore
  * Responsive design: Stack on mobile, grid on desktop
- * Following SRP: Only handles plan selection
  */
 export function WelcomePage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const plans = getPublicPlans().filter(p => p.id !== 'free'); // Only show paid plans
+  const { plans, loading } = usePlans();
+
+  // Only show paid plans (exclude free)
+  const paidPlans = plans.filter(p => p.id !== 'free' && p.isPublic);
 
   const handlePlanSelect = async (planId: string) => {
-    const plan = plans.find(p => p.id === planId);
+    const plan = paidPlans.find(p => p.id === planId);
     if (!plan) return;
+
+    const priceId = getPlanPriceId(plan);
+    if (!priceId) {
+      toast.error('Plan no disponible. Por favor intenta más tarde.');
+      return;
+    }
 
     setIsLoading(true);
     try {
       const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
       const result = await createCheckoutSession({
-        priceId: plan.stripePriceId,
+        priceId,
         successUrl: `${window.location.origin}/dashboard?welcome=true`,
         cancelUrl: `${window.location.origin}/welcome`,
       });
@@ -44,6 +53,14 @@ export function WelcomePage() {
   const handleSkip = () => {
     navigate('/dashboard');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Cargando planes...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -65,8 +82,8 @@ export function WelcomePage() {
 
         {/* Plans Grid - Responsive */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {plans.map((plan) => {
-            const isPopular = plan.id === 'starter';
+          {paidPlans.map((plan) => {
+            const isPopular = plan.highlightText === 'Más Popular';
 
             return (
               <Card
@@ -75,7 +92,7 @@ export function WelcomePage() {
               >
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                    Más Popular
+                    {plan.highlightText}
                   </div>
                 )}
 
@@ -83,7 +100,7 @@ export function WelcomePage() {
                   <CardTitle>{plan.name}</CardTitle>
                   <CardDescription className="min-h-[40px]">{plan.description}</CardDescription>
                   <div className="mt-4">
-                    <span className="text-3xl font-bold">${plan.priceMonthly}</span>
+                    <span className="text-3xl font-bold">${plan.pricing.monthly}</span>
                     <span className="text-muted-foreground text-sm">/mes</span>
                   </div>
                 </CardHeader>
