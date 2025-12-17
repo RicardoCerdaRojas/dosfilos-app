@@ -335,9 +335,16 @@ export function SectionCard({
                                     <li key={idx}>{renderTextWithBibleLinks(v)}</li>
                                   ))}
                                 </ul>
-                              ) : typeof value === 'string' 
-                                ? renderTextWithBibleLinks(value) 
-                                : JSON.stringify(value)}
+                              ) : typeof value === 'string' ? (
+                                // Use MarkdownRenderer for content, illustration, and other long text fields
+                                (key === 'content' || key === 'illustration' || key === 'significance' || value.length > 100) ? (
+                                  <MarkdownRenderer content={value} />
+                                ) : (
+                                  renderTextWithBibleLinks(value)
+                                )
+                              ) : (
+                                JSON.stringify(value)
+                              )}
                             </span>
                           </div>
                         ))}

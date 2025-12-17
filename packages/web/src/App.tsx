@@ -70,6 +70,16 @@ function App() {
           <Route path="/sermons/:id/edit" element={<RedirectToSermon suffix="/edit" />} />
           <Route path="/sermons/:id/preach" element={<RedirectToSermon suffix="/preach" />} />
 
+          {/* Preach Mode - Standalone route without sidebar */}
+          <Route 
+            path="/dashboard/sermons/:id/preach" 
+            element={
+              <ProtectedRoute>
+                <PreachModePage />
+              </ProtectedRoute>
+            } 
+          />
+
           {/* Admin Routes (Protected by component) */}
           <Route path="/admin/leads" element={
             <ProtectedRoute>
@@ -95,7 +105,7 @@ function App() {
               <Route path="generate" element={<SermonWizard />} />
               <Route path=":id" element={<SermonDetailPage />} />
               <Route path=":id/edit" element={<SermonEditPage />} />
-              <Route path=":id/preach" element={<PreachModePage />} />
+              {/* Preach mode removed - moved outside dashboard layout */}
             </Route>
 
             {/* Preaching Plans Management */}

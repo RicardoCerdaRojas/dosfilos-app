@@ -4,7 +4,7 @@ import { useSermon } from '@/hooks/use-sermons';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, Minus, Plus, Clock, Play, Pause, RotateCcw, 
-  Settings, BookOpen 
+  Settings, BookOpen, Maximize, Minimize
 } from 'lucide-react';
 import {
   Dialog,
@@ -17,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
 // Helper to format time
@@ -36,6 +35,11 @@ export function PreachModePage() {
   const [fontSize, setFontSize] = useState(24); // Base font size in px
   const [showControls, setShowControls] = useState(true);
   
+  // Fullscreen & Focus State
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isBlackout, setIsBlackout] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  
   // Timer State
   const [targetDuration, setTargetDuration] = useState(30); // minutes
   const [timeLeft, setTimeLeft] = useState(30 * 60);
@@ -46,6 +50,77 @@ export function PreachModePage() {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
   const [bibleText, setBibleText] = useState<string | null>(null);
   const [loadingBible, setLoadingBible] = useState(false);
+
+  // Fullscreen API handlers
+  const enterFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } catch (err) {
+      console.error('Error entering fullscreen:', err);
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    } catch (err) {
+      console.error('Error exiting fullscreen:', err);
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Scroll progress tracker
+  useEffect(() => {
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const progress = (scrollTop / (documentHeight - windowHeight)) * 100;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // B = Blackout toggle
+      if (e.key === 'b' || e.key === 'B') {
+        setIsBlackout(prev => !prev);
+      }
+      // F or F11 = Fullscreen toggle
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        if (isFullscreen) {
+          exitFullscreen();
+        } else {
+          enterFullscreen();
+        }
+      }
+      // Escape = Exit fullscreen and blackout
+      if (e.key === 'Escape') {
+        setIsBlackout(false);
+        if (isFullscreen) {
+          exitFullscreen();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isFullscreen]);
 
   // Timer Logic
   useEffect(() => {
@@ -59,8 +134,6 @@ export function PreachModePage() {
     }
     return () => clearInterval(interval);
   }, [isRunning, timeLeft]);
-
-  // Hide controls on scroll/inactivity could be added here
   
   // Bible Fetching Logic
   const fetchBibleText = async (ref: string) => {
@@ -91,65 +164,33 @@ export function PreachModePage() {
     }
   }, [selectedReference]);
 
-  // Bible Reference Pattern (Robust) - Same as SermonPreview
+  // Bible Reference Pattern (Robust)
   const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
 
-  // Helper to replace refs in plain text only
-  const replaceRefsInText = (text: string) => {
-    return text.replace(BIBLE_REF_PATTERN, (match, ref) => {
-      const prefix = match.slice(0, match.length - ref.length);
-      return `${prefix}<a href="#bible-${encodeURIComponent(ref.trim())}">${ref.trim()}</a>`;
-    });
-  };
-
-  // Helper to replace markdown bold with HTML strong
-  const replaceBoldWithStrong = (text: string) => {
-    return text.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
-  };
-
-  // Markdown Processing for Bible Links (Smart) - Same as SermonPreview
+  // Markdown Processing for Bible Links
   const processContent = (content: string) => {
     if (!content) return '';
-
-    // Split by existing HTML tags (especially anchors) and markdown links
-    const linkRegex = /(<a\s+[^>]*>.*?<\/a>|\[[^\]]+\]\s*\([^)]+\))/g;
-    const parts = content.split(linkRegex);
     
-    // Phase 1: Bible Refs (inside plain text chunks only)
-    const textWithRefs = parts.map(part => {
-      if (part.match(/^(<a\s+[^>]*>.*?<\/a>|\[[^\]]+\]\s*\([^)]+\))$/)) {
-        return part;
-      }
-      return replaceRefsInText(part);
-    }).join('');
-
-    // Phase 2: Markdown Block/Span Syntax (on the full string)
-    let finalContent = textWithRefs;
+    let processed = content;
     
-    // Bold
-    finalContent = replaceBoldWithStrong(finalContent);
+    // Step 1: Normalize line breaks
+    // First handle actual newlines (from editor)
+    processed = processed.replace(/\n\n+/g, '\n\n'); // Multiple newlines -> double newline (paragraph)
     
-    // Headers (## Title) - Add Tailwind classes for styling
-    finalContent = finalContent.replace(/^(#{1,6})\s+(.+)$/gm, (match, hashes, content) => {
-      const level = hashes.length;
-      const sizes: Record<number, string> = {
-        1: 'text-3xl',
-        2: 'text-2xl',
-        3: 'text-xl',
-        4: 'text-lg',
-        5: 'text-base',
-        6: 'text-sm'
-      };
-      const sizeClass = sizes[level] || 'text-lg';
-      return `<h${level} class="${sizeClass} font-bold text-foreground mt-8 mb-4">${content}</h${level}>`;
+    // Step 2: Convert HTML breaks to newlines
+    // Double <br/> = paragraph break
+    processed = processed.replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '\n\n');
+    // Single <br/> = line break  
+    processed = processed.replace(/<br\s*\/?>/gi, '\n');
+    
+    // Step 3: Add Bible reference links
+    processed = processed.replace(BIBLE_REF_PATTERN, (match, ref) => {
+      const prefix = match.slice(0, match.length - ref.length);
+      const trimmedRef = ref.trim();
+      return `${prefix}[📖 ${trimmedRef}](#bible-${encodeURIComponent(trimmedRef)})`;
     });
-
-    // Blockquotes (> Text) - Add Tailwind classes for styling
-    finalContent = finalContent.replace(/^>\s+(.+)$/gm, (match, content) => {
-      return `<blockquote class="border-l-4 border-primary/30 pl-4 italic my-6 text-muted-foreground bg-muted/10 py-3 pr-4 rounded-r">${content}</blockquote>`;
-    });
-
-    return finalContent;
+    
+    return processed;
   };
 
   const components = {
@@ -166,13 +207,22 @@ export function PreachModePage() {
               setSelectedReference(ref);
             }}
           >
-            <BookOpen className="h-4 w-4" />
             {props.children}
           </span>
         );
       }
       return <a {...props} className="text-blue-500 underline" />;
-    }
+    },
+    // Custom blockquote styling
+    blockquote: ({ node, ...props }: any) => (
+      <blockquote 
+        {...props} 
+        className="border-l-4 border-primary/30 pl-4 my-6 text-muted-foreground bg-muted/10 py-3 pr-4 rounded-r"
+      />
+    ),
+    // Custom heading styling
+    h2: ({ node, ...props }: any) => <h2 {...props} className="text-2xl font-bold mt-8 mb-4" />,
+    h3: ({ node, ...props }: any) => <h3 {...props} className="text-xl font-semibold mt-6 mb-3" />,
   };
 
   if (loading || !sermon) {
@@ -241,6 +291,26 @@ export function PreachModePage() {
             </div>
           </div>
 
+          {/* Fullscreen Toggle Button */}
+          <Button 
+            variant={isFullscreen ? "default" : "outline"} 
+            size="sm"
+            onClick={() => isFullscreen ? exitFullscreen() : enterFullscreen()}
+            className="gap-2"
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize className="h-4 w-4" />
+                Salir Full Screen
+              </>
+            ) : (
+              <>
+                <Maximize className="h-4 w-4" />
+                Full Screen
+              </>
+            )}
+          </Button>
+
           {/* Font Controls */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => setFontSize(s => Math.max(16, s - 2))}>
@@ -278,9 +348,17 @@ export function PreachModePage() {
           className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
           style={{ fontSize: `${fontSize}px` }}
         >
+          <style>{`
+            .prose p {
+              margin-top: 1.25em !important;
+              margin-bottom: 1.25em !important;
+            }
+            .prose p:first-child {
+              margin-top: 0 !important;
+            }
+          `}</style>
           <ReactMarkdown 
             components={components}
-            rehypePlugins={[rehypeRaw]}
             remarkPlugins={[remarkGfm]}
           >
             {processContent(sermon.content)}
@@ -370,6 +448,38 @@ export function PreachModePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Blackout Overlay - Press B to toggle */}
+      {isBlackout && (
+        <div 
+          className="fixed inset-0 bg-black z-[100] flex items-center justify-center cursor-pointer"
+          onClick={() => setIsBlackout(false)}
+        >
+          <div className="text-white/50 text-sm">Presiona B o haz clic para continuar</div>
+        </div>
+      )}
+
+      {/* Scroll Progress Indicator */}
+      {scrollProgress > 0 && (
+        <div className="fixed top-0 left-0 right-0 h-2 bg-muted/40 z-[60] shadow-lg">
+          <div 
+            className="h-full bg-primary shadow-lg transition-all duration-300"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Help - Only in fullscreen */}
+      {isFullscreen && (
+        <div className="fixed bottom-4 left-4 bg-background/90 backdrop-blur border rounded-lg px-4 py-3 text-xs text-muted-foreground z-50 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"
+          style={{ animationDelay: '500ms' }}
+        >
+          <div className="space-y-1">
+            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">B</kbd> = Pantalla negra</div>
+            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">ESC</kbd> = Salir fullscreen</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
