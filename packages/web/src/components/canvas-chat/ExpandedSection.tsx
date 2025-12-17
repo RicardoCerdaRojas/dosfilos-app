@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 
 // Bible reference pattern to detect scripture references in text
 const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
@@ -277,11 +278,12 @@ export function ExpandedSection({
     if (isEditing && section.type === 'text') {
       return (
         <div className="space-y-4 h-full flex flex-col">
-          <Textarea
+          <MarkdownEditor
             value={editContent}
-            onChange={(e: any) => setEditContent(e.target.value)}
-            className="flex-1 min-h-[200px] font-mono text-sm resize-none p-4"
-            placeholder="Escribe el contenido aquí..."
+            onChange={setEditContent}
+            placeholder="Escribe el contenido aquí usando markdown..."
+            height={500}
+            preview="live"
           />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={handleCancel}>
@@ -327,13 +329,21 @@ export function ExpandedSection({
                           {sortedEntries.map(([key, value]) => (
                             <div key={key} className="space-y-1">
                               <Label htmlFor={`item-${i}-${key}`}>{translateFieldName(key)}</Label>
-                              {key === 'significance' || (typeof value === 'string' && value.length > 50) ? (
-                                <Textarea
-                                  id={`item-${i}-${key}`}
+                              {(key === 'content' || key === 'illustration' || key === 'significance' || (typeof value === 'string' && value.length > 100)) ? (
+                                <MarkdownEditor
                                   value={value as string}
-                                  onChange={(e) => handleUpdateItem(key, e.target.value)}
-                                  className="min-h-[80px]"
+                                  onChange={(newValue) => handleUpdateItem(key, newValue)}
+                                  placeholder={`Escribe ${translateFieldName(key).toLowerCase()}...`}
+                                  height={key === 'content' ? 400 : 250}
+                                  preview="live"
                                 />
+                              ) : (typeof value === 'string' && value.length > 50) ? (
+                                  <Textarea
+                                    id={`item-${i}-${key}`}
+                                    value={value as string}
+                                    onChange={(e) => handleUpdateItem(key, e.target.value)}
+                                    className="min-h-[80px]"
+                                  />
                               ) : (
                                 <Input
                                   id={`item-${i}-${key}`}
