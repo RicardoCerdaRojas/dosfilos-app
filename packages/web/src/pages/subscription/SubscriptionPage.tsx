@@ -93,9 +93,13 @@ export default function SubscriptionPage() {
               Plan Actual: {currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
             </CardTitle>
             <CardDescription>
-              {isSubscriptionActive ? (
+              {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
                 <>
-                  Renovación: {new Date(userProfile.subscription.currentPeriodEnd.seconds * 1000).toLocaleDateString()}
+                  Renovación: {new Date(
+                    userProfile.subscription.currentPeriodEnd.seconds 
+                      ? userProfile.subscription.currentPeriodEnd.seconds * 1000 
+                      : userProfile.subscription.currentPeriodEnd
+                  ).toLocaleDateString()}
                 </>
               ) : (
                 'Tu suscripción no está activa'
