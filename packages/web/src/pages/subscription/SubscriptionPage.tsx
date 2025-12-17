@@ -9,6 +9,7 @@ import { db } from '@dosfilos/infrastructure';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
 import { toast } from 'sonner';
+import { getFeatureLabel } from '@/utils/featureLabels';
 
 export default function SubscriptionPage() {
   const { user } = useFirebase();
@@ -143,7 +144,7 @@ export default function SubscriptionPage() {
                   {plan.features?.map((feature: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                      <span className="text-sm">{getFeatureLabel(feature)}</span>
                     </div>
                   ))}
                 </div>
