@@ -11,6 +11,11 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    function isFunction() {
+      // Cloud Functions have special admin access
+      return request.auth.token.firebase.sign_in_provider == 'custom';
+    }
+    
     function isValidSermon() {
       let sermon = request.resource.data;
       let isDraft = sermon.status == 'draft';
@@ -37,6 +42,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow write: if isOwner(userId);
+      
+      // Allow Cloud Functions to update subscription fields
+      allow update: if isFunction() && 
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscription', 'stripeCustomerId', 'updatedAt']));
       
       // User settings subcollection (library categories, etc.)
       match /settings/{settingId} {
@@ -92,6 +101,14 @@ service cloud.firestore {
       allow create: if true; // Public form submission
       allow read: if isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com';
       allow update, delete: if isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com';
+    }
+
+    // Plans collection (subscription plan definitions)
+    // Read-only for authenticated users
+    // Only admin or Cloud Functions can modify
+    match /plans/{planId} {
+      allow read: if isAuthenticated();
+      allow write: if isFunction() || (isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com');
     }
   }
 }
