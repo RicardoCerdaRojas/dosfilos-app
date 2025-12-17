@@ -2,7 +2,7 @@ import { useFirebase } from '@/context/firebase-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Check, Crown, Zap } from 'lucide-react';
+import { Check, Crown, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { doc, getDoc, getDocs, query, collection, where } from 'firebase/firestore';
 import { db } from '@dosfilos/infrastructure';
@@ -101,13 +101,6 @@ export default function SubscriptionPage() {
   const isSubscriptionCancelled = userProfile?.subscription?.status === 'cancelled';
   const currentPlan = plans.find(p => p.id === currentPlanId);
 
-  // Debug: log subscription to see what fields we have
-  if (userProfile?.subscription && isSubscriptionCancelled) {
-    console.log('🔍 Cancelled subscription data:', userProfile.subscription);
-    console.log('📅 endDate field:', userProfile.subscription.endDate);
-    console.log('📅 currentPeriodEnd field:', userProfile.subscription.currentPeriodEnd);
-  }
-
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="mb-8">
@@ -193,11 +186,18 @@ export default function SubscriptionPage() {
                   </Badge>
                 </div>
               )}
+              
+              {isCurrent && (
+                <div className="absolute -top-3 right-4">
+                  <Badge className="bg-green-600 hover:bg-green-700">
+                    ✓ Actual
+                  </Badge>
+                </div>
+              )}
 
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{plan.name}</span>
-                  {isCurrent && <Badge variant="outline">Actual</Badge>}
+                <CardTitle className="flex items-center gap-2">
+                  {plan.name}
                 </CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
