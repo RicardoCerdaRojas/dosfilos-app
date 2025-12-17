@@ -10,12 +10,19 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
 import { toast } from 'sonner';
 import { getFeatureLabel } from '@/utils/featureLabels';
+import { CancelSubscriptionDialog } from '@/components/subscription/dialogs/CancelSubscriptionDialog';
+import { PlanChangeDialog } from '@/components/subscription/dialogs/PlanChangeDialog';
 
 export default function SubscriptionPage() {
   const { user } = useFirebase();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Dialog states
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [planChangeDialogOpen, setPlanChangeDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
   // Load user profile with subscription
   useEffect(() => {
@@ -73,8 +80,23 @@ export default function SubscriptionPage() {
     }
   };
 
+  const handlePlanChange = (plan: any) => {
+    setSelectedPlan(plan);
+    setPlanChangeDialogOpen(true);
+  };
+
+  const handleDialogSuccess = async () => {
+    // Reload user profile
+    if (!user) return;
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      setUserProfile(userDoc.data());
+    }
+  };
+
   const currentPlanId = userProfile?.subscription?.planId || 'free';
   const isSubscriptionActive = userProfile?.subscription?.status === 'active';
+  const currentPlan = plans.find(p => p.id === currentPlanId);
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
@@ -89,23 +111,36 @@ export default function SubscriptionPage() {
       {userProfile?.subscription && (
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-amber-500" />
-              Plan Actual: {currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
-            </CardTitle>
-            <CardDescription>
-              {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
-                <>
-                  Renovación: {new Date(
-                    userProfile.subscription.currentPeriodEnd.seconds 
-                      ? userProfile.subscription.currentPeriodEnd.seconds * 1000 
-                      : userProfile.subscription.currentPeriodEnd
-                  ).toLocaleDateString()}
-                </>
-              ) : (
-                'Tu suscripción no está activa'
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-amber-500" />
+                  Plan Actual: {currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
+                    <>
+                      Renovación: {new Date(
+                        userProfile.subscription.currentPeriodEnd.seconds 
+                          ? userProfile.subscription.currentPeriodEnd.seconds * 1000 
+                          : userProfile.subscription.currentPeriodEnd
+                      ).toLocaleDateString()}
+                    </>
+                  ) : (
+                    'Tu suscripción no está activa'
+                  )}
+                </CardDescription>
+              </div>
+              {isSubscriptionActive && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCancelDialogOpen(true)}
+                >
+                  Cancelar Suscripción
+                </Button>
               )}
-            </CardDescription>
+            </div>
           </CardHeader>
         </Card>
       )}
@@ -154,19 +189,49 @@ export default function SubscriptionPage() {
                   variant={isCurrent ? 'outline' : 'default'}
                   disabled={loading || isCurrent || plan.id === 'free'}
                   onClick={() => {
-                    const priceId = plan.stripeProductIds?.[0];
-                    if (priceId) {
-                      handleSubscribe(priceId);
+                    if (isSubscriptionActive && !isCurrent) {
+                      // User has active subscription, show change dialog
+                      handlePlanChange(plan);
+                    } else {
+                      // User doesn't have subscription, go to checkout
+                      const priceId = plan.stripeProductIds?.[0];
+                      if (priceId) {
+                        handleSubscribe(priceId);
+                      }
                     }
                   }}
                 >
-                  {isCurrent ? 'Plan Actual' : plan.id === 'free' ? 'Plan Gratuito' : 'Suscribirse'}
+                  {isCurrent ? 'Plan Actual' : plan.id === 'free' ? 'Plan Gratuito' : isSubscriptionActive ? 'Cambiar a Este Plan' : 'Suscribirse'}
                 </Button>
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      {/* Dialogs */}
+      <CancelSubscriptionDialog 
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        onSuccess={handleDialogSuccess}
+        currentPeriodEnd={
+          userProfile?.subscription?.currentPeriodEnd 
+            ? new Date(
+                userProfile.subscription.currentPeriodEnd.seconds 
+                  ? userProfile.subscription.currentPeriodEnd.seconds * 1000 
+                  : userProfile.subscription.currentPeriodEnd
+              )
+            : undefined
+        }
+      />
+
+      <PlanChangeDialog
+        open={planChangeDialogOpen}
+        onOpenChange={setPlanChangeDialogOpen}
+        onSuccess={handleDialogSuccess}
+        currentPlan={currentPlan}
+        newPlan={selectedPlan}
+      />
     </div>
   );
 }
