@@ -107,49 +107,30 @@ export function PreachModePage() {
     return text.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
   };
 
-  // Markdown Processing for Bible Links (Smart) - Same as SermonPreview
+  // Markdown Processing for Bible Links
   const processContent = (content: string) => {
     if (!content) return '';
-
-    // Split by existing HTML tags (especially anchors) and markdown links
-    const linkRegex = /(<a\s+[^>]*>.*?<\/a>|\[[^\]]+\]\s*\([^)]+\))/g;
-    const parts = content.split(linkRegex);
     
-    // Phase 1: Bible Refs (inside plain text chunks only)
-    const textWithRefs = parts.map(part => {
-      if (part.match(/^(<a\s+[^>]*>.*?<\/a>|\[[^\]]+\]\s*\([^)]+\))$/)) {
-        return part;
-      }
-      return replaceRefsInText(part);
-    }).join('');
-
-    // Phase 2: Markdown Block/Span Syntax (on the full string)
-    let finalContent = textWithRefs;
+    let processed = content;
     
-    // Bold
-    finalContent = replaceBoldWithStrong(finalContent);
+    // Step 1: Normalize line breaks
+    // First handle actual newlines (from editor)
+    processed = processed.replace(/\n\n+/g, '\n\n'); // Multiple newlines -> double newline (paragraph)
     
-    // Headers (## Title) - Add Tailwind classes for styling
-    finalContent = finalContent.replace(/^(#{1,6})\s+(.+)$/gm, (match, hashes, content) => {
-      const level = hashes.length;
-      const sizes: Record<number, string> = {
-        1: 'text-3xl',
-        2: 'text-2xl',
-        3: 'text-xl',
-        4: 'text-lg',
-        5: 'text-base',
-        6: 'text-sm'
-      };
-      const sizeClass = sizes[level] || 'text-lg';
-      return `<h${level} class="${sizeClass} font-bold text-foreground mt-8 mb-4">${content}</h${level}>`;
+    // Step 2: Convert HTML breaks to newlines
+    // Double <br/> = paragraph break
+    processed = processed.replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '\n\n');
+    // Single <br/> = line break  
+    processed = processed.replace(/<br\s*\/?>/gi, '\n');
+    
+    // Step 3: Add Bible reference links
+    processed = processed.replace(BIBLE_REF_PATTERN, (match, ref) => {
+      const prefix = match.slice(0, match.length - ref.length);
+      const trimmedRef = ref.trim();
+      return `${prefix}[📖 ${trimmedRef}](# bible-${encodeURIComponent(trimmedRef)})`;
     });
-
-    // Blockquotes (> Text) - Add Tailwind classes for styling
-    finalContent = finalContent.replace(/^>\s+(.+)$/gm, (match, content) => {
-      return `<blockquote class="border-l-4 border-primary/30 pl-4 italic my-6 text-muted-foreground bg-muted/10 py-3 pr-4 rounded-r">${content}</blockquote>`;
-    });
-
-    return finalContent;
+    
+    return processed;
   };
 
   const components = {
@@ -166,13 +147,22 @@ export function PreachModePage() {
               setSelectedReference(ref);
             }}
           >
-            <BookOpen className="h-4 w-4" />
             {props.children}
           </span>
         );
       }
       return <a {...props} className="text-blue-500 underline" />;
-    }
+    },
+    // Custom blockquote styling
+    blockquote: ({ node, ...props }: any) => (
+      <blockquote 
+        {...props} 
+        className="border-l-4 border-primary/30 pl-4 my-6 text-muted-foreground bg-muted/10 py-3 pr-4 rounded-r"
+      />
+    ),
+    // Custom heading styling
+    h2: ({ node, ...props }: any) => <h2 {...props} className="text-2xl font-bold mt-8 mb-4" />,
+    h3: ({ node, ...props }: any) => <h3 {...props} className="text-xl font-semibold mt-6 mb-3" />,
   };
 
   if (loading || !sermon) {
@@ -278,9 +268,17 @@ export function PreachModePage() {
           className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
           style={{ fontSize: `${fontSize}px` }}
         >
+          <style>{`
+            .prose p {
+              margin-top: 1.25em !important;
+              margin-bottom: 1.25em !important;
+            }
+            .prose p:first-child {
+              margin-top: 0 !important;
+            }
+          `}</style>
           <ReactMarkdown 
             components={components}
-            rehypePlugins={[rehypeRaw]}
             remarkPlugins={[remarkGfm]}
           >
             {processContent(sermon.content)}
