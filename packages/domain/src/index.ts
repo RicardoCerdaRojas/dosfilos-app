@@ -13,13 +13,14 @@ export * from './entities/HomileticalApproach';  // 🎯 NEW
 export * from './entities/DocumentChunk';
 
 // Repositories
-export * from './repositories/IAuthRepository';
 export * from './repositories/ISermonRepository';
 export * from './repositories/ISeriesRepository';
-export * from './repositories/IVectorRepository';
 export * from './repositories/IUserProfileRepository';
 export * from './repositories/IPlanRepository';
 export * from './repositories/IOrganizationRepository';
+
+// Config
+export * from './config/planMetadata';
 
 // Services
 export * from './services/IAIService';

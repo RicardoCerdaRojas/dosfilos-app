@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,7 +8,12 @@ import { AuthLayout } from '@/components/auth/auth-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
 import { authService } from '../../../../application/src/services/AuthService';
+import { getPlanMetadata, isPaidPlan, isValidPlan } from '@dosfilos/domain';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@dosfilos/infrastructure';
 
 const registerSchema = z.object({
   displayName: z
@@ -32,8 +37,18 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Get selected plan from URL parameter (default to free)
+  const selectedPlanId = searchParams.get('plan') || 'free';
+  
+  // Validate plan and get metadata
+  const validPlanId = isValidPlan(selectedPlanId) ? selectedPlanId : 'free';
+  const selectedPlan = getPlanMetadata(validPlanId);
+  const needsCheckout = isPaidPlan(validPlanId);
 
   const {
     register,
@@ -43,12 +58,42 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
+  const redirectToCheckout = async () => {
+    try {
+      const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+      const result = await createCheckoutSession({
+        priceId: selectedPlan.stripePriceId,
+        successUrl: `${window.location.origin}/dashboard?welcome=true`,
+        cancelUrl: `${window.location.origin}/pricing`,
+      });
+      
+      const { url } = result.data as { url: string };
+      window.location.href = url;
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast.error('Error al crear sesión de pago. Por favor intenta de nuevo.');
+      // Navigate to dashboard anyway (user can subscribe later)
+      navigate('/dashboard');
+    }
+  };
+
+  const handleWelcomeModalSkip = () => {
+    navigate('/dashboard');
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
       await authService.register(data.email, data.password, data.displayName);
       toast.success('¡Cuenta creada exitosamente!');
-      navigate('/dashboard');
+      
+      // If paid plan selected from pricing page, redirect to checkout
+      if (needsCheckout) {
+        await redirectToCheckout();
+      } else {
+        // Show welcome modal for plan selection
+        setShowWelcomeModal(true);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Error al crear la cuenta');
     } finally {
@@ -61,7 +106,14 @@ export function RegisterPage() {
     try {
       await authService.loginWithGoogle();
       toast.success('¡Cuenta creada exitosamente!');
-      navigate('/dashboard');
+      
+      // If paid plan selected from pricing page, redirect to checkout
+      if (needsCheckout) {
+        await redirectToCheckout();
+      } else {
+        // Show welcome modal for plan selection
+        setShowWelcomeModal(true);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Error al registrarse con Google');
     } finally {
@@ -75,6 +127,22 @@ export function RegisterPage() {
       subtitle="Únete a DosFilos.Preach y potencia tu ministerio"
     >
       <div className="space-y-6">
+        {/* Plan Selection Indicator */}
+        {validPlanId !== 'free' && (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Plan seleccionado:</p>
+                <p className="text-lg font-bold text-primary">{selectedPlan.name}</p>
+                <p className="text-sm text-muted-foreground">${selectedPlan.priceMonthly}/mes</p>
+              </div>
+              <Badge variant="outline" className="bg-background">
+                {needsCheckout ? 'Checkout después del registro' : 'Gratis'}
+              </Badge>
+            </div>
+          </div>
+        )}
+
         {/* Google Sign-In Button */}
         <Button
           type="button"
@@ -200,6 +268,13 @@ export function RegisterPage() {
           </Link>
         </p>
       </div>
+
+      {/* Welcome Modal - Shows after successful registration */}
+      <WelcomeModal
+        open={showWelcomeModal}
+        onOpenChange={setShowWelcomeModal}
+        onSkip={handleWelcomeModalSkip}
+      />
     </AuthLayout>
   );
 }
