@@ -50,7 +50,7 @@ export const getInvoices = onCall(async (request) => {
             amount: invoice.amount_paid / 100, // Convert from cents
             currency: invoice.currency.toUpperCase(),
             status: invoice.status || 'unknown',
-            pdfUrl: invoice.invoice_pdf,
+            pdfUrl: invoice.invoice_pdf ?? null,
         }));
 
         return { invoices: formattedInvoices };
