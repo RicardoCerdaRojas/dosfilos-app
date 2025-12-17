@@ -88,7 +88,21 @@ export function RegisterPage() {
         navigate('/welcome');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Error al crear la cuenta');
+      // Smart error handling for existing email
+      if (error.code === 'auth/email-already-in-use') {
+        toast.error(
+          'Ya existe una cuenta con este email. Redirigiendo al login...',
+          { 
+            duration: 4000,
+            description: '¿Olvidaste tu contraseña? Usa el link de recuperación.'
+          }
+        );
+        setTimeout(() => {
+          navigate('/login');
+        }, 4000);
+      } else {
+        toast.error(error.message || 'Error al crear la cuenta');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +122,18 @@ export function RegisterPage() {
         navigate('/welcome');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Error al registrarse con Google');
+      // Smart error handling for existing Google account
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        toast.error(
+          'Ya existe una cuenta con este email. Intenta iniciar sesión.',
+          { duration: 4000 }
+        );
+        setTimeout(() => {
+          navigate('/login');
+        }, 4000);
+      } else {
+        toast.error(error.message || 'Error al registrarse con Google');
+      }
     } finally {
       setIsGoogleLoading(false);
     }

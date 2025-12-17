@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authService } from '../../../../application/src/services/AuthService';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@dosfilos/infrastructure';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -30,12 +32,34 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const checkSubscriptionAndRedirect = async (userId: string) => {
+    try {
+      // Get user profile to check subscription
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      const userData = userDoc.data();
+      
+      // If user has no subscription or free plan, redirect to welcome
+      if (!userData?.subscription || userData.subscription.planId === 'free') {
+        toast.info('¡Completa tu suscripción para acceder a todas las funciones!', {
+          duration: 5000,
+        });
+        navigate('/welcome');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      // Fallback to dashboard on error
+      navigate('/dashboard');
+    }
+  };
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      await authService.login(data.email, data.password);
+      const user = await authService.login(data.email, data.password);
       toast.success('¡Bienvenido!');
-      navigate('/dashboard');
+      await checkSubscriptionAndRedirect(user.id);
     } catch (error: any) {
       toast.error(error.message || 'Error al iniciar sesión');
     } finally {
@@ -46,9 +70,9 @@ export function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await authService.loginWithGoogle();
+      const user = await authService.loginWithGoogle();
       toast.success('¡Bienvenido!');
-      navigate('/dashboard');
+      await checkSubscriptionAndRedirect(user.id);
     } catch (error: any) {
       toast.error(error.message || 'Error al iniciar sesión con Google');
     } finally {
