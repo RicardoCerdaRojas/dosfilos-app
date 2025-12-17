@@ -8,6 +8,8 @@ export * from './firebase/FirebaseLibraryRepository';
 export * from './firebase/FirebaseLibraryCategoryRepository';
 export * from './firebase/FirebaseChunkRepository';
 export * from './firebase/FirestoreVectorRepository';
+export * from './firebase/FirebaseUserProfileRepository';
+export * from './firebase/FirebasePlanRepository';
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';
 export * from './gemini/GeminiPlanGenerator';
