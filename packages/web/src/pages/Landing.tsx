@@ -977,43 +977,27 @@ export function Landing() {
       <section className="py-20 bg-slate-50">
         <div className="max-w-5xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-slate-900 text-center mb-12">
-            ¿Por qué DosFilos.Preach?
+            {t('comparisonTable.title')}
           </h2>
           
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border" style={{ borderColor: '#e2e8f0' }}>
             <table className="w-full">
               <thead style={{ backgroundColor: '#1e293b' }}>
                 <tr>
-                  <th className="p-6 text-left text-white">Característica</th>
-                  <th className="p-6 text-center text-white">IAs Genéricas</th>
-                  <th className="p-6 text-center text-white" style={{ backgroundColor: '#2563eb' }}>DosFilos.Preach</th>
+                  <th className="p-6 text-left text-white">{t('comparisonTable.headers.feature')}</th>
+                  <th className="p-6 text-center text-white">{t('comparisonTable.headers.genericAI')}</th>
+                  <th className="p-6 text-center text-white" style={{ backgroundColor: '#2563eb' }}>{t('comparisonTable.headers.dosfilos')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {[
-                  ['Entrenador exegético especializado', false, true],
-                  ['Respeta tu tradición teológica', false, true],
-                  ['Metodología hermenéutica clara', false, true],
-                  ['Contexto de 1000+ páginas', false, true],
-                  ['Asistentes expertos por área', false, true],
-                  ['Canvas + Chat para refinamiento', false, true],
-                  ['Modo predicación integrado', false, true]
-                ].map(([feature, generic, dosfilos], i) => (
+                {(t('comparisonTable.features', { returnObjects: true }) as string[]).map((feature, i) => (
                   <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-6 font-medium text-slate-900">{feature as string}</td>
+                    <td className="p-6 font-medium text-slate-900">{feature}</td>
                     <td className="p-6 text-center">
-                      {generic ? (
-                        <Check className="h-6 w-6 mx-auto" style={{ color: '#16a34a' }} />
-                      ) : (
-                        <X className="h-6 w-6 mx-auto" style={{ color: '#ef4444' }} />
-                      )}
+                      <X className="h-6 w-6 mx-auto" style={{ color: '#ef4444' }} />
                     </td>
                     <td className="p-6 text-center" style={{ backgroundColor: '#eff6ff' }}>
-                      {dosfilos ? (
-                        <Check className="h-6 w-6 mx-auto" style={{ color: '#16a34a' }} />
-                      ) : (
-                        <X className="h-6 w-6 mx-auto" style={{ color: '#ef4444' }} />
-                      )}
+                      <Check className="h-6 w-6 mx-auto" style={{ color: '#16a34a' }} />
                     </td>
                   </tr>
                 ))}

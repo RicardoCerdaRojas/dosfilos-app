@@ -282,6 +282,23 @@
             }
         ]
     },
+    "comparisonTable": {
+        "title": "¿Por qué DosFilos.Preach?",
+        "headers": {
+            "feature": "Característica",
+            "genericAI": "IAs Genéricas",
+            "dosfilos": "DosFilos.Preach"
+        },
+        "features": [
+            "Entrenador exegético especializado",
+            "Respeta tu tradición teológica",
+            "Metodología hermenéutica clara",
+            "Contexto de 1000+ páginas",
+            "Asistentes expertos por área",
+            "Canvas + Chat para refinamiento",
+            "Modo predicación integrado"
+        ]
+    },
     "pricing": {
         "title": "Elige tu Plan",
         "subtitle": "Comienza gratis. Escala cuando estés listo. Sin tarjeta de crédito requerida.",

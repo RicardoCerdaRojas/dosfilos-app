@@ -282,6 +282,23 @@
             }
         ]
     },
+    "comparisonTable": {
+        "title": "Why DosFilos.Preach?",
+        "headers": {
+            "feature": "Feature",
+            "genericAI": "Generic AIs",
+            "dosfilos": "DosFilos.Preach"
+        },
+        "features": [
+            "Specialized exegetical trainer",
+            "Respects your theological tradition",
+            "Clear hermeneutical methodology",
+            "1000+ pages context",
+            "Expert assistants by area",
+            "Canvas + Chat for refinement",
+            "Integrated preaching mode"
+        ]
+    },
     "pricing": {
         "title": "Choose Your Plan",
         "subtitle": "Start free. Scale when ready. No credit card required.",
