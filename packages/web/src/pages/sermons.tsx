@@ -44,10 +44,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/i18n';
 
 export function SermonsPage() {
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const { t } = useTranslation('sermons');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,9 +109,9 @@ export function SermonsPage() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string; className: string }> = {
-      draft: { variant: 'secondary', label: 'Borrador', className: 'bg-amber-100 text-amber-700 border-amber-300' },
-      published: { variant: 'default', label: 'Publicado', className: 'bg-green-100 text-green-700 border-green-300' },
-      archived: { variant: 'outline', label: 'Archivado', className: 'bg-gray-100 text-gray-600 border-gray-300' },
+      draft: { variant: 'secondary', label: t('statusLabels.draft'), className: 'bg-amber-100 text-amber-700 border-amber-300' },
+      published: { variant: 'default', label: t('statusLabels.published'), className: 'bg-green-100 text-green-700 border-green-300' },
+      archived: { variant: 'outline', label: t('statusLabels.archived'), className: 'bg-gray-100 text-gray-600 border-gray-300' },
     };
     const config = variants[status] ?? variants.draft!;
     return (
@@ -130,7 +132,7 @@ export function SermonsPage() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center space-y-4">
           <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Cargando sermones...</p>
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     );
@@ -140,13 +142,13 @@ export function SermonsPage() {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <FileText className="h-16 w-16 text-muted-foreground" />
-        <h2 className="text-2xl font-semibold">No tienes sermones aún</h2>
+        <h2 className="text-2xl font-semibold">{t('empty.title')}</h2>
         <p className="text-muted-foreground text-center max-w-md">
-          Comienza creando tu primer sermón y gestiona todo tu contenido pastoral en un solo lugar.
+          {t('empty.description')}
         </p>
         <Button onClick={() => navigate('/dashboard/sermons/new')} size="lg">
           <Plus className="mr-2 h-5 w-5" />
-          Crear Primer Sermón
+          {t('empty.createButton')}
         </Button>
       </div>
     );
@@ -157,12 +159,12 @@ export function SermonsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Sermones</h1>
-          <p className="text-muted-foreground">Gestiona tus sermones y contenido pastoral</p>
+          <h1 className="text-3xl font-bold">{t('header.title')}</h1>
+          <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
         <Button onClick={() => navigate('/dashboard/sermons/new')}>
           <Plus className="mr-2 h-4 w-4" />
-          Nuevo Sermón
+          {t('header.newButton')}
         </Button>
       </div>
 
@@ -171,7 +173,7 @@ export function SermonsPage() {
         {/* Search - Smaller on desktop */}
         <div className="w-full sm:w-auto sm:flex-1 sm:max-w-xs">
           <Input
-            placeholder="Buscar sermones..."
+            placeholder={t('filters.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -180,13 +182,13 @@ export function SermonsPage() {
         {/* Status Filter */}
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Estado" />
+            <SelectValue placeholder={t('filters.status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="draft">Borradores</SelectItem>
-            <SelectItem value="published">Publicados</SelectItem>
-            <SelectItem value="archived">Archivados</SelectItem>
+            <SelectItem value="all">{t('statusOptions.all')}</SelectItem>
+            <SelectItem value="draft">{t('statusOptions.drafts')}</SelectItem>
+            <SelectItem value="published">{t('statusOptions.published')}</SelectItem>
+            <SelectItem value="archived">{t('statusOptions.archived')}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -195,14 +197,14 @@ export function SermonsPage() {
           <SelectTrigger className="w-[200px]">
             <Filter className="h-4 w-4 mr-2 flex-shrink-0" />
             <span className="truncate">
-              {planFilter === 'all' ? 'Todos los planes' : 
-               planFilter === 'none' ? 'Sin plan' : 
-               getSeriesName(planFilter) || 'Plan'}
+              {planFilter === 'all' ? t('filters.allPlans') : 
+               planFilter === 'none' ? t('filters.noPlan') : 
+               getSeriesName(planFilter) || t('filters.plan')}
             </span>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos los planes</SelectItem>
-            <SelectItem value="none">Sin plan</SelectItem>
+            <SelectItem value="all">{t('filters.allPlans')}</SelectItem>
+            <SelectItem value="none">{t('filters.noPlan')}</SelectItem>
             {series.map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.title}
@@ -234,18 +236,18 @@ export function SermonsPage() {
 
       {/* Results Count */}
       <div className="text-sm text-muted-foreground">
-        {filteredSermons.length} {filteredSermons.length === 1 ? 'sermón' : 'sermones'}
+        {filteredSermons.length} {filteredSermons.length === 1 ? t('results.sermon') : t('results.sermons')}
         {planFilter !== 'all' && planFilter !== 'none' && (
-          <span> en "{getSeriesName(planFilter)}"</span>
+          <span> {t('results.inPlan')} "{getSeriesName(planFilter)}"</span>
         )}
-        {planFilter === 'none' && <span> sin plan asignado</span>}
+        {planFilter === 'none' && <span> {t('results.noPlanAssigned')}</span>}
       </div>
 
       {/* Sermons List */}
       {filteredSermons.length === 0 ? (
         <Card className="p-8 text-center">
           <p className="text-muted-foreground">
-            No se encontraron sermones con los filtros seleccionados.
+            {t('noResults')}
           </p>
         </Card>
       ) : viewMode === 'table' ? (
@@ -254,11 +256,11 @@ export function SermonsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40%]">Título</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead className="w-[40%]">{t('table.title')}</TableHead>
+                <TableHead>{t('table.plan')}</TableHead>
+                <TableHead>{t('table.status')}</TableHead>
+                <TableHead>{t('table.date')}</TableHead>
+                <TableHead className="text-right">{t('table.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -331,7 +333,7 @@ export function SermonsPage() {
                               onClick={() => setSermonToDelete(sermon.id)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar
+                              {t('actions.delete')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -412,7 +414,7 @@ export function SermonsPage() {
                     {sermon.bibleReferences.length > 0 && (
                       <span className="flex items-center gap-1">
                         <FileText className="h-3.5 w-3.5" />
-                        {sermon.bibleReferences.length} referencias
+                        {sermon.bibleReferences.length} {t('grid.references')}
                       </span>
                     )}
                   </div>
@@ -446,7 +448,7 @@ export function SermonsPage() {
                           onClick={() => setSermonToDelete(sermon.id)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
+                          {t('actions.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -462,15 +464,15 @@ export function SermonsPage() {
       <AlertDialog open={!!sermonToDelete} onOpenChange={() => setSermonToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. El sermón será eliminado permanentemente.
+              {t('deleteDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Eliminando...' : 'Eliminar'}
+              {deleting ? t('deleteDialog.deleting') : t('deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
