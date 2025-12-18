@@ -554,11 +554,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">
-              No es ChatGPT. Es tu Mentor Teológico.
+              {t('notChatGPT.title')}
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Las IAs genéricas no entienden de hermenéutica, tradiciones teológicas ni del peso 
-              de predicar la Palabra. DosFilos fue diseñado <strong>por pastores, para pastores</strong>.
+              {t('notChatGPT.subtitle')} <strong>{t('notChatGPT.emphasis')}</strong>
             </p>
           </div>
 
@@ -572,17 +571,10 @@ export function Landing() {
                 <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)' }}>
                   <Bot className="h-6 w-6" style={{ color: '#ef4444' }} />
                 </div>
-                <h3 className="text-xl font-bold">IAs Genéricas</h3>
+                <h3 className="text-xl font-bold">{t('notChatGPT.generic.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Respuestas genéricas sin supervisión teológica',
-                  'No distingue entre tradiciones interpretativas',
-                  'Puede inventar citas o referencias',
-                  'Sin metodología hermenéutica clara',
-                  'Trata la Biblia como cualquier otro libro',
-                  'No entiende el peso de la predicación'
-                ].map((item, i) => (
+                {(t('notChatGPT.generic.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <X className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#ef4444' }} />
                     <span className="text-slate-300">{item}</span>
@@ -600,17 +592,10 @@ export function Landing() {
                 <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
                   <GraduationCap className="h-6 w-6" style={{ color: '#22c55e' }} />
                 </div>
-                <h3 className="text-xl font-bold">DosFilos.Preach</h3>
+                <h3 className="text-xl font-bold">{t('notChatGPT.dosfilos.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Especializado en hermenéutica bíblica',
-                  'Configurable a tu tradición teológica',
-                  'Fuentes académicas verificadas',
-                  'Metodología histórico-literal-gramatical',
-                  'Respeta la autoridad de las Escrituras',
-                  'Diseñado para predicación fiel'
-                ].map((item, i) => (
+                {(t('notChatGPT.dosfilos.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <Check className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#22c55e' }} />
                     <span className="text-slate-300">{item}</span>
