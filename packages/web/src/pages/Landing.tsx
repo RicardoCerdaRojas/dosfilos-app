@@ -612,12 +612,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              No es Solo una Biblioteca Digital
+              {t('notLibrary.title')}
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Logos, e-Sword y otros tienen miles de libros. Pero <strong>¿quién tiene tiempo 
-              para navegar todo eso?</strong> DosFilos tiene la capacidad de procesar el equivalente 
-              a 1,000+ páginas de contexto para darte lo que necesitas, cuando lo necesitas.
+              {t('notLibrary.subtitle')} <strong>{t('notLibrary.question')}</strong> {t('notLibrary.capability')}
             </p>
           </div>
 
@@ -628,16 +626,10 @@ export function Landing() {
                 <div className="p-3 rounded-xl" style={{ backgroundColor: '#fee2e2' }}>
                   <Library className="h-8 w-8" style={{ color: '#dc2626' }} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">Bibliotecas Tradicionales</h3>
+                <h3 className="text-2xl font-bold text-slate-900">{t('notLibrary.traditional.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Miles de libros imposibles de revisar en paralelo',
-                  'Tú haces todo el trabajo de búsqueda',
-                  'Sin guía sobre qué es relevante para tu pasaje',
-                  'Horas perdidas navegando índices',
-                  'Información fragmentada en múltiples fuentes'
-                ].map((item, i) => (
+                {(t('notLibrary.traditional.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
                     <X className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#dc2626' }} />
                     <span className="text-slate-700">{item}</span>
@@ -652,16 +644,10 @@ export function Landing() {
                 <div className="p-3 rounded-xl" style={{ backgroundColor: '#dbeafe' }}>
                   <Brain className="h-8 w-8" style={{ color: '#2563eb' }} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">Asistente Experto</h3>
+                <h3 className="text-2xl font-bold text-slate-900">{t('notLibrary.assistant.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Contexto de 1,000+ páginas procesadas instantáneamente',
-                  'Te guía paso a paso hacia lo relevante',
-                  'Encuentra conexiones que tomarían horas descubrir',
-                  'Síntesis inteligente de múltiples comentarios',
-                  'Como tener un teólogo asistente 24/7'
-                ].map((item, i) => (
+                {(t('notLibrary.assistant.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: '#eff6ff' }}>
                     <Check className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#2563eb' }} />
                     <span className="text-slate-700">{item}</span>
