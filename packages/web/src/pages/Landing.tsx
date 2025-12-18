@@ -1128,28 +1128,7 @@ export function Landing() {
           </h2>
           
           <div className="space-y-6">
-            {[
-              {
-                q: '¿No es trampa usar IA para predicar?',
-                a: 'No usas IA para predicar - la usas para estudiar mejor. Es como tener un entrenador personal: tú haces el ejercicio espiritual, la IA te guía y potencia tu estudio. Tú mantienes el control total del mensaje.'
-              },
-              {
-                q: '¿Perderé mi voz única como predicador?',
-                a: 'Al contrario. Al ahorrar tiempo en investigación básica, tienes más tiempo para oración y reflexión personal. DosFilos sugiere, pero tú decides y personalizas cada aspecto del sermón.'
-              },
-              {
-                q: '¿Qué pasa con mi teología específica?',
-                a: 'Tú configuras tu tradición interpretativa (reformada, wesleyana, pentecostal, etc.). DosFilos respeta tu marco teológico y sugiere contenido alineado con tus convicciones.'
-              },
-              {
-                q: '¿Puedo cancelar en cualquier momento?',
-                a: 'Sí, sin preguntas. Cancela cuando quieras y mantén acceso hasta el final de tu período de facturación.'
-              },
-              {
-                q: '¿Mis sermones son privados?',
-                a: 'Absolutamente. Tus sermones son 100% privados y nunca se comparten. Cumplimos con todas las regulaciones de privacidad de datos.'
-              }
-            ].map((faq, i) => (
+            {(t('faq.questions', { returnObjects: true }) as Array<{q: string, a: string}>).map((faq, i) => (
               <Card key={i} className="p-6 border-2" style={{ borderColor: '#e2e8f0', backgroundColor: 'white' }}>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">{faq.q}</h3>
                 <p className="text-slate-600 leading-relaxed">{faq.a}</p>

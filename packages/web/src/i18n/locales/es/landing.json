@@ -359,7 +359,29 @@
     },
     "faq": {
         "title": "Preguntas Frecuentes",
-        "subtitle": "Todo lo que necesitas saber sobre DosFilos.Preach"
+        "subtitle": "Todo lo que necesitas saber sobre DosFilos.Preach",
+        "questions": [
+            {
+                "q": "¿No es trampa usar IA para predicar?",
+                "a": "No usas IA para predicar - la usas para estudiar mejor. Es como tener un entrenador personal: tú haces el ejercicio espiritual, la IA te guía y potencia tu estudio. Tú mantienes el control total del mensaje."
+            },
+            {
+                "q": "¿Perderé mi voz única como predicador?",
+                "a": "Al contrario. Al ahorrar tiempo en investigación básica, tienes más tiempo para oración y reflexión personal. DosFilos sugiere, pero tú decides y personalizas cada aspecto del sermón."
+            },
+            {
+                "q": "¿Qué pasa con mi teología específica?",
+                "a": "Tú configuras tu tradición interpretativa (reformada, wesleyana, pentecostal, etc.). DosFilos respeta tu marco teológico y sugiere contenido alineado con tus convicciones."
+            },
+            {
+                "q": "¿Puedo cancelar en cualquier momento?",
+                "a": "Sí, sin preguntas. Cancela cuando quieras y mantén acceso hasta el final de tu período de facturación."
+            },
+            {
+                "q": "¿Mis sermones son privados?",
+                "a": "Absolutamente. Tus sermones son 100% privados y nunca se comparten. Cumplimos con todas las regulaciones de privacidad de datos."
+            }
+        ]
     },
     "finalCta": {
         "title": "¿Listo para Transformar tu Preparación de Sermones?",

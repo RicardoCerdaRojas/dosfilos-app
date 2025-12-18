@@ -359,7 +359,29 @@
     },
     "faq": {
         "title": "Frequently Asked Questions",
-        "subtitle": "Everything you need to know about DosFilos.Preach"
+        "subtitle": "Everything you need to know about DosFilos.Preach",
+        "questions": [
+            {
+                "q": "Isn't using AI to preach cheating?",
+                "a": "You don't use AI to preach - you use it to study better. It's like having a personal trainer: you do the spiritual work, AI guides and enhances your study. You maintain full control of the message."
+            },
+            {
+                "q": "Will I lose my unique voice as a preacher?",
+                "a": "On the contrary. By saving time on basic research, you have more time for prayer and personal reflection. DosFilos suggests, but you decide and personalize every aspect of the sermon."
+            },
+            {
+                "q": "What about my specific theology?",
+                "a": "You configure your interpretive tradition (reformed, wesleyan, pentecostal, etc.). DosFilos respects your theological framework and suggests content aligned with your convictions."
+            },
+            {
+                "q": "Can I cancel anytime?",
+                "a": "Yes, no questions asked. Cancel whenever you want and keep access until the end of your billing period."
+            },
+            {
+                "q": "Are my sermons private?",
+                "a": "Absolutely. Your sermons are 100% private and never shared. We comply with all data privacy regulations."
+            }
+        ]
     },
     "finalCta": {
         "title": "Ready to Transform Your Sermon Preparation?",
