@@ -1,0 +1,25 @@
+{
+    "title": "Series Planner",
+    "subtitle": "Plan comprehensive sermon series with AI assistance",
+    "createNew": "Create New Series",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "delete": "Delete",
+    "edit": "Edit",
+    "preview": "Preview",
+    "generate": "Generate",
+    "regenerate": "Regenerate",
+    "toast": {
+        "saveSuccess": "Series saved successfully",
+        "saveError": "Error saving series",
+        "deleteSuccess": "Series deleted",
+        "deleteError": "Error deleting series",
+        "generateSuccess": "Series generated successfully",
+        "generateError": "Error generating series"
+    }
+}

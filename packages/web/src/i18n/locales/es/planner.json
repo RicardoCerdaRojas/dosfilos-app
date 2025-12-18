@@ -1,0 +1,25 @@
+{
+    "title": "Planificador de Series",
+    "subtitle": "Planifica series completas de sermones con asistencia de IA",
+    "createNew": "Crear Nueva Serie",
+    "loading": "Cargando...",
+    "saving": "Guardando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "finish": "Finalizar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "preview": "Vista Previa",
+    "generate": "Generar",
+    "regenerate": "Regenerar",
+    "toast": {
+        "saveSuccess": "Serie guardada exitosamente",
+        "saveError": "Error al guardar la serie",
+        "deleteSuccess": "Serie eliminada",
+        "deleteError": "Error al eliminar la serie",
+        "generateSuccess": "Serie generada exitosamente",
+        "generateError": "Error al generar la serie"
+    }
+}

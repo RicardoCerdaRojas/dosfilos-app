@@ -1,0 +1,23 @@
+{
+    "title": "Generador de Sermones",
+    "subtitle": "Crea sermones con asistencia de IA",
+    "steps": {
+        "passage": "Pasaje",
+        "exegesis": "Exégesis",
+        "homiletics": "Homilética",
+        "draft": "Borrador"
+    },
+    "loading": "Cargando...",
+    "generating": "Generando...",
+    "save": "Guardar",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "finish": "Finalizar",
+    "cancel": "Cancelar",
+    "toast": {
+        "saveSuccess": "Sermón guardado",
+        "saveError": "Error al guardar el sermón",
+        "generateSuccess": "Contenido generado",
+        "generateError": "Error al generar contenido"
+    }
+}
