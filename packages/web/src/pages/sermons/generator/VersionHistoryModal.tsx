@@ -29,7 +29,7 @@ export function VersionHistoryModal({ draftSermon, isOpen, onClose }: VersionHis
         setLoading(true);
         try {
             console.log('🔍 Loading versions for draft:', draftSermon.id);
-            const publishedVersions = await sermonService.getPublishedVersions(draftSermon.id);
+            const publishedVersions = await sermonService.getPublishedVersions(draftSermon.id, draftSermon.userId);
             console.log('📚 Found versions:', publishedVersions.length, publishedVersions);
             setVersions(publishedVersions);
         } catch (error) {

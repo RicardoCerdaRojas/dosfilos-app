@@ -316,8 +316,8 @@ export class SermonService {
         return obj;
     }
 
-    async getPublishedVersions(draftId: string): Promise<SermonEntity[]> {
-        return await this.sermonRepository.findByDraftId(draftId);
+    async getPublishedVersions(draftId: string, userId: string): Promise<SermonEntity[]> {
+        return await this.sermonRepository.findByDraftId(draftId, userId);
     }
 }
 
