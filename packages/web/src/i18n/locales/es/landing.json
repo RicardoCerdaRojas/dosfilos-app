@@ -21,7 +21,7 @@
             "secondary": "Ver Demo (2 min)"
         },
         "socialProof": {
-            "pastors": "500+ pastores",
+            "pastors": "10+ pastores",
             "trusting": "confiando en nosotros",
             "rating": "4.8/5"
         },
@@ -46,7 +46,7 @@
             "label": "Mayor profundidad exegética"
         },
         "pastors": {
-            "value": "500+",
+            "value": "10+",
             "label": "Pastores activos"
         },
         "satisfaction": {
@@ -214,5 +214,67 @@
                 }
             ]
         }
+    },
+    "features": {
+        "title": "Tus Asistentes Expertos",
+        "subtitle": "Trabaja con asistentes especializados en cada área del estudio bíblico. Cada uno diseñado para potenciar tu preparación.",
+        "experts": [
+            {
+                "title": "Experto en Idiomas Originales",
+                "description": "Análisis profundo de hebreo y griego bíblicos. Morfología, sintaxis y significado teológico de las palabras clave.",
+                "features": [
+                    "Hebreo bíblico",
+                    "Griego koiné",
+                    "Análisis morfológico",
+                    "Campos semánticos"
+                ]
+            },
+            {
+                "title": "Experto en Hermenéutica",
+                "description": "Guía en la interpretación histórico-literal-gramatical. Contexto, estructura y significado original del texto.",
+                "features": [
+                    "Contexto histórico",
+                    "Análisis gramatical",
+                    "Estructura literaria",
+                    "Teología bíblica"
+                ]
+            },
+            {
+                "title": "Experto en Homilética",
+                "description": "Ayuda a estructurar tu sermón de manera clara y fiel al texto. Aplicaciones prácticas y relevantes.",
+                "features": [
+                    "Estructura expositiva",
+                    "Aplicaciones contextuales",
+                    "Ilustraciones",
+                    "Transiciones"
+                ]
+            }
+        ]
+    },
+    "howItWorks": {
+        "title": "Cómo Funciona",
+        "subtitle": "Un proceso simple y poderoso diseñado para pastores que valoran la profundidad y la precisión.",
+        "steps": [
+            {
+                "number": "1",
+                "title": "Selecciona tu Pasaje",
+                "description": "Escoge el texto bíblico que predicarás. DosFilos te guía desde ahí."
+            },
+            {
+                "number": "2",
+                "title": "Análisis Profundo",
+                "description": "Trabaja con tus asistentes expertos en idiomas, hermenéutica y homilética."
+            },
+            {
+                "number": "3",
+                "title": "Estructura tu Sermón",
+                "description": "Construye tu bosquejo con aplicaciones prácticas y relevantes a tu contexto."
+            },
+            {
+                "number": "4",
+                "title": "Predica Fielmente",
+                "description": "Ve al púlpito confiado, con un sermón bien fundamentado en el texto."
+            }
+        ]
     }
 }

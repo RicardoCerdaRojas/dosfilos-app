@@ -21,7 +21,7 @@
             "secondary": "Watch Demo (2 min)"
         },
         "socialProof": {
-            "pastors": "500+ pastors",
+            "pastors": "10+ pastors",
             "trusting": "trusting us",
             "rating": "4.8/5"
         },
@@ -214,5 +214,67 @@
                 }
             ]
         }
+    },
+    "features": {
+        "title": "Your Expert Assistants",
+        "subtitle": "Work with specialized assistants in each area of biblical study. Each designed to enhance your preparation.",
+        "experts": [
+            {
+                "title": "Original Languages Expert",
+                "description": "Deep analysis of biblical Hebrew and Greek. Morphology, syntax, and theological meaning of key words.",
+                "features": [
+                    "Biblical Hebrew",
+                    "Koine Greek",
+                    "Morphological analysis",
+                    "Semantic fields"
+                ]
+            },
+            {
+                "title": "Hermeneutics Expert",
+                "description": "Guidance in historical-literal-grammatical interpretation. Context, structure, and original meaning of the text.",
+                "features": [
+                    "Historical context",
+                    "Grammatical analysis",
+                    "Literary structure",
+                    "Biblical theology"
+                ]
+            },
+            {
+                "title": "Homiletics Expert",
+                "description": "Helps structure your sermon clearly and faithfully to the text. Practical and relevant applications.",
+                "features": [
+                    "Expository structure",
+                    "Contextual applications",
+                    "Illustrations",
+                    "Transitions"
+                ]
+            }
+        ]
+    },
+    "howItWorks": {
+        "title": "How It Works",
+        "subtitle": "A simple and powerful process designed for pastors who value depth and precision.",
+        "steps": [
+            {
+                "number": "1",
+                "title": "Select Your Passage",
+                "description": "Choose the biblical text you'll preach. DosFilos guides you from there."
+            },
+            {
+                "number": "2",
+                "title": "Deep Analysis",
+                "description": "Work with your expert assistants in languages, hermeneutics, and homiletics."
+            },
+            {
+                "number": "3",
+                "title": "Structure Your Sermon",
+                "description": "Build your outline with practical, relevant applications to your context."
+            },
+            {
+                "number": "4",
+                "title": "Preach Faithfully",
+                "description": "Go to the pulpit confident, with a sermon well-founded in the text."
+            }
+        ]
     }
 }
