@@ -172,7 +172,9 @@ export class SermonEntity implements Sermon {
      */
     publishAsCopy(): SermonEntity {
         // Use draft content from wizardProgress if main content is empty
-        const contentToPublish = this.content || this.wizardProgress?.draft?.content || '';
+        const draftSections = this.wizardProgress?.draft?.sections || [];
+        const draftContent = draftSections.map(s => `${s.title}\n\n${s.content}`).join('\n\n');
+        const contentToPublish = this.content || draftContent || '';
         const titleToPublish = this.title || this.wizardProgress?.passage || 'Sermón';
 
         return new SermonEntity(
