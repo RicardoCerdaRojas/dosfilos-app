@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2 } from 'lucide-react';
+import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2, BarChart3, CheckCircle2, FileText, TrendingUp, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -192,29 +192,49 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                 </div>
                 
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
-                    <Card className="p-4">
-                        <div className="flex flex-col space-y-1">
-                            <span className="text-xs text-muted-foreground font-medium">📊 Total</span>
-                            <span className="text-2xl font-bold">{totalSermons}</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">
+                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col space-y-1">
+                                <span className="text-xs text-muted-foreground font-medium">Total</span>
+                                <span className="text-2xl font-bold">{totalSermons}</span>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <BarChart3 className="h-5 w-5 text-primary" />
+                            </div>
                         </div>
                     </Card>
-                    <Card className="p-4">
-                        <div className="flex flex-col space-y-1">
-                            <span className="text-xs text-muted-foreground font-medium">✅ Publicados</span>
-                            <span className="text-2xl font-bold text-green-600">{publishedCount}</span>
+                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col space-y-1">
+                                <span className="text-xs text-muted-foreground font-medium">Publicados</span>
+                                <span className="text-2xl font-bold text-green-600">{publishedCount}</span>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            </div>
                         </div>
                     </Card>
-                    <Card className="p-4">
-                        <div className="flex flex-col space-y-1">
-                            <span className="text-xs text-muted-foreground font-medium">📝 Borradores</span>
-                            <span className="text-2xl font-bold text-blue-600">{draftCount}</span>
+                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col space-y-1">
+                                <span className="text-xs text-muted-foreground font-medium">Borradores</span>
+                                <span className="text-2xl font-bold text-blue-600">{draftCount}</span>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                            </div>
                         </div>
                     </Card>
-                    <Card className="p-4">
-                        <div className="flex flex-col space-y-1">
-                            <span className="text-xs text-muted-foreground font-medium">⌛ Completado</span>
-                            <span className="text-2xl font-bold text-purple-600">{avgCompletion}%</span>
+                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col space-y-1">
+                                <span className="text-xs text-muted-foreground font-medium">Progreso</span>
+                                <span className="text-2xl font-bold text-purple-600">{avgCompletion}%</span>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center">
+                                <TrendingUp className="h-5 w-5 text-purple-600" />
+                            </div>
                         </div>
                     </Card>
                 </div>
@@ -276,7 +296,10 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
 
             {/* Filter Chips */}
             <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground font-medium">Filtrar:</span>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                    <Filter className="h-3.5 w-3.5" />
+                    Filtrar:
+                </div>
                 {[
                     { value: 'all', label: 'Todos' },
                     { value: 'published', label: 'Publicados' },
@@ -290,13 +313,13 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                         variant={activeFilter === filter.value ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setActiveFilter(filter.value as any)}
-                        className="h-8"
+                        className={`h-7 text-xs ${activeFilter === filter.value ? 'shadow-sm' : ''}`}
                     >
                         {filter.label}
                         {activeFilter === filter.value && filteredSermons.length > 0 && (
-                            <Badge variant="secondary" className="ml-2 px-1 py-0 text-xs">
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-background/20 text-[10px] font-semibold">
                                 {filteredSermons.length}
-                            </Badge>
+                            </span>
                         )}
                     </Button>
                 ))}
@@ -315,7 +338,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                         const { label, progress, variant, badgeClass, progressClass } = phaseInfo;
 
                         return (
-                            <Card key={sermon.id} className="group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
+                            <Card key={sermon.id} className="group flex flex-col hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-muted hover:border-primary/30 overflow-hidden">
                                 <div className="p-6 flex-1 space-y-4">
                                     {/* Header: Date + Phase Badge */}
                                     <div className="flex items-start justify-between gap-4">
