@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { BookOpen, Check, Sparkles, Brain, Clock } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -109,7 +110,12 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8 bg-background">
+      <div className="flex-1 flex flex-col justify-center items-center p-8 bg-background relative">
+        {/* Language Switcher - Top Right */}
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher variant="ghost" showLabel={false} />
+        </div>
+        
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden flex flex-col items-center gap-3">
