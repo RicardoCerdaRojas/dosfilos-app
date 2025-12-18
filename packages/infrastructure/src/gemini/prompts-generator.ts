@@ -318,23 +318,99 @@ NO se encontró información en la biblioteca personal del pastor para esta cons
 
   switch (phase) {
     case WorkflowPhase.EXEGESIS:
+      // Build exegesis context summary if available
+      let exegesisContext = '';
+      if (context.exegesisResult) {
+        const ex = context.exegesisResult;
+        exegesisContext = `
+        
+## 📖 CONTEXTO EXEGÉTICO ACTUAL:
+
+**Pasaje**: ${ex.passage || context.passage}
+
+**Proposición Exegética**: ${ex.exegeticalProposition || 'Pendiente'}
+
+**Palabras Clave Analizadas**:
+${ex.keyWords && ex.keyWords.length > 0
+            ? ex.keyWords.map((kw: any) => `- ${kw.original} (${kw.transliteration}): ${kw.significance}`).join('\n')
+            : 'Ninguna analizada aún'}
+
+**Contexto**:
+- Histórico-cultural: ${ex.context?.historical || 'Pendiente'}
+- Literario: ${ex.context?.literary || 'Pendiente'}
+- Audiencia original: ${ex.context?.audience || 'Pendiente'}
+
+**Insights Pastorales**:
+${ex.pastoralInsights && ex.pastoralInsights.length > 0
+            ? ex.pastoralInsights.map((i: string) => `- ${i}`).join('\n')
+            : 'Ninguno aún'}
+`;
+      }
+
       return `${base} Eres el EXPERTO EN EXÉGESIS. Tu trabajo es analizar el texto original, contexto histórico y literario.
-      Pasaje a analizar: "${context.passage}".
-      ${libraryContextSection}
-      Responde a las preguntas del pastor con profundidad académica pero claridad pastoral.`;
+      
+**PASAJE EN ANÁLISIS**: "${context.passage}"
+${exegesisContext}
+${libraryContextSection}
+
+**TU ROL**: Responde a las preguntas del pastor con profundidad académica pero claridad pastoral. 
+SIEMPRE ten en cuenta el CONTEXTO EXEGÉTICO ACTUAL arriba. Si el pastor pregunta sobre una palabra, 
+verifica primero si ya está en las "Palabras Clave Analizadas" y construye sobre ese análisis.`;
 
     case WorkflowPhase.HOMILETICS:
+      // Build readable homiletics context
+      const exegesisSummary = context.exegesisResult
+        ? `**Pasaje**: ${context.exegesisResult.passage}
+**Proposición Exegética**: ${context.exegesisResult.exegeticalProposition}
+**Palabras Clave**: ${context.exegesisResult.keyWords?.map((kw: any) => kw.original).join(', ') || 'N/A'}`
+        : 'Exégesis no disponible';
+
+      const homileticsInfo = context.homileticsResult
+        ? `**Proposición Homilética Actual**: ${context.homileticsResult.homileticalProposition || 'Pendiente'}
+**Enfoque**: ${context.homileticsResult.homileticalApproach || 'Pendiente'}
+**Puntos del Bosquejo**: ${context.homileticsResult.outline?.mainPoints?.length || 0} puntos`
+        : '';
+
       return `${base} Eres el EXPERTO EN HOMILÉTICA. Tu trabajo es ayudar a estructurar el sermón.
-      Basado en la exégesis previa: ${JSON.stringify(context.exegesisResult)}.
-      ${libraryContextSection}
-      Ayuda a encontrar el mejor ángulo, la proposición homilética y el bosquejo.`;
+      
+## 📖 FUNDAMENTO EXEGÉTICO:
+${exegesisSummary}
+
+## 🎯 DESARROLLO HOMILÉTICO ACTUAL:
+${homileticsInfo || 'Pendiente de desarrollo'}
+
+${libraryContextSection}
+
+**TU ROL**: Ayuda a encontrar el mejor ángulo, la proposición homilética y el bosquejo. 
+Mantén coherencia con la proposición exegética y el pasaje original.`;
 
     case WorkflowPhase.DRAFTING:
+      // Build sermon context summary
+      const sermonContext = context.homileticsResult
+        ? `**Pasaje**: ${context.exegesisResult?.passage || 'N/A'}
+**Proposición Homilética**: ${context.homileticsResult.homileticalProposition}
+**Enfoque**: ${context.homileticsResult.homileticalApproach}
+**Bosquejo**: ${context.homileticsResult.outline?.mainPoints?.length || 0} puntos principales`
+        : 'Análisis homilético no disponible';
+
+      const draftInfo = context.draft
+        ? `**Título**: ${context.draft.title}
+**Estructura**: Introducción + ${context.draft.body?.length || 0} puntos + Conclusión`
+        : '';
+
       return `${base} Eres el EDITOR Y REDACTOR. Tu trabajo es ayudar a escribir el sermón completo.
-      Basado en el bosquejo: ${JSON.stringify(context.homileticsResult)}.
-      ${libraryContextSection}
-      Ayuda a redactar, mejorar el estilo, buscar ilustraciones y afinar la retórica.
-      IMPORTANTE: Al redactar, integra las citas de la biblioteca de forma natural en el flujo del sermón.`;
+      
+## 📖 BASE DEL SERMÓN:
+${sermonContext}
+
+## ✍️ BORRADOR ACTUAL:
+${draftInfo || 'Pendiente de redacción'}
+
+${libraryContextSection}
+
+**TU ROL**: Ayuda a redactar, mejorar el estilo, buscar ilustraciones y afinar la retórica.
+IMPORTANTE: Al redactar, integra las citas de la biblioteca de forma natural en el flujo del sermón.
+Mantén coherencia con la proposición homilética y el enfoque elegido.`;
 
     case WorkflowPhase.PLANNING:
       // Use dynamic strategy from context, or default Socratic behavior
