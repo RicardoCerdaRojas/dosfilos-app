@@ -677,20 +677,19 @@ export function Landing() {
                 style={{ backgroundColor: '#ede9fe', color: '#7c3aed' }}
               >
                 <Languages className="h-4 w-4" />
-                Más que morfología estática
+                {t('grammarProfessor.badge')}
               </div>
               
               <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 leading-tight">
-                Tu profesor de gramática
+                {t('grammarProfessor.title.part1')}
                 <span className="block bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  sentado junto a ti
+                  {t('grammarProfessor.title.part2')}
                 </span>
               </h2>
               
               <p className="text-xl text-slate-600 leading-relaxed">
-                Hay herramientas que te muestran que χάρις es un sustantivo femenino singular. 
-                <strong className="text-slate-900"> DosFilos te explica por qué importa</strong>, cómo funciona 
-                en la oración, y qué implica para tu predicación.
+                {t('grammarProfessor.subtitle')}
+                <strong className="text-slate-900"> {t('grammarProfessor.emphasis')}</strong>{t('grammarProfessor.detail')}
               </p>
 
               {/* Comparison Points */}
@@ -704,9 +703,9 @@ export function Landing() {
                       <Library className="h-6 w-6" style={{ color: '#dc2626' }} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 mb-1">Herramientas tradicionales (Logos, e-Sword)</h4>
+                      <h4 className="font-bold text-slate-900 mb-1">{t('grammarProfessor.traditional.title')}</h4>
                       <p className="text-slate-600">
-                        "Este verbo es un <strong>aoristo participio pasivo</strong>" — y tu debes averiguar qué significa eso.
+                        {t('grammarProfessor.traditional.description')} <strong>{t('grammarProfessor.traditional.emphasis')}</strong> {t('grammarProfessor.traditional.continuation')}
                       </p>
                     </div>
                   </div>
@@ -721,11 +720,9 @@ export function Landing() {
                       <GraduationCap className="h-6 w-6" style={{ color: '#16a34a' }} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 mb-1">DosFilos.Preach</h4>
+                      <h4 className="font-bold text-slate-900 mb-1">{t('grammarProfessor.dosfilos.title')}</h4>
                       <p className="text-slate-600">
-                        "Este <strong>aoristo participio pasivo</strong> indica una acción completada recibida por el sujeto. 
-                        En Efesios 2:8, Pablo usa esta forma para enfatizar que la salvación es algo que hemos <em>recibido</em>, 
-                        no logrado. Aquí tienes tres formas de explicar esto a tu congregación..."
+                        {t('grammarProfessor.dosfilos.description')} <strong>{t('grammarProfessor.dosfilos.emphasis')}</strong> {t('grammarProfessor.dosfilos.explanation')} <em>{t('grammarProfessor.dosfilos.italicEmphasis')}</em>{t('grammarProfessor.dosfilos.conclusion')}
                       </p>
                     </div>
                   </div>
@@ -748,15 +745,15 @@ export function Landing() {
                       <Languages className="h-6 w-6" style={{ color: '#7c3aed' }} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900">Análisis de Efesios 2:8</h3>
-                      <p className="text-sm text-slate-500">Tu profesor de gramática explica:</p>
+                      <h3 className="font-bold text-slate-900">{t('grammarProfessor.demo.title')}</h3>
+                      <p className="text-sm text-slate-500">{t('grammarProfessor.demo.subtitle')}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8fafc' }}>
-                      <p className="text-lg font-bold text-purple-700 mb-2">τῇ γὰρ χάριτί ἐστε <span className="text-indigo-600">σεσῳσμένοι</span></p>
-                      <p className="text-sm text-slate-600">"Porque por gracia sois <strong>salvos</strong>"</p>
+                      <p className="text-lg font-bold text-purple-700 mb-2">{t('grammarProfessor.demo.verse.greek')} <span className="text-indigo-600">{t('grammarProfessor.demo.verse.highlight')}</span></p>
+                      <p className="text-sm text-slate-600">{t('grammarProfessor.demo.verse.translation')}</p>
                     </div>
 
                     <div className="space-y-3">
@@ -765,8 +762,8 @@ export function Landing() {
                           <Check className="h-4 w-4" style={{ color: '#7c3aed' }} />
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900">σεσῳσμένοι = Participio Perfecto Pasivo</p>
-                          <p className="text-sm text-slate-600">Indica una acción completada en el pasado con resultados que continúan</p>
+                          <p className="font-semibold text-slate-900">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[0]?.title}</p>
+                          <p className="text-sm text-slate-600">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[0]?.description}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -774,8 +771,8 @@ export function Landing() {
                           <Check className="h-4 w-4" style={{ color: '#7c3aed' }} />
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900">La voz pasiva es teológicamente significativa</p>
-                          <p className="text-sm text-slate-600">Dios es el agente de la salvación, no nosotros</p>
+                          <p className="font-semibold text-slate-900">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[1]?.title}</p>
+                          <p className="text-sm text-slate-600">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[1]?.description}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -1250,7 +1247,7 @@ export function Landing() {
             Tu próximo sermón puede ser tu mejor sermón
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Únete a 500+ pastores que estudian más profundo. Comienza gratis hoy.
+            Únete a 10+ pastores que estudian más profundo. Comienza gratis hoy.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">
