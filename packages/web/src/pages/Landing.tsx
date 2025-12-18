@@ -341,30 +341,30 @@ export function Landing() {
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Timer className="h-6 w-6" />
-                <span className="text-3xl font-bold">5+</span>
+                <span className="text-3xl font-bold">{t('metrics.timeSaved.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Horas ahorradas por sermón</p>
+              <p className="text-blue-100 text-sm">{t('metrics.timeSaved.label')}</p>
             </div>
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <TrendingUp className="h-6 w-6" />
-                <span className="text-3xl font-bold">85%</span>
+                <span className="text-3xl font-bold">{t('metrics.depth.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Mayor profundidad exegética</p>
+              <p className="text-blue-100 text-sm">{t('metrics.depth.label')}</p>
             </div>
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Users className="h-6 w-6" />
-                <span className="text-3xl font-bold">500+</span>
+                <span className="text-3xl font-bold">{t('metrics.pastors.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Pastores activos</p>
+              <p className="text-blue-100 text-sm">{t('metrics.pastors.label')}</p>
             </div>
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Award className="h-6 w-6" />
-                <span className="text-3xl font-bold">4.8</span>
+                <span className="text-3xl font-bold">{t('metrics.satisfaction.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Satisfacción promedio</p>
+              <p className="text-blue-100 text-sm">{t('metrics.satisfaction.label')}</p>
             </div>
           </div>
         </div>
@@ -390,17 +390,17 @@ export function Landing() {
               style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}
             >
               <Zap className="h-4 w-4" />
-              Transforma tu preparación
+              {t('transformation.badge')}
             </div>
             <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
-              De horas de frustración a
+              {t('transformation.title.part1')}
               <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                estudio profundo y eficiente
+                {t('transformation.title.part2')}
               </span>
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              La IA no predica por ti. <strong>Te entrena para que prediques mejor.</strong> 
-              Tú haces el ejercicio espiritual, nosotros potenciamos tu capacidad.
+              {t('transformation.subtitle.main')} <strong>{t('transformation.subtitle.emphasis')}</strong> 
+              {t('transformation.subtitle.detail')}
             </p>
           </div>
 
@@ -425,26 +425,21 @@ export function Landing() {
                       <Clock className="h-6 w-6" style={{ color: '#dc2626' }} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900">Sin DosFilos</h3>
-                      <p className="text-sm text-slate-500">El camino largo</p>
+                      <h3 className="text-lg font-bold text-slate-900">{t('transformation.before.title')}</h3>
+                      <p className="text-sm text-slate-500">{t('transformation.before.subtitle')}</p>
                     </div>
                   </div>
                   <div 
                     className="px-4 py-2 rounded-full text-sm font-bold"
                     style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}
                   >
-                    8-12 horas
+                    {t('transformation.before.timeLabel')}
                   </div>
                 </div>
 
                 {/* Pain Points */}
                 <div className="space-y-4">
-                  {[
-                    { title: 'Múltiples fuentes', desc: 'Libros, comentarios, diccionarios... difíciles de coordinar' },
-                    { title: 'Sin dirección clara', desc: 'No sabes si estás profundizando lo suficiente' },
-                    { title: 'Incertidumbre exegética', desc: '¿Estaré interpretando bien el texto original?' },
-                    { title: 'Acceso limitado', desc: 'Hebreo y griego requieren años de estudio' }
-                  ].map((item, i) => (
+                  {(t('transformation.before.points', { returnObjects: true }) as Array<{title: string, description: string}>).map((item, i) => (
                     <div 
                       key={i} 
                       className="flex items-start gap-4 p-4 rounded-xl transition-all hover:scale-[1.02]"
@@ -458,7 +453,7 @@ export function Landing() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{item.title}</p>
-                        <p className="text-sm text-slate-600">{item.desc}</p>
+                        <p className="text-sm text-slate-600">{item.description}</p>
                       </div>
                     </div>
                   ))}
@@ -485,26 +480,21 @@ export function Landing() {
                       <Zap className="h-6 w-6" style={{ color: '#16a34a' }} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900">Con DosFilos</h3>
-                      <p className="text-sm text-slate-500">Tu entrenador experto</p>
+                      <h3 className="text-lg font-bold text-slate-900">{t('transformation.after.title')}</h3>
+                      <p className="text-sm text-slate-500">{t('transformation.after.subtitle')}</p>
                     </div>
                   </div>
                   <div 
                     className="px-4 py-2 rounded-full text-sm font-bold"
                     style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
                   >
-                    3-5 horas
+                    {t('transformation.after.timeLabel')}
                   </div>
                 </div>
 
                 {/* Benefits */}
                 <div className="space-y-4">
-                  {[
-                    { title: 'Marco hermenéutico claro', desc: 'Te guía paso a paso con metodología probada' },
-                    { title: 'Tu entrenador personal', desc: 'Asistente experto que te acompaña en cada estudio' },
-                    { title: 'Confianza teológica', desc: 'Sabe que tu interpretación está bien fundamentada' },
-                    { title: 'Idiomas originales accesibles', desc: 'Hebreo y griego explicados, no solo mostrados' }
-                  ].map((item, i) => (
+                  {(t('transformation.after.points', { returnObjects: true }) as Array<{title: string, description: string}>).map((item, i) => (
                     <div 
                       key={i} 
                       className="flex items-start gap-4 p-4 rounded-xl transition-all hover:scale-[1.02]"
@@ -518,7 +508,7 @@ export function Landing() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{item.title}</p>
-                        <p className="text-sm text-slate-600">{item.desc}</p>
+                        <p className="text-sm text-slate-600">{item.description}</p>
                       </div>
                     </div>
                   ))}
@@ -546,12 +536,10 @@ export function Landing() {
                   </div>
                   <div className="text-center md:text-left">
                     <h3 className="text-2xl font-bold text-slate-900 mb-3">
-                      🏋️ Piénsalo como tener un entrenador personal
+                      {t('transformation.analogy.emoji')} {t('transformation.analogy.title')}
                     </h3>
                     <p className="text-lg text-slate-700 leading-relaxed">
-                      Un entrenador no hace las pesas por ti. <strong className="text-amber-700">Te guía, corrige tu forma, 
-                      sugiere ejercicios y te empuja a dar más.</strong> DosFilos es tu entrenador exegético: 
-                      tú haces el trabajo espiritual, nosotros potenciamos tu capacidad de estudio.
+                      {t('transformation.analogy.description')} <strong className="text-amber-700">{t('transformation.analogy.emphasis')}</strong> {t('transformation.analogy.conclusion')}
                     </p>
                   </div>
                 </div>
