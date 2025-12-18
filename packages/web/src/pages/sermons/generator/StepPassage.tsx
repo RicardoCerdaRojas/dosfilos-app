@@ -6,8 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, Book, Lightbulb, Sparkles } from 'lucide-react';
 import { sermonService } from '@dosfilos/application';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from '@/i18n';
 
 export function StepPassage() {
+  const { t } = useTranslation('generator');
   const { passage, setPassage, setStep } = useWizard();
   const [searchParams] = useSearchParams();
   const [localPassage, setLocalPassage] = useState(passage);
@@ -57,13 +59,7 @@ export function StepPassage() {
   };
 
   // Common passage suggestions
-  const suggestions = [
-    { book: 'Juan', ref: 'Juan 3:16', topic: 'Amor de Dios' },
-    { book: 'Romanos', ref: 'Romanos 8:28', topic: 'Propósito' },
-    { book: 'Filipenses', ref: 'Filipenses 4:13', topic: 'Fortaleza' },
-    { book: 'Salmos', ref: 'Salmos 23', topic: 'Protección' },
-    { book: 'Isaías', ref: 'Isaías 40:31', topic: 'Esperanza' },
-  ];
+  const suggestions = t('passage.suggestions', { returnObjects: true }) as Array<{ book: string; ref: string; topic: string }>;
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 py-8">
@@ -72,10 +68,10 @@ export function StepPassage() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
           <Book className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold font-serif">Selecciona un Pasaje Bíblico</h1>
+        <h1 className="text-3xl font-bold font-serif">{t('passage.title')}</h1>
         {sermonTitle && (
           <div className="bg-muted/50 rounded-lg p-4 text-left">
-            <p className="text-sm text-muted-foreground mb-1">Desarrollando sermón:</p>
+            <p className="text-sm text-muted-foreground mb-1">{t('passage.developingSermon')}</p>
             <p className="font-medium text-lg">{sermonTitle}</p>
             {sermonDescription && (
               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{sermonDescription}</p>
@@ -84,8 +80,8 @@ export function StepPassage() {
         )}
         <p className="text-muted-foreground">
           {sermonTitle 
-            ? '¿Qué texto bíblico usarás para desarrollar este sermón?'
-            : 'El texto base que usarás para desarrollar tu sermón.'
+            ? t('passage.descWithTitle')
+            : t('passage.descDefault')
           }
         </p>
       </div>
@@ -93,16 +89,16 @@ export function StepPassage() {
       {/* Main input */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Pasaje Bíblico</CardTitle>
+          <CardTitle className="text-lg">{t('passage.inputTitle')}</CardTitle>
           <CardDescription>
-            Ingresa una referencia como "Juan 3:16" o "Romanos 8:28-39"
+            {t('passage.inputDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
             value={localPassage}
             onChange={(e) => setLocalPassage(e.target.value)}
-            placeholder="Ej: Juan 3:16, Salmos 23, Mateo 5:1-12"
+            placeholder={t('passage.inputPlaceholder')}
             className="text-lg py-6"
             onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
           />
@@ -112,7 +108,7 @@ export function StepPassage() {
             className="w-full"
             size="lg"
           >
-            {isLoading ? 'Cargando...' : 'Continuar con Exégesis'}
+            {isLoading ? t('passage.loading') : t('passage.continueBtn')}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
@@ -123,7 +119,7 @@ export function StepPassage() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-amber-500" />
-            Sugerencias Populares
+            {t('passage.suggestionsTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -149,10 +145,10 @@ export function StepPassage() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Próximamente: Sugerencias con IA
+              {t('passage.comingSoonTitle')}
             </CardTitle>
             <CardDescription>
-              Basado en el título y descripción de tu sermón, la IA podrá sugerirte pasajes relevantes.
+              {t('passage.comingSoonDesc')}
             </CardDescription>
           </CardHeader>
         </Card>

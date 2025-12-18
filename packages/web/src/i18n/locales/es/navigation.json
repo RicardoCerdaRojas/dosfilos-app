@@ -5,5 +5,27 @@
     "testimonials": "Testimonios",
     "pricing": "Precios",
     "login": "Iniciar Sesión",
-    "register": "Comenzar Gratis"
+    "register": "Comenzar",
+    "menu": {
+        "dashboard": "Dashboard",
+        "sermons": "Sermones",
+        "plans": "Planes de Predicación",
+        "generateSermon": "Generar Sermón",
+        "library": "Biblioteca",
+        "subscription": "Mi Suscripción",
+        "settings": "Configuración",
+        "admin": "Admin",
+        "contactLeads": "Leads de Contacto"
+    },
+    "user": {
+        "defaultName": "Usuario",
+        "appearance": "Apariencia",
+        "profile": "Perfil",
+        "notifications": "Notificaciones",
+        "logout": "Cerrar Sesión",
+        "sessionClosed": "Sesión cerrada"
+    },
+    "errors": {
+        "logoutError": "Error al cerrar sesión"
+    }
 }

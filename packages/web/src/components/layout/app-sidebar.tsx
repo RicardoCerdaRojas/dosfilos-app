@@ -31,29 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggleMenu } from '@/components/theme-toggle';
-
-const navigationGroups = [
-  // Group 1: Main
-  [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Sermones', href: '/dashboard/sermons', icon: FileText },
-  ],
-  // Group 2: Planning
-  [
-    { name: 'Planes de Predicación', href: '/dashboard/plans', icon: BookMarked },
-    { name: 'Generar Sermón', href: '/dashboard/generate-sermon', icon: Sparkles },
-  ],
-  // Group 3: Resources
-  [
-    { name: 'Biblioteca', href: '/dashboard/library', icon: Library },
-    { name: 'Mi Suscripción', href: '/dashboard/subscription', icon: CreditCard },
-    { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
-  ],
-];
-
-const adminNavigation = [
-  { name: 'Leads de Contacto', href: '/admin/leads', icon: Users },
-];
+import { useTranslation } from '@/i18n';
 
 const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
@@ -61,7 +39,31 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const { t } = useTranslation('navigation');
   const [newLeadsCount, setNewLeadsCount] = useState(0);
+
+  const navigationGroups = [
+    // Group 1: Main
+    [
+      { name: t('menu.dashboard'), href: '/dashboard', icon: Home },
+      { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
+    ],
+    // Group 2: Planning
+    [
+      { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
+      { name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles },
+    ],
+    // Group 3: Resources
+    [
+      { name: t('menu.library'), href: '/dashboard/library', icon: Library },
+      { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
+      { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
+    ],
+  ];
+
+  const adminNavigation = [
+    { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
+  ];
 
   // Subscribe to new leads count for admin
   useEffect(() => {
@@ -84,10 +86,10 @@ export function AppSidebar() {
   const handleLogout = async () => {
     try {
       await authService.logout();
-      toast.success('Sesión cerrada');
+      toast.success(t('user.sessionClosed'));
       navigate('/login');
     } catch (error: any) {
-      toast.error(error.message || 'Error al cerrar sesión');
+      toast.error(error.message || t('errors.logoutError'));
     }
   };
 
@@ -201,7 +203,7 @@ export function AppSidebar() {
                   </Avatar>
                   <div className="flex flex-col items-start overflow-hidden flex-1">
                     <span className="text-sm font-medium truncate w-full">
-                      {user?.displayName || 'Usuario'}
+                      {user?.displayName || t('user.defaultName')}
                     </span>
                     <span className="text-xs text-muted-foreground truncate w-full">
                       {user?.email}
@@ -214,7 +216,7 @@ export function AppSidebar() {
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {user?.displayName || 'Usuario'}
+                      {user?.displayName || t('user.defaultName')}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email}
@@ -225,7 +227,7 @@ export function AppSidebar() {
                 
                 {/* Theme Submenu */}
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Apariencia
+                  {t('user.appearance')}
                 </DropdownMenuLabel>
                 <ThemeToggleMenu />
                 
@@ -233,11 +235,11 @@ export function AppSidebar() {
                 
                 <DropdownMenuItem>
                   <User2 className="mr-2 h-4 w-4" />
-                  Perfil
+                  {t('user.profile')}
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Bell className="mr-2 h-4 w-4" />
-                  Notificaciones
+                  {t('user.notifications')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -245,7 +247,7 @@ export function AppSidebar() {
                   onClick={handleLogout}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar Sesión
+                  {t('user.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

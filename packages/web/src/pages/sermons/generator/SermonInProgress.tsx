@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2, BarChart3, CheckCircle2, FileText, TrendingUp, Filter } from 'lucide-react';
+import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2, BarChart3, CheckCircle2, FileText, TrendingUp, Filter, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { VersionHistoryModal } from './VersionHistoryModal';
@@ -32,9 +32,10 @@ interface SermonsInProgressProps {
     onDiscard: (sermon: SermonEntity) => void;
     onPublish?: (sermon: SermonEntity) => void;
     onDuplicate?: (sermon: SermonEntity) => void;
+    onNewSermon?: () => void;
 }
 
-export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate }: SermonsInProgressProps) {
+export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate, onNewSermon }: SermonsInProgressProps) {
     const { t, i18n } = useTranslation('generator');
     const dateLocale = i18n.language === 'es' ? es : enUS;
     const [searchQuery, setSearchQuery] = useState('');
@@ -201,60 +202,39 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
     );
 
     return (
-        <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
                 <div>
-                    <h2 className="text-xl font-bold tracking-tight">{t('inProgress.title')}</h2>
-                    <p className="text-sm text-muted-foreground">{t('inProgress.subtitle')}</p>
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">{t('title')}</h1>
+                    <p className="text-muted-foreground max-w-2xl">{t('inProgress.subtitle')}</p>
                 </div>
-                
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">
-                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">{t('stats.total')}</span>
-                                <span className="text-2xl font-bold">{totalSermons}</span>
-                            </div>
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <BarChart3 className="h-5 w-5 text-primary" />
-                            </div>
+                {onNewSermon && (
+                    <Button onClick={onNewSermon} size="lg" className="shadow-md hover:scale-105 transition-transform whitespace-nowrap">
+                        <Plus className="mr-2 h-5 w-5" />
+                        {t('actions.startNew')}
+                    </Button>
+                )}
+            </div>
+
+            {/* Stats Row - Clean & Compact */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                    { label: t('stats.total'), value: totalSermons, icon: BarChart3, color: 'text-primary', bg: 'bg-primary/10' },
+                    { label: t('stats.published'), value: publishedCount, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-500/10' },
+                    { label: t('stats.drafts'), value: draftCount, icon: FileText, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+                    { label: t('stats.progress'), value: `${avgCompletion}%`, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-500/10' },
+                ].map((stat, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 rounded-xl border bg-card/50 hover:bg-card transition-colors">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${stat.bg}`}>
+                            <stat.icon className={`h-5 w-5 ${stat.color}`} />
                         </div>
-                    </Card>
-                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">{t('stats.published')}</span>
-                                <span className="text-2xl font-bold text-green-600">{publishedCount}</span>
-                            </div>
-                            <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                            </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                            <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
                         </div>
-                    </Card>
-                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">{t('stats.drafts')}</span>
-                                <span className="text-2xl font-bold text-blue-600">{draftCount}</span>
-                            </div>
-                            <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                            </div>
-                        </div>
-                    </Card>
-                    <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">{t('stats.progress')}</span>
-                                <span className="text-2xl font-bold text-purple-600">{avgCompletion}%</span>
-                            </div>
-                            <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center">
-                                <TrendingUp className="h-5 w-5 text-purple-600" />
-                            </div>
-                        </div>
-                    </Card>
-                </div>
+                    </div>
+                ))}
             </div>
 
             {/* Search, Sort, and View Controls */}

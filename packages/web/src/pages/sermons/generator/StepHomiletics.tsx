@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { useTranslation } from '@/i18n';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ enum HomileticsSubStep {
 export function StepHomiletics() {
     const { exegesis, rules, setHomiletics, setStep, homiletics, saving, config, selectedResourceIds, cacheName, setCacheName, selectHomileticalApproach } = useWizard();
     const { user } = useFirebase();
+    const { t } = useTranslation('generator');
     
     // 🎯 NEW: Sub-step state management
     const [currentSubStep, setCurrentSubStep] = useState<HomileticsSubStep>(
@@ -134,7 +136,7 @@ export function StepHomiletics() {
         try {
             // 🎯 Use LibraryContext for sync/cache
             console.log('🔍 handleGenerate (Homiletics) - Ensuring library context is ready');
-            toast.loading('Preparando contexto de biblioteca...', { id: 'context-prep' });
+            toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
             await ensureReady();
             toast.dismiss('context-prep');
             
@@ -151,7 +153,7 @@ export function StepHomiletics() {
 
             
             // 🎯 NEW: Use two-phase generation
-            const { previews, cacheName: newCacheName, cachedResources } = 
+            const { previews, cacheName: newCacheName } = 
                 await sermonGeneratorService.generateHomileticsPreview(exegesis, rules, homileticsConfig, user?.uid);
             
             // 🎯 Sort previews: Expository approaches first (user's primary approach)
@@ -187,7 +189,7 @@ export function StepHomiletics() {
 
             }
             
-            toast.success(`${sortedPreviews.length || 0} enfoques generados. Selecciona el mejor para tu contexto.`);
+            toast.success(t('homiletics.success.previewsGenerated', { count: sortedPreviews.length || 0 }));
 
             // 🎯 Transition to approach selection sub-step
             if (sortedPreviews.length > 0) {
@@ -195,7 +197,7 @@ export function StepHomiletics() {
             }
         } catch (error: any) {
             console.error(error);
-            toast.error(error.message || 'Error al generar vistas previas de enfoques');
+            toast.error(error.message || t('homiletics.errors.generatePreviews'));
         } finally {
             setLoading(false);
         }
@@ -212,7 +214,7 @@ export function StepHomiletics() {
         // Find the selected preview
         const selectedPreview = approachPreviews.find(p => p.id === tempSelectedApproachId);
         if (!selectedPreview) {
-            toast.error('No se encontró el enfoque seleccionado');
+            toast.error(t('homiletics.errors.notFound'));
             return;
         }
 
@@ -260,10 +262,10 @@ export function StepHomiletics() {
             // 🎯 Transition to proposition development sub-step
             setCurrentSubStep(HomileticsSubStep.PROPOSITION_DEVELOPMENT);
             
-            toast.success('Enfoque completamente desarrollado. ¡Revisa y refina!');
+            toast.success(t('homiletics.success.developed'));
         } catch (error: any) {
             console.error('❌ [Phase 2] Error developing approach:', error);
-            toast.error(error.message || 'Error al desarrollar el enfoque seleccionado');
+            toast.error(error.message || t('homiletics.errors.develop'));
             // Stay in selection view on error
         } finally {
             setDevelopingApproach(false);
@@ -418,7 +420,7 @@ export function StepHomiletics() {
                     const refusalMessage = {
                         id: (Date.now() + 1).toString(),
                         role: 'assistant' as const,
-                        content: validation.refusalMessage || "Entiendo tu mensaje, pero mi enfoque está en ayudarte con el análisis homilético. ¿Podrías reformular tu solicitud?",
+                        content: validation.refusalMessage || t('homiletics.errors.refine'), // Using general error message or English fallback if not specific key
                         timestamp: new Date()
                     };
                     setMessages(prev => [...prev, refusalMessage]);
@@ -584,17 +586,17 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     id: (Date.now() + 1).toString(),
                     role: 'assistant' as const,
                     content: refinementSources.length > 0 
-                        ? `✅ Sección "${sectionConfig.label}" refinada usando ${refinementSources.length} fuente(s) de biblioteca.`
-                        : `✅ Sección "${sectionConfig.label}" refinada exitosamente.`,
+                        ? `✅ ${t('homiletics.success.refined').replace('Sección', '')} "${sectionConfig.label}"`
+                        : `✅ ${t('homiletics.success.refined').replace('Sección', '')} "${sectionConfig.label}"`,
                     timestamp: new Date(),
                     sources: refinementSources.length > 0 ? refinementSources : undefined
                 };
                 setMessages(prev => [...prev, aiMessage]);
-                toast.success('Sección refinada exitosamente');
+                toast.success(t('homiletics.success.refined'));
 
             } catch (error: any) {
                 console.error('Error refining section:', error);
-                toast.error(error.message || 'Error al refinar la sección');
+                toast.error(error.message || t('homiletics.errors.refine'));
                 
                 const errorMessage = {
                     id: (Date.now() + 1).toString(),
@@ -635,7 +637,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedHomiletics = JSON.parse(JSON.stringify(homiletics));
                 setValueByPath(updatedHomiletics, sectionConfig.path, previousVersion.content);
                 setHomiletics(updatedHomiletics);
-                toast.success('Cambio deshecho');
+                toast.success(t('homiletics.success.undo'));
             }
         }
     };
@@ -651,7 +653,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedHomiletics = JSON.parse(JSON.stringify(homiletics));
                 setValueByPath(updatedHomiletics, sectionConfig.path, nextVersion.content);
                 setHomiletics(updatedHomiletics);
-                toast.success('Cambio rehecho');
+                toast.success(t('homiletics.success.redo'));
             }
         }
     };
@@ -667,7 +669,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedHomiletics = JSON.parse(JSON.stringify(homiletics));
                 setValueByPath(updatedHomiletics, sectionConfig.path, version.content);
                 setHomiletics(updatedHomiletics);
-                toast.success('Versión restaurada');
+                toast.success(t('homiletics.success.restored'));
             }
         }
     };
@@ -702,11 +704,11 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     'Cambios guardados manualmente'
                 );
 
-                toast.success('Sección actualizada');
+                toast.success(t('homiletics.success.updated'));
             }
         } catch (error) {
             console.error('Error updating section:', error);
-            toast.error('Error al actualizar la sección');
+            toast.error(t('homiletics.errors.update'));
         }
     };
 
@@ -720,7 +722,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
     };
 
     if (!exegesis) {
-        return <div>Error: Falta el estudio exegético.</div>;
+        return <div>{t('homiletics.errorNoExegesis')}</div>;
     }
 
     // Phase 1: Loading previews
@@ -729,8 +731,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <div className="flex items-center justify-center h-[calc(100vh-120px)]">
                 <div className="text-center space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                    <p className="text-lg font-medium">Generando enfoques homiléticos...</p>
-                    <p className="text-sm text-muted-foreground">📋 Fase 1: Creando 4-5 opciones</p>
+                    <p className="text-lg font-medium">{t('homiletics.phase1Loading')}</p>
+                    <p className="text-sm text-muted-foreground">{t('homiletics.phase1Sub')}</p>
                 </div>
             </div>
         );
@@ -742,8 +744,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <div className="flex items-center justify-center h-[calc(100vh-120px)]">
                 <div className="text-center space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                    <p className="text-lg font-medium">Desarrollando enfoque seleccionado...</p>
-                    <p className="text-sm text-muted-foreground">🎨 Fase 2: Generando proposición y bosquejo detallado</p>
+                    <p className="text-lg font-medium">{t('homiletics.phase2Loading')}</p>
+                    <p className="text-sm text-muted-foreground">{t('homiletics.phase2Sub')}</p>
                 </div>
             </div>
         );
@@ -775,7 +777,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 {saving && (
                     <div className="fixed top-4 right-4 flex items-center gap-2 bg-background border rounded-lg px-3 py-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-sm text-muted-foreground">Guardado</span>
+                        <span className="text-sm text-muted-foreground">{t('exegesis.saved')}</span>
                     </div>
                 )}
                 
@@ -797,16 +799,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-2">
                     <Mic2 className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-bold">Análisis Homilético</h2>
+                    <h2 className="text-2xl font-bold">{t('homiletics.title')}</h2>
                 </div>
                 <p className="text-muted-foreground">
-                    Construye el puente hacia la aplicación contemporánea.
+                    {t('homiletics.subtitle2')}
                 </p>
             </div>
 
             <Card className="p-6 space-y-4 bg-muted/50 mb-6">
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                    Base Exegética
+                    {t('homiletics.exegeticalBasis')}
                 </h3>
                 <p className="text-lg font-medium italic">"{exegesis.exegeticalProposition}"</p>
             </Card>
@@ -817,10 +819,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         <Mic2 className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                        <h3 className="font-semibold mb-2">Listo para generar tu propuesta homilética</h3>
+                        <h3 className="font-semibold mb-2">{t('homiletics.readyToGenerate')}</h3>
                         <p className="text-sm text-muted-foreground">
-                            Basándome en tu análisis exegético, crearé 4-5 enfoques homiléticos 
-                            diferentes para que elijas el más apropiado.
+                            {t('homiletics.readyDesc')}
                         </p>
                     </div>
                     <Button
@@ -830,7 +831,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         className="w-full max-w-md mx-auto"
                     >
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Generar Enfoques Homiléticos
+                        {t('homiletics.generateBtn')}
                     </Button>
                 </div>
             </Card>
@@ -839,9 +840,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
         <div className="h-full flex flex-col overflow-hidden">
             <div className="mb-4 flex-shrink-0 flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold">Propuesta Homilética</h3>
+                    <h3 className="text-lg font-semibold">{t('homiletics.proposalTitle')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Revisa y refina el contenido usando el chat
+                        {t('homiletics.proposalDesc')}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -855,12 +856,12 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     {loading ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Generando...
+                            {t('homiletics.regeneratingBtn')}
                         </>
                     ) : (
                         <>
                             <Sparkles className="mr-2 h-4 w-4" />
-                            Regenerar
+                            {t('homiletics.regenerateShort')}
                         </>
                     )}
                 </Button>
@@ -894,12 +895,12 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             {/* Navigation Buttons */}
             <div className="flex-shrink-0 pt-4 border-t space-y-2">
                 <Button onClick={handleContinue} size="lg" className="w-full">
-                    Continuar al Borrador
+                    {t('homiletics.continueToDrafting')}
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button onClick={() => setStep(1)} variant="outline" size="sm" className="w-full">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a Exégesis
+                    {t('homiletics.backToExegesis')}
                 </Button>
             </div>
         </div>
@@ -913,19 +914,17 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     <Mic2 className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                    <h3 className="font-semibold mb-2">¿Qué es la Homilética?</h3>
+                    <h3 className="font-semibold mb-2">{t('homiletics.whatIsTitle')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        La homilética es el arte de construir el puente entre el texto bíblico
-                        y la audiencia contemporánea, transformando la verdad eterna en aplicación práctica.
+                        {t('homiletics.whatIsDesc')}
                     </p>
                 </div>
                 <div className="pt-4 border-t">
-                    <h4 className="font-medium text-sm mb-2">Después de generar podrás:</h4>
+                    <h4 className="font-medium text-sm mb-2">{t('homiletics.afterGenerateTitle')}</h4>
                     <ul className="text-sm text-muted-foreground space-y-1 text-left">
-                        <li>• Elegir entre 4-5 enfoques diferentes</li>
-                        <li>• Refinar proposición homilética</li>
-                        <li>• Mejorar el bosquejo del sermón</li>
-                        <li>• Agregar ilustraciones relevantes</li>
+                        {(t('homiletics.afterGenerateList', { returnObjects: true }) as string[]).map((item, i) => (
+                            <li key={i}>• {item}</li>
+                        ))}
                     </ul>
                 </div>
             </div>

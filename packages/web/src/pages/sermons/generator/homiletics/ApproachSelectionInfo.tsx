@@ -8,8 +8,11 @@
 
 import { Card } from '@/components/ui/card';
 import { Sparkles, Target, Users, BookOpen } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 export function ApproachSelectionInfo() {
+    const { t } = useTranslation('generator');
+
     return (
         <Card className="p-6 h-full flex flex-col justify-center">
             <div className="space-y-6">
@@ -18,10 +21,9 @@ export function ApproachSelectionInfo() {
                     <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                         <Sparkles className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-lg">Selección de Enfoque</h3>
+                    <h3 className="font-semibold text-lg">{t('homiletics.infoTitle')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Cada enfoque ofrece una perspectiva única para predicar este pasaje.
-                        Considera tu contexto y audiencia al elegir.
+                        {t('homiletics.infoDesc')}
                     </p>
                 </div>
 
@@ -30,10 +32,9 @@ export function ApproachSelectionInfo() {
                     <div className="flex gap-3">
                         <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         <div>
-                            <h4 className="font-medium text-sm mb-1">Tipos de Enfoque</h4>
+                            <h4 className="font-medium text-sm mb-1">{t('homiletics.typesTitle')}</h4>
                             <p className="text-xs text-muted-foreground">
-                                Pastoral, Teológico, Apologético, Evangelístico, Expositivo y Narrativo.
-                                Cada uno con su propósito único.
+                                {t('homiletics.typesDesc')}
                             </p>
                         </div>
                     </div>
@@ -41,10 +42,9 @@ export function ApproachSelectionInfo() {
                     <div className="flex gap-3">
                         <Users className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         <div>
-                            <h4 className="font-medium text-sm mb-1">Audiencia Objetivo</h4>
+                            <h4 className="font-medium text-sm mb-1">{t('homiletics.audienceTitle')}</h4>
                             <p className="text-xs text-muted-foreground">
-                                Cada enfoque está optimizado para una audiencia específica.
-                                Elige el que mejor conecte con tu congregación.
+                                {t('homiletics.audienceDesc')}
                             </p>
                         </div>
                     </div>
@@ -52,10 +52,9 @@ export function ApproachSelectionInfo() {
                     <div className="flex gap-3">
                         <BookOpen className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         <div>
-                            <h4 className="font-medium text-sm mb-1">Desarrollo Personalizado</h4>
+                            <h4 className="font-medium text-sm mb-1">{t('homiletics.developmentTitle')}</h4>
                             <p className="text-xs text-muted-foreground">
-                                Una vez seleccionado, generaremos una proposición homilética y bosquejo
-                                específicamente afinados al tono y propósito de tu enfoque elegido.
+                                {t('homiletics.developmentDesc')}
                             </p>
                         </div>
                     </div>
@@ -64,8 +63,7 @@ export function ApproachSelectionInfo() {
                 {/* Tip */}
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-primary">💡 Tip:</span> No existe un enfoque "correcto".
-                        Elige el que mejor resuene con las necesidades actuales de tu iglesia.
+                        <span className="font-medium text-primary">💡 {t('homiletics.tip')}</span> {t('homiletics.tipText')}
                     </p>
                 </div>
             </div>
