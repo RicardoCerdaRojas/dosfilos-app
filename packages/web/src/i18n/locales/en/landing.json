@@ -252,29 +252,97 @@
         ]
     },
     "howItWorks": {
-        "title": "How It Works",
-        "subtitle": "A simple and powerful process designed for pastors who value depth and precision.",
-        "steps": [
-            {
-                "number": "1",
-                "title": "Select Your Passage",
-                "description": "Choose the biblical text you'll preach. DosFilos guides you from there."
+        "title": "Your Preparation Workflow",
+        "subtitle": "From text to pulpit, guided at every step"
+    },
+    "pricing": {
+        "title": "Choose Your Plan",
+        "subtitle": "Start free. Scale when ready. No credit card required.",
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "save": "Save 20%",
+        "plans": {
+            "free": {
+                "name": "Free",
+                "price": "$0",
+                "period": "forever",
+                "description": "Perfect to start and test the platform",
+                "features": [
+                    "2 sermons per month",
+                    "Access to 3 expert assistants",
+                    "Basic library access",
+                    "Community support"
+                ],
+                "cta": "Start Free"
             },
-            {
-                "number": "2",
-                "title": "Deep Analysis",
-                "description": "Work with your expert assistants in languages, hermeneutics, and homiletics."
+            "pro": {
+                "name": "Pro",
+                "price": "$29",
+                "period": "per month",
+                "description": "For pastors who preach regularly",
+                "popular": "Most Popular",
+                "features": [
+                    "Unlimited sermons",
+                    "All expert assistants",
+                    "Full library access",
+                    "Priority support",
+                    "Export in multiple formats",
+                    "Advanced customization"
+                ],
+                "cta": "Start Free Trial"
             },
-            {
-                "number": "3",
-                "title": "Structure Your Sermon",
-                "description": "Build your outline with practical, relevant applications to your context."
-            },
-            {
-                "number": "4",
-                "title": "Preach Faithfully",
-                "description": "Go to the pulpit confident, with a sermon well-founded in the text."
+            "team": {
+                "name": "Team",
+                "price": "$79",
+                "period": "per month",
+                "description": "For pastoral teams and churches",
+                "features": [
+                    "Everything in Pro",
+                    "Up to 5 team members",
+                    "Shared sermon library",
+                    "Team collaboration",
+                    "Advanced analytics",
+                    "Dedicated support"
+                ],
+                "cta": "Contact Sales"
             }
-        ]
+        },
+        "scholarship": {
+            "title": "Scholarship Program",
+            "description": "If cost is a barrier to using DosFilos, we want to help.",
+            "cta": "Apply for Scholarship"
+        }
+    },
+    "faq": {
+        "title": "Frequently Asked Questions",
+        "subtitle": "Everything you need to know about DosFilos.Preach"
+    },
+    "finalCta": {
+        "title": "Ready to Transform Your Sermon Preparation?",
+        "subtitle": "Join hundreds of pastors already preaching with greater depth and confidence.",
+        "cta": "Start Free Today",
+        "note": "No credit card required. Cancel anytime."
+    },
+    "footer": {
+        "tagline": "Your expert assistant for faithful expository preaching.",
+        "product": {
+            "title": "Product",
+            "features": "Features",
+            "pricing": "Pricing",
+            "howItWorks": "How It Works"
+        },
+        "resources": {
+            "title": "Resources",
+            "blog": "Blog",
+            "documentation": "Documentation",
+            "support": "Support"
+        },
+        "company": {
+            "title": "Company",
+            "about": "About Us",
+            "contact": "Contact",
+            "privacy": "Privacy Policy"
+        },
+        "rights": "All rights reserved."
     }
 }

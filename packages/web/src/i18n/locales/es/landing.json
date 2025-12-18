@@ -252,29 +252,97 @@
         ]
     },
     "howItWorks": {
-        "title": "Cómo Funciona",
-        "subtitle": "Un proceso simple y poderoso diseñado para pastores que valoran la profundidad y la precisión.",
-        "steps": [
-            {
-                "number": "1",
-                "title": "Selecciona tu Pasaje",
-                "description": "Escoge el texto bíblico que predicarás. DosFilos te guía desde ahí."
+        "title": "Tu Flujo de Preparación",
+        "subtitle": "Desde el texto hasta el púlpito, guiado en cada paso"
+    },
+    "pricing": {
+        "title": "Elige tu Plan",
+        "subtitle": "Comienza gratis. Escala cuando estés listo. Sin tarjeta de crédito requerida.",
+        "monthly": "Mensual",
+        "yearly": "Anual",
+        "save": "Ahorra 20%",
+        "plans": {
+            "free": {
+                "name": "Gratis",
+                "price": "$0",
+                "period": "para siempre",
+                "description": "Perfecto para comenzar y probar la plataforma",
+                "features": [
+                    "2 sermones por mes",
+                    "Acceso a 3 asistentes expertos",
+                    "Acceso básico a biblioteca",
+                    "Soporte comunitario"
+                ],
+                "cta": "Comenzar Gratis"
             },
-            {
-                "number": "2",
-                "title": "Análisis Profundo",
-                "description": "Trabaja con tus asistentes expertos en idiomas, hermenéutica y homilética."
+            "pro": {
+                "name": "Pro",
+                "price": "$29",
+                "period": "por mes",
+                "description": "Para pastores que predican regularmente",
+                "popular": "Más Popular",
+                "features": [
+                    "Sermones ilimitados",
+                    "Todos los asistentes expertos",
+                    "Acceso completo a biblioteca",
+                    "Soporte prioritario",
+                    "Exportar en múltiples formatos",
+                    "Personalización avanzada"
+                ],
+                "cta": "Comenzar Prueba Gratis"
             },
-            {
-                "number": "3",
-                "title": "Estructura tu Sermón",
-                "description": "Construye tu bosquejo con aplicaciones prácticas y relevantes a tu contexto."
-            },
-            {
-                "number": "4",
-                "title": "Predica Fielmente",
-                "description": "Ve al púlpito confiado, con un sermón bien fundamentado en el texto."
+            "team": {
+                "name": "Equipo",
+                "price": "$79",
+                "period": "por mes",
+                "description": "Para equipos pastorales e iglesias",
+                "features": [
+                    "Todo en Pro",
+                    "Hasta 5 miembros del equipo",
+                    "Biblioteca compartida de sermones",
+                    "Colaboración en equipo",
+                    "Analíticas avanzadas",
+                    "Soporte dedicado"
+                ],
+                "cta": "Contactar Ventas"
             }
-        ]
+        },
+        "scholarship": {
+            "title": "Programa de Becas",
+            "description": "Si el costo es una barrera para usar DosFilos, queremos ayudarte.",
+            "cta": "Solicitar Beca"
+        }
+    },
+    "faq": {
+        "title": "Preguntas Frecuentes",
+        "subtitle": "Todo lo que necesitas saber sobre DosFilos.Preach"
+    },
+    "finalCta": {
+        "title": "¿Listo para Transformar tu Preparación de Sermones?",
+        "subtitle": "Únete a cientos de pastores que ya predican con mayor profundidad y confianza.",
+        "cta": "Comienza Gratis Hoy",
+        "note": "Sin tarjeta de crédito requerida. Cancela en cualquier momento."
+    },
+    "footer": {
+        "tagline": "Tu asistente experto para predicación expositiva fiel.",
+        "product": {
+            "title": "Producto",
+            "features": "Características",
+            "pricing": "Precios",
+            "howItWorks": "Cómo Funciona"
+        },
+        "resources": {
+            "title": "Recursos",
+            "blog": "Blog",
+            "documentation": "Documentación",
+            "support": "Soporte"
+        },
+        "company": {
+            "title": "Empresa",
+            "about": "Acerca de",
+            "contact": "Contacto",
+            "privacy": "Política de Privacidad"
+        },
+        "rights": "Todos los derechos reservados."
     }
 }

@@ -875,10 +875,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Tu Flujo de Preparación
+              {t('howItWorks.title')}
             </h2>
             <p className="text-xl text-slate-600">
-              Desde el texto hasta el púlpito, guiado en cada paso
+              {t('howItWorks.subtitle')}
             </p>
           </div>
 
@@ -1053,10 +1053,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Precios Transparentes
+              {t('pricing.title')}
             </h2>
             <p className="text-xl text-slate-600">
-              Comienza gratis, actualiza cuando estés listo
+              {t('pricing.subtitle')}
             </p>
           </div>
 
@@ -1190,7 +1190,7 @@ export function Landing() {
       <section className="py-20 bg-slate-50">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-slate-900 text-center mb-12">
-            Preguntas Frecuentes
+            {t('faq.title')}
           </h2>
           
           <div className="space-y-6">
@@ -1232,10 +1232,10 @@ export function Landing() {
       >
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            Tu próximo sermón puede ser tu mejor sermón
+            {t('finalCta.title')}
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Únete a 10+ pastores que estudian más profundo. Comienza gratis hoy.
+            {t('finalCta.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">
@@ -1248,7 +1248,7 @@ export function Landing() {
                   boxShadow: '0 0 30px rgba(255, 255, 255, 0.3)'
                 }}
               >
-                Comenzar Gratis - Sin Tarjeta
+                {t('finalCta.cta')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -1281,36 +1281,36 @@ export function Landing() {
                 <span className="text-white font-bold">DosFilos.Preach</span>
               </div>
               <p className="text-sm">
-                Tu entrenador exegético personal. Diseñado por pastores, para pastores.
+                {t('footer.tagline')}
               </p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Producto</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.product.title')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Características</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Precios</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Roadmap</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">{t('footer.product.features')}</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">{t('footer.product.pricing')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.product.howItWorks')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Recursos</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.resources.title')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Tutoriales</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Soporte</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.resources.blog')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.resources.documentation')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.resources.support')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.company.title')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Privacidad</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Términos</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookies</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.company.about')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.company.contact')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.company.privacy')}</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-slate-800 pt-8 text-center text-sm">
-            <p>&copy; 2025 DosFilos.Preach. Todos los derechos reservados.</p>
+            <p>&copy; 2025 DosFilos.Preach. {t('footer.rights')}</p>
           </div>
         </div>
       </footer>
