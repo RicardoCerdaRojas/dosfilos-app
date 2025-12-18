@@ -133,6 +133,43 @@ function WizardContent() {
         }
     };
 
+    const handlePublish = async (sermon: SermonEntity) => {
+        try {
+            await sermonService.publishSermonAsCopy(sermon.id);
+            // Refresh the list to show updated publish count
+            const sermons = await sermonService.getInProgressSermons(user!.uid);
+            setInProgressSermons(sermons);
+        } catch (error) {
+            console.error('Error publishing sermon:', error);
+        }
+    };
+
+    const handleDuplicate = async (sermon: SermonEntity) => {
+        try {
+            // Create a copy by using the wizard progress data
+            if (!sermon.wizardProgress) return;
+            
+            const duplicatedSermon = await sermonService.createSermon({
+                userId: user!.uid,
+                title: `${sermon.title || sermon.wizardProgress.passage} (Copia)`,
+                passage: sermon.wizardProgress.passage,
+                status: 'draft',
+                wizardProgress: {
+                    ...sermon.wizardProgress,
+                    publishedCopyId: undefined,
+                    lastPublishedAt: undefined,
+                    publishCount: undefined,
+                    lastSaved: new Date(),
+                },
+            });
+            
+            // Add to the list
+            setInProgressSermons(prev => [duplicatedSermon, ...prev]);
+        } catch (error) {
+            console.error('Error duplicating sermon:', error);
+        }
+    };
+
     const handleNewSermon = () => {
         reset();
         setShowResumePrompt(false);
@@ -183,6 +220,8 @@ function WizardContent() {
                     sermons={inProgressSermons}
                     onContinue={handleContinue}
                     onDiscard={handleDiscard}
+                    onPublish={handlePublish}
+                    onDuplicate={handleDuplicate}
                 />
 
                 <div className="mt-6 text-center">
