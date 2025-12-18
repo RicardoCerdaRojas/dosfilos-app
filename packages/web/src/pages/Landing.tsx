@@ -1020,95 +1020,71 @@ export function Landing() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {[
-              {
-                name: 'Gratis',
-                price: '$0',
-                period: 'para siempre',
-                features: [
-                  '3 sermones por mes',
-                  'Funciones básicas',
-                  'Análisis de texto',
-                  'Soporte por email'
-                ],
-                cta: 'Comenzar Gratis',
-                popular: false
-              },
-              {
-                name: 'Pro',
-                price: '$14',
-                period: 'por mes',
-                features: [
-                  'Sermones ilimitados',
-                  'Planes de predicación',
-                  'Biblioteca de recursos',
-                  'Análisis avanzado',
-                  'Exportar a Word/PDF',
-                  'Soporte prioritario'
-                ],
-                cta: 'Probar 14 días gratis',
-                popular: true
-              },
-              {
-                name: 'Iglesias',
-                price: '$49',
-                period: 'por mes',
-                features: [
-                  'Hasta 5 pastores',
-                  'Todo lo de Pro',
-                  'Recursos compartidos',
-                  'Capacitación incluida',
-                  'Gestor de cuenta dedicado',
-                  'Facturación anual'
-                ],
-                cta: 'Contactar Ventas',
-                popular: false
-              }
-            ].map((plan, i) => (
-              <Card 
-                key={i} 
-                className={`p-8 relative ${plan.popular ? 'border-2 shadow-2xl scale-105' : 'border-2'}`}
-                style={{ 
-                  borderColor: plan.popular ? '#2563eb' : '#e2e8f0',
-                  backgroundColor: 'white'
-                }}
-              >
-                {plan.popular && (
-                  <div 
-                    className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-semibold text-white"
-                    style={{ backgroundColor: '#2563eb' }}
+            {(() => {
+              const plans = [
+                { key: 'free' as const, popular: false },
+                { key: 'pro' as const, popular: true },
+                { key: 'team' as const, popular: false }
+              ];
+              
+              return plans.map(({ key, popular }, i) => {
+                const plan = t(`pricing.plans.${key}`, { returnObjects: true }) as {
+                  name: string;
+                  price: string;
+                  period: string;
+                  description?: string;
+                  popular?: string;
+                  features: string[];
+                  cta: string;
+                };
+                
+                return (
+                  <Card 
+                    key={i} 
+                    className={`p-8 relative ${popular ? 'border-2 shadow-2xl scale-105' : 'border-2'}`}
+                    style={{ 
+                      borderColor: popular ? '#2563eb' : '#e2e8f0',
+                      backgroundColor: 'white'
+                    }}
                   >
-                    Más Popular
-                  </div>
-                )}
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
-                    <span className="text-slate-600">/{plan.period}</span>
-                  </div>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-start gap-3">
-                      <Check className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#16a34a' }} />
-                      <span className="text-slate-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  className="w-full"
-                  size="lg"
-                  style={{ 
-                    backgroundColor: plan.popular ? '#2563eb' : '#1e293b',
-                    color: 'white'
-                  }}
-                >
-                  {plan.cta}
-                </Button>
-              </Card>
-            ))}
-          </div>
+                    {popular && (
+                      <div 
+                        className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-semibold text-white"
+                        style={{ backgroundColor: '#2563eb' }}
+                      >
+                        {plan.popular || t('pricing.plans.pro.popular')}
+                      </div>
+                    )}
+                    <div className="text-center mb-8">
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
+                        <span className="text-slate-600">/{plan.period}</span>
+                      </div>
+                    </div>
+                    <ul className="space-y-4 mb-8">
+                      {plan.features.map((feature, j) => (
+                        <li key={j} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#16a34a' }} />
+                          <span className="text-slate-700">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                      <Button 
+                        className="w-full"
+                        size="lg"
+                        style={{ 
+                          backgroundColor: popular ? '#2563eb' : '#1e293b',
+                          color: 'white'
+                        }}
+                      >
+                        {plan.cta}
+                      </Button>
+                    </Card>
+                  );
+                });
+              })()}
+            </div>
 
           {/* Scholarship CTA */}
           <div 
