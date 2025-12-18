@@ -25,5 +25,31 @@
     },
     "errors": {
         "checkoutError": "Error al crear sesión de pago"
+    },
+    "planNames": {
+        "free": "Gratis",
+        "starter": "Starter",
+        "pro": "Pro",
+        "church": "Iglesia"
+    },
+    "planDescriptions": {
+        "free": "Para continuar tu ministerio de predicación",
+        "starter": "Para predicadores que quieren más herramientas",
+        "pro": "Para equipos pastorales y predicadores frecuentes",
+        "church": "Para iglesias y organizaciones con múltiples predicadores"
+    },
+    "features": {
+        "sermon_create": "Crear sermones ilimitados",
+        "sermon_export_pdf": "Exportar sermones a PDF",
+        "sermon_ai_assistant": "Asistente de IA para sermones",
+        "sermon_advanced_homiletics": "Homilética avanzada con IA",
+        "sermon_custom_templates": "Plantillas personalizadas",
+        "library_upload": "Subir recursos a biblioteca",
+        "library_semantic_search": "Búsqueda semántica en biblioteca",
+        "library_unlimited_storage": "Almacenamiento ilimitado",
+        "courses_view": "Acceso a cursos",
+        "courses_certificates": "Certificados de cursos",
+        "admin_manage_users": "Gestión de usuarios",
+        "admin_view_analytics": "Analíticas avanzadas"
     }
 }

@@ -25,5 +25,31 @@
     },
     "errors": {
         "checkoutError": "Error creating payment session"
+    },
+    "planNames": {
+        "free": "Free",
+        "starter": "Starter",
+        "pro": "Pro",
+        "church": "Church"
+    },
+    "planDescriptions": {
+        "free": "To continue your preaching ministry",
+        "starter": "For preachers who want more tools",
+        "pro": "For pastoral teams and frequent preachers",
+        "church": "For churches and organizations with multiple preachers"
+    },
+    "features": {
+        "sermon_create": "Create unlimited sermons",
+        "sermon_export_pdf": "Export sermons to PDF",
+        "sermon_ai_assistant": "AI assistant for sermons",
+        "sermon_advanced_homiletics": "Advanced AI homiletics",
+        "sermon_custom_templates": "Custom templates",
+        "library_upload": "Upload resources to library",
+        "library_semantic_search": "Semantic search in library",
+        "library_unlimited_storage": "Unlimited storage",
+        "courses_view": "Access to courses",
+        "courses_certificates": "Course certificates",
+        "admin_manage_users": "User management",
+        "admin_view_analytics": "Advanced analytics"
     }
 }

@@ -9,15 +9,16 @@ import { db } from '@dosfilos/infrastructure';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
 import { toast } from 'sonner';
-import { getFeatureLabel } from '@/utils/featureLabels';
 import { CancelSubscriptionDialog } from '@/components/subscription/dialogs/CancelSubscriptionDialog';
 import { PlanChangeDialog } from '@/components/subscription/dialogs/PlanChangeDialog';
 import { ReactivateSubscriptionDialog } from '@/components/subscription/dialogs/ReactivateSubscriptionDialog';
 import { useTranslation } from '@/i18n';
+import { usePlanTranslations } from '@/hooks/usePlanTranslations';
 
 export default function SubscriptionPage() {
   const { user } = useFirebase();
   const { t } = useTranslation('subscription');
+  const { getPlanName, getPlanDescription, getFeatureLabel } = usePlanTranslations();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,9 +208,9 @@ export default function SubscriptionPage() {
 
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {plan.name}
+                  {getPlanName(plan.id)}
                 </CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
+                <CardDescription>{getPlanDescription(plan.id)}</CardDescription>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">${plan.pricing?.monthly || 0}</span>
                   <span className="text-muted-foreground">{t('plans.monthly')}</span>
