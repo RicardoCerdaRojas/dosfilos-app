@@ -34,6 +34,8 @@ import seriesEn from '../locales/en/series.json';
 import seriesEs from '../locales/es/series.json';
 import plannerEn from '../locales/en/planner.json';
 import plannerEs from '../locales/es/planner.json';
+import generatorEn from '../locales/en/generator.json';
+import generatorEs from '../locales/es/generator.json';
 
 /**
  * Initialize i18next with best practices:
@@ -64,6 +66,7 @@ export const initI18n = () => {
                     library: libraryEn,
                     series: seriesEn,
                     planner: plannerEn,
+                    generator: generatorEn,
                 },
                 es: {
                     common: commonEs,
@@ -77,6 +80,7 @@ export const initI18n = () => {
                     library: libraryEs,
                     series: seriesEs,
                     planner: plannerEs,
+                    generator: generatorEs,
                 },
             },
 

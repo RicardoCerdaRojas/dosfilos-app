@@ -24,6 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { VersionHistoryModal } from './VersionHistoryModal';
 import { sermonService } from '@dosfilos/application';
+import { useTranslation } from '@/i18n';
 
 interface SermonsInProgressProps {
     sermons: SermonEntity[];
@@ -34,6 +35,7 @@ interface SermonsInProgressProps {
 }
 
 export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate }: SermonsInProgressProps) {
+    const { t } = useTranslation('generator');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'published-first' | 'draft-first' | 'progress-high' | 'progress-low'>('newest');
     const [activeFilter, setActiveFilter] = useState<'all' | 'published' | 'draft' | 'exegesis' | 'homiletics' | 'drafting'>('all');
@@ -67,7 +69,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
         // If this draft has a published copy, show as published
         if (hasPublishedCopy) {
             return { 
-                label: 'Publicado', 
+                label: t('phases.published'), 
                 progress: 100, 
                 variant: 'success' as const,
                 color: 'green',
@@ -201,8 +203,8 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
         <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold tracking-tight">Sermones en Progreso</h2>
-                    <p className="text-sm text-muted-foreground">Retoma tu trabajo donde lo dejaste</p>
+                    <h2 className="text-xl font-bold tracking-tight">{t('inProgress.title')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('inProgress.subtitle')}</p>
                 </div>
                 
                 {/* Statistics Cards */}
