@@ -3,7 +3,6 @@ import { SermonEntity } from '@dosfilos/domain';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -12,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Clock, Trash2, ArrowRight, Search } from 'lucide-react';
+import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -25,6 +24,9 @@ interface SermonsInProgressProps {
 export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInProgressProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(
+        (localStorage.getItem('sermonGeneratorView') as 'grid' | 'list') || 'grid'
+    );
 
     if (sermons.length === 0) return null;
 
@@ -34,14 +36,49 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
         
         // If this draft has a published copy, show as published
         if (hasPublishedCopy) {
-            return { label: 'Publicado', progress: 100, variant: 'success' as const };
+            return { 
+                label: 'Publicado', 
+                progress: 100, 
+                variant: 'success' as const,
+                color: 'green',
+                badgeClass: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
+                progressClass: 'bg-green-500'
+            };
         }
         
         switch (step) {
-            case 1: return { label: 'Exégesis', progress: 33, variant: 'secondary' as const };
-            case 2: return { label: 'Homilética', progress: 66, variant: 'secondary' as const };
-            case 3: return { label: 'Redacción', progress: 100, variant: 'secondary' as const };
-            default: return { label: 'Desconocido', progress: 0, variant: 'secondary' as const };
+            case 1: return { 
+                label: 'Exégesis', 
+                progress: 33, 
+                variant: 'secondary' as const,
+                color: 'blue',
+                badgeClass: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+                progressClass: 'bg-blue-500'
+            };
+            case 2: return { 
+                label: 'Homilética', 
+                progress: 66, 
+                variant: 'secondary' as const,
+                color: 'purple',
+                badgeClass: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
+                progressClass: 'bg-purple-500'
+            };
+            case 3: return { 
+                label: 'Redacción', 
+                progress: 100, 
+                variant: 'secondary' as const,
+                color: 'orange',
+                badgeClass: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
+                progressClass: 'bg-orange-500'
+            };
+            default: return { 
+                label: 'Desconocido', 
+                progress: 0, 
+                variant: 'secondary' as const,
+                color: 'gray',
+                badgeClass: 'bg-secondary/50',
+                progressClass: 'bg-secondary'
+            };
         }
     };
 
@@ -88,10 +125,36 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                             <SelectItem value="oldest">Más antiguos</SelectItem>
                         </SelectContent>
                     </Select>
+                    
+                    {/* View Toggle */}
+                    <div className="flex items-center gap-1 border rounded-md p-1">
+                        <Button
+                            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => {
+                                setViewMode('grid');
+                                localStorage.setItem('sermonGeneratorView', 'grid');
+                            }}
+                            className="h-8 px-2"
+                        >
+                            <LayoutGrid className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => {
+                                setViewMode('list');
+                                localStorage.setItem('sermonGeneratorView', 'list');
+                            }}
+                            className="h-8 px-2"
+                        >
+                            <List className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className={viewMode === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-4'}>
                 {filteredSermons.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-muted-foreground">
                         No se encontraron sermones que coincidan con tu búsqueda.
@@ -100,21 +163,8 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                     filteredSermons.map((sermon) => {
                         const wizardProgress = sermon.wizardProgress;
                         if (!wizardProgress) return null;
-                        const { label, progress, variant } = getPhaseInfo(sermon);
-                        const hasPublishedCopy = !!(wizardProgress.publishedCopyId && wizardProgress.lastPublishedAt);
-                        
-                        // Enhanced debug logging
-                        console.log('🔍 Sermon debug:', {
-                            passage: wizardProgress.passage,
-                            status: sermon.status,
-                            publishedCopyId: wizardProgress.publishedCopyId,
-                            lastPublishedAt: wizardProgress.lastPublishedAt,
-                            publishCount: wizardProgress.publishCount, // ← Explicitly log this
-                            hasPublishedCopy,
-                            willShowVersionBadge: wizardProgress.publishCount && wizardProgress.publishCount > 1, // ← Will badge show?
-                            label,
-                            progress
-                        });
+                        const phaseInfo = getPhaseInfo(sermon);
+                        const { label, progress, variant, badgeClass, progressClass } = phaseInfo;
 
                         return (
                             <Card key={sermon.id} className="group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
@@ -131,7 +181,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                                         <div className="flex flex-col items-end gap-1">
                                             <Badge 
                                                 variant={variant} 
-                                                className={`capitalize ${hasPublishedCopy ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20' : 'bg-secondary/50'}`}
+                                                className={`capitalize ${badgeClass}`}
                                             >
                                                 {label}
                                             </Badge>
@@ -173,7 +223,12 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                                             <span>Progreso</span>
                                             <span>{progress}%</span>
                                         </div>
-                                        <Progress value={progress} className="h-1.5" />
+                                        <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                                            <div 
+                                                className={`h-full ${progressClass} transition-all duration-300`}
+                                                style={{ width: `${progress}%` }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
