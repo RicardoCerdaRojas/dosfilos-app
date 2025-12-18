@@ -32,7 +32,8 @@ interface SermonsInProgressProps {
 
 export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate }: SermonsInProgressProps) {
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+    const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'published-first' | 'draft-first' | 'progress-high' | 'progress-low'>('newest');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'published' | 'draft' | 'exegesis' | 'homiletics' | 'drafting'>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(
         (localStorage.getItem('sermonGeneratorView') as 'grid' | 'list') || 'grid'
     );
@@ -93,13 +94,59 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
 
     const filteredSermons = sermons
         .filter(sermon => {
+            // Search filter
             const passage = sermon.wizardProgress?.passage || '';
-            return passage.toLowerCase().includes(searchQuery.toLowerCase());
+            if (!passage.toLowerCase().includes(searchQuery.toLowerCase())) {
+                return false;
+            }
+            
+            // Phase/Status filter
+            if (activeFilter === 'published') {
+                return !!(sermon.wizardProgress?.publishedCopyId);
+            }
+            if (activeFilter === 'draft') {
+                return !sermon.wizardProgress?.publishedCopyId;
+            }
+            if (activeFilter === 'exegesis') {
+                return sermon.wizardProgress?.currentStep === 1;
+            }
+            if (activeFilter === 'homiletics') {
+                return sermon.wizardProgress?.currentStep === 2;
+            }
+            if (activeFilter === 'drafting') {
+                return sermon.wizardProgress?.currentStep === 3;
+            }
+            
+            return true;
         })
         .sort((a, b) => {
             const dateA = new Date(a.wizardProgress?.lastSaved || 0).getTime();
             const dateB = new Date(b.wizardProgress?.lastSaved || 0).getTime();
-            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+            
+            switch (sortOrder) {
+                case 'newest':
+                    return dateB - dateA;
+                case 'oldest':
+                    return dateA - dateB;
+                case 'published-first':
+                    const aPublished = a.wizardProgress?.publishedCopyId ? 1 : 0;
+                    const bPublished = b.wizardProgress?.publishedCopyId ? 1 : 0;
+                    return bPublished - aPublished || dateB - dateA;
+                case 'draft-first':
+                    const aDraft = !a.wizardProgress?.publishedCopyId ? 1 : 0;
+                    const bDraft = !b.wizardProgress?.publishedCopyId ? 1 : 0;
+                    return bDraft - aDraft || dateB - dateA;
+                case 'progress-high':
+                    const progressA = getPhaseInfo(a).progress;
+                    const progressB = getPhaseInfo(b).progress;
+                    return progressB - progressA;
+                case 'progress-low':
+                    const progressALow = getPhaseInfo(a).progress;
+                    const progressBLow = getPhaseInfo(b).progress;
+                    return progressALow - progressBLow;
+                default:
+                    return dateB - dateA;
+            }
         });
 
     return (
@@ -161,6 +208,34 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                         </Button>
                     </div>
                 </div>
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-muted-foreground font-medium">Filtrar:</span>
+                {[
+                    { value: 'all', label: 'Todos' },
+                    { value: 'published', label: 'Publicados' },
+                    { value: 'draft', label: 'Borradores' },
+                    { value: 'exegesis', label: 'Exégesis' },
+                    { value: 'homiletics', label: 'Homilética' },
+                    { value: 'drafting', label: 'Redacción' },
+                ].map((filter) => (
+                    <Button
+                        key={filter.value}
+                        variant={activeFilter === filter.value ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setActiveFilter(filter.value as any)}
+                        className="h-8"
+                    >
+                        {filter.label}
+                        {activeFilter === filter.value && filteredSermons.length > 0 && (
+                            <Badge variant="secondary" className="ml-2 px-1 py-0 text-xs">
+                                {filteredSermons.length}
+                            </Badge>
+                        )}
+                    </Button>
+                ))}
             </div>
 
             <div className={viewMode === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-4'}>
