@@ -1,23 +1,54 @@
 {
     "title": "Sermon Generator",
-    "subtitle": "Create sermons with AI assistance",
-    "steps": {
-        "passage": "Passage",
+    "subtitle": "You have sermons in progress. Would you like to continue with any?",
+    "inProgress": {
+        "title": "Sermons in Progress",
+        "subtitle": "Resume your work where you left off"
+    },
+    "stats": {
+        "total": "Total",
+        "published": "Published",
+        "drafts": "Drafts",
+        "progress": "Progress"
+    },
+    "search": {
+        "placeholder": "Search by passage..."
+    },
+    "sort": {
+        "newest": "Most recent",
+        "oldest": "Oldest",
+        "publishedFirst": "Published first",
+        "draftFirst": "Drafts first",
+        "progressHigh": "Highest progress",
+        "progressLow": "Lowest progress"
+    },
+    "filter": {
+        "label": "Filter:",
+        "all": "All",
+        "published": "Published",
+        "draft": "Drafts",
         "exegesis": "Exegesis",
         "homiletics": "Homiletics",
-        "draft": "Draft"
+        "drafting": "Drafting"
     },
-    "loading": "Loading...",
-    "generating": "Generating...",
-    "save": "Save",
-    "next": "Next",
-    "back": "Back",
-    "finish": "Finish",
-    "cancel": "Cancel",
-    "toast": {
-        "saveSuccess": "Sermon saved",
-        "saveError": "Error saving sermon",
-        "generateSuccess": "Content generated",
-        "generateError": "Error generating content"
-    }
+    "phases": {
+        "published": "Published",
+        "exegesis": "Exegesis",
+        "homiletics": "Homiletics",
+        "drafting": "Drafting",
+        "unknown": "Unknown"
+    },
+    "card": {
+        "progress": "Progress",
+        "publishedAgo": "Published",
+        "versions": "versions"
+    },
+    "actions": {
+        "duplicate": "Duplicate sermon",
+        "publishNow": "Publish now",
+        "delete": "Delete",
+        "publish": "Publish",
+        "continue": "Continue"
+    },
+    "empty": "No sermons found matching your search."
 }

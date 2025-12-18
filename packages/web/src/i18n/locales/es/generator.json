@@ -1,23 +1,54 @@
 {
     "title": "Generador de Sermones",
-    "subtitle": "Crea sermones con asistencia de IA",
-    "steps": {
-        "passage": "Pasaje",
+    "subtitle": "Tienes sermones en progreso. ¿Deseas continuar con alguno?",
+    "inProgress": {
+        "title": "Sermones en Progreso",
+        "subtitle": "Retoma tu trabajo donde lo dejaste"
+    },
+    "stats": {
+        "total": "Total",
+        "published": "Publicados",
+        "drafts": "Borradores",
+        "progress": "Progreso"
+    },
+    "search": {
+        "placeholder": "Buscar por pasaje..."
+    },
+    "sort": {
+        "newest": "Más recientes",
+        "oldest": "Más antiguos",
+        "publishedFirst": "Publicados primero",
+        "draftFirst": "Borradores primero",
+        "progressHigh": "Mayor progreso",
+        "progressLow": "Menor progreso"
+    },
+    "filter": {
+        "label": "Filtrar:",
+        "all": "Todos",
+        "published": "Publicados",
+        "draft": "Borradores",
         "exegesis": "Exégesis",
         "homiletics": "Homilética",
-        "draft": "Borrador"
+        "drafting": "Redacción"
     },
-    "loading": "Cargando...",
-    "generating": "Generando...",
-    "save": "Guardar",
-    "next": "Siguiente",
-    "back": "Atrás",
-    "finish": "Finalizar",
-    "cancel": "Cancelar",
-    "toast": {
-        "saveSuccess": "Sermón guardado",
-        "saveError": "Error al guardar el sermón",
-        "generateSuccess": "Contenido generado",
-        "generateError": "Error al generar contenido"
-    }
+    "phases": {
+        "published": "Publicado",
+        "exegesis": "Exégesis",
+        "homiletics": "Homilética",
+        "drafting": "Redacción",
+        "unknown": "Desconocido"
+    },
+    "card": {
+        "progress": "Progreso",
+        "publishedAgo": "Publicado",
+        "versions": "versiones"
+    },
+    "actions": {
+        "duplicate": "Duplicar sermón",
+        "publishNow": "Publicar ahora",
+        "delete": "Eliminar",
+        "publish": "Publicar",
+        "continue": "Continuar"
+    },
+    "empty": "No se encontraron sermones que coincidan con tu búsqueda."
 }
