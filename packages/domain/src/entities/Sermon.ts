@@ -171,11 +171,15 @@ export class SermonEntity implements Sermon {
      * Used when publishing from the wizard without losing the draft.
      */
     publishAsCopy(): SermonEntity {
+        // Use draft content from wizardProgress if main content is empty
+        const contentToPublish = this.content || this.wizardProgress?.draft?.content || '';
+        const titleToPublish = this.title || this.wizardProgress?.passage || 'Sermón';
+
         return new SermonEntity(
             crypto.randomUUID(), // New ID for the copy
             this.userId,
-            this.title,
-            this.content,
+            titleToPublish,
+            contentToPublish,
             this.bibleReferences,
             this.tags,
             this.category,
