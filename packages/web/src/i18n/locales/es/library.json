@@ -1,0 +1,63 @@
+{
+    "header": {
+        "title": "Biblioteca Teológica",
+        "resources": "recursos",
+        "indexed": "indexados",
+        "indexAllButton": "Indexar Todo",
+        "addButton": "Agregar",
+        "closeButton": "Cerrar"
+    },
+    "upload": {
+        "title": "Agregar Nuevo Recurso",
+        "description": "Sube PDFs o EPUBs para tu biblioteca teológica",
+        "fileLabel": "Archivo",
+        "titleLabel": "Título",
+        "titlePlaceholder": "Título del documento",
+        "authorLabel": "Autor",
+        "authorPlaceholder": "Nombre del autor",
+        "categoryLabel": "Categoría",
+        "uploadButton": "Subir",
+        "fileSizeWarning": "Archivo >50MB: calidad reducida"
+    },
+    "filters": {
+        "searchPlaceholder": "Buscar por título o autor...",
+        "allCategories": "Todas las categorías"
+    },
+    "empty": {
+        "title": "Tu biblioteca está vacía",
+        "emptyLibrary": "Agrega tu primer recurso para comenzar",
+        "noResults": "No se encontraron resultados",
+        "tryOtherTerms": "Intenta con otros términos de búsqueda"
+    },
+    "indexing": {
+        "preparing": "Preparando...",
+        "indexAllButton": "Indexar Todo",
+        "noUnindexed": "No hay documentos sin indexar"
+    },
+    "deleteDialog": {
+        "title": "¿Eliminar recurso?",
+        "description": "Estás a punto de eliminar",
+        "warning": "Esta acción no se puede deshacer y eliminará también los datos de indexación.",
+        "cancel": "Cancelar",
+        "confirm": "Eliminar"
+    },
+    "toast": {
+        "uploadSuccess": "Recurso agregado a la biblioteca",
+        "uploadError": "Error al subir el recurso",
+        "deleteSuccess": "Recurso eliminado",
+        "deleteError": "Error al eliminar el recurso",
+        "updateSuccess": "Recurso actualizado",
+        "updateError": "Error al actualizar el recurso",
+        "indexSuccess": "indexado con",
+        "indexWarning": "No se generaron fragmentos para",
+        "indexError": "Error al indexar el recurso",
+        "textNotReady": "El texto aún se está extrayendo. Espera unos segundos y vuelve a intentar.",
+        "reindexSuccess": "re-indexado exitosamente",
+        "reindexWarning": "No se generaron nuevos fragmentos durante la re-indexación",
+        "reindexError": "Error al re-indexar el recurso",
+        "syncSuccess": "sincronizado correctamente con IA",
+        "syncError": "Error al sincronizar",
+        "indexingComplete": "Indexación completada con",
+        "indexingSuccess": "Biblioteca indexada"
+    }
+}

@@ -28,6 +28,8 @@ import subscriptionEn from '../locales/en/subscription.json';
 import subscriptionEs from '../locales/es/subscription.json';
 import sermonsEn from '../locales/en/sermons.json';
 import sermonsEs from '../locales/es/sermons.json';
+import libraryEn from '../locales/en/library.json';
+import libraryEs from '../locales/es/library.json';
 
 /**
  * Initialize i18next with best practices:
@@ -55,6 +57,7 @@ export const initI18n = () => {
                     dashboard: dashboardEn,
                     subscription: subscriptionEn,
                     sermons: sermonsEn,
+                    library: libraryEn,
                 },
                 es: {
                     common: commonEs,
@@ -65,6 +68,7 @@ export const initI18n = () => {
                     dashboard: dashboardEs,
                     subscription: subscriptionEs,
                     sermons: sermonsEs,
+                    library: libraryEs,
                 },
             },
 
