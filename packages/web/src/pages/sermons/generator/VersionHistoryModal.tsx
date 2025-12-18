@@ -28,12 +28,10 @@ export function VersionHistoryModal({ draftSermon, isOpen, onClose }: VersionHis
     const loadVersions = async () => {
         setLoading(true);
         try {
-            console.log('🔍 Loading versions for draft:', draftSermon.id);
             const publishedVersions = await sermonService.getPublishedVersions(draftSermon.id, draftSermon.userId);
-            console.log('📚 Found versions:', publishedVersions.length, publishedVersions);
             setVersions(publishedVersions);
         } catch (error) {
-            console.error('❌ Error loading versions:', error);
+            console.error('Error loading versions:', error);
         } finally {
             setLoading(false);
         }
