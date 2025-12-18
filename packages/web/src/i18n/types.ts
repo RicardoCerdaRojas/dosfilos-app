@@ -42,4 +42,5 @@ export type TranslationNamespace =
     | 'common'
     | 'navigation'
     | 'auth'
-    | 'welcome';
+    | 'welcome'
+    | 'dashboard';

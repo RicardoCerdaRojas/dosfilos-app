@@ -22,6 +22,8 @@ import authEn from '../locales/en/auth.json';
 import authEs from '../locales/es/auth.json';
 import welcomeEn from '../locales/en/welcome.json';
 import welcomeEs from '../locales/es/welcome.json';
+import dashboardEn from '../locales/en/dashboard.json';
+import dashboardEs from '../locales/es/dashboard.json';
 
 /**
  * Initialize i18next with best practices:
@@ -46,6 +48,7 @@ export const initI18n = () => {
                     navigation: navigationEn,
                     auth: authEn,
                     welcome: welcomeEn,
+                    dashboard: dashboardEn,
                 },
                 es: {
                     common: commonEs,
@@ -53,6 +56,7 @@ export const initI18n = () => {
                     navigation: navigationEs,
                     auth: authEs,
                     welcome: welcomeEs,
+                    dashboard: dashboardEs,
                 },
             },
 
