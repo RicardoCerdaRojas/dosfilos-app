@@ -23,10 +23,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useTranslation } from '@/i18n';
 
 export function SeriesList() {
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const { t } = useTranslation('series');
   const [series, setSeries] = useState<SermonSeriesEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [seriesToDelete, setSeriesToDelete] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export function SeriesList() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center space-y-4">
           <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Cargando planes...</p>
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     );
@@ -79,18 +81,18 @@ export function SeriesList() {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <BookOpen className="h-16 w-16 text-muted-foreground" />
-        <h2 className="text-2xl font-semibold">No tienes planes aún</h2>
+        <h2 className="text-2xl font-semibold">{t('empty.title')}</h2>
         <p className="text-muted-foreground text-center max-w-md">
-          Crea planes de predicación para organizar tus sermones.
+          {t('empty.description')}
         </p>
         <div className="flex gap-4">
           <Button variant="outline" onClick={() => navigate('/planner')}>
             <Wand2 className="mr-2 h-5 w-5" />
-            Planificador con IA
+            {t('empty.aiPlannerButton')}
           </Button>
           <Button onClick={() => navigate('/dashboard/plans/new')} size="lg">
             <Plus className="mr-2 h-5 w-5" />
-            Crear Primer Plan
+            {t('empty.createButton')}
           </Button>
         </div>
       </div>
@@ -102,17 +104,17 @@ export function SeriesList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Planes de Predicación</h1>
-          <p className="text-muted-foreground">Organiza y planifica tus sermones</p>
+          <h1 className="text-3xl font-bold">{t('header.title')}</h1>
+          <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/planner')} className="hidden sm:flex">
             <Wand2 className="mr-2 h-4 w-4" />
-            Planificador con IA
+            {t('header.aiPlannerButton')}
           </Button>
           <Button onClick={() => navigate('/plans/new')}>
             <Plus className="mr-2 h-4 w-4" />
-            Nuevo Plan
+            {t('header.newPlanButton')}
           </Button>
         </div>
       </div>
@@ -141,7 +143,7 @@ export function SeriesList() {
                 </div>
                 <Badge variant="secondary">
                   {/* Count only plannedSermons as source of truth for the plan */}
-                  {item.metadata?.plannedSermons?.length || 0} sermones
+                  {item.metadata?.plannedSermons?.length || 0} {t('sermonCount')}
                 </Badge>
               </div>
 
@@ -187,7 +189,7 @@ export function SeriesList() {
                     onClick={() => setSeriesToDelete(item.id)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Eliminar
+                    {t('actions.delete')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -200,15 +202,15 @@ export function SeriesList() {
       <AlertDialog open={!!seriesToDelete} onOpenChange={() => setSeriesToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará el plan, pero los sermones asociados se mantendrán.
+              {t('deleteDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Eliminando...' : 'Eliminar'}
+              {deleting ? t('deleteDialog.deleting') : t('deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
