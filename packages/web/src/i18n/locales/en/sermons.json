@@ -1,0 +1,58 @@
+{
+    "header": {
+        "title": "Sermons",
+        "subtitle": "Manage your sermons and pastoral content",
+        "newButton": "New Sermon"
+    },
+    "loading": "Loading sermons...",
+    "empty": {
+        "title": "You don't have any sermons yet",
+        "description": "Start by creating your first sermon and manage all your pastoral content in one place.",
+        "createButton": "Create First Sermon"
+    },
+    "filters": {
+        "search": "Search sermons...",
+        "status": "Status",
+        "allPlans": "All plans",
+        "noPlan": "No plan",
+        "plan": "Plan"
+    },
+    "statusOptions": {
+        "all": "All",
+        "drafts": "Drafts",
+        "published": "Published",
+        "archived": "Archived"
+    },
+    "statusLabels": {
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+    },
+    "results": {
+        "sermon": "sermon",
+        "sermons": "sermons",
+        "inPlan": "in",
+        "noPlanAssigned": "with no plan assigned"
+    },
+    "noResults": "No sermons found with the selected filters.",
+    "table": {
+        "title": "Title",
+        "plan": "Plan",
+        "status": "Status",
+        "date": "Date",
+        "actions": "Actions"
+    },
+    "grid": {
+        "references": "references"
+    },
+    "actions": {
+        "delete": "Delete"
+    },
+    "deleteDialog": {
+        "title": "Are you sure?",
+        "description": "This action cannot be undone. The sermon will be permanently deleted.",
+        "cancel": "Cancel",
+        "confirm": "Delete",
+        "deleting": "Deleting..."
+    }
+}
