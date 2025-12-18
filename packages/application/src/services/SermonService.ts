@@ -315,6 +315,10 @@ export class SermonService {
 
         return obj;
     }
+
+    async getPublishedVersions(draftId: string): Promise<SermonEntity[]> {
+        return await this.sermonRepository.findByDraftId(draftId);
+    }
 }
 
 // Singleton instance

@@ -31,6 +31,12 @@ service cloud.firestore {
     // Sermons collection
     match /sermons/{sermonId} {
       allow read: if isOwner(resource.data.userId) || resource.data.isShared == true;
+      
+      // Allow listing sermons by sourceSermonId (for version history)
+      allow list: if isAuthenticated() && 
+                     request.query.limit <= 50 &&
+                     (resource.data.userId == request.auth.uid || resource.data.isShared == true);
+      
       allow create: if isAuthenticated() && 
                        request.auth.uid == request.resource.data.userId &&
                        isValidSermon();

@@ -22,6 +22,7 @@ import {
 import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2, BarChart3, CheckCircle2, FileText, TrendingUp, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { VersionHistoryModal } from './VersionHistoryModal';
 
 interface SermonsInProgressProps {
     sermons: SermonEntity[];
@@ -38,6 +39,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(
         (localStorage.getItem('sermonGeneratorView') as 'grid' | 'list') || 'grid'
     );
+    const [versionModalSermon, setVersionModalSermon] = useState<SermonEntity | null>(null);
 
     if (sermons.length === 0) return null;
 
@@ -352,7 +354,14 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                                 {label}
                                             </Badge>
                                             {wizardProgress.publishCount && wizardProgress.publishCount > 1 && (
-                                                <Badge variant="outline" className="text-xs px-2 py-0">
+                                                <Badge 
+                                                    variant="outline" 
+                                                    className="text-xs px-2 py-0 cursor-pointer hover:bg-primary/10 transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setVersionModalSermon(sermon);
+                                                    }}
+                                                >
                                                     {wizardProgress.publishCount} versiones
                                                 </Badge>
                                             )}
@@ -461,6 +470,15 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     })
                 )}
             </div>
+
+            {/* Version History Modal */}
+            {versionModalSermon && (
+                <VersionHistoryModal
+                    draftSermon={versionModalSermon}
+                    isOpen={!!versionModalSermon}
+                    onClose={() => setVersionModalSermon(null)}
+                />
+            )}
         </div>
     );
 }

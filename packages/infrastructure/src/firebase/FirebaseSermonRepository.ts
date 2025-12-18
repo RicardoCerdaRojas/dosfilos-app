@@ -140,6 +140,18 @@ export class FirebaseSermonRepository implements ISermonRepository {
         return snapshot.docs.map((doc) => this.firestoreToSermon(doc.id, doc.data()));
     }
 
+    async findByDraftId(draftId: string): Promise<SermonEntity[]> {
+        const q = query(
+            collection(db, this.collectionName),
+            where('sourceSermonId', '==', draftId),
+            where('status', '==', 'published'),
+            orderBy('publishedAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+
+        return snapshot.docs.map((doc) => this.firestoreToSermon(doc.id, doc.data()));
+    }
+
     private sermonToFirestore(sermon: SermonEntity): any {
         return {
             userId: sermon.userId,
