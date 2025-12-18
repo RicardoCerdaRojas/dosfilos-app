@@ -38,6 +38,10 @@ export interface Sermon {
         lastSaved: Date;
         cacheName?: string;
         selectedResourceIds?: string[];
+        // Track if this draft has been published
+        publishedCopyId?: string;  // ID of the most recent published copy
+        lastPublishedAt?: Date;    // When it was last published
+        publishCount?: number;      // How many times it's been published
     } | undefined;
 
     // If this is a published copy, references the original draft sermon

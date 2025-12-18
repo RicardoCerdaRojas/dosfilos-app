@@ -108,7 +108,7 @@ export class SermonService {
 
     /**
      * Creates a published COPY of the draft sermon.
-     * The original draft remains untouched (status='working').
+     * The original draft remains untouched (status='working')but tracks the publication.
      * The copy has a new ID and status='published'.
      * @returns The newly created published sermon copy
      */
@@ -123,7 +123,23 @@ export class SermonService {
             const publishedCopy = draft.publishAsCopy();
 
             // Save the copy as a new sermon
-            return await this.sermonRepository.create(publishedCopy);
+            const createdCopy = await this.sermonRepository.create(publishedCopy);
+
+            // Update the draft to track this published copy
+            if (draft.wizardProgress) {
+                const currentCount = draft.wizardProgress.publishCount || 0;
+                const updatedProgress = {
+                    ...draft.wizardProgress,
+                    publishedCopyId: createdCopy.id,
+                    lastPublishedAt: new Date(),
+                    publishCount: currentCount + 1
+                };
+
+                const updatedDraft = draft.update({ wizardProgress: updatedProgress });
+                await this.sermonRepository.update(updatedDraft);
+            }
+
+            return createdCopy;
         } catch (error: any) {
             throw new Error(error.message || 'Error al publicar el sermón');
         }
