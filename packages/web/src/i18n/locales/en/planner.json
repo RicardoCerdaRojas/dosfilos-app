@@ -14,6 +14,11 @@
         "expository": "Expository",
         "expositoryDescription": "Based on a biblical book. The Assistant will analyze the original text and suggest divisions."
     },
+    "loading": {
+        "analyzingContext": "Analyzing context...",
+        "designingStructure": "Designing structure...",
+        "working": "The Assistant is working with your theological resources to create the best proposal."
+    },
     "buttons": {
         "next": "Next",
         "back": "Back",

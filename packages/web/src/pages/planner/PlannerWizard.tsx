@@ -275,10 +275,10 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                 </div>
                 <div className="space-y-2">
                     <h3 className="text-xl font-semibold">
-                        {step === 'strategy' || step === 'context' ? 'Analizando contexto...' : 'Diseñando estructura...'}
+                        {step === 'strategy' || step === 'context' ? t('loading.analyzingContext') : t('loading.designingStructure')}
                     </h3>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        El Asistente está trabajando con tus recursos teológicos para crear la mejor propuesta.
+                        {t('loading.working')}
                     </p>
                 </div>
             </div>

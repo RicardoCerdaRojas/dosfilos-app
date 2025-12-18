@@ -14,6 +14,11 @@
         "expository": "Expositivo",
         "expositoryDescription": "Basado en un libro bíblico. El Asistente analizará el texto original y sugerirá divisiones."
     },
+    "loading": {
+        "analyzingContext": "Analizando contexto...",
+        "designingStructure": "Diseñando estructura...",
+        "working": "El Asistente está trabajando con tus recursos teológicos para crear la mejor propuesta."
+    },
     "buttons": {
         "next": "Siguiente",
         "back": "Atrás",
