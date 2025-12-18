@@ -86,7 +86,7 @@ export function SeriesList() {
           {t('empty.description')}
         </p>
         <div className="flex gap-4">
-          <Button variant="outline" onClick={() => navigate('/planner')}>
+          <Button variant="outline" onClick={() => navigate('/dashboard/planner')}>
             <Wand2 className="mr-2 h-5 w-5" />
             {t('empty.aiPlannerButton')}
           </Button>
@@ -108,11 +108,11 @@ export function SeriesList() {
           <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/planner')} className="hidden sm:flex">
+          <Button variant="outline" onClick={() => navigate('/dashboard/planner')} className="hidden sm:flex">
             <Wand2 className="mr-2 h-4 w-4" />
             {t('header.aiPlannerButton')}
           </Button>
-          <Button onClick={() => navigate('/plans/new')}>
+          <Button onClick={() => navigate('/dashboard/plans/new')}>
             <Plus className="mr-2 h-4 w-4" />
             {t('header.newPlanButton')}
           </Button>
