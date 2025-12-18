@@ -149,6 +149,14 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
             }
         });
 
+    // Calculate statistics
+    const totalSermons = sermons.length;
+    const publishedCount = sermons.filter(s => s.wizardProgress?.publishedCopyId).length;
+    const draftCount = totalSermons - publishedCount;
+    const avgCompletion = Math.round(
+        sermons.reduce((sum, s) => sum + getPhaseInfo(s).progress, 0) / totalSermons
+    );
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -162,7 +170,38 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     </p>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
+                    <Card className="p-4">
+                        <div className="flex flex-col space-y-1">
+                            <span className="text-xs text-muted-foreground font-medium">📊 Total</span>
+                            <span className="text-2xl font-bold">{totalSermons}</span>
+                        </div>
+                    </Card>
+                    <Card className="p-4">
+                        <div className="flex flex-col space-y-1">
+                            <span className="text-xs text-muted-foreground font-medium">✅ Publicados</span>
+                            <span className="text-2xl font-bold text-green-600">{publishedCount}</span>
+                        </div>
+                    </Card>
+                    <Card className="p-4">
+                        <div className="flex flex-col space-y-1">
+                            <span className="text-xs text-muted-foreground font-medium">📝 Borradores</span>
+                            <span className="text-2xl font-bold text-blue-600">{draftCount}</span>
+                        </div>
+                    </Card>
+                    <Card className="p-4">
+                        <div className="flex flex-col space-y-1">
+                            <span className="text-xs text-muted-foreground font-medium">⌛ Completado</span>
+                            <span className="text-2xl font-bold text-purple-600">{avgCompletion}%</span>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Search, Sort, and View Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 flex-1">
                     <div className="relative w-full sm:w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
