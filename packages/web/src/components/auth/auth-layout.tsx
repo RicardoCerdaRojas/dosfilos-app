@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { BookOpen, Check, Sparkles, Brain, Clock } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -8,10 +9,12 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+  const { t } = useTranslation('auth');
+  
   const benefits = [
-    { icon: Clock, text: 'Ahorra 5+ horas de preparación por semana' },
-    { icon: Brain, text: 'Análisis exegético profundo con IA' },
-    { icon: Sparkles, text: 'Tu profesor de gramática 24/7' },
+    { icon: Clock, text: t('layout.benefits.0') },
+    { icon: Brain, text: t('layout.benefits.1') },
+    { icon: Sparkles, text: t('layout.benefits.2') },
   ];
 
   return (
@@ -48,10 +51,10 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           {/* Main Message */}
           <div className="space-y-4">
             <h1 className="text-4xl font-bold leading-tight">
-              Tu entrenador exegético personal
+              {t('layout.tagline')}
             </h1>
             <p className="text-xl text-blue-100">
-              Tú haces el ejercicio espiritual. La IA te entrena para predicar con mayor profundidad.
+              {t('layout.subtitle')}
             </p>
           </div>
 
@@ -84,8 +87,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               ))}
             </div>
             <div>
-              <div className="font-semibold">500+ pastores activos</div>
-              <div className="text-sm text-blue-200">Estudiando más profundo cada semana</div>
+              <div className="font-semibold">{t('layout.social.count')}</div>
+              <div className="text-sm text-blue-200">{t('layout.social.description')}</div>
             </div>
           </div>
         </div>
@@ -93,13 +96,13 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         {/* Bottom quote */}
         <div className="relative z-10 pt-8 border-t border-white/20">
           <blockquote className="text-blue-100 italic">
-            "DosFilos no escribe mis sermones — profundiza mi estudio. Es como tener un asistente de investigación teológica 24/7."
+            "{t('layout.quote')}"
           </blockquote>
           <div className="mt-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600" />
             <div>
-              <div className="font-semibold">Pastor comprometido</div>
-              <div className="text-sm text-blue-200">Usuario de DosFilos.Preach</div>
+              <div className="font-semibold">{t('layout.quoteAuthor')}</div>
+              <div className="text-sm text-blue-200">{t('layout.quoteRole')}</div>
             </div>
           </div>
         </div>

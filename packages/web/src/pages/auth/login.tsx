@@ -11,18 +11,20 @@ import { Label } from '@/components/ui/label';
 import { authService } from '../../../../application/src/services/AuthService';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@dosfilos/infrastructure';
-
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { useTranslation } from '@/i18n';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  
+  const loginSchema = z.object({
+    email: z.string().email(t('login.errors.invalidEmail')),
+    password: z.string().min(6, t('login.errors.passwordMin')),
+  });
+
+  type LoginFormData = z.infer<typeof loginSchema>;
 
   const {
     register,

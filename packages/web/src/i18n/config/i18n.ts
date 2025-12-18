@@ -18,6 +18,8 @@ import landingEn from '../locales/en/landing.json';
 import landingEs from '../locales/es/landing.json';
 import navigationEn from '../locales/en/navigation.json';
 import navigationEs from '../locales/es/navigation.json';
+import authEn from '../locales/en/auth.json';
+import authEs from '../locales/es/auth.json';
 
 /**
  * Initialize i18next with best practices:
@@ -40,11 +42,13 @@ export const initI18n = () => {
                     common: commonEn,
                     landing: landingEn,
                     navigation: navigationEn,
+                    auth: authEn,
                 },
                 es: {
                     common: commonEs,
                     landing: landingEs,
                     navigation: navigationEs,
+                    auth: authEs,
                 },
             },
 
