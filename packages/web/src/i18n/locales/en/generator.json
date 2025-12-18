@@ -1,0 +1,23 @@
+{
+    "title": "Sermon Generator",
+    "subtitle": "Create sermons with AI assistance",
+    "steps": {
+        "passage": "Passage",
+        "exegesis": "Exegesis",
+        "homiletics": "Homiletics",
+        "draft": "Draft"
+    },
+    "loading": "Loading...",
+    "generating": "Generating...",
+    "save": "Save",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "cancel": "Cancel",
+    "toast": {
+        "saveSuccess": "Sermon saved",
+        "saveError": "Error saving sermon",
+        "generateSuccess": "Content generated",
+        "generateError": "Error generating content"
+    }
+}

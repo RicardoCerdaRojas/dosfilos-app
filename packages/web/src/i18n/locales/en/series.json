@@ -1,0 +1,26 @@
+{
+    "header": {
+        "title": "Preaching Plans",
+        "subtitle": "Organize and plan your sermons",
+        "aiPlannerButton": "AI Planner",
+        "newPlanButton": "New Plan"
+    },
+    "loading": "Loading plans...",
+    "empty": {
+        "title": "You don't have any plans yet",
+        "description": "Create preaching plans to organize your sermons.",
+        "aiPlannerButton": "AI Planner",
+        "createButton": "Create First Plan"
+    },
+    "sermonCount": "sermons",
+    "actions": {
+        "delete": "Delete"
+    },
+    "deleteDialog": {
+        "title": "Are you sure?",
+        "description": "This action will delete the plan, but associated sermons will be kept.",
+        "cancel": "Cancel",
+        "confirm": "Delete",
+        "deleting": "Deleting..."
+    }
+}
