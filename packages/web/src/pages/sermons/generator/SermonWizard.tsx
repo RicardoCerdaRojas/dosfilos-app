@@ -136,7 +136,7 @@ function WizardContent() {
     const handlePublish = async (sermon: SermonEntity) => {
         try {
             await sermonService.publishSermonAsCopy(sermon.id);
-            // Refresh the list to show updated publish count
+            // Refresh the list to show updated publish status
             const sermons = await sermonService.getInProgressSermons(user!.uid);
             setInProgressSermons(sermons);
         } catch (error) {
