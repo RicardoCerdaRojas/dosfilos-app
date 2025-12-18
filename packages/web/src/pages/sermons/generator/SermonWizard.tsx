@@ -13,10 +13,12 @@ import { sermonService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { SermonEntity } from '@dosfilos/domain';
 import { LibraryContextProvider } from '@/context/library-context';
+import { useTranslation } from '@/i18n';
 
 function WizardContent() {
     const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, reset, setCacheName, setSelectedResourceIds } = useWizard();
     const { user } = useFirebase();
+    const { t } = useTranslation('generator');
     const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
     const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -210,9 +212,9 @@ function WizardContent() {
         return (
             <div className="space-y-6">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold mb-2">Generador de Sermones</h1>
+                    <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
                     <p className="text-muted-foreground">
-                        Tienes sermones en progreso. ¿Deseas continuar con alguno?
+                        {t('subtitle')}
                     </p>
                 </div>
 

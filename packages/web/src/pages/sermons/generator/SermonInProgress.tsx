@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2, BarChart3, CheckCircle2, FileText, TrendingUp, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import { VersionHistoryModal } from './VersionHistoryModal';
 import { sermonService } from '@dosfilos/application';
 import { useTranslation } from '@/i18n';
@@ -35,7 +35,8 @@ interface SermonsInProgressProps {
 }
 
 export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate }: SermonsInProgressProps) {
-    const { t } = useTranslation('generator');
+    const { t, i18n } = useTranslation('generator');
+    const dateLocale = i18n.language === 'es' ? es : enUS;
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'published-first' | 'draft-first' | 'progress-high' | 'progress-low'>('newest');
     const [activeFilter, setActiveFilter] = useState<'all' | 'published' | 'draft' | 'exegesis' | 'homiletics' | 'drafting'>('all');
@@ -80,7 +81,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
         
         switch (step) {
             case 1: return { 
-                label: 'Exégesis', 
+                label: t('phases.exegesis'), 
                 progress: 33, 
                 variant: 'secondary' as const,
                 color: 'blue',
@@ -88,7 +89,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                 progressClass: 'bg-blue-500'
             };
             case 2: return { 
-                label: 'Homilética', 
+                label: t('phases.homiletics'), 
                 progress: 66, 
                 variant: 'secondary' as const,
                 color: 'purple',
@@ -96,7 +97,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                 progressClass: 'bg-purple-500'
             };
             case 3: return { 
-                label: 'Redacción', 
+                label: t('phases.drafting'), 
                 progress: 100, 
                 variant: 'secondary' as const,
                 color: 'orange',
@@ -104,7 +105,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                 progressClass: 'bg-orange-500'
             };
             default: return { 
-                label: 'Desconocido', 
+                label: t('phases.unknown'), 
                 progress: 0, 
                 variant: 'secondary' as const,
                 color: 'gray',
@@ -212,7 +213,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">Total</span>
+                                <span className="text-xs text-muted-foreground font-medium">{t('stats.total')}</span>
                                 <span className="text-2xl font-bold">{totalSermons}</span>
                             </div>
                             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -223,7 +224,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">Publicados</span>
+                                <span className="text-xs text-muted-foreground font-medium">{t('stats.published')}</span>
                                 <span className="text-2xl font-bold text-green-600">{publishedCount}</span>
                             </div>
                             <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -234,7 +235,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">Borradores</span>
+                                <span className="text-xs text-muted-foreground font-medium">{t('stats.drafts')}</span>
                                 <span className="text-2xl font-bold text-blue-600">{draftCount}</span>
                             </div>
                             <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
@@ -245,7 +246,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     <Card className="p-4 hover:shadow-md transition-shadow duration-200 border-muted">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                                <span className="text-xs text-muted-foreground font-medium">Progreso</span>
+                                <span className="text-xs text-muted-foreground font-medium">{t('stats.progress')}</span>
                                 <span className="text-2xl font-bold text-purple-600">{avgCompletion}%</span>
                             </div>
                             <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center">
@@ -262,7 +263,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     <div className="relative w-full sm:w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar por pasaje..."
+                            placeholder={t('search.placeholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-8"
@@ -273,12 +274,12 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="newest">Más recientes</SelectItem>
-                            <SelectItem value="oldest">Más antiguos</SelectItem>
-                            <SelectItem value="published-first">Publicados primero</SelectItem>
-                            <SelectItem value="draft-first">Borradores primero</SelectItem>
-                            <SelectItem value="progress-high">Mayor progreso</SelectItem>
-                            <SelectItem value="progress-low">Menor progreso</SelectItem>
+                            <SelectItem value="newest">{t('sort.newest')}</SelectItem>
+                            <SelectItem value="oldest">{t('sort.oldest')}</SelectItem>
+                            <SelectItem value="published-first">{t('sort.publishedFirst')}</SelectItem>
+                            <SelectItem value="draft-first">{t('sort.draftFirst')}</SelectItem>
+                            <SelectItem value="progress-high">{t('sort.progressHigh')}</SelectItem>
+                            <SelectItem value="progress-low">{t('sort.progressLow')}</SelectItem>
                         </SelectContent>
                     </Select>
                     
@@ -314,15 +315,15 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
             <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
                     <Filter className="h-3.5 w-3.5" />
-                    Filtrar:
+                    {t('filter.label')}
                 </div>
                 {[
-                    { value: 'all', label: 'Todos' },
-                    { value: 'published', label: 'Publicados' },
-                    { value: 'draft', label: 'Borradores' },
-                    { value: 'exegesis', label: 'Exégesis' },
-                    { value: 'homiletics', label: 'Homilética' },
-                    { value: 'drafting', label: 'Redacción' },
+                    { value: 'all', label: t('filter.all') },
+                    { value: 'published', label: t('filter.published') },
+                    { value: 'draft', label: t('filter.draft') },
+                    { value: 'exegesis', label: t('filter.exegesis') },
+                    { value: 'homiletics', label: t('filter.homiletics') },
+                    { value: 'drafting', label: t('filter.drafting') },
                 ].map((filter) => (
                     <Button
                         key={filter.value}
@@ -344,8 +345,8 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
             <div className={viewMode === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-4'}>
                 {filteredSermons.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-muted-foreground">
-                        No se encontraron sermones que coincidan con tu búsqueda.
-                    </div>
+                    {t('empty')}
+                </div>
                 ) : (
                     filteredSermons.map((sermon) => {
                         const wizardProgress = sermon.wizardProgress;
@@ -362,7 +363,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                             <Clock className="h-3.5 w-3.5" />
                                             {formatDistanceToNow(wizardProgress.lastSaved, { 
                                                 addSuffix: true,
-                                                locale: es 
+                                                locale: dateLocale 
                                             })}
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
@@ -381,7 +382,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                                         setVersionModalSermon(sermon);
                                                     }}
                                                 >
-                                                    {versionCounts[sermon.id] || wizardProgress.publishCount || 0} versiones
+                                                    {versionCounts[sermon.id] || wizardProgress.publishCount || 0} {t('card.versions')}
                                                 </Badge>
                                             )}
                                         </div>
@@ -404,11 +405,11 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
-                                                    <span>Publicado {formatDistanceToNow(
+                                                    <span>{t('card.publishedAgo')} {formatDistanceToNow(
                                                         wizardProgress.lastPublishedAt instanceof Date 
                                                             ? wizardProgress.lastPublishedAt 
                                                             : (wizardProgress.lastPublishedAt as any).toDate?.() || new Date(wizardProgress.lastPublishedAt as any),
-                                                        { locale: es, addSuffix: true }
+                                                        { locale: dateLocale, addSuffix: true }
                                                     )}</span>
                                                 </div>
                                             </div>
@@ -418,7 +419,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                     {/* Progress Bar */}
                                     <div className="space-y-1 pt-1">
                                         <div className="flex justify-between text-xs text-muted-foreground">
-                                            <span>Progreso</span>
+                                            <span>{t('card.progress')}</span>
                                             <span>{progress}%</span>
                                         </div>
                                         <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
@@ -447,13 +448,13 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                             {onDuplicate && (
                                                 <DropdownMenuItem onClick={() => onDuplicate(sermon)}>
                                                     <Copy className="h-4 w-4 mr-2" />
-                                                    Duplicar sermón
+                                                    {t('actions.duplicate')}
                                                 </DropdownMenuItem>
                                             )}
                                             {onPublish && wizardProgress.currentStep === 3 && (
                                                 <DropdownMenuItem onClick={() => onPublish(sermon)}>
                                                     <Share2 className="h-4 w-4 mr-2" />
-                                                    Publicar ahora
+                                                    {t('actions.publishNow')}
                                                 </DropdownMenuItem>
                                             )}
                                             <DropdownMenuSeparator />
@@ -462,7 +463,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                                 className="text-destructive focus:text-destructive"
                                             >
                                                 <Trash2 className="h-4 w-4 mr-2" />
-                                                Eliminar
+                                                {t('actions.delete')}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -475,7 +476,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                             className="gap-2 shadow-sm bg-green-600 hover:bg-green-700"
                                         >
                                             <Share2 className="h-4 w-4" />
-                                            Publicar
+                                            {t('actions.publish')}
                                         </Button>
                                     ) : (
                                         <Button 
@@ -483,7 +484,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                             onClick={() => onContinue(sermon)}
                                             className="gap-2 shadow-sm"
                                         >
-                                            Continuar
+                                            {t('actions.continue')}
                                             <ArrowRight className="h-4 w-4" />
                                         </Button>
                                     )}
