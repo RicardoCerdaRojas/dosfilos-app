@@ -101,6 +101,17 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                         if (!wizardProgress) return null;
                         const { label, progress, variant } = getPhaseInfo(sermon);
                         const isPublished = sermon.status === 'published' || sermon.publishedAt;
+                        
+                        // Temporary debug logging
+                        console.log('Sermon debug:', {
+                            passage: wizardProgress.passage,
+                            status: sermon.status,
+                            publishedAt: sermon.publishedAt,
+                            preachingHistory: sermon.preachingHistory,
+                            isPublished,
+                            label,
+                            progress
+                        });
 
                         return (
                             <Card key={sermon.id} className="group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
