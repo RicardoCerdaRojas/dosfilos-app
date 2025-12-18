@@ -2,7 +2,16 @@ import { GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, P
 
 const JSON_INSTRUCTION = `IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido. No incluyas NADA de texto antes ni después del JSON (ni "Aquí está el JSON", ni bloques de código markdown como \`\`\`json). Solo el objeto JSON crudo.`;
 
-const DEFAULT_BASE_PROMPT = `Actúa como un experto teólogo, exégeta bíblico y predicador con décadas de experiencia. Tu objetivo es ayudar a pastores a crear sermones bíblicamente fieles y culturalmente relevantes.`;
+const DEFAULT_BASE_PROMPT = `Actúa como un experto teólogo, exégeta bíblico y predicador evangélico con décadas de experiencia.
+
+**MÉTODO HERMENÉUTICO DE DOS FILOS**:
+Utiliza un enfoque histórico-gramatical-literal, priorizando:
+1. La intención del autor original en su contexto histórico
+2. El significado literal del texto en sus idiomas originales (griego/hebreo)
+3. La gramática y estructura del texto como guía interpretativa
+4. El testimonio coherente de toda la Escritura
+
+Tu objetivo es ayudar a pastores a crear sermones bíblicamente fieles, teológicamente sólidos y culturalmente relevantes.`;
 
 const BASE_SYSTEM_PROMPT = `${DEFAULT_BASE_PROMPT}\n${JSON_INSTRUCTION}`;
 
@@ -17,6 +26,39 @@ export function buildExegesisPrompt(passage: string, rules: GenerationRules, con
   if (config?.cachedResources && config.cachedResources.length > 0) {
     const cachedList = config.cachedResources.map(r => `- ${r.title} (Autor: ${r.author})`).join('\n');
     knowledgeBase += `\n\nADEMÁS, TIENES ACCESO A LOS SIGUIENTES LIBROS COMPLETOS EN TU CONTEXTO (CACHE):\n${cachedList}\n\nINSTRUCCIÓN: Usa estos libros para tu análisis y cítalos en "ragSources" cuando extraigas información de ellos.`;
+  }
+
+  // If no library resources available, provide recommended sources
+  const hasLibraryResources = (config?.documents && config.documents.length > 0) ||
+    (config?.cachedResources && config.cachedResources.length > 0);
+
+  if (!hasLibraryResources) {
+    knowledgeBase = `
+## 📚 FUENTES TEOLÓGICAS RECOMENDADAS (Conocimiento General)
+
+Como no tienes acceso a la biblioteca personal del pastor, basa tu análisis en fuentes evangélicas reconocidas:
+
+**Comentarios Bíblicos Estándar**:
+- Nuevo Comentario Bíblico Siglo XXI
+- Comentario Bíblico Mundo Hispano
+- Comentario del Contexto Cultural de la Biblia (Craig Keener)
+- Comentarios de la serie "Andamios" (Editorial Vida)
+
+**Léxicos y Recursos Lingüísticos**:
+- Léxico Griego-Español del Nuevo Testamento (Tuggy)
+- Diccionario Expositivo de Palabras del AT y NT (Vine)
+- Concordancia Strong
+
+**Teología Sistemática Evangélica**:
+- Teología Sistemática (Wayne Grudem)
+- Teología Bíblica del Antiguo y Nuevo Testamento (Paul House)
+
+**INSTRUCCIONES**:
+1. Declara explícitamente: "Basado en conocimiento general de fuentes evangélicas estándar..."
+2. Cuando cites, usa formato: "Como señalan comentaristas evangélicos..." o "Según el consenso exegético..."
+3. NO inventes citas específicas de autores si no estás seguro
+4. Mantén fidelidad al método histórico-gramatical-literal
+`;
   }
 
   return `
@@ -214,7 +256,6 @@ export function buildChatSystemPrompt(phase: WorkflowPhase, context: any): strin
   // Check if we have library context either via Cache OR via RAG chunks
   const hasCacheContext = !!context.cacheName;
   const hasRAGContext = context.hasLibraryContext && context.relevantChunks?.length > 0;
-  const hasAnyLibraryContext = hasCacheContext || hasRAGContext;
 
   let libraryContextSection = '';
 
@@ -257,14 +298,22 @@ INSTRUCCIONES CRÍTICAS DE CITACIÓN:
 3. Formato de cita: (Autor, p.XX) o "Como señala Autor en 'Título'..."
 4. Esto es contenido REAL de los libros del pastor. Úsalo con prioridad sobre tu conocimiento general.`;
   } else {
-    // No library context available
+    // No library context available - provide recommended evangelical sources
     libraryContextSection = `
-## ⚠️ SIN CONTENIDO DE BIBLIOTECA PARA ESTA CONSULTA:
-NO se encontró información relevante en los recursos indexados del pastor para esta pregunta específica.
+## 📚 FUENTES TEOLÓGICAS RECOMENDADAS (Conocimiento General):
+NO se encontró información en la biblioteca personal del pastor para esta consulta.
 
-INSTRUCCIONES DE TRANSPARENCIA:
-1. Si respondes con conocimiento general, hazlo explícito: "Basado en mi conocimiento general..."
-2. No inventes citas ni atribuyas información a la biblioteca si no está arriba.`;
+**Basa tu respuesta en fuentes evangélicas reconocidas**:
+- Comentarios bíblicos estándar (Nuevo Comentario Bíblico Siglo XXI, Mundo Hispano)
+- Léxicos y concordancias (Strong, Vine, Tuggy)
+- Teología sistemática evangélica (Grudem, Berkhof)
+- Consenso exegético histórico-gramatical
+
+**INSTRUCCIONES DE TRANSPARENCIA**:
+1. Declara explícitamente: "Basado en mi conocimiento general de fuentes evangélicas..."
+2. Cuando cites, usa formato genérico: "Como señalan comentaristas evangélicos..." o "Según el consenso exegético..."
+3. NO inventes citas específicas de páginas o autores si no estás absolutamente seguro
+4. Mantén fidelidad al método histórico-gramatical-literal de Dos Filos`;
   }
 
   switch (phase) {
