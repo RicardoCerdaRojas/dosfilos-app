@@ -823,61 +823,49 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Tus Asistentes Expertos
+              {t('features.title')}
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Trabaja con asistentes especializados en cada área del estudio bíblico. 
-              Cada uno diseñado para potenciar tu preparación.
+              {t('features.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Languages,
-                title: 'Experto en Idiomas Originales',
-                description: 'Análisis profundo de hebreo y griego bíblicos. Morfología, sintaxis y significado teológico de las palabras clave.',
-                features: ['Hebreo bíblico', 'Griego koiné', 'Análisis morfológico', 'Campos semánticos'],
-                color: '#8b5cf6'
-              },
-              {
-                icon: BookMarked,
-                title: 'Experto en Hermenéutica',
-                description: 'Guía en la interpretación histórico-literal-gramatical. Contexto, estructura y significado original del texto.',
-                features: ['Contexto histórico', 'Análisis gramatical', 'Estructura literaria', 'Teología bíblica'],
-                color: '#2563eb'
-              },
-              {
-                icon: Mic,
-                title: 'Experto en Homilética',
-                description: 'Ayuda a estructurar tu sermón de manera clara y fiel al texto. Aplicaciones prácticas y relevantes.',
-                features: ['Estructura expositiva', 'Aplicaciones contextuales', 'Ilustraciones', 'Transiciones'],
-                color: '#16a34a'
-              }
-            ].map((feature, i) => (
-              <Card 
-                key={i} 
-                className="p-8 hover:shadow-xl transition-all duration-300 border-2 bg-white hover:-translate-y-1"
-                style={{ borderColor: '#e2e8f0' }}
-              >
-                <div 
-                  className="p-4 rounded-xl w-fit mb-6"
-                  style={{ backgroundColor: `${feature.color}15` }}
-                >
-                  <feature.icon className="h-8 w-8" style={{ color: feature.color }} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                <p className="text-slate-600 mb-6 leading-relaxed">{feature.description}</p>
-                <ul className="space-y-2">
-                  {feature.features.map((item, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm text-slate-700">
-                      <Check className="h-4 w-4 flex-shrink-0" style={{ color: feature.color }} />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
+            {(() => {
+              const experts = t('features.experts', { returnObjects: true }) as Array<{title: string, description: string, features: string[]}>;
+              const icons = [Languages, BookMarked, Mic];
+              const colors = ['#8b5cf6', '#2563eb', '#16a34a'];
+              
+              return experts.map((expert, i) => {
+                const Icon = icons[i]!;
+                const color = colors[i];
+                
+                return (
+                  <Card 
+                    key={i} 
+                    className="p-8 hover:shadow-xl transition-all duration-300 border-2 bg-white hover:-translate-y-1"
+                    style={{ borderColor: '#e2e8f0' }}
+                  >
+                    <div 
+                      className="p-4 rounded-xl w-fit mb-6"
+                      style={{ backgroundColor: `${color}15` }}
+                    >
+                      <Icon className="h-8 w-8" style={{ color }} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">{expert.title}</h3>
+                    <p className="text-slate-600 mb-6 leading-relaxed">{expert.description}</p>
+                    <ul className="space-y-2">
+                      {expert.features.map((item, j) => (
+                        <li key={j} className="flex items-center gap-2 text-sm text-slate-700">
+                          <Check className="h-4 w-4 flex-shrink-0" style={{ color }} />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                );
+              });
+            })()}
           </div>
         </div>
       </section>
