@@ -1,25 +1,29 @@
 {
-    "title": "Series Planner",
-    "subtitle": "Plan comprehensive sermon series with AI assistance",
-    "createNew": "Create New Series",
-    "loading": "Loading...",
-    "saving": "Saving...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "next": "Next",
-    "back": "Back",
-    "finish": "Finish",
-    "delete": "Delete",
-    "edit": "Edit",
-    "preview": "Preview",
-    "generate": "Generate",
-    "regenerate": "Regenerate",
-    "toast": {
-        "saveSuccess": "Series saved successfully",
-        "saveError": "Error saving series",
-        "deleteSuccess": "Series deleted",
-        "deleteError": "Error deleting series",
-        "generateSuccess": "Series generated successfully",
-        "generateError": "Error generating series"
+    "title": "Sermon Planner",
+    "subtitle": "Design your next preaching series with your AI Assistant's collaboration and your theological library.",
+    "steps": {
+        "strategy": "Strategy",
+        "context": "Context",
+        "objective": "Objective",
+        "structure": "Structure"
+    },
+    "planType": {
+        "question": "What type of plan do you want to create?",
+        "thematic": "Thematic",
+        "thematicDescription": "Based on a doctrinal or practical theme. The Assistant will search for verses and structure topics.",
+        "expository": "Expository",
+        "expositoryDescription": "Based on a biblical book. The Assistant will analyze the original text and suggest divisions."
+    },
+    "buttons": {
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "cancel": "Cancel",
+        "save": "Save"
+    },
+    "expertAssistant": {
+        "title": "Expert Assistant",
+        "subtitle": "Automatic",
+        "description": "Hi, I'm your expert assistant in homiletics. I can help you refine your objective, suggest titles, or answer questions about your resources."
     }
 }

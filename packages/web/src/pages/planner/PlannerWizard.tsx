@@ -28,12 +28,14 @@ import {
 import { PlannerLayout } from './PlannerLayout';
 import { PlannerField } from './PlannerField';
 import { BiblePassageViewer, BibleReference } from '@/components/bible/BiblePassageViewer';
+import { useTranslation } from '@/i18n';
 
 type Step = 'strategy' | 'context' | 'objective' | 'structure' | 'generating';
 
 export function PlannerWizard() {
     const { user } = useFirebase();
     const navigate = useNavigate();
+    const { t } = useTranslation('planner');
     const [step, setStep] = useState<Step>('strategy');
     const [loading, setLoading] = useState(false);
     const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
@@ -288,16 +290,16 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
             <div className="mb-8 text-center">
                 <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
                     <Wand2 className="h-8 w-8 text-primary" />
-                    Planificador de Sermones
+                    {t('title')}
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Diseña tu próxima serie de predicación con la colaboración de tu Asistente y tu biblioteca teológica.
+                    {t('subtitle')}
                 </p>
             </div>
 
             {/* Progress Steps */}
             <div className="flex justify-center mb-8 gap-2 overflow-x-auto">
-                {['Estrategia', 'Contexto', 'Objetivo', 'Estructura'].map((label, idx) => {
+                {[t('steps.strategy'), t('steps.context'), t('steps.objective'), t('steps.structure')].map((label, idx) => {
                     const isActive = (step === 'strategy' && idx === 0) ||
                                    (step === 'context' && idx === 1) ||
                                    (step === 'objective' && idx === 2) ||
@@ -327,29 +329,29 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                     {step === 'strategy' && (
                         <div className="space-y-6">
                             <div className="space-y-4">
-                                <Label className="text-lg">¿Qué tipo de plan deseas crear?</Label>
+                                <Label className="text-lg">{t('planType.question')}</Label>
                                 <RadioGroup value={strategy} onValueChange={(v: any) => setStrategy(v)} className="grid md:grid-cols-2 gap-4">
                                     <div className={`flex flex-col p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-all ${strategy === 'thematic' ? 'border-primary bg-primary/5' : 'border-muted'}`} onClick={() => setStrategy('thematic')}>
                                         <RadioGroupItem value="thematic" id="thematic" className="sr-only" />
                                         <Sparkles className="h-6 w-6 mb-2 text-primary" />
-                                        <span className="font-semibold">Temático</span>
+                                        <span className="font-semibold">{t('planType.thematic')}</span>
                                         <span className="text-sm text-muted-foreground mt-1">
-                                            Basado en un tema doctrinal o práctico. El Asistente buscará versículos y estructurará subtemas.
+                                            {t('planType.thematicDescription')}
                                         </span>
                                     </div>
                                     <div className={`flex flex-col p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-all ${strategy === 'expository' ? 'border-primary bg-primary/5' : 'border-muted'}`} onClick={() => setStrategy('expository')}>
                                         <RadioGroupItem value="expository" id="expository" className="sr-only" />
                                         <Book className="h-6 w-6 mb-2 text-primary" />
-                                        <span className="font-semibold">Expositivo</span>
+                                        <span className="font-semibold">{t('planType.expository')}</span>
                                         <span className="text-sm text-muted-foreground mt-1">
-                                            Basado en un libro bíblico. El Asistente analizará el texto original y sugerirá divisiones.
+                                            {t('planType.expositoryDescription')}
                                         </span>
                                     </div>
                                 </RadioGroup>
                             </div>
                             <div className="flex justify-end">
                                 <Button onClick={() => setStep('context')} size="lg">
-                                    Siguiente <ArrowRight className="ml-2 h-4 w-4" />
+                                    {t('buttons.next')} <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             </div>
                         </div>

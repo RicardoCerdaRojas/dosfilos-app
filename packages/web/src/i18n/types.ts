@@ -47,4 +47,5 @@ export type TranslationNamespace =
     | 'subscription'
     | 'sermons'
     | 'library'
-    | 'series';
+    | 'series'
+    | 'planner';
