@@ -11,5 +11,13 @@
     },
     "loading": "Cargando...",
     "error": "Error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "header": {
+        "welcome": "Bienvenido",
+        "user": "Usuario",
+        "profile": "Perfil",
+        "settings": "Configuración",
+        "logout": "Cerrar Sesión",
+        "logoutSuccess": "Sesión cerrada"
+    }
 }

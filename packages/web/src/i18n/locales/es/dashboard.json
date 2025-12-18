@@ -1,0 +1,44 @@
+{
+    "header": {
+        "title": "Dashboard",
+        "subtitle": "Resumen de tu actividad en DosFilos.Preach"
+    },
+    "stats": {
+        "totalSermons": {
+            "title": "Total Sermones",
+            "description": "Sermones guardados"
+        },
+        "newThisMonth": {
+            "title": "Nuevos este Mes",
+            "description": "Sermones creados"
+        },
+        "avgTime": {
+            "title": "Tiempo Promedio",
+            "description": "Duración de predicación",
+            "minutes": "min"
+        },
+        "bibleCoverage": {
+            "title": "Cobertura Bíblica",
+            "description": "libros citados (aprox)",
+            "books": "libros"
+        }
+    },
+    "recentSermons": {
+        "title": "Sermones Recientes",
+        "subtitle": "Últimos sermones modificados",
+        "empty": "No hay sermones recientes",
+        "status": {
+            "published": "Publicado",
+            "draft": "Borrador",
+            "archived": "Archivado"
+        }
+    },
+    "bibleProgress": {
+        "title": "Progreso Bíblico",
+        "subtitle": "Cobertura estimada de la Biblia",
+        "oldTestament": "Antiguo Testamento",
+        "newTestament": "Nuevo Testamento",
+        "comingSoon": "Próximamente: desglose detallado",
+        "yearlyGoal": "Meta anual: Predicar 10 libros nuevos"
+    }
+}

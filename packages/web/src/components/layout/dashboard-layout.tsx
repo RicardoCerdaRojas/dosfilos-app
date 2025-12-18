@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggleButtons } from '@/components/theme-toggle-buttons';
 import { cn } from '@/lib/utils';
+import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -18,7 +19,8 @@ export function DashboardLayout() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <LanguageSwitcher variant="ghost" showLabel={false} />
             <ThemeToggleButtons />
           </div>
         </header>

@@ -8,6 +8,8 @@ import { getFeatureLabel } from '@/utils/featureLabels';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
 import { toast } from 'sonner';
+import { useTranslation } from '@/i18n';
+import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
 
 /**
  * Welcome page - Post registration plan selection
@@ -16,6 +18,7 @@ import { toast } from 'sonner';
  */
 export function WelcomePage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('welcome');
   const [isLoading, setIsLoading] = useState(false);
   const { plans, loading } = usePlans();
 
@@ -28,7 +31,7 @@ export function WelcomePage() {
 
     const priceId = getPlanPriceId(plan);
     if (!priceId) {
-      toast.error('Plan no disponible. Por favor intenta más tarde.');
+      toast.error(t('errors.planNotAvailable'));
       return;
     }
 
@@ -45,7 +48,7 @@ export function WelcomePage() {
       window.location.href = url;
     } catch (error: any) {
       console.error('Checkout error:', error);
-      toast.error('Error al crear sesión de pago');
+      toast.error(t('errors.checkoutFailed'));
       setIsLoading(false);
     }
   };
@@ -57,13 +60,18 @@ export function WelcomePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Cargando planes...</p>
+        <p className="text-muted-foreground">{t('loading')}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      {/* Language Switcher - Top Right */}
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher variant="ghost" showLabel={false} />
+      </div>
+      
       <div className="w-full max-w-6xl">
         {/* Header */}
         <div className="text-center mb-8">
@@ -73,10 +81,10 @@ export function WelcomePage() {
             </div>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            ¡Bienvenido a DosFilos.Preach!
+            {t('header.title')}
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Elige el plan perfecto para potenciar tu ministerio de predicación
+            {t('header.subtitle')}
           </p>
         </div>
 
@@ -92,7 +100,7 @@ export function WelcomePage() {
               >
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                    {plan.highlightText}
+                    {t('plans.mostPopular')}
                   </div>
                 )}
 
@@ -101,7 +109,7 @@ export function WelcomePage() {
                   <CardDescription className="min-h-[40px]">{plan.description}</CardDescription>
                   <div className="mt-4">
                     <span className="text-3xl font-bold">${plan.pricing.monthly}</span>
-                    <span className="text-muted-foreground text-sm">/mes</span>
+                    <span className="text-muted-foreground text-sm">{t('plans.perMonth')}</span>
                   </div>
                 </CardHeader>
 
@@ -116,7 +124,7 @@ export function WelcomePage() {
                     ))}
                     {plan.features.length > 4 && (
                       <li className="text-xs text-muted-foreground">
-                        +{plan.features.length - 4} características más
+                        +{plan.features.length - 4} {t('plans.moreFeatures')}
                       </li>
                     )}
                   </ul>
@@ -127,7 +135,7 @@ export function WelcomePage() {
                     onClick={() => handlePlanSelect(plan.id)}
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Cargando...' : 'Suscribirse'}
+                    {isLoading ? t('plans.subscribing') : t('plans.subscribe')}
                   </Button>
                 </CardContent>
               </Card>
@@ -142,10 +150,10 @@ export function WelcomePage() {
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
             disabled={isLoading}
           >
-            Continuar con plan gratuito →
+            {t('freePlan.continueButton')}
           </button>
           <p className="text-xs text-muted-foreground mt-2">
-            Puedes cambiar tu plan en cualquier momento desde configuración
+            {t('freePlan.changeAnytime')}
           </p>
         </div>
       </div>

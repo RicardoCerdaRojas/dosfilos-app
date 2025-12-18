@@ -11,5 +11,13 @@
     },
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "header": {
+        "welcome": "Welcome",
+        "user": "User",
+        "profile": "Profile",
+        "settings": "Settings",
+        "logout": "Log Out",
+        "logoutSuccess": "Logged out successfully"
+    }
 }

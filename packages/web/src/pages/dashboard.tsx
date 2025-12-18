@@ -5,9 +5,11 @@ import { useFirebase } from '@/context/firebase-context';
 import { sermonService } from '@dosfilos/application';
 import { SermonEntity } from '@dosfilos/domain';
 import { Progress } from '@/components/ui/progress';
+import { useTranslation } from '@/i18n';
 
 export function DashboardPage() {
   const { user } = useFirebase();
+  const { t } = useTranslation('dashboard');
   const [sermons, setSermons] = useState<SermonEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -91,33 +93,33 @@ export function DashboardPage() {
 
   const statCards = [
     {
-      title: 'Total Sermones',
+      title: t('stats.totalSermons.title'),
       value: stats.totalSermons.toString(),
-      description: 'Sermones guardados',
+      description: t('stats.totalSermons.description'),
       icon: FileText,
       iconBg: 'bg-primary/10',
       iconColor: 'text-primary',
     },
     {
-      title: 'Nuevos este Mes',
+      title: t('stats.newThisMonth.title'),
       value: stats.aiGenerated.toString(),
-      description: 'Sermones creados',
+      description: t('stats.newThisMonth.description'),
       icon: Sparkles,
       iconBg: 'bg-accent/10',
       iconColor: 'text-accent',
     },
     {
-      title: 'Tiempo Promedio',
-      value: `${stats.avgDuration} min`,
-      description: 'Duración de predicación',
+      title: t('stats.avgTime.title'),
+      value: `${stats.avgDuration} ${t('stats.avgTime.minutes')}`,
+      description: t('stats.avgTime.description'),
       icon: Clock,
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
     },
     {
-      title: 'Cobertura Bíblica',
+      title: t('stats.bibleCoverage.title'),
       value: `${stats.bibleCoverage}%`,
-      description: `${stats.uniqueBooks} libros citados (aprox)`,
+      description: `${stats.uniqueBooks} ${t('stats.bibleCoverage.description')}`,
       icon: BookOpen,
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600',
@@ -127,9 +129,9 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('header.title')}</h2>
         <p className="text-muted-foreground">
-          Resumen de tu actividad en DosFilos.Preach
+          {t('header.subtitle')}
         </p>
       </div>
 
@@ -158,9 +160,9 @@ export function DashboardPage() {
         {/* Recent Activity / Sermons */}
         <Card className="col-span-4 border-muted/50">
           <CardHeader>
-            <CardTitle>Sermones Recientes</CardTitle>
+            <CardTitle>{t('recentSermons.title')}</CardTitle>
             <CardDescription>
-              Últimos sermones modificados
+              {t('recentSermons.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -178,13 +180,15 @@ export function DashboardPage() {
                     sermon.status === 'draft' ? 'bg-gray-100 text-gray-700' :
                     'bg-yellow-100 text-yellow-700'
                   }`}>
-                    {sermon.status === 'published' ? 'Publicado' : sermon.status === 'draft' ? 'Borrador' : 'Archivado'}
+                    {sermon.status === 'published' ? t('recentSermons.status.published') : 
+                     sermon.status === 'draft' ? t('recentSermons.status.draft') : 
+                     t('recentSermons.status.archived')}
                   </div>
                 </div>
               ))}
               {sermons.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  No hay sermones recientes
+                  {t('recentSermons.empty')}
                 </div>
               )}
             </div>
@@ -194,24 +198,24 @@ export function DashboardPage() {
         {/* Bible Coverage Progress */}
         <Card className="col-span-3 border-muted/50">
           <CardHeader>
-            <CardTitle>Progreso Bíblico</CardTitle>
+            <CardTitle>{t('bibleProgress.title')}</CardTitle>
             <CardDescription>
-              Cobertura estimada de la Biblia
+              {t('bibleProgress.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Antiguo Testamento</span>
+                <span className="font-medium">{t('bibleProgress.oldTestament')}</span>
                 <span className="text-muted-foreground">--%</span>
               </div>
               <Progress value={0} className="h-2" />
-              <p className="text-xs text-muted-foreground">Próximamente: desglose detallado</p>
+              <p className="text-xs text-muted-foreground">{t('bibleProgress.comingSoon')}</p>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Nuevo Testamento</span>
+                <span className="font-medium">{t('bibleProgress.newTestament')}</span>
                 <span className="text-muted-foreground">--%</span>
               </div>
               <Progress value={0} className="h-2" />
@@ -220,7 +224,7 @@ export function DashboardPage() {
             <div className="pt-4 border-t">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="h-4 w-4" />
-                <span>Meta anual: Predicar 10 libros nuevos</span>
+                <span>{t('bibleProgress.yearlyGoal')}</span>
               </div>
             </div>
           </CardContent>

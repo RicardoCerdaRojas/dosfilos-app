@@ -1,0 +1,44 @@
+{
+    "header": {
+        "title": "Dashboard",
+        "subtitle": "Summary of your activity on DosFilos.Preach"
+    },
+    "stats": {
+        "totalSermons": {
+            "title": "Total Sermons",
+            "description": "Saved sermons"
+        },
+        "newThisMonth": {
+            "title": "New This Month",
+            "description": "Sermons created"
+        },
+        "avgTime": {
+            "title": "Average Time",
+            "description": "Preaching duration",
+            "minutes": "min"
+        },
+        "bibleCoverage": {
+            "title": "Bible Coverage",
+            "description": "books cited (approx)",
+            "books": "books"
+        }
+    },
+    "recentSermons": {
+        "title": "Recent Sermons",
+        "subtitle": "Last modified sermons",
+        "empty": "No recent sermons",
+        "status": {
+            "published": "Published",
+            "draft": "Draft",
+            "archived": "Archived"
+        }
+    },
+    "bibleProgress": {
+        "title": "Bible Progress",
+        "subtitle": "Estimated Bible coverage",
+        "oldTestament": "Old Testament",
+        "newTestament": "New Testament",
+        "comingSoon": "Coming soon: detailed breakdown",
+        "yearlyGoal": "Annual goal: Preach 10 new books"
+    }
+}
