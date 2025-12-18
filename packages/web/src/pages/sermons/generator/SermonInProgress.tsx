@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { SermonEntity } from '@dosfilos/domain';
+import Fuse from 'fuse.js';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,14 +93,31 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
         }
     };
 
-    const filteredSermons = sermons
-        .filter(sermon => {
-            // Search filter
-            const passage = sermon.wizardProgress?.passage || '';
-            if (!passage.toLowerCase().includes(searchQuery.toLowerCase())) {
-                return false;
-            }
-            
+    // Fuzzy search with Fuse.js
+    const fuse = useMemo(() => {
+        return new Fuse(sermons, {
+            keys: [
+                { name: 'wizardProgress.passage', weight: 2 },
+                { name: 'title', weight: 1 },
+                { name: 'wizardProgress.exegesis.observations', weight: 0.5 },
+            ],
+            threshold: 0.4, // 0 = perfect match, 1 = match anything
+            ignoreLocation: true,
+            includeScore: true,
+        });
+    }, [sermons]);
+
+    const filteredSermons = useMemo(() => {
+        let results = sermons;
+        
+        // Apply fuzzy search if query exists
+        if (searchQuery.trim()) {
+            const fuseResults = fuse.search(searchQuery);
+            results = fuseResults.map(result => result.item);
+        }
+        
+        // Apply phase/status filter
+        results = results.filter(sermon => {
             // Phase/Status filter
             if (activeFilter === 'published') {
                 return !!(sermon.wizardProgress?.publishedCopyId);
@@ -148,6 +166,9 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                     return dateB - dateA;
             }
         });
+        
+        return results;
+    }, [sermons, searchQuery, activeFilter, sortOrder, fuse]);
 
     // Calculate statistics
     const totalSermons = sermons.length;
