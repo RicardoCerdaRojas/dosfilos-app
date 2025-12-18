@@ -28,12 +28,19 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
 
     if (sermons.length === 0) return null;
 
-    const getPhaseInfo = (step: number) => {
+    const getPhaseInfo = (sermon: SermonEntity) => {
+        const step = sermon.wizardProgress?.currentStep || 0;
+        
+        // If published, always show as complete
+        if (sermon.status === 'published' || sermon.publishedAt) {
+            return { label: 'Publicado', progress: 100, variant: 'success' as const };
+        }
+        
         switch (step) {
-            case 1: return { label: 'Exégesis', progress: 33 };
-            case 2: return { label: 'Homilética', progress: 66 };
-            case 3: return { label: 'Redacción', progress: 90 };
-            default: return { label: 'Desconocido', progress: 0 };
+            case 1: return { label: 'Exégesis', progress: 33, variant: 'secondary' as const };
+            case 2: return { label: 'Homilética', progress: 66, variant: 'secondary' as const };
+            case 3: return { label: 'Redacción', progress: 100, variant: 'secondary' as const };
+            default: return { label: 'Desconocido', progress: 0, variant: 'secondary' as const };
         }
     };
 
@@ -92,7 +99,8 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                     filteredSermons.map((sermon) => {
                         const wizardProgress = sermon.wizardProgress;
                         if (!wizardProgress) return null;
-                        const { label, progress } = getPhaseInfo(wizardProgress.currentStep);
+                        const { label, progress, variant } = getPhaseInfo(sermon);
+                        const isPublished = sermon.status === 'published' || sermon.publishedAt;
 
                         return (
                             <Card key={sermon.id} className="group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
@@ -106,7 +114,10 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                                                 locale: es 
                                             })}
                                         </div>
-                                        <Badge variant="secondary" className="capitalize bg-secondary/50">
+                                        <Badge 
+                                            variant={variant} 
+                                            className={`capitalize ${isPublished ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20' : 'bg-secondary/50'}`}
+                                        >
                                             {label}
                                         </Badge>
                                     </div>
@@ -116,6 +127,26 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
                                         <h3 className="text-xl font-bold font-serif leading-tight group-hover:text-primary transition-colors">
                                             {wizardProgress.passage}
                                         </h3>
+                                        
+                                        {/* Publication & Preaching Info */}
+                                        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                            {sermon.publishedAt && (
+                                                <div className="flex items-center gap-1">
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <span>Publicado {formatDistanceToNow(sermon.publishedAt, { locale: es, addSuffix: true })}</span>
+                                                </div>
+                                            )}
+                                            {sermon.preachingHistory && sermon.preachingHistory.length > 0 && (
+                                                <div className="flex items-center gap-1">
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                                    </svg>
+                                                    <span>Predicado {sermon.preachingHistory.length} {sermon.preachingHistory.length === 1 ? 'vez' : 'veces'}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Progress Bar */}
