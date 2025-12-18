@@ -44,4 +44,5 @@ export type TranslationNamespace =
     | 'auth'
     | 'welcome'
     | 'dashboard'
-    | 'subscription';
+    | 'subscription'
+    | 'sermons';
