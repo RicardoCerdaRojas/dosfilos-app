@@ -11,8 +11,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ContactModal } from '@/components/contact/ContactModal';
+import { useTranslation, LanguageSwitcher } from '@/i18n';
 
 export function Landing() {
+  // i18n hooks
+  const { t } = useTranslation('landing');
+  const { t: tNav } = useTranslation('navigation');
+  const { t: tCommon } = useTranslation('common');
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -60,29 +66,33 @@ export function Landing() {
               <div className="p-2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-slate-900">DosFilos.Preach</span>
+              <span className="text-xl font-bold text-slate-900">{tNav('logo')}</span>
             </div>
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Características
+                {tNav('features')}
               </a>
               <a href="#how-it-works" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Cómo Funciona
+                {tNav('howItWorks')}
               </a>
               <a href="#testimonials" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Testimonios
+                {tNav('testimonials')}
               </a>
               <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Precios
+                {tNav('pricing')}
               </a>
+              
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="ghost" showLabel={false} />
+              
               <Link to="/login">
-                <Button variant="ghost">Iniciar Sesión</Button>
+                <Button variant="ghost">{tNav('login')}</Button>
               </Link>
               <Link to="/register">
                 <Button className="bg-blue-600 hover:bg-blue-700">
-                  Comenzar Gratis
+                  {tNav('register')}
                 </Button>
               </Link>
             </div>
@@ -102,23 +112,29 @@ export function Landing() {
           <div className="md:hidden bg-white border-t border-slate-200">
             <div className="px-4 py-4 space-y-3">
               <a href="#features" className="block text-slate-600 hover:text-slate-900">
-                Características
+                {tNav('features')}
               </a>
               <a href="#how-it-works" className="block text-slate-600 hover:text-slate-900">
-                Cómo Funciona
+                {tNav('howItWorks')}
               </a>
               <a href="#testimonials" className="block text-slate-600 hover:text-slate-900">
-                Testimonios
+                {tNav('testimonials')}
               </a>
               <a href="#pricing" className="block text-slate-600 hover:text-slate-900">
-                Precios
+                {tNav('pricing')}
               </a>
+              
+              {/* Language Switcher in Mobile */}
+              <div className="pt-2 pb-2">
+                <LanguageSwitcher variant="outline" showLabel={true} className="w-full" />
+              </div>
+              
               <Link to="/login" className="block">
-                <Button variant="ghost" className="w-full">Iniciar Sesión</Button>
+                <Button variant="ghost" className="w-full">{tNav('login')}</Button>
               </Link>
               <Link to="/register" className="block">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  Comenzar Gratis
+                  {tNav('register')}
                 </Button>
               </Link>
             </div>
@@ -137,18 +153,19 @@ export function Landing() {
                 style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}
               >
                 <Sparkles className="h-4 w-4" />
-                Tu Entrenador Exegético Personal
+                {t('hero.badge')}
               </div>
               
               <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
-                Exégesis profunda.
-                <span className="block text-blue-600">Predicación fiel.</span>
+                {t('hero.title.part1')}
+                <span className="block text-blue-600">{t('hero.title.part2')}</span>
               </h1>
               
               <p className="text-xl text-slate-600 leading-relaxed">
-                La herramienta que <strong>te entrena y guía</strong> en el estudio bíblico profundo. 
-                Combina <strong>hermenéutica histórico-literal-gramatical</strong> con análisis de idiomas originales. 
-                <span className="block mt-2 text-blue-700 font-medium">Tú haces el ejercicio. La IA te entrena.</span>
+                <strong>{t('hero.subtitle.main')}</strong> 
+                {t('hero.subtitle.distinction')}
+                <strong> {t('hero.subtitle.methodology')}</strong>
+                <span className="block mt-2 text-blue-700 font-medium">{t('hero.subtitle.tagline')}</span>
               </p>
 
               {/* Trust Badges with better visibility */}
@@ -162,7 +179,7 @@ export function Landing() {
                   }}
                 >
                   <Check className="h-4 w-4" style={{ color: '#16a34a' }} />
-                  <span className="font-medium">Hermenéutica Histórico-Literal</span>
+                  <span className="font-medium">{t('hero.badges.hermeneutics')}</span>
                 </div>
                 <div 
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg border"
@@ -173,7 +190,7 @@ export function Landing() {
                   }}
                 >
                   <Check className="h-4 w-4" style={{ color: '#16a34a' }} />
-                  <span className="font-medium">Análisis Hebreo/Griego</span>
+                  <span className="font-medium">{t('hero.badges.languages')}</span>
                 </div>
                 <div 
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg border"
@@ -184,7 +201,7 @@ export function Landing() {
                   }}
                 >
                   <Check className="h-4 w-4" style={{ color: '#16a34a' }} />
-                  <span className="font-medium">Enfoque Expositivo</span>
+                  <span className="font-medium">{t('hero.badges.approach')}</span>
                 </div>
               </div>
 
@@ -199,7 +216,7 @@ export function Landing() {
                     }}
                   >
                     <span className="relative z-10 flex items-center">
-                      Comienza Gratis
+                      {t('hero.cta.primary')}
                       <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </Button>
@@ -215,9 +232,10 @@ export function Landing() {
                   }}
                 >
                   <Play className="mr-2 h-5 w-5" />
-                  Ver Demo (2 min)
+                  {t('hero.cta.secondary')}
                 </Button>
               </div>
+
 
               {/* Social Proof */}
               <div className="flex items-center gap-8 pt-4">
@@ -228,15 +246,15 @@ export function Landing() {
                     ))}
                   </div>
                   <div className="text-sm">
-                    <div className="font-semibold text-slate-900">500+ pastores</div>
-                    <div className="text-slate-600">confiando en nosotros</div>
+                    <div className="font-semibold text-slate-900">{t('hero.socialProof.pastors')}</div>
+                    <div className="text-slate-600">{t('hero.socialProof.trusting')}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
                   ))}
-                  <span className="ml-2 text-sm font-semibold text-slate-900">4.8/5</span>
+                  <span className="ml-2 text-sm font-semibold text-slate-900">{t('hero.socialProof.rating')}</span>
                 </div>
               </div>
             </div>
@@ -292,8 +310,8 @@ export function Landing() {
                     <Languages className="h-5 w-5" style={{ color: '#16a34a' }} />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">Análisis Griego</div>
-                    <div className="text-xs text-slate-600">χάρις - Efesios 2:8</div>
+                    <div className="text-sm font-semibold text-slate-900">{t('hero.floatingCards.greekAnalysis.title')}</div>
+                    <div className="text-xs text-slate-600">{t('hero.floatingCards.greekAnalysis.subtitle')}</div>
                   </div>
                 </div>
               </div>
@@ -306,8 +324,8 @@ export function Landing() {
                     <GraduationCap className="h-5 w-5" style={{ color: '#2563eb' }} />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">Tu Entrenador</div>
-                    <div className="text-xs text-slate-600">Guía experta 24/7</div>
+                    <div className="text-sm font-semibold text-slate-900">{t('hero.floatingCards.trainer.title')}</div>
+                    <div className="text-xs text-slate-600">{t('hero.floatingCards.trainer.subtitle')}</div>
                   </div>
                 </div>
               </div>
@@ -323,30 +341,30 @@ export function Landing() {
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Timer className="h-6 w-6" />
-                <span className="text-3xl font-bold">5+</span>
+                <span className="text-3xl font-bold">{t('metrics.timeSaved.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Horas ahorradas por sermón</p>
+              <p className="text-blue-100 text-sm">{t('metrics.timeSaved.label')}</p>
             </div>
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <TrendingUp className="h-6 w-6" />
-                <span className="text-3xl font-bold">85%</span>
+                <span className="text-3xl font-bold">{t('metrics.depth.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Mayor profundidad exegética</p>
+              <p className="text-blue-100 text-sm">{t('metrics.depth.label')}</p>
             </div>
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Users className="h-6 w-6" />
-                <span className="text-3xl font-bold">500+</span>
+                <span className="text-3xl font-bold">{t('metrics.pastors.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Pastores activos</p>
+              <p className="text-blue-100 text-sm">{t('metrics.pastors.label')}</p>
             </div>
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Award className="h-6 w-6" />
-                <span className="text-3xl font-bold">4.8</span>
+                <span className="text-3xl font-bold">{t('metrics.satisfaction.value')}</span>
               </div>
-              <p className="text-blue-100 text-sm">Satisfacción promedio</p>
+              <p className="text-blue-100 text-sm">{t('metrics.satisfaction.label')}</p>
             </div>
           </div>
         </div>
@@ -372,17 +390,17 @@ export function Landing() {
               style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}
             >
               <Zap className="h-4 w-4" />
-              Transforma tu preparación
+              {t('transformation.badge')}
             </div>
             <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
-              De horas de frustración a
+              {t('transformation.title.part1')}
               <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                estudio profundo y eficiente
+                {t('transformation.title.part2')}
               </span>
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              La IA no predica por ti. <strong>Te entrena para que prediques mejor.</strong> 
-              Tú haces el ejercicio espiritual, nosotros potenciamos tu capacidad.
+              {t('transformation.subtitle.main')} <strong>{t('transformation.subtitle.emphasis')}</strong> 
+              {t('transformation.subtitle.detail')}
             </p>
           </div>
 
@@ -407,26 +425,21 @@ export function Landing() {
                       <Clock className="h-6 w-6" style={{ color: '#dc2626' }} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900">Sin DosFilos</h3>
-                      <p className="text-sm text-slate-500">El camino largo</p>
+                      <h3 className="text-lg font-bold text-slate-900">{t('transformation.before.title')}</h3>
+                      <p className="text-sm text-slate-500">{t('transformation.before.subtitle')}</p>
                     </div>
                   </div>
                   <div 
                     className="px-4 py-2 rounded-full text-sm font-bold"
                     style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}
                   >
-                    8-12 horas
+                    {t('transformation.before.timeLabel')}
                   </div>
                 </div>
 
                 {/* Pain Points */}
                 <div className="space-y-4">
-                  {[
-                    { title: 'Múltiples fuentes', desc: 'Libros, comentarios, diccionarios... difíciles de coordinar' },
-                    { title: 'Sin dirección clara', desc: 'No sabes si estás profundizando lo suficiente' },
-                    { title: 'Incertidumbre exegética', desc: '¿Estaré interpretando bien el texto original?' },
-                    { title: 'Acceso limitado', desc: 'Hebreo y griego requieren años de estudio' }
-                  ].map((item, i) => (
+                  {(t('transformation.before.points', { returnObjects: true }) as Array<{title: string, description: string}>).map((item, i) => (
                     <div 
                       key={i} 
                       className="flex items-start gap-4 p-4 rounded-xl transition-all hover:scale-[1.02]"
@@ -440,7 +453,7 @@ export function Landing() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{item.title}</p>
-                        <p className="text-sm text-slate-600">{item.desc}</p>
+                        <p className="text-sm text-slate-600">{item.description}</p>
                       </div>
                     </div>
                   ))}
@@ -467,26 +480,21 @@ export function Landing() {
                       <Zap className="h-6 w-6" style={{ color: '#16a34a' }} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900">Con DosFilos</h3>
-                      <p className="text-sm text-slate-500">Tu entrenador experto</p>
+                      <h3 className="text-lg font-bold text-slate-900">{t('transformation.after.title')}</h3>
+                      <p className="text-sm text-slate-500">{t('transformation.after.subtitle')}</p>
                     </div>
                   </div>
                   <div 
                     className="px-4 py-2 rounded-full text-sm font-bold"
                     style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
                   >
-                    3-5 horas
+                    {t('transformation.after.timeLabel')}
                   </div>
                 </div>
 
                 {/* Benefits */}
                 <div className="space-y-4">
-                  {[
-                    { title: 'Marco hermenéutico claro', desc: 'Te guía paso a paso con metodología probada' },
-                    { title: 'Tu entrenador personal', desc: 'Asistente experto que te acompaña en cada estudio' },
-                    { title: 'Confianza teológica', desc: 'Sabe que tu interpretación está bien fundamentada' },
-                    { title: 'Idiomas originales accesibles', desc: 'Hebreo y griego explicados, no solo mostrados' }
-                  ].map((item, i) => (
+                  {(t('transformation.after.points', { returnObjects: true }) as Array<{title: string, description: string}>).map((item, i) => (
                     <div 
                       key={i} 
                       className="flex items-start gap-4 p-4 rounded-xl transition-all hover:scale-[1.02]"
@@ -500,7 +508,7 @@ export function Landing() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{item.title}</p>
-                        <p className="text-sm text-slate-600">{item.desc}</p>
+                        <p className="text-sm text-slate-600">{item.description}</p>
                       </div>
                     </div>
                   ))}
@@ -528,12 +536,10 @@ export function Landing() {
                   </div>
                   <div className="text-center md:text-left">
                     <h3 className="text-2xl font-bold text-slate-900 mb-3">
-                      🏋️ Piénsalo como tener un entrenador personal
+                      {t('transformation.analogy.emoji')} {t('transformation.analogy.title')}
                     </h3>
                     <p className="text-lg text-slate-700 leading-relaxed">
-                      Un entrenador no hace las pesas por ti. <strong className="text-amber-700">Te guía, corrige tu forma, 
-                      sugiere ejercicios y te empuja a dar más.</strong> DosFilos es tu entrenador exegético: 
-                      tú haces el trabajo espiritual, nosotros potenciamos tu capacidad de estudio.
+                      {t('transformation.analogy.description')} <strong className="text-amber-700">{t('transformation.analogy.emphasis')}</strong> {t('transformation.analogy.conclusion')}
                     </p>
                   </div>
                 </div>
@@ -548,11 +554,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">
-              No es ChatGPT. Es tu Mentor Teológico.
+              {t('notChatGPT.title')}
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Las IAs genéricas no entienden de hermenéutica, tradiciones teológicas ni del peso 
-              de predicar la Palabra. DosFilos fue diseñado <strong>por pastores, para pastores</strong>.
+              {t('notChatGPT.subtitle')} <strong>{t('notChatGPT.emphasis')}</strong>
             </p>
           </div>
 
@@ -566,17 +571,10 @@ export function Landing() {
                 <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)' }}>
                   <Bot className="h-6 w-6" style={{ color: '#ef4444' }} />
                 </div>
-                <h3 className="text-xl font-bold">IAs Genéricas</h3>
+                <h3 className="text-xl font-bold">{t('notChatGPT.generic.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Respuestas genéricas sin supervisión teológica',
-                  'No distingue entre tradiciones interpretativas',
-                  'Puede inventar citas o referencias',
-                  'Sin metodología hermenéutica clara',
-                  'Trata la Biblia como cualquier otro libro',
-                  'No entiende el peso de la predicación'
-                ].map((item, i) => (
+                {(t('notChatGPT.generic.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <X className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#ef4444' }} />
                     <span className="text-slate-300">{item}</span>
@@ -594,17 +592,10 @@ export function Landing() {
                 <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
                   <GraduationCap className="h-6 w-6" style={{ color: '#22c55e' }} />
                 </div>
-                <h3 className="text-xl font-bold">DosFilos.Preach</h3>
+                <h3 className="text-xl font-bold">{t('notChatGPT.dosfilos.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Especializado en hermenéutica bíblica',
-                  'Configurable a tu tradición teológica',
-                  'Fuentes académicas verificadas',
-                  'Metodología histórico-literal-gramatical',
-                  'Respeta la autoridad de las Escrituras',
-                  'Diseñado para predicación fiel'
-                ].map((item, i) => (
+                {(t('notChatGPT.dosfilos.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <Check className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#22c55e' }} />
                     <span className="text-slate-300">{item}</span>
@@ -621,12 +612,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              No es Solo una Biblioteca Digital
+              {t('notLibrary.title')}
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Logos, e-Sword y otros tienen miles de libros. Pero <strong>¿quién tiene tiempo 
-              para navegar todo eso?</strong> DosFilos tiene la capacidad de procesar el equivalente 
-              a 1,000+ páginas de contexto para darte lo que necesitas, cuando lo necesitas.
+              {t('notLibrary.subtitle')} <strong>{t('notLibrary.question')}</strong> {t('notLibrary.capability')}
             </p>
           </div>
 
@@ -637,16 +626,10 @@ export function Landing() {
                 <div className="p-3 rounded-xl" style={{ backgroundColor: '#fee2e2' }}>
                   <Library className="h-8 w-8" style={{ color: '#dc2626' }} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">Bibliotecas Tradicionales</h3>
+                <h3 className="text-2xl font-bold text-slate-900">{t('notLibrary.traditional.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Miles de libros imposibles de revisar en paralelo',
-                  'Tú haces todo el trabajo de búsqueda',
-                  'Sin guía sobre qué es relevante para tu pasaje',
-                  'Horas perdidas navegando índices',
-                  'Información fragmentada en múltiples fuentes'
-                ].map((item, i) => (
+                {(t('notLibrary.traditional.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
                     <X className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#dc2626' }} />
                     <span className="text-slate-700">{item}</span>
@@ -661,16 +644,10 @@ export function Landing() {
                 <div className="p-3 rounded-xl" style={{ backgroundColor: '#dbeafe' }}>
                   <Brain className="h-8 w-8" style={{ color: '#2563eb' }} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">Asistente Experto</h3>
+                <h3 className="text-2xl font-bold text-slate-900">{t('notLibrary.assistant.title')}</h3>
               </div>
               <ul className="space-y-4">
-                {[
-                  'Contexto de 1,000+ páginas procesadas instantáneamente',
-                  'Te guía paso a paso hacia lo relevante',
-                  'Encuentra conexiones que tomarían horas descubrir',
-                  'Síntesis inteligente de múltiples comentarios',
-                  'Como tener un teólogo asistente 24/7'
-                ].map((item, i) => (
+                {(t('notLibrary.assistant.points', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: '#eff6ff' }}>
                     <Check className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: '#2563eb' }} />
                     <span className="text-slate-700">{item}</span>
@@ -700,20 +677,19 @@ export function Landing() {
                 style={{ backgroundColor: '#ede9fe', color: '#7c3aed' }}
               >
                 <Languages className="h-4 w-4" />
-                Más que morfología estática
+                {t('grammarProfessor.badge')}
               </div>
               
               <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 leading-tight">
-                Tu profesor de gramática
+                {t('grammarProfessor.title.part1')}
                 <span className="block bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  sentado junto a ti
+                  {t('grammarProfessor.title.part2')}
                 </span>
               </h2>
               
               <p className="text-xl text-slate-600 leading-relaxed">
-                Hay herramientas que te muestran que χάρις es un sustantivo femenino singular. 
-                <strong className="text-slate-900"> DosFilos te explica por qué importa</strong>, cómo funciona 
-                en la oración, y qué implica para tu predicación.
+                {t('grammarProfessor.subtitle')}
+                <strong className="text-slate-900"> {t('grammarProfessor.emphasis')}</strong>{t('grammarProfessor.detail')}
               </p>
 
               {/* Comparison Points */}
@@ -727,9 +703,9 @@ export function Landing() {
                       <Library className="h-6 w-6" style={{ color: '#dc2626' }} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 mb-1">Herramientas tradicionales (Logos, e-Sword)</h4>
+                      <h4 className="font-bold text-slate-900 mb-1">{t('grammarProfessor.traditional.title')}</h4>
                       <p className="text-slate-600">
-                        "Este verbo es un <strong>aoristo participio pasivo</strong>" — y tu debes averiguar qué significa eso.
+                        {t('grammarProfessor.traditional.description')} <strong>{t('grammarProfessor.traditional.emphasis')}</strong> {t('grammarProfessor.traditional.continuation')}
                       </p>
                     </div>
                   </div>
@@ -744,11 +720,9 @@ export function Landing() {
                       <GraduationCap className="h-6 w-6" style={{ color: '#16a34a' }} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 mb-1">DosFilos.Preach</h4>
+                      <h4 className="font-bold text-slate-900 mb-1">{t('grammarProfessor.dosfilos.title')}</h4>
                       <p className="text-slate-600">
-                        "Este <strong>aoristo participio pasivo</strong> indica una acción completada recibida por el sujeto. 
-                        En Efesios 2:8, Pablo usa esta forma para enfatizar que la salvación es algo que hemos <em>recibido</em>, 
-                        no logrado. Aquí tienes tres formas de explicar esto a tu congregación..."
+                        {t('grammarProfessor.dosfilos.description')} <strong>{t('grammarProfessor.dosfilos.emphasis')}</strong> {t('grammarProfessor.dosfilos.explanation')} <em>{t('grammarProfessor.dosfilos.italicEmphasis')}</em>{t('grammarProfessor.dosfilos.conclusion')}
                       </p>
                     </div>
                   </div>
@@ -771,15 +745,15 @@ export function Landing() {
                       <Languages className="h-6 w-6" style={{ color: '#7c3aed' }} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900">Análisis de Efesios 2:8</h3>
-                      <p className="text-sm text-slate-500">Tu profesor de gramática explica:</p>
+                      <h3 className="font-bold text-slate-900">{t('grammarProfessor.demo.title')}</h3>
+                      <p className="text-sm text-slate-500">{t('grammarProfessor.demo.subtitle')}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8fafc' }}>
-                      <p className="text-lg font-bold text-purple-700 mb-2">τῇ γὰρ χάριτί ἐστε <span className="text-indigo-600">σεσῳσμένοι</span></p>
-                      <p className="text-sm text-slate-600">"Porque por gracia sois <strong>salvos</strong>"</p>
+                      <p className="text-lg font-bold text-purple-700 mb-2">{t('grammarProfessor.demo.verse.greek')} <span className="text-indigo-600">{t('grammarProfessor.demo.verse.highlight')}</span></p>
+                      <p className="text-sm text-slate-600">{t('grammarProfessor.demo.verse.translation')}</p>
                     </div>
 
                     <div className="space-y-3">
@@ -788,8 +762,8 @@ export function Landing() {
                           <Check className="h-4 w-4" style={{ color: '#7c3aed' }} />
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900">σεσῳσμένοι = Participio Perfecto Pasivo</p>
-                          <p className="text-sm text-slate-600">Indica una acción completada en el pasado con resultados que continúan</p>
+                          <p className="font-semibold text-slate-900">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[0]?.title}</p>
+                          <p className="text-sm text-slate-600">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[0]?.description}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -797,8 +771,8 @@ export function Landing() {
                           <Check className="h-4 w-4" style={{ color: '#7c3aed' }} />
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900">La voz pasiva es teológicamente significativa</p>
-                          <p className="text-sm text-slate-600">Dios es el agente de la salvación, no nosotros</p>
+                          <p className="font-semibold text-slate-900">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[1]?.title}</p>
+                          <p className="text-sm text-slate-600">{(t('grammarProfessor.demo.points', { returnObjects: true }) as Array<{title: string, description: string}>)?.[1]?.description}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -849,61 +823,49 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Tus Asistentes Expertos
+              {t('features.title')}
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Trabaja con asistentes especializados en cada área del estudio bíblico. 
-              Cada uno diseñado para potenciar tu preparación.
+              {t('features.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Languages,
-                title: 'Experto en Idiomas Originales',
-                description: 'Análisis profundo de hebreo y griego bíblicos. Morfología, sintaxis y significado teológico de las palabras clave.',
-                features: ['Hebreo bíblico', 'Griego koiné', 'Análisis morfológico', 'Campos semánticos'],
-                color: '#8b5cf6'
-              },
-              {
-                icon: BookMarked,
-                title: 'Experto en Hermenéutica',
-                description: 'Guía en la interpretación histórico-literal-gramatical. Contexto, estructura y significado original del texto.',
-                features: ['Contexto histórico', 'Análisis gramatical', 'Estructura literaria', 'Teología bíblica'],
-                color: '#2563eb'
-              },
-              {
-                icon: Mic,
-                title: 'Experto en Homilética',
-                description: 'Ayuda a estructurar tu sermón de manera clara y fiel al texto. Aplicaciones prácticas y relevantes.',
-                features: ['Estructura expositiva', 'Aplicaciones contextuales', 'Ilustraciones', 'Transiciones'],
-                color: '#16a34a'
-              }
-            ].map((feature, i) => (
-              <Card 
-                key={i} 
-                className="p-8 hover:shadow-xl transition-all duration-300 border-2 bg-white hover:-translate-y-1"
-                style={{ borderColor: '#e2e8f0' }}
-              >
-                <div 
-                  className="p-4 rounded-xl w-fit mb-6"
-                  style={{ backgroundColor: `${feature.color}15` }}
-                >
-                  <feature.icon className="h-8 w-8" style={{ color: feature.color }} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                <p className="text-slate-600 mb-6 leading-relaxed">{feature.description}</p>
-                <ul className="space-y-2">
-                  {feature.features.map((item, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm text-slate-700">
-                      <Check className="h-4 w-4 flex-shrink-0" style={{ color: feature.color }} />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
+            {(() => {
+              const experts = t('features.experts', { returnObjects: true }) as Array<{title: string, description: string, features: string[]}>;
+              const icons = [Languages, BookMarked, Mic];
+              const colors = ['#8b5cf6', '#2563eb', '#16a34a'];
+              
+              return experts.map((expert, i) => {
+                const Icon = icons[i]!;
+                const color = colors[i];
+                
+                return (
+                  <Card 
+                    key={i} 
+                    className="p-8 hover:shadow-xl transition-all duration-300 border-2 bg-white hover:-translate-y-1"
+                    style={{ borderColor: '#e2e8f0' }}
+                  >
+                    <div 
+                      className="p-4 rounded-xl w-fit mb-6"
+                      style={{ backgroundColor: `${color}15` }}
+                    >
+                      <Icon className="h-8 w-8" style={{ color }} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">{expert.title}</h3>
+                    <p className="text-slate-600 mb-6 leading-relaxed">{expert.description}</p>
+                    <ul className="space-y-2">
+                      {expert.features.map((item, j) => (
+                        <li key={j} className="flex items-center gap-2 text-sm text-slate-700">
+                          <Check className="h-4 w-4 flex-shrink-0" style={{ color }} />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                );
+              });
+            })()}
           </div>
         </div>
       </section>
@@ -913,73 +875,48 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Tu Flujo de Preparación
+              {t('howItWorks.title')}
             </h2>
             <p className="text-xl text-slate-600">
-              Desde el texto hasta el púlpito, guiado en cada paso
+              {t('howItWorks.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-5 gap-6">
-            {[
-              {
-                step: '1',
-                icon: BookOpen,
-                title: 'Exégesis Profunda',
-                description: 'Análisis del texto en idiomas originales con contexto histórico-cultural',
-                color: '#8b5cf6'
-              },
-              {
-                step: '2',
-                icon: Target,
-                title: 'Enfoques Homiléticos',
-                description: 'Múltiples perspectivas para predicar el pasaje de manera fiel',
-                color: '#2563eb'
-              },
-              {
-                step: '3',
-                icon: MessageCircle,
-                title: 'Asistentes Expertos',
-                description: 'Griego, hebreo, homilética y predicación expositiva a tu servicio',
-                color: '#16a34a'
-              },
-              {
-                step: '4',
-                icon: Brain,
-                title: 'Canvas + Chat',
-                description: 'Refina ideas, profundiza conceptos con tu editor inteligente',
-                color: '#f59e0b'
-              },
-              {
-                step: '5',
-                icon: Share2,
-                title: 'Predica y Comparte',
-                description: 'Modo predicación, exporta y comparte con tu congregación',
-                color: '#ec4899'
-              }
-            ].map((step, i) => (
-              <div key={i} className="relative">
-                <div className="text-center">
-                  <div 
-                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 relative"
-                    style={{ backgroundColor: `${step.color}15` }}
-                  >
-                    <step.icon className="h-7 w-7" style={{ color: step.color }} />
-                    <div 
-                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                      style={{ backgroundColor: step.color }}
-                    >
-                      {step.step}
+            {(() => {
+              const steps = t('howItWorks.steps', { returnObjects: true }) as Array<{number: string, title: string, description: string}>;
+              const icons = [BookOpen, Target, MessageCircle, Brain, Share2];
+              const colors = ['#8b5cf6', '#2563eb', '#16a34a', '#f59e0b', '#ec4899'];
+              
+              return steps.map((step, i) => {
+                const Icon = icons[i]!;
+                const color = colors[i];
+                
+                return (
+                  <div key={i} className="relative">
+                    <div className="text-center">
+                      <div 
+                        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 relative"
+                        style={{ backgroundColor: `${color}15` }}
+                      >
+                        <Icon className="h-7 w-7" style={{ color }} />
+                        <div 
+                          className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          {step.number}
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 mb-2">{step.title}</h3>
+                      <p className="text-sm text-slate-600">{step.description}</p>
                     </div>
+                    {i < 4 && (
+                      <ChevronRight className="hidden md:block absolute top-8 -right-3 h-6 w-6 text-slate-300" />
+                    )}
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">{step.title}</h3>
-                  <p className="text-sm text-slate-600">{step.description}</p>
-                </div>
-                {i < 4 && (
-                  <ChevronRight className="hidden md:block absolute top-8 -right-3 h-6 w-6 text-slate-300" />
-                )}
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
         </div>
       </section>
@@ -1040,43 +977,27 @@ export function Landing() {
       <section className="py-20 bg-slate-50">
         <div className="max-w-5xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-slate-900 text-center mb-12">
-            ¿Por qué DosFilos.Preach?
+            {t('comparisonTable.title')}
           </h2>
           
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border" style={{ borderColor: '#e2e8f0' }}>
             <table className="w-full">
               <thead style={{ backgroundColor: '#1e293b' }}>
                 <tr>
-                  <th className="p-6 text-left text-white">Característica</th>
-                  <th className="p-6 text-center text-white">IAs Genéricas</th>
-                  <th className="p-6 text-center text-white" style={{ backgroundColor: '#2563eb' }}>DosFilos.Preach</th>
+                  <th className="p-6 text-left text-white">{t('comparisonTable.headers.feature')}</th>
+                  <th className="p-6 text-center text-white">{t('comparisonTable.headers.genericAI')}</th>
+                  <th className="p-6 text-center text-white" style={{ backgroundColor: '#2563eb' }}>{t('comparisonTable.headers.dosfilos')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {[
-                  ['Entrenador exegético especializado', false, true],
-                  ['Respeta tu tradición teológica', false, true],
-                  ['Metodología hermenéutica clara', false, true],
-                  ['Contexto de 1000+ páginas', false, true],
-                  ['Asistentes expertos por área', false, true],
-                  ['Canvas + Chat para refinamiento', false, true],
-                  ['Modo predicación integrado', false, true]
-                ].map(([feature, generic, dosfilos], i) => (
+                {(t('comparisonTable.features', { returnObjects: true }) as string[]).map((feature, i) => (
                   <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-6 font-medium text-slate-900">{feature as string}</td>
+                    <td className="p-6 font-medium text-slate-900">{feature}</td>
                     <td className="p-6 text-center">
-                      {generic ? (
-                        <Check className="h-6 w-6 mx-auto" style={{ color: '#16a34a' }} />
-                      ) : (
-                        <X className="h-6 w-6 mx-auto" style={{ color: '#ef4444' }} />
-                      )}
+                      <X className="h-6 w-6 mx-auto" style={{ color: '#ef4444' }} />
                     </td>
                     <td className="p-6 text-center" style={{ backgroundColor: '#eff6ff' }}>
-                      {dosfilos ? (
-                        <Check className="h-6 w-6 mx-auto" style={{ color: '#16a34a' }} />
-                      ) : (
-                        <X className="h-6 w-6 mx-auto" style={{ color: '#ef4444' }} />
-                      )}
+                      <Check className="h-6 w-6 mx-auto" style={{ color: '#16a34a' }} />
                     </td>
                   </tr>
                 ))}
@@ -1091,103 +1012,79 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Precios Transparentes
+              {t('pricing.title')}
             </h2>
             <p className="text-xl text-slate-600">
-              Comienza gratis, actualiza cuando estés listo
+              {t('pricing.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {[
-              {
-                name: 'Gratis',
-                price: '$0',
-                period: 'para siempre',
-                features: [
-                  '3 sermones por mes',
-                  'Funciones básicas',
-                  'Análisis de texto',
-                  'Soporte por email'
-                ],
-                cta: 'Comenzar Gratis',
-                popular: false
-              },
-              {
-                name: 'Pro',
-                price: '$14',
-                period: 'por mes',
-                features: [
-                  'Sermones ilimitados',
-                  'Planes de predicación',
-                  'Biblioteca de recursos',
-                  'Análisis avanzado',
-                  'Exportar a Word/PDF',
-                  'Soporte prioritario'
-                ],
-                cta: 'Probar 14 días gratis',
-                popular: true
-              },
-              {
-                name: 'Iglesias',
-                price: '$49',
-                period: 'por mes',
-                features: [
-                  'Hasta 5 pastores',
-                  'Todo lo de Pro',
-                  'Recursos compartidos',
-                  'Capacitación incluida',
-                  'Gestor de cuenta dedicado',
-                  'Facturación anual'
-                ],
-                cta: 'Contactar Ventas',
-                popular: false
-              }
-            ].map((plan, i) => (
-              <Card 
-                key={i} 
-                className={`p-8 relative ${plan.popular ? 'border-2 shadow-2xl scale-105' : 'border-2'}`}
-                style={{ 
-                  borderColor: plan.popular ? '#2563eb' : '#e2e8f0',
-                  backgroundColor: 'white'
-                }}
-              >
-                {plan.popular && (
-                  <div 
-                    className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-semibold text-white"
-                    style={{ backgroundColor: '#2563eb' }}
+            {(() => {
+              const plans = [
+                { key: 'free' as const, popular: false },
+                { key: 'pro' as const, popular: true },
+                { key: 'team' as const, popular: false }
+              ];
+              
+              return plans.map(({ key, popular }, i) => {
+                const plan = t(`pricing.plans.${key}`, { returnObjects: true }) as {
+                  name: string;
+                  price: string;
+                  period: string;
+                  description?: string;
+                  popular?: string;
+                  features: string[];
+                  cta: string;
+                };
+                
+                return (
+                  <Card 
+                    key={i} 
+                    className={`p-8 relative ${popular ? 'border-2 shadow-2xl scale-105' : 'border-2'}`}
+                    style={{ 
+                      borderColor: popular ? '#2563eb' : '#e2e8f0',
+                      backgroundColor: 'white'
+                    }}
                   >
-                    Más Popular
-                  </div>
-                )}
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
-                    <span className="text-slate-600">/{plan.period}</span>
-                  </div>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-start gap-3">
-                      <Check className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#16a34a' }} />
-                      <span className="text-slate-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  className="w-full"
-                  size="lg"
-                  style={{ 
-                    backgroundColor: plan.popular ? '#2563eb' : '#1e293b',
-                    color: 'white'
-                  }}
-                >
-                  {plan.cta}
-                </Button>
-              </Card>
-            ))}
-          </div>
+                    {popular && (
+                      <div 
+                        className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-semibold text-white"
+                        style={{ backgroundColor: '#2563eb' }}
+                      >
+                        {plan.popular || t('pricing.plans.pro.popular')}
+                      </div>
+                    )}
+                    <div className="text-center mb-8">
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
+                        <span className="text-slate-600">/{plan.period}</span>
+                      </div>
+                    </div>
+                    <ul className="space-y-4 mb-8">
+                      {plan.features.map((feature, j) => (
+                        <li key={j} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#16a34a' }} />
+                          <span className="text-slate-700">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                      <Button 
+                        className="w-full"
+                        size="lg"
+                        style={{ 
+                          backgroundColor: popular ? '#2563eb' : '#1e293b',
+                          color: 'white'
+                        }}
+                      >
+                        {plan.cta}
+                      </Button>
+                    </Card>
+                  );
+                });
+              })()}
+            </div>
 
           {/* Scholarship CTA */}
           <div 
@@ -1203,11 +1100,10 @@ export function Landing() {
               </div>
             </div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">
-              💛 ¿Por ahora no puedes pagar?
+              {t('pricing.scholarship.title')}
             </h3>
             <p className="text-slate-700 mb-6">
-              Hablemos. Nuestro deseo es <strong>servir a la Iglesia de Cristo</strong>, 
-              no crear barreras. Tenemos opciones para ti.
+              {t('pricing.scholarship.description')}
             </p>
             <Button 
               size="lg"
@@ -1218,7 +1114,7 @@ export function Landing() {
               }}
             >
               <MessageSquare className="mr-2 h-5 w-5" />
-              Conversemos sobre tu situación
+              {t('pricing.scholarship.cta')}
             </Button>
           </div>
         </div>
@@ -1228,32 +1124,11 @@ export function Landing() {
       <section className="py-20 bg-slate-50">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-slate-900 text-center mb-12">
-            Preguntas Frecuentes
+            {t('faq.title')}
           </h2>
           
           <div className="space-y-6">
-            {[
-              {
-                q: '¿No es trampa usar IA para predicar?',
-                a: 'No usas IA para predicar - la usas para estudiar mejor. Es como tener un entrenador personal: tú haces el ejercicio espiritual, la IA te guía y potencia tu estudio. Tú mantienes el control total del mensaje.'
-              },
-              {
-                q: '¿Perderé mi voz única como predicador?',
-                a: 'Al contrario. Al ahorrar tiempo en investigación básica, tienes más tiempo para oración y reflexión personal. DosFilos sugiere, pero tú decides y personalizas cada aspecto del sermón.'
-              },
-              {
-                q: '¿Qué pasa con mi teología específica?',
-                a: 'Tú configuras tu tradición interpretativa (reformada, wesleyana, pentecostal, etc.). DosFilos respeta tu marco teológico y sugiere contenido alineado con tus convicciones.'
-              },
-              {
-                q: '¿Puedo cancelar en cualquier momento?',
-                a: 'Sí, sin preguntas. Cancela cuando quieras y mantén acceso hasta el final de tu período de facturación.'
-              },
-              {
-                q: '¿Mis sermones son privados?',
-                a: 'Absolutamente. Tus sermones son 100% privados y nunca se comparten. Cumplimos con todas las regulaciones de privacidad de datos.'
-              }
-            ].map((faq, i) => (
+            {(t('faq.questions', { returnObjects: true }) as Array<{q: string, a: string}>).map((faq, i) => (
               <Card key={i} className="p-6 border-2" style={{ borderColor: '#e2e8f0', backgroundColor: 'white' }}>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">{faq.q}</h3>
                 <p className="text-slate-600 leading-relaxed">{faq.a}</p>
@@ -1270,10 +1145,10 @@ export function Landing() {
       >
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            Tu próximo sermón puede ser tu mejor sermón
+            {t('finalCta.title')}
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Únete a 500+ pastores que estudian más profundo. Comienza gratis hoy.
+            {t('finalCta.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">
@@ -1286,7 +1161,7 @@ export function Landing() {
                   boxShadow: '0 0 30px rgba(255, 255, 255, 0.3)'
                 }}
               >
-                Comenzar Gratis - Sin Tarjeta
+                {t('finalCta.cta')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -1319,36 +1194,36 @@ export function Landing() {
                 <span className="text-white font-bold">DosFilos.Preach</span>
               </div>
               <p className="text-sm">
-                Tu entrenador exegético personal. Diseñado por pastores, para pastores.
+                {t('footer.tagline')}
               </p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Producto</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.product.title')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Características</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Precios</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Roadmap</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">{t('footer.product.features')}</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">{t('footer.product.pricing')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.product.howItWorks')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Recursos</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.resources.title')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Tutoriales</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Soporte</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.resources.blog')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.resources.documentation')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.resources.support')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.company.title')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Privacidad</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Términos</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookies</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.company.about')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.company.contact')}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t('footer.company.privacy')}</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-slate-800 pt-8 text-center text-sm">
-            <p>&copy; 2025 DosFilos.Preach. Todos los derechos reservados.</p>
+            <p>&copy; 2025 DosFilos.Preach. {t('footer.rights')}</p>
           </div>
         </div>
       </footer>
