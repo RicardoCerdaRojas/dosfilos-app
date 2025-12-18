@@ -883,65 +883,40 @@ export function Landing() {
           </div>
 
           <div className="grid md:grid-cols-5 gap-6">
-            {[
-              {
-                step: '1',
-                icon: BookOpen,
-                title: 'Exégesis Profunda',
-                description: 'Análisis del texto en idiomas originales con contexto histórico-cultural',
-                color: '#8b5cf6'
-              },
-              {
-                step: '2',
-                icon: Target,
-                title: 'Enfoques Homiléticos',
-                description: 'Múltiples perspectivas para predicar el pasaje de manera fiel',
-                color: '#2563eb'
-              },
-              {
-                step: '3',
-                icon: MessageCircle,
-                title: 'Asistentes Expertos',
-                description: 'Griego, hebreo, homilética y predicación expositiva a tu servicio',
-                color: '#16a34a'
-              },
-              {
-                step: '4',
-                icon: Brain,
-                title: 'Canvas + Chat',
-                description: 'Refina ideas, profundiza conceptos con tu editor inteligente',
-                color: '#f59e0b'
-              },
-              {
-                step: '5',
-                icon: Share2,
-                title: 'Predica y Comparte',
-                description: 'Modo predicación, exporta y comparte con tu congregación',
-                color: '#ec4899'
-              }
-            ].map((step, i) => (
-              <div key={i} className="relative">
-                <div className="text-center">
-                  <div 
-                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 relative"
-                    style={{ backgroundColor: `${step.color}15` }}
-                  >
-                    <step.icon className="h-7 w-7" style={{ color: step.color }} />
-                    <div 
-                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                      style={{ backgroundColor: step.color }}
-                    >
-                      {step.step}
+            {(() => {
+              const steps = t('howItWorks.steps', { returnObjects: true }) as Array<{number: string, title: string, description: string}>;
+              const icons = [BookOpen, Target, MessageCircle, Brain, Share2];
+              const colors = ['#8b5cf6', '#2563eb', '#16a34a', '#f59e0b', '#ec4899'];
+              
+              return steps.map((step, i) => {
+                const Icon = icons[i]!;
+                const color = colors[i];
+                
+                return (
+                  <div key={i} className="relative">
+                    <div className="text-center">
+                      <div 
+                        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 relative"
+                        style={{ backgroundColor: `${color}15` }}
+                      >
+                        <Icon className="h-7 w-7" style={{ color }} />
+                        <div 
+                          className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          {step.number}
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 mb-2">{step.title}</h3>
+                      <p className="text-sm text-slate-600">{step.description}</p>
                     </div>
+                    {i < 4 && (
+                      <ChevronRight className="hidden md:block absolute top-8 -right-3 h-6 w-6 text-slate-300" />
+                    )}
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">{step.title}</h3>
-                  <p className="text-sm text-slate-600">{step.description}</p>
-                </div>
-                {i < 4 && (
-                  <ChevronRight className="hidden md:block absolute top-8 -right-3 h-6 w-6 text-slate-300" />
-                )}
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
         </div>
       </section>

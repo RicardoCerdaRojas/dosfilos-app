@@ -253,7 +253,34 @@
     },
     "howItWorks": {
         "title": "Your Preparation Workflow",
-        "subtitle": "From text to pulpit, guided at every step"
+        "subtitle": "From text to pulpit, guided at every step",
+        "steps": [
+            {
+                "number": "1",
+                "title": "Deep Exegesis",
+                "description": "Text analysis in original languages with historical-cultural context"
+            },
+            {
+                "number": "2",
+                "title": "Homiletical Approaches",
+                "description": "Multiple perspectives to preach the passage faithfully"
+            },
+            {
+                "number": "3",
+                "title": "Expert Assistants",
+                "description": "Greek, Hebrew, homiletics and expository preaching at your service"
+            },
+            {
+                "number": "4",
+                "title": "Canvas + Chat",
+                "description": "Refine ideas, deepen concepts with your intelligent editor"
+            },
+            {
+                "number": "5",
+                "title": "Preach and Share",
+                "description": "Preaching mode, export and share with your congregation"
+            }
+        ]
     },
     "pricing": {
         "title": "Choose Your Plan",

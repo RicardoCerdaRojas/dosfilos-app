@@ -253,7 +253,34 @@
     },
     "howItWorks": {
         "title": "Tu Flujo de Preparación",
-        "subtitle": "Desde el texto hasta el púlpito, guiado en cada paso"
+        "subtitle": "Desde el texto hasta el púlpito, guiado en cada paso",
+        "steps": [
+            {
+                "number": "1",
+                "title": "Exégesis Profunda",
+                "description": "Análisis del texto en idiomas originales con contexto histórico-cultural"
+            },
+            {
+                "number": "2",
+                "title": "Enfoques Homiléticos",
+                "description": "Múltiples perspectivas para predicar el pasaje de manera fiel"
+            },
+            {
+                "number": "3",
+                "title": "Asistentes Expertos",
+                "description": "Griego, hebreo, homilética y predicación expositiva a tu servicio"
+            },
+            {
+                "number": "4",
+                "title": "Canvas + Chat",
+                "description": "Refina ideas, profundiza conceptos con tu editor inteligente"
+            },
+            {
+                "number": "5",
+                "title": "Predica y Comparte",
+                "description": "Modo predicación, exporta y comparte con tu congregación"
+            }
+        ]
     },
     "pricing": {
         "title": "Elige tu Plan",
