@@ -1,0 +1,29 @@
+{
+    "header": {
+        "title": "My Subscription",
+        "subtitle": "Manage your plan and access all premium features"
+    },
+    "currentPlan": {
+        "title": "Current Plan",
+        "renewalDate": "Renewal",
+        "accessUntil": "🎁 You keep access until",
+        "notActive": "Your subscription is not active",
+        "cancelButton": "Cancel Subscription",
+        "reactivateButton": "Reactivate Subscription",
+        "badges": {
+            "cancelled": "Cancelled",
+            "current": "✓ Current",
+            "popular": "Most Popular"
+        }
+    },
+    "plans": {
+        "monthly": "/month",
+        "freePlan": "Free Plan",
+        "currentPlanButton": "Current Plan",
+        "subscribeButton": "Subscribe",
+        "changePlanButton": "Change to This Plan"
+    },
+    "errors": {
+        "checkoutError": "Error creating payment session"
+    }
+}

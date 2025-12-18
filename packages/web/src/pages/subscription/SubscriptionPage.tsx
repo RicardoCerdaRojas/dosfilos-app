@@ -13,9 +13,11 @@ import { getFeatureLabel } from '@/utils/featureLabels';
 import { CancelSubscriptionDialog } from '@/components/subscription/dialogs/CancelSubscriptionDialog';
 import { PlanChangeDialog } from '@/components/subscription/dialogs/PlanChangeDialog';
 import { ReactivateSubscriptionDialog } from '@/components/subscription/dialogs/ReactivateSubscriptionDialog';
+import { useTranslation } from '@/i18n';
 
 export default function SubscriptionPage() {
   const { user } = useFirebase();
+  const { t } = useTranslation('subscription');
   const [userProfile, setUserProfile] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +78,7 @@ export default function SubscriptionPage() {
       }
     } catch (error: any) {
       console.error('Error creating checkout:', error);
-      toast.error(error.message || 'Error al crear sesión de pago');
+      toast.error(error.message || t('errors.checkoutError'));
     } finally {
       setLoading(false);
     }
@@ -104,9 +106,9 @@ export default function SubscriptionPage() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Mi Suscripción</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('header.title')}</h1>
         <p className="text-muted-foreground">
-          Gestiona tu plan y accede a todas las funcionalidades premium
+          {t('header.subtitle')}
         </p>
       </div>
 
@@ -118,17 +120,17 @@ export default function SubscriptionPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-amber-500" />
-                  Plan Actual: {currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
+                  {t('currentPlan.title')}: {currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
                   {isSubscriptionCancelled && (
                     <Badge variant="outline" className="ml-2 text-orange-600">
-                      Cancelada
+                      {t('currentPlan.badges.cancelled')}
                     </Badge>
                   )}
                 </CardTitle>
                 <CardDescription className="mt-2">
                   {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
                     <>
-                      Renovación: {new Date(
+                      {t('currentPlan.renewalDate')}: {new Date(
                         userProfile.subscription.currentPeriodEnd.seconds 
                           ? userProfile.subscription.currentPeriodEnd.seconds * 1000 
                           : userProfile.subscription.currentPeriodEnd
@@ -136,14 +138,14 @@ export default function SubscriptionPage() {
                     </>
                   ) : isSubscriptionCancelled && userProfile.subscription.endDate ? (
                     <>
-                      🎁 Mantienes acceso hasta: {new Date(
+                      {t('currentPlan.accessUntil')}: {new Date(
                         userProfile.subscription.endDate.seconds 
                           ? userProfile.subscription.endDate.seconds * 1000 
                           : userProfile.subscription.endDate
                       ).toLocaleDateString()}
                     </>
                   ) : (
-                    'Tu suscripción no está activa'
+                    t('currentPlan.notActive')
                   )}
                 </CardDescription>
               </div>
@@ -153,7 +155,7 @@ export default function SubscriptionPage() {
                   size="sm"
                   onClick={() => setCancelDialogOpen(true)}
                 >
-                  Cancelar Suscripción
+                  {t('currentPlan.cancelButton')}
                 </Button>
               )}
               {isSubscriptionCancelled && (
@@ -162,7 +164,7 @@ export default function SubscriptionPage() {
                   size="sm"
                   onClick={() => setReactivateDialogOpen(true)}
                 >
-                  Reactivar Suscripción
+                  {t('currentPlan.reactivateButton')}
                 </Button>
               )}
             </div>
@@ -190,7 +192,7 @@ export default function SubscriptionPage() {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <Badge className="bg-primary text-primary-foreground">
                     <Zap className="h-3 w-3 mr-1" />
-                    Más Popular
+                    {t('currentPlan.badges.popular')}
                   </Badge>
                 </div>
               )}
@@ -198,7 +200,7 @@ export default function SubscriptionPage() {
               {isCurrent && (
                 <div className="absolute -top-3 right-4">
                   <Badge className="bg-green-600 hover:bg-green-700">
-                    ✓ Actual
+                    {t('currentPlan.badges.current')}
                   </Badge>
                 </div>
               )}
@@ -210,7 +212,7 @@ export default function SubscriptionPage() {
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">${plan.pricing?.monthly || 0}</span>
-                  <span className="text-muted-foreground">/mes</span>
+                  <span className="text-muted-foreground">{t('plans.monthly')}</span>
                 </div>
               </CardHeader>
 
@@ -241,7 +243,7 @@ export default function SubscriptionPage() {
                     }
                   }}
                 >
-                  {isCurrent ? 'Plan Actual' : plan.id === 'free' ? 'Plan Gratuito' : isSubscriptionActive ? 'Cambiar a Este Plan' : 'Suscribirse'}
+                  {isCurrent ? t('plans.currentPlanButton') : plan.id === 'free' ? t('plans.freePlan') : isSubscriptionActive ? t('plans.changePlanButton') : t('plans.subscribeButton')}
                 </Button>
               </CardContent>
             </Card>

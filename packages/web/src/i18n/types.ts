@@ -43,4 +43,5 @@ export type TranslationNamespace =
     | 'navigation'
     | 'auth'
     | 'welcome'
-    | 'dashboard';
+    | 'dashboard'
+    | 'subscription';
