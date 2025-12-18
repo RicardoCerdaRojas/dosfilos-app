@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload } from 'lucide-react';
-import { sermonGeneratorService, sermonService, generatorChatService, libraryService } from '@dosfilos/application';
+import { sermonGeneratorService, sermonService, generatorChatService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
 import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel';
-import { RAGSourcesDisplay } from '@/components/sermon/RAGSourcesDisplay';
+
 import { useContentHistory } from '@/hooks/useContentHistory';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { useLibraryContext } from '@/context/library-context';
@@ -19,10 +19,12 @@ import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
-import { WorkflowPhase, CoachingStyle, LibraryResourceEntity } from '@dosfilos/domain';
+import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
 import { PassageQuickView } from '@/components/sermons/PassageQuickView';
+import { useTranslation } from '@/i18n';
 
 export function StepDraft() {
+    const { t } = useTranslation('generator');
     const navigate = useNavigate();
     const { user } = useFirebase();
     const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, selectedResourceIds, cacheName, setCacheName, sermonId, reset, saving } = useWizard();
@@ -36,7 +38,7 @@ export function StepDraft() {
         refreshContext: handleRefreshContext,
         handleSendMessage: sendGeneralMessage,
         libraryResources,
-        cacheName: activeCacheName
+
     } = useGeneratorChat({
         phase: 'sermon',
         content: draft,
@@ -88,7 +90,7 @@ export function StepDraft() {
         try {
             // 🎯 Use LibraryContext for sync/cache
             console.log('🔍 handleGenerate (Draft) - Ensuring library context is ready');
-            toast.loading('Preparando contexto de biblioteca...', { id: 'context-prep' });
+            toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
             await ensureReady();
             toast.dismiss('context-prep');
             
@@ -114,10 +116,12 @@ export function StepDraft() {
 
             }
             
-            toast.success('Borrador del sermón generado');
+
+            
+            toast.success(t('drafting.success.generated'));
         } catch (error: any) {
             console.error(error);
-            toast.error(error.message || 'Error al generar borrador');
+            toast.error(error.message || t('drafting.errors.generating'));
         } finally {
             setLoading(false);
         }
@@ -136,27 +140,27 @@ ${draft.body.map(point => `## ${point.point}
 ${point.content}
 ${point.illustration ? `
 <br/>
-> **Ilustración:** ${point.illustration}` : ''}`).join('\n<br/>\n')}
+> **${t('drafting.illustrationLabel')}:** ${point.illustration}` : ''}`).join('\n<br/>\n')}
 <br/>
-## Conclusión
+## ${t('drafting.conclusionLabel')}
 ${draft.conclusion}
 ${draft.callToAction ? `
 <br/>
-> **Llamado a la Acción:** ${draft.callToAction}` : ''}
+> **${t('drafting.callToActionLabel')}:** ${draft.callToAction}` : ''}
         `.trim();
     };
 
     // Save and exit - just navigate back without publishing
     const handleSaveAndExit = async () => {
         // Auto-save is already handling the save
-        toast.success('Borrador guardado');
+        toast.success(t('drafting.success.saved'));
         navigate('/dashboard');
     };
 
     // Publish as copy - creates a published version without losing the draft
     const handlePublish = async () => {
         if (!draft || !user || !exegesis || !sermonId) {
-            toast.error('No hay borrador para publicar');
+            toast.error(t('drafting.errors.noDraft'));
             return;
         }
 
@@ -174,12 +178,12 @@ ${draft.callToAction ? `
             // Then publish as copy
             const publishedSermon = await sermonService.publishSermonAsCopy(sermonId);
 
-            toast.success('Sermón publicado exitosamente');
+            toast.success(t('drafting.success.published'));
             reset(); // Clear wizard state
             navigate(`/dashboard/sermons/${publishedSermon.id}`);
         } catch (error: any) {
             console.error(error);
-            toast.error('Error al publicar el sermón');
+            toast.error(t('drafting.errors.publishing'));
         } finally {
             setPublishing(false);
         }
@@ -229,7 +233,7 @@ ${draft.callToAction ? `
                     const refusalMessage = {
                         id: (Date.now() + 1).toString(),
                         role: 'assistant' as const,
-                        content: validation.refusalMessage || "Entiendo tu mensaje, pero mi enfoque está en ayudarte a redactar el sermón. ¿Podrías reformular tu solicitud?",
+                        content: validation.refusalMessage || t('drafting.errors.refine'),
                         timestamp: new Date()
                     };
                     setMessages(prev => [...prev, refusalMessage]);
@@ -404,8 +408,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         if (!Array.isArray(parsedContent)) throw new Error('Expected array');
                     } catch (parseError) {
                         console.error('Failed to parse array response:', parseError);
-                        toast.error('Error al parsear la respuesta de la IA');
-                        throw new Error('La IA no devolvió un array válido');
+                        toast.error(t('exegesis.errors.parseError'));
+                        throw new Error(t('exegesis.errors.invalidArray'));
                     }
                 } else if (typeof currentContent === 'object' || sectionConfig.type === 'object') {
                     try {
@@ -453,17 +457,17 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     id: (Date.now() + 1).toString(),
                     role: 'assistant' as const,
                     content: refinementSources.length > 0 
-                        ? `✅ Sección "${sectionConfig.label}" refinada usando ${refinementSources.length} fuente(s) de biblioteca.`
-                        : `✅ Sección "${sectionConfig.label}" refinada exitosamente.`,
+                        ? `✅ ${t('drafting.success.refinedSectionWithSources', { section: `"${sectionConfig.label}"`, count: refinementSources.length })}`
+                        : `✅ ${t('drafting.success.refinedSection', { section: `"${sectionConfig.label}"` })}`,
                     timestamp: new Date(),
                     sources: refinementSources.length > 0 ? refinementSources : undefined
                 };
                 setMessages(prev => [...prev, aiMessage]);
-                toast.success('Sección refinada exitosamente');
+                toast.success(t('drafting.success.refined'));
 
             } catch (error: any) {
                 console.error('Error refining section:', error);
-                toast.error(error.message || 'Error al refinar la sección');
+                toast.error(error.message || t('drafting.errors.refining'));
                 
                 const errorMessage = {
                     id: (Date.now() + 1).toString(),
@@ -529,11 +533,11 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     'Cambios guardados manualmente'
                 );
 
-                toast.success('Sección actualizada');
+                toast.success(t('drafting.success.updated'));
             }
         } catch (error) {
             console.error('Error updating section:', error);
-            toast.error('Error al actualizar la sección');
+            toast.error(t('drafting.errors.updating'));
         }
     };
 
@@ -549,7 +553,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedDraft = JSON.parse(JSON.stringify(draft));
                 setValueByPath(updatedDraft, sectionConfig.path, previousVersion.content);
                 setDraft(updatedDraft);
-                toast.success('Cambio deshecho');
+                toast.success(t('drafting.success.undo'));
             }
         }
     };
@@ -565,7 +569,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedDraft = JSON.parse(JSON.stringify(draft));
                 setValueByPath(updatedDraft, sectionConfig.path, nextVersion.content);
                 setDraft(updatedDraft);
-                toast.success('Cambio rehecho');
+                toast.success(t('drafting.success.redo'));
             }
         }
     };
@@ -581,13 +585,13 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedDraft = JSON.parse(JSON.stringify(draft));
                 setValueByPath(updatedDraft, sectionConfig.path, version.content);
                 setDraft(updatedDraft);
-                toast.success('Versión restaurada');
+                toast.success(t('drafting.success.restored'));
             }
         }
     };
 
     if (!homiletics) {
-        return <div>Error: Falta el análisis homilético.</div>;
+        return <div>{t('drafting.errors.noHomiletics')}</div>;
     }
 
     if (loading) {
@@ -595,8 +599,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <div className="flex items-center justify-center h-[calc(100vh-120px)]">
                 <div className="text-center space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                    <p className="text-lg font-medium">Generando borrador del sermón...</p>
-                    <p className="text-sm text-muted-foreground">Esto puede tomar unos momentos</p>
+                    <p className="text-lg font-medium">{t('drafting.loading')}</p>
+                    <p className="text-sm text-muted-foreground">{t('drafting.loadingSub')}</p>
                 </div>
             </div>
         );
@@ -608,16 +612,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-2">
                     <FileText className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-bold">Borrador del Sermón</h2>
+                    <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
                 </div>
                 <p className="text-muted-foreground">
-                    Genera el sermón completo listo para predicar.
+                    {t('drafting.subtitle')}
                 </p>
             </div>
 
             <Card className="p-6 space-y-4 bg-muted/50 mb-6">
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                    Proposición Homilética
+                    {t('drafting.homileticalProposition')}
                 </h3>
                 <div className="text-lg font-medium italic">
                     <MarkdownRenderer content={homiletics.homileticalProposition} />
@@ -631,7 +635,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 {homiletics.outlinePreview && homiletics.outlinePreview.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-border/50">
                         <h4 className="font-semibold text-sm text-muted-foreground mb-2">
-                            Puntos del Sermón:
+                            {t('drafting.outlinePoints')}
                         </h4>
                         <ul className="space-y-1.5 text-sm">
                             {homiletics.outlinePreview.map((point, index) => (
@@ -651,10 +655,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         <FileText className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                        <h3 className="font-semibold mb-2">Listo para generar tu sermón completo</h3>
+                        <h3 className="font-semibold mb-2">{t('drafting.readyToGenerate')}</h3>
                         <p className="text-sm text-muted-foreground">
-                            Crearé un sermón completo con introducción, desarrollo de puntos,
-                            ilustraciones, conclusión y llamado a la acción.
+                            {t('drafting.readyDesc')}
                         </p>
                     </div>
                     <Button
@@ -664,7 +667,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         className="w-full max-w-md mx-auto"
                     >
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Generar Borrador del Sermón
+                        {t('drafting.generateBtn')}
                     </Button>
                 </div>
             </Card>
@@ -679,8 +682,8 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                             <h3 className="text-lg font-semibold">{draft.title}</h3>
                             <p className="text-sm text-muted-foreground">
                                 {expandedSectionId 
-                                    ? 'Refinando sección. Usa el chat para hacer cambios.'
-                                    : 'Haz clic en "Refinar" para expandir una sección, o usa el chat para consultas generales.'
+                                    ? t('drafting.refiningStatus')
+                                    : t('drafting.defaultStatus')
                                 }
                             </p>
                         </div>
@@ -695,12 +698,12 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                 {loading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Generando...
+                                        {t('drafting.regeneratingBtn')}
                                     </>
                                 ) : (
                                     <>
                                         <Sparkles className="mr-2 h-4 w-4" />
-                                        Regenerar
+                                        {t('drafting.regenerateBtn')}
                                     </>
                                 )}
                             </Button>
@@ -733,7 +736,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                     const pointToRegenerate = draft.body[itemIndex];
                                     
                                     // Show loading state (could be improved with a toast or specific loading indicator)
-                                    const toastId = toast.loading('Regenerando punto...');
+                                    const toastId = toast.loading(t('drafting.loadingRegeneratePoint'));
                                     
                                     try {
                                         const result = await generatorChatService.regenerateSermonPoint(
@@ -755,16 +758,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                         // Show sources if any were used
                                         if (result.sources && result.sources.length > 0) {
                                             toast.success(
-                                                `Punto regenerado usando ${result.sources.length} fuente(s) de biblioteca`, 
+                                                t('drafting.success.generatedWithSources', { count: result.sources.length }), 
                                                 { id: toastId, duration: 4000 }
                                             );
                                         } else {
-                                            toast.success('Punto regenerado exitosamente', { id: toastId });
+                                            toast.success(t('drafting.success.regeneratedPoint'), { id: toastId });
                                         }
                                         
                                     } catch (error) {
                                         console.error('Failed to regenerate point:', error);
-                                        toast.error('Error al regenerar el punto', { id: toastId });
+                                        toast.error(t('drafting.errors.regeneratingPoint'), { id: toastId });
                                     }
                                 }
                             }}
@@ -809,7 +812,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <div className="flex-shrink-0 flex gap-2">
                 <Button onClick={() => setStep(2)} variant="outline" size="lg" className="flex-1">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a Homilética
+                    {t('drafting.backToHomiletics')}
                 </Button>
                 
                 <Button 
@@ -819,7 +822,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     className="flex-1"
                 >
                     <Eye className="mr-2 h-4 w-4" />
-                    Vista Previa
+                    {t('drafting.preview')}
                 </Button>
                 
                 <Button 
@@ -829,7 +832,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     className="flex-1"
                 >
                     <Save className="mr-2 h-4 w-4" />
-                    Guardar y Salir
+                    {t('drafting.saveAndExit')}
                 </Button>
                 
                 <Button 
@@ -841,12 +844,12 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     {publishing ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Publicando...
+                            {t('drafting.publishing')}
                         </>
                     ) : (
                         <>
                             <Upload className="mr-2 h-4 w-4" />
-                            Publicar Sermón
+                            {t('drafting.publishSermon')}
                         </>
                     )}
                 </Button>
@@ -862,19 +865,17 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     <FileText className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                    <h3 className="font-semibold mb-2">El Borrador Final</h3>
+                    <h3 className="font-semibold mb-2">{t('drafting.finalDraftTitle')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Este es el último paso. Generaré un sermón completo y estructurado
-                        basado en tu exégesis y análisis homilético.
+                        {t('drafting.finalDraftDesc')}
                     </p>
                 </div>
                 <div className="pt-4 border-t">
-                    <h4 className="font-medium text-sm mb-2">Después de generar podrás:</h4>
+                    <h4 className="font-medium text-sm mb-2">{t('homiletics.afterGenerateTitle')}</h4>
                     <ul className="text-sm text-muted-foreground space-y-1 text-left">
-                        <li>• Ajustar el tono y estilo</li>
-                        <li>• Mejorar ilustraciones</li>
-                        <li>• Refinar la conclusión</li>
-                        <li>• Guardar y exportar</li>
+                        {(t('homiletics.afterGenerateList', { returnObjects: true }) as string[]).map((item, i) => (
+                            <li key={i}>• {item}</li>
+                        ))}
                     </ul>
                 </div>
             </div>
@@ -887,7 +888,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             {saving && (
                 <div className="fixed top-4 right-4 flex items-center gap-2 bg-background border rounded-lg px-3 py-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-sm text-muted-foreground">Guardado</span>
+                    <span className="text-sm text-muted-foreground">{t('exegesis.saved')}</span>
                 </div>
             )}
             
@@ -907,14 +908,14 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="!max-w-[95vw] !w-full sm:!w-[1200px] lg:!w-[1600px] h-[90vh] max-h-[90vh] flex flex-col p-0 overflow-hidden">
                     <VisuallyHidden>
-                        <DialogTitle>Vista Previa del Sermón</DialogTitle>
+                        <DialogTitle>{t('drafting.previewDialogTitle')}</DialogTitle>
                     </VisuallyHidden>
                     <div className="flex-1 overflow-y-auto">
                         {draft && exegesis && (
                             <SermonPreview
                                 title={draft.title}
                                 content={getFullContent()}
-                                authorName={user?.displayName || 'Pastor'}
+                                authorName={user?.displayName || t('drafting.authorDefault')}
                                 date={new Date()}
                                 bibleReferences={[exegesis.passage]}
                                 tags={exegesis.keyWords.map(kw => kw.original)}
@@ -924,7 +925,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     </div>
                     <div className="p-4 border-t bg-background flex justify-end">
                         <Button onClick={() => setShowPreview(false)}>
-                            Cerrar Vista Previa
+                            {t('drafting.closePreview')}
                         </Button>
                     </div>
                 </DialogContent>

@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { ApproachCard } from '@/components/homiletics/ApproachCard';
 import { HomileticalApproachPreview } from '@dosfilos/domain';
+import { useTranslation } from '@/i18n';
+import { Trans } from 'react-i18next';
 
 interface ApproachSelectionViewProps {
     /** Approach previews generated in Phase 1 */
@@ -45,6 +47,7 @@ export function ApproachSelectionView({
     developing,
     regenerating
 }: ApproachSelectionViewProps) {
+    const { t } = useTranslation('generator');
     const hasSelection = !!selectedId;
     const selectedApproach = previews.find(p => p.id === selectedId);
 
@@ -55,7 +58,7 @@ export function ApproachSelectionView({
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                         <Sparkles className="h-6 w-6 text-primary" />
-                        <h2 className="text-2xl font-bold">Elige el Enfoque de tu Sermón</h2>
+                        <h2 className="text-2xl font-bold">{t('homiletics.selectionTitle')}</h2>
                     </div>
                     {/* Regenerate Button */}
                     <Button
@@ -67,19 +70,23 @@ export function ApproachSelectionView({
                         {regenerating ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Regenerando...
+                                {t('homiletics.regeneratingBtn')}
                             </>
                         ) : (
                             <>
                                 <RefreshCw className="mr-2 h-4 w-4" />
-                                Regenerar Enfoques
+                                {t('homiletics.regenerateBtn')}
                             </>
                         )}
                     </Button>
                 </div>
                 <p className="text-muted-foreground">
-                    Se han generado <strong>{previews.length} enfoques diferentes</strong> para predicar este pasaje.
-                    Selecciona el que mejor se ajuste a tu contexto y audiencia.
+                    <Trans
+                        i18nKey="homiletics.selectionDesc"
+                        t={t}
+                        values={{ count: previews.length }}
+                        components={{ strong: <strong /> }}
+                    />
                 </p>
             </div>
 
@@ -105,7 +112,7 @@ export function ApproachSelectionView({
                         <div className="flex items-start gap-3">
                             <span className="text-primary text-xl">✓</span>
                             <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold mb-1">Enfoque Seleccionado:</h4>
+                                <h4 className="font-semibold mb-1">{t('homiletics.selectedApproach')}</h4>
                                 <p className="text-sm text-muted-foreground">
                                     <span className="font-medium">{selectedApproach.type}:</span> {selectedApproach.direction}
                                 </p>
@@ -124,12 +131,12 @@ export function ApproachSelectionView({
                     {developing ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Desarrollando Enfoque...
+                            {t('homiletics.developingBtn')}
                         </>
                     ) : (
                         <>
                             <Sparkles className="mr-2 h-4 w-4" />
-                            Desarrollar este Enfoque
+                            {t('homiletics.developBtn')}
                         </>
                     )}
                 </Button>
@@ -137,7 +144,7 @@ export function ApproachSelectionView({
                 {/* Help Text */}
                 {!hasSelection && !developing && (
                     <p className="text-xs text-center text-muted-foreground">
-                        Haz clic en una tarjeta para seleccionar ese enfoque
+                        {t('homiletics.clickToSelect')}
                     </p>
                 )}
             </div>

@@ -362,11 +362,11 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                             <div className="grid gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="topic">
-                                        {strategy === 'thematic' ? 'Tema Principal' : 'Libro Bíblico'}
+                                        {strategy === 'thematic' ? t('context.mainTheme') : t('context.biblicalBook')}
                                     </Label>
                                     <Input 
                                         id="topic" 
-                                        placeholder={strategy === 'thematic' ? 'Ej. La Soberanía de Dios' : 'Ej. Efesios'}
+                                        placeholder={strategy === 'thematic' ? t('context.mainThemePlaceholder') : t('context.biblicalBookPlaceholder')}
                                         value={topicOrBook}
                                         onChange={e => setTopicOrBook(e.target.value)}
                                     />
@@ -374,11 +374,11 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                 
                                 <div className="space-y-2">
                                     <Label htmlFor="subtopics">
-                                        {strategy === 'thematic' ? 'Subtemas (Opcional)' : 'Rango de Capítulos (Opcional)'}
+                                        {strategy === 'thematic' ? t('context.subtopics') : t('context.chapterRange')}
                                     </Label>
                                     <Input 
                                         id="subtopics" 
-                                        placeholder={strategy === 'thematic' ? 'Ej. Definición, Atributos, Aplicación' : 'Ej. 1-3'}
+                                        placeholder={strategy === 'thematic' ? t('context.subtopicsPlaceholder') : t('context.chapterRangePlaceholder')}
                                         value={subtopicsOrRange}
                                         onChange={e => setSubtopicsOrRange(e.target.value)}
                                     />
@@ -386,7 +386,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
 
                                 <div className="grid grid-cols-4 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="count">Cantidad de Sermones</Label>
+                                        <Label htmlFor="count">{t('context.sermonCount')}</Label>
                                         <Input 
                                             id="count" 
                                             type="number" 
@@ -396,23 +396,23 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                             value={numberOfSermons}
                                             onChange={e => setNumberOfSermons(e.target.value === '' ? '' : parseInt(e.target.value))}
                                         />
-                                        <p className="text-[10px] text-muted-foreground">Dejar vacío para auto</p>
+                                        <p className="text-[10px] text-muted-foreground">{t('context.leaveEmptyAuto')}</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="frequency">Frecuencia</Label>
+                                        <Label htmlFor="frequency">{t('context.frequency')}</Label>
                                         <Select value={frequency} onValueChange={(v: any) => setFrequency(v)}>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Selecciona frecuencia" />
+                                                <SelectValue placeholder={t('context.selectFrequency')} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="weekly">Semanal</SelectItem>
-                                                <SelectItem value="biweekly">Quincenal</SelectItem>
-                                                <SelectItem value="monthly">Mensual</SelectItem>
+                                                <SelectItem value="weekly">{t('context.weekly')}</SelectItem>
+                                                <SelectItem value="biweekly">{t('context.biweekly')}</SelectItem>
+                                                <SelectItem value="monthly">{t('context.monthly')}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="start">Fecha de Inicio</Label>
+                                        <Label htmlFor="start">{t('context.startDate')}</Label>
                                         <div className="relative">
                                             <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                             <Input 
@@ -425,7 +425,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="end">Fecha de Término</Label>
+                                        <Label htmlFor="end">{t('context.endDate')}</Label>
                                         <div className="relative">
                                             <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                             <Input 
@@ -441,7 +441,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
 
                                 <div className="space-y-3 pt-4 border-t">
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-base">Biblioteca Teológica (Contexto)</Label>
+                                        <Label className="text-base">{t('context.library')}</Label>
                                         <div className="flex items-center space-x-2">
                                             <Switch 
                                                 id="select-all"
@@ -452,16 +452,16 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                 }}
                                             />
                                             <label htmlFor="select-all" className="text-sm font-medium leading-none cursor-pointer text-muted-foreground">
-                                                Seleccionar todos
+                                                {t('context.selectAll')}
                                             </label>
                                         </div>
                                     </div>
                                     <p className="text-sm text-muted-foreground">
-                                        Selecciona los recursos que el Asistente debe consultar.
+                                        {t('context.selectResources')}
                                     </p>
                                     {resources.length === 0 ? (
                                         <div className="text-sm text-muted-foreground italic p-4 bg-muted/30 rounded border border-dashed text-center">
-                                            No tienes recursos en tu biblioteca.
+                                            {t('context.noResources')}
                                         </div>
                                     ) : (
                                         <div className="grid gap-2 max-h-48 overflow-y-auto p-2 border rounded bg-muted/10">
@@ -475,15 +475,15 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                             else setSelectedResources(selectedResources.filter(id => id !== res.id));
                                                         }}
                                                     />
-                                                    <label htmlFor={res.id} className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2">
-                                                        {res.title}
-                                                        {indexStatus[res.id] && (
-                                                            <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-300 bg-emerald-50">
-                                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                                Indexado
-                                                            </Badge>
-                                                        )}
-                                                    </label>
+                                                        <label htmlFor={res.id} className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2">
+                                                            {res.title}
+                                                            {indexStatus[res.id] && (
+                                                                <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-300 bg-emerald-50">
+                                                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                                    {t('context.indexed')}
+                                                                </Badge>
+                                                            )}
+                                                        </label>
                                                 </div>
                                             ))}
                                         </div>
@@ -495,20 +495,16 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                     <div className="space-y-2">
                                         <Label htmlFor="notes" className="text-base flex items-center gap-2">
                                             <MessageSquare className="h-4 w-4" />
-                                            Enfoque / Notas (Opcional)
+                                            {t('context.focus')}
                                         </Label>
                                         <p className="text-xs text-muted-foreground">
-                                            Pega aquí los puntos clave de tu conversación con el Asistente o cualquier nota adicional para guiar la propuesta.
+                                            {t('context.focusDescription')}
                                         </p>
                                         <Textarea 
                                             id="notes"
                                             value={plannerNotes}
                                             onChange={e => setPlannerNotes(e.target.value)}
-                                            placeholder="Ej: Enfoque: LA NAVIDAD RADICAL
-- El Costo Radical de la Encarnación
-- La Identidad Radical de Jesús
-- La Demanda Radical del Reino
-- La Piedad Radical como Respuesta"
+                                            placeholder={t('context.focusPlaceholder')}
                                             className="min-h-[120px] resize-y"
                                             rows={5}
                                         />
@@ -518,16 +514,16 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
 
                             <div className="flex justify-between pt-4">
                                 <Button variant="outline" onClick={() => setStep('strategy')}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" /> Atrás
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> {t('buttons.back')}
                                 </Button>
                                 <div className="flex gap-2">
                                     {seriesObjective && (
                                         <Button variant="outline" onClick={() => setStep('objective')}>
-                                            Continuar con propuesta actual <ArrowRight className="ml-2 h-4 w-4" />
+                                            {t('context.continueWithCurrent')} <ArrowRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     )}
                                     <Button onClick={handleGenerateObjective} disabled={!topicOrBook} size="lg" className="bg-gradient-to-r from-primary to-purple-600 text-white border-0">
-                                        <Wand2 className="mr-2 h-4 w-4" /> {seriesObjective ? 'Regenerar Propuesta' : 'Generar Propuesta'}
+                                        <Wand2 className="mr-2 h-4 w-4" /> {seriesObjective ? t('context.regenerateProposal') : t('context.generateProposal')}
                                     </Button>
                                 </div>
                             </div>
@@ -539,10 +535,10 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                             <div className="space-y-4">
                                 <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
                                     <h3 className="font-semibold text-primary mb-2 flex items-center gap-2">
-                                        <Sparkles className="h-4 w-4" /> Propuesta del Asistente
+                                        <Sparkles className="h-4 w-4" /> {t('objective.assistantProposal')}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        El Asistente ha analizado tu solicitud y propone el siguiente enfoque. Puedes editarlo o refinarlo.
+                                        {t('objective.assistantProposalDescription')}
                                     </p>
                                     
                                     {seriesObjective.pastoralAdvice && (
@@ -550,7 +546,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                             <div className="flex gap-2 items-start">
                                                 <Sparkles className="h-4 w-4 mt-1 flex-shrink-0" />
                                                 <div className="flex-1">
-                                                    <span className="font-semibold block mb-2">Nota del Experto:</span>
+                                                    <span className="font-semibold block mb-2">{t('objective.expertNote')}</span>
                                                     <div className="prose prose-sm prose-amber max-w-none">
                                                         <MarkdownRenderer content={seriesObjective.pastoralAdvice} />
                                                     </div>
@@ -562,10 +558,10 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                             className="bg-white border-amber-300 hover:bg-amber-100 text-amber-900 h-8 mt-3"
                                                             onClick={() => {
                                                                 setNumberOfSermons(seriesObjective.suggestedSermonCount!);
-                                                                toast.success(`Se ha actualizado a ${seriesObjective.suggestedSermonCount} sermones`);
+                                                                toast.success(t('objective.toastUpdated', { count: seriesObjective.suggestedSermonCount }));
                                                             }}
                                                         >
-                                                            Actualizar a {seriesObjective.suggestedSermonCount} sermones
+                                                            {t('objective.updateSermonCount', { count: seriesObjective.suggestedSermonCount })}
                                                         </Button>
                                                     )}
                                                 </div>
@@ -578,14 +574,14 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4 flex justify-between items-center">
                                         <div className="flex items-center gap-2 text-blue-800">
                                             <Sparkles className="h-5 w-5" />
-                                            <span className="font-medium">Modo de Refinamiento: {refiningSection}</span>
+                                            <span className="font-medium">{t('objective.refinementMode', { section: refiningSection })}</span>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" onClick={handleReformulate} className="bg-white hover:bg-blue-50 text-blue-700 border-blue-200">
-                                                <RefreshCw className="mr-2 h-3 w-3" /> Pedir Reformulación
+                                                <RefreshCw className="mr-2 h-3 w-3" /> {t('objective.askReformulation')}
                                             </Button>
                                             <Button variant="ghost" size="sm" onClick={() => setRefiningSection(null)} className="text-blue-700 hover:bg-blue-100 hover:text-blue-900">
-                                                <X className="mr-2 h-3 w-3" /> Salir del Modo Enfoque
+                                                <X className="mr-2 h-3 w-3" /> {t('objective.exitFocusMode')}
                                             </Button>
                                         </div>
                                     </div>
@@ -627,10 +623,10 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
 
                             <div className="flex justify-between pt-4">
                                 <Button variant="outline" onClick={() => setStep('context')}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" /> Atrás
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> {t('buttons.back')}
                                 </Button>
                                 <Button onClick={handleGenerateStructure} size="lg">
-                                    Continuar a Estructura <ArrowRight className="ml-2 h-4 w-4" />
+                                    {t('objective.continueToStructure')} <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             </div>
                         </div>
@@ -639,9 +635,9 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                     {step === 'structure' && proposedPlan && (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold">Estructura de Sermones</h3>
+                                <h3 className="text-lg font-semibold">{t('structure.sermonStructure')}</h3>
                                 <Button variant="ghost" size="sm" onClick={handleGenerateStructure}>
-                                    <RefreshCw className="mr-2 h-4 w-4" /> Regenerar
+                                    <RefreshCw className="mr-2 h-4 w-4" /> {t('structure.regenerate')}
                                 </Button>
                             </div>
 
@@ -649,11 +645,11 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="summary" className="flex items-center gap-2">
                                         <FileText className="h-4 w-4" />
-                                        Resumen
+                                        {t('structure.tabSummary')}
                                     </TabsTrigger>
                                     <TabsTrigger value="refinement" className="flex items-center gap-2">
                                         <Settings2 className="h-4 w-4" />
-                                        Refinamiento
+                                        {t('structure.tabRefinement')}
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -665,7 +661,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                             <div className="bg-primary/5 border border-primary/20 rounded-lg p-5 mb-6">
                                                 <div className="flex items-center gap-2 text-primary mb-3">
                                                     <Sparkles className="h-5 w-5" />
-                                                    <h4 className="font-semibold text-base m-0">Justificación de la Estructura</h4>
+                                                    <h4 className="font-semibold text-base m-0">{t('structure.structureJustification')}</h4>
                                                 </div>
                                                 <div className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
                                                     {proposedPlan.structureJustification}
@@ -679,7 +675,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                 {seriesObjective?.title}
                                             </h4>
                                             <p className="text-muted-foreground text-sm">
-                                                {proposedPlan.sermons.length} sermones · Inicio: {startDate}
+                                                {t('structure.seriesInfo', { count: proposedPlan.sermons.length, date: startDate })}
                                             </p>
                                         </div>
 
@@ -705,7 +701,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                             )}
                                                             {!sermon.passage && (
                                                                 <span className="inline-flex items-center gap-1 text-sm text-amber-600 mt-1">
-                                                                    ⚠️ Sin pasaje asignado
+                                                                    {t('structure.noPassage')}
                                                                 </span>
                                                             )}
                                                             <p className="text-muted-foreground text-sm mt-2 m-0 leading-relaxed">
@@ -751,7 +747,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                                             ? 'bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300'
                                                                             : 'bg-amber-100 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
                                                                     }`}>
-                                                                        {citation.sourceType === 'library' ? 'Biblioteca' : 'Conocimiento General'}
+                                                                        {citation.sourceType === 'library' ? t('structure.sourceLibrary') : t('structure.sourceGeneral')}
                                                                     </span>
                                                                 </div>
                                                                 {citation.sourceType === 'library' && (
@@ -768,7 +764,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                     ))}
                                                 </div>
                                                 <p className="text-xs text-muted-foreground mt-4 italic">
-                                                    Las fuentes marcadas como "Biblioteca" provienen de tus recursos. Las de "Conocimiento General" son inferencias teológicas del AI.
+                                                    {t('structure.sourcesDisclaimer')}
                                                 </p>
                                             </div>
                                         )}
@@ -820,10 +816,10 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
 
                             <div className="flex justify-between pt-4">
                                 <Button variant="outline" onClick={() => setStep('objective')}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" /> Atrás
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> {t('buttons.back')}
                                 </Button>
                                 <Button onClick={handleFinalize} size="lg" className="bg-primary text-primary-foreground">
-                                    <Save className="mr-2 h-4 w-4" /> Finalizar y Guardar
+                                    <Save className="mr-2 h-4 w-4" /> {t('structure.finalizeAndSave')}
                                 </Button>
                             </div>
                         </div>

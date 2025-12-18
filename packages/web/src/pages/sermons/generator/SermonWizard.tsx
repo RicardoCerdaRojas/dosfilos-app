@@ -211,27 +211,14 @@ function WizardContent() {
     if (showResumePrompt) {
         return (
             <div className="space-y-6">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
-                    <p className="text-muted-foreground">
-                        {t('subtitle')}
-                    </p>
-                </div>
-
                 <SermonsInProgress
                     sermons={inProgressSermons}
                     onContinue={handleContinue}
                     onDiscard={handleDiscard}
                     onPublish={handlePublish}
                     onDuplicate={handleDuplicate}
+                    onNewSermon={handleNewSermon}
                 />
-
-                <div className="mt-6 text-center">
-                    <Button onClick={handleNewSermon} variant="outline" size="lg">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Comenzar Nuevo Sermón
-                    </Button>
-                </div>
             </div>
         );
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWizard } from './WizardContext';
+import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context'; // 🎯 NEW
 import { useLibraryContext } from '@/context/library-context';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
@@ -37,6 +38,7 @@ interface StepExegesisProps {
 import { useContentHistory } from '@/hooks/useContentHistory';
 
 export function StepExegesis() {
+    const { t } = useTranslation('generator');
     const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving, cacheName, setCacheName } = useWizard();
     const { user } = useFirebase(); // 🎯 NEW
     const contentHistory = useContentHistory('exegesis', config?.id);
@@ -84,7 +86,7 @@ export function StepExegesis() {
 
     const handleGenerate = async () => {
         if (!passage.trim()) {
-            toast.error('Por favor ingresa un pasaje bíblico');
+            toast.error(t('exegesis.errors.enterPassage'));
             return;
         }
 
@@ -92,7 +94,7 @@ export function StepExegesis() {
         try {
             // 🎯 Use LibraryContext for sync/cache
             console.log('🔍 handleGenerate - Ensuring library context is ready');
-            toast.loading('Preparando contexto de biblioteca...', { id: 'context-prep' });
+            toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
             await ensureReady();
             toast.dismiss('context-prep');
             
@@ -102,10 +104,10 @@ export function StepExegesis() {
             if (result.cacheName && setCacheName) {
                 setCacheName(result.cacheName); // 🎯 Update cache name
             }
-            toast.success('Estudio exegético generado');
+            toast.success(t('exegesis.success.generated'));
         } catch (error: any) {
             console.error(error);
-            toast.error(error.message || 'Error al generar exégesis');
+            toast.error(error.message || t('exegesis.errors.generateError'));
         } finally {
             setLoading(false);
         }
@@ -134,7 +136,7 @@ export function StepExegesis() {
                 const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
                 setValueByPath(updatedExegesis, sectionConfig.path, version.content);
                 setExegesis(updatedExegesis);
-                toast.success('Versión restaurada');
+                toast.success(t('exegesis.success.restored'));
             }
         }
     };
@@ -294,8 +296,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     } catch (parseError) {
                         console.error('Failed to parse array response:', parseError);
                         console.error('Raw response:', aiResponse);
-                        toast.error('Error al parsear la respuesta de la IA');
-                        throw new Error('La IA no devolvió un array válido');
+                        console.error('Raw response:', aiResponse);
+                        toast.error(t('exegesis.errors.parseError'));
+                        throw new Error(t('exegesis.errors.invalidArray'));
                     }
                 } else if (typeof currentContent === 'object') {
                     // For objects, try to parse JSON
@@ -348,16 +351,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const aiMessage = {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant' as const,
-                    content: `✅ Sección "${sectionConfig.label}" refinada exitosamente.`,
+                    content: `✅ ${t('exegesis.success.refined').replace('Sección', '')} "${sectionConfig.label}"`,
                     timestamp: new Date()
                 };
                 setMessages(prev => [...prev, aiMessage]);
                 
 
-                toast.success('Sección refinada exitosamente');
+                toast.success(t('exegesis.success.refined'));
             } catch (error: any) {
                 console.error('Error refining section:', error);
-                toast.error(error.message || 'Error al refinar la sección');
+                toast.error(error.message || t('exegesis.errors.refineError'));
                 
                 const errorMessage = {
                     id: (Date.now() + 1).toString(),
@@ -401,7 +404,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
                 setValueByPath(updatedExegesis, sectionConfig.path, previousVersion.content);
                 setExegesis(updatedExegesis);
-                toast.success('Cambio deshecho');
+                toast.success(t('exegesis.success.undo'));
             }
         }
     };
@@ -417,7 +420,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 const updatedExegesis = JSON.parse(JSON.stringify(exegesis));
                 setValueByPath(updatedExegesis, sectionConfig.path, nextVersion.content);
                 setExegesis(updatedExegesis);
-                toast.success('Cambio rehecho');
+                toast.success(t('exegesis.success.redo'));
             }
         }
     };
@@ -456,11 +459,11 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     'Cambios guardados manualmente'
                 );
 
-                toast.success('Sección actualizada');
+                toast.success(t('exegesis.success.updated'));
             }
         } catch (error) {
             console.error('Error updating section:', error);
-            toast.error('Error al actualizar la sección');
+            toast.error(t('exegesis.errors.updateError'));
         }
     };
 
@@ -482,16 +485,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-2">
                     <BookOpen className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-bold">Estudio Exegético</h2>
+                    <h2 className="text-2xl font-bold">{t('exegesis.title')}</h2>
                 </div>
                 <p className="text-muted-foreground">
-                    Analiza el texto original y define la base bíblica de tu sermón.
+                    {t('exegesis.subtitle')}
                 </p>
                 {hasContext && (
                     <div className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-md text-sm flex items-center gap-2">
                         <BookOpen className="h-4 w-4" />
                         <span>
-                            Contexto Experto Activo: {config[WorkflowPhase.EXEGESIS].documents.length} documentos cargados
+                            {t('exegesis.contextActive', { count: config[WorkflowPhase.EXEGESIS].documents.length })}
                         </span>
                     </div>
                 )}
@@ -499,12 +502,12 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
             <Card className="p-6 space-y-6">
                 <div className="space-y-2">
-                    <Label htmlFor="passage">Pasaje Bíblico</Label>
+                    <Label htmlFor="passage">{t('exegesis.passageLabel')}</Label>
                     <Input
                         id="passage"
                         value={passage}
                         onChange={(e) => setPassage(e.target.value)}
-                        placeholder="Ej: 1 Pedro 2:1-10"
+                        placeholder={t('exegesis.passagePlaceholder')}
                         className="text-lg"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -524,7 +527,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     size="lg"
                 >
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Generar Estudio Exegético
+                    {t('exegesis.generateBtn')}
                 </Button>
             </Card>
         </div>
@@ -533,11 +536,11 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             {/* Header - fixed height */}
             <div className="mb-4 flex-shrink-0 flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold">Análisis Exegético: {exegesis.passage}</h3>
+                    <h3 className="text-lg font-semibold">{t('exegesis.analysisTitle', { passage: exegesis.passage })}</h3>
                     <p className="text-sm text-muted-foreground">
                         {expandedSectionId 
-                            ? 'Refinando sección. Usa el chat para hacer cambios.'
-                            : 'Haz clic en "Refinar" para expandir una sección, o usa el chat para consultas generales.'
+                            ? t('exegesis.refiningStatus')
+                            : t('exegesis.defaultStatus')
                         }
                     </p>
                 </div>
@@ -600,7 +603,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             {/* Continue Button */}
             <div className="flex-shrink-0 pt-4">
                 <Button onClick={() => setStep(2)} size="lg" className="w-full">
-                    Continuar a Homilética
+                    {t('exegesis.continueBtn')}
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </div>
@@ -616,20 +619,17 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     <BookOpen className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                    <h3 className="font-semibold mb-2">¿Qué es la Exégesis?</h3>
+                    <h3 className="font-semibold mb-2">{t('exegesis.whatIsTitle')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        La exégesis es el análisis crítico del texto bíblico en su idioma original,
-                        considerando el contexto histórico, literario y cultural.
+                        {t('exegesis.whatIsDesc')}
                     </p>
                 </div>
                 <div className="pt-4 space-y-2 text-left">
-                    <h4 className="font-medium text-sm">Incluye:</h4>
+                    <h4 className="font-medium text-sm">{t('exegesis.includesLabel')}</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• Análisis del contexto histórico y cultural</li>
-                        <li>• Estudio del género literario</li>
-                        <li>• Identificación de la audiencia original</li>
-                        <li>• Análisis de palabras clave</li>
-                        <li>• Proposición exegética</li>
+                        {(t('exegesis.includesList', { returnObjects: true }) as string[]).map((item, i) => (
+                            <li key={i}>• {item}</li>
+                        ))}
                     </ul>
                 </div>
             </div>
@@ -643,7 +643,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             {saving && (
                 <div className="fixed top-4 right-4 flex items-center gap-2 bg-background border rounded-lg px-3 py-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-sm text-muted-foreground">Guardado</span>
+                    <span className="text-sm text-muted-foreground">{t('exegesis.saved')}</span>
                 </div>
             )}
             

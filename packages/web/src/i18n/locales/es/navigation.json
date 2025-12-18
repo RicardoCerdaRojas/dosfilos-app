@@ -1,4 +1,11 @@
 {
+    "logo": "DosFilos.Preach",
+    "features": "Características",
+    "howItWorks": "Cómo Funciona",
+    "testimonials": "Testimonios",
+    "pricing": "Precios",
+    "login": "Iniciar Sesión",
+    "register": "Comenzar",
     "menu": {
         "dashboard": "Dashboard",
         "sermons": "Sermones",
