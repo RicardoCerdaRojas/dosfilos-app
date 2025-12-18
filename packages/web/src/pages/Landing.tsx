@@ -1124,11 +1124,10 @@ export function Landing() {
               </div>
             </div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">
-              💛 ¿Por ahora no puedes pagar?
+              {t('pricing.scholarship.title')}
             </h3>
             <p className="text-slate-700 mb-6">
-              Hablemos. Nuestro deseo es <strong>servir a la Iglesia de Cristo</strong>, 
-              no crear barreras. Tenemos opciones para ti.
+              {t('pricing.scholarship.description')}
             </p>
             <Button 
               size="lg"
@@ -1139,7 +1138,7 @@ export function Landing() {
               }}
             >
               <MessageSquare className="mr-2 h-5 w-5" />
-              Conversemos sobre tu situación
+              {t('pricing.scholarship.cta')}
             </Button>
           </div>
         </div>
