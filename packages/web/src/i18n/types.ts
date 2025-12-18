@@ -41,4 +41,5 @@ export type TranslationNamespace =
     | 'landing'
     | 'common'
     | 'navigation'
-    | 'auth';
+    | 'auth'
+    | 'welcome';

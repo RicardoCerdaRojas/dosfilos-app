@@ -20,6 +20,8 @@ import navigationEn from '../locales/en/navigation.json';
 import navigationEs from '../locales/es/navigation.json';
 import authEn from '../locales/en/auth.json';
 import authEs from '../locales/es/auth.json';
+import welcomeEn from '../locales/en/welcome.json';
+import welcomeEs from '../locales/es/welcome.json';
 
 /**
  * Initialize i18next with best practices:
@@ -43,12 +45,14 @@ export const initI18n = () => {
                     landing: landingEn,
                     navigation: navigationEn,
                     auth: authEn,
+                    welcome: welcomeEn,
                 },
                 es: {
                     common: commonEs,
                     landing: landingEs,
                     navigation: navigationEs,
                     auth: authEs,
+                    welcome: welcomeEs,
                 },
             },
 
