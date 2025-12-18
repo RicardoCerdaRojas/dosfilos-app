@@ -69,25 +69,18 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         ];
     }
 
-    // 🎯 NEW: Helper to combine prompt with file URIs (Multimodal RAG)
+    // Helper to use cached content when available
     private prepareContent(prompt: string, config?: any): any {
-        // If cacheName is present, we rely on the cache (no need to send files again)
+        // If cacheName is present, we rely on the cache (files are already in cache)
         if (config?.cacheName) {
             return prompt;
         }
 
-        // If no cache but we have geminiUris (fallback mode), send them!
-        if (config?.geminiUris && Array.isArray(config.geminiUris) && config.geminiUris.length > 0) {
-            return [
-                prompt,
-                ...config.geminiUris.map((uri: string) => ({
-                    fileData: {
-                        mimeType: 'application/pdf',
-                        fileUri: uri
-                    }
-                }))
-            ];
-        }
+        // ⚠️ IMPORTANT: We do NOT use geminiUris without cache.
+        // These URIs can expire (24-48h TTL) and cause 403 errors.
+        // Without cache, we rely on:
+        // 1. RAG chunks (already in prompt context)
+        // 2. General knowledge (with recommended sources in prompt)
 
         return prompt;
     }
@@ -95,6 +88,14 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     async generateExegesis(passage: string, rules: GenerationRules, config?: any): Promise<ExegeticalStudy> {
         try {
             const prompt = buildExegesisPrompt(passage, rules, config);
+
+            // 🧪 TESTING: Log prompt to verify hermeneutical method
+            console.log('═══════════════════════════════════════════════════════');
+            console.log('📝 EXEGESIS PROMPT (First 1000 chars):');
+            console.log('═══════════════════════════════════════════════════════');
+            console.log(prompt.substring(0, 1000));
+            console.log('═══════════════════════════════════════════════════════');
+
             const model = this.getModel(config?.cacheName);
             const content = this.prepareContent(prompt, config); // 🎯 Use prepared content
             const result = await model.generateContent(content);
@@ -306,17 +307,10 @@ FORMATO JSON REQUERIDO:
                 messageToSend = `${systemPrompt}\n\n${messageToSend}`;
             }
 
-            // 🎯 NEW: Attach files to the LAST message if available (and no cache)
-            // Note: In chat, we can pass parts to sendMessage
-            let contentToSend: any = messageToSend;
-            if (!context?.cacheName && context?.geminiUris && context.geminiUris.length > 0) {
-                contentToSend = [
-                    messageToSend,
-                    ...context.geminiUris.map((uri: string) => ({
-                        fileData: { mimeType: 'application/pdf', fileUri: uri }
-                    }))
-                ];
-            }
+            // Note: We ONLY use files via cacheName (context cache).
+            // Direct geminiUris without cache can be expired and cause 403 errors.
+            // For chat without cache, we rely on RAG chunks in context or general knowledge.
+            const contentToSend = messageToSend;
 
             const result = await chat.sendMessage(contentToSend);
             const response = await result.response;
