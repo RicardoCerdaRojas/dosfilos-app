@@ -1,0 +1,63 @@
+{
+    "header": {
+        "title": "Theological Library",
+        "resources": "resources",
+        "indexed": "indexed",
+        "indexAllButton": "Index All",
+        "addButton": "Add",
+        "closeButton": "Close"
+    },
+    "upload": {
+        "title": "Add New Resource",
+        "description": "Upload PDFs or EPUBs to your theological library",
+        "fileLabel": "File",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Document title",
+        "authorLabel": "Author",
+        "authorPlaceholder": "Author name",
+        "categoryLabel": "Category",
+        "uploadButton": "Upload",
+        "fileSizeWarning": "File >50MB: reduced quality"
+    },
+    "filters": {
+        "searchPlaceholder": "Search by title or author...",
+        "allCategories": "All categories"
+    },
+    "empty": {
+        "title": "Your library is empty",
+        "emptyLibrary": "Add your first resource to get started",
+        "noResults": "No results found",
+        "tryOtherTerms": "Try different search terms"
+    },
+    "indexing": {
+        "preparing": "Preparing...",
+        "indexAllButton": "Index All",
+        "noUnindexed": "No documents to index"
+    },
+    "deleteDialog": {
+        "title": "Delete resource?",
+        "description": "You are about to delete",
+        "warning": "This action cannot be undone and will also delete the indexing data.",
+        "cancel": "Cancel",
+        "confirm": "Delete"
+    },
+    "toast": {
+        "uploadSuccess": "Resource added to library",
+        "uploadError": "Error uploading resource",
+        "deleteSuccess": "Resource deleted",
+        "deleteError": "Error deleting resource",
+        "updateSuccess": "Resource updated",
+        "updateError": "Error updating resource",
+        "indexSuccess": "indexed with",
+        "indexWarning": "No fragments generated for",
+        "indexError": "Error indexing resource",
+        "textNotReady": "Text is still being extracted. Wait a few seconds and try again.",
+        "reindexSuccess": "re-indexed successfully",
+        "reindexWarning": "No new fragments generated during re-indexing",
+        "reindexError": "Error re-indexing resource",
+        "syncSuccess": "synced successfully with AI",
+        "syncError": "Error syncing",
+        "indexingComplete": "Indexing completed with",
+        "indexingSuccess": "Library indexed"
+    }
+}
