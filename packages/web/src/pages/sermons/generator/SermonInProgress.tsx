@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { SermonEntity } from '@dosfilos/domain';
 import Fuse from 'fuse.js';
 import { Card } from '@/components/ui/card';
@@ -23,6 +23,7 @@ import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { VersionHistoryModal } from './VersionHistoryModal';
+import { sermonService } from '@dosfilos/application';
 
 interface SermonsInProgressProps {
     sermons: SermonEntity[];
@@ -40,8 +41,24 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
         (localStorage.getItem('sermonGeneratorView') as 'grid' | 'list') || 'grid'
     );
     const [versionModalSermon, setVersionModalSermon] = useState<SermonEntity | null>(null);
+    const [versionCounts, setVersionCounts] = useState<Record<string, number>>({});
 
     if (sermons.length === 0) return null;
+
+    // Load version counts for published sermons
+    useEffect(() => {
+        const loadVersionCounts = async () => {
+            const counts: Record<string, number> = {};
+            for (const sermon of sermons) {
+                if (sermon.wizardProgress?.publishedCopyId) {
+                    const versions = await sermonService.getPublishedVersions(sermon.id, sermon.userId);
+                    counts[sermon.id] = versions.length;
+                }
+            }
+            setVersionCounts(counts);
+        };
+        loadVersionCounts();
+    }, [sermons]);
 
     const getPhaseInfo = (sermon: SermonEntity) => {
         const step = sermon.wizardProgress?.currentStep || 0;
@@ -362,7 +379,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                                         setVersionModalSermon(sermon);
                                                     }}
                                                 >
-                                                    {wizardProgress.publishCount} versiones
+                                                    {versionCounts[sermon.id] || wizardProgress.publishCount || 0} versiones
                                                 </Badge>
                                             )}
                                         </div>
