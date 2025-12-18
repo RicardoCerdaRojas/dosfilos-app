@@ -11,8 +11,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ContactModal } from '@/components/contact/ContactModal';
+import { useTranslation, LanguageSwitcher } from '@/i18n';
 
 export function Landing() {
+  // i18n hooks
+  const { t } = useTranslation('landing');
+  const { t: tNav } = useTranslation('navigation');
+  const { t: tCommon } = useTranslation('common');
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -60,29 +66,33 @@ export function Landing() {
               <div className="p-2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-slate-900">DosFilos.Preach</span>
+              <span className="text-xl font-bold text-slate-900">{tNav('logo')}</span>
             </div>
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Características
+                {tNav('features')}
               </a>
               <a href="#how-it-works" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Cómo Funciona
+                {tNav('howItWorks')}
               </a>
               <a href="#testimonials" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Testimonios
+                {tNav('testimonials')}
               </a>
               <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition-colors">
-                Precios
+                {tNav('pricing')}
               </a>
+              
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="ghost" showLabel={false} />
+              
               <Link to="/login">
-                <Button variant="ghost">Iniciar Sesión</Button>
+                <Button variant="ghost">{tNav('login')}</Button>
               </Link>
               <Link to="/register">
                 <Button className="bg-blue-600 hover:bg-blue-700">
-                  Comenzar Gratis
+                  {tNav('register')}
                 </Button>
               </Link>
             </div>
@@ -102,23 +112,29 @@ export function Landing() {
           <div className="md:hidden bg-white border-t border-slate-200">
             <div className="px-4 py-4 space-y-3">
               <a href="#features" className="block text-slate-600 hover:text-slate-900">
-                Características
+                {tNav('features')}
               </a>
               <a href="#how-it-works" className="block text-slate-600 hover:text-slate-900">
-                Cómo Funciona
+                {tNav('howItWorks')}
               </a>
               <a href="#testimonials" className="block text-slate-600 hover:text-slate-900">
-                Testimonios
+                {tNav('testimonials')}
               </a>
               <a href="#pricing" className="block text-slate-600 hover:text-slate-900">
-                Precios
+                {tNav('pricing')}
               </a>
+              
+              {/* Language Switcher in Mobile */}
+              <div className="pt-2 pb-2">
+                <LanguageSwitcher variant="outline" showLabel={true} className="w-full" />
+              </div>
+              
               <Link to="/login" className="block">
-                <Button variant="ghost" className="w-full">Iniciar Sesión</Button>
+                <Button variant="ghost" className="w-full">{tNav('login')}</Button>
               </Link>
               <Link to="/register" className="block">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  Comenzar Gratis
+                  {tNav('register')}
                 </Button>
               </Link>
             </div>
@@ -137,18 +153,19 @@ export function Landing() {
                 style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}
               >
                 <Sparkles className="h-4 w-4" />
-                Tu Entrenador Exegético Personal
+                {t('hero.badge')}
               </div>
               
               <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
-                Exégesis profunda.
-                <span className="block text-blue-600">Predicación fiel.</span>
+                {t('hero.title.part1')}
+                <span className="block text-blue-600">{t('hero.title.part2')}</span>
               </h1>
               
               <p className="text-xl text-slate-600 leading-relaxed">
-                La herramienta que <strong>te entrena y guía</strong> en el estudio bíblico profundo. 
-                Combina <strong>hermenéutica histórico-literal-gramatical</strong> con análisis de idiomas originales. 
-                <span className="block mt-2 text-blue-700 font-medium">Tú haces el ejercicio. La IA te entrena.</span>
+                <strong>{t('hero.subtitle.main')}</strong> 
+                {t('hero.subtitle.distinction')}
+                <strong> {t('hero.subtitle.methodology')}</strong>
+                <span className="block mt-2 text-blue-700 font-medium">{t('hero.subtitle.tagline')}</span>
               </p>
 
               {/* Trust Badges with better visibility */}
@@ -162,7 +179,7 @@ export function Landing() {
                   }}
                 >
                   <Check className="h-4 w-4" style={{ color: '#16a34a' }} />
-                  <span className="font-medium">Hermenéutica Histórico-Literal</span>
+                  <span className="font-medium">{t('hero.badges.hermeneutics')}</span>
                 </div>
                 <div 
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg border"
@@ -173,7 +190,7 @@ export function Landing() {
                   }}
                 >
                   <Check className="h-4 w-4" style={{ color: '#16a34a' }} />
-                  <span className="font-medium">Análisis Hebreo/Griego</span>
+                  <span className="font-medium">{t('hero.badges.languages')}</span>
                 </div>
                 <div 
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg border"
@@ -184,7 +201,7 @@ export function Landing() {
                   }}
                 >
                   <Check className="h-4 w-4" style={{ color: '#16a34a' }} />
-                  <span className="font-medium">Enfoque Expositivo</span>
+                  <span className="font-medium">{t('hero.badges.approach')}</span>
                 </div>
               </div>
 
@@ -199,7 +216,7 @@ export function Landing() {
                     }}
                   >
                     <span className="relative z-10 flex items-center">
-                      Comienza Gratis
+                      {t('hero.cta.primary')}
                       <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </Button>
@@ -215,9 +232,10 @@ export function Landing() {
                   }}
                 >
                   <Play className="mr-2 h-5 w-5" />
-                  Ver Demo (2 min)
+                  {t('hero.cta.secondary')}
                 </Button>
               </div>
+
 
               {/* Social Proof */}
               <div className="flex items-center gap-8 pt-4">
@@ -228,15 +246,15 @@ export function Landing() {
                     ))}
                   </div>
                   <div className="text-sm">
-                    <div className="font-semibold text-slate-900">500+ pastores</div>
-                    <div className="text-slate-600">confiando en nosotros</div>
+                    <div className="font-semibold text-slate-900">{t('hero.socialProof.pastors')}</div>
+                    <div className="text-slate-600">{t('hero.socialProof.trusting')}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
                   ))}
-                  <span className="ml-2 text-sm font-semibold text-slate-900">4.8/5</span>
+                  <span className="ml-2 text-sm font-semibold text-slate-900">{t('hero.socialProof.rating')}</span>
                 </div>
               </div>
             </div>
@@ -292,8 +310,8 @@ export function Landing() {
                     <Languages className="h-5 w-5" style={{ color: '#16a34a' }} />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">Análisis Griego</div>
-                    <div className="text-xs text-slate-600">χάρις - Efesios 2:8</div>
+                    <div className="text-sm font-semibold text-slate-900">{t('hero.floatingCards.greekAnalysis.title')}</div>
+                    <div className="text-xs text-slate-600">{t('hero.floatingCards.greekAnalysis.subtitle')}</div>
                   </div>
                 </div>
               </div>
@@ -306,8 +324,8 @@ export function Landing() {
                     <GraduationCap className="h-5 w-5" style={{ color: '#2563eb' }} />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">Tu Entrenador</div>
-                    <div className="text-xs text-slate-600">Guía experta 24/7</div>
+                    <div className="text-sm font-semibold text-slate-900">{t('hero.floatingCards.trainer.title')}</div>
+                    <div className="text-xs text-slate-600">{t('hero.floatingCards.trainer.subtitle')}</div>
                   </div>
                 </div>
               </div>

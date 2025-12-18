@@ -1,0 +1,218 @@
+{
+    "hero": {
+        "badge": "Your Personal Exegetical Trainer",
+        "title": {
+            "part1": "Deep exegesis.",
+            "part2": "Faithful preaching."
+        },
+        "subtitle": {
+            "main": "Prepare your sermons with the guidance of an expert in original languages and hermeneutics.",
+            "distinction": "Not a general AI: it's your specialized assistant in expository preaching with",
+            "methodology": "historical-grammatical-literal methodology.",
+            "tagline": "You do the work. AI trains you."
+        },
+        "badges": {
+            "hermeneutics": "Historical-Literal Hermeneutics",
+            "languages": "Hebrew/Greek Analysis",
+            "approach": "Expository Approach"
+        },
+        "cta": {
+            "primary": "Get Started Free",
+            "secondary": "Watch Demo (2 min)"
+        },
+        "socialProof": {
+            "pastors": "500+ pastors",
+            "trusting": "trusting us",
+            "rating": "4.8/5"
+        },
+        "floatingCards": {
+            "greekAnalysis": {
+                "title": "Greek Analysis",
+                "subtitle": "χάρις - Ephesians 2:8"
+            },
+            "trainer": {
+                "title": "Your Trainer",
+                "subtitle": "Expert guidance 24/7"
+            }
+        }
+    },
+    "metrics": {
+        "timeSaved": {
+            "value": "5+",
+            "label": "Hours saved per sermon"
+        },
+        "depth": {
+            "value": "85%",
+            "label": "Greater exegetical depth"
+        },
+        "pastors": {
+            "value": "500+",
+            "label": "Active pastors"
+        },
+        "satisfaction": {
+            "value": "4.8",
+            "label": "Average satisfaction"
+        }
+    },
+    "transformation": {
+        "badge": "Transform your preparation",
+        "title": {
+            "part1": "From hours of frustration to",
+            "part2": "deep and efficient study"
+        },
+        "subtitle": {
+            "main": "AI doesn't preach for you.",
+            "emphasis": "It trains you to preach better.",
+            "detail": "You do the spiritual work, we enhance your study capacity."
+        },
+        "before": {
+            "title": "Without DosFilos",
+            "subtitle": "The long way",
+            "timeLabel": "8-12 hours",
+            "points": [
+                {
+                    "title": "Multiple sources",
+                    "description": "Books, commentaries, dictionaries... hard to coordinate"
+                },
+                {
+                    "title": "No clear direction",
+                    "description": "You don't know if you're going deep enough"
+                },
+                {
+                    "title": "Exegetical uncertainty",
+                    "description": "Am I interpreting the original text correctly?"
+                },
+                {
+                    "title": "Limited access",
+                    "description": "Hebrew and Greek require years of study"
+                }
+            ]
+        },
+        "after": {
+            "title": "With DosFilos",
+            "subtitle": "Your expert trainer",
+            "timeLabel": "3-5 hours",
+            "points": [
+                {
+                    "title": "Clear hermeneutical framework",
+                    "description": "Guides you step by step with proven methodology"
+                },
+                {
+                    "title": "Your personal trainer",
+                    "description": "Expert assistant accompanying you in each study"
+                },
+                {
+                    "title": "Theological confidence",
+                    "description": "Know your interpretation is well-founded"
+                },
+                {
+                    "title": "Accessible original languages",
+                    "description": "Hebrew and Greek explained, not just shown"
+                }
+            ]
+        },
+        "analogy": {
+            "emoji": "🏋️",
+            "title": "Think of it as having a personal trainer",
+            "description": "A trainer doesn't lift weights for you.",
+            "emphasis": "They guide you, correct your form, suggest exercises, and push you to give more.",
+            "conclusion": "DosFilos is your exegetical trainer: you do the spiritual work, we enhance your study capacity."
+        }
+    },
+    "notChatGPT": {
+        "title": "Not ChatGPT. Your Theological Mentor.",
+        "subtitle": "Generic AIs don't understand hermeneutics, theological traditions, or the weight of preaching the Word. DosFilos was designed",
+        "emphasis": "by pastors, for pastors.",
+        "generic": {
+            "title": "Generic AIs",
+            "points": [
+                "Generic responses without theological supervision",
+                "Doesn't distinguish between interpretive traditions",
+                "Can invent quotes or references",
+                "No clear hermeneutical methodology",
+                "Treats the Bible like any other book",
+                "Doesn't understand the weight of preaching"
+            ]
+        },
+        "dosfilos": {
+            "title": "DosFilos.Preach",
+            "points": [
+                "Specialized in biblical hermeneutics",
+                "Configurable to your theological tradition",
+                "Verified academic sources",
+                "Historical-literal-grammatical methodology",
+                "Respects the authority of Scripture",
+                "Designed for faithful preaching"
+            ]
+        }
+    },
+    "notLibrary": {
+        "title": "Not Just a Digital Library",
+        "subtitle": "Logos, e-Sword and others have thousands of books. But",
+        "question": "who has time to navigate all that?",
+        "capability": "DosFilos can process the equivalent of 1,000+ pages of context to give you what you need, when you need it.",
+        "traditional": {
+            "title": "Traditional Libraries",
+            "points": [
+                "Thousands of books impossible to review in parallel",
+                "You do all the search work",
+                "No guidance on what's relevant for your passage",
+                "Hours lost navigating indexes",
+                "Fragmented information across multiple sources"
+            ]
+        },
+        "assistant": {
+            "title": "Expert Assistant",
+            "points": [
+                "1,000+ pages of context processed instantly",
+                "Guides you step by step to what's relevant",
+                "Finds connections that would take hours to discover",
+                "Intelligent synthesis of multiple commentaries",
+                "Like having a theologian assistant 24/7"
+            ]
+        }
+    },
+    "grammarProfessor": {
+        "badge": "More than static morphology",
+        "title": {
+            "part1": "Your grammar professor",
+            "part2": "sitting next to you"
+        },
+        "subtitle": "There are tools that show you that χάρις is a feminine singular noun.",
+        "emphasis": "DosFilos explains why it matters",
+        "detail": ", how it works in the sentence, and what it means for your preaching.",
+        "traditional": {
+            "title": "Traditional tools (Logos, e-Sword)",
+            "description": "\"This verb is an",
+            "emphasis": "aorist passive participle",
+            "continuation": "\" — and you must figure out what that means."
+        },
+        "dosfilos": {
+            "title": "DosFilos.Preach",
+            "description": "\"This",
+            "emphasis": "aorist passive participle",
+            "explanation": "indicates a completed action received by the subject. In Ephesians 2:8, Paul uses this form to emphasize that salvation is something we have",
+            "italicEmphasis": "received",
+            "conclusion": ", not achieved. Here are three ways to explain this to your congregation...\""
+        },
+        "demo": {
+            "title": "Analysis of Ephesians 2:8",
+            "subtitle": "Your grammar professor explains:",
+            "verse": {
+                "greek": "τῇ γὰρ χάριτί ἐστε",
+                "highlight": "σεσῳσμένοι",
+                "translation": "\"For by grace you are saved\""
+            },
+            "points": [
+                {
+                    "title": "σεσῳσμένοι = Perfect Passive Participle",
+                    "description": "Indicates a completed action in the past with results that continue"
+                },
+                {
+                    "title": "The passive voice is theologically significant",
+                    "description": "God is the one who acts; we receive the action"
+                }
+            ]
+        }
+    }
+}
