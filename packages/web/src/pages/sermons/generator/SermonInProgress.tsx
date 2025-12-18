@@ -11,7 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -19,9 +26,11 @@ interface SermonsInProgressProps {
     sermons: SermonEntity[];
     onContinue: (sermon: SermonEntity) => void;
     onDiscard: (sermon: SermonEntity) => void;
+    onPublish?: (sermon: SermonEntity) => void;
+    onDuplicate?: (sermon: SermonEntity) => void;
 }
 
-export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInProgressProps) {
+export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate }: SermonsInProgressProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(
@@ -234,23 +243,61 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard }: SermonsInP
 
                                 {/* Footer Actions */}
                                 <div className="p-4 border-t bg-muted/20 flex items-center justify-between gap-3">
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => onDiscard(sermon)}
-                                    >
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Eliminar
-                                    </Button>
-                                    <Button 
-                                        size="sm" 
-                                        onClick={() => onContinue(sermon)}
-                                        className="gap-2 shadow-sm"
-                                    >
-                                        Continuar
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Button>
+                                    {/* Action Menu */}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                className="h-9 w-9 p-0"
+                                            >
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start">
+                                            {onDuplicate && (
+                                                <DropdownMenuItem onClick={() => onDuplicate(sermon)}>
+                                                    <Copy className="h-4 w-4 mr-2" />
+                                                    Duplicar sermón
+                                                </DropdownMenuItem>
+                                            )}
+                                            {onPublish && wizardProgress.currentStep === 3 && (
+                                                <DropdownMenuItem onClick={() => onPublish(sermon)}>
+                                                    <Share2 className="h-4 w-4 mr-2" />
+                                                    Publicar ahora
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem 
+                                                onClick={() => onDiscard(sermon)}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    {/* Primary Action Button */}
+                                    {wizardProgress.currentStep === 3 && onPublish ? (
+                                        <Button 
+                                            size="sm" 
+                                            onClick={() => onPublish(sermon)}
+                                            className="gap-2 shadow-sm bg-green-600 hover:bg-green-700"
+                                        >
+                                            <Share2 className="h-4 w-4" />
+                                            Publicar
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            size="sm" 
+                                            onClick={() => onContinue(sermon)}
+                                            className="gap-2 shadow-sm"
+                                        >
+                                            Continuar
+                                            <ArrowRight className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </Card>
                         );
