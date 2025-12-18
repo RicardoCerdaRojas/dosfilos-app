@@ -173,12 +173,16 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                         />
                     </div>
                     <Select value={sortOrder} onValueChange={(v: any) => setSortOrder(v)}>
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[200px]">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="newest">Más recientes</SelectItem>
                             <SelectItem value="oldest">Más antiguos</SelectItem>
+                            <SelectItem value="published-first">Publicados primero</SelectItem>
+                            <SelectItem value="draft-first">Borradores primero</SelectItem>
+                            <SelectItem value="progress-high">Mayor progreso</SelectItem>
+                            <SelectItem value="progress-low">Menor progreso</SelectItem>
                         </SelectContent>
                     </Select>
                     
