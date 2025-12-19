@@ -42,24 +42,39 @@ export class CoreLibraryService implements ICoreLibraryService {
     ) { }
 
     async ensureStoresReady(): Promise<void> {
-        console.log('🔧 CoreLibraryService: Ensuring stores are ready...');
+        try {
+            console.log('🔧 CoreLibraryService: Ensuring stores are ready...');
 
-        // 1. Load existing config
-        const config = await this.loadConfig();
+            // 1. Load existing config
+            const config = await this.loadConfig();
 
-        if (config && this.areStoresValid(config)) {
-            console.log('✅ Using existing stores from config');
-            this.stores = config.stores;
+            if (config && this.areStoresValid(config)) {
+                console.log('✅ Using existing stores from config');
+                this.stores = config.stores;
+                this.initialized = true;
+                await this.updateLastValidated();
+                return;
+            }
+
+            // 2. Create new stores from admin's core documents
+            console.log('📚 Creating File Search Stores from core library...');
+            await this.createAllStores();
+
             this.initialized = true;
-            await this.updateLastValidated();
-            return;
+        } catch (error: any) {
+            // Graceful degradation: If we can't create stores, that's OK
+            // The system will work without them (just without core library context)
+            if (error.message?.includes('permissions') || error.code === 'permission-denied') {
+                console.warn('⚠️ CoreLibraryService: Insufficient permissions to manage core library.');
+                console.warn('💡 To enable core library, update Firestore rules to allow read/write on config/ and users/');
+            } else if (error.message?.includes('No core documents')) {
+                console.info('💡 CoreLibraryService: No core documents found. Upload PDFs and mark as core to enable.');
+            } else {
+                console.error('❌ CoreLibraryService error:', error);
+            }
+            // Don't set initialized = true, but don't throw either
+            // Just continue without core library support
         }
-
-        // 2. Create new stores from admin's core documents
-        console.log('📚 Creating File Search Stores from core library...');
-        await this.createAllStores();
-
-        this.initialized = true;
     }
 
     getStoreId(context: FileSearchStoreContext): string {
@@ -196,8 +211,10 @@ export class CoreLibraryService implements ICoreLibraryService {
 
         if (exegesisFiles.length === 0 && homileticsFiles.length === 0 && genericFiles.length === 0) {
             console.warn('⚠️ No core documents found. Skipping store creation.');
-            console.warn('💡 Admin should upload documents and mark them as core in the library.');
-            throw new Error('No core documents available. Upload PDFs to admin library and mark as core.');
+            console.info('💡 Admin should upload documents and mark them as core in the library.');
+            // Don't throw - just return without creating stores
+            // This allows the app to continue working normally
+            return;
         }
 
         // Create stores (only if has files)
