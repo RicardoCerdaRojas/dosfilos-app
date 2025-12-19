@@ -47,7 +47,13 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
         try {
           const coreLibraryService = getCoreLibraryService();
           await coreLibraryService.ensureStoresReady();
-          console.log('✅ Core Library stores ready');
+          
+          // Check if actually initialized or just gracefully degraded
+          if (coreLibraryService.isInitialized()) {
+            console.log('✅ Core Library stores ready and initialized');
+          } else {
+            console.info('ℹ️ Core Library initialization completed (no stores available yet)');
+          }
         } catch (error) {
           console.error('❌ Failed to prepare Core Library:', error);
           // Don't block user login - they can still use the app
