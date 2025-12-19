@@ -1,16 +1,17 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent, PhaseDocument, LibraryResourceEntity } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent, PhaseDocument, LibraryResourceEntity, FileSearchStoreContext, ICoreLibraryService } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService, GeminiFileSearchService } from '@dosfilos/infrastructure';
 import { libraryService } from './LibraryService';
 
 import { PhaseConfiguration } from '@dosfilos/domain';
 import { FirebaseStorageService } from '@dosfilos/infrastructure';
 
-// Extended config that includes library document IDs
+// Extended config that includes library document IDs and File Search Store
 export interface ExtendedPhaseConfiguration extends PhaseConfiguration {
     libraryDocIds?: string[];
     cacheName?: string;
     cachedResources?: Array<{ title: string; author: string }>;
-    geminiUris?: string[]; // 🎯 NEW: Direct URIs fallback
+    geminiUris?: string[]; // 🎯 Direct URIs fallback
+    fileSearchStoreId?: string; // 🎯 NEW: File Search Store ID for core library
 }
 
 // Context for RAG search
@@ -24,14 +25,16 @@ export class SermonGeneratorService {
     private storageService: FirebaseStorageService;
     private documentProcessor: DocumentProcessingService | null = null;
     private geminiFileSearch: GeminiFileSearchService | null = null;
+    private coreLibraryService: ICoreLibraryService | null = null; // 🎯 NEW
 
-    constructor() {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    constructor(coreLibraryService?: ICoreLibraryService) {
+        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
         if (!apiKey) {
             console.warn('Gemini API key not configured. Generator features will be disabled.');
         }
         this.generator = new GeminiSermonGenerator(apiKey || '');
         this.storageService = new FirebaseStorageService();
+        this.coreLibraryService = coreLibraryService || null; // 🎯 NEW
 
         // Initialize services
         if (apiKey) {
@@ -269,6 +272,7 @@ export class SermonGeneratorService {
         let remainingDocIds: string[] | undefined;
         let geminiUris: string[] | undefined;
         let cachedResources: Array<{ title: string; author: string }> | undefined;
+        let fileSearchStoreId: string | undefined; // 🎯 NEW
 
         if (config && userId) {
             const contextResult = await this.prepareGeminiContext(config);
@@ -276,6 +280,16 @@ export class SermonGeneratorService {
             remainingDocIds = contextResult.remainingDocIds;
             cachedResources = contextResult.cachedResources;
             geminiUris = contextResult.geminiUris;
+        }
+
+        // 🎯 NEW: Get File Search Store for Exegesis context
+        if (this.coreLibraryService?.isInitialized()) {
+            try {
+                fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.EXEGESIS);
+                console.log('✅ Using File Search Store for Exegesis:', fileSearchStoreId);
+            } catch (error) {
+                console.warn('⚠️ Could not get File Search Store for Exegesis:', error);
+            }
         }
 
         const ragContext = userId ? { query: passage, userId } : undefined;
@@ -289,8 +303,10 @@ export class SermonGeneratorService {
             temperature: 0.7
         };
 
-        // Inject cacheName into config for the generator
-        const finalConfig = hydratedConfig ? { ...hydratedConfig, cacheName, geminiUris } : { ...defaultConfig, cacheName, geminiUris };
+        // Inject cacheName and fileSearchStoreId into config for the generator
+        const finalConfig = hydratedConfig
+            ? { ...hydratedConfig, cacheName, geminiUris, fileSearchStoreId }
+            : { ...defaultConfig, cacheName, geminiUris, fileSearchStoreId };
 
         const exegesis = await this.generator.generateExegesis(passage, rules, finalConfig);
         return { exegesis, cacheName };
@@ -306,6 +322,7 @@ export class SermonGeneratorService {
         let remainingDocIds: string[] | undefined;
         let geminiUris: string[] | undefined;
         let cachedResources: Array<{ title: string; author: string }> | undefined;
+        let fileSearchStoreId: string | undefined; // 🎯 NEW
 
         if (config && userId) {
             const contextResult = await this.prepareGeminiContext(config);
@@ -313,6 +330,16 @@ export class SermonGeneratorService {
             remainingDocIds = contextResult.remainingDocIds;
             cachedResources = contextResult.cachedResources;
             geminiUris = contextResult.geminiUris;
+        }
+
+        // 🎯 NEW: Get File Search Store for Homiletics context
+        if (this.coreLibraryService?.isInitialized()) {
+            try {
+                fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
+                console.log('✅ Using File Search Store for Homiletics:', fileSearchStoreId);
+            } catch (error) {
+                console.warn('⚠️ Could not get File Search Store for Homiletics:', error);
+            }
         }
 
         // Use passage + proposition as search query for better relevance
@@ -327,7 +354,9 @@ export class SermonGeneratorService {
             temperature: 0.7
         };
 
-        const finalConfig = hydratedConfig ? { ...hydratedConfig, cacheName, geminiUris } : { ...defaultConfig, cacheName, geminiUris };
+        const finalConfig = hydratedConfig
+            ? { ...hydratedConfig, cacheName, geminiUris, fileSearchStoreId }
+            : { ...defaultConfig, cacheName, geminiUris, fileSearchStoreId };
 
         const homiletics = await this.generator.generateHomiletics(exegesis, rules, finalConfig);
         return { homiletics, cacheName };
@@ -364,7 +393,20 @@ export class SermonGeneratorService {
             temperature: 0.7
         };
 
-        const finalConfig = hydratedConfig ? { ...hydratedConfig, cacheName, geminiUris } : { ...defaultConfig, cacheName, geminiUris };
+        // 🎯 Get File Search Store for Drafting (use Homiletics)
+        let fileSearchStoreId: string | undefined;
+        if (this.coreLibraryService?.isInitialized()) {
+            try {
+                fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
+                console.log('✅ Using File Search Store for Drafting:', fileSearchStoreId);
+            } catch (error) {
+                console.warn('⚠️ Could not get File Search Store for Drafting:', error);
+            }
+        }
+
+        const finalConfig = hydratedConfig
+            ? { ...hydratedConfig, cacheName, geminiUris, fileSearchStoreId }
+            : { ...defaultConfig, cacheName, geminiUris, fileSearchStoreId };
 
         const draft = await this.generator.generateSermonDraft(analysis, rules, finalConfig);
         return { draft, cacheName };
