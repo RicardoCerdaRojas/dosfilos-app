@@ -94,6 +94,10 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         if (updates.preferredForPhases !== undefined) firestoreUpdates.preferredForPhases = updates.preferredForPhases;
         if (updates.updatedAt !== undefined) firestoreUpdates.updatedAt = Timestamp.fromDate(updates.updatedAt);
 
+        // 🎯 Core Library fields
+        if (updates.isCore !== undefined) firestoreUpdates.isCore = updates.isCore;
+        if (updates.coreContext !== undefined) firestoreUpdates.coreContext = updates.coreContext;
+
         await updateDoc(ref, firestoreUpdates);
     }
 
