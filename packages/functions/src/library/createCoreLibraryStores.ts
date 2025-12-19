@@ -25,7 +25,12 @@ const db = getFirestore();
  * 4. Add files to each store
  * 5. Save config to Firestore
  */
-export const createCoreLibraryStores = onCall(
+
+interface CreateCoreLibraryStoresRequest {
+    // Empty - no parameters needed
+}
+
+export const createCoreLibraryStores = onCall<CreateCoreLibraryStoresRequest>(
     {
         cors: true,
         memory: '1GiB',
