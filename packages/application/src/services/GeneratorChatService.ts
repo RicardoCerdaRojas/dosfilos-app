@@ -54,7 +54,7 @@ export class GeneratorChatService {
      */
     setCoreLibraryService(service: ICoreLibraryService) {
         this.coreLibraryService = service;
-        console.log('✅ CoreLibraryService injected into GeneratorChatService');
+
     }
 
     async testGeminiSearch(message: string, storeName: string): Promise<string> {
@@ -128,7 +128,7 @@ export class GeneratorChatService {
             try {
                 // Use Homiletics store for drafting/refinement as requested ("general store")
                 fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
-                console.log('✅ [GeneratorChat] Using File Search Store for Regeneration:', fileSearchStoreId);
+
                 hasLibraryContext = true;
             } catch (error) {
                 console.warn('⚠️ [GeneratorChat] Could not get File Search Store:', error);
@@ -325,7 +325,7 @@ export class GeneratorChatService {
 
                     const storeId = this.coreLibraryService.getStoreId(contextType);
                     enrichedContext.fileSearchStoreId = storeId;
-                    console.log(`✅ [GeneratorChat] Using ${contextType} Store for Chat (${this.currentPhase}):`, storeId);
+
                 } catch (error) {
                     console.warn('⚠️ [GeneratorChat] Could not get File Search Store:', error);
                 }

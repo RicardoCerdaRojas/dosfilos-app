@@ -43,7 +43,7 @@ export class CoreLibraryService implements ICoreLibraryService {
 
     async ensureStoresReady(): Promise<void> {
         try {
-            console.log('🔧 CoreLibraryService: Ensuring stores are ready...');
+
 
             // 1. Load existing config
             const config = await this.loadConfig();
@@ -57,7 +57,7 @@ export class CoreLibraryService implements ICoreLibraryService {
             }
 
             // 2. Create new stores from admin's core documents
-            console.log('📚 Creating File Search Stores from core library...');
+
             await this.createAllStores();
 
             await this.createAllStores();
@@ -109,7 +109,7 @@ export class CoreLibraryService implements ICoreLibraryService {
     }
 
     async recreateStores(): Promise<void> {
-        console.log('🔄 CoreLibraryService: Recreating all stores...');
+
 
         // Delete old stores
         const config = await this.loadConfig();
@@ -198,11 +198,7 @@ export class CoreLibraryService implements ICoreLibraryService {
                 }
             });
 
-            console.log('📚 Core documents found:', {
-                exegesis: coreDocsByContext.exegesis.length,
-                homiletics: coreDocsByContext.homiletics.length,
-                generic: coreDocsByContext.generic.length
-            });
+
 
             return coreDocsByContext;
         } catch (error) {

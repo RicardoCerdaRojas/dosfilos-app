@@ -44,7 +44,7 @@ export class SermonGeneratorService {
      */
     setCoreLibraryService(service: ICoreLibraryService) {
         this.coreLibraryService = service;
-        console.log('✅ CoreLibraryService injected into SermonGeneratorService');
+
     }
 
     /**
@@ -143,7 +143,7 @@ export class SermonGeneratorService {
         if (!fileSearchStoreId && this.coreLibraryService?.isInitialized()) {
             try {
                 fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.EXEGESIS);
-                console.log('✅ Using Default File Search Store for Exegesis:', fileSearchStoreId);
+
             } catch (error) {
                 console.warn('⚠️ Could not get File Search Store for Exegesis:', error);
             }
@@ -187,7 +187,7 @@ export class SermonGeneratorService {
         if (!fileSearchStoreId && this.coreLibraryService?.isInitialized()) {
             try {
                 fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
-                console.log('✅ Using Default File Search Store for Homiletics:', fileSearchStoreId);
+
             } catch (error) {
                 console.warn('⚠️ Could not get File Search Store for Homiletics:', error);
             }
@@ -236,7 +236,7 @@ export class SermonGeneratorService {
         if (this.coreLibraryService?.isInitialized()) {
             try {
                 fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
-                console.log('✅ Using File Search Store for Drafting:', fileSearchStoreId);
+
             } catch (error) {
                 console.warn('⚠️ Could not get File Search Store for Drafting:', error);
             }
@@ -286,7 +286,7 @@ export class SermonGeneratorService {
         if (!fileSearchStoreId && this.coreLibraryService?.isInitialized()) {
             try {
                 fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
-                console.log('✅ Using Default File Search Store for Preview:', fileSearchStoreId);
+
             } catch (error) {
                 console.warn('⚠️ Could not get File Search Store for Preview:', error);
             }
@@ -336,7 +336,7 @@ export class SermonGeneratorService {
         if (!fileSearchStoreId && this.coreLibraryService?.isInitialized()) {
             try {
                 fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
-                console.log('✅ Using File Search Store for Develop:', fileSearchStoreId);
+
             } catch (error) {
                 console.warn('⚠️ Could not get File Search Store for Develop:', error);
             }
@@ -371,7 +371,7 @@ export class SermonGeneratorService {
 
                 if (storeId) {
                     enrichedContext.fileSearchStoreId = storeId;
-                    console.log(`✅ [Refine] Using File Search Store: ${storeId} (Phase: ${phase || 'unknown'})`);
+
                 }
             } catch (e) {
                 console.warn('⚠️ [Refine] Failed to inject store ID:', e);

@@ -99,11 +99,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             const prompt = buildExegesisPrompt(passage, rules, config);
 
             // 🧪 TESTING: Log prompt to verify hermeneutical method
-            console.log('═══════════════════════════════════════════════════════');
-            console.log('📝 EXEGESIS PROMPT (First 1000 chars):');
-            console.log('═══════════════════════════════════════════════════════');
-            console.log(prompt.substring(0, 1000));
-            console.log('═══════════════════════════════════════════════════════');
+
 
             const model = this.getModel({
                 fileSearchStoreId: config?.fileSearchStoreId,
