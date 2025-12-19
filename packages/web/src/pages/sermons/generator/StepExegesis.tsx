@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useWizard } from './WizardContext';
 import { useTranslation } from '@/i18n';
-import { useFirebase } from '@/context/firebase-context'; // 🎯 NEW
-import { useLibraryContext } from '@/context/library-context';
+import { useFirebase } from '@/context/firebase-context';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { WizardLayout } from './WizardLayout';
-import { PromptSettings } from './PromptSettings';
 import { GenerationProgress } from '@/components/sermons/GenerationProgress';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
 import { sermonGeneratorService } from '@dosfilos/application';
@@ -19,31 +15,17 @@ import { generatorChatService } from '@dosfilos/application';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
 import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel';
-import { PassageQuickView } from '@/components/sermons/PassageQuickView';
-
-interface ExegesisContent {
-    historical: string;
-    literary: string;
-    theological: string;
-    pastoral: string;
-    keywords: any[];
-}
-
-interface StepExegesisProps {
-    passage: string;
-    onNext: () => void;
-    onBack: () => void;
-}
-
+import { BiblePassageSelector } from '@/components/sermons/BiblePassageSelector';
+import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import { useContentHistory } from '@/hooks/useContentHistory';
 
 export function StepExegesis() {
     const { t } = useTranslation('generator');
-    const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving, cacheName, setCacheName } = useWizard();
-    const { user } = useFirebase(); // 🎯 NEW
+    const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
+    const { user } = useFirebase();
     const contentHistory = useContentHistory('exegesis', config?.id);
 
-    // 🎯 NEW: Unified Chat Hook
+    // Unified Chat Hook
     const {
         messages,
         setMessages, // Needed for local state updates (refinement)
@@ -51,8 +33,6 @@ export function StepExegesis() {
         activeContext,
         refreshContext: handleRefreshContext,
         handleSendMessage: sendGeneralMessage,
-        libraryResources,
-        cacheName: activeCacheName
     } = useGeneratorChat({
         phase: 'exegesis',
         content: exegesis,
@@ -62,13 +42,10 @@ export function StepExegesis() {
         selectedResourceIds: []
     });
 
-    // 🎯 NEW: Use LibraryContext for sync/cache
-    const { ensureReady } = useLibraryContext();
-
 
     const [loading, setLoading] = useState(false);
+    const [rightPanelMode, setRightPanelMode] = useState<'chat' | 'bible'>('chat'); // 🎯 Added state
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
-    const [selectedText, setSelectedText] = useState<string>('');
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
     const [isAiProcessing, setIsAiProcessing] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
@@ -92,18 +69,20 @@ export function StepExegesis() {
 
         setLoading(true);
         try {
-            // 🎯 Use LibraryContext for sync/cache
-            console.log('🔍 handleGenerate - Ensuring library context is ready');
-            toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
-            await ensureReady();
-            toast.dismiss('context-prep');
+            // Global Context Only
+            // toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
             
-            const exegesisConfig = config ? config[WorkflowPhase.EXEGESIS] : undefined;
+            // 🎯 MERGE CONFIG: Mix phase-specific Settings with Advanced Global Settings
+            const exegesisConfig = config ? {
+                ...config[WorkflowPhase.EXEGESIS],
+                aiModel: config.advanced?.aiModel, // Inject Global Model
+                temperature: config[WorkflowPhase.EXEGESIS]?.temperature || config.advanced?.globalTemperature // Fallback to global temp
+            } : undefined;
+
             const result = await sermonGeneratorService.generateExegesis(passage, rules, exegesisConfig, user?.uid);
             setExegesis(result.exegesis);
-            if (result.cacheName && setCacheName) {
-                setCacheName(result.cacheName); // 🎯 Update cache name
-            }
+            
+            // toast.dismiss('context-prep');
             toast.success(t('exegesis.success.generated'));
         } catch (error: any) {
             console.error(error);
@@ -166,17 +145,9 @@ export function StepExegesis() {
             try {
                 const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
                 const { getValueByPath, setValueByPath } = await import('@/utils/path-utils');
-                const { GeminiAIService } = await import('@dosfilos/infrastructure');
-
-                // Initialize AI Service
-                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    throw new Error('API key not configured');
-                }
-                const aiService = new GeminiAIService(apiKey);
+                // Initialize AI Service - NOT NEEDED, using sermonGeneratorService
                 
                 // Get the section config
-                // sectionConfig is already declared above
                 const sectionConfig = getSectionConfig('exegesis', expandedSectionId);
                 if (!sectionConfig) {
                     throw new Error('Section configuration not found');
@@ -268,8 +239,13 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
 
                 // Call AI service
-                // apiKey and aiService are already initialized above
-                const aiResponse = await aiService.refineContent(contentString, instruction);
+                // Call AI service
+                // Use global service with proper phase context for Global Store access
+                const aiResponse = await sermonGeneratorService.refineContent(contentString, instruction, { 
+                    phase: 'exegesis',
+                    aiModel: config?.advanced?.aiModel,
+                    temperature: config?.[WorkflowPhase.EXEGESIS]?.temperature || config?.advanced?.globalTemperature
+                });
                 
 
                 
@@ -501,29 +477,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             </div>
 
             <Card className="p-6 space-y-6">
-                <div className="space-y-2">
-                    <Label htmlFor="passage">{t('exegesis.passageLabel')}</Label>
-                    <Input
-                        id="passage"
-                        value={passage}
-                        onChange={(e) => setPassage(e.target.value)}
-                        placeholder={t('exegesis.passagePlaceholder')}
-                        className="text-lg"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleGenerate();
-                            }
-                        }}
-                    />
-                </div>
-
-                <PromptSettings />
+                <BiblePassageSelector 
+                    value={passage}
+                    onChange={setPassage}
+                    onValidPassage={() => {}}
+                />
 
                 <Button
                     onClick={handleGenerate}
                     disabled={loading || !passage.trim()}
-                    className="w-full"
+                    className="w-full mt-6"
                     size="lg"
                 >
                     <Sparkles className="mr-2 h-4 w-4" />
@@ -544,7 +507,14 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         }
                     </p>
                 </div>
-                <PassageQuickView passage={passage} variant="badge" />
+                <Button 
+                    variant="outline" 
+                    className="h-8 gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                    onClick={() => setRightPanelMode(prev => prev === 'bible' ? 'chat' : 'bible')}
+                >
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-xs font-medium">{passage}</span>
+                </Button>
             </div>
 
             {/* Main content area - fixed height for scroll to work */}
@@ -576,27 +546,35 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 </div>
 
                 {/* Right: Resizable Chat Interface */}
+                {/* Right: Resizable Chat Interface or Bible Reader */}
                 <ResizableChatPanel storageKey="exegesisChatWidth">
-                    <ChatInterface
-                        messages={messages}
-                        contentType="exegesis"
-                        content={exegesis}
-                        selectedText=""
-                        onSendMessage={handleSendMessage}
-                        onApplyChange={handleApplyChange}
-                        onContentUpdate={handleContentUpdate}
-                        focusedSection={expandedSectionId}
-                        disableDefaultAI={true}
-                        externalIsLoading={isTotalAiLoading}
-                        showStyleSelector={true}
-                        selectedStyle={selectedStyle}
-                        onStyleChange={(style) => {
-                            setSelectedStyle(style);
-                            generatorChatService.setCoachingStyle(style);
-                        }}
-                        activeContext={activeContext}
-                        onRefreshContext={handleRefreshContext}
-                    />
+                    {rightPanelMode === 'bible' && exegesis ? (
+                         <BibleReaderPanel 
+                            passage={exegesis.passage} 
+                            onClose={() => setRightPanelMode('chat')} 
+                        />
+                    ) : (
+                        <ChatInterface
+                            messages={messages}
+                            contentType="exegesis"
+                            content={exegesis}
+                            selectedText=""
+                            onSendMessage={handleSendMessage}
+                            onApplyChange={handleApplyChange}
+                            onContentUpdate={handleContentUpdate}
+                            focusedSection={expandedSectionId}
+                            disableDefaultAI={true}
+                            externalIsLoading={isTotalAiLoading}
+                            showStyleSelector={true}
+                            selectedStyle={selectedStyle}
+                            onStyleChange={(style) => {
+                                setSelectedStyle(style);
+                                generatorChatService.setCoachingStyle(style);
+                            }}
+                            activeContext={activeContext}
+                            onRefreshContext={handleRefreshContext}
+                        />
+                    )}
                 </ResizableChatPanel>
             </div>
 
@@ -613,7 +591,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
     // Right Panel Content - Only show when no exegesis
     const rightPanel = !exegesis ? (
-        <Card className="p-6 h-full flex flex-col justify-center">
+        <Card className="p-6 h-full flex flex-col justify-start">
             <div className="text-center space-y-4">
                 <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <BookOpen className="h-8 w-8 text-primary" />

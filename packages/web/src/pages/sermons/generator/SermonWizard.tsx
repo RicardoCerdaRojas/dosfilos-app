@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useWizard, WizardProvider } from './WizardContext';
 import { WizardHeader } from './WizardHeader';
@@ -7,18 +7,13 @@ import { StepExegesis } from './StepExegesis';
 import { StepHomiletics } from './StepHomiletics';
 import { StepDraft } from './StepDraft';
 import { SermonsInProgress } from './SermonInProgress';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { sermonService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { SermonEntity } from '@dosfilos/domain';
-import { LibraryContextProvider } from '@/context/library-context';
-import { useTranslation } from '@/i18n';
 
 function WizardContent() {
-    const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, reset, setCacheName, setSelectedResourceIds } = useWizard();
+    const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, reset } = useWizard();
     const { user } = useFirebase();
-    const { t } = useTranslation('generator');
     const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
     const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -52,8 +47,6 @@ function WizardContent() {
                         if (progress.exegesis) setExegesis(progress.exegesis);
                         if (progress.homiletics) setHomiletics(progress.homiletics);
                         if (progress.draft) setDraft(progress.draft);
-                        if (progress.cacheName) setCacheName(progress.cacheName);
-                        if (progress.selectedResourceIds) setSelectedResourceIds(progress.selectedResourceIds);
                         
                         // If no passage, go to step 0 (passage selection)
                         if (!progress.passage) {
@@ -107,8 +100,6 @@ function WizardContent() {
         if (progress.exegesis) setExegesis(progress.exegesis);
         if (progress.homiletics) setHomiletics(progress.homiletics);
         if (progress.draft) setDraft(progress.draft);
-        if (progress.cacheName) setCacheName(progress.cacheName);
-        if (progress.selectedResourceIds) setSelectedResourceIds(progress.selectedResourceIds);
         
         // Restore step if available, otherwise infer from content
         if (progress.currentStep) {
@@ -154,7 +145,8 @@ function WizardContent() {
             const duplicatedSermon = await sermonService.createSermon({
                 userId: user!.uid,
                 title: `${sermon.title || sermon.wizardProgress.passage} (Copia)`,
-                passage: sermon.wizardProgress.passage,
+                // passage: sermon.wizardProgress.passage, // Removed: Not in types
+                content: '',
                 status: 'draft',
                 wizardProgress: {
                     ...sermon.wizardProgress,
@@ -239,48 +231,10 @@ function WizardContent() {
     );
 }
 
-// Wrapper to connect LibraryContextProvider with WizardContext
-function LibraryContextWrapper({ children }: { children: React.ReactNode }) {
-    const { user } = useFirebase();
-    const { selectedResourceIds, config, step } = useWizard();
-    
-    // Map step to phase config key
-    const phaseConfigKey = useMemo(() => {
-        switch (step) {
-            case 1: return 'exegesis';
-            case 2: return 'homiletics';
-            case 3: return 'drafting';
-            default: return 'exegesis';
-        }
-    }, [step]);
-    
-    // Get resource IDs from config based on current phase
-    const effectiveResourceIds = useMemo(() => {
-        // If explicitly selected resources, use those
-        if (selectedResourceIds.length > 0) return selectedResourceIds;
-        
-        // Get from phase-specific config
-        const phaseConfig = config?.[phaseConfigKey as keyof typeof config] as any;
-        return phaseConfig?.libraryDocIds || phaseConfig?.documents?.map((d: any) => d.id) || [];
-    }, [selectedResourceIds, config, phaseConfigKey]);
-    
-    return (
-        <LibraryContextProvider 
-            user={user} 
-            initialResourceIds={effectiveResourceIds}
-            phaseKey={phaseConfigKey}
-        >
-            {children}
-        </LibraryContextProvider>
-    );
-}
-
 export function SermonWizard() {
     return (
         <WizardProvider>
-            <LibraryContextWrapper>
-                <WizardContent />
-            </LibraryContextWrapper>
+            <WizardContent />
         </WizardProvider>
     );
 }

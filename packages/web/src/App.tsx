@@ -26,6 +26,7 @@ import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
 import { GeminiTest } from '@/pages/GeminiTest';
 import { Landing } from '@/pages/Landing';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
+import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { useEffect } from 'react';
 
 // Redirect component for old sermon routes
@@ -124,6 +125,9 @@ function App() {
 
             {/* Settings */}
             <Route path="settings" element={<GeneratorSettings />} />
+            
+            {/* 🎯 Admin Routes - Inside Dashboard Layout */}
+            <Route path="admin/core-library" element={<CoreLibraryAdmin />} />
             
             {/* PoC Routes */}
             <Route path="gemini-test" element={<GeminiTest />} />

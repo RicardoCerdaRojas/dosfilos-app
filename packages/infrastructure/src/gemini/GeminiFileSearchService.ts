@@ -1,17 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GoogleAICacheManager } from "@google/generative-ai/server";
 import { GEMINI_CONFIG } from "./config";
 
 export class GeminiFileSearchService {
     private genAI: GoogleGenerativeAI;
-    private cacheManager: GoogleAICacheManager;
-
     private apiKey: string;
 
     constructor(apiKey: string) {
         this.apiKey = apiKey;
         this.genAI = new GoogleGenerativeAI(apiKey);
-        this.cacheManager = new GoogleAICacheManager(apiKey);
     }
 
     /**
@@ -151,6 +147,144 @@ export class GeminiFileSearchService {
                 console.error('❌ GeminiFileSearch Cache Error:', error);
             }
             throw error;
+        }
+    }
+
+    /**
+     * Create a File Search Store (permanent, no expiration)
+     * Stores don't expire until manually deleted
+     * @param fileUris Array of Gemini file URIs
+     * @param displayName Optional display name for the store
+     * @returns Store name and creation time
+     */
+    async createFileSearchStore(
+        fileUris: string[],
+        displayName?: string
+    ): Promise<{ name: string; createTime: Date }> {
+        console.log(`📚 Creating File Search Store with ${fileUris.length} files...`);
+
+        try {
+            // Step 1: Create empty store
+            console.log('  1️⃣ Creating empty store...');
+            const createResponse = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/fileSearchStores?key=${this.apiKey}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        displayName: displayName || `Store-${Date.now()}`
+                    })
+                }
+            );
+
+            if (!createResponse.ok) {
+                const errorBody = await createResponse.text();
+                console.error('🚨 STORE CREATE ERROR:', errorBody);
+                throw new Error(`Store creation failed (${createResponse.status}): ${errorBody}`);
+            }
+
+            const store = await createResponse.json() as { name: string; createTime: string };
+            console.log(`  ✅ Store created: ${store.name}`);
+
+            // Step 2: Add files to store one by one
+            console.log(`  2️⃣ Adding ${fileUris.length} files to store...`);
+            for (let i = 0; i < fileUris.length; i++) {
+                const fileUri = fileUris[i];
+                console.log(`    Adding file ${i + 1}/${fileUris.length}: ${fileUri}`);
+
+                const addFileResponse = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/${store.name}/files?key=${this.apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            file: fileUri  // Just the file URI
+                        })
+                    }
+                );
+
+                if (!addFileResponse.ok) {
+                    const errorBody = await addFileResponse.text();
+                    console.warn(`    ⚠️ Failed to add file ${fileUri}:`, errorBody);
+                    // Don't throw - continue with other files
+                } else {
+                    console.log(`    ✅ File added`);
+                }
+            }
+
+            console.log('✅ File Search Store fully configured');
+
+            return {
+                name: store.name,
+                createTime: new Date(store.createTime)
+            };
+
+        } catch (error: any) {
+            console.error('❌ File Search Store creation error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a File Search Store
+     * @param storeName The resource name of the store
+     */
+    async deleteFileSearchStore(storeName: string): Promise<void> {
+        console.log(`🗑️ Deleting File Search Store: ${storeName}`);
+
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/${storeName}?key=${this.apiKey}`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`Store deletion failed (${response.status}): ${errorBody}`);
+            }
+
+            console.log('✅ File Search Store deleted');
+        } catch (error: any) {
+            console.error('❌ Store deletion error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * List all File Search Stores in the project
+     * @returns Array of store names
+     */
+    async listFileSearchStores(): Promise<Array<{ name: string; displayName: string; createTime: Date }>> {
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/fileSearchStores?key=${this.apiKey}`,
+                {
+                    method: 'GET'
+                }
+            );
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`List stores failed (${response.status}): ${errorBody}`);
+            }
+
+            const data = await response.json() as { fileSearchStores?: Array<{ name: string; displayName: string; createTime: string }> };
+
+            return (data.fileSearchStores || []).map(store => ({
+                name: store.name,
+                displayName: store.displayName,
+                createTime: new Date(store.createTime)
+            }));
+
+        } catch (error: any) {
+            console.error('❌ List stores error:', error);
+            return [];
         }
     }
 

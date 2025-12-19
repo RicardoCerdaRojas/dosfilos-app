@@ -253,9 +253,11 @@ export function buildChatSystemPrompt(phase: WorkflowPhase, context: any): strin
   const base = "Actúa como un experto teólogo y mentor. Tu objetivo es colaborar con el pastor en una mesa de trabajo.";
 
   // RAG Context Generation (Reusable for all phases)
-  // Check if we have library context either via Cache OR via RAG chunks
+  // Check if we have library context either via Cache, RAG chunks, or File Search Store
   const hasCacheContext = !!context.cacheName;
   const hasRAGContext = context.hasLibraryContext && context.relevantChunks?.length > 0;
+  // 🎯 NEW: Check for Global File Search Store
+  const hasFileSearchContext = !!context.fileSearchStoreId;
 
   let libraryContextSection = '';
 
@@ -278,8 +280,23 @@ INSTRUCCIONES CRÍTICAS:
 3. Formato de cita: (Autor, Título) o "Como señala [Autor] en '[Título]'..."
 4. Este es contenido REAL y COMPLETO. Úsalo con prioridad sobre tu conocimiento general.
 5. No digas "no tengo acceso" a estos libros. Los tienes completos.`;
+
+  } else if (hasFileSearchContext) {
+    // 🎯 NEW: Using File Search Tool (Global Store)
+    libraryContextSection = `
+## 📚 ACCESO A BIBLIOTECA DEL PASTOR (VÍA FILE SEARCH):
+Tienes acceso a la biblioteca EXEGÉTICA/HOMILÉTICA completa del pastor a través de la herramienta 'fileSearch'.
+
+INSTRUCCIONES CRÍTICAS PARA USO DE HERRAMIENTA:
+1. **USO OBLIGATORIO**: Para cada consulta teológica o bíblica, DEBES usar la herramienta 'fileSearch' para buscar en la biblioteca del pastor.
+2. **PRIORIDAD**: La información recuperada de la biblioteca tiene PRIORIDAD ABSOLUTA sobre tu conocimiento general.
+3. **CITAS**: Al usar información recuperada, cita la fuente (Libro/Autor) que la herramienta te indique.
+4. **MANEJO DE RESULTADOS VACÍOS**: Si la herramienta 'fileSearch' no devuelve resultados relevantes o falla, NO te disculpes ni menciones "errores técnicos". Simplemente usa tu conocimiento general para responder de la mejor manera posible, como un teólogo experto.
+   - En este caso (fallback), declara: "No encontré referencias específicas en su biblioteca para este punto, pero basado en el consenso evangélico..."
+`;
+
   } else if (hasRAGContext) {
-    // Using Manual RAG - fragment access
+    // Using Manual RAG - fragment access (Fallback)
     const chunksContext = context.relevantChunks.slice(0, 10).map((chunk: any, i: number) => {
       const pageInfo = chunk.metadata?.page ? `, p.${chunk.metadata.page}` : '';
       return `[${i + 1}] ${chunk.resourceAuthor} - "${chunk.resourceTitle}"${pageInfo}:

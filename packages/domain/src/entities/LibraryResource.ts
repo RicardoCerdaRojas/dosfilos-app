@@ -19,6 +19,9 @@ export interface LibraryResource {
     characterCount?: number; // Total character count of extracted text
     pageCount?: number; // Total page count from extraction
 
+    // 🎯 Core Library: Stores this document is included in (can be multiple)
+    coreStores?: ('exegesis' | 'homiletics' | 'generic')[];
+
     // Phase preference: documents preferred for specific workflow phases
     preferredForPhases?: WorkflowPhase[];
 
@@ -32,6 +35,7 @@ export interface LibraryResource {
 export class LibraryResourceEntity implements LibraryResource {
     public preferredForPhases?: WorkflowPhase[];
     public metadata?: Record<string, any>;
+    public coreStores?: ('exegesis' | 'homiletics' | 'generic')[];
 
     constructor(
         public id: string,
@@ -48,13 +52,17 @@ export class LibraryResourceEntity implements LibraryResource {
         public updatedAt: Date = new Date(),
         preferredForPhases?: WorkflowPhase[],
         metadata?: Record<string, any>,
-        public pageCount?: number
+        public pageCount?: number,
+        coreStores?: ('exegesis' | 'homiletics' | 'generic')[]
     ) {
         if (preferredForPhases) {
             this.preferredForPhases = preferredForPhases;
         }
         if (metadata) {
             this.metadata = metadata;
+        }
+        if (coreStores) {
+            this.coreStores = coreStores;
         }
         this.validate();
     }

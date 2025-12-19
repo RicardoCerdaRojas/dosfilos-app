@@ -99,7 +99,7 @@
         "contextActive": "Contexto Experto Activo: {{count}} documentos cargados",
         "passageLabel": "Pasaje Bíblico",
         "passagePlaceholder": "Ej: 1 Pedro 2:1-10",
-        "generateBtn": "Generar Estudio Exegético",
+        "generateBtn": "Iniciar Estudio Exegético",
         "analysisTitle": "Análisis Exegético: {{passage}}",
         "refiningStatus": "Refinando sección. Usa el chat para hacer cambios.",
         "defaultStatus": "Haz clic en \"Refinar\" para expandir una sección, o usa el chat para consultas generales.",

@@ -14,20 +14,21 @@ import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel'
 
 import { useContentHistory } from '@/hooks/useContentHistory';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
-import { useLibraryContext } from '@/context/library-context';
 import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
-import { PassageQuickView } from '@/components/sermons/PassageQuickView';
+// import { PassageQuickView } from '@/components/sermons/PassageQuickView';
+import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
+import { BookOpen } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 export function StepDraft() {
     const { t } = useTranslation('generator');
     const navigate = useNavigate();
     const { user } = useFirebase();
-    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, selectedResourceIds, cacheName, setCacheName, sermonId, reset, saving } = useWizard();
+    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, reset, saving } = useWizard();
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     const {
@@ -37,24 +38,12 @@ export function StepDraft() {
         activeContext,
         refreshContext: handleRefreshContext,
         handleSendMessage: sendGeneralMessage,
-        libraryResources,
-
     } = useGeneratorChat({
         phase: 'sermon',
         content: draft,
         config,
-        user,
-        initialCacheName: cacheName,
-        selectedResourceIds,
-        onCacheUpdate: setCacheName
+        user
     });
-
-    // 🎯 NEW: Use LibraryContext for sync/cache
-    const { 
-        ensureReady, 
-        syncExpiredDocuments: syncDocuments, 
-        isLoading: isSyncingDocuments 
-    } = useLibraryContext();
 
     const [isAiProcessing, setIsAiProcessing] = useState(false);
     
@@ -63,6 +52,7 @@ export function StepDraft() {
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
     const [showPreview, setShowPreview] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
+    const [rightPanelMode, setRightPanelMode] = useState<'chat' | 'bible'>('chat');
 
     // Combine loading states
     const isTotalAiLoading = isAiProcessing || isChatLoading;
@@ -88,35 +78,21 @@ export function StepDraft() {
 
         setLoading(true);
         try {
-            // 🎯 Use LibraryContext for sync/cache
-            console.log('🔍 handleGenerate (Draft) - Ensuring library context is ready');
-            toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
-            await ensureReady();
-            toast.dismiss('context-prep');
+            console.log('🔍 handleGenerate (Draft) - Generating via Global Context');
             
             const baseConfig = config ? config[WorkflowPhase.DRAFTING] : undefined;
             
-            // Merge session config with global config
+            // Just pass base config, global context handles everything else
             const draftConfig = baseConfig ? {
                 ...baseConfig,
-                libraryDocIds: selectedResourceIds.length > 0 
-                    ? selectedResourceIds 
-                    : baseConfig.documents?.map(d => d.id).filter(Boolean)
+                aiModel: config?.advanced?.aiModel,
+                temperature: config?.[WorkflowPhase.DRAFTING]?.temperature || config?.advanced?.globalTemperature
             } : undefined;
-
-            // 🎯 PLAN C: Capture cacheName from service
-            const { draft: result, cacheName: newCacheName } = 
+            
+            const { draft: result } = 
                 await sermonGeneratorService.generateSermonDraft(homiletics, rules, draftConfig, user?.uid);
             
             setDraft(result);
-            
-            // Save cacheName for future chat interactions
-            if (newCacheName) {
-                setCacheName(newCacheName);
-
-            }
-            
-
             
             toast.success(t('drafting.success.generated'));
         } catch (error: any) {
@@ -251,14 +227,7 @@ ${draft.callToAction ? `
             try {
                 const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
                 const { getValueByPath, setValueByPath } = await import('@/utils/path-utils');
-                const { GeminiAIService } = await import('@dosfilos/infrastructure');
-
-                // Initialize AI Service
-                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    throw new Error('API key not configured');
-                }
-                const aiService = new GeminiAIService(apiKey);
+                // Initialize AI Service - NOT NEEDED, using sermonGeneratorService
                 
                 const sectionConfig = getSectionConfig('sermon', expandedSectionId);
                 if (!sectionConfig) {
@@ -307,58 +276,10 @@ FORMATO: Usa markdown para mejor legibilidad:
                     }
                 };
                 
-                // Search library for relevant context if resources are available
-                let libraryContextStr = '';
-                let refinementSources: Array<{author: string; title: string; page?: number; snippet: string}> = [];
-                if (libraryResources.length > 0) {
-                    try {
-                        const { DocumentProcessingService } = await import('@dosfilos/infrastructure');
-                        const docProcessor = new DocumentProcessingService(apiKey);
-                        
-                        const searchQuery = `${message} ${sectionConfig.label} ${passage || ''} teología comentario bíblico`;
-                        const resourceIds = libraryResources.map(r => r.id);
-                        
-                        console.log(`📚 [Refinement] Searching ${resourceIds.length} library resources...`);
-                        const searchResults = await docProcessor.searchRelevantChunks(
-                            searchQuery,
-                            resourceIds,
-                            8 // Increased to 8 chunks for drafting
-                        );
-                        
-                        if (searchResults.length > 0) {
-                            const chunks = searchResults.map(r => r.chunk);
-                            console.log(`✅ [Refinement] Found ${chunks.length} relevant chunks`);
-                            
-                            // Capture sources for message display
-                            refinementSources = chunks.map(chunk => ({
-                                author: chunk.resourceAuthor,
-                                title: chunk.resourceTitle,
-                                page: chunk.metadata.page,
-                                snippet: chunk.text.substring(0, 150) + '...'
-                            }));
-                            
-                            const chunksText = chunks.map((chunk, i) => {
-                                const pageInfo = chunk.metadata.page ? `, p.${chunk.metadata.page}` : '';
-                                return `[${i + 1}] "${chunk.resourceTitle}" (${chunk.resourceAuthor}${pageInfo}):\n"${chunk.text.substring(0, 500)}..."`;
-                            }).join('\n\n');
-                            
-                            libraryContextStr = `
-
-RECURSOS DE TU BIBLIOTECA (USO OBLIGATORIO SI ES RELEVANTE):
-Usa esta información de tus recursos teológicos para enriquecer el contenido.
-
-${chunksText}
-
-INSTRUCCIONES DE CITACIÓN (CRÍTICO):
-- Si utilizas ideas, frases o conceptos de estos recursos, DEBES citar la fuente explícitamente en el texto.
-- Formato de cita preferido: (Autor, p.XX) o "Como dice Autor...".
-- NO inventes citas. Solo usa las proporcionadas arriba.
-`;
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ [Refinement] Could not search library:', error);
-                    }
-                }
+                
+                // Library usage for refinement is now handled by the global context
+                const refinementSources: Array<{author: string; title: string; page?: number; snippet: string}> = [];
+                const libraryContextStr = '';
                 
                 // Build sermon context for AI (draft step has full context)
                 const homileticalApproach = homiletics?.homileticalApproach;
@@ -394,7 +315,13 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
 
                 // Call AI service
-                const aiResponse = await aiService.refineContent(contentString, instruction);
+                // Call AI service
+                // Use global service with proper phase context for Global Store access
+                const aiResponse = await sermonGeneratorService.refineContent(contentString, instruction, { 
+                    phase: 'sermon',
+                    aiModel: config?.advanced?.aiModel,
+                    temperature: config?.[WorkflowPhase.DRAFTING]?.temperature || config?.advanced?.globalTemperature
+                });
                 
                 // Parse the refined content based on the original type
                 let parsedContent;
@@ -688,7 +615,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <PassageQuickView passage={passage} variant="badge" />
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                                onClick={() => setRightPanelMode(prev => prev === 'bible' ? 'chat' : 'bible')}
+                            >
+                                <BookOpen className="h-4 w-4" />
+                                <span className="text-xs font-medium">{passage}</span>
+                            </Button>
+
                             <Button
                                 onClick={handleGenerate}
                                 variant="outline"
@@ -724,7 +660,6 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                             }}
                             onSectionUndo={handleUndo}
                             onSectionRedo={handleRedo}
-                            canUndo={(sectionId) => contentHistory.canUndo(sectionId)}
                             canRedo={(sectionId) => contentHistory.canRedo(sectionId)}
                             getSectionVersions={getSectionVersions}
                             getCurrentVersionId={getCurrentVersionId}
@@ -746,7 +681,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                                 homileticalProposition: homiletics.homileticalProposition,
                                                 tone: rules.tone,
                                                 customInstructions: rules.customInstructions,
-                                                libraryResources: libraryResources
+                                                libraryResources: [],
+                                                aiModel: config?.advanced?.aiModel,
+                                                temperature: config?.[WorkflowPhase.DRAFTING]?.temperature || config?.advanced?.globalTemperature
                                             }
                                         );
                                         
@@ -783,28 +720,35 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
                 {/* Right: Resizable Chat Interface */}
                 <ResizableChatPanel storageKey="draftChatWidth">
-                    <ChatInterface
-                        messages={messages}
-                        contentType="sermon"
-                        content={draft}
-                        selectedText=""
-                        onSendMessage={handleSendMessage}
-                        onApplyChange={handleApplyChange}
-                        onContentUpdate={handleContentUpdate}
-                        focusedSection={expandedSectionId}
-                        disableDefaultAI={true}
-                        externalIsLoading={isTotalAiLoading}
-                        showStyleSelector={true}
-                        selectedStyle={selectedStyle}
-                        onStyleChange={(style) => {
-                            setSelectedStyle(style);
-                            generatorChatService.setCoachingStyle(style);
-                        }}
-                        activeContext={activeContext}
-                        onRefreshContext={handleRefreshContext}
-                        onSyncDocuments={syncDocuments}
-                        isSyncingDocuments={isSyncingDocuments}
-                    />
+                    {rightPanelMode === 'bible' && exegesis ? (
+                        <BibleReaderPanel 
+                            passage={exegesis.passage} 
+                            onClose={() => setRightPanelMode('chat')} 
+                        />
+                    ) : (
+                        <ChatInterface
+                            messages={messages}
+                            contentType="sermon"
+                            content={draft}
+                            selectedText=""
+                            onSendMessage={handleSendMessage}
+                            onApplyChange={handleApplyChange}
+                            onContentUpdate={handleContentUpdate}
+                            focusedSection={expandedSectionId}
+                            disableDefaultAI={true}
+                            externalIsLoading={isTotalAiLoading}
+                            showStyleSelector={true}
+                            selectedStyle={selectedStyle}
+                            onStyleChange={(style) => {
+                                setSelectedStyle(style);
+                                generatorChatService.setCoachingStyle(style);
+                            }}
+                            activeContext={activeContext}
+                            onRefreshContext={handleRefreshContext}
+                            onSyncDocuments={() => Promise.resolve()}
+                            isSyncingDocuments={false}
+                        />
+                    )}
                 </ResizableChatPanel>
             </div>
 
@@ -859,7 +803,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
     // Right Panel Content - Only show when no draft
     const rightPanel = !draft ? (
-        <Card className="p-6 h-full flex flex-col justify-center">
+        <Card className="p-6 h-full flex flex-col justify-start">
             <div className="text-center space-y-4">
                 <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <FileText className="h-8 w-8 text-primary" />

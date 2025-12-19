@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { ResourceCard } from './ResourceCard';
 import { EditResourceModal } from './EditResourceModal';
 import { PhasePreferenceModal } from './PhasePreferenceModal';
+import { ConfigureCoreStoresModal } from './ConfigureCoreStoresModal';
 import { cn } from '@/lib/utils';
 
 type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
@@ -26,8 +27,11 @@ interface IndexingProgress {
     currentTitle: string;
 }
 
+const ADMIN_EMAIL = 'rdocerda@gmail.com';
+
 export function LibraryManager() {
     const { user } = useFirebase();
+    const isAdmin = user?.email === ADMIN_EMAIL;
     const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
     const [categories, setCategories] = useState<LibraryCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,6 +61,8 @@ export function LibraryManager() {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [phaseModalOpen, setPhaseModalOpen] = useState(false);
     const [resourceForPhases, setResourceForPhases] = useState<LibraryResourceEntity | null>(null);
+    const [coreStoresModalOpen, setCoreStoresModalOpen] = useState(false);
+    const [resourceForCoreStores, setResourceForCoreStores] = useState<LibraryResourceEntity | null>(null);
 
     // 50MB limit for optimal Gemini processing
     const MAX_OPTIMAL_SIZE_MB = 50;
@@ -190,7 +196,13 @@ export function LibraryManager() {
         setEditModalOpen(true);
     };
 
-    const handleSaveEdit = async (id: string, updates: { title: string; author: string; type: ResourceType }) => {
+    const handleSaveEdit = async (id: string, updates: { 
+        title: string; 
+        author: string; 
+        type: ResourceType;
+        isCore?: boolean;
+        coreContext?: 'exegesis' | 'homiletics' | 'generic';
+    }) => {
         try {
             await libraryService.updateResource(id, updates);
             toast.success('Recurso actualizado');
@@ -344,6 +356,18 @@ export function LibraryManager() {
         setResources(prev => 
             prev.map(r => r.id === updatedResource.id ? updatedResource : r)
         );
+    };
+    
+    const handleCoreStoresUpdate = (updatedResource: LibraryResourceEntity) => {
+        // Update local state with new Core Library stores
+        setResources(prev => 
+            prev.map(r => r.id === updatedResource.id ? updatedResource : r)
+        );
+    };
+    
+    const handleSetCoreStores = (resource: LibraryResourceEntity) => {
+        setResourceForCoreStores(resource);
+        setCoreStoresModalOpen(true);
     };
 
     const unindexedCount = Object.values(indexStatus).filter(s => s === 'not-indexed').length;
@@ -553,6 +577,7 @@ export function LibraryManager() {
                             onReindex={() => handleReindexResource(resource)}
                             onPreview={() => handlePreview(resource)}
                             onSetPhases={() => handleSetPhases(resource)}
+                            onConfigureCoreStores={isAdmin ? () => handleSetCoreStores(resource) : undefined}
                             onSync={() => handleSyncResource(resource)}
                             isSyncing={syncingResource === resource.id}
                         />
@@ -568,6 +593,16 @@ export function LibraryManager() {
             onOpenChange={setEditModalOpen}
             onSave={handleSaveEdit}
         />
+
+        {/* Core Stores Modal */}
+        {resourceForCoreStores && (
+            <ConfigureCoreStoresModal
+                resource={resourceForCoreStores}
+                open={coreStoresModalOpen}
+                onOpenChange={setCoreStoresModalOpen}
+                onUpdate={handleCoreStoresUpdate}
+            />
+        )}
 
         {/* Phase Preference Modal */}
         {resourceForPhases && (

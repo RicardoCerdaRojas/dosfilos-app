@@ -99,7 +99,7 @@
         "contextActive": "Expert Context Active: {{count}} documents loaded",
         "passageLabel": "Biblical Passage",
         "passagePlaceholder": "E.g. 1 Peter 2:1-10",
-        "generateBtn": "Generate Exegetical Study",
+        "generateBtn": "Start Exegetical Study",
         "analysisTitle": "Exegetical Analysis: {{passage}}",
         "refiningStatus": "Refining section. Use chat to make changes.",
         "defaultStatus": "Click 'Refine' to expand a section, or use chat for general queries.",

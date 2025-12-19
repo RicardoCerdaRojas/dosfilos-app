@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database 
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -63,6 +63,7 @@ export function AppSidebar() {
 
   const adminNavigation = [
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
+    { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
   ];
 
   // Subscribe to new leads count for admin
