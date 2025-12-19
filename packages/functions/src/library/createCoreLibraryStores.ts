@@ -22,7 +22,8 @@ export const createCoreLibraryStores = onCall(
     {
         cors: true,
         memory: '1GiB',
-        timeoutSeconds: 300
+        timeoutSeconds: 300,
+        secrets: ['GEMINI_API_KEY']
     },
     async (request) => {
         const apiKey = process.env.GEMINI_API_KEY;
