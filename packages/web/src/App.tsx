@@ -26,6 +26,7 @@ import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
 import { GeminiTest } from '@/pages/GeminiTest';
 import { Landing } from '@/pages/Landing';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
+import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { useEffect } from 'react';
 
 // Redirect component for old sermon routes
@@ -84,6 +85,12 @@ function App() {
           <Route path="/admin/leads" element={
             <ProtectedRoute>
               <AdminLeads />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/core-library" element={
+            <ProtectedRoute>
+              <CoreLibraryAdmin />
             </ProtectedRoute>
           } />
 

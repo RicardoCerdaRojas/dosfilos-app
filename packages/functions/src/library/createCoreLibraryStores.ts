@@ -32,7 +32,7 @@ export const createCoreLibraryStores = onCall(
         }
 
         // Only admin can call this
-        if (!request.auth || request.auth.token.email !== 'rdocerda@gmail.com') {
+        if (!request.auth || request.auth.token?.email !== 'rdocerda@gmail.com') {
             throw new HttpsError('permission-denied', 'Only admin can create core library stores');
         }
 
