@@ -8,6 +8,7 @@ export { extractPdfText } from './library/extractPdfText';
 export { extractPdfWithGemini } from './library/extractPdfWithGemini';
 export { createGeminiStore } from './library/createGeminiStore';
 export { syncResourceToGemini } from './library/syncResourceToGemini';
+export { createCoreLibraryStores } from './library/createCoreLibraryStores';
 
 // Export Stripe functions
 export { createCheckoutSession } from './stripe/createCheckoutSession';
