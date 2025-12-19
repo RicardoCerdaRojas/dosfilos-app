@@ -94,6 +94,14 @@ export class CoreLibraryService implements ICoreLibraryService {
         return this.initialized;
     }
 
+    /**
+     * Get current config (without trying to create stores)
+     * Used for loading existing config without triggering creation
+     */
+    async getConfig(): Promise<CoreLibraryStoresConfig | null> {
+        return await this.loadConfig();
+    }
+
     async recreateStores(): Promise<void> {
         console.log('🔄 CoreLibraryService: Recreating all stores...');
 
