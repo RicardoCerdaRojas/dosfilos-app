@@ -61,11 +61,11 @@ export interface FileSearchFileMetadata {
  * Configuration for core library stores (stored in Firestore)
  */
 export interface CoreLibraryStoresConfig {
-    /** Store IDs */
+    /** Store IDs (can be null if store not created yet) */
     stores: {
-        exegesis: string;
-        homiletics: string;
-        generic: string;
+        exegesis: string | null;
+        homiletics: string | null;
+        generic: string | null;
     };
 
     /** Files metadata */

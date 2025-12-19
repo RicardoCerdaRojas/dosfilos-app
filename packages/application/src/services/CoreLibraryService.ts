@@ -248,7 +248,7 @@ export class CoreLibraryService implements ICoreLibraryService {
 
         // Save config
         await this.saveConfig({
-            stores: this.stores as any,
+            stores: this.stores,
             files: {
                 exegesis: exegesisFiles,
                 homiletics: homileticsFiles,
