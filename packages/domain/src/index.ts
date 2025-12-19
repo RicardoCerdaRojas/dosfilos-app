@@ -11,6 +11,8 @@ export * from './entities/LibraryCategory';
 export * from './entities/SermonGenerator';
 export * from './entities/HomileticalApproach';  // 🎯 NEW
 export * from './entities/DocumentChunk';
+export * from './entities/FileSearchStoreEntity'; // 🎯 File Search Stores
+
 
 // Repositories
 export * from './repositories/ISermonRepository';
@@ -31,6 +33,8 @@ export * from './services/IPlanGenerator';
 export * from './services/IEmbeddingService';
 export * from './services/ITextExtractor';
 export * from './services/ICacheService';
+export * from './ports/IFileSearchService'; // 🎯 File Search ports
+
 
 // Workflow
 export * from './entities/SermonWorkflow';

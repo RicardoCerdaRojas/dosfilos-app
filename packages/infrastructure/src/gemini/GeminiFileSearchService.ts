@@ -155,6 +155,113 @@ export class GeminiFileSearchService {
     }
 
     /**
+     * Create a File Search Store (permanent, no expiration)
+     * Stores don't expire until manually deleted
+     * @param fileUris Array of Gemini file URIs
+     * @param displayName Optional display name for the store
+     * @returns Store name and creation time
+     */
+    async createFileSearchStore(
+        fileUris: string[],
+        displayName?: string
+    ): Promise<{ name: string; createTime: Date }> {
+        console.log(`📚 Creating File Search Store with ${fileUris.length} files...`);
+
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/fileSearchStores?key=${this.apiKey}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        displayName: displayName || `Store-${Date.now()}`,
+                        fileUris
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.error('🚨 FILE SEARCH STORE CREATE ERROR:', errorBody);
+                throw new Error(`File Search Store creation failed (${response.status}): ${errorBody}`);
+            }
+
+            const store = await response.json() as { name: string; createTime: string };
+            console.log('✅ File Search Store created:', store.name);
+
+            return {
+                name: store.name,
+                createTime: new Date(store.createTime)
+            };
+
+        } catch (error: any) {
+            console.error('❌ File Search Store creation error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a File Search Store
+     * @param storeName The resource name of the store
+     */
+    async deleteFileSearchStore(storeName: string): Promise<void> {
+        console.log(`🗑️ Deleting File Search Store: ${storeName}`);
+
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/${storeName}?key=${this.apiKey}`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`Store deletion failed (${response.status}): ${errorBody}`);
+            }
+
+            console.log('✅ File Search Store deleted');
+        } catch (error: any) {
+            console.error('❌ Store deletion error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * List all File Search Stores in the project
+     * @returns Array of store names
+     */
+    async listFileSearchStores(): Promise<Array<{ name: string; displayName: string; createTime: Date }>> {
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/fileSearchStores?key=${this.apiKey}`,
+                {
+                    method: 'GET'
+                }
+            );
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`List stores failed (${response.status}): ${errorBody}`);
+            }
+
+            const data = await response.json() as { fileSearchStores?: Array<{ name: string; displayName: string; createTime: string }> };
+
+            return (data.fileSearchStores || []).map(store => ({
+                name: store.name,
+                displayName: store.displayName,
+                createTime: new Date(store.createTime)
+            }));
+
+        } catch (error: any) {
+            console.error('❌ List stores error:', error);
+            return [];
+        }
+    }
+
+    /**
      * Sends a message to Gemini using a specific File Search Store for context.
      * @param message The user's query
      * @param storeName The resource name of the File Search Store (e.g. "fileSearchStores/...")
