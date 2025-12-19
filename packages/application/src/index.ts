@@ -13,6 +13,8 @@ export * from './services/WorkflowService';
 export * from './services/ConfigService';
 export * from './services/ContentRefinementService';
 export * from './services/RAGService';
+export * from './services/CoreLibraryService'; // 🎯 Core Library with File Search Stores
+
 
 // Subscription services
 export * from './services/AuthorizationService';
