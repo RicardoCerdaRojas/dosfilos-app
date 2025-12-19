@@ -35,7 +35,8 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         });
     }
 
-    private getModel(cacheName?: string): GenerativeModel {
+    private getModel(cacheName?: string, fileSearchStoreId?: string): GenerativeModel {
+        // Priority 1: Use cache if available (Context Caching)
         if (cacheName) {
             return this.genAI.getGenerativeModel({
                 model: GEMINI_CONFIG.MODEL_NAME,
@@ -45,6 +46,23 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 safetySettings: this.getSafetySettings()
             });
         }
+
+        // Priority 2: Use File Search Store (Core Library)
+        if (fileSearchStoreId) {
+            return this.genAI.getGenerativeModel({
+                model: GEMINI_CONFIG.MODEL_NAME,
+                tools: [{
+                    // @ts-ignore - File Search tool
+                    fileSearch: {
+                        fileSearchStoreNames: [fileSearchStoreId]
+                    }
+                }],
+                generationConfig: GEMINI_CONFIG.GENERATION_CONFIG,
+                safetySettings: this.getSafetySettings()
+            });
+        }
+
+        // Priority 3: Default model (no cache, no file search)
         return this.model;
     }
 
@@ -96,7 +114,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             console.log(prompt.substring(0, 1000));
             console.log('═══════════════════════════════════════════════════════');
 
-            const model = this.getModel(config?.cacheName);
+            const model = this.getModel(config?.cacheName, config?.fileSearchStoreId);
             const content = this.prepareContent(prompt, config); // 🎯 Use prepared content
             const result = await model.generateContent(content);
             const response = result.response;
@@ -140,7 +158,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 .withRules(rules)
                 .build();
 
-            const model = this.getModel(_config?.cacheName);
+            const model = this.getModel(_config?.cacheName, _config?.fileSearchStoreId);
             const content = this.prepareContent(prompt, _config); // 🎯 Use prepared content
             const result = await model.generateContent(content);
             const response = result.response;
@@ -195,7 +213,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     ): Promise<SermonContent> {
         try {
             const prompt = buildSermonDraftPrompt(analysis, rules);
-            const model = this.getModel(_config?.cacheName);
+            const model = this.getModel(_config?.cacheName, _config?.fileSearchStoreId);
             const content = this.prepareContent(prompt, _config); // 🎯 Use prepared content
             const result = await model.generateContent(content);
             const response = result.response;
