@@ -27,10 +27,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLi
 
 import { useSearchParams } from 'react-router-dom';
 import { LibrarySettings } from './LibrarySettings';
-import { LibraryDocumentSelector } from '@/components/settings/LibraryDocumentSelector';
+import { useAuthorization } from '@/hooks/useAuthorization'; // 🎯 NEW
+// Legacy selector removed
+// import { LibraryDocumentSelector } from '@/components/settings/LibraryDocumentSelector';
 
 export function SettingsPage() {
     const { user } = useFirebase();
+    const { isAdmin } = useAuthorization(); // 🎯 NEW: Authorization check
     const configRepository = new FirebaseConfigRepository();
     const configService = new ConfigService(configRepository);
     const [isLoading, setIsLoading] = useState(true);
@@ -71,8 +74,10 @@ export function SettingsPage() {
         // Series Planner config (NEW)
         seriesPlanner: {
             basePrompt: '',
-            customInstructions: '',
+            userPrompts: [] as string[],
+            documents: [] as any[],
             libraryDocIds: [] as string[],
+            fileSearchStoreId: 'homiletics', // Default
             temperature: 0.7
         },
         // Advanced settings (NEW)
@@ -118,6 +123,8 @@ export function SettingsPage() {
                 seriesPlanner: {
                     ...prev.seriesPlanner,
                     ...(userConfig as any).seriesPlanner,
+                    userPrompts: (userConfig as any).seriesPlanner?.userPrompts || [],
+                    // Backwards compatibility if needed, or just init empty
                     libraryDocIds: (userConfig as any).seriesPlanner?.libraryDocIds || []
                 },
                 advanced: {
@@ -177,12 +184,8 @@ export function SettingsPage() {
                 [WorkflowPhase.HOMILETICS]: cleanPhase(config[WorkflowPhase.HOMILETICS]),
                 [WorkflowPhase.DRAFTING]: cleanPhase(config[WorkflowPhase.DRAFTING]),
                 seriesPlanner: {
-                    basePrompt: String(config.seriesPlanner?.basePrompt || ''),
-                    customInstructions: String(config.seriesPlanner?.customInstructions || ''),
-                    libraryDocIds: Array.isArray(config.seriesPlanner?.libraryDocIds) 
-                        ? config.seriesPlanner.libraryDocIds.filter((id: any) => typeof id === 'string' && id.length > 0)
-                        : [],
-                    temperature: Number(config.seriesPlanner?.temperature) || 0.7
+                    ...cleanPhase(config.seriesPlanner),
+                    fileSearchStoreId: (config.seriesPlanner as any).fileSearchStoreId || 'homiletics'
                 },
                 advanced: {
                     aiModel: String(config.advanced?.aiModel || 'gemini-2.5-flash'),
@@ -209,58 +212,8 @@ export function SettingsPage() {
 
     const storageService = new FirebaseStorageService();
 
-    const handleFileUpload = async (phase: Exclude<WorkflowPhase, WorkflowPhase.COMPLETED>, e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-
-        setIsLoading(true);
-        try {
-            const newDocs: any[] = [];
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files.item(i);
-                if (!file) continue;
-                let content = '';
-                
-                if (file.type === 'application/pdf') {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    let fullText = '';
-                    
-                    for (let j = 1; j <= pdf.numPages; j++) {
-                        const page = await pdf.getPage(j);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map((item: any) => item.str).join(' ');
-                        fullText += pageText + '\n';
-                    }
-                    content = fullText;
-                } else {
-                    content = await file.text();
-                }
-
-                const docId = crypto.randomUUID();
-                const storagePath = `users/${user?.uid}/configs/${(config as any).id}/docs/${docId}.txt`;
-                await storageService.uploadText(storagePath, content);
-
-                newDocs.push({
-                    id: docId,
-                    name: file.name,
-                    content: content.substring(0, 1000) + '...',
-                    storagePath: storagePath,
-                    type: file.type
-                });
-            }
-
-            updatePhaseConfig(phase, 'documents', [...config[phase].documents, ...newDocs]);
-            toast.success(`${newDocs.length} documento(s) agregado(s) correctamente`);
-        } catch (error) {
-            console.error('Error reading files:', error);
-            toast.error('Error al leer los archivos');
-        } finally {
-            setIsLoading(false);
-            e.target.value = '';
-        }
-    };
+    // Legacy file upload removed
+    // const handleFileUpload = async ...
 
     const removeDocument = (phase: Exclude<WorkflowPhase, WorkflowPhase.COMPLETED>, docId: string) => {
         const newDocs = config[phase].documents.filter((d: any) => d.id !== docId);
@@ -287,15 +240,39 @@ export function SettingsPage() {
                 </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pt-4 space-y-6">
-                {/* Library Documents Selector - NEW */}
-                <LibraryDocumentSelector
-                    phase={phase}
-                    phaseName={label}
-                    selectedDocIds={(config as any)[phase]?.libraryDocIds || []}
-                    onChange={(docIds) => updatePhaseConfig(phase, 'libraryDocIds', docIds)}
-                />
 
-                {/* Legacy Documents - show if any exist */}
+
+                {/* File Search Store Selector - ADMIN ONLY */}
+                {isAdmin && (
+                    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <Layers className="h-4 w-4 text-blue-600" />
+                                <Label>Base de Conocimiento (Store)</Label>
+                            </div>
+                            <Select
+                                value={config[phase].fileSearchStoreId || (
+                                    phase === WorkflowPhase.EXEGESIS ? 'exegesis' : 'homiletics'
+                                )}
+                                onValueChange={(value) => updatePhaseConfig(phase, 'fileSearchStoreId', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un Store" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="homiletics">Biblioteca de Homilética</SelectItem>
+                                    <SelectItem value="exegesis">Biblioteca de Exégesis</SelectItem>
+                                    <SelectItem value="generic">Biblioteca General</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                El asistente usará los documentos de esta base de conocimiento.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Legacy Documents - show if any exist - ADMIN ONLY? Or keep for data cleanup? Keeping for now but they should be empty */}
                 {(config as any)[phase]?.documents?.length > 0 && (
                     <div className="space-y-2">
                         <Label className="text-muted-foreground">Documentos Legacy (migrar a Biblioteca)</Label>
@@ -320,7 +297,7 @@ export function SettingsPage() {
                     </div>
                 )}
 
-                {/* Base Prompt */}
+                {/* Base Prompt - PERSONAL (Allowed for everyone) */}
                 <div className="space-y-2">
                     <Label>Prompt Base (Persona del Experto)</Label>
                     <ExpandableTextarea 
@@ -332,7 +309,7 @@ export function SettingsPage() {
                     />
                 </div>
 
-                {/* User Prompts */}
+                {/* User Prompts - PERSONAL (Allowed for everyone) */}
                 <div className="space-y-2">
                     <Label>Instrucciones Adicionales</Label>
                     <div className="space-y-2">
@@ -365,18 +342,20 @@ export function SettingsPage() {
                     </div>
                 </div>
 
-                {/* Temperature */}
-                <div className="space-y-3">
-                    <div className="flex justify-between">
-                        <Label>Creatividad (Temperatura)</Label>
-                        <span className="text-sm text-muted-foreground">{config[phase].temperature}</span>
+                {/* Temperature - ADMIN ONLY */}
+                {isAdmin && (
+                    <div className="space-y-3">
+                        <div className="flex justify-between">
+                            <Label>Creatividad (Temperatura)</Label>
+                            <span className="text-sm text-muted-foreground">{config[phase].temperature}</span>
+                        </div>
+                        <Slider 
+                            value={[config[phase].temperature]} 
+                            max={1} step={0.1}
+                            onValueChange={([val]) => updatePhaseConfig(phase, 'temperature', val ?? 0.5)}
+                        />
                     </div>
-                    <Slider 
-                        value={[config[phase].temperature]} 
-                        max={1} step={0.1}
-                        onValueChange={([val]) => updatePhaseConfig(phase, 'temperature', val ?? 0.5)}
-                    />
-                </div>
+                )}
             </AccordionContent>
         </AccordionItem>
     );
@@ -411,54 +390,60 @@ export function SettingsPage() {
                         <Layers className="h-4 w-4" /> Sermones
                     </TabsTrigger>
                     <TabsTrigger value="series" className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 h-12 gap-2">
-                        <Calendar className="h-4 w-4" /> Series
+                        <Calendar className="h-4 w-4" /> Planificador Predicaciones
                     </TabsTrigger>
-                    <TabsTrigger value="library" className="data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 h-12 gap-2">
-                        <Library className="h-4 w-4" /> Biblioteca
-                    </TabsTrigger>
-                    <TabsTrigger value="advanced" className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700 h-12 gap-2">
-                        <Cog className="h-4 w-4" /> Avanzado
-                    </TabsTrigger>
+                    {isAdmin && (
+                        <TabsTrigger value="library" className="data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 h-12 gap-2">
+                            <Library className="h-4 w-4" /> Biblioteca
+                        </TabsTrigger>
+                    )}
+                    {isAdmin && (
+                        <TabsTrigger value="advanced" className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700 h-12 gap-2">
+                            <Cog className="h-4 w-4" /> Avanzado
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 {/* ==================== SERMONS TAB ==================== */}
                 <TabsContent value="sermons" className="space-y-6">
-                    {/* Global Sermon Preferences */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Preferencias Globales de Sermones</CardTitle>
-                            <CardDescription>Configuración base para el asistente de generación de sermones.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Versión Bíblica Preferida</Label>
-                                    <Input 
-                                        value={config.preferredBibleVersion}
-                                        onChange={(e) => setConfig({...config, preferredBibleVersion: e.target.value})}
-                                        placeholder="Ej: Reina Valera 1960, NVI"
-                                    />
+                    {/* Global Sermon Preferences - ADMIN ONLY */}
+                    {isAdmin && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Preferencias Globales de Sermones</CardTitle>
+                                <CardDescription>Configuración base para el asistente de generación de sermones.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Versión Bíblica Preferida</Label>
+                                        <Input 
+                                            value={config.preferredBibleVersion}
+                                            onChange={(e) => setConfig({...config, preferredBibleVersion: e.target.value})}
+                                            placeholder="Ej: Reina Valera 1960, NVI"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Sesgo Teológico</Label>
+                                        <Input 
+                                            value={config.theologicalBias}
+                                            onChange={(e) => setConfig({...config, theologicalBias: e.target.value})}
+                                            placeholder="Ej: Reformado, Pentecostal"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Sesgo Teológico</Label>
+                                    <Label>Enfoque Hermenéutico</Label>
                                     <Input 
-                                        value={config.theologicalBias}
-                                        onChange={(e) => setConfig({...config, theologicalBias: e.target.value})}
-                                        placeholder="Ej: Reformado, Pentecostal"
+                                        value={config.hermeneuticalApproach}
+                                        onChange={(e) => setConfig({...config, hermeneuticalApproach: e.target.value})}
+                                        placeholder="Ej: Gramático-Histórico, Cristocéntrico"
                                     />
+                                    <p className="text-xs text-muted-foreground">El marco interpretativo general para todo el proceso.</p>
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Enfoque Hermenéutico</Label>
-                                <Input 
-                                    value={config.hermeneuticalApproach}
-                                    onChange={(e) => setConfig({...config, hermeneuticalApproach: e.target.value})}
-                                    placeholder="Ej: Gramático-Histórico, Cristocéntrico"
-                                />
-                                <p className="text-xs text-muted-foreground">El marco interpretativo general para todo el proceso.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Phase-specific settings */}
                     <Card>
@@ -492,13 +477,47 @@ export function SettingsPage() {
                 </TabsContent>
 
                 {/* ==================== SERIES TAB ==================== */}
+                {/* ==================== SERIES TAB ==================== */}
                 <TabsContent value="series" className="space-y-6">
                     <Card className="border-purple-100">
                         <CardHeader className="bg-purple-50/50">
-                            <CardTitle className="text-purple-900">Asistente de Series</CardTitle>
+                            <CardTitle className="text-purple-900">Planificador de Predicaciones</CardTitle>
                             <CardDescription>Configura el asistente para planificación de series de sermones.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-6">
+                            
+                            {/* File Search Store Selector - ADMIN ONLY */}
+                            {isAdmin && (
+                                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Layers className="h-4 w-4 text-purple-600" />
+                                            <Label>Base de Conocimiento (Store)</Label>
+                                        </div>
+                                        <Select
+                                            value={config.seriesPlanner.fileSearchStoreId || 'homiletics'}
+                                            onValueChange={(value) => setConfig({
+                                                ...config, 
+                                                seriesPlanner: {...config.seriesPlanner, fileSearchStoreId: value}
+                                            })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona un Store" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="homiletics">Biblioteca de Homilética (Predeterminado)</SelectItem>
+                                                <SelectItem value="exegesis">Biblioteca de Exégesis</SelectItem>
+                                                <SelectItem value="generic">Biblioteca General</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            El asistente usará los documentos de esta base de conocimiento para planificar series.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Base Prompt */}
                             <div className="space-y-2">
                                 <Label>Prompt Base (Persona del Experto)</Label>
                                 <ExpandableTextarea 
@@ -512,49 +531,73 @@ export function SettingsPage() {
                                     label="Prompt Base - Planificador de Series"
                                 />
                             </div>
+
+                            {/* Custom Instructions (List) */}
                             <div className="space-y-2">
-                                <Label>Instrucciones Personalizadas</Label>
-                                <ExpandableTextarea 
-                                    className="min-h-[80px] font-mono text-sm"
-                                    placeholder="Ej: Siempre sugiere series de 4-6 sermones. Incluye aplicaciones prácticas..."
-                                    value={config.seriesPlanner.customInstructions}
-                                    onChange={(e) => setConfig({
-                                        ...config, 
-                                        seriesPlanner: {...config.seriesPlanner, customInstructions: e.target.value}
-                                    })}
-                                    label="Instrucciones Personalizadas - Planificador de Series"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <div className="flex justify-between">
-                                    <Label>Creatividad (Temperatura)</Label>
-                                    <span className="text-sm text-muted-foreground">{config.seriesPlanner.temperature}</span>
+                                <Label>Instrucciones Adicionales</Label>
+                                <div className="space-y-2">
+                                    {config.seriesPlanner.userPrompts.map((prompt: string, i: number) => (
+                                        <div key={i} className="flex gap-2">
+                                            <Input 
+                                                value={prompt} 
+                                                onChange={(e) => {
+                                                    const newPrompts = [...config.seriesPlanner.userPrompts];
+                                                    newPrompts[i] = e.target.value;
+                                                    setConfig({
+                                                        ...config,
+                                                        seriesPlanner: {...config.seriesPlanner, userPrompts: newPrompts}
+                                                    });
+                                                }}
+                                                placeholder="Ej: Sugiere siempre 4 semanas por serie..."
+                                            />
+                                            <Button variant="ghost" size="icon" onClick={() => {
+                                                const newPrompts = config.seriesPlanner.userPrompts.filter((_: any, idx: number) => idx !== i);
+                                                setConfig({
+                                                    ...config,
+                                                    seriesPlanner: {...config.seriesPlanner, userPrompts: newPrompts}
+                                                });
+                                            }}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                    ))}
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            const newPrompts = [...config.seriesPlanner.userPrompts, ''];
+                                            setConfig({
+                                                ...config,
+                                                seriesPlanner: {...config.seriesPlanner, userPrompts: newPrompts}
+                                            });
+                                        }}
+                                    >
+                                        + Agregar Instrucción
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground">
+                                        Estas instrucciones se añadirán al contexto del sistema.
+                                    </p>
                                 </div>
-                                <Slider 
-                                    value={[config.seriesPlanner.temperature]} 
-                                    max={1} step={0.1}
-                                    onValueChange={([val]) => setConfig({
-                                        ...config, 
-                                        seriesPlanner: {...config.seriesPlanner, temperature: val ?? 0.7}
-                                    })}
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Mayor temperatura = más creatividad. Menor = más consistencia.
-                                </p>
                             </div>
-                            
-                            {/* Library Documents Selector */}
-                            <div className="pt-4 border-t">
-                                <LibraryDocumentSelector
-                                    phase={WorkflowPhase.PLANNING}
-                                    phaseName="Planificador de Series"
-                                    selectedDocIds={config.seriesPlanner.libraryDocIds}
-                                    onChange={(ids: string[]) => setConfig({
-                                        ...config,
-                                        seriesPlanner: {...config.seriesPlanner, libraryDocIds: ids}
-                                    })}
-                                />
-                            </div>
+
+                            {/* Temperature - ADMIN ONLY */}
+                            {isAdmin && (
+                                <div className="space-y-3">
+                                    <div className="flex justify-between">
+                                        <Label>Creatividad (Temperatura)</Label>
+                                        <span className="text-sm text-muted-foreground">{config.seriesPlanner.temperature}</span>
+                                    </div>
+                                    <Slider 
+                                        value={[config.seriesPlanner.temperature]} 
+                                        max={1} step={0.1}
+                                        onValueChange={([val]) => setConfig({
+                                            ...config, 
+                                            seriesPlanner: {...config.seriesPlanner, temperature: val ?? 0.7}
+                                        })}
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Mayor temperatura = más creatividad. Menor = más consistencia.
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>

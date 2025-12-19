@@ -18,7 +18,11 @@ interface EditResourceModalProps {
     resource: LibraryResourceEntity | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSave: (id: string, updates: { title: string; author: string; type: ResourceType }) => Promise<void>;
+    onSave: (id: string, updates: { 
+        title: string; 
+        author: string; 
+        type: ResourceType;
+    }) => Promise<void>;
 }
 
 export function EditResourceModal({ resource, open, onOpenChange, onSave }: EditResourceModalProps) {
@@ -42,6 +46,8 @@ export function EditResourceModal({ resource, open, onOpenChange, onSave }: Edit
         try {
             await onSave(resource.id, { title, author, type });
             onOpenChange(false);
+        } catch (error) {
+            console.error('Error saving resource:', error);
         } finally {
             setSaving(false);
         }

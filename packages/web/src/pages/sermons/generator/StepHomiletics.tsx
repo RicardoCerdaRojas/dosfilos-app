@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from '@/i18n';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
@@ -14,11 +14,10 @@ import { useFirebase } from '@/context/firebase-context';
 import { WorkflowPhase, HomileticalAnalysis, CoachingStyle } from '@dosfilos/domain';
 import { useContentHistory } from '@/hooks/useContentHistory';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
-import { useLibraryContext } from '@/context/library-context';
-// 🎯 NEW: Sub-step components
 import { ApproachSelectionView } from './homiletics/ApproachSelectionView';
 import { ApproachSelectionInfo } from './homiletics/ApproachSelectionInfo';
-import { PassageQuickView } from '@/components/sermons/PassageQuickView';
+import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
+import { BookOpen } from 'lucide-react';
 
 /**
  * Sub-steps within Homiletics phase
@@ -32,7 +31,7 @@ enum HomileticsSubStep {
 }
 
 export function StepHomiletics() {
-    const { exegesis, rules, setHomiletics, setStep, homiletics, saving, config, selectedResourceIds, cacheName, setCacheName, selectHomileticalApproach } = useWizard();
+    const { exegesis, rules, setHomiletics, setStep, homiletics, saving, config, selectHomileticalApproach } = useWizard();
     const { user } = useFirebase();
     const { t } = useTranslation('generator');
     
@@ -45,6 +44,7 @@ export function StepHomiletics() {
     const [loading, setLoading] = useState(false);
     const [developingApproach, setDevelopingApproach] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
+    const [rightPanelMode, setRightPanelMode] = useState<'chat' | 'bible'>('chat');
     
     // 🎯 Approach previews (Phase 1)
     const [approachPreviews, setApproachPreviews] = useState<any[]>([]);
@@ -60,20 +60,14 @@ export function StepHomiletics() {
         activeContext,
         refreshContext: handleRefreshContext,
         handleSendMessage: sendGeneralMessage,
-        libraryResources,
-        cacheName: activeCacheName
     } = useGeneratorChat({
         phase: 'homiletics',
         content: homiletics,
         config,
         user,
-        initialCacheName: cacheName,
-        selectedResourceIds,
-        onCacheUpdate: setCacheName
+        initialCacheName: null,
+        selectedResourceIds: []
     });
-
-    // 🎯 NEW: Use LibraryContext for sync/cache
-    const { ensureReady } = useLibraryContext();
 
 
     
@@ -87,6 +81,24 @@ export function StepHomiletics() {
     
     // Combine loading states
     const isTotalAiLoading = isAiProcessing || isChatLoading;
+
+    // 🎯 Auto-generation logic
+    // We use a local ref to ensure we only trigger this once per mount when conditions are met
+    const autoGenAttempted = useState(false); 
+    const hasAttempted = autoGenAttempted[0];
+    const setHasAttempted = autoGenAttempted[1];
+
+    useEffect(() => {
+        // triggers only if:
+        // 1. We have exegesis (prerequisite)
+        // 2. We don't have homiletics yet (need generation)
+        // 3. We haven't already generated (loading check)
+        // 4. We haven't already attempted in this session
+        if (exegesis && !homiletics && !loading && !approachPreviews.length && !hasAttempted) {
+            setHasAttempted(true);
+            handleGenerate();
+        }
+    }, [exegesis, homiletics, hasAttempted]);
 
 
     // 🎯 NEW: Extract passage from homiletics
@@ -134,26 +146,21 @@ export function StepHomiletics() {
         setApproachPreviews([]);
         
         try {
-            // 🎯 Use LibraryContext for sync/cache
-            console.log('🔍 handleGenerate (Homiletics) - Ensuring library context is ready');
-            toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
-            await ensureReady();
-            toast.dismiss('context-prep');
+            // 🎯 Use LibraryContext no longer needed (Global Context Only)
+            // toast.loading(t('exegesis.loading.preparingContext'), { id: 'context-prep' });
             
             const baseConfig = config ? config[WorkflowPhase.HOMILETICS] : undefined;
             
             // Merge session config with global config
             const homileticsConfig = baseConfig ? {
                 ...baseConfig,
-                libraryDocIds: selectedResourceIds.length > 0 
-                    ? selectedResourceIds 
-                    : baseConfig.documents?.map(d => d.id).filter(Boolean)
+                aiModel: config?.advanced?.aiModel, // Inject Global Model with optional chaining
+                temperature: config?.[WorkflowPhase.HOMILETICS]?.temperature || config?.advanced?.globalTemperature // Fallback to global temp
             } : undefined;
-
 
             
             // 🎯 NEW: Use two-phase generation
-            const { previews, cacheName: newCacheName } = 
+            const { previews } = 
                 await sermonGeneratorService.generateHomileticsPreview(exegesis, rules, homileticsConfig, user?.uid);
             
             // 🎯 Sort previews: Expository approaches first (user's primary approach)
@@ -166,28 +173,8 @@ export function StepHomiletics() {
                 return 0;
             });
             
-
-            
             // Save previews
             setApproachPreviews(sortedPreviews);
-            
-            // Save cacheName AND metadata for future chat interactions
-            if (newCacheName) {
-                setCacheName(newCacheName);
-                
-                // 🎯 NEW: Save cache metadata with resources
-                // This logic is now handled by useGeneratorChat's onCacheUpdate, but we need to ensure the wizard context's cacheName is updated.
-                // The hook will also update its internal activeContext.
-                // We can remove the direct setCacheMetadata call here.
-                // setCacheMetadata({
-                //     createdAt: new Date(),
-                //     documentIds: effectiveDocIds,
-                //     resourceCount: effectiveDocIds.length,
-                //     resources: cachedResources || [] // 🎯 NEW: Store hydrated resources
-                // });
-                
-
-            }
             
             toast.success(t('homiletics.success.previewsGenerated', { count: sortedPreviews.length || 0 }));
 
@@ -200,6 +187,7 @@ export function StepHomiletics() {
             toast.error(error.message || t('homiletics.errors.generatePreviews'));
         } finally {
             setLoading(false);
+            // toast.dismiss('context-prep');
         }
     };
 
@@ -228,10 +216,8 @@ export function StepHomiletics() {
             // Merge session config - REUSE cacheName from Phase 1 if available
             const homileticsConfig = baseConfig ? {
                 ...baseConfig,
-                libraryDocIds: selectedResourceIds.length > 0 
-                    ? selectedResourceIds 
-                    : baseConfig.documents?.map(d => d.id).filter(Boolean),
-                cacheName: activeCacheName || undefined // Reuse cache from Phase 1 (convert null to undefined)
+                aiModel: config?.advanced?.aiModel,
+                temperature: config?.[WorkflowPhase.HOMILETICS]?.temperature || config?.advanced?.globalTemperature
             } : undefined;
 
             // 🎯 Call Phase 2: Develop the selected approach
@@ -438,14 +424,7 @@ export function StepHomiletics() {
             try {
                 const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
                 const { getValueByPath, setValueByPath } = await import('@/utils/path-utils');
-                const { GeminiAIService } = await import('@dosfilos/infrastructure');
-
-                // Initialize AI Service
-                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    throw new Error('API key not configured');
-                }
-                const aiService = new GeminiAIService(apiKey);
+                // Initialize AI Service - NOT NEEDED, using sermonGeneratorService
                 
                 const sectionConfig = getSectionConfig('homiletics', expandedSectionId);
                 if (!sectionConfig) {
@@ -480,60 +459,14 @@ FORMATO: Usa markdown para mejor legibilidad:
                     }
                 };
                 
-                // Search library for relevant context if resources are available
-                let libraryContextStr = '';
-                let refinementSources: Array<{author: string; title: string; page?: number; snippet: string}> = [];
-                if (libraryResources.length > 0) {
-                    try {
-                        const { DocumentProcessingService } = await import('@dosfilos/infrastructure');
-                        const docProcessor = new DocumentProcessingService(apiKey);
-                        
-                        const searchQuery = `${message} ${sectionConfig.label} ${passage || ''} homilética sermón`;
-                        const resourceIds = libraryResources.map(r => r.id);
-                        
-                        console.log(`📚 [Refinement] Searching ${resourceIds.length} library resources...`);
-                        const searchResults = await docProcessor.searchRelevantChunks(
-                            searchQuery,
-                            resourceIds,
-                            8
-                        );
-                        
-                        if (searchResults.length > 0) {
-                            const chunks = searchResults.map(r => r.chunk);
-                            console.log(`✅ [Refinement] Found ${chunks.length} relevant chunks`);
-                            
-                            refinementSources = chunks.map(chunk => ({
-                                author: chunk.resourceAuthor,
-                                title: chunk.resourceTitle,
-                                page: chunk.metadata.page,
-                                snippet: chunk.text.substring(0, 150) + '...'
-                            }));
-                            
-                            const chunksText = chunks.map((chunk, i) => {
-                                const pageInfo = chunk.metadata.page ? `, p.${chunk.metadata.page}` : '';
-                                return `[${i + 1}] "${chunk.resourceTitle}" (${chunk.resourceAuthor}${pageInfo}):\n"${chunk.text.substring(0, 500)}..."`;
-                            }).join('\n\n');
-                            
-                            libraryContextStr = `
-
-RECURSOS DE TU BIBLIOTECA (USO OBLIGATORIO SI ES RELEVANTE):
-Usa esta información de tus recursos teológicos para enriquecer el contenido.
-
-${chunksText}
-
-INSTRUCCIONES DE CITACIÓN (CRÍTICO):
-- Si utilizas ideas, frases o conceptos de estos recursos, DEBES citar la fuente explícitamente en el texto.
-- Formato de cita preferido: (Autor, p.XX) o "Como dice Autor...".
-- NO inventes citas. Solo usa las proporcionadas arriba.
-`;
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ [Refinement] Could not search library:', error);
-                    }
-                }
+                // Library usage for refinement is now handled by the global context
+                const refinementSources: Array<{author: string; title: string; page?: number; snippet: string}> = [];
                 
                 // Build context for AI
                 let contextStr = '';
+                // Library context is now handled via Global File Search Store implicitly
+                const libraryContextStr = ''; 
+                
                 if (passage || exegesis) {
                     contextStr = `
 
@@ -556,7 +489,13 @@ IMPORTANTE:
 ${getFormattingInstructions(sectionConfig.id)}`;
 
                 // Call AI service
-                const aiResponse = await aiService.refineContent(contentString, instruction);
+                // Call AI service
+                // Use global service with proper phase context for Global Store access
+                const aiResponse = await sermonGeneratorService.refineContent(contentString, instruction, { 
+                    phase: 'homiletics',
+                    aiModel: config?.advanced?.aiModel,
+                    temperature: config?.[WorkflowPhase.HOMILETICS]?.temperature || config?.advanced?.globalTemperature
+                });
                 
                 // Parse the refined content based on the original type
                 let parsedContent;
@@ -846,25 +785,34 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <PassageQuickView passage={passage} variant="badge" />
-                <Button
-                    onClick={handleGenerate}
-                    variant="outline"
-                    size="sm"
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('homiletics.regeneratingBtn')}
-                        </>
-                    ) : (
-                        <>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            {t('homiletics.regenerateShort')}
-                        </>
-                    )}
-                </Button>
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                        onClick={() => setRightPanelMode(prev => prev === 'bible' ? 'chat' : 'bible')}
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        <span className="text-xs font-medium">{passage}</span>
+                    </Button>
+
+                    <Button
+                        onClick={handleGenerate}
+                        variant="outline"
+                        size="sm"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {t('homiletics.regeneratingBtn')}
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                {t('homiletics.regenerateShort')}
+                            </>
+                        )}
+                    </Button>
                 </div>
             </div>
             <div className="flex-1 min-h-0">
@@ -932,25 +880,32 @@ ${getFormattingInstructions(sectionConfig.id)}`;
     ) : (
         // When homiletics exists, show resizable chat panel
         <ResizableChatPanel storageKey="homileticsChatWidth">
-            <ChatInterface
-                messages={messages}
-                contentType="homiletics"
-                content={homiletics}
-                selectedText=""
-                onSendMessage={handleSendMessage}
-                onApplyChange={handleApplyChange}
-                onContentUpdate={setHomiletics}
-                disableDefaultAI={true}
-                externalIsLoading={isTotalAiLoading}
-                showStyleSelector={true}
-                selectedStyle={selectedStyle}
-                onStyleChange={(style) => {
-                    setSelectedStyle(style);
-                    generatorChatService.setCoachingStyle(style);
-                }}
-                activeContext={activeContext}
-                onRefreshContext={handleRefreshContext}
-            />
+            {rightPanelMode === 'bible' && exegesis ? (
+                <BibleReaderPanel 
+                    passage={exegesis.passage} 
+                    onClose={() => setRightPanelMode('chat')} 
+                />
+            ) : (
+                <ChatInterface
+                    messages={messages}
+                    contentType="homiletics"
+                    content={homiletics}
+                    selectedText=""
+                    onSendMessage={handleSendMessage}
+                    onApplyChange={handleApplyChange}
+                    onContentUpdate={setHomiletics}
+                    disableDefaultAI={true}
+                    externalIsLoading={isTotalAiLoading}
+                    showStyleSelector={true}
+                    selectedStyle={selectedStyle}
+                    onStyleChange={(style) => {
+                        setSelectedStyle(style);
+                        generatorChatService.setCoachingStyle(style);
+                    }}
+                    activeContext={activeContext}
+                    onRefreshContext={handleRefreshContext}
+                />
+            )}
         </ResizableChatPanel>
     );
     

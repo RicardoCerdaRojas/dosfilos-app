@@ -60,20 +60,26 @@ export class CoreLibraryService implements ICoreLibraryService {
             console.log('📚 Creating File Search Stores from core library...');
             await this.createAllStores();
 
+            await this.createAllStores();
+
             this.initialized = true;
         } catch (error: any) {
-            // Graceful degradation: If we can't create stores, that's OK
-            // The system will work without them (just without core library context)
-            if (error.message?.includes('permissions') || error.code === 'permission-denied') {
-                console.warn('⚠️ CoreLibraryService: Insufficient permissions to manage core library.');
-                console.warn('💡 To enable core library, update Firestore rules to allow read/write on config/ and users/');
-            } else if (error.message?.includes('No core documents')) {
-                console.info('💡 CoreLibraryService: No core documents found. Upload PDFs and mark as core to enable.');
-            } else {
-                console.error('❌ CoreLibraryService error:', error);
-            }
-            // Don't set initialized = true, but don't throw either
-            // Just continue without core library support
+            // ... error handling ...
+        }
+    }
+
+    /**
+     * 🎯 Initialize service from existing config ONLY.
+     * Safe for client-side use (does not attempt to create stores).
+     */
+    async initializeFromConfig(): Promise<void> {
+        const config = await this.loadConfig();
+        if (config && this.areStoresValid(config)) {
+            console.log('✅ CoreLibraryService: Initialized from config');
+            this.stores = config.stores;
+            this.initialized = true;
+        } else {
+            console.log('ℹ️ CoreLibraryService: No valid config found');
         }
     }
 

@@ -1,5 +1,5 @@
 import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySelector, GeminiFileSearchService } from '@dosfilos/infrastructure';
-import { ChatMessage, WorkflowPhase, LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType } from '@dosfilos/domain';
+import { ChatMessage, WorkflowPhase, LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext } from '@dosfilos/domain';
 import { SourceReference, ChatResponseWithSources } from './PlannerChatService';
 
 interface StoredHistory {
@@ -34,6 +34,7 @@ export class GeneratorChatService {
     private currentSermonId: string | null = null;
     private currentPhase: ContentType = 'exegesis';
     private listeners: (() => void)[] = [];
+    private coreLibraryService: ICoreLibraryService | null = null; // 🎯 NEW
 
     constructor() {
         const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
@@ -46,6 +47,14 @@ export class GeneratorChatService {
 
         // Clean up expired histories on initialization
         this.cleanupExpiredHistories();
+    }
+
+    /**
+     * 🎯 NEW: Dependency Injection setter
+     */
+    setCoreLibraryService(service: ICoreLibraryService) {
+        this.coreLibraryService = service;
+        console.log('✅ CoreLibraryService injected into GeneratorChatService');
     }
 
     async testGeminiSearch(message: string, storeName: string): Promise<string> {
@@ -105,15 +114,40 @@ export class GeneratorChatService {
             tone?: string;
             customInstructions?: string;
             libraryResources: LibraryResourceEntity[];
+            aiModel?: string;      // 🎯 NEW
+            temperature?: number;  // 🎯 NEW
         }
     ): Promise<{ point: any; sources: SourceReference[] }> {
         // 1. Search for relevant content in library (RAG)
-        const relevantChunks = await this.searchLibrary(
-            `Punto: ${point.point || point.title}. Referencias: ${point.scriptureReferences?.join(', ')}`,
-            context.libraryResources
-        );
+        // 🎯 UPDATE: Check for Global Store first
+        let relevantChunks: DocumentChunkEntity[] = [];
+        let hasLibraryContext = false;
+        let fileSearchStoreId: string | undefined;
 
-        // 2. Convert chunks to source references
+        if (this.coreLibraryService?.isInitialized()) {
+            try {
+                // Use Homiletics store for drafting/refinement as requested ("general store")
+                fileSearchStoreId = this.coreLibraryService.getStoreId(FileSearchStoreContext.HOMILETICS);
+                console.log('✅ [GeneratorChat] Using File Search Store for Regeneration:', fileSearchStoreId);
+                hasLibraryContext = true;
+            } catch (error) {
+                console.warn('⚠️ [GeneratorChat] Could not get File Search Store:', error);
+            }
+        }
+
+        // Fallback to manual RAG only if NO global store and YES local resources
+        if (!fileSearchStoreId && context.libraryResources?.length > 0) {
+            relevantChunks = await this.searchLibrary(
+                `Punto: ${point.point || point.title}. Referencias: ${point.scriptureReferences?.join(', ')}`,
+                context.libraryResources
+            );
+            hasLibraryContext = relevantChunks.length > 0;
+        }
+
+        // 2. Convert chunks to source references (if manual RAG)
+        // If using Global Store, sources are embedded in citation (handled by infrastructure later? 
+        // actually infrastructure returns text, we might not get structured citations easily here yet without simpler parsing.
+        // For now, we return empty sources if using Global Store, or extract from response if possible.)
         const sources: SourceReference[] = relevantChunks.map(chunk => ({
             author: chunk.resourceAuthor,
             title: chunk.resourceTitle,
@@ -122,18 +156,23 @@ export class GeneratorChatService {
         }));
 
         // 3. Call generator with context
+        const regenerateContext = {
+            sermonTitle: context.sermonTitle,
+            homileticalProposition: context.homileticalProposition,
+            hasLibraryContext,
+            relevantChunks,
+            fileSearchStoreId,
+            aiModel: context.aiModel,       // 🎯 NEW
+            temperature: context.temperature // 🎯 NEW
+        };
+
         const regeneratedPoint = await this.generator.regenerateSermonPoint(
             point,
             {
                 tone: (context.tone as any) || 'inspirational',
                 customInstructions: context.customInstructions
             },
-            {
-                sermonTitle: context.sermonTitle,
-                homileticalProposition: context.homileticalProposition,
-                hasLibraryContext: relevantChunks.length > 0,
-                relevantChunks
-            }
+            regenerateContext
         );
 
         return { point: regeneratedPoint, sources };
@@ -151,6 +190,8 @@ export class GeneratorChatService {
             libraryResources: LibraryResourceEntity[];
             phaseResources?: LibraryResourceEntity[];
             cacheName?: string;
+            aiModel?: string;      // 🎯 NEW
+            temperature?: number;  // 🎯 NEW
         }
     ): Promise<ChatResponseWithSources> {
         // Add user message to history
@@ -258,8 +299,37 @@ export class GeneratorChatService {
                 // 🎯 NEW: Pass geminiUris for Multimodal RAG fallback if cache is missing
                 geminiUris: context.cacheName ? undefined : Array.from(allResources.values())
                     .map(r => r.metadata?.geminiUri)
-                    .filter((uri): uri is string => !!uri)
+                    .filter((uri): uri is string => !!uri),
+                // 🎯 NEW: Pass Global File Search Store ID
+                fileSearchStoreId: '',
+                aiModel: context.aiModel,       // 🎯 NEW
+                temperature: context.temperature // 🎯 NEW
             };
+
+            // 🎯 NEW: Inject Global Store ID if available
+            if (this.coreLibraryService?.isInitialized()) {
+                try {
+                    // Determine which store to use based on the current phase
+                    let contextType: FileSearchStoreContext;
+
+                    switch (this.currentPhase) {
+                        case 'exegesis':
+                            contextType = FileSearchStoreContext.EXEGESIS;
+                            break;
+                        case 'homiletics':
+                        case 'sermon': // Draft uses Homiletics store
+                        default:
+                            contextType = FileSearchStoreContext.HOMILETICS;
+                            break;
+                    }
+
+                    const storeId = this.coreLibraryService.getStoreId(contextType);
+                    enrichedContext.fileSearchStoreId = storeId;
+                    console.log(`✅ [GeneratorChat] Using ${contextType} Store for Chat (${this.currentPhase}):`, storeId);
+                } catch (error) {
+                    console.warn('⚠️ [GeneratorChat] Could not get File Search Store:', error);
+                }
+            }
 
             // Get phase for chat
             const workflowPhase = this.contentTypeToWorkflowPhase(this.currentPhase);

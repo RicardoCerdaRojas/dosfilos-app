@@ -14,8 +14,6 @@ interface WizardState {
     homiletics: HomileticalAnalysis | null;
     draft: SermonContent | null;
     config: WorkflowConfiguration | null;
-    cacheName: string | null;
-    selectedResourceIds: string[];
 }
 
 interface WizardContextType extends WizardState {
@@ -26,8 +24,6 @@ interface WizardContextType extends WizardState {
     setHomiletics: (homiletics: HomileticalAnalysis) => void;
     setDraft: (draft: SermonContent) => void;
     setSermonId: (id: string | null) => void;
-    setCacheName: (name: string | null) => void;
-    setSelectedResourceIds: (ids: string[]) => void;
     selectHomileticalApproach: (approachId: string) => void;  // 🎯 NEW
     reset: () => void;
     saving: boolean;
@@ -50,13 +46,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [draft, setDraft] = useState<SermonContent | null>(null);
     const [config, setConfig] = useState<WorkflowConfiguration | null>(null);
     const [sermonId, setSermonId] = useState<string | null>(null);
-    const [cacheName, setCacheName] = useState<string | null>(null);
-    const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
 
     // Auto-save hook
     const { saving, lastSaved } = useAutoSave(
         sermonId,
-        { step, passage, exegesis, homiletics, draft, cacheName, selectedResourceIds },
+        { step, passage, exegesis, homiletics, draft },
         user?.uid || ''
     );
 
@@ -117,8 +111,6 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics(null);
         setDraft(null);
         setSermonId(null);
-        setCacheName(null);
-        setSelectedResourceIds([]);
     };
 
     // 🎯 NEW: Select homiletical approach and update derived fields
@@ -160,8 +152,6 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         homiletics,
         draft,
         config,
-        cacheName,
-        selectedResourceIds,
         sermonId, // 🎯 Expose to allow publishing
         setStep,
         setPassage,
@@ -170,13 +160,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics,
         setDraft,
         setSermonId,
-        setCacheName,
-        setSelectedResourceIds,
         selectHomileticalApproach,  // 🎯 NEW
         reset,
         saving,
         lastSaved
-    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved, cacheName, selectedResourceIds, sermonId]);
+    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved, sermonId]);
 
     return (
         <WizardContext.Provider value={contextValue}>

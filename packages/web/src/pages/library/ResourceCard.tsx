@@ -2,7 +2,7 @@ import { LibraryResourceEntity, LibraryCategory, WorkflowPhase } from '@dosfilos
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Book, FileText, MessageSquare, Languages, FileQuestion, Trash2, Edit2, Sparkles, Loader2, CheckCircle2, AlertCircle, Eye, BookOpen, Mic2, PenTool, Settings2, RefreshCw, Database } from 'lucide-react';
+import { Book, FileText, MessageSquare, Languages, FileQuestion, Trash2, Edit2, Sparkles, Loader2, CheckCircle2, AlertCircle, Eye, BookOpen, Mic2, Library, PenTool, Settings2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
@@ -18,10 +18,9 @@ interface ResourceCardProps {
     onReindex?: () => void;
     onPreview: () => void;
     onSetPhases?: () => void;
+    onConfigureCoreStores?: () => void; // NEW: for admin to configure Core Library stores
     onSync?: () => void;
     isSyncing?: boolean;
-    isAdmin?: boolean; // 🎯 NEW: Show core library controls
-    onToggleCore?: (isCore: boolean, coreContext?: 'exegesis' | 'homiletics' | 'generic') => void;
 }
 
 // Icon mapping for category icons
@@ -56,10 +55,9 @@ export function ResourceCard({
     onReindex,
     onPreview,
     onSetPhases,
+    onConfigureCoreStores,
     onSync,
-    isSyncing,
-    isAdmin,
-    onToggleCore
+    isSyncing
 }: ResourceCardProps) {
     // Find the category by ID
     const category = categories.find(c => c.id === resource.type);
@@ -194,15 +192,38 @@ export function ResourceCard({
                     {getExtractionBadge()}
                     {resource.textExtractionStatus === 'ready' && getStatusBadge()}
                     {getAIReadyBadge()}
-                    {/* 🎯 Core Library Badge */}
-                    {resource.isCore && (
-                        <span 
-                            className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1 font-medium shadow-sm"
-                            title={`Biblioteca Core: ${resource.coreContext || 'generic'}`}
-                        >
-                            <Database className="h-3 w-3" /> Core
-                        </span>
-                    )}
+                    {/* Core Library Badges */}
+                {resource.coreStores && resource.coreStores.length > 0 && (
+                    <div className="flex items-center gap-1 mb-2 flex-wrap">
+                        {resource.coreStores.includes('exegesis') && (
+                            <span 
+                                className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium shadow-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+                                title="Biblioteca Core: Exégesis (Léxicos, hermenéutica)"
+                            >
+                                <BookOpen className="h-3 w-3" />
+                                Exégesis
+                            </span>
+                        )}
+                        {resource.coreStores.includes('homiletics') && (
+                            <span 
+                                className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium shadow-sm bg-gradient-to-r from-purple-500 to-purple-600 text-white"
+                                title="Biblioteca Core: Homilética (Predicación, teología)"
+                            >
+                                <Mic2 className="h-3 w-3" />
+                                Homilética
+                            </span>
+                        )}
+                        {resource.coreStores.includes('generic') && (
+                            <span 
+                                className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium shadow-sm bg-gradient-to-r from-amber-500 to-orange-500 text-white"
+                                title="Biblioteca Core: Genérico (Uso general)"
+                            >
+                                <Library className="h-3 w-3" />
+                                Genérico
+                            </span>
+                        )}
+                    </div>
+                )}
                 </div>
 
                 {/* Phase Preference Badges */}
@@ -268,40 +289,24 @@ export function ResourceCard({
                         </Button>
                     )}
 
-                    {onSetPhases && indexStatus === 'indexed' && (
+                    {/* Configure button - for both Phases and Core Stores */}
+                    {((onSetPhases && indexStatus === 'indexed') || (onConfigureCoreStores && isGeminiReady)) && (
                         <Button 
                             variant="ghost" 
                             size="sm" 
                             className="h-8 w-8 p-0 text-primary hover:text-primary"
-                            onClick={onSetPhases}
-                            title="Configurar fases"
-                        >
-                            <Settings2 className="h-4 w-4" />
-                        </Button>
-                    )}
-                    
-                    {/* 🎯 Core Library Toggle (Admin Only) */}
-                    {isAdmin && onToggleCore && resource.textExtractionStatus === 'ready' && isGeminiReady && (
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className={cn(
-                                "h-8 w-8 p-0",
-                                resource.isCore 
-                                    ? "text-amber-600 hover:text-amber-700 bg-amber-50" 
-                                    : "text-gray-400 hover:text-amber-600"
-                            )}
-                            onClick={() => {
-                                if (resource.isCore) {
-                                    onToggleCore(false);
-                                } else {
-                                    // Default to 'generic' - admin can change later in edit dialog
-                                    onToggleCore(true, 'generic');
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                // Prioritize Core Stores if available (Admin)
+                                if (onConfigureCoreStores) {
+                                    onConfigureCoreStores();
+                                } else if (onSetPhases) {
+                                    onSetPhases();
                                 }
                             }}
-                            title={resource.isCore ? "Quitar de Biblioteca Core" : "Agregar a Biblioteca Core"}
+                            title={onConfigureCoreStores ? "Configurar Stores Core" : "Configurar fases"}
                         >
-                            <Database className="h-4 w-4" />
+                            <Settings2 className="h-4 w-4" />
                         </Button>
                     )}
                     {onReindex && indexStatus === 'indexed' && (

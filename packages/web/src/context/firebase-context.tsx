@@ -39,21 +39,25 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
       setLoading(false);
 
       // 🎯 Load Core Library config (but don't create stores automatically)
-      // Store creation happens server-side via admin UI (/admin/core-library)
+      // Store creation happens server-side via admin UI (/dashboard/admin/core-library)
       if (user) {
         try {
           const coreLibraryService = getCoreLibraryService();
-          // Just load existing config, don't try to create (CORS issues)
-          const config = await coreLibraryService.getConfig();
           
-          if (config) {
-            console.log('ℹ️ Core Library stores loaded from config');
-          } else {
-            console.info('ℹ️ No Core Library stores configured yet. Create them at /admin/core-library');
-          }
+          // 🎯 INJECTION: Wire the services together
+          // This ensures the generator knows about the stores we are about to load
+          const { sermonGeneratorService, generatorChatService } = await import('@dosfilos/application');
+          // Inject Core Library Service into Sermon Generator Service
+          sermonGeneratorService.setCoreLibraryService(coreLibraryService);
+          
+          // 🎯 NEW: Inject Core Library Service into Generator Chat Service
+          generatorChatService.setCoreLibraryService(coreLibraryService);
+          
+          // Initialize service state so getStoreId() works
+          await coreLibraryService.initializeFromConfig();
+          console.log('✅ Core Library Service initialized globally');
         } catch (error) {
-          console.warn('⚠️ Could not load Core Library config:', error);
-          // Don't block user login
+          console.error('⚠️ Failed to initialize Core Library Service:', error);
         }
       }
     });

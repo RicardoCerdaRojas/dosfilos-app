@@ -35,35 +35,42 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         });
     }
 
-    private getModel(cacheName?: string, fileSearchStoreId?: string): GenerativeModel {
-        // Priority 1: Use cache if available (Context Caching)
-        if (cacheName) {
-            return this.genAI.getGenerativeModel({
-                model: GEMINI_CONFIG.MODEL_NAME,
-                // @ts-ignore
-                cachedContent: cacheName,
-                generationConfig: GEMINI_CONFIG.GENERATION_CONFIG,
-                safetySettings: this.getSafetySettings()
-            });
+    private getModel(options?: { fileSearchStoreId?: string; temperature?: number; modelName?: string; responseMimeType?: string }): GenerativeModel {
+        const modelName = options?.modelName || GEMINI_CONFIG.MODEL_NAME;
+        const temperature = options?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature;
+
+        const generationConfig: any = {
+            ...GEMINI_CONFIG.GENERATION_CONFIG,
+            temperature: temperature
+        };
+
+        if (options?.responseMimeType && !options.fileSearchStoreId) {
+            // NOTE: Gemini API throws 400 if responseMimeType is used with Tools (File Search)
+            // So we only enable JSON mode if NOT using RAG tools.
+            generationConfig.responseMimeType = options.responseMimeType;
         }
 
-        // Priority 2: Use File Search Store (Core Library)
-        if (fileSearchStoreId) {
+        // Priority 1: Use File Search Store (Core Library)
+        if (options?.fileSearchStoreId) {
             return this.genAI.getGenerativeModel({
-                model: GEMINI_CONFIG.MODEL_NAME,
+                model: modelName,
                 tools: [{
                     // @ts-ignore - File Search tool
                     fileSearch: {
-                        fileSearchStoreNames: [fileSearchStoreId]
+                        fileSearchStoreNames: [options.fileSearchStoreId]
                     }
                 }],
-                generationConfig: GEMINI_CONFIG.GENERATION_CONFIG,
+                generationConfig: generationConfig,
                 safetySettings: this.getSafetySettings()
             });
         }
 
-        // Priority 3: Default model (no cache, no file search)
-        return this.model;
+        // Priority 2: Default model (no tools)
+        return this.genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: generationConfig,
+            safetySettings: this.getSafetySettings()
+        });
     }
 
     private getSafetySettings() {
@@ -87,22 +94,6 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         ];
     }
 
-    // Helper to use cached content when available
-    private prepareContent(prompt: string, config?: any): any {
-        // If cacheName is present, we rely on the cache (files are already in cache)
-        if (config?.cacheName) {
-            return prompt;
-        }
-
-        // ⚠️ IMPORTANT: We do NOT use geminiUris without cache.
-        // These URIs can expire (24-48h TTL) and cause 403 errors.
-        // Without cache, we rely on:
-        // 1. RAG chunks (already in prompt context)
-        // 2. General knowledge (with recommended sources in prompt)
-
-        return prompt;
-    }
-
     async generateExegesis(passage: string, rules: GenerationRules, config?: any): Promise<ExegeticalStudy> {
         try {
             const prompt = buildExegesisPrompt(passage, rules, config);
@@ -114,8 +105,13 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             console.log(prompt.substring(0, 1000));
             console.log('═══════════════════════════════════════════════════════');
 
-            const model = this.getModel(config?.cacheName, config?.fileSearchStoreId);
-            const content = this.prepareContent(prompt, config); // 🎯 Use prepared content
+            const model = this.getModel({
+                fileSearchStoreId: config?.fileSearchStoreId,
+                temperature: config?.temperature,
+                modelName: config?.aiModel,
+                responseMimeType: 'application/json'
+            });
+            const content = prompt;
             const result = await model.generateContent(content);
             const response = result.response;
             const text = response.text();
@@ -158,8 +154,13 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 .withRules(rules)
                 .build();
 
-            const model = this.getModel(_config?.cacheName, _config?.fileSearchStoreId);
-            const content = this.prepareContent(prompt, _config); // 🎯 Use prepared content
+            const model = this.getModel({
+                fileSearchStoreId: _config?.fileSearchStoreId,
+                temperature: _config?.temperature,
+                modelName: _config?.aiModel,
+                responseMimeType: 'application/json'
+            });
+            const content = prompt;
             const result = await model.generateContent(content);
             const response = result.response;
             const text = response.text();
@@ -213,8 +214,13 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     ): Promise<SermonContent> {
         try {
             const prompt = buildSermonDraftPrompt(analysis, rules);
-            const model = this.getModel(_config?.cacheName, _config?.fileSearchStoreId);
-            const content = this.prepareContent(prompt, _config); // 🎯 Use prepared content
+            const model = this.getModel({
+                fileSearchStoreId: _config?.fileSearchStoreId,
+                temperature: _config?.temperature,
+                modelName: _config?.aiModel,
+                responseMimeType: 'application/json'
+            });
+            const content = prompt;
             const result = await model.generateContent(content);
             const response = result.response;
             const text = response.text();
@@ -238,8 +244,6 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         context: any
     ): Promise<any> {
         try {
-            const prompt = `TEST`; // (Prompt building logic omitted for brevity, keeping original logic if possible or simplified)
-            // ... wait, I need to keep the full prompt string construction ...
             const fullPrompt = `
 ${buildChatSystemPrompt(WorkflowPhase.DRAFTING, context)}
 
@@ -277,8 +281,13 @@ FORMATO JSON REQUERIDO:
   "transition": "Transición..."
 }
 `;
-            const model = this.getModel(context?.cacheName);
-            const content = this.prepareContent(fullPrompt, context); // 🎯 Use prepared content
+            const model = this.getModel({
+                fileSearchStoreId: context?.fileSearchStoreId,
+                temperature: context?.temperature,
+                modelName: context?.aiModel,
+                responseMimeType: 'application/json'
+            });
+            const content = fullPrompt;
             const result = await model.generateContent(content);
             const response = result.response;
             const text = response.text();
@@ -290,7 +299,6 @@ FORMATO JSON REQUERIDO:
 
     async chat(phase: WorkflowPhase, history: ChatMessage[], context: any): Promise<string> {
         try {
-            // ... (keep start of method) ...
             const systemPrompt = buildChatSystemPrompt(phase, context);
             const geminiHistory = history.slice(0, -1).map(msg => ({
                 role: msg.role === 'user' ? 'user' : 'model',
@@ -314,10 +322,17 @@ FORMATO JSON REQUERIDO:
             const lastMessage = history[history.length - 1];
             if (!lastMessage || lastMessage.role !== 'user') throw new Error('Last message must be from user');
 
-            const model = this.getModel(context?.cacheName);
+            const model = this.getModel({
+                fileSearchStoreId: context?.fileSearchStoreId,
+                temperature: context?.temperature,
+                modelName: context?.aiModel
+            });
             const chat = model.startChat({
                 history: geminiHistory,
-                generationConfig: { maxOutputTokens: 8192 },
+                generationConfig: {
+                    maxOutputTokens: 8192,
+                    temperature: context?.temperature || GEMINI_CONFIG.GENERATION_CONFIG.temperature
+                },
             });
 
             let messageToSend = lastMessage.content;
@@ -325,9 +340,6 @@ FORMATO JSON REQUERIDO:
                 messageToSend = `${systemPrompt}\n\n${messageToSend}`;
             }
 
-            // Note: We ONLY use files via cacheName (context cache).
-            // Direct geminiUris without cache can be expired and cause 403 errors.
-            // For chat without cache, we rely on RAG chunks in context or general knowledge.
             const contentToSend = messageToSend;
 
             const result = await chat.sendMessage(contentToSend);
@@ -340,14 +352,7 @@ FORMATO JSON REQUERIDO:
 
     async refineContent(content: string, instruction: string, context?: any): Promise<string> {
         try {
-            // ... (keep librarySection logic) ...
             let librarySection = '';
-            if (context?.cachedResources && context.cachedResources.length > 0) {
-                const resourcesList = context.cachedResources.map((r: any) => `- ${r.title} (${r.author})`).join('\n');
-                librarySection = `\n## 📚 ACCESO COMPLETO A BIBLIOTECA DEL PASTOR (VÍA CACHÉ O ARCHIVOS):\n...\n${resourcesList}\n...`; // Simplified for replacement
-            }
-            // Actually, I should keep the full string to avoid breaking.
-            // But since I'm replacing the whole method, I can reconstruct it.
             if (context?.cachedResources && context.cachedResources.length > 0) {
                 const resourcesList = context.cachedResources.map((r: any) => `- ${r.title} (${r.author})`).join('\n');
                 librarySection = `
@@ -374,8 +379,12 @@ REGLAS:
 2. Sé preciso y teológicamente fiel.
 3. Cita fuentes.
 `;
-            const model = this.getModel(context?.cacheName);
-            const preparedContent = this.prepareContent(prompt, context); // 🎯 Use prepared content
+            const model = this.getModel({
+                fileSearchStoreId: context?.fileSearchStoreId,
+                temperature: context?.temperature,
+                modelName: context?.aiModel
+            });
+            const preparedContent = prompt;
             const result = await model.generateContent(preparedContent);
             const response = result.response;
             return response.text();
@@ -523,8 +532,13 @@ REGLAS:
                 .withRules(rules)
                 .build();
 
-            const model = this.getModel(_config?.cacheName);
-            const content = this.prepareContent(prompt, _config); // 🎯 Use prepared content
+            const model = this.getModel({
+                fileSearchStoreId: _config?.fileSearchStoreId,
+                temperature: _config?.temperature,
+                modelName: _config?.aiModel,
+                responseMimeType: 'application/json'
+            });
+            const content = prompt;
             const result = await model.generateContent(content);
             const response = result.response;
             const text = response.text();
@@ -565,13 +579,13 @@ REGLAS:
                 .withRules(rules)
                 .build();
 
-            // Note: Caching logic for Phase 2 is currently disabled or uses _config.cacheName?
-            // The existing code manually disabled cache for phase 2.
-            // I should respect that, but if _config has files, I must attach them!
-            // Wait, existing code said: `const model = this.getModel(); // No cacheName = fresh model`
-            // So I should pass the files if available!
-            const model = this.getModel(); // Fresh model
-            const content = this.prepareContent(prompt, _config); // 🎯 Use prepared content (attach files again)
+            const model = this.getModel({
+                fileSearchStoreId: _config?.fileSearchStoreId,
+                temperature: _config?.temperature,
+                modelName: _config?.aiModel,
+                responseMimeType: 'application/json'
+            });
+            const content = prompt;
 
             const result = await model.generateContent(content);
             const response = result.response;

@@ -14,7 +14,7 @@ export function ApproachSelectionInfo() {
     const { t } = useTranslation('generator');
 
     return (
-        <Card className="p-6 h-full flex flex-col justify-center">
+        <Card className="p-6 h-full flex flex-col justify-start">
             <div className="space-y-6">
                 {/* Header */}
                 <div className="text-center space-y-2">

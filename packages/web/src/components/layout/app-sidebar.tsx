@@ -63,7 +63,7 @@ export function AppSidebar() {
 
   const adminNavigation = [
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
-    { name: 'Biblioteca Core', href: '/admin/core-library', icon: Database },
+    { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
   ];
 
   // Subscribe to new leads count for admin

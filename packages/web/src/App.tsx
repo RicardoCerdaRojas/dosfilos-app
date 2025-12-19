@@ -88,12 +88,6 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/admin/core-library" element={
-            <ProtectedRoute>
-              <CoreLibraryAdmin />
-            </ProtectedRoute>
-          } />
-
           {/* Protected Dashboard Routes */}
           <Route
             path="/dashboard"
@@ -131,6 +125,9 @@ function App() {
 
             {/* Settings */}
             <Route path="settings" element={<GeneratorSettings />} />
+            
+            {/* 🎯 Admin Routes - Inside Dashboard Layout */}
+            <Route path="admin/core-library" element={<CoreLibraryAdmin />} />
             
             {/* PoC Routes */}
             <Route path="gemini-test" element={<GeminiTest />} />

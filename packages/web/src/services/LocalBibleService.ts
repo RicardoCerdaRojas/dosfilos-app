@@ -261,5 +261,97 @@ export class LocalBibleService {
         }
         return null;
     }
+    /** Get all books available in the local Bible */
+    static getBooks(): { id: string; name: string }[] {
+        // We can derive names from the mapping, looking for the main keys that match the ids
+        // For simplicity, we can use a hardcoded list or reverse map key items
+        // Since we want specific display names, we'll map the IDs back to a canonical name
+
+        // Use the order from the JSON source to be correct
+        return (rvrBible as any[]).map(b => {
+            // Find a nice name for this ID
+            let name = b.id.toUpperCase();
+            // Try to find a full name in our mapping
+            for (const [key, val] of Object.entries(BOOK_MAPPING)) {
+                if (val === b.id && key.length > 3) { // Prefer longer names
+                    // Simple heuristic: pick the one that looks like a title
+                    // Actually, let's just use the first 'nice' one we find or format the ID if not found
+                    if (key[0] === key[0].toUpperCase()) {
+                        name = key;
+                        break;
+                    }
+                }
+            }
+            return { id: b.id, name };
+        });
+    }
+
+    /** Get number of chapters for a book */
+    static getChapterCount(bookNameOrId: string): number {
+        let bookId = bookNameOrId;
+        // Check if it's a name that needs resolution
+        if (BOOK_MAPPING[bookNameOrId]) {
+            bookId = BOOK_MAPPING[bookNameOrId];
+        }
+
+        const book = (rvrBible as any[]).find(b => b.id === bookId);
+        return book ? book.chapters.length : 0;
+    }
+
+    /** Get full content of a chapter */
+    static getChapterContent(bookNameOrId: string, chapter: number): string[] | null {
+        let bookId = bookNameOrId;
+        // Check if it's a name that needs resolution
+        if (BOOK_MAPPING[bookNameOrId]) {
+            bookId = BOOK_MAPPING[bookNameOrId];
+        }
+
+        const book = (rvrBible as any[]).find(b => b.id === bookId);
+        if (!book) return null;
+
+        // 0-indexed array vs 1-based chapter
+        const chapterIdx = chapter - 1;
+        if (chapterIdx < 0 || chapterIdx >= book.chapters.length) return null;
+
+        return book.chapters[chapterIdx];
+    }
+
+    /** Search for verses containing query */
+    static search(query: string, limit = 20): { reference: string; text: string }[] {
+        const results: { reference: string; text: string }[] = [];
+        const q = query.toLowerCase().trim();
+        if (!q || q.length < 3) return []; // Minimum 3 chars
+
+        let count = 0;
+        const books = rvrBible as any[];
+
+        // Iterate through all books
+        for (const book of books) {
+            // Find display name for reference
+            let bookName = book.id.toUpperCase();
+            for (const [key, val] of Object.entries(BOOK_MAPPING)) {
+                if (val === book.id && key.length > 3 && key[0] === key[0].toUpperCase()) {
+                    bookName = key;
+                    break;
+                }
+            }
+
+            for (let c = 0; c < book.chapters.length; c++) {
+                const chapter = book.chapters[c];
+                for (let v = 0; v < chapter.length; v++) {
+                    const verseText = chapter[v];
+                    if (verseText.toLowerCase().includes(q)) {
+                        results.push({
+                            reference: `${bookName} ${c + 1}:${v + 1}`,
+                            text: verseText
+                        });
+                        count++;
+                        if (count >= limit) return results;
+                    }
+                }
+            }
+        }
+        return results;
+    }
 }
 

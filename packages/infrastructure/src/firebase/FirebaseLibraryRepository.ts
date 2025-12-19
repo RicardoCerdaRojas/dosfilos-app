@@ -94,9 +94,8 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         if (updates.preferredForPhases !== undefined) firestoreUpdates.preferredForPhases = updates.preferredForPhases;
         if (updates.updatedAt !== undefined) firestoreUpdates.updatedAt = Timestamp.fromDate(updates.updatedAt);
 
-        // 🎯 Core Library fields
-        if (updates.isCore !== undefined) firestoreUpdates.isCore = updates.isCore;
-        if (updates.coreContext !== undefined) firestoreUpdates.coreContext = updates.coreContext;
+        // 🎯 Core Library stores
+        if (updates.coreStores !== undefined) firestoreUpdates.coreStores = updates.coreStores;
 
         await updateDoc(ref, firestoreUpdates);
     }
@@ -117,6 +116,8 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
             pageCount: resource.pageCount || null,
             preferredForPhases: resource.preferredForPhases || [],
             metadata: resource.metadata || {},
+            // 🎯 Core Library stores
+            coreStores: resource.coreStores || [],
             createdAt: Timestamp.fromDate(resource.createdAt),
             updatedAt: Timestamp.fromDate(resource.updatedAt)
         };
@@ -143,6 +144,8 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         // Add new fields directly
         (resource as any).textContentUrl = data.textContentUrl || undefined;
         (resource as any).characterCount = data.characterCount || undefined;
+        // 🎯 Core Library stores
+        (resource as any).coreStores = data.coreStores || [];
         return resource;
     }
 }

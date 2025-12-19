@@ -19,9 +19,8 @@ export interface LibraryResource {
     characterCount?: number; // Total character count of extracted text
     pageCount?: number; // Total page count from extraction
 
-    // 🎯 Core Library: Marks document as part of global core library (admin-curated)
-    isCore?: boolean;
-    coreContext?: 'exegesis' | 'homiletics' | 'generic'; // Which core context this belongs to
+    // 🎯 Core Library: Stores this document is included in (can be multiple)
+    coreStores?: ('exegesis' | 'homiletics' | 'generic')[];
 
     // Phase preference: documents preferred for specific workflow phases
     preferredForPhases?: WorkflowPhase[];
@@ -36,8 +35,7 @@ export interface LibraryResource {
 export class LibraryResourceEntity implements LibraryResource {
     public preferredForPhases?: WorkflowPhase[];
     public metadata?: Record<string, any>;
-    public isCore?: boolean;
-    public coreContext?: 'exegesis' | 'homiletics' | 'generic';
+    public coreStores?: ('exegesis' | 'homiletics' | 'generic')[];
 
     constructor(
         public id: string,
@@ -55,8 +53,7 @@ export class LibraryResourceEntity implements LibraryResource {
         preferredForPhases?: WorkflowPhase[],
         metadata?: Record<string, any>,
         public pageCount?: number,
-        isCore?: boolean,
-        coreContext?: 'exegesis' | 'homiletics' | 'generic'
+        coreStores?: ('exegesis' | 'homiletics' | 'generic')[]
     ) {
         if (preferredForPhases) {
             this.preferredForPhases = preferredForPhases;
@@ -64,11 +61,8 @@ export class LibraryResourceEntity implements LibraryResource {
         if (metadata) {
             this.metadata = metadata;
         }
-        if (isCore !== undefined) {
-            this.isCore = isCore;
-        }
-        if (coreContext) {
-            this.coreContext = coreContext;
+        if (coreStores) {
+            this.coreStores = coreStores;
         }
         this.validate();
     }

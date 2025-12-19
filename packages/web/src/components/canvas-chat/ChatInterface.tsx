@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Loader2, Send, Sparkles, BookOpen, ChevronDown, ChevronRight, Library, Zap, Search } from 'lucide-react';
+import { Loader2, Send, Sparkles, BookOpen, ChevronDown, ChevronRight } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { getSectionConfig } from './section-configs';
 
@@ -48,10 +47,11 @@ interface ChatInterfaceProps<T = any> {
   selectedStyle?: CoachingStyle | 'auto';
   onStyleChange?: (style: CoachingStyle | 'auto') => void;
   showStyleSelector?: boolean;
+  // 🎯 Context props are preserved in interface for compatibility but validly unused in UI
   activeContext?: ActiveContext;
   onRefreshContext?: () => void;
-  onSyncDocuments?: () => Promise<void>; // 🎯 NEW: Sync expired documents
-  isSyncingDocuments?: boolean; // 🎯 NEW: Sync loading state
+  onSyncDocuments?: () => Promise<void>; 
+  isSyncingDocuments?: boolean; 
 }
 
 
@@ -69,10 +69,11 @@ export function ChatInterface<T = any>({
   selectedStyle = 'auto',
   onStyleChange,
   showStyleSelector = false,
-  activeContext,
-  onRefreshContext,
-  onSyncDocuments,
-  isSyncingDocuments = false
+  // Context props no longer used in UI
+  // activeContext,
+  // onRefreshContext,
+  // onSyncDocuments,
+  // isSyncingDocuments = false
 }: ChatInterfaceProps<T>) {
   const [userInput, setUserInput] = useState('');
   const [internalIsLoading, setInternalIsLoading] = useState(false);
@@ -230,189 +231,7 @@ export function ChatInterface<T = any>({
               </p>
             </div>
             
-            {/* 🎯 Always Visible Context Indicators */}
-            {activeContext && (
-                <div className="flex items-center gap-1.5 text-[10px] flex-shrink-0">
-                    {/* Documents Indicator */}
-                    <span 
-                        className={`px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                            activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0
-                                ? 'bg-amber-100 text-amber-700'
-                                : activeContext.syncedResourceCount && activeContext.syncedResourceCount > 0
-                                    ? 'bg-purple-100 text-purple-700'
-                                    : 'bg-gray-100 text-gray-500'
-                        }`}
-                        title={
-                            activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0
-                                ? `${activeContext.expiredResourceCount} documentos expirados`
-                                : `${activeContext.syncedResourceCount || 0} documentos sincronizados`
-                        }
-                    >
-                        📚 {activeContext.syncedResourceCount || 0}/{activeContext.totalAvailableResources || 0}
-                        {activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0 ? ' ⚠️' : ' ✓'}
-                    </span>
-                    
-                    {/* Cache Indicator */}
-                    <span 
-                        className={`px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                            activeContext.isCached && activeContext.expiresAt && new Date(activeContext.expiresAt) > new Date()
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-500'
-                        }`}
-                        title={
-                            activeContext.isCached 
-                                ? activeContext.expiresAt && new Date(activeContext.expiresAt) > new Date()
-                                    ? `Cache activo hasta ${new Date(activeContext.expiresAt).toLocaleTimeString()}`
-                                    : 'Cache expirado'
-                                : 'Sin cache'
-                        }
-                    >
-                        🗃️ {activeContext.isCached && activeContext.expiresAt && new Date(activeContext.expiresAt) > new Date() ? '✓' : '✗'}
-                    </span>
-                </div>
-            )}
-            
-            {/* Context Info Button */}
-            {activeContext && (
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Ver contexto activo">
-                            <Library className="h-4 w-4" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="end">
-                        <div className="p-3 border-b bg-muted/30">
-                            <h4 className="font-medium text-sm flex items-center gap-2">
-                                {activeContext.isCached ? (
-                                    <><Zap className="h-4 w-4 text-yellow-500 fill-yellow-500" /> Contexto Completo (Cache)</>
-                                ) : activeContext.resources.length > 0 ? (
-                                    <><Library className="h-4 w-4 text-blue-600" /> Contexto: Archivos Directos</>
-                                ) : (
-                                    <><Search className="h-4 w-4 text-blue-500" /> Búsqueda Manual (RAG)</>
-                                )}
-                            </h4>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {activeContext.isCached 
-                                    ? "El asistente tiene acceso al contenido completo de estos recursos:"
-                                    : activeContext.resources.length > 0
-                                        ? "El asistente usa estos archivos directamente en el prompt (Modo Directo):"
-                                        : "El asistente buscará fragmentos relevantes en estos recursos:"}
-                            </p>
-                            {/* Cache Status with Date and Expiration */}
-                            {activeContext.createdAt && (
-                                <div className="text-[10px] text-muted-foreground mt-2 space-y-0.5">
-                                    <p className="flex items-center gap-1">
-                                        <span>Creado:</span>
-                                        <span className="font-medium">
-                                            {new Date(activeContext.createdAt).toLocaleDateString('es-ES', { 
-                                                day: '2-digit', 
-                                                month: 'short',
-                                                year: 'numeric'
-                                            })}{', '}
-                                            {new Date(activeContext.createdAt).toLocaleTimeString('es-ES', { 
-                                                hour: '2-digit', 
-                                                minute: '2-digit' 
-                                            })}
-                                        </span>
-                                    </p>
-                                    {activeContext.expiresAt && (() => {
-                                        const now = new Date();
-                                        const expiresAt = new Date(activeContext.expiresAt);
-                                        const isExpired = now >= expiresAt;
-                                        const timeRemaining = expiresAt.getTime() - now.getTime();
-                                        const minutesRemaining = Math.max(0, Math.floor(timeRemaining / 60000));
-                                        
-                                        return (
-                                            <p className={`flex items-center gap-1 ${isExpired ? 'text-orange-500' : 'text-emerald-600'}`}>
-                                                <span>{isExpired ? '⚠️ Expirado' : '✓ Activo'}</span>
-                                                {!isExpired && (
-                                                    <span className="text-muted-foreground">
-                                                        ({minutesRemaining} min restantes)
-                                                    </span>
-                                                )}
-                                            </p>
-                                        );
-                                    })()}
-                                </div>
-                            )}
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="p-2 border-b bg-muted/10 space-y-1.5">
-                            {/* Sync Documents Button - Show if documents expired */}
-                            {(activeContext.expiredResourceCount ?? 0) > 0 && onSyncDocuments ? (
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className="w-full text-xs h-7 border-amber-300 text-amber-700 hover:bg-amber-50" 
-                                    onClick={onSyncDocuments}
-                                    disabled={isSyncingDocuments || isLoading}
-                                >
-                                    {isSyncingDocuments ? (
-                                        <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Sincronizando...</>
-                                    ) : (
-                                        <><BookOpen className="h-3 w-3 mr-2" /> Sincronizar {activeContext.expiredResourceCount} Documentos</>
-                                    )}
-                                </Button>
-                            ) : null}
-                            
-                            {/* Regenerate Cache Button */}
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full text-xs h-7" 
-                                onClick={() => {
-                                    console.log('Refresh clicked', { onRefreshContext });
-                                    onRefreshContext?.();
-                                }}
-                                disabled={
-                                    isLoading || 
-                                    isSyncingDocuments ||
-                                    !onRefreshContext || 
-                                    (activeContext.totalAvailableResources === 0) ||
-                                    !!(activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0)
-                                }
-                            >
-                                <Zap className="h-3 w-3 mr-2" />
-                                {!onRefreshContext 
-                                    ? 'Regenerar no disponible'
-                                    : activeContext.totalAvailableResources === 0 
-                                        ? 'Sin documentos para cachear' 
-                                        : activeContext.expiredResourceCount && activeContext.expiredResourceCount > 0
-                                            ? 'Sincronizar documentos primero'
-                                            : 'Regenerar Contexto (Cache)'
-                                }
-                            </Button>
-                        </div>
 
-                        <div className="max-h-60 overflow-y-auto p-2">
-                            {activeContext.resources.length > 0 ? (
-                                <div className="space-y-1">
-                                    {activeContext.resources.map((r, i) => (
-                                        <div key={i} className="text-xs px-2 py-1.5 rounded hover:bg-muted/50 flex items-center gap-2">
-                                            {/* Status indicator */}
-                                            <span className="flex-shrink-0">
-                                                {r.isGeminiExpired ? '⚠️' : r.hasGeminiUri ? '✅' : '❌'}
-                                            </span>
-                                            <div className="flex-1 min-w-0">
-                                                <span className="font-medium truncate block">{r.title}</span>
-                                                <span className="text-muted-foreground text-[10px]">{r.author}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-xs text-muted-foreground p-2 text-center">
-                                    {activeContext.totalAvailableResources === 0 
-                                        ? "No hay documentos configurados para este paso." 
-                                        : "No hay recursos seleccionados en RAG."
-                                    }
-                                </div>
-                            )}
-                        </div>
-                    </PopoverContent>
-                </Popover>
-            )}
 
             {/* Coaching Style Selector */}
             {showStyleSelector && onStyleChange && (
