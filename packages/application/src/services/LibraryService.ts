@@ -232,11 +232,18 @@ export class LibraryService {
      * Update resource metadata (title, author, type)
      */
     /**
-     * Update resource metadata (title, author, type)
+     * Update resource metadata (title, author, type, core library status)
      */
     async updateResource(
         id: string,
-        updates: { title?: string; author?: string; type?: ResourceType; metadata?: any }
+        updates: {
+            title?: string;
+            author?: string;
+            type?: ResourceType;
+            metadata?: any;
+            isCore?: boolean;
+            coreContext?: 'exegesis' | 'homiletics' | 'generic';
+        }
     ): Promise<void> {
         console.log(`📝 Updating resource ${id}:`, updates);
         await this.libraryRepository.update(id, {

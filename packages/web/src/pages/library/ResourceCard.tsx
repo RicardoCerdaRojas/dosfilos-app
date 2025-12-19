@@ -2,7 +2,7 @@ import { LibraryResourceEntity, LibraryCategory, WorkflowPhase } from '@dosfilos
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Book, FileText, MessageSquare, Languages, FileQuestion, Trash2, Edit2, Sparkles, Loader2, CheckCircle2, AlertCircle, Eye, BookOpen, Mic2, PenTool, Settings2, RefreshCw } from 'lucide-react';
+import { Book, FileText, MessageSquare, Languages, FileQuestion, Trash2, Edit2, Sparkles, Loader2, CheckCircle2, AlertCircle, Eye, BookOpen, Mic2, PenTool, Settings2, RefreshCw, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
@@ -20,6 +20,8 @@ interface ResourceCardProps {
     onSetPhases?: () => void;
     onSync?: () => void;
     isSyncing?: boolean;
+    isAdmin?: boolean; // 🎯 NEW: Show core library controls
+    onToggleCore?: (isCore: boolean, coreContext?: 'exegesis' | 'homiletics' | 'generic') => void;
 }
 
 // Icon mapping for category icons
@@ -55,7 +57,9 @@ export function ResourceCard({
     onPreview,
     onSetPhases,
     onSync,
-    isSyncing
+    isSyncing,
+    isAdmin,
+    onToggleCore
 }: ResourceCardProps) {
     // Find the category by ID
     const category = categories.find(c => c.id === resource.type);
@@ -190,6 +194,15 @@ export function ResourceCard({
                     {getExtractionBadge()}
                     {resource.textExtractionStatus === 'ready' && getStatusBadge()}
                     {getAIReadyBadge()}
+                    {/* 🎯 Core Library Badge */}
+                    {resource.isCore && (
+                        <span 
+                            className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1 font-medium shadow-sm"
+                            title={`Biblioteca Core: ${resource.coreContext || 'generic'}`}
+                        >
+                            <Database className="h-3 w-3" /> Core
+                        </span>
+                    )}
                 </div>
 
                 {/* Phase Preference Badges */}
@@ -264,6 +277,31 @@ export function ResourceCard({
                             title="Configurar fases"
                         >
                             <Settings2 className="h-4 w-4" />
+                        </Button>
+                    )}
+                    
+                    {/* 🎯 Core Library Toggle (Admin Only) */}
+                    {isAdmin && onToggleCore && resource.textExtractionStatus === 'ready' && isGeminiReady && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className={cn(
+                                "h-8 w-8 p-0",
+                                resource.isCore 
+                                    ? "text-amber-600 hover:text-amber-700 bg-amber-50" 
+                                    : "text-gray-400 hover:text-amber-600"
+                            )}
+                            onClick={() => {
+                                if (resource.isCore) {
+                                    onToggleCore(false);
+                                } else {
+                                    // Default to 'generic' - admin can change later in edit dialog
+                                    onToggleCore(true, 'generic');
+                                }
+                            }}
+                            title={resource.isCore ? "Quitar de Biblioteca Core" : "Agregar a Biblioteca Core"}
+                        >
+                            <Database className="h-4 w-4" />
                         </Button>
                     )}
                     {onReindex && indexStatus === 'indexed' && (

@@ -26,8 +26,11 @@ interface IndexingProgress {
     currentTitle: string;
 }
 
+const ADMIN_EMAIL = 'rdocerda@gmail.com';
+
 export function LibraryManager() {
     const { user } = useFirebase();
+    const isAdmin = user?.email === ADMIN_EMAIL;
     const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
     const [categories, setCategories] = useState<LibraryCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -346,6 +349,25 @@ export function LibraryManager() {
         );
     };
 
+    // 🎯 NEW: Toggle Core Library status
+    const handleToggleCore = async (resource: LibraryResourceEntity, isCore: boolean, coreContext?: 'exegesis' | 'homiletics' | 'generic') => {
+        try {
+            await libraryService.updateResource(resource.id, {
+                isCore,
+                coreContext: isCore ? coreContext : undefined
+            });
+            
+            toast.success(
+                isCore 
+                    ? `"${resource.title}" agregado a Biblioteca Core (${coreContext})` 
+                    : `"${resource.title}" removido de Biblioteca Core`
+            );
+        } catch (error) {
+            console.error('Toggle core error:', error);
+            toast.error(`Error: ${(error as Error).message}`);
+        }
+    };
+
     const unindexedCount = Object.values(indexStatus).filter(s => s === 'not-indexed').length;
 
     return (
@@ -555,6 +577,8 @@ export function LibraryManager() {
                             onSetPhases={() => handleSetPhases(resource)}
                             onSync={() => handleSyncResource(resource)}
                             isSyncing={syncingResource === resource.id}
+                            isAdmin={isAdmin}
+                            onToggleCore={(isCore, coreContext) => handleToggleCore(resource, isCore, coreContext)}
                         />
                     ))}
                 </div>
