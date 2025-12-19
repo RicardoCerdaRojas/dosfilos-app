@@ -1,17 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GoogleAICacheManager } from "@google/generative-ai/server";
 import { GEMINI_CONFIG } from "./config";
 
 export class GeminiFileSearchService {
     private genAI: GoogleGenerativeAI;
-    private cacheManager: GoogleAICacheManager;
-
     private apiKey: string;
 
     constructor(apiKey: string) {
         this.apiKey = apiKey;
         this.genAI = new GoogleGenerativeAI(apiKey);
-        this.cacheManager = new GoogleAICacheManager(apiKey);
     }
 
     /**
