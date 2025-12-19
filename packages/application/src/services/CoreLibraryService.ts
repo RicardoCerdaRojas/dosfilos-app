@@ -1,25 +1,31 @@
 import {
     ICoreLibraryService,
     IFileSearchService,
-    IStorageService,
     FileSearchStoreContext,
     FileSearchFileMetadata,
-    CoreLibraryStoresConfig
+    CoreLibraryStoresConfig,
+    LibraryResourceEntity
 } from '@dosfilos/domain';
-import { doc, getDoc, setDoc, getFirestore } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+
+const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
 /**
- * Core Library Service - Application Layer
+ * Core Library Service - Refactored
  * 
- * Responsibilities (Single Responsibility Principle):
- * - Orchestrate File Search Store creation and management
- * - Manage global configuration in Firestore
- * - Provide store IDs to consumers
+ * Uses admin's library documents marked as isCore instead of separate Firebase Storage
  * 
- * Design:
- * - Depends on abstractions (IFileSearchService) not concretions
- * - Open for extension, closed for modification
- * - Injectable dependencies for testability
+ * Flow:
+ * 1. Admin uploads PDFs to their library (like any user)
+ * 2. Admin marks documents as "core" with coreContext (exegesis|homiletics|generic)
+ * 3. System creates File Search Stores from those documents
+ * 4. Stores available globally for all users
+ * 
+ * Benefits:
+ * - Reuses existing library infrastructure
+ * - No duplicate upload logic
+ * - Admin can manage via UI
+ * - Cloud Functions handle text extraction automatically
  */
 export class CoreLibraryService implements ICoreLibraryService {
     private stores: Record<FileSearchStoreContext, string | null> = {
@@ -32,47 +38,30 @@ export class CoreLibraryService implements ICoreLibraryService {
     private readonly CONFIG_PATH = 'config/coreLibraryStores';
 
     constructor(
-        private fileSearchService: IFileSearchService,
-        private storageService: IStorageService
+        private fileSearchService: IFileSearchService
     ) { }
 
-    /**
-     * Ensure all 3 File Search Stores are ready
-     * Called at user login
-     * 
-     * Flow:
-     * 1. Load config from Firestore
-     * 2. If stores exist → use them
-     * 3. If not → create stores
-     * 4. Save config for super admin visibility
-     */
     async ensureStoresReady(): Promise<void> {
         console.log('🔧 CoreLibraryService: Ensuring stores are ready...');
 
-        // 1. Try to load existing config
+        // 1. Load existing config
         const config = await this.loadConfig();
 
         if (config && this.areStoresValid(config)) {
             console.log('✅ Using existing stores from config');
             this.stores = config.stores;
             this.initialized = true;
-
-            // Update last validated timestamp
             await this.updateLastValidated();
             return;
         }
 
-        // 2. Create new stores
-        console.log('📚 Creating new File Search Stores...');
+        // 2. Create new stores from admin's core documents
+        console.log('📚 Creating File Search Stores from core library...');
         await this.createAllStores();
 
         this.initialized = true;
     }
 
-    /**
-     * Get store ID for a specific context
-     * Throws if not initialized
-     */
     getStoreId(context: FileSearchStoreContext): string {
         if (!this.initialized) {
             throw new Error('CoreLibraryService not initialized. Call ensureStoresReady() first.');
@@ -86,21 +75,14 @@ export class CoreLibraryService implements ICoreLibraryService {
         return storeId;
     }
 
-    /**
-     * Check if service is initialized
-     */
     isInitialized(): boolean {
         return this.initialized;
     }
 
-    /**
-     * Force re-creation of all stores (admin operation)
-     * WARNING: This will delete old stores and create new ones
-     */
     async recreateStores(): Promise<void> {
         console.log('🔄 CoreLibraryService: Recreating all stores...');
 
-        // Delete old stores if they exist
+        // Delete old stores
         const config = await this.loadConfig();
         if (config) {
             for (const context of Object.values(FileSearchStoreContext)) {
@@ -121,39 +103,135 @@ export class CoreLibraryService implements ICoreLibraryService {
     }
 
     /**
-     * Private: Create all 3 stores
+     * Get core documents from admin's library
+     * Groups by coreContext
      */
-    private async createAllStores(): Promise<void> {
-        const exegesisFiles = await this.uploadAndGetFiles(FileSearchStoreContext.EXEGESIS);
-        const homileticsFiles = await this.uploadAndGetFiles(FileSearchStoreContext.HOMILETICS);
-        const genericFiles = await this.uploadAndGetFiles(FileSearchStoreContext.GENERIC);
+    private async getCoreDocuments(): Promise<Record<string, LibraryResourceEntity[]>> {
+        try {
+            const db = getFirestore();
 
-        // Create stores in parallel for speed
+            // Get admin user ID
+            const usersRef = collection(db, 'users');
+            const adminQuery = query(usersRef, where('email', '==', ADMIN_EMAIL));
+            const adminSnapshot = await getDocs(adminQuery);
+
+            if (adminSnapshot.empty) {
+                console.warn(`⚠️ Admin user ${ADMIN_EMAIL} not found`);
+                return {
+                    exegesis: [],
+                    homiletics: [],
+                    generic: []
+                };
+            }
+
+            const adminUserId = adminSnapshot.docs[0].id;
+
+            // Get core library resources for admin
+            const libraryRef = collection(db, 'library_resources');
+            const coreQuery = query(
+                libraryRef,
+                where('userId', '==', adminUserId),
+                where('isCore', '==', true)
+            );
+
+            const snapshot = await getDocs(coreQuery);
+            const coreDocsByContext: Record<string, LibraryResourceEntity[]> = {
+                exegesis: [],
+                homiletics: [],
+                generic: []
+            };
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const resource = new LibraryResourceEntity(
+                    doc.id,
+                    data.userId,
+                    data.title,
+                    data.author,
+                    data.type,
+                    data.storageUrl,
+                    data.mimeType,
+                    data.sizeBytes,
+                    data.textExtractionStatus,
+                    data.textContent,
+                    data.createdAt?.toDate(),
+                    data.updatedAt?.toDate(),
+                    data.preferredForPhases,
+                    data.metadata,
+                    data.pageCount,
+                    data.isCore,
+                    data.coreContext
+                );
+
+                const context = resource.coreContext || 'generic';
+                if (coreDocsByContext[context]) {
+                    coreDocsByContext[context].push(resource);
+                }
+            });
+
+            console.log('📚 Core documents found:', {
+                exegesis: coreDocsByContext.exegesis.length,
+                homiletics: coreDocsByContext.homiletics.length,
+                generic: coreDocsByContext.generic.length
+            });
+
+            return coreDocsByContext;
+        } catch (error) {
+            console.error('❌ Failed to get core documents:', error);
+            return {
+                exegesis: [],
+                homiletics: [],
+                generic: []
+            };
+        }
+    }
+
+    private async createAllStores(): Promise<void> {
+        const coreDocsByContext = await this.getCoreDocuments();
+
+        // Prepare file metadata for each context
+        const exegesisFiles = this.prepareFileMetadata(coreDocsByContext.exegesis || []);
+        const homileticsFiles = this.prepareFileMetadata(coreDocsByContext.homiletics || []);
+        const genericFiles = this.prepareFileMetadata(coreDocsByContext.generic || []);
+
+        if (exegesisFiles.length === 0 && homileticsFiles.length === 0 && genericFiles.length === 0) {
+            console.warn('⚠️ No core documents found. Skipping store creation.');
+            console.warn('💡 Admin should upload documents and mark them as core in the library.');
+            throw new Error('No core documents available. Upload PDFs to admin library and mark as core.');
+        }
+
+        // Create stores (only if has files)
         const [exegesisStore, homileticsStore, genericStore] = await Promise.all([
-            this.fileSearchService.createFileSearchStore(
-                exegesisFiles.map(f => f.geminiUri),
-                'Dos Filos - Biblioteca de Exégesis'
-            ),
-            this.fileSearchService.createFileSearchStore(
-                homileticsFiles.map(f => f.geminiUri),
-                'Dos Filos - Biblioteca de Homilética'
-            ),
-            this.fileSearchService.createFileSearchStore(
-                genericFiles.map(f => f.geminiUri),
-                'Dos Filos - Biblioteca Genérica'
-            )
+            exegesisFiles.length > 0
+                ? this.fileSearchService.createFileSearchStore(
+                    exegesisFiles.map(f => f.geminiUri),
+                    'Dos Filos - Biblioteca de Exégesis'
+                )
+                : Promise.resolve({ name: '' }),
+            homileticsFiles.length > 0
+                ? this.fileSearchService.createFileSearchStore(
+                    homileticsFiles.map(f => f.geminiUri),
+                    'Dos Filos - Biblioteca de Homilética'
+                )
+                : Promise.resolve({ name: '' }),
+            genericFiles.length > 0
+                ? this.fileSearchService.createFileSearchStore(
+                    genericFiles.map(f => f.geminiUri),
+                    'Dos Filos - Biblioteca Genérica'
+                )
+                : Promise.resolve({ name: '' })
         ]);
 
         // Update local state
         this.stores = {
-            [FileSearchStoreContext.EXEGESIS]: exegesisStore.name,
-            [FileSearchStoreContext.HOMILETICS]: homileticsStore.name,
-            [FileSearchStoreContext.GENERIC]: genericStore.name
+            [FileSearchStoreContext.EXEGESIS]: exegesisStore.name || null,
+            [FileSearchStoreContext.HOMILETICS]: homileticsStore.name || null,
+            [FileSearchStoreContext.GENERIC]: genericStore.name || null
         };
 
-        // Save config to Firestore (visible to super admin)
+        // Save config
         await this.saveConfig({
-            stores: this.stores,
+            stores: this.stores as any,
             files: {
                 exegesis: exegesisFiles,
                 homiletics: homileticsFiles,
@@ -167,134 +245,22 @@ export class CoreLibraryService implements ICoreLibraryService {
     }
 
     /**
-     * Private: Upload files for a specific context and return metadata
+     * Prepare file metadata from library resources
+     * Uses existing geminiUri from library documents
      */
-    private async uploadAndGetFiles(context: FileSearchStoreContext): Promise<FileSearchFileMetadata[]> {
-        const coreFilesMap = this.getCoreFilesDefinition();
-        const files = coreFilesMap[context];
-
-        const uploadedFiles: FileSearchFileMetadata[] = [];
-
-        for (const fileDef of files) {
-            try {
-                // Download from Firebase Storage
-                const blob = await this.storageService.downloadFileAsBlob(fileDef.storagePath);
-
-                // Upload to Gemini
-                const geminiUri = await this.fileSearchService.uploadFile(
-                    blob,
-                    'application/pdf',
-                    fileDef.name
-                );
-
-                uploadedFiles.push({
-                    geminiUri,
-                    name: fileDef.name,
-                    storagePath: fileDef.storagePath,
-                    author: fileDef.author,
-                    year: fileDef.year,
-                    pages: fileDef.pages,
-                    uploadedAt: new Date()
-                });
-
-                console.log(`✅ Uploaded: ${fileDef.name}`);
-            } catch (error) {
-                console.error(`❌ Failed to upload ${fileDef.name}:`, error);
-                throw error;
-            }
-        }
-
-        return uploadedFiles;
+    private prepareFileMetadata(resources: LibraryResourceEntity[]): FileSearchFileMetadata[] {
+        return resources
+            .filter(r => r.metadata?.geminiUri) // Only resources synced to Gemini
+            .map(r => ({
+                geminiUri: r.metadata!.geminiUri,
+                name: r.title,
+                storagePath: r.storageUrl,
+                author: r.author,
+                pages: r.pageCount || 0,
+                uploadedAt: r.updatedAt
+            }));
     }
 
-    /**
-     * Private: Get core files definition
-     * This is the "source of truth" for which files belong to each store
-     * 
-     * NOTE: Update this when adding/removing core library files
-     */
-    private getCoreFilesDefinition(): Record<FileSearchStoreContext, Array<{
-        name: string;
-        storagePath: string;
-        author?: string;
-        year?: string;
-        pages: number;
-    }>> {
-        return {
-            [FileSearchStoreContext.EXEGESIS]: [
-                {
-                    name: 'Léxico Griego-Español del Nuevo Testamento',
-                    storagePath: 'core-library/exegesis/lexico-griego-tuggy.pdf',
-                    author: 'Alfred E. Tuggy',
-                    year: '1996',
-                    pages: 400
-                },
-                {
-                    name: 'Léxico Hebreo-Español del Antiguo Testamento',
-                    storagePath: 'core-library/exegesis/lexico-hebreo.pdf',
-                    author: 'Moisés Chávez',
-                    pages: 400
-                },
-                {
-                    name: 'Introducción a la Hermenéutica Bíblica',
-                    storagePath: 'core-library/exegesis/hermeneutica-intro.pdf',
-                    author: 'José M. Martínez',
-                    pages: 200
-                }
-            ],
-            [FileSearchStoreContext.HOMILETICS]: [
-                {
-                    name: 'La Predicación Bíblica',
-                    storagePath: 'core-library/homiletics/robinson-predicacion.pdf',
-                    author: 'Haddon W. Robinson',
-                    year: '2000',
-                    pages: 300
-                },
-                {
-                    name: 'Teología Sistemática (extractos)',
-                    storagePath: 'core-library/homiletics/grudem-teologia.pdf',
-                    author: 'Wayne Grudem',
-                    year: '2007',
-                    pages: 400
-                },
-                {
-                    name: 'El Arte de Predicar',
-                    storagePath: 'core-library/homiletics/stott-predicacion.pdf',
-                    author: 'John Stott',
-                    pages: 200
-                },
-                {
-                    name: 'Bosquejos de Sermones',
-                    storagePath: 'core-library/homiletics/bosquejos.pdf',
-                    pages: 100
-                }
-            ],
-            [FileSearchStoreContext.GENERIC]: [
-                {
-                    name: 'Teología Bíblica del AT y NT',
-                    storagePath: 'core-library/generic/house-teologia-biblica.pdf',
-                    author: 'Paul House',
-                    pages: 400
-                },
-                {
-                    name: 'Consejería Bíblica (extractos)',
-                    storagePath: 'core-library/generic/adams-consejeria.pdf',
-                    author: 'Jay E. Adams',
-                    pages: 300
-                },
-                {
-                    name: 'Ética Cristiana',
-                    storagePath: 'core-library/generic/etica-cristiana.pdf',
-                    author: 'Norman Geisler',
-                    pages: 200
-                }
-            ]
-        };
-    }
-
-    /**
-     * Private: Load config from Firestore
-     */
     private async loadConfig(): Promise<CoreLibraryStoresConfig | null> {
         try {
             const db = getFirestore();
@@ -317,10 +283,6 @@ export class CoreLibraryService implements ICoreLibraryService {
         }
     }
 
-    /**
-     * Private: Save config to Firestore
-     * This makes configuration visible to super admins
-     */
     private async saveConfig(config: CoreLibraryStoresConfig): Promise<void> {
         try {
             const db = getFirestore();
@@ -338,9 +300,6 @@ export class CoreLibraryService implements ICoreLibraryService {
         }
     }
 
-    /**
-     * Private: Update last validated timestamp
-     */
     private async updateLastValidated(): Promise<void> {
         try {
             const db = getFirestore();
@@ -352,13 +311,10 @@ export class CoreLibraryService implements ICoreLibraryService {
         }
     }
 
-    /**
-     * Private: Check if stores from config are valid
-     */
     private areStoresValid(config: CoreLibraryStoresConfig): boolean {
         return !!(
-            config.stores.exegesis &&
-            config.stores.homiletics &&
+            config.stores.exegesis ||
+            config.stores.homiletics ||
             config.stores.generic
         );
     }

@@ -1,5 +1,5 @@
 import { CoreLibraryService } from '@dosfilos/application';
-import { GeminiFileSearchService, FirebaseStorageService } from '@dosfilos/infrastructure';
+import { GeminiFileSearchService } from '@dosfilos/infrastructure';
 
 /**
  * Singleton instance of CoreLibraryService
@@ -21,14 +21,12 @@ export function getCoreLibraryService(): CoreLibraryService {
             throw new Error('VITE_GEMINI_API_KEY not configured');
         }
 
-        // Create dependencies
+        // Create dependencies (only IFileSearchService now - no storage needed)
         const fileSearchService = new GeminiFileSearchService(apiKey);
-        const storageService = new FirebaseStorageService();
 
         // Create service with injected dependencies
         coreLibraryServiceInstance = new CoreLibraryService(
-            fileSearchService as any, // Temporary type workaround
-            storageService as any
+            fileSearchService as any // Temporary type workaround
         );
     }
 
