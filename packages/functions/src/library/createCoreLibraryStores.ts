@@ -1,7 +1,14 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Get app instance (already initialized in index.ts)
+// Initialize Firebase if not already done
+try {
+    initializeApp();
+} catch (e) {
+    // Already initialized
+}
+
 const db = getFirestore();
 
 /**
@@ -134,20 +141,20 @@ export const createCoreLibraryStores = onCall(
                 stores[context] = storeData.name;
                 console.log(`  ✅ Store created: ${storeData.name}`);
 
-                // Add files to store
+                // Import files to store using :importFile endpoint
                 for (const doc of docsWithUri) {
-                    console.log(`    Adding ${doc.title}...`);
-                    const addFileResponse = await fetch(
-                        `https://generativelanguage.googleapis.com/v1beta/${storeData.name}/files?key=${apiKey}`,
+                    console.log(`    Importing ${doc.title}...`);
+                    const importResponse = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/${storeData.name}:importFile?key=${apiKey}`,
                         {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ file: doc.geminiUri })
+                            body: JSON.stringify({ fileName: doc.geminiName })
                         }
                     );
 
-                    if (addFileResponse.ok) {
-                        console.log(`    ✅ ${doc.title} added`);
+                    if (importResponse.ok) {
+                        console.log(`    ✅ ${doc.title} imported`);
                         filesMetadata[context].push({
                             geminiUri: doc.geminiUri,
                             name: doc.title,
@@ -156,8 +163,8 @@ export const createCoreLibraryStores = onCall(
                             uploadedAt: new Date()
                         });
                     } else {
-                        const errorText = await addFileResponse.text();
-                        console.warn(`    ⚠️ Failed to add ${doc.title}:`, errorText);
+                        const errorText = await importResponse.text();
+                        console.warn(`    ⚠️ Failed to import ${doc.title}:`, errorText);
                     }
                 }
             }
