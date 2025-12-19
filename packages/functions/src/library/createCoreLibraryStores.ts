@@ -20,7 +20,9 @@ const db = getFirestore();
  */
 export const createCoreLibraryStores = onCall(
     {
-        cors: ['http://localhost:5173', 'https://preach.dosfilos.com']
+        cors: true,
+        memory: '1GiB',
+        timeoutSeconds: 300
     },
     async (request) => {
         const apiKey = process.env.GEMINI_API_KEY;
