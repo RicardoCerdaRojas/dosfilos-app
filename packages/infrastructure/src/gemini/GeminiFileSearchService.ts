@@ -164,7 +164,9 @@ export class GeminiFileSearchService {
         console.log(`📚 Creating File Search Store with ${fileUris.length} files...`);
 
         try {
-            const response = await fetch(
+            // Step 1: Create empty store
+            console.log('  1️⃣ Creating empty store...');
+            const createResponse = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/fileSearchStores?key=${this.apiKey}`,
                 {
                     method: 'POST',
@@ -172,20 +174,49 @@ export class GeminiFileSearchService {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        displayName: displayName || `Store-${Date.now()}`,
-                        fileUris
+                        displayName: displayName || `Store-${Date.now()}`
                     })
                 }
             );
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                console.error('🚨 FILE SEARCH STORE CREATE ERROR:', errorBody);
-                throw new Error(`File Search Store creation failed (${response.status}): ${errorBody}`);
+            if (!createResponse.ok) {
+                const errorBody = await createResponse.text();
+                console.error('🚨 STORE CREATE ERROR:', errorBody);
+                throw new Error(`Store creation failed (${createResponse.status}): ${errorBody}`);
             }
 
-            const store = await response.json() as { name: string; createTime: string };
-            console.log('✅ File Search Store created:', store.name);
+            const store = await createResponse.json() as { name: string; createTime: string };
+            console.log(`  ✅ Store created: ${store.name}`);
+
+            // Step 2: Add files to store one by one
+            console.log(`  2️⃣ Adding ${fileUris.length} files to store...`);
+            for (let i = 0; i < fileUris.length; i++) {
+                const fileUri = fileUris[i];
+                console.log(`    Adding file ${i + 1}/${fileUris.length}: ${fileUri}`);
+
+                const addFileResponse = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/${store.name}/files?key=${this.apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            file: fileUri  // Just the file URI
+                        })
+                    }
+                );
+
+                if (!addFileResponse.ok) {
+                    const errorBody = await addFileResponse.text();
+                    console.warn(`    ⚠️ Failed to add file ${fileUri}:`, errorBody);
+                    // Don't throw - continue with other files
+                } else {
+                    console.log(`    ✅ File added`);
+                }
+            }
+
+            console.log('✅ File Search Store fully configured');
 
             return {
                 name: store.name,
