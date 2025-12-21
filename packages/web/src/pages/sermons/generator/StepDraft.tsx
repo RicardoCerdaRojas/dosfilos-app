@@ -111,12 +111,52 @@ export function StepDraft() {
         return `
 ${draft.introduction}
 <br/>
-${draft.body.map(point => `## ${point.point}
+${draft.body.map(point => {
+    let pointContent = `## ${point.point}
 <br/>
-${point.content}
-${point.illustration ? `
+${point.content}`;
+
+    // Add Scripture References if available
+    if (point.scriptureReferences && point.scriptureReferences.length > 0) {
+        pointContent += `
 <br/>
-> **${t('drafting.illustrationLabel')}:** ${point.illustration}` : ''}`).join('\n<br/>\n')}
+### Referencias Cruzadas
+${point.scriptureReferences.map(ref => `- ${ref}`).join('\n')}`;
+    }
+
+    // Add Illustration if available
+    if (point.illustration) {
+        pointContent += `
+<br/>
+**${t('drafting.illustrationLabel')}:**
+${point.illustration}`;
+    }
+
+    // Add Implications if available
+    if (point.implications && point.implications.length > 0) {
+        pointContent += `
+<br/>
+### Implicaciones Prácticas
+${point.implications.map((impl, idx) => `${idx + 1}. ${impl}`).join('\n')}`;
+    }
+
+    // Add Authority Quote if available
+    if (point.authorityQuote) {
+        pointContent += `
+<br/>
+> **Cita de Autoridad:**
+> ${point.authorityQuote.split('\n').join('\n> ')}`;
+    }
+
+    // Add Transition if available
+    if (point.transition) {
+        pointContent += `
+<br/>
+*${point.transition}*`;
+    }
+
+    return pointContent;
+}).join('\n<br/>\n---\n<br/>\n')}
 <br/>
 ## ${t('drafting.conclusionLabel')}
 ${draft.conclusion}
@@ -554,21 +594,17 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     <MarkdownRenderer content={homiletics.homileticalProposition} />
                 </div>
                 
-                {/* Outline Preview */}
-                {(() => {
-
-                    return null;
-                })()}
-                {homiletics.outlinePreview && homiletics.outlinePreview.length > 0 && (
+                {/* Outline Preview - Use live outline.mainPoints instead of static outlinePreview */}
+                {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-border/50">
                         <h4 className="font-semibold text-sm text-muted-foreground mb-2">
                             {t('drafting.outlinePoints')}
                         </h4>
                         <ul className="space-y-1.5 text-sm">
-                            {homiletics.outlinePreview.map((point, index) => (
+                            {homiletics.outline.mainPoints.map((point: any, index: number) => (
                                 <li key={index} className="flex items-start gap-2">
                                     <span className="text-primary mt-0.5">▪</span>
-                                    <span className="text-foreground/90">{point}</span>
+                                    <span className="text-foreground/90">{point.title}</span>
                                 </li>
                             ))}
                         </ul>
