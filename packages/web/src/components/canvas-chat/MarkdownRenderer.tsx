@@ -19,7 +19,7 @@ const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Gene
 
 /**
  * Simple Markdown Renderer with Bible verse detection
- * Handles basic markdown: **bold**, paragraphs, lists, and Bible references
+ * Handles: headings (###), bold (**text**), paragraphs, lists, blockquotes (>), and Bible references
  */
 export function MarkdownRenderer({ content, className, enableBibleLinks = true }: MarkdownRendererProps) {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
@@ -33,15 +33,73 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
   const paragraphs = textContent.split('\n\n').filter(p => p.trim());
 
   const renderParagraph = (text: string, index: number) => {
-    // Check if it's a list
+    const trimmed = text.trim();
+    
+    // Check for horizontal rule
+    if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+      return <hr key={index} className="my-4 border-muted" />;
+    }
+    
+    // Check for headings (###, ####)
+    if (trimmed.startsWith('####')) {
+      const headingText = trimmed.replace(/^####\s*/, '');
+      return (
+        <h4 key={index} className="font-semibold text-base mb-2 mt-3 text-foreground">
+          {renderInlineMarkdown(headingText)}
+        </h4>
+      );
+    }
+    
+    if (trimmed.startsWith('###')) {
+      const headingText = trimmed.replace(/^###\s*/, '');
+      return (
+        <h3 key={index} className="font-bold text-lg mb-3 mt-4 text-foreground">
+          {renderInlineMarkdown(headingText)}
+        </h3>
+      );
+    }
+    
+    // Check for blockquote (lines starting with >)
+    if (trimmed.startsWith('>')) {
+      const quoteLines = text.split('\n').filter(line => line.trim().startsWith('>'));
+      const quoteText = quoteLines.map(line => line.replace(/^>\s*/, '')).join('\n');
+      return (
+        <blockquote key={index} className="border-l-4 border-primary/30 pl-4 py-2 my-3 italic text-muted-foreground bg-muted/30 rounded-r">
+          {quoteText.split('\n').map((line, i) => (
+            <p key={i} className="text-sm leading-relaxed">
+              {renderInlineMarkdown(line)}
+            </p>
+          ))}
+        </blockquote>
+      );
+    }
+
+    // Check for numbered list
+    if (/^\d+\.\s/.test(trimmed)) {
+      const items = text.split('\n').filter(line => /^\d+\.\s/.test(line.trim()));
+      return (
+        <ol key={index} className="list-decimal list-inside mb-3 space-y-1 ml-2">
+          {items.map((item, i) => {
+            const cleanItem = item.replace(/^\d+\.\s+/, '');
+            return (
+              <li key={i} className="text-sm leading-relaxed">
+                {renderInlineMarkdown(cleanItem)}
+              </li>
+            );
+          })}
+        </ol>
+      );
+    }
+    
+    // Check if it's an unordered list
     if (text.trim().startsWith('- ') || text.trim().startsWith('* ')) {
       const items = text.split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'));
       return (
-        <ul key={index} className="list-disc list-inside mb-3 space-y-1">
+        <ul key={index} className="list-disc list-inside mb-3 space-y-1 ml-2">
           {items.map((item, i) => {
             const cleanItem = item.replace(/^[-*]\s+/, '');
             return (
-              <li key={i} className="text-sm leading-relaxed ml-2">
+              <li key={i} className="text-sm leading-relaxed">
                 {renderInlineMarkdown(cleanItem)}
               </li>
             );
@@ -52,7 +110,7 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
 
     // Regular paragraph
     return (
-      <p key={index} className="mb-3 leading-relaxed text-sm">
+      <p key={index} className="mb-3 leading-relaxed text-sm text-foreground/90">
         {renderInlineMarkdown(text)}
       </p>
     );

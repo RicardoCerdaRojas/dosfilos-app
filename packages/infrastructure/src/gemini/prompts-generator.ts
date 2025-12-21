@@ -188,29 +188,132 @@ Formato de Salida (JSON):
 }
 
 export function buildSermonDraftPrompt(analysis: HomileticalAnalysis, rules: GenerationRules): string {
+  // Format exegetical study for context
+  const exegesisContext = analysis.exegeticalStudy ? `
+
+CONTEXTO EXEGÉTICO (úsalo para enriquecer el sermón):
+- Pasaje: ${analysis.exegeticalStudy.passage}
+- Proposición Exegética: ${analysis.exegeticalStudy.exegeticalProposition}
+
+Contexto del Pasaje:
+  * Histórico: ${analysis.exegeticalStudy.context.historical}
+  * Literario: ${analysis.exegeticalStudy.context.literary}
+  * Audiencia Original: ${analysis.exegeticalStudy.context.audience}
+
+Palabras Clave (úsalas para notas exegéticas):
+${analysis.exegeticalStudy.keyWords.map(kw => `  - ${kw.original} (${kw.transliteration}): ${kw.significance}`).join('\n')}
+
+Insights Pastorales:
+${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).join('\n')}
+` : '';
+
   return `
 ${BASE_SYSTEM_PROMPT}
 
 FASE 3: REDACCIÓN DEL SERMÓN
 Objetivo: Redactar el contenido completo del sermón basado en el análisis previo.
+${exegesisContext}
 
-Datos del Análisis:
+Datos del Análisis Homilético:
 - Proposición Homilética: ${analysis.homileticalProposition}
 - Enfoque: ${analysis.homileticalApproach}
 - Bosquejo: ${JSON.stringify(analysis.outline)}
 
-Instrucciones:
-  1. Escribe una introducción cautivadora.
-  2. Desarrolla cada punto del bosquejo con:
-     - Contenido profundo y teológico
-     - Referencias cruzadas (scriptureReferences)
-     - Una ilustración relevante
-     - Al menos 2 implicaciones prácticas (implications)
-     - Una cita de autoridad (teólogo, comentarista) (authorityQuote)
-     - Una transición suave al siguiente punto (transition)
-  3. Escribe una conclusión poderosa y un llamado a la acción.
-  4. Usa un tono: ${rules.tone || 'Inspirador'}.
-  5. Dirígete a una audiencia: ${rules.targetAudience || 'General'}.
+═══════════════════════════════════════════════════════════════════
+🎯 INSTRUCCIONES CRÍTICAS DE FORMATO PARA PREDICACIÓN
+═══════════════════════════════════════════════════════════════════
+
+**OBJETIVO PRINCIPAL**: El borrador DEBE ser FÁCIL DE SEGUIR AL PREDICAR.
+Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de texto.
+
+📋 REGLAS DE FORMATO OBLIGATORIAS:
+
+1. **JERARQUIZACIÓN CON ENCABEZADOS**:
+   - Usa ### para subsecciones dentro del contenido
+   - Usa #### para sub-puntos o divisiones menores
+   - Cada encabezado debe estar en su propia línea con espacio antes y después
+
+2. **SEPARACIÓN VISUAL**:
+   - SEPARA PÁRRAFOS con líneas en blanco (doble salto de línea)
+   - NUNCA escribas párrafos continuos sin separación
+   - Usa líneas horizontales (---) para separar secciones mayores
+
+3. **ÉNFASIS Y DESTACADOS**:
+   - Usa **negritas** para conceptos clave, términos teológicos y puntos principales
+   - Usa *cursivas* para palabras en hebreo/griego y énfasis secundario
+   - Usa > para bloques de citas bíblicas o citas de autoridad
+
+4. **LISTAS Y ENUMERACIONES**:
+   - Usa listas con viñetas (-, *) para múltiples puntos relacionados
+   - Usa listas numeradas (1., 2.) para secuencias o pasos
+   - Cada ítem de lista debe estar en su propia línea
+
+5. **ESTRUCTURA DEL CONTENIDO DE CADA PUNTO**:
+   Organiza el campo "content" con esta estructura clara:
+
+   ### Exposición Bíblica
+   [Explicación del texto con contexto exegético]
+
+   **Palabras Clave**: 
+   - *palabra original* (transliteración): significado
+
+   ### Aplicación Contemporánea
+   [Conexión con la vida actual]
+
+   ### Referencias Cruzadas
+   > Texto bíblico relevante (Referencia)
+
+═══════════════════════════════════════════════════════════════════
+
+Instrucciones de Contenido:
+  1. **INTRODUCCIÓN**: 
+     - Estructura con encabezados claros (### Contexto Histórico, ### Conexión Actual)
+     - Separa párrafos visualmente
+     - Usa negritas para conceptos clave
+     - Explica el trasfondo del pasaje (quién, cuándo, dónde, por qué)
+     - Conecta la situación de la audiencia original con el presente
+     
+  2. **DESARROLLO DE CADA PUNTO** del bosquejo:
+     En el campo "content", estructura así:
+     
+     ### Exposición Bíblica
+     [Párrafo 1: Contexto del punto]
+     
+     [Párrafo 2: Profundización teológica]
+     
+     **Palabras Clave Relevantes**:
+     - *original* (transliteración): **significado teológico**
+     
+     ### Aplicación Contemporánea
+     [Conexión con situaciones actuales]
+     
+     ### Referencias Cruzadas
+     > "Texto de referencia" (Cita Bíblica)
+     
+     ---
+     
+     **Nota Exegética**: [Si aplica, explicación técnica accesible]
+     
+     - Incluye **Referencias cruzadas** en scriptureReferences (array)
+     - Incluye **Ilustración relevante** en el campo "illustration" (texto markdown con formato)
+     - Incluye **Al menos 2 implicaciones prácticas** en "implications" (array de strings)
+     - Incluye **Cita de autoridad** en "authorityQuote" (texto con formato markdown)
+     - Incluye **Transición suave** al siguiente punto en "transition"
+     
+  3. **CONCLUSIÓN**: 
+     - Estructura con subsecciones si es larga
+     - Separa ideas en párrafos distintos
+     - Usa negritas para el cierre principal
+     - Cierra el arco desde el contexto original hasta hoy
+  
+  4. **LLAMADO A LA ACCIÓN**: 
+     - Usa lista numerada si son múltiples acciones
+     - Separa claramente cada paso o acción
+     - Usa negritas para verbos de acción
+  
+  5. **TONO**: ${rules.tone || 'Inspirador'}
+  
+  6. **AUDIENCIA**: ${rules.targetAudience || 'General'}
 
   Reglas Personalizadas del Usuario:
   ${rules.customInstructions || 'Ninguna'}
@@ -218,20 +321,20 @@ Instrucciones:
   Formato de Salida (JSON):
   {
     "title": "Título Creativo",
-    "introduction": "Texto de la introducción...",
+    "introduction": "### Contexto Histórico\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n### Conexión Actual\\n\\n[Conexión con audiencia]",
     "body": [
       { 
         "point": "Título del Punto 1", 
-        "content": "Contenido desarrollado...", 
-        "scriptureReferences": ["Ref 1", "Ref 2"],
-        "illustration": "Ilustración...",
-        "implications": ["Implicación práctica 1", "Implicación práctica 2"],
-        "authorityQuote": "Cita de un autor reconocido...",
-        "transition": "Frase de transición..."
+        "content": "### Exposición Bíblica\\n\\n[Párrafo 1]\\n\\n**Concepto clave**: explicación\\n\\n### Aplicación Contemporánea\\n\\n[Aplicación]\\n\\n---", 
+        "scriptureReferences": ["Referencia 1", "Referencia 2"],
+        "illustration": "**Ilustración**: [Título]\\n\\n[Desarrollo de la ilustración con separación de párrafos]",
+        "implications": ["**Implicación 1**: Descripción", "**Implicación 2**: Descripción"],
+        "authorityQuote": "> Como señala [Autor]: \\"[Cita]\\"\\n\\n— *[Fuente]*",
+        "transition": "[Frase de transición natural al siguiente punto]"
       }
     ],
-  "conclusion": "Texto de la conclusión...",
-  "callToAction": "Llamado a la acción...",
+  "conclusion": "### Resumen Principal\\n\\n[Párrafo 1]\\n\\n### Llamado Final\\n\\n**Punto culminante**: [Cierre poderoso]",
+  "callToAction": "**Pasos de Acción**:\\n\\n1. **[Acción 1]**: Descripción\\n2. **[Acción 2]**: Descripción\\n3. **[Acción 3]**: Descripción",
   "ragSources": [
     {
       "title": "Nombre del documento usado",
@@ -242,10 +345,22 @@ Instrucciones:
   ]
 }
 
+═══════════════════════════════════════════════════════════════════
+⚠️ RECORDATORIOS FINALES DE FORMATO:
+═══════════════════════════════════════════════════════════════════
+✓ SIEMPRE separa párrafos con líneas en blanco (\\n\\n)
+✓ SIEMPRE usa encabezados (###, ####) para subsecciones
+✓ SIEMPRE usa **negritas** para conceptos clave
+✓ SIEMPRE usa listas (-, 1.) para enumeraciones
+✓ SIEMPRE usa > para citas y referencias bíblicas
+✓ NUNCA escribas bloques de texto continuo sin jerarquización
+✓ RECUERDA: El pastor debe poder seguir el borrador FÁCILMENTE al predicar
+
 REGLAS DE GENERACIÓN:
 1. Si usas información de documentos proporcionados, incluye en "ragSources" una entrada por cada documento consultado.
-2. Cada punto debe tener al menos 2 implicaciones prácticas.
-3. Las ilustraciones deben ser culturalmente relevantes y memorables.
+2. Cada punto debe tener al menos 2 implicaciones prácticas con formato de lista.
+3. Las ilustraciones deben ser culturalmente relevantes, memorables y estar formateadas con encabezados.
+4. TODO el texto debe usar formato markdown con jerarquización clara.
 `;
 }
 
