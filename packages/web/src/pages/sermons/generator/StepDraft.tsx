@@ -144,8 +144,7 @@ ${point.implications.map((impl, idx) => `${idx + 1}. ${impl}`).join('\n')}`;
     if (point.authorityQuote) {
         pointContent += `
 <br/>
-> **Cita de Autoridad:**
-> ${point.authorityQuote.split('\n').join('\n> ')}`;
+${point.authorityQuote}`;
     }
 
     // Add Transition if available
