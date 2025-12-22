@@ -297,11 +297,19 @@ Instrucciones de Contenido:
      ---
      
      Luego, en campos separados:
-     - **scriptureReferences** (array): Lista de referencias bíblicas (ej: ["Juan 3:16", "Romanos 8:28"])
-     - **authorityQuote** (string): Cita formateada como blockquote con autor y fuente
-     - **illustration** (string): Ilustración relevante con título y desarrollo
-     - **implications** (array): Al menos 2 implicaciones prácticas con formato de lista
-     - **transition** (string): Frase de transición + recordatorio de proposición y puntos
+     - **scriptureReferences** (array): Lista de referencias con TEXTO del versículo como blockquote
+       Formato: "> \"[Texto del versículo]\" ([Referencia])"
+       Ejemplo: "> \"En el principio era el Verbo\" (Juan 1:1)"
+     
+     - **authorityQuote** (string): PRIMERO el título sin blockquote, LUEGO la cita con blockquote
+       Formato: "**Cita de Autoridad:**\n\n> \"[Cita]\"\n> — *[Autor], [Fuente]*"
+     
+     - **illustration** (string): Ilustración relevante con título en negritas
+     
+     - **implications** (array): Al menos 2 implicaciones prácticas, cada una debe empezar con "**Implicación X:**"
+     
+     - **transition** (string): Frase de transición + recordatorio CON SALTOS DE LÍNEA
+       Formato exacto: "[Frase]\n\n**Recordatorio:**\nProposición: [texto]\n\n**Puntos:**\n1. [Punto 1]\n2. [Punto 2]\n3. [Punto 3]"
      
   3. **CONCLUSIÓN**: 
      - Estructura con subsecciones (### Resumen Principal, ### Llamado Final)
@@ -329,11 +337,17 @@ Instrucciones de Contenido:
       { 
         "point": "Título del Punto 1", 
         "content": "### Exposición Bíblica\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n**Palabras Clave:**\\n- *original* (transliteración): **significado**\\n\\n**Nota Exegética:**\\n[Explicación técnica]\\n\\n---", 
-        "scriptureReferences": ["Juan 3:16", "Romanos 8:28"],
-        "authorityQuote": "> \\"Como señala [Autor]: [Cita]\\"\\n> — *[Nombre], [Fuente]*",
-        "illustration": "**Ilustración:** [Título]\\n\\n[Desarrollo de la ilustración con separación de párrafos]",
-        "implications": ["**Implicación 1**: Descripción", "**Implicación 2**: Descripción"],
-        "transition": "[Frase de transición]\\n\\n**Recordatorio:**\\nProposición: [proposición homilética]\\n**Puntos:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]"
+        "scriptureReferences": [
+          "> \\"Porque de tal manera amó Dios al mundo...\\" (Juan 3:16)",
+          "> \\"Sabemos que a los que aman a Dios...\\" (Romanos 8:28)"
+        ],
+        "authorityQuote": "**Cita de Autoridad:**\\n\\n> \\"[Texto de la cita]\\"\\n> — *[Nombre del Autor], [Fuente]*",
+        "illustration": "**Ilustración:** [Título]\\n\\n[Desarrollo de la ilustración]",
+        "implications": [
+          "**Implicación 1:** Descripción de la primera implicación", 
+          "**Implicación 2:** Descripción de la segunda implicación"
+        ],
+        "transition": "[Frase de transición natural]\\n\\n**Recordatorio:**\\nProposición: [proposición homilética]\\n\\n**Puntos:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]"
       }
     ],
   "conclusion": "### Resumen Principal\\n\\n[Párrafo 1]\\n\\n### Llamado Final\\n\\n**Punto culminante**: [Cierre poderoso]",
