@@ -4,7 +4,7 @@ import { SectionCard } from './SectionCard';
 import { ExpandedSection } from './ExpandedSection';
 import { getValueByPath } from '@/utils/path-utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 /**
  * Props for ContentCanvas component
@@ -55,8 +55,19 @@ export function ContentCanvas<T = any>({
   onSectionUpdate,
   onRegenerate
 }: ContentCanvasProps<T>) {
-  const sections = getSectionsForType(contentType);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const sections: SectionConfig[] = getSectionsForType(contentType);
+
+  // 🎯 Initialize readonly sections as collapsed
+  useEffect(() => {
+    const readonlySections = sections
+      .filter(s => s.readonly)
+      .map(s => s.id);
+    
+    if (readonlySections.length > 0) {
+      setCollapsedSections(new Set(readonlySections));
+    }
+  }, [contentType]); // Re-run when content type changes
 
   const toggleCollapse = (sectionId: string) => {
     setCollapsedSections(prev => {

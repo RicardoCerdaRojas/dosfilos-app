@@ -27,6 +27,7 @@ import { GeminiTest } from '@/pages/GeminiTest';
 import { Landing } from '@/pages/Landing';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
 import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
+import { GreekTutorPage } from '@/pages/greek-tutor/GreekTutorPage';
 import { useEffect } from 'react';
 
 // Redirect component for old sermon routes
@@ -122,6 +123,9 @@ function App() {
 
             {/* AI Sermon Generator */}
             <Route path="generate-sermon" element={<SermonWizard />} />
+            
+            {/* Greek Tutor Standalone */}
+            <Route path="greek-tutor" element={<GreekTutorPage />} />
 
             {/* Settings */}
             <Route path="settings" element={<GeneratorSettings />} />

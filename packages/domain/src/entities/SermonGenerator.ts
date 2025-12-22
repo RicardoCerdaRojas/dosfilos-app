@@ -47,6 +47,12 @@ export interface HomileticalAnalysis {
     selectedApproachId?: string;
 
     /**
+     * 🎯 Computed field: Formatted display text for the selected approach
+     * Not stored in DB, computed on the fly for UI display
+     */
+    approachDisplay?: string;
+
+    /**
      * @deprecated Use homileticalApproaches instead
      * Kept for backward compatibility
      */

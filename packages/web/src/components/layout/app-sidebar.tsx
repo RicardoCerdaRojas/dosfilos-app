@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap 
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -56,6 +56,7 @@ export function AppSidebar() {
     // Group 3: Resources
     [
       { name: t('menu.library'), href: '/dashboard/library', icon: Library },
+      { name: 'Entrenador Griego', href: '/dashboard/greek-tutor', icon: GraduationCap },
       { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
       { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
     ],

@@ -15,6 +15,8 @@ export * from './gemini/GeminiSermonGenerator';
 export * from './gemini/GeminiPlanGenerator';
 export * from './gemini/GeminiEmbeddingService';
 export * from './gemini/GeminiFileSearchService';
+export * from './greek-tutor/gemini/GeminiGreekTutorService'; // 🏛️ Greek Tutor Service
+export * from './greek-tutor/repositories/FirestoreGreekSessionRepository';
 export * from './services/DocumentProcessingService';
 export * from './cache/MemoryCacheService';
 export * from './export/PdfExportService';

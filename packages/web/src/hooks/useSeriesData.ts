@@ -156,14 +156,15 @@ export function useSeriesData(seriesId: string | undefined) {
                 userId: user.uid,
                 title: item.title,
                 content: item.description,
-                status: 'published' as const,
+                status: 'draft' as const, // 🎯 FIX: Use 'draft' so sermon appears in "Generar Sermón"
                 tags: [series.title],
                 seriesId: series.id,
                 scheduledDate: item.scheduledDate,
                 wizardProgress: {
                     currentStep: item.passage ? 1 : 0,
                     passage: item.passage || '',
-                    lastSaved: new Date()
+                    lastSaved: new Date(),
+                    planId: series.id // Track which plan this sermon belongs to
                 }
             };
 

@@ -232,7 +232,8 @@ export class SermonService {
                 order: 'desc'
             });
 
-            // Filter sermons that have wizardProgress
+
+            // Filter sermons that have wizardProgress (includes both independent and plan sermons)
             return sermons.filter(s => s.wizardProgress !== undefined);
         } catch (error: any) {
             throw new Error(error.message || 'Error al obtener sermones en progreso');

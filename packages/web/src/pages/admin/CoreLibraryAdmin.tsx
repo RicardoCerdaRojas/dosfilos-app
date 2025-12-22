@@ -9,19 +9,17 @@ import { RefreshCw, Database, FileText, CheckCircle, AlertTriangle, Loader2, Boo
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StoreConfig {
-    stores: {
-        exegesis: string | null;
-        homiletics: string | null;
-        generic: string | null;
-    };
-    files: {
-        exegesis: any[];
-        homiletics: any[];
-        generic: any[];
-    };
+    stores: Record<string, string | null>;
+    files: Record<string, any[]>;
+    descriptions?: Record<string, string>;
     createdAt: Date;
     lastValidatedAt: Date;
 }
@@ -33,23 +31,24 @@ interface SyncStatus {
     missing: string[];
 }
 
-type StoreContext = 'exegesis' | 'homiletics' | 'generic';
+type StoreContext = string;
 
 export default function CoreLibraryAdmin() {
     const firebase = useFirebase();
     const [config, setConfig] = useState<StoreConfig | null>(null);
     const [loading, setLoading] = useState(true);
-    const [syncStatus, setSyncStatus] = useState<Record<StoreContext, SyncStatus | null>>({
-        exegesis: null,
-        homiletics: null,
-        generic: null
-    });
-    const [syncing, setSyncing] = useState<Record<StoreContext, boolean>>({
-        exegesis: false,
-        homiletics: false,
-        generic: false
-    });
     const [activeTab, setActiveTab] = useState<StoreContext>('exegesis');
+    
+    // Create Store State
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [newStoreKey, setNewStoreKey] = useState('');
+    const [newStoreName, setNewStoreName] = useState('');
+    const [newStoreDesc, setNewStoreDesc] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
+
+    // Dynamic Sync Status State
+    const [syncStatus, setSyncStatus] = useState<Record<string, SyncStatus>>({});
+    const [syncing, setSyncing] = useState<Record<string, boolean>>({});
 
     const loadConfig = async () => {
         try {
@@ -58,16 +57,22 @@ export default function CoreLibraryAdmin() {
             const docRef = doc(db, 'config/coreLibraryStores');
             const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists) {
+            if (docSnap.exists()) {
                 const data = docSnap.data();
                 setConfig({
-                    stores: data.stores,
-                    files: data.files,
+                    stores: data.stores || {},
+                    files: data.files || {},
+                    descriptions: data.descriptions || {},
                     createdAt: data.createdAt?.toDate() || new Date(),
                     lastValidatedAt: data.lastValidatedAt?.toDate() || new Date()
                 });
                 
-                // Load sync status for each store
+                // Initialize sync state for all stores
+                const keys = Object.keys(data.stores || {});
+                if (keys.length > 0 && !keys.includes(activeTab)) {
+                    setActiveTab(keys[0]);
+                }
+
                 await validateAllStores(data);
             } else {
                 setConfig(null);
@@ -83,8 +88,10 @@ export default function CoreLibraryAdmin() {
         if (!firebase?.user) return;
         
         const db = getFirestore();
-        const contexts: StoreContext[] = ['exegesis', 'homiletics', 'generic'];
+        const contexts = Object.keys(configData.stores || {});
         
+        const newSyncStatus: Record<string, SyncStatus> = {};
+
         for (const context of contexts) {
             try {
                 // Get desired state from library
@@ -101,26 +108,23 @@ export default function CoreLibraryAdmin() {
                     .filter(d => d.metadata?.geminiUri);
                 
                 const currentFiles = configData.files?.[context] || [];
-                
                 const currentUris = new Set(currentFiles.map((f: any) => f.geminiUri));
                 
                 const missing = desiredDocs
                     .filter(d => !currentUris.has(d.metadata.geminiUri))
                     .map(d => d.title);
                 
-                setSyncStatus(prev => ({
-                    ...prev,
-                    [context]: {
-                        isSynced: missing.length === 0 && desiredDocs.length === currentFiles.length,
-                        desiredCount: desiredDocs.length,
-                        currentCount: currentFiles.length,
-                        missing
-                    }
-                }));
+                newSyncStatus[context] = {
+                    isSynced: missing.length === 0 && desiredDocs.length === currentFiles.length,
+                    desiredCount: desiredDocs.length,
+                    currentCount: currentFiles.length,
+                    missing
+                };
             } catch (error) {
                 console.error(`Error validating ${context}:`, error);
             }
         }
+        setSyncStatus(newSyncStatus);
     };
 
     const handleSyncStore = async (context: StoreContext) => {
@@ -152,7 +156,45 @@ export default function CoreLibraryAdmin() {
         }
     };
 
+    const handleCreateStore = async () => {
+        if (!newStoreKey || !newStoreName) {
+            toast.error("Clave y Nombre son requeridos");
+            return;
+        }
 
+        // Basic validation for key (slug format)
+        if (!/^[a-z0-9-]+$/.test(newStoreKey)) {
+            toast.error("La clave debe contener solo letras minúsculas, números y guiones");
+            return;
+        }
+
+        try {
+            setIsCreating(true);
+            const functions = getFunctions();
+            const createFn = httpsCallable(functions, 'createCoreLibraryStore');
+            
+            await createFn({
+                key: newStoreKey,
+                displayName: newStoreName,
+                description: newStoreDesc
+            });
+
+            toast.success(`Store '${newStoreName}' creado correctamente`);
+            setIsCreateOpen(false);
+            setNewStoreKey('');
+            setNewStoreName('');
+            setNewStoreDesc('');
+            
+            await loadConfig();
+            setActiveTab(newStoreKey); // Switch to new tab
+            
+        } catch (error: any) {
+            console.error("Error creating store:", error);
+            toast.error(`Error al crear store: ${error.message}`);
+        } finally {
+            setIsCreating(false);
+        }
+    };
 
     useEffect(() => {
         loadConfig();
@@ -169,29 +211,30 @@ export default function CoreLibraryAdmin() {
         );
     }
 
-    const storeContexts = [
-        { 
-            key: 'exegesis' as StoreContext, 
-            name: 'Exégesis', 
-            icon: BookOpen,
-            description: 'Léxicos griego/hebreo, hermenéutica, gramática',
-            emoji: '📖'
-        },
-        { 
-            key: 'homiletics' as StoreContext, 
-            name: 'Homilética', 
-            icon: Mic2,
-            description: 'Predicación, teología sistemática',
-            emoji: '🎤'
-        },
-        { 
-            key: 'generic' as StoreContext, 
-            name: 'Genérico', 
-            icon: Library,
-            description: 'Recursos de uso general',
-            emoji: '📚'
-        }
-    ];
+    const defaultMeta: Record<string, { name: string, icon: any, description: string, emoji: string }> = {
+        exegesis: { name: 'Exégesis', icon: BookOpen, description: 'Léxicos griego/hebreo, hermenéutica, gramática', emoji: '📖' },
+        homiletics: { name: 'Homilética', icon: Mic2, description: 'Predicación, teología sistemática', emoji: '🎤' },
+        generic: { name: 'Genérico', icon: Library, description: 'Recursos de uso general', emoji: '📚' }
+    };
+
+    // Generate dynamic contexts from config
+    const storeKeys = config?.stores ? Object.keys(config.stores) : [];
+    
+    // Ensure we default to showing something if empty
+    const displayKeys = storeKeys.length > 0 ? storeKeys : [];
+
+    const storeContexts = displayKeys.map(key => {
+        const meta = defaultMeta[key] || {
+            name: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '), 
+            icon: Database,
+            description: config?.descriptions?.[key] || 'Contexto personalizado',
+            emoji: '📂'
+        };
+        return {
+            ...meta,
+            key 
+        };
+    });
 
     return (
         <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -203,15 +246,74 @@ export default function CoreLibraryAdmin() {
                         Gestión de contextos de conocimiento teológico
                     </p>
                 </div>
-                <Button onClick={loadConfig} variant="outline" size="sm">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Actualizar
-                </Button>
+                <div className="flex gap-2">
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="default" size="sm">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Nuevo Store
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Crear Nuevo Store</DialogTitle>
+                                <DialogDescription>
+                                    Crea un nuevo contexto de archivos para el asistente de IA.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label>Nombre (Display Name)</Label>
+                                    <Input 
+                                        placeholder="Ej: Historia de la Iglesia" 
+                                        value={newStoreName}
+                                        onChange={(e) => {
+                                            setNewStoreName(e.target.value);
+                                            // Auto-generate slug if empty
+                                            if (!newStoreKey && e.target.value) {
+                                                setNewStoreKey(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-'));
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Clave (Key ID)</Label>
+                                    <Input 
+                                        placeholder="ej: historia-iglesia" 
+                                        value={newStoreKey}
+                                        onChange={(e) => setNewStoreKey(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Identificador único (slug) usado internamente.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Descripción</Label>
+                                    <Textarea 
+                                        placeholder="Descripción breve del contenido de este store..."
+                                        value={newStoreDesc}
+                                        onChange={(e) => setNewStoreDesc(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
+                                <Button onClick={handleCreateStore} disabled={isCreating}>
+                                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Crear Store
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Button onClick={loadConfig} variant="outline" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Actualizar
+                    </Button>
+                </div>
             </div>
 
-            {/* Quick Stats with Sync Controls - Compact Version */}
+            {/* Quick Stats with Sync Controls - Dynamic Grid */}
             {config && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {storeContexts.map(context => {
                         const status = syncStatus[context.key];
                         const files = config.files[context.key] || [];
@@ -245,8 +347,8 @@ export default function CoreLibraryAdmin() {
                                             <div className="text-3xl font-bold">{files.length}</div>
                                             <p className="text-xs text-muted-foreground">
                                                 {isSynced 
-                                                    ? `${status?.currentCount}/${status?.desiredCount} sincronizados`
-                                                    : `${status?.missing.length || 0} pendiente(s)`
+                                                    ? `${status?.currentCount || 0}/${status?.desiredCount || 0} sincronizados`
+                                                    : `${status?.missing?.length || 0} pendiente(s)`
                                                 }
                                             </p>
                                         </div>
@@ -276,9 +378,9 @@ export default function CoreLibraryAdmin() {
             {/* Tabs for each store */}
             {config ? (
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as StoreContext)}>
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="flex w-full overflow-x-auto justify-start h-auto p-1 bg-muted/50 gap-1 flex-wrap">
                         {storeContexts.map(context => (
-                            <TabsTrigger key={context.key} value={context.key} className="gap-2">
+                            <TabsTrigger key={context.key} value={context.key} className="gap-2 px-4 py-2 h-9 min-w-[120px]">
                                 <context.icon className="h-4 w-4" />
                                 {context.name}
                             </TabsTrigger>
@@ -369,29 +471,19 @@ export default function CoreLibraryAdmin() {
                 <Alert>
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                        No hay stores configurados. Los stores se crearán automáticamente al marcar documentos como Core en la biblioteca.
+                        No hay stores configurados. Crea uno nuevo o espera a que se sincronice el sistema.
                     </AlertDescription>
                 </Alert>
             )}
 
-            {/* Info Card */}
+            {/* Info Card - Reduced */}
             <Card className="border-blue-200 bg-blue-50/50">
-                <CardHeader>
+                <CardHeader className="py-3">
                     <CardTitle className="text-sm">ℹ️ Cómo Funciona</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-muted-foreground space-y-2">
-                    <p>
-                        • <strong>Auto-sincronización:</strong> Al marcar/desmarcar documentos como Core, el store se sincroniza automáticamente.
-                    </p>
-                    <p>
-                        • <strong>Validación:</strong> La página verifica si los stores están sincronizados al cargar.
-                    </p>
-                    <p>
-                        • <strong>Sincronización manual:</strong> Usa el botón "Sincronizar" si detectas inconsistencias.
-                    </p>
-                    <p>
-                        • <strong>Stores permanentes:</strong> Los File Search Stores no expiran y persisten sin costo mensual fijo.
-                    </p>
+                <CardContent className="text-sm text-muted-foreground space-y-1 pb-3">
+                    <p>• Los stores son permanentes y contienen índices de archivos procesados por Gemini.</p>
+                    <p>• Crea contextos específicos (ej: Historia, Sistemática) para organizar el conocimiento.</p>
                 </CardContent>
             </Card>
 

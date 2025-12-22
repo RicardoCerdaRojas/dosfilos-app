@@ -34,7 +34,7 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
         name: 'Starter',
         description: 'Para predicadores que quieren más herramientas',
         priceMonthly: 9.99,
-        stripePriceId: 'price_1SR3ILObMCNNnrSDLSAOIeOkd', // Replace with actual ID
+        stripePriceId: 'price_1SgDfo08MCNNnSDLK3WLKKb9', // Updated to production ID
         features: [
             'sermon:create',
             'sermon:ai_assistant',
@@ -50,7 +50,7 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
         name: 'Pro',
         description: 'Para equipos pastorales y predicadores frecuentes',
         priceMonthly: 24.99,
-        stripePriceId: 'price_pro_monthly', // Replace with actual ID
+        stripePriceId: 'price_1SgDiK08MCNNnSDL3mCVFwl4', // Updated to production ID
         features: [
             'sermon:create',
             'sermon:ai_assistant',

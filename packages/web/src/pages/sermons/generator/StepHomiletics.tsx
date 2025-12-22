@@ -116,11 +116,12 @@ export function StepHomiletics() {
             a => a.id === homiletics.selectedApproachId
         );
         
-        // If we have a selected approach, format it nicely
+        // If we have a selected approach, add formatted display field
         if (selectedApproach) {
             return {
                 ...homiletics,
-                selectedApproachId: `**${selectedApproach.type}** - ${selectedApproach.direction}\n\n` +
+                // 🎯 FIX: Use separate field for display, don't overwrite selectedApproachId
+                approachDisplay: `**${selectedApproach.type}** - ${selectedApproach.direction}\n\n` +
                     `**Tono:**\n${selectedApproach.tone}\n\n` +
                     `**Propósito:**\n${selectedApproach.purpose}\n\n` +
                     `**Audiencia:**\n${selectedApproach.targetAudience}\n\n` +
@@ -131,7 +132,7 @@ export function StepHomiletics() {
         // Fallback to legacy field if no selected approach
         return {
             ...homiletics,
-            selectedApproachId: homiletics.homileticalApproach || 'No se ha seleccionado un enfoque'
+            approachDisplay: homiletics.homileticalApproach || 'No se ha seleccionado un enfoque'
         };
     }, [homiletics]);
 
@@ -622,6 +623,12 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             
             const sectionConfig = getSectionConfig('homiletics', sectionId);
             if (sectionConfig) {
+                // 🎯 FIX: Prevent editing readonly sections
+                if (sectionConfig.readonly) {
+                    toast.error('Esta sección es de solo lectura y no puede ser editada directamente');
+                    return;
+                }
+
                 const currentContent = getValueByPath(homiletics, sectionConfig.path);
                 
                 contentHistory.saveVersion(

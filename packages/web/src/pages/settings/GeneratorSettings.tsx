@@ -13,14 +13,15 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { WorkflowPhase } from '@dosfilos/domain';
-import { BookOpen, Mic, PenTool, Settings, Library, Layers, Cog, Calendar } from 'lucide-react';
+import { BookOpen, Mic, PenTool, Settings, Library, Layers, Cog, Calendar, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
 import { ConfigService } from '@dosfilos/application';
 import { FirebaseConfigRepository, FirebaseStorageService } from '@dosfilos/infrastructure';
 
-import { Loader2, Upload, X, FileText } from 'lucide-react';
+import { Loader2, Upload, X, FileText, Database } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -38,6 +39,7 @@ export function SettingsPage() {
     const configService = new ConfigService(configRepository);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [availableStores, setAvailableStores] = useState<any[]>([]);
     const [searchParams, setSearchParams] = useSearchParams();
 
     const currentTab = searchParams.get('tab') || 'sermons';
@@ -79,6 +81,15 @@ export function SettingsPage() {
             libraryDocIds: [] as string[],
             fileSearchStoreId: 'homiletics', // Default
             temperature: 0.7
+        },
+        // Greek Tutor config (NEW)
+        greekTutor: {
+            basePrompt: '',
+            userPrompts: [] as string[],
+            documents: [] as any[], // Legacy compatibility
+            libraryDocIds: [] as string[],
+            fileSearchStoreId: 'exegesis', // Default
+            temperature: 0.5
         },
         // Advanced settings (NEW)
         advanced: {
@@ -127,6 +138,13 @@ export function SettingsPage() {
                     // Backwards compatibility if needed, or just init empty
                     libraryDocIds: (userConfig as any).seriesPlanner?.libraryDocIds || []
                 },
+                greekTutor: {
+                    ...prev.greekTutor,
+                    ...(userConfig as any).greekTutor,
+                    userPrompts: (userConfig as any).greekTutor?.userPrompts || [],
+                    fileSearchStoreId: (userConfig as any).greekTutor?.fileSearchStoreId || 'exegesis',
+                    libraryDocIds: (userConfig as any).greekTutor?.libraryDocIds || []
+                },
                 advanced: {
                     ...prev.advanced,
                     ...(userConfig as any).advanced
@@ -137,6 +155,58 @@ export function SettingsPage() {
             toast.error('Error al cargar la configuración');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadStoreConfig();
+    }, []);
+
+    const loadStoreConfig = async () => {
+        try {
+            const db = getFirestore();
+            const docRef = doc(db, 'config/coreLibraryStores');
+            const docSnap = await getDoc(docRef);
+            
+            let storeKeys: string[] = ['exegesis', 'homiletics', 'generic']; // Defaults
+            let descriptions: Record<string, string> = {};
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.stores) {
+                    storeKeys = Object.keys(data.stores);
+                }
+                if (data.descriptions) {
+                    descriptions = data.descriptions;
+                }
+            }
+
+            const defaultMeta: Record<string, any> = {
+                exegesis: { name: 'Biblioteca de Exégesis' },
+                homiletics: { name: 'Biblioteca de Homilética' },
+                generic: { name: 'Biblioteca General' }
+            };
+
+            // Map keys to display objects
+            const stores = storeKeys.map(key => {
+                const meta = defaultMeta[key] || {
+                    name: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
+                };
+                return {
+                    id: key,
+                    name: meta.name
+                };
+            });
+            
+            setAvailableStores(stores);
+        } catch (error) {
+            console.error("Error loading store config:", error);
+            // Fallback
+            setAvailableStores([
+                { id: 'exegesis', name: 'Biblioteca de Exégesis' },
+                { id: 'homiletics', name: 'Biblioteca de Homilética' },
+                { id: 'generic', name: 'Biblioteca General' }
+            ]);
         }
     };
 
@@ -186,6 +256,10 @@ export function SettingsPage() {
                 seriesPlanner: {
                     ...cleanPhase(config.seriesPlanner),
                     fileSearchStoreId: (config.seriesPlanner as any).fileSearchStoreId || 'homiletics'
+                },
+                greekTutor: {
+                    ...cleanPhase(config.greekTutor),
+                    fileSearchStoreId: (config.greekTutor as any).fileSearchStoreId || 'exegesis'
                 },
                 advanced: {
                     aiModel: String(config.advanced?.aiModel || 'gemini-2.5-flash'),
@@ -260,9 +334,9 @@ export function SettingsPage() {
                                     <SelectValue placeholder="Selecciona un Store" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="homiletics">Biblioteca de Homilética</SelectItem>
-                                    <SelectItem value="exegesis">Biblioteca de Exégesis</SelectItem>
-                                    <SelectItem value="generic">Biblioteca General</SelectItem>
+                                    {availableStores.map(store => (
+                                        <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">
@@ -372,7 +446,7 @@ export function SettingsPage() {
     }
 
     return (
-        <div className="container mx-auto py-8 max-w-4xl space-y-8">
+        <div className="container mx-auto py-8 max-w-7xl space-y-8">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 <div className="p-3 bg-primary/10 rounded-full">
@@ -385,12 +459,15 @@ export function SettingsPage() {
             </div>
 
             <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-                <TabsList className="grid w-full grid-cols-4 h-14 p-1 bg-muted/50">
+                <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'} h-14 p-1 bg-muted/50`}>
                     <TabsTrigger value="sermons" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 h-12 gap-2">
                         <Layers className="h-4 w-4" /> Sermones
                     </TabsTrigger>
                     <TabsTrigger value="series" className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 h-12 gap-2">
                         <Calendar className="h-4 w-4" /> Planificador Predicaciones
+                    </TabsTrigger>
+                     <TabsTrigger value="greek" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 h-12 gap-2">
+                        <GraduationCap className="h-4 w-4" /> Entrenador Griego
                     </TabsTrigger>
                     {isAdmin && (
                         <TabsTrigger value="library" className="data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 h-12 gap-2">
@@ -505,9 +582,11 @@ export function SettingsPage() {
                                                 <SelectValue placeholder="Selecciona un Store" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="homiletics">Biblioteca de Homilética (Predeterminado)</SelectItem>
-                                                <SelectItem value="exegesis">Biblioteca de Exégesis</SelectItem>
-                                                <SelectItem value="generic">Biblioteca General</SelectItem>
+                                                {availableStores.map(store => (
+                                                    <SelectItem key={store.id} value={store.id}>
+                                                        {store.name} {store.id === 'homiletics' ? '(Predeterminado)' : ''}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <p className="text-xs text-muted-foreground">
@@ -598,6 +677,109 @@ export function SettingsPage() {
                                     </p>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ==================== GREEK TUTOR TAB ==================== */}
+                <TabsContent value="greek" className="space-y-6">
+                    <Card className="border-indigo-100">
+                        <CardHeader className="bg-indigo-50/50">
+                            <CardTitle className="text-indigo-900">Entrenador de Exégesis Griega</CardTitle>
+                            <CardDescription>Configura el tutor interactivo de griego.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-6">
+                            
+                             {/* File Search Store Selector - ADMIN ONLY */}
+                             {isAdmin && (
+                                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Layers className="h-4 w-4 text-indigo-600" />
+                                            <Label>Base de Conocimiento (Store)</Label>
+                                        </div>
+                                        <Select
+                                            value={config.greekTutor.fileSearchStoreId || 'exegesis'}
+                                            onValueChange={(value) => setConfig({
+                                                ...config, 
+                                                greekTutor: {...config.greekTutor, fileSearchStoreId: value}
+                                            })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona un Store" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableStores.map(store => (
+                                                    <SelectItem key={store.id} value={store.id}>
+                                                        {store.name} {store.id === 'exegesis' ? '(Predeterminado)' : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            El tutor usará esta base para identificar formas y generar ejercicios.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                             {/* Base Prompt */}
+                             <div className="space-y-2">
+                                <Label>Prompt Base (Personalidad del Tutor)</Label>
+                                <ExpandableTextarea 
+                                    className="min-h-[100px] font-mono text-sm"
+                                    placeholder="Define cómo debe comportarse el tutor (ej: socrático, académico, pastoral)..."
+                                    value={config.greekTutor.basePrompt}
+                                    onChange={(e) => setConfig({
+                                        ...config, 
+                                        greekTutor: {...config.greekTutor, basePrompt: e.target.value}
+                                    })}
+                                    label="Prompt Base - Tutor Griego"
+                                />
+                            </div>
+
+                            {/* Custom Instructions (List) */}
+                            <div className="space-y-2">
+                                <Label>Instrucciones Adicionales</Label>
+                                <div className="space-y-2">
+                                    {config.greekTutor.userPrompts.map((prompt: string, i: number) => (
+                                        <div key={i} className="flex gap-2">
+                                            <Input 
+                                                value={prompt} 
+                                                onChange={(e) => {
+                                                    const newPrompts = [...config.greekTutor.userPrompts];
+                                                    newPrompts[i] = e.target.value;
+                                                    setConfig({
+                                                        ...config,
+                                                        greekTutor: {...config.greekTutor, userPrompts: newPrompts}
+                                                    });
+                                                }}
+                                                placeholder="Ej: Enfócate en la voz media..."
+                                            />
+                                            <Button variant="ghost" size="icon" onClick={() => {
+                                                const newPrompts = config.greekTutor.userPrompts.filter((_: any, idx: number) => idx !== i);
+                                                setConfig({
+                                                    ...config,
+                                                    greekTutor: {...config.greekTutor, userPrompts: newPrompts}
+                                                });
+                                            }}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                    ))}
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            const newPrompts = [...config.greekTutor.userPrompts, ''];
+                                            setConfig({
+                                                ...config,
+                                                greekTutor: {...config.greekTutor, userPrompts: newPrompts}
+                                            });
+                                        }}
+                                    >
+                                        + Agregar Instrucción
+                                    </Button>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

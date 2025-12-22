@@ -43,6 +43,17 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.userId) && isValidSermon();
       allow delete: if isOwner(resource.data.userId);
     }
+
+    // Greek Tutor Sessions
+    match /greek_sessions/{sessionId} {
+      allow read, update, delete: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+
+      match /insights/{insightId} {
+        allow read, write: if isAuthenticated() && 
+           get(/databases/$(database)/documents/greek_sessions/$(sessionId)).data.userId == request.auth.uid;
+      }
+    }
     
     // Users collection
     match /users/{userId} {

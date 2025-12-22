@@ -7,7 +7,7 @@ import { WizardLayout } from './WizardLayout';
 import { GenerationProgress } from '@/components/sermons/GenerationProgress';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Sparkles, GraduationCap } from 'lucide-react';
 import { sermonGeneratorService } from '@dosfilos/application';
 import { toast } from 'sonner';
 import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
@@ -18,8 +18,18 @@ import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel'
 import { BiblePassageSelector } from '@/components/sermons/BiblePassageSelector';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import { useContentHistory } from '@/hooks/useContentHistory';
+import { GreekTutorOverlay } from './exegesis/greek-tutor/GreekTutorOverlay';
+import { GreekTutorProvider } from './exegesis/greek-tutor/GreekTutorProvider';
 
 export function StepExegesis() {
+    return (
+        <GreekTutorProvider>
+            <StepExegesisContent />
+        </GreekTutorProvider>
+    );
+}
+
+function StepExegesisContent() {
     const { t } = useTranslation('generator');
     const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
     const { user } = useFirebase();
@@ -44,7 +54,8 @@ export function StepExegesis() {
 
 
     const [loading, setLoading] = useState(false);
-    const [rightPanelMode, setRightPanelMode] = useState<'chat' | 'bible'>('chat'); // 🎯 Added state
+    const [rightPanelMode, setRightPanelMode] = useState<'chat' | 'bible'>('chat'); 
+    const [showGreekTutor, setShowGreekTutor] = useState(false); // 🎯 Greek Tutor State
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
     const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -507,14 +518,26 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         }
                     </p>
                 </div>
-                <Button 
-                    variant="outline" 
-                    className="h-8 gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
-                    onClick={() => setRightPanelMode(prev => prev === 'bible' ? 'chat' : 'bible')}
-                >
-                    <BookOpen className="h-4 w-4" />
-                    <span className="text-xs font-medium">{passage}</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    {/* 🎯 Greek Tutor Trigger */}
+                    <Button 
+                        variant="outline" 
+                        className="h-8 gap-2 bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-300"
+                        onClick={() => setShowGreekTutor(true)}
+                    >
+                        <GraduationCap className="h-4 w-4" />
+                        <span className="text-xs font-medium">Entrenar Griego</span>
+                    </Button>
+
+                    <Button 
+                        variant="outline" 
+                        className="h-8 gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                        onClick={() => setRightPanelMode(prev => prev === 'bible' ? 'chat' : 'bible')}
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        <span className="text-xs font-medium">{passage}</span>
+                    </Button>
+                </div>
             </div>
 
             {/* Main content area - fixed height for scroll to work */}
@@ -585,6 +608,13 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </div>
+
+            {/* 🎯 Greek Tutor Overlay */}
+            <GreekTutorOverlay 
+                isOpen={showGreekTutor} 
+                onClose={() => setShowGreekTutor(false)} 
+                passage={exegesis.passage} 
+            />
         </div>
     );
 

@@ -45,8 +45,8 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
         }
 
         const { context } = request.data;
-        if (!context || !['exegesis', 'homiletics', 'generic'].includes(context)) {
-            throw new HttpsError('invalid-argument', 'Invalid context. Must be exegesis, homiletics, or generic');
+        if (!context || typeof context !== 'string') {
+            throw new HttpsError('invalid-argument', 'Invalid context. Must be a valid store key.');
         }
 
         try {

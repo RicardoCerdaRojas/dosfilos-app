@@ -28,6 +28,9 @@ export interface SectionConfig {
 
     /** Schema version when this section was introduced */
     version: number;
+
+    /** 🎯 NEW: If true, this section is computed/readonly and cannot be edited */
+    readonly?: boolean;
 }
 
 /**
@@ -98,11 +101,12 @@ export const SECTION_CONFIGS: Record<ContentType, SectionConfig[]> = {
         {
             id: 'approach',
             label: 'Enfoque Homilético',
-            path: 'selectedApproachId', // We'll use this to find the selected approach
+            path: 'approachDisplay', // 🎯 FIX: Use display field, not selectedApproachId
             description: 'Enfoque homilético seleccionado',
             type: 'text',
             required: true,
-            version: 2 // Bumped version for new multi-approach feature
+            version: 2, // Bumped version for new multi-approach feature
+            readonly: true // 🎯 This is computed, cannot be edited directly
         },
         {
             id: 'proposition',

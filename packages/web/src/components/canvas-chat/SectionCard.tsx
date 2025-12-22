@@ -211,8 +211,9 @@ export function SectionCard({
       // If expanded, render markdown
       const rendered = <MarkdownRenderer content={text} />;
       
-      // 🎯 Special case: If this is homiletics proposition, also show outlinePreview
-      if (contentType === 'homiletics' && section.id === 'proposition' && fullContent?.outlinePreview && fullContent.outlinePreview.length > 0) {
+      // 🎯 Special case: If this is homiletics proposition, also show outline points
+      // Use live outline.mainPoints instead of static outlinePreview to reflect edits
+      if (contentType === 'homiletics' && section.id === 'proposition' && fullContent?.outline?.mainPoints?.length > 0) {
         return (
           <div>
             {rendered}
@@ -221,10 +222,10 @@ export function SectionCard({
                 Puntos del Sermón:
               </h4>
               <ul className="space-y-1.5 text-sm">
-                {fullContent.outlinePreview.map((point: string, index: number) => (
+                {fullContent.outline.mainPoints.map((point: any, index: number) => (
                   <li key={index} className="flex items-start gap-2">
                     <span className="text-primary mt-0.5">▪</span>
-                    <span className="text-foreground/90">{point}</span>
+                    <span className="text-foreground/90">{point.title}</span>
                   </li>
                 ))}
               </ul>
@@ -468,9 +469,13 @@ export function SectionCard({
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
-            onExpand();
+            if (!section.readonly) {
+              onExpand();
+            }
           }}
+          disabled={section.readonly}
           className="ml-2 flex-shrink-0"
+          title={section.readonly ? 'Esta sección es de solo lectura' : 'Refinar esta sección'}
         >
           <Maximize2 className="h-3 w-3 mr-1" />
           Refinar

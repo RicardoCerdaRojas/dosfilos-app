@@ -30,7 +30,7 @@ export function DashboardLayout() {
           "flex-1",
           // Generator needs fixed height with no scroll (scroll is internal)
           isGenerator ? "overflow-hidden h-[calc(100vh-4rem)]" : "overflow-y-auto",
-          !isPlanner && !isGenerator && "bg-muted/40 p-4 md:p-6"
+          !isPlanner && !isGenerator && "bg-muted/40 p-4 md:p-2"
         )}>
           <Outlet />
         </main>

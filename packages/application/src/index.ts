@@ -14,6 +14,12 @@ export * from './services/ConfigService';
 export * from './services/ContentRefinementService';
 export * from './services/RAGService';
 export * from './services/CoreLibraryService'; // 🎯 Core Library with File Search Stores
+export * from './greek-tutor/use-cases/GenerateTrainingUnitsUseCase';
+export * from './greek-tutor/use-cases/EvaluateUserResponseUseCase';
+export * from './greek-tutor/use-cases/SaveInsightUseCase';
+export * from './greek-tutor/use-cases/ExplainMorphologyUseCase';
+export * from './greek-tutor/use-cases/StartGreekTrainingUseCase';
+export * from './greek-tutor/use-cases/AskFreeQuestionUseCase';
 
 
 // Subscription services

@@ -12,13 +12,15 @@ interface BiblePassageSelectorProps {
     onChange: (value: string) => void;
     onValidPassage?: (isValid: boolean) => void;
     disabled?: boolean;
+    hidePreview?: boolean;
 }
 
 export function BiblePassageSelector({ 
     value, 
     onChange, 
     onValidPassage,
-    disabled 
+    disabled,
+    hidePreview = false 
 }: BiblePassageSelectorProps) {
     const [previewText, setPreviewText] = useState<string | null>(null);
     const [isValid, setIsValid] = useState(false);
@@ -98,7 +100,7 @@ export function BiblePassageSelector({
             </div>
 
             {/* Preview Section */}
-            {(previewText || debouncedValue.length > 3) && (
+            {!hidePreview && (previewText || debouncedValue.length > 3) && (
                 <div className={`transition-all duration-500 ${isValid ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2'}`}>
                     {isValid ? (
                         <Card className="border-none shadow-sm bg-muted/30 overflow-hidden">
