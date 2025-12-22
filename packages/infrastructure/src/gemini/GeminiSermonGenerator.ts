@@ -389,6 +389,67 @@ REGLAS:
         }
     }
 
+    /**
+     * Escapes unescaped control characters within JSON string values.
+     * This handles cases where the AI generates literal newlines, tabs, etc. in JSON.
+     */
+    private escapeControlCharsInJson(jsonString: string): string {
+        let result = '';
+        let inString = false;
+        let escapeNext = false;
+
+        for (let i = 0; i < jsonString.length; i++) {
+            const char = jsonString[i];
+            const prev = i > 0 ? jsonString[i - 1] : '';
+
+            if (escapeNext) {
+                // Already escaped, keep as is
+                result += char;
+                escapeNext = false;
+                continue;
+            }
+
+            if (char === '\\') {
+                escapeNext = true;
+                result += char;
+                continue;
+            }
+
+            if (char === '"' && prev !== '\\') {
+                inString = !inString;
+                result += char;
+                continue;
+            }
+
+            if (inString) {
+                // Replace control characters with their escaped equivalents
+                switch (char) {
+                    case '\n':
+                        result += '\\n';
+                        break;
+                    case '\r':
+                        result += '\\r';
+                        break;
+                    case '\t':
+                        result += '\\t';
+                        break;
+                    case '\b':
+                        result += '\\b';
+                        break;
+                    case '\f':
+                        result += '\\f';
+                        break;
+                    default:
+                        result += char;
+                }
+            } else {
+                result += char;
+            }
+        }
+
+        return result;
+    }
+
     private cleanJsonResponse(text: string): string {
         // Remove markdown code blocks
         let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
@@ -398,6 +459,10 @@ REGLAS:
         if (firstBrace === -1) return '{}'; // No JSON found
 
         cleaned = cleaned.substring(firstBrace);
+
+        // CRITICAL FIX: Escape unescaped control characters within JSON strings
+        // This fixes "Bad control character in string literal" errors
+        cleaned = this.escapeControlCharsInJson(cleaned);
 
         // Try to parse as is
         try {
