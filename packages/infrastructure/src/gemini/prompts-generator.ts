@@ -302,14 +302,14 @@ Instrucciones de Contenido:
        Ejemplo: "> \"En el principio era el Verbo\" (Juan 1:1)"
      
      - **authorityQuote** (string): PRIMERO el título sin blockquote, LUEGO la cita con blockquote
-       Formato: "**Cita de Autoridad:**\n\n> \"[Cita]\"\n> — *[Autor], [Fuente]*"
+       Formato: "**Cita de Autoridad:**\\n\\n> \\"[Cita]\\"\\n> — *[Autor], [Fuente]*"
      
      - **illustration** (string): Ilustración relevante con título en negritas
      
      - **implications** (array): Al menos 2 implicaciones prácticas, cada una debe empezar con "**Implicación X:**"
      
      - **transition** (string): Frase de transición + recordatorio CON SALTOS DE LÍNEA
-       Formato exacto: "[Frase]\n\n**Recordatorio:**\nProposición: [texto]\n\n**Puntos:**\n1. [Punto 1]\n2. [Punto 2]\n3. [Punto 3]"
+       Formato exacto: "[Frase]\\n\\n**Recordatorio:**\\nProposición: [texto]\\n\\n**Puntos:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]"
      
   3. **CONCLUSIÓN**: 
      - Estructura con subsecciones (### Resumen Principal, ### Llamado Final)
