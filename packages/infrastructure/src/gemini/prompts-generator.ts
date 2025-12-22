@@ -257,21 +257,28 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
    **Palabras Clave**: 
    - *palabra original* (transliteración): significado
 
-   ### Aplicación Contemporánea
-   [Conexión con la vida actual]
+   **Nota Exegética**: 
+   [Si aplica, explicación técnica accesible]
 
-   ### Referencias Cruzadas
-   > Texto bíblico relevante (Referencia)
+   ---
+   
+   IMPORTANTE: Las siguientes secciones NO van en "content", sino en campos JSON separados:
+   - Referencias Cruzadas → campo "scriptureReferences" (array)
+   - Cita de Autoridad → campo "authorityQuote" (string)  
+   - Ilustración → campo "illustration" (string)
+   - Implicaciones → campo "implications" (array)
+   - Transición → campo "transition" (string)
 
 ═══════════════════════════════════════════════════════════════════
 
 Instrucciones de Contenido:
   1. **INTRODUCCIÓN**: 
-     - Estructura con encabezados claros (### Contexto Histórico, ### Conexión Actual)
+     - Estructura con encabezados claros (### Contexto Histórico, ### Conexión Actual, ### Proposición Homilética)
      - Separa párrafos visualmente
      - Usa negritas para conceptos clave
      - Explica el trasfondo del pasaje (quién, cuándo, dónde, por qué)
      - Conecta la situación de la audiencia original con el presente
+     - INCLUYE al final la Proposición Homilética seguida de la lista de puntos del sermón como referencia
      
   2. **DESARROLLO DE CADA PUNTO** del bosquejo:
      En el campo "content", estructura así:
@@ -284,24 +291,20 @@ Instrucciones de Contenido:
      **Palabras Clave Relevantes**:
      - *original* (transliteración): **significado teológico**
      
-     ### Aplicación Contemporánea
-     [Conexión con situaciones actuales]
-     
-     ### Referencias Cruzadas
-     > "Texto de referencia" (Cita Bíblica)
+     **Nota Exegética**: 
+     [Si aplica, explicación técnica accesible]
      
      ---
      
-     **Nota Exegética**: [Si aplica, explicación técnica accesible]
-     
-     - Incluye **Referencias cruzadas** en scriptureReferences (array)
-     - Incluye **Ilustración relevante** en el campo "illustration" (texto markdown con formato)
-     - Incluye **Al menos 2 implicaciones prácticas** en "implications" (array de strings)
-     - Incluye **Cita de autoridad** en "authorityQuote" (texto con formato markdown)
-     - Incluye **Transición suave** al siguiente punto en "transition"
+     Luego, en campos separados:
+     - **scriptureReferences** (array): Lista de referencias bíblicas (ej: ["Juan 3:16", "Romanos 8:28"])
+     - **authorityQuote** (string): Cita formateada como blockquote con autor y fuente
+     - **illustration** (string): Ilustración relevante con título y desarrollo
+     - **implications** (array): Al menos 2 implicaciones prácticas con formato de lista
+     - **transition** (string): Frase de transición + recordatorio de proposición y puntos
      
   3. **CONCLUSIÓN**: 
-     - Estructura con subsecciones si es larga
+     - Estructura con subsecciones (### Resumen Principal, ### Llamado Final)
      - Separa ideas en párrafos distintos
      - Usa negritas para el cierre principal
      - Cierra el arco desde el contexto original hasta hoy
@@ -321,16 +324,16 @@ Instrucciones de Contenido:
   Formato de Salida (JSON):
   {
     "title": "Título Creativo",
-    "introduction": "### Contexto Histórico\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n### Conexión Actual\\n\\n[Conexión con audiencia]",
+    "introduction": "### Contexto Histórico\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n### Conexión Actual\\n\\n[Conexión con audiencia]\\n\\n### Proposición Homilética\\n\\n[Proposición]\\n\\n**Puntos del Sermón:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]",
     "body": [
       { 
         "point": "Título del Punto 1", 
-        "content": "### Exposición Bíblica\\n\\n[Párrafo 1]\\n\\n**Concepto clave**: explicación\\n\\n### Aplicación Contemporánea\\n\\n[Aplicación]\\n\\n---", 
-        "scriptureReferences": ["Referencia 1", "Referencia 2"],
-        "illustration": "**Ilustración**: [Título]\\n\\n[Desarrollo de la ilustración con separación de párrafos]",
+        "content": "### Exposición Bíblica\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n**Palabras Clave:**\\n- *original* (transliteración): **significado**\\n\\n**Nota Exegética:**\\n[Explicación técnica]\\n\\n---", 
+        "scriptureReferences": ["Juan 3:16", "Romanos 8:28"],
+        "authorityQuote": "> \\"Como señala [Autor]: [Cita]\\"\\n> — *[Nombre], [Fuente]*",
+        "illustration": "**Ilustración:** [Título]\\n\\n[Desarrollo de la ilustración con separación de párrafos]",
         "implications": ["**Implicación 1**: Descripción", "**Implicación 2**: Descripción"],
-        "authorityQuote": "> Como señala [Autor]: \\"[Cita]\\"\\n\\n— *[Fuente]*",
-        "transition": "[Frase de transición natural al siguiente punto]"
+        "transition": "[Frase de transición]\\n\\n**Recordatorio:**\\nProposición: [proposición homilética]\\n**Puntos:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]"
       }
     ],
   "conclusion": "### Resumen Principal\\n\\n[Párrafo 1]\\n\\n### Llamado Final\\n\\n**Punto culminante**: [Cierre poderoso]",
