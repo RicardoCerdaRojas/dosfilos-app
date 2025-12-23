@@ -90,6 +90,7 @@
         "publishNow": "Publicar ahora",
         "delete": "Eliminar",
         "publish": "Publicar",
+        "publishing": "Publicando...",
         "continue": "Continuar"
     },
     "empty": "No se encontraron sermones que coincidan con tu búsqueda.",

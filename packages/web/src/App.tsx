@@ -28,6 +28,8 @@ import { Landing } from '@/pages/Landing';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
 import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { GreekTutorPage } from '@/pages/greek-tutor/GreekTutorPage';
+import { GreekTutorProvider } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorProvider';
+import { GreekTutorDashboardView } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorDashboardView';
 import { useEffect } from 'react';
 
 // Redirect component for old sermon routes
@@ -124,8 +126,13 @@ function App() {
             {/* AI Sermon Generator */}
             <Route path="generate-sermon" element={<SermonWizard />} />
             
-            {/* Greek Tutor Standalone */}
+            {/* Greek Tutor */}
             <Route path="greek-tutor" element={<GreekTutorPage />} />
+            <Route path="greek-tutor-dashboard" element={
+              <GreekTutorProvider>
+                <GreekTutorDashboardView />
+              </GreekTutorProvider>
+            } />
 
             {/* Settings */}
             <Route path="settings" element={<GeneratorSettings />} />

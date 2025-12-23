@@ -1,6 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, ArrowRight, BookOpen, Sparkles, Lightbulb } from 'lucide-react';
@@ -67,8 +68,9 @@ interface GreekTutorSessionViewProps {
 
 export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ initialPassage, onPassageChange }) => {
     
-    const { generateTrainingUnits, evaluateUserResponse, explainMorphology, askFreeQuestion } = useGreekTutor();
+    const { generateTrainingUnits, evaluateUserResponse, explainMorphology, askFreeQuestion, sessionRepository } = useGreekTutor();
     const { user } = useFirebase();
+    const [searchParams] = useSearchParams();
     const configRepository = new FirebaseConfigRepository();
     const configService = new ConfigService(configRepository);
     
@@ -141,6 +143,42 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             initializeSession();
         }
     }, [isActive, passage]);
+
+    // Auto-load session from query param
+    useEffect(() => {
+        const sessionIdParam = searchParams.get('sessionId');
+        if (sessionIdParam && user && status === 'IDLE') {
+            loadSessionFromId(sessionIdParam);
+        }
+    }, [searchParams, user]);
+
+    const loadSessionFromId = async (sessionId: string) => {
+        console.log('[GreekTutorSessionView] Auto-loading session:', sessionId);
+        setStatus('LOADING');
+        try {
+            const session = await sessionRepository.getSession(sessionId);
+            if (!session) {
+                console.error('[GreekTutorSessionView] Session not found:', sessionId);
+                setStatus('ERROR');
+                return;
+            }
+            
+            // Load session data
+            setPassage(session.passage);
+            setUnits(session.units);
+            setResponses(session.responses || {});
+            setIsActive(true);
+            setStatus('READY');
+            
+            console.log('[GreekTutorSessionView] Session loaded successfully:', {
+                passage: session.passage,
+                unitsCount: session.units.length
+            });
+        } catch (error) {
+            console.error('[GreekTutorSessionView] Error loading session:', error);
+            setStatus('ERROR');
+        }
+    };
 
 
     const initializeSession = async () => {
@@ -257,12 +295,32 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     const handleRequestMorphology = async (unitId: string, word: string) => {
         if (morphologyBreakdowns[unitId]) return; // Already loaded
         
+        const unit = units.find(u => u.id === unitId);
+        if (!unit) return;
+
+        // Phase 3C: Check if morphology is already cached in the unit
+        if (unit.morphologyBreakdown) {
+            console.log('[GreekTutorSessionView] Using cached morphology for:', word);
+            setMorphologyBreakdowns(prev => ({ ...prev, [unitId]: unit.morphologyBreakdown! }));
+            return;
+        }
+
+        // Not cached - generate with Gemini
+        console.log('[GreekTutorSessionView] Generating new morphology for:', word);
         setLoadingMorphology(unitId);
         try {
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
             const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
             
-            const breakdown = await explainMorphology.execute(word, passage, activeStoreId, detectedLang);
+            // Phase 3C: Pass sessionId and unitId for persistence
+            const breakdown = await explainMorphology.execute(
+                word,
+                passage,
+                unit.sessionId,
+                unitId,
+                activeStoreId,
+                detectedLang
+            );
             setMorphologyBreakdowns(prev => ({ ...prev, [unitId]: breakdown }));
         } catch (error) {
             console.error("Error loading morphology:", error);
@@ -395,7 +453,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             }
         },
         onChatMessage: handleFreeQuestion,
-        isMorphologyLoading: loadingMorphology
+        isMorphologyLoading: loadingMorphology,
+        passage,
+        userLanguage: new Intl.DisplayNames(['en'], { type: 'language' }).of(navigator.language.split('-')[0]) || 'Spanish'
     });
 
     // Export handlers
@@ -692,11 +752,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                     `}>
                         <InteractionPanel
-                            currentUnit={currentUnit!}
                             units={units}
                             currentIndex={currentIndex}
-                            completedUnits={completedUnits}
-                            onNavigateToUnit={(index) => {
+                            onNavigate={(index) => {
                                 setCurrentIndex(index);
                                 setIsMobileSidebarOpen(false); // Close on mobile after navigation
                             }}
@@ -707,6 +765,15 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                             onChatMessage={handleChatMessage}
                             activeAction={activeAction}
                             isActionLoading={isBoardLoading}
+                            onDeleteUnit={(unitId) => {
+                                console.log('[GreekTutorSessionView] Deleting unit:', unitId);
+                                // Remove unit from state
+                                setUnits(prevUnits => prevUnits.filter(u => u.id !== unitId));
+                                // Adjust current index if needed
+                                if (currentIndex >= units.length - 1) {
+                                    setCurrentIndex(Math.max(0, units.length - 2));
+                                }
+                            }}
                         />
                     </aside>
 
@@ -717,6 +784,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                             isLoading={isBoardLoading}
                             onCopy={handleCopyExport}
                             onExport={handleDownloadExport}
+                            currentUnit={currentUnit}
+                            units={units}
+                            sessionId={currentUnit?.sessionId}
+                            fileSearchStoreId={activeStoreId}
+                            onUnitAdded={(newUnit) => {
+                                console.log('[GreekTutorSessionView] Adding new unit from passage reader:', newUnit.id);
+                                setUnits(prevUnits => [...prevUnits, newUnit]);
+                            }}
                         />
                     </main>
                 </div>

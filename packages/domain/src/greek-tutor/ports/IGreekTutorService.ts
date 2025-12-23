@@ -59,12 +59,71 @@ export interface IGreekTutorService {
         fileSearchStoreId?: string,
         language?: string
     ): Promise<string>;
+
+    // Phase 3B: Passage Reader methods
+
+    /**
+     * Retrieves biblical passage in multiple versions (RV60, Greek, Transliteration)
+     * @param reference Bible reference (e.g., "Romans 12:1-2")
+     * @param fileSearchStoreId Optional store ID for enhanced accuracy
+     * @param language Output language for transliteration
+     */
+    getPassageText(
+        reference: string,
+        fileSearchStoreId?: string,
+        language?: string
+    ): Promise<import('../entities/entities').BiblicalPassage>;
+
+    /**
+     * Identifies a word from the passage and generates unit preview
+     * @param word The passage word to identify
+     * @param context Full passage context
+     * @param fileSearchStoreId Optional store ID for enhanced accuracy
+     * @param language Output language
+     */
+    identifyWordForUnit(
+        word: import('../entities/entities').PassageWord,
+        context: string,
+        fileSearchStoreId?: string,
+        language?: string
+    ): Promise<import('../entities/entities').UnitPreview>;
+
+    /**
+     * Analyzes the syntactic structure of a Greek passage
+     * @param prompt The specialized analysis prompt
+     * @returns Raw JSON string response from Gemini
+     */
+    analyzeSyntax(prompt: string): Promise<string>;
 }
 
 export interface ISessionRepository {
-    createSession(session: StudySession): Promise<void>;
-    getSession(sessionId: string): Promise<StudySession | null>;
-    updateSession(session: StudySession): Promise<void>;
+    createSession(session: import('../entities/entities').StudySession): Promise<void>;
+    getSession(sessionId: string): Promise<import('../entities/entities').StudySession | null>;
+    getAllSessions(userId: string): Promise<import('../entities/entities').StudySession[]>;
+    updateSession(session: import('../entities/entities').StudySession): Promise<void>;
     saveInsight(insight: ExegeticalInsight): Promise<void>;
     getInsightsBySession(sessionId: string): Promise<ExegeticalInsight[]>;
+
+    // Phase 3A: Progress tracking methods
+    updateUnitProgress(sessionId: string, unitId: string, progress: import('../entities/entities').UnitProgress): Promise<void>;
+    saveQuizAttempt(sessionId: string, attempt: import('../entities/entities').QuizAttempt): Promise<void>;
+    getSessionProgress(sessionId: string): Promise<import('../entities/entities').SessionProgress | null>;
+
+    // Phase 3D: Passage caching (global cache for reuse across users/sessions)
+    getCachedPassage(reference: string): Promise<import('../entities/entities').BiblicalPassage | null>;
+    cachePassage(passage: import('../entities/entities').BiblicalPassage): Promise<void>;
+
+    // Phase 4A: Session management
+    deleteSession(sessionId: string): Promise<void>;
+
+    // Phase 3A: Quiz caching methods (for hybrid generation strategy)
+    getCachedQuiz(cacheKey: string): Promise<import('../entities/entities').QuizQuestion[]>;
+    cacheQuiz(cacheKey: string, questions: import('../entities/entities').QuizQuestion[]): Promise<void>;
+
+    // Phase 3C: Morphology persistence (to avoid regeneration)
+    updateUnitMorphology(sessionId: string, unitId: string, morphology: import('../entities/entities').MorphologyBreakdown): Promise<void>;
+
+    // Phase 4B: Syntax analysis caching (global cache, reusable across users/sessions)
+    getCachedSyntaxAnalysis(reference: string): Promise<import('../syntax-analysis').PassageSyntaxAnalysis | null>;
+    cacheSyntaxAnalysis(analysis: import('../syntax-analysis').PassageSyntaxAnalysis): Promise<void>;
 }

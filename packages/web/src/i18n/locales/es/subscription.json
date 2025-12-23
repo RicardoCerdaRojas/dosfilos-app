@@ -28,14 +28,14 @@
     },
     "planNames": {
         "free": "Gratis",
-        "starter": "Starter",
-        "pro": "Pro",
+        "starter": "Pro",
+        "pro": "Equipo",
         "church": "Iglesia"
     },
     "planDescriptions": {
         "free": "Para continuar tu ministerio de predicación",
-        "starter": "Para predicadores que quieren más herramientas",
-        "pro": "Para equipos pastorales y predicadores frecuentes",
+        "starter": "Para pastores que predican regularmente",
+        "pro": "Para equipos pastorales e iglesias",
         "church": "Para iglesias y organizaciones con múltiples predicadores"
     },
     "features": {

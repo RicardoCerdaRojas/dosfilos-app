@@ -1,10 +1,12 @@
 
-import { IGreekTutorService, TrainingUnit, GreekForm, UserResponse, MorphologyBreakdown } from '@dosfilos/domain';
+import { IGreekTutorService, TrainingUnit, GreekForm, UserResponse, MorphologyBreakdown, BiblicalPassage, PassageWord, UnitPreview } from '@dosfilos/domain';
 import { GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
 import { FORM_SELECTION_SYSTEM_PROMPT, buildFormSelectionPrompt } from './prompts/FormSelectionPrompt';
 import { TRAINING_UNIT_SYSTEM_PROMPT, buildTrainingUnitPrompt } from './prompts/TrainingUnitPrompt';
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackPrompt } from './prompts/FeedbackPrompt';
 import { MORPHOLOGY_BREAKDOWN_SYSTEM_PROMPT, buildMorphologyBreakdownPrompt } from './prompts/MorphologyBreakdownPrompt';
+import { PASSAGE_TEXT_SYSTEM_PROMPT, buildPassageTextPrompt } from './prompts/PassageTextPrompt';
+import { WORD_IDENTIFICATION_SYSTEM_PROMPT, buildWordIdentificationPrompt } from './prompts/WordIdentificationPrompt';
 
 import { GEMINI_CONFIG } from '../../gemini/config';
 
@@ -258,5 +260,148 @@ DIRECTRICES:
         }
 
         return cleaned.trim();
+    }
+
+    // ========================================================================
+    // Phase 3B: Passage Reader Methods
+    // ========================================================================
+
+    /**
+     * Retrieves biblical passage in multiple versions with word alignment
+     */
+    async getPassageText(
+        reference: string,
+        fileSearchStoreId?: string,
+        language: string = 'Spanish'
+    ): Promise<BiblicalPassage> {
+        console.log('[GeminiGreekTutorService] Fetching passage text for:', reference);
+
+        const model = this.getModelWithTools(fileSearchStoreId);
+
+        const genConfig: any = {};
+        if (!fileSearchStoreId) {
+            genConfig.responseMimeType = "application/json";
+        }
+
+        try {
+            const result = await model.generateContent({
+                contents: [{ role: 'user', parts: [{ text: buildPassageTextPrompt(reference, language) }] }],
+                systemInstruction: PASSAGE_TEXT_SYSTEM_PROMPT,
+                generationConfig: genConfig
+            });
+
+            const data = JSON.parse(this.cleanJsonResponse(result.response.text()));
+
+            // Validate and structure the response
+            const passage: BiblicalPassage = {
+                reference: data.reference || reference,
+                rv60Text: data.rv60Text || '',
+                greekText: data.greekText || '',
+                transliteration: data.transliteration || '',
+                words: (data.words || []).map((w: any, index: number) => ({
+                    id: w.id || `w${index}`,
+                    greek: w.greek || '',
+                    transliteration: w.transliteration || '',
+                    spanish: w.spanish || '',
+                    position: w.position !== undefined ? w.position : index,
+                    lemma: w.lemma,
+                    isInUnits: false // Will be set by use case layer
+                }))
+            };
+
+            console.log('[GeminiGreekTutorService] Successfully retrieved passage with', passage.words.length, 'words');
+            return passage;
+        } catch (error) {
+            console.error('[GeminiGreekTutorService] Error fetching passage text:', error);
+            throw new Error(`Failed to retrieve passage ${reference}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Identifies a word from the passage and generates unit preview
+     */
+    async identifyWordForUnit(
+        word: PassageWord,
+        context: string,
+        fileSearchStoreId?: string,
+        language: string = 'Spanish'
+    ): Promise<UnitPreview> {
+        console.log('[GeminiGreekTutorService] Identifying word for unit:', word.greek);
+
+        const model = this.getModelWithTools(fileSearchStoreId);
+
+        const genConfig: any = {};
+        if (!fileSearchStoreId) {
+            genConfig.responseMimeType = "application/json";
+        }
+
+        try {
+            const result = await model.generateContent({
+                contents: [{ role: 'user', parts: [{ text: buildWordIdentificationPrompt(word.greek, context, language) }] }],
+                systemInstruction: WORD_IDENTIFICATION_SYSTEM_PROMPT,
+                generationConfig: genConfig
+            });
+
+            const data = JSON.parse(this.cleanJsonResponse(result.response.text()));
+
+            const preview: UnitPreview = {
+                greekForm: {
+                    text: data.greekForm.text || word.greek,
+                    transliteration: data.greekForm.transliteration || word.transliteration,
+                    lemma: data.greekForm.lemma || '',
+                    morphology: data.greekForm.morphology || '',
+                    gloss: data.greekForm.gloss || '',
+                    grammaticalCategory: data.greekForm.grammaticalCategory || ''
+                },
+                identification: data.identification || '',
+                recognitionGuidance: data.recognitionGuidance
+            };
+
+            console.log('[GeminiGreekTutorService] Successfully identified word:', preview.greekForm.lemma);
+            return preview;
+        } catch (error) {
+            console.error('[GeminiGreekTutorService] Error identifying word:', error);
+            throw new Error(`Failed to identify word ${word.greek}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Analyzes the syntactic structure of a Greek passage
+     * 
+     * This method is intentionally simple - it just calls Gemini with the prompt.
+     * The complexity of prompt building and response parsing is handled in the
+     * use case layer (Application Layer), following Clean Architecture.
+     * 
+     * @param prompt - The complete analysis prompt (built by use case)
+     * @returns Raw JSON string response from Gemini
+     */
+    async analyzeSyntax(prompt: string): Promise<string> {
+        try {
+            console.log('[GeminiGreekTutorService] Analyzing syntax...');
+
+            // Use the model without tools for JSON response
+            // (Tools conflict with JSON mode in Gemini)
+            const result = await this.model.generateContent({
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.3, // Lower temperature for more deterministic syntax analysis
+                    topP: 0.95,
+                    topK: 40,
+                    maxOutputTokens: 8192,
+                    // NOTE: responseMimeType JSON doesn't guarantee valid JSON in practice,
+                    // so we parse manually in the use case
+                }
+            });
+
+            const response = result.response;
+            const text = response.text();
+
+            console.log('[GeminiGreekTutorService] Syntax analysis complete. Response length:', text.length);
+
+            return text;
+        } catch (error) {
+            console.error('[GeminiGreekTutorService] Error analyzing syntax:', error);
+            throw new Error(`Failed to analyze syntax: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
 }

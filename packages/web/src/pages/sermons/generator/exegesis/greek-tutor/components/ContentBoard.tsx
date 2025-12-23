@@ -1,16 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Copy, Download, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { EducationalCapsule } from './EducationalCapsule';
+import { getRandomCapsule } from '../constants/greekCapsules';
+import { MorphologyDisplay } from './MorphologyDisplay';
+import { RecognitionGuideDisplay } from './RecognitionGuideDisplay';
+import { ContextFunctionDisplay } from './ContextFunctionDisplay';
+import { TheologicalSignificanceDisplay } from './TheologicalSignificanceDisplay';
+import { QuizSection } from './QuizSection';
+import { PassageReader } from './PassageReader';
+import { PassageSyntaxView } from './PassageSyntaxView';
+import { BiblicalPassage, PassageSyntaxAnalysis } from '@dosfilos/domain';
+import { useGreekTutor } from '../GreekTutorProvider';
+import { MorphologyBreakdown } from '@dosfilos/domain';
 
 export interface BoardContent {
-    type: 'morphology' | 'recognition' | 'context' | 'significance' | 'chat';
+    type: 'morphology' | 'recognition' | 'context' | 'significance' | 'chat' | 'quiz' | 'passage' | 'syntax';
     title: string;
     content: string;
     timestamp: Date;
+    morphologyData?: MorphologyBreakdown; // For visual rendering
+    greekWord?: string; // Greek word being studied
+    identification?: string; // Grammatical identification
+    passage?: string; // Bible passage reference
+    syntaxAnalysis?: PassageSyntaxAnalysis; // For syntax view
 }
 
 export interface ContentBoardProps {
@@ -18,6 +35,13 @@ export interface ContentBoardProps {
     isLoading: boolean;
     onCopy?: () => void;
     onExport?: () => void;
+    onWordClick?: (wordIndex: number) => void; // For word click in syntax analysis
+    // Phase 3A: Quiz integration
+    currentUnit?: import('@dosfilos/domain').TrainingUnit;
+    units?: import('@dosfilos/domain').TrainingUnit[]; // For passage reader
+    sessionId?: string;
+    fileSearchStoreId?: string;
+    onUnitAdded?: (unit: import('@dosfilos/domain').TrainingUnit) => void; // Callback when new unit is added from passage reader
 }
 
 /**
@@ -28,25 +52,29 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     content,
     isLoading,
     onCopy,
-    onExport
+    onExport,
+    onWordClick,
+    currentUnit,
+    units = [],
+    sessionId,
+    fileSearchStoreId,
+    onUnitAdded
 }) => {
-    // Empty state
+    const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule());
+    const { generateQuiz, submitQuizAnswer } = useGreekTutor();
+
+    const handleRefreshCapsule = () => {
+        setCurrentCapsule(getRandomCapsule());
+    };
+
+    // Empty state with educational capsule
     if (!content && !isLoading) {
         return (
             <div className="h-full flex items-center justify-center p-8 bg-gradient-to-br from-background via-muted/20 to-background">
-                <div className="text-center space-y-4 max-w-md">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center">
-                        <svg className="w-10 h-10 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-</svg>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold mb-2">Pizarra del Tutor</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Selecciona una acción del panel lateral o escribe una pregunta para comenzar.
-                        </p>
-                    </div>
-                </div>
+                <EducationalCapsule 
+                    capsule={currentCapsule}
+                    onRefresh={handleRefreshCapsule}
+                />
             </div>
         );
     }
@@ -104,21 +132,158 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
 
             {/* Scrollable content area */}
             <ScrollArea className="flex-1">
-                <div className="p-2 max-w-4xl mx-auto">
-                    <Card className="p-6 md:p-8 shadow-sm">
-                        <div className="prose prose-slate dark:prose-invert max-w-none 
-                                      prose-headings:font-bold prose-headings:tracking-tight
-                                      prose-p:leading-relaxed prose-li:leading-relaxed
-                                      prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-                                      prose-strong:text-foreground prose-strong:font-semibold
-                                      prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-1">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {content.content}
-                            </ReactMarkdown>
-                        </div>
-                    </Card>
+                <div className="p-6 max-w-5xl mx-auto">
+                    {/* Use visual component for morphology when data is available */}
+                    {(() => {
+                        console.log('[ContentBoard] Rendering content, type:', content.type, 'hasData:', !!content.morphologyData);
+                        
+                        if (content.type === 'morphology' && content.morphologyData) {
+                            console.log('[ContentBoard] Rendering MorphologyDisplay with:', content.morphologyData);
+                            return <MorphologyDisplay breakdown={content.morphologyData} />;
+                        }
+                        
+                        if (content.type === 'recognition' && content.greekWord && content.identification) {
+                            return (
+                                <RecognitionGuideDisplay
+                                    content={content.content}
+                                    greekWord={content.greekWord}
+                                    identification={content.identification}
+                                />
+                            );
+                        }
+                        
+                        if (content.type === 'context' && content.greekWord && content.passage) {
+                            return (
+                                <ContextFunctionDisplay
+                                    content={content.content}
+                                    greekWord={content.greekWord}
+                                    passage={content.passage}
+                                />
+                            );
+                        }
+                        
+                        if (content.type === 'quiz' && currentUnit && sessionId) {
+                            return (
+                                <div className="space-y-4">
+                                    <h5 className="text-muted-foreground">
+                                        Pon a prueba lo que has aprendido sobre <span className="font-mono text-primary">{currentUnit.greekForm.text}</span>
+                                    </h5>
+                                    <QuizSection
+                                        unit={currentUnit}
+                                        sessionId={sessionId}
+                                        generateQuizUseCase={generateQuiz}
+                                        submitQuizAnswerUseCase={submitQuizAnswer}
+                                        fileSearchStoreId={fileSearchStoreId}
+                                    />
+                                </div>
+                            );
+                        }
+                        
+                        if (content.type === 'passage' && content.passage && sessionId) {
+                            return <PassageReaderWrapper 
+                                passage={content.passage}
+                                sessionId={sessionId}
+                                units={units}
+                                fileSearchStoreId={fileSearchStoreId}
+                                onUnitAdded={onUnitAdded}
+                            />;
+                        }
+                        
+                        // Syntax Analysis View
+                        if (content.type === 'syntax' && content.syntaxAnalysis) {
+                            return (
+                                <Card className="p-6 md:p-8 shadow-sm">
+                                    <PassageSyntaxView 
+                                        analysis={content.syntaxAnalysis} 
+                                        onWordClick={onWordClick}
+                                    />
+                                </Card>
+                            );
+                        }
+                        
+                        if (content.type === 'significance' && content.greekWord && content.passage) {
+                            return (
+                                <TheologicalSignificanceDisplay
+                                    content={content.content}
+                                    greekWord={content.greekWord}
+                                    passage={content.passage}
+                                />
+                            );
+                        }
+                        
+                        // Fallback to markdown for all other types or when data is missing
+                        return (
+                            <Card className="p-6 md:p-8 shadow-sm">
+                                <div className="prose prose-slate dark:prose-invert max-w-none 
+                                              prose-headings:font-bold prose-headings:tracking-tight
+                                              prose-h1:text-2xl prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4
+                                              prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-2
+                                              prose-p:leading-relaxed prose-p:mb-4
+                                              prose-li:leading-relaxed
+                                              prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-medium
+                                              prose-pre:bg-muted prose-pre:border prose-pre:border-border
+                                              prose-strong:text-foreground prose-strong:font-semibold
+                                              prose-blockquote:border-l-4 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r prose-blockquote:not-italic
+                                              prose-hr:border-border prose-hr:my-8">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {content.content}
+                                    </ReactMarkdown>
+                                </div>
+                            </Card>
+                        );
+                    })()}
                 </div>
             </ScrollArea>
         </div>
+    );
+};
+
+/**
+ * Wrapper component to handle passage loading
+ */
+const PassageReaderWrapper: React.FC<{
+    passage: string;
+    sessionId: string;
+    units: import('@dosfilos/domain').TrainingUnit[];
+    fileSearchStoreId?: string;
+    onUnitAdded?: (unit: import('@dosfilos/domain').TrainingUnit) => void;
+}> = ({ passage, sessionId, units, fileSearchStoreId, onUnitAdded }) => {
+    const [biblicalPassage, setBiblicalPassage] = useState<BiblicalPassage | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const { getPassageText } = useGreekTutor();
+
+    useEffect(() => {
+        const loadPassage = async () => {
+            console.log('[PassageReaderWrapper] Loading passage:', passage);
+            setIsLoading(true);
+            setError(null);
+            
+            try {
+                const result = await getPassageText.execute(passage, fileSearchStoreId);
+                setBiblicalPassage(result);
+                console.log('[PassageReaderWrapper] Passage loaded successfully');
+            } catch (err) {
+                console.error('[PassageReaderWrapper] Error loading passage:', err);
+                setError(err instanceof Error ? err.message : 'Error al cargar pasaje');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (passage) {
+            loadPassage();
+        }
+    }, [passage, fileSearchStoreId]);
+
+    return (
+        <PassageReader
+            passage={biblicalPassage}
+            sessionId={sessionId}
+            currentUnits={units}
+            fileSearchStoreId={fileSearchStoreId}
+            isLoading={isLoading}
+            onUnitAdded={onUnitAdded}
+        />
     );
 };

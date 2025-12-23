@@ -321,7 +321,7 @@
             },
             "pro": {
                 "name": "Pro",
-                "price": "$29",
+                "price": "$9.99",
                 "period": "por mes",
                 "description": "Para pastores que predican regularmente",
                 "popular": "Más Popular",
@@ -337,7 +337,7 @@
             },
             "team": {
                 "name": "Equipo",
-                "price": "$79",
+                "price": "$24.9",
                 "period": "por mes",
                 "description": "Para equipos pastorales e iglesias",
                 "features": [

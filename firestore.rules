@@ -54,6 +54,30 @@ service cloud.firestore {
            get(/databases/$(database)/documents/greek_sessions/$(sessionId)).data.userId == request.auth.uid;
       }
     }
+
+    // Greek Tutor - Passage Cache (global, reusable across users)
+    // All authenticated users can read cached passages
+    // All authenticated users can write (to contribute to cache)
+    match /passage_cache/{passageId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Greek Tutor - Quiz Cache (hybrid caching by lemma+category)
+    // All authenticated users can read and write to benefit from shared cache
+    match /quiz_cache/{cacheKey} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Greek Tutor - Syntax Analysis Cache (Phase 4B)
+    // Global cache for passage syntax analyses, reusable across users/sessions
+    // Reduces Gemini API costs and improves latency for common passages
+    match /syntax_analysis_cache/{passageId} {
+      allow read: if isAuthenticated(); // All users benefit from cache
+      allow create, update: if isAuthenticated(); // Anyone can populate cache
+      allow delete: if false; // Cache is permanent (no deletion)
+    }
     
     // Users collection
     match /users/{userId} {

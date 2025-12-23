@@ -31,8 +31,8 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
     },
     starter: {
         id: 'starter',
-        name: 'Starter',
-        description: 'Para predicadores que quieren más herramientas',
+        name: 'Pro',
+        description: 'Para pastores que predican regularmente',
         priceMonthly: 9.99,
         stripePriceId: 'price_1SgDfo08MCNNnSDLK3WLKKb9', // Updated to production ID
         features: [
@@ -47,9 +47,9 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
     },
     pro: {
         id: 'pro',
-        name: 'Pro',
-        description: 'Para equipos pastorales y predicadores frecuentes',
-        priceMonthly: 24.99,
+        name: 'Equipo',
+        description: 'Para equipos pastorales e iglesias',
+        priceMonthly: 24.9,
         stripePriceId: 'price_1SgDiK08MCNNnSDL3mCVFwl4', // Updated to production ID
         features: [
             'sermon:create',
@@ -81,7 +81,7 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
             'courses:view',
         ],
         sortOrder: 3,
-        isPublic: true,
+        isPublic: false,
     },
 };
 

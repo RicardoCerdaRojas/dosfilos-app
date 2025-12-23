@@ -90,6 +90,7 @@
         "publishNow": "Publish now",
         "delete": "Delete",
         "publish": "Publish",
+        "publishing": "Publishing...",
         "continue": "Continue"
     },
     "empty": "No sermons found matching your search.",

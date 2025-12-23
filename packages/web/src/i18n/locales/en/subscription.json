@@ -28,14 +28,14 @@
     },
     "planNames": {
         "free": "Free",
-        "starter": "Starter",
-        "pro": "Pro",
+        "starter": "Pro",
+        "pro": "Team",
         "church": "Church"
     },
     "planDescriptions": {
         "free": "To continue your preaching ministry",
-        "starter": "For preachers who want more tools",
-        "pro": "For pastoral teams and frequent preachers",
+        "starter": "For pastors who preach regularly",
+        "pro": "For pastoral teams and churches",
         "church": "For churches and organizations with multiple preachers"
     },
     "features": {

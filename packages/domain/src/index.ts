@@ -13,6 +13,7 @@ export * from './entities/HomileticalApproach';  // 🎯 NEW
 export * from './entities/DocumentChunk';
 export * from './entities/FileSearchStoreEntity'; // 🎯 File Search Stores
 export * from './greek-tutor/entities/entities'; // 🏛️ Greek Tutor Entities
+export * from './greek-tutor/syntax-analysis'; // 🏛️ Greek Syntax Analysis
 
 
 // Repositories
@@ -36,6 +37,7 @@ export * from './services/ITextExtractor';
 export * from './services/ICacheService';
 export * from './ports/IFileSearchService'; // 🎯 File Search ports
 export * from './greek-tutor/ports/IGreekTutorService'; // 🏛️ Greek Tutor Ports
+export * from './greek-tutor/ports/IQuizService'; // 🎯 Phase 3A: Quiz Service
 
 
 // Workflow

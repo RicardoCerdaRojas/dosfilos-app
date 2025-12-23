@@ -18,6 +18,7 @@ function WizardContent() {
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
     const [showResumePrompt, setShowResumePrompt] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [publishingSermonId, setPublishingSermonId] = useState<string | null>(null);
     const location = useLocation();
 
     // Check for in-progress sermons on mount or when location key changes (navigation)
@@ -128,12 +129,16 @@ function WizardContent() {
 
     const handlePublish = async (sermon: SermonEntity) => {
         try {
+            setPublishingSermonId(sermon.id);
             await sermonService.publishSermonAsCopy(sermon.id);
             // Refresh the list to show updated publish status
             const sermons = await sermonService.getInProgressSermons(user!.uid);
             setInProgressSermons(sermons);
         } catch (error) {
             console.error('Error publishing sermon:', error);
+            // You can add a toast notification here if you have a toast library
+        } finally {
+            setPublishingSermonId(null);
         }
     };
 
@@ -210,6 +215,7 @@ function WizardContent() {
                     onPublish={handlePublish}
                     onDuplicate={handleDuplicate}
                     onNewSermon={handleNewSermon}
+                    publishingSermonId={publishingSermonId}
                 />
             </div>
         );

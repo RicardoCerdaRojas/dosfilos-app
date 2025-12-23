@@ -20,6 +20,7 @@ export * from './greek-tutor/use-cases/SaveInsightUseCase';
 export * from './greek-tutor/use-cases/ExplainMorphologyUseCase';
 export * from './greek-tutor/use-cases/StartGreekTrainingUseCase';
 export * from './greek-tutor/use-cases/AskFreeQuestionUseCase';
+export * from './greek-tutor/use-cases/AnalyzePassageSyntaxUseCase'; // 🏛️ Syntax Analysis
 
 
 // Subscription services

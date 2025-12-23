@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2, BarChart3, CheckCircle2, FileText, TrendingUp, Filter, Plus } from 'lucide-react';
+import { Clock, Trash2, ArrowRight, Search, LayoutGrid, List, MoreVertical, Copy, Share2, BarChart3, CheckCircle2, FileText, TrendingUp, Filter, Plus, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { VersionHistoryModal } from './VersionHistoryModal';
@@ -33,9 +33,10 @@ interface SermonsInProgressProps {
     onPublish?: (sermon: SermonEntity) => void;
     onDuplicate?: (sermon: SermonEntity) => void;
     onNewSermon?: () => void;
+    publishingSermonId?: string | null;
 }
 
-export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate, onNewSermon }: SermonsInProgressProps) {
+export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, onDuplicate, onNewSermon, publishingSermonId }: SermonsInProgressProps) {
     const { t, i18n } = useTranslation('generator');
     const dateLocale = i18n.language === 'es' ? es : enUS;
     const [searchQuery, setSearchQuery] = useState('');
@@ -432,8 +433,15 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                                 </DropdownMenuItem>
                                             )}
                                             {onPublish && wizardProgress.currentStep === 3 && (
-                                                <DropdownMenuItem onClick={() => onPublish(sermon)}>
-                                                    <Share2 className="h-4 w-4 mr-2" />
+                                                <DropdownMenuItem 
+                                                    onClick={() => onPublish(sermon)}
+                                                    disabled={publishingSermonId === sermon.id}
+                                                >
+                                                    {publishingSermonId === sermon.id ? (
+                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                    ) : (
+                                                        <Share2 className="h-4 w-4 mr-2" />
+                                                    )}
                                                     {t('actions.publishNow')}
                                                 </DropdownMenuItem>
                                             )}
@@ -453,10 +461,15 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                         <Button 
                                             size="sm" 
                                             onClick={() => onPublish(sermon)}
-                                            className="gap-2 shadow-sm bg-green-600 hover:bg-green-700"
+                                            disabled={publishingSermonId === sermon.id}
+                                            className="gap-2 shadow-sm bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <Share2 className="h-4 w-4" />
-                                            {t('actions.publish')}
+                                            {publishingSermonId === sermon.id ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Share2 className="h-4 w-4" />
+                                            )}
+                                            {publishingSermonId === sermon.id ? t('actions.publishing') : t('actions.publish')}
                                         </Button>
                                     ) : (
                                         <Button 
