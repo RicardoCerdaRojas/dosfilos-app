@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, ArrowRight, BookOpen, Sparkles, Lightbulb, Copy, Download, LayoutDashboard } from 'lucide-react';
@@ -72,6 +72,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     const { generateTrainingUnits, evaluateUserResponse, explainMorphology, askFreeQuestion, sessionRepository } = useGreekTutor();
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const configRepository = new FirebaseConfigRepository();
     const configService = new ConfigService(configRepository);
     
@@ -502,14 +503,25 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
                             {/* Left Column - Hero Content */}
                             <div className="space-y-8">
-                                {/* Title with gradient */}
-                                <div className="space-y-3">
-                                    <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                        Entrena tu discernimiento exegético
-                                    </h1>
-                                    <p className="text-lg text-muted-foreground">
-                                        Analiza pasajes del NT griego con asistencia de IA pedagógica
-                                    </p>
+                                {/* Title with gradient and Dashboard button */}
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="space-y-3 flex-1">
+                                        <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                            Entrena tu discernimiento exegético
+                                        </h1>
+                                        <p className="text-lg text-muted-foreground">
+                                            Analiza pasajes del NT griego con asistencia de IA pedagógica
+                                        </p>
+                                    </div>
+                                    <Button 
+                                        variant="outline"
+                                        size="sm"
+                                        className="shrink-0 gap-2"
+                                        onClick={() => navigate('/dashboard/greek-tutor-dashboard')}
+                                    >
+                                        <LayoutDashboard className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Mis Sesiones</span>
+                                    </Button>
                                 </div>
 
                                 {/* Passage Input - Large and prominent */}
