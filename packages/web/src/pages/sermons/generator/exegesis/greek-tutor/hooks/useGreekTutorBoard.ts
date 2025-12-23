@@ -59,6 +59,7 @@ export const useGreekTutorBoard = ({
     const [currentContent, setCurrentContent] = useState<BoardContent | null>(null);
     const [activeAction, setActiveAction] = useState<ActionType | null>(null);
     const [isChatLoading, setIsChatLoading] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     // Get Greek Tutor context at top level (MUST be here, not in callbacks)
     const greekTutorContext = useGreekTutor();
@@ -112,27 +113,28 @@ export const useGreekTutorBoard = ({
     /**
      * Handle action button click
      */
-    const handleActionClick = useCallback((action: ActionType) => {
+    const handleActionClick = useCallback(async (action: ActionType) => {
         if (!currentUnit) return;
 
         setActiveAction(action);
 
         switch (action) {
             case 'morphology': {
-                // Check if already loaded
+                // Check if already loaded in cache
                 const existing = morphologyBreakdowns[currentUnit.id];
                 if (existing) {
-                    console.log('[useGreekTutorBoard] Setting morphology content with data:', existing);
                     setCurrentContent({
                         type: 'morphology',
                         title: 'Descomposición Morfológica',
                         content: formatMorphologyContent(existing),
-                        morphologyData: existing, // Include data for visual rendering
+                        morphologyData: existing,
+                        greekWord: currentUnit.greekForm.text,
+                        identification: currentUnit.identification,
+                        passage,
                         timestamp: new Date()
                     });
                 } else {
-                    console.log('[useGreekTutorBoard] Requesting morphology for:', currentUnit.id);
-                    // Request it (hook expects unitId, handler will get word from unit)
+                    // Request it (parent component will handle the actual API call)
                     onRequestMorphology(currentUnit.id);
                 }
                 break;
@@ -218,7 +220,7 @@ export const useGreekTutorBoard = ({
                 (async () => {
                     try {
                         // Step 1: Fetch complete passage data
-                        console.log('[useGreekTutorBoard] Fetching passage:', passage);
+                        // Fetching passage
                         const biblicalPassage = await greekTutorContext.getPassageText.execute(passage);
 
                         // Step 2: Instantiate Gemini service (same as context)
@@ -232,9 +234,9 @@ export const useGreekTutorBoard = ({
                         );
 
                         // Step 4: Execute analysis (with caching and user's language)
-                        console.log('[useGreekTutorBoard] Analyzing syntax...');
+                        // Analyzing syntax
                         const analysis = await analyzeSyntaxUseCase.execute(biblicalPassage, userLanguage);
-                        console.log('[useGreekTutorBoard] Analysis complete:', analysis);
+                        // Analysis complete
 
                         // Step 5: Update content with results
                         setCurrentContent({
@@ -276,6 +278,8 @@ export const useGreekTutorBoard = ({
                 type: 'chat',
                 title: 'Respuesta del Tutor',
                 content: `**Tu pregunta:** ${message}\n\n---\n\n${answer}`,
+                greekWord: currentUnit?.greekForm.text,
+                passage: passage,
                 timestamp: new Date()
             });
         } catch (error) {
@@ -289,7 +293,7 @@ export const useGreekTutorBoard = ({
         } finally {
             setIsChatLoading(false);
         }
-    }, [onChatMessage]);
+    }, [onChatMessage, currentUnit, passage]);
 
     /**
      * Handle copy to clipboard
@@ -306,19 +310,30 @@ export const useGreekTutorBoard = ({
      */
     const handleExport = useCallback(() => {
         // Export will be handled by parent with full context
-        console.log('Export triggered from board');
+        // Export triggered
     }, []);
 
     // Update content when morphology is loaded
     const isLoadingMorphology = isMorphologyLoading === currentUnit?.id;
 
-    // Reset content when unit changes
+    // Reset content when unit changes (but not on initial load)
     useEffect(() => {
-        console.log('[useGreekTutorBoard] Unit changed to:', currentUnit?.id);
-        // Clear content and active action when switching units
-        setCurrentContent(null);
-        setActiveAction(null);
-    }, [currentUnit?.id]);
+        if (isInitialLoad) {
+            // Skip reset on first load to preserve auto-triggered content
+            setIsInitialLoad(false);
+            return;
+        }
+
+        // Auto-trigger morphology when user clicks on a different word
+        if (currentUnit && handleActionClick) {
+            handleActionClick('morphology');
+        } else {
+            // Fallback: clear content and active action
+            setCurrentContent(null);
+            setActiveAction(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUnit?.id, isInitialLoad]); // Removed handleActionClick and currentUnit to prevent re-trigger on state changes
 
     // Use useEffect to update content when morphology data arrives
     useEffect(() => {
@@ -326,7 +341,7 @@ export const useGreekTutorBoard = ({
         if (activeAction === 'morphology' && !isLoadingMorphology && currentUnit) {
             const breakdown = morphologyBreakdowns[currentUnit.id];
             if (breakdown && (!currentContent || currentContent.type !== 'morphology' || !currentContent.morphologyData)) {
-                console.log('[useGreekTutorBoard] Morphology data loaded, updating content:', breakdown);
+                // Morphology data loaded
                 setCurrentContent({
                     type: 'morphology',
                     title: 'Descomposición Morfológica',

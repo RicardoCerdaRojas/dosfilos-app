@@ -17,8 +17,8 @@ export const useResumeSession = () => {
         setIsResuming(true);
 
         try {
-            // Navigate to Greek Tutor page with sessionId as query param
-            navigate(`/dashboard/greek-tutor?sessionId=${sessionId}`);
+            // Navigate to session route (immersive, outside DashboardLayout)
+            navigate(`/dashboard/greek-tutor/session?sessionId=${sessionId}`, { replace: true });
         } catch (error) {
             console.error('[useResumeSession] Error resuming session:', error);
         } finally {

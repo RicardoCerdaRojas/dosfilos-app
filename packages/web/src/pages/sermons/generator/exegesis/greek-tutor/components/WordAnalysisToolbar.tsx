@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, FileText, Heart } from 'lucide-react';
+import { Lightbulb, GitMerge, Heart } from 'lucide-react';
 import { TrainingUnit } from '@dosfilos/domain';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ export interface WordAnalysisToolbarProps {
 
 interface ToolbarButton {
     action: WordActionType;
-    icon: typeof Eye;
+    icon: typeof Lightbulb;
     label: string;
     description: string;
 }
@@ -22,15 +22,15 @@ interface ToolbarButton {
 const TOOLBAR_BUTTONS: ToolbarButton[] = [
     {
         action: 'recognition',
-        icon: Eye,
-        label: 'Reconocer',
-        description: '¿Cómo reconocer esta forma?'
+        icon: Lightbulb,
+        label: 'Claves',
+        description: 'Claves para reconocer'
     },
     {
         action: 'context',
-        icon: FileText,
-        label: 'Contexto',
-        description: 'Función en contexto'
+        icon: GitMerge,
+        label: 'Función',
+        description: 'Función en la oración'
     },
     {
         action: 'significance',

@@ -89,8 +89,7 @@ export const usePassageReader = (
         };
     }) || [];
 
-    console.log('[usePassageReader] Total words processed:', wordsWithStatus.length);
-    console.log('[usePassageReader] Words marked as in units:', wordsWithStatus.filter(w => w.isInUnits).map(w => w.greek));
+    // Words processed
 
     /**
      * Toggle visibility of a version
@@ -115,7 +114,7 @@ export const usePassageReader = (
 
         // Don't allow selecting words already in units
         if (word.isInUnits) {
-            console.log('[usePassageReader] Word already in units:', word.greek);
+            // Word already in units
             return;
         }
 
@@ -175,7 +174,7 @@ export const usePassageReader = (
 
             // Notify parent component that a new unit was added
             if (onUnitAdded) {
-                console.log('[usePassageReader] Notifying parent of new unit:', newUnit.id);
+                // Notifying parent of new unit
                 onUnitAdded(newUnit);
             }
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -11,10 +12,16 @@ export function DashboardLayout() {
   const isPlanner = location.pathname.startsWith('/planner');
   const isGenerator = location.pathname.includes('/sermons/generate');
 
+  // DEBUG: Log location changes
+  useEffect(() => {
+    console.log('[DashboardLayout] Location changed to:', location.pathname);
+    console.log('[DashboardLayout] isGenerator:', isGenerator);
+  }, [location.pathname, isGenerator]);
+
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="overflow-hidden">
+      <SidebarInset>
         {/* Header with toggle button */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />

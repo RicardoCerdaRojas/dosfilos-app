@@ -8,7 +8,7 @@ export const GreekTutorPage: React.FC = () => {
     return (
         <div className="flex flex-col h-full bg-background">
             {/* Full-height session view with integrated header */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1">
                 <GreekTutorProvider>
                     <GreekTutorSessionView />
                 </GreekTutorProvider>

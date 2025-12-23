@@ -75,7 +75,15 @@ export function Sidebar() {
               {group.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
-                  <Link key={item.name} to={item.href}>
+                  <Link 
+                    key={item.name} 
+                    to={item.href}
+                    onClick={(e) => {
+                      console.log('[Sidebar Link] Click detected:', item.name, item.href);
+                      console.log('[Sidebar Link] Event defaultPrevented:', e.defaultPrevented);
+                      console.log('[Sidebar Link] Event isPropagationStopped:', e.isPropagationStopped());
+                    }}
+                  >
                     <Button
                       variant={isActive ? 'secondary' : 'ghost'}
                       className={cn(

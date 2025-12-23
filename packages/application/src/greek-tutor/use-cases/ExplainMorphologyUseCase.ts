@@ -25,8 +25,6 @@ export class ExplainMorphologyUseCase {
         fileSearchStoreId?: string,
         language?: string
     ): Promise<MorphologyBreakdown> {
-        console.log('[ExplainMorphologyUseCase] Generating morphology for:', word);
-
         const morphology = await this.greekTutorService.explainMorphology(
             word,
             passage,
@@ -37,7 +35,6 @@ export class ExplainMorphologyUseCase {
         // Phase 3C: Persist to Firestore to avoid regeneration
         try {
             await this.sessionRepository.updateUnitMorphology(sessionId, unitId, morphology);
-            console.log('[ExplainMorphologyUseCase] Successfully persisted morphology');
         } catch (error) {
             console.error('[ExplainMorphologyUseCase] Failed to persist morphology:', error);
             // Don't fail the request if persistence fails

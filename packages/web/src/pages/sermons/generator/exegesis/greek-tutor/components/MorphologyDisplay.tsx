@@ -4,6 +4,8 @@ import { MorphologyBreakdown } from '@dosfilos/domain';
 import { ComponentBadge } from './ComponentBadge';
 import { InsightCard } from './InsightCard';
 import { ArrowRight, GraduationCap } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export interface MorphologyDisplayProps {
     breakdown: MorphologyBreakdown;
@@ -103,7 +105,13 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
                 <>
                     <div className="border-t border-border" />
                     <InsightCard title="Síntesis">
-                        <p className="text-base leading-relaxed">{breakdown.summary}</p>
+                        <div className="prose prose-sm dark:prose-invert max-w-none
+                                        prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:my-0
+                                        prose-strong:text-foreground prose-strong:font-bold">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {breakdown.summary}
+                            </ReactMarkdown>
+                        </div>
                     </InsightCard>
                 </>
             )}

@@ -84,6 +84,16 @@ function App() {
             } 
           />
 
+          {/* Greek Tutor Active Session - Standalone route without dashboard sidebar (immersive experience) */}
+          <Route 
+            path="/dashboard/greek-tutor/session" 
+            element={
+              <ProtectedRoute>
+                <GreekTutorPage />
+              </ProtectedRoute>
+            } 
+          />
+
           {/* Admin Routes (Protected by component) */}
           <Route path="/admin/leads" element={
             <ProtectedRoute>
@@ -125,9 +135,11 @@ function App() {
 
             {/* AI Sermon Generator */}
             <Route path="generate-sermon" element={<SermonWizard />} />
-            
-            {/* Greek Tutor */}
+
+            {/* Greek Tutor - Start page with sidebar for navigation */}
             <Route path="greek-tutor" element={<GreekTutorPage />} />
+            
+            {/* Greek Tutor Dashboard - Sessions list with sidebar */}
             <Route path="greek-tutor-dashboard" element={
               <GreekTutorProvider>
                 <GreekTutorDashboardView />

@@ -299,7 +299,7 @@ function renderClauseTree(
                             <ClauseBadge type={clause.type} />
                             {clause.conjunction && (
                                 <span className="px-2 py-0.5 text-xs font-medium text-purple-700 bg-purple-100 rounded">
-                                    {clause.conjunction}
+                                    {typeof clause.conjunction === 'string' ? clause.conjunction : (clause.conjunction as any)?.text || String(clause.conjunction)}
                                 </span>
                             )}
                         </div>
@@ -316,6 +316,9 @@ function renderClauseTree(
                             const wordIndex = clause.wordIndices[idx];
                             const isClickable = onWordClick && wordIndex !== undefined;
                             
+                            // Ensure word is a string (defensive check)
+                            const wordText = typeof word === 'string' ? word : (word as any)?.text || String(word);
+                            
                             return (
                                 <React.Fragment key={idx}>
                                     <span
@@ -329,7 +332,7 @@ function renderClauseTree(
                                         }}
                                         title={isClickable ? `Analizar palabra ${idx + 1}` : undefined}
                                     >
-                                        {word}
+                                        {wordText}
                                     </span>
                                     {idx < clause.greekText.split(/\s+/).length - 1 && ' '}
                                 </React.Fragment>

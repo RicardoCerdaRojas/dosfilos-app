@@ -130,19 +130,28 @@ export class GeminiGreekTutorService implements IGreekTutorService {
             genConfig.responseMimeType = "application/json";
         }
 
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: buildMorphologyBreakdownPrompt(word, passage, language) }] }],
-            systemInstruction: MORPHOLOGY_BREAKDOWN_SYSTEM_PROMPT,
-            generationConfig: genConfig
-        });
+        try {
+            const result = await model.generateContent({
+                contents: [{ role: 'user', parts: [{ text: buildMorphologyBreakdownPrompt(word, passage, language) }] }],
+                systemInstruction: MORPHOLOGY_BREAKDOWN_SYSTEM_PROMPT,
+                generationConfig: genConfig
+            });
 
-        const data = JSON.parse(this.cleanJsonResponse(result.response.text()));
+            const rawText = result.response.text();
+            const cleanedJson = this.cleanJsonResponse(rawText);
+            const data = JSON.parse(cleanedJson);
 
-        return {
-            word: data.word || word,
-            components: data.components || [],
-            summary: data.summary || ''
-        };
+            const morphology = {
+                word: data.word || word,
+                components: data.components || [],
+                summary: data.summary || ''
+            };
+
+            return morphology;
+        } catch (error) {
+            console.error('[GeminiGreekTutorService] Error in explainMorphology:', error);
+            throw error;
+        }
     }
 
     async answerFreeQuestion(

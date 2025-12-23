@@ -16,6 +16,7 @@ import { PassageSyntaxView } from './PassageSyntaxView';
 import { BiblicalPassage, PassageSyntaxAnalysis } from '@dosfilos/domain';
 import { useGreekTutor } from '../GreekTutorProvider';
 import { MorphologyBreakdown } from '@dosfilos/domain';
+import { TutorResponseDisplay } from './TutorResponseDisplay';
 
 export interface BoardContent {
     type: 'morphology' | 'recognition' | 'context' | 'significance' | 'chat' | 'quiz' | 'passage' | 'syntax';
@@ -98,10 +99,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                 <div className="p-6 max-w-5xl mx-auto">
                     {/* Use visual component for morphology when data is available */}
                     {(() => {
-                        console.log('[ContentBoard] Rendering content, type:', content.type, 'hasData:', !!content.morphologyData);
-                        
                         if (content.type === 'morphology' && content.morphologyData) {
-                            console.log('[ContentBoard] Rendering MorphologyDisplay with:', content.morphologyData);
                             return <MorphologyDisplay breakdown={content.morphologyData} />;
                         }
                         
@@ -174,6 +172,23 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                             );
                         }
                         
+                        // Chat responses with enhanced design
+                        if (content.type === 'chat') {
+                            // Extract question and answer from content
+                            const parts = content.content.split('\n\n---\n\n');
+                            const questionLine = parts[0]?.replace('**Tu pregunta:** ', '') || '';
+                            const answer = parts[1] || content.content;
+                            
+                            return (
+                                <TutorResponseDisplay
+                                    question={questionLine}
+                                    answer={answer}
+                                    greekWord={content.greekWord}
+                                    passage={content.passage}
+                                />
+                            );
+                        }
+                        
                         // Fallback to markdown for all other types or when data is missing
                         return (
                             <Card className="p-6 md:p-8 shadow-sm">
@@ -218,14 +233,14 @@ const PassageReaderWrapper: React.FC<{
 
     useEffect(() => {
         const loadPassage = async () => {
-            console.log('[PassageReaderWrapper] Loading passage:', passage);
+            // Loading passage
             setIsLoading(true);
             setError(null);
             
             try {
                 const result = await getPassageText.execute(passage, fileSearchStoreId);
                 setBiblicalPassage(result);
-                console.log('[PassageReaderWrapper] Passage loaded successfully');
+                // Passage loaded successfully
             } catch (err) {
                 console.error('[PassageReaderWrapper] Error loading passage:', err);
                 setError(err instanceof Error ? err.message : 'Error al cargar pasaje');

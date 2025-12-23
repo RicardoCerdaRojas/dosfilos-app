@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Loader2, ArrowRight, BookOpen, Sparkles, Lightbulb, Copy, Download, LayoutDashboard } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Loader2, ArrowRight, ArrowLeft, BookOpen, Sparkles, Lightbulb, Copy, Download, LayoutDashboard, MessageCircle } from 'lucide-react';
 import { TrainingUnit, UserResponse, FileSearchStoreContext, MorphologyBreakdown } from '@dosfilos/domain';
 import { useGreekTutor } from './GreekTutorProvider';
 import { getCoreLibraryService } from '../../../../../services/coreLibraryService';
@@ -20,6 +21,7 @@ import { ContentBoard } from './components/ContentBoard';
 import { WordAnalysisToolbar } from './components/WordAnalysisToolbar';
 import { useGreekTutorBoard } from './hooks/useGreekTutorBoard';
 import { formatSessionExport, copyToClipboard, downloadAsMarkdown } from './utils/exportUtils';
+import { ConceptsLibraryModal } from './components/ConceptsLibraryModal';
 
 // Inline PassagePreview component
 const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
@@ -93,9 +95,21 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     // Chat input state
     const [chatInput, setChatInput] = useState('');
     const [chatMode, setChatMode] = useState<'contextual' | 'general'>('contextual');
+    const [isChatPopoverOpen, setIsChatPopoverOpen] = useState(false);
     
     // Mobile sidebar state
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+    // Auto-trigger action after loading (for inicial state)
+    const [autoTriggerAction, setAutoTriggerAction] = useState<'passage' | 'morphology' | null>(null);
+    
+    // Concepts library modal state
+    const [isConceptsLibraryOpen, setIsConceptsLibraryOpen] = useState(false);
+
+    // Track mount/unmount
+    useEffect(() => {
+        return () => {};
+    }, []);
 
     // Recent passages - Load from localStorage with fallback defaults
     const STORAGE_KEY = 'greek-tutor-recent-passages';
@@ -150,9 +164,11 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     useEffect(() => {
         const sessionIdParam = searchParams.get('sessionId');
         if (sessionIdParam && user && status === 'IDLE') {
+            // Set isActive immediately to prevent showing creation page
+            setIsActive(true);
             loadSessionFromId(sessionIdParam);
         }
-    }, [searchParams, user]);
+    }, [searchParams, user, status]);
 
     const loadSessionFromId = async (sessionId: string) => {
         console.log('[GreekTutorSessionView] Auto-loading session:', sessionId);
@@ -162,6 +178,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             if (!session) {
                 console.error('[GreekTutorSessionView] Session not found:', sessionId);
                 setStatus('ERROR');
+                setIsActive(false);
                 return;
             }
             
@@ -169,16 +186,27 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             setPassage(session.passage);
             setUnits(session.units);
             setResponses(session.responses || {});
-            setIsActive(true);
             setStatus('READY');
+            
+            // Restore last active unit (use unitsCompleted as best guess, or 0)
+            const lastUnitIndex = Math.min(
+                session.sessionProgress?.unitsCompleted || 0,
+                session.units.length - 1
+            );
+            setCurrentIndex(lastUnitIndex >= 0 ? lastUnitIndex : 0);
             
             console.log('[GreekTutorSessionView] Session loaded successfully:', {
                 passage: session.passage,
-                unitsCount: session.units.length
+                unitsCount: session.units.length,
+                currentUnitIndex: lastUnitIndex
             });
+            
+            // Set flag to auto-trigger morphology after hook is ready
+            setAutoTriggerAction('morphology');
         } catch (error) {
             console.error('[GreekTutorSessionView] Error loading session:', error);
             setStatus('ERROR');
+            setIsActive(false);
         }
     };
 
@@ -229,7 +257,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                     }
                 }
                 
-                console.log(`[GreekTutor] Starting session with Store Key: ${storeKey} -> ID: ${geminiStoreId}`);
+                // Starting session with store
                 setActiveStoreId(geminiStoreId);
 
                // Silence unused variables for lint if necessary - though we used everything here.
@@ -254,7 +282,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
             const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
             
-            console.log(`[GreekTutor] Language: ${detectedLang}`);
+            // Language detected
 
             if (!user?.uid) {
                 console.error("User not authenticated");
@@ -268,6 +296,17 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             
             // Add passage to recent history
             addToRecentPassages(passage);
+            
+            // Navigate to immersive session view if we have a sessionId
+            // This moves us from /dashboard/greek-tutor (with sidebar) to /dashboard/greek-tutor/session (immersive)
+            const firstUnit = generatedUnits[0];
+            if (firstUnit?.sessionId) {
+                navigate(`/dashboard/greek-tutor/session?sessionId=${firstUnit.sessionId}`, { replace: true });
+                return; // Exit early since we're navigating away
+            }
+            
+            // Set flag to auto-open "Leer Pasaje" for new studies (fallback if no navigation)
+            setAutoTriggerAction('passage');
         } catch (error) {
             console.error("Failed to start Greek Tutor session:", error);
             setStatus('ERROR');
@@ -302,13 +341,11 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
 
         // Phase 3C: Check if morphology is already cached in the unit
         if (unit.morphologyBreakdown) {
-            console.log('[GreekTutorSessionView] Using cached morphology for:', word);
             setMorphologyBreakdowns(prev => ({ ...prev, [unitId]: unit.morphologyBreakdown! }));
             return;
         }
 
         // Not cached - generate with Gemini
-        console.log('[GreekTutorSessionView] Generating new morphology for:', word);
         setLoadingMorphology(unitId);
         try {
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
@@ -323,9 +360,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                 activeStoreId,
                 detectedLang
             );
+            
             setMorphologyBreakdowns(prev => ({ ...prev, [unitId]: breakdown }));
         } catch (error) {
-            console.error("Error loading morphology:", error);
+            console.error('[GreekTutorSessionView] Error loading morphology:', error);
         } finally {
             setLoadingMorphology(null);
         }
@@ -400,7 +438,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             
             // Show toast or some feedback (using alert for MVP if no toast available)
             // toast.success("Insight guardado");
-            console.log("Insight saved:", content);
+            // Insight saved
         } catch (e) {
             console.error("Failed to save insight", e);
         } finally {
@@ -461,6 +499,15 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         userLanguage: new Intl.DisplayNames(['en'], { type: 'language' }).of(navigator.language.split('-')[0]) || 'Spanish'
     });
 
+    // Auto-trigger action after session loads
+    useEffect(() => {
+        if (autoTriggerAction && status === 'READY' && handleActionClick) {
+            // Auto-triggering action
+            handleActionClick(autoTriggerAction);
+            setAutoTriggerAction(null); // Clear flag
+        }
+    }, [autoTriggerAction, status, handleActionClick]);
+
     // Export handlers
     const handleCopyExport = async () => {
         const unit = units[currentIndex];
@@ -471,7 +518,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         
         if (success) {
             // Could show toast: "Copiado al portapapeles"
-            console.log('Content copied to clipboard');
+            // Content copied
         }
     };
 
@@ -516,8 +563,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                     <Button 
                                         variant="outline"
                                         size="sm"
-                                        className="shrink-0 gap-2"
-                                        onClick={() => navigate('/dashboard/greek-tutor-dashboard')}
+                                        className="gap-2"
+                                        onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
                                     >
                                         <LayoutDashboard className="h-4 w-4" />
                                         <span className="hidden sm:inline">Mis Sesiones</span>
@@ -630,7 +677,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
 
     // 3. Active Session View - Two Panel Layout
     return (
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full">
             {/* Error overlay */}
             {status === 'ERROR' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center z-50 bg-background/95 backdrop-blur-sm">
@@ -651,6 +698,17 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             {/* Unified Header - single header for entire page */}
             <div className="px-4 py-2.5 border-b bg-background/50 backdrop-blur-sm shrink-0">
                 <div className="flex items-center gap-4 flex-wrap">
+                    {/* Back button - First element on the left */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-3 gap-2"
+                        onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        <span className="hidden sm:inline">Volver</span>
+                    </Button>
+
                     {/* Page Title & Passage Info */}
                     <div className="flex items-center gap-3 flex-shrink-0">
                         <BookOpen className="h-4 w-4 text-primary" />
@@ -660,9 +718,6 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 <span className="text-muted-foreground">·</span>
                                 <span className="font-semibold text-sm leading-tight">{passage}</span>
                             </div>
-                            <p className="text-[10px] text-muted-foreground leading-tight">
-                                Sesión exegética
-                            </p>
                         </div>
                     </div>
 
@@ -684,63 +739,122 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                     {/* Spacer */}
                     <div className="flex-1 min-w-[100px]" />
 
-                    {/* Chat Input - Compact inline */}
-                    <div className="flex items-center gap-2 flex-1 max-w-md">
-                        <div className="flex gap-1">
-                            <button
-                                onClick={() => setChatMode('contextual')}
-                                className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
-                                    chatMode === 'contextual'
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                                }`}
-                                title="Preguntas sobre este pasaje"
+                    {/* Chat Popover - Compact trigger button */}
+                    <Popover open={isChatPopoverOpen} onOpenChange={setIsChatPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3 gap-2"
                             >
-                                Pasaje
-                            </button>
-                            <button
-                                onClick={() => setChatMode('general')}
-                                className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
-                                    chatMode === 'general'
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                                }`}
-                                title="Pregunta general"
-                            >
-                                General
-                            </button>
-                        </div>
-                        <Input
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && chatInput.trim()) {
-                                    handleChatMessage(chatInput);
-                                    setChatInput('');
-                                }
-                            }}
-                            placeholder={
-                                chatMode === 'contextual'
-                                    ? "Pregunta sobre el pasaje..."
-                                    : "Pregunta general..."
-                            }
-                            className="h-7 text-xs"
-                            disabled={isBoardLoading}
-                        />
-                        <Button 
-                            size="sm" 
-                            className="h-7 px-2 text-xs"
-                            onClick={() => {
-                                if (chatInput.trim()) {
-                                    handleChatMessage(chatInput);
-                                    setChatInput('');
-                                }
-                            }}
-                            disabled={isBoardLoading || !chatInput.trim()}
-                        >
-                            Enviar
-                        </Button>
-                    </div>
+                                <MessageCircle className="h-4 w-4" />
+                                <span className="hidden md:inline">Pregunta al Tutor</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-96" align="end">
+                            <div className="space-y-4">
+                                {/* Header with mode selector */}
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm">Pregunta al Tutor</h4>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setChatMode('contextual')}
+                                            className={`flex-1 px-3 py-1.5 text-xs rounded-md transition-colors ${
+                                                chatMode === 'contextual'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                            }`}
+                                        >
+                                            📖 Sobre el pasaje
+                                        </button>
+                                        <button
+                                            onClick={() => setChatMode('general')}
+                                            className={`flex-1 px-3 py-1.5 text-xs rounded-md transition-colors ${
+                                                chatMode === 'general'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                            }`}
+                                        >
+                                            💭 General
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Textarea for question */}
+                                <Textarea
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        // Send on Enter, but allow Shift+Enter for new line
+                                        if (e.key === 'Enter' && !e.shiftKey && chatInput.trim()) {
+                                            e.preventDefault();
+                                            handleChatMessage(chatInput);
+                                            setChatInput('');
+                                            setIsChatPopoverOpen(false);
+                                        }
+                                    }}
+                                    placeholder={
+                                        chatMode === 'contextual'
+                                            ? "Escribe tu pregunta sobre el pasaje..."
+                                            : "Escribe tu pregunta sobre griego koiné..."
+                                    }
+                                    className="min-h-[100px] resize-none text-sm"
+                                    disabled={isBoardLoading}
+                                />
+
+                                {/* Action buttons */}
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Presiona <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Enter</kbd> para enviar
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setChatInput('');
+                                                setIsChatPopoverOpen(false);
+                                            }}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => {
+                                                if (chatInput.trim()) {
+                                                    handleChatMessage(chatInput);
+                                                    setChatInput('');
+                                                    setIsChatPopoverOpen(false);
+                                                }
+                                            }}
+                                            disabled={isBoardLoading || !chatInput.trim()}
+                                        >
+                                            {isBoardLoading ? (
+                                                <>
+                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                    Procesando...
+                                                </>
+                                            ) : (
+                                                'Enviar'
+                                            )}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+
+                    {/* Concepts Library Button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 gap-2"
+                        onClick={() => setIsConceptsLibraryOpen(true)}
+                        title="Biblioteca de Conceptos Clave"
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        <span className="hidden lg:inline">Conceptos</span>
+                    </Button>
 
                     {/* Right: Action Buttons */}
                     <div className="flex items-center gap-1">
@@ -766,16 +880,6 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 </Button>
                             </>
                         )}
-                        {/* Mis Sesiones button */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2 gap-1 text-xs"
-                            onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
-                        >
-                            <LayoutDashboard className="h-3 w-3" />
-                            <span className="hidden sm:inline">Mis Sesiones</span>
-                        </Button>
                         {!initialPassage && (
                             <Button 
                                 variant="ghost" 
@@ -820,10 +924,11 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                     {/* Left Sidebar - Responsive */}
                     <aside className={`
                         w-80 shrink-0 border-r overflow-hidden
-                        md:relative md:translate-x-0
-                        fixed inset-y-0 left-0 z-40 bg-background
                         transition-transform duration-300 ease-in-out
-                        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+                        md:relative md:translate-x-0
+                        ${isMobileSidebarOpen 
+                            ? 'fixed inset-y-0 left-0 z-40 bg-background translate-x-0' 
+                            : 'fixed inset-y-0 left-0 z-40 bg-background -translate-x-full md:translate-x-0 md:static md:z-auto'}
                     `}>
                         <InteractionPanel
                             units={units}
@@ -841,7 +946,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                             activeAction={activeAction}
                             isActionLoading={isBoardLoading}
                             onDeleteUnit={(unitId) => {
-                                console.log('[GreekTutorSessionView] Deleting unit:', unitId);
+                                // Deleting unit
                                 // Remove unit from state
                                 setUnits(prevUnits => prevUnits.filter(u => u.id !== unitId));
                                 // Adjust current index if needed
@@ -862,7 +967,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                             sessionId={currentUnit?.sessionId}
                             fileSearchStoreId={activeStoreId}
                             onUnitAdded={(newUnit) => {
-                                console.log('[GreekTutorSessionView] Adding new unit from passage reader:', newUnit.id);
+                                // Adding new unit from passage reader
                                 setUnits(prevUnits => [...prevUnits, newUnit]);
                             }}
                         />
@@ -877,6 +982,12 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                     />
                 </div>
             )}
+            
+            {/* Concepts Library Modal */}
+            <ConceptsLibraryModal
+                open={isConceptsLibraryOpen}
+                onOpenChange={setIsConceptsLibraryOpen}
+            />
         </div>
     );
 };

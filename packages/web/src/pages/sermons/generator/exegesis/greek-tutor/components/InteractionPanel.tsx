@@ -129,13 +129,19 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                                             onClick={() => onNavigate(idx)}
                                             className={cn(
                                                 "flex-1 text-left px-3 py-2 rounded-md text-sm transition-colors",
-                                                idx === currentIndex
+                                                // Only highlight if this is current index AND we're not viewing passage/syntax
+                                                idx === currentIndex && activeAction !== 'passage' && activeAction !== 'syntax'
                                                     ? "bg-primary/10 text-primary font-medium border-l-2 border-primary"
                                                     : "hover:bg-muted text-muted-foreground"
                                             )}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <Circle className={cn("h-2 w-2", idx === currentIndex ? "fill-primary" : "fill-muted-foreground")} />
+                                                <Circle className={cn(
+                                                    "h-2 w-2",
+                                                    idx === currentIndex && activeAction !== 'passage' && activeAction !== 'syntax'
+                                                        ? "fill-primary"
+                                                        : "fill-muted-foreground"
+                                                )} />
                                                 <span className="text-xs font-semibold">#{idx + 1}</span>
                                                 <span className="font-greek text-sm">{unit.greekForm.text}</span>
                                             </div>
