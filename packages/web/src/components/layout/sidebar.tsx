@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { BookOpen, FileText, Sparkles, Home, Settings, LogOut, Bell, Calendar, BookMarked } from 'lucide-react';
+import { BookOpen, FileText, Sparkles, Home, Settings, LogOut, Bell, Calendar, BookMarked, Languages, CreditCard } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -20,6 +20,7 @@ const navigationGroups = [
   // Group 1: Main
   [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Entrenador Griego', href: '/dashboard/greek-tutor', icon: Languages },
     { name: 'Sermones', href: '/dashboard/sermons', icon: FileText },
   ],
   // Group 2: Planning
@@ -30,6 +31,7 @@ const navigationGroups = [
   // Group 3: Resources
   [
     { name: 'Biblioteca', href: '/dashboard/library', icon: BookMarked },
+    { name: 'Mi Suscripción', href: '/dashboard/subscription', icon: CreditCard },
     { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
   ],
 ];
@@ -78,11 +80,6 @@ export function Sidebar() {
                   <Link 
                     key={item.name} 
                     to={item.href}
-                    onClick={(e) => {
-                      console.log('[Sidebar Link] Click detected:', item.name, item.href);
-                      console.log('[Sidebar Link] Event defaultPrevented:', e.defaultPrevented);
-                      console.log('[Sidebar Link] Event isPropagationStopped:', e.isPropagationStopped());
-                    }}
                   >
                     <Button
                       variant={isActive ? 'secondary' : 'ghost'}

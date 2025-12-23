@@ -46,6 +46,7 @@ export function AppSidebar() {
     // Group 1: Main
     [
       { name: t('menu.dashboard'), href: '/dashboard', icon: Home },
+      { name: 'Entrenador Griego', href: '/dashboard/greek-tutor', icon: GraduationCap },
       { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
     ],
     // Group 2: Planning
@@ -56,9 +57,8 @@ export function AppSidebar() {
     // Group 3: Resources
     [
       { name: t('menu.library'), href: '/dashboard/library', icon: Library },
-      { name: 'Entrenador Griego', href: '/dashboard/greek-tutor', icon: GraduationCap },
-      { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
       { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
+      { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
     ],
   ];
 
