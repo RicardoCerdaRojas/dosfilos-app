@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, ArrowRight, BookOpen, Sparkles, Lightbulb } from 'lucide-react';
+import { Loader2, ArrowRight, BookOpen, Sparkles, Lightbulb, Copy, Download, LayoutDashboard } from 'lucide-react';
 import { TrainingUnit, UserResponse, FileSearchStoreContext, MorphologyBreakdown } from '@dosfilos/domain';
 import { useGreekTutor } from './GreekTutorProvider';
 import { getCoreLibraryService } from '../../../../../services/coreLibraryService';
@@ -17,6 +17,7 @@ import { BibleTextViewer } from '@/components/sermons/BibleTextViewer';
 import { GreekTutorLoadingScreen } from './GreekTutorLoadingScreen';
 import { InteractionPanel } from './components/InteractionPanel';
 import { ContentBoard } from './components/ContentBoard';
+import { WordAnalysisToolbar } from './components/WordAnalysisToolbar';
 import { useGreekTutorBoard } from './hooks/useGreekTutorBoard';
 import { formatSessionExport, copyToClipboard, downloadAsMarkdown } from './utils/exportUtils';
 
@@ -437,10 +438,11 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     // Use board hook (must be called before any conditional returns)
     const {
         currentContent,
+        currentContentTitle,
+        currentContentTimestamp,
         isLoading: isBoardLoading,
         handleActionClick,
         handleChatMessage,
-        handleCopy,
         activeAction
     } = useGreekTutorBoard({
         units,
@@ -634,86 +636,146 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                 </div>
             )}
 
-            {/* Header with passage and chat */}
-            <div className="flex items-center justify-between gap-4 px-4 py-2 border-b bg-background/50 backdrop-blur-sm shrink-0">
-                <div className="flex items-center gap-3 flex-shrink-0">
-                    <BookOpen className="h-4 w-4 text-primary" />
-                    <div>
-                        <h1 className="font-semibold text-sm">{passage}</h1>
-                        <p className="text-xs text-muted-foreground">
-                            Sesión de estudio exegético
-                        </p>
+            {/* Unified Header - single header for entire page */}
+            <div className="px-4 py-2.5 border-b bg-background/50 backdrop-blur-sm shrink-0">
+                <div className="flex items-center gap-4 flex-wrap">
+                    {/* Page Title & Passage Info */}
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h1 className="font-bold text-sm leading-tight">Entrenador Griego</h1>
+                                <span className="text-muted-foreground">·</span>
+                                <span className="font-semibold text-sm leading-tight">{passage}</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground leading-tight">
+                                Sesión exegética
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-                {/* Chat input in header */}
-                <div className="flex-1 max-w-2xl">
-                    <div className="flex flex-col gap-2">
-                        {/* Mode Toggle */}
-                        <div className="flex items-center gap-2 text-xs">
+                    {/* Content Title (compact, hidden on small screens) */}
+                    {currentContentTitle && (
+                        <>
+                            <div className="h-8 w-px bg-border hidden lg:block" />
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground hidden lg:flex">
+                                <span className="font-medium">{currentContentTitle}</span>
+                                {currentContentTimestamp && (
+                                    <span className="text-[10px]">
+                                        {currentContentTimestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {/* Spacer */}
+                    <div className="flex-1 min-w-[100px]" />
+
+                    {/* Chat Input - Compact inline */}
+                    <div className="flex items-center gap-2 flex-1 max-w-md">
+                        <div className="flex gap-1">
                             <button
                                 onClick={() => setChatMode('contextual')}
-                                className={`px-2 py-1 rounded-md transition-colors ${
+                                className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
                                     chatMode === 'contextual'
                                         ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                                 }`}
+                                title="Preguntas sobre este pasaje"
                             >
-                                📖 Sobre este pasaje
+                                Pasaje
                             </button>
                             <button
                                 onClick={() => setChatMode('general')}
-                                className={`px-2 py-1 rounded-md transition-colors ${
+                                className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
                                     chatMode === 'general'
                                         ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                                 }`}
+                                title="Pregunta general"
                             >
-                                🌍 Pregunta general
+                                General
                             </button>
                         </div>
-                        
-                        {/* Input */}
-                        <div className="flex gap-2">
-                            <Input
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && chatInput.trim()) {
-                                        handleChatMessage(chatInput);
-                                        setChatInput('');
-                                    }
-                                }}
-                                placeholder={
-                                    chatMode === 'contextual'
-                                        ? "Pregunta sobre esta palabra o pasaje..."
-                                        : "Pregunta general sobre griego koiné..."
+                        <Input
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && chatInput.trim()) {
+                                    handleChatMessage(chatInput);
+                                    setChatInput('');
                                 }
-                                className="h-8 text-sm"
-                                disabled={isBoardLoading}
-                            />
+                            }}
+                            placeholder={
+                                chatMode === 'contextual'
+                                    ? "Pregunta sobre el pasaje..."
+                                    : "Pregunta general..."
+                            }
+                            className="h-7 text-xs"
+                            disabled={isBoardLoading}
+                        />
+                        <Button 
+                            size="sm" 
+                            className="h-7 px-2 text-xs"
+                            onClick={() => {
+                                if (chatInput.trim()) {
+                                    handleChatMessage(chatInput);
+                                    setChatInput('');
+                                }
+                            }}
+                            disabled={isBoardLoading || !chatInput.trim()}
+                        >
+                            Enviar
+                        </Button>
+                    </div>
+
+                    {/* Right: Action Buttons */}
+                    <div className="flex items-center gap-1">
+                        {currentContent && (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={handleCopyExport}
+                                    title="Copiar"
+                                >
+                                    <Copy className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={handleDownloadExport}
+                                    title="Exportar"
+                                >
+                                    <Download className="h-3 w-3" />
+                                </Button>
+                            </>
+                        )}
+                        {/* Mis Sesiones button */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 gap-1 text-xs"
+                            onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
+                        >
+                            <LayoutDashboard className="h-3 w-3" />
+                            <span className="hidden sm:inline">Mis Sesiones</span>
+                        </Button>
+                        {!initialPassage && (
                             <Button 
+                                variant="ghost" 
                                 size="sm" 
-                                className="h-8"
-                                onClick={() => {
-                                    if (chatInput.trim()) {
-                                        handleChatMessage(chatInput);
-                                        setChatInput('');
-                                    }
-                                }}
-                                disabled={isBoardLoading || !chatInput.trim()}
+                                className="h-7 px-2 text-xs" 
+                                onClick={handleReset}
                             >
-                                Enviar
+                                Cambiar Pasaje
                             </Button>
-                        </div>
+                        )}
                     </div>
                 </div>
-
-                {!initialPassage && (
-                    <Button variant="ghost" size="sm" onClick={handleReset} className="flex-shrink-0">
-                        Cambiar Pasaje
-                    </Button>
-                )}
             </div>
 
             {/* Two Panel Layout */}
@@ -756,13 +818,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                             currentIndex={currentIndex}
                             onNavigate={(index) => {
                                 setCurrentIndex(index);
+                                // Auto-trigger morphology when selecting a word
+                                handleActionClick('morphology');
                                 setIsMobileSidebarOpen(false); // Close on mobile after navigation
                             }}
                             onActionClick={(action) => {
                                 handleActionClick(action);
                                 setIsMobileSidebarOpen(false); // Close on mobile after action
                             }}
-                            onChatMessage={handleChatMessage}
                             activeAction={activeAction}
                             isActionLoading={isBoardLoading}
                             onDeleteUnit={(unitId) => {
@@ -782,8 +845,6 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         <ContentBoard
                             content={currentContent}
                             isLoading={isBoardLoading}
-                            onCopy={handleCopyExport}
-                            onExport={handleDownloadExport}
                             currentUnit={currentUnit}
                             units={units}
                             sessionId={currentUnit?.sessionId}
@@ -794,6 +855,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                             }}
                         />
                     </main>
+
+                    {/* Floating Word Analysis Toolbar */}
+                    <WordAnalysisToolbar
+                        currentUnit={currentUnit ?? null}
+                        activeAction={activeAction}
+                        onActionClick={(action) => handleActionClick(action)}
+                        isLoading={isBoardLoading}
+                    />
                 </div>
             )}
         </div>

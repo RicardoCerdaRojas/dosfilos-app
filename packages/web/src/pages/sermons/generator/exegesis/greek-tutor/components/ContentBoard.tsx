@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Copy, Download, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EducationalCapsule } from './EducationalCapsule';
@@ -33,8 +32,6 @@ export interface BoardContent {
 export interface ContentBoardProps {
     content: BoardContent | null;
     isLoading: boolean;
-    onCopy?: () => void;
-    onExport?: () => void;
     onWordClick?: (wordIndex: number) => void; // For word click in syntax analysis
     // Phase 3A: Quiz integration
     currentUnit?: import('@dosfilos/domain').TrainingUnit;
@@ -51,8 +48,6 @@ export interface ContentBoardProps {
 export const ContentBoard: React.FC<ContentBoardProps> = ({
     content,
     isLoading,
-    onCopy,
-    onExport,
     onWordClick,
     currentUnit,
     units = [],
@@ -70,7 +65,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     // Empty state with educational capsule
     if (!content && !isLoading) {
         return (
-            <div className="h-full flex items-center justify-center p-8 bg-gradient-to-br from-background via-muted/20 to-background">
+            <div className="h-full flex items-start justify-start p-8 pt-12 bg-gradient-to-br from-background via-muted/20 to-background overflow-auto">
                 <EducationalCapsule 
                     capsule={currentCapsule}
                     onRefresh={handleRefreshCapsule}
@@ -82,8 +77,8 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     // Loading state
     if (isLoading) {
         return (
-            <div className="h-full flex items-center justify-center">
-                <div className="text-center space-y-4">
+            <div className="h-full flex items-start justify-start pt-20">
+                <div className="text-center space-y-4 w-full">
                     <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
                     <p className="text-sm text-muted-foreground">
                         Consultando con el tutor...
@@ -98,39 +93,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
 
     return (
         <div className="h-full flex flex-col">
-            {/* Header with title and actions */}
-            <div className="px-6 py-4 border-b bg-background/50 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
-                <div>
-                    <h2 className="text-xl font-bold">{content.title}</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                        {content.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    {onCopy && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onCopy}
-                        >
-                            <Copy className="h-4 w-4 mr-2" />
-                            Copiar
-                        </Button>
-                    )}
-                    {onExport && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onExport}
-                        >
-                            <Download className="h-4 w-4 mr-2" />
-                            Exportar
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-            {/* Scrollable content area */}
+            {/* Scrollable content area - header is now in parent */}
             <ScrollArea className="flex-1">
                 <div className="p-6 max-w-5xl mx-auto">
                     {/* Use visual component for morphology when data is available */}

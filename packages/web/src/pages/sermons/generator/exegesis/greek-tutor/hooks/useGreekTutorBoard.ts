@@ -30,6 +30,8 @@ interface UseGreekTutorBoardProps {
 
 interface UseGreekTutorBoardReturn {
     currentContent: BoardContent | null;
+    currentContentTitle: string | null;
+    currentContentTimestamp: Date | null;
     isLoading: boolean;
     handleActionClick: (action: ActionType) => void;
     handleChatMessage: (message: string) => Promise<void>;
@@ -338,6 +340,8 @@ export const useGreekTutorBoard = ({
 
     return {
         currentContent,
+        currentContentTitle: currentContent?.title || null,
+        currentContentTimestamp: currentContent?.timestamp || null,
         isLoading: isLoadingMorphology || isChatLoading,
         handleActionClick,
         handleChatMessage,

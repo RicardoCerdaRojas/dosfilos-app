@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TrainingUnit } from '@dosfilos/domain';
 import { ActionButton } from './ActionButton';
-import { UnitNavigationItem } from './UnitNavigationItem';
 import { 
-    Sparkles, 
-    Eye, 
-    BookText, 
-    Heart,
     Brain,
     BookOpen,
     ChevronDown,
@@ -26,27 +20,34 @@ export interface InteractionPanelProps {
     currentIndex: number;
     onNavigate: (index: number) => void;
     onActionClick: (action: ActionType) => void;
-    onChatMessage?: (message: string) => void;
     activeAction: ActionType | null;
     isActionLoading: boolean;
-    onDeleteUnit?: (unitId: string) => void; // Callback to delete a unit
+    onDeleteUnit?: (unitId: string) => void;
 }
 
 /**
- * Interaction panel - sidebar with actions, chat, and unit navigation.
- * Follows Single Responsibility - manages user interaction options.
+ * InteractionPanel - Simplified sidebar for pedagogical navigation
+ * 
+ * Organized into three pedagogical sections:
+ * 1. Contexto General del Pasaje
+ * 2. Unidades de Estudio (word list)
+ * 3. Refuerzo del Aprendizaje
+ * 
+ * Word-specific actions (morphology, recognition, context, significance) 
+ * are now handled by the WordAnalysisToolbar component.
  */
 export const InteractionPanel: React.FC<InteractionPanelProps> = ({
     units,
     currentIndex,
     onNavigate,
     onActionClick,
-    onChatMessage,
     activeAction,
     isActionLoading,
     onDeleteUnit
 }) => {
     const [showUnits, setShowUnits] = useState(true);
+    const [showContext, setShowContext] = useState(true);
+    const [showReinforcement, setShowReinforcement] = useState(true);
 
     // Derive currentUnit from units array based on currentIndex
     const currentUnit = units[currentIndex];
@@ -77,37 +78,68 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                 </div>
             </div>
 
-            {/* Scrollable content */}
+            {/* Scrollable content - Pedagogical sections */}
             <ScrollArea className="flex-1">
                 <div className="p-3 space-y-4">
-                    {/* Units Navigation - Now first after header */}
-                    <div className="space-y-2">
+                    {/* SECTION 1: Contexto General del Pasaje */}
+                    <section className="space-y-2">
+                        <button
+                            onClick={() => setShowContext(!showContext)}
+                            className="w-full flex items-center justify-between text-xs font-bold text-foreground uppercase tracking-wider hover:text-primary transition-colors"
+                        >
+                            <span>📖 Contexto General</span>
+                            {showContext ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        </button>
+                        {showContext && (
+                            <div className="space-y-1.5 pl-1">
+                                <ActionButton
+                                    icon={BookOpen}
+                                    label="Leer Pasaje"
+                                    description="Explora el texto completo"
+                                    onClick={() => onActionClick('passage')}
+                                    isActive={activeAction === 'passage'}
+                                    isLoading={isActionLoading && activeAction === 'passage'}
+                                />
+                                <ActionButton
+                                    icon={GitBranch}
+                                    label="Estructura Sintáctica"
+                                    description="Ver cláusulas y relaciones"
+                                    onClick={() => onActionClick('syntax')}
+                                    isActive={activeAction === 'syntax'}
+                                    isLoading={isActionLoading && activeAction === 'syntax'}
+                                />
+                            </div>
+                        )}
+                    </section>
+
+                    {/* SECTION 2: Unidades de Estudio */}
+                    <section className="space-y-2">
                         <button
                             onClick={() => setShowUnits(!showUnits)}
-                            className="w-full flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                            className="w-full flex items-center justify-between text-xs font-bold text-foreground uppercase tracking-wider hover:text-primary transition-colors"
                         >
-                            <span>Todas las Unidades</span>
+                            <span>📚 Unidades de Estudio</span>
                             {showUnits ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </button>
                         {showUnits && (
                             <div className="space-y-1">
                                 {units.map((unit, idx) => (
-                                    <li key={unit.id} className="flex items-center gap-2">
+                                    <div key={unit.id} className="flex items-center gap-2">
                                         <button
                                             onClick={() => onNavigate(idx)}
                                             className={cn(
                                                 "flex-1 text-left px-3 py-2 rounded-md text-sm transition-colors",
                                                 idx === currentIndex
-                                                    ? "bg-primary/10 text-primary font-medium"
+                                                    ? "bg-primary/10 text-primary font-medium border-l-2 border-primary"
                                                     : "hover:bg-muted text-muted-foreground"
                                             )}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <Circle className={cn("h-3 w-3", idx === currentIndex ? "fill-primary" : "")} />
-                                                <span className="text-xs">#{idx + 1}</span>
-                                                <span className="font-greek">{unit.greekForm.text}</span>
+                                                <Circle className={cn("h-2 w-2", idx === currentIndex ? "fill-primary" : "fill-muted-foreground")} />
+                                                <span className="text-xs font-semibold">#{idx + 1}</span>
+                                                <span className="font-greek text-sm">{unit.greekForm.text}</span>
                                             </div>
-                                            <div className="text-xs opacity-70">{unit.identification}</div>
+                                            <div className="text-[10px] opacity-70 mt-0.5 ml-4">{unit.identification}</div>
                                         </button>
                                         {onDeleteUnit && (
                                             <button
@@ -120,79 +152,42 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                                                 className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-md transition-colors group"
                                                 title="Eliminar unidad"
                                             >
-                                                <Trash2 className="h-4 w-4 text-muted-foreground group-hover:text-red-500" />
+                                                <Trash2 className="h-3.5 w-3.5 text-muted-foreground group-hover:text-red-500" />
                                             </button>
                                         )}
-                                    </li>
+                                    </div>
                                 ))}
                             </div>
                         )}
-                    </div>
-
-                    {/* Actions Section */}
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Acciones
-                        </h4>
-                        <div className="space-y-1.5">
-                            <ActionButton
-                                icon={Sparkles}
-                                label="Descomposición Morfológica"
-                                description="Componentes de la palabra"
-                                onClick={() => onActionClick('morphology')}
-                                isActive={activeAction === 'morphology'}
-                                isLoading={isActionLoading && activeAction === 'morphology'}
-                            />
-                            <ActionButton
-                                icon={Eye}
-                                label="¿Cómo reconocer esta forma?"
-                                description="Aprende a identificarla"
-                                onClick={() => onActionClick('recognition')}
-                                isActive={activeAction === 'recognition'}
-                                isLoading={isActionLoading && activeAction === 'recognition'}
-                            />
-                            <ActionButton
-                                icon={BookText}
-                                label="Función en Contexto"
-                                description="Su rol en este pasaje"
-                                onClick={() => onActionClick('context')}
-                                isActive={activeAction === 'context'}
-                                isLoading={isActionLoading && activeAction === 'context'}
-                            />
-                            <ActionButton
-                                icon={Heart}
-                                label="Significado Teológico"
-                                description="Para la predicación"
-                                onClick={() => onActionClick('significance')}
-                                isActive={activeAction === 'significance'}
-                                isLoading={isActionLoading && activeAction === 'significance'}
-                            />
-                            <ActionButton
-                                icon={Brain}
-                                label="Quiz de Comprensión"
-                                description="Practica lo aprendido"
-                                onClick={() => onActionClick('quiz')}
-                                isActive={activeAction === 'quiz'}
-                                isLoading={isActionLoading && activeAction === 'quiz'}
-                            />
-                            <ActionButton
-                                icon={BookOpen}
-                                label="Leer Pasaje"
-                                description="Explora el texto completo"
-                                onClick={() => onActionClick('passage')}
-                                isActive={activeAction === 'passage'}
-                                isLoading={isActionLoading && activeAction === 'passage'}
-                            />
-                            <ActionButton
-                                icon={GitBranch}
-                                label="Estructura Sintáctica"
-                                description="Ver cláusulas y relaciones"
-                                onClick={() => onActionClick('syntax')}
-                                isActive={activeAction === 'syntax'}
-                                isLoading={isActionLoading && activeAction === 'syntax'}
-                            />
+                        <div className="pl-1 pt-1">
+                            <p className="text-[10px] text-muted-foreground italic">
+                                💡 Al seleccionar una palabra se mostrará su análisis morfológico automáticamente
+                            </p>
                         </div>
-                    </div>
+                    </section>
+
+                    {/* SECTION 3: Refuerzo del Aprendizaje */}
+                    <section className="space-y-2">
+                        <button
+                            onClick={() => setShowReinforcement(!showReinforcement)}
+                            className="w-full flex items-center justify-between text-xs font-bold text-foreground uppercase tracking-wider hover:text-primary transition-colors"
+                        >
+                            <span>🧠 Refuerzo del Aprendizaje</span>
+                            {showReinforcement ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        </button>
+                        {showReinforcement && (
+                            <div className="space-y-1.5 pl-1">
+                                <ActionButton
+                                    icon={Brain}
+                                    label="Quiz de Comprensión"
+                                    description="Practica lo aprendido"
+                                    onClick={() => onActionClick('quiz')}
+                                    isActive={activeAction === 'quiz'}
+                                    isLoading={isActionLoading && activeAction === 'quiz'}
+                                />
+                            </div>
+                        )}
+                    </section>
                 </div>
             </ScrollArea>
         </div>
