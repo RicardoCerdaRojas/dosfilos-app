@@ -30,6 +30,7 @@ export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 
 // Export Email functions
 export { sendWelcomeEmail } from './emails/sendWelcomeEmail';
+export { sendNurtureEmails } from './emails/sendNurtureEmails';
 
 // Export Admin functions
 export { deleteUser } from './admin/deleteUser';
