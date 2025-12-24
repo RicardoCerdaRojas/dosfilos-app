@@ -86,32 +86,100 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
     }
 
     async saveInsight(insight: ExegeticalInsight): Promise<void> {
-        // Save as subcollection of session or root collection?
-        // Data Model spec says: sessions/{sessionId}/insights/{insightId}
-        // But standard practice might be root collection with sessionRef.
-        // Let's follow Data Model spec: sessions/{sessionId}/insights/{insightId}
+        // Store insights at user level for cross-session access
+        // Path: users/{userId}/greek_insights/{insightId}
+        // This allows insights to persist beyond individual study sessions
 
-        // Wait, StudySession entity usually contains the list of insights?
-        // Let's check StudySession entity definition. For now assuming standalone.
-        // Spec: `sessions/{sessionId}/insights/{insightId}`
+        if (!insight.userId) {
+            throw new Error('userId is required to save insight');
+        }
 
-        // However, I Configured simple root collection `greek_insights` above.
-        // Let's align with Spec: Subcollection.
-
-        const insightsRef = collection(db, this.sessionsCollection, insight.sessionId, 'insights');
+        const insightsRef = collection(db, 'users', insight.userId, 'greek_insights');
         const docRef = doc(insightsRef, insight.id);
         const { id, ...data } = insight;
-        await setDoc(docRef, removeUndefined(data));
+
+        await setDoc(docRef, removeUndefined({
+            ...data,
+            createdAt: data.createdAt || new Date(),
+            updatedAt: new Date()
+        }));
+
+        console.log(`[FirestoreGreekSessionRepository] Saved insight ${insight.id} for user ${insight.userId}`);
     }
 
     async getInsightsBySession(sessionId: string): Promise<ExegeticalInsight[]> {
-        const insightsRef = collection(db, this.sessionsCollection, sessionId, 'insights');
-        const snapshot = await getDocs(insightsRef);
+        // For backward compatibility - gets insights filtered by sessionId
+        // Note: This requires querying across all users, which is inefficient
+        // Recommend using getUserInsights instead
+        console.warn('[FirestoreGreekSessionRepository] getInsightsBySession is deprecated. Use getUserInsights instead.');
 
-        return snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        })) as ExegeticalInsight[];
+        // Since insights are now user-level, this method is not efficient
+        // Return empty array - clients should use getUserInsights
+        return [];
+    }
+
+    async getUserInsights(userId: string): Promise<ExegeticalInsight[]> {
+        // Retrieve all insights for a user
+        // Path: users/{userId}/greek_insights
+
+        try {
+            const insightsRef = collection(db, 'users', userId, 'greek_insights');
+            const snapshot = await getDocs(insightsRef);
+
+            const insights = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate() || new Date(),
+                updatedAt: doc.data().updatedAt?.toDate()
+            })) as ExegeticalInsight[];
+
+            // Sort by most recent first
+            insights.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+            console.log(`[FirestoreGreekSessionRepository] Retrieved ${insights.length} insights for user ${userId}`);
+            return insights;
+        } catch (error) {
+            console.error('[FirestoreGreekSessionRepository] getUserInsights error:', error);
+            throw new Error(`Failed to retrieve insights for user ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    async updateInsight(insightId: string, updates: Partial<ExegeticalInsight>): Promise<void> {
+        // Update insight title, tags, or other fields
+        // Need userId to locate the document
+
+        if (!updates.userId) {
+            throw new Error('userId is required in updates to locate insight');
+        }
+
+        try {
+            const insightRef = doc(db, 'users', updates.userId, 'greek_insights', insightId);
+
+            // Remove fields that shouldn't be updated
+            const { id, userId, sessionId, createdAt, ...allowedUpdates } = updates;
+
+            await updateDoc(insightRef, removeUndefined({
+                ...allowedUpdates,
+                updatedAt: new Date()
+            }));
+
+            console.log(`[FirestoreGreekSessionRepository] Updated insight ${insightId}`);
+        } catch (error) {
+            console.error('[FirestoreGreekSessionRepository] updateInsight error:', error);
+            throw new Error(`Failed to update insight ${insightId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    async deleteInsight(userId: string, insightId: string): Promise<void> {
+        // Delete an insight from user's collection
+        try {
+            const insightRef = doc(db, 'users', userId, 'greek_insights', insightId);
+            await deleteDoc(insightRef);
+            console.log(`[FirestoreGreekSessionRepository] Deleted insight ${insightId} for user ${userId}`);
+        } catch (error) {
+            console.error('[FirestoreGreekSessionRepository] deleteInsight error:', error);
+            throw new Error(`Failed to delete insight ${insightId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
 
     // ========== Phase 3A: Progress Tracking Methods ==========

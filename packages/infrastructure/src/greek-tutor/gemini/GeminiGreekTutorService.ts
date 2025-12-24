@@ -177,12 +177,49 @@ export class GeminiGreekTutorService implements IGreekTutorService {
             // General Greek question - no specific context
             const systemInstruction = `Eres un experto en griego koiné del Nuevo Testamento. 
 Tu tarea es responder preguntas generales sobre el griego koiné con claridad y profundidad académica.
-Siempre responde en ${language}.
-Usa formato markdown para estructurar tu respuesta con títulos, listas y ejemplos cuando sea apropiado.`;
+
+FORMATO DE RESPUESTA REQUERIDO (OBLIGATORIO):
+Tu respuesta DEBE seguir esta estructura con headers markdown:
+
+## Concepto Central
+Definición clara y accesible del tema preguntado.
+Mínimo: 100-150 palabras.
+
+## Contexto y Uso en el NT
+Explicación de cómo se manifiesta este concepto en el griego del NT.
+Ejemplos concretos de diferentes libros.
+Mínimo: 150-200 palabras.
+
+## Aspectos Técnicos
+Detalles gramaticales, morfológicos o sintácticos relevantes.
+Referencias a paradigmas o reglas cuando sea apropiado.
+Mínimo: 100-150 palabras.
+
+## Implicaciones para la Exégesis
+Cómo este conocimiento mejora la interpretación bíblica.
+Aplicación práctica para el estudio pastoral.
+Mínimo: 80-120 palabras.
+
+## Ejemplos Ilustrativos
+3-4 ejemplos específicos del NT con referencias exactas.
+
+DIRECTRICES CRÍTICAS:
+- LONGITUD TOTAL MÍNIMA: 500-800 palabras
+- Usa negritas (**texto**) para términos técnicos
+- Incluye versículos y referencias específicas
+- Mantén tono académico pero accesible
+- NO truncar - desarrolla cada sección completamente
+- Responde SIEMPRE en ${language}`;
 
             const result = await model.generateContent({
                 contents: [{ role: 'user', parts: [{ text: question }] }],
-                systemInstruction: systemInstruction
+                systemInstruction: systemInstruction,
+                generationConfig: {
+                    temperature: 0.7,
+                    topP: 0.95,
+                    topK: 40,
+                    maxOutputTokens: 8192, // Ensure complete responses
+                }
             });
 
             return result.response.text();
@@ -200,23 +237,54 @@ El estudiante está analizando la palabra griega "${context.greekWord}" (${conte
 
 **Pregunta del estudiante:**
 ${question}
-
-Por favor, proporciona una respuesta pastoral, exegéticamente sólida y pedagógicamente útil en ${language}. Usa markdown para formatear la respuesta cuando sea apropiado.
         `.trim();
 
-        const systemInstruction = `Eres un tutor experto en griego del Nuevo Testamento y exégesis bíblica. Tu rol es responder preguntas de estudiantes pastorales sobre palabras griegas específicas en su contexto bíblico.
+        const systemInstruction = `Eres un tutor experto en griego del Nuevo Testamento y exégesis bíblica. 
+Tu rol es responder preguntas de estudiantes pastorales sobre palabras griegas específicas en su contexto bíblico.
 
-DIRECTRICES:
-- Usa lenguaje claro y accesible
-- Fundamenta tus respuestas en el contexto del pasaje
-- Cuando sea relevante, menciona implicaciones teológicas o pastorales
-- Usa ejemplos concretos
-- Formatea tu respuesta en markdown cuando sea apropiado
-- Mantén un tono pastoral y educativo`;
+FORMATO DE RESPUESTA REQUERIDO (OBLIGATORIO):
+Tu respuesta DEBE seguir esta estructura exacta con headers markdown:
+
+## Concepto Clave
+Definición clara del aspecto gramatical, morfológico o teológico relevante.
+Mínimo: 80-120 palabras.
+
+## Contexto en el Pasaje  
+Explicación específica de cómo funciona en este versículo particular.
+Incluye análisis de la sintaxis y relación con palabras circundantes.
+Mínimo: 100-150 palabras.
+
+## Profundización Técnica
+Análisis morfológico detallado, paralelos sintácticos, y aspectos técnicos.
+Puede incluir referencias a gramáticas o léxicos cuando sea relevante.
+Mínimo: 100-150 palabras.
+
+## Implicaciones Pastorales
+Aplicación práctica para predicación y enseñanza.
+Cómo este entendimiento enriquece la exposición del texto.
+Mínimo: 80-120 palabras.
+
+## Ejemplos del Nuevo Testamento
+2-3 ejemplos similares de otros pasajes que ilustren el mismo concepto.
+
+DIRECTRICES CRÍTICAS:
+- LONGITUD TOTAL MÍNIMA: 500-800 palabras
+- Usa negritas (**texto**) para términos técnicos clave
+- Incluye ejemplos concretos en cada sección
+- Cita versículos específicos cuando sea relevante
+- Mantén tono académico pero accesible para pastores
+- NO truncar ni abreviar - desarrolla cada sección completamente
+- Responde SIEMPRE en ${language}`;
 
         const result = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: contextPrompt }] }],
-            systemInstruction: systemInstruction
+            systemInstruction: systemInstruction,
+            generationConfig: {
+                temperature: 0.7,
+                topP: 0.95,
+                topK: 40,
+                maxOutputTokens: 8192, // Ensure complete responses
+            }
         });
 
         return result.response.text();

@@ -5,12 +5,21 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { BookOpen, Lightbulb, AlertTriangle, Sparkles, Search, Target, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { SaveInsightButton } from './SaveInsightButton';
 
 interface TutorResponseDisplayProps {
     question: string;
     answer: string;
     greekWord?: string;
     passage?: string;
+    onSaveInsight?: (data: {
+        title?: string;
+        content: string;
+        question: string;
+        tags: string[];
+        greekWord?: string;
+        passage?: string;
+    }) => Promise<void>;
 }
 
 /**
@@ -20,7 +29,8 @@ export const TutorResponseDisplay: React.FC<TutorResponseDisplayProps> = ({
     question,
     answer,
     greekWord,
-    passage
+    passage,
+    onSaveInsight
 }) => {
     // Parse sections from the answer
     const sections = parseAnswerSections(answer);
@@ -52,10 +62,23 @@ export const TutorResponseDisplay: React.FC<TutorResponseDisplayProps> = ({
 
             {/* Answer Sections */}
             <Card className="p-6 md:p-8">
-                <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    Respuesta del Tutor
-                </h3>
+                <div className="flex items-start justify-between gap-4 mb-6">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Respuesta del Tutor
+                    </h3>
+                    {onSaveInsight && (
+                        <div className="shrink-0">
+                            <SaveInsightButton
+                                question={question}
+                                answer={answer}
+                                greekWord={greekWord}
+                                passage={passage}
+                                onSave={onSaveInsight}
+                            />
+                        </div>
+                    )}
+                </div>
                 
                 <div className="space-y-6">
                     {sections.map((section, index) => (

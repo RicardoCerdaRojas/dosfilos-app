@@ -107,6 +107,15 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow write: if isOwner(userId);
       }
+      
+      // Greek Tutor - Personal Insights (user's knowledge base)
+      // Users can manage their own insights
+      match /greek_insights/{insightId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isOwner(userId) && resource.data.userId == userId;
+        allow delete: if isOwner(userId) && resource.data.userId == userId;
+      }
     }
     
     // Tags collection (shared across users)

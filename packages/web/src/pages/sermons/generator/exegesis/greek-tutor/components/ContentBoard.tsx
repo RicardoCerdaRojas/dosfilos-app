@@ -40,6 +40,14 @@ export interface ContentBoardProps {
     sessionId?: string;
     fileSearchStoreId?: string;
     onUnitAdded?: (unit: import('@dosfilos/domain').TrainingUnit) => void; // Callback when new unit is added from passage reader
+    onSaveInsight?: (data: {
+        title?: string;
+        content: string;
+        question: string;
+        tags: string[];
+        greekWord?: string;
+        passage?: string;
+    }) => Promise<void>; // Callback to save tutor responses as insights
 }
 
 /**
@@ -54,7 +62,8 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     units = [],
     sessionId,
     fileSearchStoreId,
-    onUnitAdded
+    onUnitAdded,
+    onSaveInsight
 }) => {
     const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule());
     const { generateQuiz, submitQuizAnswer } = useGreekTutor();
@@ -185,6 +194,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                                     answer={answer}
                                     greekWord={content.greekWord}
                                     passage={content.passage}
+                                    onSaveInsight={onSaveInsight}
                                 />
                             );
                         }

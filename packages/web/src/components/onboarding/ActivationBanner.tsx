@@ -28,7 +28,7 @@ export function ActivationBanner() {
                             ¡Comienza tu primer sermón hoy!
                         </h3>
                         <p className="text-blue-100 text-sm md:text-base max-w-xl leading-relaxed">
-                            Nuestra IA está lista para ayudarte con el análisis exegético y la estructura homilética. Solo toma unos minutos.
+                            Estamos listos para ayudarte con el estudio exegético y la creación de la estructura homilética. Estudia profundo, ora en dependencia del Espíritu Santo y predica con fidelidad.
                         </p>
                     </div>
                 </div>

@@ -72,11 +72,17 @@ export interface StudySession {
 
 export interface ExegeticalInsight {
     id: string;
-    sessionId: string;
-    unitId: string;
-    content: string; // The insight text to save
-    tags: string[];
+    userId: string;          // Owner of the insight
+    sessionId: string;       // Which session it came from
+    unitId?: string;         // Optional: related to specific word study
+    title: string;           // User-defined or auto-generated title
+    content: string;         // The insight text to save
+    question?: string;       // Original question (for chat responses)
+    tags: string[];          // For categorization and filtering
+    passage?: string;        // Bible reference (e.g., "Mateo 28:19-20")
+    greekWord?: string;      // Related Greek word (e.g., "πορευθέντες")
     createdAt: Date;
+    updatedAt?: Date;        // Track modifications
 }
 
 export interface MorphemeComponent {

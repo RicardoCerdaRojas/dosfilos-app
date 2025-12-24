@@ -7,6 +7,10 @@ import {
     ExplainMorphologyUseCase,
     AskFreeQuestionUseCase
 } from '@dosfilos/application';
+// New insight management use cases
+import { GetUserInsightsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserInsightsUseCase';
+import { UpdateInsightUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/UpdateInsightUseCase';
+import { DeleteInsightUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteInsightUseCase';
 // Phase 3A: Quiz use cases
 import { GenerateQuizUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GenerateQuizUseCase';
 import { SubmitQuizAnswerUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/SubmitQuizAnswerUseCase';
@@ -25,6 +29,9 @@ interface GreekTutorContextType {
     generateTrainingUnits: GenerateTrainingUnitsUseCase;
     evaluateUserResponse: EvaluateUserResponseUseCase;
     saveInsight: SaveInsightUseCase;
+    getUserInsights: GetUserInsightsUseCase;
+    updateInsight: UpdateInsightUseCase;
+    deleteInsight: DeleteInsightUseCase;
     explainMorphology: ExplainMorphologyUseCase;
     askFreeQuestion: AskFreeQuestionUseCase;
     // Phase 3A: Quiz use cases
@@ -56,6 +63,9 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const generateTrainingUnits = new GenerateTrainingUnitsUseCase(greekTutorService, sessionRepository);
     const evaluateUserResponse = new EvaluateUserResponseUseCase(greekTutorService, sessionRepository);
     const saveInsight = new SaveInsightUseCase(sessionRepository);
+    const getUserInsights = new GetUserInsightsUseCase(sessionRepository);
+    const updateInsight = new UpdateInsightUseCase(sessionRepository);
+    const deleteInsight = new DeleteInsightUseCase(sessionRepository);
     const explainMorphology = new ExplainMorphologyUseCase(greekTutorService, sessionRepository); // Phase 3C: Added repository
     const askFreeQuestion = new AskFreeQuestionUseCase(greekTutorService);
     
@@ -76,7 +86,10 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         <GreekTutorContext.Provider value={{ 
             generateTrainingUnits, 
             evaluateUserResponse, 
-            saveInsight, 
+            saveInsight,
+            getUserInsights,
+            updateInsight,
+            deleteInsight,
             explainMorphology,
             askFreeQuestion,
             generateQuiz,

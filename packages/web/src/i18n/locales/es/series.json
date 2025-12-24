@@ -2,14 +2,14 @@
     "header": {
         "title": "Planes de Predicación",
         "subtitle": "Organiza y planifica tus sermones",
-        "aiPlannerButton": "Planificador con IA",
+        "aiPlannerButton": "Planificador Asistido",
         "newPlanButton": "Nuevo Plan"
     },
     "loading": "Cargando planes...",
     "empty": {
         "title": "No tienes planes aún",
         "description": "Crea planes de predicación para organizar tus sermones.",
-        "aiPlannerButton": "Planificador con IA",
+        "aiPlannerButton": "Planificador Asistido",
         "createButton": "Crear Primer Plan"
     },
     "sermonCount": "sermones",

@@ -103,6 +103,9 @@ export interface ISessionRepository {
     updateSession(session: import('../entities/entities').StudySession): Promise<void>;
     saveInsight(insight: ExegeticalInsight): Promise<void>;
     getInsightsBySession(sessionId: string): Promise<ExegeticalInsight[]>;
+    getUserInsights(userId: string): Promise<ExegeticalInsight[]>; // Get all user insights
+    updateInsight(insightId: string, updates: Partial<ExegeticalInsight>): Promise<void>; // Update title/tags
+    deleteInsight(userId: string, insightId: string): Promise<void>; // Delete insight
 
     // Phase 3A: Progress tracking methods
     updateUnitProgress(sessionId: string, unitId: string, progress: import('../entities/entities').UnitProgress): Promise<void>;

@@ -51,43 +51,43 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent 
-                className="!max-w-[90vw] h-[90vh] p-0 gap-0 w-full"
+                className="!max-w-[90vw] h-[90vh] p-0 gap-0 w-full flex flex-col items-start"
                 style={{ maxWidth: '1400px' }}
             >
                 {/* Header */}
-                <DialogHeader className="px-6 py-4 border-b">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-primary/10">
-                                <BookOpen className="h-5 w-5 text-primary" />
+                <DialogHeader className="px-8 py-6 border-b">
+                    <div className="flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-2.5 rounded-lg bg-primary/10">
+                                <BookOpen className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                                <DialogTitle className="text-lg">Biblioteca de Conceptos Clave</DialogTitle>
-                                <p className="text-xs text-muted-foreground mt-0.5">
+                                <DialogTitle className="text-xl">Biblioteca de Conceptos Clave</DialogTitle>
+                                <p className="text-sm text-muted-foreground mt-1">
                                     {currentIndex + 1} de {GREEK_CAPSULES.length}
                                 </p>
                             </div>
                         </div>
                         
                         {/* Navigation Controls */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={handlePrev}
                                 disabled={!canGoPrev}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
                             >
-                                <ChevronLeft className="h-4 w-4" />
+                                <ChevronLeft className="h-5 w-5" />
                             </Button>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={handleNext}
                                 disabled={!canGoNext}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
                             >
-                                <ChevronRight className="h-4 w-4" />
+                                <ChevronRight className="h-5 w-5" />
                             </Button>
                         </div>
                     </div>

@@ -5,7 +5,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Loader2, ArrowRight, ArrowLeft, BookOpen, Sparkles, Lightbulb, Copy, Download, LayoutDashboard, MessageCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Loader2, ArrowRight, ArrowLeft, BookOpen, Sparkles, Lightbulb, Copy, Download, LayoutDashboard, MessageCircle, Bookmark } from 'lucide-react';
 import { TrainingUnit, UserResponse, FileSearchStoreContext, MorphologyBreakdown } from '@dosfilos/domain';
 import { useGreekTutor } from './GreekTutorProvider';
 import { getCoreLibraryService } from '../../../../../services/coreLibraryService';
@@ -22,6 +23,7 @@ import { WordAnalysisToolbar } from './components/WordAnalysisToolbar';
 import { useGreekTutorBoard } from './hooks/useGreekTutorBoard';
 import { formatSessionExport, copyToClipboard, downloadAsMarkdown } from './utils/exportUtils';
 import { ConceptsLibraryModal } from './components/ConceptsLibraryModal';
+import { InsightsViewer } from './components/InsightsViewer';
 
 // Inline PassagePreview component
 const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
@@ -62,6 +64,55 @@ const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
     }
 
     return <BibleTextViewer text={text} reference={passage} />;
+};
+
+// Feature Modal Component
+const FeatureModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    description: string;
+    screenshotPath?: string;
+    details?: string[];
+}> = ({ isOpen, onClose, title, description, screenshotPath, details }) => {
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold">{title}</DialogTitle>
+                    <DialogDescription className="text-base">
+                        {description}
+                    </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6 mt-4">
+                    {screenshotPath && (
+                        <div className="rounded-lg border overflow-hidden shadow-lg">
+                            <img 
+                                src={screenshotPath} 
+                                alt={title}
+                                className="w-full h-auto"
+                            />
+                        </div>
+                    )}
+                    
+                    {details && details.length > 0 && (
+                        <div className="space-y-3">
+                            <h4 className="font-semibold text-lg">Características:</h4>
+                            <ul className="space-y-2">
+                                {details.map((detail, idx) => (
+                                    <li key={idx} className="flex items-start gap-2">
+                                        <span className="text-primary mt-1">✓</span>
+                                        <span className="text-muted-foreground">{detail}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
 };
 
 interface GreekTutorSessionViewProps {
@@ -105,6 +156,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     
     // Concepts library modal state
     const [isConceptsLibraryOpen, setIsConceptsLibraryOpen] = useState(false);
+    
+    // Feature modal state
+    const [openFeatureModal, setOpenFeatureModal] = useState<string | null>(null);
+    const [showInsightsDialog, setShowInsightsDialog] = useState(false);
 
     // Track mount/unmount
     useEffect(() => {
@@ -171,7 +226,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     }, [searchParams, user, status]);
 
     const loadSessionFromId = async (sessionId: string) => {
-        console.log('[GreekTutorSessionView] Auto-loading session:', sessionId);
+        // console.log('[GreekTutorSessionView] Auto-loading session:', sessionId);
         setStatus('LOADING');
         try {
             const session = await sessionRepository.getSession(sessionId);
@@ -195,11 +250,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             );
             setCurrentIndex(lastUnitIndex >= 0 ? lastUnitIndex : 0);
             
-            console.log('[GreekTutorSessionView] Session loaded successfully:', {
-                passage: session.passage,
-                unitsCount: session.units.length,
-                currentUnitIndex: lastUnitIndex
-            });
+            // Session loaded successfully
             
             // Set flag to auto-trigger morphology after hook is ready
             setAutoTriggerAction('morphology');
@@ -420,27 +471,42 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     
     
     
-    // Insight Saving
+    // Insight Saving - Updated for personal knowledge base
     const { saveInsight } = useGreekTutor();
     const [savingInsight, setSavingInsight] = useState(false);
 
-    const handleSaveInsight = async () => {
-        const unit = units[currentIndex];
-        if (!unit) return;
+    const handleSaveInsight = async (data: {
+        title?: string;
+        content: string;
+        question: string;
+        tags: string[];
+        greekWord?: string;
+        passage?: string;
+    }) => {
+        const sessionId = units[0]?.sessionId;
+        if (!user?.uid || !sessionId) {
+            console.error('Cannot save insight: user or session not available');
+            return;
+        }
         
         setSavingInsight(true);
         try {
-            // Construct default insight content from unit
-            const content = `[${unit.greekForm.text}] ${unit.significance}`;
-            const tags = [unit.greekForm.grammaticalCategory]; // e.g. "Verb"
+            await saveInsight.execute({
+                userId: user.uid,
+                sessionId: sessionId,
+                unitId: units[currentIndex]?.id,
+                title: data.title,
+                content: data.content,
+                question: data.question,
+                tags: data.tags,
+                passage: data.passage || passage,
+                greekWord: data.greekWord
+            });
             
-            await saveInsight.execute(unit.sessionId, unit.id, content, tags);
-            
-            // Show toast or some feedback (using alert for MVP if no toast available)
-            // toast.success("Insight guardado");
-            // Insight saved
+            // console.log('[GreekTutorSessionView] Insight saved successfully');
         } catch (e) {
-            console.error("Failed to save insight", e);
+            console.error('[GreekTutorSessionView] Failed to save insight:', e);
+            throw e; // Re-throw to let SaveInsightButton show error
         } finally {
             setSavingInsight(false);
         }
@@ -544,6 +610,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         const hasPassage = passage.trim().length > 0;
         
         return (
+            <>
             <div className="h-full overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-auto">
                     <div className="container max-w-7xl mx-auto px-6 py-12 lg:py-20">
@@ -557,7 +624,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             Entrena tu discernimiento exegético
                                         </h1>
                                         <p className="text-lg text-muted-foreground">
-                                            Analiza pasajes del NT griego con asistencia de IA pedagógica
+                                            Analiza pasajes del NT griego con asistencia de un marco hermeneutico bíblico.
                                         </p>
                                     </div>
                                     <Button 
@@ -618,45 +685,342 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                     </div>
                                 ) : (
                                     /* Feature Cards when no passage selected */
-                                    <div className="space-y-4">
-                                        <div className="p-6 rounded-xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-purple-500/5">
-                                            <div className="flex items-start gap-4">
-                                                <div className="p-2 rounded-lg bg-primary/10">
-                                                    <Sparkles className="h-5 w-5 text-primary" />
+                                    <div className="space-y-6">
+                                        {/* Section 1: Vista General */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" />
+                                                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                                    Vista General
+                                                </h3>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                {/* Lectura del pasaje */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('lectura-pasaje')}
+                                                    className="group relative p-4 rounded-lg border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 hover:border-blue-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                                                            <BookOpen className="h-4 w-4 text-blue-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Lectura del Pasaje</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Texto griego original con transliteración interactiva
+                                                            </p>
+                                                            {/* Preview content - appears on hover */}
+                                                            <div className="mt-3 pt-3 border-t border-blue-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] font-mono text-blue-600/80 space-y-1">
+                                                                    <div>πιστεύοντες → <span className="text-muted-foreground">pisteúontes</span></div>
+                                                                    <div className="text-[9px] text-muted-foreground italic">Haz clic en cualquier palabra para análisis detallado</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {/* Hover badge */}
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-700 dark:text-blue-300 font-medium">
+                                                            Ver ejemplo
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-semibold mb-1">Análisis Morfológico</h3>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Descomposición de palabras griegas en morfemas con explicaciones pedagógicas
-                                                    </p>
+
+                                                {/* Estructura Sintáctica */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('estructura-sintactica')}
+                                                    className="group relative p-4 rounded-lg border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 hover:border-cyan-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-colors">
+                                                            <svg className="h-4 w-4 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Estructura Sintáctica</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Visor de cláusulas y relaciones gramaticales
+                                                            </p>
+                                                            {/* Preview content */}
+                                                            <div className="mt-3 pt-3 border-t border-cyan-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] space-y-1">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="w-1 h-1 rounded-full bg-cyan-500"></span>
+                                                                        <span className="text-muted-foreground">Cláusula Principal</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 ml-3">
+                                                                        <span className="w-1 h-1 rounded-full bg-cyan-400"></span>
+                                                                        <span className="text-muted-foreground">Cláusula Subordinada</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-medium">
+                                                            Ver ejemplo
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="p-6 rounded-xl border-2 border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/5">
-                                            <div className="flex items-start gap-4">
-                                                <div className="p-2 rounded-lg bg-amber-500/10">
-                                                    <Lightbulb className="h-5 w-5 text-amber-600" />
+                                        {/* Section 2: Estudio de Palabras */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+                                                <h3 className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                                                    Estudio de Palabras
+                                                </h3>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                {/* Análisis morfológico */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('analisis-morfologico')}
+                                                    className="group relative p-4 rounded-lg border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5 hover:border-purple-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                                                            <Sparkles className="h-4 w-4 text-purple-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Análisis Morfológico</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Descomposición detallada de morfemas y formas
+                                                            </p>
+                                                            <div className="mt-3 pt-3 border-t border-purple-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] space-y-1.5">
+                                                                    <div><span className="font-mono text-purple-600">πιστ-</span> <span className="text-muted-foreground">raíz (creer)</span></div>
+                                                                    <div><span className="font-mono text-purple-600">-ευ-</span> <span className="text-muted-foreground">vocal temática</span></div>
+                                                                    <div><span className="font-mono text-purple-600">-οντες</span> <span className="text-muted-foreground">participio presente</span></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium">
+                                                            Ver ejemplo
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-semibold mb-1">Feedback Contextual</h3>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Evaluación pedagógica de tus respuestas con orientación pastoral
-                                                    </p>
+
+                                                {/* Claves de reconocimiento */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('claves-reconocimiento')}
+                                                    className="group relative p-4 rounded-lg border border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-purple-500/5 hover:border-pink-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-pink-500/10 group-hover:bg-pink-500/20 transition-colors">
+                                                            <svg className="h-4 w-4 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Claves de Reconocimiento</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Patrones para identificar morfología y profundizar tu conocimiento del griego bíblico.
+                                                            </p>
+                                                            <div className="mt-3 pt-3 border-t border-pink-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] text-muted-foreground space-y-1">
+                                                                    <div>💡 <span className="font-medium">-οντες</span> indica participio presente activo</div>
+                                                                    <div>📌 Terminación típica del tiempo presente</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-700 dark:text-pink-300 font-medium">
+                                                            Ver ejemplo
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Función contextual */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('funcion-contexto')}
+                                                    className="group relative p-4 rounded-lg border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-500/5 to-purple-500/5 hover:border-fuchsia-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-fuchsia-500/10 group-hover:bg-fuchsia-500/20 transition-colors">
+                                                            <svg className="h-4 w-4 text-fuchsia-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Función en Contexto</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Rol de cada palabra en la cláusula
+                                                            </p>
+                                                            <div className="mt-3 pt-3 border-t border-fuchsia-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] text-muted-foreground">
+                                                                    <div className="font-medium text-fuchsia-600 mb-1">Sujeto de la cláusula</div>
+                                                                    <div>Función: Agente de la acción principal</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
+                                                            Ver ejemplo
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Insight experto */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('insight-experto')}
+                                                    className="group relative p-4 rounded-lg border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-purple-500/5 hover:border-violet-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors">
+                                                            <Lightbulb className="h-4 w-4 text-violet-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Insight del Experto</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Perspectivas gramaticales profundas y aplicadas
+                                                            </p>
+                                                            <div className="mt-3 pt-3 border-t border-violet-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] text-muted-foreground italic">
+                                                                    "El tiempo presente enfatiza la acción continua: un creer que perdura..."
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-700 dark:text-violet-300 font-medium">
+                                                            Ver ejemplo
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="p-6 rounded-xl border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
-                                            <div className="flex items-start gap-4">
-                                                <div className="p-2 rounded-lg bg-green-500/10">
-                                                    <BookOpen className="h-5 w-5 text-green-600" />
+                                        {/* Section 3: Refuerzo del Aprendizaje */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-1 w-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" />
+                                                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                                                    Refuerzo del Aprendizaje
+                                                </h3>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                {/* Conceptos generales */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('conceptos-generales')}
+                                                    className="group relative p-4 rounded-lg border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/5 hover:border-amber-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                                                            <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Conceptos Generales</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Biblioteca de conceptos clave del griego koiné
+                                                            </p>
+                                                            <div className="mt-3 pt-3 border-t border-amber-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] text-muted-foreground space-y-1">
+                                                                    <div>📚 Casos del griego</div>
+                                                                    <div>📚 Tiempos verbales</div>
+                                                                    <div>📚 Modos y voces</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium">
+                                                            Explorar
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-semibold mb-1">Insights Guardados</h3>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Guarda las joyas exegéticas para tus predicaciones futuras
-                                                    </p>
+
+                                                {/* Preguntas al tutor */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('preguntas-tutor')}
+                                                    className="group relative p-4 rounded-lg border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-red-500/5 hover:border-orange-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                                                            <MessageCircle className="h-4 w-4 text-orange-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Preguntas al Tutor</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Asistencia personalizada en tu estudio
+                                                            </p>
+                                                            <div className="mt-3 pt-3 border-t border-orange-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] text-muted-foreground italic">
+                                                                    "¿Por qué Pablo usa el aoristo aquí?"
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-300 font-medium">
+                                                            Preguntar
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Quiz de comprensión */}
+                                                <div 
+                                                    onClick={() => setOpenFeatureModal('quiz-comprension')}
+                                                    className="group relative p-4 rounded-lg border border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5 hover:border-green-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+                                                            <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Quiz de Comprensión</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Evalúa y refuerza lo aprendido en cada sesión
+                                                            </p>
+                                                            <div className="mt-3 pt-3 border-t border-green-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
+                                                                <div className="text-[10px] text-muted-foreground space-y-1">
+                                                                    <div>✓ Identifica tiempo y voz</div>
+                                                                    <div>✓ Analiza función sintáctica</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-700 dark:text-green-300 font-medium">
+                                                            Practicar
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Mis Insights */}
+                                                <div 
+                                                    onClick={() => setShowInsightsDialog(true)}
+                                                    className="group relative p-4 rounded-lg border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5 hover:border-purple-500/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 rounded-md bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                                                            <Bookmark className="h-4 w-4 text-purple-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-medium text-sm mb-0.5">Mis Insights</h4>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                Biblioteca personal de conocimiento guardado
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium">
+                                                            Ver
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -667,6 +1031,142 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                     </div>
                 </div>
             </div>
+            {/* Feature Modals for !isActive state */}
+            <FeatureModal
+                isOpen={openFeatureModal === 'lectura-pasaje'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Lectura del Pasaje"
+                description="Explora el texto bíblico en su idioma original con herramientas interactivas para profundizar tu comprensión."
+                screenshotPath="/greek-tutor-previews/lectura_pasaje.png"
+                details={[
+                    "Visualiza el texto en griego original con opción de ver versiones en español",
+                    "Transliteración interactiva para ayudarte con la pronunciación",
+                    "Haz clic en cualquier palabra griega para agregarla a tus unidades de estudio",
+                    "Alterna fácilmente entre el texto original y la traducción",
+                    "Las palabras seleccionadas se resaltan visualmente en verde para fácil identificación"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'estructura-sintactica'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Estructura Sintáctica"
+                description="Visualiza las relaciones gramaticales y la jerarquía de cláusulas en el texto griego."
+                screenshotPath="/greek-tutor-previews/estructura_sintactica.png"
+                details={[
+                    "Vista jerárquica de cláusulas principales y subordinadas",
+                    "Relaciones sintácticas claramente marcadas",
+                    "Controles de expandir/colapsar para cada nivel de cláusula",
+                    "Identificación visual de roles gramaticales",
+                    "Comprende la estructura lógica del argumento del autor"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'analisis-morfologico'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Análisis Morfológico"
+                description="Descomposición detallada de cada palabra en sus componentes morfológicos básicos."
+                screenshotPath="/greek-tutor-previews/analisis_morfologico.png"
+                details={[
+                    "Separación visual de raíces, prefijos y sufijos",
+                    "Explicación del significado de cada morfema",
+                    "Identificación de tiempo, voz, modo, caso y número",
+                    "Conexión entre forma y función gramatical",
+                    "Profundiza tu comprensión de cómo se construyen las palabras griegas"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'claves-reconocimiento'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Claves de Reconocimiento"
+                description="Patrones morfológicos que te ayudan a identificar formas gramaticales rápidamente."
+                screenshotPath="/greek-tutor-previews/claves_reconocimiento.png"
+                details={[
+                    "Terminaciones clave para tiempos verbales",
+                    "Patrones de reconocimiento para casos",
+                    "Marcadores de voz y modo",
+                    "Ejemplos de cada patrón en contexto",
+                    "Desarrolla habilidades de lectura sin diccionario"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'funcion-contexto'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Función en Contexto"
+                description="Comprende el rol que cada palabra desempeña dentro de su cláusula y el pasaje completo."
+                screenshotPath="/greek-tutor-previews/funcion_contexto.png"
+                details={[
+                    "Identificación del papel sintáctico (sujeto, objeto, modificador)",
+                    "Relación con otras palabras en la cláusula",
+                    "Conexión con el argumento general del pasaje",
+                    "Importancia teológica de la función específica",
+                    "Ve cómo la gramática sirve al significado"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'insight-experto'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Insight del Experto"
+                description="Perspectivas profundas de gramáticos y exegetas sobre el significado y las implicaciones del texto."
+                screenshotPath="/greek-tutor-previews/insight_experto.png"
+                details={[
+                    "Explicaciones de expertos sobre elecciones gramaticales del autor",
+                    "Matices teológicos revelados por la gramática",
+                    "Conexiones con otros usos en el Nuevo Testamento",
+                    "Perspectivas hermenéuticas aplicadas",
+                    "Transforma el conocimiento gramatical en comprensión teológica"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'conceptos-generales'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Conceptos Generales"
+                description="Biblioteca de referencia de conceptos fundamentales del griego koiné del Nuevo Testamento."
+                screenshotPath="/greek-tutor-previews/conceptos_generales.png"
+                details={[
+                    "Explicaciones de los casos del griego (nominativo, genitivo, dativo, acusativo)",
+                    "Guía de tiempos verbales y sus significados",
+                    "Descripción de modos (indicativo, subjuntivo, imperativo, optativo)",
+                    "Voces (activa, media, pasiva) y sus usos",
+                    "Acceso rápido a conocimiento fundamental mientras estudias"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'preguntas-tutor'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Preguntas al Tutor"
+                description="Formula preguntas personalizadas sobre cualquier aspecto del texto y recibe respuestas contextualizadas."
+                screenshotPath="/greek-tutor-previews/preguntas_tutor.png"
+                details={[
+                    "Haz preguntas sobre gramática, sintaxis o teología",
+                    "Respuestas basadas en el contexto específico de tu pasaje",
+                    "Asistencia personalizada para tu nivel de conocimiento",
+                    "Acceso a recursos hermenéuticos especializados",
+                    "Aprende a tu propio ritmo con orientación experta"
+                ]}
+            />
+            
+            <FeatureModal
+                isOpen={openFeatureModal === 'quiz-comprension'}
+                onClose={() => setOpenFeatureModal(null)}
+                title="Quiz de Comprensión"
+                description="Evalúa y refuerza tu comprensión del griego con ejercicios interactivos adaptados a tu sesión."
+                screenshotPath="/greek-tutor-previews/quiz_comprension.png"
+                details={[
+                    "Preguntas de opción múltiple sobre morfología y sintaxis",
+                    "Feedback inmediato con explicaciones detalladas",
+                    "Ejercicios basados en el pasaje que estás estudiando",
+                    "Seguimiento de tu progreso y áreas de mejora",
+                    "Consolida tu aprendizaje con práctica activa"
+                ]}
+            />
+            </>
         );
     }
 
@@ -856,6 +1356,18 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         <span className="hidden lg:inline">Conceptos</span>
                     </Button>
 
+                    {/* Mis Insights Button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 gap-2"
+                        onClick={() => setShowInsightsDialog(true)}
+                        title="Mis Insights Guardados"
+                    >
+                        <Bookmark className="h-4 w-4" />
+                        <span className="hidden lg:inline">Insights</span>
+                    </Button>
+
                     {/* Right: Action Buttons */}
                     <div className="flex items-center gap-1">
                         {currentContent && (
@@ -966,6 +1478,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                             units={units}
                             sessionId={currentUnit?.sessionId}
                             fileSearchStoreId={activeStoreId}
+                            onSaveInsight={handleSaveInsight}
                             onUnitAdded={(newUnit) => {
                                 // Adding new unit from passage reader
                                 setUnits(prevUnits => [...prevUnits, newUnit]);
@@ -983,6 +1496,22 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                 </div>
             )}
             
+            
+            {/* Insights Dialog */}
+            <Dialog open={showInsightsDialog} onOpenChange={setShowInsightsDialog}>
+                <DialogContent className="!w-[90vw] !max-w-[1400px] min-h-[200px] max-h-[90vh] overflow-hidden flex flex-col p-6">
+                    <DialogHeader>
+                        <DialogTitle>Mis Insights Guardados</DialogTitle>
+                        <DialogDescription>
+                            Tu biblioteca personal de conocimiento del griego del NT
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-auto min-h-0">
+                        <InsightsViewer />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Concepts Library Modal */}
             <ConceptsLibraryModal
                 open={isConceptsLibraryOpen}
