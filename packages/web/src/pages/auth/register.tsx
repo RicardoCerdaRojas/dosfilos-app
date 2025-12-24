@@ -15,6 +15,7 @@ import { functions, db } from '@dosfilos/infrastructure';
 import { doc, getDoc } from 'firebase/firestore';
 import { FirestorePlan, getPlanPriceId } from '@/hooks/usePlans';
 import { useTranslation } from '@/i18n';
+import { useTrackActivity } from '@/hooks/useTrackActivity';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<FirestorePlan | null>(null);
+  const { trackLogin } = useTrackActivity();
   
   const registerSchema = z.object({
     displayName: z
@@ -131,6 +133,7 @@ export function RegisterPage() {
     setIsLoading(true);
     try {
       await authService.register(data.email, data.password, data.displayName);
+      trackLogin(); // Track initial login
       toast.success(t('register.success'));
       
       // If paid plan selected from pricing page, redirect to checkout
@@ -165,6 +168,7 @@ export function RegisterPage() {
     setIsGoogleLoading(true);
     try {
       await authService.loginWithGoogle();
+      trackLogin(); // Track initial login
       toast.success(t('register.successGoogle'));
       
       // If paid plan selected from pricing page, redirect to checkout

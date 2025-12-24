@@ -117,26 +117,57 @@ export function useAdminMetrics() {
                     });
                 } else {
                     // Fallback: Calculate metrics from users collection
-                    // Fallback: calculate from all users
                     console.log('[useAdminMetrics] No daily_metrics found, calculating from users...');
                     const usersSnapshot = await getDocs(collection(db, 'users'));
+
+                    // Count actual sermons
+                    const sermonsSnapshot = await getDocs(collection(db, 'sermons'));
+                    const totalSermonsCreated = sermonsSnapshot.size;
 
                     // Count Greek Tutor sessions
                     const greekSessionsSnapshot = await getDocs(collection(db, 'greek_sessions'));
                     const totalGreekSessions = greekSessionsSnapshot.size;
 
-                    let totalUsers = 0;
+                    // Count today's sermons
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
+                    let sermonsCreatedToday = 0;
+                    sermonsSnapshot.forEach((doc) => {
+                        const sermonData = doc.data();
+                        if (sermonData.createdAt) {
+                            const createdDate = sermonData.createdAt.toDate();
+                            if (createdDate >= today) {
+                                sermonsCreatedToday++;
+                            }
+                        }
+                    });
+
+                    let totalUsers = 0;
                     let newUsersToday = 0;
                     let usersWithDate = 0;
                     let usersWithoutDate = 0;
                     let mrr = 0;
                     const planCounts = { free: 0, pro: 0, team: 0 };
 
-                    // Activity metrics
-                    let totalSermonsCreated = 0;
-                    let totalLogins = 0;
+                    // Count actual user_activities for logins
+                    const userActivitiesSnapshot = await getDocs(collection(db, 'user_activities'));
+                    const totalLogins = userActivitiesSnapshot.size;
+
+                    // Calculate DAU (users active today)
+                    const todayEnd = new Date(today);
+                    todayEnd.setHours(23, 59, 59, 999);
+                    const uniqueActiveUsersToday = new Set<string>();
+
+                    userActivitiesSnapshot.forEach((doc) => {
+                        const activityData = doc.data();
+                        if (activityData.timestamp) {
+                            const activityDate = activityData.timestamp.toDate();
+                            if (activityDate >= today && activityDate <= todayEnd) {
+                                uniqueActiveUsersToday.add(activityData.userId);
+                            }
+                        }
+                    });
+                    const dau = uniqueActiveUsersToday.size;
 
                     usersSnapshot.forEach((doc) => {
                         const userData = doc.data();
@@ -168,28 +199,25 @@ export function useAdminMetrics() {
                         else if (planId === 'pro') planCounts.pro++;
                         else if (planId === 'team') planCounts.team++;
 
-                        // Calculate MRR (simplified)
+                        // Calculate MRR with exact pricing
                         if (userData.subscription?.status === 'active') {
-                            // Assuming fixed prices for now
-                            if (planId === 'pro') mrr += 10;
-                            else if (planId === 'team') mrr += 25;
-                        }
-
-                        // Activity metrics from analytics field
-                        if (userData.analytics) {
-                            totalSermonsCreated += userData.analytics.sermonsCreated || 0;
-                            totalLogins += userData.analytics.loginCount || 0;
+                            if (planId === 'pro') mrr += 9.99;
+                            else if (planId === 'team') mrr += 24.99;
                         }
                     });
 
-                    console.log('[useAdminMetrics] New users today calculated:', newUsersToday);
+                    console.log('[useAdminMetrics] New users today:', newUsersToday);
                     console.log('[useAdminMetrics] Users with date:', usersWithDate);
                     console.log('[useAdminMetrics] Users without date:', usersWithoutDate);
+                    console.log('[useAdminMetrics] Total sermons:', totalSermonsCreated);
+                    console.log('[useAdminMetrics] Sermons today:', sermonsCreatedToday);
                     console.log('[useAdminMetrics] Total Greek sessions:', totalGreekSessions);
+                    console.log('[useAdminMetrics] Total activities:', totalLogins);
+                    console.log('[useAdminMetrics] DAU calculated:', dau);
 
                     setMetrics({
                         totalUsers,
-                        dau: 0, // Can't calculate without activity data
+                        dau,
                         mau: 0, // Can't calculate without activity data
                         mrr,
                         activeSubscriptions: planCounts,
@@ -197,7 +225,7 @@ export function useAdminMetrics() {
                         growthRate: 0,
                         // Activity metrics
                         totalSermonsCreated,
-                        sermonsCreatedToday: 0, // TODO: Calculate from today's user_activities
+                        sermonsCreatedToday,
                         totalLogins,
                         totalGreekSessions,
                     });

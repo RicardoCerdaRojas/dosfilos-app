@@ -33,6 +33,7 @@ import { GreekTutorPage } from '@/pages/greek-tutor/GreekTutorPage';
 import { GreekTutorProvider } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorProvider';
 import { GreekTutorDashboardView } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorDashboardView';
 import { useEffect } from 'react';
+import { SessionTracker } from '@/components/analytics/SessionTracker';
 
 // Redirect component for old sermon routes
 function RedirectToSermon({ suffix = '' }: { suffix?: string }) {
@@ -52,6 +53,7 @@ function App() {
   return (
     <FirebaseProvider>
       <BrowserRouter>
+        <SessionTracker />
         <Routes>
           {/* Public Landing Page - Root */}
           <Route path="/" element={<Landing />} />

@@ -13,9 +13,12 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@dosfilos/infrastructure';
 import { useTranslation } from '@/i18n';
 
+import { useTrackActivity } from '@/hooks/useTrackActivity';
+
 export function LoginPage() {
   const navigate = useNavigate();
   const { t } = useTranslation('auth');
+  const { trackLogin } = useTrackActivity();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
@@ -60,6 +63,7 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       const user = await authService.login(data.email, data.password);
+      trackLogin(); // Track login event
       toast.success(t('login.welcome'));
       await checkSubscriptionAndRedirect(user.id);
     } catch (error: any) {
@@ -73,6 +77,7 @@ export function LoginPage() {
     setIsGoogleLoading(true);
     try {
       const user = await authService.loginWithGoogle();
+      trackLogin(); // Track login event
       toast.success(t('login.welcome'));
       await checkSubscriptionAndRedirect(user.id);
     } catch (error: any) {
