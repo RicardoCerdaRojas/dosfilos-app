@@ -21,9 +21,9 @@ export function usePlanTranslations() {
             name: t('planNames.pro'),
             description: t('planDescriptions.pro')
         },
-        'iglesia': {
-            name: t('planNames.church'),
-            description: t('planDescriptions.church')
+        'team': {
+            name: t('planNames.team'),
+            description: t('planDescriptions.team')
         }
     };
 

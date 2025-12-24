@@ -28,15 +28,15 @@
     },
     "planNames": {
         "free": "Gratis",
-        "starter": "Pro",
-        "pro": "Equipo",
-        "church": "Iglesia"
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Equipo"
     },
     "planDescriptions": {
         "free": "Para continuar tu ministerio de predicación",
-        "starter": "Para pastores que predican regularmente",
-        "pro": "Para equipos pastorales e iglesias",
-        "church": "Para iglesias y organizaciones con múltiples predicadores"
+        "starter": "Para maestros y predicadores ocasionales",
+        "pro": "Para pastores que predican regularmente",
+        "team": "Para equipos pastorales e iglesias"
     },
     "features": {
         "sermon_create": "Crear sermones ilimitados",

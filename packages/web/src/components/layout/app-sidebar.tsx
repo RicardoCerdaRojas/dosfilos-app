@@ -33,14 +33,42 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggleMenu } from '@/components/theme-toggle';
 import { useTranslation } from '@/i18n';
 import { doc, getDoc } from 'firebase/firestore';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Badge } from '@/components/ui/badge';
 
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useFirebase();
   const { t } = useTranslation('navigation');
+  const { subscription } = useSubscription();
   const [newLeadsCount, setNewLeadsCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Get plan display info
+  const getPlanBadge = () => {
+    if (!subscription) return null;
+    
+    const planColors = {
+      free: 'bg-gray-100 text-gray-700 border-gray-200',
+      pro: 'bg-blue-100 text-blue-700 border-blue-200',
+      team: 'bg-purple-100 text-purple-700 border-purple-200'
+    };
+    
+    const planNames = {
+      free: 'Free',
+      pro: 'Pro',
+      team: 'Team'
+    };
+    
+    const planId = subscription.planId || 'free';
+    const colorClass = planColors[planId as keyof typeof planColors] || planColors.free;
+    const planName = planNames[planId as keyof typeof planNames] || 'Free';
+    
+    return { colorClass, planName };
+  };
+
+  const planBadge = getPlanBadge();
 
   // Check if user is super admin
   useEffect(() => {
@@ -134,11 +162,24 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       {/* Header */}
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3 px-1 py-3">
-          <div className="p-1 rounded-lg bg-gradient-to-br from-primary to-primary/80">
-            <BookOpen className="h-5 w-5 text-primary-foreground" />
+        <div className="flex items-center gap-3 px-1 py-3 relative">
+          <div className="relative">
+            <div className="p-1 rounded-lg bg-gradient-to-br from-primary to-primary/80">
+              <BookOpen className="h-5 w-5 text-primary-foreground" />
+            </div>
+            {/* Badge - Always visible, positioned over icon */}
+            {planBadge && (
+              <Badge 
+                variant="outline" 
+                className={`absolute -top-1 -right-1 text-[10px] font-semibold px-1 py-0 h-4 ${planBadge.colorClass}`}
+              >
+                {planBadge.planName}
+              </Badge>
+            )}
           </div>
-          <span className="text-xl font-bold group-data-[collapsible=icon]:hidden">DosFilos.Preach</span>
+          <div className="flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
+            <span className="text-xl font-bold">DosFilos.Preach</span>
+          </div>
         </div>
       </SidebarHeader>
 
@@ -281,7 +322,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         
-        <div className="text-xs text-muted-foreground text-center py-2">
+        <div className="text-xs text-muted-foreground text-center py-2 group-data-[collapsible=icon]:hidden">
           DosFilos.Preach v0.1.0
         </div>
       </SidebarFooter>

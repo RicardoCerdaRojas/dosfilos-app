@@ -100,7 +100,8 @@ export default function SubscriptionPage() {
   };
 
   const currentPlanId = userProfile?.subscription?.planId || 'free';
-  const isSubscriptionActive = userProfile?.subscription?.status === 'active';
+  // Free plan is always considered active
+  const isSubscriptionActive = currentPlanId === 'free' || userProfile?.subscription?.status === 'active';
   const isSubscriptionCancelled = userProfile?.subscription?.status === 'cancelled';
   const currentPlan = plans.find(p => p.id === currentPlanId);
 
@@ -129,7 +130,10 @@ export default function SubscriptionPage() {
                   )}
                 </CardTitle>
                 <CardDescription className="mt-2">
-                  {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
+                  {currentPlanId === 'free' ? (
+                    // Free plan is always active
+                    <>Tu plan gratuito está activo</>
+                  ) : isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
                     <>
                       {t('currentPlan.renewalDate')}: {new Date(
                         userProfile.subscription.currentPeriodEnd.seconds 
