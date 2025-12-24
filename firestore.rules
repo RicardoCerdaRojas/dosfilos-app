@@ -16,6 +16,12 @@ service cloud.firestore {
       return request.auth.token.firebase.sign_in_provider == 'custom';
     }
     
+    // Check if user is super admin (for analytics dashboard)
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+    }
+    
     function isValidSermon() {
       let sermon = request.resource.data;
       let isDraft = sermon.status == 'draft';
@@ -46,7 +52,9 @@ service cloud.firestore {
 
     // Greek Tutor Sessions
     match /greek_sessions/{sessionId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
+      // Super admins can read all sessions for analytics
+      allow read: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow update, delete: if isOwner(resource.data.userId);
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
 
       match /insights/{insightId} {
@@ -80,14 +88,19 @@ service cloud.firestore {
     }
     
     // Users collection
+    // Note: isSuperAdmin() with get() doesn't work for list operations
+    // Frontend enforces role-based access control
     match /users/{userId} {
-      // Allow read for authenticated users (needed for Core Library admin userId lookup)
-      allow read: if isAuthenticated();
+      // Allow read for authenticated users (needed for admin dashboard and Core Library)
+      // Security is enforced at the application level with role checks
+      allow get, list: if isAuthenticated();
+      
+      // Allow write for owner
       allow write: if isOwner(userId);
       
       // Allow Cloud Functions to update subscription fields
       allow update: if isFunction() && 
-                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscription', 'stripeCustomerId', 'updatedAt']));
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscription', 'stripeCustomerId', 'updatedAt', 'analytics', 'role', 'metadata']));
       
       // User settings subcollection (library categories, etc.)
       match /settings/{settingId} {
@@ -139,11 +152,10 @@ service cloud.firestore {
 
     // Contact Leads collection (from landing page)
     // Anyone can create a lead (for contact form)
-    // Only admin (rdocerda@gmail.com) can read all leads
+    // Only super admin can read all leads
     match /contact_leads/{leadId} {
       allow create: if true; // Public form submission
-      allow read: if isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com';
-      allow update, delete: if isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com';
+      allow read, update, delete: if isSuperAdmin();
     }
 
     // Plans collection (subscription plan definitions)
@@ -151,7 +163,7 @@ service cloud.firestore {
     // Only admin or Cloud Functions can modify
     match /plans/{planId} {
       allow read: if isAuthenticated();
-      allow write: if isFunction() || (isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com');
+      allow write: if isFunction() || isSuperAdmin();
     }
 
     // 🎯 Core Library Configuration (global stores metadata)
@@ -159,7 +171,25 @@ service cloud.firestore {
     // Only admin can write (to create/update stores)
     match /config/coreLibraryStores {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.token.email == 'rdocerda@gmail.com';
+      allow write: if isSuperAdmin();
+    }
+
+    // ===========================
+    // 📊 ANALYTICS COLLECTIONS
+    // ===========================
+    
+    // Daily Metrics - Aggregated analytics data
+    // Only super admins can read, only Cloud Functions can write
+    match /daily_metrics/{metricId} {
+      allow read: if isSuperAdmin();
+      allow write: if isFunction();
+    }
+    
+    // User Activities - User session tracking
+    // Only super admins can read, only Cloud Functions can write
+    match /user_activities/{activityId} {
+      allow read: if isSuperAdmin();
+      allow write: if isFunction();
     }
   }
 }

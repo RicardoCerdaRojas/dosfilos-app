@@ -14,6 +14,8 @@ import { getFeatureLabel } from '@/utils/featureLabels';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
 import { toast } from 'sonner';
+import { markWelcomeCompleted } from '@/hooks/useOnboardingState';
+import { useFirebase } from '@/context/firebase-context';
 
 interface WelcomeModalProps {
   open: boolean;
@@ -28,6 +30,13 @@ interface WelcomeModalProps {
  */
 export function WelcomeModal({ open, onOpenChange, onSkip }: WelcomeModalProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useFirebase();
+
+  // Handle skip with updated tracking
+  const handleSkip = () => {
+      if (user) markWelcomeCompleted(user.uid);
+      onSkip();
+  };
   const plans = getPublicPlans().filter(p => p.id !== 'free'); // Only show paid plans
 
   const handlePlanSelect = async (planId: string) => {
@@ -52,10 +61,6 @@ export function WelcomeModal({ open, onOpenChange, onSkip }: WelcomeModalProps) 
     }
   };
 
-  const handleSkip = () => {
-    onOpenChange(false);
-    onSkip();
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

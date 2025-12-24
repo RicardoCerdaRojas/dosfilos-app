@@ -10,6 +10,8 @@ export * from './firebase/FirebaseChunkRepository';
 export * from './firebase/FirestoreVectorRepository';
 export * from './firebase/FirebaseUserProfileRepository';
 export * from './firebase/FirebasePlanRepository';
+export * from './firebase/FirebaseAnalyticsRepository'; // 📊 Analytics Repository
+export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';
 export * from './gemini/GeminiPlanGenerator';
@@ -18,6 +20,7 @@ export * from './gemini/GeminiFileSearchService';
 export * from './greek-tutor/gemini/GeminiGreekTutorService'; // 🏛️ Greek Tutor Service
 export * from './greek-tutor/repositories/FirestoreGreekSessionRepository';
 export * from './services/DocumentProcessingService';
+export * from './services/AnalyticsService'; // 📊 Analytics Tracking Service
 export * from './cache/MemoryCacheService';
 export * from './export/PdfExportService';
 export * from './strategies';

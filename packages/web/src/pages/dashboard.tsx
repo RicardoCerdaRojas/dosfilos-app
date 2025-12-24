@@ -1,25 +1,44 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Sparkles, BookOpen, TrendingUp, Clock, MapPin } from 'lucide-react';
+import { FileText, Sparkles, BookOpen, TrendingUp, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/context/firebase-context';
 import { sermonService } from '@dosfilos/application';
 import { SermonEntity } from '@dosfilos/domain';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from '@/i18n';
+import { useOnboardingState } from '@/hooks/useOnboardingState';
+import { OnboardingWelcomeModal, ActivationBanner, CelebrationModal } from '@/components/onboarding';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export function DashboardPage() {
   const { user } = useFirebase();
   const { t } = useTranslation('dashboard');
+  const navigate = useNavigate();
   const [sermons, setSermons] = useState<SermonEntity[]>([]);
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalSermons: 0,
-    aiGenerated: 0, // We can approximate this by checking if it has wizardProgress or created via wizard
+    aiGenerated: 0,
     bibleReferences: 0,
     avgDuration: 0,
     bibleCoverage: 0,
     uniqueBooks: 0
   });
+
+  // Onboarding state
+  const onboarding = useOnboardingState();
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  // Show modals based on onboarding state
+  useEffect(() => {
+    if (onboarding.shouldShowWelcome) {
+      setShowWelcome(true);
+    }
+    if (onboarding.shouldShowCelebration) {
+      setShowCelebration(true);
+    }
+  }, [onboarding.shouldShowWelcome, onboarding.shouldShowCelebration]);
 
   useEffect(() => {
     if (user) {
@@ -35,8 +54,6 @@ export function DashboardPage() {
       calculateStats(data);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -135,6 +152,9 @@ export function DashboardPage() {
         </p>
       </div>
 
+      {/* Activation Banner - Show only for users with 0 sermons */}
+      {onboarding.shouldShowBanner && <ActivationBanner />}
+
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
@@ -186,11 +206,28 @@ export function DashboardPage() {
                   </div>
                 </div>
               ))}
-              {sermons.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  {t('recentSermons.empty')}
+            {sermons.length === 0 && (
+              <div className="text-center py-12">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-purple-100 p-4 rounded-full">
+                    <Sparkles className="h-8 w-8 text-purple-600" />
+                  </div>
                 </div>
-              )}
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  ¡Crea tu primer sermón!
+                </h3>
+                <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
+                  Comienza tu jornada con nuestra asistente de IA para preparación homilética
+                </p>
+                <Button 
+                  onClick={() => navigate('/dashboard/generate-sermon')}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generar sermón
+                </Button>
+              </div>
+            )}
             </div>
           </CardContent>
         </Card>
@@ -230,6 +267,17 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Onboarding Modals */}
+      <OnboardingWelcomeModal 
+        isOpen={showWelcome}
+        onClose={() => setShowWelcome(false)}
+      />
+      
+      <CelebrationModal
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+      />
     </div>
   );
 }

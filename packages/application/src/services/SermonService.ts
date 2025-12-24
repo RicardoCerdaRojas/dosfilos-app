@@ -1,4 +1,4 @@
-import { FirebaseSermonRepository } from '@dosfilos/infrastructure';
+import { FirebaseSermonRepository, AnalyticsService } from '@dosfilos/infrastructure';
 import { SermonEntity, FindOptions, Sermon } from '@dosfilos/domain';
 
 export class SermonService {
@@ -36,7 +36,15 @@ export class SermonService {
                 scheduledDate: data.scheduledDate,
                 wizardProgress: data.wizardProgress,
             });
-            return await this.sermonRepository.create(sermon);
+            const createdSermon = await this.sermonRepository.create(sermon);
+
+            // Track sermon creation
+            AnalyticsService.trackSermonCreated(
+                createdSermon.id,
+                data.bibleReferences?.[0] || 'Unknown'
+            ).catch(err => console.warn('[SermonService] Failed to track sermon creation:', err));
+
+            return createdSermon;
         } catch (error: any) {
             throw new Error(error.message || 'Error al crear el sermón');
         }

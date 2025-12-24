@@ -9,13 +9,18 @@ import {
     User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { IAuthRepository } from '@dosfilos/domain';
 import { UserEntity } from '@dosfilos/domain';
-import { auth, db } from '../config/firebase';
+import { auth, db, functions } from '../config/firebase';
 
 export class FirebaseAuthRepository implements IAuthRepository {
     async signIn(email: string, password: string): Promise<UserEntity> {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+        // Track login
+        this.trackLogin().catch(err => console.warn('[Auth] Failed to track login:', err));
+
         return this.mapFirebaseUserToEntity(userCredential.user);
     }
 
@@ -28,17 +33,30 @@ export class FirebaseAuthRepository implements IAuthRepository {
         const userCredential = await signInWithPopup(auth, provider);
         const user = userCredential.user;
 
+        // Check if this is a new user by looking at metadata
+        const isNewUser = userCredential.user.metadata.creationTime === userCredential.user.metadata.lastSignInTime;
+
         // Create or update user document in Firestore
+        const userData: any = {
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            updatedAt: serverTimestamp(),
+        };
+
+        // Only set createdAt for new users
+        if (isNewUser) {
+            userData.createdAt = serverTimestamp();
+        }
+
         await setDoc(
             doc(db, 'users', user.uid),
-            {
-                email: user.email,
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                updatedAt: serverTimestamp(),
-            },
+            userData,
             { merge: true }
         );
+
+        // Track login
+        this.trackLogin().catch(err => console.warn('[Auth] Failed to track login:', err));
 
         return this.mapFirebaseUserToEntity(user);
     }
@@ -58,6 +76,9 @@ export class FirebaseAuthRepository implements IAuthRepository {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
+
+        // Track login (first login for new user)
+        this.trackLogin().catch(err => console.warn('[Auth] Failed to track login:', err));
 
         return this.mapFirebaseUserToEntity(user);
     }
@@ -106,5 +127,19 @@ export class FirebaseAuthRepository implements IAuthRepository {
             displayName: firebaseUser.displayName,
             photoURL: firebaseUser.photoURL,
         });
+    }
+
+    /**
+     * Track user login via Cloud Function
+     * Non-blocking - errors are logged but don't affect authentication flow
+     */
+    private async trackLogin(): Promise<void> {
+        try {
+            const trackLoginFn = httpsCallable(functions, 'onUserLogin');
+            await trackLoginFn();
+        } catch (error) {
+            // Silently fail - analytics shouldn't break auth flow
+            console.error('[Auth] Analytics tracking error:', error);
+        }
     }
 }

@@ -22,3 +22,15 @@ export { changePlan } from './stripe/changePlan';
 export { cancelSubscription } from './stripe/cancelSubscription';
 export { reactivateSubscription } from './stripe/reactivateSubscription';
 export { getInvoices } from './stripe/getInvoices';
+
+// Export Analytics functions
+export { trackUserActivity } from './analytics/trackUserActivity';
+export { onUserLogin } from './analytics/onUserLogin';
+export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
+
+// Export Email functions
+export { sendWelcomeEmail } from './emails/sendWelcomeEmail';
+
+// Export Admin functions
+export { deleteUser } from './admin/deleteUser';
+export { resendWelcomeEmail } from './admin/resendWelcomeEmail';

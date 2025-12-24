@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { BookOpen, FileText, Sparkles, Home, Settings, LogOut, Bell, Calendar, BookMarked, Languages, CreditCard } from 'lucide-react';
+import { BookOpen, FileText, Sparkles, Home, Settings, LogOut, Bell, Calendar, BookMarked, Languages, CreditCard, BarChart3, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -15,6 +15,9 @@ import {
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
 import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@dosfilos/infrastructure';
 
 const navigationGroups = [
   // Group 1: Main
@@ -36,10 +39,40 @@ const navigationGroups = [
   ],
 ];
 
+// Admin navigation (only shown to super admins)
+const adminNavigation = [
+  { name: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
+  { name: 'Gestión de Usuarios', href: '/dashboard/admin/users', icon: Users },
+];
+
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is super admin
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsAdmin(userData.role === 'super_admin');
+        }
+      } catch (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminRole();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -100,6 +133,38 @@ export function Sidebar() {
               )}
             </div>
           ))}
+
+          {/* Admin Section - Only visible to super admins */}
+          {isAdmin && (
+            <>
+              <div className="my-2 border-t" />
+              <div className="px-3 py-2">
+                <p className="text-xs font-semibold text-orange-600 uppercase tracking-wider">
+                  Admin
+                </p>
+              </div>
+              {adminNavigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link 
+                    key={item.name} 
+                    to={item.href}
+                  >
+                    <Button
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      className={cn(
+                        'w-full justify-start gap-3',
+                        isActive && 'bg-secondary text-secondary-foreground'
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.name}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
       </ScrollArea>
 

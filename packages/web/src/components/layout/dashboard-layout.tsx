@@ -7,10 +7,23 @@ import { ThemeToggleButtons } from '@/components/theme-toggle-buttons';
 import { cn } from '@/lib/utils';
 import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
 
+import { useSmartTriggers } from '@/hooks/useSmartTriggers';
+
 export function DashboardLayout() {
   const location = useLocation();
   const isPlanner = location.pathname.startsWith('/planner');
   const isGenerator = location.pathname.includes('/sermons/generate');
+
+  // Initialize Smart Triggers
+  useSmartTriggers();
+
+  // Track dashboard visits for "Stuck User" trigger
+  useEffect(() => {
+    if (location.pathname === '/dashboard') {
+        const visits = parseInt(localStorage.getItem('dashboard_visits') || '0');
+        localStorage.setItem('dashboard_visits', (visits + 1).toString());
+    }
+  }, [location.pathname]);
 
   // DEBUG: Log location changes
   useEffect(() => {

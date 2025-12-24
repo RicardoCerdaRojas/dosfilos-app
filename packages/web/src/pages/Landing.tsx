@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   BookOpen, Check, ChevronRight, Play, Star, 
   Sparkles, BookMarked, MessageSquare,
@@ -12,12 +12,15 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ContactModal } from '@/components/contact/ContactModal';
 import { useTranslation, LanguageSwitcher } from '@/i18n';
+import { useFirebase } from '@/context/firebase-context';
 
 export function Landing() {
   // i18n hooks
   const { t } = useTranslation('landing');
   const { t: tNav } = useTranslation('navigation');
   const { t: tCommon } = useTranslation('common');
+  const navigate = useNavigate();
+  const { user } = useFirebase();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -27,6 +30,26 @@ export function Landing() {
   const openContactModal = (type: 'sales' | 'scholarship' | 'support' | 'demo') => {
     setContactModalType(type);
     setContactModalOpen(true);
+  };
+
+  // Handler for pricing button clicks
+  const handlePlanSelect = async (planKey: 'free' | 'pro' | 'team') => {
+    // If free plan, just redirect to register
+    if (planKey === 'free') {
+      navigate('/register');
+      return;
+    }
+
+    // For paid plans, check if user is logged in
+    if (!user) {
+      // Store intended plan in sessionStorage and redirect to register
+      sessionStorage.setItem('selectedPlan', planKey);
+      navigate('/register');
+      return;
+    }
+
+    // User is logged in, redirect to subscription page where they can checkout
+    navigate('/dashboard/subscription');
   };
 
   const heroImages = [
@@ -1077,6 +1100,7 @@ export function Landing() {
                           backgroundColor: popular ? '#2563eb' : '#1e293b',
                           color: 'white'
                         }}
+                        onClick={() => handlePlanSelect(key)}
                       >
                         {plan.cta}
                       </Button>

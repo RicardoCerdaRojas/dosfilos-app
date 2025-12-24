@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3 
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -32,8 +32,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggleMenu } from '@/components/theme-toggle';
 import { useTranslation } from '@/i18n';
-
-const ADMIN_EMAIL = 'rdocerda@gmail.com';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function AppSidebar() {
   const location = useLocation();
@@ -41,6 +40,30 @@ export function AppSidebar() {
   const { user } = useFirebase();
   const { t } = useTranslation('navigation');
   const [newLeadsCount, setNewLeadsCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is super admin
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsAdmin(userData.role === 'super_admin');
+        }
+      } catch (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminRole();
+  }, [user]);
 
   const navigationGroups = [
     // Group 1: Main
@@ -63,13 +86,15 @@ export function AppSidebar() {
   ];
 
   const adminNavigation = [
+    { name: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
+    { name: 'Gestión de Usuarios', href: '/dashboard/admin/users', icon: Users },
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
     { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
   ];
 
   // Subscribe to new leads count for admin
   useEffect(() => {
-    if (!user || user.email !== ADMIN_EMAIL) return;
+    if (!user || !isAdmin) return;
 
     const q = query(
       collection(db, 'contact_leads'),
@@ -146,7 +171,7 @@ export function AppSidebar() {
         ))}
 
         {/* Admin Section - Only visible for admin users */}
-        {user?.email === ADMIN_EMAIL && (
+        {isAdmin && (
           <>
             <SidebarSeparator />
             <SidebarGroup>
