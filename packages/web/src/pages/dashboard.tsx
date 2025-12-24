@@ -10,11 +10,14 @@ import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { OnboardingWelcomeModal, ActivationBanner, CelebrationModal } from '@/components/onboarding';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { UpgradeRequiredModal } from '@/components/upgrade';
 
 export function DashboardPage() {
   const { user } = useFirebase();
   const { t } = useTranslation('dashboard');
   const navigate = useNavigate();
+  const { checkCanCreateSermon } = useUsageLimits();
   const [sermons, setSermons] = useState<SermonEntity[]>([]);
   const [stats, setStats] = useState({
     totalSermons: 0,
@@ -29,6 +32,32 @@ export function DashboardPage() {
   const onboarding = useOnboardingState();
   const [showWelcome, setShowWelcome] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState({
+    reason: 'limit_reached' as const,
+    limitType: 'sermons' as const,
+    currentLimit: 1
+  });
+
+  // Handler for creating a new sermon with limit check
+  const handleCreateSermon = async () => {
+    const check = await checkCanCreateSermon();
+    
+    if (!check.allowed) {
+      // Show upgrade modal instead of just toast
+      setUpgradeReason({
+        reason: 'limit_reached',
+        limitType: 'sermons',
+        currentLimit: check.limit || 1
+      });
+      setShowUpgradeModal(true);
+      return;
+    }
+    
+    navigate('/dashboard/generate-sermon');
+  };
 
   // Show modals based on onboarding state
   useEffect(() => {
@@ -220,7 +249,7 @@ export function DashboardPage() {
                   Comienza tu jornada con nuestra asistente de IA para preparación homilética
                 </p>
                 <Button 
-                  onClick={() => navigate('/dashboard/generate-sermon')}
+                  onClick={handleCreateSermon}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
@@ -277,6 +306,15 @@ export function DashboardPage() {
       <CelebrationModal
         isOpen={showCelebration}
         onClose={() => setShowCelebration(false)}
+      />
+
+      {/* Upgrade Required Modal */}
+      <UpgradeRequiredModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        reason={upgradeReason.reason}
+        limitType={upgradeReason.limitType}
+        currentLimit={upgradeReason.currentLimit}
       />
     </div>
   );

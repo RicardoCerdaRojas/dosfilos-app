@@ -29,6 +29,8 @@ import { PlannerLayout } from './PlannerLayout';
 import { PlannerField } from './PlannerField';
 import { BiblePassageViewer, BibleReference } from '@/components/bible/BiblePassageViewer';
 import { useTranslation } from '@/i18n';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { UpgradeRequiredModal } from '@/components/upgrade';
 
 type Step = 'strategy' | 'context' | 'objective' | 'structure' | 'generating';
 
@@ -36,8 +38,17 @@ export function PlannerWizard() {
     const { user } = useFirebase();
     const navigate = useNavigate();
     const { t } = useTranslation('planner');
+    const { checkCanCreatePreachingPlan } = useUsageLimits();
     const [step, setStep] = useState<Step>('strategy');
     const [loading, setLoading] = useState(false);
+    
+    // Upgrade modal state
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeReason, setUpgradeReason] = useState({
+        reason: 'limit_reached' as const,
+        limitType: 'plans' as const,
+        currentLimit: 1
+    });
     const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
     
     // Form State
@@ -144,6 +155,20 @@ export function PlannerWizard() {
 
     const handleFinalize = async () => {
         if (!user || !proposedPlan) return;
+        
+        // Check usage limits before creating plan
+        const check = await checkCanCreatePreachingPlan();
+        
+        if (!check.allowed) {
+            setUpgradeReason({
+                reason: 'limit_reached',
+                limitType: 'plans',
+                currentLimit: check.limit || 1
+            });
+            setShowUpgradeModal(true);
+            return;
+        }
+        
         setLoading(true);
         try {
             await seriesService.createSeriesFromPlan(user.uid, {
@@ -842,6 +867,15 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
             onChatOpenChange={setIsChatOpen}
         >
             {wizardContent}
+            
+            {/* Upgrade Required Modal */}
+            <UpgradeRequiredModal
+                open={showUpgradeModal}
+                onOpenChange={setShowUpgradeModal}
+                reason={upgradeReason.reason}
+                limitType={upgradeReason.limitType}
+                currentLimit={upgradeReason.currentLimit}
+            />
         </PlannerLayout>
     );
 }

@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { UpgradeRequiredModal } from '@/components/upgrade';
 
 interface SeriesFormData {
   title: string;
@@ -23,8 +25,17 @@ export function SeriesForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const { checkCanCreatePreachingPlan } = useUsageLimits();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!id);
+  
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState({
+    reason: 'limit_reached' as const,
+    limitType: 'plans' as const,
+    currentLimit: 1
+  });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<SeriesFormData>();
 
@@ -57,6 +68,22 @@ export function SeriesForm() {
 
   const onSubmit = async (data: SeriesFormData) => {
     if (!user) return;
+    
+    // Check limits only for NEW plans (not when editing)
+    if (!id) {
+      const check = await checkCanCreatePreachingPlan();
+      
+      if (!check.allowed) {
+        setUpgradeReason({
+          reason: 'limit_reached',
+          limitType: 'plans',
+          currentLimit: check.limit || 1
+        });
+        setShowUpgradeModal(true);
+        return;
+      }
+    }
+    
     setLoading(true);
     try {
       const payload = {
@@ -172,6 +199,15 @@ export function SeriesForm() {
           </div>
         </form>
       </Card>
+      
+      {/* Upgrade Required Modal */}
+      <UpgradeRequiredModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        reason={upgradeReason.reason}
+        limitType={upgradeReason.limitType}
+        currentLimit={upgradeReason.currentLimit}
+      />
     </div>
   );
 }

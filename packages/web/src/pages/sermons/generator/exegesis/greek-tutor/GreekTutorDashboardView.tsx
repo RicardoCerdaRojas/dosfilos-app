@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GreekTutorDashboard } from './dashboard/GreekTutorDashboard';
 import { useGreekTutor } from './GreekTutorProvider';
 import { useNavigate } from 'react-router-dom';
 import { useFirebase } from '@/context/firebase-context';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { UpgradeRequiredModal } from '@/components/upgrade';
 
 /**
  * Wrapper component that provides use cases to GreekTutorDashboard
@@ -12,8 +14,30 @@ export const GreekTutorDashboardView: React.FC = () => {
     const { getUserSessions, deleteSession } = useGreekTutor();
     const { user } = useFirebase();
     const navigate = useNavigate();
+    const { checkCanStartGreekSession } = useUsageLimits();
+    
+    // Upgrade modal state
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeReason, setUpgradeReason] = useState({
+        reason: 'limit_reached' as const,
+        limitType: 'greek_sessions' as const,
+        currentLimit: 1
+    });
 
-    const handleCreateNew = () => {
+    const handleCreateNew = async () => {
+        // Check usage limits before creating session
+        const check = await checkCanStartGreekSession();
+        
+        if (!check.allowed) {
+            setUpgradeReason({
+                reason: 'limit_reached',
+                limitType: 'greek_sessions',
+                currentLimit: check.limit || 1
+            });
+            setShowUpgradeModal(true);
+            return;
+        }
+        
         // Navigate to the session creation flow
         // For now, navigate directly to the exegesis flow
         navigate('/sermon/generator/exegesis');
@@ -30,6 +54,15 @@ export const GreekTutorDashboardView: React.FC = () => {
                 getUserSessionsUseCase={getUserSessions}
                 deleteSessionUseCase={deleteSession}
                 onCreateNew={handleCreateNew}
+            />
+            
+            {/* Upgrade Required Modal */}
+            <UpgradeRequiredModal
+                open={showUpgradeModal}
+                onOpenChange={setShowUpgradeModal}
+                reason={upgradeReason.reason}
+                limitType={upgradeReason.limitType}
+                currentLimit={upgradeReason.currentLimit}
             />
         </div>
     );

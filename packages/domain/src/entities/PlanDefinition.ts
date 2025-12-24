@@ -10,10 +10,22 @@ export interface PlanDefinition {
 
     // Usage limits
     limits: {
-        aiRequestsPerDay: number; // AI generation limit per day
-        libraryStorageMB: number; // Storage limit in MB
-        maxMembers: number; // Team members (future)
-        sermonsPerMonth: number; // Sermon creation limit
+        // Sermon generation limits
+        sermonsPerMonth: number; // Monthly sermon creation limit (all plans)
+
+        // Preaching plans limits
+        maxPreachingPlans?: number; // Total limit (Free plan only)
+        maxPreachingPlansPerMonth?: number; // Monthly limit (Pro/Team only)
+
+        // Greek Tutor limits
+        greekSessionsPerMonth: number; // Monthly Greek Tutor study sessions
+
+        // Library limits
+        libraryStorageMB: number; // Storage limit in MB (0 = no access)
+
+        // Legacy/deprecated fields (keep for backwards compatibility)
+        aiRequestsPerDay?: number; // AI generation limit per day
+        maxMembers?: number; // Team members (future)
     };
 
     // Pricing

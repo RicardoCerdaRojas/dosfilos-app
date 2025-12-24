@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useFirebase } from '@/context/firebase-context';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { libraryService, categoryService } from '@dosfilos/application';
 import { LibraryResourceEntity, LibraryCategory, ResourceType } from '@dosfilos/domain';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -17,6 +18,7 @@ import { EditResourceModal } from './EditResourceModal';
 import { PhasePreferenceModal } from './PhasePreferenceModal';
 import { ConfigureCoreStoresModal } from './ConfigureCoreStoresModal';
 import { cn } from '@/lib/utils';
+import { UpgradeRequiredPage } from '@/components/upgrade';
 
 type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
 type ViewMode = 'grid' | 'list';
@@ -31,7 +33,9 @@ const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
 export function LibraryManager() {
     const { user } = useFirebase();
+    const { checkCanAccessLibrary } = useUsageLimits();
     const isAdmin = user?.email === ADMIN_EMAIL;
+    const [hasLibraryAccess, setHasLibraryAccess] = useState<boolean | null>(null);
     const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
     const [categories, setCategories] = useState<LibraryCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -74,9 +78,23 @@ export function LibraryManager() {
         }
     }, [user]);
 
+    // Check library access for free users
+    useEffect(() => {
+        async function checkAccess() {
+            if (!user) {
+                setHasLibraryAccess(false);
+                return;
+            }
+            
+            const canAccess = await checkCanAccessLibrary();
+            setHasLibraryAccess(canAccess);
+        }
+        checkAccess();
+    }, [user, checkCanAccessLibrary]);
+
     // Subscribe to real-time resource updates
     useEffect(() => {
-        if (!user) return;
+        if (!user || hasLibraryAccess === false) return;
 
         const unsubscribe = libraryService.subscribeToUserResources(
             user.uid,
@@ -89,7 +107,7 @@ export function LibraryManager() {
 
         // Cleanup subscription on unmount
         return () => unsubscribe();
-    }, [user]);
+    }, [user, hasLibraryAccess]); // checkAllIndexStatus is defined below, exclude rom deps
 
     // Filtered resources based on search and category
     const filteredResources = useMemo(() => {
@@ -371,6 +389,25 @@ export function LibraryManager() {
     };
 
     const unindexedCount = Object.values(indexStatus).filter(s => s === 'not-indexed').length;
+
+    // Show upgrade screen for free users
+    if (hasLibraryAccess === null) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (hasLibraryAccess === false) {
+        return (
+            <UpgradeRequiredPage
+                reason="module_restricted"
+                module="Biblioteca"
+                limitType="library"
+            />
+        );
+    }
 
     return (
         <>

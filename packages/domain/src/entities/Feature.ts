@@ -6,6 +6,7 @@ export enum Module {
     GENERAR = 'module:generar',
     BIBLIOTECA = 'module:biblioteca',
     CONFIGURACION = 'module:configuracion',
+    GREEK_TUTOR = 'module:greek_tutor',
 }
 
 // Feature capabilities (from plans.features array)

@@ -120,6 +120,17 @@ export function useAdminMetrics() {
                     console.log('[useAdminMetrics] No daily_metrics found, calculating from users...');
                     const usersSnapshot = await getDocs(collection(db, 'users'));
 
+                    // Fetch plan prices from Firestore
+                    const plansSnapshot = await getDocs(collection(db, 'plans'));
+                    const planPrices: Record<string, number> = {};
+                    plansSnapshot.forEach((doc) => {
+                        const planData = doc.data();
+                        if (planData.pricing?.monthly) {
+                            planPrices[doc.id] = planData.pricing.monthly;
+                        }
+                    });
+                    console.log('[useAdminMetrics] Plan prices loaded:', planPrices);
+
                     // Count actual sermons
                     const sermonsSnapshot = await getDocs(collection(db, 'sermons'));
                     const totalSermonsCreated = sermonsSnapshot.size;
@@ -169,6 +180,22 @@ export function useAdminMetrics() {
                     });
                     const dau = uniqueActiveUsersToday.size;
 
+                    // Calculate MAU (users active in last 30 days)
+                    const thirtyDaysAgo = new Date(today);
+                    thirtyDaysAgo.setDate(today.getDate() - 30);
+                    const uniqueActiveUsersThisMonth = new Set<string>();
+
+                    userActivitiesSnapshot.forEach((doc) => {
+                        const activityData = doc.data();
+                        if (activityData.timestamp) {
+                            const activityDate = activityData.timestamp.toDate();
+                            if (activityDate >= thirtyDaysAgo) {
+                                uniqueActiveUsersThisMonth.add(activityData.userId);
+                            }
+                        }
+                    });
+                    const mau = uniqueActiveUsersThisMonth.size;
+
                     usersSnapshot.forEach((doc) => {
                         const userData = doc.data();
                         totalUsers++;
@@ -199,10 +226,14 @@ export function useAdminMetrics() {
                         else if (planId === 'pro') planCounts.pro++;
                         else if (planId === 'team') planCounts.team++;
 
-                        // Calculate MRR with exact pricing
+                        // Calculate MRR using prices from Firestore
                         if (userData.subscription?.status === 'active') {
-                            if (planId === 'pro') mrr += 9.99;
-                            else if (planId === 'team') mrr += 24.99;
+                            const price = planPrices[planId];
+                            if (price) {
+                                mrr += price;
+                            } else {
+                                console.warn(`[useAdminMetrics] No price found for plan: ${planId}`);
+                            }
                         }
                     });
 
@@ -214,11 +245,12 @@ export function useAdminMetrics() {
                     console.log('[useAdminMetrics] Total Greek sessions:', totalGreekSessions);
                     console.log('[useAdminMetrics] Total activities:', totalLogins);
                     console.log('[useAdminMetrics] DAU calculated:', dau);
+                    console.log('[useAdminMetrics] MAU calculated:', mau);
 
                     setMetrics({
                         totalUsers,
                         dau,
-                        mau: 0, // Can't calculate without activity data
+                        mau,
                         mrr,
                         activeSubscriptions: planCounts,
                         newUsersToday,
