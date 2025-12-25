@@ -15,6 +15,7 @@ export * from './entities/FileSearchStoreEntity'; // 🎯 File Search Stores
 export * from './entities/UserActivity'; // 📊 Analytics: User Activity
 export * from './entities/UserActivitySummary'; // 📊 Analytics: User Activity Summary
 export * from './entities/DailyMetrics'; // 📊 Analytics: Daily Metrics
+export * from './entities/GeoEvent'; // 📊 Geographic Analytics: Events
 export * from './greek-tutor/entities/entities'; // 🏛️ Greek Tutor Entities
 export * from './greek-tutor/syntax-analysis'; // 🏛️ Greek Syntax Analysis
 
@@ -29,6 +30,7 @@ export * from './repositories/IOrganizationRepository';
 export * from './repositories/IAnalyticsRepository'; // 📊 Analytics Repository
 export * from './repositories/IUserRepository'; // 📊 Admin User Repository
 export * from './repositories/IUserActivityRepository'; // 📊 User Activity Repository
+export * from './repositories/IGeoEventRepository'; // 📊 Geographic Event Repository
 
 
 // Config

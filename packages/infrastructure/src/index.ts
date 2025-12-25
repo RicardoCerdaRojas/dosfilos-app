@@ -25,3 +25,5 @@ export * from './services/AnalyticsService'; // 📊 Analytics Tracking Service
 export * from './cache/MemoryCacheService';
 export * from './export/PdfExportService';
 export * from './strategies';
+export * from './firebase/FirebaseGeoEventRepository'; // 📊 Geographic Event Repository
+export * from './services/GeolocationService'; // 📊 IP Geolocation Service
