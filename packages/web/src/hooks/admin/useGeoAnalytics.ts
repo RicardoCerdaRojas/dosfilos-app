@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase/config';
-import { FirebaseGeoEventRepository, GeolocationService } from '@dosfilos/infrastructure';
+import { db, FirebaseGeoEventRepository } from '@dosfilos/infrastructure';
 import { GetGeoAnalytics } from '@dosfilos/application';
 import { FunnelMetrics, CountrySummary, DailyMetric } from '@dosfilos/domain';
 
