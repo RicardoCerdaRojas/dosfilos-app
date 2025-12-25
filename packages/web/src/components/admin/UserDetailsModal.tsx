@@ -41,7 +41,10 @@ export function UserDetailsModal({ user, isOpen, onClose, onChangePlan }: UserDe
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent 
+                className="max-w-5xl max-h-[90vh] overflow-y-auto"
+                style={{ width: '85vw', maxWidth: '1200px' }}
+            >
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3">
                         <User className="h-6 w-6" />

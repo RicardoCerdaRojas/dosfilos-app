@@ -23,7 +23,10 @@ export function UserActivityModal({ userId, isOpen, onClose }: Props) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent 
+                className="max-w-7xl max-h-[90vh] overflow-y-auto"
+                style={{ width: '90vw', maxWidth: '1400px' }}
+            >
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3">
                         <User className="h-5 w-5 text-slate-600" />
