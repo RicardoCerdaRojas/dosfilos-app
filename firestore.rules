@@ -37,17 +37,23 @@ service cloud.firestore {
     // Sermons collection
     match /sermons/{sermonId} {
       // Allow reading individual sermons
-      allow get: if isOwner(resource.data.userId) || resource.data.isShared == true;
+      allow get: if isOwner(resource.data.userId) || resource.data.isShared == true || isSuperAdmin();
       
-      // Allow listing/querying sermons (for collections, version history, etc.)
-      // Security is enforced by requiring userId in the query itself
-      allow list: if isAuthenticated();
+      // Allow listing/querying sermons (for collections, version history, analytics)
+      // Security is enforced by requiring userId in the query itself or being super admin
+      allow list: if isAuthenticated() || isSuperAdmin();
       
       allow create: if isAuthenticated() && 
                        request.auth.uid == request.resource.data.userId &&
                        isValidSermon();
       allow update: if isOwner(resource.data.userId) && isValidSermon();
       allow delete: if isOwner(resource.data.userId);
+      
+      // Allow super admins to read wizardProgress subcollection for analytics
+      match /wizardProgress/{progressId} {
+        allow read: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId) || isSuperAdmin();
+        allow write: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
+      }
     }
 
     // Greek Tutor Sessions
