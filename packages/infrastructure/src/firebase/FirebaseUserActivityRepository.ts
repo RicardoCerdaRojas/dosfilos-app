@@ -44,15 +44,15 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
             const analytics = userData.analytics || {};
 
             // Get recent content in parallel
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
             const weekAgo = new Date();
             weekAgo.setDate(weekAgo.getDate() - 7);
             weekAgo.setHours(0, 0, 0, 0);
 
             const [contentToday, contentWeek] = await Promise.all([
-                this.getRecentContent(userId, 1),
+                this.getRecentContent(userId, 0), // 0 = today only
                 this.getRecentContent(userId, 7),
             ]);
 
@@ -163,9 +163,18 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
     }
 
     async getRecentContent(userId: string, days: number): Promise<ContentActivity[]> {
-        const sinceDate = new Date();
-        sinceDate.setDate(sinceDate.getDate() - days);
-        sinceDate.setHours(0, 0, 0, 0);
+        const now = new Date();
+        let sinceDate: Date;
+
+        if (days === 0) {
+            // Special case: today only (from midnight)
+            sinceDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        } else {
+            sinceDate = new Date();
+            sinceDate.setDate(sinceDate.getDate() - days);
+            sinceDate.setHours(0, 0, 0, 0);
+        }
+
         const sinceTimestamp = Timestamp.fromDate(sinceDate);
 
         try {

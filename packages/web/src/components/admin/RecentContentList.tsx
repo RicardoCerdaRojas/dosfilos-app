@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ContentActivity } from '@dosfilos/domain';
 import { Card } from '@/components/ui/card';
 import { FileText, BookOpen, Folder, Upload, CalendarDays, Clock } from 'lucide-react';
@@ -90,9 +91,21 @@ function ContentActivityItem({ item }: { item: ContentActivity }) {
 }
 
 export function RecentContentList({ content, title = 'Contenido Reciente' }: Props) {
+    const [showAll, setShowAll] = useState(false);
+    const displayLimit = 10;
+    const displayedContent = showAll ? content : content.slice(0, displayLimit);
+    const hasMore = content.length > displayLimit;
+
     return (
         <Card className="p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+                {content.length > 0 && (
+                    <span className="text-sm text-slate-500">
+                        {content.length} {content.length === 1 ? 'item' : 'items'}
+                    </span>
+                )}
+            </div>
             
             {content.length === 0 ? (
                 <div className="text-center py-8">
@@ -102,11 +115,31 @@ export function RecentContentList({ content, title = 'Contenido Reciente' }: Pro
                     <p className="text-slate-500 text-sm">No hay contenido reciente</p>
                 </div>
             ) : (
-                <ul className="space-y-2">
-                    {content.map((item) => (
-                        <ContentActivityItem key={item.id} item={item} />
-                    ))}
-                </ul>
+                <>
+                    <ul className="space-y-2 max-h-[500px] overflow-y-auto">
+                        {displayedContent.map((item) => (
+                            <ContentActivityItem key={item.id} item={item} />
+                        ))}
+                    </ul>
+                    
+                    {hasMore && !showAll && (
+                        <button
+                            onClick={() => setShowAll(true)}
+                            className="mt-4 w-full py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                            Ver {content.length - displayLimit} más...
+                        </button>
+                    )}
+                    
+                    {showAll && hasMore && (
+                        <button
+                            onClick={() => setShowAll(false)}
+                            className="mt-4 w-full py-2 text-sm text-slate-600 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                            Ver menos
+                        </button>
+                    )}
+                </>
             )}
         </Card>
     );
