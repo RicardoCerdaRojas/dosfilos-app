@@ -59,10 +59,18 @@ export function AnalyticsDashboard() {
                     </div>
                 </div>
 
-                <Button onClick={() => navigate('/dashboard/admin/users')}>
-                    <Users className="h-4 w-4 mr-2" />
-                    Gestión de Usuarios
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/dashboard/admin/geographic')}
+                    >
+                        🌍 Analytics Geográfico
+                    </Button>
+                    <Button onClick={() => navigate('/dashboard/admin/users')}>
+                        <Users className="h-4 w-4 mr-2" />
+                        Gestión de Usuarios
+                    </Button>
+                </div>
             </div>
 
             {metricsLoading ? (
