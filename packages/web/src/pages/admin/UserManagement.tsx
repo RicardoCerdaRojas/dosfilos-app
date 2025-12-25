@@ -296,7 +296,7 @@ export function UserManagement() {
                                                 {user.analytics?.sermonsCreated || 0} sermones
                                             </p>
                                             <p className="text-xs text-slate-500">
-                                                {user.analytics?.greekTutorSessions || 0} Greek · {user.analytics?.seriesCreated || 0} series
+                                                {user.analytics?.greekTutorSessions || 0} Greek · {user.analytics?.seriesCreated || 0} borradores
                                             </p>
                                         </div>
                                     </TableCell>

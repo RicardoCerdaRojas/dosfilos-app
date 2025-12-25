@@ -63,15 +63,15 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
                 userDisplayName: userData.displayName || null,
                 userPhotoURL: userData.photoURL || null,
 
-                // Content totals from analytics
-                totalSermonsCreated: analytics.sermonsCreated || 0,
-                totalSermonsPublished: analytics.sermonsPublished || 0,
+                // Content totals - COUNT REAL DATA from collections
+                totalSermonsCreated: await this.countUserSermons(userId),
+                totalSermonsPublished: await this.countUserSermons(userId, 'published'),
                 totalSermonsGenerated: analytics.sermonsGenerated || 0,
-                totalGreekSessions: analytics.greekTutorSessions || 0,
-                totalGreekSessionsCompleted: analytics.greekTutorCompleted || 0,
-                totalSeriesCreated: analytics.seriesCreated || 0,
-                totalLibraryUploads: analytics.libraryUploads || 0,
-                totalPreachingPlans: analytics.preachingPlansCreated || 0,
+                totalGreekSessions: await this.countUserGreekSessions(userId),
+                totalGreekSessionsCompleted: await this.countUserGreekSessions(userId, true),
+                totalSeriesCreated: await this.countUserSeries(userId),
+                totalLibraryUploads: await this.countUserLibraryUploads(userId),
+                totalPreachingPlans: await this.countUserPreachingPlans(userId),
 
                 // Recent activity
                 contentCreatedToday: contentToday,
@@ -376,5 +376,86 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
             createdAt: data.createdAt?.toDate() || new Date(),
             status: data.status || data.isCompleted ? 'completed' : 'active',
         };
+    }
+
+    // Helper methods to count real data
+    private async countUserSermons(userId: string, status?: string): Promise<number> {
+        try {
+            let q = query(
+                collection(this.db, this.sermonsCollection),
+                where('userId', '==', userId)
+            );
+
+            if (status) {
+                q = query(q, where('status', '==', status));
+            }
+
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting sermons:', error);
+            return 0;
+        }
+    }
+
+    private async countUserGreekSessions(userId: string, completedOnly?: boolean): Promise<number> {
+        try {
+            let q = query(
+                collection(this.db, this.greekSessionsCollection),
+                where('userId', '==', userId)
+            );
+
+            if (completedOnly) {
+                q = query(q, where('isCompleted', '==', true));
+            }
+
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting Greek sessions:', error);
+            return 0;
+        }
+    }
+
+    private async countUserSeries(userId: string): Promise<number> {
+        try {
+            const q = query(
+                collection(this.db, this.seriesCollection),
+                where('userId', '==', userId)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting series:', error);
+            return 0;
+        }
+    }
+
+    private async countUserLibraryUploads(userId: string): Promise<number> {
+        try {
+            const q = query(
+                collection(this.db, this.libraryCollection),
+                where('userId', '==', userId)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting library uploads:', error);
+            return 0;
+        }
+    }
+
+    private async countUserPreachingPlans(userId: string): Promise<number> {
+        try {
+            const q = query(
+                collection(this.db, this.plansCollection),
+                where('userId', '==', userId)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting preaching plans:', error);
+            return 0;
+        }
     }
 }

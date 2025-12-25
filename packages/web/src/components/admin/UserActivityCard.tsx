@@ -66,9 +66,9 @@ export function UserActivityCard({ activity }: Props) {
                 />
                 
                 <MetricItem
-                    label="Series"
+                    label="Borradores"
                     value={activity.totalSeriesCreated}
-                    icon={<Folder className="h-5 w-5" />}
+                    icon={<FileText className="h-5 w-5" />}
                     color="indigo"
                 />
                 
