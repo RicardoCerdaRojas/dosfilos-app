@@ -25,18 +25,18 @@ export class TrackGeoEvent {
     async execute(input: TrackGeoEventInput): Promise<void> {
         try {
             // Get geographic location from IP
-            const location = await this.geolocationService.getLocationByIP(input.ipAddress);
+            let location = await this.geolocationService.getLocationByIP(input.ipAddress);
 
             if (!location) {
                 console.warn('[TrackGeoEvent] Could not determine location for IP:', input.ipAddress);
                 // Use default location for unknown IPs
-                location: {
+                location = {
                     country: 'Unknown',
-                        countryCode: 'XX',
-                            region: '',
-                                city: '',
-                                    lat: 0,
-                                        lon: 0,
+                    countryCode: 'XX',
+                    region: '',
+                    city: '',
+                    lat: 0,
+                    lon: 0,
                 };
             }
 
