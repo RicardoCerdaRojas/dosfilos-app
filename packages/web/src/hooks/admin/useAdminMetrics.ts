@@ -131,27 +131,40 @@ export function useAdminMetrics() {
                     });
                     console.log('[useAdminMetrics] Plan prices loaded:', planPrices);
 
-                    // Count actual sermons
+                    // Count actual sermons WITH wizardProgress subcollection
+                    // These are sermons created through the generator
                     const sermonsSnapshot = await getDocs(collection(db, 'sermons'));
-                    const totalSermonsCreated = sermonsSnapshot.size;
+                    let totalSermonsCreated = 0;
+                    let sermonsCreatedToday = 0;
 
-                    // Count Greek Tutor sessions
-                    const greekSessionsSnapshot = await getDocs(collection(db, 'greek_sessions'));
-                    const totalGreekSessions = greekSessionsSnapshot.size;
-
-                    // Count today's sermons
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
-                    let sermonsCreatedToday = 0;
-                    sermonsSnapshot.forEach((doc) => {
-                        const sermonData = doc.data();
-                        if (sermonData.createdAt) {
-                            const createdDate = sermonData.createdAt.toDate();
-                            if (createdDate >= today) {
-                                sermonsCreatedToday++;
+
+                    // Count sermons that have wizardProgress
+                    for (const sermonDoc of sermonsSnapshot.docs) {
+                        const wizardProgressQuery = query(
+                            collection(db, 'sermons', sermonDoc.id, 'wizardProgress')
+                        );
+                        const wizardSnapshot = await getDocs(wizardProgressQuery);
+
+                        if (!wizardSnapshot.empty) {
+                            // This sermon has wizardProgress
+                            totalSermonsCreated++;
+
+                            // Check if created today
+                            const sermonData = sermonDoc.data();
+                            if (sermonData.createdAt) {
+                                const createdDate = sermonData.createdAt.toDate();
+                                if (createdDate >= today) {
+                                    sermonsCreatedToday++;
+                                }
                             }
                         }
-                    });
+                    }
+
+                    // Count Greek Tutor sessions (fixed collection name)
+                    const greekSessionsSnapshot = await getDocs(collection(db, 'greek_tutor_sessions'));
+                    const totalGreekSessions = greekSessionsSnapshot.size;
 
                     let totalUsers = 0;
                     let newUsersToday = 0;
