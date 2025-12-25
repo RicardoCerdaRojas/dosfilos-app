@@ -28,6 +28,7 @@ import { Landing } from '@/pages/Landing';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
 import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { AnalyticsDashboard } from '@/pages/admin/AnalyticsDashboard';
+import { GeographicDashboard } from '@/pages/admin/GeographicDashboard';
 import { UserManagement } from '@/pages/admin/UserManagement';
 import { GreekTutorPage } from '@/pages/greek-tutor/GreekTutorPage';
 import { GreekTutorProvider } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorProvider';
@@ -156,6 +157,7 @@ function App() {
             {/* 🎯 Admin Routes - Inside Dashboard Layout */}
             <Route path="admin/core-library" element={<CoreLibraryAdmin />} />
             <Route path="admin/analytics" element={<AnalyticsDashboard />} />
+            <Route path="admin/geographic" element={<GeographicDashboard />} />
             <Route path="admin/users" element={<UserManagement />} />
             
             {/* PoC Routes */}

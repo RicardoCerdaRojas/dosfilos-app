@@ -208,5 +208,19 @@ service cloud.firestore {
       allow read: if isSuperAdmin();
       allow write: if isFunction();
     }
+    
+    // Geographic Events - Anonymous tracking allowed
+    // For landing page tracking, registration, and login analytics
+    match /geo_events/{eventId} {
+      // Allow anonymous creation (landing page visits)
+      // TODO: Add rate limiting via Cloud Function or reCAPTCHA
+      allow create: if true;
+      
+      // Only super admins can read and delete
+      allow read, delete: if isSuperAdmin();
+      
+      // Events are immutable - no updates allowed
+      allow update: if false;
+    }
   }
 }
