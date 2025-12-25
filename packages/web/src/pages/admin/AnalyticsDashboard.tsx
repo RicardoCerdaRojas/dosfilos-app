@@ -9,7 +9,8 @@ import {
     DollarSign, 
     TrendingUp,
     ArrowLeft,
-    Loader2
+    Loader2,
+    Globe
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -64,7 +65,8 @@ export function AnalyticsDashboard() {
                         variant="outline"
                         onClick={() => navigate('/dashboard/admin/geographic')}
                     >
-                        🌍 Analytics Geográfico
+                        <Globe className="h-4 w-4 mr-2" />
+                        Analytics Geográfico
                     </Button>
                     <Button onClick={() => navigate('/dashboard/admin/users')}>
                         <Users className="h-4 w-4 mr-2" />
