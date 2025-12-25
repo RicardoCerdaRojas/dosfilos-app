@@ -51,7 +51,7 @@ service cloud.firestore {
     }
 
     // Greek Tutor Sessions
-    match /greek_sessions/{sessionId} {
+    match /greek_tutor_sessions/{sessionId} {
       // Super admins can read all sessions for analytics
       allow read: if isOwner(resource.data.userId) || isSuperAdmin();
       allow update, delete: if isOwner(resource.data.userId);
@@ -59,7 +59,7 @@ service cloud.firestore {
 
       match /insights/{insightId} {
         allow read, write: if isAuthenticated() && 
-           get(/databases/$(database)/documents/greek_sessions/$(sessionId)).data.userId == request.auth.uid;
+           get(/databases/$(database)/documents/greek_tutor_sessions/$(sessionId)).data.userId == request.auth.uid;
       }
     }
 
@@ -132,9 +132,9 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId);
     }
 
-    // Series collection
-    match /series/{seriesId} {
-      allow read: if isOwner(resource.data.userId);
+    // Sermon Series collection
+    match /sermon_series/{seriesId} {
+      allow read: if isOwner(resource.data.userId) || isSuperAdmin();
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
       allow update: if isOwner(resource.data.userId);
       allow delete: if isOwner(resource.data.userId);
@@ -173,6 +173,14 @@ service cloud.firestore {
     match /plans/{planId} {
       allow read: if isAuthenticated();
       allow write: if isFunction() || isSuperAdmin();
+    }
+
+    // Preaching Plans collection
+    match /preaching_plans/{planId} {
+      allow read: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
     }
 
     // 🎯 Core Library Configuration (global stores metadata)
