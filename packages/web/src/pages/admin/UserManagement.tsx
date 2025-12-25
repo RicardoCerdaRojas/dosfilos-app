@@ -7,6 +7,7 @@ import { useResendWelcomeEmail } from '@/hooks/admin/useResendWelcomeEmail';
 import { PlanBadge } from '@/components/admin/PlanBadge';
 import { EngagementBadge } from '@/components/admin/EngagementBadge';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
+import { UserActivityModal } from '@/components/admin/UserActivityModal';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ import {
     Download,
     User as UserIcon,
     Eye,
+    Activity,
     CreditCard,
     Trash2,
     Mail
@@ -69,6 +71,10 @@ export function UserManagement() {
     
     // Resend Email hook
     const { resendEmail, isLoading: isResending } = useResendWelcomeEmail();
+    
+    // Activity modal state
+    const [activityUserId, setActivityUserId] = useState<string | null>(null);
+    const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
 
     // Build filters object
     const filters = {
@@ -119,6 +125,11 @@ export function UserManagement() {
         console.log('Change plan for user:', userId);
         // Could navigate to /dashboard/admin/users/{userId}/change-plan
         // or open a ChangePlanModal
+    };
+    
+    const handleViewActivity = (userId: string) => {
+        setActivityUserId(userId);
+        setIsActivityModalOpen(true);
     };
 
     const handleDeleteClick = (user: any) => {
@@ -234,6 +245,7 @@ export function UserManagement() {
                                 <TableHead>Usuario</TableHead>
                                 <TableHead>Plan</TableHead>
                                 <TableHead>Estado</TableHead>
+                                <TableHead>Actividad</TableHead>
                                 <TableHead>Engagement</TableHead>
                                 <TableHead>Último Login</TableHead>
                                 <TableHead>Registrado</TableHead>
@@ -279,6 +291,16 @@ export function UserManagement() {
                                         </span>
                                     </TableCell>
                                     <TableCell>
+                                        <div className="text-sm">
+                                            <p className="font-medium text-slate-900">
+                                                {user.analytics?.sermonsCreated || 0} sermones
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {user.analytics?.greekTutorSessions || 0} Greek · {user.analytics?.seriesCreated || 0} series
+                                            </p>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
                                         <EngagementBadge 
                                             score={user.analytics?.engagementScore || 0}
                                             showScore={true}
@@ -301,6 +323,15 @@ export function UserManagement() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleViewActivity(user.id)}
+                                                title="Ver actividad detallada"
+                                            >
+                                                <Activity className="h-4 w-4 mr-1" />
+                                                Actividad
+                                            </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
@@ -394,6 +425,16 @@ export function UserManagement() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            {/* Activity Modal */}
+            <UserActivityModal
+                userId={activityUserId}
+                isOpen={isActivityModalOpen}
+                onClose={() => {
+                    setIsActivityModalOpen(false);
+                    setActivityUserId(null);
+                }}
+            />
         </div>
     );
 }
