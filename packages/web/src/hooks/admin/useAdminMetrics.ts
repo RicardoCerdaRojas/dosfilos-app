@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@dosfilos/infrastructure';
 
 /**
@@ -80,6 +80,11 @@ export function useAdminMetrics() {
             try {
                 setLoading(true);
 
+                // TEMPORARY: Skip daily_metrics and always calculate from real data
+                // TODO: Re-enable once daily_metrics are properly aggregated
+                const metricsSnapshot = { empty: true }; // Force fallback
+
+                /*
                 // Try to get latest daily metrics
                 const metricsQuery = query(
                     collection(db, 'daily_metrics'),
@@ -115,7 +120,7 @@ export function useAdminMetrics() {
                         newUsersToday: latestData.newUsers || 0,
                         growthRate
                     });
-                } else {
+                } else */ {
                     // Fallback: Calculate metrics from users collection
                     console.log('[useAdminMetrics] No daily_metrics found, calculating from users...');
                     const usersSnapshot = await getDocs(collection(db, 'users'));
