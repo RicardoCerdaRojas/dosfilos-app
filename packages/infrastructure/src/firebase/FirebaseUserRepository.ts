@@ -211,7 +211,18 @@ export class FirebaseUserRepository implements IUserRepository {
         userId: string,
         field: keyof Pick<
             UserAnalytics,
-            'loginCount' | 'sessionCount' | 'sermonsCreated' | 'sermonsGenerated' | 'greekTutorSessions' | 'libraryUploads'
+            | 'loginCount'
+            | 'sessionCount'
+            | 'sermonsCreated'
+            | 'sermonsPublished'
+            | 'sermonsGenerated'
+            | 'greekTutorSessions'
+            | 'greekTutorCompleted'
+            | 'libraryUploads'
+            | 'seriesCreated'
+            | 'preachingPlansCreated'
+            | 'contentCreatedToday'
+            | 'contentCreatedThisWeek'
         >,
         amount: number = 1
     ): Promise<void> {
@@ -291,7 +302,8 @@ export class FirebaseUserRepository implements IUserRepository {
                 lastLoginAt: data.analytics.lastLoginAt?.toDate() || new Date(),
                 lastActivityAt: data.analytics.lastActivityAt?.toDate() || new Date(),
                 firstSermonAt: data.analytics.firstSermonAt?.toDate(),
-                firstAIGenerationAt: data.analytics.firstAIGenerationAt?.toDate()
+                firstAIGenerationAt: data.analytics.firstAIGenerationAt?.toDate(),
+                lastContentCreatedAt: data.analytics.lastContentCreatedAt?.toDate()
             } : undefined,
             metadata: data.metadata,
             createdAt: data.createdAt?.toDate() || new Date(),

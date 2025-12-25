@@ -16,15 +16,24 @@ export interface UserAnalytics {
     sessionCount: number;
     totalSessionDuration: number; // in minutes
 
-    // Feature usage
+    // Feature usage - Content counters
     sermonsCreated: number;
-    sermonsGenerated: number; // AI-generated sermons
+    sermonsPublished: number;        // NEW: Only published sermons
+    sermonsGenerated: number;        // AI-generated sermons
     greekTutorSessions: number;
+    greekTutorCompleted: number;     // NEW: Completed sessions
     libraryUploads: number;
+    seriesCreated: number;           // NEW: Sermon series
+    preachingPlansCreated: number;   // NEW: Preaching plans
 
     // Important timestamps
     firstSermonAt?: Date;
     firstAIGenerationAt?: Date;
+    lastContentCreatedAt?: Date;     // NEW: Last content creation
+
+    // Daily activity tracking (resets daily)
+    contentCreatedToday: number;     // NEW: Counter for today's content
+    contentCreatedThisWeek: number;  // NEW: Counter for this week's content
 
     // Engagement metrics (computed)
     engagementScore: number; // 0-100
@@ -152,9 +161,15 @@ export class UserEntity implements User {
             sessionCount: 0,
             totalSessionDuration: 0,
             sermonsCreated: 0,
+            sermonsPublished: 0,
             sermonsGenerated: 0,
             greekTutorSessions: 0,
+            greekTutorCompleted: 0,
             libraryUploads: 0,
+            seriesCreated: 0,
+            preachingPlansCreated: 0,
+            contentCreatedToday: 0,
+            contentCreatedThisWeek: 0,
             engagementScore: 0,
             riskLevel: 'low',
         };

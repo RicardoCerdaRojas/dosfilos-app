@@ -12,6 +12,7 @@ export * from './firebase/FirebaseUserProfileRepository';
 export * from './firebase/FirebasePlanRepository';
 export * from './firebase/FirebaseAnalyticsRepository'; // 📊 Analytics Repository
 export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository
+export * from './firebase/FirebaseUserActivityRepository'; // 📊 User Activity Repository
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';
 export * from './gemini/GeminiPlanGenerator';
