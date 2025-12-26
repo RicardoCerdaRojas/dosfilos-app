@@ -184,6 +184,7 @@ Identify all clauses in this passage and their relationships. For each clause, p
 - Use clear, unique IDs for clauses (e.g., "clause_1", "clause_2")
 - Main clauses should have parentClauseId = null
 - Provide a brief overall structure description
+- **CRITICAL**: In the structureDescription, use numbered references [1], [2], [3]... to refer to each clause. These will become clickable links in the UI.
 
 **Response Format** (JSON):
 {
@@ -201,7 +202,7 @@ Identify all clauses in this passage and their relationships. For each clause, p
     ...
   ],
   "rootClauseId": "clause_1",
-  "structureDescription": "The passage contains two main clauses..."
+  "structureDescription": "The passage has two main clauses: clause [1] presents the primary command, while clause [2] provides a coordinated imperative. Clause [1] is modified by a purpose clause [3]..."
 }
 
 Respond ONLY with valid JSON, no additional text.`;
