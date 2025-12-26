@@ -98,7 +98,7 @@ export const onUserCreated = functions.firestore
  */
 export const onUserActivity = functions.firestore
     .document('user_activities/{activityId}')
-    .onCreate(async (snap, context) => {
+    .onCreate(async (snap, _context) => {
         const activity = snap.data();
 
         // Only track login events
@@ -138,7 +138,7 @@ export const onUserActivity = functions.firestore
  */
 export const onUserDeleted = functions.firestore
     .document('users/{userId}')
-    .onDelete(async (snap, context) => {
+    .onDelete(async (_snap, context) => {
         const userId = context.params.userId;
 
         console.log(`Cleaning up analytics for deleted user: ${userId}`);
