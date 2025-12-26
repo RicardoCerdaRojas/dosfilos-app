@@ -50,7 +50,7 @@ export const onSermonCreated = functions.firestore
         }, { merge: true });
 
         // Update daily global metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         batch.set(dailyRef, {
             date: today,
             sermons: {
@@ -112,7 +112,7 @@ export const onSermonPublished = functions.firestore
         }, { merge: true });
 
         // Update daily global metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         batch.set(dailyRef, {
             sermons: {
                 published: FieldValue.increment(1),
@@ -157,7 +157,7 @@ export const onSermonDeleted = functions.firestore
         }, { merge: true });
 
         // Update daily global metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         batch.set(dailyRef, {
             sermons: {
                 created: FieldValue.increment(-1),

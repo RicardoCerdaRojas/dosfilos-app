@@ -41,7 +41,7 @@ export const onGreekSessionCreated = functions.firestore
         }, { merge: true });
 
         // Update daily global metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         batch.set(dailyRef, {
             date: today,
             greekSessions: {
@@ -95,7 +95,7 @@ export const onGreekSessionCompleted = functions.firestore
         }, { merge: true });
 
         // Update daily global metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         batch.set(dailyRef, {
             greekSessions: {
                 completed: FieldValue.increment(1),
@@ -137,7 +137,7 @@ export const onGreekSessionDeleted = functions.firestore
         batch.set(userAnalyticsRef, decrements, { merge: true });
 
         // Update daily global metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         const dailyDecrements: any = {
             greekSessions: {
                 created: FieldValue.increment(-1),

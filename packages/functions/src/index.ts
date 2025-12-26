@@ -52,6 +52,9 @@ export {
 export { sendWelcomeEmail } from './emails/sendWelcomeEmail';
 export { sendNurtureEmails } from './emails/sendNurtureEmails';
 
+// Export Geographic Analytics functions
+export { trackUserRegistration, trackUserLogin, trackLandingVisit } from './analytics/geoCallableFunctions';
+
 // Export Admin functions
 export { deleteUser } from './admin/deleteUser';
 export { resendWelcomeEmail } from './admin/resendWelcomeEmail';

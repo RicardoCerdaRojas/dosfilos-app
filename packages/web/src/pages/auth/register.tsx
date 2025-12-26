@@ -24,7 +24,7 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<FirestorePlan | null>(null);
-  const { trackLogin } = useTrackActivity();
+  const { trackLogin, trackRegistration } = useTrackActivity();
   
   const registerSchema = z.object({
     displayName: z
@@ -132,8 +132,14 @@ export function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await authService.register(data.email, data.password, data.displayName);
-      trackLogin(); // Track initial login
+      const user = await authService.register(data.email, data.password, data.displayName);
+      
+      // Track geographic registration event
+      trackRegistration(user.id);
+      
+      // Track initial login
+      trackLogin();
+      
       toast.success(t('register.success'));
       
       // If paid plan selected from pricing page, redirect to checkout
@@ -167,8 +173,14 @@ export function RegisterPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await authService.loginWithGoogle();
-      trackLogin(); // Track initial login
+      const user = await authService.loginWithGoogle();
+      
+      // Track geographic registration event (Google creates/logs in user)
+      trackRegistration(user.id);
+      
+      // Track initial login
+      trackLogin();
+      
       toast.success(t('register.successGoogle'));
       
       // If paid plan selected from pricing page, redirect to checkout

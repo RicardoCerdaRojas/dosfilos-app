@@ -66,7 +66,7 @@ export const onUserCreated = functions.firestore
         });
 
         // Update daily global metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         batch.set(dailyRef, {
             date: today,
             users: {
@@ -123,7 +123,7 @@ export const onUserActivity = functions.firestore
         }, { merge: true });
 
         // Update daily metrics
-        const dailyRef = db.doc(`global_metrics/daily/${today}`);
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
         batch.set(dailyRef, {
             totalLogins: FieldValue.increment(1),
             updatedAt: FieldValue.serverTimestamp(),

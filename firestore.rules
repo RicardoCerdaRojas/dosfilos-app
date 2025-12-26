@@ -262,5 +262,14 @@ service cloud.firestore {
       // Only Cloud Functions can write
       allow write: if false;
     }
+
+    // Geographic Events Collection (for analytics dashboard)
+    match /geo_events/{eventId} {
+      // Only super admins can read
+      allow read: if isSuperAdmin();
+
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
   }
 }

@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { ContactModal } from '@/components/contact/ContactModal';
 import { useTranslation, LanguageSwitcher } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
+import { useTrackActivity } from '@/hooks/useTrackActivity';
 
 export function Landing() {
   // i18n hooks
@@ -21,11 +22,19 @@ export function Landing() {
   const { t: tCommon } = useTranslation('common');
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const { trackLandingVisit } = useTrackActivity();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactModalType, setContactModalType] = useState<'sales' | 'scholarship' | 'support' | 'demo'>('sales');
+
+  // Track landing page visit for non-authenticated users
+  useEffect(() => {
+    if (!user) {
+      trackLandingVisit();
+    }
+  }, [user, trackLandingVisit]);
 
   const openContactModal = (type: 'sales' | 'scholarship' | 'support' | 'demo') => {
     setContactModalType(type);
