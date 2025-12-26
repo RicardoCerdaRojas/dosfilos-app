@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, FileText, Calendar, Tag, MoreVertical, Pencil, Trash2, Eye,
-  LayoutGrid, List, BookOpen, Filter
+  LayoutGrid, List, BookOpen, Filter, Presentation
 } from 'lucide-react';
 import { SermonEntity, SermonSeriesEntity } from '@dosfilos/domain';
 import { seriesService } from '@dosfilos/application';
@@ -155,7 +155,7 @@ export function SermonsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -310,6 +310,7 @@ export function SermonsPage() {
                           size="sm" 
                           className="h-8 w-8 p-0"
                           onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
+                          title="Ver sermón"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -318,8 +319,18 @@ export function SermonsPage() {
                           size="sm" 
                           className="h-8 w-8 p-0"
                           onClick={() => navigate(`/dashboard/sermons/${sermon.id}/edit`)}
+                          title="Editar"
                         >
                           <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => navigate(`/dashboard/sermons/${sermon.id}/preach`)}
+                          title="Modo predicación"
+                        >
+                          <Presentation className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -351,7 +362,7 @@ export function SermonsPage() {
           {filteredSermons.map((sermon) => {
             const seriesName = getSeriesName(sermon.seriesId);
             return (
-              <Card key={sermon.id} className="group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
+              <Card key={sermon.id} className="py-0 group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
                 <div className="p-6 flex-1 space-y-4">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-4">
@@ -409,7 +420,7 @@ export function SermonsPage() {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-4 border-t bg-muted/20 flex items-center justify-between gap-2">
+                <div className="p-3 border-t bg-muted/20 flex items-center justify-between gap-2">
                   <div className="text-xs text-muted-foreground">
                     {sermon.bibleReferences.length > 0 && (
                       <span className="flex items-center gap-1">
@@ -425,6 +436,7 @@ export function SermonsPage() {
                       size="sm" 
                       className="h-8 w-8 p-0 hover:text-primary"
                       onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
+                      title="Ver sermón"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -433,8 +445,18 @@ export function SermonsPage() {
                       size="sm" 
                       className="h-8 w-8 p-0 hover:text-primary"
                       onClick={() => navigate(`/dashboard/sermons/${sermon.id}/edit`)}
+                      title="Editar"
                     >
                       <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 hover:text-primary"
+                      onClick={() => navigate(`/dashboard/sermons/${sermon.id}/preach`)}
+                      title="Modo predicación"
+                    >
+                      <Presentation className="h-4 w-4" />
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
