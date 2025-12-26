@@ -97,12 +97,12 @@ export class FirebaseGeoEventRepository implements IGeoEventRepository {
                 endDate,
             }, 10000); // High limit for aggregation
 
-            // Group by country
+            // Group by country with unique user tracking
             const countryMap = new Map<string, {
                 countryCode: string;
                 visits: number;
-                registrations: number;
-                logins: number;
+                registeredUsers: Set<string>;
+                loggedInUsers: Set<string>;
             }>();
 
             events.forEach(event => {
@@ -113,33 +113,44 @@ export class FirebaseGeoEventRepository implements IGeoEventRepository {
                     countryMap.set(country, {
                         countryCode: code,
                         visits: 0,
-                        registrations: 0,
-                        logins: 0,
+                        registeredUsers: new Set<string>(),
+                        loggedInUsers: new Set<string>(),
                     });
                 }
 
                 const stats = countryMap.get(country)!;
-                if (event.type === 'landing_visit') stats.visits++;
-                if (event.type === 'registration') stats.registrations++;
-                if (event.type === 'login') stats.logins++;
+
+                if (event.type === 'landing_visit') {
+                    // Count each landing visit
+                    stats.visits++;
+                } else if (event.type === 'registration' && event.userId) {
+                    // Track unique users who registered
+                    stats.registeredUsers.add(event.userId);
+                } else if (event.type === 'login' && event.userId) {
+                    // Track unique users who logged in
+                    stats.loggedInUsers.add(event.userId);
+                }
             });
 
             // Convert to CountrySummary array
             const summaries: CountrySummary[] = [];
             countryMap.forEach((stats, country) => {
+                const registrations = stats.registeredUsers.size;
+                const logins = stats.loggedInUsers.size;
+
                 const conversionRate = stats.visits > 0
-                    ? (stats.registrations / stats.visits) * 100
+                    ? (registrations / stats.visits) * 100
                     : 0;
-                const activationRate = stats.registrations > 0
-                    ? (stats.logins / stats.registrations) * 100
+                const activationRate = registrations > 0
+                    ? (logins / registrations) * 100
                     : 0;
 
                 summaries.push({
                     country,
                     countryCode: stats.countryCode,
                     landingVisits: stats.visits,
-                    registrations: stats.registrations,
-                    logins: stats.logins,
+                    registrations,
+                    logins,
                     conversionRate,
                     activationRate,
                 });
@@ -243,17 +254,29 @@ export class FirebaseGeoEventRepository implements IGeoEventRepository {
                 ...filters,
             }, 10000);
 
-            const counts = {
-                landing_visit: 0,
-                registration: 0,
-                login: 0,
-            };
+            // Track unique users for registration and login
+            const uniqueRegistrations = new Set<string>();
+            const uniqueLogins = new Set<string>();
+            let landingVisits = 0;
 
             events.forEach(event => {
-                counts[event.type]++;
+                if (event.type === 'landing_visit') {
+                    // Landing visits are anonymous, count each event
+                    landingVisits++;
+                } else if (event.type === 'registration' && event.userId) {
+                    // Count unique users who registered
+                    uniqueRegistrations.add(event.userId);
+                } else if (event.type === 'login' && event.userId) {
+                    // Count unique users who logged in
+                    uniqueLogins.add(event.userId);
+                }
             });
 
-            return counts;
+            return {
+                landing_visit: landingVisits,
+                registration: uniqueRegistrations.size,
+                login: uniqueLogins.size,
+            };
         } catch (error) {
             console.error('[FirebaseGeoEventRepository] Error getting event counts:', error);
             return {
