@@ -1492,6 +1492,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 // Adding new unit from passage reader
                                 setUnits(prevUnits => [...prevUnits, newUnit]);
                             }}
+                            onRetrySyntax={() => handleActionClick('syntax')}
                         />
                     </main>
 
