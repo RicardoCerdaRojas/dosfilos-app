@@ -190,7 +190,7 @@ Identify all clauses in this passage and their relationships. For each clause, p
       "wordIndices": [0, 1, 2, ...],
       "mainVerbIndex": 0,
       "parentClauseId": null,
-      "conjunction": undefined,
+      "conjunction": null,
       "greekText": "Παρακαλῶ οὖν ὑμᾶς...",
       "syntacticFunction": "Main exhortation"
     },
@@ -214,10 +214,14 @@ Respond ONLY with valid JSON, no additional text.`;
     private parseGeminiResponse(rawResponse: string): GeminiSyntaxAnalysisResponse {
         try {
             // Remove markdown code blocks if present
-            const cleanedResponse = rawResponse
+            let cleanedResponse = rawResponse
                 .replace(/```json\n?/g, '')
                 .replace(/```\n?/g, '')
                 .trim();
+
+            // Sanitize JSON: replace undefined literals with null
+            // Gemini sometimes outputs 'undefined' which is not valid JSON
+            cleanedResponse = cleanedResponse.replace(/:\s*undefined\s*([,}])/g, ': null$1');
 
             const parsed = JSON.parse(cleanedResponse);
 

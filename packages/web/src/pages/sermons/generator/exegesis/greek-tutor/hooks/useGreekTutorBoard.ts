@@ -252,7 +252,12 @@ export const useGreekTutorBoard = ({
                         setCurrentContent({
                             type: 'syntax',
                             title: 'Estructura Sintáctica',
-                            content: `Error al analizar la sintaxis: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+                            content: `> [!WARNING]
+> **No se pudo completar el análisis**
+> 
+> Hubo un problema al analizar la estructura del pasaje. Por favor intenta de nuevo en unos momentos.
+> 
+> Si el problema persiste, prueba con un pasaje más corto.`,
                             passage,
                             timestamp: new Date()
                         });
