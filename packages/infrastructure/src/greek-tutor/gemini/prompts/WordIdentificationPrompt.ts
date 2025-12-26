@@ -40,18 +40,20 @@ Be concise but pedagogically helpful.`;
  * Builds the user prompt for word identification
  */
 export function buildWordIdentificationPrompt(
-    word: string,
-    context: string,
-    language: string
+  word: string,
+  context: string,
+  language: string
 ): string {
-    return `Identify the Greek word "${word}" in the following context:
+  return `Identify the Greek word "${word}" in the following context:
 
 ${context}
 
 Provide:
-1. Complete GreekForm details (lemma, morphology code, gloss, category)
+1. Complete GreekForm details (lemma, morphology code, gloss IN ${language}, category IN ${language})
 2. Clear grammatical identification in ${language}
-3. Optional recognition guidance if the form is noteworthy
+3. Optional recognition guidance in ${language} if the form is noteworthy
+
+CRITICAL: The 'gloss' and 'grammaticalCategory' fields MUST be in ${language}, not English.
 
 Return JSON only, no additional commentary.`;
 }
