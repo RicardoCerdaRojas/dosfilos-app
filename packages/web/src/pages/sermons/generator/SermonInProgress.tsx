@@ -203,7 +203,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
     );
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 p-5">
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
                 <div>
@@ -333,7 +333,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                         const { label, progress, variant, badgeClass, progressClass } = phaseInfo;
 
                         return (
-                            <Card key={sermon.id} className="group flex flex-col hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-muted hover:border-primary/30 overflow-hidden">
+                            <Card key={sermon.id} className="py-0 pt-4 group flex flex-col hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-muted hover:border-primary/30 overflow-hidden">
                                 <div className="p-4 flex-1 space-y-3">
                                     {/* Header: Date + Phase Badge */}
                                     <div className="flex items-start justify-between gap-4">
