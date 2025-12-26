@@ -151,3 +151,59 @@ export const onUserDeleted = functions.firestore
 
         console.log(`✓ Analytics cleaned up for ${userId}`);
     });
+
+/**
+ * Track when a user changes their subscription plan
+ * Updates plan distribution counters in global_metrics_daily
+ */
+export const onSubscriptionChanged = functions.firestore
+    .document('users/{userId}')
+    .onUpdate(async (change, context) => {
+        const before = change.before.data();
+        const after = change.after.data();
+
+        const oldPlanId = before.subscription?.planId || 'free';
+        const newPlanId = after.subscription?.planId || 'free';
+
+        // Only proceed if plan actually changed
+        if (oldPlanId === newPlanId) {
+            return;
+        }
+
+        const userId = context.params.userId;
+        const today = getTodayString();
+
+        console.log(`Plan changed for user ${userId}: ${oldPlanId} → ${newPlanId}`);
+
+        const batch = db.batch();
+
+        // Update today's daily metrics - decrement old plan, increment new plan
+        const dailyRef = db.doc(`global_metrics_daily/${today}`);
+        batch.set(dailyRef, {
+            users: {
+                byPlan: {
+                    [oldPlanId]: FieldValue.increment(-1),
+                    [newPlanId]: FieldValue.increment(1),
+                },
+                // Update paid users count
+                paidUsers: FieldValue.increment(
+                    (newPlanId !== 'free' ? 1 : 0) - (oldPlanId !== 'free' ? 1 : 0)
+                ),
+            },
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        // Update aggregate metrics
+        const aggregateRef = db.doc('global_metrics/aggregate');
+        batch.set(aggregateRef, {
+            currentMonth: {
+                paidUsers: FieldValue.increment(
+                    (newPlanId !== 'free' ? 1 : 0) - (oldPlanId !== 'free' ? 1 : 0)
+                ),
+            },
+            lastUpdated: FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        await batch.commit();
+        console.log(`✓ Plan distribution updated: ${oldPlanId} → ${newPlanId}`);
+    });

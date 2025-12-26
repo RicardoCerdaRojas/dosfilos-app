@@ -245,8 +245,17 @@ service cloud.firestore {
       allow write: if false;
     }
     
-    // Global Metrics - Platform-wide analytics
+    // Global Metrics - Platform-wide analytics (aggregate)
     match /global_metrics/{document=**} {
+      // Only super admins can read
+      allow read: if isSuperAdmin();
+      
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
+    
+    // Global Daily Metrics - Daily snapshots
+    match /global_metrics_daily/{date} {
       // Only super admins can read
       allow read: if isSuperAdmin();
       

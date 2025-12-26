@@ -5,9 +5,9 @@
  * This script migrates existing data to the new event-driven analytics system:
  * - Creates user_analytics documents for all existing users
  * - Populates global_metrics/aggregate with platform totals
+ * - Creates global_metrics_daily with plan distribution
  * 
  * Run with: node scripts/migrateToEventDriven.js
- * Or with TypeScript: npx tsx scripts/migrateToEventDriven.ts
  */
 
 const admin = require('firebase-admin');
@@ -65,10 +65,10 @@ async function migrateUser(userId) {
     const [sermonsSnap, greekSessionsSnap, seriesSnap, plansSnap, loginsSnap] = await Promise.all([
         db.collection('sermons').where('userId', '==', userId).get(),
         db.collection('greek_sessions').where('userId', '==', userId).get(),
-        db.collection('sermon_series').where('userId', '==', userId).get(),
+        db.collection('series').where('userId', '==', userId).get(),
         db.collection('preaching_plans').where('userId', '==', userId).get(),
         db.collection('user_activities')
-            .where('userId', '==', userId)
+            .where('userId', '==', 'login')
             .where('type', '==', 'login')
             .get(),
     ]);
@@ -181,18 +181,37 @@ async function migrate() {
         const totalSeries = userAnalytics.reduce((sum, u) => sum + u.series.total, 0);
         const totalPlans = userAnalytics.reduce((sum, u) => sum + u.preachingPlans.total, 0);
 
+        // Calculate plan distribution
+        const planDistribution = { free: 0, pro: 0, team: 0, enterprise: 0 };
+        let paidUsers = 0;
+
+        for (const userDoc of usersSnapshot.docs) {
+            const userData = userDoc.data();
+            const planId = userData.subscription?.planId || 'free';
+            planDistribution[planId] = (planDistribution[planId] || 0) + 1;
+
+            // Count paid users (not free plan)
+            if (planId !== 'free') {
+                paidUsers++;
+            }
+        }
+
         console.log(`  Total Users: ${totalUsers}`);
+        console.log(`  Plan Distribution: Free=${planDistribution.free}, Pro=${planDistribution.pro}, Team=${planDistribution.team}`);
+        console.log(`  Paid Users: ${paidUsers}`);
         console.log(`  Total Sermons: ${totalSermons} (${totalPublished} published, ${totalDrafts} drafts)`);
         console.log(`  Total Greek Sessions: ${totalGreekSessions}`);
         console.log(`  Total Series: ${totalSeries}`);
         console.log(`  Total Plans: ${totalPlans}`);
 
         // 4. Write global aggregate
-        console.log('\n📊 Step 4: Writing global aggregate...');
+        console.log('\n📊 Step 4: Writing global metrics...');
         await db.doc('global_metrics/aggregate').set({
             allTime: {
                 users: totalUsers,
                 sermons: totalSermons,
+                published: totalPublished,
+                drafts: totalDrafts,
                 greekSessions: totalGreekSessions,
                 series: totalSeries,
                 plans: totalPlans,
@@ -201,27 +220,60 @@ async function migrate() {
                 dau: 0, // Will be calculated by scheduled function
                 mau: 0,
                 mrr: 0,
+                paidUsers: paidUsers,
             },
             lastUpdated: FieldValue.serverTimestamp(),
         });
 
-        console.log('✓ Global aggregate created\n');
+        console.log('✓ Global aggregate created');
 
-        // 5. Validation
-        console.log('📊 Step 5: Validation...');
+        // 5. Create today's daily metrics with plan distribution
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayString = `${year}-${month}-${day}`;
+
+        await db.doc(`global_metrics_daily/${todayString}`).set({
+            date: todayString,
+            users: {
+                total: totalUsers,
+                new: 0,
+                byPlan: planDistribution,
+                paidUsers: paidUsers,
+            },
+            sermons: {
+                created: 0,
+                published: 0,
+                drafts: 0,
+            },
+            greekSessions: {
+                created: 0,
+            },
+            totalLogins: 0,
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        console.log(`✓ Daily metrics created for ${todayString}\n`);
+
+        // 6. Validation
+        console.log('📊 Step 6: Validation...');
         const analyticsCount = (await db.collection('user_analytics').get()).size;
         console.log(`  user_analytics documents: ${analyticsCount}/${totalUsers}`);
 
         const aggregateDoc = await db.doc('global_metrics/aggregate').get();
         console.log(`  global aggregate exists: ${aggregateDoc.exists}`);
 
-        if (analyticsCount === totalUsers && aggregateDoc.exists) {
+        const dailyDoc = await db.doc(`global_metrics_daily/${todayString}`).get();
+        console.log(`  daily metrics exists: ${dailyDoc.exists}`);
+
+        if (analyticsCount === totalUsers && aggregateDoc.exists && dailyDoc.exists) {
             console.log('\n✅ Migration completed successfully!');
-            console.log('\n📝 Next steps:');
-            console.log('  1. Deploy Cloud Functions');
-            console.log('  2. Test with new sermon creation');
-            console.log('  3. Monitor Cloud Function logs');
-            console.log('  4. Update frontend to read from new collections');
+            console.log('\n📝 Summary:');
+            console.log(`  ✓ ${analyticsCount} user analytics created`);
+            console.log(`  ✓ Global aggregate populated`);
+            console.log(`  ✓ Daily metrics created with plan distribution`);
+            console.log(`  ✓ ${paidUsers} paid users counted`);
         } else {
             console.log('\n⚠️  Migration completed with warnings. Please review.');
         }

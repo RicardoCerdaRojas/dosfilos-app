@@ -45,6 +45,7 @@ export {
     onUserCreated,
     onUserActivity,
     onUserDeleted,
+    onSubscriptionChanged,
 } from './analytics/userAnalytics';
 
 // Export Email functions
