@@ -1,5 +1,5 @@
 
-import { IGreekTutorService, TrainingUnit, GreekForm, UserResponse, MorphologyBreakdown, BiblicalPassage, PassageWord, UnitPreview } from '@dosfilos/domain';
+import { IGreekTutorService, IWordCacheRepository, TrainingUnit, GreekForm, UserResponse, MorphologyBreakdown, BiblicalPassage, PassageWord, UnitPreview } from '@dosfilos/domain';
 import { GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
 import { FORM_SELECTION_SYSTEM_PROMPT, buildFormSelectionPrompt } from './prompts/FormSelectionPrompt';
 import { TRAINING_UNIT_SYSTEM_PROMPT, buildTrainingUnitPrompt } from './prompts/TrainingUnitPrompt';
@@ -13,10 +13,12 @@ import { GEMINI_CONFIG } from '../../gemini/config';
 export class GeminiGreekTutorService implements IGreekTutorService {
     private genAI: GoogleGenerativeAI;
     private model: GenerativeModel;
+    private wordCache?: IWordCacheRepository;
 
-    constructor(apiKey: string) {
+    constructor(apiKey: string, wordCache?: IWordCacheRepository) {
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.model = this.genAI.getGenerativeModel({ model: GEMINI_CONFIG.MODEL_NAME });
+        this.wordCache = wordCache;
     }
 
     private getModelWithTools(fileSearchStoreId?: string) {
@@ -405,6 +407,33 @@ DIRECTRICES CRÍTICAS:
     ): Promise<UnitPreview> {
         console.log('[GeminiGreekTutorService] Identifying word for unit:', word.greek);
 
+        // Check cache first (if lemma available and cache enabled)
+        if (word.lemma && this.wordCache) {
+            try {
+                const cached = await this.wordCache.get(word.lemma, language);
+                if (cached) {
+                    console.log('[GeminiGreekTutorService] Cache HIT:', word.lemma);
+                    return {
+                        greekForm: {
+                            text: word.greek,
+                            transliteration: word.transliteration,
+                            lemma: word.lemma,
+                            morphology: '',
+                            gloss: cached.gloss,
+                            grammaticalCategory: cached.grammaticalCategory
+                        },
+                        identification: '',
+                        recognitionGuidance: undefined
+                    };
+                }
+            } catch (cacheError) {
+                console.warn('[GeminiGreekTutorService] Cache error:', cacheError);
+            }
+        }
+
+        // Cache miss - call Gemini API
+        console.log('[GeminiGreekTutorService] Cache MISS, calling API:', word.greek);
+
         const model = this.getModelWithTools(fileSearchStoreId);
 
         const genConfig: any = {};
@@ -435,6 +464,24 @@ DIRECTRICES CRÍTICAS:
             };
 
             console.log('[GeminiGreekTutorService] Successfully identified word:', preview.greekForm.lemma);
+
+            // Save to cache if lemma available
+            if (preview.greekForm.lemma && this.wordCache) {
+                try {
+                    await this.wordCache.set({
+                        lemma: preview.greekForm.lemma,
+                        language,
+                        gloss: preview.greekForm.gloss,
+                        grammaticalCategory: preview.greekForm.grammaticalCategory,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                    console.log('[GeminiGreekTutorService] Cached word:', preview.greekForm.lemma);
+                } catch (cacheError) {
+                    console.warn('[GeminiGreekTutorService] Cache save failed:', cacheError);
+                }
+            }
+
             return preview;
         } catch (error) {
             console.error('[GeminiGreekTutorService] Error identifying word:', error);

@@ -47,6 +47,7 @@ export * from './services/ITextExtractor';
 export * from './services/ICacheService';
 export * from './ports/IFileSearchService'; // 🎯 File Search ports
 export * from './greek-tutor/ports/IGreekTutorService'; // 🏛️ Greek Tutor Ports
+export * from './greek-tutor/ports/IWordCacheRepository'; // 🏛️ Greek Tutor Word Cache
 export * from './greek-tutor/ports/IQuizService'; // 🎯 Phase 3A: Quiz Service
 
 
