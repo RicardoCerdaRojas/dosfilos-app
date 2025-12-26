@@ -160,7 +160,81 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                         }
                         
                         // Syntax Analysis View
-                        if (content.type === 'syntax' && content.syntaxAnalysis) {
+                        if (content.type === 'syntax') {
+                            // Check if it's an error state (no analysis data)
+                            if (!content.syntaxAnalysis) {
+                                return (
+                                    <Card className="p-6 md:p-8 shadow-sm border-2 border-orange-200 dark:border-orange-900/30 bg-gradient-to-br from-orange-50/50 to-background dark:from-orange-950/10 dark:to-background">
+                                        <div className="space-y-6">
+                                            {/* Header with icon */}
+                                            <div className="flex items-start gap-4">
+                                                <div className="flex-shrink-0">
+                                                    <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                                                        <span className="text-2xl">⚠️</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-xl font-bold text-foreground mb-2">Análisis no disponible</h3>
+                                                    <p className="text-muted-foreground">
+                                                        Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-border" />
+
+                                            {/* Suggestions */}
+                                            <div className="space-y-4">
+                                                <h4 className="font-semibold text-foreground">¿Qué puedes hacer?</h4>
+                                                
+                                                <div className="grid gap-3">
+                                                    <div className="flex gap-3 p-3 rounded-lg bg-background border">
+                                                        <span className="text-xl flex-shrink-0">💡</span>
+                                                        <div>
+                                                            <p className="font-medium text-sm">Intenta de nuevo</p>
+                                                            <p className="text-xs text-muted-foreground">El análisis usa IA y a veces puede fallar temporalmente.</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex gap-3 p-3 rounded-lg bg-background border">
+                                                        <span className="text-xl flex-shrink-0">📖</span>
+                                                        <div>
+                                                            <p className="font-medium text-sm">Prueba con un pasaje más corto</p>
+                                                            <p className="text-xs text-muted-foreground">Los pasajes más largos son más complejos de analizar.</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex gap-3 p-3 rounded-lg bg-background border">
+                                                        <span className="text-xl flex-shrink-0">🔄</span>
+                                                        <div>
+                                                            <p className="font-medium text-sm">Regresa más tarde</p>
+                                                            <p className="text-xs text-muted-foreground">Este es un feature experimental que estamos mejorando.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-border" />
+
+                                            {/* Retry button */}
+                                            <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-lg p-4">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-foreground">Mientras tanto...</p>
+                                                    <p className="text-xs text-muted-foreground">Puedes usar: análisis morfológico, contexto de palabras, y quiz.</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => window.location.reload()}
+                                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium text-sm flex-shrink-0 ml-4"
+                                                >
+                                                    🔄 Reintentar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                );
+                            }
+                            
+                            // Normal syntax view with analysis
                             return (
                                 <Card className="p-6 md:p-8 shadow-sm">
                                     <PassageSyntaxView 
