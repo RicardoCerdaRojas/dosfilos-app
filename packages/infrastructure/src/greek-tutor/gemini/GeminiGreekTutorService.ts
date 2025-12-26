@@ -418,12 +418,12 @@ DIRECTRICES CRÍTICAS:
                             text: word.greek,
                             transliteration: word.transliteration,
                             lemma: word.lemma,
-                            morphology: '',
+                            morphology: cached.morphology,
                             gloss: cached.gloss,
                             grammaticalCategory: cached.grammaticalCategory
                         },
-                        identification: '',
-                        recognitionGuidance: undefined
+                        identification: cached.identification,
+                        recognitionGuidance: cached.recognitionGuidance
                     };
                 }
             } catch (cacheError) {
@@ -473,6 +473,9 @@ DIRECTRICES CRÍTICAS:
                         language,
                         gloss: preview.greekForm.gloss,
                         grammaticalCategory: preview.greekForm.grammaticalCategory,
+                        morphology: preview.greekForm.morphology,
+                        identification: preview.identification,
+                        recognitionGuidance: preview.recognitionGuidance,
                         createdAt: new Date(),
                         updatedAt: new Date()
                     });

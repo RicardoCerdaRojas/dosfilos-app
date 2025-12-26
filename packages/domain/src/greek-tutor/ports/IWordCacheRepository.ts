@@ -6,6 +6,9 @@ export interface WordCacheEntry {
     language: string;
     gloss: string;
     grammaticalCategory: string;
+    morphology: string;
+    identification: string;
+    recognitionGuidance?: string;
     createdAt: Date;
     updatedAt: Date;
 }

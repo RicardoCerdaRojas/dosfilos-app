@@ -92,6 +92,15 @@ service cloud.firestore {
       allow create, update: if isAuthenticated(); // Anyone can populate cache
       allow delete: if false; // Cache is permanent (no deletion)
     }
+
+    // Greek Tutor - Word Cache (Global lemma-based cache)
+    // Stores gloss and grammatical category for Greek lemmata
+    // Shared across all users to reduce API costs by ~50-60%
+    match /greekWordCache/{cacheId} {
+      allow read: if isAuthenticated(); // All users benefit from cache
+      allow create, update: if isAuthenticated(); // Anyone can populate cache
+      allow delete: if false; // Cache is permanent (no deletion)
+    }
     
     // Users collection
     // Note: isSuperAdmin() with get() doesn't work for list operations

@@ -44,6 +44,9 @@ export class FirestoreWordCacheRepository implements IWordCacheRepository {
                 language: data.language,
                 gloss: data.gloss,
                 grammaticalCategory: data.grammaticalCategory,
+                morphology: data.morphology || '',
+                identification: data.identification || '',
+                recognitionGuidance: data.recognitionGuidance,
                 createdAt: data.createdAt?.toDate() || new Date(),
                 updatedAt: data.updatedAt?.toDate() || new Date()
             };
@@ -66,6 +69,9 @@ export class FirestoreWordCacheRepository implements IWordCacheRepository {
                 language: entry.language,
                 gloss: entry.gloss,
                 grammaticalCategory: entry.grammaticalCategory,
+                morphology: entry.morphology,
+                identification: entry.identification,
+                recognitionGuidance: entry.recognitionGuidance,
                 createdAt: entry.createdAt,
                 updatedAt: new Date() // Always update timestamp
             });
