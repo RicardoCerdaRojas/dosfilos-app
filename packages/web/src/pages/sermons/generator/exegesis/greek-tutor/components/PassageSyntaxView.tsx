@@ -107,11 +107,11 @@ export function PassageSyntaxView({ analysis, onWordClick }: PassageSyntaxViewPr
 
     // Make clause references clickeable in description
     const renderDescriptionWithLinks = (text: string) => {
-        // Split on both (clause_N) AND standalone clause_N patterns
-        const parts = text.split(/(\(clause_\d+\)|clause_\d+)/);
+        // Split on: (clause_N), clause_N, AND [N] patterns
+        const parts = text.split(/(\(clause_\d+\)|clause_\d+|\[\d+\])/);
         return parts.map((part, index) => {
             // Match clause_N with or without parentheses
-            const match = part.match(/clause_(\d+)/);
+            let match = part.match(/clause_(\d+)/);
             if (match) {
                 const clauseId = `clause_${match[1]}`;
                 const clauseNumber = match[1];
@@ -126,6 +126,24 @@ export function PassageSyntaxView({ analysis, onWordClick }: PassageSyntaxViewPr
                     </button>
                 );
             }
+            
+            // Match [N] pattern (Gemini format)
+            match = part.match(/\[(\d+)\]/);
+            if (match) {
+                const clauseNumber = match[1];
+                const clauseId = `clause_${clauseNumber}`;
+                return (
+                    <button
+                        key={index}
+                        onClick={() => scrollToClause(clauseId)}
+                        className="inline-flex items-center justify-center w-6 h-6 mx-0.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-300 hover:border-blue-500 rounded-full transition-all cursor-pointer hover:shadow-sm"
+                        title={`Ir a cláusula ${clauseNumber}`}
+                    >
+                        {clauseNumber}
+                    </button>
+                );
+            }
+            
             return <span key={index}>{part}</span>;
         });
     };
