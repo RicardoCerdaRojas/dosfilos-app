@@ -108,7 +108,7 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-4xl mr-28">
             {/* Header */}
             <Card>
                 <CardHeader>
