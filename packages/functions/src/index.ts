@@ -28,6 +28,26 @@ export { trackUserActivity } from './analytics/trackUserActivity';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 
+// Export Event-Driven Analytics functions
+export {
+    onSermonCreated,
+    onSermonPublished,
+    onSermonDeleted,
+} from './analytics/sermonAnalytics';
+
+export {
+    onGreekSessionCreated,
+    onGreekSessionCompleted,
+    onGreekSessionDeleted,
+} from './analytics/greekSessionAnalytics';
+
+export {
+    onUserCreated,
+    onUserActivity,
+    onUserDeleted,
+    onSubscriptionChanged,
+} from './analytics/userAnalytics';
+
 // Export Email functions
 export { sendWelcomeEmail } from './emails/sendWelcomeEmail';
 export { sendNurtureEmails } from './emails/sendNurtureEmails';

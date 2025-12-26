@@ -26,3 +26,7 @@ export * from './greek-tutor/use-cases/AnalyzePassageSyntaxUseCase'; // 🏛️ 
 // Subscription services
 export * from './services/AuthorizationService';
 export * from './services/SubscriptionService';
+
+// Analytics use cases
+export * from './use-cases/analytics';
+export * from './use-cases/user-activity';

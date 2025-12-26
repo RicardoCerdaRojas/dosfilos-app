@@ -37,21 +37,27 @@ service cloud.firestore {
     // Sermons collection
     match /sermons/{sermonId} {
       // Allow reading individual sermons
-      allow get: if isOwner(resource.data.userId) || resource.data.isShared == true;
+      allow get: if isOwner(resource.data.userId) || resource.data.isShared == true || isSuperAdmin();
       
-      // Allow listing/querying sermons (for collections, version history, etc.)
-      // Security is enforced by requiring userId in the query itself
-      allow list: if isAuthenticated();
+      // Allow listing/querying sermons (for collections, version history, analytics)
+      // Security is enforced by requiring userId in the query itself or being super admin
+      allow list: if isAuthenticated() || isSuperAdmin();
       
       allow create: if isAuthenticated() && 
                        request.auth.uid == request.resource.data.userId &&
                        isValidSermon();
       allow update: if isOwner(resource.data.userId) && isValidSermon();
       allow delete: if isOwner(resource.data.userId);
+      
+      // Allow super admins to read & list wizardProgress subcollection for analytics
+      match /wizardProgress/{progressId} {
+        allow get, list: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId) || isSuperAdmin();
+        allow create, update, delete: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
+      }
     }
 
-    // Greek Tutor Sessions
-    match /greek_tutor_sessions/{sessionId} {
+    // Greek Sessions (correct collection name)
+    match /greek_sessions/{sessionId} {
       // Super admins can read all sessions for analytics
       allow read: if isOwner(resource.data.userId) || isSuperAdmin();
       allow update, delete: if isOwner(resource.data.userId);
@@ -59,7 +65,7 @@ service cloud.firestore {
 
       match /insights/{insightId} {
         allow read, write: if isAuthenticated() && 
-           get(/databases/$(database)/documents/greek_tutor_sessions/$(sessionId)).data.userId == request.auth.uid;
+           get(/databases/$(database)/documents/greek_sessions/$(sessionId)).data.userId == request.auth.uid;
       }
     }
 
@@ -207,6 +213,54 @@ service cloud.firestore {
     match /user_activities/{activityId} {
       allow read: if isSuperAdmin();
       allow write: if isFunction();
+    }
+    
+    // Geographic Events - Anonymous tracking allowed
+    // For landing page tracking, registration, and login analytics
+    match /geo_events/{eventId} {
+      // Allow anonymous creation (landing page visits)
+      // TODO: Add rate limiting via Cloud Function or reCAPTCHA
+      allow create: if true;
+      
+      // Only super admins can read and delete
+      allow read, delete: if isSuperAdmin();
+      
+      // Events are immutable - no updates allowed
+      allow update: if false;
+    }
+    
+    // ==========================================
+    // EVENT-DRIVEN ANALYTICS COLLECTIONS
+    // ==========================================
+    
+    // User Analytics - Pre-aggregated metrics per user
+    match /user_analytics/{userId} {
+      // Super admins can read all user analytics
+      allow read: if isSuperAdmin();
+      
+      // Users can read their own analytics
+      allow read: if isOwner(userId);
+      
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
+    
+    // Global Metrics - Platform-wide analytics (aggregate)
+    match /global_metrics/{document=**} {
+      // Only super admins can read
+      allow read: if isSuperAdmin();
+      
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
+    
+    // Global Daily Metrics - Daily snapshots
+    match /global_metrics_daily/{date} {
+      // Only super admins can read
+      allow read: if isSuperAdmin();
+      
+      // Only Cloud Functions can write
+      allow write: if false;
     }
   }
 }

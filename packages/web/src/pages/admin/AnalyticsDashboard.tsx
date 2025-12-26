@@ -9,7 +9,8 @@ import {
     DollarSign, 
     TrendingUp,
     ArrowLeft,
-    Loader2
+    Loader2,
+    Globe
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -59,10 +60,19 @@ export function AnalyticsDashboard() {
                     </div>
                 </div>
 
-                <Button onClick={() => navigate('/dashboard/admin/users')}>
-                    <Users className="h-4 w-4 mr-2" />
-                    Gestión de Usuarios
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/dashboard/admin/geographic')}
+                    >
+                        <Globe className="h-4 w-4 mr-2" />
+                        Analytics Geográfico
+                    </Button>
+                    <Button onClick={() => navigate('/dashboard/admin/users')}>
+                        <Users className="h-4 w-4 mr-2" />
+                        Gestión de Usuarios
+                    </Button>
+                </div>
             </div>
 
             {metricsLoading ? (
@@ -198,15 +208,12 @@ export function AnalyticsDashboard() {
                             </div>
 
                             <div className="border-l-4 border-amber-500 pl-4">
-                                <p className="text-sm text-slate-600">Promedio Sermones</p>
+                                <p className="text-sm text-slate-600">Planes de Predicación</p>
                                 <p className="text-2xl font-bold text-slate-900">
-                                    {metrics.totalUsers > 0 
-                                        ? ((metrics.totalSermonsCreated || 0) / metrics.totalUsers).toFixed(1)
-                                        : '0.0'
-                                    }
+                                    {metrics.totalPreachingPlans || 0}
                                 </p>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    Por usuario
+                                    Total creados
                                 </p>
                             </div>
                         </div>
