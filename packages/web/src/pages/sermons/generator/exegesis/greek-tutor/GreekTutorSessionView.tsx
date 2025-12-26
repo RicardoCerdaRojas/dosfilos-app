@@ -252,8 +252,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             
             // Session loaded successfully
             
-            // Set flag to auto-trigger morphology after hook is ready
-            setAutoTriggerAction('morphology');
+            // Set flag to auto-trigger passage reading after hook is ready
+            setAutoTriggerAction('passage');
         } catch (error) {
             console.error('[GreekTutorSessionView] Error loading session:', error);
             setStatus('ERROR');

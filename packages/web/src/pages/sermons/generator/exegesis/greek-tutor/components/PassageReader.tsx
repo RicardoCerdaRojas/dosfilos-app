@@ -43,11 +43,55 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
         handleCloseModal
     } = usePassageReader(passage, sessionId, currentUnits, fileSearchStoreId, onUnitAdded);
 
+    const educationalTips = [
+        "Haz clic en cualquier palabra griega para ver su análisis detallado",
+        "El orden de palabras en griego es flexible gracias a su sistema de casos",
+        "La transliteración te ayuda a pronunciar correctamente mientras estudias",
+        "Cada sesión queda guardada automáticamente en tu dashboard"
+    ];
+    
+    const randomTip = educationalTips[Math.floor(Math.random() * educationalTips.length)];
+
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-3 text-muted-foreground">Cargando pasaje...</span>
+            <div className="space-y-6 p-8">
+                {/* Header con ícono y título */}
+                <div className="text-center space-y-2">
+                    <div className="flex justify-center">
+                        <BookOpen className="h-12 w-12 text-primary animate-pulse" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Preparando tu sesión de estudio</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {passage?.reference || 'Cargando pasaje...'}
+                    </p>
+                </div>
+
+                {/* Pasos de progreso */}
+                <div className="space-y-3 max-w-md mx-auto">
+                    <div className="flex items-center gap-3 text-sm">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <span className="text-muted-foreground">Cargando texto griego original</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm opacity-50">
+                        <div className="h-4 w-4 rounded-full border-2 border-muted" />
+                        <span className="text-muted-foreground">Generando transliteración</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm opacity-50">
+                        <div className="h-4 w-4 rounded-full border-2 border-muted" />
+                        <span className="text-muted-foreground">Preparando análisis interactivo</span>
+                    </div>
+                </div>
+
+                {/* Tip educativo */}
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 max-w-md mx-auto">
+                    <div className="flex gap-3">
+                        <span className="text-xl">💡</span>
+                        <div className="text-sm">
+                            <p className="font-medium text-primary mb-1">Tip</p>
+                            <p className="text-muted-foreground">{randomTip}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
