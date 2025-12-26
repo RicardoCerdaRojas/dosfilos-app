@@ -136,40 +136,53 @@ export function useAdminMetrics() {
                     });
                     console.log('[useAdminMetrics] Plan prices loaded:', planPrices);
 
-                    // Count actual sermons WITH wizardProgress subcollection
-                    // These are sermons created through the generator
+                    // Count sermons using SAME LOGIC as SermonInProgress component
+                    // Published sermons = have wizardProgress.publishedCopyId
+                    // Drafted sermons = have wizardProgress but no publishedCopyId
+                    console.log('[useAdminMetrics] Starting sermon count...');
                     const sermonsSnapshot = await getDocs(collection(db, 'sermons'));
-                    let totalSermonsCreated = 0;
-                    let sermonsCreatedToday = 0;
 
+                    console.log('[useAdminMetrics] Total sermon documents in Firestore:', sermonsSnapshot.size);
+
+                    // Filter to only sermons with wizardProgress (in-progress or published)
+                    const sermonsWithProgress = sermonsSnapshot.docs.filter(doc => {
+                        const data = doc.data();
+                        return data.wizardProgress !== undefined && data.wizardProgress !== null;
+                    });
+
+                    const totalSermonsCreated = sermonsWithProgress.length;
+                    const publishedCount = sermonsWithProgress.filter(doc => {
+                        const wizardProgress = doc.data().wizardProgress;
+                        return wizardProgress?.publishedCopyId !== undefined && wizardProgress?.publishedCopyId !== null;
+                    }).length;
+                    const draftCount = totalSermonsCreated - publishedCount;
+
+                    console.log('[useAdminMetrics] Sermons with wizardProgress:', totalSermonsCreated);
+                    console.log('[useAdminMetrics] Published sermons:', publishedCount);
+                    console.log('[useAdminMetrics] Draft sermons:', draftCount);
+
+                    // Count sermons created today
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
+                    let sermonsCreatedToday = 0;
 
-                    // Count sermons that have wizardProgress
-                    for (const sermonDoc of sermonsSnapshot.docs) {
-                        const wizardProgressQuery = query(
-                            collection(db, 'sermons', sermonDoc.id, 'wizardProgress')
-                        );
-                        const wizardSnapshot = await getDocs(wizardProgressQuery);
-
-                        if (!wizardSnapshot.empty) {
-                            // This sermon has wizardProgress
-                            totalSermonsCreated++;
-
-                            // Check if created today
-                            const sermonData = sermonDoc.data();
-                            if (sermonData.createdAt) {
-                                const createdDate = sermonData.createdAt.toDate();
-                                if (createdDate >= today) {
-                                    sermonsCreatedToday++;
-                                }
+                    sermonsWithProgress.forEach((doc) => {
+                        const sermonData = doc.data();
+                        if (sermonData.createdAt) {
+                            const createdDate = sermonData.createdAt.toDate();
+                            if (createdDate >= today) {
+                                sermonsCreatedToday++;
                             }
                         }
-                    }
+                    });
 
-                    // Count Greek Tutor sessions (fixed collection name)
-                    const greekSessionsSnapshot = await getDocs(collection(db, 'greek_tutor_sessions'));
+                    console.log('[useAdminMetrics] Sermons created today:', sermonsCreatedToday);
+
+                    // Count Greek sessions (correct collection name from Firestore)
+                    console.log('[useAdminMetrics] Fetching greek_sessions...');
+                    const greekSessionsSnapshot = await getDocs(collection(db, 'greek_sessions'));
                     const totalGreekSessions = greekSessionsSnapshot.size;
+                    console.log('[useAdminMetrics] Total Greek sessions:', totalGreekSessions);
 
                     let totalUsers = 0;
                     let newUsersToday = 0;
