@@ -218,14 +218,9 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Header - Optimized for space efficiency */}
-            <div className="flex items-center justify-between pb-2">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Mis Sesiones de Estudio</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        Gestiona y continúa tus sesiones de Greek Tutor
-                    </p>
-                </div>
+            {/* Header - Ultra-compact for maximum content space */}
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Mis Sesiones de Estudio</h2>
                 <Button onClick={onCreateNew}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva Sesión
