@@ -26,7 +26,7 @@ import { GeminiGreekTutorService, FirestoreGreekSessionRepository } from '@dosfi
 import { FirestoreWordCacheRepository } from '@dosfilos/infrastructure/src/greek-tutor/cache/FirestoreWordCacheRepository';
 // Phase 3A: Quiz service
 import { GeminiQuizService } from '@dosfilos/infrastructure/src/greek-tutor/gemini/GeminiQuizService';
-import { useFirebase } from '@/context/firebase-context';
+import { getFirestore } from 'firebase/firestore';
 
 interface GreekTutorContextType {
     generateTrainingUnits: GenerateTrainingUnitsUseCase;
@@ -55,10 +55,10 @@ const GreekTutorContext = createContext<GreekTutorContextType | null>(null);
 export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // Determine API Key from environment
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-    const { firestore } = useFirebase();
     
     // Instantiate Infrastructure
-    const wordCacheRepository = firestore ? new FirestoreWordCacheRepository(firestore) : undefined;
+    const firestore = getFirestore();
+    const wordCacheRepository = new FirestoreWordCacheRepository(firestore);
     const greekTutorService = new GeminiGreekTutorService(apiKey, wordCacheRepository);
     const sessionRepository = new FirestoreGreekSessionRepository();
     // Phase 3A: Quiz service (hybrid caching)
