@@ -124,10 +124,15 @@ export const usePassageReader = (
         setUnitPreview(null);
 
         try {
+            // Detect user's system language
+            const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
+            const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+
             const preview = await identifyPassageWord.execute(
                 word,
                 passage.greekText,
-                fileSearchStoreId
+                fileSearchStoreId,
+                detectedLang  // Pass detected language
             );
             setUnitPreview(preview);
         } catch (error) {

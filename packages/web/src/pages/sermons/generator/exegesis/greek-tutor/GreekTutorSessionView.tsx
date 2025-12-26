@@ -252,8 +252,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             
             // Session loaded successfully
             
-            // Set flag to auto-trigger morphology after hook is ready
-            setAutoTriggerAction('morphology');
+            // Set flag to auto-trigger passage reading after hook is ready
+            setAutoTriggerAction('passage');
         } catch (error) {
             console.error('[GreekTutorSessionView] Error loading session:', error);
             setStatus('ERROR');
@@ -562,7 +562,16 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         onChatMessage: handleFreeQuestion,
         isMorphologyLoading: loadingMorphology,
         passage,
-        userLanguage: new Intl.DisplayNames(['en'], { type: 'language' }).of(navigator.language.split('-')[0]) || 'Spanish'
+        userLanguage: (() => {
+            const browserLang = navigator.language.split('-')[0];
+            const langMap: Record<string, string> = {
+                'es': 'Spanish',
+                'en': 'English',
+                'pt': 'Portuguese',
+                'fr': 'French'
+            };
+            return langMap[browserLang] || 'Spanish';
+        })()
     });
 
     // Auto-trigger action after session loads
@@ -1483,6 +1492,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 // Adding new unit from passage reader
                                 setUnits(prevUnits => [...prevUnits, newUnit]);
                             }}
+                            onRetrySyntax={() => handleActionClick('syntax')}
                         />
                     </main>
 

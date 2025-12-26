@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, AlertCircle, ArrowLeft, Play } from 'lucide-react';
+import { Loader2, Plus, AlertCircle } from 'lucide-react';
 import { SessionCard } from './components/SessionCard';
 import { StatisticsPanel } from './components/StatisticsPanel';
 import { SearchBar } from './components/SearchBar';
@@ -9,7 +10,6 @@ import { SessionFilters, ProgressFilter, SortBy } from './components/SessionFilt
 import { CleanupButton } from './components/CleanupButton';
 import { EmptyState } from './components/EmptyState';
 import { useSessionList } from './hooks/useSessionList';
-import { useResumeSession } from './hooks/useResumeSession';
 import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { calculateSessionProgress, getSessionLastActivity } from './utils/sessionUtils';
@@ -31,7 +31,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
     deleteSessionUseCase,
     onCreateNew
 }) => {
-    const { resumeSession } = useResumeSession();
+    const navigate = useNavigate();
     const [deletingId, setDeletingId] = useState<string | null>(null);
     
     // Filter and sort states
@@ -108,6 +108,13 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 
         return filtered;
     }, [sessions, searchQuery, progressFilter, sortBy]);
+
+    /**
+     * Resume a session by navigating to it
+     */
+    const resumeSession = (sessionId: string) => {
+        navigate(`/dashboard/greek-tutor/session?sessionId=${sessionId}`, { replace: true });
+    };
 
     // Find most recent active session for "Continue where you left off"
     // Must be before any conditional returns to satisfy React hooks rules
@@ -211,23 +218,9 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            {/* Header - Ultra-compact for maximum content space */}
             <div className="flex items-center justify-between">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <Button
-                            onClick={() => window.history.back()}
-                            variant="ghost"
-                            size="icon"
-                        >
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                        <h2 className="text-3xl font-bold tracking-tight">Mis Sesiones de Estudio</h2>
-                    </div>
-                    <p className="text-muted-foreground mt-1 ml-12">
-                        Gestiona y continúa tus sesiones de Greek Tutor
-                    </p>
-                </div>
+                <h2 className="text-xl font-bold">Mis Sesiones de Estudio</h2>
                 <Button onClick={onCreateNew}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva Sesión
@@ -264,24 +257,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                 </div>
             )}
 
-            {/* Continue Where You Left Off - Featured Session */}
-            {mostRecentActive && !hasNoSessions && (
-                <div className="space-y-3">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Play className="h-5 w-5 text-primary" />
-                        Continuar donde lo dejaste
-                    </h3>
-                    <div className="max-w-md">
-                        <SessionCard
-                            session={mostRecentActive}
-                            onResume={resumeSession}
-                            onDelete={deletingId === mostRecentActive.id ? undefined : handleDelete}
-                            onDuplicate={handleDuplicate}
-                            featured={true}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* Continue section removed to optimize space - users can see all sessions directly */}
 
             {/* Sessions Grid or Empty State */}
             {hasNoSessions ? (

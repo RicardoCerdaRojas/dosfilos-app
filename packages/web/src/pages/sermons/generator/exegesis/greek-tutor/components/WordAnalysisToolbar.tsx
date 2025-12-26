@@ -57,6 +57,11 @@ export const WordAnalysisToolbar: React.FC<WordAnalysisToolbarProps> = ({
         return null;
     }
 
+    // Don't render when viewing passage or syntax analysis (not analyzing specific words)
+    if (activeAction === 'passage' || activeAction === 'syntax') {
+        return null;
+    }
+
     return (
         <div
             className="fixed right-6 top-1/2 -translate-y-1/2 z-20 animate-in slide-in-from-right duration-300"

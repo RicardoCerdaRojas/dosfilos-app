@@ -203,7 +203,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
     );
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 p-5">
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
                 <div>
@@ -238,8 +238,8 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                 ))}
             </div>
 
-            {/* Search, Sort, and View Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Search, Sort, Filters and View Controls - Combined responsive row */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
                     <div className="relative w-full sm:w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -263,64 +263,61 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                             <SelectItem value="progress-low">{t('sort.progressLow')}</SelectItem>
                         </SelectContent>
                     </Select>
-                    
-                    {/* View Toggle */}
-                    <div className="flex items-center gap-1 border rounded-md p-1">
-                        <Button
-                            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            onClick={() => {
-                                setViewMode('grid');
-                                localStorage.setItem('sermonGeneratorView', 'grid');
-                            }}
-                            className="h-8 px-2"
-                        >
-                            <LayoutGrid className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            onClick={() => {
-                                setViewMode('list');
-                                localStorage.setItem('sermonGeneratorView', 'list');
-                            }}
-                            className="h-8 px-2"
-                        >
-                            <List className="h-4 w-4" />
-                        </Button>
-                    </div>
                 </div>
-            </div>
-
-            {/* Filter Chips */}
-            <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
-                    <Filter className="h-3.5 w-3.5" />
-                    {t('filter.label')}
+                
+                {/* Middle: Filter Chips */}
+                <div className="flex items-center gap-1 border rounded-md p-1 flex-wrap">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    {[
+                        { value: 'all', label: t('filter.all') },
+                        { value: 'published', label: t('filter.published') },
+                        { value: 'draft', label: t('filter.draft') },
+                        { value: 'exegesis', label: t('filter.exegesis') },
+                        { value: 'homiletics', label: t('filter.homiletics') },
+                        { value: 'drafting', label: t('filter.drafting') },
+                    ].map((filter) => (
+                        <Button
+                            key={filter.value}
+                            variant={activeFilter === filter.value ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setActiveFilter(filter.value as any)}
+                            className={`h-7 text-xs ${activeFilter === filter.value ? 'shadow-sm' : ''}`}
+                        >
+                            {filter.label}
+                            {activeFilter === filter.value && filteredSermons.length > 0 && (
+                                <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-background/20 text-[10px] font-semibold">
+                                    {filteredSermons.length}
+                                </span>
+                            )}
+                        </Button>
+                    ))}
                 </div>
-                {[
-                    { value: 'all', label: t('filter.all') },
-                    { value: 'published', label: t('filter.published') },
-                    { value: 'draft', label: t('filter.draft') },
-                    { value: 'exegesis', label: t('filter.exegesis') },
-                    { value: 'homiletics', label: t('filter.homiletics') },
-                    { value: 'drafting', label: t('filter.drafting') },
-                ].map((filter) => (
+                
+                {/* Right: View Toggle */}
+                <div className="flex items-center gap-1 border rounded-md p-1 shrink-0">
                     <Button
-                        key={filter.value}
-                        variant={activeFilter === filter.value ? 'default' : 'outline'}
+                        variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                         size="sm"
-                        onClick={() => setActiveFilter(filter.value as any)}
-                        className={`h-7 text-xs ${activeFilter === filter.value ? 'shadow-sm' : ''}`}
+                        onClick={() => {
+                            setViewMode('grid');
+                            localStorage.setItem('sermonGeneratorView', 'grid');
+                        }}
+                        className="h-8 px-2"
                     >
-                        {filter.label}
-                        {activeFilter === filter.value && filteredSermons.length > 0 && (
-                            <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-background/20 text-[10px] font-semibold">
-                                {filteredSermons.length}
-                            </span>
-                        )}
+                        <LayoutGrid className="h-4 w-4" />
                     </Button>
-                ))}
+                    <Button
+                        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => {
+                            setViewMode('list');
+                            localStorage.setItem('sermonGeneratorView', 'list');
+                        }}
+                        className="h-8 px-2"
+                    >
+                        <List className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
 
             <div className={viewMode === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-4'}>
@@ -336,7 +333,7 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                         const { label, progress, variant, badgeClass, progressClass } = phaseInfo;
 
                         return (
-                            <Card key={sermon.id} className="group flex flex-col hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-muted hover:border-primary/30 overflow-hidden">
+                            <Card key={sermon.id} className="py-0 pt-4 group flex flex-col hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-muted hover:border-primary/30 overflow-hidden">
                                 <div className="p-4 flex-1 space-y-3">
                                     {/* Header: Date + Phase Badge */}
                                     <div className="flex items-start justify-between gap-4">

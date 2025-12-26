@@ -22,8 +22,11 @@ import { AddPassageWordToUnitsUseCase } from '@dosfilos/application/src/greek-tu
 import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { GeminiGreekTutorService, FirestoreGreekSessionRepository } from '@dosfilos/infrastructure';
+// Word cache for reducing API costs
+import { FirestoreWordCacheRepository } from '@dosfilos/infrastructure/src/greek-tutor/cache/FirestoreWordCacheRepository';
 // Phase 3A: Quiz service
 import { GeminiQuizService } from '@dosfilos/infrastructure/src/greek-tutor/gemini/GeminiQuizService';
+import { getFirestore } from 'firebase/firestore';
 
 interface GreekTutorContextType {
     generateTrainingUnits: GenerateTrainingUnitsUseCase;
@@ -54,7 +57,9 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
     
     // Instantiate Infrastructure
-    const greekTutorService = new GeminiGreekTutorService(apiKey);
+    const firestore = getFirestore();
+    const wordCacheRepository = new FirestoreWordCacheRepository(firestore);
+    const greekTutorService = new GeminiGreekTutorService(apiKey, wordCacheRepository);
     const sessionRepository = new FirestoreGreekSessionRepository();
     // Phase 3A: Quiz service (hybrid caching)
     const quizService = new GeminiQuizService(apiKey, sessionRepository);

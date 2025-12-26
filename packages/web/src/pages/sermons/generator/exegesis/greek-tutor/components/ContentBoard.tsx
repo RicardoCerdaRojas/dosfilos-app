@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle, Lightbulb, BookOpen, RotateCcw, Clock, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { EducationalCapsule } from './EducationalCapsule';
@@ -48,6 +48,7 @@ export interface ContentBoardProps {
         greekWord?: string;
         passage?: string;
     }) => Promise<void>; // Callback to save tutor responses as insights
+    onRetrySyntax?: () => void; // Callback to retry syntax analysis
 }
 
 /**
@@ -63,7 +64,8 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     sessionId,
     fileSearchStoreId,
     onUnitAdded,
-    onSaveInsight
+    onSaveInsight,
+    onRetrySyntax
 }) => {
     const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule());
     const { generateQuiz, submitQuizAnswer } = useGreekTutor();
@@ -160,7 +162,93 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                         }
                         
                         // Syntax Analysis View
-                        if (content.type === 'syntax' && content.syntaxAnalysis) {
+                        if (content.type === 'syntax') {
+                            // Check if it's an error state (no analysis data)
+                            if (!content.syntaxAnalysis) {
+                                return (
+                                    <Card className="p-6 md:p-8 shadow-sm border-2 border-orange-200 dark:border-orange-900/30 bg-gradient-to-br from-orange-50/50 to-background dark:from-orange-950/10 dark:to-background">
+                                        <div className="space-y-6">
+                                            {/* Header with icon */}
+                                            <div className="flex items-start gap-4">
+                                                <div className="flex-shrink-0">
+                                                    <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                                                        <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-xl font-bold text-foreground mb-2">Análisis no disponible</h3>
+                                                    <p className="text-muted-foreground">
+                                                        Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-border" />
+
+                                            {/* Suggestions */}
+                                            <div className="space-y-4">
+                                                <h4 className="font-semibold text-foreground">¿Qué puedes hacer?</h4>
+                                                
+                                                <div className="grid gap-3">
+                                                    <div className="flex gap-3 p-3 rounded-lg bg-background border">
+                                                        <div className="flex-shrink-0 mt-0.5">
+                                                            <Lightbulb className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm">Intenta de nuevo</p>
+                                                            <p className="text-xs text-muted-foreground">El análisis usa IA y a veces puede fallar temporalmente.</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex gap-3 p-3 rounded-lg bg-background border">
+                                                        <div className="flex-shrink-0 mt-0.5">
+                                                            <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm">Prueba con un pasaje más corto</p>
+                                                            <p className="text-xs text-muted-foreground">Los pasajes más largos son más complejos de analizar.</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex gap-3 p-3 rounded-lg bg-background border">
+                                                        <div className="flex-shrink-0 mt-0.5">
+                                                            <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm">Regresa más tarde</p>
+                                                            <p className="text-xs text-muted-foreground">Este es un feature experimental que estamos mejorando.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-border" />
+
+                                            {/* Retry button */}
+                                            <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-lg p-4">
+                                                <div className="flex items-center gap-2 flex-1">
+                                                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                                    <div>
+                                                        <p className="text-sm font-medium text-foreground">Mientras tanto...</p>
+                                                        <p className="text-xs text-muted-foreground">Puedes usar: análisis morfológico, contexto de palabras, y quiz.</p>
+                                                    </div>
+                                                </div>
+                                                {onRetrySyntax && (
+                                                    <button
+                                                        onClick={onRetrySyntax}
+                                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium text-sm flex-shrink-0 ml-4 flex items-center gap-2"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4" />
+                                                        Reintentar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </Card>
+                                );
+                            }
+                            
+                            // Normal syntax view with analysis
                             return (
                                 <Card className="p-6 md:p-8 shadow-sm">
                                     <PassageSyntaxView 

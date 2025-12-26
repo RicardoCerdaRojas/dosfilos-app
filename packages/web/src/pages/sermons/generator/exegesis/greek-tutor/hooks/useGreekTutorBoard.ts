@@ -252,7 +252,28 @@ export const useGreekTutorBoard = ({
                         setCurrentContent({
                             type: 'syntax',
                             title: 'Estructura Sintáctica',
-                            content: `Error al analizar la sintaxis: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+                            content: `# ⚠️ Análisis no disponible
+
+Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.
+
+---
+
+## ¿Qué puedes hacer?
+
+💡 **Intenta de nuevo**
+El análisis usa IA y a veces puede fallar temporalmente. Haz click nuevamente en "Estructura Sintáctica" para reintentar.
+
+📖 **Prueba con un pasaje más corto**
+Los pasajes más largos son más complejos de analizar. Intenta seleccionar un solo versículo.
+
+🔄 **Regresa más tarde**
+Este es un feature experimental que estamos mejorando constantemente.
+
+---
+
+> [!TIP]
+> **Mientras tanto...**
+> Puedes usar las otras herramientas disponibles: análisis morfológico, contexto de palabras, y quiz de comprensión.`,
                             passage,
                             timestamp: new Date()
                         });

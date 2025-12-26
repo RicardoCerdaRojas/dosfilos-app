@@ -85,14 +85,18 @@ export class AnalyzePassageSyntaxUseCase {
     async execute(passage: BiblicalPassage, language: string = 'Spanish'): Promise<PassageSyntaxAnalysis> {
         // Step 1: Try cache first (if repository available)
         if (this.sessionRepository) {
+            console.log('[AnalyzePassageSyntaxUseCase] Checking cache for:', passage.reference);
             const cachedAnalysis = await this.sessionRepository.getCachedSyntaxAnalysis(passage.reference);
             if (cachedAnalysis) {
-                console.log('[AnalyzePassageSyntaxUseCase] Using cached syntax analysis');
+                console.log('[AnalyzePassageSyntaxUseCase] ✅ Cache HIT! Using cached analysis for:', passage.reference);
                 return cachedAnalysis;
             }
+            console.log('[AnalyzePassageSyntaxUseCase] ❌ Cache MISS. Generating new analysis...');
+        } else {
+            console.warn('[AnalyzePassageSyntaxUseCase] No session repository - cache disabled');
         }
 
-        console.log('[AnalyzePassageSyntaxUseCase] Cache miss - generating new analysis');
+        console.log('[AnalyzePassageSyntaxUseCase] Calling Gemini API...');
 
         // Step 2: Generate the analysis prompt
         const prompt = this.buildAnalysisPrompt(passage, language);
@@ -180,6 +184,7 @@ Identify all clauses in this passage and their relationships. For each clause, p
 - Use clear, unique IDs for clauses (e.g., "clause_1", "clause_2")
 - Main clauses should have parentClauseId = null
 - Provide a brief overall structure description
+- **CRITICAL**: In the structureDescription, use numbered references [1], [2], [3]... to refer to each clause. These will become clickable links in the UI.
 
 **Response Format** (JSON):
 {
@@ -190,14 +195,14 @@ Identify all clauses in this passage and their relationships. For each clause, p
       "wordIndices": [0, 1, 2, ...],
       "mainVerbIndex": 0,
       "parentClauseId": null,
-      "conjunction": undefined,
+      "conjunction": null,
       "greekText": "Παρακαλῶ οὖν ὑμᾶς...",
       "syntacticFunction": "Main exhortation"
     },
     ...
   ],
   "rootClauseId": "clause_1",
-  "structureDescription": "The passage contains two main clauses..."
+  "structureDescription": "The passage has two main clauses: clause [1] presents the primary command, while clause [2] provides a coordinated imperative. Clause [1] is modified by a purpose clause [3]..."
 }
 
 Respond ONLY with valid JSON, no additional text.`;
@@ -214,10 +219,14 @@ Respond ONLY with valid JSON, no additional text.`;
     private parseGeminiResponse(rawResponse: string): GeminiSyntaxAnalysisResponse {
         try {
             // Remove markdown code blocks if present
-            const cleanedResponse = rawResponse
+            let cleanedResponse = rawResponse
                 .replace(/```json\n?/g, '')
                 .replace(/```\n?/g, '')
                 .trim();
+
+            // Sanitize JSON: replace undefined literals with null
+            // Gemini sometimes outputs 'undefined' which is not valid JSON
+            cleanedResponse = cleanedResponse.replace(/:\s*undefined\s*([,}])/g, ': null$1');
 
             const parsed = JSON.parse(cleanedResponse);
 

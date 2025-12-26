@@ -100,7 +100,7 @@ export function SeriesList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -122,7 +122,7 @@ export function SeriesList() {
       {/* Series Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {series.map((item) => (
-          <Card key={item.id} className="group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
+          <Card key={item.id} className="py-0 pt-6 group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
             {item.coverUrl && (
               <div className="h-48 w-full overflow-hidden">
                 <img 
@@ -132,7 +132,7 @@ export function SeriesList() {
                 />
               </div>
             )}
-            <div className="p-6 flex-1 space-y-4">
+            <div className="px-6 py-0 flex-1 space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-medium">
                   <Calendar className="h-3.5 w-3.5" />
@@ -160,12 +160,12 @@ export function SeriesList() {
               </div>
             </div>
 
-            <div className="p-4 border-t bg-muted/20 flex items-center justify-end gap-1">
+            <div className="py-2 px-3 border-t bg-muted/20 flex items-center justify-end gap-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="h-8 w-8 p-0 hover:text-primary"
-                onClick={() => navigate(`/series/${item.id}`)}
+                onClick={() => navigate(`/dashboard/plans/${item.id}`)}
               >
                 <Eye className="h-4 w-4" />
               </Button>
