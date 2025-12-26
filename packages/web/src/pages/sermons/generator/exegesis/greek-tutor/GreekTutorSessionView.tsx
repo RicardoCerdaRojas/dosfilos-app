@@ -562,7 +562,16 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         onChatMessage: handleFreeQuestion,
         isMorphologyLoading: loadingMorphology,
         passage,
-        userLanguage: new Intl.DisplayNames(['en'], { type: 'language' }).of(navigator.language.split('-')[0]) || 'Spanish'
+        userLanguage: (() => {
+            const browserLang = navigator.language.split('-')[0];
+            const langMap: Record<string, string> = {
+                'es': 'Spanish',
+                'en': 'English',
+                'pt': 'Portuguese',
+                'fr': 'French'
+            };
+            return langMap[browserLang] || 'Spanish';
+        })()
     });
 
     // Auto-trigger action after session loads
