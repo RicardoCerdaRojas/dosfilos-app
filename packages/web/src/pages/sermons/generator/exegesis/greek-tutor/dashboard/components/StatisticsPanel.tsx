@@ -156,7 +156,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
                             <PopoverTrigger asChild>
                                 {statContent}
                             </PopoverTrigger>
-                            <PopoverContent side="top" className="w-96">
+                            <PopoverContent side="top" className="w-80">
                                 {tooltipContent}
                             </PopoverContent>
                         </Popover>

@@ -38,9 +38,8 @@ export const GreekTutorDashboardView: React.FC = () => {
             return;
         }
         
-        // Navigate to the session creation flow
-        // For now, navigate directly to the exegesis flow
-        navigate('/sermon/generator/exegesis');
+        // Navigate to greek-tutor session creation
+        navigate('/dashboard/greek-tutor');
     };
 
     if (!user) {
