@@ -54,7 +54,7 @@ export function SermonsPage() {
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sermonToDelete, setSermonToDelete] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [series, setSeries] = useState<SermonSeriesEntity[]>([]);
   const [loadingSeries, setLoadingSeries] = useState(true);
 
@@ -146,7 +146,7 @@ export function SermonsPage() {
         <p className="text-muted-foreground text-center max-w-md">
           {t('empty.description')}
         </p>
-        <Button onClick={() => navigate('/dashboard/sermons/new')} size="lg">
+        <Button onClick={() => navigate('/dashboard/generate-sermon')} size="lg">
           <Plus className="mr-2 h-5 w-5" />
           {t('empty.createButton')}
         </Button>
@@ -162,7 +162,7 @@ export function SermonsPage() {
           <h1 className="text-3xl font-bold">{t('header.title')}</h1>
           <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/dashboard/sermons/new')}>
+        <Button onClick={() => navigate('/dashboard/generate-sermon?new=true')}>
           <Plus className="mr-2 h-4 w-4" />
           {t('header.newButton')}
         </Button>

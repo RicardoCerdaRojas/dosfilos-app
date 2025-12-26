@@ -31,7 +31,14 @@ function WizardContent() {
 
             // Check if we're resuming a specific sermon via URL param
             const sermonIdParam = searchParams.get('id');
+            const newSermonParam = searchParams.get('new');
 
+            // If 'new=true', skip resume prompt and start fresh wizard
+            if (newSermonParam === 'true') {
+                setLoading(false);
+                setShowResumePrompt(false);
+                return;
+            }
             
             if (sermonIdParam) {
                 try {
