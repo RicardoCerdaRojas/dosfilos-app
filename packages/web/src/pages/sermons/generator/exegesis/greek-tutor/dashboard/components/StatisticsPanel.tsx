@@ -1,10 +1,16 @@
 import React from 'react';
-import { BarChart3, BookOpen, TrendingUp, Clock, Flame } from 'lucide-react';
+import { BarChart3, BookOpen, TrendingUp, Clock, Flame, Info } from 'lucide-react';
 import { StudySession } from '@dosfilos/domain';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { calculateSessionProgress, getSessionLastActivity } from '../utils/sessionUtils';
 import { calculateStudyStreak } from '../utils/progressUtils';
+
 
 interface StatisticsPanelProps {
     sessions: StudySession[];
@@ -39,8 +45,16 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
         }, getSessionLastActivity(sessions[0]!))
         : null;
     
+    // Shorter format: "hace 2h" instead of "hace alrededor de 2 horas"
     const lastActivityText = lastActivity
         ? formatDistanceToNow(lastActivity, { addSuffix: true, locale: es })
+            .replace('alrededor de ', '')
+            .replace(' horas', 'h')
+            .replace(' hora', 'h')
+            .replace(' minutos', 'min')
+            .replace(' minuto', 'min')
+            .replace(' días', 'd')
+            .replace(' día', 'd')
         : 'N/A';
 
     const streak = calculateStudyStreak(sessions);
@@ -58,6 +72,12 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
             value: totalWords,
             color: 'text-green-600'
         },
+        ...(streak > 0 ? [{
+            icon: Flame,
+            label: 'Racha de Estudio',
+            value: `${streak} día${streak > 1 ? 's' : ''}`,
+            color: 'text-orange-600'
+        }] : []),
         {
             icon: TrendingUp,
             label: 'Progreso Promedio',
@@ -69,31 +89,79 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
             label: 'Última Actividad',
             value: lastActivityText,
             color: 'text-amber-600'
-        },
-        ...(streak > 0 ? [{
-            icon: Flame,
-            label: 'Racha de Estudio',
-            value: `${streak} día${streak > 1 ? 's' : ''}`,
-            color: 'text-orange-600'
-        }] : [])
+        }
     ];
 
+
     return (
-        <div className="bg-card border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                Resumen General
-            </h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {stats.map((stat, index) => (
-                    <div key={index} className="space-y-1">
-                        <div className="flex items-center gap-2">
-                            <stat.icon className={`h-4 w-4 ${stat.color}`} />
-                            <p className="text-xs text-muted-foreground">{stat.label}</p>
+        <div className="bg-card border rounded-lg p-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {stats.map((stat, index) => {
+                    // Determine if this stat needs a tooltip
+                    const needsTooltip = stat.label === 'Progreso Promedio' || stat.label === 'Racha de Estudio';
+                    
+                    const statContent = (
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5">
+                                <stat.icon className={`h-3 w-3 ${stat.color}`} />
+                                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                                {needsTooltip && (
+                                    <Info className="h-3 w-3 text-muted-foreground/50 hover:text-primary transition-colors cursor-help" />
+                                )}
+                            </div>
+                            <p className="text-xl font-bold">{stat.value}</p>
                         </div>
-                        <p className="text-2xl font-bold">{stat.value}</p>
-                    </div>
-                ))}
+                    );
+
+                    if (!needsTooltip) {
+                        return <div key={index}>{statContent}</div>;
+                    }
+
+                    // Tooltip content based on metric
+                    const tooltipContent = stat.label === 'Progreso Promedio' ? (
+                        <div className="space-y-2 max-w-xs">
+                            <p className="font-semibold text-sm">🎯 Tu Nivel de Dominio del Griego</p>
+                            <p className="text-sm">
+                                Muestra qué tan bien estás <span className="font-semibold text-primary">dominando</span> las palabras que estudias.
+                            </p>
+                            <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
+                                <p className="font-medium">Cómo se calcula:</p>
+                                <p>• Palabra <span className="text-green-600 font-medium">dominada</span>: ≥50% de precisión en quizzes</p>
+                                <p>• Se promedian todas tus sesiones</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground italic">
+                                💡 Progreso alto = Estás internalizando el griego bíblico
+                            </p>
+                        </div>
+                    ) : ( // Racha de Estudio
+                        <div className="space-y-2 max-w-xs">
+                            <p className="font-semibold text-sm">🔥 Mantén el Momentum</p>
+                            <p className="text-sm">
+                                La <span className="font-semibold text-orange-600">consistencia</span> es clave para dominar el griego. ¡No rompas la cadena!
+                            </p>
+                            <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
+                                <p className="font-medium">Cómo funciona:</p>
+                                <p>• Cuenta días consecutivos estudiando</p>
+                                <p>• Tienes 1 día de gracia (puedes estudiar hoy o ayer)</p>
+                                <p>• Se rompe después de {'>'} 1 día sin actividad</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground italic">
+                                💪 Estudiar 10 min diarios {'>'} 2 horas 1 vez por semana
+                            </p>
+                        </div>
+                    );
+
+                    return (
+                        <Popover key={index}>
+                            <PopoverTrigger asChild>
+                                {statContent}
+                            </PopoverTrigger>
+                            <PopoverContent side="top" className="w-80">
+                                {tooltipContent}
+                            </PopoverContent>
+                        </Popover>
+                    );
+                })}
             </div>
         </div>
     );
