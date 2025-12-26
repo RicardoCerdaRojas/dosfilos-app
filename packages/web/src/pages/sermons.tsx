@@ -146,7 +146,7 @@ export function SermonsPage() {
         <p className="text-muted-foreground text-center max-w-md">
           {t('empty.description')}
         </p>
-        <Button onClick={() => navigate('/dashboard/generate-sermon')} size="lg">
+        <Button onClick={() => navigate('/dashboard/generate-sermon?new=true')} size="lg">
           <Plus className="mr-2 h-5 w-5" />
           {t('empty.createButton')}
         </Button>
