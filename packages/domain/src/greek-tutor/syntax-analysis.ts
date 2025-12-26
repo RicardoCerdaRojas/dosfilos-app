@@ -209,8 +209,11 @@ export function createClause(params: {
     }
 
     // Validate main verb index if provided
-    if (params.mainVerbIndex !== undefined && !params.wordIndices.includes(params.mainVerbIndex)) {
-        throw new Error('Main verb index must be within wordIndices');
+    // If invalid, log warning and set to undefined (Gemini sometimes provides incorrect indices)
+    let validMainVerbIndex: number | undefined = params.mainVerbIndex;
+    if (params.mainVerbIndex !== undefined && params.mainVerbIndex !== null && !params.wordIndices.includes(params.mainVerbIndex)) {
+        console.warn(`[Clause ${params.id}] Invalid mainVerbIndex ${params.mainVerbIndex} not in wordIndices. Ignoring.`);
+        validMainVerbIndex = undefined;
     }
 
     const clause: Clause = {
@@ -223,8 +226,8 @@ export function createClause(params: {
     };
 
     // Add optional properties only if they exist
-    if (params.mainVerbIndex !== undefined) {
-        (clause as any).mainVerbIndex = params.mainVerbIndex;
+    if (validMainVerbIndex !== undefined) {
+        (clause as any).mainVerbIndex = validMainVerbIndex;
     }
     if (params.conjunction !== undefined) {
         (clause as any).conjunction = params.conjunction;
