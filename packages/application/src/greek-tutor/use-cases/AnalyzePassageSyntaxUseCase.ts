@@ -85,14 +85,18 @@ export class AnalyzePassageSyntaxUseCase {
     async execute(passage: BiblicalPassage, language: string = 'Spanish'): Promise<PassageSyntaxAnalysis> {
         // Step 1: Try cache first (if repository available)
         if (this.sessionRepository) {
+            console.log('[AnalyzePassageSyntaxUseCase] Checking cache for:', passage.reference);
             const cachedAnalysis = await this.sessionRepository.getCachedSyntaxAnalysis(passage.reference);
             if (cachedAnalysis) {
-                console.log('[AnalyzePassageSyntaxUseCase] Using cached syntax analysis');
+                console.log('[AnalyzePassageSyntaxUseCase] ✅ Cache HIT! Using cached analysis for:', passage.reference);
                 return cachedAnalysis;
             }
+            console.log('[AnalyzePassageSyntaxUseCase] ❌ Cache MISS. Generating new analysis...');
+        } else {
+            console.warn('[AnalyzePassageSyntaxUseCase] No session repository - cache disabled');
         }
 
-        console.log('[AnalyzePassageSyntaxUseCase] Cache miss - generating new analysis');
+        console.log('[AnalyzePassageSyntaxUseCase] Calling Gemini API...');
 
         // Step 2: Generate the analysis prompt
         const prompt = this.buildAnalysisPrompt(passage, language);
