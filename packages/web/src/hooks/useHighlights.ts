@@ -65,26 +65,38 @@ export function useHighlights(sermonId: string) {
 
     // Handle text selection
     useEffect(() => {
-        const handleSelection = () => {
-            const selection = window.getSelection();
-            const text = selection?.toString().trim();
+        let selectionTimeout: NodeJS.Timeout;
 
-            if (text && text.length > 0) {
-                const range = selection?.getRangeAt(0);
-                if (range) {
-                    setSelectedText({ text, range });
+        const handleSelection = () => {
+            // Small delay to ensure selection is ready on mobile/tablet
+            clearTimeout(selectionTimeout);
+            selectionTimeout = setTimeout(() => {
+                const selection = window.getSelection();
+                const text = selection?.toString().trim();
+
+                if (text && text.length > 0) {
+                    const range = selection?.getRangeAt(0);
+                    if (range) {
+                        setSelectedText({ text, range });
+                    }
+                } else {
+                    setSelectedText(null);
                 }
-            } else {
-                setSelectedText(null);
-            }
+            }, 100);
         };
 
+        // Mouse events for desktop
         document.addEventListener('mouseup', handleSelection);
+        // Touch events for mobile/tablet
         document.addEventListener('touchend', handleSelection);
+        // Selection change for better mobile support
+        document.addEventListener('selectionchange', handleSelection);
 
         return () => {
+            clearTimeout(selectionTimeout);
             document.removeEventListener('mouseup', handleSelection);
             document.removeEventListener('touchend', handleSelection);
+            document.removeEventListener('selectionchange', handleSelection);
         };
     }, []);
 
