@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Send, Sparkles, BookOpen, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Send, Sparkles, BookOpen, ChevronDown, ChevronRight, Wrench, MessageCircle, Bot, Brain, Zap, Compass, GraduationCap } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { getSectionConfig } from './section-configs';
 
@@ -78,6 +78,7 @@ export function ChatInterface<T = any>({
   const [userInput, setUserInput] = useState('');
   const [internalIsLoading, setInternalIsLoading] = useState(false);
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
+  const [chatMode, setChatMode] = useState<'refine' | 'general'>('refine');
   
   // Combine internal and external loading states
   const isLoading = internalIsLoading || externalIsLoading;
@@ -122,9 +123,11 @@ export function ChatInterface<T = any>({
       // Add user message to UI
       onSendMessage(message);
 
-      // Only call AI if no focused section (general mode) AND default AI is not disabled
-      // If focused section OR disabled, parent handles the AI call
-      if (!focusedSection && !disableDefaultAI) {
+      // Only call AI if:
+      // 1. No focused section (general mode) AND default AI is not disabled, OR
+      // 2. Focused section BUT user selected general mode
+      // If focused section in refine mode OR disabled, parent handles the AI call
+      if ((!focusedSection && !disableDefaultAI) || (focusedSection && chatMode === 'general')) {
         // Import the refinement service
         const { contentRefinementService } = await import('@dosfilos/application');
         
@@ -167,7 +170,8 @@ export function ChatInterface<T = any>({
 
         onSendMessage(suggestion, 'assistant');
 
-        if (response.refinedContent) {
+        // Only update content if we're NOT in general question mode
+        if (response.refinedContent && chatMode !== 'general') {
           onContentUpdate(response.refinedContent);
         }
       }
@@ -231,20 +235,66 @@ export function ChatInterface<T = any>({
               </p>
             </div>
             
-
+            {/* Chat Mode Selector - Show when refining a section */}
+            {focusedSection && (
+              <Select value={chatMode} onValueChange={(v) => setChatMode(v as 'refine' | 'general')}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="refine">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-3 w-3" />
+                      <span>Refinar Sección</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="general">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="h-3 w-3" />
+                      <span>Pregunta General</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
 
             {/* Coaching Style Selector */}
             {showStyleSelector && onStyleChange && (
               <Select value={selectedStyle} onValueChange={(v) => onStyleChange(v as CoachingStyle | 'auto')}>
-                <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectTrigger className="w-[160px] h-8 text-xs">
                   <SelectValue placeholder="Modo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">🤖 Automático</SelectItem>
-                  <SelectItem value={CoachingStyle.SOCRATIC}>🧠 Socrático</SelectItem>
-                  <SelectItem value={CoachingStyle.DIRECT}>⚡ Directo</SelectItem>
-                  <SelectItem value={CoachingStyle.EXPLORATORY}>🔍 Exploratorio</SelectItem>
-                  <SelectItem value={CoachingStyle.DIDACTIC}>📚 Didáctico</SelectItem>
+                  <SelectItem value="auto">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-3 w-3" />
+                      <span>Automático</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.SOCRATIC}>
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-3 w-3" />
+                      <span>Socrático</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.DIRECT}>
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-3 w-3" />
+                      <span>Directo</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.EXPLORATORY}>
+                    <div className="flex items-center gap-2">
+                      <Compass className="h-3 w-3" />
+                      <span>Exploratorio</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.DIDACTIC}>
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-3 w-3" />
+                      <span>Didáctico</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -363,7 +413,9 @@ export function ChatInterface<T = any>({
             }}
             placeholder={
               focusedSection
-                ? "Describe los cambios que quieres hacer..."
+                ? chatMode === 'refine'
+                  ? "Describe los cambios que quieres hacer..."
+                  : "Haz una pregunta general sobre esta sección..."
                 : "Escribe tu solicitud..."
             }
             className="min-h-[80px] resize-none"

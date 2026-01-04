@@ -4,7 +4,7 @@ import { useSermon } from '@/hooks/use-sermons';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, Minus, Plus, Clock, Play, Pause, RotateCcw, 
-  Settings, BookOpen, Maximize, Minimize
+  Settings, BookOpen, Maximize, Minimize, Eraser
 } from 'lucide-react';
 import {
   Dialog,
@@ -18,6 +18,9 @@ import { cn } from '@/lib/utils';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { useHighlights } from '@/hooks/useHighlights';
+import { HighlightToolbar } from '@/components/preach/HighlightToolbar';
 
 // Helper to format time
 const formatTime = (seconds: number) => {
@@ -50,6 +53,9 @@ export function PreachModePage() {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
   const [bibleText, setBibleText] = useState<string | null>(null);
   const [loadingBible, setLoadingBible] = useState(false);
+  
+  // Highlights
+  const { highlights, selectedText, addHighlight, removeHighlight, clearAllHighlights } = useHighlights(id || '');
 
   // Fullscreen API handlers
   const enterFullscreen = async () => {
@@ -192,6 +198,58 @@ export function PreachModePage() {
     
     return processed;
   };
+  
+  // Helper to get highlight color class
+  const getHighlightClass = (color: string) => {
+    switch (color) {
+      case 'yellow': return 'bg-yellow-200 dark:bg-yellow-900/40';
+      case 'green': return 'bg-green-200 dark:bg-green-900/40';
+      case 'pink': return 'bg-pink-200 dark:bg-pink-900/40';
+      case 'blue': return 'bg-blue-200 dark:bg-blue-900/40';
+      default: return '';
+    }
+  };
+  
+  // Apply highlights to content
+  const applyHighlights = (content: string) => {
+    if (highlights.length === 0) return content;
+    
+    let result = content;
+    // Sort highlights by length (longest first) to avoid nested replacements
+    const sortedHighlights = [...highlights].sort((a, b) => b.text.length - a.text.length);
+    
+    sortedHighlights.forEach(highlight => {
+      const colorClass = getHighlightClass(highlight.color);
+      const regex = new RegExp(highlight.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      result = result.replace(
+        regex, 
+        `<mark class="${colorClass} rounded px-0.5 cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar resaltado">$&</mark>`
+      );
+    });
+    
+    return result;
+  };
+  
+  // Handle click on highlighted text to remove it
+  useEffect(() => {
+    const handleHighlightClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'MARK' && target.dataset.highlightId) {
+        const highlightId = target.dataset.highlightId;
+        const highlight = highlights.find(h => h.id === highlightId);
+        if (highlight) {
+          // Brief visual feedback
+          target.style. opacity = '0.3';
+          setTimeout(() => {
+            removeHighlight(highlightId);
+          }, 150);
+        }
+      }
+    };
+    
+    document.addEventListener('click', handleHighlightClick);
+    return () => document.removeEventListener('click', handleHighlightClick);
+  }, [highlights, removeHighlight]);
 
   const components = {
     a: ({ node, ...props }: any) => {
@@ -321,6 +379,25 @@ export function PreachModePage() {
               <Plus className="h-4 w-4" />
             </Button>
           </div>
+          
+          {/* Highlight Controls */}
+          {highlights.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-yellow-400" />
+                <span>{highlights.length} resaltado{highlights.length !== 1 ? 's' : ''}</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={clearAllHighlights}
+                className="gap-2"
+              >
+                <Eraser className="h-4 w-4" />
+                Limpiar
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -360,11 +437,19 @@ export function PreachModePage() {
           <ReactMarkdown 
             components={components}
             remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
           >
-            {processContent(sermon.content)}
+            {applyHighlights(processContent(sermon.content))}
           </ReactMarkdown>
         </div>
       </div>
+      
+      {/* Highlight Toolbar */}
+      <HighlightToolbar 
+        selectedText={selectedText}
+        onHighlight={addHighlight}
+        onClose={() => window.getSelection()?.removeAllRanges()}
+      />
 
       {/* Floating Timer - Visible when running and controls are hidden */}
       {isRunning && !showControls && (
