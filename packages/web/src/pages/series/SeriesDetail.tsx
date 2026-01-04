@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, LayoutDashboard, List, Calendar } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlanDashboard } from '@/components/plan/PlanDashboard';
@@ -41,55 +41,108 @@ export function SeriesDetail() {
   const completedCount = sermonItems.filter(s => s.status === 'complete').length;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="space-y-4">
-        <Button variant="ghost" className="pl-0" onClick={() => navigate('/dashboard/plans')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver a Planes
-        </Button>
+    <div className="space-y-0">
+      {/* Clean Image Banner */}
+      {series.coverUrl && (
+        <div 
+          className="relative -mx-6 -mt-6 h-48 bg-cover bg-center"
+          style={{ backgroundImage: `url(${series.coverUrl})` }}
+        >
+          {/* Subtle gradient at bottom for smooth transition */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
+          
+          {/* Back button and Edit button positioned over image */}
+          <div className="relative h-full flex items-start justify-between p-6">
+            <Button 
+              variant="ghost" 
+              className="text-white hover:bg-white/20 bg-black/30 backdrop-blur-sm"
+              onClick={() => navigate('/dashboard/plans')}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver a Planes
+            </Button>
+            
+            <Button 
+              onClick={() => navigate(`/dashboard/plans/${series.id}/edit`)}
+              className="bg-white text-slate-900 hover:bg-white/90 shadow-lg"
+            >
+              Editar Planes
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* Content Section - Clean and Spacious */}
+      <div className="px-6 pt-8 pb-6 space-y-6">
+        {/* Breadcrumb for plans without image */}
+        {!series.coverUrl && (
+          <Button variant="ghost" className="pl-0" onClick={() => navigate('/dashboard/plans')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver a Planes
+          </Button>
+        )}
         
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-          {series.coverUrl && (
-            <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden shadow-md shrink-0">
-              <img src={series.coverUrl} alt={series.title} className="w-full h-full object-cover" />
-            </div>
-          )}
-          <div className="flex-1 space-y-3">
-            <h1 className="text-3xl font-bold font-serif">{series.title}</h1>
-            <p className="text-muted-foreground text-lg">{series.description}</p>
-            <div className="flex items-center gap-3 pt-2 flex-wrap">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        {/* Title and Description */}
+        <div className="space-y-4 max-w-4xl">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold font-serif leading-tight text-slate-900">
+              {series.title}
+            </h1>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
-                {new Date(series.startDate).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                <span>
+                  {new Date(series.startDate).toLocaleDateString('es-ES', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </span>
               </div>
-              <Badge variant="secondary">{sermonItems.length} sermones</Badge>
-              {plannedCount > 0 && (
-                <Badge variant="outline" className="border-slate-400 text-slate-600">
-                  {plannedCount} planificados
-                </Badge>
-              )}
-              {inProgressCount > 0 && (
-                <Badge variant="outline" className="border-amber-500 text-amber-600">
-                  {inProgressCount} en desarrollo
-                </Badge>
-              )}
-              {completedCount > 0 && (
-                <Badge variant="outline" className="border-green-500 text-green-600">
-                  {completedCount} listos
-                </Badge>
-              )}
+              <span>•</span>
+              <span>{sermonItems.length} {sermonItems.length === 1 ? 'sermón' : 'sermones'}</span>
             </div>
           </div>
-          <Button onClick={() => navigate(`/dashboard/plans/${series.id}/edit`)}>
-            Editar Planes
-          </Button>
+          
+          {series.description && (
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              {series.description}
+            </p>
+          )}
         </div>
+        
+        {/* Stats Badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {plannedCount > 0 && (
+            <Badge variant="outline" className="border-slate-300 text-slate-700 px-3 py-1">
+              {plannedCount} planificados
+            </Badge>
+          )}
+          {inProgressCount > 0 && (
+            <Badge variant="outline" className="border-amber-400 text-amber-700 bg-amber-50 px-3 py-1">
+              {inProgressCount} en desarrollo
+            </Badge>
+          )}
+          {completedCount > 0 && (
+            <Badge variant="outline" className="border-green-400 text-green-700 bg-green-50 px-3 py-1">
+              {completedCount} completados
+            </Badge>
+          )}
+        </div>
+        
+        {/* Edit button for plans without image */}
+        {!series.coverUrl && (
+          <div>
+            <Button onClick={() => navigate(`/dashboard/plans/${series.id}/edit`)}>
+              Editar Planes
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* View Tabs */}
-      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'dashboard' | 'calendar')}>
-        <div className="flex items-center justify-between border-b pb-4">
+      <div className="px-6">
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'dashboard' | 'calendar')}>
+          <div className="flex items-center justify-between border-b pb-4">
           <TabsList>
             <TabsTrigger value="dashboard">
               <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -132,7 +185,8 @@ export function SeriesDetail() {
             onMarkComplete={handleMarkComplete}
           />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

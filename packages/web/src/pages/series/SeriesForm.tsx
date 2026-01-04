@@ -69,23 +69,26 @@ export function SeriesForm() {
   const onSubmit = async (data: SeriesFormData) => {
     if (!user) return;
     
-    // Check limits only for NEW plans (not when editing)
-    if (!id) {
-      const check = await checkCanCreatePreachingPlan();
-      
-      if (!check.allowed) {
-        setUpgradeReason({
-          reason: 'limit_reached',
-          limitType: 'plans',
-          currentLimit: check.limit || 1
-        });
-        setShowUpgradeModal(true);
-        return;
-      }
-    }
-    
+    // Show loading immediately when user clicks submit
     setLoading(true);
+    
     try {
+      // Check limits only for NEW plans (not when editing)
+      if (!id) {
+        const check = await checkCanCreatePreachingPlan();
+        
+        if (!check.allowed) {
+          setLoading(false); // Hide loading before showing modal
+          setUpgradeReason({
+            reason: 'limit_reached',
+            limitType: 'plans',
+            currentLimit: check.limit || 1
+          });
+          setShowUpgradeModal(true);
+          return;
+        }
+      }
+      
       const payload = {
         title: data.title,
         description: data.description,

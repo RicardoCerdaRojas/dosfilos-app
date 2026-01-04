@@ -51,10 +51,22 @@ export class FirebasePlanRepository implements IPlanRepository {
             features: data.features ?? [],
             modules: data.modules ?? [],
             limits: {
-                aiRequestsPerDay: data.limits?.aiRequestsPerDay ?? 0,
-                libraryStorageMB: data.limits?.libraryStorageMB ?? 0,
-                maxMembers: data.limits?.maxMembers ?? 1,
+                // Sermon limits
                 sermonsPerMonth: data.limits?.sermonsPerMonth ?? 0,
+
+                // Preaching plan limits
+                maxPreachingPlans: data.limits?.maxPreachingPlans, // Total limit (Free plan)
+                maxPreachingPlansPerMonth: data.limits?.maxPreachingPlansPerMonth, // Monthly limit (Pro/Team)
+
+                // Greek Tutor limits
+                greekSessionsPerMonth: data.limits?.greekSessionsPerMonth ?? 0,
+
+                // Library limits
+                libraryStorageMB: data.limits?.libraryStorageMB ?? 0,
+
+                // Legacy/deprecated fields
+                aiRequestsPerDay: data.limits?.aiRequestsPerDay ?? 0,
+                maxMembers: data.limits?.maxMembers ?? 1,
             },
             pricing: {
                 currency: data.pricing?.currency ?? 'USD',
