@@ -219,15 +219,51 @@ export function PreachModePage() {
     const sortedHighlights = [...highlights].sort((a, b) => b.text.length - a.text.length);
     
     sortedHighlights.forEach(highlight => {
-      const colorClass = getHighlightClass(highlight.color);
-      const regex = new RegExp(highlight.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-      result = result.replace(
-        regex, 
-        `<mark class="${colorClass} rounded px-0.5 cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar resaltado">$&</mark>`
-      );
+      // Build the search pattern with context
+      const searchPattern = `${highlight.contextBefore}${highlight.text}${highlight.contextAfter}`;
+      const patternIndex = result.indexOf(searchPattern);
+      
+      if (patternIndex === -1) {
+        // Fallback: try without context if not found (for old highlights or edited content)
+        const regex = new RegExp(highlight.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        applyHighlightWithRegex(result, highlight, regex);
+        return;
+      }
+      
+      // Calculate exact position of the text within the pattern
+      const textStart = patternIndex + highlight.contextBefore.length;
+      const textEnd = textStart + highlight.text.length;
+      
+      // Build mark tag based on style
+      let markTag = '';
+      if (highlight.style === 'underline') {
+        markTag = `<mark class="bg-transparent border-b-2 border-primary cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar subrayado">${highlight.text}</mark>`;
+      } else {
+        const colorClass = getHighlightClass(highlight.color!);
+        markTag = `<mark class="${colorClass} rounded px-0.5 cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar resaltado">${highlight.text}</mark>`;
+      }
+      
+      // Replace only this specific occurrence
+      result = result.substring(0, textStart) + markTag + result.substring(textEnd);
     });
     
     return result;
+  };
+  
+  // Helper for regex-based fallback
+  const applyHighlightWithRegex = (content: string, highlight: any, regex: RegExp) => {
+    if (highlight.style === 'underline') {
+      return content.replace(
+        regex, 
+        `<mark class="bg-transparent border-b-2 border-primary cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar subrayado">$&</mark>`
+      );
+    } else {
+      const colorClass = getHighlightClass(highlight.color!);
+      return content.replace(
+        regex, 
+        `<mark class="${colorClass} rounded px-0.5 cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar resaltado">$&</mark>`
+      );
+    }
   };
   
   // Handle click on highlighted text to remove it

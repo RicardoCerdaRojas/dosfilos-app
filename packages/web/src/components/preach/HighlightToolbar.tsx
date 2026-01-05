@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Highlighter, X } from 'lucide-react';
+import { Highlighter, X, Underline } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HighlightColor } from '@/hooks/useHighlights';
 
 interface HighlightToolbarProps {
   selectedText: { text: string; range: Range } | null;
-  onHighlight: (color: HighlightColor) => void;
+  onHighlight: (color?: HighlightColor, style?: 'highlight' | 'underline') => void;
   onClose: () => void;
 }
 
@@ -21,15 +21,23 @@ export function HighlightToolbar({ selectedText, onHighlight, onClose }: Highlig
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
-    if (selectedText?.range) {
-      const rect = selectedText.range.getBoundingClientRect();
-      setPosition({
-        top: rect.top + window.scrollY - 60,
-        left: rect.left + window.scrollX + (rect.width / 2),
-      });
-    } else {
-      setPosition(null);
-    }
+    const updatePosition = () => {
+      if (selectedText?.range) {
+        const rect = selectedText.range.getBoundingClientRect();
+        setPosition({
+          top: rect.top - 60, // Fixed position relative to viewport
+          left: rect.left + (rect.width / 2), // Fixed position relative to viewport
+        });
+      } else {
+        setPosition(null);
+      }
+    };
+
+    updatePosition();
+
+    // Update position on scroll
+    window.addEventListener('scroll', updatePosition);
+    return () => window.removeEventListener('scroll', updatePosition);
   }, [selectedText]);
 
   if (!selectedText || !position) return null;
@@ -52,12 +60,24 @@ export function HighlightToolbar({ selectedText, onHighlight, onClose }: Highlig
             variant="ghost"
             size="sm"
             className={cn('h-8 w-8 p-0', bg, 'hover:opacity-80')}
-            onClick={() => onHighlight(color)}
+            onClick={() => onHighlight(color, 'highlight')}
             title={label}
           >
             <span className="sr-only">{label}</span>
           </Button>
         ))}
+        
+        <div className="w-px h-6 bg-border mx-1" />
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={() => onHighlight(undefined, 'underline')}
+          title="Subrayar"
+        >
+          <Underline className="h-4 w-4" />
+        </Button>
         
         <div className="w-px h-6 bg-border mx-1" />
         

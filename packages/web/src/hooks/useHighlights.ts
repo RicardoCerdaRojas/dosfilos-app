@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export type HighlightColor = 'yellow' | 'green' | 'pink' | 'blue';
+export type HighlightStyle = 'highlight' | 'underline';
 
 export interface Highlight {
     id: string;
     text: string;
-    color: HighlightColor;
-    startOffset: number;
-    endOffset: number;
+    color?: HighlightColor;
+    style: HighlightStyle;
+    contextBefore: string;  // Context for precise matching
+    contextAfter: string;   // Context for precise matching
+    startOffset: number;    // Deprecated but kept for compatibility
+    endOffset: number;      // Deprecated but kept for compatibility
 }
 
 export function useHighlights(sermonId: string) {
@@ -36,14 +40,38 @@ export function useHighlights(sermonId: string) {
         }
     }, [highlights, storageKey]);
 
-    const addHighlight = useCallback((color: HighlightColor) => {
+    const addHighlight = useCallback((color?: HighlightColor, style: HighlightStyle = 'highlight') => {
         if (!selectedText || !selectedText.text.trim()) return;
+
+        // Get the full text content from the selection's container
+        const range = selectedText.range;
+        const container = range.commonAncestorContainer;
+        const fullText = container.textContent || '';
+
+        // Find where the selected text is in the container
+        const selectedInContainer = fullText.indexOf(selectedText.text);
+
+        if (selectedInContainer === -1) {
+            console.warn('Could not find selected text in container');
+            return;
+        }
+
+        // Capture context (30 chars before and after)
+        const contextLength = 30;
+        const contextStart = Math.max(0, selectedInContainer - contextLength);
+        const contextEnd = Math.min(fullText.length, selectedInContainer + selectedText.text.length + contextLength);
+
+        const contextBefore = fullText.substring(contextStart, selectedInContainer);
+        const contextAfter = fullText.substring(selectedInContainer + selectedText.text.length, contextEnd);
 
         const newHighlight: Highlight = {
             id: `highlight-${Date.now()}-${Math.random()}`,
             text: selectedText.text,
             color,
-            startOffset: 0, // Will be calculated by component
+            style,
+            contextBefore,
+            contextAfter,
+            startOffset: 0,
             endOffset: 0,
         };
 
