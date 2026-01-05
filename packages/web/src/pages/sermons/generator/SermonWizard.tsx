@@ -32,21 +32,24 @@ function WizardContent() {
             // Check if we're resuming a specific sermon via URL param
             const sermonIdParam = searchParams.get('id');
             const newSermonParam = searchParams.get('new');
+            console.log('[SermonWizard] URL params:', { sermonIdParam, newSermonParam });
 
             // If 'new=true', skip resume prompt and start fresh wizard
             if (newSermonParam === 'true') {
+                console.log('[SermonWizard] New sermon requested, skipping resume');
                 setLoading(false);
                 setShowResumePrompt(false);
                 return;
             }
             
             if (sermonIdParam) {
+                console.log('[SermonWizard] Loading sermon from URL param:', sermonIdParam);
                 try {
-
                     const sermon = await sermonService.getSermon(sermonIdParam);
-
+                    console.log('[SermonWizard] ✅ Sermon loaded:', { id: sermon?.id, title: sermon?.title, hasProgress: !!sermon?.wizardProgress });
                     
                     if (sermon && sermon.wizardProgress) {
+                        console.log('[SermonWizard] Restoring wizard progress:', sermon.wizardProgress);
                         // Resume this specific sermon
                         setSermonId(sermon.id);
                         
@@ -59,8 +62,11 @@ function WizardContent() {
                         // If no passage, go to step 0 (passage selection)
                         if (!progress.passage) {
                             setStep(0);
-                        } else if (progress.currentStep) {
-                            setStep(progress.currentStep);
+                        } else if (progress.currentStep !== undefined) {
+                            // Validate step is in range 0-3
+                            const validStep = Math.min(Math.max(progress.currentStep, 0), 3);
+                            console.log('[SermonWizard] URL param - Setting step:', validStep, progress.currentStep !== validStep ? `(clamped from ${progress.currentStep})` : '');
+                            setStep(validStep);
                         } else if (progress.draft) {
                             setStep(3);
                         } else if (progress.homiletics) {
@@ -83,6 +89,8 @@ function WizardContent() {
 
             try {
                 const sermons = await sermonService.getInProgressSermons(user.uid);
+                console.log('[SermonWizard] Found in-progress sermons:', sermons.length);
+                sermons.forEach(s => console.log('  - ID:', s.id, 'Title:', s.title || s.wizardProgress?.passage));
                 if (sermons.length > 0) {
                     setInProgressSermons(sermons);
                     setShowResumePrompt(true);
@@ -98,9 +106,14 @@ function WizardContent() {
     }, [user, location.key, searchParams]);
 
     const handleContinue = (sermon: SermonEntity) => {
-        if (!sermon.wizardProgress) return;
+        console.log('[SermonWizard] 🎯 handleContinue called for sermon:', { id: sermon.id, title: sermon.title || sermon.wizardProgress?.passage });
+        if (!sermon.wizardProgress) {
+            console.warn('[SermonWizard] ⚠️ No wizard progress found!');
+            return;
+        }
 
         const progress = sermon.wizardProgress;
+        console.log('[SermonWizard] Restoring state:', { passage: progress.passage, currentStep: progress.currentStep });
         
         // Restore wizard state including sermonId
         setSermonId(sermon.id);
@@ -110,8 +123,11 @@ function WizardContent() {
         if (progress.draft) setDraft(progress.draft);
         
         // Restore step if available, otherwise infer from content
-        if (progress.currentStep) {
-            setStep(progress.currentStep);
+        // IMPORTANT: Validate step is in range 0-3 (max step is 3 for draft)
+        if (progress.currentStep !== undefined) {
+            const validStep = Math.min(Math.max(progress.currentStep, 0), 3);
+            console.log('[SermonWizard] Setting step:', validStep, progress.currentStep !== validStep ? `(clamped from ${progress.currentStep})` : '');
+            setStep(validStep);
         } else if (progress.draft) {
             setStep(3);
         } else if (progress.homiletics) {

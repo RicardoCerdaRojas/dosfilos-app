@@ -232,16 +232,16 @@ export class SermonService {
 
     async getInProgressSermons(userId: string): Promise<SermonEntity[]> {
         try {
-            // 🎯 FIX: Changed from 'working' to 'draft' to match actual Firestore values
+            // Get ALL sermons (drafts, published, archived) to include those with wizardProgress
+            // This allows users to continue editing published sermons in the wizard
             const sermons = await this.sermonRepository.findByUserId(userId, {
-                status: 'draft',
-                limit: 20,
+                // Removed status filter to include published sermons with wizardProgress
+                limit: 50, // Increased to show more sermons
                 orderBy: 'updatedAt',
                 order: 'desc'
             });
 
-
-            // Filter sermons that have wizardProgress (includes both independent and plan sermons)
+            // Filter sermons that have wizardProgress (includes drafts and published sermons)
             return sermons.filter(s => s.wizardProgress !== undefined);
         } catch (error: any) {
             throw new Error(error.message || 'Error al obtener sermones en progreso');

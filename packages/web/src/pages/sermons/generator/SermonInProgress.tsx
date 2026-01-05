@@ -370,7 +370,10 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
                                     <div className="space-y-1.5">
                                         <h3 
                                             className="text-lg font-bold font-serif leading-tight group-hover:text-primary transition-colors cursor-pointer"
-                                            onClick={() => onContinue(sermon)}
+                                            onClick={() => {
+                                                console.log('[SermonsInProgress] 🖱️ User clicked sermon:', { id: sermon.id, passage: wizardProgress.passage });
+                                                onContinue(sermon);
+                                            }}
                                             title="Haz clic para abrir el sermón"
                                         >
                                             {wizardProgress.passage}
