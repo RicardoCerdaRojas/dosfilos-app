@@ -335,26 +335,27 @@ export function PreachModePage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top Bar - Controls */}
       <div className={cn(
-        "fixed top-0 left-0 right-0 bg-background/95 backdrop-blur border-b z-50 transition-transform duration-300 p-4 flex items-center justify-between",
+        "fixed top-0 left-0 right-0 bg-background/95 backdrop-blur border-b z-50 transition-transform duration-300 p-4 flex items-center justify-between gap-4",
         !showControls && "-translate-y-full"
       )}>
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate(`/dashboard/sermons/${id}`)}>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/sermons/${id}`)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Salir
           </Button>
-          <div className="h-6 w-px bg-border" />
-          <h1 className="font-semibold truncate max-w-[400px] md:max-w-[600px]">{sermon.title}</h1>
+          {/* Hide title on tablet and below, show only on large screens */}
+          <div className="h-6 w-px bg-border hidden lg:block" />
+          <h1 className="font-semibold truncate max-w-[300px] lg:max-w-[600px] hidden lg:block">{sermon.title}</h1>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 md:gap-4">
           {/* Timer Controls */}
-          <div className="flex items-center gap-3 bg-muted/50 rounded-full px-4 py-1.5">
+          <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5">
             <Clock className={cn("h-4 w-4", getTimerColor())} />
-            <span className={cn("font-mono font-medium tabular-nums min-w-[60px] text-center", getTimerColor())}>
+            <span className={cn("font-mono font-medium tabular-nums min-w-[50px] text-center text-sm", getTimerColor())}>
               {formatTime(timeLeft)}
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -388,21 +389,11 @@ export function PreachModePage() {
           {/* Fullscreen Toggle Button */}
           <Button 
             variant={isFullscreen ? "default" : "outline"} 
-            size="sm"
+            size="icon"
             onClick={() => isFullscreen ? exitFullscreen() : enterFullscreen()}
-            className="gap-2"
+            title={isFullscreen ? "Salir Full Screen" : "Full Screen"}
           >
-            {isFullscreen ? (
-              <>
-                <Minimize className="h-4 w-4" />
-                Salir Full Screen
-              </>
-            ) : (
-              <>
-                <Maximize className="h-4 w-4" />
-                Full Screen
-              </>
-            )}
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
           </Button>
 
           {/* Font Controls */}
@@ -425,12 +416,11 @@ export function PreachModePage() {
               </div>
               <Button 
                 variant="outline" 
-                size="sm"
+                size="icon"
                 onClick={clearAllHighlights}
-                className="gap-2"
+                title="Limpiar todos los resaltados"
               >
                 <Eraser className="h-4 w-4" />
-                Limpiar
               </Button>
             </div>
           )}

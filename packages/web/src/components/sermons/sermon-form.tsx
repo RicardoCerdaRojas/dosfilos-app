@@ -17,6 +17,7 @@ export type SermonFormData = {
   content: string;
   bibleReferences: string[];
   tags: string[];
+  authorName?: string;
   status: 'working' | 'draft' | 'published' | 'archived';
 };
 
@@ -38,6 +39,7 @@ export function SermonForm({
   const [content, setContent] = useState(defaultValues?.content || '');
   const [bibleReferences, setBibleReferences] = useState<string[]>(defaultValues?.bibleReferences || []);
   const [tags, setTags] = useState<string[]>(defaultValues?.tags || []);
+  const [authorName, setAuthorName] = useState(defaultValues?.authorName || '');
   const [status, setStatus] = useState<'working' | 'draft' | 'published' | 'archived'>(defaultValues?.status || 'draft');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -68,6 +70,7 @@ export function SermonForm({
       content,
       bibleReferences,
       tags,
+      authorName: authorName || undefined,
       status,
     });
   };
@@ -112,6 +115,21 @@ export function SermonForm({
             <SelectItem value="otro">Otro</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Author Name */}
+      <div className="space-y-2">
+        <Label htmlFor="authorName">Autor</Label>
+        <Input
+          id="authorName"
+          value={authorName}
+          onChange={(e) => setAuthorName(e.target.value)}
+          placeholder="Ej: Pastor Juan Pérez"
+          disabled={loading}
+        />
+        <p className="text-xs text-muted-foreground">
+          Nombre del predicador (opcional)
+        </p>
       </div>
 
       {/* Content */}

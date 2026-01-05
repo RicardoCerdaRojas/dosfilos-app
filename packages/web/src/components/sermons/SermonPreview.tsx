@@ -194,8 +194,12 @@ export function SermonPreview({
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-[0.2em]">
               <span>{date.toLocaleDateString('es-ES', { dateStyle: 'long' })}</span>
-              <span className="text-border">•</span>
-              <span>{authorName}</span>
+              {authorName && authorName !== 'Pastor' && (
+                <>
+                  <span className="text-border">•</span>
+                  <span>{authorName}</span>
+                </>
+              )}
             </div>
             <h1 className="text-4xl sm:text-6xl font-bold tracking-tight font-serif text-foreground leading-tight">
               {title}

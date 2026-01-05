@@ -252,8 +252,8 @@ export function SermonDetailPage() {
     <div className="min-h-screen bg-background pb-20">
       {/* Header Toolbar */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 transition-all duration-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -263,10 +263,10 @@ export function SermonDetailPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             
-            {/* Title in header - Only visible when scrolled */}
-            <div className={`flex items-center gap-3 transition-opacity duration-300 ${isScrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              <div className="h-6 w-px bg-border hidden sm:block" />
-              <span className="font-semibold truncate max-w-[200px] sm:max-w-md">
+            {/* Title in header - Only visible when scrolled on large screens */}
+            <div className={`flex items-center gap-3 transition-opacity duration-300 hidden lg:flex ${isScrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <div className="h-6 w-px bg-border" />
+              <span className="font-semibold truncate max-w-[300px] xl:max-w-md">
                 {sermon.title}
               </span>
               {getStatusBadge(sermon.status)}
@@ -277,23 +277,32 @@ export function SermonDetailPage() {
             <Button 
               onClick={() => setShowShareDialog(true)} 
               variant="ghost" 
-              size="sm"
+              size="icon"
+              title="Compartir"
               className={sermon.isShared ? "text-blue-600 bg-blue-50 hover:bg-blue-100" : "text-muted-foreground hover:text-foreground"}
             >
-              <Share2 className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Compartir</span>
+              <Share2 className="h-4 w-4" />
             </Button>
             
-            <Button onClick={() => navigate(`/dashboard/sermons/${id}/edit`)} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <Pencil className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Editar</span>
+            <Button 
+              onClick={() => navigate(`/dashboard/sermons/${id}/edit`)} 
+              variant="ghost" 
+              size="icon"
+              title="Editar"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Pencil className="h-4 w-4" />
             </Button>
 
-            <div className="h-6 w-px bg-border mx-2" />
+            <div className="h-6 w-px bg-border mx-1" />
 
-            <Button onClick={() => navigate(`/dashboard/sermons/${id}/preach`)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+            <Button 
+              onClick={() => navigate(`/dashboard/sermons/${id}/preach`)} 
+              size="sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+            >
               <BookOpen className="mr-2 h-4 w-4" />
-              Predicar
+              <span className="hidden sm:inline">Predicar</span>
             </Button>
 
             <DropdownMenu>

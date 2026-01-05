@@ -70,6 +70,7 @@ export function SermonEditPage() {
             content: sermon.content,
             bibleReferences: sermon.bibleReferences,
             tags: sermon.tags,
+            authorName: sermon.authorName,
             status: sermon.status,
           }}
           onSubmit={handleSubmit}
