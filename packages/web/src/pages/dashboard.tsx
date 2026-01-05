@@ -173,128 +173,145 @@ export function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">{t('header.title')}</h2>
-        <p className="text-muted-foreground">
-          {t('header.subtitle')}
-        </p>
-      </div>
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="rounded-2xl border-2 border-muted/30 bg-gradient-to-b from-background via-background to-muted/10 p-6 md:p-8 shadow-sm">
+        <div className="space-y-8">
+          {/* Header with gradient */}
+          <div className="border-b pb-6">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-600 to-primary bg-clip-text text-transparent pb-1">
+              {t('header.title')}
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              {t('header.subtitle')}
+            </p>
+          </div>
 
-      {/* Activation Banner - Show only for users with 0 sermons */}
-      {onboarding.shouldShowBanner && <ActivationBanner />}
+          {/* Activation Banner - Show only for users with 0 sermons */}
+          {onboarding.shouldShowBanner && <ActivationBanner />}
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Card 
-            key={stat.title}
-            className="transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer border-muted/50"
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`p-2 rounded-lg ${stat.iconBg}`}>
-                <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+          {/* Stats Grid */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {statCards.map((stat) => (
+              <Card 
+                key={stat.title}
+                className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1 cursor-pointer border-2 border-muted/50 hover:border-primary/30 bg-gradient-to-br from-card to-card/80"
+              >
+                {/* Subtle gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                    {stat.title}
+                  </CardTitle>
+                  <div className={`p-2.5 rounded-xl ${stat.iconBg} group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="relative">
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent Activity / Sermons */}
-        <Card className="col-span-4 border-muted/50">
-          <CardHeader>
-            <CardTitle>{t('recentSermons.title')}</CardTitle>
-            <CardDescription>
-              {t('recentSermons.subtitle')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {sermons.slice(0, 5).map((sermon) => (
-                <div key={sermon.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">{sermon.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(sermon.updatedAt).toLocaleDateString()}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+            {/* Recent Activity / Sermons */}
+            <Card className="col-span-4 border-2 border-muted/50 shadow-md bg-gradient-to-br from-card to-card/80">
+              <CardHeader>
+                <CardTitle className="text-xl">{t('recentSermons.title')}</CardTitle>
+                <CardDescription>
+                  {t('recentSermons.subtitle')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {sermons.slice(0, 5).map((sermon) => (
+                    <div key={sermon.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0 hover:bg-muted/30 rounded-lg px-3 py-2 transition-colors -mx-3">
+                      <div className="space-y-1 flex-1">
+                        <p 
+                          className="text-sm font-medium leading-none cursor-pointer hover:text-primary hover:underline transition-colors"
+                          onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
+                        >
+                          {sermon.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(sermon.updatedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                        sermon.status === 'published' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                        sermon.status === 'draft' ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' :
+                        'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      }`}>
+                        {sermon.status === 'published' ? t('recentSermons.status.published') : 
+                         sermon.status === 'draft' ? t('recentSermons.status.draft') : 
+                         t('recentSermons.status.archived')}
+                      </div>
+                    </div>
+                  ))}
+                {sermons.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="flex justify-center mb-4">
+                      <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full">
+                        <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      ¡Crea tu primer sermón!
+                    </h3>
+                    <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
+                      Comienza tu jornada con nuestra asistente de IA para preparación homilética
                     </p>
+                    <Button 
+                      onClick={handleCreateSermon}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generar sermón
+                    </Button>
                   </div>
-                  <div className={`text-xs px-2 py-1 rounded-full ${
-                    sermon.status === 'published' ? 'bg-green-100 text-green-700' :
-                    sermon.status === 'draft' ? 'bg-gray-100 text-gray-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {sermon.status === 'published' ? t('recentSermons.status.published') : 
-                     sermon.status === 'draft' ? t('recentSermons.status.draft') : 
-                     t('recentSermons.status.archived')}
+                )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bible Coverage Progress */}
+            <Card className="col-span-3 border-2 border-muted/50 shadow-md bg-gradient-to-br from-card to-card/80">
+              <CardHeader>
+                <CardTitle className="text-xl">{t('bibleProgress.title')}</CardTitle>
+                <CardDescription>
+                  {t('bibleProgress.subtitle')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{t('bibleProgress.oldTestament')}</span>
+                    <span className="text-muted-foreground">--%</span>
+                  </div>
+                  <Progress value={0} className="h-2" />
+                  <p className="text-xs text-muted-foreground">{t('bibleProgress.comingSoon')}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{t('bibleProgress.newTestament')}</span>
+                    <span className="text-muted-foreground">--%</span>
+                  </div>
+                  <Progress value={0} className="h-2" />
+                </div>
+
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>{t('bibleProgress.yearlyGoal')}</span>
                   </div>
                 </div>
-              ))}
-            {sermons.length === 0 && (
-              <div className="text-center py-12">
-                <div className="flex justify-center mb-4">
-                  <div className="bg-purple-100 p-4 rounded-full">
-                    <Sparkles className="h-8 w-8 text-purple-600" />
-                  </div>
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  ¡Crea tu primer sermón!
-                </h3>
-                <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
-                  Comienza tu jornada con nuestra asistente de IA para preparación homilética
-                </p>
-                <Button 
-                  onClick={handleCreateSermon}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generar sermón
-                </Button>
-              </div>
-            )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bible Coverage Progress */}
-        <Card className="col-span-3 border-muted/50">
-          <CardHeader>
-            <CardTitle>{t('bibleProgress.title')}</CardTitle>
-            <CardDescription>
-              {t('bibleProgress.subtitle')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{t('bibleProgress.oldTestament')}</span>
-                <span className="text-muted-foreground">--%</span>
-              </div>
-              <Progress value={0} className="h-2" />
-              <p className="text-xs text-muted-foreground">{t('bibleProgress.comingSoon')}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{t('bibleProgress.newTestament')}</span>
-                <span className="text-muted-foreground">--%</span>
-              </div>
-              <Progress value={0} className="h-2" />
-            </div>
-
-            <div className="pt-4 border-t">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="h-4 w-4" />
-                <span>{t('bibleProgress.yearlyGoal')}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* Onboarding Modals */}

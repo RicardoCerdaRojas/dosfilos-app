@@ -625,50 +625,66 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                     <div className="container max-w-7xl mx-auto px-6 py-12 lg:py-20">
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
                             {/* Left Column - Hero Content */}
-                            <div className="space-y-8">
-                                {/* Title with gradient and Dashboard button */}
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="space-y-3 flex-1">
-                                        <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                            Entrena tu discernimiento exegético
-                                        </h1>
-                                        <p className="text-lg text-muted-foreground">
-                                            Analiza pasajes del NT griego con asistencia de un marco hermeneutico bíblico.
-                                        </p>
+                            <div className="space-y-6">
+                                {/* Compact Hero with Gradient Background */}
+                                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 p-8 text-white shadow-xl">
+                                    {/* Gradient overlay for depth */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent"></div>
+                                    
+                                    <div className="relative space-y-3">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1">
+                                                <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+                                                    Entrenador Griego
+                                                </h1>
+                                                <p className="text-blue-100 text-base leading-relaxed">
+                                                    El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.
+                                                </p>
+                                            </div>
+                                            <Button 
+                                                variant="secondary"
+                                                size="sm"
+                                                className="gap-2 bg-white/20 hover:bg-white/30 border-white/30 text-white backdrop-blur-sm shrink-0"
+                                                onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
+                                            >
+                                                <LayoutDashboard className="h-4 w-4" />
+                                                <span className="hidden sm:inline">Mis Sesiones</span>
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <Button 
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2"
-                                        onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
-                                    >
-                                        <LayoutDashboard className="h-4 w-4" />
-                                        <span className="hidden sm:inline">Mis Sesiones</span>
-                                    </Button>
                                 </div>
 
-                                {/* Passage Input - Large and prominent */}
+                                {/* Passage Input Card - Large and prominent */}
                                 <div className="space-y-4">
-                                    <BiblePassageSelector 
-                                        value={passage}
-                                        onChange={setPassage}
-                                        onValidPassage={() => {}}
-                                        hidePreview={hasPassage}
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-1 w-8 bg-gradient-to-r from-primary to-purple-600 rounded-full" />
+                                        <h3 className="text-sm font-bold uppercase tracking-wider text-primary">
+                                            Pasaje Bíblico
+                                        </h3>
+                                    </div>
                                     
-                                    {/* CTA Button - Gradient */}
+                                    <div className="relative">
+                                        <BiblePassageSelector 
+                                            value={passage}
+                                            onChange={setPassage}
+                                            onValidPassage={() => {}}
+                                            hidePreview={hasPassage}
+                                        />
+                                    </div>
+                                    
+                                    {/* CTA Button - Large and prominent with gradient */}
                                     <Button 
-                                        className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all" 
+                                        className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary via-purple-600 to-pink-600 hover:from-primary/90 hover:via-purple-600/90 hover:to-pink-600/90 shadow-lg hover:shadow-xl transition-all group" 
                                         size="lg"
                                         onClick={handleStart}
                                         disabled={!passage.trim()}
                                     >
                                         Iniciar Entrenamiento
-                                        <ArrowRight className="ml-2 h-5 w-5" />
+                                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                                     </Button>
                                 </div>
 
-                                {/* Recent Passages - Quick Access */}
+                                {/* Recent Passages - Interactive chips */}
                                 <div className="space-y-3">
                                     <p className="text-sm text-muted-foreground font-medium">Pasajes frecuentes:</p>
                                     <div className="flex flex-wrap gap-2">
@@ -676,8 +692,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             <button
                                                 key={ref}
                                                 onClick={() => setPassage(ref)}
-                                                className="px-3 py-1.5 text-sm rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-colors"
+                                                className="group px-4 py-2 text-sm rounded-full border-2 border-primary/20 bg-primary/5 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 font-medium"
                                             >
+                                                <BookOpen className="h-3 w-3 inline mr-1.5 opacity-60 group-hover:opacity-100" />
                                                 {ref}
                                             </button>
                                         ))}
