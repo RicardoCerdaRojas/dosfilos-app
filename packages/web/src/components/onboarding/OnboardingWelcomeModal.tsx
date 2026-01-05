@@ -34,7 +34,7 @@ export function OnboardingWelcomeModal({ isOpen, onClose }: OnboardingWelcomeMod
                         ¡Bienvenido a DosFilos.Preach!
                     </DialogTitle>
                     <DialogDescription className="text-base">
-                        Estás a solo 5 minutos de crear tu primer sermón con asistencia de IA
+                        El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -44,32 +44,31 @@ export function OnboardingWelcomeModal({ isOpen, onClose }: OnboardingWelcomeMod
                         <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
                             <BookOpen className="h-5 w-5 text-blue-600 mt-0.5" />
                             <div>
-                                <h3 className="font-semibold text-blue-900">Análisis Bíblico Profundo</h3>
+                                <h3 className="font-semibold text-blue-900">Estudia el texto bíblico</h3>
                                 <p className="text-sm text-blue-700">
-                                    Nuestra IA analiza el contexto, la exégesis y la aplicación homilética de tu pasaje
+                                    Analiza el contexto, trabaja en la exégesis y construye la proposición exegética
                                 </p>
                             </div>
                         </div>
-
-                        <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg">
-                            <Zap className="h-5 w-5 text-green-600 mt-0.5" />
-                            <div>
-                                <h3 className="font-semibold text-green-900">Ahorra Horas de Preparación</h3>
-                                <p className="text-sm text-green-700">
-                                    Lo que normalmente te toma horas, ahora lo logras en minutos con calidad profesional
-                                </p>
-                            </div>
-                        </div>
-
                         <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg">
                             <Sparkles className="h-5 w-5 text-purple-600 mt-0.5" />
                             <div>
-                                <h3 className="font-semibold text-purple-900">Griego Bíblico con IA</h3>
+                                <h3 className="font-semibold text-purple-900">Trabaja en la homilética</h3>
                                 <p className="text-sm text-purple-700">
-                                    Accede al Greek Tutor para análisis morfológico y sintáctico profundo
+                                    Trabaja el enfoque homilético para tu sermón, construye la proposición homilética
                                 </p>
                             </div>
                         </div>
+                        <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg">
+                            <Zap className="h-5 w-5 text-green-600 mt-0.5" />
+                            <div>
+                                <h3 className="font-semibold text-green-900">Ahorra tiempo de Preparación</h3>
+                                <p className="text-sm text-green-700">
+                                    Todos tus recursos en un solo lugar, con acceso rápido y fácil.
+                                </p>
+                            </div>
+                        </div>
+
                     </div>
 
                     {/* Quick Example */}
