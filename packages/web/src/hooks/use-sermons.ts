@@ -34,32 +34,41 @@ export function useSermons(options?: FindOptions) {
 }
 
 export function useSermon(id: string | undefined) {
+    console.log('[useSermon] Hook called with ID:', id);
     const [sermon, setSermon] = useState<SermonEntity | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchSermon = async () => {
+        console.log('[useSermon] fetchSermon called, ID:', id);
         if (!id) {
+            console.log('[useSermon] No ID provided, aborting');
             setLoading(false);
             return;
         }
         setLoading(true);
         setError(null);
         try {
+            console.log('[useSermon] Fetching sermon from service...');
             const data = await sermonService.getSermon(id);
+            console.log('[useSermon] ✅ Sermon loaded:', data);
             setSermon(data);
         } catch (err: any) {
+            console.error('[useSermon] ❌ Error loading sermon:', err);
             setError(err.message);
             toast.error(err.message);
         } finally {
+            console.log('[useSermon] Setting loading to false');
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        console.log('[useSermon] useEffect triggered, fetching sermon');
         fetchSermon();
     }, [id]);
 
+    console.log('[useSermon] Returning state:', { sermon: sermon?.id, loading, error });
     return { sermon, loading, error, mutate: fetchSermon };
 }
 

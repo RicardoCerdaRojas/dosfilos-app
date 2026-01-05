@@ -55,6 +55,7 @@ export function SermonDetailPage() {
   }
 
   const { sermon, loading, mutate } = useSermon(id);
+  console.log('[SermonDetail] useSermon returned:', { hasSermon: !!sermon, sermonId: sermon?.id, loading });
   const { deleteSermon, loading: deleting } = useDeleteSermon();
   const { publishSermon, loading: publishing } = usePublishSermon();
   const { archiveSermon, loading: archiving } = useArchiveSermon();
