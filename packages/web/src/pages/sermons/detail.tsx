@@ -48,17 +48,17 @@ export function SermonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // Call all hooks before any conditional returns (React Hooks rules)
+  const { sermon, loading, mutate } = useSermon(id);
+  const { deleteSermon, loading: deleting } = useDeleteSermon();
+  const { publishSermon, loading: publishing } = usePublishSermon();
+  const { archiveSermon, loading: archiving } = useArchiveSermon();
+
   // Validate ID - if it's a route param placeholder, redirect
   if (!id || id === ':id' || id.startsWith(':')) {
     navigate('/dashboard/sermons', { replace: true });
     return null;
   }
-
-  const { sermon, loading, mutate } = useSermon(id);
-  console.log('[SermonDetail] useSermon returned:', { hasSermon: !!sermon, sermonId: sermon?.id, loading });
-  const { deleteSermon, loading: deleting } = useDeleteSermon();
-  const { publishSermon, loading: publishing } = usePublishSermon();
-  const { archiveSermon, loading: archiving } = useArchiveSermon();
 
   const [series, setSeries] = useState<SermonSeriesEntity | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
