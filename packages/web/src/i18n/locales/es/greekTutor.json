@@ -487,6 +487,27 @@
         "save": "Guardar",
         "saving": "Guardando..."
     },
+    "quiz": {
+        "testPrompt": "Pon a prueba lo que has aprendido sobre",
+        "generatingQuiz": "Generando quiz...",
+        "practiceTitle": "Practica tu comprensión",
+        "questionCounter": "Pregunta {{current}} de {{total}}",
+        "quizTitle": "Quiz de Comprensión",
+        "verifyAnswer": "Verificar Respuesta",
+        "skip": "Saltar",
+        "nextQuestion": "Siguiente Pregunta",
+        "quizCompleted": "✨ ¡Quiz completado! Tu nivel es:",
+        "correct": "¡Correcto! 🎉",
+        "incorrect": "No es correcto",
+        "trueOption": "Verdadero",
+        "falseOption": "Falso",
+        "masteryLevels": {
+            "notSeen": "No visto",
+            "seen": "Visto",
+            "practiced": "Practicado",
+            "mastered": "Dominado"
+        }
+    },
     "common": {
         "of": "de"
     },

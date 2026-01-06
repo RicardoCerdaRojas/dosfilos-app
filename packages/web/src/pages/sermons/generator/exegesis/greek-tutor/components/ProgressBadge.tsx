@@ -1,42 +1,12 @@
 import React from 'react';
 import { Trophy, Eye, Brain, Star } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 export interface ProgressBadgeProps {
     masteryLevel: 0 | 1 | 2 | 3;
     size?: 'sm' | 'md' | 'lg';
     showLabel?: boolean;
 }
-
-const MASTERY_CONFIG = {
-    0: { 
-        label: 'No visto', 
-        icon: Eye, 
-        color: 'text-gray-400', 
-        bgColor: 'bg-gray-100 dark:bg-gray-800',
-        borderColor: 'border-gray-300 dark:border-gray-700'
-    },
-    1: { 
-        label: 'Visto', 
-        icon: Eye, 
-        color: 'text-blue-500', 
-        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-        borderColor: 'border-blue-300 dark:border-blue-700'
-    },
-    2: { 
-        label: 'Practicado', 
-        icon: Brain, 
-        color: 'text-purple-500', 
-        bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-        borderColor: 'border-purple-300 dark:border-purple-700'
-    },
-    3: { 
-        label: 'Dominado', 
-        icon: Trophy, 
-        color: 'text-amber-500', 
-        bgColor: 'bg-amber-100 dark:bg-amber-900/30',
-        borderColor: 'border-amber-300 dark:border-amber-700'
-    }
-};
 
 /**
  * Badge component showing mastery level progress.
@@ -48,6 +18,38 @@ export const ProgressBadge: React.FC<ProgressBadgeProps> = ({
     size = 'md',
     showLabel = true
 }) => {
+    const { t } = useTranslation('greekTutor');
+    
+    const MASTERY_CONFIG = {
+        0: { 
+            label: t('quiz.masteryLevels.notSeen'), 
+            icon: Eye, 
+            color: 'text-gray-400', 
+            bgColor: 'bg-gray-100 dark:bg-gray-800',
+            borderColor: 'border-gray-300 dark:border-gray-700'
+        },
+        1: { 
+            label: t('quiz.masteryLevels.seen'), 
+            icon: Eye, 
+            color: 'text-blue-500', 
+            bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+            borderColor: 'border-blue-300 dark:border-blue-700'
+        },
+        2: { 
+            label: t('quiz.masteryLevels.practiced'), 
+            icon: Brain, 
+            color: 'text-purple-500', 
+            bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+            borderColor: 'border-purple-300 dark:border-purple-700'
+        },
+        3: { 
+            label: t('quiz.masteryLevels.mastered'), 
+            icon: Trophy, 
+            color: 'text-amber-500', 
+            bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+            borderColor: 'border-amber-300 dark:border-amber-700'
+        }
+    };
     const config = MASTERY_CONFIG[masteryLevel];
     const Icon = config.icon;
     

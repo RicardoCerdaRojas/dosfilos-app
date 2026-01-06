@@ -140,7 +140,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                             return (
                                 <div className="space-y-4">
                                     <h5 className="text-muted-foreground">
-                                        Pon a prueba lo que has aprendido sobre <span className="font-mono text-primary">{currentUnit.greekForm.text}</span>
+                                        {t('quiz.testPrompt')} <span className="font-mono text-primary">{currentUnit.greekForm.text}</span>
                                     </h5>
                                     <QuizSection
                                         unit={currentUnit}
