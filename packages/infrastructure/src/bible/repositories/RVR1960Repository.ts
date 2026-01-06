@@ -52,17 +52,11 @@ export class RVR1960Repository implements IBibleVersionRepository {
 
     parseReference(ref: string): BibleReference | null {
         const normalized = ref.trim();
-        console.log('[RVR1960Repository] parseReference input:', normalized);
-
         const match = normalized.match(/^((?:[1-3]\s?)?[A-ZÁÉÍÓÚÑa-záéíóúñ]+(?:\s+de\s+los\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?)\s*(\d+)[:.](\d+)(?:[-–](\d+))?$/i);
-
-        console.log('[RVR1960Repository] regex match:', match);
 
         if (!match) return null;
 
         const bookName = match[1]?.trim() || '';
-        console.log('[RVR1960Repository] bookName extracted:', bookName);
-
         let resolvedBook = '';
         for (const [key] of Object.entries(this.BOOK_MAPPING)) {
             if (key.toLowerCase() === bookName.toLowerCase()) {
@@ -70,8 +64,6 @@ export class RVR1960Repository implements IBibleVersionRepository {
                 break;
             }
         }
-
-        console.log('[RVR1960Repository] resolvedBook:', resolvedBook, 'mapped ID:', this.BOOK_MAPPING[resolvedBook]);
 
         if (!resolvedBook) return null;
 
@@ -84,37 +76,27 @@ export class RVR1960Repository implements IBibleVersionRepository {
     }
 
     getVerses(refString: string): string | null {
-        console.log('[RVR1960Repository] getVerses called with:', refString);
-
         const ref = this.parseReference(refString);
         if (!ref) {
-            console.log('[RVR1960Repository] parseReference returned null');
             return null;
         }
 
         const bookId = this.BOOK_MAPPING[ref.book];
-        console.log('[RVR1960Repository] looking for bookId:', bookId);
-
         if (!bookId) return null;
 
         const bookData = (rvrBible as any[]).find(b => b.id === bookId);
         if (!bookData) {
-            console.log('[RVR1960Repository] Book data not found in JSON for ID:', bookId);
-            // Debug available books
-            console.log('[RVR1960Repository] Available book IDs:', (rvrBible as any[]).slice(0, 5).map(b => b.id));
             return null;
         }
 
         const chapterIndex = ref.chapter - 1;
         if (chapterIndex < 0 || chapterIndex >= bookData.chapters.length) {
-            console.log('[RVR1960Repository] Chapter index out of bounds:', chapterIndex, 'Total chapters:', bookData.chapters.length);
             return null;
         }
 
         const chapterVerses = bookData.chapters[chapterIndex];
         const startVerseIndex = ref.verseStart - 1;
         if (startVerseIndex < 0 || startVerseIndex >= chapterVerses.length) {
-            console.log('[RVR1960Repository] Start verse index out of bounds:', startVerseIndex, 'Total verses:', chapterVerses.length);
             return null;
         }
 

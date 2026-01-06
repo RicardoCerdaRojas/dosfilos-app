@@ -31,7 +31,7 @@ import { useTranslation } from '@/i18n';
 const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
     const [text, setText] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const { t } = useTranslation('greekTutor');
+    const { t, i18n } = useTranslation('greekTutor');
 
     useEffect(() => {
         if (!passage.trim()) {
@@ -41,7 +41,10 @@ const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
 
         setLoading(true);
         try {
-            const verses = LocalBibleService.getVerses(passage);
+            // Use current system language for Bible lookup
+            // If user explicitly types English in Spanish mode, auto-detection in service will still work as fallback
+            // but we prioritize the UI language context
+            const verses = LocalBibleService.getVerses(passage, i18n.language);
             setText(verses || null);
         } catch (e) {
             setText(null);

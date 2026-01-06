@@ -46,7 +46,8 @@ export class LocalBibleService {
             'matthew', 'mark', 'luke', 'john', 'james',
             'acts', 'revelation', 'philippians', 'ephesians',
             'colossians', 'thessalonians', 'timothy', 'titus',
-            'philemon', 'hebrews', 'peter', 'jude'
+            'philemon', 'hebrews', 'peter', 'jude',
+            'romans', 'corinthians', 'galatians'
         ];
 
         // Common Spanish-only book names
