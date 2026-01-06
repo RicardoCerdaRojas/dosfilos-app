@@ -52,10 +52,7 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
                                     </div>
                                     <ComponentBadge 
                                         type={component.type}
-                                        label={component.type === 'prefix' ? 'Prefijo' : 
-                                               component.type === 'root' ? 'Raíz' :
-                                               component.type === 'formative' ? 'Formativo' :
-                                               component.type === 'ending' ? 'Terminación' : 'Otro'}
+                                        label={getComponentLabel(component.type)}
                                     />
                                 </div>
                                 {idx < breakdown.components.length - 1 && (
@@ -95,10 +92,7 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
                                     </span>
                                     <ComponentBadge 
                                         type={component.type}
-                                        label={component.type === 'prefix' ? 'Prefijo' : 
-                                               component.type === 'root' ? 'Raíz' :
-                                               component.type === 'formative' ? 'Formativo' :
-                                               component.type === 'ending' ? 'Terminación' : 'Otro'}
+                                        label={getComponentLabel(component.type)}
                                     />
                                 </div>
                                 
