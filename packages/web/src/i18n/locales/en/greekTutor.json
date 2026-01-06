@@ -390,6 +390,21 @@
             "skip": "Skip"
         }
     },
+    "morphology": {
+        "analysisTitle": "Analysis of the components that form this Greek word",
+        "structure": "Structure",
+        "components": "Components",
+        "synthesis": "Synthesis",
+        "pedagogicalTip": "Pedagogical Tip",
+        "tipContent": "When identifying morphemes, always start with the root (the main meaning), then analyze the prefixes that modify the sense, and finally the endings that indicate grammatical function. This order will help you understand both the meaning and the function of the word in the text.",
+        "componentTypes": {
+            "prefix": "Prefix",
+            "root": "Root",
+            "formative": "Formative",
+            "ending": "Ending",
+            "other": " Other"
+        }
+    },
     "common": {
         "of": "of"
     },

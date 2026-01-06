@@ -6,6 +6,7 @@ import { InsightCard } from './InsightCard';
 import { ArrowRight, GraduationCap } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useTranslation } from '@/i18n';
 
 export interface MorphologyDisplayProps {
     breakdown: MorphologyBreakdown;
@@ -16,18 +17,29 @@ export interface MorphologyDisplayProps {
  * didactic format with clear visual hierarchy.
  */
 export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown }) => {
+    const { t } = useTranslation('greekTutor');
+    
+    const getComponentLabel = (type: string): string => {
+        switch (type) {
+            case 'prefix': return t('morphology.componentTypes.prefix');
+            case 'root': return t('morphology.componentTypes.root');
+            case 'formative': return t('morphology.componentTypes.formative');
+            case 'ending': return t('morphology.componentTypes.ending');
+            default: return t('morphology.componentTypes.other');
+        }
+    };
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Title */}
             <div>
                 <h5 className="text-sm text-muted-foreground">
-                    Análisis de los componentes que forman esta palabra griega
+                    {t('morphology.analysisTitle')}
                 </h5>
             </div>
 
             {/* Structure Section - Visual Timeline */}
             <div className="space-y-3">
-                <h3 className="text-lg font-bold text-foreground">Estructura</h3>
+                <h3 className="text-lg font-bold text-foreground">{t('morphology.structure')}</h3>
                 <Card className="p-6 bg-gradient-to-br from-muted/50 to-background border-2">
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                         {breakdown.components.map((component, idx) => (
@@ -59,7 +71,7 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
 
             {/* Components Section - Individual Cards */}
             <div className="space-y-4">
-                <h3 className="text-lg font-bold text-foreground">Componentes</h3>
+                <h3 className="text-lg font-bold text-foreground">{t('morphology.components')}</h3>
                 <div className="grid gap-4 sm:grid-cols-1">
                     {breakdown.components.map((component, idx) => (
                         <Card 
@@ -104,7 +116,7 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
             {breakdown.summary && (
                 <>
                     <div className="border-t border-border" />
-                    <InsightCard title="Síntesis">
+                    <InsightCard title={t('morphology.synthesis')}>
                         <div className="prose prose-sm dark:prose-invert max-w-none
                                         prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:my-0
                                         prose-strong:text-foreground prose-strong:font-bold">
@@ -124,13 +136,11 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
                             <GraduationCap className="w-4 h-4 text-amber-600" />
                         </div>
                         <h4 className="text-sm font-bold text-amber-900 dark:text-amber-100 uppercase tracking-wide">
-                            Tip Pedagógico
+                            {t('morphology.pedagogicalTip')}
                         </h4>
                     </div>
                     <p className="text-sm text-foreground/90 leading-relaxed">
-                        Al identificar morfemas, empieza siempre por la <strong>raíz</strong> (el significado principal), 
-                        luego analiza los <strong>prefijos</strong> que modifican el sentido, y finalmente las <strong>terminaciones</strong> 
-                        que indican función gramatical. Este orden te ayudará a comprender tanto el significado como la función de la palabra en el texto.
+                        {t('morphology.tipContent')}
                     </p>
                 </div>
             </Card>

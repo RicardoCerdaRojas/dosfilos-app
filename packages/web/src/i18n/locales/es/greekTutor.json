@@ -390,6 +390,21 @@
             "skip": "Saltar"
         }
     },
+    "morphology": {
+        "analysisTitle": "Análisis de los componentes que forman esta palabra griega",
+        "structure": "Estructura",
+        "components": "Componentes",
+        "synthesis": "Síntesis",
+        "pedagogicalTip": "Tip Pedagógico",
+        "tipContent": "Al identificar morfemas, empieza siempre por la raíz (el significado principal), luego analiza los prefijos que modifican el sentido, y finalmente las terminaciones que indican función gramatical. Este orden te ayudará a comprender tanto el significado como la función de la palabra en el texto.",
+        "componentTypes": {
+            "prefix": "Prefijo",
+            "root": "Raíz",
+            "formative": "Formativo",
+            "ending": "Terminación",
+            "other": "Otro"
+        }
+    },
     "common": {
         "of": "de"
     },
