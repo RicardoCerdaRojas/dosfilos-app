@@ -22,12 +22,6 @@ interface PassageVersionRowProps {
     highlightedWordId?: string;
 }
 
-const VERSION_LABELS = {
-    rv60: 'RV60 (Español)',
-    greek: 'Griego Original',
-    transliteration: 'Transliteración'
-};
-
 /**
  * Individual row for displaying one version of the passage
  * Includes toggle switch and word selection for Greek version
