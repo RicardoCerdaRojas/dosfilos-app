@@ -405,6 +405,22 @@
             "other": "Otro"
         }
     },
+    "wordAnalysis": {
+        "analyze": "Analizar",
+        "ariaLabel": "Análisis de palabra",
+        "recognition": {
+            "label": "Claves",
+            "description": "Claves para reconocer"
+        },
+        "context": {
+            "label": "Función",
+            "description": "Función en la oración"
+        },
+        "significance": {
+            "label": "Teología",
+            "description": "Significado teológico"
+        }
+    },
     "common": {
         "of": "de"
     },

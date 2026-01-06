@@ -405,6 +405,22 @@
             "other": " Other"
         }
     },
+    "wordAnalysis": {
+        "analyze": "Analyze",
+        "ariaLabel": "Word analysis",
+        "recognition": {
+            "label": "Keys",
+            "description": "Recognition keys"
+        },
+        "context": {
+            "label": "Function",
+            "description": "Function in sentence"
+        },
+        "significance": {
+            "label": "Theology",
+            "description": "Theological significance"
+        }
+    },
     "common": {
         "of": "of"
     },
