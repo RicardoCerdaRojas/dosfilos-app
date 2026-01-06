@@ -222,6 +222,7 @@ const InsightCard: React.FC<{
     onEdit: () => void;
     onDelete: () => void;
 }> = ({ insight, onEdit, onDelete }) => {
+    const { t } = useTranslation('greekTutor');
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Parse content into sections (same logic as TutorResponseDisplay)
@@ -300,6 +301,7 @@ const EditInsightDialog: React.FC<{
     onClose: () => void;
     onSave: (updates: { title?: string; tags?: string[] }) => Promise<void>;
 }> = ({ insight, onClose, onSave }) => {
+    const { t } = useTranslation('greekTutor');
     const [title, setTitle] = useState('');
     const [tagInput, setTagInput] = useState('');
     const [tags, setTags] = useState<string[]>([]);
