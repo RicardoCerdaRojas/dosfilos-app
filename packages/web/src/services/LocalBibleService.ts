@@ -1,4 +1,4 @@
-import { BibleVersionFactory } from '@dosfilos/infrastructure/bible';
+import { BibleVersionFactory } from '@dosfilos/infrastructure';
 import { IBibleVersionRepository } from '@dosfilos/domain';
 
 /**
@@ -11,6 +11,7 @@ import { IBibleVersionRepository } from '@dosfilos/domain';
  * - Provides simple interface for existing code
  * - Delegates to BibleVersionFactory internally
  * - Zero breaking changes to existing consumers
+ * - AUTO-DETECTS language from reference (English vs Spanish)
  * 
  * @deprecated Consider migrating to BibleVersionFactory.getForLocale() directly
  * for better type safety and explicit locale control
@@ -33,28 +34,71 @@ export interface BibleReference {
 
 export class LocalBibleService {
     /**
-     * Get Bible repository for specified locale
-     * Default to Spanish (RVR1960) for backward compatibility
+     * Detect language from reference string
+     * English book names: "John", "Ephesians", "Romans", etc.
+     * Spanish book names: "Juan", "Efesios", "Romanos", etc.
      */
-    private static getRepository(locale: string = 'es'): IBibleVersionRepository {
-        return BibleVersionFactory.getForLocale(locale);
+    private static detectLanguage(ref: string): string {
+        const normalized = ref.trim().toLowerCase();
+
+        // Common English-only book names
+        const englishIndicators = [
+            'matthew', 'mark', 'luke', 'john', 'james',
+            'acts', 'revelation', 'philippians', 'ephesians',
+            'colossians', 'thessalonians', 'timothy', 'titus',
+            'philemon', 'hebrews', 'peter', 'jude'
+        ];
+
+        // Common Spanish-only book names
+        const spanishIndicators = [
+            'mateo', 'marcos', 'lucas', 'juan', 'santiago',
+            'hechos', 'apocalipsis', 'filipenses', 'efesios',
+            'colosenses', 'tesalonicenses', 'timoteo', 'tito',
+            'filemón', 'filemon', 'hebreos', 'pedro', 'judas'
+        ];
+
+        // Check for English indicators
+        for (const indicator of englishIndicators) {
+            if (normalized.includes(indicator)) {
+                return 'en';
+            }
+        }
+
+        // Check for Spanish indicators
+        for (const spanishIndicators of spanishIndicators) {
+            if (normalized.includes(spanishIndicators)) {
+                return 'es';
+            }
+        }
+
+        // Default to Spanish for compatibility
+        return 'es';
     }
 
-    static parseReference(ref: string, locale: string = 'es'): BibleReference | null {
-        return this.getRepository(locale).parseReference(ref);
+    /**
+     * Get Bible repository for specified locale
+     * If no locale specified, auto-detect from reference
+     */
+    private static getRepository(locale?: string, reference?: string): IBibleVersionRepository {
+        const effectiveLocale = locale || (reference ? this.detectLanguage(reference) : 'es');
+        return BibleVersionFactory.getForLocale(effectiveLocale);
     }
 
-    static getVerses(refString: string, locale: string = 'es'): string | null {
-        return this.getRepository(locale).getVerses(refString);
+    static parseReference(ref: string, locale?: string): BibleReference | null {
+        return this.getRepository(locale, ref).parseReference(ref);
+    }
+
+    static getVerses(refString: string, locale?: string): string | null {
+        return this.getRepository(locale, refString).getVerses(refString);
     }
 
     /** Check if a book name/abbreviation is valid */
-    static isValidBook(bookName: string, locale: string = 'es'): boolean {
-        return this.getRepository(locale).isValidBook(bookName);
+    static isValidBook(bookName: string, locale?: string): boolean {
+        return this.getRepository(locale, bookName).isValidBook(bookName);
     }
 
     /** Get the canonical (full) name for a book abbreviation */
-    static getCanonicalBookName(bookName: string, locale: string = 'es'): string | null {
+    static getCanonicalBookName(bookName: string, locale?: string): string | null {
         // This method needs special handling - not in interface
         // For now, return the book name if valid
         return this.isValidBook(bookName, locale) ? bookName : null;
