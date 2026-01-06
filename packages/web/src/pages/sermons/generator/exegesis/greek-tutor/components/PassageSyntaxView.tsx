@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, GitBranch, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SyntaxHelpModal } from './SyntaxHelpModal';
 import { SyntaxOnboarding, useHasSeenOnboarding } from './SyntaxOnboarding';
+import { useTranslation } from '@/i18n';
 
 interface PassageSyntaxViewProps {
     analysis: PassageSyntaxAnalysis;
@@ -24,6 +25,7 @@ interface PassageSyntaxViewProps {
  * - Clickable words for morphology analysis
  */
 export function PassageSyntaxView({ analysis, onWordClick }: PassageSyntaxViewProps) {
+    const { t } = useTranslation('greekTutor');
     const [expandedClauses, setExpandedClauses] = useState<Set<string>>(() => {
         // Initialize with all MAIN clauses expanded
         const mainClauses = analysis.clauses
@@ -159,12 +161,12 @@ export function PassageSyntaxView({ analysis, onWordClick }: PassageSyntaxViewPr
                     <div>
                         <div className="flex items-center gap-2">
                             <h3 className="text-lg font-semibold text-gray-900">
-                                Estructura Sintáctica
+                                {t('syntax.title')}
                             </h3>
                             <button
                                 onClick={() => setShowHelpModal(true)}
                                 className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                title="Ver guía de ayuda"
+                                title={t('syntax.helpTooltip')}
                             >
                                 <HelpCircle className="w-4 h-4" />
                             </button>
@@ -181,13 +183,13 @@ export function PassageSyntaxView({ analysis, onWordClick }: PassageSyntaxViewPr
                         onClick={collapseAll}
                         className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                     >
-                        Colapsar Todo
+                        {t('syntax.collapseAll')}
                     </button>
                     <button
                         onClick={expandAll}
                         className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                     >
-                        Expandir Todo
+                        {t('syntax.expandAll')}
                     </button>
                 </div>
             </div>
@@ -195,7 +197,7 @@ export function PassageSyntaxView({ analysis, onWordClick }: PassageSyntaxViewPr
             {/* Overall Structure Description */}
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg syntax-description">
                 <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                    Descripción General
+                    {t('syntax.generalDescription')}
                 </h4>
                 <p className="text-sm text-blue-800 leading-relaxed">
                     {renderDescriptionWithLinks(analysis.structureDescription)}
@@ -218,21 +220,22 @@ export function PassageSyntaxView({ analysis, onWordClick }: PassageSyntaxViewPr
                             onWordClick,
                             clauseRefs,
                             highlightedClauseId,
-                            getClauseNumber
+                            getClauseNumber,
+                            t
                         )
                     )}
             </div>
 
             {/* Legend */}
             <div className="pt-4 border-t border-gray-200 syntax-legend">
-                <h4 className="text-xs font-semibold text-gray-700 mb-3">Leyenda</h4>
+                <h4 className="text-xs font-semibold text-gray-700 mb-3">{t('syntax.legend')}</h4>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                    <ClauseBadge type={ClauseType.MAIN} />
-                    <ClauseBadge type={ClauseType.SUBORDINATE_PURPOSE} />
-                    <ClauseBadge type={ClauseType.SUBORDINATE_CAUSAL} />
-                    <ClauseBadge type={ClauseType.PARTICIPIAL} />
-                    <ClauseBadge type={ClauseType.INFINITIVAL} />
-                    <ClauseBadge type={ClauseType.RELATIVE} />
+                    <ClauseBadge type={ClauseType.MAIN} t={t} />
+                    <ClauseBadge type={ClauseType.SUBORDINATE_PURPOSE} t={t} />
+                    <ClauseBadge type={ClauseType.SUBORDINATE_CAUSAL} t={t} />
+                    <ClauseBadge type={ClauseType.PARTICIPIAL} t={t} />
+                    <ClauseBadge type={ClauseType.INFINITIVAL} t={t} />
+                    <ClauseBadge type={ClauseType.RELATIVE} t={t} />
                 </div>
             </div>
 
@@ -267,7 +270,8 @@ function renderClauseTree(
     onWordClick: ((wordIndex: number) => void) | undefined,
     clauseRefs: React.MutableRefObject<Map<string, HTMLDivElement>>,
     highlightedClauseId: string | null,
-    getClauseNumber: (id: string) => string
+    getClauseNumber: (id: string) => string,
+    t: (key: string) => string
 ): React.ReactNode {
     const clause = clauseMap.get(clauseId);
     if (!clause) return null;
@@ -314,7 +318,7 @@ function renderClauseTree(
                     {/* Clause Header with Number Badge */}
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <ClauseBadge type={clause.type} />
+                            <ClauseBadge type={clause.type} t={t} />
                             {clause.conjunction && (
                                 <span className="px-2 py-0.5 text-xs font-medium text-purple-700 bg-purple-100 rounded">
                                     {typeof clause.conjunction === 'string' ? clause.conjunction : (clause.conjunction as any)?.text || String(clause.conjunction)}
@@ -348,7 +352,7 @@ function renderClauseTree(
                                                 onWordClick(wordIndex);
                                             }
                                         }}
-                                        title={isClickable ? `Analizar palabra ${idx + 1}` : undefined}
+                                        title={isClickable ? `${t('syntax.analyzeWord')} ${idx + 1}` : undefined}
                                     >
                                         {wordText}
                                     </span>
@@ -367,9 +371,9 @@ function renderClauseTree(
 
                     {/* Stats */}
                     <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span>{clause.wordIndices.length} palabras</span>
+                        <span>{clause.wordIndices.length} {t('syntax.words')}</span>
                         {clause.mainVerbIndex !== undefined && (
-                            <span>• Verbo principal en posición {clause.mainVerbIndex}</span>
+                            <span>• {t('syntax.mainVerb')} {clause.mainVerbIndex}</span>
                         )}
                     </div>
                 </div>
@@ -389,7 +393,8 @@ function renderClauseTree(
                             onWordClick,
                             clauseRefs,
                             highlightedClauseId,
-                            getClauseNumber
+                            getClauseNumber,
+                            t
                         )
                     )}
                 </div>
@@ -401,8 +406,8 @@ function renderClauseTree(
 /**
  * ClauseBadge - Visual indicator of clause type
  */
-function ClauseBadge({ type }: { type: ClauseType }) {
-    const config = getClauseTypeConfig(type);
+function ClauseBadge({ type, t }: { type: ClauseType, t: (key: string) => string }) {
+    const config = getClauseTypeConfig(type, t);
     
     return (
         <span className={cn(
@@ -419,7 +424,7 @@ function ClauseBadge({ type }: { type: ClauseType }) {
 /**
  * Configuration for clause type badges
  */
-function getClauseTypeConfig(type: ClauseType) {
+function getClauseTypeConfig(type: ClauseType, t: (key: string) => string) {
     const configs: Record<ClauseType, {
         label: string;
         bgClass: string;
@@ -427,61 +432,61 @@ function getClauseTypeConfig(type: ClauseType) {
         dotClass: string;
     }> = {
         [ClauseType.MAIN]: {
-            label: 'Principal',
+            label: t('syntax.clauseTypes.main'),
             bgClass: 'bg-blue-100',
             textClass: 'text-blue-800',
             dotClass: 'bg-blue-600'
         },
         [ClauseType.SUBORDINATE_PURPOSE]: {
-            label: 'Propósito (ἵνα)',
+            label: t('syntax.clauseTypes.purposeIna'),
             bgClass: 'bg-green-100',
             textClass: 'text-green-800',
             dotClass: 'bg-green-600'
         },
         [ClauseType.SUBORDINATE_RESULT]: {
-            label: 'Resultado (ὥστε)',
+            label: t('syntax.clauseTypes.resultHoste'),
             bgClass: 'bg-yellow-100',
             textClass: 'text-yellow-800',
             dotClass: 'bg-yellow-600'
         },
         [ClauseType.SUBORDINATE_CAUSAL]: {
-            label: 'Causal (ὅτι, γάρ)',
+            label: t('syntax.clauseTypes.causal'),
             bgClass: 'bg-orange-100',
             textClass: 'text-orange-800',
             dotClass: 'bg-orange-600'
         },
         [ClauseType.SUBORDINATE_CONDITIONAL]: {
-            label: 'Condicional (εἰ)',
+            label: t('syntax.clauseTypes.conditional'),
             bgClass: 'bg-red-100',
             textClass: 'text-red-800',
             dotClass: 'bg-red-600'
         },
         [ClauseType.SUBORDINATE_TEMPORAL]: {
-            label: 'Temporal (ὅτε)',
+            label: t('syntax.clauseTypes.temporal'),
             bgClass: 'bg-purple-100',
             textClass: 'text-purple-800',
             dotClass: 'bg-purple-600'
         },
         [ClauseType.SUBORDINATE_INDIRECT_QUESTION]: {
-            label: 'Pregunta Indirecta',
+            label: t('syntax.clauseTypes.indirectQuestion'),
             bgClass: 'bg-amber-100',
             textClass: 'text-amber-800',
             dotClass: 'bg-amber-600'
         },
         [ClauseType.PARTICIPIAL]: {
-            label: 'Participial',
+            label: t('syntax.clauseTypes.participial'),
             bgClass: 'bg-teal-100',
             textClass: 'text-teal-800',
             dotClass: 'bg-teal-600'
         },
         [ClauseType.INFINITIVAL]: {
-            label: 'Infinitival',
+            label: t('syntax.clauseTypes.infinitival'),
             bgClass: 'bg-indigo-100',
             textClass: 'text-indigo-800',
             dotClass: 'bg-indigo-600'
         },
         [ClauseType.RELATIVE]: {
-            label: 'Relativa (ὅς)',
+            label: t('syntax.clauseTypes.relative'),
             bgClass: 'bg-pink-100',
             textClass: 'text-pink-800',
             dotClass: 'bg-pink-600'
