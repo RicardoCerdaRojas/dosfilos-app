@@ -4,20 +4,26 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Languages, Minus, Plus } from 'lucide-react';
 
+
 interface BibleTextViewerProps {
     text: string;
     reference?: string;
     className?: string;
+    language?: string;
 }
 
-export function BibleTextViewer({ text, reference, className = '' }: BibleTextViewerProps) {
-    const [activeTab, setActiveTab] = useState('rvr');
+export function BibleTextViewer({ text, reference, className = '', language = 'es' }: BibleTextViewerProps) {
+    const [activeTab, setActiveTab] = useState('version');
     const [fontSize, setFontSize] = useState(18);
+
+    const isEnglish = language.startsWith('en');
+    const versionShort = isEnglish ? 'ASV' : 'RVR1960';
+    const versionLong = isEnglish ? 'American Standard Version' : 'Reina Valera 1960';
 
     return (
         <Card className={`border-none shadow-sm bg-muted/30 overflow-hidden ${className}`}>
             <CardContent className="p-0">
-                <Tabs defaultValue="rvr" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs defaultValue="version" value={activeTab} onValueChange={setActiveTab} className="w-full">
                     {/* Header with controls */}
                     <div className="flex items-center justify-between p-3 bg-muted/50 border-b">
                         <div className="flex items-center gap-2">
@@ -57,7 +63,7 @@ export function BibleTextViewer({ text, reference, className = '' }: BibleTextVi
 
                             {/* Version Tabs */}
                             <TabsList className="h-8">
-                                <TabsTrigger value="rvr" className="text-xs px-3 h-6">RVR1960</TabsTrigger>
+                                <TabsTrigger value="version" className="text-xs px-3 h-6">{versionShort}</TabsTrigger>
                                 <TabsTrigger value="original" className="text-xs px-3 h-6 flex items-center gap-1">
                                     <Languages className="h-3 w-3" />
                                     Original
@@ -67,7 +73,7 @@ export function BibleTextViewer({ text, reference, className = '' }: BibleTextVi
                     </div>
                     
                     {/* Text Content */}
-                    <TabsContent value="rvr" className="mt-0">
+                    <TabsContent value="version" className="mt-0">
                         <div className="bg-amber-50/50 dark:bg-stone-950/50 p-6 min-h-[160px]">
                             <blockquote 
                                 className="border-l-4 border-primary/20 pl-6 italic text-foreground/80 font-serif leading-relaxed transition-all duration-200"
@@ -76,7 +82,7 @@ export function BibleTextViewer({ text, reference, className = '' }: BibleTextVi
                                 "{text}"
                             </blockquote>
                             <div className="mt-4 text-right">
-                                <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Reina Valera 1960</span>
+                                <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{versionLong}</span>
                             </div>
                         </div>
                     </TabsContent>

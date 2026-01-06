@@ -1,5 +1,18 @@
 {
     "title": "Greek Tutor",
+    "loading": {
+        "title": "Preparing Your Study Session",
+        "subtitle": "Analyzing the biblical passage with advanced exegetical tools",
+        "steps": {
+            "grammar": "Consulting standard grammars",
+            "forms": "Identifying relevant Greek forms",
+            "context": "Analyzing exegetical context",
+            "units": "Preparing training units"
+        },
+        "progress": "Progress",
+        "estimatedTime": "~15-30 seconds",
+        "footer": "Faithful study of Scripture honors God and edifies His people"
+    },
     "description": "The ecosystem of tools for biblical study and sermon preparation.",
     "startTraining": "Start Training",
     "mySessions": "My Sessions",

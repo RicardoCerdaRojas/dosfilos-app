@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, BookOpen, Sparkles, Heart, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingStep {
     label: string;
@@ -32,15 +33,16 @@ const ENCOURAGEMENTS = [
 ];
 
 export const GreekTutorLoadingScreen: React.FC = () => {
+    const { t } = useTranslation('greekTutor');
     const [currentStep, setCurrentStep] = useState(0);
     const [encouragementIndex, setEncouragementIndex] = useState(0);
     const [progress, setProgress] = useState(0);
     
     const steps: LoadingStep[] = [
-        { label: 'Consultando gramáticas estándares', status: currentStep > 0 ? 'complete' : 'active' },
-        { label: 'Identificando formas griegas relevantes', status: currentStep > 1 ? 'complete' : currentStep === 1 ? 'active' : 'pending' },
-        { label: 'Analizando contexto exegético', status: currentStep > 2 ? 'complete' : currentStep === 2 ? 'active' : 'pending' },
-        { label: 'Preparando unidades de entrenamiento', status: currentStep === 3 ? 'active' : 'pending' }
+        { label: t('loading.steps.grammar'), status: currentStep > 0 ? 'complete' : 'active' },
+        { label: t('loading.steps.forms'), status: currentStep > 1 ? 'complete' : currentStep === 1 ? 'active' : 'pending' },
+        { label: t('loading.steps.context'), status: currentStep > 2 ? 'complete' : currentStep === 2 ? 'active' : 'pending' },
+        { label: t('loading.steps.units'), status: currentStep === 3 ? 'active' : 'pending' }
     ];
 
     useEffect(() => {
@@ -101,10 +103,10 @@ export const GreekTutorLoadingScreen: React.FC = () => {
                             </div>
                             <div className="flex-1 pt-1">
                                 <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                                    Preparando tu sesión de estudio
+                                    {t('loading.title')}
                                 </h2>
                                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                                    Estamos analizando el pasaje bíblico con herramientas exegéticas avanzadas
+                                    {t('loading.subtitle')}
                                 </p>
                             </div>
                         </div>
@@ -113,10 +115,10 @@ export const GreekTutorLoadingScreen: React.FC = () => {
                         <Card className="p-4 md:p-6 shadow-lg border-2 border-primary/10 bg-gradient-to-br from-background to-muted/30 backdrop-blur-sm">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="font-semibold text-foreground">Progreso</span>
+                                    <span className="font-semibold text-foreground">{t('loading.progress')}</span>
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <Clock className="h-4 w-4" />
-                                        <span className="text-xs">~15-30 segundos</span>
+                                        <span className="text-xs">{t('loading.estimatedTime')}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -168,7 +170,7 @@ export const GreekTutorLoadingScreen: React.FC = () => {
                         {/* Bottom message */}
                         <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-2 px-2">
                             <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-                            <span>El estudio fiel de las Escrituras honra a Dios y edifica a su pueblo</span>
+                            <span>{t('loading.footer')}</span>
                         </p>
                     </div>
 

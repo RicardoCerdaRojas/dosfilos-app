@@ -1,5 +1,18 @@
 {
     "title": "Entrenador Griego",
+    "loading": {
+        "title": "Preparando tu sesión de estudio",
+        "subtitle": "Estamos analizando el pasaje bíblico con herramientas exegéticas avanzadas",
+        "steps": {
+            "grammar": "Consultando gramáticas estándares",
+            "forms": "Identificando formas griegas relevantes",
+            "context": "Analizando contexto exegético",
+            "units": "Preparando unidades de entrenamiento"
+        },
+        "progress": "Progreso",
+        "estimatedTime": "~15-30 segundos",
+        "footer": "El estudio fiel de las Escrituras honra a Dios y edifica a su pueblo"
+    },
     "description": "El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.",
     "startTraining": "Iniciar Entrenamiento",
     "mySessions": "Mis Sesiones",

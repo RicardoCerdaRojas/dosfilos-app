@@ -22,6 +22,8 @@ import { AddPassageWordToUnitsUseCase } from '@dosfilos/application/src/greek-tu
 import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { GeminiGreekTutorService, FirestoreGreekSessionRepository } from '@dosfilos/infrastructure';
+import { IBibleVersionRepository } from '@dosfilos/domain';
+import { LocalBibleService } from '@/services/LocalBibleService';
 // Word cache for reducing API costs
 import { FirestoreWordCacheRepository } from '@dosfilos/infrastructure/src/greek-tutor/cache/FirestoreWordCacheRepository';
 // Phase 3A: Quiz service
@@ -79,7 +81,17 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const submitQuizAnswer = new SubmitQuizAnswerUseCase(sessionRepository);
     
     // Phase 3B: Passage reader use cases
-    const getPassageText = new GetPassageTextUseCase(greekTutorService, sessionRepository); // Phase 3D: Added repository for caching
+    const bibleAdapter: IBibleVersionRepository = {
+        getVerses: (reference: string) => {
+            // Use current language context if available, otherwise default to auto-detect
+            // Since we are in a hook/provider, we might not have direct access to i18n instance here easily without valid context, 
+            // but LocalBibleService.getVerses handles auto-detect if language is not passed which is safer.
+            // However, LocalBibleService.getVerses(ref, lang) is the signature.
+            // We pass 'es' as default, but the service auto-detects English references regardless.
+            return LocalBibleService.getVerses(reference, 'es') || '';
+        }
+    };
+    const getPassageText = new GetPassageTextUseCase(greekTutorService, sessionRepository, bibleAdapter); // Phase 3D: Added repository for caching
     const identifyPassageWord = new IdentifyPassageWordUseCase(greekTutorService);
     const addPassageWordToUnits = new AddPassageWordToUnitsUseCase(greekTutorService);
     

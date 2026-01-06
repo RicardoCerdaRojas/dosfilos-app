@@ -69,7 +69,7 @@ const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
         );
     }
 
-    return <BibleTextViewer text={text} reference={passage} />;
+    return <BibleTextViewer text={text} reference={passage} language={i18n.language} />;
 };
 
 // Feature Modal Component
@@ -132,11 +132,11 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { t } = useTranslation('greekTutor');
+    const { t, i18n } = useTranslation('greekTutor');
     const configRepository = new FirebaseConfigRepository();
     const configService = new ConfigService(configRepository);
     
-    
+
     // State
     const [passage, setPassage] = useState(initialPassage || '');
     const [isActive, setIsActive] = useState(!!initialPassage);
@@ -158,6 +158,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     
     // Mobile sidebar state
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    
+
 
     // Auto-trigger action after loading (for inicial state)
     const [autoTriggerAction, setAutoTriggerAction] = useState<'passage' | 'morphology' | null>(null);
@@ -333,13 +335,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             };
 
             // 5. Execute
-            // Determine language (e.g. "Spanish" or "English")
-            // const userLang = navigator.language.startsWith('es') ? 'Spanish' : 'English';
-            // User requested: "same language that the user operating the system has"
-            // We can map navigator.language to full name or pass explicitly.
-            // For now, let's target Spanish heavily but allow fallback.
+            // Determine language from current UI selection
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
-            const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+            // Use i18n.language (e.g. 'es', 'en') instead of navigator.language
+            const detectedLang = userLangObj.of(i18n.language.split('-')[0]) || 'Spanish';
             
             // Language detected
 
@@ -544,11 +543,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         setStatus('IDLE');
         if (!initialPassage) setPassage('');
     };
-
-    // Helper for safe access
-    const currentUnit = units[currentIndex];
-
+    
     // Use board hook (must be called before any conditional returns)
+    // We do NOT destructure handleCopy/handleExport here to avoid conflicts with local custom handlers
     const {
         currentContent,
         currentContentTitle,
@@ -571,17 +568,20 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         isMorphologyLoading: loadingMorphology,
         passage,
         userLanguage: (() => {
-            const browserLang = navigator.language.split('-')[0];
+            const currentLang = i18n.language?.split('-')[0] || 'es';
             const langMap: Record<string, string> = {
                 'es': 'Spanish',
                 'en': 'English',
                 'pt': 'Portuguese',
                 'fr': 'French'
             };
-            return langMap[browserLang] || 'Spanish';
+            return langMap[currentLang] || 'Spanish';
         })(),
         translate: (key: string) => t(key)
     });
+
+    // Helper for safe access
+    const currentUnit = units[currentIndex];
 
     // Auto-trigger action after session loads
     useEffect(() => {
