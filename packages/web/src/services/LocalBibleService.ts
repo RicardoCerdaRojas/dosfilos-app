@@ -65,8 +65,8 @@ export class LocalBibleService {
         }
 
         // Check for Spanish indicators
-        for (const spanishIndicators of spanishIndicators) {
-            if (normalized.includes(spanishIndicators)) {
+        for (const indicator of spanishIndicators) {
+            if (normalized.includes(indicator)) {
                 return 'es';
             }
         }
