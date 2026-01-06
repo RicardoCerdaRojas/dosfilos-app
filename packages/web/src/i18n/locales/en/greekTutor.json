@@ -432,7 +432,23 @@
         "send": "Send",
         "tutorConsulting": "Consulting with tutor...",
         "yourQuestion": "Your Question",
-        "tutorResponse": "Tutor Response"
+        "tutorResponse": "Tutor Response",
+        "saveInsight": {
+            "button": "Save Insight",
+            "saving": "Saving...",
+            "modalTitle": "Save as Personal Insight",
+            "modalDescription": "This response will be saved in your personal knowledge library",
+            "wordLabel": "Word:",
+            "passageLabel": "Passage:",
+            "titleLabel": "Title (optional)",
+            "titlePlaceholder": "Will be auto-generated if left empty",
+            "titleCharCount": "{count}/100 characters",
+            "tagsLabel": "Tags",
+            "tagsPlaceholder": "Add tag...",
+            "tagsCount": "{count}/10 tags",
+            "cancel": "Cancel",
+            "save": "Save Insight"
+        }
     },
     "common": {
         "of": "of"

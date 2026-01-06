@@ -432,7 +432,23 @@
         "send": "Enviar",
         "tutorConsulting": "Consultando con el tutor...",
         "yourQuestion": "Tu Pregunta",
-        "tutorResponse": "Respuesta del Tutor"
+        "tutorResponse": "Respuesta del Tutor",
+        "saveInsight": {
+            "button": "Guardar Insight",
+            "saving": "Guardando...",
+            "modalTitle": "Guardar como Insight Personal",
+            "modalDescription": "Esta respuesta se guardará en tu biblioteca de conocimiento personal",
+            "wordLabel": "Palabra:",
+            "passageLabel": "Pasaje:",
+            "titleLabel": "Título (opcional)",
+            "titlePlaceholder": "Se generará automáticamente si se deja vacío",
+            "titleCharCount": "{count}/100 caracteres",
+            "tagsLabel": "Etiquetas",
+            "tagsPlaceholder": "Agregar etiqueta...",
+            "tagsCount": "{count}/10 etiquetas",
+            "cancel": "Cancelar",
+            "save": "Guardar Insight"
+        }
     },
     "common": {
         "of": "de"

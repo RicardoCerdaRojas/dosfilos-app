@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Bookmark, Check, X } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 interface SaveInsightButtonProps {
     question: string;
@@ -32,6 +33,7 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
     passage,
     onSave
 }) => {
+    const { t } = useTranslation('greekTutor');
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [tagInput, setTagInput] = useState('');
@@ -92,15 +94,15 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
                 className="gap-2"
             >
                 <Bookmark className="h-4 w-4" />
-                Guardar Insight
+                {t('askTutor.saveInsight.button')}
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle>Guardar como Insight Personal</DialogTitle>
+                        <DialogTitle>{t('askTutor.saveInsight.modalTitle')}</DialogTitle>
                         <DialogDescription>
-                            Esta respuesta se guardará en tu biblioteca de conocimiento personal
+                            {t('askTutor.saveInsight.modalDescription')}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -109,7 +111,7 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
                         <div className="rounded-lg border p-3 bg-muted/30 space-y-2">
                             {greekWord && (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-muted-foreground">Palabra:</span>
+                                    <span className="text-xs text-muted-foreground">{t('askTutor.saveInsight.wordLabel')}</span>
                                     <Badge variant="outline" className="font-greek">
                                         {greekWord}
                                     </Badge>
@@ -117,7 +119,7 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
                             )}
                             {passage && (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-muted-foreground">Pasaje:</span>
+                                    <span className="text-xs text-muted-foreground">{t('askTutor.saveInsight.passageLabel')}</span>
                                     <span className="text-xs">{passage}</span>
                                 </div>
                             )}
@@ -126,24 +128,24 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
                         {/* Title Input */}
                         <div className="space-y-2">
                             <Label htmlFor="title">
-                                Título (opcional)
+                                {t('askTutor.saveInsight.titleLabel')}
                             </Label>
                             <Input
                                 id="title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Se generará automáticamente si se deja vacío"
+                                placeholder={t('askTutor.saveInsight.titlePlaceholder')}
                                 maxLength={100}
                             />
                             <p className="text-xs text-muted-foreground">
-                                {title.length}/100 caracteres
+                                {t('askTutor.saveInsight.titleCharCount', { count: title.length })}
                             </p>
                         </div>
 
                         {/* Tags Input */}
                         <div className="space-y-2">
                             <Label htmlFor="tags">
-                                Etiquetas
+                                {t('askTutor.saveInsight.tagsLabel')}
                             </Label>
                             <div className="flex gap-2">
                                 <Input
@@ -151,7 +153,7 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
                                     value={tagInput}
                                     onChange={(e) => setTagInput(e.target.value)}
                                     onKeyDown={handleKeyDown}
-                                    placeholder="Agregar etiqueta..."
+                                    placeholder={t('askTutor.saveInsight.tagsPlaceholder')}
                                     disabled={tags.length >= 10}
                                 />
                                 <Button
@@ -183,7 +185,7 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
                                 </div>
                             )}
                             <p className="text-xs text-muted-foreground">
-                                {tags.length}/10 etiquetas
+                                {t('askTutor.saveInsight.tagsCount', { count: tags.length })}
                             </p>
                         </div>
                     </div>
@@ -194,13 +196,13 @@ export const SaveInsightButton: React.FC<SaveInsightButtonProps> = ({
                             onClick={() => setIsOpen(false)}
                             disabled={isSaving}
                         >
-                            Cancelar
+                            {t('askTutor.saveInsight.cancel')}
                         </Button>
                         <Button
                             onClick={handleSave}
                             disabled={isSaving}
                         >
-                            {isSaving ? 'Guardando...' : 'Guardar Insight'}
+                            {isSaving ? t('askTutor.saveInsight.saving') : t('askTutor.saveInsight.save')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
