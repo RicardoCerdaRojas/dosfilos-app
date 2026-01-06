@@ -319,6 +319,23 @@
             "autoMorphologyTip": "Al seleccionar una palabra se mostrará su análisis morfológico automáticamente"
         }
     },
+    "wordPreview": {
+        "title": "Agregar palabra a las unidades",
+        "previewFor": "Vista previa de la unidad de estudio para",
+        "greekWord": "Palabra griega",
+        "transliteration": "Transliteración",
+        "identifying": "Identificando palabra...",
+        "grammaticalId": "Identificación Gramatical",
+        "formDetails": "Detalles del Formulario",
+        "lemma": "Lema:",
+        "category": "Categoría:",
+        "gloss": "Glosa:",
+        "recognitionGuide": "Guía de Reconocimiento",
+        "error": "Error al identificar la palabra. Por favor intenta de nuevo.",
+        "cancel": "Cancelar",
+        "addUnit": "Agregar Unidad",
+        "clickToStudy": "Click para estudiar"
+    },
     "common": {
         "of": "de"
     },

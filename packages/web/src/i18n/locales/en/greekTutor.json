@@ -319,6 +319,23 @@
             "autoMorphologyTip": "Selecting a word will automatically display its morphological analysis"
         }
     },
+    "wordPreview": {
+        "title": "Add word to units",
+        "previewFor": "Study unit preview for",
+        "greekWord": "Greek word",
+        "transliteration": "Transliteration",
+        "identifying": "Identifying word...",
+        "grammaticalId": "Grammatical Identification",
+        "formDetails": "Form Details",
+        "lemma": "Lemma:",
+        "category": "Category:",
+        "gloss": "Gloss:",
+        "recognitionGuide": "Recognition Guide",
+        "error": "Error identifying word. Please try again.",
+        "cancel": "Cancel",
+        "addUnit": "Add Unit",
+        "clickToStudy": "Click to study"
+    },
     "common": {
         "of": "of"
     },
