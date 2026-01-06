@@ -421,6 +421,16 @@
             "description": "Theological significance"
         }
     },
+    "askTutor": {
+        "contextualMode": "📖 About the passage",
+        "generalMode": "💭 General",
+        "placeholderContextual": "Write your question about the passage...",
+        "placeholderGeneral": "Write your question about Koine Greek...",
+        "pressEnterHint": "Press {key} to send",
+        "processing": "Processing...",
+        "cancel": "Cancel",
+        "send": "Send"
+    },
     "common": {
         "of": "of"
     },

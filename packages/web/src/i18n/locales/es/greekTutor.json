@@ -421,6 +421,16 @@
             "description": "Significado teológico"
         }
     },
+    "askTutor": {
+        "contextualMode": "📖 Sobre el pasaje",
+        "generalMode": "💭 General",
+        "placeholderContextual": "Escribe tu pregunta sobre el pasaje...",
+        "placeholderGeneral": "Escribe tu pregunta sobre griego koiné...",
+        "pressEnterHint": "Presiona {key} para enviar",
+        "processing": "Procesando...",
+        "cancel": "Cancelar",
+        "send": "Enviar"
+    },
     "common": {
         "of": "de"
     },

@@ -1299,7 +1299,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                             }`}
                                         >
-                                            📖 Sobre el pasaje
+                                            {t('askTutor.contextualMode')}
                                         </button>
                                         <button
                                             onClick={() => setChatMode('general')}
@@ -1309,7 +1309,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                             }`}
                                         >
-                                            💭 General
+                                            {t('askTutor.generalMode')}
                                         </button>
                                     </div>
                                 </div>
@@ -1329,8 +1329,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                     }}
                                     placeholder={
                                         chatMode === 'contextual'
-                                            ? "Escribe tu pregunta sobre el pasaje..."
-                                            : "Escribe tu pregunta sobre griego koiné..."
+                                            ? t('askTutor.placeholderContextual')
+                                            : t('askTutor.placeholderGeneral')
                                     }
                                     className="min-h-[100px] resize-none text-sm"
                                     disabled={isBoardLoading}
@@ -1339,7 +1339,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 {/* Action buttons */}
                                 <div className="flex items-center justify-between">
                                     <p className="text-[10px] text-muted-foreground">
-                                        Presiona <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Enter</kbd> para enviar
+                                        {t('askTutor.pressEnterHint', { key: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Enter</kbd> })}
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
@@ -1350,7 +1350,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                 setIsChatPopoverOpen(false);
                                             }}
                                         >
-                                            Cancelar
+                                            {t('askTutor.cancel')}
                                         </Button>
                                         <Button
                                             size="sm"
@@ -1366,10 +1366,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             {isBoardLoading ? (
                                                 <>
                                                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                    Procesando...
+                                                    {t('askTutor.processing')}
                                                 </>
                                             ) : (
-                                                'Enviar'
+                                                t('askTutor.send')
                                             )}
                                         </Button>
                                     </div>
