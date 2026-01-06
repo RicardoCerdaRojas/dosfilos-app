@@ -2,7 +2,7 @@ import React from 'react';
 import { BarChart3, BookOpen, TrendingUp, Clock, Flame, Info } from 'lucide-react';
 import { StudySession } from '@dosfilos/domain';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import {
     Popover,
     PopoverContent,
@@ -27,6 +27,10 @@ interface StatisticsPanelProps {
  * - Last activity timestamp
  */
 export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) => {
+    const { i18n } = useTranslation();
+    
+    // Get date-fns locale based on current language
+    const dateLocale = i18n.language.startsWith('en') ? enUS : es;
     const { t } = useTranslation('greekTutor');
     // Calculate metrics
     const activeSessions = sessions.filter(s => s.status === 'ACTIVE').length;
@@ -47,9 +51,10 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
         }, getSessionLastActivity(sessions[0]!))
         : null;
     
-    // Shorter format: "hace 2h" instead of "hace alrededor de 2 horas"
+    // Shorter format: "2h ago" / "hace 2h"
     const lastActivityText = lastActivity
-        ? formatDistanceToNow(lastActivity, { addSuffix: true, locale: es })
+        ? formatDistanceToNow(lastActivity, { addSuffix: true, locale: dateLocale })
+            // Spanish replacements
             .replace('alrededor de ', '')
             .replace(' horas', 'h')
             .replace(' hora', 'h')
@@ -57,6 +62,14 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
             .replace(' minuto', 'min')
             .replace(' días', 'd')
             .replace(' día', 'd')
+            // English replacements
+            .replace(' hours', 'h')
+            .replace(' hour', 'h')
+            .replace(' minutes', 'min')
+            .replace(' minute', 'min')
+            .replace(' days', 'd')
+            .replace(' day', 'd')
+            .replace('about ', '')
         : 'N/A';
 
     const streak = calculateStudyStreak(sessions);

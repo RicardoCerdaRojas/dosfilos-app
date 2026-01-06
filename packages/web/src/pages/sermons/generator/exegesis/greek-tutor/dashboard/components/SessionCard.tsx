@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/popover';
 import { BookOpen, Clock, PlayCircle, Sparkles, TrendingUp, CheckCircle, Timer, Target, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import { calculateSessionProgress, getSessionLastActivity } from '../utils/sessionUtils';
 import { getSessionState } from '../utils/sessionStateUtils';
 import { estimateTimeRemaining } from '../utils/timeEstimationUtils';
@@ -39,7 +39,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     featured = false
 }) => {
     const [showWordList, setShowWordList] = useState(false);
-    const { t } = useTranslation('greekTutor');
+    const { t, i18n } = useTranslation('greekTutor');
+    
+    // Get date-fns locale based on current language
+    const dateLocale = i18n.language.startsWith('en') ? enUS : es;
 
     // Calculate progress using utility
     const progressPercentage = calculateSessionProgress(session);
@@ -61,7 +64,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     const lastActivity = getSessionLastActivity(session);
     const relativeTime = formatDistanceToNow(lastActivity, { 
         addSuffix: true, 
-        locale: es 
+        locale: dateLocale
     });
 
     const estimatedTime = estimateTimeRemaining(session);
