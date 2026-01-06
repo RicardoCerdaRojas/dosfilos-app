@@ -27,3 +27,4 @@ export * from './export/PdfExportService';
 export * from './strategies';
 export * from './firebase/FirebaseGeoEventRepository'; // 📊 Geographic Event Repository
 export * from './services/GeolocationService'; // 📊 IP Geolocation Service
+export * from './bible'; // 📖 Bible Multi-version Repositories

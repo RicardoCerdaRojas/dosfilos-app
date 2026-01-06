@@ -17,6 +17,7 @@ import { BiblicalPassage, PassageSyntaxAnalysis } from '@dosfilos/domain';
 import { useGreekTutor } from '../GreekTutorProvider';
 import { MorphologyBreakdown } from '@dosfilos/domain';
 import { TutorResponseDisplay } from './TutorResponseDisplay';
+import { useTranslation } from '@/i18n';
 
 export interface BoardContent {
     type: 'morphology' | 'recognition' | 'context' | 'significance' | 'chat' | 'quiz' | 'passage' | 'syntax';
@@ -67,11 +68,12 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     onSaveInsight,
     onRetrySyntax
 }) => {
-    const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule());
+    const { t, i18n } = useTranslation('greekTutor');
+    const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule(i18n.language));
     const { generateQuiz, submitQuizAnswer } = useGreekTutor();
 
     const handleRefreshCapsule = () => {
-        setCurrentCapsule(getRandomCapsule());
+        setCurrentCapsule(getRandomCapsule(i18n.language));
     };
 
     // Empty state with educational capsule
@@ -91,10 +93,10 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
         return (
             <div className="h-full flex items-start justify-start pt-20">
                 <div className="text-center space-y-4 w-full">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-                    <p className="text-sm text-muted-foreground">
-                        Consultando con el tutor...
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                        <Loader2 className="h-8 w-8 animate-spin mb-3" />
+                        {t('askTutor.tutorConsulting')}
+                    </div>
                 </div>
             </div>
         );
@@ -138,7 +140,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                             return (
                                 <div className="space-y-4">
                                     <h5 className="text-muted-foreground">
-                                        Pon a prueba lo que has aprendido sobre <span className="font-mono text-primary">{currentUnit.greekForm.text}</span>
+                                        {t('quiz.testPrompt')} <span className="font-mono text-primary">{currentUnit.greekForm.text}</span>
                                     </h5>
                                     <QuizSection
                                         unit={currentUnit}

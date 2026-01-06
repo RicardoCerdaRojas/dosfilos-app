@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Loader2 } from 'lucide-react';
 import { StudySession } from '@dosfilos/domain';
 import { calculateSessionProgress } from '../utils/sessionUtils';
+import { useTranslation } from '@/i18n';
 
 interface CleanupButtonProps {
     sessions: StudySession[];
@@ -15,6 +16,7 @@ interface CleanupButtonProps {
  */
 export const CleanupButton: React.FC<CleanupButtonProps> = ({ sessions, onCleanup }) => {
     const [isDeleting, setIsDeleting] = useState(false);
+    const { t } = useTranslation('greekTutor');
 
     // Find empty sessions (0% progress and older than 24 hours)
     const emptySessionsOlderThan24h = sessions.filter(session => {
@@ -27,9 +29,8 @@ export const CleanupButton: React.FC<CleanupButtonProps> = ({ sessions, onCleanu
         if (emptySessionsOlderThan24h.length === 0) return;
 
         const confirmed = window.confirm(
-            `¿Estás seguro de que deseas eliminar ${emptySessionsOlderThan24h.length} sesión(es) vacía(s)?\n\n` +
-            `Estas sesiones tienen 0% de progreso y fueron creadas hace más de 24 horas.\n\n` +
-            `Esta acción no se puede deshacer.`
+            t('dashboard.cleanup.confirmTitle', { count: emptySessionsOlderThan24h.length }) + '\n\n' +
+            t('dashboard.cleanup.confirmDescription')
         );
 
         if (!confirmed) return;
@@ -40,7 +41,7 @@ export const CleanupButton: React.FC<CleanupButtonProps> = ({ sessions, onCleanu
             await onCleanup(sessionIds);
         } catch (error) {
             console.error('[CleanupButton] Error cleaning up sessions:', error);
-            alert('Error al limpiar sesiones. Por favor intenta de nuevo.');
+            alert(t('dashboard.cleanup.error'));
         } finally {
             setIsDeleting(false);
         }
@@ -62,12 +63,12 @@ export const CleanupButton: React.FC<CleanupButtonProps> = ({ sessions, onCleanu
             {isDeleting ? (
                 <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Limpiando...
+                    {t('dashboard.cleanup.cleaning')}
                 </>
             ) : (
                 <>
                     <Trash2 className="h-4 w-4" />
-                    Limpiar sesiones vacías ({emptySessionsOlderThan24h.length})
+                    {t('dashboard.cleanup.button', { count: emptySessionsOlderThan24h.length })}
                 </>
             )}
         </Button>

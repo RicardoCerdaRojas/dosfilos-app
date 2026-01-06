@@ -12,12 +12,14 @@ import { useGreekTutor } from '../GreekTutorProvider';
 import { useFirebase } from '@/context/firebase-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from '@/i18n';
 
 /**
  * InsightsViewer Component
  * Displays user's saved insights with search, filter, and management capabilities
  */
 export const InsightsViewer: React.FC = () => {
+    const { t } = useTranslation('greekTutor');
     const { getUserInsights, updateInsight, deleteInsight } = useGreekTutor();
     const { user } = useFirebase();
     
@@ -88,7 +90,7 @@ export const InsightsViewer: React.FC = () => {
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
-                    <p className="text-sm text-muted-foreground">Cargando insights...</p>
+                    <p className="text-sm text-muted-foreground">{t('insights.loading')}</p>
                 </div>
             </div>
         );
@@ -99,9 +101,9 @@ export const InsightsViewer: React.FC = () => {
             <div className="flex items-center justify-center h-64">
                 <div className="text-center max-w-sm">
                     <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="font-semibold mb-2">No hay insights guardados</h3>
+                    <h3 className="font-semibold mb-2">{t('insights.emptyTitle')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Cuando guardes respuestas del tutor como insights, aparecerán aquí.
+                        {t('insights.emptyMessage')}
                     </p>
                 </div>
             </div>
@@ -117,7 +119,7 @@ export const InsightsViewer: React.FC = () => {
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar en título, contenido o pregunta..."
+                            placeholder={t('insights.searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10"
@@ -127,7 +129,7 @@ export const InsightsViewer: React.FC = () => {
                     {/* Tag Filters */}
                     {allTags.length > 0 && (
                         <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">Filtrar por etiquetas:</Label>
+                            <Label className="text-xs text-muted-foreground">{t('insights.filterByTags')}</Label>
                             <div className="flex flex-wrap gap-2">
                                 {allTags.map(tag => (
                                     <Badge
@@ -146,7 +148,7 @@ export const InsightsViewer: React.FC = () => {
                     {/* Active filters */}
                     {(searchTerm || selectedTags.length > 0) && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{insights.length} resultado{insights.length !== 1 ? 's' : ''}</span>
+                            <span>{t('insights.resultCount', { count: insights.length })}</span>
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -156,7 +158,7 @@ export const InsightsViewer: React.FC = () => {
                                 }}
                                 className="h-6 text-xs"
                             >
-                                Limpiar filtros
+                                {t('insights.clearFilters')}
                             </Button>
                         </div>
                     )}
@@ -195,17 +197,17 @@ export const InsightsViewer: React.FC = () => {
             <Dialog open={!!deletingInsight} onOpenChange={() => setDeleteingInsight(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>¿Eliminar insight?</DialogTitle>
+                        <DialogTitle>{t('insights.deleteTitle')}</DialogTitle>
                         <DialogDescription>
-                            Esta acción no se puede deshacer.
+                            {t('insights.deleteMessage')}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setDeleteingInsight(null)}>
-                            Cancelar
+                            {t('insights.cancel')}
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
-                            Eliminar
+                            {t('insights.delete')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -220,6 +222,7 @@ const InsightCard: React.FC<{
     onEdit: () => void;
     onDelete: () => void;
 }> = ({ insight, onEdit, onDelete }) => {
+    const { t } = useTranslation('greekTutor');
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Parse content into sections (same logic as TutorResponseDisplay)
@@ -267,14 +270,14 @@ const InsightCard: React.FC<{
                 {/* Collapsible Content */}
                 <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
                     <CollapsibleTrigger className="flex items-center gap-2 text-sm text-primary hover:underline">
-                        <span>{isExpanded ? 'Ocultar' : 'Ver contenido'}</span>
+                        <span>{isExpanded ? t('insights.hideContent') : t('insights.viewContent')}</span>
                         <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                         <div className="mt-3 space-y-4">
                             {insight.question && (
                                 <div className="text-sm p-3 rounded-lg bg-muted/50 border border-muted">
-                                    <p className="font-medium text-muted-foreground mb-1 text-xs">Pregunta:</p>
+                                    <p className="font-medium text-muted-foreground mb-1 text-xs">{t('insights.question')}</p>
                                     <p className="text-foreground">{insight.question}</p>
                                 </div>
                             )}
@@ -298,6 +301,7 @@ const EditInsightDialog: React.FC<{
     onClose: () => void;
     onSave: (updates: { title?: string; tags?: string[] }) => Promise<void>;
 }> = ({ insight, onClose, onSave }) => {
+    const { t } = useTranslation('greekTutor');
     const [title, setTitle] = useState('');
     const [tagInput, setTagInput] = useState('');
     const [tags, setTags] = useState<string[]>([]);
@@ -333,11 +337,11 @@ const EditInsightDialog: React.FC<{
         <Dialog open={!!insight} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Editar Insight</DialogTitle>
+                    <DialogTitle>{t('insights.editTitle')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Título</Label>
+                        <Label>{t('insights.title')}</Label>
                         <Input
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
@@ -345,13 +349,13 @@ const EditInsightDialog: React.FC<{
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Etiquetas</Label>
+                        <Label>{t('insights.tags')}</Label>
                         <div className="flex gap-2">
                             <Input
                                 value={tagInput}
                                 onChange={(e) => setTagInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                                placeholder="Agregar etiqueta..."
+                                placeholder={t('insights.addTag')}
                                 disabled={tags.length >= 10}
                             />
                             <Button onClick={addTag} size="sm" disabled={!tagInput.trim() || tags.length >= 10}>
@@ -378,7 +382,7 @@ const EditInsightDialog: React.FC<{
                         Cancelar
                     </Button>
                     <Button onClick={handleSave} disabled={saving || !title.trim()}>
-                        {saving ? 'Guardando...' : 'Guardar'}
+                        {saving ? t('insights.saving') : t('insights.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -62,6 +62,13 @@ export class GeminiGreekTutorService implements IGreekTutorService {
 
         // Handle wrapped responses (e.g. { "forms": [...] })
         if (typeof parsed === 'object' && parsed !== null) {
+            // Check for common keys
+            if (Array.isArray(parsed.forms)) return parsed.forms;
+            if (Array.isArray(parsed.greekForms)) return parsed.greekForms;
+            if (Array.isArray(parsed.words)) return parsed.words;
+            if (Array.isArray(parsed.items)) return parsed.items;
+
+            // Fallback: look for ANY array value
             const values = Object.values(parsed);
             const arrayValue = values.find(val => Array.isArray(val));
             if (arrayValue) {
@@ -296,48 +303,24 @@ DIRECTRICES CRÍTICAS:
         // Remove markdown code blocks
         let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
 
-        // Find the first '{' or '['
+        // Attempt to find the first generic JSON start
         const firstPunctuation = cleaned.search(/[{\[]/);
-        if (firstPunctuation === -1) return '{}';
-
-        cleaned = cleaned.substring(firstPunctuation);
-
-        // Find the matching closing bracket/brace
-        // This handles cases where there's text after the JSON
-        let depth = 0;
-        let inString = false;
-        let endIndex = -1;
-        const firstChar = cleaned[0];
-        const expectedClose = firstChar === '{' ? '}' : ']';
-
-        for (let i = 0; i < cleaned.length; i++) {
-            const char = cleaned[i];
-
-            // Track if we're in a string (ignore brackets in strings)
-            if (char === '"' && (i === 0 || cleaned[i - 1] !== '\\')) {
-                inString = !inString;
-                continue;
-            }
-
-            if (inString) continue;
-
-            // Track bracket depth
-            if (char === firstChar) {
-                depth++;
-            } else if (char === expectedClose) {
-                depth--;
-                if (depth === 0) {
-                    endIndex = i;
-                    break;
-                }
-            }
+        if (firstPunctuation === -1) {
+            console.warn('[GeminiGreekTutorService] No JSON start character found in response.');
+            return '[]'; // Return empty array as fallback if really no JSON
         }
 
-        // Extract just the JSON part
-        if (endIndex !== -1) {
-            cleaned = cleaned.substring(0, endIndex + 1);
+        // Find the last actual JSON end
+        const lastBrace = cleaned.lastIndexOf('}');
+        const lastBracket = cleaned.lastIndexOf(']');
+        const lastPunctuation = Math.max(lastBrace, lastBracket);
+
+        if (lastPunctuation === -1 || lastPunctuation < firstPunctuation) {
+            console.warn('[GeminiGreekTutorService] No JSON end character found in response.');
+            return '[]';
         }
 
+        cleaned = cleaned.substring(firstPunctuation, lastPunctuation + 1);
         return cleaned.trim();
     }
 
@@ -351,7 +334,8 @@ DIRECTRICES CRÍTICAS:
     async getPassageText(
         reference: string,
         fileSearchStoreId?: string,
-        language: string = 'Spanish'
+        language: string = 'Spanish',
+        bibleText?: string
     ): Promise<BiblicalPassage> {
         console.log('[GeminiGreekTutorService] Fetching passage text for:', reference);
 
@@ -373,8 +357,12 @@ DIRECTRICES CRÍTICAS:
 
             // Validate and structure the response
             const passage: BiblicalPassage = {
-                reference: data.reference || reference,
-                rv60Text: data.rv60Text || '',
+                // FORCE use of requested reference (e.g. "Romans 12:1-2") instead of AI's potentially localized version
+                // This ensures cache keys ("romans_12_1_2") match the request keys reliably
+                reference: reference,
+                // Use provided local bible text if available (e.g. ASV for English), otherwise fallback to AI generated text
+                // Note: The field name 'rv60Text' is legacy; it now holds the primary translation text (Spanish or English)
+                rv60Text: bibleText || data.rv60Text || '',
                 greekText: data.greekText || '',
                 transliteration: data.transliteration || '',
                 words: (data.words || []).map((w: any, index: number) => ({

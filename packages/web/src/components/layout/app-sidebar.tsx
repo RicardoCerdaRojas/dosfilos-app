@@ -97,7 +97,7 @@ export function AppSidebar() {
     // Group 1: Main
     [
       { name: t('menu.dashboard'), href: '/dashboard', icon: Home },
-      { name: 'Entrenador Griego', href: '/dashboard/greek-tutor', icon: GraduationCap },
+      { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
       { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
     ],
     // Group 2: Planning

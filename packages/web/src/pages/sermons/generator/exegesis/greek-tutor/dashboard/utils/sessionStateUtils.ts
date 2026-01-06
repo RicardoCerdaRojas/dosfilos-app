@@ -1,5 +1,6 @@
 import { StudySession } from '@dosfilos/domain';
 import { calculateSessionProgress, getSessionLastActivity } from './sessionUtils';
+import i18n from '@/i18n/config/i18n';
 
 export type SessionState = 'new' | 'progress' | 'complete' | 'paused';
 
@@ -21,7 +22,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
     if (progress === 100) {
         return {
             type: 'complete',
-            label: 'Completado',
+            label: i18n.t('dashboard.status.complete', { ns: 'greekTutor' }),
             color: 'text-purple-700',
             bgColor: 'bg-purple-100'
         };
@@ -30,7 +31,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
     if (daysSinceActivity > 7 && progress > 0) {
         return {
             type: 'paused',
-            label: 'Pausado',
+            label: i18n.t('dashboard.status.paused', { ns: 'greekTutor' }),
             color: 'text-amber-600',
             bgColor: 'bg-amber-50'
         };
@@ -39,7 +40,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
     if (progress <= 10 && progress > 0) {
         return {
             type: 'new',
-            label: 'Recién iniciado',
+            label: i18n.t('dashboard.status.new', { ns: 'greekTutor' }),
             color: 'text-blue-700',
             bgColor: 'bg-blue-100'
         };
@@ -47,7 +48,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
 
     return {
         type: 'progress',
-        label: 'En progreso',
+        label: i18n.t('dashboard.status.progress', { ns: 'greekTutor' }),
         color: 'text-green-700',
         bgColor: 'bg-green-100'
     };

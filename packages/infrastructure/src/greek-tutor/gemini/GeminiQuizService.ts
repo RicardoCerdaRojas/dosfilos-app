@@ -33,8 +33,8 @@ export class GeminiQuizService implements IQuizService {
         fileSearchStoreId?: string,
         language: string = 'Spanish'
     ): Promise<QuizQuestion[]> {
-        // Generate cache key from grammatical characteristics
-        const cacheKey = this.generateCacheKey(unit);
+        // Generate cache key from grammatical characteristics + language
+        const cacheKey = this.generateCacheKey(unit, language);
 
         // Try cache first (hybrid strategy)
         const cached = await this.getCached(cacheKey);
@@ -50,8 +50,11 @@ export class GeminiQuizService implements IQuizService {
 
         console.log(`[GeminiQuizService] Cache MISS for key: ${cacheKey}, generating with Gemini`);
 
+        // Convert locale code to full language name for prompt
+        const languageName = this.getLanguageName(language);
+
         // Generate with Gemini
-        const questions = await this.generateWithGemini(unit, count, language);
+        const questions = await this.generateWithGemini(unit, count, languageName);
 
         // Store in cache for future use
         await this.storeInCache(cacheKey, questions);
@@ -60,13 +63,26 @@ export class GeminiQuizService implements IQuizService {
     }
 
     /**
-     * Generates cache key from unit grammatical characteristics.
-     * Units with same lemma + category will share quiz questions.
+     * Converts i18n locale code to full language name for AI prompt.
      */
-    private generateCacheKey(unit: TrainingUnit): string {
+    private getLanguageName(locale: string): string {
+        const languageMap: Record<string, string> = {
+            'es': 'Spanish',
+            'en': 'English',
+            'es-ES': 'Spanish',
+            'en-US': 'English'
+        };
+        return languageMap[locale] || 'Spanish'; // Default to Spanish
+    }
+
+    /**
+     * Generates cache key from unit grammatical characteristics AND language.
+     * Units with same lemma + category + language will share quiz questions.
+     */
+    private generateCacheKey(unit: TrainingUnit, language: string): string {
         const { lemma, grammaticalCategory } = unit.greekForm;
-        // Normalize to lowercase for consistency
-        return `quiz_${lemma.toLowerCase()}_${grammaticalCategory.toLowerCase()}`;
+        // Normalize to lowercase for consistency, include language
+        return `quiz_${lemma.toLowerCase()}_${grammaticalCategory.toLowerCase()}_${language.toLowerCase()}`;
     }
 
     /**

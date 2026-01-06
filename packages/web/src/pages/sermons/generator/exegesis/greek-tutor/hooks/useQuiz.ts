@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { QuizQuestion, UnitProgress, TrainingUnit } from '@dosfilos/domain';
 import { GenerateQuizUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GenerateQuizUseCase';
 import { SubmitQuizAnswerUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/SubmitQuizAnswerUseCase';
+import { useTranslation } from '@/i18n';
 
 export interface UseQuizProps {
     unit: TrainingUnit;
@@ -37,6 +38,7 @@ export const useQuiz = ({
     submitQuizAnswerUseCase,
     fileSearchStoreId
 }: UseQuizProps): UseQuizReturn => {
+    const { i18n } = useTranslation();
     const [questions, setQuestions] = useState<QuizQuestion[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +58,8 @@ export const useQuiz = ({
         try {
             const quizQuestions = await generateQuizUseCase.execute(unit, {
                 count: 3,
-                fileSearchStoreId
+                fileSearchStoreId,
+                language: i18n.language // Pass current locale to use case
             });
             setQuestions(quizQuestions);
             setCurrentQuestionIndex(0);
@@ -68,7 +71,7 @@ export const useQuiz = ({
         } finally {
             setIsLoading(false);
         }
-    }, [unit, generateQuizUseCase, fileSearchStoreId]);
+    }, [unit, generateQuizUseCase, fileSearchStoreId, i18n.language]);
 
     const submitAnswer = useCallback(async (answer: string) => {
         if (questions.length === 0 || isSubmitted) return;

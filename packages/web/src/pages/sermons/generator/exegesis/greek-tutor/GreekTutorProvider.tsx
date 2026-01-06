@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
     GenerateTrainingUnitsUseCase, 
     EvaluateUserResponseUseCase, 
@@ -22,6 +23,9 @@ import { AddPassageWordToUnitsUseCase } from '@dosfilos/application/src/greek-tu
 import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { GeminiGreekTutorService, FirestoreGreekSessionRepository } from '@dosfilos/infrastructure';
+import { IBibleVersionRepository } from '@dosfilos/domain';
+import { AnalyzePassageSyntaxUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/AnalyzePassageSyntaxUseCase';
+import { LocalBibleService } from '@/services/LocalBibleService';
 // Word cache for reducing API costs
 import { FirestoreWordCacheRepository } from '@dosfilos/infrastructure/src/greek-tutor/cache/FirestoreWordCacheRepository';
 // Phase 3A: Quiz service
@@ -44,6 +48,7 @@ interface GreekTutorContextType {
     getPassageText: GetPassageTextUseCase;
     identifyPassageWord: IdentifyPassageWordUseCase;
     addPassageWordToUnits: AddPassageWordToUnitsUseCase;
+    analyzePassageSyntax: AnalyzePassageSyntaxUseCase;
     // Phase 4A: Dashboard use cases
     getUserSessions: GetUserSessionsUseCase;
     deleteSession: DeleteSessionUseCase;
@@ -79,13 +84,75 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const submitQuizAnswer = new SubmitQuizAnswerUseCase(sessionRepository);
     
     // Phase 3B: Passage reader use cases
-    const getPassageText = new GetPassageTextUseCase(greekTutorService, sessionRepository); // Phase 3D: Added repository for caching
-    const identifyPassageWord = new IdentifyPassageWordUseCase(greekTutorService);
-    const addPassageWordToUnits = new AddPassageWordToUnitsUseCase(greekTutorService);
+    // Phase 3B: Passage reader use cases
+    const { i18n } = useTranslation();
+
+    // Mapping for book names to ensure correct language text is fetched
+    const BOOK_TRANSLATIONS: Record<string, { es: string, en: string }> = useMemo(() => ({
+        'romans': { es: 'Romanos', en: 'Romans' }, 'romanos': { es: 'Romanos', en: 'Romans' },
+        'john': { es: 'Juan', en: 'John' }, 'juan': { es: 'Juan', en: 'John' },
+        'matthew': { es: 'Mateo', en: 'Matthew' }, 'mateo': { es: 'Mateo', en: 'Matthew' },
+        'mark': { es: 'Marcos', en: 'Mark' }, 'marcos': { es: 'Marcos', en: 'Mark' },
+        'luke': { es: 'Lucas', en: 'Luke' }, 'lucas': { es: 'Lucas', en: 'Luke' },
+        'acts': { es: 'Hechos', en: 'Acts' }, 'hechos': { es: 'Hechos', en: 'Acts' },
+        'genesis': { es: 'Génesis', en: 'Genesis' }, 'génesis': { es: 'Génesis', en: 'Genesis' },
+        'exodus': { es: 'Éxodo', en: 'Exodus' }, 'éxodo': { es: 'Éxodo', en: 'Exodus' },
+        // Add more common books as needed
+    }), []);
+
+    const translateReference = (reference: string, targetLang: string): string => {
+        const lowerRef = reference.toLowerCase();
+        const match = lowerRef.match(/^((?:\d\s)?[a-z\u00C0-\u00FF]+)\s+(.+)$/);
+        
+        if (!match) return reference;
+
+        const bookName = match[1].trim(); 
+        const rest = match[2];
+
+        // Find translation
+        const entry = BOOK_TRANSLATIONS[bookName] || Object.values(BOOK_TRANSLATIONS).find(e => e.en.toLowerCase() === bookName || e.es.toLowerCase() === bookName);
+
+        if (entry) {
+            const translatedBook = targetLang === 'es' ? entry.es : entry.en;
+            // capitalize first letter
+            const capitalizedBook = translatedBook.charAt(0).toUpperCase() + translatedBook.slice(1);
+            return `${capitalizedBook} ${rest}`;
+        }
+
+        return reference;
+    };
+
+    const bibleAdapter: IBibleVersionRepository = useMemo(() => ({
+        getVerses: (reference: string) => {
+            // Translate reference to match current UI language
+            // This ensures "Romans 12:1-2" fetches "Romanos 12:1-2" (RVR1960) when in Spanish mode
+            const currentLang = i18n.language?.startsWith('es') ? 'es' : 'en';
+            const localizedReference = translateReference(reference, currentLang);
+            
+            console.log(`[GreekTutorProvider] Fetching verses for: ${localizedReference} (Original: ${reference}, Lang: ${currentLang})`);
+            
+            return LocalBibleService.getVerses(localizedReference) || '';
+        },
+        // Implement missing properties to satisfy interface
+        getVersionId: () => 'local-auto',
+        getLanguage: () => i18n.language?.startsWith('es') ? 'es' : 'en',
+        parseReference: (ref) => ({ book: ref, chapter: 1, verseStart: 1 }), // Dummy implementation
+        isValidBook: () => true,
+        getBooks: () => [],
+        search: () => Promise.resolve([]),
+        getVerseText: () => '',
+        getChapterText: () => ''
+    }), [i18n.language, BOOK_TRANSLATIONS]);
+
+    // Re-create use cases when dependencies change (e.g. language adapter)
+    const getPassageText = useMemo(() => new GetPassageTextUseCase(greekTutorService, sessionRepository, bibleAdapter), [bibleAdapter]);
+    const identifyPassageWord = useMemo(() => new IdentifyPassageWordUseCase(greekTutorService), []);
+    const addPassageWordToUnits = useMemo(() => new AddPassageWordToUnitsUseCase(greekTutorService), []);
+    const analyzePassageSyntax = useMemo(() => new AnalyzePassageSyntaxUseCase(greekTutorService, sessionRepository), []);
     
     // Phase 4A: Dashboard use cases
-    const getUserSessions = new GetUserSessionsUseCase(sessionRepository);
-    const deleteSession = new DeleteSessionUseCase(sessionRepository);
+    const getUserSessions = useMemo(() => new GetUserSessionsUseCase(sessionRepository), []);
+    const deleteSessionUse = useMemo(() => new DeleteSessionUseCase(sessionRepository), []);
 
     return (
         <GreekTutorContext.Provider value={{ 
@@ -102,8 +169,9 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             getPassageText,
             identifyPassageWord,
             addPassageWordToUnits,
+            analyzePassageSyntax,
             getUserSessions,
-            deleteSession,
+            deleteSession: deleteSessionUse,
             sessionRepository
         }}>
             {children}

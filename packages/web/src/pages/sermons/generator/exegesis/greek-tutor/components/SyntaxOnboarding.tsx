@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import { useTranslation } from '@/i18n';
 
 interface SyntaxOnboardingProps {
     /** Whether to run the tour */
@@ -23,6 +24,7 @@ const STORAGE_KEY = 'greek-tutor-syntax-onboarding-seen';
  * - Only shows once (uses localStorage)
  */
 export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
+    const { t } = useTranslation('greekTutor');
     const [runTour, setRunTour] = useState(false);
 
     useEffect(() => {
@@ -47,18 +49,17 @@ export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
             content: (
                 <div className="space-y-2 text-left">
                     <h2 className="text-lg font-bold text-gray-900">
-                        👋 ¡Bienvenido al Análisis Sintáctico!
+                        👋 {t('syntax.onboarding.welcome')}
                     </h2>
                     <p className="text-sm text-gray-700">
-                        Esta herramienta te ayuda a entender <strong>la estructura</strong> del texto griego 
-                        antes de estudiar palabras individuales.
+                        {t('syntax.onboarding.intro')}
                     </p>
                     <p className="text-sm text-gray-700">
-                        Te mostraré los elementos clave en 5 pasos rápidos.
+                        {t('syntax.onboarding.steps')}
                     </p>
                     <div className="mt-3 p-2 bg-blue-50 rounded-md">
                         <p className="text-xs text-blue-800">
-                            💡 Puedes saltar este tutorial en cualquier momento
+                            {t('syntax.onboarding.skipTip')}
                         </p>
                     </div>
                 </div>
@@ -71,14 +72,13 @@ export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
             content: (
                 <div className="space-y-2">
                     <h3 className="text-base font-semibold text-gray-900">
-                        📖 Descripción General
+                        {t('syntax.onboarding.step1Title')}
                     </h3>
                     <p className="text-sm text-gray-700">
-                        Lee esta caja azul <strong>primero</strong>. Te da el panorama completo 
-                        del argumento del pasaje.
+                        {t('syntax.onboarding.step1Content')}
                     </p>
                     <p className="text-xs text-gray-600 italic">
-                        Pregunta: "¿Cuál es la idea principal?"
+                        {t('syntax.onboarding.step1Question')}
                     </p>
                 </div>
             ),
@@ -89,15 +89,13 @@ export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
             content: (
                 <div className="space-y-2">
                     <h3 className="text-base font-semibold text-gray-900">
-                        🔵 Cláusula Principal
+                        {t('syntax.onboarding.step2Title')}
                     </h3>
                     <p className="text-sm text-gray-700">
-                        Las cláusulas con fondo <strong>azul</strong> son las <strong>principales</strong> - 
-                        la espina dorsal del texto.
+                        {t('syntax.onboarding.step2Content1')}
                     </p>
                     <p className="text-sm text-gray-700">
-                        Identifica el <strong>verbo principal</strong> (posición indicada abajo) 
-                        y el sujeto.
+                        {t('syntax.onboarding.step2Content2')}
                     </p>
                 </div>
             ),
@@ -108,17 +106,16 @@ export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
             content: (
                 <div className="space-y-2">
                     <h3 className="text-base font-semibold text-gray-900">
-                        ↪️ Cláusulas Subordinadas
+                        {t('syntax.onboarding.step3Title')}
                     </h3>
                     <p className="text-sm text-gray-700">
-                        Las cláusulas <strong>indentadas</strong> dependen de la principal.
+                        {t('syntax.onboarding.step3Content1')}
                     </p>
                     <p className="text-sm text-gray-700">
-                        El <strong>color</strong> te dice su función: verde (propósito), 
-                        naranja (causa), etc.
+                        {t('syntax.onboarding.step3Content2')}
                     </p>
                     <p className="text-xs text-gray-600 italic">
-                        Pregunta: "¿Cómo modifica esta cláusula la principal?"
+                        {t('syntax.onboarding.step3Question')}
                     </p>
                 </div>
             ),
@@ -129,17 +126,17 @@ export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
             content: (
                 <div className="space-y-2">
                     <h3 className="text-base font-semibold text-gray-900">
-                        🎯 Controles de Vista
+                        {t('syntax.onboarding.step4Title')}
                     </h3>
                     <p className="text-sm text-gray-700">
-                        Usa estos botones para controlar qué ves:
+                        {t('syntax.onboarding.step4Content')}
                     </p>
                     <ul className="text-sm text-gray-700 space-y-1 ml-4">
-                        <li>• <strong>Colapsar Todo</strong>: Solo principales (para panorama)</li>
-                        <li>• <strong>Expandir Todo</strong>: Ver toda la estructura</li>
+                        <li>• {t('syntax.onboarding.step4Collapse')}</li>
+                        <li>• {t('syntax.onboarding.step4Expand')}</li>
                     </ul>
                     <p className="text-xs text-gray-600 mt-2 italic">
-                        💡 Empieza colapsado para no abrumarte
+                        {t('syntax.onboarding.step4Tip')}
                     </p>
                 </div>
             ),
@@ -150,18 +147,17 @@ export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
             content: (
                 <div className="space-y-2">
                     <h3 className="text-base font-semibold text-gray-900">
-                        🎨 Leyenda de Colores
+                        {t('syntax.onboarding.step5Title')}
                     </h3>
                     <p className="text-sm text-gray-700">
-                        Cada color representa un tipo de cláusula con una función específica.
+                        {t('syntax.onboarding.step5Content1')}
                     </p>
                     <p className="text-sm text-gray-700">
-                        Por ejemplo: <strong>Verde</strong> = Propósito ("para que..."), 
-                        <strong>Naranja</strong> = Causa ("porque...")
+                        {t('syntax.onboarding.step5Content2')}
                     </p>
                     <div className="mt-3 p-2 bg-green-50 rounded-md">
                         <p className="text-xs text-green-800">
-                            ✅ ¡Listo! Ahora sabes cómo usar el análisis sintáctico.
+                            {t('syntax.onboarding.step5Done')}
                         </p>
                     </div>
                 </div>
@@ -209,11 +205,11 @@ export function SyntaxOnboarding({ run, onComplete }: SyntaxOnboardingProps) {
                 },
             }}
             locale={{
-                back: 'Atrás',
-                close: 'Cerrar',
-                last: 'Finalizar',
-                next: 'Siguiente',
-                skip: 'Saltar',
+                back: t('syntax.onboarding.back'),
+                close: t('syntax.onboarding.close'),
+                last: t('syntax.onboarding.last'),
+                next: t('syntax.onboarding.next'),
+                skip: t('syntax.onboarding.skip'),
             }}
         />
     );

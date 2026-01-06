@@ -11,13 +11,14 @@ import {
 } from '@/components/ui/popover';
 import { BookOpen, Clock, PlayCircle, Sparkles, TrendingUp, CheckCircle, Timer, Target, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import { calculateSessionProgress, getSessionLastActivity } from '../utils/sessionUtils';
 import { getSessionState } from '../utils/sessionStateUtils';
 import { estimateTimeRemaining } from '../utils/timeEstimationUtils';
 import { countDifficultWords } from '../utils/progressUtils';
 import { SessionCardMenu } from './SessionCardMenu';
 import { WordListPreview } from './WordListPreview';
+import { useTranslation } from '@/i18n';
 
 interface SessionCardProps {
     session: StudySession;
@@ -38,6 +39,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     featured = false
 }) => {
     const [showWordList, setShowWordList] = useState(false);
+    const { t, i18n } = useTranslation('greekTutor');
+    
+    // Get date-fns locale based on current language
+    const dateLocale = i18n.language.startsWith('en') ? enUS : es;
 
     // Calculate progress using utility
     const progressPercentage = calculateSessionProgress(session);
@@ -59,7 +64,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     const lastActivity = getSessionLastActivity(session);
     const relativeTime = formatDistanceToNow(lastActivity, { 
         addSuffix: true, 
-        locale: es 
+        locale: dateLocale
     });
 
     const estimatedTime = estimateTimeRemaining(session);
@@ -107,7 +112,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                         <PopoverTrigger asChild>
                             <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
                                 <BookOpen className="h-4 w-4" />
-                                <span>{totalUnits} {totalUnits === 1 ? 'palabra' : 'palabras'}</span>
+                                <span>{totalUnits} {t(`dashboard.sessionCard.palabra`, { count: totalUnits })}</span>
                             </button>
                         </PopoverTrigger>
                         <PopoverContent side="top" className="w-80 p-0">
@@ -125,7 +130,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                     {quizAccuracy !== undefined && quizAccuracy > 0 && (
                         <div className="flex items-center gap-1.5">
                             <Target className="h-4 w-4" />
-                            <span>{Math.round(quizAccuracy)}% precisión</span>
+                            <span>{Math.round(quizAccuracy)}% {t('dashboard.sessionCard.precision')}</span>
                         </div>
                     )}
 
@@ -133,7 +138,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                         <div className="flex items-center gap-1.5">
                             <Badge variant="destructive" className="text-xs flex items-center gap-1">
                                 <AlertTriangle className="h-3 w-3" />
-                                {difficultWordsCount} difícil{difficultWordsCount > 1 ? 'es' : ''}
+                                {difficultWordsCount} {t(`dashboard.sessionCard.dificil`, { count: difficultWordsCount })}
                             </Badge>
                         </div>
                     )}
@@ -142,12 +147,12 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                 {/* Progress Bar */}
                 <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Progreso</span>
+                        <span className="text-muted-foreground">{t('dashboard.sessionCard.progress')}</span>
                         <span className="font-medium">{progressPercentage}%</span>
                     </div>
                     <Progress value={progressPercentage} className="h-2" />
                     <p className="text-xs text-muted-foreground">
-                        {completedUnits} de {totalUnits} palabras aprendidas
+                        {t('dashboard.sessionCard.wordsLearned', { completed: completedUnits, total: totalUnits })}
                     </p>
                 </div>
 
@@ -159,7 +164,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                         variant={featured || session.status === 'ACTIVE' ? 'default' : 'outline'}
                     >
                         <PlayCircle className="mr-2 h-4 w-4" />
-                        {session.status === 'ACTIVE' ? 'Continuar' : 'Ver Detalles'}
+                        {session.status === 'ACTIVE' ? t('dashboard.sessionCard.continue') : t('dashboard.sessionCard.viewDetails')}
                     </Button>
                 </div>
             </CardContent>

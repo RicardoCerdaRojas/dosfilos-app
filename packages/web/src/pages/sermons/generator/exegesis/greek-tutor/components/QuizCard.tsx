@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { QuizQuestion } from '@dosfilos/domain';
 import { CheckCircle2, XCircle, HelpCircle, SkipForward } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 export interface QuizCardProps {
     question: QuizQuestion;
@@ -26,6 +27,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
     userAnswer,
     isCorrect
 }) => {
+    const { t } = useTranslation('greekTutor');
     const [selectedAnswer, setSelectedAnswer] = useState<string>('');
     
     const handleSubmit = () => {
@@ -66,7 +68,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
                         <HelpCircle className="w-4 h-4 text-blue-600" />
                     </div>
                     <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100 uppercase tracking-wide">
-                        Quiz de Comprensión
+                        {t('quiz.quizTitle')}
                     </h4>
                 </div>
                 
@@ -100,7 +102,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
                 {/* True/False options */}
                 {question.type === 'true-false' && (
                     <div className="grid grid-cols-2 gap-3">
-                        {['Verdadero', 'Falso'].map((option) => (
+                        {[t('quiz.trueOption'), t('quiz.falseOption')].map((option) => (
                             <button
                                 key={option}
                                 onClick={() => !isSubmitted && setSelectedAnswer(option)}
@@ -129,7 +131,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
                             disabled={!selectedAnswer}
                             className="flex-1"
                         >
-                            Verificar Respuesta
+                            {t('quiz.verifyAnswer')}
                         </Button>
                         {onSkip && (
                             <Button 
@@ -138,7 +140,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
                                 className="flex items-center gap-1"
                             >
                                 <SkipForward className="w-4 h-4" />
-                                Saltar
+                                {t('quiz.skip')}
                             </Button>
                         )}
                     </div>
@@ -160,7 +162,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
                             )}
                             <div>
                                 <p className="font-semibold text-sm mb-1">
-                                    {isCorrect ? '¡Correcto! 🎉' : 'No es correcto'}
+                                    {isCorrect ? t('quiz.correct') : t('quiz.incorrect')}
                                 </p>
                                 <p className="text-sm text-foreground/80 leading-relaxed">
                                     {question.explanation}

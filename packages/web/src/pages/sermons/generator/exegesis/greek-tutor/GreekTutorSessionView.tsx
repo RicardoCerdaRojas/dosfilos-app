@@ -24,11 +24,14 @@ import { useGreekTutorBoard } from './hooks/useGreekTutorBoard';
 import { formatSessionExport, copyToClipboard, downloadAsMarkdown } from './utils/exportUtils';
 import { ConceptsLibraryModal } from './components/ConceptsLibraryModal';
 import { InsightsViewer } from './components/InsightsViewer';
+import { useTranslation } from '@/i18n';
+
 
 // Inline PassagePreview component
 const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
     const [text, setText] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const { t, i18n } = useTranslation('greekTutor');
 
     useEffect(() => {
         if (!passage.trim()) {
@@ -38,7 +41,10 @@ const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
 
         setLoading(true);
         try {
-            const verses = LocalBibleService.getVerses(passage);
+            // Use current system language for Bible lookup
+            // If user explicitly types English in Spanish mode, auto-detection in service will still work as fallback
+            // but we prioritize the UI language context
+            const verses = LocalBibleService.getVerses(passage, i18n.language);
             setText(verses || null);
         } catch (e) {
             setText(null);
@@ -58,12 +64,12 @@ const PassagePreview: React.FC<{ passage: string }> = ({ passage }) => {
     if (!text) {
         return (
             <p className="text-muted-foreground italic text-center py-8">
-                Pasaje no reconocido
+                {t('passageNotRecognized')}
             </p>
         );
     }
 
-    return <BibleTextViewer text={text} reference={passage} />;
+    return <BibleTextViewer text={text} reference={passage} language={i18n.language} />;
 };
 
 // Feature Modal Component
@@ -126,9 +132,11 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation('greekTutor');
     const configRepository = new FirebaseConfigRepository();
     const configService = new ConfigService(configRepository);
     
+
     // State
     const [passage, setPassage] = useState(initialPassage || '');
     const [isActive, setIsActive] = useState(!!initialPassage);
@@ -150,6 +158,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
     
     // Mobile sidebar state
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    
+
 
     // Auto-trigger action after loading (for inicial state)
     const [autoTriggerAction, setAutoTriggerAction] = useState<'passage' | 'morphology' | null>(null);
@@ -325,13 +335,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             };
 
             // 5. Execute
-            // Determine language (e.g. "Spanish" or "English")
-            // const userLang = navigator.language.startsWith('es') ? 'Spanish' : 'English';
-            // User requested: "same language that the user operating the system has"
-            // We can map navigator.language to full name or pass explicitly.
-            // For now, let's target Spanish heavily but allow fallback.
+            // Determine language from current UI selection
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
-            const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+            // Use i18n.language (e.g. 'es', 'en') instead of navigator.language
+            const detectedLang = userLangObj.of(i18n.language.split('-')[0]) || 'Spanish';
             
             // Language detected
 
@@ -536,11 +543,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         setStatus('IDLE');
         if (!initialPassage) setPassage('');
     };
-
-    // Helper for safe access
-    const currentUnit = units[currentIndex];
-
+    
     // Use board hook (must be called before any conditional returns)
+    // We do NOT destructure handleCopy/handleExport here to avoid conflicts with local custom handlers
     const {
         currentContent,
         currentContentTitle,
@@ -563,16 +568,20 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         isMorphologyLoading: loadingMorphology,
         passage,
         userLanguage: (() => {
-            const browserLang = navigator.language.split('-')[0];
+            const currentLang = i18n.language?.split('-')[0] || 'es';
             const langMap: Record<string, string> = {
                 'es': 'Spanish',
                 'en': 'English',
                 'pt': 'Portuguese',
                 'fr': 'French'
             };
-            return langMap[browserLang] || 'Spanish';
-        })()
+            return langMap[currentLang] || 'Spanish';
+        })(),
+        translate: (key: string) => t(key)
     });
+
+    // Helper for safe access
+    const currentUnit = units[currentIndex];
 
     // Auto-trigger action after session loads
     useEffect(() => {
@@ -635,10 +644,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex-1">
                                                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
-                                                    Entrenador Griego
+                                                    {t('title')}
                                                 </h1>
                                                 <p className="text-blue-100 text-base leading-relaxed">
-                                                    El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.
+                                                    {t('description')}
                                                 </p>
                                             </div>
                                             <Button 
@@ -648,7 +657,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                 onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
                                             >
                                                 <LayoutDashboard className="h-4 w-4" />
-                                                <span className="hidden sm:inline">Mis Sesiones</span>
+                                                <span className="hidden sm:inline">{t('mySessions')}</span>
                                             </Button>
                                         </div>
                                     </div>
@@ -659,7 +668,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                     <div className="flex items-center gap-2">
                                         <div className="h-1 w-8 bg-gradient-to-r from-primary to-purple-600 rounded-full" />
                                         <h3 className="text-sm font-bold uppercase tracking-wider text-primary">
-                                            Pasaje Bíblico
+                                            {t('biblicalPassage')}
                                         </h3>
                                     </div>
                                     
@@ -669,6 +678,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             onChange={setPassage}
                                             onValidPassage={() => {}}
                                             hidePreview={hasPassage}
+                                            label={t('passageSelector.label')}
+                                            placeholder={t('passageSelector.placeholder')}
                                         />
                                     </div>
                                     
@@ -679,14 +690,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                         onClick={handleStart}
                                         disabled={!passage.trim()}
                                     >
-                                        Iniciar Entrenamiento
+                                        {t('startTraining')}
                                         <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                                     </Button>
                                 </div>
 
                                 {/* Recent Passages - Interactive chips */}
                                 <div className="space-y-3">
-                                    <p className="text-sm text-muted-foreground font-medium">Pasajes frecuentes:</p>
+                                    <p className="text-sm text-muted-foreground font-medium">{t('frequentPassages')}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {recentPassages.map((ref) => (
                                             <button
@@ -717,7 +728,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             <div className="flex items-center gap-2">
                                                 <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" />
                                                 <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                                                    Vista General
+                                                    {t('sections.overview')}
                                                 </h3>
                                             </div>
                                             
@@ -732,15 +743,15 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             <BookOpen className="h-4 w-4 text-blue-600" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Lectura del Pasaje</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.readPassage.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Texto griego original con transliteración interactiva
+                                                                {t('features.readPassage.description')}
                                                             </p>
                                                             {/* Preview content - appears on hover */}
                                                             <div className="mt-3 pt-3 border-t border-blue-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] font-mono text-blue-600/80 space-y-1">
                                                                     <div>πιστεύοντες → <span className="text-muted-foreground">pisteúontes</span></div>
-                                                                    <div className="text-[9px] text-muted-foreground italic">Haz clic en cualquier palabra para análisis detallado</div>
+                                                                    <div className="text-[9px] text-muted-foreground italic">{t('features.readPassage.preview')}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -748,7 +759,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                     {/* Hover badge */}
                                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                         <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-700 dark:text-blue-300 font-medium">
-                                                            Ver ejemplo
+                                                            {t('buttons.viewExample')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -765,20 +776,20 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             </svg>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Estructura Sintáctica</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.syntax.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Visor de cláusulas y relaciones gramaticales
+                                                                {t('features.syntax.description')}
                                                             </p>
                                                             {/* Preview content */}
                                                             <div className="mt-3 pt-3 border-t border-cyan-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] space-y-1">
                                                                     <div className="flex items-center gap-1">
                                                                         <span className="w-1 h-1 rounded-full bg-cyan-500"></span>
-                                                                        <span className="text-muted-foreground">Cláusula Principal</span>
+                                                                        <span className="text-muted-foreground">{t('features.syntax.preview.mainClause')}</span>
                                                                     </div>
                                                                     <div className="flex items-center gap-1 ml-3">
                                                                         <span className="w-1 h-1 rounded-full bg-cyan-400"></span>
-                                                                        <span className="text-muted-foreground">Cláusula Subordinada</span>
+                                                                        <span className="text-muted-foreground">{t('features.syntax.preview.subordinateClause')}</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -798,7 +809,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             <div className="flex items-center gap-2">
                                                 <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
                                                 <h3 className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                                                    Estudio de Palabras
+                                                    {t('sections.wordStudy')}
                                                 </h3>
                                             </div>
                                             
@@ -813,15 +824,15 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             <Sparkles className="h-4 w-4 text-purple-600" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Análisis Morfológico</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.morphology.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Descomposición detallada de morfemas y formas
+                                                                {t('features.morphology.description')}
                                                             </p>
                                                             <div className="mt-3 pt-3 border-t border-purple-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] space-y-1.5">
-                                                                    <div><span className="font-mono text-purple-600">πιστ-</span> <span className="text-muted-foreground">raíz (creer)</span></div>
-                                                                    <div><span className="font-mono text-purple-600">-ευ-</span> <span className="text-muted-foreground">vocal temática</span></div>
-                                                                    <div><span className="font-mono text-purple-600">-οντες</span> <span className="text-muted-foreground">participio presente</span></div>
+                                                                    <div><span className="font-mono text-purple-600">πιστ-</span> <span className="text-muted-foreground">{t('features.morphology.preview.root')}</span></div>
+                                                                    <div><span className="font-mono text-purple-600">-ευ-</span> <span className="text-muted-foreground">{t('features.morphology.preview.thematicVowel')}</span></div>
+                                                                    <div><span className="font-mono text-purple-600">-οντες</span> <span className="text-muted-foreground">{t('features.morphology.preview.participle')}</span></div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -845,9 +856,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             </svg>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Claves de Reconocimiento</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.recognitionKeys.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Patrones para identificar morfología y profundizar tu conocimiento del griego bíblico.
+                                                                {t('features.recognitionKeys.description')}
                                                             </p>
                                                             <div className="mt-3 pt-3 border-t border-pink-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] text-muted-foreground space-y-1">
@@ -876,14 +887,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             </svg>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Función en Contexto</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.contextFunction.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Rol de cada palabra en la cláusula
+                                                                {t('features.contextFunction.description')}
                                                             </p>
                                                             <div className="mt-3 pt-3 border-t border-fuchsia-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] text-muted-foreground">
-                                                                    <div className="font-medium text-fuchsia-600 mb-1">Sujeto de la cláusula</div>
-                                                                    <div>Función: Agente de la acción principal</div>
+                                                                    <div className="font-medium text-fuchsia-600 mb-1">{t('features.contextFunction.preview.subject')}</div>
+                                                                    <div>{t('features.contextFunction.preview.function')}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -905,13 +916,13 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             <Lightbulb className="h-4 w-4 text-violet-600" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Insight del Experto</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.expertInsight.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Perspectivas gramaticales profundas y aplicadas
+                                                                {t('features.expertInsight.description')}
                                                             </p>
                                                             <div className="mt-3 pt-3 border-t border-violet-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] text-muted-foreground italic">
-                                                                    "El tiempo presente enfatiza la acción continua: un creer que perdura..."
+                                                                    "{t('features.expertInsight.preview')}"
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -930,7 +941,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             <div className="flex items-center gap-2">
                                                 <div className="h-1 w-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" />
                                                 <h3 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                                                    Refuerzo del Aprendizaje
+                                                    {t('sections.learningReinforcement')}
                                                 </h3>
                                             </div>
                                             
@@ -947,22 +958,22 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             </svg>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Conceptos Generales</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.generalConcepts.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Biblioteca de conceptos clave del griego koiné
+                                                                {t('features.generalConcepts.description')}
                                                             </p>
                                                             <div className="mt-3 pt-3 border-t border-amber-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] text-muted-foreground space-y-1">
-                                                                    <div>📚 Casos del griego</div>
-                                                                    <div>📚 Tiempos verbales</div>
-                                                                    <div>📚 Modos y voces</div>
+                                                                    <div>📚 {t('features.generalConcepts.preview.cases')}</div>
+                                                                    <div>📚 {t('features.generalConcepts.preview.tenses')}</div>
+                                                                    <div>📚 {t('features.generalConcepts.preview.moods')}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                         <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium">
-                                                            Explorar
+                                                            {t('buttons.explore')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -977,20 +988,20 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             <MessageCircle className="h-4 w-4 text-orange-600" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Preguntas al Tutor</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.tutorQuestions.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Asistencia personalizada en tu estudio
+                                                                {t('features.tutorQuestions.description')}
                                                             </p>
                                                             <div className="mt-3 pt-3 border-t border-orange-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] text-muted-foreground italic">
-                                                                    "¿Por qué Pablo usa el aoristo aquí?"
+                                                                    "{t('features.tutorQuestions.preview')}"
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                         <span className="text-[9px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-300 font-medium">
-                                                            Preguntar
+                                                            {t('buttons.ask')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -1007,21 +1018,21 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             </svg>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Quiz de Comprensión</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.quiz.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Evalúa y refuerza lo aprendido en cada sesión
+                                                                {t('features.quiz.description')}
                                                             </p>
                                                             <div className="mt-3 pt-3 border-t border-green-500/10 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-300 overflow-hidden">
                                                                 <div className="text-[10px] text-muted-foreground space-y-1">
-                                                                    <div>✓ Identifica tiempo y voz</div>
-                                                                    <div>✓ Analiza función sintáctica</div>
+                                                                    <div>✓ {t('features.quiz.preview.identify')}</div>
+                                                                    <div>✓ {t('features.quiz.preview.analyze')}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                         <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-700 dark:text-green-300 font-medium">
-                                                            Practicar
+                                                            {t('buttons.practice')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -1036,15 +1047,15 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                             <Bookmark className="h-4 w-4 text-purple-600" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm mb-0.5">Mis Insights</h4>
+                                                            <h4 className="font-medium text-sm mb-0.5">{t('features.myInsights.title')}</h4>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                Biblioteca personal de conocimiento guardado
+                                                                {t('features.myInsights.description')}
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                         <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium">
-                                                            Ver
+                                                            {t('buttons.view')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -1232,7 +1243,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         onClick={() => window.location.href = '/dashboard/greek-tutor-dashboard'}
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        <span className="hidden sm:inline">Volver</span>
+                        <span className="hidden sm:inline">{t('ui.navigation.back')}</span>
                     </Button>
 
                     {/* Page Title & Passage Info */}
@@ -1240,7 +1251,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         <BookOpen className="h-4 w-4 text-primary" />
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="font-bold text-sm leading-tight">Entrenador Griego</h1>
+                                <h1 className="font-bold text-sm leading-tight">{t('ui.navigation.greekTutor')}</h1>
                                 <span className="text-muted-foreground">·</span>
                                 <span className="font-semibold text-sm leading-tight">{passage}</span>
                             </div>
@@ -1274,14 +1285,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 className="h-8 px-3 gap-2"
                             >
                                 <MessageCircle className="h-4 w-4" />
-                                <span className="hidden md:inline">Pregunta al Tutor</span>
+                                <span className="hidden md:inline">{t('ui.navigation.askTutor')}</span>
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-96" align="end">
                             <div className="space-y-4">
                                 {/* Header with mode selector */}
                                 <div className="space-y-2">
-                                    <h4 className="font-semibold text-sm">Pregunta al Tutor</h4>
+                                    <h4 className="font-semibold text-sm">{t('ui.navigation.askTutor')}</h4>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setChatMode('contextual')}
@@ -1291,7 +1302,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                             }`}
                                         >
-                                            📖 Sobre el pasaje
+                                            {t('askTutor.contextualMode')}
                                         </button>
                                         <button
                                             onClick={() => setChatMode('general')}
@@ -1301,7 +1312,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                             }`}
                                         >
-                                            💭 General
+                                            {t('askTutor.generalMode')}
                                         </button>
                                     </div>
                                 </div>
@@ -1321,8 +1332,8 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                     }}
                                     placeholder={
                                         chatMode === 'contextual'
-                                            ? "Escribe tu pregunta sobre el pasaje..."
-                                            : "Escribe tu pregunta sobre griego koiné..."
+                                            ? t('askTutor.placeholderContextual')
+                                            : t('askTutor.placeholderGeneral')
                                     }
                                     className="min-h-[100px] resize-none text-sm"
                                     disabled={isBoardLoading}
@@ -1331,7 +1342,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 {/* Action buttons */}
                                 <div className="flex items-center justify-between">
                                     <p className="text-[10px] text-muted-foreground">
-                                        Presiona <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Enter</kbd> para enviar
+                                        {t('askTutor.pressEnterHint', { key: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Enter</kbd> })}
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
@@ -1342,7 +1353,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                                 setIsChatPopoverOpen(false);
                                             }}
                                         >
-                                            Cancelar
+                                            {t('askTutor.cancel')}
                                         </Button>
                                         <Button
                                             size="sm"
@@ -1358,10 +1369,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                             {isBoardLoading ? (
                                                 <>
                                                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                    Procesando...
+                                                    {t('askTutor.processing')}
                                                 </>
                                             ) : (
-                                                'Enviar'
+                                                t('askTutor.send')
                                             )}
                                         </Button>
                                     </div>
@@ -1379,7 +1390,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         title="Biblioteca de Conceptos Clave"
                     >
                         <BookOpen className="h-4 w-4" />
-                        <span className="hidden lg:inline">Conceptos</span>
+                        <span className="hidden lg:inline">{t('ui.navigation.concepts')}</span>
                     </Button>
 
                     {/* Mis Insights Button */}
@@ -1388,10 +1399,10 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         size="sm"
                         className="h-8 px-3 gap-2"
                         onClick={() => setShowInsightsDialog(true)}
-                        title="Mis Insights Guardados"
+                        title={t('insights.modalTitle')}
                     >
                         <Bookmark className="h-4 w-4" />
-                        <span className="hidden lg:inline">Insights</span>
+                        <span className="hidden lg:inline">{t('ui.navigation.insights')}</span>
                     </Button>
 
                     {/* Right: Action Buttons */}
@@ -1425,7 +1436,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 className="h-7 px-2 text-xs" 
                                 onClick={handleReset}
                             >
-                                Cambiar Pasaje
+                                {t('ui.navigation.changePassage')}
                             </Button>
                         )}
                     </div>
@@ -1528,9 +1539,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             <Dialog open={showInsightsDialog} onOpenChange={setShowInsightsDialog}>
                 <DialogContent className="!w-[90vw] !max-w-[1400px] min-h-[200px] max-h-[90vh] overflow-hidden flex flex-col p-6">
                     <DialogHeader>
-                        <DialogTitle>Mis Insights Guardados</DialogTitle>
+                        <DialogTitle>{t('insights.modalTitle')}</DialogTitle>
                         <DialogDescription>
-                            Tu biblioteca personal de conocimiento del griego del NT
+                            {t('insights.modalSubtitle')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-auto min-h-0">

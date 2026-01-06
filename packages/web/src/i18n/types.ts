@@ -46,7 +46,10 @@ export type TranslationNamespace =
     | 'dashboard'
     | 'subscription'
     | 'sermons'
+    | 'sermonDetail'
     | 'library'
     | 'series'
     | 'planner'
-    | 'generator';
+    | 'generator'
+    | 'greekTutor';
+

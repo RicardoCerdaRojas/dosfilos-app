@@ -13,6 +13,8 @@ import { useSessionList } from './hooks/useSessionList';
 import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { calculateSessionProgress, getSessionLastActivity } from './utils/sessionUtils';
+import { useTranslation } from '@/i18n';
+
 
 interface GreekTutorDashboardProps {
     userId: string;
@@ -33,6 +35,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 }) => {
     const navigate = useNavigate();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const { t } = useTranslation('greekTutor');
     
     // Filter and sort states
     const [searchQuery, setSearchQuery] = useState('');
@@ -139,7 +142,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
         if (!userId) return;
         
         const confirmed = window.confirm(
-            '¿Estás seguro de que deseas eliminar esta sesión de estudio? Esta acción no se puede deshacer.'
+            t('dashboard.deleteConfirm')
         );
         
         if (!confirmed) return;
@@ -150,7 +153,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
             await refetch(); // Refresh list
         } catch (error) {
             console.error('[GreekTutorDashboard] Error deleting session:', error);
-            alert('Error al eliminar la sesión. Por favor intenta de nuevo.');
+            alert(t('dashboard.deleteError'));
         } finally {
             setDeletingId(null);
         }
@@ -196,7 +199,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
         return (
             <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-3 text-muted-foreground">Cargando sesiones...</span>
+                <span className="ml-3 text-muted-foreground">{t('dashboard.loadingSessions')}</span>
             </div>
         );
     }
@@ -207,7 +210,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                    Error al cargar las sesiones: {error}
+                    {t('dashboard.loadError')}: {error}
                 </AlertDescription>
             </Alert>
         );
@@ -220,10 +223,10 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
         <div className="space-y-6">
             {/* Header - Ultra-compact for maximum content space */}
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Mis Sesiones de Estudio</h2>
+                <h2 className="text-xl font-bold">{t('dashboard.title')}</h2>
                 <Button onClick={onCreateNew}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Nueva Sesión
+                    {t('dashboard.newSession')}
                 </Button>
             </div>
 
@@ -239,7 +242,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                         <SearchBar
                             value={searchQuery}
                             onChange={setSearchQuery}
-                            placeholder="Buscar pasaje (ej: Romanos, Juan 3:16)..."
+                            placeholder={t('dashboard.searchPlaceholder')}
                         />
                     </div>
                     <div className="flex items-center gap-3">
@@ -276,9 +279,9 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
                         <AlertCircle className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">No se encontraron resultados</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('dashboard.noResults')}</h3>
                     <p className="text-muted-foreground mb-4">
-                        Intenta ajustar los filtros o la búsqueda
+                        {t('dashboard.adjustFilters')}
                     </p>
                     <Button
                         variant="outline"
@@ -288,13 +291,13 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                             setSortBy('date-desc');
                         }}
                     >
-                        Limpiar filtros
+                        {t('dashboard.clearFilters')}
                     </Button>
                 </div>
             ) : (
                 <>
                     <div className="text-sm text-muted-foreground">
-                        Mostrando {filteredAndSortedSessions.length} de {sessions.length} sesiones
+                        {t('dashboard.showingCount', { filtered: filteredAndSortedSessions.length, total: sessions.length })}
                     </div>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {filteredAndSortedSessions.map((session) => (

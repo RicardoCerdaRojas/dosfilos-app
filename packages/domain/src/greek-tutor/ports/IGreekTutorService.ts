@@ -71,7 +71,8 @@ export interface IGreekTutorService {
     getPassageText(
         reference: string,
         fileSearchStoreId?: string,
-        language?: string
+        language?: string,
+        bibleText?: string
     ): Promise<import('../entities/entities').BiblicalPassage>;
 
     /**
@@ -127,6 +128,6 @@ export interface ISessionRepository {
     updateUnitMorphology(sessionId: string, unitId: string, morphology: import('../entities/entities').MorphologyBreakdown): Promise<void>;
 
     // Phase 4B: Syntax analysis caching (global cache, reusable across users/sessions)
-    getCachedSyntaxAnalysis(reference: string): Promise<import('../syntax-analysis').PassageSyntaxAnalysis | null>;
-    cacheSyntaxAnalysis(analysis: import('../syntax-analysis').PassageSyntaxAnalysis): Promise<void>;
+    getCachedSyntaxAnalysis(reference: string, language?: string): Promise<import('../syntax-analysis').PassageSyntaxAnalysis | null>;
+    cacheSyntaxAnalysis(analysis: import('../syntax-analysis').PassageSyntaxAnalysis, language?: string): Promise<void>;
 }

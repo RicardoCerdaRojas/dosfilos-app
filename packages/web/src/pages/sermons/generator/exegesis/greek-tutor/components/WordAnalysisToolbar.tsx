@@ -2,6 +2,7 @@ import React from 'react';
 import { Lightbulb, GitMerge, Heart } from 'lucide-react';
 import { TrainingUnit } from '@dosfilos/domain';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/i18n';
 
 export type WordActionType = 'recognition' | 'context' | 'significance';
 
@@ -52,6 +53,28 @@ export const WordAnalysisToolbar: React.FC<WordAnalysisToolbarProps> = ({
     onActionClick,
     isLoading
 }) => {
+    const { t } = useTranslation('greekTutor');
+    
+    const TOOLBAR_BUTTONS: ToolbarButton[] = [
+        {
+            action: 'recognition',
+            icon: Lightbulb,
+            label: t('wordAnalysis.recognition.label'),
+            description: t('wordAnalysis.recognition.description')
+        },
+        {
+            action: 'context',
+            icon: GitMerge,
+            label: t('wordAnalysis.context.label'),
+            description: t('wordAnalysis.context.description')
+        },
+        {
+            action: 'significance',
+            icon: Heart,
+            label: t('wordAnalysis.significance.label'),
+            description: t('wordAnalysis.significance.description')
+        }
+    ];
     // Don't render if no unit is selected
     if (!currentUnit) {
         return null;
@@ -66,12 +89,12 @@ export const WordAnalysisToolbar: React.FC<WordAnalysisToolbarProps> = ({
         <div
             className="fixed right-6 top-1/2 -translate-y-1/2 z-20 animate-in slide-in-from-right duration-300"
             role="toolbar"
-            aria-label="Análisis de palabra"
+            aria-label={t('wordAnalysis.ariaLabel')}
         >
             <div className="bg-background border-2 shadow-lg rounded-lg p-2 space-y-2">
                 {/* Word indicator */}
                 <div className="text-center pb-2 border-b">
-                    <p className="text-xs text-muted-foreground font-medium">Analizar</p>
+                    <p className="text-xs text-muted-foreground font-medium">{t('wordAnalysis.analyze')}</p>
                     <p className="text-sm font-greek font-bold text-primary">
                         {currentUnit.greekForm.text}
                     </p>

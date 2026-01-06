@@ -85,8 +85,8 @@ export class AnalyzePassageSyntaxUseCase {
     async execute(passage: BiblicalPassage, language: string = 'Spanish'): Promise<PassageSyntaxAnalysis> {
         // Step 1: Try cache first (if repository available)
         if (this.sessionRepository) {
-            console.log('[AnalyzePassageSyntaxUseCase] Checking cache for:', passage.reference);
-            const cachedAnalysis = await this.sessionRepository.getCachedSyntaxAnalysis(passage.reference);
+            console.log(`[AnalyzePassageSyntaxUseCase] Checking cache for: ${passage.reference} (${language})`);
+            const cachedAnalysis = await this.sessionRepository.getCachedSyntaxAnalysis(passage.reference, language);
             if (cachedAnalysis) {
                 console.log('[AnalyzePassageSyntaxUseCase] ✅ Cache HIT! Using cached analysis for:', passage.reference);
                 return cachedAnalysis;
@@ -115,7 +115,7 @@ export class AnalyzePassageSyntaxUseCase {
 
         // Step 7: Cache the result (fire and forget, non-blocking)
         if (this.sessionRepository) {
-            this.sessionRepository.cacheSyntaxAnalysis(analysis).catch(error => {
+            this.sessionRepository.cacheSyntaxAnalysis(analysis, language).catch(error => {
                 console.warn('[AnalyzePassageSyntaxUseCase] Failed to cache analysis (non-critical):', error);
             });
         }

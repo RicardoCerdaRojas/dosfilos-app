@@ -6,6 +6,7 @@ import { BookOpen, Lightbulb, AlertTriangle, Sparkles, Search, Target, ChevronDo
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SaveInsightButton } from './SaveInsightButton';
+import { useTranslation } from '@/i18n';
 
 interface TutorResponseDisplayProps {
     question: string;
@@ -32,6 +33,7 @@ export const TutorResponseDisplay: React.FC<TutorResponseDisplayProps> = ({
     passage,
     onSaveInsight
 }) => {
+    const { t } = useTranslation('greekTutor');
     // Parse sections from the answer
     const sections = parseAnswerSections(answer);
     
@@ -44,7 +46,7 @@ export const TutorResponseDisplay: React.FC<TutorResponseDisplayProps> = ({
                         <BookOpen className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1">
-                        <p className="text-xs font-medium text-primary mb-1">Tu Pregunta</p>
+                        <p className="text-xs font-medium text-primary mb-1">{t('askTutor.yourQuestion')}</p>
                         <p className="text-sm leading-relaxed">{question}</p>
                         {greekWord && (
                             <div className="mt-2 flex items-center gap-2">
@@ -65,7 +67,7 @@ export const TutorResponseDisplay: React.FC<TutorResponseDisplayProps> = ({
                 <div className="flex items-start justify-between gap-4 mb-6">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-primary" />
-                        Respuesta del Tutor
+                        {t('askTutor.tutorResponse')}
                     </h3>
                     {onSaveInsight && (
                         <div className="shrink-0">

@@ -329,16 +329,94 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
 
     private passageCacheCollection = 'passage_cache';
 
+    private readonly BOOK_ALIASES: Record<string, string> = {
+        // Spanish
+        'romanos': 'rom', 'rom': 'rom',
+        'juan': 'jhn', 'jn': 'jhn',
+        'mateo': 'mat', 'mt': 'mat',
+        'marcos': 'mrk', 'mc': 'mrk',
+        'lucas': 'luk', 'lc': 'luk',
+        'hechos': 'act', 'hch': 'act',
+        'efesios': 'eph', 'ef': 'eph',
+        'gálatas': 'gal', 'galatas': 'gal',
+        'filipenses': 'php', 'fil': 'php',
+        'colosenses': 'col', 'col': 'col',
+        '1 tesalonicenses': '1th', '1tes': '1th',
+        '2 tesalonicenses': '2th', '2tes': '2th',
+        '1 timoteo': '1ti', '1tim': '1ti',
+        '2 timoteo': '2ti', '2tim': '2ti',
+        'tito': 'tit',
+        'filemón': 'phm', 'filemon': 'phm',
+        'hebreos': 'heb',
+        'santiago': 'jas', 'stg': 'jas',
+        '1 pedro': '1pe',
+        '2 pedro': '2pe',
+        '1 juan': '1jn',
+        '2 juan': '2jn',
+        '3 juan': '3jn',
+        'judas': 'jud',
+        'apocalipsis': 'rev', 'apoc': 'rev',
+
+        // English
+        'romans': 'rom',
+        'john': 'jhn',
+        'matthew': 'mat',
+        'mark': 'mrk',
+        'luke': 'luk',
+        'acts': 'act',
+        'ephesians': 'eph',
+        'galatians': 'gal',
+        'philippians': 'php',
+        'colossians': 'col',
+        '1 thessalonians': '1th',
+        '2 thessalonians': '2th',
+        '1 timothy': '1ti',
+        '2 timothy': '2ti',
+        'titus': 'tit',
+        'philemon': 'phm',
+        'hebrews': 'heb',
+        'james': 'jas',
+        '1 peter': '1pe',
+        '2 peter': '2pe',
+        '1 john': '1jn',
+        '2 john': '2jn',
+        '3 john': '3jn',
+        'jude': 'jud',
+        'revelation': 'rev'
+    };
+
     /**
      * Normalizes a biblical reference to use as cache key
-     * E.g., "Romanos 12:1-2" → "romanos_12_1_2"
+     * E.g., "Romanos 12:1-2" -> "rom_12_1_2"
+     * E.g., "Romans 12:1-2" -> "rom_12_1_2" (Shared Cache!)
      */
     private normalizeReference(reference: string): string {
-        return reference.toLowerCase()
-            .replace(/\s+/g, '_')
+        const lowerRef = reference.toLowerCase().trim();
+
+        // Split into book and chapters/verses
+        // Match standard format: "{Book Name} {Chapter}:{Verse}"
+        // Handle "1 John" vs "John" prefixing
+        const match = lowerRef.match(/^((?:\d\s)?[a-z\u00C0-\u00FF]+)\s+(.+)$/);
+
+        if (!match) {
+            // Fallback to simple cleanup if not parseable
+            return lowerRef
+                .replace(/\s+/g, '_')
+                .replace(/:/g, '_')
+                .replace(/-/g, '_')
+                .replace(/[^a-z0-9_]/g, '');
+        }
+
+        const bookPart = match[1].trim(); // e.g. "romans" or "1 juan"
+        const restPart = match[2]
+            .replace(/\s+/g, '') // Remove spaces in "12: 1-2"
             .replace(/:/g, '_')
-            .replace(/-/g, '_')
-            .replace(/[^a-z0-9_]/g, '');
+            .replace(/-/g, '_');
+
+        // Lookup canonical book ID
+        const canonicalBook = this.BOOK_ALIASES[bookPart] || bookPart.replace(/\s+/g, '_');
+
+        return `${canonicalBook}_${restPart}`;
     }
 
     /**
@@ -434,11 +512,15 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
      * - Significantly reduces Gemini API calls for common passages
      */
     async getCachedSyntaxAnalysis(
-        reference: string
+        reference: string,
+        language: string = 'Spanish'
     ): Promise<import('@dosfilos/domain').PassageSyntaxAnalysis | null> {
         try {
             const normalizedRef = this.normalizeReference(reference);
-            const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, normalizedRef);
+            // Append language to cache key to separate EN/ES analysis
+            // e.g. "romanos_12_1_2_en" or "romanos_12_1_2_es"
+            const cacheKey = `${normalizedRef}_${language.toLowerCase().substring(0, 2)}`;
+            const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, cacheKey);
             const cacheSnap = await getDoc(cacheRef);
 
             if (cacheSnap.exists()) {
@@ -477,11 +559,14 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
      * - Fields: passageReference, clauses, rootClauseId, structureDescription, analyzedAt, usageCount
      */
     async cacheSyntaxAnalysis(
-        analysis: import('@dosfilos/domain').PassageSyntaxAnalysis
+        analysis: import('@dosfilos/domain').PassageSyntaxAnalysis,
+        language: string = 'Spanish'
     ): Promise<void> {
         try {
             const normalizedRef = this.normalizeReference(analysis.passageReference);
-            const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, normalizedRef);
+            // Append language to cache key
+            const cacheKey = `${normalizedRef}_${language.toLowerCase().substring(0, 2)}`;
+            const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, cacheKey);
 
             // Check if already exists to increment usage count
             const existingSnap = await getDoc(cacheRef);

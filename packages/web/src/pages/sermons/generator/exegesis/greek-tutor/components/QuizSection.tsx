@@ -7,6 +7,7 @@ import { Loader2, ArrowRight } from 'lucide-react';
 import { useQuiz } from '../hooks/useQuiz';
 import { GenerateQuizUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GenerateQuizUseCase';
 import { SubmitQuizAnswerUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/SubmitQuizAnswerUseCase';
+import { useTranslation } from '@/i18n';
 
 export interface QuizSectionProps {
     unit: TrainingUnit;
@@ -28,6 +29,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
     submitQuizAnswerUseCase,
     fileSearchStoreId
 }) => {
+    const { t } = useTranslation('greekTutor');
     const {
         questions,
         currentQuestionIndex,
@@ -57,7 +59,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
         return (
             <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="ml-2 text-sm text-muted-foreground">Generando quiz...</span>
+                <span className="ml-2 text-sm text-muted-foreground">{t('quiz.generatingQuiz')}</span>
             </div>
         );
     }
@@ -74,9 +76,9 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
             {/* Header with progress */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-bold">Practica tu comprensión</h3>
+                    <h3 className="text-lg font-bold">{t('quiz.practiceTitle')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Pregunta {currentQuestionIndex + 1} de {questions.length}
+                        {t('quiz.questionCounter', { current: currentQuestionIndex + 1, total: questions.length })}
                     </p>
                 </div>
                 <ProgressBadge masteryLevel={progress.masteryLevel} />
@@ -98,7 +100,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                     onClick={nextQuestion}
                     className="w-full"
                 >
-                    Siguiente Pregunta
+                    {t('quiz.nextQuestion')}
                     <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
             )}
@@ -107,7 +109,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
             {isSubmitted && isLastQuestion && (
                 <div className="p-4 rounded-lg bg-primary/10 border-2 border-primary/30">
                     <p className="text-center font-semibold">
-                        ✨ ¡Quiz completado! Tu nivel es: <ProgressBadge masteryLevel={progress.masteryLevel} size="sm" />
+                        {t('quiz.quizCompleted')} <ProgressBadge masteryLevel={progress.masteryLevel} size="sm" />
                     </p>
                 </div>
             )}
