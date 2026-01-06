@@ -20,6 +20,7 @@ export const EducationalCapsule: React.FC<EducationalCapsuleProps> = ({
     onRefresh 
 }) => {
     const { t } = useTranslation('greekTutor');
+    
     return (
         <div className="max-w-3xl mx-auto space-y-4">
             {/* Header */}
@@ -29,7 +30,9 @@ export const EducationalCapsule: React.FC<EducationalCapsuleProps> = ({
                 </div>
                 <div>
                     <h3 className="text-lg font-bold text-foreground">{t('concepts.keyConceptTitle')}</h3>
-                    <p className="text-xs text-muted-foreground">{t('concepts.keyConceptSubtitle')}</p>
+                    <p className="text-xs text-muted-foreground">{t('concepts.keyConceptSubt
+
+itle')}</p>
                 </div>
             </div>
 

@@ -68,12 +68,13 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     onSaveInsight,
     onRetrySyntax
 }) => {
-    const { t } = useTranslation('greekTutor');
-    const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule());
+}) => {
+    const { t, i18n } = useTranslation('greekTutor');
+    const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule(i18n.language));
     const { generateQuiz, submitQuizAnswer } = useGreekTutor();
 
     const handleRefreshCapsule = () => {
-        setCurrentCapsule(getRandomCapsule());
+        setCurrentCapsule(getRandomCapsule(i18n.language));
     };
 
     // Empty state with educational capsule

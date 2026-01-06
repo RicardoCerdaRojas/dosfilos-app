@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
-import { GREEK_CAPSULES } from '../constants/greekCapsules';
+import { getCapsules } from '../constants/greekCapsules';
 import { EducationalCapsule } from './EducationalCapsule';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslation } from '@/i18n';
@@ -19,12 +19,13 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
     open,
     onOpenChange
 }) => {
-    const { t } = useTranslation('greekTutor');
+    const { t, i18n } = useTranslation('greekTutor');
     const [currentIndex, setCurrentIndex] = useState(0);
     
-    const currentCapsule = GREEK_CAPSULES[currentIndex];
+    const capsules = getCapsules(i18n.language);
+    const currentCapsule = capsules[currentIndex];
     const canGoPrev = currentIndex > 0;
-    const canGoNext = currentIndex < GREEK_CAPSULES.length - 1;
+    const canGoNext = currentIndex < capsules.length - 1;
     
     const handlePrev = () => {
         if (canGoPrev) {
@@ -66,7 +67,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                             <div>
                                 <DialogTitle className="text-xl">{t('concepts.libraryTitle')}</DialogTitle>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                    {t('concepts.counter', { current: currentIndex + 1, total: GREEK_CAPSULES.length })}
+                                    {t('concepts.counter', { current: currentIndex + 1, total: capsules.length })}
                                 </p>
                             </div>
                         </div>
@@ -77,7 +78,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                                 variant="ghost"
                                 size="sm"
                                 onClick={handlePrev}
-                                disabled={!canGoPrev}
+                               disabled={!canGoPrev}
                                 className="h-9 w-9 p-0"
                             >
                                 <ChevronLeft className="h-5 w-5" />
@@ -101,7 +102,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                     <div className="hidden md:flex md:w-64 border-r flex-col">
                         <ScrollArea className="flex-1">
                             <div className="p-4 space-y-1">
-                                {GREEK_CAPSULES.map((capsule, index) => (
+                                {capsules.map((capsule, index) => (
                                     <button
                                         key={capsule.id}
                                         onClick={() => handleJumpTo(index)}
@@ -145,7 +146,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                             {t('concepts.previous')}
                         </Button>
                         <div className="text-xs text-muted-foreground whitespace-nowrap">
-                            {currentIndex + 1}/{GREEK_CAPSULES.length}
+                            {currentIndex + 1}/{capsules.length}
                         </div>
                         <Button
                             variant="outline"
@@ -165,7 +166,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                             {t('concepts.goToOtherConcept')}
                         </summary>
                         <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
-                            {GREEK_CAPSULES.map((capsule, index) => (
+                            {capsules.map((capsule, index) => (
                                 <button
                                     key={capsule.id}
                                     onClick={() => handleJumpTo(index)}
