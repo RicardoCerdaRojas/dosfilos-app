@@ -79,12 +79,18 @@ export class ASVRepository implements IBibleVersionRepository {
 
     parseReference(ref: string): BibleReference | null {
         const normalized = ref.trim();
+        console.log('[ASVRepository] parseReference input:', normalized);
+
         // English pattern: "John 3:16" or "1 John 3:16-17"
-        const match = normalized.match(/^((?:[1-3]\\s?)?[A-Za-z]+(?:\\s+[A-Za-z]+)*)\\s*(\\d+)[:.](\\d+)(?:[-–](\\d+))?$/i);
+        const match = normalized.match(/^((?:[1-3]\s?)?[A-Za-z]+(?:\s+[A-Za-z]+)*)\s*(\d+)[:.](\d+)(?:[-–](\d+))?$/i);
+
+        console.log('[ASVRepository] regex match:', match);
 
         if (!match) return null;
 
         const bookName = match[1]?.trim() || '';
+        console.log('[ASVRepository] bookName extracted:', bookName);
+
         let resolvedBook = '';
         for (const [key] of Object.entries(this.BOOK_MAPPING)) {
             if (key.toLowerCase() === bookName.toLowerCase()) {
@@ -92,6 +98,8 @@ export class ASVRepository implements IBibleVersionRepository {
                 break;
             }
         }
+
+        console.log('[ASVRepository] resolvedBook:', resolvedBook, 'bookNumber:', this.BOOK_MAPPING[resolvedBook]);
 
         if (!resolvedBook) return null;
 
@@ -104,10 +112,16 @@ export class ASVRepository implements IBibleVersionRepository {
     }
 
     getVerses(refString: string): string | null {
+        console.log('[ASVRepository] getVerses called with:', refString);
+
         const ref = this.parseReference(refString);
+        console.log('[ASVRepository] parsed reference:', ref);
+
         if (!ref) return null;
 
         const bookNumber = this.BOOK_MAPPING[ref.book];
+        console.log('[ASVRepository] bookNumber:', bookNumber);
+
         if (!bookNumber) return null;
 
         // Filter verses for this reference
@@ -117,6 +131,9 @@ export class ASVRepository implements IBibleVersionRepository {
             v.verse >= ref.verseStart &&
             (!ref.verseEnd || v.verse <= ref.verseEnd)
         );
+
+        console.log('[ASVRepository] filtered verses count:', verses.length);
+        console.log('[ASVRepository] first verse sample:', verses[0]);
 
         if (verses.length === 0) return null;
 
