@@ -463,6 +463,8 @@
         "selectActionPrompt": "Select an action from the side panel to begin your study"
     },
     "insights": {
+        "modalTitle": "My Saved Insights",
+        "modalSubtitle": "Your personal library of NT Greek knowledge",
         "loading": "Loading insights...",
         "emptyTitle": "No saved insights",
         "emptyMessage": "When you save tutor responses as insights, they will appear here.",

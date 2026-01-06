@@ -463,6 +463,8 @@
         "selectActionPrompt": "Selecciona una acción del panel lateral para comenzar tu estudio"
     },
     "insights": {
+        "modalTitle": "Mis Insights Guardados",
+        "modalSubtitle": "Tu biblioteca personal de conocimiento del griego del NT",
         "loading": "Cargando insights...",
         "emptyTitle": "No hay insights guardados",
         "emptyMessage": "Cuando guardes respuestas del tutor como insights, aparecerán aquí.",

@@ -1396,7 +1396,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         size="sm"
                         className="h-8 px-3 gap-2"
                         onClick={() => setShowInsightsDialog(true)}
-                        title="Mis Insights Guardados"
+                        title={t('insights.modalTitle')}
                     >
                         <Bookmark className="h-4 w-4" />
                         <span className="hidden lg:inline">{t('ui.navigation.insights')}</span>
@@ -1536,9 +1536,9 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             <Dialog open={showInsightsDialog} onOpenChange={setShowInsightsDialog}>
                 <DialogContent className="!w-[90vw] !max-w-[1400px] min-h-[200px] max-h-[90vh] overflow-hidden flex flex-col p-6">
                     <DialogHeader>
-                        <DialogTitle>Mis Insights Guardados</DialogTitle>
+                        <DialogTitle>{t('insights.modalTitle')}</DialogTitle>
                         <DialogDescription>
-                            Tu biblioteca personal de conocimiento del griego del NT
+                            {t('insights.modalSubtitle')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-auto min-h-0">
