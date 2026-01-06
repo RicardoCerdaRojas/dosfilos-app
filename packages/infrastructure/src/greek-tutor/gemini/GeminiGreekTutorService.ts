@@ -334,7 +334,8 @@ DIRECTRICES CRÍTICAS:
     async getPassageText(
         reference: string,
         fileSearchStoreId?: string,
-        language: string = 'Spanish'
+        language: string = 'Spanish',
+        bibleText?: string
     ): Promise<BiblicalPassage> {
         console.log('[GeminiGreekTutorService] Fetching passage text for:', reference);
 
@@ -356,8 +357,12 @@ DIRECTRICES CRÍTICAS:
 
             // Validate and structure the response
             const passage: BiblicalPassage = {
-                reference: data.reference || reference,
-                rv60Text: data.rv60Text || '',
+                // FORCE use of requested reference (e.g. "Romans 12:1-2") instead of AI's potentially localized version
+                // This ensures cache keys ("romans_12_1_2") match the request keys reliably
+                reference: reference,
+                // Use provided local bible text if available (e.g. ASV for English), otherwise fallback to AI generated text
+                // Note: The field name 'rv60Text' is legacy; it now holds the primary translation text (Spanish or English)
+                rv60Text: bibleText || data.rv60Text || '',
                 greekText: data.greekText || '',
                 transliteration: data.transliteration || '',
                 words: (data.words || []).map((w: any, index: number) => ({

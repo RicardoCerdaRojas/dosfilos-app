@@ -225,25 +225,19 @@ export const useGreekTutorBoard = ({
                         // Fetching passage
                         const biblicalPassage = await greekTutorContext.getPassageText.execute(passage);
 
-                        // Step 2: Instantiate Gemini service (same as context)
-                        const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-                        const greekTutorService = new (await import('@dosfilos/infrastructure')).GeminiGreekTutorService(apiKey);
-
-                        // Step 3: Instantiate use case
-                        const analyzeSyntaxUseCase = new AnalyzePassageSyntaxUseCase(
-                            greekTutorService,
-                            greekTutorContext.sessionRepository
-                        );
+                        // Step 2 & 3: Use provided use case from context (Dependency Injection)
+                        // No need to manually instantiate services or use cases - reuse the singleton from provider
+                        const analyzeSyntaxUseCase = greekTutorContext.analyzePassageSyntax;
 
                         // Step 4: Execute analysis (with caching and user's language)
-                        // Analyzing syntax
+                        console.log('[useGreekTutorBoard] Analyzing syntax in language:', userLanguage);
                         const analysis = await analyzeSyntaxUseCase.execute(biblicalPassage, userLanguage);
                         // Analysis complete
 
                         // Step 5: Update content with results
                         setCurrentContent({
                             type: 'syntax',
-                            title: 'Estructura Sintáctica',
+                            title: translate('session.actions.syntax'),
                             content: analysis.structureDescription,
                             passage,
                             syntaxAnalysis: analysis,
@@ -251,32 +245,14 @@ export const useGreekTutorBoard = ({
                         });
                     } catch (error) {
                         console.error('[useGreekTutorBoard] Syntax analysis error:', error);
+
+                        // Use a fallback object indicating error, handled by ContentBoard
                         setCurrentContent({
                             type: 'syntax',
-                            title: 'Estructura Sintáctica',
-                            content: `# ⚠️ Análisis no disponible
-
-Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.
-
----
-
-## ¿Qué puedes hacer?
-
-💡 **Intenta de nuevo**
-El análisis usa IA y a veces puede fallar temporalmente. Haz click nuevamente en "Estructura Sintáctica" para reintentar.
-
-📖 **Prueba con un pasaje más corto**
-Los pasajes más largos son más complejos de analizar. Intenta seleccionar un solo versículo.
-
-🔄 **Regresa más tarde**
-Este es un feature experimental que estamos mejorando constantemente.
-
----
-
-> [!TIP]
-> **Mientras tanto...**
-> Puedes usar las otras herramientas disponibles: análisis morfológico, contexto de palabras, y quiz de comprensión.`,
+                            title: translate('session.actions.syntax'),
+                            content: translate('session.errors.syntaxFailed'), // ContentBoard shows a rich error view based on !syntaxAnalysis
                             passage,
+                            // syntaxAnalysis: undefined, // Explicitly undefined to trigger error view
                             timestamp: new Date()
                         });
                     } finally {

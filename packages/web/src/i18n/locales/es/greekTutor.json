@@ -11,7 +11,13 @@
         },
         "progress": "Progreso",
         "estimatedTime": "~15-30 segundos",
-        "footer": "El estudio fiel de las Escrituras honra a Dios y edifica a su pueblo"
+        "footer": "El estudio fiel de las Escrituras honra a Dios y edifica a su pueblo",
+        "tipTitle": "Consejo de Estudio",
+        "tips": [
+            "El orden de palabras en griego es flexible gracias a su sistema de casos",
+            "Los tiempos verbales griegos comunican aspecto más que tiempo cronológico",
+            "Presta atención a las preposiciones, suelen tener matices teológicos profundos"
+        ]
     },
     "description": "El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.",
     "startTraining": "Iniciar Entrenamiento",

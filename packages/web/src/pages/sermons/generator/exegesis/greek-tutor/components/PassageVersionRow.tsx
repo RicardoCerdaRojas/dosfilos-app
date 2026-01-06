@@ -35,15 +35,21 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
     onWordClick,
     highlightedWordId
 }) => {
-    const { t } = useTranslation('greekTutor');
+    const { t, i18n } = useTranslation('greekTutor');
+    const isEnglish = i18n.language.startsWith('en');
+    
+    const getVersionLabel = () => {
+        if (version === 'greek') return t('session.passageReader.greekOriginal');
+        if (version === 'transliteration') return t('session.passageReader.transliteration');
+        // Dynamic label for the translation version
+        return isEnglish ? "ASV (English)" : "RVR1960 (Español)";
+    };
     return (
         <Card className={cn(!isVisible && 'opacity-60')}>
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <Label htmlFor={`toggle-${version}`} className="text-sm font-semibold cursor-pointer">
-                        {version === 'rv60' ? t('session.passageReader.rvr60') : 
-                         version === 'greek' ? t('session.passageReader.greekOriginal') :
-                         t('session.passageReader.transliteration')}
+                        {getVersionLabel()}
                     </Label>
                     <Switch
                         id={`toggle-${version}`}
