@@ -30,9 +30,7 @@ export const EducationalCapsule: React.FC<EducationalCapsuleProps> = ({
                 </div>
                 <div>
                     <h3 className="text-lg font-bold text-foreground">{t('concepts.keyConceptTitle')}</h3>
-                    <p className="text-xs text-muted-foreground">{t('concepts.keyConceptSubt
-
-itle')}</p>
+                    <p className="text-xs text-muted-foreground">{t('concepts.keyConceptSubtitle')}</p>
                 </div>
             </div>
 
