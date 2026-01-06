@@ -387,104 +387,101 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
 
     /**
      * Normalizes a biblical reference to use as cache key
-     * E.g., "Romanos 12:1-2" → "romanos_12_1_2"
+     * E.g., "Romanos 12:1-2" -> "rom_12_1_2"
+     * E.g., "Romans 12:1-2" -> "rom_12_1_2" (Shared Cache!)
      */
-    * Normalizes a biblical reference to use as cache key
-        * E.g., "Romanos 12:1-2" → "rom_12_1_2"
-            * E.g., "Romans 12:1-2" → "rom_12_1_2"(Shared Cache!)
-                */
     private normalizeReference(reference: string): string {
-    const lowerRef = reference.toLowerCase().trim();
+        const lowerRef = reference.toLowerCase().trim();
 
-    // Split into book and chapters/verses
-    // Match standard format: "{Book Name} {Chapter}:{Verse}"
-    // Handle "1 John" vs "John" prefixing
-    const match = lowerRef.match(/^((?:\d\s)?[a-z\u00C0-\u00FF]+)\s+(.+)$/);
+        // Split into book and chapters/verses
+        // Match standard format: "{Book Name} {Chapter}:{Verse}"
+        // Handle "1 John" vs "John" prefixing
+        const match = lowerRef.match(/^((?:\d\s)?[a-z\u00C0-\u00FF]+)\s+(.+)$/);
 
-    if (!match) {
-        // Fallback to simple cleanup if not parseable
-        return lowerRef
-            .replace(/\s+/g, '_')
+        if (!match) {
+            // Fallback to simple cleanup if not parseable
+            return lowerRef
+                .replace(/\s+/g, '_')
+                .replace(/:/g, '_')
+                .replace(/-/g, '_')
+                .replace(/[^a-z0-9_]/g, '');
+        }
+
+        const bookPart = match[1].trim(); // e.g. "romans" or "1 juan"
+        const restPart = match[2]
+            .replace(/\s+/g, '') // Remove spaces in "12: 1-2"
             .replace(/:/g, '_')
-            .replace(/-/g, '_')
-            .replace(/[^a-z0-9_]/g, '');
+            .replace(/-/g, '_');
+
+        // Lookup canonical book ID
+        const canonicalBook = this.BOOK_ALIASES[bookPart] || bookPart.replace(/\s+/g, '_');
+
+        return `${canonicalBook}_${restPart}`;
     }
-
-    const bookPart = match[1].trim(); // e.g. "romans" or "1 juan"
-    const restPart = match[2]
-        .replace(/\s+/g, '') // Remove spaces in "12: 1-2"
-        .replace(/:/g, '_')
-        .replace(/-/g, '_');
-
-    // Lookup canonical book ID
-    const canonicalBook = this.BOOK_ALIASES[bookPart] || bookPart.replace(/\s+/g, '_');
-
-    return `${canonicalBook}_${restPart}`;
-}
 
     /**
      * Retrieves a cached passage from Firestore by reference.
      * Returns null if not cached.
      */
-    async getCachedPassage(reference: string): Promise < import('@dosfilos/domain').BiblicalPassage | null > {
-    try {
-        const cacheKey = this.normalizeReference(reference);
-        const cacheRef = doc(db, this.passageCacheCollection, cacheKey);
-        const cacheSnap = await getDoc(cacheRef);
+    async getCachedPassage(reference: string): Promise<import('@dosfilos/domain').BiblicalPassage | null> {
+        try {
+            const cacheKey = this.normalizeReference(reference);
+            const cacheRef = doc(db, this.passageCacheCollection, cacheKey);
+            const cacheSnap = await getDoc(cacheRef);
 
-        if(!cacheSnap.exists()) {
-    console.log(`[FirestoreGreekSessionRepository] Passage cache MISS for: ${reference}`);
-    return null;
-}
+            if (!cacheSnap.exists()) {
+                console.log(`[FirestoreGreekSessionRepository] Passage cache MISS for: ${reference}`);
+                return null;
+            }
 
-const data = cacheSnap.data();
+            const data = cacheSnap.data();
 
-// Update usage stats
-await updateDoc(cacheRef, {
-    lastUsedAt: new Date(),
-    usageCount: (data.usageCount || 0) + 1
-});
+            // Update usage stats
+            await updateDoc(cacheRef, {
+                lastUsedAt: new Date(),
+                usageCount: (data.usageCount || 0) + 1
+            });
 
-console.log(`[FirestoreGreekSessionRepository] Passage cache HIT for: ${reference} (used ${data.usageCount || 0} times)`);
+            console.log(`[FirestoreGreekSessionRepository] Passage cache HIT for: ${reference} (used ${data.usageCount || 0} times)`);
 
-return {
-    reference: data.reference,
-    rv60Text: data.rv60Text,
-    greekText: data.greekText,
-    transliteration: data.transliteration,
-    words: data.words || []
-};
+            return {
+                reference: data.reference,
+                rv60Text: data.rv60Text,
+                greekText: data.greekText,
+                transliteration: data.transliteration,
+                words: data.words || []
+            };
         } catch (error) {
-    console.error('[FirestoreGreekSessionRepository] getCachedPassage error:', error);
-    return null; // Non-critical - proceed without cache
-}
+            console.error('[FirestoreGreekSessionRepository] getCachedPassage error:', error);
+            return null; // Non-critical - proceed without cache
+        }
     }
 
     /**
      * Caches a passage in Firestore for reuse
      * Non-critical: If caching fails (e.g., permissions), feature still works without cache
      */
-    async cachePassage(passage: import('@dosfilos/domain').BiblicalPassage): Promise < void> {
-    try {
-        const cacheKey = this.normalizeReference(passage.reference);
-        const cacheRef = doc(db, this.passageCacheCollection, cacheKey);
+    async cachePassage(passage: import('@dosfilos/domain').BiblicalPassage): Promise<void> {
+        try {
+            const cacheKey = this.normalizeReference(passage.reference);
+            const cacheRef = doc(db, this.passageCacheCollection, cacheKey);
 
-        await setDoc(cacheRef, {
-            reference: passage.reference,
-        rv60Text: passage.rv60Text,
-        greekText: passage.greekText,
-        transliteration: passage.transliteration,
-        words: passage.words,
-        createdAt: new Date(),
-        lastUsedAt: new Date(),
-        usageCount: 1
-    });
+            await setDoc(cacheRef, {
+                reference: passage.reference,
+                rv60Text: passage.rv60Text,
+                greekText: passage.greekText,
+                transliteration: passage.transliteration,
+                words: passage.words,
+                createdAt: new Date(),
+                lastUsedAt: new Date(),
+                usageCount: 1
+            });
 
-    console.log(`[FirestoreGreekSessionRepository] Cached passage: ${passage.reference}`);
-} catch (error) {
-    // Non-critical error - feature works without cache
-    console.warn('[FirestoreGreekSessionRepository] Could not cache passage (permissions or other issue). Feature will work but won\'t benefit from caching:', error);
-}
+            console.log(`[FirestoreGreekSessionRepository] Cached passage: ${passage.reference}`);
+        } catch (error) {
+            // Non-critical error - feature works without cache
+            console.warn('[FirestoreGreekSessionRepository] Could not cache passage (permissions or other issue). Feature will work but won\'t benefit from caching:', error);
+        }
     }
 
     // ========== Phase 4A: Session Management ==========
@@ -492,16 +489,16 @@ return {
     /**
      * Deletes a session from Firestore
      */
-    async deleteSession(sessionId: string): Promise < void> {
-    try {
-        const sessionRef = doc(db, this.sessionsCollection, sessionId);
-        await deleteDoc(sessionRef);
+    async deleteSession(sessionId: string): Promise<void> {
+        try {
+            const sessionRef = doc(db, this.sessionsCollection, sessionId);
+            await deleteDoc(sessionRef);
             console.log(`[FirestoreGreekSessionRepository] Deleted session: ${sessionId}`);
-    } catch(error) {
-        console.error('[FirestoreGreekSessionRepository] deleteSession error:', error);
-        throw new Error(`Failed to delete session ${sessionId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } catch (error) {
+            console.error('[FirestoreGreekSessionRepository] deleteSession error:', error);
+            throw new Error(`Failed to delete session ${sessionId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
-}
 
     // ========== Phase 4B: Syntax Analysis Caching (Global) ==========
 
@@ -515,38 +512,38 @@ return {
      * - Significantly reduces Gemini API calls for common passages
      */
     async getCachedSyntaxAnalysis(
-    reference: string,
-    language: string = 'Spanish'
-): Promise < import('@dosfilos/domain').PassageSyntaxAnalysis | null > {
-    try {
-        const normalizedRef = this.normalizeReference(reference);
-        // Append language to cache key to separate EN/ES analysis
-        // e.g. "romanos_12_1_2_en" or "romanos_12_1_2_es"
-        const cacheKey = `${normalizedRef}_${language.toLowerCase().substring(0, 2)}`;
-        const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, cacheKey);
-        const cacheSnap = await getDoc(cacheRef);
+        reference: string,
+        language: string = 'Spanish'
+    ): Promise<import('@dosfilos/domain').PassageSyntaxAnalysis | null> {
+        try {
+            const normalizedRef = this.normalizeReference(reference);
+            // Append language to cache key to separate EN/ES analysis
+            // e.g. "romanos_12_1_2_en" or "romanos_12_1_2_es"
+            const cacheKey = `${normalizedRef}_${language.toLowerCase().substring(0, 2)}`;
+            const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, cacheKey);
+            const cacheSnap = await getDoc(cacheRef);
 
-        if(cacheSnap.exists()) {
-    const data = cacheSnap.data();
-    console.log(`[FirestoreGreekSessionRepository] Syntax analysis cache hit for: ${reference}`);
+            if (cacheSnap.exists()) {
+                const data = cacheSnap.data();
+                console.log(`[FirestoreGreekSessionRepository] Syntax analysis cache hit for: ${reference}`);
 
-    // Reconstruct the domain entity from Firestore data
-    return {
-        passageReference: data.passageReference,
-        clauses: data.clauses,
-        rootClauseId: data.rootClauseId,
-        structureDescription: data.structureDescription,
-        analyzedAt: data.analyzedAt?.toDate() || new Date()
-    } as import('@dosfilos/domain').PassageSyntaxAnalysis;
-}
+                // Reconstruct the domain entity from Firestore data
+                return {
+                    passageReference: data.passageReference,
+                    clauses: data.clauses,
+                    rootClauseId: data.rootClauseId,
+                    structureDescription: data.structureDescription,
+                    analyzedAt: data.analyzedAt?.toDate() || new Date()
+                } as import('@dosfilos/domain').PassageSyntaxAnalysis;
+            }
 
-console.log(`[FirestoreGreekSessionRepository] No cached syntax analysis for: ${reference}`);
-return null;
+            console.log(`[FirestoreGreekSessionRepository] No cached syntax analysis for: ${reference}`);
+            return null;
         } catch (error) {
-    console.error('[FirestoreGreekSessionRepository] getCachedSyntaxAnalysis error:', error);
-    // Non-critical: return null if cache read fails
-    return null;
-}
+            console.error('[FirestoreGreekSessionRepository] getCachedSyntaxAnalysis error:', error);
+            // Non-critical: return null if cache read fails
+            return null;
+        }
     }
 
     /**
@@ -562,41 +559,41 @@ return null;
      * - Fields: passageReference, clauses, rootClauseId, structureDescription, analyzedAt, usageCount
      */
     async cacheSyntaxAnalysis(
-    analysis: import('@dosfilos/domain').PassageSyntaxAnalysis,
-    language: string = 'Spanish'
-): Promise < void> {
-    try {
-        const normalizedRef = this.normalizeReference(analysis.passageReference);
-        // Append language to cache key
-        const cacheKey = `${normalizedRef}_${language.toLowerCase().substring(0, 2)}`;
-        const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, cacheKey);
+        analysis: import('@dosfilos/domain').PassageSyntaxAnalysis,
+        language: string = 'Spanish'
+    ): Promise<void> {
+        try {
+            const normalizedRef = this.normalizeReference(analysis.passageReference);
+            // Append language to cache key
+            const cacheKey = `${normalizedRef}_${language.toLowerCase().substring(0, 2)}`;
+            const cacheRef = doc(db, this.syntaxAnalysisCacheCollection, cacheKey);
 
-        // Check if already exists to increment usage count
-        const existingSnap = await getDoc(cacheRef);
-        const usageCount = existingSnap.exists()
-            ? (existingSnap.data()?.usageCount || 0) + 1
-            : 1;
+            // Check if already exists to increment usage count
+            const existingSnap = await getDoc(cacheRef);
+            const usageCount = existingSnap.exists()
+                ? (existingSnap.data()?.usageCount || 0) + 1
+                : 1;
 
-        const cacheData = {
-            passageReference: analysis.passageReference,
-            clauses: analysis.clauses,
-            rootClauseId: analysis.rootClauseId,
-            structureDescription: analysis.structureDescription,
-            analyzedAt: analysis.analyzedAt,
-            usageCount,
-            lastAccessedAt: new Date()
-        };
+            const cacheData = {
+                passageReference: analysis.passageReference,
+                clauses: analysis.clauses,
+                rootClauseId: analysis.rootClauseId,
+                structureDescription: analysis.structureDescription,
+                analyzedAt: analysis.analyzedAt,
+                usageCount,
+                lastAccessedAt: new Date()
+            };
 
-        await setDoc(cacheRef, removeUndefined(cacheData));
-    console.log(
-        `[FirestoreGreekSessionRepository] Cached syntax analysis for: ${analysis.passageReference} ` +
-        `(usage: ${usageCount})`
-    );
-} catch (error) {
-    console.error('[FirestoreGreekSessionRepository] cacheSyntaxAnalysis error:', error);
-    // Non-critical: don't throw, just log the error
-    // The feature works fine without caching, just slower
-}
+            await setDoc(cacheRef, removeUndefined(cacheData));
+            console.log(
+                `[FirestoreGreekSessionRepository] Cached syntax analysis for: ${analysis.passageReference} ` +
+                `(usage: ${usageCount})`
+            );
+        } catch (error) {
+            console.error('[FirestoreGreekSessionRepository] cacheSyntaxAnalysis error:', error);
+            // Non-critical: don't throw, just log the error
+            // The feature works fine without caching, just slower
+        }
     }
 }
 
