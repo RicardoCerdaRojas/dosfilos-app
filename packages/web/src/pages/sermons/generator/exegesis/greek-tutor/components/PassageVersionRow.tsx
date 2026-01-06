@@ -47,7 +47,9 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <Label htmlFor={`toggle-${version}`} className="text-sm font-semibold cursor-pointer">
-                        {VERSION_LABELS[version]}
+                        {version === 'rv60' ? t('session.passageReader.rvr60') : 
+                         version === 'greek' ? t('session.passageReader.greekOriginal') :
+                         t('session.passageReader.transliteration')}
                     </Label>
                     <Switch
                         id={`toggle-${version}`}
