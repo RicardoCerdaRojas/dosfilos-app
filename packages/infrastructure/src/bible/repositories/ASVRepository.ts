@@ -1,5 +1,5 @@
 import { IBibleVersionRepository, BibleReference } from '@dosfilos/domain';
-import asvBible from '@/assets/bible/asv.json';
+import asvBible from '../data/asv.json';
 
 /**
  * Interface for ASV JSON structure
