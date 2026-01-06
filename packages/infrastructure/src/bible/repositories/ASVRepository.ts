@@ -46,7 +46,7 @@ export class ASVRepository implements IBibleVersionRepository {
         '2 Corinthians': 47, '2Corinthians': 47, '2Cor': 47, '2 Cor': 47, '2Co': 47,
         'Galatians': 48, 'Gal': 48, 'Ga': 48,
         'Ephesians': 49, 'Eph': 49, 'Ef': 49,
-        'Philippians': 50, 'Phil': 50, 'Php': 50, 'Php': 50,
+        'Philippians': 50, 'Phil': 50, 'Php': 50,
         'Colossians': 51, 'Col': 51,
         '1 Thessalonians': 52, '1Thessalonians': 52, '1Thess': 52, '1 Thess': 52, '1Th': 52,
         '2 Thessalonians': 53, '2Thessalonians': 53, '2Thess': 53, '2 Thess': 53, '2Th': 53,
