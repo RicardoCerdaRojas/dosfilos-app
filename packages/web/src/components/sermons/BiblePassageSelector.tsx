@@ -13,6 +13,8 @@ interface BiblePassageSelectorProps {
     onValidPassage?: (isValid: boolean) => void;
     disabled?: boolean;
     hidePreview?: boolean;
+    label?: string;
+    placeholder?: string;
 }
 
 export function BiblePassageSelector({ 
@@ -20,7 +22,9 @@ export function BiblePassageSelector({
     onChange, 
     onValidPassage,
     disabled,
-    hidePreview = false 
+    hidePreview = false,
+    label = "Pasaje Bíblico",
+    placeholder = "Ej: Juan 3:16, Salmos 23"
 }: BiblePassageSelectorProps) {
     const [previewText, setPreviewText] = useState<string | null>(null);
     const [isValid, setIsValid] = useState(false);
@@ -74,7 +78,7 @@ export function BiblePassageSelector({
         <div className="space-y-6">
             <div className="space-y-2">
                 <Label htmlFor="passage-selector" className="text-base font-medium">
-                    Pasaje Bíblico
+                    {label}
                 </Label>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -82,7 +86,7 @@ export function BiblePassageSelector({
                         id="passage-selector"
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
-                        placeholder="Ej: Juan 3:16, Salmos 23"
+                        placeholder={placeholder}
                         className="pl-10 text-xl py-6 h-auto"
                         disabled={disabled}
                     />

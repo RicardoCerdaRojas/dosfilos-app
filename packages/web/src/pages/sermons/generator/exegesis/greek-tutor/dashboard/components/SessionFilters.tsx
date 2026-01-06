@@ -7,6 +7,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useTranslation } from '@/i18n';
 
 export type ProgressFilter = 'all' | 'empty' | 'started' | 'half' | 'complete';
 export type SortBy = 'date-desc' | 'date-asc' | 'az' | 'progress';
@@ -27,6 +28,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onProgressFilterChange,
     onSortByChange
 }) => {
+    const { t } = useTranslation('greekTutor');
     return (
         <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -37,11 +39,11 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                     <SelectValue placeholder="Filtrar por progreso" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="empty">Vacías (0%)</SelectItem>
-                    <SelectItem value="started">Iniciadas (1-50%)</SelectItem>
-                    <SelectItem value="half">Avanzadas (51-99%)</SelectItem>
-                    <SelectItem value="complete">Completadas (100%)</SelectItem>
+                    <SelectItem value="all">{t('dashboard.filters.all')}</SelectItem>
+                    <SelectItem value="empty">{t('dashboard.filters.empty')}</SelectItem>
+                    <SelectItem value="started">{t('dashboard.filters.started')}</SelectItem>
+                    <SelectItem value="half">{t('dashboard.filters.half')}</SelectItem>
+                    <SelectItem value="complete">{t('dashboard.filters.complete')}</SelectItem>
                 </SelectContent>
             </Select>
 
@@ -51,10 +53,10 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                     <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="date-desc">Más reciente</SelectItem>
-                    <SelectItem value="date-asc">Más antiguo</SelectItem>
-                    <SelectItem value="az">A-Z (Pasaje)</SelectItem>
-                    <SelectItem value="progress">Por progreso</SelectItem>
+                    <SelectItem value="date-desc">{t('dashboard.filters.mostRecent')}</SelectItem>
+                    <SelectItem value="date-asc">{t('dashboard.filters.oldest')}</SelectItem>
+                    <SelectItem value="az">{t('dashboard.filters.azPassage')}</SelectItem>
+                    <SelectItem value="progress">{t('dashboard.filters.byProgress')}</SelectItem>
                 </SelectContent>
             </Select>
         </div>

@@ -12,6 +12,7 @@ import {
     GitBranch
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/i18n';
 
 export type ActionType = 'morphology' | 'recognition' | 'context' | 'significance' | 'quiz' | 'passage' | 'syntax';
 
@@ -45,6 +46,7 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
     isActionLoading,
     onDeleteUnit
 }) => {
+    const { t } = useTranslation('greekTutor');
     const [showUnits, setShowUnits] = useState(true);
     const [showContext, setShowContext] = useState(true);
     const [showReinforcement, setShowReinforcement] = useState(true);
@@ -68,23 +70,23 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                             onClick={() => setShowContext(!showContext)}
                             className="w-full flex items-center justify-between text-xs font-bold text-foreground uppercase tracking-wider hover:text-primary transition-colors"
                         >
-                            <span>📖 Contexto General</span>
+                            <span>📖 {t('ui.sidebar.generalContext')}</span>
                             {showContext ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </button>
                         {showContext && (
                             <div className="space-y-1.5 pl-1">
                                 <ActionButton
                                     icon={BookOpen}
-                                    label="Leer Pasaje"
-                                    description="Explora el texto completo"
+                                    label={t('ui.sidebar.readPassage')}
+                                    description={t('ui.sidebar.exploreFullText')}
                                     onClick={() => onActionClick('passage')}
                                     isActive={activeAction === 'passage'}
                                     isLoading={isActionLoading && activeAction === 'passage'}
                                 />
                                 <ActionButton
                                     icon={GitBranch}
-                                    label="Estructura Sintáctica"
-                                    description="Ver cláusulas y relaciones"
+                                    label={t('ui.sidebar.syntacticStructure')}
+                                    description={t('ui.sidebar.seeClauses')}
                                     onClick={() => onActionClick('syntax')}
                                     isActive={activeAction === 'syntax'}
                                     isLoading={isActionLoading && activeAction === 'syntax'}
@@ -99,7 +101,7 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                             onClick={() => setShowUnits(!showUnits)}
                             className="w-full flex items-center justify-between text-xs font-bold text-foreground uppercase tracking-wider hover:text-primary transition-colors"
                         >
-                            <span>📚 Unidades de Estudio</span>
+                            <span>📚 {t('ui.sidebar.studyUnits')}</span>
                             {showUnits ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </button>
                         {showUnits && (
@@ -108,7 +110,7 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                                 {showWordViewer && (
                                     <div className="mb-3 p-3 border rounded-md bg-background/50 backdrop-blur-sm">
                                         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                                            Unidad {currentIndex + 1} de {units.length}
+                                            Unidad {currentIndex + 1} {t('common.of')} {units.length}
                                         </div>
                                         <div className="space-y-1.5">
                                             <h3 className="text-xl font-serif text-primary font-bold">
@@ -160,7 +162,7 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        if (window.confirm(`¿Eliminar "${unit.greekForm.text}" de las unidades?`)) {
+                                                        if (window.confirm(t('ui.sidebar.deleteConfirm', { word: unit.greekForm.text }))) {
                                                             onDeleteUnit(unit.id);
                                                         }
                                                     }}
@@ -177,7 +179,7 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                         )}
                         <div className="pl-1 pt-1">
                             <p className="text-[10px] text-muted-foreground italic">
-                                💡 Al seleccionar una palabra se mostrará su análisis morfológico automáticamente
+                                💡 {t('ui.sidebar.autoMorphologyTip')}
                             </p>
                         </div>
                     </section>
@@ -188,15 +190,15 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                             onClick={() => setShowReinforcement(!showReinforcement)}
                             className="w-full flex items-center justify-between text-xs font-bold text-foreground uppercase tracking-wider hover:text-primary transition-colors"
                         >
-                            <span>🧠 Refuerzo del Aprendizaje</span>
+                            <span>🧠 {t('ui.sidebar.learningReinforcement')}</span>
                             {showReinforcement ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </button>
                         {showReinforcement && (
                             <div className="space-y-1.5 pl-1">
                                 <ActionButton
                                     icon={Brain}
-                                    label="Quiz de Comprensión"
-                                    description="Practica lo aprendido"
+                                    label={t('ui.sidebar.comprehensionQuiz')}
+                                    description={t('ui.sidebar.practiceWhat')}
                                     onClick={() => onActionClick('quiz')}
                                     isActive={activeAction === 'quiz'}
                                     isLoading={isActionLoading && activeAction === 'quiz'}

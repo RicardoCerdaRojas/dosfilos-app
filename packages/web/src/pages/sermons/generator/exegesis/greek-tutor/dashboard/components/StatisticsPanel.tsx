@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/popover';
 import { calculateSessionProgress, getSessionLastActivity } from '../utils/sessionUtils';
 import { calculateStudyStreak } from '../utils/progressUtils';
+import { useTranslation } from '@/i18n';
 
 
 interface StatisticsPanelProps {
@@ -26,6 +27,7 @@ interface StatisticsPanelProps {
  * - Last activity timestamp
  */
 export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) => {
+    const { t } = useTranslation('greekTutor');
     // Calculate metrics
     const activeSessions = sessions.filter(s => s.status === 'ACTIVE').length;
     
@@ -62,31 +64,31 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
     const stats = [
         {
             icon: BarChart3,
-            label: 'Sesiones Activas',
+            label: t('dashboard.statistics.activeSessions'),
             value: activeSessions,
             color: 'text-blue-600'
         },
         {
             icon: BookOpen,
-            label: 'Palabras Estudiadas',
+            label: t('dashboard.statistics.wordsStudied'),
             value: totalWords,
             color: 'text-green-600'
         },
         ...(streak > 0 ? [{
             icon: Flame,
-            label: 'Racha de Estudio',
-            value: `${streak} día${streak > 1 ? 's' : ''}`,
+            label: t('dashboard.statistics.studyStreak'),
+            value: t(`dashboard.statistics.streakDays`, { count: streak }),
             color: 'text-orange-600'
         }] : []),
         {
             icon: TrendingUp,
-            label: 'Progreso Promedio',
+            label: t('dashboard.statistics.averageProgress'),
             value: `${averageProgress}%`,
             color: 'text-purple-600'
         },
         {
             icon: Clock,
-            label: 'Última Actividad',
+            label: t('dashboard.statistics.lastActivity'),
             value: lastActivityText,
             color: 'text-amber-600'
         }

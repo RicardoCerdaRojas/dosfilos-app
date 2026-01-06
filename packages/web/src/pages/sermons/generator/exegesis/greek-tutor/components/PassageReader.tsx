@@ -6,6 +6,7 @@ import { BookOpen, Loader2 } from 'lucide-react';
 import { PassageVersionRow } from './PassageVersionRow';
 import { WordPreviewModal } from './WordPreviewModal';
 import { usePassageReader } from '../hooks/usePassageReader';
+import { useTranslation } from '@/i18n';
 
 interface PassageReaderProps {
     passage: BiblicalPassage | null;
@@ -29,6 +30,7 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
     isLoading = false,
     onUnitAdded
 }) => {
+    const { t } = useTranslation('greekTutor');
     const {
         visibleVersions,
         toggleVersion,
@@ -60,9 +62,9 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
                     <div className="flex justify-center">
                         <BookOpen className="h-12 w-12 text-primary animate-pulse" />
                     </div>
-                    <h3 className="text-lg font-semibold">Preparando tu sesión de estudio</h3>
+                    <h3 className="text-lg font-semibold">{t('session.passageReader.preparingSession')}</h3>
                     <p className="text-sm text-muted-foreground">
-                        {passage?.reference || 'Cargando pasaje...'}
+                        {passage?.reference || t('session.passageReader.loadingPassage')}
                     </p>
                 </div>
 
@@ -70,15 +72,15 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
                 <div className="space-y-3 max-w-md mx-auto">
                     <div className="flex items-center gap-3 text-sm">
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                        <span className="text-muted-foreground">Cargando texto griego original</span>
+                        <span className="text-muted-foreground">{t('session.passageReader.loadingGreek')}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm opacity-50">
                         <div className="h-4 w-4 rounded-full border-2 border-muted" />
-                        <span className="text-muted-foreground">Generando transliteración</span>
+                        <span className="text-muted-foreground">{t('session.passageReader.generatingTranslit')}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm opacity-50">
                         <div className="h-4 w-4 rounded-full border-2 border-muted" />
-                        <span className="text-muted-foreground">Preparando análisis interactivo</span>
+                        <span className="text-muted-foreground">{t('session.passageReader.preparingAnalysis')}</span>
                     </div>
                 </div>
 
@@ -87,7 +89,7 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
                     <div className="flex gap-3">
                         <span className="text-xl">💡</span>
                         <div className="text-sm">
-                            <p className="font-medium text-primary mb-1">Tip</p>
+                            <p className="font-medium text-primary mb-1">{t('session.passageReader.tip')}</p>
                             <p className="text-muted-foreground">{randomTip}</p>
                         </div>
                     </div>
@@ -101,7 +103,7 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
             <Alert>
                 <BookOpen className="h-4 w-4" />
                 <AlertDescription>
-                    No se pudo cargar el pasaje. Por favor intenta de nuevo más tarde.
+                    {t('session.passageReader.errorLoading')}
                 </AlertDescription>
             </Alert>
         );
@@ -117,7 +119,7 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
                         {passage.reference}
                     </CardTitle>
                     <CardDescription>
-                        Selecciona las versiones que deseas visualizar. Haz click en las palabras griegas para agregarlas a tus unidades de estudio.
+                        {t('session.passageReader.selectVersions')}
                     </CardDescription>
                 </CardHeader>
             </Card>
@@ -156,7 +158,7 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
             {currentUnits.length > 0 && (
                 <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
                     <AlertDescription className="text-sm">
-                        Las palabras resaltadas en verde ya están en tus unidades de estudio ({currentUnits.length} total).
+                        {t('session.passageReader.wordsHighlighted', { count: currentUnits.length })}
                     </AlertDescription>
                 </Alert>
             )}

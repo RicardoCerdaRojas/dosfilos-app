@@ -25,6 +25,7 @@ interface UseGreekTutorBoardProps {
     isMorphologyLoading: string | null;
     passage: string; // Bible passage reference for context
     userLanguage?: string; // User's preferred language (e.g., 'Spanish', 'English')
+    translate: (key: string) => string; // Translation function
 }
 
 
@@ -53,7 +54,8 @@ export const useGreekTutorBoard = ({
     onChatMessage,
     isMorphologyLoading,
     passage,
-    userLanguage = 'Spanish' // Default to Spanish if not provided
+    userLanguage = 'Spanish', // Default to Spanish if not provided
+    translate
 }: UseGreekTutorBoardProps): UseGreekTutorBoardReturn => {
 
     const [currentContent, setCurrentContent] = useState<BoardContent | null>(null);
@@ -125,7 +127,7 @@ export const useGreekTutorBoard = ({
                 if (existing) {
                     setCurrentContent({
                         type: 'morphology',
-                        title: 'Descomposición Morfológica',
+                        title: translate('session.actions.morphology'),
                         content: formatMorphologyContent(existing),
                         morphologyData: existing,
                         greekWord: currentUnit.greekForm.text,
@@ -143,8 +145,8 @@ export const useGreekTutorBoard = ({
             case 'recognition': {
                 setCurrentContent({
                     type: 'recognition',
-                    title: '¿Cómo reconocer esta forma?',
-                    content: currentUnit.recognitionGuidance || 'Contenido no disponible',
+                    title: translate('session.actions.recognition'),
+                    content: currentUnit.recognitionGuidance || translate('session.content.notAvailable'),
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
                     passage,
@@ -156,7 +158,7 @@ export const useGreekTutorBoard = ({
             case 'context': {
                 setCurrentContent({
                     type: 'context',
-                    title: 'Función en Contexto',
+                    title: translate('session.actions.context'),
                     content: currentUnit.functionInContext,
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -169,7 +171,7 @@ export const useGreekTutorBoard = ({
             case 'significance': {
                 setCurrentContent({
                     type: 'significance',
-                    title: 'Significado Teológico',
+                    title: translate('session.actions.significance'),
                     content: currentUnit.significance,
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -182,7 +184,7 @@ export const useGreekTutorBoard = ({
             case 'quiz': {
                 setCurrentContent({
                     type: 'quiz',
-                    title: 'Quiz de Comprensión',
+                    title: translate('session.actions.quiz'),
                     content: '', // QuizSection handles its own content
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -195,7 +197,7 @@ export const useGreekTutorBoard = ({
             case 'passage': {
                 setCurrentContent({
                     type: 'passage',
-                    title: 'Leer Pasaje Completo',
+                    title: translate('session.actions.passage'),
                     content: '', // PassageReader handles its own content
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -210,8 +212,8 @@ export const useGreekTutorBoard = ({
                 setIsChatLoading(true); // Reuse existing loading state
                 setCurrentContent({
                     type: 'syntax',
-                    title: 'Estructura Sintáctica',
-                    content: 'Analizando estructura del pasaje...',
+                    title: translate('session.actions.syntax'),
+                    content: translate('session.content.analyzing'),
                     passage,
                     timestamp: new Date()
                 });

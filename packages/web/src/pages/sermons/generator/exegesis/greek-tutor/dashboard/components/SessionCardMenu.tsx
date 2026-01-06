@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import type { StudySession } from '@dosfilos/domain/greek-tutor/entities/entities';
+import { useTranslation } from '@/i18n';
 
 interface SessionCardMenuProps {
   session: StudySession;
@@ -32,6 +33,7 @@ export const SessionCardMenu: React.FC<SessionCardMenuProps> = ({
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { t } = useTranslation('greekTutor');
 
   const handleDuplicate = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -79,7 +81,7 @@ export const SessionCardMenu: React.FC<SessionCardMenuProps> = ({
               className="cursor-pointer"
             >
               <Copy className="mr-2 h-4 w-4" />
-              Duplicar sesión
+              {t('dashboard.menu.duplicate')}
             </DropdownMenuItem>
           )}
           {onDelete && (
@@ -88,7 +90,7 @@ export const SessionCardMenu: React.FC<SessionCardMenuProps> = ({
               className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Eliminar
+              {t('dashboard.menu.delete')}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -97,22 +99,21 @@ export const SessionCardMenu: React.FC<SessionCardMenuProps> = ({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar sesión?</AlertDialogTitle>
+            <AlertDialogTitle>{t('dashboard.menu.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de eliminar la sesión de <strong>{session.passage}</strong>.
-              Esta acción no se puede deshacer.
+              {t('dashboard.menu.deleteDescription', { passage: session.passage })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>
-              Cancelar
+              {t('dashboard.menu.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              {isDeleting ? 'Eliminando...' : 'Eliminar'}
+              {isDeleting ? t('dashboard.menu.deleting') : t('dashboard.menu.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
