@@ -462,6 +462,29 @@
         "practicalExample": "Practical Example",
         "selectActionPrompt": "Select an action from the side panel to begin your study"
     },
+    "insights": {
+        "loading": "Loading insights...",
+        "emptyTitle": "No saved insights",
+        "emptyMessage": "When you save tutor responses as insights, they will appear here.",
+        "searchPlaceholder": "Search in title, content, or question...",
+        "filterByTags": "Filter by tags:",
+        "resultCount_one": "{{count}} result",
+        "resultCount_other": "{{count}} results",
+        "clearFilters": "Clear filters",
+        "viewContent": "View content",
+        "hideContent": "Hide",
+        "question": "Question:",
+        "editTitle": "Edit Insight",
+        "deleteTitle": "Delete insight?",
+        "deleteMessage": "This action cannot be undone.",
+        "title": "Title",
+        "tags": "Tags",
+        "addTag": "Add tag...",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "save": "Save",
+        "saving": "Saving..."
+    },
     "common": {
         "of": "of"
     },

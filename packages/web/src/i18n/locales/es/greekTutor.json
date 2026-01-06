@@ -462,6 +462,29 @@
         "practicalExample": "Ejemplo Práctico",
         "selectActionPrompt": "Selecciona una acción del panel lateral para comenzar tu estudio"
     },
+    "insights": {
+        "loading": "Cargando insights...",
+        "emptyTitle": "No hay insights guardados",
+        "emptyMessage": "Cuando guardes respuestas del tutor como insights, aparecerán aquí.",
+        "searchPlaceholder": "Buscar en título, contenido o pregunta...",
+        "filterByTags": "Filtrar por etiquetas:",
+        "resultCount_one": "{{count}} resultado",
+        "resultCount_other": "{{count}} resultados",
+        "clearFilters": "Limpiar filtros",
+        "viewContent": "Ver contenido",
+        "hideContent": "Ocultar",
+        "question": "Pregunta:",
+        "editTitle": "Editar Insight",
+        "deleteTitle": "¿Eliminar insight?",
+        "deleteMessage": "Esta acción no se puede deshacer.",
+        "title": "Título",
+        "tags": "Etiquetas",
+        "addTag": "Agregar etiqueta...",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "save": "Guardar",
+        "saving": "Guardando..."
+    },
     "common": {
         "of": "de"
     },
