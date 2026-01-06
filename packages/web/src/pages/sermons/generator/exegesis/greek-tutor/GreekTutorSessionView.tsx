@@ -1282,14 +1282,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 className="h-8 px-3 gap-2"
                             >
                                 <MessageCircle className="h-4 w-4" />
-                                <span className="hidden md:inline">Pregunta al Tutor</span>
+                                <span className="hidden md:inline">{t('ui.navigation.askTutor')}</span>
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-96" align="end">
                             <div className="space-y-4">
                                 {/* Header with mode selector */}
                                 <div className="space-y-2">
-                                    <h4 className="font-semibold text-sm">Pregunta al Tutor</h4>
+                                    <h4 className="font-semibold text-sm">{t('ui.navigation.askTutor')}</h4>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setChatMode('contextual')}
