@@ -175,6 +175,22 @@ export function HistoryModal({
                             {version.aiSuggestion}
                           </p>
                         )}
+                        
+                        <div className="pt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 text-xs w-full bg-background border hover:bg-muted"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRestore(version.id);
+                              onOpenChange(false);
+                            }}
+                          >
+                            <RotateCcw className="h-3 w-3 mr-1.5" />
+                            {isCurrent ? 'Recargar' : 'Restaurar'}
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   );
@@ -184,11 +200,11 @@ export function HistoryModal({
           </div>
 
           {/* Right: Version Details */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 bg-background/50">
             {selectedVersion ? (
               <>
-                {/* Actions Bar */}
-                <div className="p-4 border-b flex items-center justify-between gap-4 flex-shrink-0 bg-muted/10">
+                {/* Actions Bar (Top) */}
+                <div className="p-4 border-b flex items-center justify-between gap-4 flex-shrink-0 bg-background">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-sm truncate">
                       {selectedVersion.changeDescription}
@@ -214,24 +230,11 @@ export function HistoryModal({
                         </TabsList>
                       </Tabs>
                     )}
-                    {selectedVersion.id !== currentVersionId && (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          onRestore(selectedVersion.id);
-                          onOpenChange(false);
-                        }}
-                        className="h-9"
-                      >
-                        <RotateCcw className="h-4 w-4 mr-1.5" />
-                        Restaurar
-                      </Button>
-                    )}
                   </div>
                 </div>
 
                 {/* Content Area */}
-                <ScrollArea className="flex-1 p-6">
+                <ScrollArea className="flex-1 p-6 bg-background">
                   {viewMode === 'diff' && previousVersion ? (
                     <div>
                       <div className="mb-4 p-4 bg-muted/50 rounded-lg border">
