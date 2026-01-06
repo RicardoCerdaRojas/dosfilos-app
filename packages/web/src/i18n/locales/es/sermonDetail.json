@@ -1,0 +1,28 @@
+{
+    "actions": {
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "export": "Exportar",
+        "share": "Compartir",
+        "duplicate": "Duplicar",
+        "back": "Volver a Sermones"
+    },
+    "status": {
+        "draft": "Borrador",
+        "published": "Publicado",
+        "archived": "Archivado"
+    },
+    "sections": {
+        "passage": "Pasaje",
+        "exegesis": "Exégesis",
+        "outline": "Bosquejo",
+        "sermon": "Sermón",
+        "notes": "Notas"
+    },
+    "toast": {
+        "exportSuccess": "Sermón exportado",
+        "exportError": "Error al exportar el sermón",
+        "deleteSuccess": "Sermón eliminado",
+        "deleteError": "Error al eliminar el sermón"
+    }
+}

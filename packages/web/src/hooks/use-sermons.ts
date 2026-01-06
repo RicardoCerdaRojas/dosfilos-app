@@ -34,34 +34,42 @@ export function useSermons(options?: FindOptions) {
 }
 
 export function useSermon(id: string | undefined) {
+    console.log('[useSermon] Hook called with ID:', id);
     const [sermon, setSermon] = useState<SermonEntity | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const fetchSermon = async () => {
+        console.log('[useSermon] fetchSermon called, ID:', id);
         if (!id) {
+            console.log('[useSermon] No ID provided, aborting');
             setLoading(false);
             return;
         }
+        setLoading(true);
+        setError(null);
+        try {
+            console.log('[useSermon] Fetching sermon from service...');
+            const data = await sermonService.getSermon(id);
+            console.log('[useSermon] ✅ Sermon loaded:', data);
+            setSermon(data);
+        } catch (err: any) {
+            console.error('[useSermon] ❌ Error loading sermon:', err);
+            setError(err.message);
+            toast.error(err.message);
+        } finally {
+            console.log('[useSermon] Setting loading to false');
+            setLoading(false);
+        }
+    };
 
-        const fetchSermon = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const data = await sermonService.getSermon(id);
-                setSermon(data);
-            } catch (err: any) {
-                setError(err.message);
-                toast.error(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
+    useEffect(() => {
+        console.log('[useSermon] useEffect triggered, fetching sermon');
         fetchSermon();
     }, [id]);
 
-    return { sermon, loading, error };
+    console.log('[useSermon] Returning state:', { sermon: sermon?.id, loading, error });
+    return { sermon, loading, error, mutate: fetchSermon };
 }
 
 export function useCreateSermon() {
@@ -74,7 +82,7 @@ export function useCreateSermon() {
         bibleReferences?: string[];
         tags?: string[];
         category?: string;
-        status?: 'draft' | 'published' | 'archived';
+        status?: 'working' | 'draft' | 'published' | 'archived';
     }) => {
         if (!user) throw new Error('Usuario no autenticado');
 
@@ -109,7 +117,7 @@ export function useUpdateSermon() {
             bibleReferences: string[];
             tags: string[];
             category: string;
-            status: 'draft' | 'published' | 'archived';
+            status: 'working' | 'draft' | 'published' | 'archived';
         }>
     ) => {
         setLoading(true);

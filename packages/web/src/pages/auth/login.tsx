@@ -9,18 +9,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authService } from '../../../../application/src/services/AuthService';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@dosfilos/infrastructure';
+import { useTranslation } from '@/i18n';
 
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { useTrackActivity } from '@/hooks/useTrackActivity';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('auth');
+  const { trackLogin } = useTrackActivity();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  
+  const loginSchema = z.object({
+    email: z.string().email(t('login.errors.invalidEmail')),
+    password: z.string().min(6, t('login.errors.passwordMin')),
+  });
+
+  type LoginFormData = z.infer<typeof loginSchema>;
 
   const {
     register,
@@ -30,14 +37,37 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const checkSubscriptionAndRedirect = async (userId: string) => {
+    try {
+      // Get user profile to check subscription
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      const userData = userDoc.data();
+      
+      // If user has no subscription or free plan, redirect to welcome
+      if (!userData?.subscription || userData.subscription.planId === 'free') {
+        toast.info(t('login.subscriptionPrompt'), {
+          duration: 5000,
+        });
+        navigate('/welcome');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      // Fallback to dashboard on error
+      navigate('/dashboard');
+    }
+  };
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      await authService.login(data.email, data.password);
-      toast.success('¡Bienvenido!');
-      navigate('/');
+      const user = await authService.login(data.email, data.password);
+      trackLogin(); // Track login event
+      toast.success(t('login.welcome'));
+      await checkSubscriptionAndRedirect(user.id);
     } catch (error: any) {
-      toast.error(error.message || 'Error al iniciar sesión');
+      toast.error(error.message || t('login.errors.loginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -46,11 +76,12 @@ export function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await authService.loginWithGoogle();
-      toast.success('¡Bienvenido!');
-      navigate('/');
+      const user = await authService.loginWithGoogle();
+      trackLogin(); // Track login event
+      toast.success(t('login.welcome'));
+      await checkSubscriptionAndRedirect(user.id);
     } catch (error: any) {
-      toast.error(error.message || 'Error al iniciar sesión con Google');
+      toast.error(error.message || t('login.errors.googleFailed'));
     } finally {
       setIsGoogleLoading(false);
     }
@@ -58,8 +89,8 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Iniciar Sesión"
-      subtitle="Ingresa a tu cuenta de DosFilos.app"
+      title={t('login.title')}
+      subtitle={t('login.subtitle')}
     >
       <div className="space-y-6">
         {/* Google Sign-In Button */}
@@ -71,7 +102,7 @@ export function LoginPage() {
           disabled={isGoogleLoading || isLoading}
         >
           {isGoogleLoading ? (
-            'Iniciando sesión...'
+            t('login.googleLoading')
           ) : (
             <>
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -92,7 +123,7 @@ export function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continuar con Google
+              {t('login.google')}
             </>
           )}
         </Button>
@@ -104,7 +135,7 @@ export function LoginPage() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              O continúa con email
+              {t('login.divider')}
             </span>
           </div>
         </div>
@@ -114,11 +145,11 @@ export function LoginPage() {
           <div className="space-y-4">
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('login.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={t('login.emailPlaceholder')}
                 {...register('email')}
                 disabled={isLoading || isGoogleLoading}
               />
@@ -130,18 +161,18 @@ export function LoginPage() {
             {/* Password */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">{t('login.password')}</Label>
                 <Link
                   to="/forgot-password"
                   className="text-sm text-primary hover:underline"
                 >
-                  ¿Olvidaste tu contraseña?
+                  {t('login.forgotPassword')}
                 </Link>
               </div>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('login.passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading || isGoogleLoading}
               />
@@ -153,15 +184,15 @@ export function LoginPage() {
 
           {/* Submit Button */}
           <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            {isLoading ? t('login.submitting') : t('login.submit')}
           </Button>
         </form>
 
         {/* Register Link */}
         <p className="text-center text-sm text-muted-foreground">
-          ¿No tienes una cuenta?{' '}
+          {t('login.noAccount')}{' '}
           <Link to="/register" className="text-primary hover:underline font-medium">
-            Regístrate
+            {t('login.register')}
           </Link>
         </p>
       </div>

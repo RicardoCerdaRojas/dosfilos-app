@@ -23,7 +23,7 @@ export class PdfExportService implements IExportService {
         // Header / Branding
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text('DosFilos.app', pageWidth - margin, 15, { align: 'right' });
+        doc.text('DosFilos.Preach', pageWidth - margin, 15, { align: 'right' });
 
         // Title
         doc.setFontSize(24);

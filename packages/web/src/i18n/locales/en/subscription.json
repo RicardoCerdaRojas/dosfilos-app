@@ -1,0 +1,55 @@
+{
+    "header": {
+        "title": "My Subscription",
+        "subtitle": "Manage your plan and access all premium features"
+    },
+    "currentPlan": {
+        "title": "Current Plan",
+        "renewalDate": "Renewal",
+        "accessUntil": "🎁 You keep access until",
+        "notActive": "Your subscription is not active",
+        "cancelButton": "Cancel Subscription",
+        "reactivateButton": "Reactivate Subscription",
+        "badges": {
+            "cancelled": "Cancelled",
+            "current": "✓ Current",
+            "popular": "Most Popular"
+        }
+    },
+    "plans": {
+        "monthly": "/month",
+        "freePlan": "Free Plan",
+        "currentPlanButton": "Current Plan",
+        "subscribeButton": "Subscribe",
+        "changePlanButton": "Change to This Plan"
+    },
+    "errors": {
+        "checkoutError": "Error creating payment session"
+    },
+    "planNames": {
+        "free": "Free",
+        "starter": "Pro",
+        "pro": "Team",
+        "church": "Church"
+    },
+    "planDescriptions": {
+        "free": "To continue your preaching ministry",
+        "starter": "For pastors who preach regularly",
+        "pro": "For pastoral teams and churches",
+        "church": "For churches and organizations with multiple preachers"
+    },
+    "features": {
+        "sermon_create": "Create unlimited sermons",
+        "sermon_export_pdf": "Export sermons to PDF",
+        "sermon_ai_assistant": "AI assistant for sermons",
+        "sermon_advanced_homiletics": "Advanced AI homiletics",
+        "sermon_custom_templates": "Custom templates",
+        "library_upload": "Upload resources to library",
+        "library_semantic_search": "Semantic search in library",
+        "library_unlimited_storage": "Unlimited storage",
+        "courses_view": "Access to courses",
+        "courses_certificates": "Course certificates",
+        "admin_manage_users": "User management",
+        "admin_view_analytics": "Advanced analytics"
+    }
+}

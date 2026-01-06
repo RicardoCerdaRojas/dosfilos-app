@@ -1,0 +1,28 @@
+{
+    "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "export": "Export",
+        "share": "Share",
+        "duplicate": "Duplicate",
+        "back": "Back to Sermons"
+    },
+    "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+    },
+    "sections": {
+        "passage": "Passage",
+        "exegesis": "Exegesis",
+        "outline": "Outline",
+        "sermon": "Sermon",
+        "notes": "Notes"
+    },
+    "toast": {
+        "exportSuccess": "Sermon exported",
+        "exportError": "Error exporting sermon",
+        "deleteSuccess": "Sermon deleted",
+        "deleteError": "Error deleting sermon"
+    }
+}

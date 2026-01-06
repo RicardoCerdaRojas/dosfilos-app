@@ -1,0 +1,414 @@
+{
+    "hero": {
+        "badge": "Tu Entrenador Exegético Personal",
+        "title": {
+            "part1": "Exégesis profunda.",
+            "part2": "Predicación fiel."
+        },
+        "subtitle": {
+            "main": "Prepara tus sermones con la guía de un experto en idiomas originales y hermenéutica.",
+            "distinction": "No es una IA general: es tu asistente especializado en predicación expositiva con",
+            "methodology": "metodología histórico-gramatical-literal.",
+            "tagline": "Tú haces el ejercicio. La IA te entrena."
+        },
+        "badges": {
+            "hermeneutics": "Hermenéutica Histórico-Literal",
+            "languages": "Análisis Hebreo/Griego",
+            "approach": "Enfoque Expositivo"
+        },
+        "cta": {
+            "primary": "Comienza Gratis",
+            "secondary": "Ver Demo (2 min)"
+        },
+        "socialProof": {
+            "pastors": "10+ pastores",
+            "trusting": "confiando en nosotros",
+            "rating": "4.8/5"
+        },
+        "floatingCards": {
+            "greekAnalysis": {
+                "title": "Análisis Griego",
+                "subtitle": "χάρις - Efesios 2:8"
+            },
+            "trainer": {
+                "title": "Tu Entrenador",
+                "subtitle": "Guía experta 24/7"
+            }
+        }
+    },
+    "metrics": {
+        "timeSaved": {
+            "value": "5+",
+            "label": "Horas ahorradas por sermón"
+        },
+        "depth": {
+            "value": "85%",
+            "label": "Mayor profundidad exegética"
+        },
+        "pastors": {
+            "value": "10+",
+            "label": "Pastores activos"
+        },
+        "satisfaction": {
+            "value": "4.8",
+            "label": "Satisfacción promedio"
+        }
+    },
+    "transformation": {
+        "badge": "Transforma tu preparación",
+        "title": {
+            "part1": "De horas de frustración a",
+            "part2": "estudio profundo y eficiente"
+        },
+        "subtitle": {
+            "main": "La IA no predica por ti.",
+            "emphasis": "Te entrena para que prediques mejor.",
+            "detail": "Tú haces el ejercicio espiritual, nosotros potenciamos tu capacidad."
+        },
+        "before": {
+            "title": "Sin DosFilos",
+            "subtitle": "El camino largo",
+            "timeLabel": "8-12 horas",
+            "points": [
+                {
+                    "title": "Múltiples fuentes",
+                    "description": "Libros, comentarios, diccionarios... difíciles de coordinar"
+                },
+                {
+                    "title": "Sin dirección clara",
+                    "description": "No sabes si estás profundizando lo suficiente"
+                },
+                {
+                    "title": "Incertidumbre exegética",
+                    "description": "¿Estaré interpretando bien el texto original?"
+                },
+                {
+                    "title": "Acceso limitado",
+                    "description": "Hebreo y griego requieren años de estudio"
+                }
+            ]
+        },
+        "after": {
+            "title": "Con DosFilos",
+            "subtitle": "Tu entrenador experto",
+            "timeLabel": "3-5 horas",
+            "points": [
+                {
+                    "title": "Marco hermenéutico claro",
+                    "description": "Te guía paso a paso con metodología probada"
+                },
+                {
+                    "title": "Tu entrenador personal",
+                    "description": "Asistente experto que te acompaña en cada estudio"
+                },
+                {
+                    "title": "Confianza teológica",
+                    "description": "Sabe que tu interpretación está bien fundamentada"
+                },
+                {
+                    "title": "Idiomas originales accesibles",
+                    "description": "Hebreo y griego explicados, no solo mostrados"
+                }
+            ]
+        },
+        "analogy": {
+            "emoji": "🏋️",
+            "title": "Piénsalo como tener un entrenador personal",
+            "description": "Un entrenador no hace las pesas por ti.",
+            "emphasis": "Te guía, corrige tu forma, sugiere ejercicios y te empuja a dar más.",
+            "conclusion": "DosFilos es tu entrenador exegético: tú haces el trabajo espiritual, nosotros potenciamos tu capacidad de estudio."
+        }
+    },
+    "notChatGPT": {
+        "title": "No es ChatGPT. Es tu Mentor Teológico.",
+        "subtitle": "Las IAs genéricas no entienden de hermenéutica, tradiciones teológicas ni del peso de predicar la Palabra. DosFilos fue diseñado",
+        "emphasis": "por pastores, para pastores.",
+        "generic": {
+            "title": "IAs Genéricas",
+            "points": [
+                "Respuestas genéricas sin supervisión teológica",
+                "No distingue entre tradiciones interpretativas",
+                "Puede inventar citas o referencias",
+                "Sin metodología hermenéutica clara",
+                "Trata la Biblia como cualquier otro libro",
+                "No entiende el peso de la predicación"
+            ]
+        },
+        "dosfilos": {
+            "title": "DosFilos.Preach",
+            "points": [
+                "Especializado en hermenéutica bíblica",
+                "Configurable a tu tradición teológica",
+                "Fuentes académicas verificadas",
+                "Metodología histórico-literal-gramatical",
+                "Respeta la autoridad de las Escrituras",
+                "Diseñado para predicación fiel"
+            ]
+        }
+    },
+    "notLibrary": {
+        "title": "No es Solo una Biblioteca Digital",
+        "subtitle": "Logos, e-Sword y otros tienen miles de libros. Pero",
+        "question": "¿quién tiene tiempo para navegar todo eso?",
+        "capability": "DosFilos tiene la capacidad de procesar el equivalente a 1,000+ páginas de contexto para darte lo que necesitas, cuando lo necesitas.",
+        "traditional": {
+            "title": "Bibliotecas Tradicionales",
+            "points": [
+                "Miles de libros imposibles de revisar en paralelo",
+                "Tú haces todo el trabajo de búsqueda",
+                "Sin guía sobre qué es relevante para tu pasaje",
+                "Horas perdidas navegando índices",
+                "Información fragmentada en múltiples fuentes"
+            ]
+        },
+        "assistant": {
+            "title": "Asistente Experto",
+            "points": [
+                "Contexto de 1,000+ páginas procesadas instantáneamente",
+                "Te guía paso a paso hacia lo relevante",
+                "Encuentra conexiones que tomarían horas descubrir",
+                "Síntesis inteligente de múltiples comentarios",
+                "Como tener un teólogo asistente 24/7"
+            ]
+        }
+    },
+    "grammarProfessor": {
+        "badge": "Más que morfología estática",
+        "title": {
+            "part1": "Tu profesor de gramática",
+            "part2": "sentado junto a ti"
+        },
+        "subtitle": "Hay herramientas que te muestran que χάρις es un sustantivo femenino singular.",
+        "emphasis": "DosFilos te explica por qué importa",
+        "detail": ", cómo funciona en la oración, y qué implica para tu predicación.",
+        "traditional": {
+            "title": "Herramientas tradicionales (Logos, e-Sword)",
+            "description": "\"Este verbo es un",
+            "emphasis": "aoristo participio pasivo",
+            "continuation": "\" — y tu debes averiguar qué significa eso."
+        },
+        "dosfilos": {
+            "title": "DosFilos.Preach",
+            "description": "\"Este",
+            "emphasis": "aoristo participio pasivo",
+            "explanation": "indica una acción completada recibida por el sujeto. En Efesios 2:8, Pablo usa esta forma para enfatizar que la salvación es algo que hemos",
+            "italicEmphasis": "recibido",
+            "conclusion": ", no logrado. Aquí tienes tres formas de explicar esto a tu congregación...\""
+        },
+        "demo": {
+            "title": "Análisis de Efesios 2:8",
+            "subtitle": "Tu profesor de gramática explica:",
+            "verse": {
+                "greek": "τῇ γὰρ χάριτί ἐστε",
+                "highlight": "σεσῳσμένοι",
+                "translation": "\"Porque por gracia sois salvos\""
+            },
+            "points": [
+                {
+                    "title": "σεσῳσμένοι = Participio Perfecto Pasivo",
+                    "description": "Indica una acción completada en el pasado con resultados que continúan"
+                },
+                {
+                    "title": "La voz pasiva es teológicamente significativa",
+                    "description": "Dios es quien actúa; nosotros recibimos la acción"
+                }
+            ]
+        }
+    },
+    "features": {
+        "title": "Tus Asistentes Expertos",
+        "subtitle": "Trabaja con asistentes especializados en cada área del estudio bíblico. Cada uno diseñado para potenciar tu preparación.",
+        "experts": [
+            {
+                "title": "Experto en Idiomas Originales",
+                "description": "Análisis profundo de hebreo y griego bíblicos. Morfología, sintaxis y significado teológico de las palabras clave.",
+                "features": [
+                    "Hebreo bíblico",
+                    "Griego koiné",
+                    "Análisis morfológico",
+                    "Campos semánticos"
+                ]
+            },
+            {
+                "title": "Experto en Hermenéutica",
+                "description": "Guía en la interpretación histórico-literal-gramatical. Contexto, estructura y significado original del texto.",
+                "features": [
+                    "Contexto histórico",
+                    "Análisis gramatical",
+                    "Estructura literaria",
+                    "Teología bíblica"
+                ]
+            },
+            {
+                "title": "Experto en Homilética",
+                "description": "Ayuda a estructurar tu sermón de manera clara y fiel al texto. Aplicaciones prácticas y relevantes.",
+                "features": [
+                    "Estructura expositiva",
+                    "Aplicaciones contextuales",
+                    "Ilustraciones",
+                    "Transiciones"
+                ]
+            }
+        ]
+    },
+    "howItWorks": {
+        "title": "Tu Flujo de Preparación",
+        "subtitle": "Desde el texto hasta el púlpito, guiado en cada paso",
+        "steps": [
+            {
+                "number": "1",
+                "title": "Exégesis Profunda",
+                "description": "Análisis del texto en idiomas originales con contexto histórico-cultural"
+            },
+            {
+                "number": "2",
+                "title": "Enfoques Homiléticos",
+                "description": "Múltiples perspectivas para predicar el pasaje de manera fiel"
+            },
+            {
+                "number": "3",
+                "title": "Asistentes Expertos",
+                "description": "Griego, hebreo, homilética y predicación expositiva a tu servicio"
+            },
+            {
+                "number": "4",
+                "title": "Canvas + Chat",
+                "description": "Refina ideas, profundiza conceptos con tu editor inteligente"
+            },
+            {
+                "number": "5",
+                "title": "Predica y Comparte",
+                "description": "Modo predicación, exporta y comparte con tu congregación"
+            }
+        ]
+    },
+    "comparisonTable": {
+        "title": "¿Por qué DosFilos.Preach?",
+        "headers": {
+            "feature": "Característica",
+            "genericAI": "IAs Genéricas",
+            "dosfilos": "DosFilos.Preach"
+        },
+        "features": [
+            "Entrenador exegético especializado",
+            "Respeta tu tradición teológica",
+            "Metodología hermenéutica clara",
+            "Contexto de 1000+ páginas",
+            "Asistentes expertos por área",
+            "Canvas + Chat para refinamiento",
+            "Modo predicación integrado"
+        ]
+    },
+    "pricing": {
+        "title": "Elige tu Plan",
+        "subtitle": "Comienza gratis. Escala cuando estés listo. Sin tarjeta de crédito requerida.",
+        "monthly": "Mensual",
+        "yearly": "Anual",
+        "save": "Ahorra 20%",
+        "plans": {
+            "free": {
+                "name": "Gratis",
+                "price": "$0",
+                "period": "para siempre",
+                "description": "Perfecto para comenzar y probar la plataforma",
+                "features": [
+                    "2 sermones por mes",
+                    "Acceso a 3 asistentes expertos",
+                    "Acceso básico a biblioteca",
+                    "Soporte comunitario"
+                ],
+                "cta": "Comenzar Gratis"
+            },
+            "pro": {
+                "name": "Pro",
+                "price": "$9.99",
+                "period": "por mes",
+                "description": "Para pastores que predican regularmente",
+                "popular": "Más Popular",
+                "features": [
+                    "Sermones ilimitados",
+                    "Todos los asistentes expertos",
+                    "Acceso completo a biblioteca",
+                    "Soporte prioritario",
+                    "Exportar en múltiples formatos",
+                    "Personalización avanzada"
+                ],
+                "cta": "Suscríbete"
+            },
+            "team": {
+                "name": "Equipo",
+                "price": "$24.9",
+                "period": "por mes",
+                "description": "Para equipos pastorales e iglesias",
+                "features": [
+                    "Todo en Pro",
+                    "Hasta 5 miembros del equipo",
+                    "Biblioteca compartida de sermones",
+                    "Colaboración en equipo",
+                    "Analíticas avanzadas",
+                    "Soporte dedicado"
+                ],
+                "cta": "Suscríbete"
+            }
+        },
+        "scholarship": {
+            "title": "Programa de Becas",
+            "description": "Si el costo es una barrera para usar DosFilos, queremos ayudarte.",
+            "cta": "Solicitar Beca"
+        }
+    },
+    "faq": {
+        "title": "Preguntas Frecuentes",
+        "subtitle": "Todo lo que necesitas saber sobre DosFilos.Preach",
+        "questions": [
+            {
+                "q": "¿No es trampa usar IA para predicar?",
+                "a": "No usas IA para predicar - la usas para estudiar mejor. Es como tener un entrenador personal: tú haces el ejercicio espiritual, la IA te guía y potencia tu estudio. Tú mantienes el control total del mensaje."
+            },
+            {
+                "q": "¿Perderé mi voz única como predicador?",
+                "a": "Al contrario. Al ahorrar tiempo en investigación básica, tienes más tiempo para oración y reflexión personal. DosFilos sugiere, pero tú decides y personalizas cada aspecto del sermón."
+            },
+            {
+                "q": "¿Qué pasa con mi teología específica?",
+                "a": "Tú configuras tu tradición interpretativa (reformada, wesleyana, pentecostal, etc.). DosFilos respeta tu marco teológico y sugiere contenido alineado con tus convicciones."
+            },
+            {
+                "q": "¿Puedo cancelar en cualquier momento?",
+                "a": "Sí, sin preguntas. Cancela cuando quieras y mantén acceso hasta el final de tu período de facturación."
+            },
+            {
+                "q": "¿Mis sermones son privados?",
+                "a": "Absolutamente. Tus sermones son 100% privados y nunca se comparten. Cumplimos con todas las regulaciones de privacidad de datos."
+            }
+        ]
+    },
+    "finalCta": {
+        "title": "¿Listo para Transformar tu Preparación de Sermones?",
+        "subtitle": "Únete a cientos de pastores que ya predican con mayor profundidad y confianza.",
+        "cta": "Comienza Gratis Hoy",
+        "note": "Sin tarjeta de crédito requerida. Cancela en cualquier momento."
+    },
+    "footer": {
+        "tagline": "Tu asistente experto para predicación expositiva fiel.",
+        "product": {
+            "title": "Producto",
+            "features": "Características",
+            "pricing": "Precios",
+            "howItWorks": "Cómo Funciona"
+        },
+        "resources": {
+            "title": "Recursos",
+            "blog": "Blog",
+            "documentation": "Documentación",
+            "support": "Soporte"
+        },
+        "company": {
+            "title": "Empresa",
+            "about": "Acerca de",
+            "contact": "Contacto",
+            "privacy": "Política de Privacidad"
+        },
+        "rights": "Todos los derechos reservados."
+    }
+}

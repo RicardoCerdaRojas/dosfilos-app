@@ -1,10 +1,13 @@
 import { WorkflowPhase } from '@dosfilos/domain';
 import { cn } from '@/lib/utils';
-import { BookOpen, Mic2, FileText, Check } from 'lucide-react';
+import { BookOpen, Mic2, FileText, Check, LogOut } from 'lucide-react';
+import { useWizard } from './WizardContext';
+import { Button } from '@/components/ui/button';
+import { LibraryStatusBadge } from '@/components/library/LibraryStatusBadge';
 
 interface WizardHeaderProps {
   currentStep: number;
-  phase: WorkflowPhase;
+  onExit?: () => void;
 }
 
 const PHASES = [
@@ -13,7 +16,20 @@ const PHASES = [
   { step: 3, phase: 'SERMON_DRAFT' as WorkflowPhase, label: 'Redacción', icon: FileText }
 ];
 
-export function WizardHeader({ currentStep, phase }: WizardHeaderProps) {
+export function WizardHeader({ currentStep, onExit }: WizardHeaderProps) {
+  const { setStep, exegesis, homiletics } = useWizard();
+
+  const handleStepClick = (step: number) => {
+    // Prevent navigation if previous steps are not completed
+    if (step === 1) {
+      setStep(1);
+    } else if (step === 2 && exegesis) {
+      setStep(2);
+    } else if (step === 3 && homiletics) {
+      setStep(3);
+    }
+  };
+
   return (
     <div className="border-b bg-background flex-shrink-0">
       <div className="container mx-auto px-4 py-3">
@@ -24,9 +40,19 @@ export function WizardHeader({ currentStep, phase }: WizardHeaderProps) {
               const Icon = p.icon;
               const isActive = p.step === currentStep;
               const isCompleted = p.step < currentStep;
+              const isClickable = (p.step === 1) || 
+                                (p.step === 2 && !!exegesis) || 
+                                (p.step === 3 && !!homiletics);
               
               return (
-                <div key={p.step} className="flex items-center">
+                <div 
+                  key={p.step} 
+                  className={cn(
+                    "flex items-center",
+                    isClickable && "cursor-pointer"
+                  )}
+                  onClick={() => isClickable && handleStepClick(p.step)}
+                >
                   {index > 0 && (
                     <div className="relative h-[2px] w-12 mx-2 bg-muted overflow-hidden">
                       <div 
@@ -62,9 +88,23 @@ export function WizardHeader({ currentStep, phase }: WizardHeaderProps) {
             })}
           </div>
 
-          {/* Current Phase Title */}
-          <div className="text-sm font-medium text-muted-foreground hidden md:block">
-            Paso {currentStep} de 3
+          {/* Exit Action */}
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-muted-foreground hidden md:block">
+              Paso {currentStep} de 3
+            </div>
+            <LibraryStatusBadge />
+            {onExit && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onExit}
+                className="text-muted-foreground hover:text-destructive gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Guardar y Salir</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>

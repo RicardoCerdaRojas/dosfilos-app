@@ -1,5 +1,23 @@
-import rvrBible from '@/assets/bible/rvr1960.json';
+import { BibleVersionFactory } from '@dosfilos/infrastructure';
+import { IBibleVersionRepository } from '@dosfilos/domain';
 
+/**
+ * LocalBibleService - Facade pattern for backward compatibility
+ * 
+ * This service maintains the existing API while delegating to the new
+ * multi-version Bible repository architecture.
+ * 
+ * Follows Facade Pattern:
+ * - Provides simple interface for existing code
+ * - Delegates to BibleVersionFactory internally
+ * - Zero breaking changes to existing consumers
+ * - AUTO-DETECTS language from reference (English vs Spanish)
+ * 
+ * @deprecated Consider migrating to BibleVersionFactory.getForLocale() directly
+ * for better type safety and explicit locale control
+ */
+
+// Re-export types for backward compatibility
 export interface BibleVerse {
     book: string;
     chapter: number;
@@ -14,70 +32,103 @@ export interface BibleReference {
     verseEnd?: number;
 }
 
-// Map full Spanish book names to the IDs used in the JSON
-const BOOK_MAPPING: Record<string, string> = {
-    'Génesis': 'gn', 'Exodo': 'ex', 'Éxodo': 'ex', 'Levítico': 'lv', 'Numeros': 'nm', 'Números': 'nm', 'Deuteronomio': 'dt',
-    'Josué': 'js', 'Jueces': 'jud', 'Rut': 'rt', '1 Samuel': '1sm', '2 Samuel': '2sm', '1 Reyes': '1kgs', '2 Reyes': '2kgs', '1 Crónicas': '1ch', '2 Crónicas': '2ch',
-    'Esdras': 'ezr', 'Nehemías': 'ne', 'Ester': 'et', 'Job': 'job', 'Salmos': 'ps', 'Proverbios': 'prv', 'Eclesiastés': 'ec', 'Cantares': 'so',
-    'Isaías': 'is', 'Jeremías': 'jr', 'Lamentaciones': 'lm', 'Ezequiel': 'ez', 'Daniel': 'dn', 'Oseas': 'ho', 'Joel': 'jl', 'Amós': 'am', 'Abdías': 'ob', 'Jonás': 'jn', 'Miqueas': 'mi', 'Nahúm': 'na', 'Habacuc': 'hk', 'Sofonías': 'zp', 'Hageo': 'hg', 'Zacarías': 'zc', 'Malaquías': 'ml',
-    'Mateo': 'mt', 'Marcos': 'mk', 'Lucas': 'lk', 'Juan': 'jo', 'Hechos': 'act', 'Romanos': 'rm', '1 Corintios': '1co', '2 Corintios': '2co', 'Gálatas': 'gl', 'Efesios': 'eph', 'Filipenses': 'ph', 'Colosenses': 'col',
-    '1 Tesalonicenses': '1ts', '2 Tesalonicenses': '2ts', '1 Timoteo': '1ti', '2 Timoteo': '2ti', 'Tito': 'tit', 'Filemón': 'phm', 'Hebreos': 'hb', 'Santiago': 'jm',
-    '1 Pedro': '1pe', '2 Pedro': '2pe', '1 Juan': '1jo', '2 Juan': '2jo', '3 Juan': '3jo', 'Judas': 'jd', 'Apocalipsis': 're'
-};
-
 export class LocalBibleService {
-    static parseReference(ref: string): BibleReference | null {
-        // Regex to capture book name (including number prefix), chapter, and verse(s)
-        // Matches: "1 Juan 3:16" or "Juan 3:16-18"
-        const match = ref.match(/^((?:[1-3]\s)?[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)\s(\d+):(\d+)(?:-(\d+))?$/);
+    /**
+     * Detect language from reference string
+     * English book names: "John", "Ephesians", "Romans", etc.
+     * Spanish book names: "Juan", "Efesios", "Romanos", etc.
+     */
+    private static detectLanguage(ref: string): string {
+        const normalized = ref.trim().toLowerCase();
 
-        if (!match) return null;
+        // Common English-only book names
+        const englishIndicators = [
+            'matthew', 'mark', 'luke', 'john', 'james',
+            'acts', 'revelation', 'philippians', 'ephesians',
+            'colossians', 'thessalonians', 'timothy', 'titus',
+            'philemon', 'hebrews', 'peter', 'jude',
+            'romans', 'corinthians', 'galatians'
+        ];
 
-        return {
-            book: match[1] || '',
-            chapter: parseInt(match[2] || '0'),
-            verseStart: parseInt(match[3] || '0'),
-            verseEnd: match[4] ? parseInt(match[4]) : undefined
-        };
-    }
+        // Common Spanish-only book names
+        const spanishIndicators = [
+            'mateo', 'marcos', 'lucas', 'juan', 'santiago',
+            'hechos', 'apocalipsis', 'filipenses', 'efesios',
+            'colosenses', 'tesalonicenses', 'timoteo', 'tito',
+            'filemón', 'filemon', 'hebreos', 'pedro', 'judas'
+        ];
 
-    static getVerses(refString: string): string | null {
-        const ref = this.parseReference(refString);
-        if (!ref) return null;
-
-        const bookId = BOOK_MAPPING[ref.book];
-        if (!bookId) return null;
-
-        // Find the book in the JSON data
-        // The JSON structure is an array of objects: { id: "gn", chapters: [ [ "verse 1", ... ], ... ] }
-        const bookData = (rvrBible as any[]).find(b => b.id === bookId);
-        if (!bookData) return null;
-
-        // Chapters are 0-indexed in the array? Let's check the JSON.
-        // Looking at the JSON snippet:
-        // "chapters": [ [ "EN el principio...", ... ], ... ]
-        // It seems chapter 1 is at index 0.
-        const chapterIndex = ref.chapter - 1;
-        if (chapterIndex < 0 || chapterIndex >= bookData.chapters.length) return null;
-
-        const chapterVerses = bookData.chapters[chapterIndex];
-
-        // Verses are also in an array, so verse 1 is at index 0.
-        const startVerseIndex = ref.verseStart - 1;
-        if (startVerseIndex < 0 || startVerseIndex >= chapterVerses.length) return null;
-
-        let text = '';
-
-        if (ref.verseEnd) {
-            const endVerseIndex = Math.min(ref.verseEnd - 1, chapterVerses.length - 1);
-            for (let i = startVerseIndex; i <= endVerseIndex; i++) {
-                const verseNum = i + 1;
-                text += `${verseNum} ${chapterVerses[i]} `;
+        // Check for English indicators
+        for (const indicator of englishIndicators) {
+            if (normalized.includes(indicator)) {
+                return 'en';
             }
-        } else {
-            text = chapterVerses[startVerseIndex];
         }
 
-        return text.trim();
+        // Check for Spanish indicators
+        for (const indicator of spanishIndicators) {
+            if (normalized.includes(indicator)) {
+                return 'es';
+            }
+        }
+
+        // Default to Spanish for compatibility
+        return 'es';
     }
+
+    /**
+     * Get Bible repository for specified locale
+     * If no locale specified, auto-detect from reference
+     */
+    private static getRepository(locale?: string, reference?: string): IBibleVersionRepository {
+        const effectiveLocale = locale || (reference ? this.detectLanguage(reference) : 'es');
+        return BibleVersionFactory.getForLocale(effectiveLocale);
+    }
+
+    static parseReference(ref: string, locale?: string): BibleReference | null {
+        return this.getRepository(locale, ref).parseReference(ref);
+    }
+
+    static getVerses(refString: string, locale?: string): string | null {
+        return this.getRepository(locale, refString).getVerses(refString);
+    }
+
+    /** Check if a book name/abbreviation is valid */
+    static isValidBook(bookName: string, locale?: string): boolean {
+        return this.getRepository(locale, bookName).isValidBook(bookName);
+    }
+
+    /** Get the canonical (full) name for a book abbreviation */
+    static getCanonicalBookName(bookName: string, locale?: string): string | null {
+        // This method needs special handling - not in interface
+        // For now, return the book name if valid
+        return this.isValidBook(bookName, locale) ? bookName : null;
+    }
+
+    /** Get all books available in the local Bible */
+    static getBooks(locale: string = 'es'): { id: string; name: string }[] {
+        return this.getRepository(locale).getBooks();
+    }
+
+    /** Get number of chapters for a book */
+    static getChapterCount(bookNameOrId: string, locale: string = 'es'): number {
+        return this.getRepository(locale).getChapterCount(bookNameOrId);
+    }
+
+    /** Get full content of a chapter */
+    static getChapterContent(bookNameOrId: string, chapter: number, locale: string = 'es'): string[] | null {
+        return this.getRepository(locale).getChapterContent(bookNameOrId, chapter);
+    }
+
+    /** Search for verses containing query */
+    static search(query: string, limit = 20, locale: string = 'es'): { reference: string; text: string }[] {
+        return this.getRepository(locale).search(query, limit);
+    }
+}
+
+// Cached pattern for performance - delegated to repositories now
+export function getBookPattern(): string {
+    // This is used for regex matching in some components
+    // Return a simple pattern that works for both ES and EN
+    return '[A-ZÁÉÍÓÚÑa-záéíóúñ0-9\\s]+';
 }

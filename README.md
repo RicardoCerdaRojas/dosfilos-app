@@ -1,4 +1,4 @@
-# DosFilos.app
+# DosFilos.Preach
 
 Sistema de herramientas para pastores y predicadores con gestor y generador de sermones basado en IA.
 
@@ -145,4 +145,4 @@ Privado - Todos los derechos reservados
 
 ## 👥 Equipo
 
-DosFilos.app - Sistema de herramientas pastorales
+DosFilos.Preach - Sistema de herramientas pastorales

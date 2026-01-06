@@ -1,0 +1,536 @@
+{
+    "title": "Entrenador Griego",
+    "loading": {
+        "title": "Preparando tu sesión de estudio",
+        "subtitle": "Estamos analizando el pasaje bíblico con herramientas exegéticas avanzadas",
+        "steps": {
+            "grammar": "Consultando gramáticas estándares",
+            "forms": "Identificando formas griegas relevantes",
+            "context": "Analizando contexto exegético",
+            "units": "Preparando unidades de entrenamiento"
+        },
+        "progress": "Progreso",
+        "estimatedTime": "~15-30 segundos",
+        "footer": "El estudio fiel de las Escrituras honra a Dios y edifica a su pueblo",
+        "tipTitle": "Consejo de Estudio",
+        "tips": [
+            "El orden de palabras en griego es flexible gracias a su sistema de casos",
+            "Los tiempos verbales griegos comunican aspecto más que tiempo cronológico",
+            "Presta atención a las preposiciones, suelen tener matices teológicos profundos"
+        ]
+    },
+    "description": "El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.",
+    "startTraining": "Iniciar Entrenamiento",
+    "mySessions": "Mis Sesiones",
+    "biblicalPassage": "Pasaje Bíblico",
+    "frequentPassages": "Pasajes frecuentes:",
+    "passageNotRecognized": "Pasaje no reconocido",
+    "passageSelector": {
+        "label": "Pasaje Bíblico",
+        "placeholder": "Ej: Juan 3:16, Salmos 23"
+    },
+    "sections": {
+        "overview": "Vista General",
+        "wordStudy": "Estudio de Palabras",
+        "learningReinforcement": "Refuerzo del Aprendizaje"
+    },
+    "features": {
+        "readPassage": {
+            "title": "Lectura del Pasaje",
+            "description": "Texto griego original con transliteración interactiva",
+            "modalDescription": "Explora el texto bíblico en su idioma original con herramientas interactivas para profundizar tu comprensión.",
+            "preview": "Haz clic en cualquier palabra para análisis detallado",
+            "details": [
+                "Visualiza el texto en griego original con opción de ver versiones en español",
+                "Transliteración interactiva para ayudarte con la pronunciación",
+                "Haz clic en cualquier palabra griega para agregarla a tus unidades de estudio",
+                "Alterna fácilmente entre el texto original y la traducción",
+                "Las palabras seleccionadas se resaltan visualmente en verde para fácil identificación"
+            ]
+        },
+        "syntax": {
+            "title": "Estructura Sintáctica",
+            "description": "Visor de cláusulas y relaciones gramaticales",
+            "modalDescription": "Visualiza las relaciones gramaticales y la jerarquía de cláusulas en el texto griego.",
+            "preview": {
+                "mainClause": "Cláusula Principal",
+                "subordinateClause": "Cláusula Subordinada"
+            },
+            "details": [
+                "Vista jerárquica de cláusulas principales y subordinadas",
+                "Relaciones sintácticas claramente marcadas",
+                "Controles de expandir/colapsar para cada nivel de cláusula",
+                "Identificación visual de roles gramaticales",
+                "Comprende la estructura lógica del argumento del autor"
+            ]
+        },
+        "morphology": {
+            "title": "Análisis Morfológico",
+            "description": "Descomposición detallada de morfemas y formas",
+            "modalDescription": "Descomposición detallada de cada palabra en sus componentes morfológicos básicos.",
+            "preview": {
+                "root": "raíz (creer)",
+                "thematicVowel": "vocal temática",
+                "participle": "participio presente"
+            },
+            "details": [
+                "Separación visual de raíces, prefijos y sufijos",
+                "Explicación del significado de cada morfema",
+                "Identificación de tiempo, voz, modo, caso y número",
+                "Conexión entre forma y función gramatical",
+                "Profundiza tu comprensión de cómo se construyen las palabras griegas"
+            ]
+        },
+        "recognitionKeys": {
+            "title": "Claves de Reconocimiento",
+            "description": "Patrones para identificar morfología y profundizar tu conocimiento del griego bíblico.",
+            "modalDescription": "Patrones morfológicos que te ayudan a identificar formas gramaticales rápidamente.",
+            "preview": {
+                "indicator": "indica participio presente activo",
+                "typical": "Terminación típica del tiempo presente"
+            },
+            "details": [
+                "Terminaciones clave para tiempos verbales",
+                "Patrones de reconocimiento para casos",
+                "Marcadores de voz y modo",
+                "Ejemplos de cada patrón en contexto",
+                "Desarrolla habilidades de lectura sin diccionario"
+            ]
+        },
+        "contextFunction": {
+            "title": "Función en Contexto",
+            "description": "Rol de cada palabra en la cláusula",
+            "modalDescription": "Comprende el rol que cada palabra desempeña dentro de su cláusula y el pasaje completo.",
+            "preview": {
+                "subject": "Sujeto de la cláusula",
+                "function": "Función: Agente de la acción principal"
+            },
+            "details": [
+                "Identificación del papel sintáctico (sujeto, objeto, modificador)",
+                "Relación con otras palabras en la cláusula",
+                "Conexión con el argumento general del pasaje",
+                "Importancia teológica de la función específica",
+                "Ve cómo la gramática sirve al significado"
+            ]
+        },
+        "expertInsight": {
+            "title": "Insight del Experto",
+            "description": "Perspectivas gramaticales profundas y aplicadas",
+            "modalDescription": "Perspectivas profundas de gramáticos y exegetas sobre el significado y las implicaciones del texto.",
+            "preview": "El tiempo presente enfatiza la acción continua: un creer que perdura...",
+            "details": [
+                "Explicaciones de expertos sobre elecciones gramaticales del autor",
+                "Matices teológicos revelados por la gramática",
+                "Conexiones con otros usos en el Nuevo Testamento",
+                "Perspectivas hermenéuticas aplicadas",
+                "Transforma el conocimiento gramatical en comprensión teológica"
+            ]
+        },
+        "generalConcepts": {
+            "title": "Conceptos Generales",
+            "description": "Biblioteca de conceptos clave del griego koiné",
+            "modalDescription": "Biblioteca de referencia de conceptos fundamentales del griego koiné del Nuevo Testamento.",
+            "preview": {
+                "cases": "Casos del griego",
+                "tenses": "Tiempos verbales",
+                "moods": "Modos y voces"
+            },
+            "details": [
+                "Explicaciones de los casos del griego (nominativo, genitivo, dativo, acusativo)",
+                "Guía de tiempos verbales y sus significados",
+                "Descripción de modos (indicativo, subjuntivo, imperativo, optativo)",
+                "Voces (activa, media, pasiva) y sus usos",
+                "Acceso rápido a conocimiento fundamental mientras estudias"
+            ]
+        },
+        "tutorQuestions": {
+            "title": "Preguntas al Tutor",
+            "description": "Asistencia personalizada en tu estudio",
+            "modalDescription": "Formula preguntas personalizadas sobre cualquier aspecto del texto y recibe respuestas contextualizadas.",
+            "preview": "¿Por qué Pablo usa el aoristo aquí?",
+            "details": [
+                "Haz preguntas sobre gramática, sintaxis o teología",
+                "Respuestas basadas en el contexto específico de tu pasaje",
+                "Asistencia personalizada para tu nivel de conocimiento",
+                "Acceso a recursos hermenéuticos especializados",
+                "Aprende a tu propio ritmo con orientación experta"
+            ]
+        },
+        "quiz": {
+            "title": "Quiz de Comprensión",
+            "description": "Evalúa y refuerza lo aprendido en cada sesión",
+            "modalDescription": "Evalúa y refuerza tu comprensión del griego con ejercicios interactivos adaptados a tu sesión.",
+            "preview": {
+                "identify": "Identifica tiempo y voz",
+                "analyze": "Analiza función sintáctica"
+            },
+            "details": [
+                "Preguntas de opción múltiple sobre morfología y sintaxis",
+                "Feedback inmediato con explicaciones detalladas",
+                "Ejercicios basados en el pasaje que estás estudiando",
+                "Seguimiento de tu progreso y áreas de mejora",
+                "Consolida tu aprendizaje con práctica activa"
+            ]
+        },
+        "myInsights": {
+            "title": "Mis Insights",
+            "description": "Biblioteca personal de conocimiento guardado"
+        }
+    },
+    "buttons": {
+        "viewExample": "Ver ejemplo",
+        "explore": "Explorar",
+        "ask": "Preguntar",
+        "practice": "Practicar",
+        "view": "Ver"
+    },
+    "dashboard": {
+        "title": "Mis Sesiones de Estudio",
+        "newSession": "Nueva Sesión",
+        "loadingSessions": "Cargando sesiones...",
+        "loadError": "Error al cargar las sesiones",
+        "deleteConfirm": "¿Estás seguro de que deseas eliminar esta sesión de estudio? Esta acción no se puede deshacer.",
+        "deleteError": "Error al eliminar la sesión. Por favor intenta de nuevo.",
+        "searchPlaceholder": "Buscar pasaje (ej: Romanos, Juan 3:16)...",
+        "noResults": "No se encontraron resultados",
+        "adjustFilters": "Intenta ajustar los filtros o la búsqueda",
+        "clearFilters": "Limpiar filtros",
+        "showingCount": "Mostrando {{filtered}} de {{total}} sesiones",
+        "statistics": {
+            "activeSessions": "Sesiones Activas",
+            "wordsStudied": "Palabras Estudiadas",
+            "averageProgress": "Progreso Promedio",
+            "lastActivity": "Última Actividad",
+            "studyStreak": "Racha de Estudio",
+            "streakDays_one": "{{count}} día",
+            "streakDays_other": "{{count}} días"
+        },
+        "sessionCard": {
+            "palabra_one": "palabra",
+            "palabra_other": "palabras",
+            "precision": "precisión",
+            "dificil_one": "difícil",
+            "dificil_other": "difíciles",
+            "progress": "Progreso",
+            "wordsLearned": "{{completed}} de {{total}} palabras aprendidas",
+            "continue": "Continuar",
+            "viewDetails": "Ver Detalles"
+        },
+        "status": {
+            "new": "Nueva",
+            "progress": "En progreso",
+            "complete": "Completada",
+            "paused": "Pausada"
+        },
+        "filters": {
+            "all": "Todas",
+            "empty": "Vacías (0%)",
+            "started": "Iniciadas (1-50%)",
+            "half": "Avanzadas (51-99%)",
+            "complete": "Completadas (100%)",
+            "sortByPlaceholder": "Ordenar por",
+            "mostRecent": "Más reciente",
+            "oldest": "Más antiguo",
+            "azPassage": "A-Z (Pasaje)",
+            "byProgress": "Por progreso"
+        },
+        "menu": {
+            "duplicate": "Duplicar sesión",
+            "delete": "Eliminar",
+            "deleteTitle": "¿Eliminar sesión?",
+            "deleteDescription": "Estás a punto de eliminar la sesión de {{passage}}. Esta acción no se puede deshacer.",
+            "cancel": "Cancelar",
+            "deleting": "Eliminando..."
+        },
+        "cleanup": {
+            "button": "Limpiar sesiones vacías ({{count}})",
+            "cleaning": "Limpiando...",
+            "confirmTitle": "¿Estás seguro de que deseas eliminar {{count}} sesión(es) vacía(s)?",
+            "confirmDescription": "Estas sesiones tienen 0% de progreso y fueron creadas hace más de 24 horas.\n\nEsta acción no se puede deshacer.",
+            "error": "Error al limpiar sesiones. Por favor intenta de nuevo."
+        }
+    },
+    "session": {
+        "actions": {
+            "morphology": "Descomposición Morfológica",
+            "recognition": "¿Cómo reconocer esta forma?",
+            "context": "Función en Contexto",
+            "significance": "Significado Teológico",
+            "quiz": "Quiz de Comprensión",
+            "passage": "Leer Pasaje Completo",
+            "syntax": "Estructura Sintáctica"
+        },
+        "content": {
+            "structure": "Estructura",
+            "components": "Componentes",
+            "synthesis": "Síntesis",
+            "summary": "Resumen",
+            "notAvailable": "Contenido no disponible",
+            "analyzing": "Analizando estructura del pasaje...",
+            "tutorResponse": "Respuesta del Tutor",
+            "yourQuestion": "Tu pregunta",
+            "error": "Error"
+        },
+        "morphology": {
+            "prefix": "Prefijo",
+            "root": "Raíz",
+            "formative": "Formativo",
+            "ending": "Terminación",
+            "other": "Otro",
+            "component": "Componente"
+        },
+        "errors": {
+            "syntaxUnavailable": "⚠️ Análisis no disponible",
+            "syntaxErrorMessage": "Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.",
+            "whatCanYouDo": "¿Qué puedes hacer?",
+            "tryAgain": "Intenta de nuevo",
+            "tryAgainDescription": "El análisis usa IA y a veces puede fallar temporalmente. Haz click nuevamente en \"Estructura Sintáctica\" para reintentar.",
+            "tryShort": "Prueba con un pasaje más corto",
+            "tryShortDescription": "Los pasajes más largos son más complejos de analizar. Intenta seleccionar un solo versículo.",
+            "comeLater": "Regresa más tarde",
+            "comeLaterDescription": "Este es un feature experimental que estamos mejorando constantemente.",
+            "meanwhile": "Mientras tanto...",
+            "meanwhileDescription": "Puedes usar las otras herramientas disponibles: análisis morfológico, contexto de palabras, y quiz de comprensión.",
+            "chatError": "Hubo un error al procesar tu pregunta. Por favor intenta de nuevo."
+        },
+        "passageReader": {
+            "selectVersions": "Selecciona las versiones que deseas visualizar. Haz click en las palabras griegas para agregarlas a tus unidades de estudio.",
+            "rvr60": "RV60 (Español)",
+            "greekOriginal": "Griego Original",
+            "transliteration": "Transliteración",
+            "wordsHighlighted": "Las palabras resaltadas en verde ya están en tus unidades de estudio ({{count}} total).",
+            "preparingSession": "Preparando tu sesión de estudio",
+            "loadingPassage": "Cargando pasaje...",
+            "loadingGreek": "Cargando texto griego original",
+            "generatingTranslit": "Generando transliteración",
+            "preparingAnalysis": "Preparando análisis interactivo",
+            "tip": "Tip",
+            "tips": {
+                "clickWord": "Haz clic en cualquier palabra griega para ver su análisis detallado",
+                "wordOrder": "El orden de palabras en griego es flexible gracias a su sistema de casos",
+                "translitHelps": "La transliteración te ayuda a pronunciar correctamente mientras estudias",
+                "autoSave": "Cada sesión queda guardada automáticamente en tu dashboard"
+            },
+            "errorLoading": "No se pudo cargar el pasaje. Por favor intenta de nuevo más tarde."
+        }
+    },
+    "ui": {
+        "navigation": {
+            "back": "Volver",
+            "greekTutor": "Entrenador Griego",
+            "askTutor": "Preguntas al Tutor",
+            "concepts": "Conceptos",
+            "insights": "Insights",
+            "changePassage": "Cambiar Pasaje"
+        },
+        "sidebar": {
+            "generalContext": "CONTEXTO GENERAL",
+            "readPassage": "Leer Pasaje",
+            "exploreFullText": "Explora el texto completo",
+            "syntacticStructure": "Estructura Sintáctica",
+            "seeClauses": "Ver cláusulas y relaciones",
+            "studyUnits": "UNIDADES DE ESTUDIO",
+            "learningReinforcement": "REFUERZO DEL APRENDIZAJE",
+            "comprehensionQuiz": "Quiz de Comprensión",
+            "practiceWhat": "Practica lo aprendido",
+            "deleteUnit": "Eliminar unidad",
+            "deleteConfirm": "¿Eliminar \"{{word}}\" de las unidades?",
+            "autoMorphologyTip": "Al seleccionar una palabra se mostrará su análisis morfológico automáticamente"
+        }
+    },
+    "wordPreview": {
+        "title": "Agregar palabra a las unidades",
+        "previewFor": "Vista previa de la unidad de estudio para",
+        "greekWord": "Palabra griega",
+        "transliteration": "Transliteración",
+        "identifying": "Identificando palabra...",
+        "grammaticalId": "Identificación Gramatical",
+        "formDetails": "Detalles del Formulario",
+        "lemma": "Lema:",
+        "category": "Categoría:",
+        "gloss": "Glosa:",
+        "recognitionGuide": "Guía de Reconocimiento",
+        "error": "Error al identificar la palabra. Por favor intenta de nuevo.",
+        "cancel": "Cancelar",
+        "addUnit": "Agregar Unidad",
+        "clickToStudy": "Click para estudiar"
+    },
+    "syntax": {
+        "title": "Estructura Sintáctica",
+        "helpTooltip": "Ver guía de ayuda",
+        "collapseAll": "Colapsar Todo",
+        "expandAll": "Expandir Todo",
+        "generalDescription": "Descripción General",
+        "legend": "Leyenda",
+        "words": "palabras",
+        "mainVerb": "Verbo principal en posición",
+        "analyzeWord": "Analizar palabra",
+        "goToClause": "Ir a cláusula",
+        "clauseTypes": {
+            "main": "Principal",
+            "purposeIna": "Propósito (ἵνα)",
+            "resultHoste": "Resultado (ὥστε)",
+            "causal": "Causal (ὅτι, γάρ)",
+            "conditional": "Condicional (εἰ)",
+            "temporal": "Temporal (ὅτε)",
+            "indirectQuestion": "Pregunta Indirecta",
+            "participial": "Participial",
+            "infinitival": "Infinitival",
+            "relative": "Relativa (ὅς)"
+        },
+        "onboarding": {
+            "welcome": "¡Bienvenido al Análisis Sintáctico!",
+            "intro": "Esta herramienta te ayuda a entender la estructura del texto griego antes de estudiar palabras individuales.",
+            "steps": "Te mostraré los elementos clave en 5 pasos rápidos.",
+            "skipTip": "💡 Puedes saltar este tutorial en cualquier momento",
+            "step1Title": "📖 Descripción General",
+            "step1Content": "Lee esta caja azul primero. Te da el panorama completo del argumento del pasaje.",
+            "step1Question": "Pregunta: \"¿Cuál es la idea principal?\"",
+            "step2Title": "🔵 Cláusula Principal",
+            "step2Content1": "Las cláusulas con fondo azul son las principales - la espina dorsal del texto.",
+            "step2Content2": "Identifica el verbo principal (posición indicada abajo) y el sujeto.",
+            "step3Title": "↪️ Cláusulas Subordinadas",
+            "step3Content1": "Las c láusulas indentadas dependen de la principal.",
+            "step3Content2": "El color te dice su función: verde (propósito), naranja (causa), etc.",
+            "step3Question": "Pregunta: \"¿Cómo modifica esta cláusula la principal?\"",
+            "step4Title": "🎯 Controles de Vista",
+            "step4Content": "Usa estos botones para controlar qué ves:",
+            "step4Collapse": "Colapsar Todo: Solo principales (para panorama)",
+            "step4Expand": "Expandir Todo: Ver toda la estructura",
+            "step4Tip": "💡 Empieza colapsado para no abrumarte",
+            "step5Title": "🎨 Leyenda de Colores",
+            "step5Content1": "Cada color representa un tipo de cláusula con una función específica.",
+            "step5Content2": "Por ejemplo: Verde = Propósito (\"para que...\"), Naranja = Causa (\"porque...\")",
+            "step5Done": "✅ ¡Listo! Ahora sabes cómo usar el análisis sintáctico.",
+            "back": "Atrás",
+            "close": "Cerrar",
+            "last": "Finalizar",
+            "next": "Siguiente",
+            "skip": "Saltar"
+        }
+    },
+    "morphology": {
+        "analysisTitle": "Análisis de los componentes que forman esta palabra griega",
+        "structure": "Estructura",
+        "components": "Componentes",
+        "synthesis": "Síntesis",
+        "pedagogicalTip": "Tip Pedagógico",
+        "tipContent": "Al identificar morfemas, empieza siempre por la raíz (el significado principal), luego analiza los prefijos que modifican el sentido, y finalmente las terminaciones que indican función gramatical. Este orden te ayudará a comprender tanto el significado como la función de la palabra en el texto.",
+        "componentTypes": {
+            "prefix": "Prefijo",
+            "root": "Raíz",
+            "formative": "Formativo",
+            "ending": "Terminación",
+            "other": "Otro"
+        }
+    },
+    "wordAnalysis": {
+        "analyze": "Analizar",
+        "ariaLabel": "Análisis de palabra",
+        "recognition": {
+            "label": "Claves",
+            "description": "Claves para reconocer"
+        },
+        "context": {
+            "label": "Función",
+            "description": "Función en la oración"
+        },
+        "significance": {
+            "label": "Teología",
+            "description": "Significado teológico"
+        }
+    },
+    "askTutor": {
+        "contextualMode": "📖 Sobre el pasaje",
+        "generalMode": "💭 General",
+        "placeholderContextual": "Escribe tu pregunta sobre el pasaje...",
+        "placeholderGeneral": "Escribe tu pregunta sobre griego koiné...",
+        "pressEnterHint": "Presiona {key} para enviar",
+        "processing": "Procesando...",
+        "cancel": "Cancelar",
+        "send": "Enviar",
+        "tutorConsulting": "Consultando con el tutor...",
+        "yourQuestion": "Tu Pregunta",
+        "tutorResponse": "Respuesta del Tutor",
+        "saveInsight": {
+            "button": "Guardar Insight",
+            "saving": "Guardando...",
+            "modalTitle": "Guardar como Insight Personal",
+            "modalDescription": "Esta respuesta se guardará en tu biblioteca de conocimiento personal",
+            "wordLabel": "Palabra:",
+            "passageLabel": "Pasaje:",
+            "titleLabel": "Título (opcional)",
+            "titlePlaceholder": "Se generará automáticamente si se deja vacío",
+            "titleCharCount": "{count}/100 caracteres",
+            "tagsLabel": "Etiquetas",
+            "tagsPlaceholder": "Agregar etiqueta...",
+            "tagsCount": "{count}/10 etiquetas",
+            "cancel": "Cancelar",
+            "save": "Guardar Insight"
+        }
+    },
+    "concepts": {
+        "libraryTitle": "Biblioteca de Conceptos Clave",
+        "counter": "{{current}} de {{total}}",
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "goToOtherConcept": "Ir a otro concepto...",
+        "seeOtherConcept": "Ver otro concepto",
+        "keyConceptTitle": "Concepto Clave del Griego Bíblico",
+        "keyConceptSubtitle": "Aprende mientras estudias",
+        "practicalExample": "Ejemplo Práctico",
+        "selectActionPrompt": "Selecciona una acción del panel lateral para comenzar tu estudio"
+    },
+    "insights": {
+        "modalTitle": "Mis Insights Guardados",
+        "modalSubtitle": "Tu biblioteca personal de conocimiento del griego del NT",
+        "loading": "Cargando insights...",
+        "emptyTitle": "No hay insights guardados",
+        "emptyMessage": "Cuando guardes respuestas del tutor como insights, aparecerán aquí.",
+        "searchPlaceholder": "Buscar en título, contenido o pregunta...",
+        "filterByTags": "Filtrar por etiquetas:",
+        "resultCount_one": "{{count}} resultado",
+        "resultCount_other": "{{count}} resultados",
+        "clearFilters": "Limpiar filtros",
+        "viewContent": "Ver contenido",
+        "hideContent": "Ocultar",
+        "question": "Pregunta:",
+        "editTitle": "Editar Insight",
+        "deleteTitle": "¿Eliminar insight?",
+        "deleteMessage": "Esta acción no se puede deshacer.",
+        "title": "Título",
+        "tags": "Etiquetas",
+        "addTag": "Agregar etiqueta...",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "save": "Guardar",
+        "saving": "Guardando..."
+    },
+    "quiz": {
+        "testPrompt": "Pon a prueba lo que has aprendido sobre",
+        "generatingQuiz": "Generando quiz...",
+        "practiceTitle": "Practica tu comprensión",
+        "questionCounter": "Pregunta {{current}} de {{total}}",
+        "quizTitle": "Quiz de Comprensión",
+        "verifyAnswer": "Verificar Respuesta",
+        "skip": "Saltar",
+        "nextQuestion": "Siguiente Pregunta",
+        "quizCompleted": "✨ ¡Quiz completado! Tu nivel es:",
+        "correct": "¡Correcto! 🎉",
+        "incorrect": "No es correcto",
+        "trueOption": "Verdadero",
+        "falseOption": "Falso",
+        "masteryLevels": {
+            "notSeen": "No visto",
+            "seen": "Visto",
+            "practiced": "Practicado",
+            "mastered": "Dominado"
+        }
+    },
+    "common": {
+        "of": "de"
+    },
+    "modal": {
+        "characteristics": "Características:"
+    }
+}

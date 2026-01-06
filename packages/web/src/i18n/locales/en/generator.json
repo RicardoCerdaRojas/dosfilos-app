@@ -1,0 +1,255 @@
+{
+    "title": "Sermon Generator",
+    "subtitle": "You have sermons in progress. Do you want to continue with any?",
+    "phases": {
+        "published": "Published",
+        "exegesis": "Exegesis",
+        "homiletics": "Homiletics",
+        "drafting": "Drafting",
+        "unknown": "Unknown"
+    },
+    "stats": {
+        "total": "Total",
+        "published": "Published",
+        "drafts": "Drafts",
+        "progress": "Progress"
+    },
+    "inProgress": {
+        "title": "Sermons in Progress",
+        "subtitle": "Continue working on your saved sermons."
+    },
+    "search": {
+        "placeholder": "Search by passage..."
+    },
+    "sort": {
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "publishedFirst": "Published First",
+        "draftFirst": "Drafts First",
+        "progressHigh": "Highest Progress",
+        "progressLow": "Lowest Progress"
+    },
+    "filter": {
+        "label": "Filter:",
+        "all": "All",
+        "published": "Published",
+        "draft": "Drafts",
+        "exegesis": "Exegesis",
+        "homiletics": "Homiletics",
+        "drafting": "Drafting"
+    },
+    "card": {
+        "versions": "versions",
+        "progress": "Progress",
+        "publishedAgo": "Published"
+    },
+    "passage": {
+        "title": "Select a Biblical Passage",
+        "developingSermon": "Developing sermon:",
+        "descWithTitle": "What biblical text will you use to develop this sermon?",
+        "descDefault": "The base text you will use to develop your sermon.",
+        "inputTitle": "Biblical Passage",
+        "inputDesc": "Enter a reference like 'John 3:16' or 'Romans 8:28-39'",
+        "inputPlaceholder": "Ex: John 3:16, Psalm 23, Matthew 5:1-12",
+        "continueBtn": "Continue to Exegesis",
+        "loading": "Loading...",
+        "suggestionsTitle": "Popular Suggestions",
+        "suggestions": [
+            {
+                "book": "John",
+                "ref": "John 3:16",
+                "topic": "God's Love"
+            },
+            {
+                "book": "Romans",
+                "ref": "Romans 8:28",
+                "topic": "Purpose"
+            },
+            {
+                "book": "Philippians",
+                "ref": "Philippians 4:13",
+                "topic": "Strength"
+            },
+            {
+                "book": "Psalms",
+                "ref": "Psalm 23",
+                "topic": "Protection"
+            },
+            {
+                "book": "Isaiah",
+                "ref": "Isaiah 40:31",
+                "topic": "Hope"
+            }
+        ],
+        "comingSoonTitle": "Coming Soon: AI Suggestions",
+        "comingSoonDesc": "Based on your sermon title and description, AI will be able to suggest relevant passages."
+    },
+    "actions": {
+        "startNew": "Start New Sermon",
+        "duplicate": "Duplicate sermon",
+        "publishNow": "Publish now",
+        "delete": "Delete",
+        "publish": "Publish",
+        "publishing": "Publishing...",
+        "continue": "Continue"
+    },
+    "empty": "No sermons found matching your search.",
+    "exegesis": {
+        "title": "Exegetical Study",
+        "subtitle": "Analyze the original text and define the biblical basis of your sermon.",
+        "contextActive": "Expert Context Active: {{count}} documents loaded",
+        "passageLabel": "Biblical Passage",
+        "passagePlaceholder": "E.g. 1 Peter 2:1-10",
+        "generateBtn": "Start Exegetical Study",
+        "analysisTitle": "Exegetical Analysis: {{passage}}",
+        "refiningStatus": "Refining section. Use chat to make changes.",
+        "defaultStatus": "Click 'Refine' to expand a section, or use chat for general queries.",
+        "continueBtn": "Continue to Homiletics",
+        "whatIsTitle": "What is Exegesis?",
+        "whatIsDesc": "Exegesis is the critical analysis of the biblical text in its original language, considering historical, literary, and cultural context.",
+        "includesLabel": "Includes:",
+        "includesList": [
+            "Historical and cultural context analysis",
+            "Literary genre study",
+            "Original audience identification",
+            "Key word analysis",
+            "Exegetical proposition"
+        ],
+        "saved": "Saved",
+        "errors": {
+            "enterPassage": "Please enter a biblical passage",
+            "generateError": "Error generating exegesis",
+            "refineError": "Error refining section",
+            "updateError": "Error updating section",
+            "parseError": "Error parsing AI response",
+            "invalidArray": "AI did not return a valid array"
+        },
+        "success": {
+            "generated": "Exegetical study generated",
+            "restored": "Version restored",
+            "refined": "Section refined successfully",
+            "updated": "Section updated",
+            "undo": "Change undone",
+            "redo": "Change redone"
+        },
+        "loading": {
+            "preparingContext": "Preparing library context..."
+        }
+    },
+    "homiletics": {
+        "title": "Homiletical Analysis",
+        "subtitle": "Develop the structure and purpose of your sermon based on the exegesis.",
+        "selectionTitle": "Choose Your Sermon Approach",
+        "selectionDesc": "<strong>{{count}} different approaches</strong> have been generated to preach this passage. Select the one that best fits your context and audience.",
+        "regenerateBtn": "Regenerate Approaches",
+        "regeneratingBtn": "Regenerating...",
+        "selectedApproach": "Selected Approach:",
+        "developBtn": "Develop this Approach",
+        "developingBtn": "Developing Approach...",
+        "clickToSelect": "Click on a card to select that approach",
+        "phase1Loading": "Generating homiletical approaches...",
+        "phase1Sub": "📋 Phase 1: Creating 4-5 options",
+        "phase2Loading": "Developing selected approach...",
+        "phase2Sub": "🎨 Phase 2: Generating proposition and detailed outline",
+        "errorNoExegesis": "Error: Exegetical study is missing.",
+        "infoTitle": "Approach Selection",
+        "infoDesc": "Each approach offers a unique perspective to preach this passage. Consider your context and audience when choosing.",
+        "typesTitle": "Approach Types",
+        "typesDesc": "Pastoral, Theological, Apologetic, Evangelistic, Expository, and Narrative. Each with its unique purpose.",
+        "audienceTitle": "Target Audience",
+        "audienceDesc": "Each approach is optimized for a specific audience. Choose the one that best connects with your congregation.",
+        "developmentTitle": "Custom Development",
+        "developmentDesc": "Once selected, we will generate a homiletical proposition and outline specifically tuned to the tone and purpose of your chosen approach.",
+        "tip": "Tip:",
+        "tipText": "There is no \"correct\" approach. Choose the one that resonates best with your church's current needs.",
+        "continueToDrafting": "Continue to Drafting",
+        "subtitle2": "Build the bridge to contemporary application.",
+        "exegeticalBasis": "Exegetical Basis",
+        "readyToGenerate": "Ready to generate your homiletical proposal",
+        "readyDesc": "Based on your exegetical analysis, I will create 4-5 different homiletical approaches for you to choose the most appropriate one.",
+        "generateBtn": "Generate Homiletical Approaches",
+        "proposalTitle": "Homiletical Proposal",
+        "proposalDesc": "Review and refine the content using the chat",
+        "regenerateShort": "Regenerate",
+        "backToExegesis": "Back to Exegesis",
+        "whatIsTitle": "What is Homiletics?",
+        "whatIsDesc": "Homiletics is the art of building the bridge between the biblical text and the contemporary audience, transforming eternal truth into practical application.",
+        "afterGenerateTitle": "After generating you can:",
+        "afterGenerateList": [
+            "Choose between 4-5 different approaches",
+            "Refine homiletical proposition",
+            "Improve sermon outline",
+            "Add relevant illustrations"
+        ],
+        "success": {
+            "previewsGenerated": "{{count}} approaches generated. Select the best one for your context.",
+            "developed": "Approach fully developed. Review and refine!",
+            "refined": "Section refined successfully",
+            "undo": "Change undone",
+            "redo": "Change redone",
+            "restored": "Version restored",
+            "updated": "Section updated"
+        },
+        "errors": {
+            "generatePreviews": "Error generating approach previews",
+            "notFound": "Selected approach not found",
+            "develop": "Error developing selected approach",
+            "refine": "Error refining section",
+            "update": "Error updating section"
+        }
+    },
+    "drafting": {
+        "title": "Sermon Draft",
+        "subtitle": "Generate the complete sermon ready to preach.",
+        "homileticalProposition": "Homiletical Proposition",
+        "outlinePoints": "Sermon Points:",
+        "readyToGenerate": "Ready to generate your complete sermon",
+        "readyDesc": "I will create a complete sermon with introduction, point development, illustrations, conclusion, and call to action.",
+        "generateBtn": "Generate Sermon Draft",
+        "regenerateBtn": "Regenerate",
+        "regeneratingBtn": "Generating...",
+        "refiningStatus": "Refining section. Use chat to make changes.",
+        "defaultStatus": "Click 'Refine' to expand a section, or use chat for general queries.",
+        "saveAndExit": "Save and Exit",
+        "publishCopy": "Publish Copy",
+        "back": "Back",
+        "backToHomiletics": "Back to Homiletics",
+        "preview": "Preview",
+        "previewDialogTitle": "Sermon Preview",
+        "closePreview": "Close Preview",
+        "publishing": "Publishing...",
+        "publishSermon": "Publish Sermon",
+        "finalDraftTitle": "The Final Draft",
+        "finalDraftDesc": "This is the last step. I will generate a complete and structured sermon based on your exegesis and homiletical analysis.",
+        "illustrationLabel": "Illustration",
+        "conclusionLabel": "Conclusion",
+        "callToActionLabel": "Call to Action",
+        "authorDefault": "Pastor",
+        "loading": "Generating sermon draft...",
+        "loadingSub": "This may take a few moments",
+        "loadingRegeneratePoint": "Regenerating point...",
+        "success": {
+            "generated": "Sermon draft generated",
+            "refined": "Section refined successfully",
+            "refinedSection": "{{section}} refined successfully",
+            "refinedSectionWithSources": "{{section}} refined using {{count}} library source(s)",
+            "saved": "Draft saved",
+            "published": "Sermon published successfully",
+            "regeneratedPoint": "Point regenerated successfully",
+            "generatedWithSources": "Point regenerated using {{count}} library source(s)",
+            "undo": "Change undone",
+            "redo": "Change redone",
+            "restored": "Version restored",
+            "updated": "Section updated"
+        },
+        "errors": {
+            "noDraft": "No draft to publish",
+            "publishing": "Error publishing sermon",
+            "generating": "Error generating draft",
+            "refining": "Error refining section",
+            "updating": "Error updating section",
+            "regeneratingPoint": "Error regenerating point",
+            "noHomiletics": "Error: Homiletical analysis is missing."
+        }
+    }
+}

@@ -1,0 +1,58 @@
+{
+    "header": {
+        "title": "Sermones",
+        "subtitle": "Gestiona tus sermones y contenido pastoral",
+        "newButton": "Nuevo Sermón"
+    },
+    "loading": "Cargando sermones...",
+    "empty": {
+        "title": "No tienes sermones aún",
+        "description": "Comienza creando tu primer sermón y gestiona todo tu contenido pastoral en un solo lugar.",
+        "createButton": "Crear Primer Sermón"
+    },
+    "filters": {
+        "search": "Buscar sermones...",
+        "status": "Estado",
+        "allPlans": "Todos los planes",
+        "noPlan": "Sin plan",
+        "plan": "Plan"
+    },
+    "statusOptions": {
+        "all": "Todos",
+        "drafts": "Borradores",
+        "published": "Publicados",
+        "archived": "Archivados"
+    },
+    "statusLabels": {
+        "draft": "Borrador",
+        "published": "Publicado",
+        "archived": "Archivado"
+    },
+    "results": {
+        "sermon": "sermón",
+        "sermons": "sermones",
+        "inPlan": "en",
+        "noPlanAssigned": "sin plan asignado"
+    },
+    "noResults": "No se encontraron sermones con los filtros seleccionados.",
+    "table": {
+        "title": "Título",
+        "plan": "Plan",
+        "status": "Estado",
+        "date": "Fecha",
+        "actions": "Acciones"
+    },
+    "grid": {
+        "references": "referencias"
+    },
+    "actions": {
+        "delete": "Eliminar"
+    },
+    "deleteDialog": {
+        "title": "¿Estás seguro?",
+        "description": "Esta acción no se puede deshacer. El sermón será eliminado permanentemente.",
+        "cancel": "Cancelar",
+        "confirm": "Eliminar",
+        "deleting": "Eliminando..."
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "buttons": {
+        "getStarted": "Get Started Free",
+        "watchDemo": "Watch Demo (2 min)",
+        "learnMore": "Learn More",
+        "contactUs": "Contact Us",
+        "close": "Close",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "save": "Save"
+    },
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "header": {
+        "welcome": "Welcome",
+        "user": "User",
+        "profile": "Profile",
+        "settings": "Settings",
+        "logout": "Log Out",
+        "logoutSuccess": "Logged out successfully"
+    }
+}

@@ -1,36 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextarea } from '@/components/ui/expandable-textarea';
+
+// ... imports
+
+
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { WorkflowPhase } from '@dosfilos/domain';
-import { BookOpen, Mic, PenTool, Settings } from 'lucide-react';
+import { BookOpen, Mic, PenTool, Settings, Library, Layers, Cog, Calendar, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
 import { ConfigService } from '@dosfilos/application';
 import { FirebaseConfigRepository, FirebaseStorageService } from '@dosfilos/infrastructure';
-import { useEffect } from 'react';
 
-import { Loader2, Upload, X, FileText } from 'lucide-react';
+import { Loader2, Upload, X, FileText, Database } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 import { useSearchParams } from 'react-router-dom';
+import { LibrarySettings } from './LibrarySettings';
+import { useAuthorization } from '@/hooks/useAuthorization'; // 🎯 NEW
+// Legacy selector removed
+// import { LibraryDocumentSelector } from '@/components/settings/LibraryDocumentSelector';
 
-export function GeneratorSettings() {
+export function SettingsPage() {
     const { user } = useFirebase();
+    const { isAdmin } = useAuthorization(); // 🎯 NEW: Authorization check
     const configRepository = new FirebaseConfigRepository();
     const configService = new ConfigService(configRepository);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [availableStores, setAvailableStores] = useState<any[]>([]);
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const currentTab = searchParams.get('tab') || 'general';
+    const currentTab = searchParams.get('tab') || 'sermons';
 
     const handleTabChange = (value: string) => {
         setSearchParams({ tab: value });
@@ -44,19 +56,45 @@ export function GeneratorSettings() {
             basePrompt: '',
             userPrompts: [] as string[],
             documents: [] as any[],
+            libraryDocIds: [] as string[],
             temperature: 0.3
         },
         [WorkflowPhase.HOMILETICS]: {
             basePrompt: '',
             userPrompts: [] as string[],
             documents: [] as any[],
+            libraryDocIds: [] as string[],
             temperature: 0.7
         },
         [WorkflowPhase.DRAFTING]: {
             basePrompt: '',
             userPrompts: [] as string[],
             documents: [] as any[],
+            libraryDocIds: [] as string[],
             temperature: 0.7
+        },
+        // Series Planner config (NEW)
+        seriesPlanner: {
+            basePrompt: '',
+            userPrompts: [] as string[],
+            documents: [] as any[],
+            libraryDocIds: [] as string[],
+            fileSearchStoreId: 'homiletics', // Default
+            temperature: 0.7
+        },
+        // Greek Tutor config (NEW)
+        greekTutor: {
+            basePrompt: '',
+            userPrompts: [] as string[],
+            documents: [] as any[], // Legacy compatibility
+            libraryDocIds: [] as string[],
+            fileSearchStoreId: 'exegesis', // Default
+            temperature: 0.5
+        },
+        // Advanced settings (NEW)
+        advanced: {
+            aiModel: 'gemini-2.5-flash',
+            globalTemperature: 0.7
         }
     });
 
@@ -78,17 +116,38 @@ export function GeneratorSettings() {
                 [WorkflowPhase.EXEGESIS]: {
                     ...prev[WorkflowPhase.EXEGESIS],
                     ...userConfig[WorkflowPhase.EXEGESIS],
-                    basePrompt: userConfig[WorkflowPhase.EXEGESIS]?.basePrompt || ''
+                    basePrompt: userConfig[WorkflowPhase.EXEGESIS]?.basePrompt || '',
+                    libraryDocIds: userConfig[WorkflowPhase.EXEGESIS]?.libraryDocIds || []
                 },
                 [WorkflowPhase.HOMILETICS]: {
                     ...prev[WorkflowPhase.HOMILETICS],
                     ...userConfig[WorkflowPhase.HOMILETICS],
-                    basePrompt: userConfig[WorkflowPhase.HOMILETICS]?.basePrompt || ''
+                    basePrompt: userConfig[WorkflowPhase.HOMILETICS]?.basePrompt || '',
+                    libraryDocIds: userConfig[WorkflowPhase.HOMILETICS]?.libraryDocIds || []
                 },
                 [WorkflowPhase.DRAFTING]: {
                     ...prev[WorkflowPhase.DRAFTING],
                     ...userConfig[WorkflowPhase.DRAFTING],
-                    basePrompt: userConfig[WorkflowPhase.DRAFTING]?.basePrompt || ''
+                    basePrompt: userConfig[WorkflowPhase.DRAFTING]?.basePrompt || '',
+                    libraryDocIds: userConfig[WorkflowPhase.DRAFTING]?.libraryDocIds || []
+                },
+                seriesPlanner: {
+                    ...prev.seriesPlanner,
+                    ...(userConfig as any).seriesPlanner,
+                    userPrompts: (userConfig as any).seriesPlanner?.userPrompts || [],
+                    // Backwards compatibility if needed, or just init empty
+                    libraryDocIds: (userConfig as any).seriesPlanner?.libraryDocIds || []
+                },
+                greekTutor: {
+                    ...prev.greekTutor,
+                    ...(userConfig as any).greekTutor,
+                    userPrompts: (userConfig as any).greekTutor?.userPrompts || [],
+                    fileSearchStoreId: (userConfig as any).greekTutor?.fileSearchStoreId || 'exegesis',
+                    libraryDocIds: (userConfig as any).greekTutor?.libraryDocIds || []
+                },
+                advanced: {
+                    ...prev.advanced,
+                    ...(userConfig as any).advanced
                 }
             }));
         } catch (error) {
@@ -96,6 +155,58 @@ export function GeneratorSettings() {
             toast.error('Error al cargar la configuración');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadStoreConfig();
+    }, []);
+
+    const loadStoreConfig = async () => {
+        try {
+            const db = getFirestore();
+            const docRef = doc(db, 'config/coreLibraryStores');
+            const docSnap = await getDoc(docRef);
+            
+            let storeKeys: string[] = ['exegesis', 'homiletics', 'generic']; // Defaults
+            let descriptions: Record<string, string> = {};
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.stores) {
+                    storeKeys = Object.keys(data.stores);
+                }
+                if (data.descriptions) {
+                    descriptions = data.descriptions;
+                }
+            }
+
+            const defaultMeta: Record<string, any> = {
+                exegesis: { name: 'Biblioteca de Exégesis' },
+                homiletics: { name: 'Biblioteca de Homilética' },
+                generic: { name: 'Biblioteca General' }
+            };
+
+            // Map keys to display objects
+            const stores = storeKeys.map(key => {
+                const meta = defaultMeta[key] || {
+                    name: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
+                };
+                return {
+                    id: key,
+                    name: meta.name
+                };
+            });
+            
+            setAvailableStores(stores);
+        } catch (error) {
+            console.error("Error loading store config:", error);
+            // Fallback
+            setAvailableStores([
+                { id: 'exegesis', name: 'Biblioteca de Exégesis' },
+                { id: 'homiletics', name: 'Biblioteca de Homilética' },
+                { id: 'generic', name: 'Biblioteca General' }
+            ]);
         }
     };
 
@@ -112,8 +223,6 @@ export function GeneratorSettings() {
                     return {
                         id: String(doc.id || crypto.randomUUID()),
                         name: String(doc.name || 'Sin nombre'),
-                        // Truncate content to avoid 1MB Firestore limit (approx 1000 chars for preview)
-                        // If storagePath exists, we rely on that for full content
                         content: String(doc.content || '').substring(0, 1000), 
                         storagePath: doc.storagePath ? String(doc.storagePath) : undefined,
                         type: String(doc.type || 'text/plain')
@@ -128,6 +237,9 @@ export function GeneratorSettings() {
                     ? phaseConfig.userPrompts.filter((p: any) => p !== null && p !== undefined).map(String) 
                     : [],
                 documents: cleanDocuments(phaseConfig?.documents),
+                libraryDocIds: Array.isArray(phaseConfig?.libraryDocIds) 
+                    ? phaseConfig.libraryDocIds.filter((id: any) => typeof id === 'string' && id.length > 0)
+                    : [],
                 temperature: Number(phaseConfig?.temperature) || 0.5
             });
 
@@ -141,10 +253,21 @@ export function GeneratorSettings() {
                 [WorkflowPhase.EXEGESIS]: cleanPhase(config[WorkflowPhase.EXEGESIS]),
                 [WorkflowPhase.HOMILETICS]: cleanPhase(config[WorkflowPhase.HOMILETICS]),
                 [WorkflowPhase.DRAFTING]: cleanPhase(config[WorkflowPhase.DRAFTING]),
+                seriesPlanner: {
+                    ...cleanPhase(config.seriesPlanner),
+                    fileSearchStoreId: (config.seriesPlanner as any).fileSearchStoreId || 'homiletics'
+                },
+                greekTutor: {
+                    ...cleanPhase(config.greekTutor),
+                    fileSearchStoreId: (config.greekTutor as any).fileSearchStoreId || 'exegesis'
+                },
+                advanced: {
+                    aiModel: String(config.advanced?.aiModel || 'gemini-2.5-flash'),
+                    globalTemperature: Number(config.advanced?.globalTemperature) || 0.7
+                },
                 updatedAt: new Date().toISOString()
             };
 
-            // Calculate estimated size (just for logging, should be small now)
             const jsonString = JSON.stringify(configToSave);
             const sizeInBytes = new Blob([jsonString]).size;
             console.log(`Config size: ${(sizeInBytes / 1024).toFixed(2)} KB`);
@@ -163,61 +286,8 @@ export function GeneratorSettings() {
 
     const storageService = new FirebaseStorageService();
 
-    const handleFileUpload = async (phase: Exclude<WorkflowPhase, WorkflowPhase.COMPLETED>, e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-
-        setIsLoading(true);
-        try {
-            const newDocs: any[] = [];
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files.item(i);
-                if (!file) continue;
-                let content = '';
-                
-                if (file.type === 'application/pdf') {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    let fullText = '';
-                    
-                    for (let j = 1; j <= pdf.numPages; j++) {
-                        const page = await pdf.getPage(j);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map((item: any) => item.str).join(' ');
-                        fullText += pageText + '\n';
-                    }
-                    content = fullText;
-                } else {
-                    // Text or Markdown
-                    content = await file.text();
-                }
-
-                // Upload full content to Storage
-                const docId = crypto.randomUUID();
-                const storagePath = `users/${user?.uid}/configs/${(config as any).id}/docs/${docId}.txt`;
-                await storageService.uploadText(storagePath, content);
-
-                newDocs.push({
-                    id: docId,
-                    name: file.name,
-                    content: content.substring(0, 1000) + '...', // Store only preview in Firestore
-                    storagePath: storagePath, // Store reference to full content
-                    type: file.type
-                });
-            }
-
-            updatePhaseConfig(phase, 'documents', [...config[phase].documents, ...newDocs]);
-            toast.success(`${newDocs.length} documento(s) agregado(s) correctamente`);
-        } catch (error) {
-            console.error('Error reading files:', error);
-            toast.error('Error al leer los archivos');
-        } finally {
-            setIsLoading(false);
-            // Reset input
-            e.target.value = '';
-        }
-    };
+    // Legacy file upload removed
+    // const handleFileUpload = async ...
 
     const removeDocument = (phase: Exclude<WorkflowPhase, WorkflowPhase.COMPLETED>, docId: string) => {
         const newDocs = config[phase].documents.filter((d: any) => d.id !== docId);
@@ -234,6 +304,136 @@ export function GeneratorSettings() {
         }));
     };
 
+    // Render phase settings as an accordion item
+    const renderPhaseSettings = (phase: Exclude<WorkflowPhase, WorkflowPhase.COMPLETED>, label: string, icon: React.ReactNode, color: string) => (
+        <AccordionItem value={phase} className={`border-${color}-200`}>
+            <AccordionTrigger className={`hover:bg-${color}-50/50 px-4`}>
+                <div className="flex items-center gap-2">
+                    {icon}
+                    <span>{label}</span>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pt-4 space-y-6">
+
+
+                {/* File Search Store Selector - ADMIN ONLY */}
+                {isAdmin && (
+                    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <Layers className="h-4 w-4 text-blue-600" />
+                                <Label>Base de Conocimiento (Store)</Label>
+                            </div>
+                            <Select
+                                value={config[phase].fileSearchStoreId || (
+                                    phase === WorkflowPhase.EXEGESIS ? 'exegesis' : 'homiletics'
+                                )}
+                                onValueChange={(value) => updatePhaseConfig(phase, 'fileSearchStoreId', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un Store" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableStores.map(store => (
+                                        <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                El asistente usará los documentos de esta base de conocimiento.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Legacy Documents - show if any exist - ADMIN ONLY? Or keep for data cleanup? Keeping for now but they should be empty */}
+                {(config as any)[phase]?.documents?.length > 0 && (
+                    <div className="space-y-2">
+                        <Label className="text-muted-foreground">Documentos Legacy (migrar a Biblioteca)</Label>
+                        <div className="space-y-2">
+                            {(config as any)[phase].documents.map((doc: any) => (
+                                <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm border border-dashed border-amber-300">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-amber-500" />
+                                        <span className="truncate max-w-[200px]">{doc.name}</span>
+                                    </div>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-6 w-6 p-0 hover:text-red-500"
+                                        onClick={() => removeDocument(phase, doc.id)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Base Prompt - PERSONAL (Allowed for everyone) */}
+                <div className="space-y-2">
+                    <Label>Prompt Base (Persona del Experto)</Label>
+                    <ExpandableTextarea 
+                        className="min-h-[80px] font-mono text-sm"
+                        placeholder="Define la personalidad y rol base de este experto..."
+                        value={config[phase].basePrompt}
+                        onChange={(e) => updatePhaseConfig(phase, 'basePrompt', e.target.value)}
+                        label={`Prompt Base - ${label}`}
+                    />
+                </div>
+
+                {/* User Prompts - PERSONAL (Allowed for everyone) */}
+                <div className="space-y-2">
+                    <Label>Instrucciones Adicionales</Label>
+                    <div className="space-y-2">
+                        {config[phase].userPrompts.map((prompt: string, i: number) => (
+                            <div key={i} className="flex gap-2">
+                                <Input 
+                                    value={prompt} 
+                                    onChange={(e) => {
+                                        const newPrompts = [...config[phase].userPrompts];
+                                        newPrompts[i] = e.target.value;
+                                        updatePhaseConfig(phase, 'userPrompts', newPrompts);
+                                    }}
+                                />
+                                <Button variant="ghost" size="icon" onClick={() => {
+                                    const newPrompts = config[phase].userPrompts.filter((_: any, idx: number) => idx !== i);
+                                    updatePhaseConfig(phase, 'userPrompts', newPrompts);
+                                }}><X className="h-4 w-4" /></Button>
+                            </div>
+                        ))}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                                const newPrompts = [...config[phase].userPrompts, ''];
+                                updatePhaseConfig(phase, 'userPrompts', newPrompts);
+                            }}
+                        >
+                            + Agregar Instrucción
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Temperature - ADMIN ONLY */}
+                {isAdmin && (
+                    <div className="space-y-3">
+                        <div className="flex justify-between">
+                            <Label>Creatividad (Temperatura)</Label>
+                            <span className="text-sm text-muted-foreground">{config[phase].temperature}</span>
+                        </div>
+                        <Slider 
+                            value={[config[phase].temperature]} 
+                            max={1} step={0.1}
+                            onValueChange={([val]) => updatePhaseConfig(phase, 'temperature', val ?? 0.5)}
+                        />
+                    </div>
+                )}
+            </AccordionContent>
+        </AccordionItem>
+    );
+
     if (isLoading) {
         return (
             <div className="container mx-auto py-8 max-w-4xl flex justify-center items-center min-h-[400px]">
@@ -246,361 +446,402 @@ export function GeneratorSettings() {
     }
 
     return (
-        <div className="container mx-auto py-8 max-w-4xl space-y-8">
+        <div className="container mx-auto py-8 max-w-7xl space-y-8">
+            {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 <div className="p-3 bg-primary/10 rounded-full">
                     <Settings className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Configuración del Generador</h1>
-                    <p className="text-muted-foreground">Personaliza a tus "Expertos IA" para cada fase del proceso.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Configuración de IA</h1>
+                    <p className="text-muted-foreground">Personaliza tus asistentes de IA y preferencias.</p>
                 </div>
             </div>
 
             <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-                <TabsList className="grid w-full grid-cols-4 h-14 p-1 bg-muted/50">
-                    <TabsTrigger value="general" className="data-[state=active]:bg-background data-[state=active]:shadow-sm h-12">General</TabsTrigger>
-                    <TabsTrigger value="exegesis" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 h-12 gap-2">
-                        <BookOpen className="h-4 w-4" /> Exégesis
+                <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'} h-14 p-1 bg-muted/50`}>
+                    <TabsTrigger value="sermons" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 h-12 gap-2">
+                        <Layers className="h-4 w-4" /> Sermones
                     </TabsTrigger>
-                    <TabsTrigger value="homiletics" className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 h-12 gap-2">
-                        <Mic className="h-4 w-4" /> Homilética
+                    <TabsTrigger value="series" className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 h-12 gap-2">
+                        <Calendar className="h-4 w-4" /> Planificador Predicaciones
                     </TabsTrigger>
-                    <TabsTrigger value="drafting" className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700 h-12 gap-2">
-                        <PenTool className="h-4 w-4" /> Redacción
+                     <TabsTrigger value="greek" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 h-12 gap-2">
+                        <GraduationCap className="h-4 w-4" /> Entrenador Griego
                     </TabsTrigger>
+                    {isAdmin && (
+                        <TabsTrigger value="library" className="data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 h-12 gap-2">
+                            <Library className="h-4 w-4" /> Biblioteca
+                        </TabsTrigger>
+                    )}
+                    {isAdmin && (
+                        <TabsTrigger value="advanced" className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700 h-12 gap-2">
+                            <Cog className="h-4 w-4" /> Avanzado
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
-                {/* General Settings */}
-                <TabsContent value="general">
+                {/* ==================== SERMONS TAB ==================== */}
+                <TabsContent value="sermons" className="space-y-6">
+                    {/* Global Sermon Preferences - ADMIN ONLY */}
+                    {isAdmin && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Preferencias Globales de Sermones</CardTitle>
+                                <CardDescription>Configuración base para el asistente de generación de sermones.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Versión Bíblica Preferida</Label>
+                                        <Input 
+                                            value={config.preferredBibleVersion}
+                                            onChange={(e) => setConfig({...config, preferredBibleVersion: e.target.value})}
+                                            placeholder="Ej: Reina Valera 1960, NVI"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Sesgo Teológico</Label>
+                                        <Input 
+                                            value={config.theologicalBias}
+                                            onChange={(e) => setConfig({...config, theologicalBias: e.target.value})}
+                                            placeholder="Ej: Reformado, Pentecostal"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Enfoque Hermenéutico</Label>
+                                    <Input 
+                                        value={config.hermeneuticalApproach}
+                                        onChange={(e) => setConfig({...config, hermeneuticalApproach: e.target.value})}
+                                        placeholder="Ej: Gramático-Histórico, Cristocéntrico"
+                                    />
+                                    <p className="text-xs text-muted-foreground">El marco interpretativo general para todo el proceso.</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Phase-specific settings */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Preferencias Globales</CardTitle>
-                            <CardDescription>Configuración base para todos los expertos.</CardDescription>
+                            <CardTitle>Configuración por Fase</CardTitle>
+                            <CardDescription>Personaliza cada experto IA del flujo de generación.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Accordion type="single" collapsible className="w-full">
+                                {renderPhaseSettings(
+                                    WorkflowPhase.EXEGESIS, 
+                                    'Experto en Exégesis', 
+                                    <BookOpen className="h-4 w-4 text-blue-600" />,
+                                    'blue'
+                                )}
+                                {renderPhaseSettings(
+                                    WorkflowPhase.HOMILETICS, 
+                                    'Experto en Homilética', 
+                                    <Mic className="h-4 w-4 text-purple-600" />,
+                                    'purple'
+                                )}
+                                {renderPhaseSettings(
+                                    WorkflowPhase.DRAFTING, 
+                                    'Experto en Redacción', 
+                                    <PenTool className="h-4 w-4 text-green-600" />,
+                                    'green'
+                                )}
+                            </Accordion>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ==================== SERIES TAB ==================== */}
+                {/* ==================== SERIES TAB ==================== */}
+                <TabsContent value="series" className="space-y-6">
+                    <Card className="border-purple-100">
+                        <CardHeader className="bg-purple-50/50">
+                            <CardTitle className="text-purple-900">Planificador de Predicaciones</CardTitle>
+                            <CardDescription>Configura el asistente para planificación de series de sermones.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-6">
+                            
+                            {/* File Search Store Selector - ADMIN ONLY */}
+                            {isAdmin && (
+                                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Layers className="h-4 w-4 text-purple-600" />
+                                            <Label>Base de Conocimiento (Store)</Label>
+                                        </div>
+                                        <Select
+                                            value={config.seriesPlanner.fileSearchStoreId || 'homiletics'}
+                                            onValueChange={(value) => setConfig({
+                                                ...config, 
+                                                seriesPlanner: {...config.seriesPlanner, fileSearchStoreId: value}
+                                            })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona un Store" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableStores.map(store => (
+                                                    <SelectItem key={store.id} value={store.id}>
+                                                        {store.name} {store.id === 'homiletics' ? '(Predeterminado)' : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            El asistente usará los documentos de esta base de conocimiento para planificar series.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Base Prompt */}
+                            <div className="space-y-2">
+                                <Label>Prompt Base (Persona del Experto)</Label>
+                                <ExpandableTextarea 
+                                    className="min-h-[100px] font-mono text-sm"
+                                    placeholder="Define la personalidad del experto planificador de series. Si lo dejas vacío, se usará el predeterminado."
+                                    value={config.seriesPlanner.basePrompt}
+                                    onChange={(e) => setConfig({
+                                        ...config, 
+                                        seriesPlanner: {...config.seriesPlanner, basePrompt: e.target.value}
+                                    })}
+                                    label="Prompt Base - Planificador de Series"
+                                />
+                            </div>
+
+                            {/* Custom Instructions (List) */}
+                            <div className="space-y-2">
+                                <Label>Instrucciones Adicionales</Label>
+                                <div className="space-y-2">
+                                    {config.seriesPlanner.userPrompts.map((prompt: string, i: number) => (
+                                        <div key={i} className="flex gap-2">
+                                            <Input 
+                                                value={prompt} 
+                                                onChange={(e) => {
+                                                    const newPrompts = [...config.seriesPlanner.userPrompts];
+                                                    newPrompts[i] = e.target.value;
+                                                    setConfig({
+                                                        ...config,
+                                                        seriesPlanner: {...config.seriesPlanner, userPrompts: newPrompts}
+                                                    });
+                                                }}
+                                                placeholder="Ej: Sugiere siempre 4 semanas por serie..."
+                                            />
+                                            <Button variant="ghost" size="icon" onClick={() => {
+                                                const newPrompts = config.seriesPlanner.userPrompts.filter((_: any, idx: number) => idx !== i);
+                                                setConfig({
+                                                    ...config,
+                                                    seriesPlanner: {...config.seriesPlanner, userPrompts: newPrompts}
+                                                });
+                                            }}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                    ))}
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            const newPrompts = [...config.seriesPlanner.userPrompts, ''];
+                                            setConfig({
+                                                ...config,
+                                                seriesPlanner: {...config.seriesPlanner, userPrompts: newPrompts}
+                                            });
+                                        }}
+                                    >
+                                        + Agregar Instrucción
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground">
+                                        Estas instrucciones se añadirán al contexto del sistema.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Temperature - ADMIN ONLY */}
+                            {isAdmin && (
+                                <div className="space-y-3">
+                                    <div className="flex justify-between">
+                                        <Label>Creatividad (Temperatura)</Label>
+                                        <span className="text-sm text-muted-foreground">{config.seriesPlanner.temperature}</span>
+                                    </div>
+                                    <Slider 
+                                        value={[config.seriesPlanner.temperature]} 
+                                        max={1} step={0.1}
+                                        onValueChange={([val]) => setConfig({
+                                            ...config, 
+                                            seriesPlanner: {...config.seriesPlanner, temperature: val ?? 0.7}
+                                        })}
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Mayor temperatura = más creatividad. Menor = más consistencia.
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ==================== GREEK TUTOR TAB ==================== */}
+                <TabsContent value="greek" className="space-y-6">
+                    <Card className="border-indigo-100">
+                        <CardHeader className="bg-indigo-50/50">
+                            <CardTitle className="text-indigo-900">Entrenador de Exégesis Griega</CardTitle>
+                            <CardDescription>Configura el tutor interactivo de griego.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-6">
+                            
+                             {/* File Search Store Selector - ADMIN ONLY */}
+                             {isAdmin && (
+                                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Layers className="h-4 w-4 text-indigo-600" />
+                                            <Label>Base de Conocimiento (Store)</Label>
+                                        </div>
+                                        <Select
+                                            value={config.greekTutor.fileSearchStoreId || 'exegesis'}
+                                            onValueChange={(value) => setConfig({
+                                                ...config, 
+                                                greekTutor: {...config.greekTutor, fileSearchStoreId: value}
+                                            })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona un Store" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableStores.map(store => (
+                                                    <SelectItem key={store.id} value={store.id}>
+                                                        {store.name} {store.id === 'exegesis' ? '(Predeterminado)' : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            El tutor usará esta base para identificar formas y generar ejercicios.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                             {/* Base Prompt */}
+                             <div className="space-y-2">
+                                <Label>Prompt Base (Personalidad del Tutor)</Label>
+                                <ExpandableTextarea 
+                                    className="min-h-[100px] font-mono text-sm"
+                                    placeholder="Define cómo debe comportarse el tutor (ej: socrático, académico, pastoral)..."
+                                    value={config.greekTutor.basePrompt}
+                                    onChange={(e) => setConfig({
+                                        ...config, 
+                                        greekTutor: {...config.greekTutor, basePrompt: e.target.value}
+                                    })}
+                                    label="Prompt Base - Tutor Griego"
+                                />
+                            </div>
+
+                            {/* Custom Instructions (List) */}
+                            <div className="space-y-2">
+                                <Label>Instrucciones Adicionales</Label>
+                                <div className="space-y-2">
+                                    {config.greekTutor.userPrompts.map((prompt: string, i: number) => (
+                                        <div key={i} className="flex gap-2">
+                                            <Input 
+                                                value={prompt} 
+                                                onChange={(e) => {
+                                                    const newPrompts = [...config.greekTutor.userPrompts];
+                                                    newPrompts[i] = e.target.value;
+                                                    setConfig({
+                                                        ...config,
+                                                        greekTutor: {...config.greekTutor, userPrompts: newPrompts}
+                                                    });
+                                                }}
+                                                placeholder="Ej: Enfócate en la voz media..."
+                                            />
+                                            <Button variant="ghost" size="icon" onClick={() => {
+                                                const newPrompts = config.greekTutor.userPrompts.filter((_: any, idx: number) => idx !== i);
+                                                setConfig({
+                                                    ...config,
+                                                    greekTutor: {...config.greekTutor, userPrompts: newPrompts}
+                                                });
+                                            }}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                    ))}
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            const newPrompts = [...config.greekTutor.userPrompts, ''];
+                                            setConfig({
+                                                ...config,
+                                                greekTutor: {...config.greekTutor, userPrompts: newPrompts}
+                                            });
+                                        }}
+                                    >
+                                        + Agregar Instrucción
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ==================== LIBRARY TAB ==================== */}
+                <TabsContent value="library">
+                    <LibrarySettings />
+                </TabsContent>
+
+                {/* ==================== ADVANCED TAB ==================== */}
+                <TabsContent value="advanced" className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Configuración Avanzada</CardTitle>
+                            <CardDescription>Ajustes técnicos para usuarios avanzados.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
-                                <Label>Versión Bíblica Preferida</Label>
-                                <Input 
-                                    value={config.preferredBibleVersion}
-                                    onChange={(e) => setConfig({...config, preferredBibleVersion: e.target.value})}
-                                    placeholder="Ej: Reina Valera 1960, NVI, LBLA"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Sesgo Teológico / Denominacional</Label>
-                                <Input 
-                                    value={config.theologicalBias}
-                                    onChange={(e) => setConfig({...config, theologicalBias: e.target.value})}
-                                    placeholder="Ej: Reformado, Pentecostal, Luterano..."
-                                />
-                                <p className="text-xs text-muted-foreground">Esto ayudará a la IA a interpretar pasajes según tu tradición.</p>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Enfoque Hermenéutico</Label>
-                                <Input 
-                                    value={config.hermeneuticalApproach}
-                                    onChange={(e) => setConfig({...config, hermeneuticalApproach: e.target.value})}
-                                    placeholder="Ej: Gramático-Histórico, Cristocéntrico, Redentor..."
-                                />
-                                <p className="text-xs text-muted-foreground">El marco interpretativo general para todo el proceso.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Exegesis Settings */}
-                <TabsContent value="exegesis">
-                    <Card className="border-blue-100">
-                        <CardHeader className="bg-blue-50/50">
-                            <CardTitle className="text-blue-900">Experto en Exégesis</CardTitle>
-                            <CardDescription>Configura cómo la IA debe analizar el texto original.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6 pt-6">
-                            <div className="space-y-2">
-                                <Label>Base de Conocimiento (Documentos)</Label>
-                                <div 
-                                    className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => document.getElementById(`file-upload-${WorkflowPhase.EXEGESIS}`)?.click()}
+                                <Label>Modelo de IA</Label>
+                                <Select 
+                                    value={config.advanced.aiModel}
+                                    onValueChange={(value) => setConfig({
+                                        ...config,
+                                        advanced: {...config.advanced, aiModel: value}
+                                    })}
                                 >
-                                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                                    <p className="text-sm text-muted-foreground">Arrastra archivos aquí o haz clic para subir</p>
-                                    <p className="text-xs text-muted-foreground mt-1">(Soporta .txt, .md, .pdf)</p>
-                                    <input 
-                                        type="file" 
-                                        id={`file-upload-${WorkflowPhase.EXEGESIS}`}
-                                        className="hidden" 
-                                        accept=".txt,.md,.pdf"
-                                        multiple
-                                        onChange={(e) => handleFileUpload(WorkflowPhase.EXEGESIS, e)}
-                                    />
-                                </div>
-                                <div className="space-y-2 mt-4">
-                                    {config[WorkflowPhase.EXEGESIS].documents.map((doc: any) => (
-                                        <div key={doc.id} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <FileText className="h-4 w-4 text-blue-500" />
-                                                <span className="truncate max-w-[200px]">{doc.name}</span>
-                                            </div>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                className="h-6 w-6 p-0 hover:text-red-500"
-                                                onClick={() => removeDocument(WorkflowPhase.EXEGESIS, doc.id)}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un modelo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (Recomendado)</SelectItem>
+                                        <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</SelectItem>
+                                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Más lento)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    El modelo usado para todas las generaciones de IA.
+                                </p>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Prompt Base (Persona del Experto)</Label>
-                                <Textarea 
-                                    className="min-h-[100px] font-mono text-sm"
-                                    placeholder="Define la personalidad y rol base de este experto. Si lo dejas vacío, se usará el predeterminado del sistema."
-                                    value={config[WorkflowPhase.EXEGESIS].basePrompt}
-                                    onChange={(e) => updatePhaseConfig(WorkflowPhase.EXEGESIS, 'basePrompt', e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Prompts e Instrucciones Adicionales</Label>
-                                <div className="space-y-2">
-                                    {config[WorkflowPhase.EXEGESIS].userPrompts.map((prompt: string, i: number) => (
-                                        <div key={i} className="flex gap-2">
-                                            <Input 
-                                                value={prompt} 
-                                                onChange={(e) => {
-                                                    const newPrompts = [...config[WorkflowPhase.EXEGESIS].userPrompts];
-                                                    newPrompts[i] = e.target.value;
-                                                    updatePhaseConfig(WorkflowPhase.EXEGESIS, 'userPrompts', newPrompts);
-                                                }}
-                                            />
-                                            <Button variant="ghost" size="icon" onClick={() => {
-                                                const newPrompts = config[WorkflowPhase.EXEGESIS].userPrompts.filter((_, idx) => idx !== i);
-                                                updatePhaseConfig(WorkflowPhase.EXEGESIS, 'userPrompts', newPrompts);
-                                            }}>X</Button>
-                                        </div>
-                                    ))}
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => {
-                                            const newPrompts = [...config[WorkflowPhase.EXEGESIS].userPrompts, ''];
-                                            updatePhaseConfig(WorkflowPhase.EXEGESIS, 'userPrompts', newPrompts);
-                                        }}
-                                    >
-                                        + Agregar Instrucción
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="flex justify-between">
-                                    <Label>Creatividad (Temperatura)</Label>
-                                    <span className="text-sm text-muted-foreground">{config[WorkflowPhase.EXEGESIS].temperature}</span>
+                                    <Label>Temperatura Global (por defecto)</Label>
+                                    <span className="text-sm text-muted-foreground">{config.advanced.globalTemperature}</span>
                                 </div>
                                 <Slider 
-                                    value={[config[WorkflowPhase.EXEGESIS].temperature]} 
+                                    value={[config.advanced.globalTemperature]} 
                                     max={1} step={0.1}
-                                    onValueChange={([val]) => updatePhaseConfig(WorkflowPhase.EXEGESIS, 'temperature', val ?? 0.3)}
+                                    onValueChange={([val]) => setConfig({
+                                        ...config,
+                                        advanced: {...config.advanced, globalTemperature: val ?? 0.7}
+                                    })}
                                 />
-                                <p className="text-xs text-muted-foreground">Baja temperatura (0.1-0.3) es mejor para análisis riguroso y factual.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Homiletics Settings */}
-                <TabsContent value="homiletics">
-                    <Card className="border-purple-100">
-                        <CardHeader className="bg-purple-50/50">
-                            <CardTitle className="text-purple-900">Experto en Homilética</CardTitle>
-                            <CardDescription>Configura el estilo de predicación y estructura.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6 pt-6">
-                            <div className="space-y-2">
-                                <Label>Base de Conocimiento (Documentos)</Label>
-                                <div 
-                                    className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => document.getElementById(`file-upload-${WorkflowPhase.HOMILETICS}`)?.click()}
-                                >
-                                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                                    <p className="text-sm text-muted-foreground">Arrastra archivos aquí o haz clic para subir</p>
-                                    <input 
-                                        type="file" 
-                                        id={`file-upload-${WorkflowPhase.HOMILETICS}`}
-                                        className="hidden" 
-                                        accept=".txt,.md,.pdf"
-                                        multiple
-                                        onChange={(e) => handleFileUpload(WorkflowPhase.HOMILETICS, e)}
-                                    />
-                                </div>
-                                <div className="space-y-2 mt-4">
-                                    {config[WorkflowPhase.HOMILETICS].documents.map((doc: any) => (
-                                        <div key={doc.id} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <FileText className="h-4 w-4 text-purple-500" />
-                                                <span className="truncate max-w-[200px]">{doc.name}</span>
-                                            </div>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                className="h-6 w-6 p-0 hover:text-red-500"
-                                                onClick={() => removeDocument(WorkflowPhase.HOMILETICS, doc.id)}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Prompt Base (Persona del Experto)</Label>
-                                <Textarea 
-                                    className="min-h-[100px] font-mono text-sm"
-                                    placeholder="Define la personalidad y rol base de este experto. Si lo dejas vacío, se usará el predeterminado del sistema."
-                                    value={config[WorkflowPhase.HOMILETICS].basePrompt}
-                                    onChange={(e) => updatePhaseConfig(WorkflowPhase.HOMILETICS, 'basePrompt', e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Prompts e Instrucciones Adicionales</Label>
-                                <div className="space-y-2">
-                                    {config[WorkflowPhase.HOMILETICS].userPrompts.map((prompt: string, i: number) => (
-                                        <div key={i} className="flex gap-2">
-                                            <Input 
-                                                value={prompt} 
-                                                onChange={(e) => {
-                                                    const newPrompts = [...config[WorkflowPhase.HOMILETICS].userPrompts];
-                                                    newPrompts[i] = e.target.value;
-                                                    updatePhaseConfig(WorkflowPhase.HOMILETICS, 'userPrompts', newPrompts);
-                                                }}
-                                            />
-                                        </div>
-                                    ))}
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => {
-                                            const newPrompts = [...config[WorkflowPhase.HOMILETICS].userPrompts, ''];
-                                            updatePhaseConfig(WorkflowPhase.HOMILETICS, 'userPrompts', newPrompts);
-                                        }}
-                                    >
-                                        + Agregar Instrucción
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex justify-between">
-                                    <Label>Creatividad (Temperatura)</Label>
-                                    <span className="text-sm text-muted-foreground">{config[WorkflowPhase.HOMILETICS].temperature}</span>
-                                </div>
-                                <Slider 
-                                    value={[config[WorkflowPhase.HOMILETICS].temperature]} 
-                                    max={1} step={0.1}
-                                    onValueChange={([val]) => updatePhaseConfig(WorkflowPhase.HOMILETICS, 'temperature', val ?? 0.7)}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Drafting Settings */}
-                <TabsContent value="drafting">
-                    <Card className="border-green-100">
-                        <CardHeader className="bg-green-50/50">
-                            <CardTitle className="text-green-900">Experto en Redacción</CardTitle>
-                            <CardDescription>Configura el tono y estilo de escritura final.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6 pt-6">
-                            <div className="space-y-2">
-                                <Label>Base de Conocimiento (Documentos)</Label>
-                                <div 
-                                    className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => document.getElementById(`file-upload-${WorkflowPhase.DRAFTING}`)?.click()}
-                                >
-                                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                                    <p className="text-sm text-muted-foreground">Arrastra archivos aquí o haz clic para subir</p>
-                                    <input 
-                                        type="file" 
-                                        id={`file-upload-${WorkflowPhase.DRAFTING}`}
-                                        className="hidden" 
-                                        accept=".txt,.md,.pdf"
-                                        multiple
-                                        onChange={(e) => handleFileUpload(WorkflowPhase.DRAFTING, e)}
-                                    />
-                                </div>
-                                <div className="space-y-2 mt-4">
-                                    {config[WorkflowPhase.DRAFTING].documents.map((doc: any) => (
-                                        <div key={doc.id} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <FileText className="h-4 w-4 text-green-500" />
-                                                <span className="truncate max-w-[200px]">{doc.name}</span>
-                                            </div>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                className="h-6 w-6 p-0 hover:text-red-500"
-                                                onClick={() => removeDocument(WorkflowPhase.DRAFTING, doc.id)}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Prompt Base (Persona del Experto)</Label>
-                                <Textarea 
-                                    className="min-h-[100px] font-mono text-sm"
-                                    placeholder="Define la personalidad y rol base de este experto. Si lo dejas vacío, se usará el predeterminado del sistema."
-                                    value={config[WorkflowPhase.DRAFTING].basePrompt}
-                                    onChange={(e) => updatePhaseConfig(WorkflowPhase.DRAFTING, 'basePrompt', e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Prompts e Instrucciones Adicionales</Label>
-                                <div className="space-y-2">
-                                    {config[WorkflowPhase.DRAFTING].userPrompts.map((prompt: string, i: number) => (
-                                        <div key={i} className="flex gap-2">
-                                            <Input 
-                                                value={prompt} 
-                                                onChange={(e) => {
-                                                    const newPrompts = [...config[WorkflowPhase.DRAFTING].userPrompts];
-                                                    newPrompts[i] = e.target.value;
-                                                    updatePhaseConfig(WorkflowPhase.DRAFTING, 'userPrompts', newPrompts);
-                                                }}
-                                            />
-                                        </div>
-                                    ))}
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => {
-                                            const newPrompts = [...config[WorkflowPhase.DRAFTING].userPrompts, ''];
-                                            updatePhaseConfig(WorkflowPhase.DRAFTING, 'userPrompts', newPrompts);
-                                        }}
-                                    >
-                                        + Agregar Instrucción
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex justify-between">
-                                    <Label>Creatividad (Temperatura)</Label>
-                                    <span className="text-sm text-muted-foreground">{config[WorkflowPhase.DRAFTING].temperature}</span>
-                                </div>
-                                <Slider 
-                                    value={[config[WorkflowPhase.DRAFTING].temperature]} 
-                                    max={1} step={0.1}
-                                    onValueChange={([val]) => updatePhaseConfig(WorkflowPhase.DRAFTING, 'temperature', val ?? 0.7)}
-                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Este valor se usa como predeterminado cuando no hay configuración específica de fase.
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>
 
+            {/* Save Button */}
             <div className="flex justify-end gap-4">
                 <Button variant="outline" disabled={isSaving}>Cancelar</Button>
                 <Button onClick={handleSave} className="min-w-[150px]" disabled={isSaving}>
@@ -617,3 +858,6 @@ export function GeneratorSettings() {
         </div>
     );
 }
+
+// Keep the old export for backwards compatibility
+export { SettingsPage as GeneratorSettings };

@@ -8,6 +8,7 @@ export interface ISermonRepository {
     findByShareToken(token: string): Promise<SermonEntity | null>;
     findByUserId(userId: string, options?: FindOptions): Promise<SermonEntity[]>;
     findAll(options?: FindOptions): Promise<SermonEntity[]>;
+    findByDraftId(draftId: string, userId: string): Promise<SermonEntity[]>;
 }
 
 export interface FindOptions {
@@ -15,7 +16,7 @@ export interface FindOptions {
     offset?: number;
     orderBy?: 'createdAt' | 'updatedAt' | 'title';
     order?: 'asc' | 'desc';
-    status?: 'draft' | 'published' | 'archived';
+    status?: 'working' | 'draft' | 'published' | 'archived';
     tags?: string[];
     category?: string;
 }

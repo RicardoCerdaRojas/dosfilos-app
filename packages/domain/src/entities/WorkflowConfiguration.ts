@@ -12,6 +12,9 @@ export interface PhaseConfiguration {
     basePrompt?: string; // The core "Expert Persona" prompt
     userPrompts: string[]; // Additional specific instructions
     documents: PhaseDocument[]; // Knowledge base documents
+    libraryDocIds?: string[]; // IDs of library documents to include
+    cachedResources?: Array<{ title: string; author: string }>; // Metadata of cached resources
+    fileSearchStoreId?: string; // 🎯 NEW: ID of the File Search Store to use
     temperature?: number; // Creativity level
 }
 
@@ -25,10 +28,19 @@ export interface WorkflowConfiguration {
     hermeneuticalApproach?: string; // e.g. "Historical-Grammatical", "Christocentric"
     defaultTargetAudience?: string;
 
+    // Advanced Global Settings
+    advanced?: {
+        aiModel: string;
+        globalTemperature: number;
+    };
+
     // Phase-specific settings
     [WorkflowPhase.EXEGESIS]: PhaseConfiguration;
     [WorkflowPhase.HOMILETICS]: PhaseConfiguration;
     [WorkflowPhase.DRAFTING]: PhaseConfiguration;
+
+    // Planner specific
+    seriesPlanner?: PhaseConfiguration;
 
     updatedAt: Date;
 }

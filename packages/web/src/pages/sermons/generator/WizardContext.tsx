@@ -24,9 +24,11 @@ interface WizardContextType extends WizardState {
     setHomiletics: (homiletics: HomileticalAnalysis) => void;
     setDraft: (draft: SermonContent) => void;
     setSermonId: (id: string | null) => void;
+    selectHomileticalApproach: (approachId: string) => void;  // 🎯 NEW
     reset: () => void;
     saving: boolean;
     lastSaved: Date | null;
+    sermonId: string | null; // 🎯 Expose to allow publishing
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -80,7 +82,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         const createDraftSermon = async () => {
             if (exegesis && !sermonId && user && passage) {
                 try {
-                    console.log('Creating draft sermon...', { passage, exegesis });
+
                     const newSermonId = await sermonService.createDraft({
                         userId: user.uid,
                         passage,
@@ -91,7 +93,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
                             lastSaved: new Date()
                         }
                     });
-                    console.log('Draft sermon created with ID:', newSermonId);
+
                     setSermonId(newSermonId);
                 } catch (error) {
                     console.error('Error creating draft sermon:', error);
@@ -111,6 +113,37 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setSermonId(null);
     };
 
+    // 🎯 NEW: Select homiletical approach and update derived fields
+    const selectHomileticalApproach = (approachId: string) => {
+        if (!homiletics || !homiletics.homileticalApproaches) {
+            console.warn('Cannot select approach: no approaches available');
+            return;
+        }
+
+        const selectedApproach = homiletics.homileticalApproaches.find(
+            a => a.id === approachId
+        );
+
+        if (!selectedApproach) {
+            console.warn('Selected approach not found:', approachId);
+            return;
+        }
+
+        // Update homiletics with selected approach
+        setHomiletics({
+            ...homiletics,
+            selectedApproachId: approachId,
+            // Update legacy fields from selected approach
+            homileticalApproach: selectedApproach.type as any,
+            contemporaryApplication: selectedApproach.contemporaryApplication,
+            homileticalProposition: selectedApproach.homileticalProposition,
+            outlinePreview: selectedApproach.outlinePreview, // 🎯 NEW: Include outline preview
+            outline: selectedApproach.outline
+        });
+
+
+    };
+
     const contextValue = useMemo(() => ({
         step,
         passage,
@@ -119,6 +152,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         homiletics,
         draft,
         config,
+        sermonId, // 🎯 Expose to allow publishing
         setStep,
         setPassage,
         setRules,
@@ -126,10 +160,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics,
         setDraft,
         setSermonId,
+        selectHomileticalApproach,  // 🎯 NEW
         reset,
         saving,
         lastSaved
-    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved]);
+    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved, sermonId]);
 
     return (
         <WizardContext.Provider value={contextValue}>

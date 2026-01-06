@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,32 +8,91 @@ import { AuthLayout } from '@/components/auth/auth-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { authService } from '../../../../application/src/services/AuthService';
-
-const registerSchema = z.object({
-  displayName: z
-    .string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(50, 'El nombre no puede exceder 50 caracteres'),
-  email: z.string().email('Email inválido'),
-  password: z
-    .string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
-    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
-    .regex(/[a-z]/, 'Debe contener al menos una minúscula')
-    .regex(/[0-9]/, 'Debe contener al menos un número'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
-  path: ['confirmPassword'],
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+import { httpsCallable } from 'firebase/functions';
+import { functions, db } from '@dosfilos/infrastructure';
+import { doc, getDoc } from 'firebase/firestore';
+import { FirestorePlan, getPlanPriceId } from '@/hooks/usePlans';
+import { useTranslation } from '@/i18n';
+import { useTrackActivity } from '@/hooks/useTrackActivity';
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { t } = useTranslation('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<FirestorePlan | null>(null);
+  const { trackLogin, trackRegistration } = useTrackActivity();
+  
+  const registerSchema = z.object({
+    displayName: z
+      .string()
+      .min(2, t('register.errors.nameMin'))
+      .max(50, t('register.errors.nameMax')),
+    email: z.string().email(t('register.errors.invalidEmail')),
+    password: z
+      .string()
+      .min(8, t('register.errors.passwordMin'))
+      .regex(/[A-Z]/, t('register.errors.passwordUppercase'))
+      .regex(/[a-z]/, t('register.errors.passwordLowercase'))
+      .regex(/[0-9]/, t('register.errors.passwordNumber')),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t('register.errors.passwordMismatch'),
+    path: ['confirmPassword'],
+  });
+
+  type RegisterFormData = z.infer<typeof registerSchema>;
+
+  // Get selected plan ID from URL parameter
+  const selectedPlanId = searchParams.get('plan') || 'free';
+  const needsCheckout = selectedPlanId !== 'free';
+
+  // Load plan from Firestore
+  useEffect(() => {
+    const loadPlan = async () => {
+      if (selectedPlanId === 'free') {
+        setSelectedPlan({
+          id: 'free',
+          name: t('register.free'),
+          description: t('register.free'),
+          pricing: { currency: 'USD', monthly: 0 },
+          stripeProductIds: [],
+          features: [],
+          isActive: true,
+          isPublic: true,
+          sortOrder: 0,
+        });
+        return;
+      }
+
+      try {
+        const planDoc = await getDoc(doc(db, 'plans', selectedPlanId));
+        if (planDoc.exists()) {
+          setSelectedPlan({ id: planDoc.id, ...planDoc.data() } as FirestorePlan);
+        } else {
+          // Fallback to free if plan not found
+          setSelectedPlan({
+            id: 'free',
+            name: t('register.free'),
+            description: t('register.free'),
+            pricing: { currency: 'USD', monthly: 0 },
+            stripeProductIds: [],
+            features: [],
+            isActive: true,
+            isPublic: true,
+            sortOrder: 0,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading plan:', error);
+      }
+    };
+
+    loadPlan();
+  }, [selectedPlanId]);
 
   const {
     register,
@@ -43,14 +102,69 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
+  const redirectToCheckout = async () => {
+    if (!selectedPlan) return;
+    
+    const priceId = getPlanPriceId(selectedPlan);
+    if (!priceId) {
+      toast.error(t('register.errors.planNotAvailable'));
+      navigate('/dashboard');
+      return;
+    }
+
+    try {
+      const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+      const result = await createCheckoutSession({
+        priceId,
+        successUrl: `${window.location.origin}/dashboard?welcome=true`,
+        cancelUrl: `${window.location.origin}/pricing`,
+      });
+      
+      const { url } = result.data as { url: string };
+      window.location.href = url;
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast.error(t('register.errors.checkoutFailed'));
+      navigate('/dashboard');
+    }
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await authService.register(data.email, data.password, data.displayName);
-      toast.success('¡Cuenta creada exitosamente!');
-      navigate('/');
+      const user = await authService.register(data.email, data.password, data.displayName);
+      
+      // Track geographic registration event
+      trackRegistration(user.id);
+      
+      // Track initial login
+      trackLogin();
+      
+      toast.success(t('register.success'));
+      
+      // If paid plan selected from pricing page, redirect to checkout
+      if (needsCheckout) {
+        await redirectToCheckout();
+      } else {
+        // Navigate to welcome page for plan selection
+        navigate('/welcome');
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Error al crear la cuenta');
+      // Smart error handling for existing email
+      if (error.code === 'auth/email-already-in-use') {
+        toast.error(
+          t('register.errors.emailExists'),
+          { 
+            duration: 4000,
+            description: t('register.errors.emailExistsDesc')
+          }
+        );
+        setTimeout(() => {
+          navigate('/login');
+        }, 4000);
+      } else {
+        toast.error(error.message || t('register.errors.registerFailed'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -59,11 +173,36 @@ export function RegisterPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await authService.loginWithGoogle();
-      toast.success('¡Cuenta creada exitosamente!');
-      navigate('/');
+      const user = await authService.loginWithGoogle();
+      
+      // Track geographic registration event (Google creates/logs in user)
+      trackRegistration(user.id);
+      
+      // Track initial login
+      trackLogin();
+      
+      toast.success(t('register.successGoogle'));
+      
+      // If paid plan selected from pricing page, redirect to checkout
+      if (needsCheckout) {
+        await redirectToCheckout();
+      } else {
+        // Navigate to welcome page for plan selection
+        navigate('/welcome');
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Error al registrarse con Google');
+      // Smart error handling for existing Google account
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        toast.error(
+          t('register.errors.googleExists'),
+          { duration: 4000 }
+        );
+        setTimeout(() => {
+          navigate('/login');
+        }, 4000);
+      } else {
+        toast.error(error.message || t('register.errors.googleFailed'));
+      }
     } finally {
       setIsGoogleLoading(false);
     }
@@ -71,10 +210,26 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Crear Cuenta"
-      subtitle="Únete a DosFilos.app y potencia tu ministerio"
+      title={t('register.title')}
+      subtitle={t('register.subtitle')}
     >
       <div className="space-y-6">
+        {/* Plan Selection Indicator */}
+        {selectedPlan && selectedPlan.id !== 'free' && (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">{t('register.planSelected')}</p>
+                <p className="text-lg font-bold text-primary">{selectedPlan.name}</p>
+                <p className="text-sm text-muted-foreground">${selectedPlan.pricing.monthly}{t('register.perMonth')}</p>
+              </div>
+              <Badge variant="outline" className="bg-background">
+                {needsCheckout ? t('register.checkoutAfter') : t('register.free')}
+              </Badge>
+            </div>
+          </div>
+        )}
+
         {/* Google Sign-In Button */}
         <Button
           type="button"
@@ -84,7 +239,7 @@ export function RegisterPage() {
           disabled={isGoogleLoading || isLoading}
         >
           {isGoogleLoading ? (
-            'Creando cuenta...'
+            t('register.googleLoading')
           ) : (
             <>
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -105,7 +260,7 @@ export function RegisterPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continuar con Google
+              {t('register.google')}
             </>
           )}
         </Button>
@@ -117,7 +272,7 @@ export function RegisterPage() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              O regístrate con email
+              {t('register.divider')}
             </span>
           </div>
         </div>
@@ -127,11 +282,11 @@ export function RegisterPage() {
           <div className="space-y-4">
             {/* Display Name */}
             <div className="space-y-2">
-              <Label htmlFor="displayName">Nombre completo</Label>
+              <Label htmlFor="displayName">{t('register.displayName')}</Label>
               <Input
                 id="displayName"
                 type="text"
-                placeholder="Juan Pérez"
+                placeholder={t('register.displayNamePlaceholder')}
                 {...register('displayName')}
                 disabled={isLoading || isGoogleLoading}
               />
@@ -142,11 +297,11 @@ export function RegisterPage() {
 
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('register.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={t('register.emailPlaceholder')}
                 {...register('email')}
                 disabled={isLoading || isGoogleLoading}
               />
@@ -157,11 +312,11 @@ export function RegisterPage() {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t('register.password')}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('register.passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading || isGoogleLoading}
               />
@@ -172,11 +327,11 @@ export function RegisterPage() {
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <Label htmlFor="confirmPassword">{t('register.confirmPassword')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('register.confirmPasswordPlaceholder')}
                 {...register('confirmPassword')}
                 disabled={isLoading || isGoogleLoading}
               />
@@ -188,15 +343,15 @@ export function RegisterPage() {
 
           {/* Submit Button */}
           <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-            {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
+            {isLoading ? t('register.submitting') : t('register.submit')}
           </Button>
         </form>
 
         {/* Login Link */}
         <p className="text-center text-sm text-muted-foreground">
-          ¿Ya tienes una cuenta?{' '}
+          {t('register.hasAccount')}{' '}
           <Link to="/login" className="text-primary hover:underline font-medium">
-            Inicia sesión
+            {t('register.login')}
           </Link>
         </p>
       </div>

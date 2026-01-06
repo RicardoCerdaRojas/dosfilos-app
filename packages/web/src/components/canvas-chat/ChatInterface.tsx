@@ -1,25 +1,59 @@
 import { useState, useRef, useEffect } from 'react';
-import { ContentType, CanvasChatMessage } from '@dosfilos/domain';
+import { ContentType, CanvasChatMessage, CoachingStyle } from '@dosfilos/domain';
+import { SourceReference } from '@dosfilos/application';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Send, Sparkles } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Send, Sparkles, BookOpen, ChevronDown, ChevronRight, Wrench, MessageCircle, Bot, Brain, Zap, Compass, GraduationCap } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { getSectionConfig } from './section-configs';
 
+interface MessageWithMetadata extends CanvasChatMessage {
+  sources?: SourceReference[];
+  strategyUsed?: CoachingStyle;
+}
+
+export interface ActiveContext {
+    isCached: boolean;
+    createdAt?: Date | null;
+    expiresAt?: Date | null;
+    resources: Array<{ 
+        title: string; 
+        author: string;
+        hasGeminiUri?: boolean;
+        geminiSyncedAt?: Date | null;
+        isGeminiExpired?: boolean;
+    }>;
+    totalAvailableResources?: number; // 🎯 Total docs configured for this step
+    // Computed stats for header indicators
+    syncedResourceCount?: number;
+    expiredResourceCount?: number;
+}
+
 interface ChatInterfaceProps<T = any> {
-  messages: CanvasChatMessage[];
+  messages: CanvasChatMessage[] | MessageWithMetadata[];
   contentType: ContentType;
   content: T;
   selectedText?: string;
   onSendMessage: (message: string, role?: 'user' | 'assistant') => void;
   onApplyChange: (messageId: string, newContent: any) => void;
   onContentUpdate: (content: T) => void;
-  focusedSection?: string | null; // ID of currently expanded section
-  disableDefaultAI?: boolean; // If true, ChatInterface won't trigger AI automatically
-  externalIsLoading?: boolean; // If true, forces loading state
+  focusedSection?: string | null;
+  disableDefaultAI?: boolean;
+  externalIsLoading?: boolean;
+  // New: Coaching style support
+  selectedStyle?: CoachingStyle | 'auto';
+  onStyleChange?: (style: CoachingStyle | 'auto') => void;
+  showStyleSelector?: boolean;
+  // 🎯 Context props are preserved in interface for compatibility but validly unused in UI
+  activeContext?: ActiveContext;
+  onRefreshContext?: () => void;
+  onSyncDocuments?: () => Promise<void>; 
+  isSyncingDocuments?: boolean; 
 }
+
 
 export function ChatInterface<T = any>({
   messages,
@@ -31,15 +65,47 @@ export function ChatInterface<T = any>({
   onContentUpdate,
   focusedSection = null,
   disableDefaultAI = false,
-  externalIsLoading = false
+  externalIsLoading = false,
+  selectedStyle = 'auto',
+  onStyleChange,
+  showStyleSelector = false,
+  // Context props no longer used in UI
+  // activeContext,
+  // onRefreshContext,
+  // onSyncDocuments,
+  // isSyncingDocuments = false
 }: ChatInterfaceProps<T>) {
   const [userInput, setUserInput] = useState('');
   const [internalIsLoading, setInternalIsLoading] = useState(false);
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
+  const [chatMode, setChatMode] = useState<'refine' | 'general'>('refine');
   
   // Combine internal and external loading states
   const isLoading = internalIsLoading || externalIsLoading;
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const toggleSources = (messageId: string) => {
+    setExpandedSources(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const getStrategyLabel = (style: CoachingStyle): string => {
+    switch (style) {
+      case CoachingStyle.SOCRATIC: return '🧠 Socrático';
+      case CoachingStyle.DIRECT: return '⚡ Directo';
+      case CoachingStyle.EXPLORATORY: return '🔍 Exploratorio';
+      case CoachingStyle.DIDACTIC: return '📚 Didáctico';
+      default: return style;
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,9 +123,11 @@ export function ChatInterface<T = any>({
       // Add user message to UI
       onSendMessage(message);
 
-      // Only call AI if no focused section (general mode) AND default AI is not disabled
-      // If focused section OR disabled, parent handles the AI call
-      if (!focusedSection && !disableDefaultAI) {
+      // Only call AI if:
+      // 1. No focused section (general mode) AND default AI is not disabled, OR
+      // 2. Focused section BUT user selected general mode
+      // If focused section in refine mode OR disabled, parent handles the AI call
+      if ((!focusedSection && !disableDefaultAI) || (focusedSection && chatMode === 'general')) {
         // Import the refinement service
         const { contentRefinementService } = await import('@dosfilos/application');
         
@@ -102,7 +170,8 @@ export function ChatInterface<T = any>({
 
         onSendMessage(suggestion, 'assistant');
 
-        if (response.refinedContent) {
+        // Only update content if we're NOT in general question mode
+        if (response.refinedContent && chatMode !== 'general') {
           onContentUpdate(response.refinedContent);
         }
       }
@@ -149,7 +218,14 @@ export function ChatInterface<T = any>({
             <Sparkles className="h-5 w-5 text-primary" />
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold truncate">
-                {focusedSection ? `Refinando: ${getSectionName()}` : 'Asistente de Exégesis'}
+                {focusedSection 
+                  ? `Refinando: ${getSectionName()}` 
+                  : contentType === 'homiletics' 
+                    ? 'Asistente de Homilética' 
+                    : contentType === 'sermon'
+                      ? 'Asistente de Redacción'
+                      : 'Asistente de Exégesis'
+                }
               </h3>
               <p className="text-xs text-muted-foreground truncate">
                 {focusedSection 
@@ -158,6 +234,70 @@ export function ChatInterface<T = any>({
                 }
               </p>
             </div>
+            
+            {/* Chat Mode Selector - Show when refining a section */}
+            {focusedSection && (
+              <Select value={chatMode} onValueChange={(v) => setChatMode(v as 'refine' | 'general')}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="refine">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-3 w-3" />
+                      <span>Refinar Sección</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="general">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="h-3 w-3" />
+                      <span>Pregunta General</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Coaching Style Selector */}
+            {showStyleSelector && onStyleChange && (
+              <Select value={selectedStyle} onValueChange={(v) => onStyleChange(v as CoachingStyle | 'auto')}>
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Modo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-3 w-3" />
+                      <span>Automático</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.SOCRATIC}>
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-3 w-3" />
+                      <span>Socrático</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.DIRECT}>
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-3 w-3" />
+                      <span>Directo</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.EXPLORATORY}>
+                    <div className="flex items-center gap-2">
+                      <Compass className="h-3 w-3" />
+                      <span>Exploratorio</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={CoachingStyle.DIDACTIC}>
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-3 w-3" />
+                      <span>Didáctico</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
@@ -172,17 +312,64 @@ export function ChatInterface<T = any>({
               }
             </div>
           ) : (
-            messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                onApply={
-                  message.role === 'assistant' && !message.appliedChange
-                    ? (content: any) => onApplyChange(message.id, content)
-                    : undefined
-                }
-              />
-            ))
+            messages.map((message) => {
+              const msgWithMeta = message as MessageWithMetadata;
+              return (
+                <div key={message.id} className="space-y-1">
+                  <MessageBubble
+                    message={message}
+                    onApply={
+                      message.role === 'assistant' && !message.appliedChange
+                        ? (content: any) => onApplyChange(message.id, content)
+                        : undefined
+                    }
+                  />
+                  {/* Strategy badge and sources for assistant messages */}
+                  {message.role === 'assistant' && (msgWithMeta.sources?.length || msgWithMeta.strategyUsed) && (
+                    <div className="flex items-center gap-2 ml-11 flex-wrap">
+                      {/* Strategy Badge */}
+                      {msgWithMeta.strategyUsed && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {getStrategyLabel(msgWithMeta.strategyUsed)}
+                        </span>
+                      )}
+                      {/* Collapsible Sources */}
+                      {msgWithMeta.sources && msgWithMeta.sources.length > 0 && (
+                        <Collapsible 
+                          open={expandedSources.has(message.id)}
+                          onOpenChange={() => toggleSources(message.id)}
+                        >
+                          <CollapsibleTrigger asChild>
+                            <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-2 rounded hover:bg-muted/50">
+                              <BookOpen className="h-3 w-3" />
+                              <span>Fuentes ({msgWithMeta.sources.length})</span>
+                              {expandedSources.has(message.id) ? (
+                                <ChevronDown className="h-3 w-3" />
+                              ) : (
+                                <ChevronRight className="h-3 w-3" />
+                              )}
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-2 space-y-1">
+                            {msgWithMeta.sources.map((source, idx) => (
+                              <div key={idx} className="text-xs bg-muted/50 rounded p-2 ml-2">
+                                <div className="font-medium">{source.title}</div>
+                                <div className="text-muted-foreground">
+                                  {source.author}{source.page ? ` — Pág. ${source.page}` : ''}
+                                </div>
+                                <div className="text-muted-foreground mt-1 italic line-clamp-2">
+                                  "{source.snippet}"
+                                </div>
+                              </div>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
           
           {/* Loading indicator - Typing animation */}
@@ -226,7 +413,9 @@ export function ChatInterface<T = any>({
             }}
             placeholder={
               focusedSection
-                ? "Describe los cambios que quieres hacer..."
+                ? chatMode === 'refine'
+                  ? "Describe los cambios que quieres hacer..."
+                  : "Haz una pregunta general sobre esta sección..."
                 : "Escribe tu solicitud..."
             }
             className="min-h-[80px] resize-none"

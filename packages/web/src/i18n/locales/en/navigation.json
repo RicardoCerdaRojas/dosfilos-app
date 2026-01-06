@@ -1,0 +1,32 @@
+{
+    "logo": "DosFilos.Preach",
+    "features": "Features",
+    "howItWorks": "How it Works",
+    "testimonials": "Testimonials",
+    "pricing": "Pricing",
+    "login": "Login",
+    "register": "Get Started",
+    "menu": {
+        "dashboard": "Dashboard",
+        "sermons": "Sermons",
+        "plans": "Preaching Plans",
+        "generateSermon": "Generate Sermon",
+        "greekTutor": "Greek Tutor",
+        "library": "Library",
+        "subscription": "My Subscription",
+        "settings": "Settings",
+        "admin": "Admin",
+        "contactLeads": "Contact Leads"
+    },
+    "user": {
+        "defaultName": "User",
+        "appearance": "Appearance",
+        "profile": "Profile",
+        "notifications": "Notifications",
+        "logout": "Log Out",
+        "sessionClosed": "Session closed"
+    },
+    "errors": {
+        "logoutError": "Error logging out"
+    }
+}

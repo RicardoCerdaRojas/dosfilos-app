@@ -1,5 +1,12 @@
 import { ExegeticalStudy, HomileticalAnalysis, SermonContent } from './SermonGenerator';
 
+export interface PreachingLog {
+    date: Date;
+    location: string;
+    durationMinutes: number;
+    notes?: string;
+}
+
 export interface Sermon {
     id: string;
     userId: string;
@@ -8,12 +15,18 @@ export interface Sermon {
     bibleReferences: string[];
     tags: string[];
     category?: string | undefined;
-    status: 'draft' | 'published' | 'archived';
+    status: 'working' | 'draft' | 'published' | 'archived';
     createdAt: Date;
     updatedAt: Date;
-    shareToken?: string;
+    publishedAt?: Date | undefined;
+    shareToken?: string | undefined;
     isShared: boolean;
     authorName: string;
+
+    // Series and History
+    seriesId?: string | undefined;
+    scheduledDate?: Date | undefined;  // Planned preaching date from planner
+    preachingHistory: PreachingLog[];
 
     // Wizard progress for in-progress sermons
     wizardProgress?: {
@@ -23,7 +36,17 @@ export interface Sermon {
         homiletics?: HomileticalAnalysis;
         draft?: SermonContent;
         lastSaved: Date;
-    };
+        cacheName?: string;
+        selectedResourceIds?: string[];
+        // Track if this draft has been published
+        publishedCopyId?: string;  // ID of the most recent published copy
+        lastPublishedAt?: Date;    // When it was last published
+        publishCount?: number;      // How many times it's been published
+        planId?: string; // ID of the preaching plan this sermon belongs to
+    } | undefined;
+
+    // If this is a published copy, references the original draft sermon
+    sourceSermonId?: string | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -35,14 +58,18 @@ export class SermonEntity implements Sermon {
         public bibleReferences: string[] = [],
         public tags: string[] = [],
         public category: string | undefined = undefined,
-        public status: 'draft' | 'published' | 'archived' = 'draft',
+        public status: 'working' | 'draft' | 'published' | 'archived' = 'working',
         public createdAt: Date = new Date(),
         public updatedAt: Date = new Date(),
         public publishedAt: Date | undefined = undefined,
         public shareToken: string | undefined = undefined,
         public isShared: boolean = false,
         public authorName: string = 'Pastor',
-        public wizardProgress?: Sermon['wizardProgress']
+        public wizardProgress?: Sermon['wizardProgress'],
+        public seriesId?: string,
+        public scheduledDate?: Date,
+        public preachingHistory: PreachingLog[] = [],
+        public sourceSermonId?: string
     ) {
         this.validate();
     }
@@ -64,7 +91,7 @@ export class SermonEntity implements Sermon {
     }
 
     static create(
-        data: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+        data: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt' | 'preachingHistory'> & { id?: string, preachingHistory?: PreachingLog[] }
     ): SermonEntity {
         const d = data as any;
         return new SermonEntity(
@@ -75,14 +102,18 @@ export class SermonEntity implements Sermon {
             data.bibleReferences ?? [],
             data.tags ?? [],
             data.category,
-            data.status ?? 'draft',
+            data.status ?? 'working',
             new Date(),
             new Date(),
             d.publishedAt,
             d.shareToken,
             d.isShared ?? false,
             d.authorName ?? 'Pastor',
-            data.wizardProgress
+            data.wizardProgress,
+            data.seriesId,
+            data.scheduledDate,
+            data.preachingHistory ?? [],
+            data.sourceSermonId
         );
     }
 
@@ -103,7 +134,11 @@ export class SermonEntity implements Sermon {
             d.shareToken ?? this.shareToken,
             d.isShared ?? this.isShared,
             d.authorName ?? this.authorName,
-            data.wizardProgress ?? this.wizardProgress
+            data.wizardProgress ?? this.wizardProgress,
+            data.seriesId ?? this.seriesId,
+            data.scheduledDate ?? this.scheduledDate,
+            data.preachingHistory ?? this.preachingHistory,
+            d.sourceSermonId ?? this.sourceSermonId
         );
     }
 
@@ -122,7 +157,54 @@ export class SermonEntity implements Sermon {
             new Date(),
             this.shareToken,
             this.isShared,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory,
+            this.sourceSermonId
+        );
+    }
+
+    /**
+     * Creates a published COPY of this sermon with a new ID.
+     * The copy references this sermon as the source (sourceSermonId).
+     * Used when publishing from the wizard without losing the draft.
+     */
+    publishAsCopy(): SermonEntity {
+        // Use draft content from wizardProgress if main content is empty
+        let draftContent = '';
+        if (this.wizardProgress?.draft) {
+            const draft = this.wizardProgress.draft;
+            draftContent = `${draft.title}\n\n${draft.introduction}\n\n`;
+            draft.body.forEach((point) => {
+                draftContent += `${point.point}\n\n${point.content}\n\n`;
+            });
+            draftContent += draft.conclusion;
+        }
+        const contentToPublish = this.content || draftContent || '';
+        const titleToPublish = this.title || this.wizardProgress?.passage || 'Sermón';
+
+        return new SermonEntity(
+            crypto.randomUUID(), // New ID for the copy
+            this.userId,
+            titleToPublish,
+            contentToPublish,
+            this.bibleReferences,
+            this.tags,
+            this.category,
+            'published',
+            new Date(), // New creation date
+            new Date(),
+            new Date(), // Published now
+            undefined, // No share token yet
+            false,
+            this.authorName,
+            undefined, // Don't copy wizardProgress to published version
+            this.seriesId,
+            this.scheduledDate,
+            [],
+            this.id // Link back to the source draft
         );
     }
 
@@ -141,7 +223,12 @@ export class SermonEntity implements Sermon {
             this.publishedAt,
             this.shareToken,
             this.isShared,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory,
+            this.sourceSermonId
         );
     }
 
@@ -160,7 +247,12 @@ export class SermonEntity implements Sermon {
             this.publishedAt,
             this.shareToken ?? crypto.randomUUID(),
             true,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory,
+            this.sourceSermonId
         );
     }
 
@@ -179,7 +271,26 @@ export class SermonEntity implements Sermon {
             this.publishedAt,
             this.shareToken,
             false,
-            this.authorName
+            this.authorName,
+            this.wizardProgress,
+            this.seriesId,
+            this.scheduledDate,
+            this.preachingHistory,
+            this.sourceSermonId
         );
+    }
+
+    addPreachingLog(log: PreachingLog): SermonEntity {
+        return this.update({
+            preachingHistory: [...this.preachingHistory, log]
+        });
+    }
+
+    assignToSeries(seriesId: string): SermonEntity {
+        return this.update({ seriesId });
+    }
+
+    removeFromSeries(): SermonEntity {
+        return this.update({ seriesId: undefined } as any);
     }
 }

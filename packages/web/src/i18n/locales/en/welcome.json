@@ -1,0 +1,22 @@
+{
+    "header": {
+        "title": "Welcome to DosFilos.Preach!",
+        "subtitle": "Choose the perfect plan to empower your preaching ministry"
+    },
+    "loading": "Loading plans...",
+    "plans": {
+        "mostPopular": "Most Popular",
+        "perMonth": "/month",
+        "moreFeatures": "more features",
+        "subscribe": "Subscribe",
+        "subscribing": "Loading..."
+    },
+    "freePlan": {
+        "continueButton": "Continue with free plan →",
+        "changeAnytime": "You can change your plan anytime from settings"
+    },
+    "errors": {
+        "planNotAvailable": "Plan not available. Please try again later.",
+        "checkoutFailed": "Error creating payment session"
+    }
+}

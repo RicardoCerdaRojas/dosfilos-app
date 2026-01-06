@@ -16,7 +16,7 @@ export function SermonEditPage() {
     
     try {
       await updateSermon(id, data);
-      navigate(`/sermons/${id}`);
+      navigate(`/dashboard/sermons/${id}`);
     } catch (error) {
       // Error already handled by hook with toast
     }
@@ -37,7 +37,7 @@ export function SermonEditPage() {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <h2 className="text-2xl font-semibold">Sermón no encontrado</h2>
-        <Button onClick={() => navigate('/sermons')}>
+        <Button onClick={() => navigate('/dashboard/sermons')}>
           Volver a sermones
         </Button>
       </div>
@@ -51,7 +51,7 @@ export function SermonEditPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate(`/sermons/${id}`)}
+          onClick={() => navigate(`/dashboard/sermons/${id}`)}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -70,6 +70,7 @@ export function SermonEditPage() {
             content: sermon.content,
             bibleReferences: sermon.bibleReferences,
             tags: sermon.tags,
+            authorName: sermon.authorName,
             status: sermon.status,
           }}
           onSubmit={handleSubmit}

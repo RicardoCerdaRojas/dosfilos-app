@@ -55,6 +55,8 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-width: 14rem;
+    --sidebar-width-icon: 3rem;
   }
 
   .dark {
@@ -95,6 +97,39 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  /* Force light mode when .light class is used (for Landing page) */
+  .light,
+  .dark .light {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 45 93% 47%;
+    --secondary-foreground: 222 47% 11%;
+
+    --accent: 142 76% 36%;
+    --accent-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+
+    --ring: 221 83% 53%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
   }
 
   /* Color Theme: Purple Pastoral */
@@ -222,4 +257,22 @@
       background-position: 0% 50%;
     }
   }
+}
+
+/* Sidebar width utilities for shadcn/ui */
+.w-\(--sidebar-width\) {
+  width: var(--sidebar-width);
+}
+
+.w-\(--sidebar-width-icon\) {
+  width: var(--sidebar-width-icon);
+}
+
+/* Group data modifiers for sidebar collapse */
+.group-data-\[collapsible\=icon\]\:w-\(--sidebar-width-icon\)[data-collapsible="icon"] {
+  width: var(--sidebar-width-icon);
+}
+
+.group[data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:w-\(--sidebar-width-icon\) {
+  width: var(--sidebar-width-icon);
 }

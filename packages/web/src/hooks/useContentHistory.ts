@@ -82,7 +82,6 @@ export function useContentHistory(
     // Save history to localStorage whenever it changes (but only after initial load)
     useEffect(() => {
         if (!isLoaded) {
-            console.log('⏸️ Skipping save - not loaded yet');
             return;
         }
 
@@ -106,7 +105,7 @@ export function useContentHistory(
         aiSuggestion?: string
     ) => {
         const version: SectionVersion = {
-            id: `${sectionId}-${Date.now()}`,
+            id: `${sectionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             sectionId,
             content: JSON.parse(JSON.stringify(content)), // Deep clone
             timestamp: new Date(),

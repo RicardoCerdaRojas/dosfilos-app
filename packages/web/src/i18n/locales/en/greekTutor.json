@@ -1,0 +1,220 @@
+{
+    "title": "Greek Tutor",
+    "loading": {
+        "title": "Preparing Your Study Session",
+        "subtitle": "Analyzing the biblical passage with advanced exegetical tools",
+        "steps": {
+            "grammar": "Consulting standard grammars",
+            "forms": "Identifying relevant Greek forms",
+            "context": "Analyzing exegetical context",
+            "units": "Preparing training units"
+        },
+        "progress": "Progress",
+        "estimatedTime": "~15-30 seconds",
+        "footer": "Faithful study of Scripture honors God and edifies His people",
+        "tipTitle": "Study Tip",
+        "tips": [
+            "Greek word order is flexible thanks to its case system",
+            "Greek verb tenses communicate aspect more than chronological time",
+            "Pay attention to prepositions, as they often carry deep theological nuances",
+            "The definite article in Greek functions differently than in English",
+            "Participles are verbal adjectives that share characteristics of both"
+        ]
+    },
+    "description": "The ecosystem of tools for biblical study and sermon preparation.",
+    "startTraining": "Start Training",
+    "mySessions": "My Sessions",
+    "biblicalPassage": "Biblical Passage",
+    "frequentPassages": "Frequent passages:",
+    "passageNotRecognized": "Passage not recognized",
+    "passageSelector": {
+        "label": "Biblical Passage",
+        "placeholder": "E.g.: John 3:16, Psalms 23",
+        "searchButton": "Start Study",
+        "searching": "Searching...",
+        "analyzing": "Analyzing...",
+        "invalidReference": "Invalid Reference",
+        "invalidReferenceDesc": "Please enter a valid biblical reference (e.g., John 3:16)."
+    },
+    "sections": {
+        "overview": "General Overview",
+        "wordStudy": "Word Study",
+        "learningReinforcement": "Learning Reinforcement"
+    },
+    "features": {
+        "readPassage": {
+            "title": "Read Passage",
+            "description": "Explore the biblical text in its original language with interactive tools to deepen your understanding.",
+            "preview": "Interactive transliteration",
+            "details": [
+                "View original Greek text with Spanish version options",
+                "Interactive transliteration for pronunciation",
+                "Click any Greek word to add to study units",
+                "Toggle between original and translation",
+                "Selected words highlighted in green"
+            ]
+        },
+        "syntax": {
+            "title": "Syntactic Structure",
+            "description": "Visualize grammatical relationships and clause hierarchy in the Greek text.",
+            "preview": {
+                "mainClause": "Main Clause",
+                "subordinateClause": "Subordinate Clause"
+            },
+            "details": [
+                "Hierarchical view of main and subordinate clauses",
+                "Syntactic relationships clearly marked",
+                "Expand/collapse controls for each level",
+                "Visual identification of grammatical roles",
+                "Understand the author's logical argument structure"
+            ]
+        },
+        "morphology": {
+            "title": "Morphological Analysis",
+            "description": "Detailed breakdown of each word into its basic morphological components.",
+            "preview": {
+                "root": "root",
+                "thematicVowel": "vowel",
+                "participle": "participle"
+            },
+            "details": [
+                "Visual separation of roots, prefixes, and suffixes",
+                "Explanation of each morpheme's meaning",
+                "Identification of tense, voice, mood, case, and number",
+                "Connection between form and grammatical function",
+                "Deepen understanding of Greek word construction"
+            ]
+        },
+        "recognitionKeys": {
+            "title": "Recognition Keys",
+            "description": "Morphological patterns helping you identify grammatical forms quickly.",
+            "details": [
+                "Key endings for verb tenses",
+                "Recognition patterns for cases",
+                "Voice and mood markers",
+                "Examples of each pattern in context",
+                "Develop reading skills without a dictionary"
+            ]
+        },
+        "contextFunction": {
+            "title": "Function in Context",
+            "description": "Understand the role each word plays within its clause and the full passage.",
+            "preview": {
+                "subject": "Subject",
+                "function": "Grammatical Function"
+            },
+            "details": [
+                "Identification of syntactic role (subject, object, modifier)",
+                "Relationship with other words in the clause",
+                "Connection to the passage's general argument",
+                "Theological importance of specific function",
+                "See how grammar serves meaning"
+            ]
+        },
+        "expertInsight": {
+            "title": "Expert Insight",
+            "description": "Deep perspectives from grammarians and exegetes on text meaning and implications.",
+            "preview": "Scholarly commentary...",
+            "details": [
+                "Expert explanations of author's grammatical choices",
+                "Theological nuances revealed by grammar",
+                "Connections to other NT usages",
+                "Applied hermeneutical perspectives",
+                "Transforms grammatical knowledge into theological understanding"
+            ]
+        },
+        "generalConcepts": {
+            "title": "General Concepts",
+            "description": "Reference library of fundamental Koine Greek concepts.",
+            "preview": {
+                "cases": "Greek Cases",
+                "tenses": "Verb Tenses",
+                "moods": "Moods"
+            },
+            "details": [
+                "Explanations of Greek cases",
+                "Guide to verb tenses and meanings",
+                "Description of moods",
+                "Voices and their uses",
+                "Quick access to fundamental knowledge"
+            ]
+        },
+        "tutorQuestions": {
+            "title": "Ask Tutor",
+            "description": "Ask personalized questions about any aspect of the text and receive contextualized answers.",
+            "preview": "How does this verb function here?",
+            "details": [
+                "Ask about grammar, syntax, or theology",
+                "Answers based on specific passage context",
+                "Personalized assistance for your level",
+                "Access to specialized hermeneutical resources",
+                "Learn at your own pace with expert guidance"
+            ]
+        },
+        "quiz": {
+            "title": "Comprehension Quiz",
+            "description": "Evaluate and reinforce your Greek understanding with interactive exercises.",
+            "preview": {
+                "identify": "Identify forms",
+                "analyze": "Analyze syntax"
+            },
+            "details": [
+                "Multiple choice questions on morphology and syntax",
+                "Immediate feedback with detailed explanations",
+                "Exercises based on the study passage",
+                "Track progress and improvement areas",
+                "Consolidate learning with active practice"
+            ]
+        },
+        "myInsights": {
+            "title": "My Insights",
+            "description": "View and manage your saved personal notes and insights."
+        }
+    },
+    "buttons": {
+        "viewExample": "View Example",
+        "explore": "Explore",
+        "ask": "Ask",
+        "practice": "Practice",
+        "view": "View"
+    },
+    "ui": {
+        "navigation": {
+            "back": "Back",
+            "greekTutor": "Greek Tutor",
+            "askTutor": "Ask Tutor",
+            "concepts": "Concepts",
+            "insights": "Insights",
+            "changePassage": "Change Passage"
+        }
+    },
+    "askTutor": {
+        "contextualMode": "Contextual",
+        "generalMode": "General",
+        "placeholderContextual": "Ask about this specific passage...",
+        "placeholderGeneral": "Ask a general Greek question...",
+        "pressEnterHint": "Press {{key}} to send",
+        "cancel": "Cancel",
+        "send": "Send",
+        "processing": "Thinking..."
+    },
+    "insights": {
+        "modalTitle": "My Insights",
+        "modalSubtitle": "Personal notes and theological reflections saved from your sessions."
+    },
+    "session": {
+        "back": "Back",
+        "changePassage": "Change Passage",
+        "askTutor": "Ask Tutor",
+        "concepts": "Concepts",
+        "insights": "Insights",
+        "studyUnits": "Study Units",
+        "learningReinforcement": "Learning Reinforcement",
+        "content": {
+            "analyzing": "Generating analysis..."
+        },
+        "errors": {
+            "syntaxFailed": "Analysis failed. Please try again."
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "header": {
+        "title": "Planes de Predicación",
+        "subtitle": "Organiza y planifica tus sermones",
+        "aiPlannerButton": "Planificador Asistido",
+        "newPlanButton": "Nuevo Plan"
+    },
+    "loading": "Cargando planes...",
+    "empty": {
+        "title": "No tienes planes aún",
+        "description": "Crea planes de predicación para organizar tus sermones.",
+        "aiPlannerButton": "Planificador Asistido",
+        "createButton": "Crear Primer Plan"
+    },
+    "sermonCount": "sermones",
+    "actions": {
+        "delete": "Eliminar"
+    },
+    "deleteDialog": {
+        "title": "¿Estás seguro?",
+        "description": "Esta acción eliminará el plan, pero los sermones asociados se mantendrán.",
+        "cancel": "Cancelar",
+        "confirm": "Eliminar",
+        "deleting": "Eliminando..."
+    }
+}

@@ -22,8 +22,19 @@ export class FirebaseSermonRepository implements ISermonRepository {
 
     async create(sermon: SermonEntity): Promise<SermonEntity> {
         const sermonRef = doc(db, this.collectionName, sermon.id);
-        await setDoc(sermonRef, this.sermonToFirestore(sermon));
-        return sermon;
+        const firestoreData = this.sermonToFirestore(sermon);
+
+
+        try {
+            await setDoc(sermonRef, firestoreData);
+
+            return sermon;
+        } catch (error: any) {
+            console.error('❌ Firestore setDoc error:', error);
+            console.error('❌ Error code:', error.code);
+            console.error('❌ Error message:', error.message);
+            throw error;
+        }
     }
 
     async update(sermon: SermonEntity): Promise<SermonEntity> {
@@ -38,14 +49,28 @@ export class FirebaseSermonRepository implements ISermonRepository {
     }
 
     async findById(id: string): Promise<SermonEntity | null> {
-        const sermonRef = doc(db, this.collectionName, id);
-        const snapshot = await getDoc(sermonRef);
 
-        if (!snapshot.exists()) {
-            return null;
+
+        try {
+            const sermonRef = doc(db, this.collectionName, id);
+            const snapshot = await getDoc(sermonRef);
+
+            if (!snapshot.exists()) {
+
+                return null;
+            }
+
+
+            return this.firestoreToSermon(snapshot.id, snapshot.data());
+        } catch (error: any) {
+            // Only log unexpected errors, not permission-denied (common when doc was deleted)
+            if (error.code !== 'permission-denied') {
+                console.error('❌ FirebaseSermonRepository.findById error:', error);
+                console.error('❌ Error code:', error.code);
+                console.error('❌ Error message:', error.message);
+            }
+            throw error;
         }
-
-        return this.firestoreToSermon(snapshot.id, snapshot.data());
     }
 
     async findByShareToken(token: string): Promise<SermonEntity | null> {
@@ -61,7 +86,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             return null;
         }
 
-        const doc = snapshot.docs[0];
+        const doc = snapshot.docs[0]!;
         return this.firestoreToSermon(doc.id, doc.data());
     }
 
@@ -115,6 +140,20 @@ export class FirebaseSermonRepository implements ISermonRepository {
         return snapshot.docs.map((doc) => this.firestoreToSermon(doc.id, doc.data()));
     }
 
+    async findByDraftId(draftId: string, userId: string): Promise<SermonEntity[]> {
+        console.log('🔎 FirebaseSermonRepository.findByDraftId:', draftId, 'for user:', userId);
+        const q = query(
+            collection(db, this.collectionName),
+            where('userId', '==', userId),
+            where('sourceSermonId', '==', draftId),
+            where('status', '==', 'published'),
+            orderBy('publishedAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+
+        return snapshot.docs.map((doc) => this.firestoreToSermon(doc.id, doc.data()));
+    }
+
     private sermonToFirestore(sermon: SermonEntity): any {
         return {
             userId: sermon.userId,
@@ -130,10 +169,17 @@ export class FirebaseSermonRepository implements ISermonRepository {
             shareToken: sermon.shareToken ?? null,
             isShared: sermon.isShared,
             authorName: sermon.authorName,
+            seriesId: sermon.seriesId ?? null,
+            scheduledDate: sermon.scheduledDate ? Timestamp.fromDate(sermon.scheduledDate) : null,
+            preachingHistory: sermon.preachingHistory.map(log => ({
+                ...log,
+                date: Timestamp.fromDate(log.date)
+            })),
             wizardProgress: sermon.wizardProgress ? {
                 ...sermon.wizardProgress,
                 lastSaved: Timestamp.fromDate(sermon.wizardProgress.lastSaved)
             } : null,
+            sourceSermonId: sermon.sourceSermonId ?? null,
         };
     }
 
@@ -152,10 +198,17 @@ export class FirebaseSermonRepository implements ISermonRepository {
             shareToken: d.shareToken,
             isShared: d.isShared,
             authorName: d.authorName,
+            seriesId: d.seriesId,
+            scheduledDate: d.scheduledDate?.toDate(),
+            preachingHistory: (d.preachingHistory ?? []).map((log: any) => ({
+                ...log,
+                date: log.date?.toDate() || new Date()
+            })),
             wizardProgress: d.wizardProgress ? {
                 ...d.wizardProgress,
                 lastSaved: d.wizardProgress.lastSaved?.toDate() || new Date()
             } : undefined,
+            sourceSermonId: d.sourceSermonId,
         });
     }
 }

@@ -1,0 +1,22 @@
+{
+    "header": {
+        "title": "¡Bienvenido a DosFilos.Preach!",
+        "subtitle": "Elige el plan perfecto para potenciar tu ministerio de predicación"
+    },
+    "loading": "Cargando planes...",
+    "plans": {
+        "mostPopular": "Más Popular",
+        "perMonth": "/mes",
+        "moreFeatures": "características más",
+        "subscribe": "Suscribirse",
+        "subscribing": "Cargando..."
+    },
+    "freePlan": {
+        "continueButton": "Continuar con plan gratuito →",
+        "changeAnytime": "Puedes cambiar tu plan en cualquier momento desde configuración"
+    },
+    "errors": {
+        "planNotAvailable": "Plan no disponible. Por favor intenta más tarde.",
+        "checkoutFailed": "Error al crear sesión de pago"
+    }
+}

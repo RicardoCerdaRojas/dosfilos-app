@@ -4,7 +4,7 @@ import { SectionCard } from './SectionCard';
 import { ExpandedSection } from './ExpandedSection';
 import { getValueByPath } from '@/utils/path-utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 /**
  * Props for ContentCanvas component
@@ -25,6 +25,8 @@ interface ContentCanvasProps<T = any> {
   getCurrentVersionId?: (sectionId: string) => string | undefined;
   onRestoreVersion?: (sectionId: string, versionId: string) => void;
   modifiedSections?: Set<string>;
+  onSectionUpdate?: (sectionId: string, newContent: any) => void;
+  onRegenerate?: (sectionId: string, itemIndex?: number) => void;
 }
 
 /**
@@ -49,10 +51,23 @@ export function ContentCanvas<T = any>({
   getSectionVersions,
   getCurrentVersionId,
   onRestoreVersion,
-  modifiedSections = new Set()
+  modifiedSections = new Set(),
+  onSectionUpdate,
+  onRegenerate
 }: ContentCanvasProps<T>) {
-  const sections = getSectionsForType(contentType);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const sections: SectionConfig[] = getSectionsForType(contentType);
+
+  // 🎯 Initialize readonly sections as collapsed
+  useEffect(() => {
+    const readonlySections = sections
+      .filter(s => s.readonly)
+      .map(s => s.id);
+    
+    if (readonlySections.length > 0) {
+      setCollapsedSections(new Set(readonlySections));
+    }
+  }, [contentType]); // Re-run when content type changes
 
   const toggleCollapse = (sectionId: string) => {
     setCollapsedSections(prev => {
@@ -102,6 +117,16 @@ export function ContentCanvas<T = any>({
               ? (versionId) => onRestoreVersion(section.id, versionId)
               : undefined
           }
+          onSave={
+            onSectionUpdate
+              ? (newContent) => onSectionUpdate(section.id, newContent)
+              : undefined
+          }
+          onRegenerate={
+            onRegenerate
+              ? (itemIndex) => onRegenerate(section.id, itemIndex)
+              : undefined
+          }
           isModified={isModified}
         />
       );
@@ -122,6 +147,8 @@ export function ContentCanvas<T = any>({
               key={section.id}
               section={section}
               content={sectionContent}
+              fullContent={content} // 🎯 NEW: Pass full content for related fields
+              contentType={contentType} // 🎯 NEW: Pass content type
               onExpand={() => onSectionExpand(section.id)}
               isModified={isModified}
               isCollapsed={isCollapsed}
