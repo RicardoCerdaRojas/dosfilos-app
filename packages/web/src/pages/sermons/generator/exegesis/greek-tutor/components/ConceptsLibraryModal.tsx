@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { GREEK_CAPSULES } from '../constants/greekCapsules';
 import { EducationalCapsule } from './EducationalCapsule';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslation } from '@/i18n';
 
 interface ConceptsLibraryModalProps {
     open: boolean;
@@ -18,6 +19,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
     open,
     onOpenChange
 }) => {
+    const { t } = useTranslation('greekTutor');
     const [currentIndex, setCurrentIndex] = useState(0);
     
     const currentCapsule = GREEK_CAPSULES[currentIndex];
@@ -62,9 +64,9 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                                 <BookOpen className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                                <DialogTitle className="text-xl">Biblioteca de Conceptos Clave</DialogTitle>
+                                <DialogTitle className="text-xl">{t('concepts.libraryTitle')}</DialogTitle>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                    {currentIndex + 1} de {GREEK_CAPSULES.length}
+                                    {t('concepts.counter', { current: currentIndex + 1, total: GREEK_CAPSULES.length })}
                                 </p>
                             </div>
                         </div>
@@ -140,7 +142,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                             className="flex-1"
                         >
                             <ChevronLeft className="h-4 w-4 mr-1" />
-                            Anterior
+                            {t('concepts.previous')}
                         </Button>
                         <div className="text-xs text-muted-foreground whitespace-nowrap">
                             {currentIndex + 1}/{GREEK_CAPSULES.length}
@@ -152,7 +154,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                             disabled={!canGoNext}
                             className="flex-1"
                         >
-                            Siguiente
+                            {t('concepts.next')}
                             <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                     </div>
@@ -160,7 +162,7 @@ export const ConceptsLibraryModal: React.FC<ConceptsLibraryModalProps> = ({
                     {/* Concept selector for mobile */}
                     <details className="mt-3">
                         <summary className="text-xs text-primary cursor-pointer hover:underline">
-                            Ir a otro concepto...
+                            {t('concepts.goToOtherConcept')}
                         </summary>
                         <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
                             {GREEK_CAPSULES.map((capsule, index) => (

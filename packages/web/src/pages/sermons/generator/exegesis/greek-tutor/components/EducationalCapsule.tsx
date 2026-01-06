@@ -4,6 +4,7 @@ import { Lightbulb } from 'lucide-react';
 import { GreekCapsule } from '../constants/greekCapsules';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useTranslation } from '@/i18n';
 
 export interface EducationalCapsuleProps {
     capsule: GreekCapsule;
@@ -18,6 +19,7 @@ export const EducationalCapsule: React.FC<EducationalCapsuleProps> = ({
     capsule,
     onRefresh 
 }) => {
+    const { t } = useTranslation('greekTutor');
     return (
         <div className="max-w-3xl mx-auto space-y-4">
             {/* Header */}
@@ -26,8 +28,8 @@ export const EducationalCapsule: React.FC<EducationalCapsuleProps> = ({
                     <Lightbulb className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-foreground">Concepto Clave del Griego Bíblico</h3>
-                    <p className="text-xs text-muted-foreground">Aprende mientras estudias</p>
+                    <h3 className="text-lg font-bold text-foreground">{t('concepts.keyConceptTitle')}</h3>
+                    <p className="text-xs text-muted-foreground">{t('concepts.keyConceptSubtitle')}</p>
                 </div>
             </div>
 
@@ -54,7 +56,7 @@ export const EducationalCapsule: React.FC<EducationalCapsuleProps> = ({
                     {capsule.example && (
                         <div className="pt-6 border-t border-primary/20">
                             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                                Ejemplo Práctico
+                                {t('concepts.practicalExample')}
                             </p>
                             <blockquote className="border-l-4 border-primary pl-4 py-3 bg-primary/5 rounded-r">
                                 <p className="text-sm text-foreground/90 italic leading-relaxed m-0">
@@ -69,14 +71,14 @@ export const EducationalCapsule: React.FC<EducationalCapsuleProps> = ({
             {/* Instruction */}
             <div className="text-center space-y-2 py-2">
                 <p className="text-sm text-muted-foreground">
-                    Selecciona una acción del panel lateral para comenzar tu estudio
+                    {t('concepts.selectActionPrompt')}
                 </p>
                 {onRefresh && (
                     <button
                         onClick={onRefresh}
                         className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors font-medium"
                     >
-                        Ver otro concepto
+                        {t('concepts.seeOtherConcept')}
                     </button>
                 )}
             </div>

@@ -450,6 +450,18 @@
             "save": "Guardar Insight"
         }
     },
+    "concepts": {
+        "libraryTitle": "Biblioteca de Conceptos Clave",
+        "counter": "{{current}} de {{total}}",
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "goToOtherConcept": "Ir a otro concepto...",
+        "seeOtherConcept": "Ver otro concepto",
+        "keyConceptTitle": "Concepto Clave del Griego Bíblico",
+        "keyConceptSubtitle": "Aprende mientras estudias",
+        "practicalExample": "Ejemplo Práctico",
+        "selectActionPrompt": "Selecciona una acción del panel lateral para comenzar tu estudio"
+    },
     "common": {
         "of": "de"
     },

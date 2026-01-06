@@ -450,6 +450,18 @@
             "save": "Save Insight"
         }
     },
+    "concepts": {
+        "libraryTitle": "Key Concepts Library",
+        "counter": "{{current}} of {{total}}",
+        "previous": "Previous",
+        "next": "Next",
+        "goToOtherConcept": "Go to another concept...",
+        "seeOtherConcept": "See another concept",
+        "keyConceptTitle": "Key Concept of Biblical Greek",
+        "keyConceptSubtitle": "Learn while you study",
+        "practicalExample": "Practical Example",
+        "selectActionPrompt": "Select an action from the side panel to begin your study"
+    },
     "common": {
         "of": "of"
     },
