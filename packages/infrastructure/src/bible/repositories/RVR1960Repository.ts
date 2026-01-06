@@ -1,5 +1,5 @@
 import { IBibleVersionRepository, BibleReference } from '@dosfilos/domain';
-import rvrBible from '@/assets/bible/rvr1960.json';
+import rvrBible from '../data/rvr1960.json';
 
 /**
  * RVR1960 Repository - Adapter for Spanish Reina-Valera 1960 Bible
@@ -155,9 +155,7 @@ export class RVR1960Repository implements IBibleVersionRepository {
         if (!q || q.length < 3) return [];
 
         let count = 0;
-        const books = rv
-
-        rBible as any[];
+        const books = rvrBible as any[];
 
         for (const book of books) {
             let bookName = book.id.toUpperCase();

@@ -85,17 +85,11 @@ export class LocalBibleService {
     }
 
     static parseReference(ref: string, locale?: string): BibleReference | null {
-        const detectedLocale = locale || this.detectLanguage(ref);
-        console.log('[LocalBibleService] parseReference:', { ref, locale, detectedLocale });
         return this.getRepository(locale, ref).parseReference(ref);
     }
 
     static getVerses(refString: string, locale?: string): string | null {
-        const detectedLocale = locale || this.detectLanguage(refString);
-        console.log('[LocalBibleService] getVerses:', { refString, locale, detectedLocale });
-        const result = this.getRepository(locale, refString).getVerses(refString);
-        console.log('[LocalBibleService] getVerses result:', result ? result.substring(0, 100) + '...' : 'null');
-        return result;
+        return this.getRepository(locale, refString).getVerses(refString);
     }
 
     /** Check if a book name/abbreviation is valid */
