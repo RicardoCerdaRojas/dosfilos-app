@@ -17,6 +17,7 @@ import { BiblicalPassage, PassageSyntaxAnalysis } from '@dosfilos/domain';
 import { useGreekTutor } from '../GreekTutorProvider';
 import { MorphologyBreakdown } from '@dosfilos/domain';
 import { TutorResponseDisplay } from './TutorResponseDisplay';
+import { useTranslation } from '@/i18n';
 
 export interface BoardContent {
     type: 'morphology' | 'recognition' | 'context' | 'significance' | 'chat' | 'quiz' | 'passage' | 'syntax';
@@ -67,6 +68,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
     onSaveInsight,
     onRetrySyntax
 }) => {
+    const { t } = useTranslation('greekTutor');
     const [currentCapsule, setCurrentCapsule] = useState(() => getRandomCapsule());
     const { generateQuiz, submitQuizAnswer } = useGreekTutor();
 
@@ -91,10 +93,10 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
         return (
             <div className="h-full flex items-start justify-start pt-20">
                 <div className="text-center space-y-4 w-full">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-                    <p className="text-sm text-muted-foreground">
-                        Consultando con el tutor...
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                        <Loader2 className="h-8 w-8 animate-spin mb-3" />
+                        {t('askTutor.tutorConsulting')}
+                    </div>
                 </div>
             </div>
         );

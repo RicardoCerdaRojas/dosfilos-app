@@ -429,7 +429,10 @@
         "pressEnterHint": "Press {key} to send",
         "processing": "Processing...",
         "cancel": "Cancel",
-        "send": "Send"
+        "send": "Send",
+        "tutorConsulting": "Consulting with tutor...",
+        "yourQuestion": "Your Question",
+        "tutorResponse": "Tutor Response"
     },
     "common": {
         "of": "of"
