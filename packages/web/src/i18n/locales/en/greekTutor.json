@@ -186,6 +186,20 @@
             "concepts": "Concepts",
             "insights": "Insights",
             "changePassage": "Change Passage"
+        },
+        "sidebar": {
+            "generalContext": "GENERAL CONTEXT",
+            "readPassage": "Read Passage",
+            "exploreFullText": "Explore the full text",
+            "syntacticStructure": "Syntactic Structure",
+            "seeClauses": "View clauses and relationships",
+            "studyUnits": "STUDY UNITS",
+            "learningReinforcement": "LEARNING REINFORCEMENT",
+            "comprehensionQuiz": "Comprehension Quiz",
+            "practiceWhat": "Practice what you learned",
+            "deleteUnit": "Delete unit",
+            "deleteConfirm": "Delete \"{{word}}\" from units?",
+            "autoMorphologyTip": "Selecting a word will automatically show its morphological analysis"
         }
     },
     "askTutor": {
@@ -193,10 +207,12 @@
         "generalMode": "General",
         "placeholderContextual": "Ask about this specific passage...",
         "placeholderGeneral": "Ask a general Greek question...",
-        "pressEnterHint": "Press {{key}} to send",
+        "pressEnterHint": "Press <kbd>{{key}}</kbd> to send",
         "cancel": "Cancel",
         "send": "Send",
-        "processing": "Thinking..."
+        "processing": "Thinking...",
+        "responseTitle": "Tutor Response",
+        "yourQuestion": "Your question:"
     },
     "insights": {
         "modalTitle": "My Insights",
@@ -214,7 +230,131 @@
             "analyzing": "Generating analysis..."
         },
         "errors": {
-            "syntaxFailed": "Analysis failed. Please try again."
+            "syntaxFailed": "Analysis failed. Please try again.",
+            "general": "There was an error processing your question. Please try again."
         }
+    },
+    "syntax": {
+        "title": "Syntactic Structure",
+        "helpTooltip": "View help guide",
+        "collapseAll": "Collapse All",
+        "expandAll": "Expand All",
+        "generalDescription": "General Description",
+        "legend": "Legend",
+        "words": "words",
+        "mainVerb": "Main verb at position",
+        "analyzeWord": "Analyze word",
+        "clauseTypes": {
+            "main": "Main",
+            "purposeIna": "Purpose (ἵνα)",
+            "resultHoste": "Result (ὥστε)",
+            "causal": "Causal (ὅτι, γάρ)",
+            "conditional": "Conditional (εἰ)",
+            "temporal": "Temporal (ὅτε)",
+            "indirectQuestion": "Indirect Question",
+            "participial": "Participial",
+            "infinitival": "Infinitival",
+            "relative": "Relative (ὅς)"
+        },
+        "onboarding": {
+            "welcome": "Welcome to Syntactic Analysis!",
+            "intro": "This tool helps you understand the Greek text structure before studying individual words.",
+            "steps": "I'll show you the key elements in 5 quick steps.",
+            "skipTip": "💡 You can skip this tutorial at any time",
+            "step1Title": "📖 General Overview",
+            "step1Content": "Read this blue box first. It gives you the full picture of the passage's argument.",
+            "step1Question": "Question: \"What is the main idea?\"",
+            "step2Title": "🔵 Main Clause",
+            "step2Content1": "Clauses with blue background are the main ones - the backbone of the text.",
+            "step2Content2": "Identify the main verb (position indicated below) and the subject.",
+            "step3Title": "↪️ Subordinate Clauses",
+            "step3Content1": "Indented clauses depend on the main one.",
+            "step3Content2": "The color tells you its function: green (purpose), orange (cause), etc.",
+            "step3Question": "Question: \"How does this clause modify the main one?\"",
+            "step4Title": "🎯 View Controls",
+            "step4Content": "Use these buttons to control what you see:",
+            "step4Collapse": "Collapse All: Only main clauses (for overview)",
+            "step4Expand": "Expand All: See full structure",
+            "step4Tip": "💡 Start collapsed to avoid being overwhelmed",
+            "step5Title": "🎨 Color Legend",
+            "step5Content1": "Each color represents a clause type with a specific function.",
+            "step5Content2": "For example: Green = Purpose (\"so that...\"), Orange = Cause (\"because...\")",
+            "step5Done": "✅ Ready! Now you know how to use syntactic analysis.",
+            "back": "Back",
+            "close": "Close",
+            "last": "Finish",
+            "next": "Next",
+            "skip": "Skip"
+        }
+    },
+    "quiz": {
+        "quizTitle": "Comprehension Quiz",
+        "practiceTitle": "Practice your comprehension",
+        "questionCounter": "Question {{current}} of {{total}}",
+        "generatingQuiz": "Generating quiz...",
+        "verifyAnswer": "Verify Answer",
+        "skip": "Skip",
+        "nextQuestion": "Next Question",
+        "correct": "Correct!",
+        "incorrect": "Incorrect",
+        "quizCompleted": "Quiz completed!",
+        "trueOption": "True",
+        "falseOption": "False",
+        "testPrompt": "Test what you have learned about",
+        "masteryLevels": {
+            "notSeen": "Not seen",
+            "seen": "Seen",
+            "practiced": "Practiced",
+            "mastered": "Mastered"
+        }
+    },
+    "morphology": {
+        "analysisTitle": "Analysis of the components that form this Greek word",
+        "structure": "Structure",
+        "components": "Components",
+        "synthesis": "Synthesis",
+        "pedagogicalTip": "Pedagogical Tip",
+        "tipContent": "Observe how the prefix changes the nuances of the root verb.",
+        "componentTypes": {
+            "prefix": "Prefix",
+            "root": "Root",
+            "formative": "Formative",
+            "ending": "Ending",
+            "other": "Other"
+        }
+    },
+    "wordAnalysis": {
+        "ariaLabel": "Word Analysis Toolbar",
+        "analyze": "Analyze",
+        "recognition": {
+            "label": "Keys",
+            "description": "Recognition Keys"
+        },
+        "context": {
+            "label": "Function",
+            "description": "Function in Context"
+        },
+        "significance": {
+            "label": "Theology",
+            "description": "Theological Significance"
+        }
+    },
+    "concepts": {
+        "libraryTitle": "Key Concepts Library",
+        "counter": "{{current}} of {{total}}",
+        "previous": "Previous",
+        "next": "Next",
+        "goToOtherConcept": "View another concept",
+        "keyConceptTitle": "Biblical Greek Key Concept",
+        "keyConceptSubtitle": "Learn while you study",
+        "practicalExample": "Practical Example",
+        "selectActionPrompt": "Select an action from the side panel to start your study",
+        "seeOtherConcept": "View another concept"
+    },
+    "headers": {
+        "readPassage": "Read Full Passage",
+        "syntacticStructure": "Syntactic Structure",
+        "morphologicalDecomposition": "Morphological Decomposition",
+        "comprehensionQuiz": "Comprehension Quiz"
     }
 }

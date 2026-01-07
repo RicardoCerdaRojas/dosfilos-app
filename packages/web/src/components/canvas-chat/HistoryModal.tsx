@@ -234,29 +234,33 @@ export function HistoryModal({
                 </div>
 
                 {/* Content Area */}
-                <ScrollArea className="flex-1 p-6 bg-background">
-                  {viewMode === 'diff' && previousVersion ? (
-                    <div>
-                      <div className="mb-4 p-4 bg-muted/50 rounded-lg border">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">
-                          Comparando con versión anterior
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {previousVersion.changeDescription} • {formatRelativeTime(previousVersion.timestamp)}
-                        </p>
-                      </div>
-                      <DiffViewer
-                        oldContent={previousVersion.content}
-                        newContent={selectedVersion.content}
-                        contentType={section.type}
-                      />
+                <div className="flex-1 min-h-0">
+                  <ScrollArea className="h-full bg-background">
+                    <div className="p-6">
+                      {viewMode === 'diff' && previousVersion ? (
+                        <div>
+                          <div className="mb-4 p-4 bg-muted/50 rounded-lg border">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">
+                              Comparando con versión anterior
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {previousVersion.changeDescription} • {formatRelativeTime(previousVersion.timestamp)}
+                            </p>
+                          </div>
+                          <DiffViewer
+                            oldContent={previousVersion.content}
+                            newContent={selectedVersion.content}
+                            contentType={section.type}
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          {renderContent(selectedVersion.content)}
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div>
-                      {renderContent(selectedVersion.content)}
-                    </div>
-                  )}
-                </ScrollArea>
+                  </ScrollArea>
+                </div>
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">

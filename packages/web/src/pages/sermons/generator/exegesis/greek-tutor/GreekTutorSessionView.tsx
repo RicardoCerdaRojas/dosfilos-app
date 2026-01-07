@@ -24,7 +24,7 @@ import { useGreekTutorBoard } from './hooks/useGreekTutorBoard';
 import { formatSessionExport, copyToClipboard, downloadAsMarkdown } from './utils/exportUtils';
 import { ConceptsLibraryModal } from './components/ConceptsLibraryModal';
 import { InsightsViewer } from './components/InsightsViewer';
-import { useTranslation } from '@/i18n';
+import { useTranslation, Trans } from 'react-i18next';
 
 
 // Inline PassagePreview component
@@ -407,7 +407,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         setLoadingMorphology(unitId);
         try {
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
-            const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+            const detectedLang = userLangObj.of(i18n.language.split('-')[0]) || 'Spanish';
             
             // Phase 3C: Pass sessionId and unitId for persistence
             const breakdown = await explainMorphology.execute(
@@ -434,7 +434,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         if (!question.trim()) return '';
         
         const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
-        const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+        const detectedLang = userLangObj.of(i18n.language.split('-')[0]) || 'Spanish';
         
         // General mode - use answerFreeQuestion without specific context
         if (chatMode === 'general') {
@@ -1342,7 +1342,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 {/* Action buttons */}
                                 <div className="flex items-center justify-between">
                                     <p className="text-[10px] text-muted-foreground">
-                                        {t('askTutor.pressEnterHint', { key: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Enter</kbd> })}
+                                        <Trans i18nKey="askTutor.pressEnterHint" values={{ key: 'Enter' }} components={{ kbd: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]" /> }} />
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
@@ -1524,13 +1524,17 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         />
                     </main>
 
-                    {/* Floating Word Analysis Toolbar */}
-                    <WordAnalysisToolbar
-                        currentUnit={currentUnit ?? null}
-                        activeAction={activeAction}
-                        onActionClick={(action) => handleActionClick(action)}
-                        isLoading={isBoardLoading}
-                    />
+                    {/* Floating Word Analysis Toolbar - ONLY for Study Units (when not in other modes) */}
+                {isActive && activeAction !== 'passage' && activeAction !== 'syntax' && activeAction !== 'quiz' && (
+                    <div className="absolute top-6 right-6 z-20">
+                        <WordAnalysisToolbar
+                            currentUnit={currentUnit ?? null}
+                            activeAction={activeAction}
+                            onActionClick={(action) => handleActionClick(action)}
+                            isLoading={isBoardLoading}
+                        />
+                    </div>
+                )}
                 </div>
             )}
             
