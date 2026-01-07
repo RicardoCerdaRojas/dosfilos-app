@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSermon } from '@/hooks/use-sermons';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const formatTime = (seconds: number) => {
 };
 
 export function PreachModePage() {
+  const { t } = useTranslation('sermonDetail');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { sermon, loading } = useSermon(id);
@@ -52,6 +54,7 @@ export function PreachModePage() {
   // Bible Viewer State
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
   const [bibleText, setBibleText] = useState<string | null>(null);
+  const [bibleVersion, setBibleVersion] = useState<string>('');
   const [loadingBible, setLoadingBible] = useState(false);
   
   // Highlights
@@ -153,12 +156,15 @@ export function PreachModePage() {
       
       if (text) {
         setBibleText(text);
+        setBibleVersion(LocalBibleService.getVersionName(ref));
       } else {
-        setBibleText('No se pudo encontrar el texto. Verifique la referencia.');
+        setBibleText(t('preachMode.bible.notFound'));
+        setBibleVersion('');
       }
     } catch (error) {
       console.error('Error fetching bible text:', error);
-      setBibleText('Error al cargar el texto bíblico.');
+      setBibleText(t('preachMode.bible.error'));
+      setBibleVersion('');
     } finally {
       setLoadingBible(false);
     }
@@ -320,7 +326,7 @@ export function PreachModePage() {
   };
 
   if (loading || !sermon) {
-    return <div className="flex items-center justify-center h-screen">Cargando...</div>;
+    return <div className="flex items-center justify-center h-screen">{t('preachMode.loading')}</div>;
   }
 
   // Timer Color Logic
@@ -341,7 +347,7 @@ export function PreachModePage() {
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/sermons/${id}`)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Salir
+            {t('preachMode.exit')}
           </Button>
           {/* Hide title on tablet and below, show only on large screens */}
           <div className="h-6 w-px bg-border hidden lg:block" />
@@ -391,7 +397,7 @@ export function PreachModePage() {
             variant={isFullscreen ? "default" : "outline"} 
             size="icon"
             onClick={() => isFullscreen ? exitFullscreen() : enterFullscreen()}
-            title={isFullscreen ? "Salir Full Screen" : "Full Screen"}
+            title={isFullscreen ? t('preachMode.exitFullScreen') : t('preachMode.fullScreen')}
           >
             {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
           </Button>
@@ -412,13 +418,13 @@ export function PreachModePage() {
             <div className="flex items-center gap-2">
               <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full flex items-center gap-1.5">
                 <div className="h-2 w-2 rounded-full bg-yellow-400" />
-                <span>{highlights.length} resaltado{highlights.length !== 1 ? 's' : ''}</span>
+                <span>{t('preachMode.highlights', { count: highlights.length })}</span>
               </div>
               <Button 
                 variant="outline" 
                 size="icon"
                 onClick={clearAllHighlights}
-                title="Limpiar todos los resaltados"
+                title={t('preachMode.clearHighlights')}
               >
                 <Eraser className="h-4 w-4" />
               </Button>
@@ -502,7 +508,7 @@ export function PreachModePage() {
               {formatTime(timeLeft)}
             </span>
             {timeLeft <= 5 * 60 && (
-              <span className="text-xs font-medium opacity-80">¡Tiempo!</span>
+              <span className="text-xs font-medium opacity-80">{t('preachMode.timeUp')}</span>
             )}
           </div>
         </div>
@@ -512,11 +518,11 @@ export function PreachModePage() {
       <Dialog open={showTimerSettings} onOpenChange={setShowTimerSettings}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Configurar Temporizador</DialogTitle>
+            <DialogTitle>{t('preachMode.timer.settings')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Duración del Sermón (minutos)</Label>
+              <Label>{t('preachMode.timer.duration')}</Label>
               <Input 
                 type="number" 
                 value={targetDuration} 
@@ -528,7 +534,7 @@ export function PreachModePage() {
               setTimeLeft(targetDuration * 60);
               setShowTimerSettings(false);
             }} className="w-full">
-              Guardar y Reiniciar
+              {t('preachMode.timer.saveAndReset')}
             </Button>
           </div>
         </DialogContent>
@@ -554,7 +560,7 @@ export function PreachModePage() {
               </div>
             )}
             <div className="mt-4 text-xs text-muted-foreground text-right">
-              Fuente: Reina Valera 1960
+              {bibleVersion && t('preachMode.bible.source', { version: bibleVersion })}
             </div>
           </div>
         </DialogContent>
@@ -566,7 +572,7 @@ export function PreachModePage() {
           className="fixed inset-0 bg-black z-[100] flex items-center justify-center cursor-pointer"
           onClick={() => setIsBlackout(false)}
         >
-          <div className="text-white/50 text-sm">Presiona B o haz clic para continuar</div>
+          <div className="text-white/50 text-sm">{t('preachMode.blackout')}</div>
         </div>
       )}
 
@@ -586,8 +592,8 @@ export function PreachModePage() {
           style={{ animationDelay: '500ms' }}
         >
           <div className="space-y-1">
-            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">B</kbd> = Pantalla negra</div>
-            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">ESC</kbd> = Salir fullscreen</div>
+            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">B</kbd> = {t('preachMode.shortcuts.blackout')}</div>
+            <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">ESC</kbd> = {t('preachMode.shortcuts.exit')}</div>
           </div>
         </div>
       )}

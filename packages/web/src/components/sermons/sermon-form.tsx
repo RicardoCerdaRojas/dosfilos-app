@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { TagInput } from './tag-input';
+import { useTranslation } from 'react-i18next';
 
 export type SermonFormData = {
   title: string;
@@ -34,6 +35,11 @@ export function SermonForm({
   submitLabel = 'Guardar',
   loading = false,
 }: SermonFormProps) {
+  const { t } = useTranslation('sermonDetail');
+  
+  // Use localized label if default default, otherwise respect prop
+  const resolvedSubmitLabel = submitLabel === 'Guardar' ? t('form.save') : submitLabel;
+
   const [title, setTitle] = useState(defaultValues?.title || '');
   const [category, setCategory] = useState(defaultValues?.category || '');
   const [content, setContent] = useState(defaultValues?.content || '');
@@ -49,12 +55,13 @@ export function SermonForm({
     // Simple validation
     const newErrors: Record<string, string> = {};
     
+    
     if (!title || title.length < 5) {
-      newErrors.title = 'El título debe tener al menos 5 caracteres';
+      newErrors.title = t('form.titleError');
     }
     
     if (!content || content.trim().length === 0) {
-      newErrors.content = 'El contenido es requerido';
+      newErrors.content = t('form.contentError');
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -79,12 +86,12 @@ export function SermonForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
       <div className="space-y-2">
-        <Label htmlFor="title">Título del Sermón *</Label>
+        <Label htmlFor="title">{t('form.title')} *</Label>
         <Input
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Ej: El amor de Dios"
+          placeholder={t('form.titlePlaceholder')}
           disabled={loading}
         />
         {errors.title && (
@@ -94,52 +101,52 @@ export function SermonForm({
 
       {/* Category */}
       <div className="space-y-2">
-        <Label htmlFor="category">Categoría</Label>
+        <Label htmlFor="category">{t('form.category')}</Label>
         <Select
           value={category}
           onValueChange={setCategory}
           disabled={loading}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecciona una categoría" />
+            <SelectValue placeholder={t('form.categoryPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="evangelismo">Evangelismo</SelectItem>
-            <SelectItem value="discipulado">Discipulado</SelectItem>
-            <SelectItem value="adoracion">Adoración</SelectItem>
-            <SelectItem value="familia">Familia</SelectItem>
-            <SelectItem value="juventud">Juventud</SelectItem>
-            <SelectItem value="matrimonio">Matrimonio</SelectItem>
-            <SelectItem value="finanzas">Finanzas</SelectItem>
-            <SelectItem value="oracion">Oración</SelectItem>
-            <SelectItem value="otro">Otro</SelectItem>
+            <SelectItem value="evangelismo">{t('form.categories.evangelismo')}</SelectItem>
+            <SelectItem value="discipulado">{t('form.categories.discipulado')}</SelectItem>
+            <SelectItem value="adoracion">{t('form.categories.adoracion')}</SelectItem>
+            <SelectItem value="familia">{t('form.categories.familia')}</SelectItem>
+            <SelectItem value="juventud">{t('form.categories.juventud')}</SelectItem>
+            <SelectItem value="matrimonio">{t('form.categories.matrimonio')}</SelectItem>
+            <SelectItem value="finanzas">{t('form.categories.finanzas')}</SelectItem>
+            <SelectItem value="oracion">{t('form.categories.oracion')}</SelectItem>
+            <SelectItem value="otro">{t('form.categories.otro')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Author Name */}
       <div className="space-y-2">
-        <Label htmlFor="authorName">Autor</Label>
+        <Label htmlFor="authorName">{t('form.author')}</Label>
         <Input
           id="authorName"
           value={authorName}
           onChange={(e) => setAuthorName(e.target.value)}
-          placeholder="Ej: Pastor Juan Pérez"
+          placeholder={t('form.authorPlaceholder')}
           disabled={loading}
         />
         <p className="text-xs text-muted-foreground">
-          Nombre del predicador (opcional)
+          {t('form.authorHelp')}
         </p>
       </div>
 
       {/* Content */}
       <div className="space-y-2">
-        <Label>Contenido del Sermón *</Label>
+        <Label>{t('form.content')} *</Label>
         <textarea
           className="w-full min-h-[300px] p-4 border rounded-lg"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Escribe el contenido de tu sermón..."
+          placeholder={t('form.contentPlaceholder')}
           disabled={loading}
         />
         {errors.content && (
@@ -149,35 +156,35 @@ export function SermonForm({
 
       {/* Bible References */}
       <div className="space-y-2">
-        <Label>Referencias Bíblicas</Label>
+        <Label>{t('form.bibleRefs')}</Label>
         <TagInput
           tags={bibleReferences}
           onChange={setBibleReferences}
-          placeholder="Ej: Juan 3:16, Romanos 8:28"
+          placeholder={t('form.bibleRefsPlaceholder')}
           disabled={loading}
         />
         <p className="text-xs text-muted-foreground">
-          Agrega las referencias bíblicas que usarás en el sermón
+          {t('form.bibleRefsHelp')}
         </p>
       </div>
 
       {/* Tags */}
       <div className="space-y-2">
-        <Label>Etiquetas</Label>
+        <Label>{t('form.tags')}</Label>
         <TagInput
           tags={tags}
           onChange={setTags}
-          placeholder="Ej: salvación, gracia, fe"
+          placeholder={t('form.tagsPlaceholder')}
           disabled={loading}
         />
         <p className="text-xs text-muted-foreground">
-          Agrega etiquetas para organizar tus sermones
+          {t('form.tagsHelp')}
         </p>
       </div>
 
       {/* Status */}
       <div className="space-y-2">
-        <Label htmlFor="status">Estado</Label>
+        <Label htmlFor="status">{t('form.status')}</Label>
         <Select
           value={status}
           onValueChange={(value: any) => setStatus(value)}
@@ -187,9 +194,9 @@ export function SermonForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="draft">Borrador</SelectItem>
-            <SelectItem value="published">Publicado</SelectItem>
-            <SelectItem value="archived">Archivado</SelectItem>
+            <SelectItem value="draft">{t('status.draft')}</SelectItem>
+            <SelectItem value="published">{t('status.published')}</SelectItem>
+            <SelectItem value="archived">{t('status.archived')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -197,7 +204,7 @@ export function SermonForm({
       {/* Submit Button */}
       <div className="flex gap-4">
         <Button type="submit" disabled={loading} className="flex-1">
-          {loading ? 'Guardando...' : submitLabel}
+          {loading ? t('form.saving') : resolvedSubmitLabel}
         </Button>
       </div>
     </form>

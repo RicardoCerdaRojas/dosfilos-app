@@ -109,7 +109,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
         <div className="h-full flex flex-col">
             {/* Scrollable content area - header is now in parent */}
             <ScrollArea className="flex-1">
-                <div className="p-6 max-w-5xl mx-auto">
+                <div className={content.type === 'passage' ? "w-full px-2 md:px-4 py-6" : "p-6 max-w-5xl mx-auto"}>
                     {/* Use visual component for morphology when data is available */}
                     {(() => {
                         if (content.type === 'morphology' && content.morphologyData) {
@@ -329,6 +329,7 @@ const PassageReaderWrapper: React.FC<{
     const [biblicalPassage, setBiblicalPassage] = useState<BiblicalPassage | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { i18n } = useTranslation();
     const { getPassageText } = useGreekTutor();
 
     useEffect(() => {
@@ -338,7 +339,9 @@ const PassageReaderWrapper: React.FC<{
             setError(null);
             
             try {
-                const result = await getPassageText.execute(passage, fileSearchStoreId);
+                // Determine language for AI instructions (defaults to Spanish if not English)
+                const language = i18n.language?.startsWith('en') ? 'English' : 'Spanish';
+                const result = await getPassageText.execute(passage, fileSearchStoreId, language);
                 setBiblicalPassage(result);
                 // Passage loaded successfully
             } catch (err) {

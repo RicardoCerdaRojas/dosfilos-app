@@ -77,6 +77,21 @@ export class LocalBibleService {
     }
 
     /**
+     * Get the language code ('en' or 'es') for a given reference
+     */
+    static getLanguage(ref: string): string {
+        return this.detectLanguage(ref);
+    }
+
+    /**
+     * Get the full version name based on the detected language
+     */
+    static getVersionName(ref: string): string {
+        const lang = this.detectLanguage(ref);
+        return lang === 'en' ? 'American Standard Version' : 'Reina Valera 1960';
+    }
+
+    /**
      * Get Bible repository for specified locale
      * If no locale specified, auto-detect from reference
      */

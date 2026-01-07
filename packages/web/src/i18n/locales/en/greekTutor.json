@@ -178,6 +178,87 @@
         "practice": "Practice",
         "view": "View"
     },
+    "dashboard": {
+        "title": "My Study Sessions",
+        "newSession": "New Session",
+        "loadingSessions": "Loading sessions...",
+        "loadError": "Error loading sessions",
+        "deleteConfirm": "Are you sure you want to delete this study session? This action cannot be undone.",
+        "deleteError": "Error deleting session. Please try again.",
+        "searchPlaceholder": "Search passage (e.g. Romans, John 3:16)...",
+        "noResults": "No results found",
+        "adjustFilters": "Try adjusting filters or search query",
+        "clearFilters": "Clear filters",
+        "showingCount": "Showing {{filtered}} of {{total}} sessions",
+        "statistics": {
+            "activeSessions": "Active Sessions",
+            "wordsStudied": "Words Studied",
+            "averageProgress": "Average Progress",
+            "lastActivity": "Last Activity",
+            "studyStreak": "Study Streak",
+            "streakDays_one": "{{count}} day",
+            "streakDays_other": "{{count}} days",
+            "tooltips": {
+                "masteryTitle": "🎯 Your Greek Mastery Level",
+                "masteryDesc": "Shows how well you are <0>mastering</0> the words you study.",
+                "calcTitle": "How it's calculated:",
+                "calcMastered": "• Word <0>mastered</0>: ≥50% quiz accuracy",
+                "calcAverage": "• Averaged across all your sessions",
+                "masteryTip": "💡 High progress = You are internalizing biblical Greek",
+                "streakTitle": "🔥 Keep the Momentum",
+                "streakDesc": "<0>Consistency</0> is key to mastering Greek. Don't break the chain!",
+                "streakCalcTitle": "How it works:",
+                "streakRule1": "• Counts consecutive study days",
+                "streakRule2": "• You have 1 grace day (study today or yesterday)",
+                "streakRule3": "• Breaks after > 1 day without activity",
+                "streakTip": "💪 10 mins daily > 2 hours once a week"
+            }
+        },
+        "sessionCard": {
+            "palabra_one": "word",
+            "palabra_other": "words",
+            "precision": "accuracy",
+            "dificil_one": "difficult",
+            "dificil_other": "difficult",
+            "progress": "Progress",
+            "wordsLearned": "{{completed}} of {{total}} words learned",
+            "continue": "Continue",
+            "viewDetails": "View Details"
+        },
+        "status": {
+            "new": "New",
+            "progress": "In progress",
+            "complete": "Completed",
+            "paused": "Paused"
+        },
+        "filters": {
+            "all": "All",
+            "empty": "Empty (0%)",
+            "started": "Started (1-50%)",
+            "half": "Advanced (51-99%)",
+            "complete": "Completed (100%)",
+            "sortByPlaceholder": "Sort by",
+            "mostRecent": "Most recent",
+            "oldest": "Oldest",
+            "azPassage": "A-Z (Passage)",
+            "byProgress": "By progress"
+        },
+        "menu": {
+            "duplicate": "Duplicate session",
+            "delete": "Delete",
+            "deleteTitle": "Delete session?",
+            "deleteDescription": "You are about to delete the session for {{passage}}. This action cannot be undone.",
+            "cancel": "Cancel",
+            "deleting": "Deleting..."
+        },
+        "cleanup": {
+            "button": "Clear empty sessions ({{count}})",
+            "cleaning": "Cleaning...",
+            "confirmTitle": "Are you sure you want to delete {{count}} empty session(s)?",
+            "confirmDescription": "These sessions have 0% progress and were created over 24 hours ago.\n\nThis action cannot be undone.",
+            "error": "Error cleaning up sessions. Please try again."
+        }
+    },
     "ui": {
         "navigation": {
             "back": "Back",
@@ -185,6 +266,12 @@
             "askTutor": "Ask Tutor",
             "concepts": "Concepts",
             "insights": "Insights",
+            "selectVersions": "Select versions...",
+            "rvr60": "RV60 (Spanish)",
+            "asv": "ASV (English)",
+            "greekOriginal": "Greek Original",
+            "transliteration": "Transliteration",
+            "wordsHighlighted": "Words highlighted",
             "changePassage": "Change Passage"
         },
         "sidebar": {
@@ -201,6 +288,24 @@
             "deleteConfirm": "Delete \"{{word}}\" from units?",
             "autoMorphologyTip": "Selecting a word will automatically show its morphological analysis"
         }
+    },
+    "wordPreview": {
+        "title": "Add word to units",
+        "previewFor": "Study unit preview for",
+        "greekWord": "Greek Word",
+        "transliteration": "Transliteration",
+        "identifying": "Identifying word...",
+        "grammaticalId": "Grammatical Identification",
+        "formDetails": "Form Details",
+        "lemma": "Lemma:",
+        "category": "Category:",
+        "gloss": "Gloss:",
+        "recognitionGuide": "Recognition Guide",
+        "error": "Error identifying word. Please try again.",
+        "cancel": "Cancel",
+        "addUnit": "Add Unit",
+        "clickToStudy": "Click to study",
+        "alreadyInUnits": "Already in your units"
     },
     "askTutor": {
         "contextualMode": "Contextual",

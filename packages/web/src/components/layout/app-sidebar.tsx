@@ -158,6 +158,13 @@ export function AppSidebar() {
       .slice(0, 2);
   };
 
+  const isRouteActive = (href: string) => {
+    if (href === '/dashboard') {
+      return location.pathname === href || location.pathname === `${href}/`;
+    }
+    return location.pathname.startsWith(href);
+  };
+
   return (
     <Sidebar collapsible="icon">
       {/* Header */}
@@ -191,7 +198,7 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.map((item) => {
-                    const isActive = location.pathname === item.href;
+                    const isActive = isRouteActive(item.href);
                     return (
                       <SidebarMenuItem key={item.name}>
                         <SidebarMenuButton asChild isActive={isActive}>
@@ -225,7 +232,7 @@ export function AppSidebar() {
                     v0.1.1
                   </span>
                   {adminNavigation.map((item) => {
-                    const isActive = location.pathname === item.href;
+                    const isActive = isRouteActive(item.href);
                     const isLeadsItem = item.href === '/admin/leads';
                     return (
                       <SidebarMenuItem key={item.name}>
