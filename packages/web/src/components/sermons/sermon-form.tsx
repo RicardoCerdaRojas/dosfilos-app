@@ -1,16 +1,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { TagInput } from './tag-input';
 import { useTranslation } from 'react-i18next';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SermonPreview } from './SermonPreview';
+import { SermonMetadataPanel } from './SermonMetadataPanel';
+import { RichSermonEditor } from '@/components/ui/RichSermonEditor';
+import { PanelRightClose, PanelRightOpen, Save } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export type SermonFormData = {
   title: string;
@@ -40,6 +36,7 @@ export function SermonForm({
   // Use localized label if default default, otherwise respect prop
   const resolvedSubmitLabel = submitLabel === 'Guardar' ? t('form.save') : submitLabel;
 
+  // Form State
   const [title, setTitle] = useState(defaultValues?.title || '');
   const [category, setCategory] = useState(defaultValues?.category || '');
   const [content, setContent] = useState(defaultValues?.content || '');
@@ -49,12 +46,14 @@ export function SermonForm({
   const [status, setStatus] = useState<'working' | 'draft' | 'published' | 'archived'>(defaultValues?.status || 'draft');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // UI State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
     // Simple validation
     const newErrors: Record<string, string> = {};
-    
     
     if (!title || title.length < 5) {
       newErrors.title = t('form.titleError');
@@ -83,130 +82,109 @@ export function SermonForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Title */}
-      <div className="space-y-2">
-        <Label htmlFor="title">{t('form.title')} *</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t('form.titlePlaceholder')}
-          disabled={loading}
-        />
-        {errors.title && (
-          <p className="text-sm text-destructive">{errors.title}</p>
+    <div className="flex h-[calc(100vh-180px)] min-h-[600px] border rounded-lg overflow-hidden bg-background shadow-sm">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/5">
+          <div className="flex items-center gap-2">
+            {!isSidebarOpen && (
+              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} title="Mostrar detalles">
+                <PanelRightOpen className="h-5 w-5 text-muted-foreground" />
+              </Button>
+            )}
+            <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Editor</h2>
+          </div>
+          
+          <Button onClick={() => handleSubmit()} disabled={loading} size="sm" className="gap-2">
+            <Save className="h-4 w-4" />
+            {loading ? t('form.saving') : resolvedSubmitLabel}
+          </Button>
+        </div>
+
+        <Tabs defaultValue="write" className="flex-1 flex flex-col overflow-hidden">
+          <div className="px-4 pt-2 border-b">
+            <TabsList className="bg-transparent p-0 h-auto">
+              <TabsTrigger 
+                value="write" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+              >
+                Escribir
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preview" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+              >
+                Previsualizar
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <TabsContent value="write" className="flex-1 mt-0 p-0 overflow-y-auto relative">
+            <RichSermonEditor
+              markdown={content}
+              onChange={setContent}
+              placeholder={t('form.contentPlaceholder')}
+              className="w-full min-h-full"
+            />
+             {errors.content && (
+              <div className="absolute bottom-4 left-4 right-4 bg-destructive/10 text-destructive px-4 py-2 rounded border border-destructive/20 text-sm z-10 w-auto inline-block">
+                {errors.content}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="preview" className="flex-1 mt-0 overflow-hidden bg-muted/5">
+            <div className="h-full overflow-y-auto p-6">
+              <div className="max-w-4xl mx-auto bg-background shadow-sm rounded-lg min-h-full">
+                <SermonPreview
+                  title={title || 'Título del Sermón'}
+                  content={content}
+                  authorName={authorName}
+                  date={new Date()}
+                  bibleReferences={bibleReferences}
+                  tags={tags}
+                  category={category}
+                  status={status}
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Sidebar - Metadata Panel */}
+      <div 
+        className={cn(
+          "w-80 flex-shrink-0 transition-all duration-300 ease-in-out border-l bg-muted/10 relative",
+          !isSidebarOpen && "w-0 overflow-hidden border-l-0"
         )}
+      >
+        <div className="absolute top-2 right-2 z-10">
+           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} title="Ocultar detalles">
+            <PanelRightClose className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </div>
+        <div className={cn("w-80 h-full", !isSidebarOpen && "hidden")}>
+          <SermonMetadataPanel
+            title={title}
+            setTitle={setTitle}
+            category={category}
+            setCategory={setCategory}
+            authorName={authorName}
+            setAuthorName={setAuthorName}
+            bibleReferences={bibleReferences}
+            setBibleReferences={setBibleReferences}
+            tags={tags}
+            setTags={setTags}
+            status={status}
+            setStatus={setStatus}
+            loading={loading}
+            errors={errors}
+            onSubmit={() => handleSubmit()}
+            submitLabel={resolvedSubmitLabel}
+          />
+        </div>
       </div>
-
-      {/* Category */}
-      <div className="space-y-2">
-        <Label htmlFor="category">{t('form.category')}</Label>
-        <Select
-          value={category}
-          onValueChange={setCategory}
-          disabled={loading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={t('form.categoryPlaceholder')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="evangelismo">{t('form.categories.evangelismo')}</SelectItem>
-            <SelectItem value="discipulado">{t('form.categories.discipulado')}</SelectItem>
-            <SelectItem value="adoracion">{t('form.categories.adoracion')}</SelectItem>
-            <SelectItem value="familia">{t('form.categories.familia')}</SelectItem>
-            <SelectItem value="juventud">{t('form.categories.juventud')}</SelectItem>
-            <SelectItem value="matrimonio">{t('form.categories.matrimonio')}</SelectItem>
-            <SelectItem value="finanzas">{t('form.categories.finanzas')}</SelectItem>
-            <SelectItem value="oracion">{t('form.categories.oracion')}</SelectItem>
-            <SelectItem value="otro">{t('form.categories.otro')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Author Name */}
-      <div className="space-y-2">
-        <Label htmlFor="authorName">{t('form.author')}</Label>
-        <Input
-          id="authorName"
-          value={authorName}
-          onChange={(e) => setAuthorName(e.target.value)}
-          placeholder={t('form.authorPlaceholder')}
-          disabled={loading}
-        />
-        <p className="text-xs text-muted-foreground">
-          {t('form.authorHelp')}
-        </p>
-      </div>
-
-      {/* Content */}
-      <div className="space-y-2">
-        <Label>{t('form.content')} *</Label>
-        <textarea
-          className="w-full min-h-[300px] p-4 border rounded-lg"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={t('form.contentPlaceholder')}
-          disabled={loading}
-        />
-        {errors.content && (
-          <p className="text-sm text-destructive">{errors.content}</p>
-        )}
-      </div>
-
-      {/* Bible References */}
-      <div className="space-y-2">
-        <Label>{t('form.bibleRefs')}</Label>
-        <TagInput
-          tags={bibleReferences}
-          onChange={setBibleReferences}
-          placeholder={t('form.bibleRefsPlaceholder')}
-          disabled={loading}
-        />
-        <p className="text-xs text-muted-foreground">
-          {t('form.bibleRefsHelp')}
-        </p>
-      </div>
-
-      {/* Tags */}
-      <div className="space-y-2">
-        <Label>{t('form.tags')}</Label>
-        <TagInput
-          tags={tags}
-          onChange={setTags}
-          placeholder={t('form.tagsPlaceholder')}
-          disabled={loading}
-        />
-        <p className="text-xs text-muted-foreground">
-          {t('form.tagsHelp')}
-        </p>
-      </div>
-
-      {/* Status */}
-      <div className="space-y-2">
-        <Label htmlFor="status">{t('form.status')}</Label>
-        <Select
-          value={status}
-          onValueChange={(value: any) => setStatus(value)}
-          disabled={loading}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="draft">{t('status.draft')}</SelectItem>
-            <SelectItem value="published">{t('status.published')}</SelectItem>
-            <SelectItem value="archived">{t('status.archived')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Submit Button */}
-      <div className="flex gap-4">
-        <Button type="submit" disabled={loading} className="flex-1">
-          {loading ? t('form.saving') : resolvedSubmitLabel}
-        </Button>
-      </div>
-    </form>
+    </div>
   );
 }

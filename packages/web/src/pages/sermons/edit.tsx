@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { SermonForm, SermonFormData } from '@/components/sermons/sermon-form';
 import { useSermon, useUpdateSermon } from '@/hooks/use-sermons';
 
@@ -48,7 +47,7 @@ export function SermonEditPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-[95%] mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
@@ -65,22 +64,20 @@ export function SermonEditPage() {
       </div>
 
       {/* Form */}
-      <Card className="p-6">
-        <SermonForm
-          defaultValues={{
-            title: sermon.title,
-            category: sermon.category,
-            content: sermon.content,
-            bibleReferences: sermon.bibleReferences,
-            tags: sermon.tags,
-            authorName: sermon.authorName,
-            status: sermon.status,
-          }}
-          onSubmit={handleSubmit}
-          submitLabel={t('form.save')}
-          loading={updating}
-        />
-      </Card>
+      <SermonForm
+        defaultValues={{
+          title: sermon.title,
+          category: sermon.category,
+          content: sermon.content,
+          bibleReferences: sermon.bibleReferences,
+          tags: sermon.tags,
+          authorName: sermon.authorName,
+          status: sermon.status,
+        }}
+        onSubmit={handleSubmit}
+        submitLabel={t('form.save')}
+        loading={updating}
+      />
     </div>
   );
 }
