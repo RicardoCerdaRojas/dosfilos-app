@@ -4,16 +4,31 @@ import { LibraryService } from './LibraryService';
 
 export class SeriesService {
     private seriesRepository: FirebaseSeriesRepository;
+    private libraryService: LibraryService;
 
     constructor() {
         this.seriesRepository = new FirebaseSeriesRepository();
+        this.libraryService = new LibraryService();
+    }
+
+    private async retry<T>(operation: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
+        try {
+            return await operation();
+        } catch (error: any) {
+            // Retry on network errors or specific firebase offline errors
+            if (retries > 0 && (error.code === 'unavailable' || error.message?.includes('offline') || error.message?.includes('network'))) {
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return this.retry(operation, retries - 1, delay * 2);
+            }
+            throw error;
+        }
     }
 
     async createSeries(data: {
         userId: string;
         title: string;
         description: string;
-        startDate: Date;
+        startDate?: Date;
         endDate?: Date;
         coverUrl?: string;
     }): Promise<SermonSeriesEntity> {
@@ -30,7 +45,7 @@ export class SeriesService {
                 sermonIds: [],
                 draftIds: []
             });
-            return await this.seriesRepository.create(series);
+            return await this.retry(() => this.seriesRepository.create(series));
         } catch (error: any) {
             throw new Error(error.message || 'Error al crear la serie');
         }
@@ -41,19 +56,19 @@ export class SeriesService {
         data: Partial<{
             title: string;
             description: string;
-            startDate: Date;
-            endDate: Date;
+            startDate?: Date;
+            endDate?: Date;
             coverUrl: string;
             sermonIds: string[];
         }>
     ): Promise<SermonSeriesEntity> {
         try {
-            const series = await this.seriesRepository.findById(id);
+            const series = await this.retry(() => this.seriesRepository.findById(id));
             if (!series) {
                 throw new Error('Serie no encontrada');
             }
             const updatedSeries = series.update(data);
-            return await this.seriesRepository.update(updatedSeries);
+            return await this.retry(() => this.seriesRepository.update(updatedSeries));
         } catch (error: any) {
             throw new Error(error.message || 'Error al actualizar la serie');
         }
@@ -61,7 +76,7 @@ export class SeriesService {
 
     async deleteSeries(id: string): Promise<void> {
         try {
-            await this.seriesRepository.delete(id);
+            await this.retry(() => this.seriesRepository.delete(id));
         } catch (error: any) {
             throw new Error(error.message || 'Error al eliminar la serie');
         }
@@ -69,7 +84,7 @@ export class SeriesService {
 
     async getSeries(id: string): Promise<SermonSeriesEntity | null> {
         try {
-            return await this.seriesRepository.findById(id);
+            return await this.retry(() => this.seriesRepository.findById(id));
         } catch (error: any) {
             throw new Error(error.message || 'Error al obtener la serie');
         }
@@ -77,7 +92,7 @@ export class SeriesService {
 
     async getUserSeries(userId: string): Promise<SermonSeriesEntity[]> {
         try {
-            return await this.seriesRepository.findByUserId(userId);
+            return await this.retry(() => this.seriesRepository.findByUserId(userId));
         } catch (error: any) {
             throw new Error(error.message || 'Error al obtener las series');
         }
@@ -85,12 +100,12 @@ export class SeriesService {
 
     async addSermonToSeries(seriesId: string, sermonId: string): Promise<void> {
         try {
-            const series = await this.seriesRepository.findById(seriesId);
+            const series = await this.retry(() => this.seriesRepository.findById(seriesId));
             if (!series) {
                 throw new Error('Serie no encontrada');
             }
             const updatedSeries = series.addSermon(sermonId);
-            await this.seriesRepository.update(updatedSeries);
+            await this.retry(() => this.seriesRepository.update(updatedSeries));
         } catch (error: any) {
             throw new Error(error.message || 'Error al agregar sermón a la serie');
         }
@@ -98,12 +113,12 @@ export class SeriesService {
 
     async removeSermonFromSeries(seriesId: string, sermonId: string): Promise<void> {
         try {
-            const series = await this.seriesRepository.findById(seriesId);
+            const series = await this.retry(() => this.seriesRepository.findById(seriesId));
             if (!series) {
                 throw new Error('Serie no encontrada');
             }
             const updatedSeries = series.removeSermon(sermonId);
-            await this.seriesRepository.update(updatedSeries);
+            await this.retry(() => this.seriesRepository.update(updatedSeries));
         } catch (error: any) {
             throw new Error(error.message || 'Error al remover sermón de la serie');
         }
@@ -114,17 +129,24 @@ export class SeriesService {
             type: 'thematic' | 'expository';
             topicOrBook: string;
             subtopicsOrRange?: string;
-            startDate: Date;
+            startDate?: Date;
             endDate?: Date;
             frequency?: 'weekly' | 'biweekly' | 'monthly';
             contextResourceIds: string[];
             plannerNotes?: string; // Additional context/notes from chat conversation
+            language?: string;
         }
     ) {
         try {
-            const libraryService = new LibraryService();
-            const userResources = await libraryService.getUserResources(userId);
-            const contextResources = userResources.filter(r => request.contextResourceIds.includes(r.id));
+            // Fetch User Resources
+            const userResources = await this.retry(() => this.libraryService.getUserResources(userId));
+            const selectedUserResources = userResources.filter(r => request.contextResourceIds.includes(r.id));
+
+            // Fetch Core Resources (Always included)
+            const coreResources = await this.retry(() => this.libraryService.getCoreResources());
+
+            // Merge resources (Core first, then User)
+            const allResources = [...coreResources, ...selectedUserResources];
 
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (!apiKey) throw new Error('Gemini API Key not found');
@@ -135,8 +157,9 @@ export class SeriesService {
                 subtopicsOrRange: request.subtopicsOrRange,
                 plannerNotes: request.plannerNotes,
                 numberOfSermons: 0, // Not needed for objective
-                startDate: new Date(), // Not needed for objective
-                contextResources
+                startDate: request.startDate, // Not needed for objective but passed if exists
+                contextResources: allResources,
+                language: request.language
             });
         } catch (error: any) {
             throw new Error(error.message || 'Error al generar objetivo');
@@ -150,17 +173,24 @@ export class SeriesService {
             topicOrBook: string;
             subtopicsOrRange?: string;
             numberOfSermons?: number;
-            startDate: Date;
+            startDate?: Date;
             endDate?: Date;
             frequency?: 'weekly' | 'biweekly' | 'monthly';
             contextResourceIds: string[];
+            language?: string;
         },
         objective: { title: string; description: string; objective: string }
     ) {
         try {
-            const libraryService = new LibraryService();
-            const userResources = await libraryService.getUserResources(userId);
-            const contextResources = userResources.filter(r => request.contextResourceIds.includes(r.id));
+            // Fetch User Resources
+            const userResources = await this.retry(() => this.libraryService.getUserResources(userId));
+            const selectedUserResources = userResources.filter(r => request.contextResourceIds.includes(r.id));
+
+            // Fetch Core Resources (Always included)
+            const coreResources = await this.retry(() => this.libraryService.getCoreResources());
+
+            // Merge resources (Core first, then User)
+            const allResources = [...coreResources, ...selectedUserResources];
 
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (!apiKey) throw new Error('Gemini API Key not found');
@@ -168,7 +198,8 @@ export class SeriesService {
             const generator = new GeminiPlanGenerator(apiKey);
             return await generator.generateSeriesStructure({
                 ...request,
-                contextResources
+                contextResources: allResources,
+                language: request.language
             }, objective);
         } catch (error: any) {
             throw new Error(error.message || 'Error al generar estructura');
@@ -183,20 +214,24 @@ export class SeriesService {
         }
     ): Promise<SermonSeriesEntity> {
         try {
-            const startDate = new Date(plan.series.startDate!);
+            const startDate = plan.series.startDate ? new Date(plan.series.startDate) : undefined;
 
             // Create planned sermons with calculated dates (stored as metadata, NOT actual sermons)
             const plannedSermons = plan.sermons.map((sermonData) => {
-                // Calculate scheduled date: startDate + (week - 1) weeks
-                const scheduledDate = new Date(startDate);
-                scheduledDate.setDate(scheduledDate.getDate() + ((sermonData.week - 1) * 7));
+                let scheduledDate: Date | undefined;
+
+                if (startDate) {
+                    // Calculate scheduled date: startDate + (week - 1) weeks
+                    scheduledDate = new Date(startDate);
+                    scheduledDate.setDate(scheduledDate.getDate() + ((sermonData.week - 1) * 7));
+                }
 
                 return {
                     id: crypto.randomUUID(),
                     week: sermonData.week,
                     title: sermonData.title,
                     description: sermonData.description,
-                    passage: sermonData.passage,
+                    passage: sermonData.passage || '', // Ensure passage exists
                     scheduledDate: scheduledDate
                     // draftId is omitted until user starts developing
                 };
@@ -207,7 +242,7 @@ export class SeriesService {
                 userId,
                 title: plan.series.title!,
                 description: plan.series.description!,
-                startDate: plan.series.startDate!,
+                startDate: startDate,
                 type: plan.series.type!,
                 metadata: {
                     ...plan.series.metadata,
@@ -219,7 +254,7 @@ export class SeriesService {
             });
 
             // 2. Save Series (no sermons created!)
-            return await this.seriesRepository.create(series);
+            return await this.retry(() => this.seriesRepository.create(series));
         } catch (error: any) {
             throw new Error(error.message || 'Error al guardar el plan');
         }
@@ -239,8 +274,7 @@ export class SeriesService {
     ): Promise<SermonSeriesEntity> {
         try {
             // 1. Fetch context resources
-            const libraryService = new LibraryService(); // Or inject it
-            const userResources = await libraryService.getUserResources(userId);
+            const userResources = await this.retry(() => this.libraryService.getUserResources(userId));
             const contextResources = userResources.filter(r => request.contextResourceIds.includes(r.id));
 
             // 2. Generate Plan Structure

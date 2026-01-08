@@ -6,11 +6,12 @@ export interface PlanGenerationRequest {
     topicOrBook: string;
     subtopicsOrRange?: string; // "Holiness, Sin" or "Chapters 1-3"
     numberOfSermons?: number;
-    startDate: Date;
+    startDate?: Date;
     endDate?: Date;
     frequency?: 'weekly' | 'biweekly' | 'monthly';
     contextResources: any[]; // Resources to use for RAG/Context
     plannerNotes?: string; // Additional context/notes from chat conversation
+    language?: string; // Output language (e.g. 'es', 'en')
 }
 
 export interface GeneratedPlan {
