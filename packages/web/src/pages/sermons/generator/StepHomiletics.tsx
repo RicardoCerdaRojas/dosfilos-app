@@ -17,7 +17,18 @@ import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { ApproachSelectionView } from './homiletics/ApproachSelectionView';
 import { ApproachSelectionInfo } from './homiletics/ApproachSelectionInfo';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 /**
  * Sub-steps within Homiletics phase
@@ -802,24 +813,41 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                         <span className="text-xs font-medium">{passage}</span>
                     </Button>
 
-                    <Button
-                        onClick={handleGenerate}
-                        variant="outline"
-                        size="sm"
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {t('homiletics.regeneratingBtn')}
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                {t('homiletics.regenerateShort')}
-                            </>
-                        )}
-                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {t('homiletics.regeneratingBtn')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        {t('homiletics.regenerateShort')}
+                                    </>
+                                )}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>{t('homiletics.regenerateConfirmTitle', '¿Regenerar Estudio Homilético?')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('homiletics.confirmRegenerateFull', 'Esta acción reiniciará todo el proceso homilético. Generated new approaches and you will lose the current selection and manual refinements.')}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common.cancel', 'Cancelar')}</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleGenerate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    {t('common.regenerate', 'Regenerar')}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
             <div className="flex-1 min-h-0">

@@ -199,6 +199,10 @@ export class LibraryService {
         return this.libraryRepository.findByUserId(userId);
     }
 
+    async getCoreResources(): Promise<LibraryResourceEntity[]> {
+        return this.libraryRepository.findCoreResources();
+    }
+
     subscribeToUserResources(
         userId: string,
         callback: (resources: LibraryResourceEntity[]) => void,

@@ -22,6 +22,7 @@ export interface ILibraryRepository {
     subscribeToUserResources(userId: string, callback: (resources: LibraryResourceEntity[]) => void): () => void;
     update(id: string, updates: Partial<LibraryResourceEntity>): Promise<void>;
     delete(id: string): Promise<void>;
+    findCoreResources(): Promise<LibraryResourceEntity[]>;
 }
 
 export class FirebaseLibraryRepository implements ILibraryRepository {
@@ -45,6 +46,20 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         const q = query(
             collection(db, this.collectionName),
             where('userId', '==', userId),
+            orderBy('createdAt', 'desc')
+        );
+
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => this.firestoreToResource(doc.id, doc.data()));
+    }
+
+    async findCoreResources(): Promise<LibraryResourceEntity[]> {
+        // Core resources are those where coreStores includes 'global' OR some specific store
+        // For simplicity, we assume any resource with isCore=true or in 'global' store
+        // Since isCore is not a top-level field in the entity but coreStores is, we check coreStores
+        const q = query(
+            collection(db, this.collectionName),
+            where('coreStores', 'array-contains', 'global'),
             orderBy('createdAt', 'desc')
         );
 

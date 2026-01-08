@@ -1,6 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFirestore, Firestore, initializeFirestore, memoryLocalCache } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getFunctions, Functions } from 'firebase/functions';
 
@@ -25,7 +25,11 @@ export function initializeFirebase() {
     if (!app) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
-        db = getFirestore(app);
+        // Initialize Firestore with settings to avoid "offline" issues
+        db = initializeFirestore(app, {
+            localCache: memoryLocalCache(),
+            experimentalForceLongPolling: true, // Force long polling to bypass network restrictions
+        });
         storage = getStorage(app);
         functions = getFunctions(app);
     }

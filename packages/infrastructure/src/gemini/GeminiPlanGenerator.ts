@@ -51,10 +51,23 @@ export class GeminiPlanGenerator implements IPlanGenerator {
 
         // 2. Build prompt with RAG context
         const prompt = this.buildObjectivePromptWithRAG(request, relevantChunks);
-        const result = await this.model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
-        return JSON.parse(this.cleanJsonResponse(text));
+        console.log('📝 [Objective] Prompt built. Calling Gemini API...');
+
+        try {
+            const result = await this.model.generateContent(prompt);
+            console.log('✅ [Objective] Gemini API response received');
+            const response = result.response;
+            const text = response.text();
+            console.log('📄 [Objective] Raw response text length:', text.length);
+
+            const cleanedJson = this.cleanJsonResponse(text);
+            const parsed = JSON.parse(cleanedJson);
+            console.log('✅ [Objective] Response successfully parsed');
+            return parsed;
+        } catch (error) {
+            console.error('❌ [Objective] Error during generation or parsing:', error);
+            throw error;
+        }
     }
 
     async generateSeriesStructure(request: PlanGenerationRequest, objective: SeriesObjective): Promise<GeneratedPlan> {
@@ -64,7 +77,9 @@ export class GeminiPlanGenerator implements IPlanGenerator {
 
         if (resourceIds.length > 0) {
             console.log(`Searching for relevant chunks in ${resourceIds.length} resources...`);
-            const searchQuery = `${objective.title} ${objective.objective} ${request.topicOrBook}`;
+            // STRICT QUERY: Use ONLY user's input. AI titles/objectives can be hallucinated or abstract.
+            // We want to find exactly what the user asked for in their library.
+            const searchQuery = `${request.topicOrBook} ${request.subtopicsOrRange || ''}`;
             const searchResults = await this.documentProcessor.searchRelevantChunks(
                 searchQuery,
                 resourceIds,
@@ -116,9 +131,16 @@ export class GeminiPlanGenerator implements IPlanGenerator {
         request: PlanGenerationRequest,
         relevantChunks: DocumentChunkEntity[]
     ): string {
-        const dateInstruction = request.endDate
-            ? `Date Range: ${request.startDate} to ${request.endDate}. Frequency: ${request.frequency || 'Weekly'}. Calculate the number of sermons based on this range.`
-            : `Start Date: ${request.startDate}. Frequency: ${request.frequency || 'Weekly'}.`;
+        const language = request.language || 'es';
+
+        let dateInstruction = '';
+        if (request.startDate) {
+            dateInstruction = request.endDate
+                ? `Date Range: ${request.startDate} to ${request.endDate}. Frequency: ${request.frequency || 'Weekly'}. Calculate the number of sermons based on this range.`
+                : `Start Date: ${request.startDate}. Frequency: ${request.frequency || 'Weekly'}.`;
+        } else {
+            dateInstruction = 'Date: Undetermined (The series is flexible/undated).';
+        }
 
         const countInstruction = request.numberOfSermons
             ? `Target Number of Sermons: ${request.numberOfSermons}`
@@ -142,53 +164,58 @@ export class GeminiPlanGenerator implements IPlanGenerator {
         }
 
         return `
-Eres un experto profesor de homilética y mentor pastoral. Diseña el objetivo de una serie de predicación.
+Act as an expert homiletics professor and pastoral mentor. Design the objective for a sermon series.
 
-## Solicitud del Pastor:
-- Tipo: ${request.type === 'thematic' ? 'Serie Temática' : 'Serie Expositiva'}
-- Tema/Libro: ${request.topicOrBook}
-${request.subtopicsOrRange ? `- Subtemas/Rango: ${request.subtopicsOrRange}` : ''}
+## Request Details:
+- Type: ${request.type === 'thematic' ? 'Thematic Series' : 'Expository Series'}
+- Topic/Book: ${request.topicOrBook}
+${request.subtopicsOrRange ? `- Subtopics/Range: ${request.subtopicsOrRange}` : ''}
 - ${dateInstruction}
 - ${countInstruction}
 
-## Contexto de la Biblioteca Teológica del Pastor:
+## Theological Library Context:
 ${hasLibraryContext ? `
-He encontrado los siguientes fragmentos relevantes en los libros indexados del pastor:
+I have found the following relevant chunks in the pastor's indexed library:
 
 ${verifiedContext}
 
-INSTRUCCIÓN CRÍTICA: Usa este contenido VERIFICADO para fundamentar tus sugerencias. 
-Menciona específicamente qué autores y recursos se pueden usar y cómo.
+CRITICAL INSTRUCTION: Use this VERIFIED content to ground your suggestions. 
+Specifically mention which authors and resources can be used and how.
 ` : `
-El pastor tiene estos recursos disponibles (no indexados aún):
+The pastor has these resources available (not indexed yet):
 ${verifiedContext}
 `}
 ${request.plannerNotes ? `
-## Enfoque y Notas del Pastor:
-El pastor ha definido el siguiente enfoque o puntos clave que quiere desarrollar:
+## Pastor's Focus & Notes:
+The pastor has defined the following focus or key points:
 
 ${request.plannerNotes}
 
-IMPORTANTE: Esta información proviene de una conversación previa con el asistente. 
-Usa estos puntos como guía principal para estructurar el título, descripción y objetivo de la serie.
-Los puntos clave mencionados deben reflejarse en la propuesta.
+IMPORTANT: This info comes from a previous conversation. Use it as the main guide for the series title, description, and objective.
 ` : ''}
 
-## Tu Tarea:
-1. Propón un título creativo y teológicamente profundo para la serie.
-2. Escribe una descripción que capture la esencia de lo que se explorará.
-3. Define el objetivo central que guiará cada sermón.
-4. En "pastoralAdvice", incluye:
-   - Reflexión sobre la viabilidad del número de sermones solicitado
-   - Cómo los recursos del pastor pueden enriquecer cada mensaje
-   - Sugerencias específicas basadas en el contenido de la biblioteca
+## Your Task:
+1. Propose a creative and theologically deep title.
+2. Write a description capturing the essence of the series.
+3. Define the central objective.
+4. In "pastoralAdvice", include:
+   - Reflection on the viability of the sermon count.
+   - How the pastor's resources can enrich the message.
+   - Specific suggestions based on the library content.
 
-## Formato de Respuesta (JSON):
+## OUTPUT RULES:
+- **LANGUAGE: You MUST output strictly in ${language}**.
+- Transform all your homiletical advice and content into ${language}.
+- **CRITICAL: ESCAPE ALL DOUBLE QUOTES** inside string values. 
+  Example: "description": "He said \"Hello\"" 
+  INCORRECT: "description": "He said "Hello""
+
+## Response Format (JSON):
 {
-  "title": "Título de la Serie",
-  "description": "Descripción de 2-3 oraciones",
-  "objective": "Objetivo central en 1-2 oraciones",
-  "pastoralAdvice": "Nota del experto con consejos específicos basados en la biblioteca del pastor",
+  "title": "Series Title (in ${language})",
+  "description": "Description (in ${language})",
+  "objective": "Central Objective (in ${language})",
+  "pastoralAdvice": "Expert advice (in ${language})",
   "suggestedSermonCount": 4
 }
 
@@ -204,6 +231,8 @@ JSON:
         objective: SeriesObjective,
         relevantChunks: DocumentChunkEntity[]
     ): string {
+        const language = request.language || 'es';
+
         // Build verified context from chunks
         const hasLibraryContext = relevantChunks.length > 0;
 
@@ -211,19 +240,23 @@ JSON:
         if (hasLibraryContext) {
             verifiedContext = relevantChunks.map((chunk, i) => {
                 const pageInfo = chunk.metadata.page ? `, p.${chunk.metadata.page}` : '';
-                return `[FUENTE ${i + 1}: ${chunk.resourceAuthor} - "${chunk.resourceTitle}"${pageInfo}]\n${chunk.text}\n[/FUENTE ${i + 1}]`;
+                return `[SOURCE ${i + 1}: ${chunk.resourceAuthor} - "${chunk.resourceTitle}"${pageInfo}]\n${chunk.text}\n[/SOURCE ${i + 1}]`;
             }).join('\n\n');
         } else {
-            verifiedContext = 'No se proporcionaron recursos de biblioteca para este tema.';
+            verifiedContext = 'No library resources provided for this topic.';
         }
 
         const frequencyInstruction = request.frequency
             ? `Frequency: ${request.frequency} (Adjust dates accordingly)`
-            : 'Frequency: Weekly';
+            : 'Frequency: Flexible/Self-paced (Do not assign specific dates)';
 
         const countInstruction = request.numberOfSermons
             ? `Number of Sermons: ${request.numberOfSermons}`
             : `Number of Sermons: AUTO (Propose an optimal number based on the topic depth).`;
+
+        const dateInstruction = request.startDate
+            ? `Start Date: ${request.startDate}`
+            : `Start Date: TBD (Undated Series)`;
 
         const passageInstruction = request.type === 'expository'
             ? `For expository series, divide the book/passage range logically. Each sermon should cover a specific passage range.`
@@ -233,58 +266,68 @@ JSON:
         let citationRules: string;
         if (hasLibraryContext) {
             citationRules = `
-REGLAS DE CITACIÓN (MUY IMPORTANTE):
-1. PRIORIZA las fuentes proporcionadas del usuario (marcadas como [FUENTE N]).
-2. Cuando uses información de las FUENTES proporcionadas, cita así: "[Biblioteca: Autor, Título]"
-3. Si usas conocimiento teológico general que NO está en las fuentes, indica: "[Conocimiento general]"
-4. NUNCA inventes citas o atribuyas ideas a autores que no están en las fuentes proporcionadas.
-5. Si una idea viene de las fuentes del usuario, indica cuál fuente (ej: ver Fuente 1).`;
+CITATION RULES (VERY IMPORTANT):
+1. PRIORITIZE user provided sources (marked as [SOURCE N]).
+2. When using info from PROVIDED SOURCES, cite as: "[Library: Author, Title]" (translated to ${language})
+3. If using general theological knowledge NOT in sources, mark as: "[General Knowledge]" (translated to ${language})
+4. NEVER invent citations or attribute ideas to authors not in the provided sources.
+5. If an idea comes from user sources, indicate which one (e.g., see Source 1).`;
         } else {
             citationRules = `
-NOTA SOBRE FUENTES:
-- No se proporcionaron recursos de la biblioteca del usuario para este tema.
-- Puedes usar tu conocimiento teológico general, pero indica claramente: "[Conocimiento general]"
-- NO atribuyas citas específicas a autores a menos que estés absolutamente seguro.`;
+SOURCE NOTES:
+- No library resources provided.
+- You may use general theological knowledge, but clearly indicate: "[General Knowledge]" (translated to ${language})
+- DO NOT attribute specific citations unless absolutely certain.`;
         }
 
         const justificationInstruction = hasLibraryContext
-            ? 'Referencia las fuentes de la biblioteca cuando sea apropiado, indicando [Biblioteca: Autor, Título]'
-            : 'Indica [Conocimiento general] cuando uses ideas teológicas no verificadas';
+            ? `Reference library sources where appropriate, initializing as [Library: Author, Title]`
+            : `Indicate [General Knowledge] when using unverified concepts`;
 
         return `
             Act as an expert homiletics professor.
-            Create a sermon structure for the following series:
+            Create a sermon structure for the following series.
+
+            **TOPIC ADHERENCE & CONTEXT USAGE:**
+            The user explicitly requested a series on: "**${request.topicOrBook}**".
+            The Objective is: "${objective.objective}".
+
+            **INSTRUCTIONS FOR LIBRARY CONTEXT:**
+            The "VERIFIED CONTEXT" below comes from the user's library.
             
-            Series Title: ${objective.title}
-            Objective: ${objective.objective}
-            Type: ${request.type}
-            Topic/Book: ${request.topicOrBook}
-            ${countInstruction}
-            Start Date: ${request.startDate}
-            ${frequencyInstruction}
-            
-            CONTEXTO VERIFICADO DE LA BIBLIOTECA DEL USUARIO:
+            --------------------------------------------------
             ${verifiedContext}
-            
-            ${citationRules}
-            
-            PASSAGE ASSIGNMENT INSTRUCTIONS:
-            ${passageInstruction}
-            Each sermon MUST have a specific biblical passage assigned.
-            
+            --------------------------------------------------
+
+            1. **Primary Goal:** Use this context to ENRICH the sermons with specific quotes, insights, or theological arguments.
+            2. **Relevance Check:**
+               - IF the context supports the topic (even indirectly, e.g. systematic theology, broad biblical principles applying to the topic), **USE IT** and cite it.
+               - IF the context is clearly about a **COMPLETELY DIFFERENT TOPIC** (e.g. context is about "The Temple in Ezra" but topic is "Marriage"), then IGNORE that specific piece of context.
+            3. **Do not hallucinate:** If the context is empty or irrelevant, use your [General Knowledge] but DO NOT invent fake library sources.
+
+            **FAILURE CONDITIONS:**
+            - Generating sermons about a wrong book/topic (e.g. "Romans" when asked for "Genesis").
+            - Ignoring useful, relevant context just because it doesn't contain the exact keyword.
+
+            **OUTPUT RULES (CRITICAL):**
+            1. Response must be valid JSON.
+            2. **ESCAPE ALL DOUBLE QUOTES** inside string values. Example: "content": "He said \"Hello\"" NOT "content": "He said "Hello""
+            3. Do not use trailing commas.
+            4. **LANGUAGE: ${language}** (All fields must be in ${language})
+            5. **Every sermon MUST be directly related to: ${request.topicOrBook}**.
+
             Output a JSON object with:
             
-            1. "structureJustification": A 2-3 paragraph explanation in Spanish of WHY you structured the series this way. Explain:
-               - The theological/narrative logic behind the sermon sequence
-               - Why you selected these specific passages
-               - How each sermon builds upon the previous one to achieve the series objective
+            1. "structureJustification": A 2-3 paragraph explanation IN ${language} of WHY you structured the series this way. 
+               - **Explicitly mention how you integrated the Library Context (or why you couldn't).**
+               - Explain the theological/narrative logic.
+               - Why you selected these specific passages.
                - ${justificationInstruction}
-               This should read like a brief pastoral memo explaining your homiletical reasoning.
             
             2. "sermons": An array where each sermon object has:
-               - title: Sermon title (creative and engaging).
-               - description: Brief description of the sermon's focus and key theology.
-               - passage: The primary biblical passage for this sermon. REQUIRED.
+               - title: Sermon title (creative and engaging) IN ${language}.
+               - description: Brief description of focus and key theology IN ${language}.
+               - passage: The primary biblical passage. REQUIRED.
                - week: Sermon number (1 to N).
             
             3. "sourcesUsed": An array of objects indicating which sources you used:
@@ -337,14 +380,28 @@ NOTA SOBRE FUENTES:
     }
 
     private cleanJsonResponse(text: string): string {
-        let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+        // Remove markdown fences if present (Native JSON mode might omit them)
+        let cleaned = text.trim();
+        if (cleaned.startsWith('```')) {
+            cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+        }
+
         const firstBrace = cleaned.indexOf('{');
         if (firstBrace === -1) return '{}';
-        cleaned = cleaned.substring(firstBrace);
+
         const lastBrace = cleaned.lastIndexOf('}');
         if (lastBrace !== -1) {
-            cleaned = cleaned.substring(0, lastBrace + 1);
+            cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        } else {
+            cleaned = cleaned.substring(firstBrace);
         }
+
+        // Basic sanitization for common LLM JSON errors
+        // 1. Remove control characters
+        cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F]/g, (c) => {
+            return ["\b", "\f", "\n", "\r", "\t"].includes(c) ? c : "";
+        });
+
         return cleaned;
     }
 }

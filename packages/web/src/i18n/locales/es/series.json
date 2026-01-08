@@ -22,5 +22,79 @@
         "cancel": "Cancelar",
         "confirm": "Eliminar",
         "deleting": "Eliminando..."
+    },
+    "form": {
+        "titleNew": "Diseñar Nueva Serie",
+        "titleEdit": "Editar Plan",
+        "subtitleNew": "Configura la estructura básica de tu próxima serie de predicación",
+        "subtitleEdit": "Modifica los detalles de tu serie",
+        "steps": {
+            "identity": {
+                "title": "Identidad de la Serie",
+                "labelTitle": "Título de la Serie",
+                "labelTitlePlaceholder": "Ej: El Sermón del Monte",
+                "labelDescription": "Descripción / Tema Central",
+                "labelDescriptionPlaceholder": "Describe el enfoque teológico o práctico de esta serie...",
+                "errors": {
+                    "titleRequired": "El título es requerido",
+                    "titleMinLength": "Mínimo 3 caracteres"
+                }
+            },
+            "planning": {
+                "title": "Planificación",
+                "frequency": "Frecuencia",
+                "frequencies": {
+                    "weekly": "Semanal",
+                    "biweekly": "Quincenal",
+                    "monthly": "Mensual",
+                    "flexible": "Flexible / A tu ritmo"
+                },
+                "startDate": "Fecha de Inicio",
+                "startDateOptional": "(Opcional)",
+                "endDate": "Fecha de Fin (Auto)",
+                "endDatePlaceholder": "Calculada automáticamente",
+                "sermonCount": "Número de Sermones",
+                "sermonCountReady": "Sermón 1 al {{count}} listos para editar",
+                "autoCreateNotice": "Se crearán automáticamente <strong>{{count}} espacios para sermones</strong> ({{range}}) listos para editar."
+            },
+            "visuals": {
+                "title": "Portada",
+                "uploadPlaceholder": "Sube una imagen de portada",
+                "uploading": "Subiendo...",
+                "formats": "PNG, JPG hasta 5MB",
+                "pasteUrl": "O pega una URL",
+                "remove": "Eliminar",
+                "change": "Cambiar",
+                "errors": {
+                    "maxSize": "La imagen no debe superar los 5MB",
+                    "uploadSuccess": "Imagen subida correctamente",
+                    "uploadError": "Error al subir la imagen"
+                }
+            }
+        },
+        "preview": {
+            "title": "Vista Previa",
+            "noCover": "Sin portada",
+            "datePending": "Fecha (Pendiente)",
+            "sermonCountBadge": "{{count}} Sermones",
+            "defaultTitle": "Título de tu Serie",
+            "defaultDescription": "Aquí aparecerá la descripción de tu serie. Escribe algo inspirador para tu congregación..."
+        },
+        "tips": {
+            "pro": "Tip Pro:",
+            "editMode": "Estás editando una serie existente.",
+            "createMode": "Al crear la serie, se generarán sermones con fechas calculadas automáticamente según la frecuencia elegida."
+        },
+        "buttons": {
+            "cancel": "Cancelar",
+            "save": "Guardar Cambios",
+            "create": "Crear Serie"
+        },
+        "messages": {
+            "loadError": "Error al cargar la serie",
+            "saveSuccess": "Serie creada con {{count}} sermones listos",
+            "updateSuccess": "Plan actualizado correctamente",
+            "saveError": "Error al guardar el plan"
+        }
     }
 }

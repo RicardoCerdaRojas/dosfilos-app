@@ -348,7 +348,7 @@ DIRECTRICES CRÍTICAS:
 
         try {
             const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: buildPassageTextPrompt(reference, language) }] }],
+                contents: [{ role: 'user', parts: [{ text: buildPassageTextPrompt(reference, language, bibleText) }] }],
                 systemInstruction: PASSAGE_TEXT_SYSTEM_PROMPT,
                 generationConfig: genConfig
             });

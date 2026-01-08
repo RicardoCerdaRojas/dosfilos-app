@@ -1,11 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { SermonForm, SermonFormData } from '@/components/sermons/sermon-form';
 import { useSermon, useUpdateSermon } from '@/hooks/use-sermons';
 
+import { useTranslation } from 'react-i18next';
+
 export function SermonEditPage() {
+  const { t } = useTranslation('sermonDetail');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { sermon, loading: loadingSermon } = useSermon(id);
@@ -27,7 +29,7 @@ export function SermonEditPage() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center space-y-4">
           <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Cargando sermón...</p>
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     );
@@ -36,16 +38,16 @@ export function SermonEditPage() {
   if (!sermon) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <h2 className="text-2xl font-semibold">Sermón no encontrado</h2>
+        <h2 className="text-2xl font-semibold">{t('notFound.title')}</h2>
         <Button onClick={() => navigate('/dashboard/sermons')}>
-          Volver a sermones
+          {t('notFound.button')}
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-[95%] mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
@@ -56,28 +58,26 @@ export function SermonEditPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Editar Sermón</h1>
+          <h1 className="text-3xl font-bold">{t('form.editTitle')}</h1>
           <p className="text-muted-foreground">{sermon.title}</p>
         </div>
       </div>
 
       {/* Form */}
-      <Card className="p-6">
-        <SermonForm
-          defaultValues={{
-            title: sermon.title,
-            category: sermon.category,
-            content: sermon.content,
-            bibleReferences: sermon.bibleReferences,
-            tags: sermon.tags,
-            authorName: sermon.authorName,
-            status: sermon.status,
-          }}
-          onSubmit={handleSubmit}
-          submitLabel="Guardar Cambios"
-          loading={updating}
-        />
-      </Card>
+      <SermonForm
+        defaultValues={{
+          title: sermon.title,
+          category: sermon.category,
+          content: sermon.content,
+          bibleReferences: sermon.bibleReferences,
+          tags: sermon.tags,
+          authorName: sermon.authorName,
+          status: sermon.status,
+        }}
+        onSubmit={handleSubmit}
+        submitLabel={t('form.save')}
+        loading={updating}
+      />
     </div>
   );
 }

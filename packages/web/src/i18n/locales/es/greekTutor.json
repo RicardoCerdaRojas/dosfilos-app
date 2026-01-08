@@ -203,7 +203,22 @@
             "lastActivity": "Última Actividad",
             "studyStreak": "Racha de Estudio",
             "streakDays_one": "{{count}} día",
-            "streakDays_other": "{{count}} días"
+            "streakDays_other": "{{count}} días",
+            "tooltips": {
+                "masteryTitle": "🎯 Tu Nivel de Dominio",
+                "masteryDesc": "Muestra qué tan bien estás <0>dominando</0> las palabras.",
+                "calcTitle": "Cómo se calcula:",
+                "calcMastered": "• Palabra <0>dominada</0>: ≥50% precisión",
+                "calcAverage": "• Promedio de todas tus sesiones",
+                "masteryTip": "💡 Progreso alto = Estás internalizando el griego",
+                "streakTitle": "🔥 Mantén el Momentum",
+                "streakDesc": "La <0>consistencia</0> es clave. ¡No rompas la cadena!",
+                "streakCalcTitle": "Cómo funciona:",
+                "streakRule1": "• Cuenta días consecutivos estudiando",
+                "streakRule2": "• Tienes 1 día de gracia (ayer u hoy)",
+                "streakRule3": "• Se rompe tras > 1 día sin actividad",
+                "streakTip": "💪 10 mins diarios > 2 horas/semana"
+            }
         },
         "sessionCard": {
             "palabra_one": "palabra",

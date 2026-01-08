@@ -21,7 +21,18 @@ import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
 // import { PassageQuickView } from '@/components/sermons/PassageQuickView';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useTranslation } from '@/i18n';
 
 export function StepDraft() {
@@ -660,24 +671,41 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                 <span className="text-xs font-medium">{passage}</span>
                             </Button>
 
-                            <Button
-                                onClick={handleGenerate}
-                                variant="outline"
-                                size="sm"
-                                disabled={loading}
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {t('drafting.regeneratingBtn')}
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="mr-2 h-4 w-4" />
-                                        {t('drafting.regenerateBtn')}
-                                    </>
-                                )}
-                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={loading}
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                {t('drafting.regeneratingBtn')}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <RefreshCw className="mr-2 h-4 w-4" />
+                                                {t('drafting.regenerateBtn')}
+                                            </>
+                                        )}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>{t('drafting.regenerateConfirmTitle', '¿Regenerar Borrador del Sermón?')}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            {t('drafting.confirmRegenerateDesc', 'Esta acción creará un nuevo borrador basado en tus elecciones homiléticas. Cualquier edición manual en el texto actual se perderá permanentemente.')}
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>{t('common.cancel', 'Cancelar')}</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleGenerate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                            {t('common.regenerate', 'Regenerar')}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     </div>
                     <div className="flex-1 min-h-0">

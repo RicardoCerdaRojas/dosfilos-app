@@ -38,6 +38,8 @@ import generatorEn from '../locales/en/generator.json';
 import generatorEs from '../locales/es/generator.json';
 import greekTutorEn from '../locales/en/greekTutor.json';
 import greekTutorEs from '../locales/es/greekTutor.json';
+import sermonDetailEn from '../locales/en/sermonDetail.json';
+import sermonDetailEs from '../locales/es/sermonDetail.json';
 
 /**
  * Initialize i18next with best practices:
@@ -70,6 +72,7 @@ export const initI18n = () => {
                     planner: plannerEn,
                     generator: generatorEn,
                     greekTutor: greekTutorEn,
+                    sermonDetail: sermonDetailEn,
                 },
                 es: {
                     common: commonEs,
@@ -85,6 +88,7 @@ export const initI18n = () => {
                     planner: plannerEs,
                     generator: generatorEs,
                     greekTutor: greekTutorEs,
+                    sermonDetail: sermonDetailEs,
                 },
             },
 

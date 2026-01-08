@@ -158,6 +158,13 @@ export function AppSidebar() {
       .slice(0, 2);
   };
 
+  const isRouteActive = (href: string) => {
+    if (href === '/dashboard') {
+      return location.pathname === href || location.pathname === `${href}/`;
+    }
+    return location.pathname.startsWith(href);
+  };
+
   return (
     <Sidebar collapsible="icon">
       {/* Header */}
@@ -191,7 +198,7 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.map((item) => {
-                    const isActive = location.pathname === item.href;
+                    const isActive = isRouteActive(item.href);
                     return (
                       <SidebarMenuItem key={item.name}>
                         <SidebarMenuButton asChild isActive={isActive}>
@@ -221,8 +228,11 @@ export function AppSidebar() {
                   <div className="px-2 py-1 text-xs font-semibold text-amber-600 group-data-[collapsible=icon]:hidden">
                     ⚡ Admin
                   </div>
+                  <span className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                    v0.1.1
+                  </span>
                   {adminNavigation.map((item) => {
-                    const isActive = location.pathname === item.href;
+                    const isActive = isRouteActive(item.href);
                     const isLeadsItem = item.href === '/admin/leads';
                     return (
                       <SidebarMenuItem key={item.name}>
@@ -323,7 +333,7 @@ export function AppSidebar() {
         </SidebarMenu>
         
         <div className="text-xs text-muted-foreground text-center py-2 group-data-[collapsible=icon]:hidden">
-          DosFilos.Preach v0.1.0
+          DosFilos.Preach v0.1.1
         </div>
       </SidebarFooter>
     </Sidebar>
