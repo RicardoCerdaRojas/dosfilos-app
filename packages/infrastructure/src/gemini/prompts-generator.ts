@@ -86,6 +86,8 @@ Genera un análisis exegético que contenga:
 ### 2. Palabras Clave (3-5 términos máximo)
 Para cada palabra clave:
 - Término original (griego/hebreo con transliteración)
+- Lema (Raíz Lexical) - ¡IMPORTANTE!
+- Traducción Literal (Significado básico)
 - Morfología básica (parte del discurso, tiempo verbal si aplica)
 - Función sintáctica en el pasaje
 - Significado teológico/exegético relevante
@@ -120,6 +122,8 @@ Formato de Salida (JSON):
     {
       "original": "ἀποθέμενοι",
       "transliteration": "apothemenoi",
+      "lemma": "ἀποτίθημι",
+      "literalTranslation": "poner a un lado / desechar",
       "morphology": "Participio aoristo medio, nominativo plural masculino",
       "syntacticFunction": "Participio circunstancial de modo/manera",
       "significance": "Indica una acción decisiva y completa de 'despojarse' o 'desechar', enfatizando la totalidad del acto."

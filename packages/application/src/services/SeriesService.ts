@@ -211,19 +211,28 @@ export class SeriesService {
         plan: {
             series: Partial<SermonSeriesEntity>;
             sermons: { title: string; description: string; passage?: string; week: number }[];
+            frequency?: 'weekly' | 'biweekly' | 'monthly' | 'flexible';
         }
     ): Promise<SermonSeriesEntity> {
         try {
             const startDate = plan.series.startDate ? new Date(plan.series.startDate) : undefined;
+            const frequency = plan.frequency || 'weekly';
 
             // Create planned sermons with calculated dates (stored as metadata, NOT actual sermons)
             const plannedSermons = plan.sermons.map((sermonData) => {
                 let scheduledDate: Date | undefined;
 
-                if (startDate) {
-                    // Calculate scheduled date: startDate + (week - 1) weeks
+                if (startDate && frequency !== 'flexible') {
                     scheduledDate = new Date(startDate);
-                    scheduledDate.setDate(scheduledDate.getDate() + ((sermonData.week - 1) * 7));
+                    const weekOffset = sermonData.week - 1;
+
+                    if (frequency === 'weekly') {
+                        scheduledDate.setDate(scheduledDate.getDate() + (weekOffset * 7));
+                    } else if (frequency === 'biweekly') {
+                        scheduledDate.setDate(scheduledDate.getDate() + (weekOffset * 14));
+                    } else if (frequency === 'monthly') {
+                        scheduledDate.setMonth(scheduledDate.getMonth() + weekOffset);
+                    }
                 }
 
                 return {

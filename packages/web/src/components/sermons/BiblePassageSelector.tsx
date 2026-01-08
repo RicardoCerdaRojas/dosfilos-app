@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,6 +27,7 @@ export function BiblePassageSelector({
     label = "Pasaje Bíblico",
     placeholder = "Ej: Juan 3:16, Salmos 23"
 }: BiblePassageSelectorProps) {
+    const { i18n } = useTranslation();
     const [previewText, setPreviewText] = useState<string | null>(null);
     const [isValid, setIsValid] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +54,10 @@ export function BiblePassageSelector({
 
             setIsLoading(true);
             try {
-                const text = LocalBibleService.getVerses(debouncedValue);
+                // Pass current system language to resolve ambiguous book names (e.g. Genesis)
+                // normalize i18n language (es-ES -> es, en-US -> en)
+                const currentLang = i18n.language?.split('-')[0] || 'es';
+                const text = LocalBibleService.getVerses(debouncedValue, currentLang);
                 if (text) {
                     setPreviewText(text);
                     setIsValid(true);

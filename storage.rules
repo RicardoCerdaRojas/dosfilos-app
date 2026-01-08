@@ -58,5 +58,13 @@ service firebase.storage {
                       isValidImageType() &&
                       request.resource.size <= 2 * 1024 * 1024; // 2MB max
     }
+
+    // Series Covers (manual plan creation)
+    match /users/{userId}/series-covers/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && 
+                      isValidImageType() &&
+                      request.resource.size <= 5 * 1024 * 1024; // 5MB max
+    }
   }
 }

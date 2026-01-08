@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlanDashboard } from '@/components/plan/PlanDashboard';
 import { CalendarView } from '@/components/plan/CalendarView';
 import { AddSermonDialog } from '@/components/plan/AddSermonDialog';
+import { EditSermonDialog } from '@/components/plan/EditSermonDialog';
 import { useSeriesData } from '@/hooks/useSeriesData';
 import { Badge } from '@/components/ui/badge';
 
@@ -13,6 +14,7 @@ export function SeriesDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'dashboard' | 'calendar'>('dashboard');
+  const [editingSermon, setEditingSermon] = useState<any>(null);
   
   const {
     series,
@@ -46,7 +48,7 @@ export function SeriesDetail() {
       {series.coverUrl && (
         <div 
           className="relative -mx-6 -mt-6 h-48 bg-cover bg-center"
-          style={{ backgroundImage: `url(${series.coverUrl})` }}
+          style={{ backgroundImage: `url("${series.coverUrl}")` }}
         >
           {/* Subtle gradient at bottom for smooth transition */}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
@@ -92,10 +94,10 @@ export function SeriesDetail() {
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  {new Date(series.startDate).toLocaleDateString('es-ES', { 
+                  {series.startDate ? new Date(series.startDate).toLocaleDateString('es-ES', { 
                     month: 'long', 
                     year: 'numeric' 
-                  })}
+                  }) : 'Sin fecha'}
                 </span>
               </div>
               <span>•</span>
@@ -166,6 +168,7 @@ export function SeriesDetail() {
             completedCount={completedCount}
             onStartDraft={handleStartDraft}
             onContinue={handleContinueEditing}
+            onEditSermon={setEditingSermon}
             onFixAlert={(type) => {
               if (type === 'without-date' || type === 'urgent') {
                 setViewMode('calendar');
@@ -187,6 +190,14 @@ export function SeriesDetail() {
         </TabsContent>
         </Tabs>
       </div>
+
+      <EditSermonDialog 
+         series={series}
+         sermon={editingSermon}
+         open={!!editingSermon}
+         onOpenChange={(open) => !open && setEditingSermon(null)}
+         onSermonUpdated={reloadData}
+      />
     </div>
   );
 }

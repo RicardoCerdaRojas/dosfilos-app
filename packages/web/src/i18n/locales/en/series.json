@@ -22,5 +22,79 @@
         "cancel": "Cancel",
         "confirm": "Delete",
         "deleting": "Deleting..."
+    },
+    "form": {
+        "titleNew": "Design New Series",
+        "titleEdit": "Edit Plan",
+        "subtitleNew": "Configure the basic structure of your next preaching series",
+        "subtitleEdit": "Modify your series details",
+        "steps": {
+            "identity": {
+                "title": "Series Identity",
+                "labelTitle": "Series Title",
+                "labelTitlePlaceholder": "Ex: The Sermon on the Mount",
+                "labelDescription": "Description / Central Theme",
+                "labelDescriptionPlaceholder": "Describe the theological or practical focus of this series...",
+                "errors": {
+                    "titleRequired": "Title is required",
+                    "titleMinLength": "Minimum 3 characters"
+                }
+            },
+            "planning": {
+                "title": "Planning",
+                "frequency": "Frequency",
+                "frequencies": {
+                    "weekly": "Weekly",
+                    "biweekly": "Biweekly",
+                    "monthly": "Monthly",
+                    "flexible": "Flexible / At your pace"
+                },
+                "startDate": "Start Date",
+                "startDateOptional": "(Optional)",
+                "endDate": "End Date (Auto)",
+                "endDatePlaceholder": "Calculated automatically",
+                "sermonCount": "Number of Sermons",
+                "sermonCountReady": "Sermon 1 to {{count}} ready to edit",
+                "autoCreateNotice": "<strong>{{count}} sermon slots</strong> ({{range}}) will be automatically created ready for editing."
+            },
+            "visuals": {
+                "title": "Cover",
+                "uploadPlaceholder": "Upload a cover image",
+                "uploading": "Uploading...",
+                "formats": "PNG, JPG up to 5MB",
+                "pasteUrl": "Or paste a URL",
+                "remove": "Remove",
+                "change": "Change",
+                "errors": {
+                    "maxSize": "Image must not exceed 5MB",
+                    "uploadSuccess": "Image uploaded successfully",
+                    "uploadError": "Error uploading image"
+                }
+            }
+        },
+        "preview": {
+            "title": "Preview",
+            "noCover": "No cover",
+            "datePending": "Date (Pending)",
+            "sermonCountBadge": "{{count}} Sermons",
+            "defaultTitle": "Your Series Title",
+            "defaultDescription": "Your series description will appear here. Write something inspiring..."
+        },
+        "tips": {
+            "pro": "Pro Tip:",
+            "editMode": "You are editing an existing series.",
+            "createMode": "When creating the series, sermons will be generated with dates automatically calculated based on the chosen frequency."
+        },
+        "buttons": {
+            "cancel": "Cancel",
+            "save": "Save Changes",
+            "create": "Create Series"
+        },
+        "messages": {
+            "loadError": "Error loading series",
+            "saveSuccess": "Series created with {{count}} sermons ready",
+            "updateSuccess": "Plan updated successfully",
+            "saveError": "Error saving plan"
+        }
     }
 }
