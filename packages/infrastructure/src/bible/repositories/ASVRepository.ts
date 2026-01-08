@@ -75,7 +75,6 @@ export class ASVRepository implements IBibleVersionRepository {
         'Haggai': 37, 'Hag': 37, 'Hg': 37,
         'Zechariah': 38, 'Zech': 38, 'Zc': 38,
         'Malachi': 39, 'Mal': 39, 'Ml': 39,
-
         // New Testament - English names
         'Matthew': 40, 'Matt': 40, 'Mt': 40,
         'Mark': 41, 'Mk': 41, 'Mr': 41,

@@ -103,7 +103,6 @@ export class LocalBibleService {
     static parseReference(ref: string, locale?: string): BibleReference | null {
         return this.getRepository(locale, ref).parseReference(ref);
     }
-
     static getVerses(refString: string, locale?: string): string | null {
         return this.getRepository(locale, refString).getVerses(refString);
     }

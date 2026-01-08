@@ -53,7 +53,7 @@ export class RVR1960Repository implements IBibleVersionRepository {
         'Zacarías': 'zc', 'Zacarias': 'zc', 'Zac': 'zc',
         'Malaquías': 'ml', 'Malaquias': 'ml', 'Mal': 'ml',
 
-        // Nuevo Testamento
+        // Nuevo Testamento - Spanish names
         'Mateo': 'mt', 'Mat': 'mt', 'Mt': 'mt',
         'Marcos': 'mk', 'Mar': 'mk', 'Mc': 'mk', 'Mr': 'mk',
         'Lucas': 'lk', 'Luc': 'lk', 'Lc': 'lk',
