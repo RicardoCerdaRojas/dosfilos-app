@@ -4,6 +4,7 @@ import { BookOpen, Network, Zap } from 'lucide-react';
 import { HighlightedVerse } from './HighlightedVerse';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useTranslation } from '@/i18n';
 
 export interface ContextFunctionDisplayProps {
     content: string; // Markdown content from backend
@@ -23,6 +24,7 @@ export const ContextFunctionDisplay: React.FC<ContextFunctionDisplayProps> = ({
     passage,
     passageText
 }) => {
+    const { t } = useTranslation('greekTutor');
     // Extract key insights from markdown if formatted with headers
     const extractSections = (markdown: string) => {
         const sections: Record<string, string> = {};
@@ -61,7 +63,7 @@ export const ContextFunctionDisplay: React.FC<ContextFunctionDisplayProps> = ({
             {/* Header */}
             <div>
                 <h5 className="text-sm text-muted-foreground">
-                    Cómo <span className="font-mono text-primary">{greekWord}</span> funciona en {passage}
+                    {t('studyUnit.function.howFunctionsIn', { word: greekWord, passage })}
                 </h5>
             </div>
 
@@ -85,7 +87,7 @@ export const ContextFunctionDisplay: React.FC<ContextFunctionDisplayProps> = ({
                     </div>
                     <div className="flex-1">
                         <h3 className="font-semibold text-sm text-blue-900 dark:text-blue-100 uppercase tracking-wide mb-2">
-                            Función Sintáctica
+                            {t('studyUnit.function.syntacticFunction')}
                         </h3>
                         {hasStructuredContent && sections['función sintáctica'] ? (
                             <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed">
@@ -128,13 +130,11 @@ export const ContextFunctionDisplay: React.FC<ContextFunctionDisplayProps> = ({
                             <Zap className="w-4 h-4 text-purple-600" />
                         </div>
                         <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100 uppercase tracking-wide">
-                            Impacto Semántico
+                            {t('studyUnit.function.semanticImpact')}
                         </h4>
                     </div>
                     <p className="text-sm text-foreground/90 leading-relaxed">
-                        La función sintáctica de esta palabra no es solo gramatical – afecta directamente el 
-                        <strong> significado teológico</strong> del pasaje. Considera cómo esta construcción 
-                        orienta la atención del lector hacia ciertos aspectos del mensaje divino.
+                        {t('studyUnit.function.semanticText')}
                     </p>
                 </div>
             </Card>
@@ -147,12 +147,11 @@ export const ContextFunctionDisplay: React.FC<ContextFunctionDisplayProps> = ({
                             <BookOpen className="w-4 h-4 text-emerald-600" />
                         </div>
                         <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-100 uppercase tracking-wide">
-                            Para el Púlpito
+                            {t('studyUnit.function.forThePulpit')}
                         </h4>
                     </div>
                     <p className="text-sm text-foreground/90 leading-relaxed">
-                        Al predicar, ayuda a tu congregación a ver cómo la <strong>estructura gramatical</strong> 
-                        revela la intención del autor inspirado. La sintaxis es teología en acción.
+                        {t('studyUnit.function.pulpitTip')}
                     </p>
                 </div>
             </Card>

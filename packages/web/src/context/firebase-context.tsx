@@ -55,7 +55,6 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
           
           // Initialize service state so getStoreId() works
           await coreLibraryService.initializeFromConfig();
-          console.log('✅ Core Library Service initialized globally');
         } catch (error) {
           console.error('⚠️ Failed to initialize Core Library Service:', error);
         }

@@ -28,7 +28,6 @@ export class GeminiAIService implements IAIService {
         this.genAI = new GoogleGenerativeAI(apiKey);
 
         const modelName = GEMINI_CONFIG.MODEL_NAME;
-        console.log(`[GeminiAI] Using model: ${modelName}`);
 
         this.model = this.genAI.getGenerativeModel({
             model: modelName,

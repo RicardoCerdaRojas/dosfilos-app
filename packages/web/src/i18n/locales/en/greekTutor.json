@@ -178,6 +178,44 @@
         "practice": "Practice",
         "view": "View"
     },
+    "studyUnit": {
+        "recognition": {
+            "stepByStepGuide": "Step-by-step guide to identify",
+            "identification": "Identification",
+            "stepsToRecognize": "Steps to Recognize",
+            "practicalAdvice": "Practical Advice",
+            "practicalTip": "When identifying Greek verbal forms, first look for the ending to determine person and number, then the temporal stem for tense, and finally analyze prefixes (augment, reduplication) to confirm aspect.",
+            "attention": "Attention!",
+            "attentionText": "Some forms are visually similar but function differently. Pay special attention to syntactic context to distinguish between forms that share identical endings."
+        },
+        "function": {
+            "howFunctionsIn": "How {{word}} functions in {{passage}}",
+            "syntacticFunction": "Syntactic Function",
+            "semanticImpact": "Semantic Impact",
+            "semanticText": "This word's syntactic function is not merely grammatical – it directly affects the theological meaning of the passage. Consider how this construction directs the reader's attention to certain aspects of the divine message.",
+            "forThePulpit": "For the Pulpit",
+            "pulpitTip": "When preaching, help your congregation see how the grammatical structure reveals the inspired author's intention. Syntax is theology in action."
+        },
+        "theology": {
+            "pastoralImplications": "Pastoral implications of {{word}} in {{passage}}",
+            "textToPulpit": "From Text to Pulpit",
+            "step1Title": "1. Exegesis",
+            "step1Desc": "Discover the original meaning in Greek context",
+            "step2Title": "2. Theology",
+            "step2Desc": "Connect with doctrine and the gospel",
+            "step3Title": "3. Application",
+            "step3Desc": "Proclaim with fidelity and pastoral relevance",
+            "preachingPoints": "Preaching Points",
+            "reflectiveQuestions": [
+                "How does this grammatical detail change your understanding of the passage?",
+                "What theological truth does this Greek construction highlight?",
+                "How can you communicate this exegetical depth to your congregation in an accessible way?",
+                "What pastoral application arises from this insight?"
+            ],
+            "pastoralAdvice": "Pastoral Advice",
+            "pastoralText": "Knowledge of Greek is a pastoral gift, not an academic ornament. Use these insights to feed your flock with God's Word in its original richness, but always translate exegetical depth into homiletical clarity."
+        }
+    },
     "dashboard": {
         "title": "My Study Sessions",
         "newSession": "New Session",
@@ -316,12 +354,49 @@
         "cancel": "Cancel",
         "send": "Send",
         "processing": "Thinking...",
+        "tutorConsulting": "Consulting with tutor...",
         "responseTitle": "Tutor Response",
-        "yourQuestion": "Your question:"
+        "yourQuestion": "Your question:",
+        "saveInsight": {
+            "button": "Save Insight",
+            "saving": "Saving...",
+            "modalTitle": "Save as Personal Insight",
+            "modalDescription": "This response will be saved to your personal knowledge library",
+            "wordLabel": "Word:",
+            "passageLabel": "Passage:",
+            "titleLabel": "Title (optional)",
+            "titlePlaceholder": "Will be auto-generated if left empty",
+            "titleCharCount": "{{count}}/100 characters",
+            "tagsLabel": "Tags",
+            "tagsPlaceholder": "Add tag...",
+            "tagsCount": "{{count}}/10 tags",
+            "cancel": "Cancel",
+            "save": "Save Insight"
+        }
     },
     "insights": {
         "modalTitle": "My Insights",
-        "modalSubtitle": "Personal notes and theological reflections saved from your sessions."
+        "modalSubtitle": "Personal notes and theological reflections saved from your sessions.",
+        "loading": "Loading your insights...",
+        "emptyTitle": "No insights saved yet",
+        "emptyMessage": "As you study, save your personal notes and theological reflections. They will appear here.",
+        "searchPlaceholder": "Search in title, content, or question...",
+        "filterByTags": "Filter by tags:",
+        "resultCount": "Showing {{count}} result(s)",
+        "clearFilters": "Clear filters",
+        "viewContent": "View content",
+        "hideContent": "Hide content",
+        "question": "Question",
+        "deleteTitle": "Delete insight",
+        "deleteMessage": "Are you sure you want to delete this insight? This action cannot be undone.",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "editTitle": "Edit insight",
+        "title": "Title",
+        "tags": "Tags",
+        "addTag": "Add tag...",
+        "saving": "Saving...",
+        "save": "Save"
     },
     "session": {
         "back": "Back",
@@ -335,8 +410,40 @@
             "analyzing": "Generating analysis..."
         },
         "errors": {
+            "syntaxUnavailable": "⚠️ Analysis not available",
+            "syntaxErrorMessage": "Sorry, we couldn't complete the syntactic analysis of this passage at this time.",
+            "whatCanYouDo": "What can you do?",
+            "tryAgain": "Try again",
+            "tryAgainDescription": "The analysis uses AI and can sometimes fail temporarily. Click \\\"Syntactic Structure\\\" again to retry.",
+            "tryShort": "Try a shorter passage",
+            "tryShortDescription": "Longer passages are more complex to analyze. Try selecting a single verse.",
+            "comeLater": "Come back later",
+            "comeLaterDescription": "This is an experimental feature that we are constantly improving.",
+            "meanwhile": "Meanwhile...",
+            "meanwhileDescription": "You can use other available tools: morphological analysis, word context, and comprehension quiz.",
+            "chatError": "There was an error processing your question. Please try again.",
             "syntaxFailed": "Analysis failed. Please try again.",
             "general": "There was an error processing your question. Please try again."
+        },
+        "passageReader": {
+            "selectVersions": "Select the versions you want to view. Click on Greek words to add them to your study units.",
+            "rvr60": "RV60 (Spanish)",
+            "greekOriginal": "Greek Original",
+            "transliteration": "Transliteration",
+            "wordsHighlighted": "Words highlighted in green are already in your study units ({{count}} total).",
+            "preparingSession": "Preparing your study session",
+            "loadingPassage": "Loading passage...",
+            "loadingGreek": "Loading original Greek text",
+            "generatingTranslit": "Generating transliteration",
+            "preparingAnalysis": "Preparing interactive analysis",
+            "tip": "Tip",
+            "tips": {
+                "clickWord": "Click on any Greek word to see its detailed analysis",
+                "wordOrder": "Word order in Greek is flexible thanks to its case system",
+                "translitHelps": "Transliteration helps you pronounce correctly while studying",
+                "autoSave": "Each session is automatically saved to your dashboard"
+            },
+            "errorLoading": "Could not load passage. Please try again later."
         }
     },
     "syntax": {
@@ -461,5 +568,8 @@
         "syntacticStructure": "Syntactic Structure",
         "morphologicalDecomposition": "Morphological Decomposition",
         "comprehensionQuiz": "Comprehension Quiz"
+    },
+    "modal": {
+        "characteristics": "Features:"
     }
 }

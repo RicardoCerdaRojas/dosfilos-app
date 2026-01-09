@@ -4,6 +4,7 @@ import { Eye, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { StepIndicator, Step } from './StepIndicator';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useTranslation } from '@/i18n';
 
 export interface RecognitionGuideDisplayProps {
     content: string; // Markdown content from backend
@@ -21,6 +22,7 @@ export const RecognitionGuideDisplay: React.FC<RecognitionGuideDisplayProps> = (
     greekWord,
     identification
 }) => {
+    const { t } = useTranslation('greekTutor');
     // Parse markdown to extract steps if formatted properly
     // For MVP, we'll render markdown but add visual enhancements
     const parseStepsFromMarkdown = (markdown: string): Step[] | null => {
@@ -51,7 +53,7 @@ export const RecognitionGuideDisplay: React.FC<RecognitionGuideDisplayProps> = (
             {/* Header */}
             <div>
                 <h5 className="text-sm text-muted-foreground">
-                    Guía paso a paso para identificar <span className="font-mono text-primary">{greekWord}</span>
+                    {t('studyUnit.recognition.stepByStepGuide')} <span className="font-mono text-primary">{greekWord}</span>
                 </h5>
             </div>
 
@@ -63,7 +65,7 @@ export const RecognitionGuideDisplay: React.FC<RecognitionGuideDisplayProps> = (
                     </div>
                     <div>
                         <h3 className="font-semibold text-sm text-primary uppercase tracking-wide mb-1">
-                            Identificación
+                            {t('studyUnit.recognition.identification')}
                         </h3>
                         <p className="text-base leading-relaxed text-foreground">
                             {identification}
@@ -78,7 +80,7 @@ export const RecognitionGuideDisplay: React.FC<RecognitionGuideDisplayProps> = (
             {detectedSteps ? (
                 <>
                     <div>
-                        <h3 className="text-lg font-bold mb-4">Pasos para reconocer</h3>
+                        <h3 className="text-lg font-bold mb-4">{t('studyUnit.recognition.stepsToRecognize')}</h3>
                         <StepIndicator steps={detectedSteps} />
                     </div>
                 </>
@@ -108,13 +110,11 @@ export const RecognitionGuideDisplay: React.FC<RecognitionGuideDisplayProps> = (
                             <CheckCircle2 className="w-4 h-4 text-green-600" />
                         </div>
                         <h4 className="text-sm font-bold text-green-900 dark:text-green-100 uppercase tracking-wide">
-                            Consejo Práctico
+                            {t('studyUnit.recognition.practicalAdvice')}
                         </h4>
                     </div>
                     <p className="text-sm text-foreground/90 leading-relaxed">
-                        Al identificar formas verbales griegas, busca primero la <strong>terminación</strong> para determinar 
-                        persona y número, luego el <strong>tema temporal</strong> para el tiempo, y finalmente 
-                        analiza prefijos (aumento, reduplicación) para confirmar el aspecto.
+                        {t('studyUnit.recognition.practicalTip')}
                     </p>
                 </div>
             </Card>
@@ -127,12 +127,11 @@ export const RecognitionGuideDisplay: React.FC<RecognitionGuideDisplayProps> = (
                             <AlertTriangle className="w-4 h-4 text-amber-600" />
                         </div>
                         <h4 className="text-sm font-bold text-amber-900 dark:text-amber-100 uppercase tracking-wide">
-                            ¡Atención!
+                            {t('studyUnit.recognition.attention')}
                         </h4>
                     </div>
                     <p className="text-sm text-foreground/90 leading-relaxed">
-                        Algunas formas son visualmente similares pero funcionan diferente. Presta especial atención 
-                        al contexto sintáctico para distinguir entre formas que comparten terminaciones idénticas.
+                        {t('studyUnit.recognition.attentionText')}
                     </p>
                 </div>
             </Card>
