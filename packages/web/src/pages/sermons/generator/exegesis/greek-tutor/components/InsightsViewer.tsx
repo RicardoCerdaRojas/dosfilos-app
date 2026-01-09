@@ -379,7 +379,7 @@ const EditInsightDialog: React.FC<{
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose} disabled={saving}>
-                        Cancelar
+                        {t('insights.cancel')}
                     </Button>
                     <Button onClick={handleSave} disabled={saving || !title.trim()}>
                         {saving ? t('insights.saving') : t('insights.save')}

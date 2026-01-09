@@ -67,7 +67,7 @@ export const TutorResponseDisplay: React.FC<TutorResponseDisplayProps> = ({
                 <div className="flex items-start justify-between gap-4 mb-6">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-primary" />
-                        {t('askTutor.tutorResponse')}
+                        {t('askTutor.responseTitle')}
                     </h3>
                     {onSaveInsight && (
                         <div className="shrink-0">

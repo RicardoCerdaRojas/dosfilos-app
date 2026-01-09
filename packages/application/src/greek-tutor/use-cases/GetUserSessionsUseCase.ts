@@ -29,7 +29,6 @@ export class GetUserSessionsUseCase {
         userId: string,
         filters?: SessionFilters
     ): Promise<StudySession[]> {
-        console.log('[GetUserSessionsUseCase] Fetching sessions for user:', userId);
 
         try {
             // Get all sessions for user
@@ -45,7 +44,6 @@ export class GetUserSessionsUseCase {
                 new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
             );
 
-            console.log(`[GetUserSessionsUseCase] Found ${sessions.length} sessions`);
             return sessions;
         } catch (error) {
             console.error('[GetUserSessionsUseCase] Error fetching sessions:', error);
