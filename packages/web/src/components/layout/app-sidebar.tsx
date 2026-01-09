@@ -35,6 +35,7 @@ import { useTranslation } from '@/i18n';
 import { doc, getDoc } from 'firebase/firestore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Badge } from '@/components/ui/badge';
+import packageJson from '../../../package.json';
 
 export function AppSidebar() {
   const location = useLocation();
@@ -229,7 +230,7 @@ export function AppSidebar() {
                     ⚡ Admin
                   </div>
                   <span className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                    v0.1.1
+                    v{packageJson.version}
                   </span>
                   {adminNavigation.map((item) => {
                     const isActive = isRouteActive(item.href);
@@ -333,7 +334,7 @@ export function AppSidebar() {
         </SidebarMenu>
         
         <div className="text-xs text-muted-foreground text-center py-2 group-data-[collapsible=icon]:hidden">
-          DosFilos.Preach v0.1.1
+          DosFilos.Preach v{packageJson.version}
         </div>
       </SidebarFooter>
     </Sidebar>
