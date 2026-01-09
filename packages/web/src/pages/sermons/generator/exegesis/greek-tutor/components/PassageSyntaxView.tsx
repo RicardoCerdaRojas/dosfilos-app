@@ -333,7 +333,7 @@ function renderClauseTree(
 
                     {/* Greek Text */}
                     <div className="text-sm font-medium text-gray-900 leading-relaxed">
-                        {clause.greekText.split(/\s+/).map((word, idx) => {
+                        {(clause.greekText || '').split(/\s+/).filter(w => w).map((word, idx) => {
                             // Get the word index from clause.wordIndices
                             const wordIndex = clause.wordIndices[idx];
                             const isClickable = onWordClick && wordIndex !== undefined;
@@ -356,7 +356,7 @@ function renderClauseTree(
                                     >
                                         {wordText}
                                     </span>
-                                    {idx < clause.greekText.split(/\s+/).length - 1 && ' '}
+                                    {idx < (clause.greekText || '').split(/\s+/).filter(w => w).length - 1 && ' '}
                                 </React.Fragment>
                             );
                         })}

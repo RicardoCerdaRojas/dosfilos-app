@@ -75,7 +75,6 @@ export class CoreLibraryService implements ICoreLibraryService {
     async initializeFromConfig(): Promise<void> {
         const config = await this.loadConfig();
         if (config && this.areStoresValid(config)) {
-            console.log('✅ CoreLibraryService: Initialized from config');
             this.stores = config.stores;
             this.initialized = true;
         } else {

@@ -49,11 +49,12 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
         setHoveredWord
     } = usePassageReader(passage, sessionId, currentUnits, fileSearchStoreId, onUnitAdded);
 
+    // Use translated tips
     const educationalTips = [
-        "Haz clic en cualquier palabra griega para ver su análisis detallado",
-        "El orden de palabras en griego es flexible gracias a su sistema de casos",
-        "La transliteración te ayuda a pronunciar correctamente mientras estudias",
-        "Cada sesión queda guardada automáticamente en tu dashboard"
+        t('session.passageReader.tips.clickWord'),
+        t('session.passageReader.tips.wordOrder'),
+        t('session.passageReader.tips.translitHelps'),
+        t('session.passageReader.tips.autoSave')
     ];
     
     const randomTip = educationalTips[Math.floor(Math.random() * educationalTips.length)];

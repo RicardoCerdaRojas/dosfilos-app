@@ -230,7 +230,6 @@ export const useGreekTutorBoard = ({
                         const analyzeSyntaxUseCase = greekTutorContext.analyzePassageSyntax;
 
                         // Step 4: Execute analysis (with caching and user's language)
-                        console.log('[useGreekTutorBoard] Analyzing syntax in language:', userLanguage);
                         const analysis = await analyzeSyntaxUseCase.execute(biblicalPassage, userLanguage);
                         // Analysis complete
 

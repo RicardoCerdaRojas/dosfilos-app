@@ -365,10 +365,52 @@
         "category": "Categoría:",
         "gloss": "Glosa:",
         "recognitionGuide": "Guía de Reconocimiento",
+        "titlePrefix": "Análisis de",
+        "analyzing": "Analizando...",
+        "loadingAnalysis": "Cargando análisis...",
+        "errorLoading": "Error al cargar el análisis. Por favor, inténtalo de nuevo.",
         "error": "Error al identificar la palabra. Por favor intenta de nuevo.",
         "cancel": "Cancelar",
         "addUnit": "Agregar Unidad",
         "clickToStudy": "Click para estudiar"
+    },
+    "studyUnit": {
+        "recognition": {
+            "stepByStepGuide": "Guía paso a paso para identificar",
+            "identification": "Identificación",
+            "stepsToRecognize": "Pasos para reconocer",
+            "practicalAdvice": "Consejo Práctico",
+            "practicalTip": "Al identificar formas verbales griegas, busca primero la terminación para determinar persona y número, luego el tema temporal para el tiempo, y finalmente analiza prefijos (aumento, reduplicación) para confirmar el aspecto.",
+            "attention": "¡Atención!",
+            "attentionText": "Algunas formas son visualmente similares pero funcionan diferente. Presta especial atención al contexto sintáctico para distinguir entre formas que comparten terminaciones idénticas."
+        },
+        "function": {
+            "howFunctionsIn": "Cómo {{word}} funciona en {{passage}}",
+            "syntacticFunction": "Función Sintáctica",
+            "semanticImpact": "Impacto Semántico",
+            "semanticText": "La función sintáctica de esta palabra no es solo gramatical – afecta directamente el significado teológico del pasaje. Considera cómo esta construcción orienta la atención del lector hacia ciertos aspectos del mensaje divino.",
+            "forThePulpit": "Para el Púlpito",
+            "pulpitTip": "Al predicar, ayuda a tu congregación a ver cómo la estructura gramatical revela la intención del autor inspirado. La sintaxis es teología en acción."
+        },
+        "theology": {
+            "pastoralImplications": "Implicaciones pastorales de {{word}} en {{passage}}",
+            "textToPulpit": "Del Texto al Púlpito",
+            "step1Title": "1. Exégesis",
+            "step1Desc": "Descubre el significado original en el contexto griego",
+            "step2Title": "2. Teología",
+            "step2Desc": "Conecta con la doctrina y el evangelio",
+            "step3Title": "3. Aplicación",
+            "step3Desc": "Proclama con fidelidad y relevancia pastoral",
+            "preachingPoints": "Puntos de Predicación",
+            "reflectiveQuestions": [
+                "¿Cómo cambia este detalle gramatical tu comprensión del pasaje?",
+                "¿Qué verdad teológica resalta esta construcción griega?",
+                "¿Cómo puedes comunicar esta profundidad exegética a tu congregación de manera accesible?",
+                "¿Qué aplicación pastoral surge de este insight?"
+            ],
+            "pastoralAdvice": "Consejo Pastoral",
+            "pastoralText": "El conocimiento del griego es un regalo pastoral, no un adorno académico. Usa estos insights para alimentar a tu rebaño con la Palabra de Dios en su riqueza original, pero siempre traduce la profundidad exegética a la claridad homilética."
+        }
     },
     "syntax": {
         "title": "Estructura Sintáctica",
@@ -504,22 +546,21 @@
         "emptyMessage": "Cuando guardes respuestas del tutor como insights, aparecerán aquí.",
         "searchPlaceholder": "Buscar en título, contenido o pregunta...",
         "filterByTags": "Filtrar por etiquetas:",
-        "resultCount_one": "{{count}} resultado",
-        "resultCount_other": "{{count}} resultados",
+        "resultCount": "Mostrando {{count}} resultado(s)",
         "clearFilters": "Limpiar filtros",
         "viewContent": "Ver contenido",
-        "hideContent": "Ocultar",
-        "question": "Pregunta:",
-        "editTitle": "Editar Insight",
-        "deleteTitle": "¿Eliminar insight?",
-        "deleteMessage": "Esta acción no se puede deshacer.",
+        "hideContent": "Ocultar contenido",
+        "question": "Pregunta",
+        "deleteTitle": "Eliminar insight",
+        "deleteMessage": "¿Estás seguro de que deseas eliminar este insight? Esta acción no se puede deshacer.",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "editTitle": "Editar insight",
         "title": "Título",
         "tags": "Etiquetas",
         "addTag": "Agregar etiqueta...",
-        "cancel": "Cancelar",
-        "delete": "Eliminar",
-        "save": "Guardar",
-        "saving": "Guardando..."
+        "saving": "Guardando...",
+        "save": "Guardar"
     },
     "quiz": {
         "testPrompt": "Pon a prueba lo que has aprendido sobre",

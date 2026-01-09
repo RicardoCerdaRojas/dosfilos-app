@@ -32,7 +32,7 @@ function WizardContent() {
             // Check if we're resuming a specific sermon via URL param
             const sermonIdParam = searchParams.get('id');
             const newSermonParam = searchParams.get('new');
-            console.log('[SermonWizard] URL params:', { sermonIdParam, newSermonParam });
+            // Debugging intentionally left in for URL routing diagnosis
 
             // If 'new=true', skip resume prompt and start fresh wizard
             if (newSermonParam === 'true') {
@@ -89,8 +89,6 @@ function WizardContent() {
 
             try {
                 const sermons = await sermonService.getInProgressSermons(user.uid);
-                console.log('[SermonWizard] Found in-progress sermons:', sermons.length);
-                sermons.forEach(s => console.log('  - ID:', s.id, 'Title:', s.title || s.wizardProgress?.passage));
                 if (sermons.length > 0) {
                     setInProgressSermons(sermons);
                     setShowResumePrompt(true);

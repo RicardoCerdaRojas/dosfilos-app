@@ -136,7 +136,6 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
             // Sort by most recent first
             insights.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-            console.log(`[FirestoreGreekSessionRepository] Retrieved ${insights.length} insights for user ${userId}`);
             return insights;
         } catch (error) {
             console.error('[FirestoreGreekSessionRepository] getUserInsights error:', error);
@@ -463,7 +462,6 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
                     }
                 }
 
-                console.log(`[FirestoreGreekSessionRepository] Passage cache MISS for: ${reference} (${langCode})`);
                 return null;
             }
 
@@ -474,8 +472,6 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
                 lastUsedAt: new Date(),
                 usageCount: (data.usageCount || 0) + 1
             });
-
-            console.log(`[FirestoreGreekSessionRepository] Passage cache HIT for: ${reference} (${langCode})`);
 
             return {
                 reference: data.reference,
@@ -565,7 +561,6 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
 
             if (cacheSnap.exists()) {
                 const data = cacheSnap.data();
-                console.log(`[FirestoreGreekSessionRepository] Syntax analysis cache hit for: ${reference}`);
 
                 // Reconstruct the domain entity from Firestore data
                 return {

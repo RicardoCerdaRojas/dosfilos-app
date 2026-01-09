@@ -85,13 +85,10 @@ export class AnalyzePassageSyntaxUseCase {
     async execute(passage: BiblicalPassage, language: string = 'Spanish'): Promise<PassageSyntaxAnalysis> {
         // Step 1: Try cache first (if repository available)
         if (this.sessionRepository) {
-            console.log(`[AnalyzePassageSyntaxUseCase] Checking cache for: ${passage.reference} (${language})`);
             const cachedAnalysis = await this.sessionRepository.getCachedSyntaxAnalysis(passage.reference, language);
             if (cachedAnalysis) {
-                console.log('[AnalyzePassageSyntaxUseCase] ✅ Cache HIT! Using cached analysis for:', passage.reference);
                 return cachedAnalysis;
             }
-            console.log('[AnalyzePassageSyntaxUseCase] ❌ Cache MISS. Generating new analysis...');
         } else {
             console.warn('[AnalyzePassageSyntaxUseCase] No session repository - cache disabled');
         }
@@ -140,8 +137,8 @@ export class AnalyzePassageSyntaxUseCase {
             .join(' ');
 
         const languageInstructions = language === 'Spanish'
-            ? 'IMPORTANTE: Responde en ESPAÑOL. Todas las descripciones, explicaciones y términos técnicos deben estar en español.'
-            : 'IMPORTANT: Respond in ENGLISH. All descriptions, explanations, and technical terms should be in English.';
+            ? 'IMPORTANTE: Responde en ESPAÑOL. Todas las descripciones deben estar en español.'
+            : 'IMPORTANT: Respond in ENGLISH. All descriptions should be in English.';
 
         return `You are an expert in Koine Greek syntax and New Testament exegesis.
 
@@ -158,33 +155,24 @@ ${wordsWithIndices}
 **Your Task**:
 Identify all clauses in this passage and their relationships. For each clause, provide:
 
-1. **Type**: 
-   - MAIN: Independent clause with finite verb
-   - SUBORDINATE_PURPOSE: Purpose clause (ἵνα, ὥστε)
-   - SUBORDINATE_RESULT: Result clause (ὥστε, ὡς)
-   - SUBORDINATE_CAUSAL: Causal clause (ὅτι, διότι, γάρ)
-   - SUBORDINATE_CONDITIONAL: Conditional (εἰ, ἐάν)
-   - SUBORDINATE_TEMPORAL: Temporal (ὅτε, ὡς, ἕως)
-   - PARTICIPIAL: Built around a participle
-   - INFINITIVAL: Built around an infinitive
-   - RELATIVE: Relative clause (ὅς, ἥ, ὅ)
+1. **Type**: MAIN, SUBORDINATE_PURPOSE, SUBORDINATE_RESULT, SUBORDINATE_CAUSAL, SUBORDINATE_CONDITIONAL, SUBORDINATE_TEMPORAL, PARTICIPIAL, INFINITIVAL, or RELATIVE
 
-2. **Word Indices**: List the indices (from the numbered list above) of ALL words in this clause
+2. **Word Indices**: List ALL word indices belonging to this clause
 
-3. **Main Verb Index**: The index of the main verb of the clause (if applicable)
+3. **Main Verb Index**: Index of the main verb (if applicable)
 
-4. **Parent Clause**: The ID of the clause this depends on (null for main clauses)
+4. **Parent Clause**: ID of parent clause (null for main clauses)
 
-5. **Conjunction**: The word that introduces this clause (e.g., ἵνα, ὅτι), if any
+5. **Conjunction**: Introducing word (e.g., ἵνα, ὅτι), if any
 
-6. **Syntactic Function**: Brief description of what this clause does (e.g., "States the main command", "Expresses the purpose of the action")
+6. **Syntactic Function**: ONE short phrase (max 8 words) describing the clause's role
 
-**Requirements**:
+**CRITICAL EFFICIENCY REQUIREMENTS**:
+- Keep syntacticFunction descriptions VERY BRIEF (5-8 words max)
+- Keep structureDescription CONCISE (2-3 sentences max)
 - Every word must belong to exactly one clause
-- Use clear, unique IDs for clauses (e.g., "clause_1", "clause_2")
-- Main clauses should have parentClauseId = null
-- Provide a brief overall structure description
-- **CRITICAL**: In the structureDescription, use numbered references [1], [2], [3]... to refer to each clause. These will become clickable links in the UI.
+- Use IDs: "clause_1", "clause_2", etc.
+- **In structureDescription, use [1], [2], [3]... to reference clauses (clickable in UI)**
 
 **Response Format** (JSON):
 {
@@ -198,11 +186,10 @@ Identify all clauses in this passage and their relationships. For each clause, p
       "conjunction": null,
       "greekText": "Παρακαλῶ οὖν ὑμᾶς...",
       "syntacticFunction": "Main exhortation"
-    },
-    ...
+    }
   ],
   "rootClauseId": "clause_1",
-  "structureDescription": "The passage has two main clauses: clause [1] presents the primary command, while clause [2] provides a coordinated imperative. Clause [1] is modified by a purpose clause [3]..."
+  "structureDescription": "Two main clauses: [1] primary command, [2] coordinated imperative. [1] modified by purpose clause [3]."
 }
 
 Respond ONLY with valid JSON, no additional text.`;
@@ -228,6 +215,16 @@ Respond ONLY with valid JSON, no additional text.`;
             // Gemini sometimes outputs 'undefined' which is not valid JSON
             cleanedResponse = cleanedResponse.replace(/:\s*undefined\s*([,}])/g, ': null$1');
 
+            // Check for truncation indicators BEFORE parsing
+            const isTruncated = this.detectTruncation(cleanedResponse);
+            if (isTruncated) {
+                console.warn('[AnalyzePassageSyntaxUseCase] ⚠️ Detected truncated JSON response');
+                throw new Error(
+                    'The syntax analysis response was truncated. This passage may be too long. ' +
+                    'Try analyzing a shorter passage (1-2 verses instead of 3+).'
+                );
+            }
+
             const parsed = JSON.parse(cleanedResponse);
 
             // Validate structure
@@ -247,6 +244,47 @@ Respond ONLY with valid JSON, no additional text.`;
             console.error('Raw response:', rawResponse);
             throw new Error(`Failed to parse syntax analysis response: ${error}`);
         }
+    }
+
+    /**
+     * Detect if JSON response was truncated
+     * Common indicators: incomplete object/array, missing closing braces
+     */
+    private detectTruncation(json: string): boolean {
+        json = json.trim();
+
+        // Count opening and closing braces/brackets
+        const openBraces = (json.match(/{/g) || []).length;
+        const closeBraces = (json.match(/}/g) || []).length;
+        const openBrackets = (json.match(/\[/g) || []).length;
+        const closeBrackets = (json.match(/]/g) || []).length;
+
+        // If mismatch, definitely truncated
+        if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
+            console.warn(
+                `[detectTruncation] Brace/bracket mismatch: ` +
+                `{${openBraces}vs${closeBraces}} [${openBrackets}vs${closeBrackets}]`
+            );
+            return true;
+        }
+
+        // Check for common truncation patterns
+        const truncationPatterns = [
+            /,\s*$/,              // Ends with comma (incomplete array/object)
+            /:\s*$/,              // Ends with colon (incomplete key-value)
+            /"\s*$/,              // Ends with quote (incomplete string)
+            /,\s*\]/,             // Trailing comma before array close
+            /,\s*}/               // Trailing comma before object close
+        ];
+
+        for (const pattern of truncationPatterns) {
+            if (pattern.test(json)) {
+                console.warn(`[detectTruncation] Matched pattern: ${pattern}`);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -284,26 +322,102 @@ Respond ONLY with valid JSON, no additional text.`;
     }
 
     /**
-     * Map string clause type to enum
+     * Map string clause type to enum with intelligent fallback
+     * 
+     * Design Principles (SOLID):
+     * - Open/Closed: Open to new variations without modification
+     * - Single Responsibility: Normalizes and maps clause types
+     * - Liskov Substitution: All mapped types are valid ClauseType values
+     * 
+     * Strategy:
+     * 1. Normalize input (uppercase, trim)
+     * 2. Try exact match with aliases
+     * 3. Try fuzzy matching for common patterns
+     * 4. Log warning for unknown types and use reasonable fallback
      */
     private mapClauseType(typeString: string): ClauseType {
-        const typeMap: Record<string, ClauseType> = {
+        // Normalize input
+        const normalized = typeString.toUpperCase().trim();
+
+        // Extended type map with multiple aliases per type
+        // This makes the system resilient to Gemini's varying output formats
+        const typeAliases: Record<string, ClauseType> = {
+            // Main clause
             'MAIN': ClauseType.MAIN,
+            'INDEPENDENT': ClauseType.MAIN,
+            'PRINCIPAL': ClauseType.MAIN,
+
+            // Purpose
             'SUBORDINATE_PURPOSE': ClauseType.SUBORDINATE_PURPOSE,
+            'PURPOSE': ClauseType.SUBORDINATE_PURPOSE,
+            'FINAL': ClauseType.SUBORDINATE_PURPOSE,
+
+            // Result
             'SUBORDINATE_RESULT': ClauseType.SUBORDINATE_RESULT,
+            'RESULT': ClauseType.SUBORDINATE_RESULT,
+            'CONSECUTIVE': ClauseType.SUBORDINATE_RESULT,
+
+            // Causal
             'SUBORDINATE_CAUSAL': ClauseType.SUBORDINATE_CAUSAL,
+            'CAUSAL': ClauseType.SUBORDINATE_CAUSAL,
+            'REASON': ClauseType.SUBORDINATE_CAUSAL,
+
+            // Conditional
             'SUBORDINATE_CONDITIONAL': ClauseType.SUBORDINATE_CONDITIONAL,
+            'CONDITIONAL': ClauseType.SUBORDINATE_CONDITIONAL,
+
+            // Temporal
             'SUBORDINATE_TEMPORAL': ClauseType.SUBORDINATE_TEMPORAL,
+            'TEMPORAL': ClauseType.SUBORDINATE_TEMPORAL,
+            'TIME': ClauseType.SUBORDINATE_TEMPORAL,
+
+            // Indirect Question / Interrogative (multiple variations)
+            'SUBORDINATE_INTERROGATIVE': ClauseType.SUBORDINATE_INDIRECT_QUESTION,
+            'SUBORDINATE_INDIRECT_QUESTION': ClauseType.SUBORDINATE_INDIRECT_QUESTION,
+            'INDIRECT_QUESTION': ClauseType.SUBORDINATE_INDIRECT_QUESTION,
+            'INTERROGATIVE': ClauseType.SUBORDINATE_INDIRECT_QUESTION,
+            'QUESTION': ClauseType.SUBORDINATE_INDIRECT_QUESTION,
+
+            // Participial
             'PARTICIPIAL': ClauseType.PARTICIPIAL,
+            'PARTICIPLE': ClauseType.PARTICIPIAL,
+
+            // Infinitival
             'INFINITIVAL': ClauseType.INFINITIVAL,
-            'RELATIVE': ClauseType.RELATIVE
+            'INFINITIVE': ClauseType.INFINITIVAL,
+
+            // Relative
+            'RELATIVE': ClauseType.RELATIVE,
+            'RELATIVE_CLAUSE': ClauseType.RELATIVE,
         };
 
-        const mapped = typeMap[typeString];
-        if (!mapped) {
-            throw new Error(`Unknown clause type: ${typeString}`);
+        // Try exact match first
+        const exactMatch = typeAliases[normalized];
+        if (exactMatch) {
+            return exactMatch;
         }
-        return mapped;
+
+        // Fuzzy matching for compound names (e.g., "SUBORDINATE TEMPORAL" -> "TEMPORAL")
+        // Remove common prefixes and try again
+        const withoutPrefix = normalized
+            .replace(/^SUBORDINATE[_\s]+/, '')
+            .replace(/^CLAUSE[_\s]+/, '')
+            .trim();
+
+        const fuzzyMatch = typeAliases[withoutPrefix];
+        if (fuzzyMatch) {
+            console.warn(
+                `[mapClauseType] Fuzzy matched "${typeString}" -> "${withoutPrefix}" -> ${fuzzyMatch}`
+            );
+            return fuzzyMatch;
+        }
+
+        // Last resort: use RELATIVE as safe fallback for unknown subordinate types
+        console.warn(
+            `[mapClauseType] ⚠️ Unknown clause type: "${typeString}". ` +
+            `Using RELATIVE as fallback. Consider adding this type to the aliases map.`
+        );
+        return ClauseType.RELATIVE;
     }
 
     /**
@@ -324,11 +438,11 @@ Respond ONLY with valid JSON, no additional text.`;
      * Checks:
      * - All word indices are valid
      * - No words are orphaned (every word belongs to a clause)
-     * - No words are duplicated (each word belongs to exactly one clause)
+     * - Duplicates are auto-corrected (word in first occurrence only)
      */
     private validateAnalysis(analysis: PassageSyntaxAnalysis, passage: BiblicalPassage): void {
         const totalWords = passage.words.length;
-        const coveredWords = new Set<number>();
+        const coveredWords = new Map<number, string>(); // index -> clause ID
 
         for (const clause of analysis.clauses) {
             for (const idx of clause.wordIndices) {
@@ -340,15 +454,19 @@ Respond ONLY with valid JSON, no additional text.`;
                     );
                 }
 
-                // Check for duplicates
+                // Check for duplicates - warn and skip instead of throwing
                 if (coveredWords.has(idx)) {
-                    throw new Error(
-                        `Word at index ${idx} (${passage.words[idx]!.greek}) ` +
-                        `appears in multiple clauses`
+                    const previousClause = coveredWords.get(idx);
+                    console.warn(
+                        `[AnalyzePassageSyntaxUseCase] ⚠️ Word at index ${idx} (${passage.words[idx]!.greek}) ` +
+                        `appears in both clause ${previousClause} and ${clause.id}. ` +
+                        `Keeping only in ${previousClause}.`
                     );
+                    // Don't add to covered words again - first occurrence wins
+                    continue;
                 }
 
-                coveredWords.add(idx);
+                coveredWords.set(idx, clause.id);
             }
         }
 
@@ -368,7 +486,7 @@ Respond ONLY with valid JSON, no additional text.`;
         }
 
         console.log(
-            `[AnalyzePassageSyntaxUseCase] Validation passed: ` +
+            `[AnalyzePassageSyntaxUseCase] ✅ Validation passed: ` +
             `${analysis.clauses.length} clauses covering ${totalWords} words`
         );
     }

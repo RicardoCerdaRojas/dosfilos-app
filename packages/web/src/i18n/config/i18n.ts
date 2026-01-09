@@ -99,7 +99,7 @@ export const initI18n = () => {
             defaultNS: 'common',
 
             // Debug mode (disable in production)
-            debug: import.meta.env.DEV,
+            debug: false,
 
             // Language detection options
             detection: {
