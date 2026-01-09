@@ -24,7 +24,7 @@ import { useGreekTutorBoard } from './hooks/useGreekTutorBoard';
 import { formatSessionExport, copyToClipboard, downloadAsMarkdown } from './utils/exportUtils';
 import { ConceptsLibraryModal } from './components/ConceptsLibraryModal';
 import { InsightsViewer } from './components/InsightsViewer';
-import { useTranslation } from '@/i18n';
+import { useTranslation, Trans } from 'react-i18next';
 
 
 // Inline PassagePreview component
@@ -81,6 +81,7 @@ const FeatureModal: React.FC<{
     screenshotPath?: string;
     details?: string[];
 }> = ({ isOpen, onClose, title, description, screenshotPath, details }) => {
+    const { t } = useTranslation('greekTutor');
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -104,7 +105,7 @@ const FeatureModal: React.FC<{
                     
                     {details && details.length > 0 && (
                         <div className="space-y-3">
-                            <h4 className="font-semibold text-lg">Características:</h4>
+                            <h4 className="font-semibold text-lg">{t('modal.characteristics')}</h4>
                             <ul className="space-y-2">
                                 {details.map((detail, idx) => (
                                     <li key={idx} className="flex items-start gap-2">
@@ -407,7 +408,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         setLoadingMorphology(unitId);
         try {
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
-            const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+            const detectedLang = userLangObj.of(i18n.language.split('-')[0]) || 'Spanish';
             
             // Phase 3C: Pass sessionId and unitId for persistence
             const breakdown = await explainMorphology.execute(
@@ -434,7 +435,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         if (!question.trim()) return '';
         
         const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
-        const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+        const detectedLang = userLangObj.of(i18n.language.split('-')[0]) || 'Spanish';
         
         // General mode - use answerFreeQuestion without specific context
         if (chatMode === 'general') {
@@ -1072,136 +1073,82 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             <FeatureModal
                 isOpen={openFeatureModal === 'lectura-pasaje'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Lectura del Pasaje"
-                description="Explora el texto bíblico en su idioma original con herramientas interactivas para profundizar tu comprensión."
+                title={t('features.readPassage.title')}
+                description={t('features.readPassage.description')}
                 screenshotPath="/greek-tutor-previews/lectura_pasaje.png"
-                details={[
-                    "Visualiza el texto en griego original con opción de ver versiones en español",
-                    "Transliteración interactiva para ayudarte con la pronunciación",
-                    "Haz clic en cualquier palabra griega para agregarla a tus unidades de estudio",
-                    "Alterna fácilmente entre el texto original y la traducción",
-                    "Las palabras seleccionadas se resaltan visualmente en verde para fácil identificación"
-                ]}
+                details={t('features.readPassage.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'estructura-sintactica'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Estructura Sintáctica"
-                description="Visualiza las relaciones gramaticales y la jerarquía de cláusulas en el texto griego."
+                title={t('features.syntax.title')}
+                description={t('features.syntax.description')}
                 screenshotPath="/greek-tutor-previews/estructura_sintactica.png"
-                details={[
-                    "Vista jerárquica de cláusulas principales y subordinadas",
-                    "Relaciones sintácticas claramente marcadas",
-                    "Controles de expandir/colapsar para cada nivel de cláusula",
-                    "Identificación visual de roles gramaticales",
-                    "Comprende la estructura lógica del argumento del autor"
-                ]}
+                details={t('features.syntax.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'analisis-morfologico'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Análisis Morfológico"
-                description="Descomposición detallada de cada palabra en sus componentes morfológicos básicos."
+                title={t('features.morphology.title')}
+                description={t('features.morphology.description')}
                 screenshotPath="/greek-tutor-previews/analisis_morfologico.png"
-                details={[
-                    "Separación visual de raíces, prefijos y sufijos",
-                    "Explicación del significado de cada morfema",
-                    "Identificación de tiempo, voz, modo, caso y número",
-                    "Conexión entre forma y función gramatical",
-                    "Profundiza tu comprensión de cómo se construyen las palabras griegas"
-                ]}
+                details={t('features.morphology.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'claves-reconocimiento'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Claves de Reconocimiento"
-                description="Patrones morfológicos que te ayudan a identificar formas gramaticales rápidamente."
+                title={t('features.recognitionKeys.title')}
+                description={t('features.recognitionKeys.description')}
                 screenshotPath="/greek-tutor-previews/claves_reconocimiento.png"
-                details={[
-                    "Terminaciones clave para tiempos verbales",
-                    "Patrones de reconocimiento para casos",
-                    "Marcadores de voz y modo",
-                    "Ejemplos de cada patrón en contexto",
-                    "Desarrolla habilidades de lectura sin diccionario"
-                ]}
+                details={t('features.recognitionKeys.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'funcion-contexto'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Función en Contexto"
-                description="Comprende el rol que cada palabra desempeña dentro de su cláusula y el pasaje completo."
+                title={t('features.contextFunction.title')}
+                description={t('features.contextFunction.description')}
                 screenshotPath="/greek-tutor-previews/funcion_contexto.png"
-                details={[
-                    "Identificación del papel sintáctico (sujeto, objeto, modificador)",
-                    "Relación con otras palabras en la cláusula",
-                    "Conexión con el argumento general del pasaje",
-                    "Importancia teológica de la función específica",
-                    "Ve cómo la gramática sirve al significado"
-                ]}
+                details={t('features.contextFunction.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'insight-experto'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Insight del Experto"
-                description="Perspectivas profundas de gramáticos y exegetas sobre el significado y las implicaciones del texto."
+                title={t('features.expertInsight.title')}
+                description={t('features.expertInsight.description')}
                 screenshotPath="/greek-tutor-previews/insight_experto.png"
-                details={[
-                    "Explicaciones de expertos sobre elecciones gramaticales del autor",
-                    "Matices teológicos revelados por la gramática",
-                    "Conexiones con otros usos en el Nuevo Testamento",
-                    "Perspectivas hermenéuticas aplicadas",
-                    "Transforma el conocimiento gramatical en comprensión teológica"
-                ]}
+                details={t('features.expertInsight.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'conceptos-generales'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Conceptos Generales"
-                description="Biblioteca de referencia de conceptos fundamentales del griego koiné del Nuevo Testamento."
+                title={t('features.generalConcepts.title')}
+                description={t('features.generalConcepts.description')}
                 screenshotPath="/greek-tutor-previews/conceptos_generales.png"
-                details={[
-                    "Explicaciones de los casos del griego (nominativo, genitivo, dativo, acusativo)",
-                    "Guía de tiempos verbales y sus significados",
-                    "Descripción de modos (indicativo, subjuntivo, imperativo, optativo)",
-                    "Voces (activa, media, pasiva) y sus usos",
-                    "Acceso rápido a conocimiento fundamental mientras estudias"
-                ]}
+                details={t('features.generalConcepts.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'preguntas-tutor'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Preguntas al Tutor"
-                description="Formula preguntas personalizadas sobre cualquier aspecto del texto y recibe respuestas contextualizadas."
+                title={t('features.tutorQuestions.title')}
+                description={t('features.tutorQuestions.description')}
                 screenshotPath="/greek-tutor-previews/preguntas_tutor.png"
-                details={[
-                    "Haz preguntas sobre gramática, sintaxis o teología",
-                    "Respuestas basadas en el contexto específico de tu pasaje",
-                    "Asistencia personalizada para tu nivel de conocimiento",
-                    "Acceso a recursos hermenéuticos especializados",
-                    "Aprende a tu propio ritmo con orientación experta"
-                ]}
+                details={t('features.tutorQuestions.details', { returnObjects: true }) as string[]}
             />
             
             <FeatureModal
                 isOpen={openFeatureModal === 'quiz-comprension'}
                 onClose={() => setOpenFeatureModal(null)}
-                title="Quiz de Comprensión"
-                description="Evalúa y refuerza tu comprensión del griego con ejercicios interactivos adaptados a tu sesión."
+                title={t('features.quiz.title')}
+                description={t('features.quiz.description')}
                 screenshotPath="/greek-tutor-previews/quiz_comprension.png"
-                details={[
-                    "Preguntas de opción múltiple sobre morfología y sintaxis",
-                    "Feedback inmediato con explicaciones detalladas",
-                    "Ejercicios basados en el pasaje que estás estudiando",
-                    "Seguimiento de tu progreso y áreas de mejora",
-                    "Consolida tu aprendizaje con práctica activa"
-                ]}
+                details={t('features.quiz.details', { returnObjects: true }) as string[]}
             />
             </>
         );
@@ -1342,7 +1289,7 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                                 {/* Action buttons */}
                                 <div className="flex items-center justify-between">
                                     <p className="text-[10px] text-muted-foreground">
-                                        {t('askTutor.pressEnterHint', { key: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Enter</kbd> })}
+                                        <Trans ns="greekTutor" i18nKey="askTutor.pressEnterHint" values={{ key: 'Enter' }} components={{ kbd: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]" /> }} />
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
@@ -1524,13 +1471,17 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
                         />
                     </main>
 
-                    {/* Floating Word Analysis Toolbar */}
-                    <WordAnalysisToolbar
-                        currentUnit={currentUnit ?? null}
-                        activeAction={activeAction}
-                        onActionClick={(action) => handleActionClick(action)}
-                        isLoading={isBoardLoading}
-                    />
+                    {/* Floating Word Analysis Toolbar - ONLY for Study Units (when not in other modes) */}
+                {isActive && activeAction !== 'passage' && activeAction !== 'syntax' && activeAction !== 'quiz' && (
+                    <div className="absolute top-6 right-6 z-20">
+                        <WordAnalysisToolbar
+                            currentUnit={currentUnit ?? null}
+                            activeAction={activeAction}
+                            onActionClick={(action) => handleActionClick(action)}
+                            isLoading={isBoardLoading}
+                        />
+                    </div>
+                )}
                 </div>
             )}
             

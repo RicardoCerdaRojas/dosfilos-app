@@ -30,7 +30,7 @@ export interface SermonSeries {
     title: string;
     description: string;
     coverUrl?: string | undefined;
-    startDate: Date;
+    startDate?: Date | undefined;
     endDate?: Date | undefined;
     sermonIds: string[];
     draftIds: string[];  // Sermon IDs that are still in the wizard workflow
@@ -47,11 +47,11 @@ export class SermonSeriesEntity implements SermonSeries {
         public userId: string,
         public title: string,
         public description: string,
-        public startDate: Date,
         public sermonIds: string[] = [],
         public draftIds: string[] = [],
         public type: SeriesType = 'manual',
         public resourceIds: string[] = [],
+        public startDate?: Date,
         public coverUrl?: string,
         public endDate?: Date,
         public metadata?: SeriesMetadata,
@@ -78,11 +78,11 @@ export class SermonSeriesEntity implements SermonSeries {
             data.userId,
             data.title,
             data.description,
-            data.startDate,
             data.sermonIds ?? [],
             data.draftIds ?? [],
             data.type ?? 'manual',
             data.resourceIds ?? [],
+            data.startDate,
             data.coverUrl,
             data.endDate,
             data.metadata,
@@ -97,11 +97,11 @@ export class SermonSeriesEntity implements SermonSeries {
             this.userId,
             data.title ?? this.title,
             data.description ?? this.description,
-            data.startDate ?? this.startDate,
             data.sermonIds ?? this.sermonIds,
             data.draftIds ?? this.draftIds,
             data.type ?? this.type,
             data.resourceIds ?? this.resourceIds,
+            data.startDate ?? this.startDate,
             data.coverUrl ?? this.coverUrl,
             data.endDate ?? this.endDate,
             data.metadata ?? this.metadata,

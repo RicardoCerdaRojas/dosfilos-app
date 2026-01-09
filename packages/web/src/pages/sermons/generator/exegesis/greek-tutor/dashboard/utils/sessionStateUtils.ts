@@ -1,6 +1,6 @@
 import { StudySession } from '@dosfilos/domain';
 import { calculateSessionProgress, getSessionLastActivity } from './sessionUtils';
-import i18n from '@/i18n/config/i18n';
+import { TFunction } from 'i18next';
 
 export type SessionState = 'new' | 'progress' | 'complete' | 'paused';
 
@@ -14,7 +14,7 @@ export interface SessionStateInfo {
 /**
  * Determine the state of a session based on progress and activity
  */
-export const getSessionState = (session: StudySession): SessionStateInfo => {
+export const getSessionState = (session: StudySession, t: TFunction): SessionStateInfo => {
     const progress = calculateSessionProgress(session);
     const lastActivity = getSessionLastActivity(session);
     const daysSinceActivity = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24);
@@ -22,7 +22,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
     if (progress === 100) {
         return {
             type: 'complete',
-            label: i18n.t('dashboard.status.complete', { ns: 'greekTutor' }),
+            label: t('dashboard.status.complete'),
             color: 'text-purple-700',
             bgColor: 'bg-purple-100'
         };
@@ -31,7 +31,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
     if (daysSinceActivity > 7 && progress > 0) {
         return {
             type: 'paused',
-            label: i18n.t('dashboard.status.paused', { ns: 'greekTutor' }),
+            label: t('dashboard.status.paused'),
             color: 'text-amber-600',
             bgColor: 'bg-amber-50'
         };
@@ -40,7 +40,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
     if (progress <= 10 && progress > 0) {
         return {
             type: 'new',
-            label: i18n.t('dashboard.status.new', { ns: 'greekTutor' }),
+            label: t('dashboard.status.new'),
             color: 'text-blue-700',
             bgColor: 'bg-blue-100'
         };
@@ -48,7 +48,7 @@ export const getSessionState = (session: StudySession): SessionStateInfo => {
 
     return {
         type: 'progress',
-        label: i18n.t('dashboard.status.progress', { ns: 'greekTutor' }),
+        label: t('dashboard.status.progress'),
         color: 'text-green-700',
         bgColor: 'bg-green-100'
     };

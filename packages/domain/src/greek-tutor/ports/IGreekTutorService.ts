@@ -114,8 +114,8 @@ export interface ISessionRepository {
     getSessionProgress(sessionId: string): Promise<import('../entities/entities').SessionProgress | null>;
 
     // Phase 3D: Passage caching (global cache for reuse across users/sessions)
-    getCachedPassage(reference: string): Promise<import('../entities/entities').BiblicalPassage | null>;
-    cachePassage(passage: import('../entities/entities').BiblicalPassage): Promise<void>;
+    getCachedPassage(reference: string, language?: string): Promise<import('../entities/entities').BiblicalPassage | null>;
+    cachePassage(passage: import('../entities/entities').BiblicalPassage, language?: string): Promise<void>;
 
     // Phase 4A: Session management
     deleteSession(sessionId: string): Promise<void>;

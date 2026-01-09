@@ -43,8 +43,10 @@ import { exportService, sermonService, seriesService } from '@dosfilos/applicati
 import { SermonSeriesEntity, PreachingLog } from '@dosfilos/domain';
 import { toast } from 'sonner';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
+import { useTranslation } from 'react-i18next';
 
 export function SermonDetailPage() {
+  const { t } = useTranslation('sermonDetail');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -122,10 +124,10 @@ export function SermonDetailPage() {
     try {
       setExporting(true);
       await exportService.exportSermonToPdf(sermon);
-      toast.success('Sermón exportado correctamente');
+      toast.success(t('toast.exportSuccess'));
     } catch (error) {
       console.error('Error exporting sermon:', error);
-      toast.error('Error al exportar el sermón');
+      toast.error(t('toast.exportError'));
     } finally {
       setExporting(false);
     }
@@ -137,15 +139,15 @@ export function SermonDetailPage() {
       setSharing(true);
       if (checked) {
         await sermonService.shareSermon(id);
-        toast.success('Sermón compartido');
+        toast.success(t('toast.shared'));
       } else {
         await sermonService.unshareSermon(id);
-        toast.success('Sermón dejado de compartir');
+        toast.success(t('toast.unshared'));
       }
       mutate();
     } catch (error) {
       console.error('Error sharing sermon:', error);
-      toast.error('Error al cambiar estado de compartir');
+      toast.error(t('toast.shareError'));
     } finally {
       setSharing(false);
     }
@@ -156,7 +158,7 @@ export function SermonDetailPage() {
     setLogging(true);
     try {
       const newLog: PreachingLog = {
-        date: new Date(logDate),
+        date: new Date(logDate || new Date().toISOString()),
         location: logLocation,
         durationMinutes: parseInt(logDuration) || 0,
         notes: logNotes
@@ -168,14 +170,14 @@ export function SermonDetailPage() {
         preachingHistory: updatedHistory
       } as any);
 
-      toast.success('Predicación registrada');
+      toast.success(t('toast.logSuccess'));
       setShowLogDialog(false);
       setLogLocation('');
       setLogNotes('');
       mutate();
     } catch (error) {
       console.error('Error logging preaching:', error);
-      toast.error('Error al registrar predicación');
+      toast.error(t('toast.logError'));
     } finally {
       setLogging(false);
     }
@@ -187,7 +189,7 @@ export function SermonDetailPage() {
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success('Enlace copiado al portapapeles');
+    toast.success(t('toast.copied'));
   };
 
   const handleMarkComplete = async () => {
@@ -200,11 +202,11 @@ export function SermonDetailPage() {
           lastSaved: new Date()
         }
       } as any);
-      toast.success('Sermón marcado como completado');
+      toast.success(t('toast.completeSuccess'));
       mutate();
     } catch (error) {
       console.error('Error marking sermon as complete:', error);
-      toast.error('Error al marcar como completado');
+      toast.error(t('toast.completeError'));
     } finally {
       setMarkingComplete(false);
     }
@@ -215,7 +217,7 @@ export function SermonDetailPage() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center space-y-4">
           <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Cargando sermón...</p>
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     );
@@ -225,9 +227,9 @@ export function SermonDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <FileText className="h-16 w-16 text-muted-foreground" />
-        <h2 className="text-2xl font-semibold">Sermón no encontrado</h2>
+        <h2 className="text-2xl font-semibold">{t('notFound.title')}</h2>
         <Button onClick={() => navigate('/dashboard/sermons')}>
-          Volver a sermones
+          {t('notFound.button')}
         </Button>
       </div>
     );
@@ -235,9 +237,9 @@ export function SermonDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
-      draft: { variant: 'secondary', label: 'Borrador' },
-      published: { variant: 'default', label: 'Publicado' },
-      archived: { variant: 'outline', label: 'Archivado' },
+      draft: { variant: 'secondary', label: t('status.draft') },
+      published: { variant: 'default', label: t('status.published') },
+      archived: { variant: 'outline', label: t('status.archived') },
     };
     const config = variants[status] || variants.draft;
     const safeConfig = config!;
@@ -278,7 +280,7 @@ export function SermonDetailPage() {
               onClick={() => setShowShareDialog(true)} 
               variant="ghost" 
               size="icon"
-              title="Compartir"
+              title={t('actions.share')}
               className={sermon.isShared ? "text-blue-600 bg-blue-50 hover:bg-blue-100" : "text-muted-foreground hover:text-foreground"}
             >
               <Share2 className="h-4 w-4" />
@@ -288,7 +290,7 @@ export function SermonDetailPage() {
               onClick={() => navigate(`/dashboard/sermons/${id}/edit`)} 
               variant="ghost" 
               size="icon"
-              title="Editar"
+              title={t('actions.edit')}
               className="text-muted-foreground hover:text-foreground"
             >
               <Pencil className="h-4 w-4" />
@@ -302,7 +304,7 @@ export function SermonDetailPage() {
               className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
             >
               <BookOpen className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Predicar</span>
+              <span className="hidden sm:inline">{t('actions.preach')}</span>
             </Button>
 
             <DropdownMenu>
@@ -312,34 +314,34 @@ export function SermonDetailPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('actions.share')}</DropdownMenuLabel>
                 <DropdownMenuItem onClick={handleExport} disabled={exporting}>
                   <Download className="mr-2 h-4 w-4" />
-                  Exportar PDF
+                  {t('actions.exportPdf')}
                 </DropdownMenuItem>
                 {sermon.isShared && (
                   <DropdownMenuItem onClick={() => window.open(`/share/${sermon.shareToken}`, '_blank')}>
                     <Globe className="mr-2 h-4 w-4" />
-                    Ver Público
+                    {t('actions.viewPublic')}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 {sermon.status === 'draft' && (
                   <DropdownMenuItem onClick={handlePublish} disabled={publishing}>
                     <Eye className="mr-2 h-4 w-4" />
-                    Publicar
+                    {t('actions.publish')}
                   </DropdownMenuItem>
                 )}
                 {sermon.status === 'published' && (
                   <DropdownMenuItem onClick={handleArchive} disabled={archiving}>
                     <Archive className="mr-2 h-4 w-4" />
-                    Archivar
+                    {t('actions.archive')}
                   </DropdownMenuItem>
                 )}
                 {sermon.status === 'draft' && (!sermon.wizardProgress || (sermon.wizardProgress.currentStep ?? 0) < 4) && (
                   <DropdownMenuItem onClick={handleMarkComplete} disabled={markingComplete}>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    {markingComplete ? 'Marcando...' : 'Marcar Completado'}
+                    {markingComplete ? t('actions.markingComplete') : t('actions.markComplete')}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -348,7 +350,7 @@ export function SermonDetailPage() {
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
+                  {t('actions.delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -378,7 +380,7 @@ export function SermonDetailPage() {
             <Card className="p-4 space-y-3">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <BookOpen className="h-4 w-4" />
-                <h3>Parte de la Serie</h3>
+                <h3>{t('series.partOf')}</h3>
               </div>
               <div>
                 <h4 className="font-bold text-lg cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
@@ -389,7 +391,7 @@ export function SermonDetailPage() {
                 </p>
               </div>
               <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
-                Ver Serie Completa
+                {t('series.viewFull')}
               </Button>
             </Card>
           )}
@@ -399,7 +401,7 @@ export function SermonDetailPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-medium">
                 <History className="h-4 w-4" />
-                <h3>Historial</h3>
+                <h3>{t('history.title')}</h3>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowLogDialog(true)}>
                 <Plus className="h-4 w-4" />
@@ -409,7 +411,7 @@ export function SermonDetailPage() {
             <div className="space-y-4">
               {(!sermon.preachingHistory || sermon.preachingHistory.length === 0) ? (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                  No hay registros de predicación.
+                  {t('history.empty')}
                 </p>
               ) : (
                 sermon.preachingHistory.map((log, index) => (
@@ -439,15 +441,15 @@ export function SermonDetailPage() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('dialogs.delete.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. El sermón "{sermon.title}" será eliminado permanentemente.
+              {t('dialogs.delete.description', { title: sermon.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('dialogs.delete.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleting ? 'Eliminando...' : 'Eliminar'}
+              {deleting ? t('dialogs.delete.deleting') : t('dialogs.delete.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -457,18 +459,18 @@ export function SermonDetailPage() {
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Compartir Sermón</DialogTitle>
+            <DialogTitle>{t('dialogs.share.title')}</DialogTitle>
             <DialogDescription>
-              Genera un enlace público para compartir este sermón con otros.
+              {t('dialogs.share.description')}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
             <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg bg-muted/50">
               <Label htmlFor="share-mode" className="flex flex-col space-y-1 cursor-pointer">
-                <span className="font-medium">Compartir públicamente</span>
+                <span className="font-medium">{t('dialogs.share.publicMode')}</span>
                 <span className="font-normal text-xs text-muted-foreground">
-                  Cualquiera con el enlace podrá ver este sermón.
+                  {t('dialogs.share.publicModeDesc')}
                 </span>
               </Label>
               <Switch
@@ -481,7 +483,7 @@ export function SermonDetailPage() {
 
             {sermon.isShared && sermon.shareToken && (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                <Label>Enlace público</Label>
+                <Label>{t('dialogs.share.publicLink')}</Label>
                 <div className="flex items-center space-x-2">
                   <div className="relative flex-1">
                     <Input
@@ -499,7 +501,7 @@ export function SermonDetailPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Este enlace permite ver el sermón sin necesidad de iniciar sesión.
+                  {t('dialogs.share.copyTip')}
                 </p>
               </div>
             )}
@@ -511,15 +513,15 @@ export function SermonDetailPage() {
       <Dialog open={showLogDialog} onOpenChange={setShowLogDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Registrar Predicación</DialogTitle>
+            <DialogTitle>{t('dialogs.log.title')}</DialogTitle>
             <DialogDescription>
-              Guarda un registro de cuándo y dónde predicaste este sermón.
+              {t('dialogs.log.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="log-date">Fecha</Label>
+                <Label htmlFor="log-date">{t('dialogs.log.date')}</Label>
                 <Input
                   id="log-date"
                   type="date"
@@ -528,7 +530,7 @@ export function SermonDetailPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="log-duration">Duración (min)</Label>
+                <Label htmlFor="log-duration">{t('dialogs.log.duration')}</Label>
                 <div className="relative">
                   <Input
                     id="log-duration"
@@ -542,33 +544,33 @@ export function SermonDetailPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="log-location">Lugar / Iglesia</Label>
+              <Label htmlFor="log-location">{t('dialogs.log.location')}</Label>
               <div className="relative">
                 <Input
                   id="log-location"
                   value={logLocation}
                   onChange={(e) => setLogLocation(e.target.value)}
-                  placeholder="Ej: Iglesia Central"
+                  placeholder={t('dialogs.log.locationPlaceholder')}
                   className="pl-8"
                 />
                 <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="log-notes">Notas (Opcional)</Label>
+              <Label htmlFor="log-notes">{t('dialogs.log.notes')}</Label>
               <Textarea
                 id="log-notes"
                 value={logNotes}
                 onChange={(e) => setLogNotes(e.target.value)}
-                placeholder="Reacciones, puntos a mejorar, etc."
+                placeholder={t('dialogs.log.notesPlaceholder')}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLogDialog(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowLogDialog(false)}>{t('dialogs.delete.cancel')}</Button>
             <Button onClick={handleLogPreaching} disabled={logging || !logLocation}>
-              {logging ? 'Guardando...' : 'Guardar Registro'}
+              {logging ? t('dialogs.log.saving') : t('dialogs.log.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

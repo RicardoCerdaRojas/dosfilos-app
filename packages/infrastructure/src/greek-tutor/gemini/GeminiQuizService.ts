@@ -39,7 +39,6 @@ export class GeminiQuizService implements IQuizService {
         // Try cache first (hybrid strategy)
         const cached = await this.getCached(cacheKey);
         if (cached && cached.length >= count) {
-            console.log(`[GeminiQuizService] Cache HIT for key: ${cacheKey}`);
             // Update usage metrics and return
             return cached.slice(0, count).map(q => ({
                 ...q,
@@ -47,8 +46,6 @@ export class GeminiQuizService implements IQuizService {
                 usageCount: (q.usageCount || 0) + 1
             }));
         }
-
-        console.log(`[GeminiQuizService] Cache MISS for key: ${cacheKey}, generating with Gemini`);
 
         // Convert locale code to full language name for prompt
         const languageName = this.getLanguageName(language);

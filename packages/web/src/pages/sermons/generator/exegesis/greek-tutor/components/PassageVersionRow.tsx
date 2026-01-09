@@ -1,7 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import {
     Tooltip,
     TooltipContent,
@@ -16,10 +14,12 @@ interface PassageVersionRowProps {
     version: 'rv60' | 'greek' | 'transliteration';
     text: string;
     words?: PassageWord[];
-    isVisible: boolean;
-    onToggle: () => void;
+    // Layout props
+    className?: string;
     onWordClick?: (word: PassageWord) => void;
+    onWordHover?: (word: PassageWord | null) => void;
     highlightedWordId?: string;
+    highlightText?: string;
 }
 
 /**
@@ -30,10 +30,11 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
     version,
     text,
     words,
-    isVisible,
-    onToggle,
     onWordClick,
-    highlightedWordId
+    onWordHover,
+    highlightedWordId,
+    highlightText,
+    className
 }) => {
     const { t, i18n } = useTranslation('greekTutor');
     const isEnglish = i18n.language.startsWith('en');
@@ -45,23 +46,25 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
         return isEnglish ? "ASV (English)" : "RVR1960 (Español)";
     };
     return (
-        <Card className={cn(!isVisible && 'opacity-60')}>
-            <CardHeader className="pb-3">
+        <Card className={cn("h-full flex flex-col transition-all duration-300 hover:shadow-md", className)}>
+            <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
                 <div className="flex items-center justify-between">
-                    <Label htmlFor={`toggle-${version}`} className="text-sm font-semibold cursor-pointer">
-                        {getVersionLabel()}
-                    </Label>
-                    <Switch
-                        id={`toggle-${version}`}
-                        checked={isVisible}
-                        onCheckedChange={onToggle}
-                    />
+                    <div className="flex items-center gap-2">
+                        {/* Status Indicator */}
+                        <div className={cn(
+                            "h-2 w-2 rounded-full",
+                            version === 'greek' ? "bg-blue-500" : 
+                            version === 'transliteration' ? "bg-purple-500" : "bg-green-500"
+                        )} />
+                        <h4 className="font-semibold text-sm">
+                            {getVersionLabel()}
+                        </h4>
+                    </div>
                 </div>
             </CardHeader>
 
-            {isVisible && (
-                <CardContent>
-                    {/* Greek version with selectable words */}
+            <CardContent className="pt-3 px-4 h-full"> 
+                {/* Greek version with selectable words */}
                     {version === 'greek' && words && onWordClick ? (
                         <TooltipProvider delayDuration={200}>
                             <div className="flex flex-wrap gap-2">
@@ -70,6 +73,8 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
                                         <TooltipTrigger asChild>
                                             <button
                                                 onClick={() => !word.isInUnits && onWordClick(word)}
+                                                onMouseEnter={() => onWordHover?.(word)}
+                                                onMouseLeave={() => onWordHover?.(null)}
                                                 disabled={word.isInUnits}
                                                 className={cn(
                                                     'font-greek text-lg transition-colors rounded px-1 py-0.5',
@@ -99,7 +104,7 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
                                                 {/* Translation */}
                                                 <div>
                                                     <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-0.5">
-                                                        RV60
+                                                        {isEnglish ? "ASV" : "RV60"}
                                                     </p>
                                                     <p className="text-sm text-popover-foreground">
                                                         {word.spanish}
@@ -110,8 +115,8 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
                                                 {word.lemma && (
                                                     <div>
                                                         <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-0.5">
-                                                            Lema
-                                                        </p>
+                                                        {t('wordPreview.lemma')}
+                                                    </p>
                                                         <p className="text-sm font-mono text-popover-foreground">
                                                             {word.lemma}
                                                         </p>
@@ -125,7 +130,7 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
                                                             <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                                             </svg>
-                                                            <p className="text-xs font-medium">Ya en tus unidades</p>
+                                                            <p className="text-xs font-medium">{t('wordPreview.alreadyInUnits')}</p>
                                                         </div>
                                                     ) : (
                                                         <div className="flex items-center gap-1.5 text-primary">
@@ -145,14 +150,25 @@ export const PassageVersionRow: React.FC<PassageVersionRowProps> = ({
                     ) : (
                         /* RV60 and Transliteration - plain text */
                         <p className={cn(
-                            'text-base leading-relaxed',
-                            version === 'transliteration' && 'font-mono text-muted-foreground'
+                            'text-[1.05rem] leading-8',
+                            version === 'transliteration' ? 'font-mono text-muted-foreground' : 'font-serif'
                         )}>
-                            {text}
+                            {highlightText ? (
+                                text.split(new RegExp(`(${highlightText})`, 'gi')).map((part, i) => (
+                                    part.toLowerCase() === highlightText.toLowerCase() ? (
+                                        <span key={i} className="bg-yellow-200 dark:bg-yellow-900/50 rounded px-0.5 transition-colors duration-200">
+                                            {part}
+                                        </span>
+                                    ) : (
+                                        <span key={i}>{part}</span>
+                                    )
+                                ))
+                            ) : (
+                                text
+                            )}
                         </p>
                     )}
-                </CardContent>
-            )}
+            </CardContent>
         </Card>
     );
 };

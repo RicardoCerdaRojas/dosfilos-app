@@ -1,8 +1,9 @@
 import React from 'react';
 import { BiblicalPassage, TrainingUnit } from '@dosfilos/domain';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BookOpen, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils'; // Added import
 import { PassageVersionRow } from './PassageVersionRow';
 import { WordPreviewModal } from './WordPreviewModal';
 import { usePassageReader } from '../hooks/usePassageReader';
@@ -30,7 +31,8 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
     isLoading = false,
     onUnitAdded
 }) => {
-    const { t } = useTranslation('greekTutor');
+    const { t, i18n } = useTranslation('greekTutor');
+    const isEnglish = (i18n.language || 'es').startsWith('en');
     const {
         visibleVersions,
         toggleVersion,
@@ -42,14 +44,17 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
         isAddingUnit,
         handleWordClick,
         handleConfirmAdd,
-        handleCloseModal
+        handleCloseModal,
+        hoveredWord,
+        setHoveredWord
     } = usePassageReader(passage, sessionId, currentUnits, fileSearchStoreId, onUnitAdded);
 
+    // Use translated tips
     const educationalTips = [
-        "Haz clic en cualquier palabra griega para ver su análisis detallado",
-        "El orden de palabras en griego es flexible gracias a su sistema de casos",
-        "La transliteración te ayuda a pronunciar correctamente mientras estudias",
-        "Cada sesión queda guardada automáticamente en tu dashboard"
+        t('session.passageReader.tips.clickWord'),
+        t('session.passageReader.tips.wordOrder'),
+        t('session.passageReader.tips.translitHelps'),
+        t('session.passageReader.tips.autoSave')
     ];
     
     const randomTip = educationalTips[Math.floor(Math.random() * educationalTips.length)];
@@ -109,49 +114,103 @@ export const PassageReader: React.FC<PassageReaderProps> = ({
         );
     }
 
+
+    // Calculate grid columns based on visibility
+    const visibleCount = visibleVersions.size;
+    const gridCols = visibleCount === 1 ? 'grid-cols-1' :
+                     visibleCount === 2 ? 'grid-cols-1 lg:grid-cols-2' :
+                     'grid-cols-1 lg:grid-cols-3';
+
     return (
-        <div className="space-y-4 max-w-4xl mr-28">
-            {/* Header */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <BookOpen className="h-5 w-5" />
-                        {passage.reference}
-                    </CardTitle>
-                    <CardDescription>
-                        {t('session.passageReader.selectVersions')}
-                    </CardDescription>
-                </CardHeader>
+        <div className="space-y-4 w-full">
+            {/* Header & View Controls */}
+            <Card className="border-none shadow-sm bg-transparent">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-xl font-bold flex items-center gap-2">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                            {passage.reference}
+                        </h3>
+                    </div>
+
+                    {/* View Options Toolbar */}
+                    <div className="flex items-center gap-2 bg-background/50 backdrop-blur-sm p-1 rounded-lg border border-border/50">
+                        {/* RV60 Toggle */}
+                        <button
+                            onClick={() => toggleVersion('rv60')}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
+                                visibleVersions.has('rv60') 
+                                    ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20" 
+                                    : "hover:bg-muted text-muted-foreground"
+                            )}
+                        >
+                            <div className={cn("h-1.5 w-1.5 rounded-full", visibleVersions.has('rv60') ? "bg-green-500" : "bg-muted-foreground/30")} />
+                            {isEnglish ? "ASV" : "RV60"}
+                        </button>
+
+                        {/* Greek Toggle */}
+                        <button
+                            onClick={() => toggleVersion('greek')}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
+                                visibleVersions.has('greek') 
+                                    ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20" 
+                                    : "hover:bg-muted text-muted-foreground"
+                            )}
+                        >
+                            <div className={cn("h-1.5 w-1.5 rounded-full", visibleVersions.has('greek') ? "bg-blue-500" : "bg-muted-foreground/30")} />
+                            {t('session.passageReader.greekOriginal')}
+                        </button>
+
+                        {/* Transliteration Toggle */}
+                        <button
+                            onClick={() => toggleVersion('transliteration')}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
+                                visibleVersions.has('transliteration') 
+                                    ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20" 
+                                    : "hover:bg-muted text-muted-foreground"
+                            )}
+                        >
+                            <div className={cn("h-1.5 w-1.5 rounded-full", visibleVersions.has('transliteration') ? "bg-purple-500" : "bg-muted-foreground/30")} />
+                            {t('session.passageReader.transliteration')}
+                        </button>
+                    </div>
+                </div>
             </Card>
 
-            {/* Version Rows */}
-            <div className="space-y-3">
+            {/* Content Grid */}
+            <div className={cn("grid gap-4 transition-all duration-300", gridCols)}>
                 {/* RV60 Row */}
-                <PassageVersionRow
-                    version="rv60"
-                    text={passage.rv60Text}
-                    isVisible={visibleVersions.has('rv60')}
-                    onToggle={() => toggleVersion('rv60')}
-                />
+                {visibleVersions.has('rv60') && (
+                    <PassageVersionRow
+                        version="rv60"
+                        text={passage.rv60Text}
+                        highlightText={hoveredWord?.spanish}
+                    />
+                )}
 
                 {/* Greek Row */}
-                <PassageVersionRow
-                    version="greek"
-                    text={passage.greekText}
-                    words={wordsWithStatus}
-                    isVisible={visibleVersions.has('greek')}
-                    onToggle={() => toggleVersion('greek')}
-                    onWordClick={handleWordClick}
-                    highlightedWordId={selectedWord?.id}
-                />
+                {visibleVersions.has('greek') && (
+                    <PassageVersionRow
+                        version="greek"
+                        text={passage.greekText}
+                        words={wordsWithStatus}
+                        onWordClick={handleWordClick}
+                        highlightedWordId={selectedWord?.id}
+                        onWordHover={setHoveredWord}
+                    />
+                )}
 
                 {/* Transliteration Row */}
-                <PassageVersionRow
-                    version="transliteration"
-                    text={passage.transliteration}
-                    isVisible={visibleVersions.has('transliteration')}
-                    onToggle={() => toggleVersion('transliteration')}
-                />
+                {visibleVersions.has('transliteration') && (
+                    <PassageVersionRow
+                        version="transliteration"
+                        text={passage.transliteration}
+                        highlightText={hoveredWord?.transliteration}
+                    />
+                )}
             </div>
 
             {/* Words in Units Info */}

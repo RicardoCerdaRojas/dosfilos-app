@@ -55,8 +55,8 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
     const currentUnit = units[currentIndex];
 
     // Check if we should show word viewer
-    // Show only when: NOT in passage/syntax mode OR there's a selected unit being analyzed
-    const showWordViewer = currentUnit && (activeAction !== 'passage' && activeAction !== 'syntax');
+    // Show only when: NOT in passage/syntax/quiz mode OR there's a selected unit being analyzed
+    const showWordViewer = currentUnit && (activeAction !== 'passage' && activeAction !== 'syntax' && activeAction !== 'quiz');
 
     return (
         <div className="h-full flex flex-col bg-muted/30 border-r">
@@ -140,8 +140,8 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                                                 onClick={() => onNavigate(idx)}
                                                 className={cn(
                                                     "flex-1 text-left px-3 py-2 rounded-md text-sm transition-colors",
-                                                    // Only highlight if this is current index AND we're not viewing passage/syntax
-                                                    idx === currentIndex && activeAction !== 'passage' && activeAction !== 'syntax'
+                                                    // Only highlight if this is current index AND we're not viewing passage/syntax/quiz
+                                                    idx === currentIndex && activeAction !== 'passage' && activeAction !== 'syntax' && activeAction !== 'quiz'
                                                         ? "bg-primary/10 text-primary font-medium border-l-2 border-primary"
                                                         : "hover:bg-muted text-muted-foreground"
                                                 )}
@@ -149,7 +149,7 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                                                 <div className="flex items-center gap-2">
                                                     <Circle className={cn(
                                                         "h-2 w-2",
-                                                        idx === currentIndex && activeAction !== 'passage' && activeAction !== 'syntax'
+                                                        idx === currentIndex && activeAction !== 'passage' && activeAction !== 'syntax' && activeAction !== 'quiz'
                                                             ? "fill-primary"
                                                             : "fill-muted-foreground"
                                                     )} />

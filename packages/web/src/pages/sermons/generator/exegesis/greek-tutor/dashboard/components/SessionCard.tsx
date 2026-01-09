@@ -50,7 +50,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     const completedUnits = session.sessionProgress?.unitsCompleted || 0;
 
     // Get session state
-    const state = getSessionState(session);
+    const state = getSessionState(session, t);
 
     // Get state icon
     const StateIcon = {

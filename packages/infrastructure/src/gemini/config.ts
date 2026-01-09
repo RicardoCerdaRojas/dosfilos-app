@@ -7,5 +7,6 @@ export const GEMINI_CONFIG = {
     GENERATION_CONFIG: {
         maxOutputTokens: 8192,
         temperature: 0.7,
+        responseMimeType: 'application/json',
     }
 };

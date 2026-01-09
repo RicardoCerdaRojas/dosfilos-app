@@ -11,6 +11,7 @@ import {
 import { calculateSessionProgress, getSessionLastActivity } from '../utils/sessionUtils';
 import { calculateStudyStreak } from '../utils/progressUtils';
 import { useTranslation } from '@/i18n';
+import { Trans } from 'react-i18next';
 
 
 interface StatisticsPanelProps {
@@ -113,7 +114,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {stats.map((stat, index) => {
                     // Determine if this stat needs a tooltip
-                    const needsTooltip = stat.label === 'Progreso Promedio' || stat.label === 'Racha de Estudio';
+                    const needsTooltip = stat.label === t('dashboard.statistics.averageProgress') || stat.label === t('dashboard.statistics.studyStreak');
                     
                     const statContent = (
                         <div className="space-y-0.5">
@@ -133,35 +134,43 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
                     }
 
                     // Tooltip content based on metric
-                    const tooltipContent = stat.label === 'Progreso Promedio' ? (
+                    const tooltipContent = stat.label === t('dashboard.statistics.averageProgress') ? (
                         <div className="space-y-2 max-w-xs">
-                            <p className="font-semibold text-sm">🎯 Tu Nivel de Dominio del Griego</p>
+                            <p className="font-semibold text-sm">{t('dashboard.statistics.tooltips.masteryTitle')}</p>
                             <p className="text-sm">
-                                Muestra qué tan bien estás <span className="font-semibold text-primary">dominando</span> las palabras que estudias.
+                                <Trans
+                                    i18nKey="dashboard.statistics.tooltips.masteryDesc"
+                                    t={t}
+                                    components={[<span className="font-semibold text-primary" key="0">dominando</span>]}
+                                />
                             </p>
                             <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
-                                <p className="font-medium">Cómo se calcula:</p>
-                                <p>• Palabra <span className="text-green-600 font-medium">dominada</span>: ≥50% de precisión en quizzes</p>
-                                <p>• Se promedian todas tus sesiones</p>
+                                <p className="font-medium">{t('dashboard.statistics.tooltips.calcTitle')}</p>
+                                <p><Trans i18nKey="dashboard.statistics.tooltips.calcMastered" t={t} components={[<span className="text-green-600 font-medium" key="0">dominada</span>]} /></p>
+                                <p>{t('dashboard.statistics.tooltips.calcAverage')}</p>
                             </div>
                             <p className="text-xs text-muted-foreground italic">
-                                💡 Progreso alto = Estás internalizando el griego bíblico
+                                {t('dashboard.statistics.tooltips.masteryTip')}
                             </p>
                         </div>
                     ) : ( // Racha de Estudio
                         <div className="space-y-2 max-w-xs">
-                            <p className="font-semibold text-sm">🔥 Mantén el Momentum</p>
+                            <p className="font-semibold text-sm">{t('dashboard.statistics.tooltips.streakTitle')}</p>
                             <p className="text-sm">
-                                La <span className="font-semibold text-orange-600">consistencia</span> es clave para dominar el griego. ¡No rompas la cadena!
+                                <Trans 
+                                    i18nKey="dashboard.statistics.tooltips.streakDesc" 
+                                    t={t} 
+                                    components={[<span className="font-semibold text-orange-600" key="0">consistencia</span>]} 
+                                />
                             </p>
                             <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
-                                <p className="font-medium">Cómo funciona:</p>
-                                <p>• Cuenta días consecutivos estudiando</p>
-                                <p>• Tienes 1 día de gracia (puedes estudiar hoy o ayer)</p>
-                                <p>• Se rompe después de {'>'} 1 día sin actividad</p>
+                                <p className="font-medium">{t('dashboard.statistics.tooltips.streakCalcTitle')}</p>
+                                <p>{t('dashboard.statistics.tooltips.streakRule1')}</p>
+                                <p>{t('dashboard.statistics.tooltips.streakRule2')}</p>
+                                <p>{t('dashboard.statistics.tooltips.streakRule3')}</p>
                             </div>
                             <p className="text-xs text-muted-foreground italic">
-                                💪 Estudiar 10 min diarios {'>'} 2 horas 1 vez por semana
+                                {t('dashboard.statistics.tooltips.streakTip')}
                             </p>
                         </div>
                     );

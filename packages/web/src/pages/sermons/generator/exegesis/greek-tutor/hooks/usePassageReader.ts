@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BiblicalPassage, PassageWord, UnitPreview, TrainingUnit } from '@dosfilos/domain';
 import { useGreekTutor } from '../GreekTutorProvider';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Custom hook for managing passage reader state and logic
@@ -23,8 +24,10 @@ export const usePassageReader = (
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddingUnit, setIsAddingUnit] = useState(false);
+    const [hoveredWord, setHoveredWord] = useState<PassageWord | null>(null);
 
     const { identifyPassageWord, addPassageWordToUnits } = useGreekTutor();
+    const { i18n } = useTranslation('greekTutor');
 
     // Helper function to normalize Greek text for comparison
     const normalizeGreek = (text: string): string => {
@@ -126,7 +129,7 @@ export const usePassageReader = (
         try {
             // Detect user's system language
             const userLangObj = new Intl.DisplayNames(['en'], { type: 'language' });
-            const detectedLang = userLangObj.of(navigator.language.split('-')[0]) || 'Spanish';
+            const detectedLang = userLangObj.of((i18n.language || 'es').split('-')[0]) || 'Spanish';
 
             const preview = await identifyPassageWord.execute(
                 word,
@@ -220,6 +223,8 @@ export const usePassageReader = (
         isAddingUnit,
         handleWordClick,
         handleConfirmAdd,
-        handleCloseModal
+        handleCloseModal,
+        hoveredWord,
+        setHoveredWord
     };
 };

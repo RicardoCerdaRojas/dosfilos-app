@@ -72,24 +72,24 @@ export const useGreekTutorBoard = ({
      * Format morphology breakdown for display
      */
     const formatMorphologyContent = useCallback((breakdown: MorphologyBreakdown): string => {
-        let content = `# Descomposición Morfológica\n\n`;
+        let content = `# ${translate('headers.morphologicalDecomposition')}\n\n`;
 
         // Word with components in highlighted block
-        content += `## Estructura\n\n`;
+        content += `## ${translate('morphology.structure')}\n\n`;
         content += `\`\`\`\n`;
         content += breakdown.components.map(c => c.part).join(' + ');
         content += `\n\`\`\`\n\n`;
         content += `---\n\n`;
 
         // Component breakdown without emojis
-        content += `## Componentes\n\n`;
+        content += `## ${translate('morphology.components')}\n\n`;
         breakdown.components.forEach((component) => {
             const typeLabels: Record<string, string> = {
-                'prefix': 'Prefijo',
-                'root': 'Raíz',
-                'formative': 'Formativo',
-                'ending': 'Terminación',
-                'other': 'Otro'
+                'prefix': translate('morphology.componentTypes.prefix'),
+                'root': translate('morphology.componentTypes.root'),
+                'formative': translate('morphology.componentTypes.formative'),
+                'ending': translate('morphology.componentTypes.ending'),
+                'other': translate('morphology.componentTypes.other')
             };
 
             const typeLabel = typeLabels[component.type] || 'Componente';
@@ -103,14 +103,14 @@ export const useGreekTutorBoard = ({
 
         // Summary in highlighted format
         if (breakdown.summary) {
-            content += `## Síntesis\n\n`;
+            content += `## ${translate('morphology.synthesis')}\n\n`;
             content += `> [!TIP]\n`;
-            content += `> **Resumen**\n>\n`;
+            content += `> **${translate('morphology.synthesis')}**\n>\n`;
             content += `> ${breakdown.summary}\n`;
         }
 
         return content;
-    }, []);
+    }, [translate]);
 
     /**
      * Handle action button click
@@ -127,7 +127,7 @@ export const useGreekTutorBoard = ({
                 if (existing) {
                     setCurrentContent({
                         type: 'morphology',
-                        title: translate('session.actions.morphology'),
+                        title: translate('headers.morphologicalDecomposition'),
                         content: formatMorphologyContent(existing),
                         morphologyData: existing,
                         greekWord: currentUnit.greekForm.text,
@@ -145,7 +145,7 @@ export const useGreekTutorBoard = ({
             case 'recognition': {
                 setCurrentContent({
                     type: 'recognition',
-                    title: translate('session.actions.recognition'),
+                    title: translate('wordAnalysis.recognition.description'),
                     content: currentUnit.recognitionGuidance || translate('session.content.notAvailable'),
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -158,7 +158,7 @@ export const useGreekTutorBoard = ({
             case 'context': {
                 setCurrentContent({
                     type: 'context',
-                    title: translate('session.actions.context'),
+                    title: translate('wordAnalysis.context.description'),
                     content: currentUnit.functionInContext,
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -171,7 +171,7 @@ export const useGreekTutorBoard = ({
             case 'significance': {
                 setCurrentContent({
                     type: 'significance',
-                    title: translate('session.actions.significance'),
+                    title: translate('wordAnalysis.significance.description'),
                     content: currentUnit.significance,
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -184,7 +184,7 @@ export const useGreekTutorBoard = ({
             case 'quiz': {
                 setCurrentContent({
                     type: 'quiz',
-                    title: translate('session.actions.quiz'),
+                    title: translate('headers.comprehensionQuiz'),
                     content: '', // QuizSection handles its own content
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -197,7 +197,7 @@ export const useGreekTutorBoard = ({
             case 'passage': {
                 setCurrentContent({
                     type: 'passage',
-                    title: translate('session.actions.passage'),
+                    title: translate('headers.readPassage'),
                     content: '', // PassageReader handles its own content
                     greekWord: currentUnit.greekForm.text,
                     identification: currentUnit.identification,
@@ -212,7 +212,7 @@ export const useGreekTutorBoard = ({
                 setIsChatLoading(true); // Reuse existing loading state
                 setCurrentContent({
                     type: 'syntax',
-                    title: translate('session.actions.syntax'),
+                    title: translate('headers.syntacticStructure'),
                     content: translate('session.content.analyzing'),
                     passage,
                     timestamp: new Date()
@@ -230,14 +230,13 @@ export const useGreekTutorBoard = ({
                         const analyzeSyntaxUseCase = greekTutorContext.analyzePassageSyntax;
 
                         // Step 4: Execute analysis (with caching and user's language)
-                        console.log('[useGreekTutorBoard] Analyzing syntax in language:', userLanguage);
                         const analysis = await analyzeSyntaxUseCase.execute(biblicalPassage, userLanguage);
                         // Analysis complete
 
                         // Step 5: Update content with results
                         setCurrentContent({
                             type: 'syntax',
-                            title: translate('session.actions.syntax'),
+                            title: translate('headers.syntacticStructure'),
                             content: analysis.structureDescription,
                             passage,
                             syntaxAnalysis: analysis,
@@ -249,7 +248,7 @@ export const useGreekTutorBoard = ({
                         // Use a fallback object indicating error, handled by ContentBoard
                         setCurrentContent({
                             type: 'syntax',
-                            title: translate('session.actions.syntax'),
+                            title: translate('headers.syntacticStructure'),
                             content: translate('session.errors.syntaxFailed'), // ContentBoard shows a rich error view based on !syntaxAnalysis
                             passage,
                             // syntaxAnalysis: undefined, // Explicitly undefined to trigger error view
@@ -275,8 +274,8 @@ export const useGreekTutorBoard = ({
             const answer = await onChatMessage(message);
             setCurrentContent({
                 type: 'chat',
-                title: 'Respuesta del Tutor',
-                content: `**Tu pregunta:** ${message}\n\n---\n\n${answer}`,
+                title: translate('askTutor.responseTitle'),
+                content: `**${translate('askTutor.yourQuestion')}** ${message}\n\n---\n\n${answer}`,
                 greekWord: currentUnit?.greekForm.text,
                 passage: passage,
                 timestamp: new Date()
@@ -286,7 +285,7 @@ export const useGreekTutorBoard = ({
             setCurrentContent({
                 type: 'chat',
                 title: 'Error',
-                content: `**Tu pregunta:** ${message}\n\n❌ Hubo un error al procesar tu pregunta. Por favor intenta de nuevo.`,
+                content: `**${translate('askTutor.yourQuestion')}** ${message}\n\n❌ ${translate('session.errors.general')}`,
                 timestamp: new Date()
             });
         } finally {
@@ -343,7 +342,7 @@ export const useGreekTutorBoard = ({
                 // Morphology data loaded
                 setCurrentContent({
                     type: 'morphology',
-                    title: 'Descomposición Morfológica',
+                    title: translate('headers.morphologicalDecomposition'),
                     content: formatMorphologyContent(breakdown),
                     morphologyData: breakdown, // Include data for visual rendering
                     timestamp: new Date()

@@ -1,11 +1,23 @@
 {
+    "loading": "Loading sermon...",
+    "notFound": {
+        "title": "Sermon not found",
+        "button": "Back to sermons"
+    },
     "actions": {
         "edit": "Edit",
         "delete": "Delete",
         "export": "Export",
         "share": "Share",
         "duplicate": "Duplicate",
-        "back": "Back to Sermons"
+        "back": "Back to Sermons",
+        "preach": "Preach",
+        "viewPublic": "View Public",
+        "publish": "Publish",
+        "archive": "Archive",
+        "markComplete": "Mark Complete",
+        "markingComplete": "Marking...",
+        "exportPdf": "Export PDF"
     },
     "status": {
         "draft": "Draft",
@@ -17,12 +29,119 @@
         "exegesis": "Exegesis",
         "outline": "Outline",
         "sermon": "Sermon",
-        "notes": "Notes"
+        "notes": "Notes",
+        "tagsAndCategory": "Tags and Category"
+    },
+    "series": {
+        "partOf": "Part of Series",
+        "viewFull": "View Full Series"
+    },
+    "history": {
+        "title": "History",
+        "empty": "No preaching logs.",
+        "logButton": "Log Preaching"
+    },
+    "dialogs": {
+        "delete": {
+            "title": "Are you sure?",
+            "description": "This action cannot be undone. The sermon \"{{title}}\" will be permanently deleted.",
+            "confirm": "Delete",
+            "deleting": "Deleting...",
+            "cancel": "Cancel"
+        },
+        "share": {
+            "title": "Share Sermon",
+            "description": "Generate a public link to share this sermon with others.",
+            "publicMode": "Share publicly",
+            "publicModeDesc": "Anyone with the link can view this sermon.",
+            "publicLink": "Public link",
+            "copyTip": "This link allows viewing the sermon without logging in.",
+            "copied": "Link copied to clipboard"
+        },
+        "log": {
+            "title": "Log Preaching",
+            "description": "Keep a record of when and where you preached this sermon.",
+            "date": "Date",
+            "duration": "Duration (min)",
+            "location": "Location / Church",
+            "locationPlaceholder": "E.g. Central Church",
+            "notes": "Notes (Optional)",
+            "notesPlaceholder": "Reactions, points to improve, etc.",
+            "save": "Save Log",
+            "saving": "Saving..."
+        }
     },
     "toast": {
         "exportSuccess": "Sermon exported",
         "exportError": "Error exporting sermon",
         "deleteSuccess": "Sermon deleted",
-        "deleteError": "Error deleting sermon"
+        "deleteError": "Error deleting sermon",
+        "shared": "Sermon shared",
+        "unshared": "Sermon unshared",
+        "shareError": "Error changing share status",
+        "logSuccess": "Preaching logged",
+        "logError": "Error logging preaching",
+        "completeSuccess": "Sermon marked as complete",
+        "completeError": "Error marking as complete",
+        "copied": "Link copied to clipboard"
+    },
+    "form": {
+        "title": "Sermon Title",
+        "titlePlaceholder": "E.g. The Love of God",
+        "titleError": "Title must be at least 5 characters",
+        "category": "Category",
+        "categoryPlaceholder": "Select a category",
+        "author": "Author",
+        "authorPlaceholder": "E.g. Pastor John Doe",
+        "authorHelp": "Preacher name (optional)",
+        "content": "Sermon Content",
+        "contentPlaceholder": "Write your sermon content...",
+        "contentError": "Content is required",
+        "bibleRefs": "Bible References",
+        "bibleRefsPlaceholder": "E.g. John 3:16, Romans 8:28",
+        "bibleRefsHelp": "Add the bible references used in the sermon",
+        "tags": "Tags",
+        "tagsPlaceholder": "E.g. salvation, grace, faith",
+        "tagsHelp": "Add tags to organize your sermons",
+        "status": "Status",
+        "save": "Save Changes",
+        "saving": "Saving...",
+        "editTitle": "Edit Sermon",
+        "categories": {
+            "evangelismo": "Evangelism",
+            "discipulado": "Discipleship",
+            "adoracion": "Worship",
+            "familia": "Family",
+            "juventud": "Youth",
+            "matrimonio": "Marriage",
+            "finanzas": "Finances",
+            "oracion": "Prayer",
+            "otro": "Other"
+        }
+    },
+    "preachMode": {
+        "exit": "Exit",
+        "loading": "Loading...",
+        "fullScreen": "Full Screen",
+        "exitFullScreen": "Exit Full Screen",
+        "timeUp": "Time's up!",
+        "highlights": "{{count}} highlight",
+        "highlights_other": "{{count}} highlights",
+        "clearHighlights": "Clear all highlights",
+        "blackout": "Press B or click to continue",
+        "shortcuts": {
+            "blackout": "Blackout",
+            "exit": "Exit fullscreen"
+        },
+        "timer": {
+            "settings": "Timer Settings",
+            "duration": "Sermon Duration (minutes)",
+            "saveAndReset": "Save and Reset"
+        },
+        "bible": {
+            "source": "Source: {{version}}",
+            "notFound": "Could not find text. Check reference.",
+            "error": "Error loading bible text."
+        }
     }
 }

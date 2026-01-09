@@ -136,7 +136,6 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
             // Sort by most recent first
             insights.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-            console.log(`[FirestoreGreekSessionRepository] Retrieved ${insights.length} insights for user ${userId}`);
             return insights;
         } catch (error) {
             console.error('[FirestoreGreekSessionRepository] getUserInsights error:', error);
@@ -423,14 +422,46 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
      * Retrieves a cached passage from Firestore by reference.
      * Returns null if not cached.
      */
-    async getCachedPassage(reference: string): Promise<import('@dosfilos/domain').BiblicalPassage | null> {
+    /**
+     * Retrieves a cached passage from Firestore by reference.
+     * Returns null if not cached.
+     * Now supports language-scoped caching to prevent thrashing.
+     */
+    async getCachedPassage(
+        reference: string,
+        language: string = 'Spanish'
+    ): Promise<import('@dosfilos/domain').BiblicalPassage | null> {
         try {
-            const cacheKey = this.normalizeReference(reference);
+            const normalizedRef = this.normalizeReference(reference);
+            // Append language to cache key (e.g., "rom_12_1_2_en")
+            // Default to 'es' for backward compatibility if needed, but explicit is better
+            const langCode = language.toLowerCase().startsWith('en') ? 'en' : 'es'; // Normalize to code
+            const cacheKey = `${normalizedRef}_${langCode}`;
+
             const cacheRef = doc(db, this.passageCacheCollection, cacheKey);
             const cacheSnap = await getDoc(cacheRef);
 
             if (!cacheSnap.exists()) {
-                console.log(`[FirestoreGreekSessionRepository] Passage cache MISS for: ${reference}`);
+                // Fallback attempt: try legacy key without language suffix (migration path)
+                // Only if looking for Spanish, as legacy data is likely Spanish
+                if (langCode === 'es') {
+                    const legacyKey = normalizedRef;
+                    const legacySnap = await getDoc(doc(db, this.passageCacheCollection, legacyKey));
+                    if (legacySnap.exists()) {
+                        // We found legacy data. We could return it, but next save will upgrade it to scoped key.
+                        const data = legacySnap.data();
+                        // But we must be careful not to return Spanish legacy data if user asked for English
+                        // This is handled by the "Deep Validation" in UseCase anyway, so safe to return.
+                        return {
+                            reference: data.reference,
+                            rv60Text: data.rv60Text,
+                            greekText: data.greekText,
+                            transliteration: data.transliteration,
+                            words: data.words || []
+                        };
+                    }
+                }
+
                 return null;
             }
 
@@ -441,8 +472,6 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
                 lastUsedAt: new Date(),
                 usageCount: (data.usageCount || 0) + 1
             });
-
-            console.log(`[FirestoreGreekSessionRepository] Passage cache HIT for: ${reference} (used ${data.usageCount || 0} times)`);
 
             return {
                 reference: data.reference,
@@ -461,9 +490,15 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
      * Caches a passage in Firestore for reuse
      * Non-critical: If caching fails (e.g., permissions), feature still works without cache
      */
-    async cachePassage(passage: import('@dosfilos/domain').BiblicalPassage): Promise<void> {
+    async cachePassage(
+        passage: import('@dosfilos/domain').BiblicalPassage,
+        language: string = 'Spanish'
+    ): Promise<void> {
         try {
-            const cacheKey = this.normalizeReference(passage.reference);
+            const normalizedRef = this.normalizeReference(passage.reference);
+            const langCode = language.toLowerCase().startsWith('en') ? 'en' : 'es';
+            const cacheKey = `${normalizedRef}_${langCode}`;
+
             const cacheRef = doc(db, this.passageCacheCollection, cacheKey);
 
             await setDoc(cacheRef, {
@@ -472,15 +507,16 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
                 greekText: passage.greekText,
                 transliteration: passage.transliteration,
                 words: passage.words,
+                language: langCode, // Store language metadata explicitly
                 createdAt: new Date(),
                 lastUsedAt: new Date(),
                 usageCount: 1
             });
 
-            console.log(`[FirestoreGreekSessionRepository] Cached passage: ${passage.reference}`);
+            console.log(`[FirestoreGreekSessionRepository] Cached passage: ${passage.reference} (${langCode})`);
         } catch (error) {
             // Non-critical error - feature works without cache
-            console.warn('[FirestoreGreekSessionRepository] Could not cache passage (permissions or other issue). Feature will work but won\'t benefit from caching:', error);
+            console.warn('[FirestoreGreekSessionRepository] Could not cache passage:', error);
         }
     }
 
@@ -525,7 +561,6 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
 
             if (cacheSnap.exists()) {
                 const data = cacheSnap.data();
-                console.log(`[FirestoreGreekSessionRepository] Syntax analysis cache hit for: ${reference}`);
 
                 // Reconstruct the domain entity from Firestore data
                 return {

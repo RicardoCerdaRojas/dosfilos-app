@@ -21,6 +21,7 @@ interface PlanDashboardProps {
   completedCount: number;
   onStartDraft: (sermon: SermonItem) => void;
   onContinue: (draftId: string) => void;
+  onEditSermon?: (sermon: SermonItem) => void;
   onFixAlert?: (alertType: string) => void;
 }
 
@@ -31,6 +32,7 @@ export function PlanDashboard({
   completedCount,
   onStartDraft,
   onContinue,
+  onEditSermon,
   onFixAlert
 }: PlanDashboardProps) {
   // Calculate next sermon
@@ -85,7 +87,9 @@ export function PlanDashboard({
       {/* Upcoming Sermons & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <UpcomingSermonsList
-          sermons={sermons.map(s => ({
+          sermons={sermons
+            .filter(s => s.status !== 'complete')
+            .map(s => ({
             id: s.id,
             week: 0, // Not used in display
             title: s.title,
@@ -99,6 +103,10 @@ export function PlanDashboard({
             if (item) onStartDraft(item);
           }}
           onContinue={onContinue}
+          onEdit={(sermon) => {
+             const item = sermons.find(s => s.id === sermon.id);
+             if (item && onEditSermon) onEditSermon(item);
+          }}
         />
         
         <AlertsPanel

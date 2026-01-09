@@ -28,7 +28,6 @@ export class GetUserInsightsUseCase {
             insights = this.applyFilters(insights, filters);
         }
 
-        console.log(`[GetUserInsightsUseCase] Retrieved ${insights.length} insights for user ${userId}`);
         return insights;
     }
 

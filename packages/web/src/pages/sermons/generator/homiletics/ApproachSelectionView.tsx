@@ -14,6 +14,17 @@ import { ApproachCard } from '@/components/homiletics/ApproachCard';
 import { HomileticalApproachPreview } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 import { Trans } from 'react-i18next';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ApproachSelectionViewProps {
     /** Approach previews generated in Phase 1 */
@@ -61,24 +72,41 @@ export function ApproachSelectionView({
                         <h2 className="text-2xl font-bold">{t('homiletics.selectionTitle')}</h2>
                     </div>
                     {/* Regenerate Button */}
-                    <Button
-                        onClick={onRegenerate}
-                        variant="outline"
-                        size="sm"
-                        disabled={developing || regenerating}
-                    >
-                        {regenerating ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {t('homiletics.regeneratingBtn')}
-                            </>
-                        ) : (
-                            <>
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                {t('homiletics.regenerateBtn')}
-                            </>
-                        )}
-                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={developing || regenerating}
+                            >
+                                {regenerating ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {t('homiletics.regeneratingBtn')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        {t('homiletics.regenerateBtn')}
+                                    </>
+                                )}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>{t('homiletics.regenerateConfirmTitle', '¿Regenerar Enfoques?')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('homiletics.confirmRegenerateDesc', 'Esta acción generará nuevas ideas de enfoques homiléticos y reemplazará la lista actual. Si ya habías seleccionado uno, se perderá.')}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common.cancel', 'Cancelar')}</AlertDialogCancel>
+                                <AlertDialogAction onClick={onRegenerate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    {t('common.regenerate', 'Regenerar')}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
                 <p className="text-muted-foreground">
                     <Trans

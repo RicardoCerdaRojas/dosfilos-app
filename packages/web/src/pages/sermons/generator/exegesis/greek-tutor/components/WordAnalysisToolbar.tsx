@@ -20,26 +20,7 @@ interface ToolbarButton {
     description: string;
 }
 
-const TOOLBAR_BUTTONS: ToolbarButton[] = [
-    {
-        action: 'recognition',
-        icon: Lightbulb,
-        label: 'Claves',
-        description: 'Claves para reconocer'
-    },
-    {
-        action: 'context',
-        icon: GitMerge,
-        label: 'Función',
-        description: 'Función en la oración'
-    },
-    {
-        action: 'significance',
-        icon: Heart,
-        label: 'Teología',
-        description: 'Significado teológico'
-    }
-];
+
 
 /**
  * WordAnalysisToolbar - Floating toolbar for word-specific analysis actions

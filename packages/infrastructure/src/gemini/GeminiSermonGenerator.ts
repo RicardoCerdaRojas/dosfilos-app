@@ -52,6 +52,12 @@ export class GeminiSermonGenerator implements ISermonGenerator {
 
         // Priority 1: Use File Search Store (Core Library)
         if (options?.fileSearchStoreId) {
+            // CRITICAL FIX: Explicitly disable JSON mode when using Tools (RAG/File Search)
+            // Gemini API throws 400 if responseMimeType='application/json' is used with Tools.
+            if (generationConfig.responseMimeType) {
+                delete generationConfig.responseMimeType;
+            }
+
             return this.genAI.getGenerativeModel({
                 model: modelName,
                 tools: [{
@@ -123,6 +129,8 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 keyWords: Array.isArray(parsed.keyWords) ? parsed.keyWords.map((kw: any) => ({
                     original: kw.original || '',
                     transliteration: kw.transliteration || '',
+                    lemma: kw.lemma || '',
+                    literalTranslation: kw.literalTranslation || '',
                     morphology: kw.morphology || '',
                     syntacticFunction: kw.syntacticFunction || '',
                     significance: kw.significance || ''

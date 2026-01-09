@@ -1,11 +1,23 @@
 {
+    "loading": "Cargando sermón...",
+    "notFound": {
+        "title": "Sermón no encontrado",
+        "button": "Volver a sermones"
+    },
     "actions": {
         "edit": "Editar",
         "delete": "Eliminar",
         "export": "Exportar",
         "share": "Compartir",
         "duplicate": "Duplicar",
-        "back": "Volver a Sermones"
+        "back": "Volver a Sermones",
+        "preach": "Predicar",
+        "viewPublic": "Ver Público",
+        "publish": "Publicar",
+        "archive": "Archivar",
+        "markComplete": "Marcar Completado",
+        "markingComplete": "Marcando...",
+        "exportPdf": "Exportar PDF"
     },
     "status": {
         "draft": "Borrador",
@@ -17,12 +29,120 @@
         "exegesis": "Exégesis",
         "outline": "Bosquejo",
         "sermon": "Sermón",
-        "notes": "Notas"
+        "notes": "Notas",
+        "tagsAndCategory": "Etiquetas y Categoría"
+    },
+    "series": {
+        "partOf": "Parte de la Serie",
+        "viewFull": "Ver Serie Completa"
+    },
+    "history": {
+        "title": "Historial",
+        "empty": "No hay registros de predicación.",
+        "logButton": "Registrar Predicación"
+    },
+    "dialogs": {
+        "delete": {
+            "title": "¿Estás seguro?",
+            "description": "Esta acción no se puede deshacer. El sermón \"{{title}}\" será eliminado permanentemente.",
+            "confirm": "Eliminar",
+            "deleting": "Eliminando...",
+            "cancel": "Cancelar"
+        },
+        "share": {
+            "title": "Compartir Sermón",
+            "description": "Genera un enlace público para compartir este sermón con otros.",
+            "publicMode": "Compartir públicamente",
+            "publicModeDesc": "Cualquiera con el enlace podrá ver este sermón.",
+            "publicLink": "Enlace público",
+            "copyTip": "Este enlace permite ver el sermón sin necesidad de iniciar sesión.",
+            "copied": "Enlace copiado al portapapeles"
+        },
+        "log": {
+            "title": "Registrar Predicación",
+            "description": "Guarda un registro de cuándo y dónde predicaste este sermón.",
+            "date": "Fecha",
+            "duration": "Duración (min)",
+            "location": "Lugar / Iglesia",
+            "locationPlaceholder": "Ej: Iglesia Central",
+            "notes": "Notas (Opcional)",
+            "notesPlaceholder": "Reacciones, puntos a mejorar, etc.",
+            "save": "Guardar Registro",
+            "saving": "Guardando..."
+        }
     },
     "toast": {
         "exportSuccess": "Sermón exportado",
         "exportError": "Error al exportar el sermón",
         "deleteSuccess": "Sermón eliminado",
-        "deleteError": "Error al eliminar el sermón"
+        "deleteError": "Error al eliminar el sermón",
+        "shared": "Sermón compartido",
+        "unshared": "Sermón dejado de compartir",
+        "shareError": "Error al cambiar estado de compartir",
+        "logSuccess": "Predicación registrada",
+        "logError": "Error al registrar predicación",
+        "completeSuccess": "Sermón marcado como completado",
+        "completeError": "Error al marcar como completado",
+        "copied": "Enlace copiado al portapapeles"
+    },
+    "form": {
+        "title": "Título del Sermón",
+        "titlePlaceholder": "Ej: El amor de Dios",
+        "titleError": "El título debe tener al menos 5 caracteres",
+        "category": "Categoría",
+        "categoryPlaceholder": "Selecciona una categoría",
+        "author": "Autor",
+        "authorPlaceholder": "Ej: Pastor Juan Pérez",
+        "authorHelp": "Nombre del predicador (opcional)",
+        "content": "Contenido del Sermón",
+        "contentPlaceholder": "Escribe el contenido de tu sermón...",
+        "contentError": "El contenido es requerido",
+        "bibleRefs": "Referencias Bíblicas",
+        "bibleRefsPlaceholder": "Ej: Juan 3:16, Romanos 8:28",
+        "bibleRefsHelp": "Agrega las referencias bíblicas que usarás en el sermón",
+        "tags": "Etiquetas",
+        "tagsPlaceholder": "Ej: salvación, gracia, fe",
+        "tagsHelp": "Agrega etiquetas para organizar tus sermones",
+        "status": "Estado",
+        "save": "Guardar Cambios",
+        "saving": "Guardando...",
+        "editTitle": "Editar Sermón",
+        "sermonDetails": "Detalles del Sermón",
+        "categories": {
+            "evangelismo": "Evangelismo",
+            "discipulado": "Discipulado",
+            "adoracion": "Adoración",
+            "familia": "Familia",
+            "juventud": "Juventud",
+            "matrimonio": "Matrimonio",
+            "finanzas": "Finanzas",
+            "oracion": "Oración",
+            "otro": "Otro"
+        }
+    },
+    "preachMode": {
+        "exit": "Salir",
+        "loading": "Cargando...",
+        "fullScreen": "Pantalla Completa",
+        "exitFullScreen": "Salir de Pantalla Completa",
+        "timeUp": "¡Tiempo!",
+        "highlights": "{{count}} resaltado",
+        "highlights_other": "{{count}} resaltados",
+        "clearHighlights": "Limpiar todos los resaltados",
+        "blackout": "Presiona B o haz clic para continuar",
+        "shortcuts": {
+            "blackout": "Pantalla negra",
+            "exit": "Salir de pantalla completa"
+        },
+        "timer": {
+            "settings": "Configurar Temporizador",
+            "duration": "Duración del Sermón (minutos)",
+            "saveAndReset": "Guardar y Reiniciar"
+        },
+        "bible": {
+            "source": "Fuente: {{version}}",
+            "notFound": "No se pudo encontrar el texto. Verifique la referencia.",
+            "error": "Error al cargar el texto bíblico."
+        }
     }
 }

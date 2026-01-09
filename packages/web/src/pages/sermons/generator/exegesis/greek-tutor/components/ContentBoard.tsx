@@ -109,7 +109,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
         <div className="h-full flex flex-col">
             {/* Scrollable content area - header is now in parent */}
             <ScrollArea className="flex-1">
-                <div className="p-6 max-w-5xl mx-auto">
+                <div className={content.type === 'passage' ? "w-full px-2 md:px-4 py-6" : "p-6 max-w-5xl mx-auto"}>
                     {/* Use visual component for morphology when data is available */}
                     {(() => {
                         if (content.type === 'morphology' && content.morphologyData) {
@@ -178,9 +178,9 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                                                     </div>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h3 className="text-xl font-bold text-foreground mb-2">Análisis no disponible</h3>
+                                                    <h3 className="text-xl font-bold text-foreground mb-2">{t('session.errors.syntaxUnavailable')}</h3>
                                                     <p className="text-muted-foreground">
-                                                        Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.
+                                                        {t('session.errors.syntaxErrorMessage')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -189,7 +189,7 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
 
                                             {/* Suggestions */}
                                             <div className="space-y-4">
-                                                <h4 className="font-semibold text-foreground">¿Qué puedes hacer?</h4>
+                                                <h4 className="font-semibold text-foreground">{t('session.errors.whatCanYouDo')}</h4>
                                                 
                                                 <div className="grid gap-3">
                                                     <div className="flex gap-3 p-3 rounded-lg bg-background border">
@@ -197,8 +197,8 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                                                             <Lightbulb className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm">Intenta de nuevo</p>
-                                                            <p className="text-xs text-muted-foreground">El análisis usa IA y a veces puede fallar temporalmente.</p>
+                                                            <p className="font-medium text-sm">{t('session.errors.tryAgain')}</p>
+                                                            <p className="text-xs text-muted-foreground">{t('session.errors.tryAgainDescription')}</p>
                                                         </div>
                                                     </div>
                                                     
@@ -207,8 +207,8 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                                                             <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm">Prueba con un pasaje más corto</p>
-                                                            <p className="text-xs text-muted-foreground">Los pasajes más largos son más complejos de analizar.</p>
+                                                            <p className="font-medium text-sm">{t('session.errors.tryShort')}</p>
+                                                            <p className="text-xs text-muted-foreground">{t('session.errors.tryShortDescription')}</p>
                                                         </div>
                                                     </div>
                                                     
@@ -217,8 +217,8 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                                                             <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm">Regresa más tarde</p>
-                                                            <p className="text-xs text-muted-foreground">Este es un feature experimental que estamos mejorando.</p>
+                                                            <p className="font-medium text-sm">{t('session.errors.comeLater')}</p>
+                                                            <p className="text-xs text-muted-foreground">{t('session.errors.comeLaterDescription')}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -231,8 +231,8 @@ export const ContentBoard: React.FC<ContentBoardProps> = ({
                                                 <div className="flex items-center gap-2 flex-1">
                                                     <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                                                     <div>
-                                                        <p className="text-sm font-medium text-foreground">Mientras tanto...</p>
-                                                        <p className="text-xs text-muted-foreground">Puedes usar: análisis morfológico, contexto de palabras, y quiz.</p>
+                                                        <p className="text-sm font-medium text-foreground">{t('session.errors.meanwhile')}</p>
+                                                        <p className="text-xs text-muted-foreground">{t('session.errors.meanwhileDescription')}</p>
                                                     </div>
                                                 </div>
                                                 {onRetrySyntax && (
@@ -329,6 +329,7 @@ const PassageReaderWrapper: React.FC<{
     const [biblicalPassage, setBiblicalPassage] = useState<BiblicalPassage | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { i18n } = useTranslation();
     const { getPassageText } = useGreekTutor();
 
     useEffect(() => {
@@ -338,7 +339,9 @@ const PassageReaderWrapper: React.FC<{
             setError(null);
             
             try {
-                const result = await getPassageText.execute(passage, fileSearchStoreId);
+                // Determine language for AI instructions (defaults to Spanish if not English)
+                const language = i18n.language?.startsWith('en') ? 'English' : 'Spanish';
+                const result = await getPassageText.execute(passage, fileSearchStoreId, language);
                 setBiblicalPassage(result);
                 // Passage loaded successfully
             } catch (err) {

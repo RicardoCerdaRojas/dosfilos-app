@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
+import { useTranslation } from 'react-i18next';
 import remarkGfm from 'remark-gfm';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
@@ -36,21 +36,14 @@ export function SermonPreview({
   category,
   status = 'draft'
 }: SermonPreviewProps) {
+  const { t, i18n } = useTranslation('sermonDetail');
   const [fontSize, setFontSize] = useState(18);
-  const [isScrolled, setIsScrolled] = useState(false);
   
   // Bible Viewer State
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
   const [bibleText, setBibleText] = useState<string | null>(null);
+  const [bibleVersion, setBibleVersion] = useState<string>('');
   const [loadingBible, setLoadingBible] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 300);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Bible Fetching Logic
   const fetchBibleText = async (ref: string) => {
@@ -61,8 +54,10 @@ export function SermonPreview({
       const text = LocalBibleService.getVerses(ref);
       if (text) {
         setBibleText(text);
+        setBibleVersion(LocalBibleService.getVersionName(ref));
       } else {
-        setBibleText('No se pudo encontrar el texto. Verifique la referencia.');
+        setBibleText(t('preachMode.bible.notFound'));
+        setBibleVersion('');
       }
     } catch (error) {
       console.error('Error fetching bible text:', error);
@@ -78,23 +73,8 @@ export function SermonPreview({
     }
   }, [selectedReference]);
 
-  // Bible Reference Pattern (Robust)
-  const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
-
-  // Helper to replace refs in plain text only
-  const replaceRefsInText = (text: string) => {
-    return text.replace(BIBLE_REF_PATTERN, (match, ref) => {
-      // Calculate the prefix (everything before the ref in the match)
-      const prefix = match.slice(0, match.length - ref.length);
-      // Use HTML anchor tags
-      return `${prefix}<a href="#bible-${encodeURIComponent(ref.trim())}">${ref.trim()}</a>`;
-    });
-  };
-
-  // Helper to replace markdown bold with HTML strong
-  const replaceBoldWithStrong = (text: string) => {
-    return text.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
-  };
+  // Bible Reference Pattern (Robust) - includes Full English and Spanish book names
+  const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Exodus|Éx|Ex|Levítico|Levitico|Leviticus|Lev|Lv|Números|Numeros|Numbers|Núm|Num|Nm|Deuteronomio|Deut|Deuteronomy|Dt|Josué|Josue|Joshua|Jos|Jueces|Jue|Judges|Jc|Rut|Ruth|Rt|Samuel|Sam|S|Reyes|Rey|Kings|Kgs|R|Crónicas|Cronicas|Chronicles|Chr|Cr|Esdras|Esd|Ezra|Ezr|Nehemías|Nehemias|Nehemiah|Neh|Ne|Ester|Est|Esther|Et|Job|Jb|Salmos?|Psalms?|Sal|Sl|Ps|Proverbios|Prov|Proverbs|Pr|Prv|Eclesiastés|Eclesiastes|Ecclesiastes|Ecl|Ec|Cantares|Cantar|Song of Solomon|Songs|Cnt|Ct|Isaías|Isaias|Isaiah|Is|Isa|Jeremías|Jeremias|Jeremiah|Jer|Jr|Lamentaciones|Lam|Lamentations|Lm|Ezequiel|Ezeq|Ezekiel|Ez|Daniel|Dan|Dn|Oseas|Os|Hosea|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Obadiah|Abd|Ab|Jonás|Jonas|Jonah|Jon|Miqueas|Miq|Micah|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Habakkuk|Hab|Sofonías|Sofonias|Zephaniah|Sof|Hageo|Hag|Haggai|Zacarías|Zacarias|Zechariah|Zac|Zc|Malaquías|Malaquias|Malachi|Mal|Mateo|Mat|Matthew|Matt|Mt|Marcos|Mar|Mark|Mk|Mr|Lucas|Luc|Luke|Lk|Lm|Juan|Jn|John|Hechos|Hch|Hec|Acts|Ac|Romanos|Rom|Romans|Ro|Rm|Corintios|Cor|Corinthians|Co|Gálatas|Galatas|Galatians|Gál|Gal|Ga|Efesios|Ef|Ephesians|Eph|Efe|Filipenses|Fil|Philippians|Phil|Php|Fp|Colosenses|Col|Colossians|Tesalonicenses|Tes|Thessalonians|Thess|Ts|Th|Timoteo|Tim|Timothy|Ti|Tito|Tit|Titus|Filemón|Filemon|Philemon|Phm|Flm|Flmn|Hebreos|Heb|Hebrews|He|Santiago|Sant|James|Jas|Stg|Pedro|Ped|Peter|Pet|Pe|Pt|P|Judas|Jud|Jude|Apocalipsis|Apoc|Ap|Revelation|Rev)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
 
   // Markdown Processing for Bible Links
   const processContent = (content: string) =>{
@@ -159,9 +139,9 @@ export function SermonPreview({
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
-      draft: { variant: 'secondary', label: 'Borrador' },
-      published: { variant: 'default', label: 'Publicado' },
-      archived: { variant: 'outline', label: 'Archivado' },
+      draft: { variant: 'secondary', label: t('status.draft') },
+      published: { variant: 'default', label: t('status.published') },
+      archived: { variant: 'outline', label: t('status.archived') },
     };
     const config = variants[status] || variants.draft;
     const safeConfig = config!;
@@ -193,7 +173,7 @@ export function SermonPreview({
         <div className="text-center space-y-8 pb-8 border-b">
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-[0.2em]">
-              <span>{date.toLocaleDateString('es-ES', { dateStyle: 'long' })}</span>
+              <span>{date.toLocaleDateString(i18n.language, { dateStyle: 'long' })}</span>
               {authorName && authorName !== 'Pastor' && (
                 <>
                   <span className="text-border">•</span>
@@ -253,7 +233,7 @@ export function SermonPreview({
           <div className="pt-8 border-t">
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Etiquetas y Categoría
+                {t('sections.tagsAndCategory')}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {category && (
@@ -292,7 +272,7 @@ export function SermonPreview({
               </div>
             )}
             <div className="mt-4 text-xs text-muted-foreground text-right">
-              Fuente: Reina Valera 1960
+              {bibleVersion && t('preachMode.bible.source', { version: bibleVersion })}
             </div>
           </div>
         </DialogContent>

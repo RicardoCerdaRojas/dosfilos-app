@@ -1,294 +1,62 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useFirebase } from '@/context/firebase-context';
-import { seriesService, libraryService, plannerChatService, ConfigService } from '@dosfilos/application';
-import { FirebaseConfigRepository } from '@dosfilos/infrastructure';
-import { LibraryResourceEntity, SermonSeriesEntity, Citation } from '@dosfilos/domain';
+import { ArrowLeft, ArrowRight, Book, Calendar as CalendarIcon, CheckCircle2, FileText, MessageSquare, RefreshCw, Save, Settings2, Sparkles, Wand2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Wand2, Calendar as CalendarIcon, Book, Sparkles, Save, RefreshCw, X, FileText, Settings2, CheckCircle2, MessageSquare } from 'lucide-react';
-import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { PlannerLayout } from './PlannerLayout';
 import { PlannerField } from './PlannerField';
 import { BiblePassageViewer, BibleReference } from '@/components/bible/BiblePassageViewer';
 import { useTranslation } from '@/i18n';
-import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { UpgradeRequiredModal } from '@/components/upgrade';
-
-type Step = 'strategy' | 'context' | 'objective' | 'structure' | 'generating';
+import { usePlannerWizard } from './hooks/usePlannerWizard';
+import { toast } from 'sonner';
 
 export function PlannerWizard() {
-    const { user } = useFirebase();
-    const navigate = useNavigate();
     const { t } = useTranslation('planner');
-    const { checkCanCreatePreachingPlan } = useUsageLimits();
-    const [step, setStep] = useState<Step>('strategy');
-    const [loading, setLoading] = useState(false);
     
-    // Upgrade modal state
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-    const [upgradeReason, setUpgradeReason] = useState({
-        reason: 'limit_reached' as const,
-        limitType: 'plans' as const,
-        currentLimit: 1
-    });
-    const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
-    
-    // Form State
-    const [strategy, setStrategy] = useState<'thematic' | 'expository'>('thematic');
-    const [topicOrBook, setTopicOrBook] = useState('');
-    const [subtopicsOrRange, setSubtopicsOrRange] = useState('');
-    const [numberOfSermons, setNumberOfSermons] = useState<number | ''>('');
-    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState('');
-    const [frequency, setFrequency] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
-    const [selectedResources, setSelectedResources] = useState<string[]>([]);
-    const [plannerNotes, setPlannerNotes] = useState(''); // Notes/approach from chat conversation
-
-    // Generated State
-    const [seriesObjective, setSeriesObjective] = useState<{ title: string; description: string; objective: string; pastoralAdvice?: string; suggestedSermonCount?: number } | null>(null);
-    const [proposedPlan, setProposedPlan] = useState<{ series: Partial<SermonSeriesEntity>; sermons: { title: string; description: string; passage?: string; week: number }[]; structureJustification?: string; citations?: Citation[] } | null>(null);
-    const [refiningSection, setRefiningSection] = useState<string | null>(null);
-    const [isReformulating, setIsReformulating] = useState(false);
-    const [isChatOpen, setIsChatOpen] = useState(true);
-    const [selectedBibleRef, setSelectedBibleRef] = useState<string | null>(null);
-
-    const [indexStatus, setIndexStatus] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        if (user) {
-            // Load library resources and user config in parallel
-            Promise.all([
-                libraryService.getUserResources(user.uid),
-                new ConfigService(new FirebaseConfigRepository()).getUserConfig(user.uid)
-            ]).then(async ([res, userConfig]) => {
-                setResources(res);
-                
-                // Check index status for each resource
-                const statuses: Record<string, boolean> = {};
-                for (const resource of res) {
-                    try {
-                        const isIndexed = await libraryService.isResourceIndexed(resource.id);
-                        statuses[resource.id] = isIndexed;
-                    } catch {
-                        statuses[resource.id] = false;
-                    }
-                }
-                setIndexStatus(statuses);
-                
-                // Auto-select resources from saved config if any
-                const savedLibraryDocIds = (userConfig as any)?.seriesPlanner?.libraryDocIds || [];
-                if (savedLibraryDocIds.length > 0) {
-                    // Only select resources that exist in the library
-                    const validIds = savedLibraryDocIds.filter((id: string) => 
-                        res.some(r => r.id === id)
-                    );
-                    setSelectedResources(validIds);
-                }
-            }).catch(console.error);
-        }
-    }, [user]);
-
-    const handleGenerateObjective = async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const objective = await seriesService.generateSeriesObjective(user.uid, {
-                type: strategy,
-                topicOrBook,
-                subtopicsOrRange,
-                startDate: new Date(startDate),
-                endDate: endDate ? new Date(endDate) : undefined,
-                frequency,
-                contextResourceIds: selectedResources,
-                plannerNotes: plannerNotes || undefined
-            });
-            
-            // No cleaning needed anymore, we want markdown!
-            setSeriesObjective(objective);
-            setStep('objective');
-        } catch (error: any) {
-            toast.error(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGenerateStructure = async () => {
-        if (!user || !seriesObjective) return;
-        setLoading(true);
-        try {
-            const plan = await seriesService.generateSeriesStructure(user.uid, {
-                type: strategy,
-                topicOrBook,
-                subtopicsOrRange,
-                numberOfSermons: numberOfSermons === '' ? undefined : numberOfSermons,
-                startDate: new Date(startDate || new Date().toISOString()),
-                frequency,
-                contextResourceIds: selectedResources
-            }, seriesObjective);
-            setProposedPlan(plan);
-            setStep('structure');
-        } catch (error: any) {
-            toast.error(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleFinalize = async () => {
-        if (!user || !proposedPlan) return;
+    const {
+        // State
+        step, setStep,
+        loading,
+        showUpgradeModal, setShowUpgradeModal,
+        upgradeReason,
+        resources, indexStatus,
         
-        // Check usage limits before creating plan
-        const check = await checkCanCreatePreachingPlan();
+        // Form Data
+        strategy, setStrategy,
+        topicOrBook, setTopicOrBook,
+        subtopicsOrRange, setSubtopicsOrRange,
+        numberOfSermons, setNumberOfSermons,
+        startDate, setStartDate,
+        endDate, setEndDate,
+        frequency, setFrequency,
+        selectedResources, setSelectedResources,
+        plannerNotes, setPlannerNotes,
         
-        if (!check.allowed) {
-            setUpgradeReason({
-                reason: 'limit_reached',
-                limitType: 'plans',
-                currentLimit: check.limit || 1
-            });
-            setShowUpgradeModal(true);
-            return;
-        }
-        
-        setLoading(true);
-        try {
-            await seriesService.createSeriesFromPlan(user.uid, {
-                series: {
-                    ...proposedPlan.series,
-                    resourceIds: selectedResources
-                },
-                sermons: proposedPlan.sermons
-            });
-            toast.success('Plan de predicación creado exitosamente');
-            navigate('/plans');
-        } catch (error: any) {
-            toast.error(error.message);
-            setLoading(false);
-        }
-    };
+        // Generated Data
+        seriesObjective, setSeriesObjective,
+        proposedPlan,
+        refiningSection, setRefiningSection,
+        isReformulating,
+        isChatOpen, setIsChatOpen,
+        selectedBibleRef, setSelectedBibleRef,
 
-    const updateSermon = (index: number, field: 'title' | 'description' | 'passage', value: string) => {
-        if (!proposedPlan) return;
-        const newSermons = [...proposedPlan.sermons];
-        const currentSermon = newSermons[index];
-        if (!currentSermon) return;
-        newSermons[index] = { 
-            title: currentSermon.title,
-            description: currentSermon.description,
-            passage: currentSermon.passage,
-            week: currentSermon.week,
-            [field]: value
-        };
-        setProposedPlan({ ...proposedPlan, sermons: newSermons });
-    };
-
-    const handleRefine = async (field: string, currentValue: string) => {
-        setRefiningSection(field);
-        setIsChatOpen(true);
-        
-        const context = {
-            type: strategy,
-            topicOrBook,
-            resources: resources.filter(r => selectedResources.includes(r.id))
-        };
-        
-        // Build full phase context so AI knows about all sections
-        const phaseContext = seriesObjective 
-            ? `\n\nContexto de la serie actual:
-- Título: "${seriesObjective.title}"
-- Descripción: "${seriesObjective.description}"
-- Objetivo General: "${seriesObjective.objective}"`
-            : '';
-        
-        // Conversational Prompt with full context
-        const prompt = `[HIDDEN] Estoy trabajando en la sección "${field}":
-        
-"${currentValue}"
-${phaseContext}
-
-Quiero refinar la sección "${field}". Por favor, NO la reescribas todavía. Simplemente salúdame y pregúntame qué aspecto específico me gustaría mejorar o si tengo alguna dirección en mente. Sé breve y servicial. Recuerda que tienes acceso al contexto completo de las otras secciones si necesito que las uses como referencia.`;
-        
-        try {
-            await plannerChatService.sendMessage(prompt, context);
-        } catch (error) {
-            toast.error('Error al contactar al asistente');
-        }
-    };
-
-    const handleReformulate = async () => {
-        const context = {
-            type: strategy,
-            topicOrBook,
-            resources: resources.filter(r => selectedResources.includes(r.id))
-        };
-        const prompt = `[HIDDEN] Basado en nuestra conversación, por favor reformula la sección "${refiningSection}" completa ahora.
-        
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exacto (sin markdown, sin texto extra):
-{
-    "reformulatedText": "el texto completo reformulado aquí"
-}`;
-
-        setIsReformulating(true);
-        try {
-            const response = await plannerChatService.sendMessage(prompt, context);
-            
-            // Try to extract JSON from response (in case it's wrapped in markdown code blocks)
-            const jsonMatch = response.match(/\{[\s\S]*\}/);
-            const jsonString = jsonMatch ? jsonMatch[0] : response;
-            
-            const data = JSON.parse(jsonString);
-            
-            if (data.reformulatedText) {
-                // Update State based on refiningSection
-                if (refiningSection === 'Título de la Serie') {
-                    setSeriesObjective(prev => prev ? ({ ...prev, title: data.reformulatedText }) : null);
-                } else if (refiningSection === 'Descripción') {
-                    setSeriesObjective(prev => prev ? ({ ...prev, description: data.reformulatedText }) : null);
-                } else if (refiningSection === 'Objetivo General') {
-                    setSeriesObjective(prev => prev ? ({ ...prev, objective: data.reformulatedText }) : null);
-                } else if (refiningSection?.startsWith('Sermón')) {
-                    // Handle Sermon updates: "Sermón 1: Título"
-                    const match = refiningSection.match(/Sermón (\d+): (.+)/);
-                    if (match && proposedPlan) {
-                        const index = parseInt(match[1]) - 1;
-                        const field = match[2] === 'Título' ? 'title' : 'description';
-                        
-                        const newSermons = [...proposedPlan.sermons];
-                        if (newSermons[index]) {
-                            newSermons[index] = { ...newSermons[index], [field]: data.reformulatedText };
-                            setProposedPlan({ ...proposedPlan, sermons: newSermons });
-                        }
-                    }
-                }
-                
-                toast.success('Sección actualizada automáticamente');
-            }
-        } catch (error) {
-            console.error('Error parsing response:', error);
-            toast.error('No se pudo actualizar automáticamente. Por favor revisa el chat.');
-        } finally {
-            setIsReformulating(false);
-        }
-    };
+        // Handlers
+        handleGenerateObjective,
+        handleGenerateStructure,
+        handleFinalize,
+        updateSermon,
+        handleRefine,
+        handleReformulate
+    } = usePlannerWizard();
 
     if (loading) {
         return (
@@ -425,7 +193,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="frequency">{t('context.frequency')}</Label>
-                                        <Select value={frequency} onValueChange={(v: any) => setFrequency(v)}>
+                                        <Select value={frequency || 'flexible'} onValueChange={(v: any) => setFrequency(v === 'flexible' ? undefined : v)}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder={t('context.selectFrequency')} />
                                             </SelectTrigger>
@@ -433,6 +201,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido en este formato exac
                                                 <SelectItem value="weekly">{t('context.weekly')}</SelectItem>
                                                 <SelectItem value="biweekly">{t('context.biweekly')}</SelectItem>
                                                 <SelectItem value="monthly">{t('context.monthly')}</SelectItem>
+                                                <SelectItem value="flexible">{t('context.flexible')}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

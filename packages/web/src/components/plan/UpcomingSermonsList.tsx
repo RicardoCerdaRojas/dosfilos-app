@@ -2,13 +2,14 @@ import { PlannedSermon } from '@dosfilos/domain';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, BookOpen, Wand2, FileText } from 'lucide-react';
+import { BookOpen, Wand2, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UpcomingSermonsListProps {
   sermons: PlannedSermon[];
   onStartDraft?: (sermon: PlannedSermon) => void;
   onContinue?: (draftId: string) => void;
+  onEdit?: (sermon: PlannedSermon) => void;
   onView?: (draftId: string) => void;
   maxItems?: number;
 }
@@ -41,26 +42,35 @@ export function UpcomingSermonsList({
   sermons,
   onStartDraft,
   onContinue,
+  onEdit,
   onView,
   maxItems = 5
 }: UpcomingSermonsListProps) {
-  // Filter sermons with scheduled dates and get next 30 days
-  const upcomingSermons = sermons
-    .filter(s => s.scheduledDate)
+  // Process sermons
+  const processedSermons = sermons
     .map(s => ({
       ...s,
-      daysUntil: getDaysUntil(s.scheduledDate!)
-    }))
-    .filter(s => s.daysUntil >= 0 && s.daysUntil <= 30)
-    .sort((a, b) => a.daysUntil - b.daysUntil)
-    .slice(0, maxItems);
+      daysUntil: s.scheduledDate ? getDaysUntil(s.scheduledDate) : null
+    }));
 
-  if (upcomingSermons.length === 0) {
+  // Separate dated and undated
+  const datedSermons = processedSermons
+    .filter(s => s.daysUntil !== null && s.daysUntil! >= 0 && s.daysUntil! <= 30)
+    .sort((a, b) => a.daysUntil! - b.daysUntil!);
+    
+  // Undated sermons (ordered by week/sequence if available, or just index)
+  const undatedSermons = processedSermons
+    .filter(s => s.daysUntil === null);
+    
+  // Combine: Dated first (urgent), then undated
+  const displayList = [...datedSermons, ...undatedSermons].slice(0, maxItems);
+
+  if (displayList.length === 0) {
     return (
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Próximos Sermones (30 días)</h3>
+        <h3 className="text-lg font-semibold mb-4">Próximos Sermones</h3>
         <p className="text-center text-muted-foreground py-8">
-          No hay sermones programados en los próximos 30 días
+          No hay sermones pendientes próximos
         </p>
       </Card>
     );
@@ -69,12 +79,12 @@ export function UpcomingSermonsList({
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">
-        Próximos Sermones (30 días)
+        Próximos Sermones
       </h3>
       <div className="space-y-3">
-        {upcomingSermons.map((sermon) => {
+        {displayList.map((sermon) => {
           const statusInfo = getStatusInfo(sermon);
-          const isUrgent = sermon.daysUntil <= 7;
+          const isUrgent = sermon.daysUntil !== null && sermon.daysUntil <= 7;
 
           return (
             <div
@@ -89,21 +99,27 @@ export function UpcomingSermonsList({
                 {/* Date Badge */}
                 <div className={cn(
                   'flex flex-col items-center justify-center rounded-lg p-2 min-w-[60px]',
-                  isUrgent ? 'bg-amber-100' : 'bg-slate-100'
+                  sermon.daysUntil !== null 
+                    ? (isUrgent ? 'bg-amber-100' : 'bg-slate-100')
+                    : 'bg-slate-50 border border-slate-200'
                 )}>
                   <span className={cn(
                     'text-xs font-medium uppercase',
-                    isUrgent ? 'text-amber-700' : 'text-slate-600'
+                    sermon.daysUntil !== null 
+                      ? (isUrgent ? 'text-amber-700' : 'text-slate-600')
+                      : 'text-slate-400'
                   )}>
-                    {sermon.daysUntil === 0 ? 'Hoy' :
-                     sermon.daysUntil === 1 ? 'Mañana' :
-                     `${sermon.daysUntil}d`}
+                    {sermon.daysUntil !== null ? (
+                       sermon.daysUntil === 0 ? 'Hoy' :
+                       sermon.daysUntil === 1 ? 'Mañana' :
+                       `${sermon.daysUntil}d`
+                    ) : '-'}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {sermon.scheduledDate && new Date(sermon.scheduledDate).toLocaleDateString('es-ES', {
+                  <span className="text-[10px] text-muted-foreground text-center leading-tight mt-1">
+                    {sermon.scheduledDate ? new Date(sermon.scheduledDate).toLocaleDateString('es-ES', {
                       day: '2-digit',
                       month: 'short'
-                    })}
+                    }) : 'Sin fecha'}
                   </span>
                 </div>
 
@@ -118,12 +134,24 @@ export function UpcomingSermonsList({
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpen className="h-3 w-3" />
-                    <span className="font-medium">{sermon.passage}</span>
+                    <span className="font-medium">{sermon.passage || 'Sin pasaje'}</span>
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
+                  {onEdit && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="px-2"
+                      onClick={() => onEdit(sermon)}
+                      title="Editar detalles"
+                    >
+                      <Edit className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+
                   {statusInfo.status === 'planned' && onStartDraft && (
                     <Button
                       size="sm"

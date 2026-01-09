@@ -129,8 +129,6 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             const currentLang = i18n.language?.startsWith('es') ? 'es' : 'en';
             const localizedReference = translateReference(reference, currentLang);
             
-            console.log(`[GreekTutorProvider] Fetching verses for: ${localizedReference} (Original: ${reference}, Lang: ${currentLang})`);
-            
             return LocalBibleService.getVerses(localizedReference) || '';
         },
         // Implement missing properties to satisfy interface

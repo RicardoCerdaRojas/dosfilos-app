@@ -141,7 +141,6 @@ export class FirebaseSermonRepository implements ISermonRepository {
     }
 
     async findByDraftId(draftId: string, userId: string): Promise<SermonEntity[]> {
-        console.log('🔎 FirebaseSermonRepository.findByDraftId:', draftId, 'for user:', userId);
         const q = query(
             collection(db, this.collectionName),
             where('userId', '==', userId),
