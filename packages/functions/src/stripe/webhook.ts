@@ -104,21 +104,31 @@ async function handleCheckoutCompleted(
     const planDoc = plansSnapshot.docs[0];
     const planId = planDoc.id;
 
+    // Prepare subscription data
+    const subscriptionData: any = {
+        id: subscription.id,
+        planId,
+        status: subscription.status,
+        stripePriceId: priceId,
+        startDate: FieldValue.serverTimestamp(),
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    // Handle trial period
+    if (subscription.trial_end) {
+        subscriptionData.trialEnd = new Date(subscription.trial_end * 1000);
+        // Trial countdown starts on first login (null until then)
+        subscriptionData.trialStartedAt = null;
+    }
+
     await db.collection('users').doc(firebaseUID).update({
-        subscription: {
-            id: subscription.id,
-            planId,
-            status: subscription.status,
-            stripePriceId: priceId,
-            startDate: FieldValue.serverTimestamp(),
-            currentPeriodStart: new Date(subscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
-            updatedAt: FieldValue.serverTimestamp(),
-        },
+        subscription: subscriptionData,
     });
 
-    console.log(`Subscription activated for user ${firebaseUID}`);
+    console.log(`Subscription activated for user ${firebaseUID}, trial: ${subscription.trial_end ? 'yes' : 'no'}`);
 }
 
 async function handleSubscriptionUpdated(
@@ -131,13 +141,20 @@ async function handleSubscriptionUpdated(
         return;
     }
 
-    await db.collection('users').doc(firebaseUID).update({
+    const updateData: any = {
         'subscription.status': subscription.status,
         'subscription.currentPeriodStart': new Date(subscription.current_period_start * 1000),
         'subscription.currentPeriodEnd': new Date(subscription.current_period_end * 1000),
         'subscription.cancelAtPeriodEnd': subscription.cancel_at_period_end,
         'subscription.updatedAt': FieldValue.serverTimestamp(),
-    });
+    };
+
+    // Update trial end if present
+    if (subscription.trial_end) {
+        updateData['subscription.trialEnd'] = new Date(subscription.trial_end * 1000);
+    }
+
+    await db.collection('users').doc(firebaseUID).update(updateData);
 
     console.log(`Subscription updated for user ${firebaseUID}`);
 }

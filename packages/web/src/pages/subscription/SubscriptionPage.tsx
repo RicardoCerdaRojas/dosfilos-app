@@ -99,9 +99,9 @@ export default function SubscriptionPage() {
     }
   };
 
-  const currentPlanId = userProfile?.subscription?.planId || 'free';
-  // Free plan is always considered active
-  const isSubscriptionActive = currentPlanId === 'free' || userProfile?.subscription?.status === 'active';
+  const currentPlanId = userProfile?.subscription?.planId || 'basic';
+  // All plans now require active subscription (including trials)
+  const isSubscriptionActive = userProfile?.subscription?.status === 'active' || userProfile?.subscription?.status === 'trialing';
   const isSubscriptionCancelled = userProfile?.subscription?.status === 'cancelled';
   const currentPlan = plans.find(p => p.id === currentPlanId);
 
@@ -130,10 +130,7 @@ export default function SubscriptionPage() {
                   )}
                 </CardTitle>
                 <CardDescription className="mt-2">
-                  {currentPlanId === 'free' ? (
-                    // Free plan is always active
-                    <>Tu plan gratuito está activo</>
-                  ) : isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
+                  {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
                     <>
                       {t('currentPlan.renewalDate')}: {new Date(
                         userProfile.subscription.currentPeriodEnd.seconds 
@@ -181,15 +178,12 @@ export default function SubscriptionPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans
           .filter(plan => {
-            // Hide free plan if user has any paid subscription (active or cancelled)
-            if (plan.id === 'free' && userProfile?.subscription?.planId && userProfile.subscription.planId !== 'free') {
-              return false;
-            }
+            // Only show public plans (legacy free/starter are hidden)
             return true;
           })
           .map((plan) => {
           const isCurrent = plan.id === currentPlanId;
-          const isPopular = plan.id === 'starter';
+          const isPopular = plan.id === 'basic'; // Basic is now the entry plan
 
           return (
             <Card key={plan.id} className={`relative ${isPopular ? 'border-primary shadow-lg' : ''}`}>
@@ -234,7 +228,7 @@ export default function SubscriptionPage() {
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'outline' : 'default'}
-                  disabled={loading || isCurrent || plan.id === 'free'}
+                  disabled={loading || isCurrent}
                   onClick={() => {
                     if (isSubscriptionActive && !isCurrent) {
                       // User has active subscription, show change dialog
@@ -248,7 +242,7 @@ export default function SubscriptionPage() {
                     }
                   }}
                 >
-                  {isCurrent ? t('plans.currentPlanButton') : plan.id === 'free' ? t('plans.freePlan') : isSubscriptionActive ? t('plans.changePlanButton') : t('plans.subscribeButton')}
+                  {isCurrent ? t('plans.currentPlanButton') : isSubscriptionActive ? t('plans.changePlanButton') : t('plans.subscribeButton')}
                 </Button>
               </CardContent>
             </Card>

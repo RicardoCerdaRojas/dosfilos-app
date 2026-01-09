@@ -69,6 +69,7 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
             allow_promotion_codes: true,
             billing_address_collection: 'required',
             subscription_data: {
+                trial_period_days: 30, // 30-day trial for all new subscriptions
                 metadata: {
                     firebaseUID: userId,
                 },
