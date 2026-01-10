@@ -26,6 +26,10 @@ export { cancelSubscription } from './stripe/cancelSubscription';
 export { reactivateSubscription } from './stripe/reactivateSubscription';
 export { getInvoices } from './stripe/getInvoices';
 
+// Subscription management functions
+export { extendTrial } from './subscription/extendTrial';
+export { submitCancellationFeedback } from './subscription/submitCancellationFeedback';
+
 // Export Analytics functions
 export { trackUserActivity } from './analytics/trackUserActivity';
 export { onUserLogin } from './analytics/onUserLogin';
