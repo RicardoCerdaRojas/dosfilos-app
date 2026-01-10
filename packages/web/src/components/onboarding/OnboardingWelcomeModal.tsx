@@ -33,10 +33,10 @@ export function OnboardingWelcomeModal({ isOpen, onClose }: OnboardingWelcomeMod
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-2xl">
                         <Sparkles className="h-6 w-6 text-yellow-500" />
-                        ¡Bienvenido a DosFilos.Preach!
+                        {t('welcomeModal.title')}
                     </DialogTitle>
                     <DialogDescription className="text-base">
-                        El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.
+                        {t('welcomeModal.subtitle')}
                     </DialogDescription>
                 </DialogHeader>
 
