@@ -2,10 +2,12 @@ import { Button } from '@/components/ui/button';
 import { X, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useTranslation } from '@/i18n';
 
 export function ActivationBanner() {
     const navigate = useNavigate();
     const [dismissed, setDismissed] = useState(false);
+    const { t } = useTranslation('dashboard');
 
     if (dismissed) return null;
 
@@ -25,10 +27,10 @@ export function ActivationBanner() {
                     </div>
                     <div className="space-y-1">
                         <h3 className="text-lg font-semibold text-white tracking-tight">
-                            ¡Comienza tu primer sermón hoy!
+                            {t('welcomeModal.title')}
                         </h3>
                         <p className="text-blue-100 text-sm md:text-base max-w-xl leading-relaxed">
-                            Estamos listos para ayudarte con el estudio exegético y la creación de la estructura homilética. Estudia profundo, ora en dependencia del Espíritu Santo y predica con fidelidad.
+                            {t('welcomeModal.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -39,7 +41,7 @@ export function ActivationBanner() {
                         onClick={() => navigate('/dashboard/generate-sermon')}
                         className="bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700 font-semibold shadow-md whitespace-nowrap w-full md:w-auto border-0"
                     >
-                        Crear mi primer sermón
+                        {t('welcomeModal.buttons.createSermon')}
                         <Sparkles className="ml-2 h-4 w-4" />
                     </Button>
                     <Button

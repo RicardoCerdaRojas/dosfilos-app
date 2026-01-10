@@ -40,5 +40,33 @@
         "newTestament": "New Testament",
         "comingSoon": "Coming soon: detailed breakdown",
         "yearlyGoal": "Annual goal: Preach 10 new books"
+    },
+    "welcomeModal": {
+        "title": "Welcome to DosFilos.Preach!",
+        "subtitle": "The ecosystem of tools for biblical study and sermon preparation.",
+        "features": {
+            "studyBible": {
+                "title": "Study the Biblical Text",
+                "description": "Analyze context, work on exegesis, and build the exegetical proposition"
+            },
+            "homiletics": {
+                "title": "Work on Homiletics",
+                "description": "Work on the homiletic approach for your sermon, build the homiletic proposition"
+            },
+            "saveTime": {
+                "title": "Save Preparation Time",
+                "description": "All your resources in one place, with quick and easy access"
+            }
+        },
+        "tip": "Tip: Start with a familiar passage like John 3:16 or Psalm 23",
+        "buttons": {
+            "later": "I'll do it later",
+            "createSermon": "Create my first sermon"
+        }
+    },
+    "firstSermonBanner": {
+        "title": "Create your first sermon!",
+        "subtitle": "Start your journey with our AI assistant for homiletic preparation",
+        "cta": "Generate sermon"
     }
 }
