@@ -18,6 +18,7 @@ import { SermonWizard } from './pages/sermons/generator/SermonWizard';
 import { LoginPage } from '@/pages/auth/login';
 import { RegisterPage } from '@/pages/auth/register';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
+import { RegistrationSuccessPage } from '@/pages/auth/registration-success';
 import { PublicSermonPage } from '@/pages/public/sermon';
 import { PricingPage } from '@/pages/public/pricing';
 import { WelcomePage } from '@/pages/onboarding/WelcomePage';
@@ -69,6 +70,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/auth/registration-success" element={<RegistrationSuccessPage />} />
           <Route path="/share/:token" element={<PublicSermonPage />} />
 
           {/* Redirect old sermon routes to new dashboard routes */}
