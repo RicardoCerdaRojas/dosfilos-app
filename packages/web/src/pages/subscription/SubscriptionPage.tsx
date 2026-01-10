@@ -1,5 +1,5 @@
 import { useFirebase } from '@/context/firebase-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crown } from 'lucide-react';
@@ -19,7 +19,7 @@ import { PlanCard } from '@/components/plans';
 export default function SubscriptionPage() {
   const { user } = useFirebase();
   const { t } = useTranslation('subscription');
-  const { plans, loading: plansLoading } = usePlans();
+  const { plans } = usePlans();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
