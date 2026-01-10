@@ -109,13 +109,12 @@ export default function SubscriptionPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-primary" />
                   {t('currentPlan')}
-('currentPlan.title')}: {currentPlan?.localizedName || currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
+                </CardTitle>
                   {isSubscriptionCancelled && (
                     <Badge variant="outline" className="ml-2 text-orange-600">
                       {t('currentPlan.badges.cancelled')}
                     </Badge>
                   )}
-                </CardTitle>
                 <CardDescription className="mt-2">
                   {isSubscriptionActive && userProfile.subscription.currentPeriodEnd ? (
                     <>
