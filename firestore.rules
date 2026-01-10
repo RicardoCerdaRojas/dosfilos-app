@@ -183,10 +183,18 @@ service cloud.firestore {
     }
 
     // Plans collection (subscription plan definitions)
-    // Read-only for authenticated users
+    // PUBLIC READ - Landing page needs to show plans without authentication
     // Only admin or Cloud Functions can modify
     match /plans/{planId} {
-      allow read: if isAuthenticated();
+      allow read: if true; // Public read for landing page
+      allow write: if isFunction() || isSuperAdmin();
+    }
+
+    // Plan Translations collection (i18n for plans)
+    // PUBLIC READ - Landing page needs translations without authentication
+    // Only admin or Cloud Functions can modify
+    match /plan_translations/{planId} {
+      allow read: if true; // Public read for landing page
       allow write: if isFunction() || isSuperAdmin();
     }
 

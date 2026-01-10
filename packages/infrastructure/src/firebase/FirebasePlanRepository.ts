@@ -1,13 +1,15 @@
 import { IPlanRepository, PlanDefinition } from '@dosfilos/domain';
+import type { PlanTranslation } from '@dosfilos/domain';
 import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 export class FirebasePlanRepository implements IPlanRepository {
-    private readonly collection = 'plans';
+    private readonly plansCollection = 'plans';
+    private readonly translationsCollection = 'plan_translations';
 
     async getAll(): Promise<PlanDefinition[]> {
         const q = query(
-            collection(db, this.collection),
+            collection(db, this.plansCollection),
             where('isActive', '==', true)
         );
 
@@ -15,8 +17,19 @@ export class FirebasePlanRepository implements IPlanRepository {
         return querySnapshot.docs.map(doc => this.mapToPlanDefinition(doc.id, doc.data()));
     }
 
+    async getPublicPlans(): Promise<PlanDefinition[]> {
+        const q = query(
+            collection(db, this.plansCollection),
+            where('isActive', '==', true),
+            where('isPublic', '==', true)
+        );
+
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => this.mapToPlanDefinition(doc.id, doc.data()));
+    }
+
     async getById(planId: string): Promise<PlanDefinition | null> {
-        const docRef = doc(db, this.collection, planId);
+        const docRef = doc(db, this.plansCollection, planId);
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
@@ -28,7 +41,7 @@ export class FirebasePlanRepository implements IPlanRepository {
 
     async getByStripePriceId(priceId: string): Promise<PlanDefinition | null> {
         const q = query(
-            collection(db, this.collection),
+            collection(db, this.plansCollection),
             where('stripeProductIds', 'array-contains', priceId)
         );
 
@@ -40,6 +53,20 @@ export class FirebasePlanRepository implements IPlanRepository {
 
         const doc = querySnapshot.docs[0];
         return this.mapToPlanDefinition(doc.id, doc.data());
+    }
+
+    async getTranslations(planId: string, locale: string): Promise<PlanTranslation | null> {
+        const docRef = doc(db, this.translationsCollection, planId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            return null;
+        }
+
+        return {
+            planId: docSnap.id,
+            ...docSnap.data()
+        } as PlanTranslation;
     }
 
     private mapToPlanDefinition(id: string, data: any): PlanDefinition {
@@ -76,6 +103,8 @@ export class FirebasePlanRepository implements IPlanRepository {
             stripeProductIds: data.stripeProductIds ?? [],
             isActive: data.isActive ?? false,
             isPublic: data.isPublic ?? true,
+            isLegacy: data.isLegacy ?? false,
+            highlightText: data.highlightText ?? null,
             sortOrder: data.sortOrder ?? 0,
             createdAt: data.createdAt?.toDate() ?? new Date(),
             updatedAt: data.updatedAt?.toDate() ?? new Date(),

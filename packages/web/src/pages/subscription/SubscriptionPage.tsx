@@ -2,9 +2,9 @@ import { useFirebase } from '@/context/firebase-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Crown, Zap } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { doc, getDoc, getDocs, query, collection, where } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@dosfilos/infrastructure';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
@@ -13,14 +13,14 @@ import { CancelSubscriptionDialog } from '@/components/subscription/dialogs/Canc
 import { PlanChangeDialog } from '@/components/subscription/dialogs/PlanChangeDialog';
 import { ReactivateSubscriptionDialog } from '@/components/subscription/dialogs/ReactivateSubscriptionDialog';
 import { useTranslation } from '@/i18n';
-import { usePlanTranslations } from '@/hooks/usePlanTranslations';
+import { usePlans } from '@/hooks/usePlans';
+import { PlanCard } from '@/components/plans';
 
 export default function SubscriptionPage() {
   const { user } = useFirebase();
   const { t } = useTranslation('subscription');
-  const { getPlanName, getPlanDescription, getFeatureLabel } = usePlanTranslations();
+  const { plans, loading: plansLoading } = usePlans();
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Dialog states
@@ -41,28 +41,13 @@ export default function SubscriptionPage() {
         }
       } catch (error) {
         console.error('Error loading profile:', error);
-      }
-    };
-
-    loadProfile();
-  }, [user]);
-
-  // Load plans
-  useEffect(() => {
-    const loadPlans = async () => {
-      try {
-        const plansSnapshot = await getDocs(query(collection(db, 'plans'), where('isPublic', '==', true)));
-        const plansData = plansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a: any, b: any) => a.sortOrder - b.sortOrder);
-        setPlans(plansData);
-      } catch (error) {
-        console.error('Error loading plans:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadPlans();
-  }, []);
+    loadProfile();
+  }, [user]);
 
   const handleSubscribe = async (priceId: string) => {
     try {
@@ -99,11 +84,12 @@ export default function SubscriptionPage() {
     }
   };
 
-  const currentPlanId = userProfile?.subscription?.planId || 'basic';
+  const currentPlanId = userProfile?.subscription?.planId || 'free';
   // All plans now require active subscription (including trials)
   const isSubscriptionActive = userProfile?.subscription?.status === 'active' || userProfile?.subscription?.status === 'trialing';
   const isSubscriptionCancelled = userProfile?.subscription?.status === 'cancelled';
   const currentPlan = plans.find(p => p.id === currentPlanId);
+  const isFreeUser = currentPlanId === 'free';
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
@@ -122,7 +108,7 @@ export default function SubscriptionPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-amber-500" />
-                  {t('currentPlan.title')}: {currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
+                  {t('currentPlan.title')}: {currentPlan?.localizedName || currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
                   {isSubscriptionCancelled && (
                     <Badge variant="outline" className="ml-2 text-orange-600">
                       {t('currentPlan.badges.cancelled')}
@@ -174,78 +160,49 @@ export default function SubscriptionPage() {
         </Card>
       )}
 
+      {/* Free Plan Upgrade Message */}
+      {isFreeUser && !isSubscriptionActive && (
+        <Card className="mb-8 border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg">
+              🎁 {t('freePlan.upgradeTitle', { defaultValue: 'Estás usando el Plan Gratuito' })}
+            </CardTitle>
+            <CardDescription className="mt-2">
+              {t('freePlan.upgradeMessage', { 
+                defaultValue: 'Desbloquea todo el potencial de DosFilos.Preach con acceso a generación de sermones con IA, análisis homilético avanzado, y mucho más.' 
+              })}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans
-          .filter(plan => {
-            // Only show public plans (legacy free/starter are hidden)
-            return true;
-          })
-          .map((plan) => {
+        {plans.map((plan) => {
           const isCurrent = plan.id === currentPlanId;
-          const isPopular = plan.id === 'basic'; // Basic is now the entry plan
-
+          
           return (
-            <Card key={plan.id} className={`relative ${isPopular ? 'border-primary shadow-lg' : ''}`}>
-              {isPopular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">
-                    <Zap className="h-3 w-3 mr-1" />
-                    {t('currentPlan.badges.popular')}
-                  </Badge>
-                </div>
-              )}
-              
-              {isCurrent && (
-                <div className="absolute -top-3 right-4">
-                  <Badge className="bg-green-600 hover:bg-green-700">
-                    {t('currentPlan.badges.current')}
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {getPlanName(plan.id)}
-                </CardTitle>
-                <CardDescription>{getPlanDescription(plan.id)}</CardDescription>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">${plan.pricing?.monthly || 0}</span>
-                  <span className="text-muted-foreground">{t('plans.monthly')}</span>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="space-y-3 mb-6">
-                  {plan.features?.map((feature: string, idx: number) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{getFeatureLabel(feature)}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Button
-                  className="w-full"
-                  variant={isCurrent ? 'outline' : 'default'}
-                  disabled={loading || isCurrent}
-                  onClick={() => {
-                    if (isSubscriptionActive && !isCurrent) {
-                      // User has active subscription, show change dialog
-                      handlePlanChange(plan);
-                    } else {
-                      // User doesn't have subscription, go to checkout
-                      const priceId = plan.stripeProductIds?.[0];
-                      if (priceId) {
-                        handleSubscribe(priceId);
-                      }
-                    }
-                  }}
-                >
-                  {isCurrent ? t('plans.currentPlanButton') : isSubscriptionActive ? t('plans.changePlanButton') : t('plans.subscribeButton')}
-                </Button>
-              </CardContent>
-            </Card>
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              isCurrentPlan={isCurrent}
+              onSelect={(planId) => {
+                const selectedPlanData = plans.find(p => p.id === planId);
+                if (!selectedPlanData || isCurrent) return;
+                
+                // If user doesn't have a subscription, create checkout
+                if (!userProfile?.subscription || !isSubscriptionActive) {
+                  if (selectedPlanData.stripeProductIds && selectedPlanData.stripeProductIds.length > 0) {
+                    handleSubscribe(selectedPlanData.stripeProductIds[0] || '');
+                  }
+                } else {
+                  // User has active subscription - show change dialog
+                  handlePlanChange(selectedPlanData);
+                }
+              }}
+              loading={loading}
+              className=""
+            />
           );
         })}
       </div>

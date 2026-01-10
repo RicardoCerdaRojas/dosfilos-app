@@ -16,6 +16,9 @@ export { syncCoreLibraryStore } from './library/syncCoreLibraryStore';
 export { createCheckoutSession } from './stripe/createCheckoutSession';
 export { stripeWebhook } from './stripe/webhook';
 
+// Export Auth functions
+export { completeRegistration } from './auth/completeRegistration';
+
 // Custom portal functions
 export { updatePaymentMethod } from './stripe/updatePaymentMethod';
 export { changePlan } from './stripe/changePlan';

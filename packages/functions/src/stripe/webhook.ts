@@ -81,6 +81,61 @@ async function handleCheckoutCompleted(
     db: FirebaseFirestore.Firestore,
     session: Stripe.Checkout.Session
 ) {
+    // ========================================================================
+    // NEW REGISTRATION FLOW
+    // ========================================================================
+    // Check if this is a new registration (payment-first flow)
+    if (session.metadata?.isNewRegistration === 'true') {
+        console.log('📝 Processing new registration checkout', {
+            sessionId: session.id,
+            email: session.customer_email,
+            displayName: session.metadata?.displayName,
+        });
+
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        const priceId = subscription.items.data[0].price.id;
+
+        // Get plan from plans collection by Stripe price ID
+        const plansSnapshot = await db.collection('plans')
+            .where('stripeProductIds', 'array-contains', priceId)
+            .limit(1)
+            .get();
+
+        const planId = plansSnapshot.empty ? 'basic' : plansSnapshot.docs[0].id;
+
+        // Store pending registration for completeRegistration function
+        await db.collection('pending_registrations').doc(session.id).set({
+            email: session.customer_email,
+            displayName: session.metadata?.displayName || '',
+            locale: (session.metadata?.locale || 'es') as 'en' | 'es',
+            paymentCompleted: true,
+            subscription: {
+                stripeSubscriptionId: subscription.id,
+                stripeCustomerId: subscription.customer as string,
+                status: subscription.status,
+                planId,
+                trialEnd: subscription.trial_end
+                    ? new Date(subscription.trial_end * 1000)
+                    : null,
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            },
+            createdAt: new Date(),
+        });
+
+        console.log('✅ Pending registration created', {
+            sessionId: session.id,
+            email: session.customer_email,
+            planId,
+            status: subscription.status,
+        });
+
+        // Don't process further - user will be created by completeRegistration
+        return;
+    }
+
+    // ========================================================================
+    // EXISTING USER FLOW (upgrade/initial subscription)
+    // ========================================================================
     const firebaseUID = session.metadata?.firebaseUID;
     if (!firebaseUID) {
         console.error('No firebaseUID in checkout session metadata');
