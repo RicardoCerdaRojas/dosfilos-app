@@ -91,7 +91,8 @@ export function PlanCard({
           </div>
         )}
         
-        {/* Features List */}
+        {/* Features List - HIDDEN as per user request */}
+        {/* 
         <div className="space-y-3 mb-4">
           {plan.localizedFeatures.map((feature) => (
             <div key={feature.id} className="flex items-start gap-2">
@@ -100,6 +101,7 @@ export function PlanCard({
             </div>
           ))}
         </div>
+        */}
         
         {/* Limits Section (REFACTORED - using translations) */}
         {plan.localizedLimits && plan.localizedLimits.length > 0 && (
