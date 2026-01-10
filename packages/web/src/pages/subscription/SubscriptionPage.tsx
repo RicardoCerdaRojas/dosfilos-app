@@ -19,7 +19,7 @@ import { PlanCard } from '@/components/plans';
 export default function SubscriptionPage() {
   const { user } = useFirebase();
   const { t } = useTranslation('subscription');
-  const { plans } = usePlans();
+  const { plans, loading: plansLoading } = usePlans();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
@@ -85,11 +85,38 @@ export default function SubscriptionPage() {
   };
 
   const currentPlanId = userProfile?.subscription?.planId || 'free';
-  // All plans now require active subscription (including trials)
   const isSubscriptionActive = userProfile?.subscription?.status === 'active' || userProfile?.subscription?.status === 'trialing';
   const isSubscriptionCancelled = userProfile?.subscription?.status === 'cancelled';
   const currentPlan = plans.find(p => p.id === currentPlanId);
   const isFreeUser = currentPlanId === 'free';
+
+  // Show loading state
+  if (loading || plansLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-6xl">
+        <div className="mb-8">
+          <div className="h-9 w-64 bg-muted animate-pulse rounded mb-2" />
+          <div className="h-5 w-96 bg-muted animate-pulse rounded" />
+        </div>
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="h-7 w-48 bg-muted animate-pulse rounded mb-2" />
+            <div className="h-5 w-64 bg-muted animate-pulse rounded" />
+          </CardHeader>
+        </Card>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-6 w-32 bg-muted rounded mb-2" />
+                <div className="h-8 w-24 bg-muted rounded" />
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
