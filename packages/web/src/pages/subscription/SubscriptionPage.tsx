@@ -94,9 +94,9 @@ export default function SubscriptionPage() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t('header.title')}</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
         <p className="text-muted-foreground">
-          {t('header.subtitle')}
+          {t('subtitle')}
         </p>
       </div>
 
@@ -107,8 +107,9 @@ export default function SubscriptionPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <Crown className="h-5 w-5 text-amber-500" />
-                  {t('currentPlan.title')}: {currentPlan?.localizedName || currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
+                  <Crown className="h-5 w-5 text-primary" />
+                  {t('currentPlan')}
+('currentPlan.title')}: {currentPlan?.localizedName || currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1)}
                   {isSubscriptionCancelled && (
                     <Badge variant="outline" className="ml-2 text-orange-600">
                       {t('currentPlan.badges.cancelled')}

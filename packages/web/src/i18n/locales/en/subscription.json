@@ -1,4 +1,17 @@
 {
+    "title": "My Subscription",
+    "subtitle": "Manage your plan and billing",
+    "currentPlan": "Current Plan",
+    "status": {
+        "active": "Active",
+        "trialing": "Trial Period",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+    },
+    "freePlan": {
+        "upgradeTitle": "🎁 You're using the Free Plan",
+        "upgradeMessage": "Unlock the full potential of DosFilos.Preach with access to AI sermon generation, advanced homiletic analysis, and much more."
+    },
     "trialExtension": {
         "title": "Wait! We're giving you 7 more days",
         "subtitle": "We know you sometimes need more time to discover the full potential of DosFilos.Preach",

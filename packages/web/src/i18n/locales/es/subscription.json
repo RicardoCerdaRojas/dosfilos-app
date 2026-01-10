@@ -1,4 +1,17 @@
 {
+    "title": "Mi Suscripción",
+    "subtitle": "Administra tu plan y facturación",
+    "currentPlan": "Plan Actual",
+    "status": {
+        "active": "Activo",
+        "trialing": "Período de Prueba",
+        "cancelled": "Cancelado",
+        "expired": "Expirado"
+    },
+    "freePlan": {
+        "upgradeTitle": "🎁 Estás usando el Plan Gratuito",
+        "upgradeMessage": "Desbloquea todo el potencial de DosFilos.Preach con acceso a generación de sermones con IA, análisis homilético avanzado, y mucho más."
+    },
     "trialExtension": {
         "title": "¡Espera! Te regalamos 7 días más",
         "subtitle": "Sabemos que a veces necesitas más tiempo para descubrir todo el potencial de DosFilos.Preach",
