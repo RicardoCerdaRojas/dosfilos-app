@@ -210,16 +210,17 @@ export default function SubscriptionPage() {
       {/* Dialogs */}
       <CancelSubscriptionDialog 
         open={cancelDialogOpen}
-        onOpenChange={setCancelDialogOpen}
+        onClose={() => setCancelDialogOpen(false)}
         onSuccess={handleDialogSuccess}
-        currentPeriodEnd={
-          userProfile?.subscription?.currentPeriodEnd 
+        isTrialing={userProfile?.subscription?.status === 'trialing'}
+        trialEndDate={
+          userProfile?.subscription?.trialEnd 
             ? new Date(
-                userProfile.subscription.currentPeriodEnd.seconds 
-                  ? userProfile.subscription.currentPeriodEnd.seconds * 1000 
-                  : userProfile.subscription.currentPeriodEnd
+                userProfile.subscription.trialEnd.seconds 
+                  ? userProfile.subscription.trialEnd.seconds * 1000 
+                  : userProfile.subscription.trialEnd
               )
-            : undefined
+            : null
         }
       />
 
