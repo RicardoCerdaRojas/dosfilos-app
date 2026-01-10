@@ -8,7 +8,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import type { LocalizedPlan } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 
