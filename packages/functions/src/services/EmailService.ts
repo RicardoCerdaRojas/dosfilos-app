@@ -19,16 +19,16 @@ import { Resend } from 'resend';
 // ============================================================================
 
 export interface EmailRecipient {
-    email: string;
-    name?: string;
+  email: string;
+  name?: string;
 }
 
 export type SupportedLocale = 'en' | 'es';
 
 export interface EmailContext {
-    locale: SupportedLocale;
-    recipient: EmailRecipient;
-    data: Record<string, any>;
+  locale: SupportedLocale;
+  recipient: EmailRecipient;
+  data: Record<string, any>;
 }
 
 // ============================================================================
@@ -36,12 +36,12 @@ export interface EmailContext {
 // ============================================================================
 
 export interface IEmailProvider {
-    send(params: {
-        to: string;
-        subject: string;
-        html: string;
-        from?: string;
-    }): Promise<{ id: string }>;
+  send(params: {
+    to: string;
+    subject: string;
+    html: string;
+    from?: string;
+  }): Promise<{ id: string }>;
 }
 
 // ============================================================================
@@ -49,27 +49,27 @@ export interface IEmailProvider {
 // ============================================================================
 
 export class ResendProvider implements IEmailProvider {
-    private resend: Resend;
+  private resend: Resend;
 
-    constructor(apiKey: string) {
-        this.resend = new Resend(apiKey);
-    }
+  constructor(apiKey: string) {
+    this.resend = new Resend(apiKey);
+  }
 
-    async send(params: {
-        to: string;
-        subject: string;
-        html: string;
-        from?: string;
-    }): Promise<{ id: string }> {
-        const result = await this.resend.emails.send({
-            from: params.from || 'DosFilos.Preach <noreply@dosfilos.com>',
-            to: params.to,
-            subject: params.subject,
-            html: params.html,
-        });
+  async send(params: {
+    to: string;
+    subject: string;
+    html: string;
+    from?: string;
+  }): Promise<{ id: string }> {
+    const result = await this.resend.emails.send({
+      from: params.from || 'DosFilos.Preach <noreply@dosfilos.com>',
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+    });
 
-        return { id: result.data?.id || '' };
-    }
+    return { id: result.data?.id || '' };
+  }
 }
 
 // ============================================================================
@@ -77,30 +77,30 @@ export class ResendProvider implements IEmailProvider {
 // ============================================================================
 
 interface TrialWelcomeData {
-    displayName: string;
-    planName: string;
-    trialEndDate: string;
-    dashboardUrl: string;
+  displayName: string;
+  planName: string;
+  trialEndDate: string;
+  dashboardUrl: string;
 }
 
 interface SetPasswordData {
-    displayName: string;
-    setPasswordUrl: string;
-    expiresIn: string;
+  displayName: string;
+  setPasswordUrl: string;
+  expiresIn: string;
 }
 
 class EmailTemplates {
-    /**
-     * Welcome email after trial starts
-     */
-    static trialWelcome(context: EmailContext): { subject: string; html: string } {
-        const { locale, recipient, data } = context;
-        const d = data as TrialWelcomeData;
+  /**
+   * Welcome email after trial starts
+   */
+  static trialWelcome(context: EmailContext): { subject: string; html: string } {
+    const { locale, data } = context;
+    const d = data as TrialWelcomeData;
 
-        const templates = {
-            en: {
-                subject: `Welcome to DosFilos.Preach, ${d.displayName}! 🎉`,
-                html: `
+    const templates = {
+      en: {
+        subject: `Welcome to DosFilos.Preach, ${d.displayName}! 🎉`,
+        html: `
           <!DOCTYPE html>
           <html>
           <head>
@@ -158,10 +158,10 @@ class EmailTemplates {
           </body>
           </html>
         `
-            },
-            es: {
-                subject: `¡Bienvenido a DosFilos.Preach, ${d.displayName}! 🎉`,
-                html: `
+      },
+      es: {
+        subject: `¡Bienvenido a DosFilos.Preach, ${d.displayName}! 🎉`,
+        html: `
           <!DOCTYPE html>
           <html>
           <head>
@@ -219,23 +219,23 @@ class EmailTemplates {
           </body>
           </html>
         `
-            }
-        };
+      }
+    };
 
-        return templates[locale];
-    }
+    return templates[locale];
+  }
 
-    /**
-     * Email with link to set password after payment
-     */
-    static setPassword(context: EmailContext): { subject: string; html: string } {
-        const { locale, recipient, data } = context;
-        const d = data as SetPasswordData;
+  /**
+   * Email with link to set password after payment
+   */
+  static setPassword(context: EmailContext): { subject: string; html: string } {
+    const { locale, data } = context;
+    const d = data as SetPasswordData;
 
-        const templates = {
-            en: {
-                subject: 'Set your password - DosFilos.Preach',
-                html: `
+    const templates = {
+      en: {
+        subject: 'Set your password - DosFilos.Preach',
+        html: `
           <!DOCTYPE html>
           <html>
           <head>
@@ -282,10 +282,10 @@ class EmailTemplates {
           </body>
           </html>
         `
-            },
-            es: {
-                subject: 'Configura tu contraseña - DosFilos.Preach',
-                html: `
+      },
+      es: {
+        subject: 'Configura tu contraseña - DosFilos.Preach',
+        html: `
           <!DOCTYPE html>
           <html>
           <head>
@@ -332,11 +332,11 @@ class EmailTemplates {
           </body>
           </html>
         `
-            }
-        };
+      }
+    };
 
-        return templates[locale];
-    }
+    return templates[locale];
+  }
 }
 
 // ============================================================================
@@ -344,37 +344,37 @@ class EmailTemplates {
 // ============================================================================
 
 export class EmailService {
-    constructor(private provider: IEmailProvider) { }
+  constructor(private provider: IEmailProvider) { }
 
-    async sendTrialWelcome(
-        recipient: EmailRecipient,
-        data: TrialWelcomeData,
-        locale: SupportedLocale = 'es'
-    ): Promise<{ id: string }> {
-        const context: EmailContext = { locale, recipient, data };
-        const { subject, html } = EmailTemplates.trialWelcome(context);
+  async sendTrialWelcome(
+    recipient: EmailRecipient,
+    data: TrialWelcomeData,
+    locale: SupportedLocale = 'es'
+  ): Promise<{ id: string }> {
+    const context: EmailContext = { locale, recipient, data };
+    const { subject, html } = EmailTemplates.trialWelcome(context);
 
-        return this.provider.send({
-            to: recipient.email,
-            subject,
-            html
-        });
-    }
+    return this.provider.send({
+      to: recipient.email,
+      subject,
+      html
+    });
+  }
 
-    async sendSetPassword(
-        recipient: EmailRecipient,
-        data: SetPasswordData,
-        locale: SupportedLocale = 'es'
-    ): Promise<{ id: string }> {
-        const context: EmailContext = { locale, recipient, data };
-        const { subject, html } = EmailTemplates.setPassword(context);
+  async sendSetPassword(
+    recipient: EmailRecipient,
+    data: SetPasswordData,
+    locale: SupportedLocale = 'es'
+  ): Promise<{ id: string }> {
+    const context: EmailContext = { locale, recipient, data };
+    const { subject, html } = EmailTemplates.setPassword(context);
 
-        return this.provider.send({
-            to: recipient.email,
-            subject,
-            html
-        });
-    }
+    return this.provider.send({
+      to: recipient.email,
+      subject,
+      html
+    });
+  }
 }
 
 // ============================================================================
@@ -382,11 +382,11 @@ export class EmailService {
 // ============================================================================
 
 export function createEmailService(): EmailService {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-        throw new Error('RESEND_API_KEY environment variable is required');
-    }
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY environment variable is required');
+  }
 
-    const provider = new ResendProvider(apiKey);
-    return new EmailService(provider);
+  const provider = new ResendProvider(apiKey);
+  return new EmailService(provider);
 }
