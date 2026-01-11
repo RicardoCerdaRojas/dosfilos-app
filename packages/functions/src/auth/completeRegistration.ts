@@ -190,7 +190,7 @@ async function sendWelcomeEmails(
         ? new Intl.DateTimeFormat(locale, {
             dateStyle: 'long',
         }).format(new Date(pending.subscription.trialEnd))
-        : 'N/A';
+        : (locale === 'es' ? 'Sin período de prueba' : 'No trial period');
 
     // Get plan name (localized)
     const planNames: Record<string, Record<SupportedLocale, string>> = {
