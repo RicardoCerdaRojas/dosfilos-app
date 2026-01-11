@@ -48,15 +48,14 @@ export function Landing() {
   const handlePlanSelect = async (planId: string) => {
     // If free plan, just redirect to register
     if (planId === 'free') {
-      navigate('/register');
+      navigate('/register?plan=free');
       return;
     }
 
     // For paid plans, check if user is logged in
     if (!user) {
-      // Store intended plan in sessionStorage and redirect to register
-      sessionStorage.setItem('selectedPlan', planId);
-      navigate('/register');
+      // Redirect to register with plan ID in query param
+      navigate(`/register?plan=${planId}`);
       return;
     }
 

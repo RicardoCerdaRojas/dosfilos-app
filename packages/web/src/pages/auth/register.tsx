@@ -46,13 +46,29 @@ export function RegisterPage() {
 
   type RegisterFormData = z.infer<typeof registerSchema>;
 
-  // Get selected plan ID from URL parameter
-  const selectedPlanId = searchParams.get('plan') || 'free';
-  const isPaidPlan = selectedPlanId !== 'free';
+  // Security: Only allow specific plans for new registrations
+  const ALLOWED_PLANS = ['basic', 'pro', 'team'];
+  
+  // Get selected plan ID from URL parameter (no default)
+  const selectedPlanId = searchParams.get('plan');
+  const isPaidPlan = selectedPlanId ? selectedPlanId !== 'free' : false;
 
-  // Load plan from Firestore
+  // Security validation and plan loading
   useEffect(() => {
     const loadPlan = async () => {
+      // Security: Validate plan parameter
+      if (!selectedPlanId || !ALLOWED_PLANS.includes(selectedPlanId)) {
+        toast.error(
+          t('register.errors.invalidPlan'),
+          { 
+            duration: 3000,
+            description: t('register.errors.invalidPlanDesc')
+          }
+        );
+        navigate('/pricing');
+        return;
+      }
+
       if (selectedPlanId === 'free') {
         setSelectedPlan({
           id: 'free',
