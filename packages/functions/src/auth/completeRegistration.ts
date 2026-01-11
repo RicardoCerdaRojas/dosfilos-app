@@ -18,7 +18,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { createEmailService, SupportedLocale } from '../services/EmailService';
+import { SupportedLocale } from '../services/EmailService';
 import { logger } from 'firebase-functions/v2';
 
 // ============================================================================
@@ -159,85 +159,6 @@ async function createUserProfile(
 }
 
 /**
- * Sends welcome and set password emails
- */
-async function sendWelcomeEmails(
-    pending: PendingRegistration,
-    dashboardUrl: string
-): Promise<void> {
-    const emailService = createEmailService();
-    const locale = pending.locale || 'es';
-
-    const recipient = {
-        email: pending.email,
-        name: pending.displayName,
-    };
-
-    // Helper to safely convert any date-like value to Date
-    const toSafeDate = (value: any): Date | null => {
-        if (!value) return null;
-
-        // Firestore Timestamp
-        if (typeof value.toDate === 'function') {
-            return value.toDate();
-        }
-
-        // Already a Date
-        if (value instanceof Date) {
-            return value;
-        }
-
-        // Unix timestamp (number)
-        if (typeof value === 'number') {
-            return new Date(value);
-        }
-
-        // ISO string
-        if (typeof value === 'string') {
-            const parsed = new Date(value);
-            return isNaN(parsed.getTime()) ? null : parsed;
-        }
-
-        return null;
-    };
-
-    // Format trial end date with safe conversion
-    let trialEndDate: string;
-    const trialDate = toSafeDate(pending.subscription.trialEnd);
-
-    if (trialDate) {
-        trialEndDate = new Intl.DateTimeFormat(locale, {
-            dateStyle: 'long',
-        }).format(trialDate);
-    } else {
-        trialEndDate = locale === 'es' ? 'Sin período de prueba' : 'No trial period';
-    }
-
-    // Get plan name (localized)
-    const planNames: Record<string, Record<SupportedLocale, string>> = {
-        basic: { en: 'Basic', es: 'Básico' },
-        pro: { en: 'Pro', es: 'Pro' },
-        team: { en: 'Team', es: 'Team' },
-    };
-
-    const planName = planNames[pending.subscription.planId]?.[locale] || pending.subscription.planId;
-
-    // Send welcome email
-    await emailService.sendTrialWelcome(
-        recipient,
-        {
-            displayName: pending.displayName,
-            planName,
-            trialEndDate,
-            dashboardUrl,
-        },
-        locale
-    );
-
-    logger.info('Welcome email sent', { email: pending.email, locale });
-}
-
-/**
  * Marks pending registration as completed
  */
 async function markRegistrationCompleted(sessionId: string): Promise<void> {
@@ -267,14 +188,10 @@ export const completeRegistration = onCall<CompleteRegistrationRequest>(
             // 3. Create user profile with subscription data
             await createUserProfile(uid, pending);
 
-            // 4. Send welcome email
-            const dashboardUrl = `${process.env.FRONTEND_URL}/dashboard`;
-            await sendWelcomeEmails(pending, dashboardUrl);
-
-            // 5. Mark registration as completed
+            // 4. Mark registration as completed
             await markRegistrationCompleted(sessionId);
 
-            // 6. Create custom token for auto-login
+            // 5. Create custom token for auto-login
             const auth = getAuth();
             const customToken = await auth.createCustomToken(uid);
 
