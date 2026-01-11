@@ -185,12 +185,18 @@ async function sendWelcomeEmails(
         name: pending.displayName,
     };
 
-    // Format trial end date
-    const trialEndDate = pending.subscription.trialEnd
-        ? new Intl.DateTimeFormat(locale, {
+    // Format trial end date - handle Firestore Timestamp
+    let trialEndDate: string;
+    if (pending.subscription.trialEnd) {
+        const trialDate = (pending.subscription.trialEnd as any).toDate
+            ? (pending.subscription.trialEnd as any).toDate()
+            : new Date(pending.subscription.trialEnd);
+        trialEndDate = new Intl.DateTimeFormat(locale, {
             dateStyle: 'long',
-        }).format(new Date(pending.subscription.trialEnd))
-        : (locale === 'es' ? 'Sin período de prueba' : 'No trial period');
+        }).format(trialDate);
+    } else {
+        trialEndDate = locale === 'es' ? 'Sin período de prueba' : 'No trial period';
+    }
 
     // Get plan name (localized)
     const planNames: Record<string, Record<SupportedLocale, string>> = {
