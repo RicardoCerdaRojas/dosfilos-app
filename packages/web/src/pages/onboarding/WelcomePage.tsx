@@ -19,6 +19,9 @@ export function WelcomePage() {
   const { t } = useTranslation('welcome');
   const [isLoading, setIsLoading] = useState(false);
   const { plans, loading } = usePlans();
+  
+  // Filter out legacy plans (Free plan should not be shown to new users)
+  const availablePlans = plans.filter(plan => !plan.isLegacy);
 
   const handlePlanSelect = async (planId: string) => {
     const plan = plans.find(p => p.id === planId);
@@ -83,9 +86,9 @@ export function WelcomePage() {
           </p>
         </div>
 
-        {/* Plans Grid - Using new component */}
+        {/* Plan Grid */}
         <PlanGrid
-          plans={plans}
+          plans={availablePlans}
           onPlanSelect={handlePlanSelect}
           loading={isLoading}
         />
