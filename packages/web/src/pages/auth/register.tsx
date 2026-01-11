@@ -117,7 +117,7 @@ export function RegisterPage() {
 
   /**
    * Payment-First Flow: Redirect to Stripe Checkout for paid plans
-   * User will be created AFTER successful payment
+   * User will be created AFTER successful payment by completeRegistration
    */
   const redirectToCheckoutBeforeRegistration = async (data: RegisterFormData) => {
     if (!selectedPlan) return;
@@ -128,15 +128,15 @@ export function RegisterPage() {
       return;
     }
 
-    // Create temporary Firebase user (needed for createCheckoutSession auth)
-    // This user will be linked to subscription after payment
-    await authService.register(data.email, data.password, data.displayName);
+    // NO user creation here - true payment-first!
+    // User will be created by completeRegistration after payment succeeds
     
     try {
       const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
       const result = await createCheckoutSession({
         priceId,
         isNewRegistration: true,
+        email: data.email,  // Pass email directly
         displayName: data.displayName,
         locale: i18n.language as 'en' | 'es',
       });
