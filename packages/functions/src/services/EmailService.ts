@@ -110,7 +110,7 @@ class EmailTemplates {
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
               .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
-              .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+              .button { display: inline-block; background: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
               .feature { margin: 15px 0; padding-left: 25px; position: relative; }
               .feature:before { content: "✓"; position: absolute; left: 0; color: #10b981; font-weight: bold; }
               .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
@@ -134,8 +134,7 @@ class EmailTemplates {
                   Status: Active
                 </div>
                 
-                <p><strong>What you can do now:</strong></p>
-                <div class="feature">Create sermons with AI assistance</div>
+                <p style="font-weight: bold; color: #000;"><strong>What you can do now:</strong></p>
                 <div class="feature">Access advanced homiletical analysis</div>
                 <div class="feature">Study biblical Greek interactively</div>
                 <div class="feature">Build your sermon library</div>
@@ -171,7 +170,7 @@ class EmailTemplates {
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
               .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
-              .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+              .button { display: inline-block; background: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
               .feature { margin: 15px 0; padding-left: 25px; position: relative; }
               .feature:before { content: "✓"; position: absolute; left: 0; color: #10b981; font-weight: bold; }
               .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
@@ -195,8 +194,7 @@ class EmailTemplates {
                   Estado: Activo
                 </div>
                 
-                <p><strong>Lo que puedes hacer ahora:</strong></p>
-                <div class="feature">Crear sermones con asistencia de IA</div>
+                <p style="font-weight: bold; color: #000;"><strong>Lo que puedes hacer ahora:</strong></p>
                 <div class="feature">Acceder a análisis homilético avanzado</div>
                 <div class="feature">Estudiar griego bíblico de forma interactiva</div>
                 <div class="feature">Construir tu biblioteca de sermones</div>
