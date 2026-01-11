@@ -214,8 +214,16 @@ async function sendWelcomeEmails(
     };
 
     // Format trial end date with safe conversion
+    logger.info('DEBUG: trial end raw value', {
+        value: pending.subscription.trialEnd,
+        type: typeof pending.subscription.trialEnd,
+        constructor: pending.subscription.trialEnd?.constructor?.name,
+    });
+
     let trialEndDate: string;
     const trialDate = toSafeDate(pending.subscription.trialEnd);
+
+    logger.info('DEBUG: trial date after conversion', { trialDate });
 
     if (trialDate) {
         trialEndDate = new Intl.DateTimeFormat(locale, {
