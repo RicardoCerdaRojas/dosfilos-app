@@ -159,22 +159,10 @@ async function createUserProfile(
 }
 
 /**
- * Generates password reset token for new user
- */
-async function generatePasswordResetToken(email: string): Promise<string> {
-    const auth = getAuth();
-    const link = await auth.generatePasswordResetLink(email, {
-        url: `${process.env.FRONTEND_URL}/auth/set-password`,
-    });
-    return link;
-}
-
-/**
  * Sends welcome and set password emails
  */
 async function sendWelcomeEmails(
     pending: PendingRegistration,
-    passwordResetUrl: string,
     dashboardUrl: string
 ): Promise<void> {
     const emailService = createEmailService();
@@ -246,18 +234,7 @@ async function sendWelcomeEmails(
         locale
     );
 
-    // Send set password email
-    await emailService.sendSetPassword(
-        recipient,
-        {
-            displayName: pending.displayName,
-            setPasswordUrl: passwordResetUrl,
-            expiresIn: locale === 'es' ? '24 horas' : '24 hours',
-        },
-        locale
-    );
-
-    logger.info('Welcome emails sent', { email: pending.email, locale });
+    logger.info('Welcome email sent', { email: pending.email, locale });
 }
 
 /**
@@ -290,17 +267,14 @@ export const completeRegistration = onCall<CompleteRegistrationRequest>(
             // 3. Create user profile with subscription data
             await createUserProfile(uid, pending);
 
-            // 4. Generate password reset link
-            const passwordResetUrl = await generatePasswordResetToken(pending.email);
+            // 4. Send welcome email
             const dashboardUrl = `${process.env.FRONTEND_URL}/dashboard`;
+            await sendWelcomeEmails(pending, dashboardUrl);
 
-            // 5. Send welcome emails
-            await sendWelcomeEmails(pending, passwordResetUrl, dashboardUrl);
-
-            // 6. Mark registration as completed
+            // 5. Mark registration as completed
             await markRegistrationCompleted(sessionId);
 
-            // 7. Create custom token for auto-login
+            // 6. Create custom token for auto-login
             const auth = getAuth();
             const customToken = await auth.createCustomToken(uid);
 
