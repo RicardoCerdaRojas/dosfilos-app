@@ -9,24 +9,30 @@ interface CheckoutSessionData {
     // New registration metadata
     isNewRegistration?: boolean;
     displayName?: string;
+    email?: string; // Required for new registrations
     locale?: 'en' | 'es';
 }
 
 export const createCheckoutSession = onCall<CheckoutSessionData>(async (request) => {
-    // Verify authentication
-    if (!request.auth) {
-        throw new HttpsError('unauthenticated', 'User must be authenticated');
-    }
-
-    const userId = request.auth.uid;
     const {
         priceId,
         successUrl,
         cancelUrl,
         isNewRegistration = false,
         displayName,
+        email,
         locale = 'es'
     } = request.data;
+
+    // Auth verification: Only required for existing users
+    if (!isNewRegistration && !request.auth) {
+        throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    // For new registrations, email is required
+    if (isNewRegistration && !email) {
+        throw new HttpsError('invalid-argument', 'Email is required for new registrations');
+    }
 
     if (!priceId) {
         throw new HttpsError('invalid-argument', 'priceId is required');
@@ -34,31 +40,53 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
 
     try {
         const db = getFirestore();
-        const userRef = db.collection('users').doc(userId);
-        const userDoc = await userRef.get();
+        let customerId: string;
+        let customerEmail: string;
 
-        if (!userDoc.exists) {
-            throw new HttpsError('not-found', 'User profile not found');
-        }
+        // NEW REGISTRATION: Create Stripe customer without Firebase user
+        if (isNewRegistration) {
+            customerEmail = email!;
 
-        const userData = userDoc.data()!;
-        let customerId = userData.stripeCustomerId;
-
-        // Create Stripe customer if doesn't exist
-        if (!customerId) {
+            // Create Stripe customer directly
             const customer = await stripe.customers.create({
-                email: userData.email,
+                email: customerEmail,
+                name: displayName,
                 metadata: {
-                    firebaseUID: userId,
+                    isNewRegistration: 'true',
                 },
             });
 
             customerId = customer.id;
+        } else {
+            // EXISTING USER: Get from Firebase profile
+            const userId = request.auth!.uid;
+            const userRef = db.collection('users').doc(userId);
+            const userDoc = await userRef.get();
 
-            // Save customer ID to Firestore
-            await userRef.update({
-                stripeCustomerId: customerId,
-            });
+            if (!userDoc.exists) {
+                throw new HttpsError('not-found', 'User profile not found');
+            }
+
+            const userData = userDoc.data()!;
+            customerEmail = userData.email;
+            customerId = userData.stripeCustomerId;
+
+            // Create Stripe customer if doesn't exist
+            if (!customerId) {
+                const customer = await stripe.customers.create({
+                    email: userData.email,
+                    metadata: {
+                        firebaseUID: userId,
+                    },
+                });
+
+                customerId = customer.id;
+
+                // Save customer ID to Firestore
+                await userRef.update({
+                    stripeCustomerId: customerId,
+                });
+            }
         }
 
         // Determine success and cancel URLs
@@ -69,21 +97,20 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
         const finalCancelUrl = cancelUrl || `${baseUrl}/pricing?canceled=true`;
 
         // Prepare metadata
-        const metadata: Record<string, string> = {
-            firebaseUID: userId,
-        };
+        const metadata: Record<string, string> = {};
 
-        // Add registration-specific metadata
         if (isNewRegistration) {
             metadata.isNewRegistration = 'true';
             if (displayName) metadata.displayName = displayName;
             if (locale) metadata.locale = locale;
+        } else {
+            metadata.firebaseUID = request.auth!.uid;
         }
 
         // Create checkout session
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
-            customer_email: userData.email, // Ensure email is passed to Stripe
+            customer_email: customerEmail, // Ensure email is passed to Stripe
             payment_method_types: ['card'],
             line_items: [
                 {
