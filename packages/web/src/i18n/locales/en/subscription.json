@@ -1,55 +1,54 @@
 {
-    "header": {
-        "title": "My Subscription",
-        "subtitle": "Manage your plan and access all premium features"
+    "title": "My Subscription",
+    "subtitle": "Manage your plan and billing",
+    "currentPlan": "Current Plan",
+    "status": {
+        "active": "Active",
+        "trialing": "Trial Period",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
     },
-    "currentPlan": {
-        "title": "Current Plan",
-        "renewalDate": "Renewal",
-        "accessUntil": "🎁 You keep access until",
-        "notActive": "Your subscription is not active",
-        "cancelButton": "Cancel Subscription",
-        "reactivateButton": "Reactivate Subscription",
-        "badges": {
-            "cancelled": "Cancelled",
-            "current": "✓ Current",
-            "popular": "Most Popular"
+    "freePlan": {
+        "upgradeTitle": "🎁 You're using the Free Plan",
+        "upgradeMessage": "Unlock the full potential of DosFilos.Preach with access to AI sermon generation, advanced homiletic analysis, and much more."
+    },
+    "trialExtension": {
+        "title": "Wait! We're giving you 7 more days",
+        "subtitle": "We know you sometimes need more time to discover the full potential of DosFilos.Preach",
+        "benefit1": {
+            "title": "7 additional free days",
+            "description": "No cost, no commitment. Just more time to explore."
+        },
+        "benefit2": {
+            "title": "Full access until",
+            "description": "All premium features without restrictions."
+        },
+        "reminder": "You can cancel anytime. We won't charge you anything during the extension.",
+        "accept": "Yes, give me 7 more days!",
+        "accepting": "Activating extension...",
+        "decline": "No thanks, I want to cancel"
+    },
+    "feedback": {
+        "title": "Help us improve",
+        "subtitle": "Your opinion is very valuable to us. Can you tell us why you're canceling?",
+        "reasonLabel": "Main reason",
+        "reasons": {
+            "tooExpensive": "Too expensive",
+            "notEnoughFeatures": "Doesn't have the features I need",
+            "technicalIssues": "Technical issues",
+            "notUsing": "I'm not using it enough",
+            "foundAlternative": "Found a better alternative",
+            "other": "Other reason"
+        },
+        "commentsLabel": "Additional comments (optional)",
+        "commentsPlaceholder": "Is there anything specific we could improve?",
+        "submit": "Submit feedback",
+        "submitting": "Submitting...",
+        "skip": "Skip",
+        "success": "Thanks for your feedback. We hope to see you soon!",
+        "errors": {
+            "selectReason": "Please select a reason",
+            "submit": "Error submitting feedback"
         }
-    },
-    "plans": {
-        "monthly": "/month",
-        "freePlan": "Free Plan",
-        "currentPlanButton": "Current Plan",
-        "subscribeButton": "Subscribe",
-        "changePlanButton": "Change to This Plan"
-    },
-    "errors": {
-        "checkoutError": "Error creating payment session"
-    },
-    "planNames": {
-        "free": "Free",
-        "starter": "Pro",
-        "pro": "Team",
-        "church": "Church"
-    },
-    "planDescriptions": {
-        "free": "To continue your preaching ministry",
-        "starter": "For pastors who preach regularly",
-        "pro": "For pastoral teams and churches",
-        "church": "For churches and organizations with multiple preachers"
-    },
-    "features": {
-        "sermon_create": "Create unlimited sermons",
-        "sermon_export_pdf": "Export sermons to PDF",
-        "sermon_ai_assistant": "AI assistant for sermons",
-        "sermon_advanced_homiletics": "Advanced AI homiletics",
-        "sermon_custom_templates": "Custom templates",
-        "library_upload": "Upload resources to library",
-        "library_semantic_search": "Semantic search in library",
-        "library_unlimited_storage": "Unlimited storage",
-        "courses_view": "Access to courses",
-        "courses_certificates": "Course certificates",
-        "admin_manage_users": "User management",
-        "admin_view_analytics": "Advanced analytics"
     }
 }

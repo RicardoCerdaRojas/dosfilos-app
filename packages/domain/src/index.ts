@@ -18,6 +18,7 @@ export * from './entities/DailyMetrics'; // 📊 Analytics: Daily Metrics
 export * from './entities/GeoEvent'; // 📊 Geographic Analytics: Events
 export * from './greek-tutor/entities/entities'; // 🏛️ Greek Tutor Entities
 export * from './greek-tutor/syntax-analysis'; // 🏛️ Greek Syntax Analysis
+export * from './models/Plan'; // 🎯 Plan models (refactored system)
 
 
 
@@ -45,6 +46,7 @@ export * from './services/IPlanGenerator';
 export * from './services/IEmbeddingService';
 export * from './services/ITextExtractor';
 export * from './services/ICacheService';
+export * from './services/PlanService'; // 🎯 Plan Service (refactored system)
 export * from './ports/IFileSearchService'; // 🎯 File Search ports
 export * from './greek-tutor/ports/IGreekTutorService'; // 🏛️ Greek Tutor Ports
 export * from './greek-tutor/ports/IWordCacheRepository'; // 🏛️ Greek Tutor Word Cache

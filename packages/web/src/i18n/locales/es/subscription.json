@@ -1,55 +1,54 @@
 {
-    "header": {
-        "title": "Mi Suscripción",
-        "subtitle": "Gestiona tu plan y accede a todas las funcionalidades premium"
+    "title": "Mi Suscripción",
+    "subtitle": "Administra tu plan y facturación",
+    "currentPlan": "Plan Actual",
+    "status": {
+        "active": "Activo",
+        "trialing": "Período de Prueba",
+        "cancelled": "Cancelado",
+        "expired": "Expirado"
     },
-    "currentPlan": {
-        "title": "Plan Actual",
-        "renewalDate": "Renovación",
-        "accessUntil": "🎁 Mantienes acceso hasta",
-        "notActive": "Tu suscripción no está activa",
-        "cancelButton": "Cancelar Suscripción",
-        "reactivateButton": "Reactivar Suscripción",
-        "badges": {
-            "cancelled": "Cancelada",
-            "current": "✓ Actual",
-            "popular": "Más Popular"
+    "freePlan": {
+        "upgradeTitle": "🎁 Estás usando el Plan Gratuito",
+        "upgradeMessage": "Desbloquea todo el potencial de DosFilos.Preach con acceso a generación de sermones con IA, análisis homilético avanzado, y mucho más."
+    },
+    "trialExtension": {
+        "title": "¡Espera! Te regalamos 7 días más",
+        "subtitle": "Sabemos que a veces necesitas más tiempo para descubrir todo el potencial de DosFilos.Preach",
+        "benefit1": {
+            "title": "7 días adicionales gratis",
+            "description": "Sin costo, sin compromiso. Solo más tiempo para explorar."
+        },
+        "benefit2": {
+            "title": "Acceso completo hasta",
+            "description": "Todas las características premium sin restricciones."
+        },
+        "reminder": "Puedes cancelar en cualquier momento. No te cobraremos nada durante la extensión.",
+        "accept": "¡Sí, dame 7 días más!",
+        "accepting": "Activando extensión...",
+        "decline": "No gracias, quiero cancelar"
+    },
+    "feedback": {
+        "title": "Ayúdanos a mejorar",
+        "subtitle": "Tu opinión es muy valiosa para nosotros. ¿Puedes decirnos por qué cancelas?",
+        "reasonLabel": "Motivo principal",
+        "reasons": {
+            "tooExpensive": "Demasiado costoso",
+            "notEnoughFeatures": "No tiene las características que necesito",
+            "technicalIssues": "Problemas técnicos",
+            "notUsing": "No lo estoy usando lo suficiente",
+            "foundAlternative": "Encontré una alternativa mejor",
+            "other": "Otro motivo"
+        },
+        "commentsLabel": "Comentarios adicionales (opcional)",
+        "commentsPlaceholder": "¿Hay algo específico que podríamos mejorar?",
+        "submit": "Enviar feedback",
+        "submitting": "Enviando...",
+        "skip": "Omitir",
+        "success": "Gracias por tu feedback. ¡Esperamos verte pronto!",
+        "errors": {
+            "selectReason": "Por favor selecciona un motivo",
+            "submit": "Error al enviar feedback"
         }
-    },
-    "plans": {
-        "monthly": "/mes",
-        "freePlan": "Plan Gratuito",
-        "currentPlanButton": "Plan Actual",
-        "subscribeButton": "Suscribirse",
-        "changePlanButton": "Cambiar a Este Plan"
-    },
-    "errors": {
-        "checkoutError": "Error al crear sesión de pago"
-    },
-    "planNames": {
-        "free": "Gratis",
-        "starter": "Starter",
-        "pro": "Pro",
-        "team": "Equipo"
-    },
-    "planDescriptions": {
-        "free": "Para continuar tu ministerio de predicación",
-        "starter": "Para maestros y predicadores ocasionales",
-        "pro": "Para pastores que predican regularmente",
-        "team": "Para equipos pastorales e iglesias"
-    },
-    "features": {
-        "sermon_create": "Crear sermones ilimitados",
-        "sermon_export_pdf": "Exportar sermones a PDF",
-        "sermon_ai_assistant": "Asistente de IA para sermones",
-        "sermon_advanced_homiletics": "Homilética avanzada con IA",
-        "sermon_custom_templates": "Plantillas personalizadas",
-        "library_upload": "Subir recursos a biblioteca",
-        "library_semantic_search": "Búsqueda semántica en biblioteca",
-        "library_unlimited_storage": "Almacenamiento ilimitado",
-        "courses_view": "Acceso a cursos",
-        "courses_certificates": "Certificados de cursos",
-        "admin_manage_users": "Gestión de usuarios",
-        "admin_view_analytics": "Analíticas avanzadas"
     }
 }

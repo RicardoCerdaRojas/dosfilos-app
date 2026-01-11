@@ -6,6 +6,10 @@ interface CheckoutSessionData {
     priceId: string;
     successUrl?: string;
     cancelUrl?: string;
+    // New registration metadata
+    isNewRegistration?: boolean;
+    displayName?: string;
+    locale?: 'en' | 'es';
 }
 
 export const createCheckoutSession = onCall<CheckoutSessionData>(async (request) => {
@@ -15,7 +19,14 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
     }
 
     const userId = request.auth.uid;
-    const { priceId, successUrl, cancelUrl } = request.data;
+    const {
+        priceId,
+        successUrl,
+        cancelUrl,
+        isNewRegistration = false,
+        displayName,
+        locale = 'es'
+    } = request.data;
 
     if (!priceId) {
         throw new HttpsError('invalid-argument', 'priceId is required');
@@ -50,6 +61,25 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
             });
         }
 
+        // Determine success and cancel URLs
+        const baseUrl = process.env.FRONTEND_URL;
+        const finalSuccessUrl = isNewRegistration
+            ? `${baseUrl}/auth/registration-success?session_id={CHECKOUT_SESSION_ID}`
+            : successUrl || `${baseUrl}/dashboard/settings?success=true`;
+        const finalCancelUrl = cancelUrl || `${baseUrl}/pricing?canceled=true`;
+
+        // Prepare metadata
+        const metadata: Record<string, string> = {
+            firebaseUID: userId,
+        };
+
+        // Add registration-specific metadata
+        if (isNewRegistration) {
+            metadata.isNewRegistration = 'true';
+            if (displayName) metadata.displayName = displayName;
+            if (locale) metadata.locale = locale;
+        }
+
         // Create checkout session
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
@@ -61,17 +91,14 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
                 },
             ],
             mode: 'subscription',
-            success_url: successUrl || `${process.env.FRONTEND_URL}/dashboard/settings?success=true`,
-            cancel_url: cancelUrl || `${process.env.FRONTEND_URL}/dashboard/settings?canceled=true`,
-            metadata: {
-                firebaseUID: userId,
-            },
+            success_url: finalSuccessUrl,
+            cancel_url: finalCancelUrl,
+            metadata,
             allow_promotion_codes: true,
             billing_address_collection: 'required',
             subscription_data: {
-                metadata: {
-                    firebaseUID: userId,
-                },
+                trial_period_days: 30, // 30-day trial for all new subscriptions
+                metadata,
             },
         });
 

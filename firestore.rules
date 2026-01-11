@@ -183,10 +183,18 @@ service cloud.firestore {
     }
 
     // Plans collection (subscription plan definitions)
-    // Read-only for authenticated users
+    // PUBLIC READ - Landing page needs to show plans without authentication
     // Only admin or Cloud Functions can modify
     match /plans/{planId} {
-      allow read: if isAuthenticated();
+      allow read: if true; // Public read for landing page
+      allow write: if isFunction() || isSuperAdmin();
+    }
+
+    // Plan Translations collection (i18n for plans)
+    // PUBLIC READ - Landing page needs translations without authentication
+    // Only admin or Cloud Functions can modify
+    match /plan_translations/{planId} {
+      allow read: if true; // Public read for landing page
       allow write: if isFunction() || isSuperAdmin();
     }
 
@@ -279,6 +287,22 @@ service cloud.firestore {
 
       // Only Cloud Functions can write
       allow write: if false;
+    }
+    // ============================================================================
+    // Subscription & Trial Management
+    // ============================================================================
+    
+    // Cancellation Feedback - User can write their own feedback
+    match /cancellation_feedback/{feedbackId} {
+      allow create: if isAuthenticated();
+      allow read: if false; // Only admins via backend
+      allow update, delete: if false; // Immutable
+    }
+    
+    // Pending Registrations - Created by webhook, read by Cloud Function
+    match /pending_registrations/{sessionId} {
+      allow read: if false; // Only Cloud Functions
+      allow write: if false; // Only webhook/Cloud Functions
     }
   }
 }

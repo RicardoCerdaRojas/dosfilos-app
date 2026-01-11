@@ -20,7 +20,7 @@ import { useTrackActivity } from '@/hooks/useTrackActivity';
 export function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t } = useTranslation('auth');
+  const { t, i18n } = useTranslation('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<FirestorePlan | null>(null);
@@ -48,7 +48,7 @@ export function RegisterPage() {
 
   // Get selected plan ID from URL parameter
   const selectedPlanId = searchParams.get('plan') || 'free';
-  const needsCheckout = selectedPlanId !== 'free';
+  const isPaidPlan = selectedPlanId !== 'free';
 
   // Load plan from Firestore
   useEffect(() => {
@@ -58,13 +58,17 @@ export function RegisterPage() {
           id: 'free',
           name: t('register.free'),
           description: t('register.free'),
-          pricing: { currency: 'USD', monthly: 0 },
+          tier: 'free',
+          pricing: { currency: 'USD', monthly: 0, yearly: 0 },
           stripeProductIds: [],
           features: [],
+          modules: [],
+          limits: {},
           isActive: true,
-          isPublic: true,
-          sortOrder: 0,
-        });
+          isPublic: false,
+          isLegacy: true,
+          sortOrder: 99,
+        } as FirestorePlan);
         return;
       }
 
@@ -73,18 +77,11 @@ export function RegisterPage() {
         if (planDoc.exists()) {
           setSelectedPlan({ id: planDoc.id, ...planDoc.data() } as FirestorePlan);
         } else {
-          // Fallback to free if plan not found
-          setSelectedPlan({
-            id: 'free',
-            name: t('register.free'),
-            description: t('register.free'),
-            pricing: { currency: 'USD', monthly: 0 },
-            stripeProductIds: [],
-            features: [],
-            isActive: true,
-            isPublic: true,
-            sortOrder: 0,
-          });
+          // Fallback to basic if plan not found
+          const basicDoc = await getDoc(doc(db, 'plans', 'basic'));
+          if (basicDoc.exists()) {
+            setSelectedPlan({ id: basicDoc.id, ...basicDoc.data() } as FirestorePlan);
+          }
         }
       } catch (error) {
         console.error('Error loading plan:', error);
@@ -92,7 +89,7 @@ export function RegisterPage() {
     };
 
     loadPlan();
-  }, [selectedPlanId]);
+  }, [selectedPlanId, t]);
 
   const {
     register,
@@ -102,53 +99,65 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
-  const redirectToCheckout = async () => {
+  /**
+   * Payment-First Flow: Redirect to Stripe Checkout for paid plans
+   * User will be created AFTER successful payment
+   */
+  const redirectToCheckoutBeforeRegistration = async (data: RegisterFormData) => {
     if (!selectedPlan) return;
     
     const priceId = getPlanPriceId(selectedPlan);
     if (!priceId) {
       toast.error(t('register.errors.planNotAvailable'));
-      navigate('/dashboard');
       return;
     }
 
+    // Create temporary Firebase user (needed for createCheckoutSession auth)
+    // This user will be linked to subscription after payment
+    await authService.register(data.email, data.password, data.displayName);
+    
     try {
       const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
       const result = await createCheckoutSession({
         priceId,
-        successUrl: `${window.location.origin}/dashboard?welcome=true`,
-        cancelUrl: `${window.location.origin}/pricing`,
+        isNewRegistration: true,
+        displayName: data.displayName,
+        locale: i18n.language as 'en' | 'es',
       });
       
       const { url } = result.data as { url: string };
+      
+      // Redirect to Stripe Checkout
       window.location.href = url;
     } catch (error: any) {
       console.error('Checkout error:', error);
       toast.error(t('register.errors.checkoutFailed'));
-      navigate('/dashboard');
     }
   };
 
+  /**
+   * Traditional Flow: Create user immediately for free plan
+   */
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
+    
     try {
+      // PAID PLAN: Redirect to Stripe first
+      if (isPaidPlan) {
+        await redirectToCheckoutBeforeRegistration(data);
+        return;
+      }
+      
+      // FREE PLAN: Create user normally
       const user = await authService.register(data.email, data.password, data.displayName);
       
-      // Track geographic registration event
+      // Track registration
       trackRegistration(user.id);
-      
-      // Track initial login
       trackLogin();
       
       toast.success(t('register.success'));
+      navigate('/welcome');
       
-      // If paid plan selected from pricing page, redirect to checkout
-      if (needsCheckout) {
-        await redirectToCheckout();
-      } else {
-        // Navigate to welcome page for plan selection
-        navigate('/welcome');
-      }
     } catch (error: any) {
       // Smart error handling for existing email
       if (error.code === 'auth/email-already-in-use') {
@@ -175,21 +184,32 @@ export function RegisterPage() {
     try {
       const user = await authService.loginWithGoogle();
       
-      // Track geographic registration event (Google creates/logs in user)
+      // Track registration
       trackRegistration(user.id);
-      
-      // Track initial login
       trackLogin();
       
       toast.success(t('register.successGoogle'));
       
-      // If paid plan selected from pricing page, redirect to checkout
-      if (needsCheckout) {
-        await redirectToCheckout();
-      } else {
-        // Navigate to welcome page for plan selection
-        navigate('/welcome');
+      // PAID PLAN: Redirect to Stripe checkout
+      if (isPaidPlan && selectedPlan) {
+        const priceId = getPlanPriceId(selectedPlan);
+        if (priceId) {
+          const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+          const result = await createCheckoutSession({
+            priceId,
+            isNewRegistration: true,
+            displayName: user.displayName || '',
+            locale: i18n.language as 'en' | 'es',
+          });
+          const { url } = result.data as { url: string };
+          window.location.href = url;
+          return;
+        }
       }
+      
+      // FREE PLAN: Navigate to welcome
+      navigate('/welcome');
+      
     } catch (error: any) {
       // Smart error handling for existing Google account
       if (error.code === 'auth/account-exists-with-different-credential') {
@@ -224,7 +244,7 @@ export function RegisterPage() {
                 <p className="text-sm text-muted-foreground">${selectedPlan.pricing.monthly}{t('register.perMonth')}</p>
               </div>
               <Badge variant="outline" className="bg-background">
-                {needsCheckout ? t('register.checkoutAfter') : t('register.free')}
+                {isPaidPlan ? t('register.checkoutAfter') : t('register.free')}
               </Badge>
             </div>
           </div>

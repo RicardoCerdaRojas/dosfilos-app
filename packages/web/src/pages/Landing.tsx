@@ -14,6 +14,8 @@ import { ContactModal } from '@/components/contact/ContactModal';
 import { useTranslation, LanguageSwitcher } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useTrackActivity } from '@/hooks/useTrackActivity';
+import { usePlans } from '@/hooks/usePlans';
+import { PlanCard } from '@/components/plans';
 
 export function Landing() {
   // i18n hooks
@@ -23,6 +25,7 @@ export function Landing() {
   const navigate = useNavigate();
   const { user } = useFirebase();
   const { trackLandingVisit } = useTrackActivity();
+  const { plans, loading } = usePlans();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -42,9 +45,9 @@ export function Landing() {
   };
 
   // Handler for pricing button clicks
-  const handlePlanSelect = async (planKey: 'free' | 'pro' | 'team') => {
+  const handlePlanSelect = async (planId: string) => {
     // If free plan, just redirect to register
-    if (planKey === 'free') {
+    if (planId === 'free') {
       navigate('/register');
       return;
     }
@@ -52,7 +55,7 @@ export function Landing() {
     // For paid plans, check if user is logged in
     if (!user) {
       // Store intended plan in sessionStorage and redirect to register
-      sessionStorage.setItem('selectedPlan', planKey);
+      sessionStorage.setItem('selectedPlan', planId);
       navigate('/register');
       return;
     }
@@ -1052,72 +1055,22 @@ export function Landing() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {(() => {
-              const plans = [
-                { key: 'free' as const, popular: false },
-                { key: 'pro' as const, popular: true },
-                { key: 'team' as const, popular: false }
-              ];
-              
-              return plans.map(({ key, popular }, i) => {
-                const plan = t(`pricing.plans.${key}`, { returnObjects: true }) as {
-                  name: string;
-                  price: string;
-                  period: string;
-                  description?: string;
-                  popular?: string;
-                  features: string[];
-                  cta: string;
-                };
-                
-                return (
-                  <Card 
-                    key={i} 
-                    className={`p-8 relative ${popular ? 'border-2 shadow-2xl scale-105' : 'border-2'}`}
-                    style={{ 
-                      borderColor: popular ? '#2563eb' : '#e2e8f0',
-                      backgroundColor: 'white'
-                    }}
-                  >
-                    {popular && (
-                      <div 
-                        className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-semibold text-white"
-                        style={{ backgroundColor: '#2563eb' }}
-                      >
-                        {plan.popular || t('pricing.plans.pro.popular')}
-                      </div>
-                    )}
-                    <div className="text-center mb-8">
-                      <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
-                        <span className="text-slate-600">/{plan.period}</span>
-                      </div>
-                    </div>
-                    <ul className="space-y-4 mb-8">
-                      {plan.features.map((feature, j) => (
-                        <li key={j} className="flex items-start gap-3">
-                          <Check className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#16a34a' }} />
-                          <span className="text-slate-700">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                      <Button 
-                        className="w-full"
-                        size="lg"
-                        style={{ 
-                          backgroundColor: popular ? '#2563eb' : '#1e293b',
-                          color: 'white'
-                        }}
-                        onClick={() => handlePlanSelect(key)}
-                      >
-                        {plan.cta}
-                      </Button>
-                    </Card>
-                  );
-                });
-              })()}
-            </div>
+            {loading ? (
+              <div className="col-span-3 text-center py-12">
+                <p className="text-slate-600">{t('loading', { defaultValue: 'Cargando planes...' })}</p>
+              </div>
+            ) : (
+              plans.map((plan) => (
+                <PlanCard
+                  key={plan.id}
+                  plan={plan}
+                  onSelect={handlePlanSelect}
+                  loading={false}
+                  className="p-8"
+                />
+              ))
+            )}
+          </div>
 
           {/* Scholarship CTA */}
           <div 

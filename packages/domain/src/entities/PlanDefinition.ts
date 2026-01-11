@@ -41,6 +41,8 @@ export interface PlanDefinition {
     // Metadata
     isActive: boolean; // If plan is available for purchase
     isPublic: boolean; // If visible to users
+    isLegacy: boolean; // If plan is deprecated (Free, Enterprise)
+    highlightText?: string | null; // Badge text (e.g., "Más Popular")
     sortOrder: number; // Display order
     createdAt: Date;
     updatedAt: Date;

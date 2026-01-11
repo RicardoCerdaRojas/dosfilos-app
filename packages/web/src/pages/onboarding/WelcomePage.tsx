@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, PartyPopper } from 'lucide-react';
+import { PartyPopper } from 'lucide-react';
 import { usePlans, getPlanPriceId } from '@/hooks/usePlans';
-import { getFeatureLabel } from '@/utils/featureLabels';
+import { PlanGrid } from '@/components/plans';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@dosfilos/infrastructure';
 import { toast } from 'sonner';
@@ -13,7 +11,7 @@ import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
 
 /**
  * Welcome page - Post registration plan selection
- * Loads plans from Firestore
+ * Loads plans from Firestore via usePlans hook
  * Responsive design: Stack on mobile, grid on desktop
  */
 export function WelcomePage() {
@@ -22,11 +20,8 @@ export function WelcomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const { plans, loading } = usePlans();
 
-  // Only show paid plans (exclude free)
-  const paidPlans = plans.filter(p => p.id !== 'free' && p.isPublic);
-
   const handlePlanSelect = async (planId: string) => {
-    const plan = paidPlans.find(p => p.id === planId);
+    const plan = plans.find(p => p.id === planId);
     if (!plan) return;
 
     const priceId = getPlanPriceId(plan);
@@ -88,63 +83,15 @@ export function WelcomePage() {
           </p>
         </div>
 
-        {/* Plans Grid - Responsive */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {paidPlans.map((plan) => {
-            const isPopular = plan.highlightText === 'Más Popular';
-
-            return (
-              <Card
-                key={plan.id}
-                className={`relative ${isPopular ? 'border-primary shadow-lg md:scale-105' : ''}`}
-              >
-                {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                    {t('plans.mostPopular')}
-                  </div>
-                )}
-
-                <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription className="min-h-[40px]">{plan.description}</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold">${plan.pricing.monthly}</span>
-                    <span className="text-muted-foreground text-sm">{t('plans.perMonth')}</span>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  {/* Top 4 Features */}
-                  <ul className="space-y-2">
-                    {plan.features.slice(0, 4).map((feature) => (
-                      <li key={feature} className="flex items-start gap-2 text-sm">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{getFeatureLabel(feature)}</span>
-                      </li>
-                    ))}
-                    {plan.features.length > 4 && (
-                      <li className="text-xs text-muted-foreground">
-                        +{plan.features.length - 4} {t('plans.moreFeatures')}
-                      </li>
-                    )}
-                  </ul>
-
-                  <Button
-                    className="w-full"
-                    variant={isPopular ? 'default' : 'outline'}
-                    onClick={() => handlePlanSelect(plan.id)}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? t('plans.subscribing') : t('plans.subscribe')}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Plans Grid - Using new component */}
+        <PlanGrid
+          plans={plans}
+          onPlanSelect={handlePlanSelect}
+          loading={isLoading}
+        />
 
         {/* Discrete Free Option */}
-        <div className="text-center border-t pt-6">
+        <div className="text-center border-t pt-6 mt-8">
           <button
             onClick={handleSkip}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"

@@ -9,7 +9,7 @@ export enum SubscriptionStatus {
 export interface Subscription {
     // Core fields
     id: string; // Stripe subscription ID
-    planId: string; // Internal plan ID ("free", "starter", "pro")
+    planId: string; // Internal plan ID ("basic", "pro", "team")
     status: SubscriptionStatus;
     stripePriceId: string; // Stripe Price ID
 
@@ -29,8 +29,12 @@ export interface Subscription {
         attemptedAt: Date;
     };
 
-    // Optional features
+    // Trial features
     trialEnd?: Date; // Trial period end (if applicable)
+    trialStartedAt?: Date; // When trial countdown actually started (null = not started yet)
+
+    // Grace period (after trial expiration)
+    gracePeriodEnd?: Date; // End of 7-day grace period after trial expires
 
     // Metadata
     updatedAt: Date;

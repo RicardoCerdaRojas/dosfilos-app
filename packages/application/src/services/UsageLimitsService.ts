@@ -25,7 +25,7 @@ export class UsageLimitsService {
         const user = await this.userProfileRepo.getProfile(userId);
         if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
 
-        const plan = await this.planRepo.getById(user.subscription?.planId || 'free');
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
         if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
 
         const limit = plan.limits.sermonsPerMonth;
@@ -57,40 +57,23 @@ export class UsageLimitsService {
         const user = await this.userProfileRepo.getProfile(userId);
         if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
 
-        const plan = await this.planRepo.getById(user.subscription?.planId || 'free');
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
         if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
 
-        if (plan.id === 'free') {
-            // Free: Total absolute limit (1 total)
-            const totalPlans = await this.countAllPreachingPlans(userId);
-            const limit = plan.limits.maxPreachingPlans || 1;
+        // All plans now use monthly limits (Basic, Pro, Team)
+        const plansThisMonth = await this.countPreachingPlansThisMonth(userId);
+        const limit = plan.limits.maxPreachingPlansPerMonth || 0;
 
-            if (totalPlans >= limit) {
-                return {
-                    allowed: false,
-                    reason: `Plan Free: Máximo ${limit} plan de predicación. Haz upgrade para crear más.`,
-                    remaining: 0,
-                    limit
-                };
-            }
-
-            return { allowed: true, remaining: limit - totalPlans, limit };
-        } else {
-            // Pro/Team: Monthly limit
-            const plansThisMonth = await this.countPreachingPlansThisMonth(userId);
-            const limit = plan.limits.maxPreachingPlansPerMonth || 0;
-
-            if (plansThisMonth >= limit) {
-                return {
-                    allowed: false,
-                    reason: `Has creado ${limit} planes este mes. Espera al próximo mes o haz upgrade.`,
-                    remaining: 0,
-                    limit
-                };
-            }
-
-            return { allowed: true, remaining: limit - plansThisMonth, limit };
+        if (plansThisMonth >= limit) {
+            return {
+                allowed: false,
+                reason: `Has creado ${limit} planes este mes. Espera al próximo mes o haz upgrade.`,
+                remaining: 0,
+                limit
+            };
         }
+
+        return { allowed: true, remaining: limit - plansThisMonth, limit };
     }
 
     /**
@@ -100,7 +83,7 @@ export class UsageLimitsService {
         const user = await this.userProfileRepo.getProfile(userId);
         if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
 
-        const plan = await this.planRepo.getById(user.subscription?.planId || 'free');
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
         if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
 
         const limit = plan.limits.greekSessionsPerMonth;
@@ -129,8 +112,8 @@ export class UsageLimitsService {
         const user = await this.userProfileRepo.getProfile(userId);
         if (!user) return false;
 
-        const planId = user.subscription?.planId || 'free';
-        return planId !== 'free';
+        // All plans now have library access (Basic, Pro, Team)
+        return true;
     }
 
     /**
@@ -144,7 +127,7 @@ export class UsageLimitsService {
         const user = await this.userProfileRepo.getProfile(userId);
         if (!user) return { used: 0, limit: 0, percentage: 0 };
 
-        const plan = await this.planRepo.getById(user.subscription?.planId || 'free');
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
         if (!plan) return { used: 0, limit: 0, percentage: 0 };
 
         const used = await this.calculateLibraryStorageMB(userId);
@@ -159,9 +142,9 @@ export class UsageLimitsService {
 
     private getLimitMessage(planId: string, type: 'sermon' | 'greek', limit: number): string {
         const messages = {
-            free: {
-                sermon: `Plan Free: ${limit} sermón por mes. Haz upgrade a Pro para 4 sermones/mes.`,
-                greek: `Plan Free: ${limit} estudio por mes. Haz upgrade a Pro para 3 estudios/mes.`
+            basic: {
+                sermon: `Plan Basic: ${limit} sermón por mes. Haz upgrade a Pro para 4 sermones/mes.`,
+                greek: `Plan Basic: ${limit} estudio por mes. Haz upgrade a Pro para 3 estudios/mes.`
             },
             pro: {
                 sermon: `Plan Pro: ${limit} sermones por mes. Haz upgrade a Team para 12 sermones/mes.`,

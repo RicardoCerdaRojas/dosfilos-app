@@ -15,7 +15,13 @@
     "test:unit": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "audit:features": "ts-node scripts/audit-feature-ids.ts",
+    "audit:features:simple": "node scripts/audit-feature-ids-simple.js",
+    "migrate:plans": "node scripts/migrate-plans-phase1.js",
+    "seed:translations": "node scripts/seed-plan-translations.js",
+    "seed:translations:v2": "node scripts/seed-plan-translations-v2.js",
+    "migrate:hide-free": "node scripts/hide-free-plan.js"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

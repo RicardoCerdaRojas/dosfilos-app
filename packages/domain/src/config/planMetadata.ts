@@ -12,15 +12,17 @@ export interface PlanMetadata {
     features: string[];
     sortOrder: number;
     isPublic: boolean;
+    hasFreeTrial: boolean;
+    trialDays: number;
 }
 
 export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
-    free: {
-        id: 'free',
-        name: 'Gratis',
+    basic: {
+        id: 'basic',
+        name: 'Basic',
         description: 'Para comenzar tu ministerio de predicación',
-        priceMonthly: 0,
-        stripePriceId: null,
+        priceMonthly: 9.99,
+        stripePriceId: 'price_1Snh3X08MCNNnSDL4izMKQex',
         features: [
             'sermon:create',
             'sermon:export_pdf',
@@ -28,13 +30,15 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
         ],
         sortOrder: 0,
         isPublic: true,
+        hasFreeTrial: true,
+        trialDays: 30,
     },
-    starter: {
-        id: 'starter',
+    pro: {
+        id: 'pro',
         name: 'Pro',
         description: 'Para pastores que predican regularmente',
-        priceMonthly: 9.99,
-        stripePriceId: 'price_1SgDfo08MCNNnSDLK3WLKKb9', // Updated to production ID
+        priceMonthly: 14.99,
+        stripePriceId: 'price_1Snh5U08MCNNnSDLVggbHmWm',
         features: [
             'sermon:create',
             'sermon:ai_assistant',
@@ -44,13 +48,15 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
         ],
         sortOrder: 1,
         isPublic: true,
+        hasFreeTrial: true,
+        trialDays: 30,
     },
-    pro: {
-        id: 'pro',
-        name: 'Equipo',
+    team: {
+        id: 'team',
+        name: 'Team',
         description: 'Para equipos pastorales e iglesias',
-        priceMonthly: 24.9,
-        stripePriceId: 'price_1SgDiK08MCNNnSDL3mCVFwl4', // Updated to production ID
+        priceMonthly: 24.99,
+        stripePriceId: 'price_1SgDiK08MCNNnSDL3mCVFwl4',
         features: [
             'sermon:create',
             'sermon:ai_assistant',
@@ -62,26 +68,43 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
         ],
         sortOrder: 2,
         isPublic: true,
+        hasFreeTrial: true,
+        trialDays: 30,
     },
-    iglesia: {
-        id: 'iglesia',
-        name: 'Iglesia',
-        description: 'Para iglesias y organizaciones con múltiples predicadores',
-        priceMonthly: 99,
-        stripePriceId: 'price_iglesia_monthly', // Replace with actual ID
+    // Legacy plans - keep for backward compatibility
+    free: {
+        id: 'free',
+        name: 'Gratis (Legacy)',
+        description: 'Plan legacy - migrar a Basic',
+        priceMonthly: 0,
+        stripePriceId: null,
+        features: [
+            'sermon:create',
+            'sermon:export_pdf',
+            'library:upload',
+        ],
+        sortOrder: 99,
+        isPublic: false,
+        hasFreeTrial: false,
+        trialDays: 0,
+    },
+    starter: {
+        id: 'starter',
+        name: 'Pro (Legacy)',
+        description: 'Plan legacy - migrar a Pro',
+        priceMonthly: 9.99,
+        stripePriceId: 'price_1SgDfo08MCNNnSDLK3WLKKb9',
         features: [
             'sermon:create',
             'sermon:ai_assistant',
-            'sermon:advanced_homiletics',
             'sermon:export_pdf',
-            'sermon:custom_templates',
             'library:upload',
             'library:semantic_search',
-            'library:unlimited_storage',
-            'courses:view',
         ],
-        sortOrder: 3,
+        sortOrder: 99,
         isPublic: false,
+        hasFreeTrial: false,
+        trialDays: 0,
     },
 };
 

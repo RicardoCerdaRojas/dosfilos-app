@@ -16,12 +16,19 @@ export { syncCoreLibraryStore } from './library/syncCoreLibraryStore';
 export { createCheckoutSession } from './stripe/createCheckoutSession';
 export { stripeWebhook } from './stripe/webhook';
 
+// Export Auth functions
+export { completeRegistration } from './auth/completeRegistration';
+
 // Custom portal functions
 export { updatePaymentMethod } from './stripe/updatePaymentMethod';
 export { changePlan } from './stripe/changePlan';
 export { cancelSubscription } from './stripe/cancelSubscription';
 export { reactivateSubscription } from './stripe/reactivateSubscription';
 export { getInvoices } from './stripe/getInvoices';
+
+// Subscription management functions
+export { extendTrial } from './subscription/extendTrial';
+export { submitCancellationFeedback } from './subscription/submitCancellationFeedback';
 
 // Export Analytics functions
 export { trackUserActivity } from './analytics/trackUserActivity';

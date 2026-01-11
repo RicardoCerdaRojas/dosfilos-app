@@ -40,5 +40,33 @@
         "newTestament": "Nuevo Testamento",
         "comingSoon": "Próximamente: desglose detallado",
         "yearlyGoal": "Meta anual: Profundidad y fidelidad"
+    },
+    "welcomeModal": {
+        "title": "¡Bienvenido a DosFilos.Preach!",
+        "subtitle": "El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.",
+        "features": {
+            "studyBible": {
+                "title": "Estudia el texto bíblico",
+                "description": "Analiza el contexto, trabaja la exégesis y construye la proposición exegética"
+            },
+            "homiletics": {
+                "title": "Trabaja la homilética",
+                "description": "Trabaja el enfoque homilético para tu sermón, construye la proposición homilética"
+            },
+            "saveTime": {
+                "title": "Ahorra tiempo de Preparación",
+                "description": "Todas tus recursos en un solo lugar, con acceso rápido y fácil"
+            }
+        },
+        "tip": "Tip: Empieza con un pasaje conocido como Juan 3:16 o Salmo 23",
+        "buttons": {
+            "later": "Lo haré después",
+            "createSermon": "Crear mi primer sermón"
+        }
+    },
+    "firstSermonBanner": {
+        "title": "¡Crea tu primer sermón!",
+        "subtitle": "Comienza tu jornada con nuestra asistente de IA para preparación homilética",
+        "cta": "Generar sermón"
     }
 }
