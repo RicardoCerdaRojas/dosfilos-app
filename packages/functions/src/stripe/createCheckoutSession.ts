@@ -108,27 +108,54 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
         }
 
         // Create checkout session
-        const session = await stripe.checkout.sessions.create({
-            customer: customerId,
-            customer_email: customerEmail, // Ensure email is passed to Stripe
-            payment_method_types: ['card'],
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
-                },
-            ],
-            mode: 'subscription',
-            success_url: finalSuccessUrl,
-            cancel_url: finalCancelUrl,
-            metadata,
-            allow_promotion_codes: true,
-            billing_address_collection: 'required',
-            subscription_data: {
-                trial_period_days: 30, // 30-day trial for all new subscriptions
+        // Stripe only allows customer OR customer_email, not both
+        let session;
+
+        if (isNewRegistration) {
+            // New registration: use customer_email
+            session = await stripe.checkout.sessions.create({
+                customer_email: customerEmail,
+                payment_method_types: ['card'],
+                line_items: [
+                    {
+                        price: priceId,
+                        quantity: 1,
+                    },
+                ],
+                mode: 'subscription',
+                success_url: finalSuccessUrl,
+                cancel_url: finalCancelUrl,
                 metadata,
-            },
-        });
+                allow_promotion_codes: true,
+                billing_address_collection: 'required',
+                subscription_data: {
+                    trial_period_days: 30,
+                    metadata,
+                },
+            });
+        } else {
+            // Existing user: use customer
+            session = await stripe.checkout.sessions.create({
+                customer: customerId,
+                payment_method_types: ['card'],
+                line_items: [
+                    {
+                        price: priceId,
+                        quantity: 1,
+                    },
+                ],
+                mode: 'subscription',
+                success_url: finalSuccessUrl,
+                cancel_url: finalCancelUrl,
+                metadata,
+                allow_promotion_codes: true,
+                billing_address_collection: 'required',
+                subscription_data: {
+                    trial_period_days: 30,
+                    metadata,
+                },
+            });
+        }
 
         return { sessionId: session.id, url: session.url };
     } catch (error: any) {
