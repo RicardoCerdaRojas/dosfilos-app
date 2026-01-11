@@ -83,6 +83,7 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(async (request)
         // Create checkout session
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
+            customer_email: userData.email, // Ensure email is passed to Stripe
             payment_method_types: ['card'],
             line_items: [
                 {
