@@ -2,7 +2,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Pencil, Archive, Trash2, FileText, 
   BookOpen, MapPin, Clock, History, Plus,
-  Share2, MoreVertical, Download, Globe, Eye, Check, Copy, CheckCircle
+  Share2, MoreVertical, Download, Globe, Eye, Check, Copy, CheckCircle,
+  Type, Minus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,7 +76,10 @@ export function SermonDetailPage() {
   const [logDuration, setLogDuration] = useState('45');
   const [logNotes, setLogNotes] = useState('');
   const [logging, setLogging] = useState(false);
+
   const [markingComplete, setMarkingComplete] = useState(false);
+  const [fontSize, setFontSize] = useState(18);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -276,6 +279,30 @@ export function SermonDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
+             {/* Font Size Controls */}
+            <div className="flex items-center gap-1 bg-muted/50 border rounded-full px-2 py-1 mr-2">
+              <Type className="h-3 w-3 text-muted-foreground ml-1" />
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.max(14, s - 1))}>
+                <Minus className="h-3 w-3" />
+              </Button>
+              <span className="text-xs w-6 text-center tabular-nums">{fontSize}</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.min(24, s + 1))}>
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+
+            {/* History Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHistory(true)}
+              className="text-muted-foreground hover:text-foreground gap-2"
+            >
+              <History className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('history.title')}</span>
+            </Button>
+
+            <div className="h-6 w-px bg-border mx-1" />
             <Button 
               onClick={() => setShowShareDialog(true)} 
               variant="ghost" 
@@ -358,9 +385,9 @@ export function SermonDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="space-y-8">
           <SermonPreview
             title={sermon.title}
             content={sermon.content}
@@ -370,70 +397,8 @@ export function SermonDetailPage() {
             tags={sermon.tags}
             category={sermon.category}
             status={sermon.status}
+            fontSize={fontSize}
           />
-        </div>
-
-        {/* Sidebar Info */}
-        <div className="space-y-6">
-          {/* Series Card */}
-          {series && (
-            <Card className="p-4 space-y-3">
-              <div className="flex items-center gap-2 text-primary font-medium">
-                <BookOpen className="h-4 w-4" />
-                <h3>{t('series.partOf')}</h3>
-              </div>
-              <div>
-                <h4 className="font-bold text-lg cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
-                  {series.title}
-                </h4>
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                  {series.description}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
-                {t('series.viewFull')}
-              </Button>
-            </Card>
-          )}
-
-          {/* Preaching History */}
-          <Card className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-medium">
-                <History className="h-4 w-4" />
-                <h3>{t('history.title')}</h3>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowLogDialog(true)}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              {(!sermon.preachingHistory || sermon.preachingHistory.length === 0) ? (
-                <p className="text-sm text-muted-foreground text-center py-2">
-                  {t('history.empty')}
-                </p>
-              ) : (
-                sermon.preachingHistory.map((log, index) => (
-                  <div key={index} className="text-sm border-l-2 border-muted pl-3 space-y-1">
-                    <div className="font-medium flex items-center justify-between">
-                      <span>{new Date(log.date || new Date()).toLocaleDateString()}</span>
-                      <span className="text-xs text-muted-foreground">{log.durationMinutes} min</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{log.location}</span>
-                    </div>
-                    {log.notes && (
-                      <p className="text-xs text-muted-foreground italic mt-1">
-                        "{log.notes}"
-                      </p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
         </div>
       </div>
 
@@ -573,6 +538,75 @@ export function SermonDetailPage() {
               {logging ? t('dialogs.log.saving') : t('dialogs.log.save')}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* History Dialog */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('history.title')}</DialogTitle>
+            <DialogDescription>
+              {t('history.description', { defaultValue: 'Registro de predicaciones y detalles.' })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+             {/* Series Info */}
+             {series && (
+              <div className="space-y-2 pb-4 border-b">
+                <div className="flex items-center gap-2 text-primary font-medium text-sm">
+                  <BookOpen className="h-4 w-4" />
+                  <h3>{t('series.partOf')}</h3>
+                </div>
+                <div>
+                  <h4 className="font-bold text-base cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
+                    {series.title}
+                  </h4>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                    {series.description}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
+                  {t('series.viewFull')}
+                </Button>
+              </div>
+            )}
+
+            {/* Preaching Log List */}
+            <div className="space-y-4">
+               <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-muted-foreground">Registro de Predicaciones</h4>
+                <Button variant="ghost" size="sm" onClick={() => setShowLogDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar
+                </Button>
+              </div>
+              
+              {(!sermon.preachingHistory || sermon.preachingHistory.length === 0) ? (
+                <p className="text-sm text-muted-foreground text-center py-4 bg-muted/30 rounded-lg">
+                  {t('history.empty')}
+                </p>
+              ) : (
+                sermon.preachingHistory.map((log, index) => (
+                  <div key={index} className="text-sm border-l-2 border-primary/30 pl-3 space-y-1 py-1">
+                    <div className="font-medium flex items-center justify-between">
+                      <span>{new Date(log.date || new Date()).toLocaleDateString()}</span>
+                      <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{log.durationMinutes} min</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{log.location}</span>
+                    </div>
+                    {log.notes && (
+                      <p className="text-xs text-muted-foreground italic mt-1 bg-muted/20 p-2 rounded">
+                        "{log.notes}"
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
