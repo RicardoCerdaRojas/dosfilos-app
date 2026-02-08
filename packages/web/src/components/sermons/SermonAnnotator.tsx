@@ -21,6 +21,11 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   const handleMount = (editorInstance: Editor) => {
     setEditor(editorInstance);
     
+    // Manually load snapshot if available
+    if (initialSnapshot) {
+       editorInstance.store.loadSnapshot(initialSnapshot);
+    }
+
     // Set readonly mode
     editorInstance.updateInstanceState({ isReadonly: readOnly });
 
@@ -83,7 +88,7 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   return (
     <div className={cn("relative w-full h-full border-l bg-white overflow-hidden touch-none", className)}>
       <Tldraw
-        snapshot={initialSnapshot}
+        key={sermonId}
         onMount={handleMount}
         hideUi={true}
         inferDarkMode={false} 
