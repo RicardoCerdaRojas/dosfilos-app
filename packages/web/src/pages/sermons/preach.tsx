@@ -14,6 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { 
+  ResizableHandle, 
+  ResizablePanel, 
+  ResizablePanelGroup 
+} from "@/components/ui/resizable";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -450,65 +455,112 @@ export function PreachModePage() {
 
       {/* Main Content Area */}
       {/* Main Content Area */}
-      <div className={cn(
-        "flex-1 w-full transition-all duration-300",
-        showAnnotations ? "grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden" : ""
-      )}>
-        {/* Sermon Text */}
-        <div 
-          className={cn(
-            "w-full focus:outline-none",
-            showAnnotations ? "h-full overflow-y-auto p-4 sm:p-6" : "max-w-4xl mx-auto p-8 pt-24 pb-32"
-          )}
-          onClick={() => !showAnnotations && setShowControls(!showControls)}
-        >
-          {/* Sermon Title - Discrete */}
-          <div className="text-center mb-12">
-            <h1 
-              className="font-serif font-bold text-muted-foreground/70"
-              style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
-            >
-              {sermon.title}
-            </h1>
-            {sermon.bibleReferences && sermon.bibleReferences.length > 0 && (
-              <p className="text-muted-foreground mt-2" style={{ fontSize: `${fontSize * 0.7}px` }}>
-                {sermon.bibleReferences.join(' • ')}
-              </p>
-            )}
-          </div>
+      {/* Main Content Area with Resizable Panels */}
+      <div className="flex-1 w-full h-[calc(100vh-64px)] overflow-hidden">
+        {showAnnotations ? (
+          <ResizablePanelGroup direction="horizontal" className="h-full w-full rounded-lg border">
+            <ResizablePanel defaultSize={60} minSize={30}>
+              <div 
+                className={cn(
+                  "w-full h-full focus:outline-none overflow-y-auto p-4 sm:p-6",
+                  showControls ? "pt-4" : ""
+                )}
+                onClick={() => setShowControls(!showControls)}
+              >
+                  {/* Sermon Title - Discrete */}
+                  <div className="text-center mb-12">
+                    <h1 
+                      className="font-serif font-bold text-muted-foreground/70"
+                      style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
+                    >
+                      {sermon.title}
+                    </h1>
+                    {sermon.bibleReferences && sermon.bibleReferences.length > 0 && (
+                      <p className="text-muted-foreground mt-2" style={{ fontSize: `${fontSize * 0.7}px` }}>
+                        {sermon.bibleReferences.join(' • ')}
+                      </p>
+                    )}
+                  </div>
 
-          <div 
-            className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
-            style={{ fontSize: `${fontSize}px` }}
-          >
-            <style>{`
-              .prose p {
-                margin-top: 1.25em !important;
-                margin-bottom: 1.25em !important;
-              }
-              .prose p:first-child {
-                margin-top: 0 !important;
-                margin-bottom: 1.25em !important;
-              }
-            `}</style>
-            <ReactMarkdown 
-              components={components}
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
+                  <div 
+                    className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
+                    style={{ fontSize: `${fontSize}px` }}
+                  >
+                    <style>{`
+                      .prose p {
+                        margin-top: 1.25em !important;
+                        margin-bottom: 1.25em !important;
+                      }
+                      .prose p:first-child {
+                        margin-top: 0 !important;
+                        margin-bottom: 1.25em !important;
+                      }
+                    `}</style>
+                    <ReactMarkdown 
+                      components={components}
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
+                    >
+                      {applyHighlights(processContent(sermon.content))}
+                    </ReactMarkdown>
+                  </div>
+              </div>
+            </ResizablePanel>
+            
+            <ResizableHandle withHandle />
+            
+            <ResizablePanel defaultSize={40} minSize={20}>
+              <div className={cn(
+                "h-full bg-white relative",
+                showControls ? "" : ""
+              )}>
+                <SermonAnnotator sermonId={id!} />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        ) : (
+           <div 
+              className="w-full h-full focus:outline-none overflow-y-auto max-w-4xl mx-auto p-8 pt-24 pb-32"
+              onClick={() => setShowControls(!showControls)}
             >
-              {applyHighlights(processContent(sermon.content))}
-            </ReactMarkdown>
-          </div>
-        </div>
+              {/* Sermon Title - Discrete */}
+              <div className="text-center mb-12">
+                <h1 
+                  className="font-serif font-bold text-muted-foreground/70"
+                  style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
+                >
+                  {sermon.title}
+                </h1>
+                {sermon.bibleReferences && sermon.bibleReferences.length > 0 && (
+                  <p className="text-muted-foreground mt-2" style={{ fontSize: `${fontSize * 0.7}px` }}>
+                    {sermon.bibleReferences.join(' • ')}
+                  </p>
+                )}
+              </div>
 
-        {/* Annotation Panel */}
-        {showAnnotations && (
-          <div className={cn(
-            "h-full border-l bg-white relative",
-            showControls ? "pt-16" : ""
-          )}>
-            <SermonAnnotator sermonId={id!} />
-          </div>
+              <div 
+                className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
+                style={{ fontSize: `${fontSize}px` }}
+              >
+                <style>{`
+                  .prose p {
+                    margin-top: 1.25em !important;
+                    margin-bottom: 1.25em !important;
+                  }
+                  .prose p:first-child {
+                    margin-top: 0 !important;
+                    margin-bottom: 1.25em !important;
+                  }
+                `}</style>
+                <ReactMarkdown 
+                  components={components}
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                >
+                  {applyHighlights(processContent(sermon.content))}
+                </ReactMarkdown>
+              </div>
+            </div>
         )}
       </div>
       
