@@ -14,21 +14,38 @@ interface SermonAnnotatorProps {
 }
 
 export function SermonAnnotator({ sermonId, className, readOnly = false, scrollContainerRef }: SermonAnnotatorProps) {
+  console.log('[SermonAnnotator] Component render, sermonId:', sermonId);
   const { initialSnapshot, loading, saveSnapshot } = useSermonAnnotations(sermonId);
   const [editor, setEditor] = useState<Editor | null>(null);
+  
+  console.log('[SermonAnnotator] State - loading:', loading, 'hasSnapshot:', !!initialSnapshot, 'snapshotSize:', initialSnapshot?.store ? Object.keys(initialSnapshot.store).length : 0);
 
   const isReady = useRef(false);
 
   // Handle editor mounting
   const handleMount = (editorInstance: Editor) => {
+    console.log('[SermonAnnotator] handleMount called');
     setEditor(editorInstance);
     
-    // Manually load snapshot if available
+    // Manually load snapshot if available AND has content
     if (initialSnapshot && initialSnapshot.store) {
-       editorInstance.store.put(Object.values(initialSnapshot.store));
+       const records = Object.values(initialSnapshot.store);
+       console.log('[SermonAnnotator] Snapshot has', records.length, 'records');
+       
+       // Only load if there's actual content (more than just the default page/document)
+       if (records.length > 2) {
+         console.log('[SermonAnnotator] Loading snapshot with content');
+         editorInstance.store.put(records);
+         console.log('[SermonAnnotator] Snapshot loaded successfully');
+       } else {
+         console.log('[SermonAnnotator] Snapshot is empty, skipping load');
+       }
+    } else {
+       console.log('[SermonAnnotator] No snapshot to load');
     }
     
     // Mark as ready to allow saving
+    console.log('[SermonAnnotator] Setting isReady to true');
     isReady.current = true;
 
     // Set readonly mode
@@ -64,15 +81,26 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   // Sync edits to Firestore
   useEffect(() => {
     if (!editor) return;
+    
+    console.log('[SermonAnnotator] Attaching store listener');
 
     const cleanup = editor.store.listen(() => {
-      // Setup a listener for changes
-      // This listener fires on every change, so debouncing in the hook is crucial
        // Only save if we are ready (initial load/hydration complete)
-       if (!isReady.current) return;
+       if (!isReady.current) {
+         console.log('[SermonAnnotator] Store changed but not ready, skipping save');
+         return;
+       }
 
        const snapshot = getSnapshot(editor.store);
-       saveSnapshot(snapshot as any);
+       const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
+       
+       // Only save if there's actual content (more than default page/document)
+       if (recordCount > 2) {
+         console.log('[SermonAnnotator] Store has content, saving snapshot with', recordCount, 'records');
+         saveSnapshot(snapshot as any);
+       } else {
+         console.log('[SermonAnnotator] Store is empty, skipping save');
+       }
     });
 
     return () => cleanup();
