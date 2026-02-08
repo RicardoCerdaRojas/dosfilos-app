@@ -59,7 +59,7 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
       // Setup a listener for changes
       // This listener fires on every change, so debouncing in the hook is crucial
        const snapshot = getSnapshot(editor.store);
-       saveSnapshot(snapshot);
+       saveSnapshot(snapshot as any);
     });
 
     return () => cleanup();
@@ -81,7 +81,7 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   }
 
   return (
-    <div className={cn("relative w-full h-full border-l bg-white overflow-hidden", className)}>
+    <div className={cn("relative w-full h-full border-l bg-white overflow-hidden touch-none", className)}>
       <Tldraw
         persistenceKey={`sermon-${sermonId}`}
         snapshot={initialSnapshot}
