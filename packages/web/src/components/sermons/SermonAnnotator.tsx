@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Tldraw, Editor, getSnapshot } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { useSermonAnnotations } from '@/hooks/useSermonAnnotations';
@@ -17,6 +17,8 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   const { initialSnapshot, loading, saveSnapshot } = useSermonAnnotations(sermonId);
   const [editor, setEditor] = useState<Editor | null>(null);
 
+  const isReady = useRef(false);
+
   // Handle editor mounting
   const handleMount = (editorInstance: Editor) => {
     setEditor(editorInstance);
@@ -25,6 +27,9 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
     if (initialSnapshot && initialSnapshot.store) {
        editorInstance.store.put(Object.values(initialSnapshot.store));
     }
+    
+    // Mark as ready to allow saving
+    isReady.current = true;
 
     // Set readonly mode
     editorInstance.updateInstanceState({ isReadonly: readOnly });
@@ -63,6 +68,9 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
     const cleanup = editor.store.listen(() => {
       // Setup a listener for changes
       // This listener fires on every change, so debouncing in the hook is crucial
+       // Only save if we are ready (initial load/hydration complete)
+       if (!isReady.current) return;
+
        const snapshot = getSnapshot(editor.store);
        saveSnapshot(snapshot as any);
     });
