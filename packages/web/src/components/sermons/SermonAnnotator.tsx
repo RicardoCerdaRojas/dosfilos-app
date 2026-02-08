@@ -27,12 +27,19 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
     console.log('[SermonAnnotator] handleMount called');
     setEditor(editorInstance);
     
-    // Manually load snapshot if available
+    // Manually load snapshot if available AND has content
     if (initialSnapshot && initialSnapshot.store) {
        const records = Object.values(initialSnapshot.store);
-       console.log('[SermonAnnotator] Loading snapshot with', records.length, 'records');
-       editorInstance.store.put(records);
-       console.log('[SermonAnnotator] Snapshot loaded successfully');
+       console.log('[SermonAnnotator] Snapshot has', records.length, 'records');
+       
+       // Only load if there's actual content (more than just the default page/document)
+       if (records.length > 2) {
+         console.log('[SermonAnnotator] Loading snapshot with content');
+         editorInstance.store.put(records);
+         console.log('[SermonAnnotator] Snapshot loaded successfully');
+       } else {
+         console.log('[SermonAnnotator] Snapshot is empty, skipping load');
+       }
     } else {
        console.log('[SermonAnnotator] No snapshot to load');
     }
@@ -86,8 +93,14 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
 
        const snapshot = getSnapshot(editor.store);
        const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
-       console.log('[SermonAnnotator] Store changed, saving snapshot with', recordCount, 'records');
-       saveSnapshot(snapshot as any);
+       
+       // Only save if there's actual content (more than default page/document)
+       if (recordCount > 2) {
+         console.log('[SermonAnnotator] Store has content, saving snapshot with', recordCount, 'records');
+         saveSnapshot(snapshot as any);
+       } else {
+         console.log('[SermonAnnotator] Store is empty, skipping save');
+       }
     });
 
     return () => cleanup();
