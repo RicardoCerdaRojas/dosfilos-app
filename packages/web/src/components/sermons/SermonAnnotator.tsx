@@ -83,7 +83,6 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   return (
     <div className={cn("relative w-full h-full border-l bg-white overflow-hidden touch-none", className)}>
       <Tldraw
-        persistenceKey={`sermon-${sermonId}`}
         snapshot={initialSnapshot}
         onMount={handleMount}
         hideUi={true}
