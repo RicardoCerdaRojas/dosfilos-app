@@ -3,8 +3,18 @@ import {
   ArrowLeft, Pencil, Archive, Trash2, FileText, 
   BookOpen, MapPin, Clock, History, Plus,
   Share2, MoreVertical, Download, Globe, Eye, Check, Copy, CheckCircle,
-  Type, Minus
+  Type, Minus, Pen, PenTool, PenLine
 } from 'lucide-react';
+import { useRef } from 'react';
+import { 
+  ResizableHandle, 
+  ResizablePanel, 
+  ResizablePanelGroup 
+} from "@/components/ui/resizable";
+import { useSidebar } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { SermonAnnotator } from '@/components/sermons/SermonAnnotator';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -61,6 +71,9 @@ export function SermonDetailPage() {
   const { publishSermon, loading: publishing } = usePublishSermon();
   const { archiveSermon, loading: archiving } = useArchiveSermon();
 
+  // Sidebar control
+  const { open, setOpen, isMobile } = useSidebar();
+  
   const [series, setSeries] = useState<SermonSeriesEntity | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -79,7 +92,46 @@ export function SermonDetailPage() {
 
   const [markingComplete, setMarkingComplete] = useState(false);
   const [fontSize, setFontSize] = useState(18);
+
   const [showHistory, setShowHistory] = useState(false);
+  const [showAnnotations, setShowAnnotations] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const prevShowAnnotations = useRef(showAnnotations);
+  const prevOpen = useRef(open);
+  
+  // 1. Auto-toggle sidebar based on annotations state
+  useEffect(() => {
+    // Only run if showAnnotations actually changed
+    if (prevShowAnnotations.current !== showAnnotations) {
+      prevShowAnnotations.current = showAnnotations;
+      
+      if (!isMobile) {
+        if (showAnnotations) {
+          setOpen(false);
+        } else {
+          setOpen(true);
+        }
+      }
+    }
+  }, [showAnnotations, setOpen, isMobile]);
+
+  // 2. Auto-close annotations when sidebar is manually opened
+  useEffect(() => {
+    // Only run if sidebar state actually changed
+    if (prevOpen.current !== open) {
+      prevOpen.current = open;
+      
+      // If sidebar was opened, close annotations
+      if (open && showAnnotations && !isMobile) {
+        setShowAnnotations(false);
+        // Synchronize ref to avoid triggering the other effect unnecessarily
+        prevShowAnnotations.current = false;
+      }
+    } else if (open !== prevOpen.current) {
+      // Fallback sync if ref missed update (unlikely but safe)
+      prevOpen.current = open;
+    }
+  }, [open, showAnnotations, isMobile]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -254,10 +306,13 @@ export function SermonDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className={cn("bg-background h-full flex flex-col", showAnnotations ? "overflow-hidden" : "overflow-y-auto pb-20")}>
       {/* Header Toolbar */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 transition-all duration-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        <div className={cn(
+          "px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3",
+          showAnnotations ? "w-full" : "max-w-5xl mx-auto"
+        )}>
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -292,46 +347,39 @@ export function SermonDetailPage() {
             </div>
 
             {/* History Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHistory(true)}
-              className="text-muted-foreground hover:text-foreground gap-2"
-            >
-              <History className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('history.title')}</span>
+            {/* Annotations Toggle */}
+            <Button variant="ghost" size="sm" onClick={() => setShowHistory(true)}>
+              <History className="h-4 w-4 2xl:mr-2" />
+              <span className="hidden 2xl:inline">{t('actions.history', { defaultValue: 'Historial' })}</span>
             </Button>
 
-            <div className="h-6 w-px bg-border mx-1" />
             <Button 
-              onClick={() => setShowShareDialog(true)} 
-              variant="ghost" 
-              size="icon"
-              title={t('actions.share')}
-              className={sermon.isShared ? "text-blue-600 bg-blue-50 hover:bg-blue-100" : "text-muted-foreground hover:text-foreground"}
+              variant={showAnnotations ? "secondary" : "ghost"} 
+              size="sm" 
+              onClick={() => setShowAnnotations(!showAnnotations)}
             >
-              <Share2 className="h-4 w-4" />
+              <PenTool className="h-4 w-4 2xl:mr-2" />
+              <span className="hidden 2xl:inline">{showAnnotations ? t('actions.hideNotes', { defaultValue: 'Ocultar Notas' }) : t('actions.notes', { defaultValue: 'Notas' })}</span>
             </Button>
             
-            <Button 
-              onClick={() => navigate(`/dashboard/sermons/${id}/edit`)} 
-              variant="ghost" 
-              size="icon"
-              title={t('actions.edit')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Pencil className="h-4 w-4" />
+            <Separator orientation="vertical" className="h-6" />
+
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary">
+              <Share2 className="h-4 w-4" />
             </Button>
 
-            <div className="h-6 w-px bg-border mx-1" />
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/sermons/${sermon.id}/edit`)}>
+              <PenLine className="h-4 w-4" />
+            </Button>
+
+            <Separator orientation="vertical" className="h-6" />
 
             <Button 
-              onClick={() => navigate(`/dashboard/sermons/${id}/preach`)} 
-              size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+              onClick={() => navigate(`/preach/${sermon.id}`)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
             >
-              <BookOpen className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{t('actions.preach')}</span>
+              <BookOpen className="h-4 w-4 xl:mr-2" />
+              <span className="hidden xl:inline">{t('actions.present', { defaultValue: 'Predicar' })}</span>
             </Button>
 
             <DropdownMenu>
@@ -385,21 +433,64 @@ export function SermonDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Main Content */}
-        <div className="space-y-8">
-          <SermonPreview
-            title={sermon.title}
-            content={sermon.content}
-            authorName={sermon.authorName}
-            date={new Date(sermon.updatedAt || new Date())}
-            bibleReferences={sermon.bibleReferences}
-            tags={sermon.tags}
-            category={sermon.category}
-            status={sermon.status}
-            fontSize={fontSize}
-          />
-        </div>
+      <div className="flex-1 overflow-hidden">
+        {showAnnotations ? (
+           <ResizablePanelGroup direction="horizontal" className="h-full">
+             <ResizablePanel defaultSize={60} minSize={30}>
+               <div 
+                 ref={scrollRef}
+                 className="h-full overflow-y-auto w-full pb-20 scrollbar-thin scroll-smooth"
+               >
+                  <div className={cn(
+                    "p-4 sm:p-6 lg:p-8 w-full space-y-8",
+                    // When annotations are shown, use full width (no max-width) to verify alignment
+                    // Or keep max-width but remove mx-auto to left align?
+                    // Let's try matching the header padding logic:
+                    // Header has px-4 sm:px-6 lg:px-8.
+                    // Here we have p-4... so padding matches.
+                    // If we remove mx-auto, it aligns left.
+                    showAnnotations ? "max-w-none" : "max-w-4xl mx-auto"
+                  )}>
+                     <SermonPreview
+                        title={sermon.title}
+                        content={sermon.content}
+                        authorName={sermon.authorName}
+                        date={new Date(sermon.updatedAt || new Date())}
+                        bibleReferences={sermon.bibleReferences}
+                        tags={sermon.tags}
+                        category={sermon.category}
+                        status={sermon.status}
+                        fontSize={fontSize}
+                      />
+                  </div>
+               </div>
+             </ResizablePanel>
+             
+             <ResizableHandle withHandle />
+             
+             <ResizablePanel defaultSize={40} minSize={20}>
+               <div className="h-full border-l bg-white relative overflow-hidden">
+                 <SermonAnnotator sermonId={id!} scrollContainerRef={scrollRef} />
+               </div>
+             </ResizablePanel>
+           </ResizablePanelGroup>
+        ) : (
+          <div className="h-full overflow-y-auto w-full pb-20">
+             <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 w-full space-y-8">
+               <SermonPreview
+                title={sermon.title}
+                content={sermon.content}
+                authorName={sermon.authorName}
+                date={new Date(sermon.updatedAt || new Date())}
+                bibleReferences={sermon.bibleReferences}
+                tags={sermon.tags}
+                category={sermon.category}
+                status={sermon.status}
+                fontSize={fontSize}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}

@@ -54,6 +54,11 @@ service cloud.firestore {
         allow get, list: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId) || isSuperAdmin();
         allow create, update, delete: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
       }
+
+      // Allow access to annotations subcollection
+      match /annotations/{annotationId} {
+        allow read, write: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
+      }
     }
 
     // Greek Sessions (correct collection name)
