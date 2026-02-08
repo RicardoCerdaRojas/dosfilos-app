@@ -22,8 +22,9 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
     setEditor(editorInstance);
     
     // Manually load snapshot if available
-    if (initialSnapshot) {
-       editorInstance.store.loadSnapshot(initialSnapshot);
+    // Manually load snapshot if available
+    if (initialSnapshot && initialSnapshot.store) {
+       editorInstance.store.put(Object.values(initialSnapshot.store));
     }
 
     // Set readonly mode
