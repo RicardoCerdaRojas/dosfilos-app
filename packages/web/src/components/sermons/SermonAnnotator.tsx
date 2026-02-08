@@ -14,21 +14,31 @@ interface SermonAnnotatorProps {
 }
 
 export function SermonAnnotator({ sermonId, className, readOnly = false, scrollContainerRef }: SermonAnnotatorProps) {
+  console.log('[SermonAnnotator] Component render, sermonId:', sermonId);
   const { initialSnapshot, loading, saveSnapshot } = useSermonAnnotations(sermonId);
   const [editor, setEditor] = useState<Editor | null>(null);
+  
+  console.log('[SermonAnnotator] State - loading:', loading, 'hasSnapshot:', !!initialSnapshot, 'snapshotSize:', initialSnapshot?.store ? Object.keys(initialSnapshot.store).length : 0);
 
   const isReady = useRef(false);
 
   // Handle editor mounting
   const handleMount = (editorInstance: Editor) => {
+    console.log('[SermonAnnotator] handleMount called');
     setEditor(editorInstance);
     
     // Manually load snapshot if available
     if (initialSnapshot && initialSnapshot.store) {
-       editorInstance.store.put(Object.values(initialSnapshot.store));
+       const records = Object.values(initialSnapshot.store);
+       console.log('[SermonAnnotator] Loading snapshot with', records.length, 'records');
+       editorInstance.store.put(records);
+       console.log('[SermonAnnotator] Snapshot loaded successfully');
+    } else {
+       console.log('[SermonAnnotator] No snapshot to load');
     }
     
     // Mark as ready to allow saving
+    console.log('[SermonAnnotator] Setting isReady to true');
     isReady.current = true;
 
     // Set readonly mode
