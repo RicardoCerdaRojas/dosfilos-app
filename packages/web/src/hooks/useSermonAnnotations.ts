@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { doc, getDoc, setDoc, getFirestore } from 'firebase/firestore';
 import { debounce } from 'lodash';
 import { TLStoreSnapshot } from 'tldraw';
@@ -8,6 +8,27 @@ const db = getFirestore();
 export function useSermonAnnotations(sermonId: string | undefined) {
     const [initialSnapshot, setInitialSnapshot] = useState<TLStoreSnapshot | undefined>(undefined);
     const [loading, setLoading] = useState(true);
+
+    // Create stable debounced save function using ref
+    const debouncedSaveRef = useRef<ReturnType<typeof debounce> | null>(null);
+
+    // Initialize debounced function once
+    if (!debouncedSaveRef.current) {
+        debouncedSaveRef.current = debounce(async (sid: string, snapshot: TLStoreSnapshot) => {
+            const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
+            console.log('[useSermonAnnotations] SAVING snapshot with', recordCount, 'records to Firestore');
+
+            try {
+                await setDoc(doc(db, 'sermons', sid, 'annotations', 'main'), {
+                    snapshot,
+                    updatedAt: new Date(),
+                });
+                console.log('[useSermonAnnotations] Save successful');
+            } catch (error) {
+                console.error('[useSermonAnnotations] Error saving annotations:', error);
+            }
+        }, 1000);
+    }
 
     // Load initial data (Once)
     useEffect(() => {
@@ -49,26 +70,11 @@ export function useSermonAnnotations(sermonId: string | undefined) {
         // resetting the editor state while the user is editing.
     }, [sermonId]);
 
-    // Save function
-    const saveSnapshot = useCallback(
-        debounce(async (snapshot: TLStoreSnapshot) => {
-            if (!sermonId) return;
-
-            const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
-            console.log('[useSermonAnnotations] SAVING snapshot with', recordCount, 'records to Firestore');
-
-            try {
-                await setDoc(doc(db, 'sermons', sermonId, 'annotations', 'main'), {
-                    snapshot,
-                    updatedAt: new Date(),
-                });
-                console.log('[useSermonAnnotations] Save successful');
-            } catch (error) {
-                console.error('[useSermonAnnotations] Error saving annotations:', error);
-            }
-        }, 1000),
-        [sermonId]
-    );
+    // Stable save function wrapper
+    const saveSnapshot = useCallback((snapshot: TLStoreSnapshot) => {
+        if (!sermonId || !debouncedSaveRef.current) return;
+        debouncedSaveRef.current(sermonId, snapshot);
+    }, [sermonId]);
 
     return {
         initialSnapshot,
