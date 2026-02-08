@@ -119,10 +119,10 @@ export function Landing() {
               </a>
               
               {/* Language Switcher */}
-              <LanguageSwitcher variant="ghost" showLabel={false} />
+              <LanguageSwitcher variant="ghost" showLabel={false} className="text-slate-600 hover:text-slate-900" />
               
               <Link to="/login">
-                <Button variant="ghost">{tNav('login')}</Button>
+                <Button variant="ghost" className="text-slate-600 hover:text-slate-900">{tNav('login')}</Button>
               </Link>
               <Link to="/register">
                 <Button className="bg-blue-600 hover:bg-blue-700">

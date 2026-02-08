@@ -5,8 +5,9 @@ import { useSermon } from '@/hooks/use-sermons';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, Minus, Plus, Clock, Play, Pause, RotateCcw, 
-  Settings, BookOpen, Maximize, Minimize, Eraser
+  Settings, BookOpen, Maximize, Minimize, Eraser, Pen
 } from 'lucide-react';
+import { SermonAnnotator } from '@/components/sermons/SermonAnnotator';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ export function PreachModePage() {
   // Settings State
   const [fontSize, setFontSize] = useState(24); // Base font size in px
   const [showControls, setShowControls] = useState(true);
+  const [showAnnotations, setShowAnnotations] = useState(false);
   
   // Fullscreen & Focus State
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -338,7 +340,10 @@ export function PreachModePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className={cn(
+      "bg-background text-foreground flex flex-col h-full",
+      showAnnotations ? "overflow-hidden" : "overflow-y-auto"
+    )}>
       {/* Top Bar - Controls */}
       <div className={cn(
         "fixed top-0 left-0 right-0 bg-background/95 backdrop-blur border-b z-50 transition-transform duration-300 p-4 flex items-center justify-between gap-4",
@@ -430,50 +435,81 @@ export function PreachModePage() {
               </Button>
             </div>
           )}
+          
+          {/* Annotations Toggle */}
+          <Button 
+            variant={showAnnotations ? "default" : "outline"}
+            size="icon"
+            onClick={() => setShowAnnotations(!showAnnotations)}
+            title={t('preachMode.annotations', { defaultValue: 'Notas' })}
+          >
+            <Pen className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div 
-        className="flex-1 max-w-4xl mx-auto w-full p-8 pt-24 pb-32 focus:outline-none"
-        onClick={() => setShowControls(!showControls)}
-      >
-        {/* Sermon Title - Discrete */}
-        <div className="text-center mb-12">
-          <h1 
-            className="font-serif font-bold text-muted-foreground/70"
-            style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
-          >
-            {sermon.title}
-          </h1>
-          {sermon.bibleReferences && sermon.bibleReferences.length > 0 && (
-            <p className="text-muted-foreground mt-2" style={{ fontSize: `${fontSize * 0.7}px` }}>
-              {sermon.bibleReferences.join(' • ')}
-            </p>
+      {/* Main Content Area */}
+      <div className={cn(
+        "flex-1 w-full transition-all duration-300",
+        showAnnotations ? "grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden" : ""
+      )}>
+        {/* Sermon Text */}
+        <div 
+          className={cn(
+            "w-full focus:outline-none",
+            showAnnotations ? "h-full overflow-y-auto p-4 sm:p-6" : "max-w-4xl mx-auto p-8 pt-24 pb-32"
           )}
+          onClick={() => !showAnnotations && setShowControls(!showControls)}
+        >
+          {/* Sermon Title - Discrete */}
+          <div className="text-center mb-12">
+            <h1 
+              className="font-serif font-bold text-muted-foreground/70"
+              style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
+            >
+              {sermon.title}
+            </h1>
+            {sermon.bibleReferences && sermon.bibleReferences.length > 0 && (
+              <p className="text-muted-foreground mt-2" style={{ fontSize: `${fontSize * 0.7}px` }}>
+                {sermon.bibleReferences.join(' • ')}
+              </p>
+            )}
+          </div>
+
+          <div 
+            className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
+            style={{ fontSize: `${fontSize}px` }}
+          >
+            <style>{`
+              .prose p {
+                margin-top: 1.25em !important;
+                margin-bottom: 1.25em !important;
+              }
+              .prose p:first-child {
+                margin-top: 0 !important;
+                margin-bottom: 1.25em !important;
+              }
+            `}</style>
+            <ReactMarkdown 
+              components={components}
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+            >
+              {applyHighlights(processContent(sermon.content))}
+            </ReactMarkdown>
+          </div>
         </div>
 
-        <div 
-          className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          <style>{`
-            .prose p {
-              margin-top: 1.25em !important;
-              margin-bottom: 1.25em !important;
-            }
-            .prose p:first-child {
-              margin-top: 0 !important;
-            }
-          `}</style>
-          <ReactMarkdown 
-            components={components}
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-          >
-            {applyHighlights(processContent(sermon.content))}
-          </ReactMarkdown>
-        </div>
+        {/* Annotation Panel */}
+        {showAnnotations && (
+          <div className={cn(
+            "h-full border-l bg-white relative",
+            showControls ? "pt-16" : ""
+          )}>
+            <SermonAnnotator sermonId={id!} />
+          </div>
+        )}
       </div>
       
       {/* Highlight Toolbar */}

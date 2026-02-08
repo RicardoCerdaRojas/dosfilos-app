@@ -64,10 +64,13 @@ export function DashboardLayout() {
     }
   }, [location.pathname]);
 
+  const isSermonDetail = location.pathname.startsWith('/dashboard/sermons/') && location.pathname !== '/dashboard/sermons';
+  const isFullScreen = isPlanner || isGenerator || isSermonDetail;
+
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className={cn(isFullScreen && "md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none")}>
         {/* Header with toggle button */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
@@ -90,9 +93,8 @@ export function DashboardLayout() {
         {/* Main content */}
         <main className={cn(
           "flex-1",
-          // Generator needs fixed height with no scroll (scroll is internal)
-          isGenerator ? "overflow-hidden h-[calc(100vh-4rem)]" : "overflow-y-auto",
-          !isPlanner && !isGenerator && "bg-muted/40 p-4 md:p-2"
+          // Apps that need full height control (no parent scroll, no parent padding)
+          isFullScreen ? "overflow-hidden h-[calc(100dvh-4rem)]" : "overflow-y-auto bg-muted/40 p-4 md:p-2"
         )}>
           <Outlet />
         </main>

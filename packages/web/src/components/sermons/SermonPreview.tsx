@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  BookOpen, Minus, Plus, Type
+  BookOpen
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -24,6 +23,7 @@ interface SermonPreviewProps {
   tags?: string[];
   category?: string;
   status?: string;
+  fontSize?: number;
 }
 
 export function SermonPreview({
@@ -34,10 +34,10 @@ export function SermonPreview({
   bibleReferences = [],
   tags = [],
   category,
-  status = 'draft'
+  status = 'draft',
+  fontSize = 18
 }: SermonPreviewProps) {
   const { t, i18n } = useTranslation('sermonDetail');
-  const [fontSize, setFontSize] = useState(18);
   
   // Bible Viewer State
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
@@ -155,18 +155,7 @@ export function SermonPreview({
   return (
     <div className="bg-background min-h-full">
       {/* Floating Controls */}
-      <div className="sticky top-4 z-10 flex justify-end px-4 mb-4 pointer-events-none">
-        <div className="flex items-center gap-1 bg-background/80 backdrop-blur border rounded-full px-2 py-1 shadow-sm pointer-events-auto">
-          <Type className="h-3 w-3 text-muted-foreground ml-1" />
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.max(14, s - 1))}>
-            <Minus className="h-3 w-3" />
-          </Button>
-          <span className="text-xs w-6 text-center tabular-nums">{fontSize}</span>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.min(24, s + 1))}>
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
+
 
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Document Header */}

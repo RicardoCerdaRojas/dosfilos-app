@@ -54,12 +54,18 @@ service cloud.firestore {
         allow get, list: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId) || isSuperAdmin();
         allow create, update, delete: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
       }
+
+      // Allow access to annotations subcollection
+      match /annotations/{annotationId} {
+        allow read, write: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
+      }
     }
 
     // Greek Sessions (correct collection name)
     match /greek_sessions/{sessionId} {
       // Super admins can read all sessions for analytics
-      allow read: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow get: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow list: if isAuthenticated() || isSuperAdmin();
       allow update, delete: if isOwner(resource.data.userId);
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
 
@@ -149,7 +155,8 @@ service cloud.firestore {
 
     // Sermon Series collection
     match /series/{seriesId} {
-      allow read: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow get: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow list: if isAuthenticated() || isSuperAdmin();
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
       allow update: if isOwner(resource.data.userId);
       allow delete: if isOwner(resource.data.userId);

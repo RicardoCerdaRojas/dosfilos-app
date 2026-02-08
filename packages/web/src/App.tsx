@@ -90,6 +90,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/preach/:id" 
+            element={
+              <ProtectedRoute>
+                <PreachModePage />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* Greek Tutor Active Session - Standalone route without dashboard sidebar (immersive experience) */}
           <Route 
