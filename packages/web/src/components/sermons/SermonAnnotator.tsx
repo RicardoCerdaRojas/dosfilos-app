@@ -74,14 +74,19 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   // Sync edits to Firestore
   useEffect(() => {
     if (!editor) return;
+    
+    console.log('[SermonAnnotator] Attaching store listener');
 
     const cleanup = editor.store.listen(() => {
-      // Setup a listener for changes
-      // This listener fires on every change, so debouncing in the hook is crucial
        // Only save if we are ready (initial load/hydration complete)
-       if (!isReady.current) return;
+       if (!isReady.current) {
+         console.log('[SermonAnnotator] Store changed but not ready, skipping save');
+         return;
+       }
 
        const snapshot = getSnapshot(editor.store);
+       const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
+       console.log('[SermonAnnotator] Store changed, saving snapshot with', recordCount, 'records');
        saveSnapshot(snapshot as any);
     });
 
