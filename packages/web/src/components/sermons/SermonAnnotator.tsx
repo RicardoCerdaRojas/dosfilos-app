@@ -13,6 +13,9 @@ interface SermonAnnotatorProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
 
+// Track which sermons have been hydrated to prevent re-loading on remounts
+const hydratedSermons = new Set<string>();
+
 export function SermonAnnotator({ sermonId, className, readOnly = false, scrollContainerRef }: SermonAnnotatorProps) {
   console.log('[SermonAnnotator] Component render, sermonId:', sermonId);
   const { initialSnapshot, loading, saveSnapshot } = useSermonAnnotations(sermonId);
@@ -21,25 +24,42 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
   console.log('[SermonAnnotator] State - loading:', loading, 'hasSnapshot:', !!initialSnapshot, 'snapshotSize:', initialSnapshot?.store ? Object.keys(initialSnapshot.store).length : 0);
 
   const isReady = useRef(false);
+  const hasHydrated = useRef(false);
 
   // Handle editor mounting
   const handleMount = (editorInstance: Editor) => {
-    console.log('[SermonAnnotator] handleMount called');
+    console.log('[SermonAnnotator] handleMount called, hasHydrated:', hasHydrated.current, 'alreadyHydrated:', hydratedSermons.has(sermonId));
     setEditor(editorInstance);
     
-    // Manually load snapshot if available AND has content
-    if (initialSnapshot && initialSnapshot.store) {
+    // Only hydrate if we haven't already for this sermon (prevents re-loading on remounts)
+    const shouldHydrate = !hasHydrated.current && !hydratedSermons.has(sermonId);
+    
+    if (shouldHydrate && initialSnapshot && initialSnapshot.store) {
        const records = Object.values(initialSnapshot.store);
        console.log('[SermonAnnotator] Snapshot has', records.length, 'records');
        
-       // Only load if there's actual content (more than just the default page/document)
-       if (records.length > 2) {
-         console.log('[SermonAnnotator] Loading snapshot with content');
+       // Check for actual user-created content (shapes, not just internal Tldraw records)
+       const hasUserContent = records.some((record: any) => {
+         // Look for draw, geo, arrow, text, image shapes - actual user drawings
+         return record.typeName === 'shape' && 
+                ['draw', 'geo', 'arrow', 'text', 'image', 'line', 'highlight', 'note'].includes(record.type);
+       });
+       
+       console.log('[SermonAnnotator] Has user content:', hasUserContent);
+       
+       // Only load if there's actual user content
+       if (hasUserContent) {
+         console.log('[SermonAnnotator] Loading snapshot with user content');
          editorInstance.store.put(records);
          console.log('[SermonAnnotator] Snapshot loaded successfully');
        } else {
-         console.log('[SermonAnnotator] Snapshot is empty, skipping load');
+         console.log('[SermonAnnotator] Snapshot has no user content, skipping load');
        }
+       
+       hasHydrated.current = true;
+       hydratedSermons.add(sermonId);
+    } else if (hasHydrated.current || hydratedSermons.has(sermonId)) {
+       console.log('[SermonAnnotator] Already hydrated for this sermon, skipping');
     } else {
        console.log('[SermonAnnotator] No snapshot to load');
     }
@@ -92,14 +112,22 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
        }
 
        const snapshot = getSnapshot(editor.store);
-       const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
+       const records = snapshot.store ? Object.values(snapshot.store) : [];
        
-       // Only save if there's actual content (more than default page/document)
-       if (recordCount > 2) {
-         console.log('[SermonAnnotator] Store has content, saving snapshot with', recordCount, 'records');
+       // Check for actual user-created shapes
+       const hasUserContent = records.some((record: any) => {
+         // Look for draw, geo, arrow, text, image shapes - actual user drawings
+         return record.typeName === 'shape' && 
+                ['draw', 'geo', 'arrow', 'text', 'image', 'line', 'highlight', 'note'].includes(record.type);
+       });
+       
+       // Only save if there's actual user content
+       if (hasUserContent) {
+         const recordCount = records.length;
+         console.log('[SermonAnnotator] Store has user content, saving snapshot with', recordCount, 'records');
          saveSnapshot(snapshot as any);
        } else {
-         console.log('[SermonAnnotator] Store is empty, skipping save');
+         console.log('[SermonAnnotator] Store has no user content, skipping save');
        }
     });
 
