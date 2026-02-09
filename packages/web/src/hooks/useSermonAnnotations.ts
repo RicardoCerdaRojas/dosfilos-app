@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { doc, getDoc, setDoc, getFirestore } from 'firebase/firestore';
 import { debounce } from 'lodash';
-import { TLStoreSnapshot } from 'tldraw';
+import type { AnnotationSnapshot } from '@/adapters/DrawingEngineAdapter';
 
 const db = getFirestore();
 
 export function useSermonAnnotations(sermonId: string | undefined) {
-    const [initialSnapshot, setInitialSnapshot] = useState<TLStoreSnapshot | undefined>(undefined);
+    const [initialSnapshot, setInitialSnapshot] = useState<AnnotationSnapshot | undefined>(undefined);
     const [loading, setLoading] = useState(true);
 
     // Create stable debounced save function using ref
@@ -14,16 +14,15 @@ export function useSermonAnnotations(sermonId: string | undefined) {
 
     // Initialize debounced function once
     if (!debouncedSaveRef.current) {
-        debouncedSaveRef.current = debounce(async (sid: string, snapshot: TLStoreSnapshot) => {
-            const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
-            console.log('[useSermonAnnotations] SAVING snapshot with', recordCount, 'records to Firestore');
-
+        debouncedSaveRef.current = debounce(async (sid: string, snapshot: AnnotationSnapshot) => {
             try {
+                // Firestore doesn't support nested arrays, so we store as JSON string
+                const snapshotJSON = JSON.stringify(snapshot);
+
                 await setDoc(doc(db, 'sermons', sid, 'annotations', 'main'), {
-                    snapshot,
+                    snapshotJSON,
                     updatedAt: new Date(),
                 });
-                console.log('[useSermonAnnotations] Save successful');
             } catch (error) {
                 console.error('[useSermonAnnotations] Error saving annotations:', error);
             }
@@ -32,7 +31,6 @@ export function useSermonAnnotations(sermonId: string | undefined) {
 
     // Load initial data (Once)
     useEffect(() => {
-        console.log('[useSermonAnnotations] Effect triggered for sermonId:', sermonId);
         if (!sermonId) {
             setLoading(false);
             return;
@@ -41,25 +39,21 @@ export function useSermonAnnotations(sermonId: string | undefined) {
         const fetchAnnotations = async () => {
             try {
                 const docRef = doc(db, 'sermons', sermonId, 'annotations', 'main');
-                console.log('[useSermonAnnotations] Fetching from:', docRef.path);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data.snapshot) {
-                        const recordCount = data.snapshot.store ? Object.keys(data.snapshot.store).length : 0;
-                        console.log('[useSermonAnnotations] Loaded snapshot with', recordCount, 'records');
-                        setInitialSnapshot(data.snapshot as TLStoreSnapshot);
-                    } else {
-                        console.log('[useSermonAnnotations] Document exists but no snapshot field');
+                    // Try new JSON format first, fallback to old format
+                    if (data.snapshotJSON) {
+                        const snapshot = JSON.parse(data.snapshotJSON) as AnnotationSnapshot;
+                        setInitialSnapshot(snapshot);
+                    } else if (data.snapshot) {
+                        setInitialSnapshot(data.snapshot as AnnotationSnapshot);
                     }
-                } else {
-                    console.log('[useSermonAnnotations] No existing annotations document');
                 }
             } catch (error) {
                 console.error('[useSermonAnnotations] Error fetching annotations:', error);
             } finally {
-                console.log('[useSermonAnnotations] Fetch complete, setting loading to false');
                 setLoading(false);
             }
         };
@@ -71,7 +65,7 @@ export function useSermonAnnotations(sermonId: string | undefined) {
     }, [sermonId]);
 
     // Stable save function wrapper
-    const saveSnapshot = useCallback((snapshot: TLStoreSnapshot) => {
+    const saveSnapshot = useCallback((snapshot: AnnotationSnapshot) => {
         if (!sermonId || !debouncedSaveRef.current) return;
         debouncedSaveRef.current(sermonId, snapshot);
     }, [sermonId]);

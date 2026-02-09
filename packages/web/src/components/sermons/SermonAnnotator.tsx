@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { Tldraw, Editor } from 'tldraw';
-import 'tldraw/tldraw.css';
+import { Excalidraw } from '@excalidraw/excalidraw';
+import '@excalidraw/excalidraw/index.css';
 import { useSermonAnnotations } from '@/hooks/useSermonAnnotations';
+import { ExcalidrawAdapter } from '@/adapters/ExcalidrawAdapter';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
-import { SermonAnnotationToolbar } from './SermonAnnotationToolbar';
+import { Loader2, MousePointer2, Pencil, Eraser } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SermonAnnotatorProps {
   sermonId: string;
@@ -13,152 +14,328 @@ interface SermonAnnotatorProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
 
-// Track which sermons have been hydrated to prevent re-loading on remounts
-const hydratedSermons = new Set<string>();
-
 export function SermonAnnotator({ sermonId, className, readOnly = false, scrollContainerRef }: SermonAnnotatorProps) {
-  console.log('[SermonAnnotator] Component render, sermonId:', sermonId);
   const { initialSnapshot, loading, saveSnapshot } = useSermonAnnotations(sermonId);
-  const [editor, setEditor] = useState<Editor | null>(null);
-  
-  console.log('[SermonAnnotator] State - loading:', loading, 'hasSnapshot:', !!initialSnapshot, 'snapshotSize:', initialSnapshot?.store ? Object.keys(initialSnapshot.store).length : 0);
-
+  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
+  const adapterRef = useRef<ExcalidrawAdapter | null>(null);
   const isReady = useRef(false);
-  const hasHydrated = useRef(false);
+  
+  // Custom toolbar state
+  const [activeTool, setActiveTool] = useState<'selection' | 'freedraw' | 'eraser'>('freedraw');
+  const [strokeWidth, setStrokeWidth] = useState<number>(1); // 0.5=thin, 1=medium, 2=bold
+  const [strokeColor, setStrokeColor] = useState<string>('#000000'); // Default black
 
-  // Handle editor mounting
-  const handleMount = (editorInstance: Editor) => {
-    console.log('[SermonAnnotator] handleMount called, hasHydrated:', hasHydrated.current, 'alreadyHydrated:', hydratedSermons.has(sermonId));
-    setEditor(editorInstance);
-    
-    // Only hydrate if we haven't already for this sermon (prevents re-loading on remounts)
-    const shouldHydrate = !hasHydrated.current && !hydratedSermons.has(sermonId);
-    
-    if (shouldHydrate && initialSnapshot && initialSnapshot.store) {
-       const records = Object.values(initialSnapshot.store);
-       console.log('[SermonAnnotator] Snapshot has', records.length, 'records');
-       
-       // Check for actual user-created content (shapes, not just internal Tldraw records)
-       const hasUserContent = records.some((record: any) => {
-         // Look for draw, geo, arrow, text, image shapes - actual user drawings
-         return record.typeName === 'shape' && 
-                ['draw', 'geo', 'arrow', 'text', 'image', 'line', 'highlight', 'note'].includes(record.type);
-       });
-       
-       console.log('[SermonAnnotator] Has user content:', hasUserContent);
-       
-       // Only load if there's actual user content
-       if (hasUserContent) {
-         console.log('[SermonAnnotator] Loading snapshot with user content');
-         editorInstance.store.put(records);
-         console.log('[SermonAnnotator] Snapshot loaded successfully');
-       } else {
-         console.log('[SermonAnnotator] Snapshot has no user content, skipping load');
-       }
-       
-       hasHydrated.current = true;
-       hydratedSermons.add(sermonId);
-    } else if (hasHydrated.current || hydratedSermons.has(sermonId)) {
-       console.log('[SermonAnnotator] Already hydrated for this sermon, skipping');
-    } else {
-       console.log('[SermonAnnotator] No snapshot to load');
-    }
-    
-    // Mark as ready to allow saving
-    console.log('[SermonAnnotator] Setting isReady to true');
+  // Initialize adapter when API is ready
+  useEffect(() => {
+    if (!excalidrawAPI) return;
+
+    // Create adapter
+    const adapter = new ExcalidrawAdapter(excalidrawAPI);
+    adapterRef.current = adapter;
+
+    // Apply initial tool state after Excalidraw finishes initializing
+    // Small delay ensures Excalidraw is ready and won't override our settings
+    setTimeout(() => {
+      excalidrawAPI.updateScene({
+        appState: {
+          activeTool: { type: activeTool },
+          currentItemStrokeWidth: strokeWidth,
+          currentItemStrokeColor: strokeColor,
+          currentItemRoughness: 0,
+        },
+      });
+    }, 100);
+
+    // Mark as ready
     isReady.current = true;
 
-    // Set readonly mode
-    editorInstance.updateInstanceState({ isReadonly: readOnly });
+  }, [excalidrawAPI, activeTool, strokeWidth, strokeColor]);
 
-    // Lock camera options to prevent manual panning/zooming if sync is enabled
-    if (scrollContainerRef) {
-       editorInstance.setCameraOptions({ isLocked: true });
+  // Allow scroll ONLY in sermon content containers - surgical fix
+  useEffect(() => {
+    const styleId = 'excalidraw-scroll-fix';
+    
+    // Remove existing style if any
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+    
+    // Inject CSS to enable scroll in sermon containers ONLY
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      /* Enable scroll ONLY in sermon content containers */
+      .overflow-y-auto,
+      [data-radix-scroll-area-viewport] {
+        touch-action: pan-y !important;
+      }
+      
+      /* Keep Excalidraw canvas functional */
+      .excalidraw .excalidraw-canvas-wrapper {
+        touch-action: none !important;
+      }
+      
+      /* HIDE native Excalidraw UI - we use custom toolbar */
+      .excalidraw .layer-ui__wrapper__top-right,
+      .excalidraw .App-toolbar,
+      .excalidraw .App-menu,
+      .excalidraw .App-menu_top,
+      .excalidraw .Island {
+        display: none !important;
+      }
+      
+      /* Keep canvas full size */
+      .excalidraw .excalidraw-canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Cleanup
+    return () => {
+      const styleToRemove = document.getElementById(styleId);
+      if (styleToRemove) {
+        styleToRemove.remove();
+      }
+    };
+  }, []);
+
+  // Synchronize scroll between sermon content and canvas
+  useEffect(() => {
+    if (!scrollContainerRef?.current || !excalidrawAPI) return;
+
+    const container = scrollContainerRef.current;
+
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      
+      // Use CSS transform to shift the canvas viewport
+      const canvasWrapper = document.querySelector('.excalidraw-wrapper');
+      if (canvasWrapper) {
+        (canvasWrapper as HTMLElement).style.transform = `translateY(${scrollTop}px)`;
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    
+    // Apply initial scroll position
+    handleScroll();
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      const canvasWrapper = document.querySelector('.excalidraw-wrapper');
+      if (canvasWrapper) {
+        (canvasWrapper as HTMLElement).style.transform = '';
+      }
+    };
+  }, [scrollContainerRef, excalidrawAPI]);
+
+
+  // Handle tool changes
+  const handleToolChange = (tool: 'selection' | 'freedraw' | 'eraser') => {
+    if (!excalidrawAPI) return;
+    
+    setActiveTool(tool);
+    
+    // Update Excalidraw state
+    excalidrawAPI.updateScene({
+      appState: {
+        activeTool: {
+          type: tool,
+        },
+      },
+    });
+  };
+
+  // Handle stroke width change
+  const handleStrokeWidthChange = (width: number) => {
+    if (!excalidrawAPI) return;
+    
+    setStrokeWidth(width);
+    
+    // Update Excalidraw state
+    excalidrawAPI.updateScene({
+      appState: {
+        currentItemStrokeWidth: width,
+      },
+    });
+  };
+
+  // Handle color change
+  const handleColorChange = (color: string) => {
+    if (!excalidrawAPI) return;
+    
+    setStrokeColor(color);
+    
+    // Update Excalidraw state
+    excalidrawAPI.updateScene({
+      appState: {
+        currentItemStrokeColor: color,
+      },
+    });
+  };
+
+  const handleChange = () => {
+    if (!isReady.current || !adapterRef.current) {
+      return;
+    }
+
+    const adapter = adapterRef.current;
+    const snapshot = adapter.getSnapshot();
+    
+    if (adapter.hasUserContent(snapshot)) {
+      saveSnapshot(snapshot);
     }
   };
 
-  // Sync scroll from container to Tldraw camera
-  useEffect(() => {
-    if (!editor || !scrollContainerRef?.current) return;
-    
-    const container = scrollContainerRef.current;
-    
-    const handleScroll = () => {
-      // Sync Y position: When container scrolls down (scrollTop increases), camera moves down (y decreases)
-      // Tldraw coordinates: +y is down.
-      // If text scrolls down by 100px, we want to see the part of canvas at y=100.
-      // To see canvas at y=100, camera must be at y=-100.
-      editor.setCamera({ x: 0, y: -container.scrollTop });
-    };
-
-    // Initial sync
-    handleScroll();
-
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [editor, scrollContainerRef]);
-
-  // Sync edits to Firestore
-  useEffect(() => {
-    if (!editor) return;
-    
-    console.log('[SermonAnnotator] Attaching store listener');
-
-    const cleanup = editor.store.listen(() => {
-       // Only save if we are ready (initial load/hydration complete)
-       if (!isReady.current) {
-         console.log('[SermonAnnotator] Store changed but not ready, skipping save');
-         return;
-       }
-
-       // Capture current state using allRecords to detect content
-       const allRecords = editor.store.allRecords();
-       
-       // Check for actual user-created shapes
-       const hasUserContent = allRecords.some((record: any) => {
-         return record.typeName === 'shape' && 
-                ['draw', 'geo', 'arrow', 'text', 'image', 'line', 'highlight', 'note'].includes(record.type);
-       });
-       
-       // Only save if there's actual user content
-       if (hasUserContent) {
-         // Use getStoreSnapshot which returns the correct TLStoreSnapshot format
-         const snapshot = editor.store.getStoreSnapshot();
-         const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
-         console.log('[SermonAnnotator] Store has user content, saving snapshot with', recordCount, 'records');
-         saveSnapshot(snapshot as any);
-       } else {
-         console.log('[SermonAnnotator] Store has no user content, skipping save');
-       }
-    });
-
-    return () => cleanup();
-  }, [editor, saveSnapshot]);
-
-  // Update readonly state if prop changes
-  useEffect(() => {
-    if (editor) {
-      editor.updateInstanceState({ isReadonly: readOnly });
-    }
-  }, [editor, readOnly]);
-
   if (loading) {
     return (
-      <div className={cn("flex items-center justify-center bg-muted/10 h-full w-full", className)}>
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className={cn("flex items-center justify-center h-full", className)}>
+        <Loader2 className="animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className={cn("relative w-full h-full border-l bg-white overflow-hidden touch-none", className)}>
-      <Tldraw
-        key={sermonId}
-        onMount={handleMount}
-        hideUi={true}
-        inferDarkMode={false} 
+    <div className={cn("w-full h-full", className)}>
+      {/* Custom Toolbar - Fixed to viewport bottom-right, always visible, never covers banner */}
+      {!readOnly && excalidrawAPI && (
+        <div className="fixed bottom-4 right-4 z-50 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border">
+          <div className="flex gap-2 items-center p-2">
+            {/* Tools */}
+            <div className="flex gap-1 border-r pr-2">
+              <Button
+                variant={activeTool === 'selection' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={() => handleToolChange('selection')}
+                title="Seleccionar (V)"
+              >
+                <MousePointer2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={activeTool === 'freedraw' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={() => handleToolChange('freedraw')}
+                title="Lápiz (P)"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={activeTool === 'eraser' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={() => handleToolChange('eraser')}
+                title="Goma (E)"
+              >
+                <Eraser className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Colors */}
+            <div className="flex gap-1 items-center border-r pr-2">
+              <Button
+                variant={strokeColor === '#000000' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleColorChange('#000000')}
+                className="h-7 w-7 p-0"
+                title="Negro"
+              >
+                <div className="w-4 h-4 rounded-full bg-black"></div>
+              </Button>
+              <Button
+                variant={strokeColor === '#dc2626' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleColorChange('#dc2626')}
+                className="h-7 w-7 p-0"
+                title="Rojo"
+              >
+                <div className="w-4 h-4 rounded-full bg-red-600"></div>
+              </Button>
+              <Button
+                variant={strokeColor === '#2563eb' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleColorChange('#2563eb')}
+                className="h-7 w-7 p-0"
+                title="Azul"
+              >
+                <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+              </Button>
+              <Button
+                variant={strokeColor === '#16a34a' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleColorChange('#16a34a')}
+                className="h-7 w-7 p-0"
+                title="Verde"
+              >
+                <div className="w-4 h-4 rounded-full bg-green-600"></div>
+              </Button>
+              <Button
+                variant={strokeColor === '#ea580c' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleColorChange('#ea580c')}
+                className="h-7 w-7 p-0"
+                title="Naranja"
+              >
+                <div className="w-4 h-4 rounded-full bg-orange-600"></div>
+              </Button>
+            </div>
+            
+            {/* Stroke Width */}
+            <div className="flex gap-1 items-center">
+              <Button
+                variant={strokeWidth === 0.5 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleStrokeWidthChange(0.5)}
+                className="h-7 w-7 p-0"
+                title="Delgado"
+              >
+                <div className="w-3 h-0.5 bg-current"></div>
+              </Button>
+              <Button
+                variant={strokeWidth === 1 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleStrokeWidthChange(1)}
+                className="h-7 w-7 p-0"
+                title="Medio"
+              >
+                <div className="w-3 h-1 bg-current"></div>
+              </Button>
+              <Button
+                variant={strokeWidth === 2 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleStrokeWidthChange(2)}
+                className="h-7 w-7 p-0"
+                title="Grueso"
+              >
+                <div className="w-3 h-1.5 bg-current"></div>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <Excalidraw
+        excalidrawAPI={(api) => setExcalidrawAPI(api)}
+        onChange={handleChange}
+        viewModeEnabled={readOnly}
+        theme="light"
+        initialData={initialSnapshot && !loading ? {
+          elements: initialSnapshot.elements as any[],
+          // Don't include appState - let our initialization handle tool selection
+        } : undefined}
+        UIOptions={{
+          canvasActions: {
+            loadScene: false,
+            saveToActiveFile: false,
+            export: false,
+            saveAsImage: false,
+          },
+          // Hide native toolbar - we use custom toolbar
+          dockedSidebarBreakpoint: 0,
+        }}
+        renderTopRightUI={() => null} // Hide top-right UI (hamburger menu, etc)
       />
-      <SermonAnnotationToolbar editor={editor} readOnly={readOnly} />
     </div>
   );
 }
