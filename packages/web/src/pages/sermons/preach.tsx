@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSermon } from '@/hooks/use-sermons';
@@ -66,6 +66,9 @@ export function PreachModePage() {
   
   // Highlights
   const { highlights, selectedText, addHighlight, removeHighlight, clearAllHighlights } = useHighlights(id || '');
+
+  // Ref for sermon content container (for scroll sync with annotations)
+  const sermonContentRef = useRef<HTMLDivElement>(null);
 
   // Fullscreen API handlers
   const enterFullscreen = async () => {
@@ -461,6 +464,7 @@ export function PreachModePage() {
           <ResizablePanelGroup direction="horizontal" className="h-full w-full rounded-lg border">
             <ResizablePanel defaultSize={60} minSize={30}>
               <div 
+                ref={sermonContentRef}
                 className={cn(
                   "w-full h-full focus:outline-none overflow-y-auto p-4 sm:p-6",
                   showControls ? "pt-4" : ""
@@ -507,14 +511,18 @@ export function PreachModePage() {
               </div>
             </ResizablePanel>
             
-            <ResizableHandle withHandle />
+            <ResizableHandle withHandle className="bg-border hover:bg-primary/20 transition-colors" />
+
             
             <ResizablePanel defaultSize={40} minSize={20}>
               <div className={cn(
                 "h-full bg-white relative",
                 showControls ? "" : ""
               )}>
-                <SermonAnnotator sermonId={id!} />
+                <SermonAnnotator 
+                  sermonId={id!} 
+                  scrollContainerRef={sermonContentRef}
+                />
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
