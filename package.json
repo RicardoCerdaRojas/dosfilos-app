@@ -21,7 +21,11 @@
     "migrate:plans": "node scripts/migrate-plans-phase1.js",
     "seed:translations": "node scripts/seed-plan-translations.js",
     "seed:translations:v2": "node scripts/seed-plan-translations-v2.js",
-    "migrate:hide-free": "node scripts/hide-free-plan.js"
+    "migrate:hide-free": "node scripts/hide-free-plan.js",
+    "mobile": "npm run start --workspace=packages/mobile",
+    "mobile:android": "npm run android --workspace=packages/mobile",
+    "mobile:ios": "npm run ios --workspace=packages/mobile",
+    "mobile:web": "npm run web --workspace=packages/mobile"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

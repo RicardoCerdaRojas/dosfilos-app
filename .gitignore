@@ -59,3 +59,10 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+# Mobile
+packages/mobile/.expo/
+packages/mobile/dist/
+packages/mobile/web-build/
+packages/mobile/ios/
+packages/mobile/android/
