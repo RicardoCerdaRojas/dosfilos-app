@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Tldraw, Editor, getSnapshot } from 'tldraw';
+import { Tldraw, Editor } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { useSermonAnnotations } from '@/hooks/useSermonAnnotations';
 import { cn } from '@/lib/utils';
@@ -111,19 +111,20 @@ export function SermonAnnotator({ sermonId, className, readOnly = false, scrollC
          return;
        }
 
-       const snapshot = getSnapshot(editor.store);
-       const records = snapshot.store ? Object.values(snapshot.store) : [];
+       // Capture current state using allRecords to detect content
+       const allRecords = editor.store.allRecords();
        
        // Check for actual user-created shapes
-       const hasUserContent = records.some((record: any) => {
-         // Look for draw, geo, arrow, text, image shapes - actual user drawings
+       const hasUserContent = allRecords.some((record: any) => {
          return record.typeName === 'shape' && 
                 ['draw', 'geo', 'arrow', 'text', 'image', 'line', 'highlight', 'note'].includes(record.type);
        });
        
        // Only save if there's actual user content
        if (hasUserContent) {
-         const recordCount = records.length;
+         // Use getStoreSnapshot which returns the correct TLStoreSnapshot format
+         const snapshot = editor.store.getStoreSnapshot();
+         const recordCount = snapshot.store ? Object.keys(snapshot.store).length : 0;
          console.log('[SermonAnnotator] Store has user content, saving snapshot with', recordCount, 'records');
          saveSnapshot(snapshot as any);
        } else {
