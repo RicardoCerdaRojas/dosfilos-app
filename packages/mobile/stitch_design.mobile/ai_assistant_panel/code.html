@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>AI Assistant Panel - Theological Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 ios-blur border-b border-primary/10 px-4 py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-primary/10 text-slate-600 dark:text-slate-400">
+<span class="material-icons-outlined">close</span>
+</button>
+<div>
+<h1 class="text-lg font-semibold tracking-tight">AI Study Assistant</h1>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+<span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">Theological Engine v4.2</span>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-icons-outlined">add_comment</span>
+</button>
+</header>
+<!-- Chat Feed Area -->
+<main class="flex-1 overflow-y-auto px-4 py-6 space-y-6 hide-scrollbar">
+<!-- Welcome / Suggested Prompts -->
+<div class="text-center mb-8">
+<div class="inline-flex p-3 bg-primary/10 rounded-2xl mb-4">
+<span class="material-icons-outlined text-primary text-3xl">auto_stories</span>
+</div>
+<h2 class="text-xl font-bold mb-2">Prepare your Sermon</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400 px-8">Ask for Greek root analysis, cross-references, or historical context.</p>
+</div>
+<!-- User Message -->
+<div class="flex justify-end ml-12">
+<div class="bg-primary text-white rounded-2xl rounded-tr-none px-4 py-3 shadow-sm">
+<p class="text-sm leading-relaxed">Summarize the Greek root of "Grace" in Ephesians 2:8 and find relevant cross-references.</p>
+</div>
+</div>
+<!-- AI Assistant Response -->
+<div class="flex flex-col gap-3 mr-12">
+<div class="flex items-center gap-2 mb-1">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-icons-outlined text-[14px] text-white">smart_toy</span>
+</div>
+<span class="text-xs font-semibold text-slate-500">SYSTEM RESPONSE</span>
+<span class="bg-primary/20 text-primary text-[10px] px-1.5 py-0.5 rounded font-bold">REFORMED PERSPECTIVE</span>
+</div>
+<div class="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-primary/20 rounded-2xl rounded-tl-none p-4 shadow-sm">
+<p class="text-sm leading-relaxed mb-4">
+                    The Greek word for "grace" in Ephesians 2:8 is <span class="text-primary font-bold">χάρις (charis)</span>. In this context, it signifies the unmerited favor and divine influence of God upon the heart, and its reflection in the life.
+                </p>
+<!-- Citation Block -->
+<div class="bg-primary/5 dark:bg-primary/10 border-l-4 border-primary rounded-lg p-3 mb-4">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-bold text-primary tracking-wide uppercase">Scripture • ESV</span>
+<span class="material-icons-outlined text-primary text-sm">bookmark_border</span>
+</div>
+<p class="text-sm italic text-slate-700 dark:text-slate-300">
+                        "For by grace you have been saved through faith. And this is not your own doing; it is the gift of God..."
+                    </p>
+<p class="text-[11px] mt-2 font-bold text-slate-500">Ephesians 2:8</p>
+</div>
+<p class="text-sm leading-relaxed mb-4">
+                    Other relevant cross-references include:
+                </p>
+<ul class="space-y-2 mb-4">
+<li class="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+<span class="material-icons-outlined text-primary text-sm mt-0.5">link</span>
+<span><strong>Romans 3:24</strong> - Justified by His grace as a gift.</span>
+</li>
+<li class="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+<span class="material-icons-outlined text-primary text-sm mt-0.5">link</span>
+<span><strong>2 Timothy 1:9</strong> - Grace given in Christ before the ages began.</span>
+</li>
+</ul>
+<!-- Action Row -->
+<div class="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+<button class="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-2 rounded-lg text-xs font-semibold">
+<span class="material-icons-outlined text-sm">post_add</span>
+                        Insert into Notes
+                    </button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500">
+<span class="material-icons-outlined text-sm">content_copy</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500">
+<span class="material-icons-outlined text-sm">share</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Suggestion Chips -->
+<div class="flex overflow-x-auto gap-2 py-2 hide-scrollbar">
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-primary/20 bg-white dark:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300">
+                Show Commentary
+            </button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-primary/20 bg-white dark:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300">
+                Word Study: Faith
+            </button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-primary/20 bg-white dark:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300">
+                Historical Context
+            </button>
+</div>
+<!-- Loading State (Subtle) -->
+<div class="flex items-center gap-3 mr-12 opacity-60">
+<div class="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-icons-outlined text-[14px] animate-pulse">auto_awesome</span>
+</div>
+<div class="flex gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]"></span>
+</div>
+</div>
+</main>
+<!-- Input Area -->
+<footer class="sticky bottom-0 bg-background-light dark:bg-background-dark/95 ios-blur p-4 border-t border-primary/10">
+<div class="max-w-screen-md mx-auto">
+<!-- Context Toggle -->
+<div class="flex items-center justify-between mb-3 px-1">
+<div class="flex items-center gap-2">
+<span class="material-icons-outlined text-primary text-sm">settings_suggest</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Context: Reformed</span>
+</div>
+<button class="text-[10px] font-bold text-primary uppercase">Change</button>
+</div>
+<div class="relative flex items-end gap-2 bg-white dark:bg-slate-800 rounded-xl p-2 border border-slate-200 dark:border-slate-700 shadow-lg">
+<button class="p-2 text-slate-400 hover:text-primary">
+<span class="material-icons-outlined">attach_file</span>
+</button>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 max-h-32 resize-none text-slate-900 dark:text-slate-100" placeholder="Ask about scripture..." rows="1"></textarea>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white shadow-md shadow-primary/20">
+<span class="material-icons-outlined">arrow_upward</span>
+</button>
+</div>
+<!-- Home Indicator (iOS style) -->
+<div class="w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-6 mb-2"></div>
+</div>
+</footer>
+<!-- Background Decoration for Visual Depth -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="absolute top-1/2 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+</div>
+</body></html>

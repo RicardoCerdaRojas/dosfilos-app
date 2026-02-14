@@ -16,5 +16,7 @@
     {
       "path": "./packages/functions"
     }
-  ]
+  ],
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
 }

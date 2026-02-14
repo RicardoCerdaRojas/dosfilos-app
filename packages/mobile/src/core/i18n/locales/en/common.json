@@ -1,0 +1,22 @@
+{
+    "welcome": "Welcome",
+    "profile": "Profile",
+    "settings": "Settings",
+    "appearance": "Appearance",
+    "language": "Language",
+    "logout": "Log Out",
+    "edit_profile": "Edit Profile",
+    "notifications": "Notifications",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "spanish": "Spanish",
+    "english": "English",
+    "back": "Back",
+    "soon": "Coming Soon",
+    "home_tab": "Home",
+    "bible_tab": "Bible",
+    "study_tab": "Study",
+    "tutor_tab": "Tutor",
+    "sermons_tab": "Sermons"
+}

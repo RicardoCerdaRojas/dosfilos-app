@@ -1,98 +1,128 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import React from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import { useAuthStore } from '@/presentation/state/auth.store';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { 
+  ActiveSermonCard, 
+  QuickActionButton, 
+  RecentSermonItem,
+  DashboardStatsCard
+} from '@/presentation/components/dashboard';
+import { UserAvatar } from '@/presentation/components/UserAvatar';
+import { useTranslation } from 'react-i18next';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const user = useAuthStore((state) => state.user);
+  const router = useRouter();
+  const { t } = useTranslation();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  return (
+    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-primary">
+      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
+        {/* Header Section */}
+        <View className="py-6 flex-row justify-between items-center">
+          <View>
+            <Text className="text-xs uppercase tracking-widest text-primary font-semibold">
+              Theologos Studio
+            </Text>
+            <Text className="text-2xl font-bold dark:text-academic-beige">
+              {t('home:welcome')} {user?.firstName || 'Dr. Julian'}
+            </Text>
+            <View className="flex-row items-center mt-1">
+              <MaterialIcons name="sync" size={12} color="#64748b" />
+              <Text className="text-[10px] text-slate-500 ml-1">
+                {t('home:last_synced', { minutes: 2 })}
+              </Text>
+            </View>
+          </View>
+          <UserAvatar />
+        </View>
+
+        {/* Active Sermon Card */}
+        <ActiveSermonCard 
+          title="The Grace of the Epistles"
+          passage="Ephesians 2:1-10"
+          progress={65}
+        />
+
+        {/* Progress Section */}
+        <View className="flex-row mb-8">
+          <DashboardStatsCard 
+            icon="auto-stories"
+            label={t('home:study_goal')}
+            value="4/10"
+            subtitle={t('home:chapters')}
+            progress={40}
+            color="primary"
+          />
+          <DashboardStatsCard 
+            icon="schedule"
+            label={t('home:reading')}
+            value="20"
+            subtitle={t('home:min_left')}
+            progress={70}
+            color="gold"
+          />
+        </View>
+
+        {/* Quick Actions Grid */}
+        <View className="mb-8">
+          <Text className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 ml-1">
+            {t('home:quick_actions')}
+          </Text>
+          <View className="flex-row justify-between">
+            <QuickActionButton 
+              icon="psychology" 
+              label={t('home:start_study')} 
+              color="primary" 
+              onPress={() => router.navigate('/bible')} 
+            />
+            <QuickActionButton 
+              icon="import-contacts" 
+              label={t('home:open_bible')} 
+              color="academic-gold" 
+              onPress={() => router.navigate('/bible')} 
+            />
+            <QuickActionButton 
+              icon="add-circle-outline" 
+              label={t('home:new_sermon')} 
+              color="primary" 
+            />
+          </View>
+        </View>
+
+        {/* Recent Sermons Section */}
+        <View className="pb-10">
+          <View className="flex-row justify-between items-center mb-4 ml-1">
+            <Text className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              {t('home:recent_sermons')}
+            </Text>
+            <TouchableOpacity>
+              <Text className="text-[11px] font-semibold text-primary">{t('home:view_all')}</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <RecentSermonItem 
+            title="The Sermon on the Mount" 
+            passage="Matthew 5:1-12" 
+            time={t('home:edited_ago', { time: '2h' })} 
+          />
+          <RecentSermonItem 
+            title="Faith vs. Works" 
+            passage="James 2" 
+            time={t('home:yesterday')} 
+          />
+          <RecentSermonItem 
+            title="The Great Commission" 
+            passage="Matthew 28" 
+            time={t('home:days_ago', { count: 3 })} 
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+
+

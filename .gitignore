@@ -66,3 +66,13 @@ packages/mobile/dist/
 packages/mobile/web-build/
 packages/mobile/ios/
 packages/mobile/android/
+
+# Root Level Generated Files
+.npm-cache
+.expo/
+.agent/
+.npm/
+
+# Generated Native Projects (at root)
+/android/
+/ios/

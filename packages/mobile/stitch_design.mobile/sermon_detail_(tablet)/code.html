@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sermon Detail - Logos Study</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(23, 84, 207, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-primary/20 px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-primary/20 rounded-lg transition-colors">
+<span class="material-icons-round text-slate-500">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<nav class="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wider mb-0.5">
+<span>Sermon Series</span>
+<span class="material-icons-round text-[10px]">chevron_right</span>
+<span class="text-primary font-medium">The Book of Romans</span>
+</nav>
+<h1 class="text-xl font-bold tracking-tight">The Power of the Gospel</h1>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-primary/10 rounded-lg transition-all">
+<span class="material-icons-round text-lg">edit</span>
+<span>Edit</span>
+</button>
+<button class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg shadow-primary/20 transition-all active:scale-95">
+<span class="material-icons-round">play_arrow</span>
+<span>Start Preaching Mode</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Sticky Sidebar Navigation -->
+<aside class="w-64 flex-shrink-0 border-r border-slate-200 dark:border-primary/10 bg-slate-50/50 dark:bg-background-dark/50 overflow-y-auto custom-scrollbar p-6 hidden md:block">
+<h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6">Sermon Sections</h3>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium" href="#overview">
+<span class="material-icons-round text-xl">subject</span>
+                    Overview
+                </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors" href="#scripture">
+<span class="material-icons-round text-xl">auto_stories</span>
+                    Scripture
+                </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors" href="#introduction">
+<span class="material-icons-round text-xl">start</span>
+                    Introduction
+                </a>
+<div class="pt-4 pb-2">
+<div class="h-px bg-slate-200 dark:bg-primary/10"></div>
+</div>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors" href="#point-1">
+<span class="material-icons-round text-xl">looks_one</span>
+                    Divine Revelation
+                </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors" href="#point-2">
+<span class="material-icons-round text-xl">looks_two</span>
+                    The Faith Response
+                </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors" href="#point-3">
+<span class="material-icons-round text-xl">looks_3</span>
+                    A New Identity
+                </a>
+<div class="pt-4 pb-2">
+<div class="h-px bg-slate-200 dark:bg-primary/10"></div>
+</div>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors" href="#conclusion">
+<span class="material-icons-round text-xl">stop</span>
+                    Conclusion
+                </a>
+</nav>
+<div class="mt-12 p-4 bg-primary/5 rounded-xl border border-primary/10">
+<p class="text-[10px] font-bold text-primary/60 uppercase tracking-widest mb-2">Speaker Notes</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Remember to pause after the second point for the congregational prayer.</p>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-background-dark">
+<div class="max-w-4xl mx-auto px-8 py-10 space-y-10">
+<!-- Header Card / Metadata -->
+<section class="space-y-6" id="overview">
+<div class="grid grid-cols-2 gap-4">
+<div class="p-5 rounded-xl border border-slate-200 dark:border-primary/20 bg-slate-50/50 dark:bg-primary/5">
+<span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Main Passage</span>
+<h2 class="text-2xl font-bold text-primary mt-1">Romans 1:16-17</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-2">NRSVUE • Preached on Oct 24, 2024</p>
+</div>
+<div class="p-5 rounded-xl border border-slate-200 dark:border-primary/20 bg-slate-50/50 dark:bg-primary/5">
+<span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Speaker</span>
+<div class="flex items-center gap-3 mt-2">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Portrait of a scholarly male speaker" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfDmi8glP6NfGuTML5ZyxfrFMUawXvMP-3jG0KRKspQZNPbNLXhsRkKMygo-AZ0a2D1WgODCdNil9G1jxNMHcfbJKrIOjtaELfDEGqUNryXszQvodq1IpNXL4zOYVAkig7DKGxKMna3HCwzIGIzufIbcKAnySF36z-Jf1DDYfc_ut7Uk1ljqVpNEUVK1yM0q5rf5qK7D0nmuDNUy7yShZR5Hq9UHBdqtiGGHjaX9SDXOyMkpIPhIFm0s6k_ZXDPXlnyVqA2tiWeaMJ"/>
+<div>
+<h3 class="font-semibold text-slate-800 dark:text-slate-100">Dr. Elias Thorne</h3>
+<p class="text-xs text-slate-500">Theological Professor</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Big Idea Box -->
+<div class="relative overflow-hidden p-8 rounded-2xl bg-primary text-white shadow-xl">
+<div class="relative z-10">
+<span class="text-[10px] font-bold text-white/60 uppercase tracking-widest">The Big Idea</span>
+<p class="text-2xl font-medium leading-relaxed mt-4">
+                                "The Gospel is not just a message to be believed, but a dynamic power from God that actively transforms and justifies those who live by faith."
+                            </p>
+</div>
+<!-- Abstract Background Decoration -->
+<div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+<div class="absolute -left-10 -top-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+</div>
+</section>
+<!-- Detailed Outline -->
+<section class="space-y-12 pb-20">
+<!-- Section: Introduction -->
+<div class="space-y-4" id="introduction">
+<div class="flex items-center gap-4">
+<div class="w-1.5 h-8 bg-primary rounded-full"></div>
+<h2 class="text-2xl font-bold">Introduction</h2>
+</div>
+<div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed space-y-4">
+<p>Open with the historical context of Rome in the first century. Contrast the earthly power of the Roman Empire with the spiritual power of the Kingdom of God. Use the illustration of the "Roman Road" as a metaphor for the spread of ideas.</p>
+</div>
+</div>
+<!-- Section: Main Point 1 -->
+<div class="space-y-6" id="point-1">
+<div class="flex items-start justify-between">
+<div class="space-y-2">
+<span class="text-primary font-bold text-sm tracking-tighter">POINT I</span>
+<h3 class="text-2xl font-bold">Unashamed of the Gospel</h3>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-slate-100 dark:bg-primary/10 rounded text-xs font-medium text-slate-500 dark:text-primary">Exegesis</span>
+<span class="px-3 py-1 bg-slate-100 dark:bg-primary/10 rounded text-xs font-medium text-slate-500 dark:text-primary">v. 16a</span>
+</div>
+</div>
+<div class="bg-slate-50 dark:bg-primary/5 p-6 rounded-xl border-l-4 border-primary/30 italic text-slate-700 dark:text-slate-300">
+                            "For I am not ashamed of the gospel; it is the power of God for salvation to everyone who has faith, to the Jew first and also to the Greek."
+                        </div>
+<ul class="space-y-4 ml-4">
+<li class="flex gap-4">
+<span class="material-icons-round text-primary text-sm mt-1.5">fiber_manual_record</span>
+<p class="text-slate-600 dark:text-slate-400">The Greek word <span class="font-semibold text-primary italic">dynamis</span> (power) suggests an active, explosive force, not just potential.</p>
+</li>
+<li class="flex gap-4">
+<span class="material-icons-round text-primary text-sm mt-1.5">fiber_manual_record</span>
+<p class="text-slate-600 dark:text-slate-400">Paul’s lack of shame is a direct challenge to the social honor/shame culture of Rome.</p>
+</li>
+<li class="flex gap-4">
+<span class="material-icons-round text-primary text-sm mt-1.5">fiber_manual_record</span>
+<div class="bg-slate-100 dark:bg-primary/10 p-4 rounded-lg border border-slate-200 dark:border-primary/10">
+<p class="text-xs font-bold text-slate-400 uppercase mb-2">Illustration: The Surgeon</p>
+<p class="text-sm text-slate-600 dark:text-slate-400">A surgeon isn't ashamed of a scalpel, even though it cuts. It is the power that brings healing to the dying patient.</p>
+</div>
+</li>
+</ul>
+</div>
+<!-- Section: Main Point 2 -->
+<div class="space-y-6" id="point-2">
+<div class="flex items-start justify-between">
+<div class="space-y-2">
+<span class="text-primary font-bold text-sm tracking-tighter">POINT II</span>
+<h3 class="text-2xl font-bold">The Righteousness of God Revealed</h3>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-slate-100 dark:bg-primary/10 rounded text-xs font-medium text-slate-500 dark:text-primary">Theology</span>
+<span class="px-3 py-1 bg-slate-100 dark:bg-primary/10 rounded text-xs font-medium text-slate-500 dark:text-primary">v. 17</span>
+</div>
+</div>
+<div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
+<p>Discuss the concept of <span class="italic">dikaiosynē theou</span>. Is it an attribute of God or a gift from God? For Luther, this was the "gateway to paradise." We must emphasize that this righteousness is revealed "from faith to faith."</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 rounded-xl border border-slate-200 dark:border-primary/10 bg-slate-50 dark:bg-primary/5">
+<h4 class="font-bold text-sm mb-2 flex items-center gap-2">
+<span class="material-icons-round text-primary text-lg">history_edu</span>
+                                    Cross-Reference
+                                </h4>
+<p class="text-xs text-slate-500">Habakkuk 2:4 — "The righteous shall live by his faith." Compare Paul's use of this minor prophet.</p>
+</div>
+<div class="p-4 rounded-xl border border-slate-200 dark:border-primary/10 bg-slate-50 dark:bg-primary/5">
+<h4 class="font-bold text-sm mb-2 flex items-center gap-2">
+<span class="material-icons-round text-primary text-lg">psychology</span>
+                                    Thought Provoker
+                                </h4>
+<p class="text-xs text-slate-500">How does the modern world define "righteousness" vs. how Paul defines it here?</p>
+</div>
+</div>
+</div>
+<!-- Section: Conclusion -->
+<div class="space-y-4" id="conclusion">
+<div class="flex items-center gap-4">
+<div class="w-1.5 h-8 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+<h2 class="text-2xl font-bold">Conclusion &amp; Call to Action</h2>
+</div>
+<div class="bg-primary/5 p-8 rounded-2xl border border-primary/20">
+<h4 class="font-bold text-lg text-primary mb-4">Application Points:</h4>
+<ol class="space-y-4">
+<li class="flex gap-4">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">1</span>
+<p class="text-slate-600 dark:text-slate-400">Identify one area of your life where you have been "ashamed" of your convictions.</p>
+</li>
+<li class="flex gap-4">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">2</span>
+<p class="text-slate-600 dark:text-slate-400">Commit to a specific act of "faith-living" this week—trusting God's power over your own ability.</p>
+</li>
+</ol>
+<div class="mt-8 text-center italic text-slate-500 dark:text-slate-400">
+                                "Closing Prayer: Asking for the Spirit to activate this 'power' in our community."
+                            </div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Resource Drawer (Tablet Side Sheet) -->
+<aside class="w-80 flex-shrink-0 border-l border-slate-200 dark:border-primary/10 bg-slate-50/50 dark:bg-background-dark/50 overflow-y-auto custom-scrollbar p-6 hidden lg:block">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Research &amp; Notes</h3>
+<span class="material-icons-round text-slate-400">more_horiz</span>
+</div>
+<div class="space-y-6">
+<!-- Greek Lexicon Card -->
+<div class="bg-white dark:bg-primary/10 p-4 rounded-xl border border-slate-200 dark:border-primary/20 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-primary uppercase">Greek Study</span>
+<span class="text-xs text-slate-400">G1411</span>
+</div>
+<h4 class="text-lg font-bold mb-1">δύναμις (dynamis)</h4>
+<p class="text-xs text-slate-500 leading-relaxed mb-3">Power, might, strength, force; specifically miraculous power.</p>
+<button class="w-full py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-[10px] font-bold transition-colors uppercase tracking-wider">View Full Entry</button>
+</div>
+<!-- Recent References -->
+<div>
+<h4 class="text-xs font-bold text-slate-400 uppercase mb-3">Quick Refs</h4>
+<div class="space-y-2">
+<div class="p-3 rounded-lg hover:bg-white dark:hover:bg-primary/10 border border-transparent hover:border-slate-200 dark:hover:border-primary/20 cursor-pointer transition-all">
+<p class="text-sm font-medium">Galatians 2:20</p>
+<p class="text-[10px] text-slate-500 line-clamp-1">"I have been crucified with Christ..."</p>
+</div>
+<div class="p-3 rounded-lg hover:bg-white dark:hover:bg-primary/10 border border-transparent hover:border-slate-200 dark:hover:border-primary/20 cursor-pointer transition-all">
+<p class="text-sm font-medium">Ephesians 3:20</p>
+<p class="text-[10px] text-slate-500 line-clamp-1">"Now to him who is able to do immeasurably..."</p>
+</div>
+</div>
+</div>
+<!-- Media Preview -->
+<div class="space-y-3">
+<h4 class="text-xs font-bold text-slate-400 uppercase">Attached Media</h4>
+<div class="relative group cursor-pointer overflow-hidden rounded-xl aspect-video bg-slate-200">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="Abstract golden sunset over hills" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBen26_pSDryjNGWlWiyAniXh9LOaflbSlj4OmpTI2BtMlBdcRy1VefOWWNS8Cz1252iSFXB2RaK53-8k4ZoGkVkGq_semITFfPtc8lzruF2P2-RQozPcqJlamckU0v43GGD2lMrZcv2Wq3o8fDREhuvMvmvKkjPrUvAh5XJwLOCssu1kJxld77IygvegYqLCH6zFPUj6BjQ0XiwXS6N4l5Z1vR2rvfSyQumLBgxuxJVVGaeZStim77ZzLYCDZbVLq30AnMK4OuYqjl"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-icons-round text-white text-4xl">play_circle_filled</span>
+</div>
+</div>
+<p class="text-[10px] text-slate-500 text-center italic">Sermon Slide: "The Power Concept"</p>
+</div>
+</div>
+</aside>
+</div>
+<!-- Floating Action for Mobile/Small Tablet -->
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center z-50">
+<span class="material-icons-round text-3xl">play_arrow</span>
+</button>
+</body></html>

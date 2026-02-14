@@ -1,0 +1,17 @@
+{
+    "title": "Sermones",
+    "search_placeholder": "Buscar por pasaje o título...",
+    "status_draft": "Borrador",
+    "status_working": "En Proceso",
+    "status_ready": "Listo",
+    "status_preached": "Predicado",
+    "no_results": "No se encontraron resultados",
+    "no_sermons_in_status": "No hay sermones en {{status}}",
+    "preacher_prefix": "Predicador",
+    "active_sermon_title": "Sermón Activo",
+    "active_sermon_label": "Sermón Activo",
+    "prepared_percent": "{{percent}}% Preparado",
+    "resume_preparation": "Continuar Preparación",
+    "error_loading": "Error al cargar el sermón",
+    "view_all": "Ver todos"
+}

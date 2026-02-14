@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Theological App Shell</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1a202c",
+                        "border-dark": "#2d3748",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen antialiased overflow-hidden">
+<!-- App Container -->
+<div class="flex h-screen w-full relative">
+<!-- Side Drawer (Tablet/Desktop View - Hidden on Mobile) -->
+<aside class="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark p-6 shrink-0">
+<div class="flex items-center gap-3 mb-10">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg">
+<span class="material-icons-outlined">menu_book</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">TheosLogos</h1>
+</div>
+<nav class="space-y-2 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium" href="#">
+<span class="material-icons-outlined">library_books</span>
+<span>Bible Library</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-icons-outlined text-slate-400">edit_note</span>
+<span>Sermon Notes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-icons-outlined text-slate-400">auto_stories</span>
+<span>Theological Resources</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-icons-outlined text-slate-400">search</span>
+<span>Global Search</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200 dark:border-border-dark">
+<button class="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-icons-outlined text-slate-400">cloud_done</span>
+<span class="text-sm">Synced: 2m ago</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col relative overflow-hidden h-full">
+<!-- Top App Bar -->
+<header class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-border-dark bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md sticky top-0 z-30">
+<div class="flex items-center gap-2">
+<span class="text-sm text-slate-400 hidden sm:inline">Library</span>
+<span class="material-icons-outlined text-sm text-slate-400 hidden sm:inline">chevron_right</span>
+<h2 class="font-semibold text-lg">Ephesians 2:1-10</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-icons-outlined">search</span>
+</button>
+<button class="w-10 h-10 rounded-full border-2 border-primary/20 overflow-hidden shadow-inner">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Portrait of a person for profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfCDaBEwzzAETEe0ax307xbuPq8DnValOusnmnhZERG6vAvpjeY_FPq-4Z_LMtzzGdjdga7ANsxb1squEDwZs0YtRrf-OrxAzd_NdesDyFBq7CMhcivqIRfpxSVLpDt7saO2_tdHIb7FfXlPc1M3hKIcBjBd6nbSGg0AehRLOpbLFC7DYvJp4E0PsFFyq5gB4O-Klco3z8V9ZxaKtl-XF2oJ48zHJoePm86q8FeNwNXu6HRpNA8xmyFtutAz_X9DAj8n0ozHE5tFsL"/>
+</button>
+</div>
+</header>
+<!-- Scrollable Workspace -->
+<section class="flex-1 overflow-y-auto p-6 space-y-8 bg-background-light dark:bg-background-dark">
+<!-- Content Placeholder -->
+<div class="max-w-2xl mx-auto space-y-6">
+<div class="space-y-4">
+<h3 class="text-3xl font-bold text-primary">Made Alive in Christ</h3>
+<p class="text-lg leading-relaxed text-slate-600 dark:text-slate-400 italic">
+                            "And you were dead in the trespasses and sins in which you once walked, following the course of this world..."
+                        </p>
+<div class="h-px bg-slate-200 dark:bg-border-dark w-full"></div>
+<div class="space-y-4 text-slate-700 dark:text-slate-300">
+<p>The transition from death to life is the core of Paul's message here. In the original Greek, the word <span class="text-primary font-medium">νεκροὺς (nekrous)</span> emphasizes a total inability to respond spiritually.</p>
+<p>Sermon Point 1: The condition of humanity apart from intervention. Focus on the word 'grace' which appears as the catalyst for transformation in verse 5.</p>
+</div>
+</div>
+<!-- Decorative Study Card -->
+<div class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-border-dark shadow-sm">
+<h4 class="font-semibold mb-2 flex items-center gap-2">
+<span class="material-icons-outlined text-primary text-sm">history_edu</span>
+                            Cross References
+                        </h4>
+<ul class="text-sm space-y-2 text-slate-500">
+<li>• Colossians 2:13 — "And you, who were dead..."</li>
+<li>• Romans 5:8 — "But God shows his love..."</li>
+</ul>
+</div>
+</div>
+<!-- Padding for bottom nav visibility -->
+<div class="h-20 md:hidden"></div>
+</section>
+<!-- Settings Bottom Sheet Overlay (Mobile Focused) -->
+<div class="absolute inset-0 bg-black/60 z-40 backdrop-blur-sm flex flex-col justify-end">
+<div class="bg-white dark:bg-surface-dark rounded-t-3xl p-6 shadow-2xl max-w-md mx-auto w-full animate-slide-up">
+<!-- Handle -->
+<div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6"></div>
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold">App Settings</h3>
+<button class="p-2 rounded-full bg-slate-100 dark:bg-slate-800">
+<span class="material-icons-outlined text-sm">close</span>
+</button>
+</div>
+<div class="space-y-6">
+<!-- Profile Section -->
+<div class="flex items-center gap-4 bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20">
+<img alt="Profile" class="w-14 h-14 rounded-full object-cover" data-alt="Portrait of a person for profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6FBVEd6fRCgX3N6lFsmnr6GwIb8dLMS3MxY5FZg_R55rNaO0917stfbyuRp1HiKG1yNQJVtiVqArc5eOtCs8O6tUIgzd4afhJ5iv0VlcW1uUUDVsYCpdBFg1WYqKLnyESV7hDDNiMg9qU1YWGzgbwumj-D-IeBE0CbpExjmyuzriUCuJ5CFlEbdTboELd7hTdUOksEeE1wXfWFifa_t3Mt6islclcJO88QbHGP5cn7RF4OsLb4gtXQd_IAArJ1eukWaCYv1lH6kEP"/>
+<div>
+<h4 class="font-semibold">Dr. Sarah Jenkins</h4>
+<p class="text-sm text-slate-500">Theology Professor</p>
+</div>
+<button class="ml-auto text-primary font-semibold text-sm">Edit</button>
+</div>
+<!-- Language Switcher -->
+<div class="space-y-3">
+<label class="text-sm font-medium text-slate-500 uppercase tracking-wider">Interface Language</label>
+<div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+<button class="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-white dark:bg-surface-dark shadow-md text-primary font-bold transition-all">
+<span class="text-lg">🇺🇸</span>
+<span>English</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all">
+<span class="text-lg">🇲🇽</span>
+<span>Español</span>
+</button>
+</div>
+</div>
+<!-- Preferences List -->
+<div class="space-y-1">
+<button class="flex items-center justify-between w-full p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
+<div class="flex items-center gap-3">
+<span class="material-icons-outlined text-slate-400">text_fields</span>
+<span>Font Size</span>
+</div>
+<span class="text-slate-400 text-sm">Medium (18pt)</span>
+</button>
+<button class="flex items-center justify-between w-full p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
+<div class="flex items-center gap-3">
+<span class="material-icons-outlined text-slate-400">palette</span>
+<span>Reading Theme</span>
+</div>
+<span class="text-slate-400 text-sm">Sepia</span>
+</button>
+<button class="flex items-center justify-between w-full p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
+<div class="flex items-center gap-3">
+<span class="material-icons-outlined text-slate-400">notifications_active</span>
+<span>Study Reminders</span>
+</div>
+<div class="w-10 h-6 bg-primary rounded-full relative">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+</div>
+</button>
+</div>
+<button class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform">
+                            Save Changes
+                        </button>
+</div>
+</div>
+</div>
+<!-- Bottom Tab Bar (Mobile Only) -->
+<nav class="md:hidden flex items-center justify-around h-20 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-lg border-t border-slate-200 dark:border-border-dark px-2 z-50">
+<a class="flex flex-col items-center justify-center w-full h-full text-primary" href="#">
+<span class="material-icons-outlined">book</span>
+<span class="text-[10px] mt-1 font-semibold">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-slate-400" href="#">
+<span class="material-icons-outlined">edit_note</span>
+<span class="text-[10px] mt-1 font-medium">Study</span>
+</a>
+<div class="relative -top-4">
+<button class="w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform ring-4 ring-background-light dark:ring-background-dark">
+<span class="material-icons-outlined text-3xl">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center w-full h-full text-slate-400" href="#">
+<span class="material-icons-outlined">mic</span>
+<span class="text-[10px] mt-1 font-medium">Sermons</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-slate-400" href="#">
+<span class="material-icons-outlined">settings</span>
+<span class="text-[10px] mt-1 font-medium">Settings</span>
+</a>
+</nav>
+</main>
+</div>
+<style>
+        /* Modern Bottom Sheet Animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</body></html>

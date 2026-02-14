@@ -1,0 +1,17 @@
+{
+    "title": "Sermons",
+    "search_placeholder": "Search by passage or title...",
+    "status_draft": "Draft",
+    "status_working": "Working",
+    "status_ready": "Ready",
+    "status_preached": "Preached",
+    "no_results": "No results found",
+    "no_sermons_in_status": "No sermons in {{status}}",
+    "preacher_prefix": "Preacher",
+    "active_sermon_title": "Active Sermon",
+    "active_sermon_label": "Active Sermon",
+    "prepared_percent": "{{percent}}% Prepared",
+    "resume_preparation": "Resume Preparation",
+    "error_loading": "Error loading sermon",
+    "view_all": "View all"
+}

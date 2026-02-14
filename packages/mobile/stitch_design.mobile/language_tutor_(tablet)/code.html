@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Language Tutor - Theological Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(23, 84, 207, 0.2);
+            border-radius: 10px;
+        }
+        .interlinear-word:hover {
+            background: rgba(23, 84, 207, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 bg-white dark:bg-background-dark z-20">
+<div class="flex items-center gap-3">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+<span class="material-icons-outlined text-primary">menu_book</span>
+</button>
+<div class="flex items-center text-sm font-medium">
+<span class="text-slate-500">Greek NT</span>
+<span class="material-icons-outlined text-xs mx-2 text-slate-400">chevron_right</span>
+<span class="text-primary">Romans 1:1-7</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+<span class="material-icons-outlined text-sm">ios_share</span>
+<span>Export Sermon</span>
+</button>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+<span class="material-icons-outlined">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Workspace Content -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Left Column: Scripture Reader (70%) -->
+<section class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 bg-white dark:bg-background-dark">
+<div class="max-w-3xl mx-auto">
+<!-- Scripture Header -->
+<div class="mb-10 text-center">
+<h1 class="text-3xl font-bold mb-2 tracking-tight">ΠΡΟΣ ΡΩΜΑΙΟΥΣ</h1>
+<p class="text-slate-500 dark:text-slate-400 font-light">The Epistle to the Romans</p>
+</div>
+<!-- Verse Rendering -->
+<div class="space-y-8">
+<div class="flex flex-wrap gap-x-4 gap-y-8 leading-relaxed">
+<span class="text-primary font-bold text-lg pt-1">1:1</span>
+<!-- Word Block -->
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">Παῦλος</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Paulos</div>
+<div class="text-sm text-slate-400 italic">Paul</div>
+</div>
+<!-- Word Block (Active State) -->
+<div class="group cursor-pointer p-1 rounded-lg bg-primary/20 ring-1 ring-primary/50">
+<div class="text-2xl font-semibold mb-1 text-primary">δοῦλος</div>
+<div class="text-[10px] uppercase tracking-wider text-primary/70 font-medium">doulos</div>
+<div class="text-sm text-slate-400 italic">a servant</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">Χριστοῦ</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Christou</div>
+<div class="text-sm text-slate-400 italic">of Christ</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">Ἰησοῦ,</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Iēsou</div>
+<div class="text-sm text-slate-400 italic">Jesus</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">κλητὸς</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">klētos</div>
+<div class="text-sm text-slate-400 italic">called</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">ἀπόστολος,</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">apostolos</div>
+<div class="text-sm text-slate-400 italic">an apostle</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">ἀφωρισμένος</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">aphōrismenos</div>
+<div class="text-sm text-slate-400 italic">set apart</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">εἰς</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">eis</div>
+<div class="text-sm text-slate-400 italic">for</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">εὐαγγέλιον</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">euangelion</div>
+<div class="text-sm text-slate-400 italic">the gospel</div>
+</div>
+<div class="group cursor-pointer interlinear-word p-1 rounded transition-all">
+<div class="text-2xl font-semibold mb-1">θεοῦ,</div>
+<div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">theou</div>
+<div class="text-sm text-slate-400 italic">of God</div>
+</div>
+</div>
+<!-- Additional Content for Context -->
+<div class="border-l-2 border-slate-200 dark:border-slate-800 pl-6 py-2">
+<p class="text-slate-500 dark:text-slate-400 italic text-sm leading-relaxed">
+                            "Paul, a bondservant of Jesus Christ, called to be an apostle, separated to the gospel of God..." (NKJV)
+                        </p>
+</div>
+<!-- Next Verse -->
+<div class="flex flex-wrap gap-x-4 gap-y-8 leading-relaxed pt-4 opacity-50">
+<span class="text-primary font-bold text-lg pt-1">1:2</span>
+<div class="text-2xl font-semibold mb-1">ὃ</div>
+<div class="text-2xl font-semibold mb-1">προεπηγγείλατο</div>
+<div class="text-2xl font-semibold mb-1">διὰ</div>
+<div class="text-2xl font-semibold mb-1">τῶν</div>
+<div class="text-2xl font-semibold mb-1">προφητῶν</div>
+<div class="text-2xl font-semibold mb-1">αὐτοῦ</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Analysis Panel (30% - fixed width for academic precision) -->
+<aside class="w-80 lg:w-96 bg-slate-50 dark:bg-background-dark border-l border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+<!-- Panel Tabs -->
+<div class="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark/50">
+<button class="flex-1 py-4 text-xs font-semibold uppercase tracking-widest border-b-2 border-primary text-primary">Parsing</button>
+<button class="flex-1 py-4 text-xs font-semibold uppercase tracking-widest border-b-2 border-transparent text-slate-400 hover:text-slate-200">Notes</button>
+<button class="flex-1 py-4 text-xs font-semibold uppercase tracking-widest border-b-2 border-transparent text-slate-400 hover:text-slate-200">Refs</button>
+</div>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+<!-- Active Word Info -->
+<section>
+<div class="flex justify-between items-start mb-4">
+<div>
+<h2 class="text-2xl font-bold text-primary">δοῦλος</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400">doulos | G1401</p>
+</div>
+<button class="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+<span class="material-icons-outlined text-xl">volume_up</span>
+</button>
+</div>
+<div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Part of Speech</span>
+<span class="font-medium px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Noun</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Case</span>
+<span class="font-medium">Nominative</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Number</span>
+<span class="font-medium">Singular</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Gender</span>
+<span class="font-medium">Masculine</span>
+</div>
+</div>
+</section>
+<!-- Lexicon Section -->
+<section>
+<h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 flex items-center gap-2">
+<span class="w-4 h-px bg-slate-300 dark:bg-slate-700"></span>
+                        Lexicon / BDAG
+                    </h3>
+<div class="space-y-4">
+<div class="p-4 bg-primary/5 border-l-4 border-primary rounded-r-lg">
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+<span class="font-bold text-primary">1.</span> A male slave, one who is in a permanent relation of servitude to another.
+                            </p>
+</div>
+<div class="p-4 bg-slate-100 dark:bg-slate-800/20 rounded-lg">
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+<span class="font-bold text-slate-500 dark:text-slate-400">2.</span> Fig. of a believer's relationship to Christ; denoting absolute ownership and total devotion.
+                            </p>
+</div>
+</div>
+</section>
+<!-- Root Info -->
+<section>
+<h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 flex items-center gap-2">
+<span class="w-4 h-px bg-slate-300 dark:bg-slate-700"></span>
+                        Etymology
+                    </h3>
+<div class="flex items-center gap-3 p-3 bg-white dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-icons-outlined text-slate-400">account_tree</span>
+</div>
+<div>
+<p class="text-xs text-slate-500">Root Verb</p>
+<p class="text-sm font-medium">δέω (deō) — "to bind"</p>
+</div>
+</div>
+</section>
+<!-- Workspace Notes Section -->
+<section class="pt-4 border-t border-slate-200 dark:border-slate-800">
+<h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">Study Notes</h3>
+<div class="relative">
+<textarea class="w-full h-40 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none font-display" placeholder="Add exegetical observations..."></textarea>
+<div class="absolute bottom-3 right-3 flex gap-2">
+<button class="p-1.5 text-slate-400 hover:text-primary transition-colors">
+<span class="material-icons-outlined text-lg">sell</span>
+</button>
+<button class="p-1.5 text-slate-400 hover:text-primary transition-colors">
+<span class="material-icons-outlined text-lg">format_list_bulleted</span>
+</button>
+</div>
+</div>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-slate-200 dark:bg-slate-800 text-[10px] font-medium rounded-full text-slate-600 dark:text-slate-400">#Identity</span>
+<span class="px-2 py-1 bg-slate-200 dark:bg-slate-800 text-[10px] font-medium rounded-full text-slate-600 dark:text-slate-400">#Humility</span>
+</div>
+</section>
+</div>
+<!-- Panel Footer Action -->
+<div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+<span class="material-icons-outlined text-sm">save</span>
+                    Save to Workspace
+                </button>
+</div>
+</aside>
+</main>
+<!-- Bottom Status Bar (iOS style) -->
+<footer class="h-10 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between text-[10px] font-medium text-slate-500 tracking-wider uppercase">
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online Sync</span>
+<span>Verse 1 of 32</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="hover:text-primary cursor-pointer transition-colors">Lexham Research Library</span>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<span>NA28 Text</span>
+</div>
+</footer>
+<!-- Image descriptive data-alt -->
+<div class="hidden">
+<img data-alt="Abstract theological pattern with subtle geometric shapes and dark blue gradients" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_HXkFgOhG2e7BF647HKU5Pjlya0ETJIAgFA_1IUhCRRYGuMDEDDBM-cC5kKFCmrAMhY6AaKnpcATa0dVmazxiRDOptNMzYMWKz-H44RwY9YsBRzTgpvEAaGLc-m_ZVIPJXcqZsiovfhGDzD3gb5cx9ZlCOhQO3qiICCqyiRLi1jLC6ajmZCcH7szmxpyCzjOmLyBHuhmEffptt10MeGJnUn9CUGv6pQwPXVI0U6YRnVFMXDjZWUH7DEsfDbt5fhAtxwTIGlB3bqpL"/>
+<img data-alt="Ancient Greek manuscript texture background with low opacity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLHz9nkJ3Na7L2VfudIWOvAIWRcCOjXyRfoWPP4y2KYO8IB3lAJQRBOsquxpTkM7O5R4DI2k3a9NAcCVyKvig19FHQcthyvzzEmC7YPVvxvNad1bSeayVlC_erycjuMrXJIh8OGvYkxb50qflqfCY77FQ80L_orp0Fap72RKEFhO4el_mUxq9LXY34C3OJZhv8oU2lEIT5D2Fg-LtAFDWdA7UU_mLpZSJv1E8NMFtAGtvQzXJABsBqR5pPfj44HRPTkRjwwwbWqe_i"/>
+</div>
+</body></html>
