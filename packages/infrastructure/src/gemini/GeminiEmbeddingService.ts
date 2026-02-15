@@ -19,7 +19,8 @@ export class GeminiEmbeddingService implements IEmbeddingService {
             throw new Error('Gemini API key is required for embeddings');
         }
         this.genAI = new GoogleGenerativeAI(apiKey);
-        this.model = this.genAI.getGenerativeModel({ model: 'text-embedding-004' });
+        // Use models/gemini-embedding-001 with outputDimensionality to match 768 dimensions
+        this.model = this.genAI.getGenerativeModel({ model: 'models/gemini-embedding-001' });
     }
 
     /**
@@ -36,7 +37,11 @@ export class GeminiEmbeddingService implements IEmbeddingService {
         try {
             // Truncate text if too long (model has token limits)
             const truncatedText = text.slice(0, 8000);
-            const result = await this.model.embedContent(truncatedText);
+            const result = await this.model.embedContent({
+                content: { role: 'user', parts: [{ text: truncatedText }] },
+                // @ts-ignore - API supports this parameter but types might be outdated
+                outputDimensionality: GeminiEmbeddingService.EMBEDDING_DIMENSION
+            });
             return result.embedding.values;
         } catch (error) {
             console.error('Error generating embedding:', error);

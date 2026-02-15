@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Parallel Reading View - Bible Study</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "neutral-light": "#e2e8f0",
+                        "neutral-dark": "#1e293b",
+                    },
+                    fontFamily: {
+                        "display": ["Newsreader", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden h-screen flex flex-col">
+<!-- iOS Status Bar Placeholder (Visual only) -->
+<div class="h-11 w-full bg-background-light dark:bg-background-dark flex justify-between items-center px-6 shrink-0">
+<div class="text-xs font-semibold">9:41</div>
+<div class="flex items-center space-x-1">
+<span class="material-icons-outlined text-xs">signal_cellular_alt</span>
+<span class="material-icons-outlined text-xs">wifi</span>
+<span class="material-icons-outlined text-xs rotate-90">battery_full</span>
+</div>
+</div>
+<!-- Main Navigation Header -->
+<header class="border-b border-primary/10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center justify-between px-4 py-3">
+<button class="p-2 -ml-2 text-primary">
+<span class="material-icons-outlined">arrow_back_ios</span>
+</button>
+<div class="text-center">
+<h1 class="text-lg font-semibold tracking-tight">Romans 8</h1>
+<p class="text-[10px] uppercase tracking-widest text-primary/70 font-bold">Theological Study</p>
+</div>
+<div class="flex items-center space-x-1">
+<button class="p-2 text-primary">
+<span class="material-icons-outlined">search</span>
+</button>
+<button class="p-2 text-primary">
+<span class="material-icons-outlined">settings</span>
+</button>
+</div>
+</div>
+<!-- Mode Selector Bar -->
+<div class="px-4 pb-4">
+<div class="flex bg-primary/5 dark:bg-primary/10 p-1 rounded-lg">
+<button class="flex-1 bg-white dark:bg-primary shadow-sm rounded py-1.5 text-sm font-medium transition-all">Text</button>
+<button class="flex-1 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">Original</button>
+<button class="flex-1 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">Interlinear</button>
+</div>
+</div>
+</header>
+<!-- Version & Layout Control -->
+<div class="flex items-center justify-between px-4 py-2 bg-primary/5 dark:bg-white/5 border-b border-primary/10">
+<div class="flex items-center space-x-4 flex-1">
+<button class="flex items-center space-x-1 text-xs font-bold uppercase text-primary bg-primary/10 px-2 py-1 rounded">
+<span>ESV</span>
+<span class="material-icons-outlined text-[14px]">expand_more</span>
+</button>
+<div class="h-4 w-px bg-primary/20"></div>
+<button class="flex items-center space-x-1 text-xs font-bold uppercase text-primary/60 bg-primary/5 px-2 py-1 rounded">
+<span>RVR1960</span>
+<span class="material-icons-outlined text-[14px]">expand_more</span>
+</button>
+</div>
+<div class="flex items-center bg-primary/10 rounded p-0.5">
+<button class="p-1 rounded text-primary">
+<span class="material-icons-outlined text-[18px]">view_column</span>
+</button>
+<button class="p-1 rounded text-primary/40 hover:text-primary">
+<span class="material-icons-outlined text-[18px]">rectangle</span>
+</button>
+</div>
+</div>
+<!-- Parallel Reading View -->
+<main class="flex-1 overflow-y-auto overflow-x-hidden">
+<div class="flex w-full min-h-full">
+<!-- Left Column: ESV -->
+<div class="w-1/2 border-r border-primary/10 px-4 py-6 space-y-6">
+<!-- Verse 1 -->
+<div class="relative">
+<span class="absolute -left-2 top-1 text-[10px] font-bold text-primary/40">1</span>
+<p class="text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                        There is therefore now no condemnation for those who are in Christ Jesus.
+                    </p>
+</div>
+<!-- Verse 2 -->
+<div class="relative bg-primary/5 -mx-4 px-4 py-2 border-l-2 border-primary">
+<span class="absolute left-2 top-3 text-[10px] font-bold text-primary">2</span>
+<p class="text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                        For the law of the Spirit of life has set you free in Christ Jesus from the law of sin and death.
+                    </p>
+</div>
+<!-- Verse 3 -->
+<div class="relative">
+<span class="absolute -left-2 top-1 text-[10px] font-bold text-primary/40">3</span>
+<p class="text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                        For God has done what the law, weakened by the flesh, could not do. By sending his own Son in the likeness of sinful flesh and for sin, he condemned sin in the flesh.
+                    </p>
+</div>
+<!-- Verse 4 -->
+<div class="relative">
+<span class="absolute -left-2 top-1 text-[10px] font-bold text-primary/40">4</span>
+<p class="text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                        In order that the righteous requirement of the law might be fulfilled in us, who walk not according to the flesh but according to the Spirit.
+                    </p>
+</div>
+</div>
+<!-- Right Column: RVR1960 -->
+<div class="w-1/2 px-4 py-6 space-y-6 bg-slate-50/30 dark:bg-slate-900/30">
+<!-- Verse 1 -->
+<div class="relative">
+<span class="absolute -left-2 top-1 text-[10px] font-bold text-primary/40 italic">1</span>
+<p class="text-base leading-relaxed text-slate-600 dark:text-slate-400 italic">
+                        Ahora, pues, ninguna condenación hay para los que están en Cristo Jesús, los que no andan conforme a la carne, sino conforme al Espíritu.
+                    </p>
+</div>
+<!-- Verse 2 (Highlighted match) -->
+<div class="relative bg-primary/5 -mx-4 px-4 py-2 border-l-2 border-primary/40">
+<span class="absolute left-2 top-3 text-[10px] font-bold text-primary/60 italic">2</span>
+<p class="text-base leading-relaxed text-slate-600 dark:text-slate-400 italic">
+                        Porque la ley del Espíritu de vida en Cristo Jesús me ha librado de la ley del pecado y de la muerte.
+                    </p>
+</div>
+<!-- Verse 3 -->
+<div class="relative">
+<span class="absolute -left-2 top-1 text-[10px] font-bold text-primary/40 italic">3</span>
+<p class="text-base leading-relaxed text-slate-600 dark:text-slate-400 italic">
+                        Porque lo que era imposible para la ley, por cuanto era débil por la carne, Dios, enviando a su Hijo en semejanza de carne de pecado y a causa del pecado, condenó al pecado en la carne.
+                    </p>
+</div>
+<!-- Verse 4 -->
+<div class="relative">
+<span class="absolute -left-2 top-1 text-[10px] font-bold text-primary/40 italic">4</span>
+<p class="text-base leading-relaxed text-slate-600 dark:text-slate-400 italic">
+                        Para que la justicia de la ley se cumpliese en nosotros, que no andamos conforme a la carne, sino conforme al Espíritu.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Actions / Toolbar -->
+<footer class="border-t border-primary/10 bg-background-light dark:bg-background-dark pb-8 pt-2">
+<div class="flex items-center justify-around px-6">
+<button class="flex flex-col items-center space-y-1 text-primary">
+<span class="material-icons-outlined text-2xl">menu_book</span>
+<span class="text-[10px] font-medium uppercase">Library</span>
+</button>
+<button class="flex flex-col items-center space-y-1 text-slate-400 dark:text-slate-500">
+<span class="material-icons-outlined text-2xl">edit_note</span>
+<span class="text-[10px] font-medium uppercase">Notebook</span>
+</button>
+<button class="flex flex-col items-center space-y-1 text-slate-400 dark:text-slate-500">
+<span class="material-icons-outlined text-2xl">history</span>
+<span class="text-[10px] font-medium uppercase">History</span>
+</button>
+<button class="flex flex-col items-center space-y-1 text-slate-400 dark:text-slate-500">
+<span class="material-icons-outlined text-2xl">person_outline</span>
+<span class="text-[10px] font-medium uppercase">Profile</span>
+</button>
+</div>
+</footer>
+<!-- iOS Home Indicator -->
+<div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+<!-- Floating Context Action (Selected Verse) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-background-light dark:bg-neutral-dark border border-primary/30 shadow-2xl rounded-xl px-4 py-2 flex items-center space-x-6 z-50">
+<button class="flex flex-col items-center">
+<span class="material-icons-outlined text-primary text-xl">content_copy</span>
+<span class="text-[9px] font-bold uppercase text-primary">Copy</span>
+</button>
+<button class="flex flex-col items-center">
+<span class="material-icons-outlined text-primary text-xl">share</span>
+<span class="text-[9px] font-bold uppercase text-primary">Share</span>
+</button>
+<div class="h-6 w-px bg-primary/20"></div>
+<button class="flex flex-col items-center">
+<span class="material-icons-outlined text-primary text-xl">format_paint</span>
+<span class="text-[9px] font-bold uppercase text-primary">Highlight</span>
+</button>
+<button class="flex flex-col items-center">
+<span class="material-icons-outlined text-primary text-xl">add_comment</span>
+<span class="text-[9px] font-bold uppercase text-primary">Note</span>
+</button>
+</div>
+</body></html>

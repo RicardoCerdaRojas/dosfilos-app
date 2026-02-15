@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sermon Wizard: Homiletics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1c2331",
+                        "border-dark": "#2d364a"
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header / Navigation -->
+<header class="border-b border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+<span class="material-icons-round text-slate-500">arrow_back_ios_new</span>
+</button>
+<h1 class="text-xl font-semibold tracking-tight">Sermon Wizard</h1>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">1</div>
+<span class="text-sm font-medium text-slate-400">Passage</span>
+</div>
+<div class="w-12 h-[2px] bg-primary"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/20">2</div>
+<span class="text-sm font-medium">Homiletics</span>
+</div>
+<div class="w-12 h-[2px] bg-slate-200 dark:bg-border-dark"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-border-dark text-slate-500 flex items-center justify-center text-sm font-bold">3</div>
+<span class="text-sm font-medium text-slate-400">Drafting</span>
+</div>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2">
+<span>Next Step</span>
+<span class="material-icons-round text-sm">arrow_forward</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Left Pane: Outline Builder -->
+<section class="flex-1 overflow-y-auto p-6 md:p-8 border-r border-slate-200 dark:border-border-dark bg-background-light dark:bg-background-dark">
+<div class="max-w-3xl mx-auto">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="text-2xl font-bold mb-1">Outline Structure</h2>
+<p class="text-slate-500 text-sm">Organize your sermon flow by dragging points.</p>
+</div>
+<div class="bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+<span class="material-icons-round text-lg">timer</span>
+<span>Est: 35-40 mins</span>
+</div>
+</div>
+<!-- Draggable List -->
+<div class="space-y-4">
+<!-- Intro Card -->
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex items-start gap-4">
+<div class="drag-handle p-1 text-slate-400 group-hover:text-primary transition-colors">
+<span class="material-icons-round">drag_indicator</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase tracking-widest font-bold text-primary">Introduction</span>
+<button class="text-slate-400 hover:text-red-500"><span class="material-icons-round text-sm">more_horiz</span></button>
+</div>
+<input class="bg-transparent border-none p-0 text-lg font-semibold w-full focus:ring-0 mb-2" type="text" value="The Weight of Grace"/>
+<textarea class="bg-slate-50 dark:bg-background-dark/50 border-none rounded-lg text-sm text-slate-500 w-full focus:ring-1 focus:ring-primary/30" placeholder="Hook, context, and opening prayer notes..." rows="2"></textarea>
+</div>
+</div>
+</div>
+<!-- Main Point 1 -->
+<div class="bg-white dark:bg-surface-dark border-2 border-primary/40 dark:border-primary/40 rounded-xl p-4 shadow-sm relative">
+<div class="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary rounded-full"></div>
+<div class="flex items-start gap-4">
+<div class="drag-handle p-1 text-slate-400">
+<span class="material-icons-round">drag_indicator</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase tracking-widest font-bold text-primary">Main Point 1</span>
+<div class="flex items-center gap-2">
+<span class="material-icons-round text-sm text-slate-400">attachment</span>
+<button class="text-slate-400 hover:text-red-500"><span class="material-icons-round text-sm">delete_outline</span></button>
+</div>
+</div>
+<input class="bg-transparent border-none p-0 text-lg font-semibold w-full focus:ring-0 mb-2" type="text" value="Understanding the Depth of Forgiveness"/>
+<div class="space-y-3 mt-4 ml-2 border-l-2 border-slate-100 dark:border-border-dark pl-4">
+<div class="flex items-center gap-3">
+<span class="material-icons-round text-slate-300 text-sm">subdirectory_arrow_right</span>
+<input class="bg-transparent border-none p-0 text-sm text-slate-500 w-full focus:ring-0" type="text" value="Greek root: 'Aphiemi' (to let go)"/>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-icons-round text-slate-300 text-sm">subdirectory_arrow_right</span>
+<input class="bg-transparent border-none p-0 text-sm text-slate-400 italic w-full focus:ring-0" placeholder="Add exegesis note..." type="text"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Point 2 -->
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4 shadow-sm opacity-90">
+<div class="flex items-start gap-4">
+<div class="drag-handle p-1 text-slate-400">
+<span class="material-icons-round">drag_indicator</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase tracking-widest font-bold text-primary">Main Point 2</span>
+<button class="text-slate-400"><span class="material-icons-round text-sm">more_horiz</span></button>
+</div>
+<input class="bg-transparent border-none p-0 text-lg font-semibold w-full focus:ring-0 mb-2" type="text" value="The Practical Response to Unmerited Favor"/>
+<div class="h-10 border-2 border-dashed border-slate-100 dark:border-border-dark rounded-lg flex items-center justify-center text-xs text-slate-400">
+                                    Drag an application card here
+                                </div>
+</div>
+</div>
+</div>
+<!-- Conclusion -->
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4 shadow-sm">
+<div class="flex items-start gap-4">
+<div class="drag-handle p-1 text-slate-400">
+<span class="material-icons-round">drag_indicator</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase tracking-widest font-bold text-primary">Conclusion</span>
+<button class="text-slate-400"><span class="material-icons-round text-sm">more_horiz</span></button>
+</div>
+<input class="bg-transparent border-none p-0 text-lg font-semibold w-full focus:ring-0" type="text" value="Living as People of the Covenant"/>
+</div>
+</div>
+</div>
+<!-- Add Point Action -->
+<button class="w-full py-4 border-2 border-dashed border-slate-200 dark:border-border-dark rounded-xl text-slate-400 hover:text-primary hover:border-primary/50 transition-all flex items-center justify-center gap-2">
+<span class="material-icons-round">add_circle_outline</span>
+<span class="font-medium">Add New Section</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Right Pane: Illustrations/Applications -->
+<aside class="w-96 overflow-y-auto bg-white dark:bg-surface-dark p-6 flex flex-col">
+<div class="flex p-1 bg-slate-100 dark:bg-background-dark rounded-xl mb-6">
+<button class="flex-1 py-2 px-3 rounded-lg text-sm font-semibold bg-white dark:bg-surface-dark shadow-sm text-primary">Illustrations</button>
+<button class="flex-1 py-2 px-3 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Applications</button>
+</div>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="font-semibold text-slate-900 dark:text-slate-100">Recommended</h3>
+<div class="flex gap-1">
+<span class="px-2 py-0.5 rounded bg-primary/10 text-[10px] text-primary font-bold">FAITH</span>
+<span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-background-dark text-[10px] text-slate-500 font-bold">GRACE</span>
+</div>
+</div>
+<!-- Resource Cards -->
+<div class="space-y-4">
+<div class="bg-background-light dark:bg-background-dark rounded-xl p-4 border border-slate-200 dark:border-border-dark group hover:border-primary transition-colors cursor-move">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Historical</span>
+<span class="material-icons-round text-lg text-slate-300 group-hover:text-primary">drag_handle</span>
+</div>
+<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                            The story of the Prodigal Son's return, focusing on the sandals as a symbol of restored status.
+                        </p>
+<div class="mt-4 pt-4 border-t border-slate-200 dark:border-border-dark flex justify-between items-center">
+<span class="text-xs text-slate-400 italic">Used 4.2k times</span>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+                                VIEW DETAILS <span class="material-icons-round text-[14px]">open_in_new</span>
+</button>
+</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark rounded-xl p-4 border border-slate-200 dark:border-border-dark group hover:border-primary transition-colors cursor-move">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Modern Analogy</span>
+<span class="material-icons-round text-lg text-slate-300 group-hover:text-primary">drag_handle</span>
+</div>
+<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                            The 'Zero Balance' metaphor: An anonymous benefactor paying off a mountain of crippling debt overnight.
+                        </p>
+<div class="mt-4 pt-4 border-t border-slate-200 dark:border-border-dark flex justify-between items-center">
+<span class="text-xs text-slate-400 italic">Trending</span>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+                                VIEW DETAILS <span class="material-icons-round text-[14px]">open_in_new</span>
+</button>
+</div>
+</div>
+<div class="relative overflow-hidden rounded-xl h-32 flex items-center justify-center">
+<img alt="Theological Background" class="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:scale-105 transition-transform" data-alt="Abstract parchment and ink textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJT69fSx6YJsgwcblKPO1NwM9jpIQmhSWUcm2Lnv1EmfeULtxOTWp4LYy-QYsDk-U-9YcvCRkxTIcsm9benXtx4QojjEx-_1LOqzKUr5dXEM4Ro4CzeA9ZIqNfDj7zfhBSGpvx5sBkZKN2OJ2k0DZyP0_Cc0kxcPoKX6EwdA3VaB-z2Z50lk0ZagRXCZ9Bexj4XFeJ6I94roWWcK5z4nMHWj33aK5b_c8TlgOElRKbTk64Ohg74NNuyRYKrgfW1ydxww9d5gwOv62P"/>
+<div class="relative z-10 text-center px-4">
+<span class="material-icons-round text-primary mb-1">auto_awesome</span>
+<p class="text-xs font-semibold text-primary">AI Suggestion</p>
+<p class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">Based on your passage selection</p>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-white dark:from-surface-dark via-transparent"></div>
+</div>
+</div>
+<!-- Footer Sidebar Info -->
+<div class="mt-auto pt-6 border-t border-slate-100 dark:border-border-dark">
+<div class="bg-primary/5 rounded-xl p-4 flex gap-4">
+<div class="bg-primary text-white p-2 rounded-lg self-start">
+<span class="material-icons-round">lightbulb</span>
+</div>
+<div>
+<h4 class="text-xs font-bold text-primary uppercase mb-1">Homiletic Tip</h4>
+<p class="text-[11px] leading-snug text-slate-500">
+                                Try to balance exegetical depth with personal application in every main point to keep the congregation engaged.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- Bottom Toolbar (Mobile/Tablet specific) -->
+<div class="md:hidden bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-border-dark p-4 flex gap-4">
+<button class="flex-1 bg-slate-100 dark:bg-border-dark py-3 rounded-xl font-semibold">Preview</button>
+<button class="flex-1 bg-primary text-white py-3 rounded-xl font-semibold">Generate</button>
+</div>
+</body></html>

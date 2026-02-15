@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Theology Explorer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "accent-gold": "#D4AF37",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "neutral-dark": "#1e2433",
+                        "border-dark": "#2d364a"
+                    },
+                    fontFamily: {
+                        "display": ["Noto Serif", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Noto Serif', serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<!-- iOS Status Bar Spacer -->
+<div class="h-12 w-full bg-background-light dark:bg-background-dark sticky top-0 z-50"></div>
+<!-- Main Mobile Container -->
+<main class="max-w-md mx-auto min-h-screen pb-24 px-4">
+<!-- Header -->
+<header class="py-4 sticky top-12 bg-background-light dark:bg-background-dark z-40 mb-2">
+<div class="flex items-center justify-between mb-4">
+<span class="text-primary dark:text-blue-400 font-bold text-sm tracking-widest uppercase">Theology Explorer</span>
+<button class="p-2 rounded-full hover:bg-primary/10">
+<span class="material-icons text-primary">account_circle</span>
+</button>
+</div>
+<h1 class="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Concepts</h1>
+<!-- Search Bar -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+<span class="material-icons text-slate-400">search</span>
+</div>
+<input class="w-full bg-slate-200 dark:bg-neutral-dark border-none rounded-xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary transition-all placeholder-slate-500" placeholder="Search doctrines, terms, or tags..." type="text"/>
+</div>
+<!-- Categories Pill Scroll -->
+<div class="flex overflow-x-auto gap-2 py-4 no-scrollbar">
+<button class="px-4 py-1.5 rounded-full bg-primary text-white text-sm whitespace-nowrap">All</button>
+<button class="px-4 py-1.5 rounded-full bg-slate-200 dark:bg-neutral-dark text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">Soteriology</button>
+<button class="px-4 py-1.5 rounded-full bg-slate-200 dark:bg-neutral-dark text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">Ecclesiology</button>
+<button class="px-4 py-1.5 rounded-full bg-slate-200 dark:bg-neutral-dark text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">Eschatology</button>
+</div>
+</header>
+<!-- Topic Detail Screen Simulation (Focus on Justification) -->
+<div class="space-y-6">
+<section class="mb-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-xs font-semibold text-primary/80 uppercase tracking-widest">Selected Topic</span>
+</div>
+<h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">Justification</h2>
+<p class="text-slate-600 dark:text-slate-400 italic text-sm leading-relaxed">
+                    The act of God's free grace, wherein he pardoneth all our sins, and accepteth us as righteous in his sight.
+                </p>
+</section>
+<!-- Collapsible Sections -->
+<div class="space-y-3">
+<!-- Section 1: Definition -->
+<div class="border border-slate-200 dark:border-border-dark rounded-xl overflow-hidden bg-white/50 dark:bg-neutral-dark/30">
+<button class="w-full px-5 py-4 flex items-center justify-between text-left focus:outline-none">
+<span class="font-bold text-lg">Formal Definition</span>
+<span class="material-icons text-primary">expand_more</span>
+</button>
+<div class="px-5 pb-5 text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        In Christian theology, justification is God's righteous act of removing the guilt and penalty of sin while, at the same time, declaring a sinner righteous through Christ's atoning sacrifice. In Protestantism, it is often summarized as "Sola Fide" (by faith alone).
+                    </div>
+</div>
+<!-- Section 2: Historical Context -->
+<div class="border border-slate-200 dark:border-border-dark rounded-xl overflow-hidden bg-white/50 dark:bg-neutral-dark/30">
+<button class="w-full px-5 py-4 flex items-center justify-between text-left focus:outline-none">
+<span class="font-bold text-lg">Historical Context</span>
+<span class="material-icons text-primary">expand_less</span>
+</button>
+<div class="px-5 pb-5 text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        The doctrine was the central concern of the 16th-century Protestant Reformation. Martin Luther famously described it as the "article upon which the church stands or falls." It distinguishes the Protestant view (imputed righteousness) from the Roman Catholic view (infused righteousness).
+                    </div>
+</div>
+<!-- Section 3: Perspectives -->
+<div class="border border-slate-200 dark:border-border-dark rounded-xl overflow-hidden bg-white/50 dark:bg-neutral-dark/30">
+<button class="w-full px-5 py-4 flex items-center justify-between text-left focus:outline-none opacity-60">
+<span class="font-bold text-lg">Cross-Denominational Views</span>
+<span class="material-icons text-primary/50">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Linked Scripture Gallery -->
+<section class="mt-8">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white">Linked Scripture</h3>
+<span class="text-xs text-primary font-bold">View All (12)</span>
+</div>
+<div class="flex overflow-x-auto gap-4 no-scrollbar pb-4">
+<!-- Verse Card 1 -->
+<div class="min-w-[280px] p-5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-icons text-primary text-sm">auto_stories</span>
+<span class="font-bold text-primary text-sm">Romans 5:1</span>
+</div>
+<p class="text-sm italic leading-relaxed text-slate-700 dark:text-slate-200">
+                            "Therefore, since we have been justified by faith, we have peace with God through our Lord Jesus Christ."
+                        </p>
+</div>
+<!-- Verse Card 2 -->
+<div class="min-w-[280px] p-5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-icons text-primary text-sm">auto_stories</span>
+<span class="font-bold text-primary text-sm">Galatians 2:16</span>
+</div>
+<p class="text-sm italic leading-relaxed text-slate-700 dark:text-slate-200">
+                            "Know that a person is not justified by the works of the law, but by faith in Jesus Christ..."
+                        </p>
+</div>
+</div>
+</section>
+<!-- Related Topics -->
+<section class="mt-4 mb-12">
+<h3 class="text-lg font-bold mb-4">Related Topics</h3>
+<div class="grid grid-cols-1 gap-3">
+<div class="p-4 bg-slate-100 dark:bg-neutral-dark rounded-lg flex items-center justify-between">
+<div>
+<p class="font-bold">Sanctification</p>
+<p class="text-xs text-slate-500">The process of being made holy.</p>
+</div>
+<span class="material-icons text-slate-400">chevron_right</span>
+</div>
+<div class="p-4 bg-slate-100 dark:bg-neutral-dark rounded-lg flex items-center justify-between">
+<div>
+<p class="font-bold">Original Sin</p>
+<p class="text-xs text-slate-500">The fallen state of humanity.</p>
+</div>
+<span class="material-icons text-slate-400">chevron_right</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Floating Action Button: Ask AI -->
+<div class="fixed bottom-8 right-6 z-50">
+<button class="bg-accent-gold hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-full shadow-xl flex items-center gap-2 transition-all transform active:scale-95">
+<span class="material-icons">auto_awesome</span>
+<span>Ask AI</span>
+</button>
+</div>
+<!-- Bottom Navigation (iOS Style) -->
+<nav class="fixed bottom-0 left-0 right-0 h-20 bg-background-light/80 dark:bg-background-dark/80 ios-blur border-t border-slate-200 dark:border-border-dark flex items-center justify-around px-6 pb-4">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons">menu_book</span>
+<span class="text-[10px] font-bold">Library</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons">explore</span>
+<span class="text-[10px] font-bold">Discover</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons">bookmark</span>
+<span class="text-[10px] font-bold">Saved</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons">settings</span>
+<span class="text-[10px] font-bold">Settings</span>
+</button>
+</nav>
+</main>
+<!-- Background Decoration Image -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] z-0 overflow-hidden">
+<img alt="Ancient theological manuscripts and scrolls" class="w-full h-full object-cover" data-alt="Abstract parchment texture with faint script patterns" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR3vlxqXQN1Ck0dKcsPyPoKJihCXpnUReLNEKgQaakKcv9pkBNtB4zDPRcHRV8yHGY7WNOV5CyNubcKLKuGKF0AcLdfzVS3riIFCCR62eGVWrFDF4IRHVvelE3QB3oqREKW_19NrIXRCauAdfSmNGQURF4rTnfdI1nSUUQar3eMz2U7b2DG5p2VrUUqWUbLKS9TUpY9B9iHzFb5lr-CNY7OWT-PKv4iS0_wyTVPx19cm0xlTBPPURBTGWvpNdfhe7syYWoCheJwD2Z"/>
+</div>
+</body></html>

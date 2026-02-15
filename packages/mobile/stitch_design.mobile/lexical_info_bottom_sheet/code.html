@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lexical Info Bottom Sheet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1754cf",
+              "background-light": "#f6f6f8",
+              "background-dark": "#111621",
+              "gold-action": "#d4af37",
+            },
+            fontFamily: {
+              "display": ["Lexend"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Lexend', sans-serif; }
+        .ios-status-bar { height: 44px; }
+        .bottom-sheet { border-radius: 24px 24px 0 0; }
+        .glass-effect { backdrop-filter: blur(8px); background-color: rgba(17, 22, 33, 0.85); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen overflow-hidden flex flex-col">
+<!-- Mock Screen Content (The Scripture Reading View) -->
+<div class="flex-1 overflow-y-auto px-6 pt-12">
+<div class="flex items-center justify-between mb-8">
+<span class="material-icons text-primary">arrow_back_ios</span>
+<h1 class="text-lg font-semibold">John 1:1</h1>
+<span class="material-icons text-primary">more_horiz</span>
+</div>
+<div class="space-y-6">
+<div class="flex items-baseline gap-2">
+<span class="text-primary/50 text-sm font-bold">1</span>
+<p class="text-2xl leading-relaxed tracking-wide">
+                    In the beginning was the 
+                    <span class="bg-primary/20 text-primary px-1 rounded-sm border-b-2 border-primary cursor-pointer">Word</span>, 
+                    and the Word was with God, and the Word was God.
+                </p>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-primary/50 text-sm font-bold">2</span>
+<p class="text-2xl leading-relaxed tracking-wide">
+                    He was in the beginning with God.
+                </p>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-primary/50 text-sm font-bold">3</span>
+<p class="text-2xl leading-relaxed tracking-wide">
+                    All things were made through him, and without him was not any thing made that was made.
+                </p>
+</div>
+</div>
+</div>
+<!-- Scrim / Backdrop Overlay -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-10"></div>
+<!-- Bottom Sheet Container -->
+<div class="fixed inset-x-0 bottom-0 z-20 transition-transform duration-300 transform translate-y-0">
+<div class="glass-effect bottom-sheet border-t border-white/10 shadow-2xl pb-10">
+<!-- Grab Handle -->
+<div class="flex justify-center pt-3 pb-5">
+<div class="w-10 h-1 rounded-full bg-slate-500/30"></div>
+</div>
+<!-- Content Area -->
+<div class="px-6 space-y-6">
+<!-- Lemma & Transliteration -->
+<div class="flex items-end justify-between">
+<div>
+<p class="text-sm font-medium text-primary uppercase tracking-widest mb-1">G3056 • lógos</p>
+<h2 class="text-4xl font-bold dark:text-white">λόγος</h2>
+</div>
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-icons text-primary">volume_up</span>
+</div>
+</div>
+<!-- Morphology Chips -->
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-800 border border-slate-700 text-slate-300">Noun</span>
+<span class="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-800 border border-slate-700 text-slate-300">Nominative</span>
+<span class="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-800 border border-slate-700 text-slate-300">Masculine</span>
+<span class="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-800 border border-slate-700 text-slate-300">Singular</span>
+</div>
+<!-- Lexicon Preview -->
+<div class="space-y-3">
+<div class="flex items-center gap-2 border-b border-slate-700 pb-2">
+<span class="material-icons text-sm text-primary/70">menu_book</span>
+<span class="text-xs font-bold uppercase tracking-wider text-slate-400">BDAG Lexicon</span>
+</div>
+<div class="max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+<p class="text-slate-300 text-base leading-relaxed">
+<span class="italic font-semibold text-white">1. a communication</span> whereby the mind finds expression, word, utterance, statement. 
+                            <span class="italic font-semibold text-white">2. the Independent Personified Word</span> (the Logos), the agent of creation and the revealer of the Father.
+                        </p>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full bg-gold-action hover:bg-yellow-600 transition-colors flex items-center justify-center gap-3 py-4 rounded-xl shadow-lg shadow-gold-action/20">
+<span class="material-icons text-slate-900 font-bold">bookmark_add</span>
+<span class="text-slate-900 font-bold text-lg">Add to Study Notes</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Background Decorative Elements -->
+<div class="fixed top-0 left-0 w-full h-full -z-10 opacity-10 pointer-events-none">
+<img class="w-full h-full object-cover" data-alt="Ancient manuscript parchment texture background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCo1OspUdB-3n2U_N-Fc1H3860BghDZ20M_jy0SCCrW1W-vmSNPBUvnDxtbbm6BunrPdhfQP-7T5I1z0XKYhWbKV2dyiey_FUO5wkX0fv45V3o2xha0we6z8oI1mZEteHRC5h_vf4kf2CEQcjrTtSFC6x79crVrwDz5dmi4cztlmF8zy-JO5yZjX__kIdnOMgVX4tBLBBiRWqpbilqtHn2nI9z2Yub9lxmDI6mnUbb65vJu_SZ26LPx_9V-GTuPVrlsH2soR_E10BSL"/>
+</div>
+<!-- Navigation Bar Mock (iPhone Style) -->
+<div class="fixed bottom-0 inset-x-0 h-10 bg-transparent flex justify-center items-end pb-2 pointer-events-none z-30">
+<div class="w-32 h-1 bg-white/20 rounded-full"></div>
+</div>
+</body></html>

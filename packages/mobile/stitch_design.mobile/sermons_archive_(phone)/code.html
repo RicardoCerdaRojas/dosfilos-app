@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sermons Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "accent-gold": "#b59410",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1c2433",
+                        "border-dark": "#2d3748",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-display">
+<!-- Status Bar Spacer (iOS Style) -->
+<div class="h-12 w-full bg-background-light dark:bg-background-dark sticky top-0 z-50"></div>
+<!-- Header Section -->
+<header class="px-5 pb-4 bg-background-light dark:bg-background-dark sticky top-12 z-40 border-b border-slate-200 dark:border-border-dark/50">
+<div class="flex justify-between items-end mb-6">
+<h1 class="text-3xl font-bold tracking-tight">Sermons</h1>
+<button class="text-primary p-1">
+<span class="material-icons-round">tune</span>
+</button>
+</div>
+<!-- Search Bar -->
+<div class="relative mb-6">
+<span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+<input class="w-full bg-slate-200/50 dark:bg-surface-dark border-none rounded-xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary text-sm placeholder:text-slate-500" placeholder="Search scripture or title..." type="text"/>
+</div>
+<!-- Segmented Filter -->
+<div class="bg-slate-200/80 dark:bg-surface-dark p-1 rounded-xl flex items-center">
+<button class="flex-1 py-1.5 text-sm font-medium rounded-lg bg-white dark:bg-primary shadow-sm text-slate-900 dark:text-white transition-all">
+                Draft
+            </button>
+<button class="flex-1 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                Ready
+            </button>
+<button class="flex-1 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                Preached
+            </button>
+</div>
+</header>
+<!-- Content List -->
+<main class="px-5 py-6 pb-32 space-y-4">
+<!-- Sermon Card 1 -->
+<div class="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-100 dark:border-border-dark/30 shadow-sm active:scale-[0.98] transition-transform">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">Draft</span>
+<span class="text-xs text-slate-400 font-medium">Oct 24</span>
+</div>
+<h3 class="text-xl font-semibold leading-tight mb-1 text-slate-900 dark:text-white">The Theology of Stillness</h3>
+<p class="text-primary dark:text-primary font-medium text-sm mb-3 italic">Psalm 46:1-11</p>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-slate-200">
+<img alt="Author" class="w-full h-full object-cover" data-alt="Portrait of a male pastor or theologian" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOpcIGdR73kYBndHSJVHM0Qb7S5R8GcxSGv1mzjKpOxL7VDT_2BNcY0fra_8WIDnolIxmbpco2xVdbhYL9s9Jb3fweMhgCHa4RNEUn9zn0JcfVDXIKblNFUssy935PgYKDTU7eFVF_ALj6RBxvaFqSsRFtogK21K8MRWBGjivVcOn69Ski1wY3EhAitLQk14F-myq4h-Rxe00eT0fCL1-gkeeF0gu81CKj9j3Qdpt65pnYqghNPmmuv5b9fw5pKnVolGgknj90hy-c"/>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400">Rev. Dr. Thomas</span>
+</div>
+</div>
+<!-- Sermon Card 2 -->
+<div class="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-100 dark:border-border-dark/30 shadow-sm active:scale-[0.98] transition-transform">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-400">Working</span>
+<span class="text-xs text-slate-400 font-medium">Oct 21</span>
+</div>
+<h3 class="text-xl font-semibold leading-tight mb-1 text-slate-900 dark:text-white">Justification by Faith Alone</h3>
+<p class="text-primary dark:text-primary font-medium text-sm mb-3 italic">Romans 5:1-5</p>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-slate-200">
+<img alt="Author" class="w-full h-full object-cover" data-alt="Portrait of a male pastor or theologian" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMGc5RxaBbcCEIUjm4DxAIkN6w1_XJUI5dkM-tagzym9O4oS9wrTEKQWJ93Uu6QukExP2sgKFJ2dYKKysO_JUKlcbjl3-cNNsXKKFtEkHEOjLmjDsvvi12yTjExdO7AIvSzCNprPLwLbarOiznOWwA1ntPF2FrWJpWGNlumzFigyXDilUQW6-aFA3l7kwB4gDXVQd4InWhcjaN_7fYJ0FRp-FFJJkAB2oYH3rCibg-vOUS-IanMO0G6DC23xHQzIz51yOHxh5wVU3Z"/>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400">Rev. Dr. Thomas</span>
+</div>
+</div>
+<!-- Sermon Card 3 -->
+<div class="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-100 dark:border-border-dark/30 shadow-sm active:scale-[0.98] transition-transform opacity-80">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">Draft</span>
+<span class="text-xs text-slate-400 font-medium">Oct 18</span>
+</div>
+<h3 class="text-xl font-semibold leading-tight mb-1 text-slate-900 dark:text-white">Walking Through the Valley</h3>
+<p class="text-primary dark:text-primary font-medium text-sm mb-3 italic">Psalm 23:4</p>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-slate-200">
+<img alt="Author" class="w-full h-full object-cover" data-alt="Portrait of a male pastor or theologian" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzSsIIdmvLS9slIDy9BQOCIhcsDT1BTN_EqW2DnS7m1F7vvMTjucciQ0nYh1DJahb1ilQ9xkJtT-JDUjdO_fFGaGsiATPQfqwcDyxWcg2J-8WpSvKqN5b_gMtV1ZZ51ytxp2JE8zH7W807CS_fQxK9sGrBSlZGGb_pWBoxWPM6Ucwmx6Co0dkY_ryfCbhev7cp0EFikmyxBDbxuEbXZQcH3wzC6Wk-z71iR8g_kjakgcYjYvJz5z8jwDoCr_XU57cZVqVtwSzLjw6Z"/>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400">Rev. Dr. Thomas</span>
+</div>
+</div>
+<!-- Sermon Card 4 -->
+<div class="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-100 dark:border-border-dark/30 shadow-sm active:scale-[0.98] transition-transform">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">Draft</span>
+<span class="text-xs text-slate-400 font-medium">Oct 12</span>
+</div>
+<h3 class="text-xl font-semibold leading-tight mb-1 text-slate-900 dark:text-white">The Cost of Discipleship</h3>
+<p class="text-primary dark:text-primary font-medium text-sm mb-3 italic">Luke 14:25-33</p>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-slate-200">
+<img alt="Author" class="w-full h-full object-cover" data-alt="Portrait of a male pastor or theologian" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAsjpIqRSsBIfBcbagizWnaevFEXGxcItc7nhNB-AWE53wa0oO_Wvv092zvKqeQynUrnx9-3Re76P1YbMuswKAGESIsAm7uhssJmvw7ClPkNuq1j76XdqA83gfcOhyUtj0JLQEFiJTrd5AsBF6bJ1VNK4ila4Q_YPlYBJ75o9ELVaHt6zE5W0H1FS8BrDM1XXl5_fVy_fP67auTZaFNmrf5V8jUCIYNwP1MRMFb2YpA0HATjdk1-BPBfAPBeAlcnI3rozy4MQLfn_e"/>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400">Rev. Dr. Thomas</span>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed right-6 bottom-24 w-14 h-14 bg-accent-gold hover:bg-yellow-600 text-white rounded-full shadow-lg shadow-accent-gold/20 flex items-center justify-center transition-all z-50">
+<span class="material-icons-round text-3xl">add</span>
+</button>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-surface-dark/80 ios-blur border-t border-slate-200 dark:border-border-dark flex justify-around items-center px-6 pb-4 z-50">
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons-round">auto_stories</span>
+<span class="text-[10px] font-medium">Archive</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
+<span class="material-icons-round">menu_book</span>
+<span class="text-[10px] font-medium">Library</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
+<span class="material-icons-round">history_edu</span>
+<span class="text-[10px] font-medium">Tools</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
+<span class="material-icons-round">person_outline</span>
+<span class="text-[10px] font-medium">Profile</span>
+</div>
+</nav>
+</body></html>

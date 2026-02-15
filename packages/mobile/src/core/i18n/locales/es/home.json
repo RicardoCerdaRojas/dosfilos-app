@@ -1,0 +1,17 @@
+{
+    "welcome": "Bienvenido,",
+    "last_synced": "Última sincronización: hace {{minutes}} minutos",
+    "study_goal": "Meta de Estudio",
+    "reading": "Lectura",
+    "chapters": "Capítulos",
+    "min_left": "Min restantes",
+    "quick_actions": "Acciones Rápidas",
+    "start_study": "Iniciar Estudio",
+    "open_bible": "Abrir Biblia",
+    "new_sermon": "Nuevo Sermón",
+    "recent_sermons": "Sermones Recientes",
+    "view_all": "Ver Todo",
+    "edited_ago": "Editado hace {{time}}",
+    "yesterday": "Ayer",
+    "days_ago": "Hace {{count}} días"
+}

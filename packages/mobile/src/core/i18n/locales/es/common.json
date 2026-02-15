@@ -1,0 +1,22 @@
+{
+    "welcome": "Bienvenido",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "appearance": "Apariencia",
+    "language": "Idioma",
+    "logout": "Cerrar Sesión",
+    "edit_profile": "Editar Perfil",
+    "notifications": "Notificaciones",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "spanish": "Español",
+    "english": "Inglés",
+    "back": "Atrás",
+    "soon": "Próximamente",
+    "home_tab": "Inicio",
+    "bible_tab": "Biblia",
+    "study_tab": "Estudio",
+    "tutor_tab": "Tutor",
+    "sermons_tab": "Sermones"
+}
