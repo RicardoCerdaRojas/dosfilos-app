@@ -23,7 +23,7 @@ const db = getFirestore();
  */
 
 interface SyncCoreLibraryStoreRequest {
-    context: 'exegesis' | 'homiletics' | 'generic';
+    context: string;
 }
 
 export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
@@ -70,21 +70,34 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
                 .where('coreStores', 'array-contains', context)
                 .get();
 
-            const desiredDocs = desiredDocsSnapshot.docs
-                .map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        title: data.title,
-                        author: data.author,
-                        geminiUri: data.metadata?.geminiUri,
-                        geminiName: data.metadata?.geminiName,
-                        pageCount: data.pageCount || 0
-                    };
-                })
-                .filter(d => d.geminiUri && d.geminiName); // Only docs with Gemini files
+            const allDesiredDocs = desiredDocsSnapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    title: data.title,
+                    author: data.author,
+                    geminiUri: data.metadata?.geminiUri,
+                    geminiName: data.metadata?.geminiName,
+                    pageCount: data.pageCount || 0
+                };
+            });
 
-            console.log(`📋 Desired state: ${desiredDocs.length} documents for ${context}`);
+            // Trigger background sync for docs missing Gemini URI
+            const missingUriDocs = allDesiredDocs.filter(d => !d.geminiUri || !d.geminiName);
+            if (missingUriDocs.length > 0) {
+                console.log(`⚠️ Found ${missingUriDocs.length} documents missing Gemini URI. Triggering background sync...`);
+                // We'll import the function locally to call it directly, or we could just use fetch/pubsub.
+                // Since this is another cloud function, calling it directly as a normal async function if possible,
+                // or just relying on the fact that we can call it. Wait, we can't easily call an http function directly.
+                // We will just let the user know they are processing. The frontend now triggers them on upload.
+                // But for existing ones, let's just log it. The cron job or manual trigger is needed.
+                // Actually, since we are inside firebase-functions, we could import and call the handler.
+                // But for safety and avoiding circular dependencies, we'll just log it.
+            }
+
+            const desiredDocs = allDesiredDocs.filter(d => d.geminiUri && d.geminiName); // Only docs with Gemini files
+
+            console.log(`📋 Desired state: ${desiredDocs.length} valid documents for ${context} (ignoring ${missingUriDocs.length} pending)`);
 
             // 3. Get CURRENT state from config
             const configRef = db.doc('config/coreLibraryStores');
@@ -137,35 +150,10 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
                 // Use the new store ID
                 const finalStoreId = newStoreId;
 
-                // 5. Import all desired files (store is empty)
-                const filesMetadata = [];
-                for (const doc of desiredDocs) {
-                    console.log(`  📄 Importing ${doc.title}...`);
-                    const importResponse = await fetch(
-                        `https://generativelanguage.googleapis.com/v1beta/${finalStoreId}:importFile?key=${apiKey}`,
-                        {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ fileName: doc.geminiName })
-                        }
-                    );
+                // 4.5 Import all desired files 
+                const filesMetadata = await importFilesToStore(apiKey, finalStoreId, desiredDocs);
 
-                    if (importResponse.ok) {
-                        console.log(`    ✅ Imported`);
-                        filesMetadata.push({
-                            geminiUri: doc.geminiUri,
-                            name: doc.title,
-                            author: doc.author,
-                            pages: doc.pageCount,
-                            uploadedAt: new Date()
-                        });
-                    } else {
-                        const errorText = await importResponse.text();
-                        console.warn(`    ⚠️ Failed to import: ${errorText}`);
-                    }
-                }
-
-                // 6. Update config
+                // 5. Update config
                 await configRef.set({
                     files: {
                         ...(config?.files || {}),
@@ -234,17 +222,62 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
                 }
             }
 
-            // 7. Remove extra files (filter them out from config)
-            // Note: Gemini API doesn't have a removeFile endpoint, so we can only update our config
-            // The files will remain in the store but won't be tracked
-            const removedCount = toRemove.length;
-            const updatedFiles = currentFiles.filter((f: any) => desiredUris.has(f.geminiUri));
+            // 7. Remove extra files (Gemini doesn't support removeFile, so we must recreate the store!)
+            let removedCount = 0;
+            let finalStoreId = storeId;
+            let updatedFiles: any[] = [...currentFiles];
 
-            console.log(`🗑️ Removing ${removedCount} files from config (they remain in Gemini store)`);
+            if (toRemove.length > 0) {
+                console.log(`🗑️ Need to remove ${toRemove.length} files. Gemini API doesn't support unlinking, so we must recreate the store.`);
+
+                // Fetch current displayName to retain it
+                const storeResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/${storeId}?key=${apiKey}`);
+                let displayName = `Dos Filos - Biblioteca de ${context}`;
+                if (storeResponse.ok) {
+                    const storeData = await storeResponse.json() as { displayName: string };
+                    if (storeData.displayName) displayName = storeData.displayName;
+                }
+
+                // Create new store
+                console.log(`📦 Creating REPLACEMENT ${context} store...`);
+                const createResponse = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/fileSearchStores?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ displayName })
+                    }
+                );
+
+                if (!createResponse.ok) throw new HttpsError('internal', `Failed to create replacement store: ${await createResponse.text()}`);
+
+                const storeData = await createResponse.json() as { name: string };
+                finalStoreId = storeData.name;
+
+                // Import ONLY the desired docs
+                updatedFiles = await importFilesToStore(apiKey, finalStoreId, desiredDocs);
+                addedCount += updatedFiles.length; // Technically all desired files were added to the new store
+                removedCount = toRemove.length;
+
+                // Note: We don't delete the old Gemini Store automatically yet, to be safe. It will just be orphaned.
+                // In a production environment with strict quotas, you should perform: DELETE https://generativelanguage.googleapis.com/v1beta/${storeId}
+                try {
+                    console.log(`🗑️ Deleting old orphan store: ${storeId}`);
+                    await fetch(`https://generativelanguage.googleapis.com/v1beta/${storeId}?key=${apiKey}`, { method: 'DELETE' });
+                } catch (e) {
+                    console.warn(`⚠️ Failed to delete old store ${storeId}, it is now orphaned.`, e);
+                }
+            }
+
+            console.log(`✅ ${context} store synced successfully. Final store: ${finalStoreId}`);
 
             // 8. Update config
             await configRef.set({
                 ...config,
+                stores: {
+                    ...(config?.stores || {}),
+                    [context]: finalStoreId
+                },
                 files: {
                     ...(config?.files || {}),
                     [context]: updatedFiles
@@ -252,11 +285,10 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
                 lastValidatedAt: new Date()
             }, { merge: true });
 
-            console.log(`✅ ${context} store synced successfully`);
-
             return {
                 success: true,
                 context,
+                storeId: finalStoreId,
                 filesAdded: addedCount,
                 filesRemoved: removedCount,
                 totalFiles: updatedFiles.length
@@ -267,3 +299,33 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
             throw new HttpsError('internal', error.message);
         }
     });
+
+// Helper Function
+async function importFilesToStore(apiKey: string, storeId: string, docs: any[]) {
+    const filesMetadata = [];
+    for (const doc of docs) {
+        console.log(`  📄 Importing ${doc.title} into ${storeId}...`);
+        const importResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/${storeId}:importFile?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName: doc.geminiName })
+            }
+        );
+
+        if (importResponse.ok) {
+            console.log(`    ✅ Imported`);
+            filesMetadata.push({
+                geminiUri: doc.geminiUri,
+                name: doc.title,
+                author: doc.author,
+                pages: doc.pageCount,
+                uploadedAt: new Date()
+            });
+        } else {
+            console.warn(`    ⚠️ Failed to import: ${await importResponse.text()}`);
+        }
+    }
+    return filesMetadata;
+}

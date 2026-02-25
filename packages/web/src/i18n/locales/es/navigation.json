@@ -1,5 +1,5 @@
 {
-    "logo": "DosFilos.Preach",
+    "logo": "Preach.DosFilos",
     "features": "Características",
     "howItWorks": "Cómo Funciona",
     "testimonials": "Testimonios",
@@ -9,7 +9,7 @@
     "menu": {
         "dashboard": "Dashboard",
         "sermons": "Sermones",
-        "plans": "Planes de Predicación",
+        "plans": "Planificador",
         "generateSermon": "Generar Sermón",
         "greekTutor": "Entrenador Griego",
         "library": "Biblioteca",

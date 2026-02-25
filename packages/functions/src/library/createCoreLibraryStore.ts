@@ -83,6 +83,10 @@ export const createCoreLibraryStore = onCall<CreateCoreLibraryStoreRequest>(
                     ...(config?.descriptions || {}),
                     [key]: description || ''
                 },
+                displayNames: { // Save display name explicitly
+                    ...(config?.displayNames || {}),
+                    [key]: displayName
+                },
                 lastValidatedAt: new Date()
             }, { merge: true });
 

@@ -2,7 +2,45 @@
     "header": {
         "title": "Sermones",
         "subtitle": "Gestiona tus sermones y contenido pastoral",
-        "newButton": "Nuevo Sermón"
+        "newButton": "Nuevo Sermón",
+        "generateWithTutor": "Generar con el tutor",
+        "useWizard": "Usar asistente clásico",
+        "createBlank": "Sermón en blanco"
+    },
+    "sermonCreatedSuccess": "Sermón creado exitosamente",
+    "sermonCreatedError": "Error al crear el sermón",
+    "tutor": {
+        "welcome": "¡Hola! Soy tu asistente de predicación.",
+        "welcomeSubtitle": "Cuéntame qué tienes en mente, o pide sugerencias.",
+        "prompts": {
+            "idea": "Ayúdame a encontrar una idea para el domingo",
+            "passage": "Tengo un tema pero necesito un pasaje bíblico",
+            "example": "Quiero predicar sobre la gracia, ¿qué enfoque me sugieres?"
+        },
+        "actions": {
+            "idea": "Necesito una idea",
+            "passage": "Sugerir pasaje",
+            "example": "Ejemplo: La Gracia"
+        },
+        "inputPlaceholder": "Escribe tu idea o pregunta...",
+        "detailsTitle": "Detalles del Sermón",
+        "passageLabel": "Pasaje Bíblico",
+        "passagePlaceholder": "Ej. Juan 3:16",
+        "ideaLabel": "Idea Central / Tema",
+        "ideaPlaceholder": "¿De qué quieres hablar?",
+        "generating": "Generando Sermón...",
+        "generateButton": "Generar Sermón Completo",
+        "disclaimer": "Al generar, se creará un análisis exegético y homilético completo en segundo plano.",
+        "steps": {
+            "exegesis": "Realizando análisis exegético...",
+            "homiletics": "Estructurando el sermón...",
+            "drafting": "Redactando el contenido completo...",
+            "success": "¡Sermón listo!"
+        },
+        "errors": {
+            "missingFields": "Por favor, define un pasaje y una idea principal primero.",
+            "generationFailed": "Error al generar el sermón. Por favor intenta de nuevo."
+        }
     },
     "loading": "Cargando sermones...",
     "empty": {

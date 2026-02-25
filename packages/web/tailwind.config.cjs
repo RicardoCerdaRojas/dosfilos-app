@@ -72,6 +72,10 @@ export default {
 				serif: [
 					'Merriweather',
 					'serif'
+				],
+				bible: [
+					'Crimson Pro',
+					'serif'
 				]
 			},
 			keyframes: {

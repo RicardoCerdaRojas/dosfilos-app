@@ -5,9 +5,9 @@ import {
     ExegeticalStudy,
     HomileticalAnalysis,
     SermonContent,
-    ChatMessage,
     WorkflowPhase
 } from '@dosfilos/domain';
+import { ChatMessage } from '@dosfilos/domain/src/entities/SermonWorkflow';
 import {
     buildExegesisPrompt,
     buildSermonDraftPrompt,
@@ -349,6 +349,62 @@ FORMATO JSON REQUERIDO:
             const result = await chat.sendMessage(contentToSend);
             const response = await result.response;
             return response.text();
+        } catch (error: any) {
+            throw this.handleError(error);
+        }
+    }
+
+    async chatStream(phase: WorkflowPhase, history: ChatMessage[], context: any, onChunk: (text: string) => void): Promise<string> {
+        try {
+            const systemPrompt = buildChatSystemPrompt(phase, context);
+            const geminiHistory = history.slice(0, -1).map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.content }]
+            }));
+
+            if (geminiHistory.length > 0) {
+                const firstMsg = geminiHistory[0];
+                if (firstMsg && firstMsg.role === 'user') {
+                    const parts = firstMsg.parts;
+                    if (parts && parts.length > 0 && parts[0]) {
+                        const firstPart = parts[0];
+                        if (firstPart && 'text' in firstPart) {
+                            firstPart.text = `${systemPrompt}\n\n${firstPart.text}`;
+                        }
+                    }
+                }
+            }
+
+            if (history.length === 0) throw new Error('History cannot be empty');
+            const lastMessage = history[history.length - 1];
+            if (!lastMessage || lastMessage.role !== 'user') throw new Error('Last message must be from user');
+
+            const model = this.getModel({
+                fileSearchStoreId: context?.fileSearchStoreId,
+                temperature: context?.temperature,
+                modelName: context?.aiModel
+            });
+            const chatObject = model.startChat({
+                history: geminiHistory,
+                generationConfig: {
+                    maxOutputTokens: 8192,
+                    temperature: context?.temperature || GEMINI_CONFIG.GENERATION_CONFIG.temperature
+                },
+            });
+
+            let messageToSend = lastMessage.content;
+            if (geminiHistory.length === 0) {
+                messageToSend = `${systemPrompt}\n\n${messageToSend}`;
+            }
+
+            const result = await chatObject.sendMessageStream(messageToSend);
+            let fullText = '';
+            for await (const chunk of result.stream) {
+                const chunkText = chunk.text();
+                fullText += chunkText;
+                onChunk(fullText);
+            }
+            return fullText;
         } catch (error: any) {
             throw this.handleError(error);
         }

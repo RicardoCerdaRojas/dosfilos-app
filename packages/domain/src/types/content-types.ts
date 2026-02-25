@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 
 export type ContentType = 'exegesis' | 'homiletics' | 'sermon';
 
-export type WorkflowPhase = 'PLANNING' | 'EXEGESIS' | 'HOMILETICS' | 'DRAFTING';
+export type WorkflowPhase = 'PLANNING' | 'BRAINSTORMING' | 'EXEGESIS' | 'HOMILETICS' | 'DRAFTING';
 
 export interface QuickAction {
     id: string;

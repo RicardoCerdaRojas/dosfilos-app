@@ -19,12 +19,15 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
  */
 export class GeminiQuizService implements IQuizService {
     private genAI: GoogleGenerativeAI;
+    private modelName: string;
 
     constructor(
         private apiKey: string,
-        private sessionRepository: ISessionRepository
+        private sessionRepository: ISessionRepository,
+        modelName?: string
     ) {
         this.genAI = new GoogleGenerativeAI(apiKey);
+        this.modelName = modelName || 'gemini-1.5-flash-latest';
     }
 
     async generateQuizQuestions(
@@ -123,7 +126,7 @@ export class GeminiQuizService implements IQuizService {
         language: string
     ): Promise<QuizQuestion[]> {
         const model = this.genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash-exp',
+            model: this.modelName,
             generationConfig: {
                 responseMimeType: 'application/json',
                 temperature: 0.7 // Slight creativity for varied questions

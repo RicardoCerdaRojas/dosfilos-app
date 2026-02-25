@@ -15,7 +15,7 @@ import { useSmartTriggers } from '@/hooks/useSmartTriggers';
 export function DashboardLayout() {
   const location = useLocation();
   const { user } = useFirebase();
-  const isPlanner = location.pathname.startsWith('/planner');
+  const isPlanner = location.pathname.includes('/planner');
   const isGenerator = location.pathname.includes('/sermons/generate');
   const [currentPlan, setCurrentPlan] = useState<string>('free');
 
@@ -64,13 +64,17 @@ export function DashboardLayout() {
     }
   }, [location.pathname]);
 
+  const isBible = location.pathname.includes('/bible');
   const isSermonDetail = location.pathname.startsWith('/dashboard/sermons/') && location.pathname !== '/dashboard/sermons';
-  const isFullScreen = isPlanner || isGenerator || isSermonDetail;
+  const isFullScreen = isPlanner || isGenerator || isSermonDetail || isBible;
 
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className={cn(isFullScreen && "md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none")}>
+      <SidebarInset className={cn(
+        isFullScreen ? "h-svh overflow-hidden" : "min-h-svh", 
+        isFullScreen && "md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none"
+      )}>
         {/* Header with toggle button */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
@@ -92,9 +96,9 @@ export function DashboardLayout() {
         
         {/* Main content */}
         <main className={cn(
-          "flex-1",
+          "flex-1 flex flex-col",
           // Apps that need full height control (no parent scroll, no parent padding)
-          isFullScreen ? "overflow-hidden h-[calc(100dvh-4rem)]" : "overflow-y-auto bg-muted/40 p-4 md:p-2"
+          isFullScreen ? "overflow-hidden h-full" : "overflow-y-auto bg-muted/40 p-4 md:p-2"
         )}>
           <Outlet />
         </main>

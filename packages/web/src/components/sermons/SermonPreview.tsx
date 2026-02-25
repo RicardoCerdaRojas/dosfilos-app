@@ -12,6 +12,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface SermonPreviewProps {
@@ -93,7 +94,15 @@ export function SermonPreview({
     processed = processed.replace(/<br\s*\/?>/gi, '\n');
     
     // Step 3: Add Bible reference links
-    processed = processed.replace(BIBLE_REF_PATTERN, (match, ref) => {
+    processed = processed.replace(BIBLE_REF_PATTERN, (match, ref, offset, string) => {
+      // Prevent double-processing if already inside a markdown link
+      const substringBefore = string.slice(Math.max(0, offset - 10), offset);
+      const substringAfter = string.slice(offset + match.length, Math.min(string.length, offset + match.length + 20));
+      
+      if (substringBefore.includes('[📖') || substringAfter.includes('](#bible-') || substringBefore.includes('#bible-')) {
+          return match;
+      }
+
       const prefix = match.slice(0, match.length - ref.length);
       const trimmedRef = ref.trim();
       return `${prefix}[📖 ${trimmedRef}](#bible-${encodeURIComponent(trimmedRef)})`;
@@ -212,6 +221,7 @@ export function SermonPreview({
           <ReactMarkdown 
             components={components}
             remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
           >
             {processContent(content)}
           </ReactMarkdown>

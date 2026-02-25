@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, FileText, Calendar, Tag, MoreVertical, Pencil, Trash2, Eye,
-  LayoutGrid, List, BookOpen, Filter, Presentation
+  LayoutGrid, List, BookOpen, Filter, Presentation, Sparkles, Wand2
 } from 'lucide-react';
-import { SermonEntity, SermonSeriesEntity } from '@dosfilos/domain';
+import { SermonSeriesEntity } from '@dosfilos/domain';
 import { seriesService } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Select,
@@ -56,7 +57,6 @@ export function SermonsPage() {
   const [sermonToDelete, setSermonToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [series, setSeries] = useState<SermonSeriesEntity[]>([]);
-  const [loadingSeries, setLoadingSeries] = useState(true);
 
   const { sermons, loading, refetch } = useSermons({
     status: statusFilter === 'all' ? undefined : (statusFilter as any),
@@ -76,7 +76,7 @@ export function SermonsPage() {
       } catch (error) {
         console.error('Error loading series:', error);
       } finally {
-        setLoadingSeries(false);
+        // loadingSeries removed
       }
     };
     loadSeries();
@@ -162,10 +162,38 @@ export function SermonsPage() {
           <h1 className="text-3xl font-bold">{t('header.title')}</h1>
           <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/dashboard/generate-sermon?new=true')}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('header.newButton')}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('header.newButton')}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem 
+              onClick={() => navigate('/dashboard/sermons/tutor')}
+              className="cursor-pointer"
+            >
+              <Sparkles className="mr-2 h-4 w-4 text-indigo-500" />
+              {t('header.generateWithTutor')}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => navigate('/dashboard/generate-sermon?new=true')}
+              className="cursor-pointer"
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              {t('header.useWizard')}
+            </DropdownMenuItem>
+             <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={() => navigate('/dashboard/sermons/new')}
+              className="cursor-pointer"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              {t('header.createBlank')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Filters & View Toggle */}
