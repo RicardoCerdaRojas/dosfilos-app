@@ -321,7 +321,7 @@ export default function BibleLibraryScreen() {
               >
                 {/* Simplified Mobile Controls */}
                 <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1e293b' : '#f1f5f9', padding: 4, borderRadius: 12, marginRight: 12 }}>
-                  <Pressable onPress={() => router.push('/bible/versions')} style={{ backgroundColor: '#1754cf', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}>
+                  <Pressable onPress={() => router.push('/bible/versions' as any)} style={{ backgroundColor: '#1754cf', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}>
                     <Text style={{ fontSize: 10, fontWeight: '800', color: '#ffffff' }}>{selectedVersionId}</Text>
                   </Pressable>
                 </View>

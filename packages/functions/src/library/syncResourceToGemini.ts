@@ -8,15 +8,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-// Initialize Firebase if not already done
-try {
-    initializeApp();
-} catch (e) {
-    // Already initialized
-}
-
-const db = getFirestore();
-const storage = getStorage();
 
 // Gemini file size limit: 50MB
 const MAX_GEMINI_FILE_SIZE = 50 * 1024 * 1024;
@@ -185,6 +176,8 @@ export const syncResourceToGemini = onCall<SyncResourceRequest>({
     timeoutSeconds: 300,
     secrets: ['GEMINI_API_KEY']
 }, async (request) => {
+    const db = getFirestore();
+    const storage = getStorage();
     console.log('🚀 syncResourceToGemini started');
 
     try {

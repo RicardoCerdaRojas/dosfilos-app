@@ -9,8 +9,6 @@ import * as path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
-const db = getFirestore();
-const storage = getStorage();
 
 // Gemini file size limit is 50MB
 const MAX_GEMINI_FILE_SIZE = 50 * 1024 * 1024;
@@ -210,6 +208,8 @@ export const extractPdfWithGemini = onObjectFinalized(
         secrets: ['GEMINI_API_KEY'],
     },
     async (event) => {
+        const db = getFirestore();
+        const storage = getStorage();
         const filePath = event.data.name;
         const contentType = event.data.contentType;
 

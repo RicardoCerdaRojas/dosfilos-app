@@ -1,21 +1,11 @@
+
 import { onCall } from 'firebase-functions/v2/https';
-import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-
-// Initialize Firebase if not already done
-try {
-    initializeApp();
-} catch (e) {
-    // Already initialized
-}
-
-const db = getFirestore();
-const storage = getStorage();
 
 interface FileSearchStore {
     name: string;
@@ -29,6 +19,8 @@ export const createGeminiStore = onCall<CreateStoreRequest>({
     cors: true,
     secrets: ['GEMINI_API_KEY']
 }, async (request) => {
+    const db = getFirestore();
+    const storage = getStorage();
     console.log('🚀 createGeminiStore function started');
 
     try {
