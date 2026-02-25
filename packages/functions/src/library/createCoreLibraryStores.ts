@@ -9,8 +9,6 @@ try {
     // Already initialized
 }
 
-const db = getFirestore();
-
 /**
  * Cloud Function: Create Core Library File Search Stores
  * 
@@ -50,6 +48,7 @@ export const createCoreLibraryStores = onCall<CreateCoreLibraryStoresRequest>(
 
         try {
             console.log('🔧 Starting Core Library Stores creation...');
+            const db = getFirestore();
 
             // 1. Get admin user ID
             const usersSnapshot = await db.collection('users')
@@ -85,6 +84,7 @@ export const createCoreLibraryStores = onCall<CreateCoreLibraryStoresRequest>(
                         title: data.title,
                         author: data.author,
                         geminiUri: data.metadata?.geminiUri,
+                        geminiName: data.metadata?.geminiName, // This was missing
                         pageCount: data.pageCount || 0
                     });
                 }
