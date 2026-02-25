@@ -1,13 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-
-// Initialize Firebase if not already done
-try {
-    initializeApp();
-} catch (e) {
-    // Already initialized
-}
 
 interface RemoveFileFromStoreRequest {
     documentId: string;
@@ -17,7 +9,7 @@ interface RemoveFileFromStoreRequest {
 export const removeFileFromStore = onCall<RemoveFileFromStoreRequest>(
     {
         cors: true,
-        memory: '256MiB',
+        memory: '512MiB',
         timeoutSeconds: 30
     },
     async (request) => {

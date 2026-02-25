@@ -1,13 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-
-// Initialize Firebase if not already done
-try {
-    initializeApp();
-} catch (e) {
-    // Already initialized
-}
 
 interface UpdateCoreLibraryStoreRequest {
     key: string;
@@ -18,7 +10,7 @@ interface UpdateCoreLibraryStoreRequest {
 export const updateCoreLibraryStore = onCall<UpdateCoreLibraryStoreRequest>(
     {
         cors: true,
-        memory: '256MiB',
+        memory: '512MiB',
         timeoutSeconds: 30,
         secrets: ['GEMINI_API_KEY']
     },

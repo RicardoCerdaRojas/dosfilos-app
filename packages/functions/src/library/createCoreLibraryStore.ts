@@ -1,13 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-
-// Initialize Firebase if not already done
-try {
-    initializeApp();
-} catch (e) {
-    // Already initialized
-}
 
 interface CreateCoreLibraryStoreRequest {
     key: string;
