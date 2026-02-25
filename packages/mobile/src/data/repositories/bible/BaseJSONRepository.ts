@@ -44,7 +44,7 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         const chapter = book.chapters[chapterIdx];
         const verses = chapter.slice(ref.verseStart - 1, ref.verseEnd ? ref.verseEnd : ref.verseStart);
 
-        return verses.join(' ');
+        return verses.join(' ').replace(/\\s*\\n\\s*/g, ' ').trim();
     }
 
     isValidBook(bookName: string): boolean {
@@ -110,7 +110,7 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         const chapterIdx = chapter - 1;
         if (chapterIdx < 0 || chapterIdx >= book.chapters.length) return null;
 
-        return book.chapters[chapterIdx];
+        return book.chapters[chapterIdx].map(verse => verse ? verse.replace(/\\s*\\n\\s*/g, ' ').trim() : verse);
     }
 
     search(query: string, limit = 20): { reference: string; text: string }[] {
@@ -132,7 +132,7 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
                     if (verseText.toLowerCase().includes(q)) {
                         results.push({
                             reference: `${bInfo.name} ${c + 1}:${v + 1}`,
-                            text: verseText
+                            text: verseText.replace(/\\s*\\n\\s*/g, ' ').trim()
                         });
                         count++;
                         if (count >= limit) return results;

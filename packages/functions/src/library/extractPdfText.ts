@@ -4,8 +4,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
-const db = getFirestore();
-const storage = getStorage();
 
 /**
  * Cloud Function: Extract text from PDFs uploaded to library
@@ -22,6 +20,8 @@ export const extractPdfText = onObjectFinalized(
         timeoutSeconds: 300,
     },
     async (event) => {
+        const db = getFirestore();
+        const storage = getStorage();
         const filePath = event.data.name;
         const contentType = event.data.contentType;
 

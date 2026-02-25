@@ -27,7 +27,7 @@ export const LoginScreen = () => {
     redirectUri: "https://auth.expo.io/@ricardocerdarojas/mobile", 
     responseType: "token", 
     scopes: ['openid', 'profile', 'email'],
-  }, { useProxy: true });
+  });
 
   React.useEffect(() => {
     if (request) {

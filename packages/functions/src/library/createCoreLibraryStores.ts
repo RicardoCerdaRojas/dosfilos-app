@@ -1,13 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-
-// Initialize Firebase if not already done
-try {
-    initializeApp();
-} catch (e) {
-    // Already initialized
-}
 
 /**
  * Cloud Function: Create Core Library File Search Stores
@@ -24,8 +16,8 @@ try {
  * 5. Save config to Firestore
  */
 
+
 interface CreateCoreLibraryStoresRequest {
-    // Empty - no parameters needed
 }
 
 export const createCoreLibraryStores = onCall<CreateCoreLibraryStoresRequest>(
