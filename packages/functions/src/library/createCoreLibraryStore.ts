@@ -10,8 +10,8 @@ interface CreateCoreLibraryStoreRequest {
 export const createCoreLibraryStore = onCall<CreateCoreLibraryStoreRequest>(
     {
         cors: true,
-        memory: '512MiB',
-        timeoutSeconds: 60,
+        memory: '1GiB',
+        timeoutSeconds: 180,
         secrets: ['GEMINI_API_KEY']
     },
     async (request) => {
