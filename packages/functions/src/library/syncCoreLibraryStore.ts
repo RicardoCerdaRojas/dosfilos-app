@@ -9,8 +9,6 @@ try {
     // Already initialized
 }
 
-const db = getFirestore();
-
 /**
  * Cloud Function: Sync a specific Core Library Store
  * 
@@ -51,6 +49,7 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
 
         try {
             console.log(`🔄 Syncing ${context} store...`);
+            const db = getFirestore();
 
             // 1. Get admin user ID
             const usersSnapshot = await db.collection('users')

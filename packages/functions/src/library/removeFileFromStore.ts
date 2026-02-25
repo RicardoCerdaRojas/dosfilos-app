@@ -1,7 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-const db = getFirestore();
+// Initialize Firebase if not already done
+try {
+    initializeApp();
+} catch (e) {
+    // Already initialized
+}
 
 interface RemoveFileFromStoreRequest {
     documentId: string;
@@ -15,6 +21,7 @@ export const removeFileFromStore = onCall<RemoveFileFromStoreRequest>(
         timeoutSeconds: 30
     },
     async (request) => {
+        const db = getFirestore();
         // Only admin can call this
         if (!request.auth || request.auth.token?.email !== 'rdocerda@gmail.com') {
             throw new HttpsError('permission-denied', 'Only admin can remove files from core library stores');

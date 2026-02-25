@@ -1,8 +1,13 @@
-
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-const db = getFirestore();
+// Initialize Firebase if not already done
+try {
+    initializeApp();
+} catch (e) {
+    // Already initialized
+}
 
 interface CreateCoreLibraryStoreRequest {
     key: string;
@@ -18,6 +23,7 @@ export const createCoreLibraryStore = onCall<CreateCoreLibraryStoreRequest>(
         secrets: ['GEMINI_API_KEY']
     },
     async (request) => {
+        const db = getFirestore();
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             throw new HttpsError('failed-precondition', 'GEMINI_API_KEY not configured');
