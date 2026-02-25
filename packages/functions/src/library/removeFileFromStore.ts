@@ -9,8 +9,9 @@ interface RemoveFileFromStoreRequest {
 export const removeFileFromStore = onCall<RemoveFileFromStoreRequest>(
     {
         cors: true,
-        memory: '512MiB',
-        timeoutSeconds: 30
+        memory: '1GiB',
+        timeoutSeconds: 180,
+        secrets: ['GEMINI_API_KEY']
     },
     async (request) => {
         const db = getFirestore();

@@ -17,6 +17,8 @@ interface CreateStoreRequest {
 
 export const createGeminiStore = onCall<CreateStoreRequest>({
     cors: true,
+    memory: '1GiB',
+    timeoutSeconds: 180,
     secrets: ['GEMINI_API_KEY']
 }, async (request) => {
     const db = getFirestore();

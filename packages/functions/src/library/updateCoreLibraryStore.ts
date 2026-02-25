@@ -10,8 +10,8 @@ interface UpdateCoreLibraryStoreRequest {
 export const updateCoreLibraryStore = onCall<UpdateCoreLibraryStoreRequest>(
     {
         cors: true,
-        memory: '512MiB',
-        timeoutSeconds: 30,
+        memory: '1GiB',
+        timeoutSeconds: 180,
         secrets: ['GEMINI_API_KEY']
     },
     async (request) => {
