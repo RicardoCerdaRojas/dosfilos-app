@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
+
 /**
  * Cloud Function: Sync a specific Core Library Store
  * 

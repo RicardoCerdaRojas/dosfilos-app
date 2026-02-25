@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
+
 interface RemoveFileFromStoreRequest {
     documentId: string;
     context: string;

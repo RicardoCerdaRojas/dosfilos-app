@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
+
 /**
  * Cloud Function: Create Core Library File Search Stores
  * 
@@ -16,8 +17,8 @@ import { getFirestore } from 'firebase-admin/firestore';
  * 5. Save config to Firestore
  */
 
+
 interface CreateCoreLibraryStoresRequest {
-    // Empty - no parameters needed
 }
 
 export const createCoreLibraryStores = onCall<CreateCoreLibraryStoresRequest>(
