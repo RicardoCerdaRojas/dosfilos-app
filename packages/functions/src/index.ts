@@ -10,7 +10,9 @@ export { createGeminiStore } from './library/createGeminiStore';
 export { syncResourceToGemini } from './library/syncResourceToGemini';
 export { createCoreLibraryStores } from './library/createCoreLibraryStores';
 export { createCoreLibraryStore } from './library/createCoreLibraryStore';
+export { updateCoreLibraryStore } from './library/updateCoreLibraryStore';
 export { syncCoreLibraryStore } from './library/syncCoreLibraryStore';
+export { removeFileFromStore } from './library/removeFileFromStore';
 
 // Export Stripe functions
 export { createCheckoutSession } from './stripe/createCheckoutSession';

@@ -13,11 +13,16 @@ export * from './firebase/FirebasePlanRepository';
 export * from './firebase/FirebaseAnalyticsRepository'; // 📊 Analytics Repository
 export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository
 export * from './firebase/FirebaseUserActivityRepository'; // 📊 User Activity Repository
+export * from './firebase/FirestoreAIChatRepository'; // 🎓 Multi-Agent Chat Repository
+export * from './firebase/FirestoreAIProjectRepository'; // 🎓 Multi-Agent Project Repository
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';
 export * from './gemini/GeminiPlanGenerator';
 export * from './gemini/GeminiEmbeddingService';
 export * from './gemini/GeminiFileSearchService';
+export * from './gemini/GeminiMultiAgentService'; // 🎓 Multi-Agent AI Service
+export * from './firebase/MockAIAgentRepository'; // 🎓 Catalog of AI faculty agents
+export * from './firebase/FirestoreAIAgentRepository'; // 🎓 Live DB of AI faculty agents
 export * from './greek-tutor/gemini/GeminiGreekTutorService'; // 🏛️ Greek Tutor Service
 export * from './greek-tutor/repositories/FirestoreGreekSessionRepository';
 export * from './services/DocumentProcessingService';

@@ -16,11 +16,15 @@ export * from './entities/UserActivity'; // 📊 Analytics: User Activity
 export * from './entities/UserActivitySummary'; // 📊 Analytics: User Activity Summary
 export * from './entities/DailyMetrics'; // 📊 Analytics: Daily Metrics
 export * from './entities/GeoEvent'; // 📊 Geographic Analytics: Events
-export * from './greek-tutor/entities/entities'; // 🏛️ Greek Tutor Entities
+export type { GreekForm, TrainingUnit, ChatMessage as GreekTutorChatMessage, UserResponse, StudySession, ExegeticalInsight, MorphemeComponent, MorphologyBreakdown, QuizQuestion, QuizAttempt, UnitProgress, SessionProgress, BiblicalPassage, PassageWord, UnitPreview } from './greek-tutor/entities/entities'; // 🏛️ Greek Tutor Entities
 export * from './greek-tutor/syntax-analysis'; // 🏛️ Greek Syntax Analysis
 export * from './models/Plan'; // 🎯 Plan models (refactored system)
 
 
+// Multi-Agent Faculty Entities
+export * from './entities/AIAgent';
+export * from './entities/AIChatSession';
+export * from './entities/AIProject';
 
 // Repositories
 export * from './repositories/ISermonRepository';
@@ -32,7 +36,11 @@ export * from './repositories/IAnalyticsRepository'; // 📊 Analytics Repositor
 export * from './repositories/IUserRepository'; // 📊 Admin User Repository
 export * from './repositories/IUserActivityRepository'; // 📊 User Activity Repository
 export * from './repositories/IGeoEventRepository'; // 📊 Geographic Event Repository
-
+export * from './repositories/IAIAgentRepository'; // 🎓 Multi-Agent Agent Repository
+export * from './repositories/IAIChatRepository'; // 🎓 Multi-Agent Chat Repository
+export * from './repositories/IAIProjectRepository'; // 🎓 Multi-Agent Project Repository
+export * from './repositories/IAuthRepository';
+export * from './repositories/IVectorRepository';
 
 // Config
 export * from './config/planMetadata';
@@ -47,6 +55,7 @@ export * from './services/IEmbeddingService';
 export * from './services/ITextExtractor';
 export * from './services/ICacheService';
 export * from './services/PlanService'; // 🎯 Plan Service (refactored system)
+export * from './services/IAIGeneratorService'; // 🎓 Multi-Agent Generator Service
 export * from './ports/IFileSearchService'; // 🎯 File Search ports
 export * from './greek-tutor/ports/IGreekTutorService'; // 🏛️ Greek Tutor Ports
 export * from './greek-tutor/ports/IWordCacheRepository'; // 🏛️ Greek Tutor Word Cache
@@ -55,11 +64,12 @@ export * from './bible'; // 📖 Bible Domain (Multi-version support)
 
 
 // Workflow
-export * from './entities/SermonWorkflow';
+export { WorkflowPhase } from './entities/SermonWorkflow';
+export type { ChatMessage as SermonWorkflowChatMessage, PhaseResult, SermonWorkflow, CreateWorkflowDTO } from './entities/SermonWorkflow';
 export * from './entities/WorkflowConfiguration';
 export * from './repositories/IWorkflowRepository';
 export * from './repositories/IConfigRepository';
-export * from './types/content-types';
+export type { ContentType, WorkflowPhase as ContentWorkflowPhase, QuickAction, CanvasChatMessage, ContentAdapter, CanvasChatProps } from './types/content-types';
 
 // Strategies
 export * from './strategies';

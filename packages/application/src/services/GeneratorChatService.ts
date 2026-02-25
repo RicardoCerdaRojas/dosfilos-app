@@ -1,5 +1,6 @@
 import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySelector, GeminiFileSearchService } from '@dosfilos/infrastructure';
-import { ChatMessage, WorkflowPhase, LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext } from '@dosfilos/domain';
+import { LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext } from '@dosfilos/domain';
+import { ChatMessage, WorkflowPhase } from '@dosfilos/domain/src/entities/SermonWorkflow';
 import { SourceReference, ChatResponseWithSources } from './PlannerChatService';
 
 interface StoredHistory {
@@ -369,6 +370,262 @@ export class GeneratorChatService {
     }
 
     /**
+     * Send a message and get AI response with streaming support
+     */
+    async sendMessageStream(
+        message: string,
+        context: {
+            passage: string;
+            currentContent?: any;
+            focusedSection?: string | null;
+            libraryResources: LibraryResourceEntity[];
+            phaseResources?: LibraryResourceEntity[];
+            cacheName?: string;
+            aiModel?: string;      // 🎯 NEW
+            temperature?: number;  // 🎯 NEW
+        },
+        onChunk: (chunk: string) => void
+    ): Promise<ChatResponseWithSources> {
+        // Add user message to history
+        this.history.push({
+            role: 'user',
+            content: message,
+            timestamp: new Date()
+        });
+        this.notifyListeners();
+        this.saveHistory();
+
+        try {
+            // Select coaching strategy
+            const strategy = await this.strategySelector.selectStrategy(
+                message,
+                {
+                    type: this.currentPhase,
+                    topicOrBook: context.passage,
+                    resources: context.libraryResources
+                },
+                this.userPreferredStyle
+            );
+            const strategyPromptAdditions = strategy.buildSystemPromptAdditions();
+
+
+            // Collect all resource IDs for RAG search
+            // Priority: phase-specific + entire library
+            const allResources = new Map<string, LibraryResourceEntity>();
+
+            // Add library resources
+            for (const r of context.libraryResources) {
+                allResources.set(r.id, r);
+            }
+
+            // Add phase-specific resources (they get added, duplicates filtered by Map)
+            if (context.phaseResources) {
+                for (const r of context.phaseResources) {
+                    allResources.set(r.id, r);
+                }
+            }
+
+            const resourceIds = Array.from(allResources.keys());
+            let relevantChunks: DocumentChunkEntity[] = [];
+            let sources: SourceReference[] = [];
+
+            // DECISION: Use Gemini Cache if available, otherwise fallback to Manual RAG
+            if (context.cacheName) {
+
+
+                // When using cache, we populate sources with the cached resources for display
+                // The actual content is already available to the model via the cache
+                const cachedResources = Array.from(allResources.values())
+                    .filter(r => r.metadata?.geminiUri);
+
+                sources = cachedResources.map(r => ({
+                    author: r.author,
+                    title: r.title,
+                    snippet: '(Contenido completo disponible en caché)'
+                }));
+
+
+            } else {
+                // FALLBACK: Manual RAG search
+
+
+                if (resourceIds.length > 0) {
+                    // Build search query from message + context
+                    const searchQuery = context.focusedSection
+                        ? `${message} ${context.focusedSection}`
+                        : message;
+
+                    try {
+                        const searchResults = await this.documentProcessor.searchRelevantChunks(
+                            searchQuery,
+                            resourceIds,
+                            5 // Top 5 chunks
+                        );
+                        relevantChunks = searchResults.map(r => r.chunk);
+
+
+                        // Convert to source references
+                        sources = relevantChunks.map(chunk => ({
+                            author: chunk.resourceAuthor,
+                            title: chunk.resourceTitle,
+                            page: chunk.metadata.page,
+                            snippet: chunk.text.substring(0, 150) + '...'
+                        }));
+                    } catch (error) {
+                        console.warn('⚠️ [GeneratorChat] RAG search failed:', error);
+                    }
+                }
+            }
+
+            // Build enriched context
+            const enrichedContext = {
+                type: this.currentPhase,
+                topicOrBook: context.passage,
+                resources: Array.from(allResources.values()),
+                relevantChunks,
+                hasLibraryContext: context.cacheName ? true : relevantChunks.length > 0,
+                strategyPromptAdditions,
+                focusedSection: context.focusedSection,
+                currentContent: context.currentContent,
+                cacheName: context.cacheName, // Pass cacheName to generator
+                // 🎯 NEW: Pass geminiUris for Multimodal RAG fallback if cache is missing
+                geminiUris: context.cacheName ? undefined : Array.from(allResources.values())
+                    .map(r => r.metadata?.geminiUri)
+                    .filter((uri): uri is string => !!uri),
+                // 🎯 NEW: Pass Global File Search Store ID
+                fileSearchStoreId: '',
+                aiModel: context.aiModel,       // 🎯 NEW
+                temperature: context.temperature // 🎯 NEW
+            };
+
+            // 🎯 NEW: Inject Global Store ID if available
+            if (this.coreLibraryService?.isInitialized()) {
+                try {
+                    // Determine which store to use based on the current phase
+                    let contextType: FileSearchStoreContext;
+
+                    switch (this.currentPhase) {
+                        case 'exegesis':
+                            contextType = FileSearchStoreContext.EXEGESIS;
+                            break;
+                        case 'homiletics':
+                        case 'sermon': // Draft uses Homiletics store
+                        default:
+                            contextType = FileSearchStoreContext.HOMILETICS;
+                            break;
+                    }
+
+                    const storeId = this.coreLibraryService.getStoreId(contextType);
+                    enrichedContext.fileSearchStoreId = storeId;
+
+                } catch (error) {
+                    console.warn('⚠️ [GeneratorChat] Could not get File Search Store:', error);
+                }
+            }
+
+            // Get phase for chat
+            const workflowPhase = this.contentTypeToWorkflowPhase(this.currentPhase);
+
+            const response = await this.generator.chatStream(
+                workflowPhase,
+                this.history,
+                enrichedContext,
+                onChunk
+            );
+
+            // Add assistant response to history
+            const messageId = `assistant_${Date.now()}`;
+            this.history.push({
+                role: 'assistant',
+                content: response,
+                timestamp: new Date()
+            });
+
+            // Store sources
+            this.sourcesPerMessage.set(messageId, sources);
+
+            this.notifyListeners();
+            this.saveHistory();
+
+            return {
+                content: response,
+                sources,
+                strategyUsed: strategy.getStyle()
+            };
+        } catch (error) {
+            // Remove user message on failure
+            this.history.pop();
+            this.notifyListeners();
+            this.saveHistory();
+            throw error;
+        }
+    }
+
+    /**
+     * Analyze current chat history to extract passage, idea, and potentially a full draft.
+     */
+    async analyzeChatForSermon(): Promise<{ passage: string, idea: string, hasDraft: boolean, title: string, contentMarkdown: string }> {
+        const historyCopy = [...this.history];
+        if (historyCopy.length === 0) {
+            return { passage: '', idea: '', hasDraft: false, title: '', contentMarkdown: '' };
+        }
+
+        const instructionMsg = `Analyze our entire conversation above. Extract the following information in strict JSON format:
+        {
+            "passage": "The primary biblical passage discussed, or empty string if none.",
+            "idea": "The central idea, theme, or proposition discussed.",
+            "hasDraft": boolean (true if a full sermon draft, manuscript, or highly detailed outline was provided by the assistant AND implicitly or explicitly accepted by the user).,
+            "title": "A suggested title for the sermon, based on the discussion.",
+            "contentMarkdown": "If hasDraft is true, provide the full sermon content in clean Markdown format (using standard markdown like #, ##, ###, *, -). Do not use HTML tags. If hasDraft is false, leave empty."
+        }
+        Return ONLY valid JSON. Do not wrap in markdown \`\`\`json blocks. Do not add any conversational text.
+        `;
+
+        historyCopy.push({
+            role: 'user',
+            content: instructionMsg,
+            timestamp: new Date()
+        });
+
+        try {
+            const response = await this.generator.chat(
+                WorkflowPhase.PLANNING,
+                historyCopy,
+                {}
+            );
+
+            let cleanJson = response.trim();
+            if (cleanJson.startsWith('```json')) {
+                cleanJson = cleanJson.substring(7);
+            } else if (cleanJson.startsWith('```')) {
+                cleanJson = cleanJson.substring(3);
+            }
+            if (cleanJson.endsWith('```')) {
+                cleanJson = cleanJson.substring(0, cleanJson.length - 3);
+            }
+
+            const parsed = JSON.parse(cleanJson.trim());
+            const rawContent = parsed.contentMarkdown || '';
+            // Strip out AI-generated custom bible links to prevent polluting the editor
+            // Handles multiple MDXEditor backslash escaping e.g. \\[📖 Ref\\]\\(#bible-Ref\\)
+            const cleanedContent = rawContent.replace(/\\*\[(.*?)\\*\]\\*\(#bible-[^)]+\\*\)/gi, (_, inner) => {
+                return inner.replace(/📖\s*/g, "").replace(/\\/g, "").trim();
+            });
+
+            return {
+                passage: parsed.passage || '',
+                idea: parsed.idea || '',
+                hasDraft: !!parsed.hasDraft,
+                title: parsed.title || '',
+                contentMarkdown: cleanedContent
+            };
+        } catch (error) {
+            console.error('Failed to analyze chat:', error);
+            throw new Error('Error al analizar la conversación. Intenta de nuevo.');
+        }
+    }
+
+    /**
      * Get current message history
      */
     getHistory(): ChatMessage[] {
@@ -415,8 +672,9 @@ export class GeneratorChatService {
         this.listeners.forEach(listener => listener());
     }
 
-    private contentTypeToWorkflowPhase(contentType: ContentType): WorkflowPhase {
+    private contentTypeToWorkflowPhase(contentType: ContentType | 'brainstorming'): WorkflowPhase {
         switch (contentType) {
+            case 'brainstorming': return WorkflowPhase.PLANNING;
             case 'exegesis': return WorkflowPhase.EXEGESIS;
             case 'homiletics': return WorkflowPhase.HOMILETICS;
             case 'sermon': return WorkflowPhase.DRAFTING;

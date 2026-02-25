@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SermonForm, SermonFormData } from '@/components/sermons/sermon-form';
 import { useSermon, useUpdateSermon } from '@/hooks/use-sermons';
@@ -47,23 +46,7 @@ export function SermonEditPage() {
   }
 
   return (
-    <div className="w-full max-w-[95%] mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(`/dashboard/sermons/${id}`)}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">{t('form.editTitle')}</h1>
-          <p className="text-muted-foreground">{sermon.title}</p>
-        </div>
-      </div>
-
-      {/* Form */}
+    <div className="h-full">
       <SermonForm
         defaultValues={{
           title: sermon.title,
@@ -77,6 +60,7 @@ export function SermonEditPage() {
         onSubmit={handleSubmit}
         submitLabel={t('form.save')}
         loading={updating}
+        onBack={() => navigate(`/dashboard/sermons/${id}`)}
       />
     </div>
   );

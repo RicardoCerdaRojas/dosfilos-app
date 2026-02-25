@@ -3,10 +3,14 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from '@/components/theme-provider'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Initialize i18n before rendering
 import { initI18n } from '@/i18n'
 initI18n();
+
+// Create a client
+const queryClient = new QueryClient();
 
 // Suppress known Excalidraw warning about controlled/uncontrolled inputs
 // This is a known issue in the Excalidraw library and doesn't affect functionality
@@ -24,8 +28,10 @@ console.error = (...args: any[]) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="system" storageKey="dosfilos-ui-theme">
-      <App />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="system" storageKey="dosfilos-ui-theme">
+        <App />
+      </ThemeProvider>
+    </QueryClientProvider>
   </StrictMode>,
 )

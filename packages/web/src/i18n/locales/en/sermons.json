@@ -2,7 +2,45 @@
     "header": {
         "title": "Sermons",
         "subtitle": "Manage your sermons and pastoral content",
-        "newButton": "New Sermon"
+        "newButton": "New Sermon",
+        "generateWithTutor": "Generate with Tutor",
+        "useWizard": "Use Classic Wizard",
+        "createBlank": "Blank Sermon"
+    },
+    "sermonCreatedSuccess": "Sermon created successfully",
+    "sermonCreatedError": "Error creating sermon",
+    "tutor": {
+        "welcome": "Hi! I'm your preaching assistant.",
+        "welcomeSubtitle": "Tell me what's on your mind, or ask for suggestions.",
+        "prompts": {
+            "idea": "Help me find a sermon idea for Sunday",
+            "passage": "I have a topic but need a bible passage",
+            "example": "I want to preach on grace, any suggestions?"
+        },
+        "actions": {
+            "idea": "Need an idea",
+            "passage": "Suggest passage",
+            "example": "Example: Grace"
+        },
+        "inputPlaceholder": "Type your idea or question...",
+        "detailsTitle": "Sermon Details",
+        "passageLabel": "Biblical Passage",
+        "passagePlaceholder": "e.g. John 3:16",
+        "ideaLabel": "Central Idea / Theme",
+        "ideaPlaceholder": "What do you want to preach about?",
+        "generating": "Generating Sermon...",
+        "generateButton": "Generate Full Sermon",
+        "disclaimer": "Generation will create a full exegetical and homiletical analysis in the background.",
+        "steps": {
+            "exegesis": "Performing exegetical analysis...",
+            "homiletics": "Structuring the sermon...",
+            "drafting": "Drafting full content...",
+            "success": "Sermon ready!"
+        },
+        "errors": {
+            "missingFields": "Please define a passage and central idea first.",
+            "generationFailed": "Error generating sermon. Please try again."
+        }
     },
     "loading": "Loading sermons...",
     "empty": {

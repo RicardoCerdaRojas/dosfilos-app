@@ -146,10 +146,10 @@ export class RVR1960Repository implements IBibleVersionRepository {
             const endVerseIndex = Math.min(ref.verseEnd - 1, chapterVerses.length - 1);
             for (let i = startVerseIndex; i <= endVerseIndex; i++) {
                 const verseNum = i + 1;
-                text += `${verseNum} ${chapterVerses[i]} `;
+                text += `${verseNum} ${chapterVerses[i].replace(/\s*\/n\s*/g, ' ').trim()} `;
             }
         } else {
-            text = chapterVerses[startVerseIndex];
+            text = chapterVerses[startVerseIndex].replace(/\s*\/n\s*/g, ' ').trim();
         }
 
         return text.trim();
@@ -195,7 +195,7 @@ export class RVR1960Repository implements IBibleVersionRepository {
         const chapterIdx = chapter - 1;
         if (chapterIdx < 0 || chapterIdx >= book.chapters.length) return null;
 
-        return book.chapters[chapterIdx];
+        return book.chapters[chapterIdx].map((verse: string) => verse ? verse.replace(/\s*\/n\s*/g, ' ').trim() : verse);
     }
 
     search(query: string, limit = 20): { reference: string; text: string }[] {
@@ -222,7 +222,7 @@ export class RVR1960Repository implements IBibleVersionRepository {
                     if (verseText.toLowerCase().includes(q)) {
                         results.push({
                             reference: `${bookName} ${c + 1}:${v + 1}`,
-                            text: verseText
+                            text: verseText.replace(/\s*\/n\s*/g, ' ').trim()
                         });
                         count++;
                         if (count >= limit) return results;

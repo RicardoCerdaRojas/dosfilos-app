@@ -77,8 +77,19 @@ export function PublicSermonPage() {
 
     // Markdown Processing
     const processContent = (content: string) => {
+        if (!content) return '';
         const bibleRegex = /\b((?:[1-3]\s)?[A-Z][a-zá-ú]+\s\d+:\d+(?:-\d+)?)\b/g;
-        return content.replace(bibleRegex, (match) => `[${match}](#bible-${encodeURIComponent(match)})`);
+        // Add Bible reference links
+        return content.replace(bibleRegex, (match, _, offset, string) => {
+            // Prevent double-processing if already inside a markdown link
+            const substringBefore = string.slice(Math.max(0, offset - 10), offset);
+            const substringAfter = string.slice(offset + match.length, Math.min(string.length, offset + match.length + 20));
+            
+            if (substringBefore.includes('[📖') || substringAfter.includes('](#bible-') || substringBefore.includes('#bible-')) {
+                return match;
+            }
+            return `[${match}](#bible-${encodeURIComponent(match)})`;
+        });
     };
 
     const components = {

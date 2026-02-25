@@ -131,7 +131,7 @@ const planTranslationsData = {
             modules: {
                 "module:dashboard": "Panel",
                 "module:sermones": "Sermones",
-                "module:planes": "Planes de Predicación",
+                "module:planes": "Planificador",
                 "module:generar": "Generador de Sermones",
                 "module:biblioteca": "Biblioteca",
                 "module:configuracion": "Configuración",
@@ -208,7 +208,7 @@ const planTranslationsData = {
             modules: {
                 "module:dashboard": "Panel",
                 "module:sermones": "Sermones",
-                "module:planes": "Planes de Predicación",
+                "module:planes": "Planificador",
                 "module:generar": "Generador de Sermones",
                 "module:biblioteca": "Biblioteca",
                 "module:configuracion": "Configuración",

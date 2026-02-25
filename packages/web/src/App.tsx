@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { DashboardPage } from '@/pages/dashboard';
 import { SermonsPage } from '@/pages/sermons';
 import { SermonNewPage } from '@/pages/sermons/new';
+import { SermonTutorPage } from '@/pages/sermons/tutor';
 import { SermonDetailPage } from '@/pages/sermons/detail';
 import { SermonEditPage } from '@/pages/sermons/edit';
 import { PreachModePage } from '@/pages/sermons/preach';
@@ -31,9 +32,14 @@ import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { AnalyticsDashboard } from '@/pages/admin/AnalyticsDashboard';
 import { GeographicDashboard } from '@/pages/admin/GeographicDashboard';
 import { UserManagement } from '@/pages/admin/UserManagement';
+import TutorManagement from '@/pages/admin/TutorManagement';
+import TutorEditor from '@/pages/admin/TutorEditor';
 import { GreekTutorPage } from '@/pages/greek-tutor/GreekTutorPage';
 import { GreekTutorProvider } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorProvider';
 import { GreekTutorDashboardView } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorDashboardView';
+import { BiblePage } from '@/pages/bible/BiblePage';
+import { BibleProvider } from '@/context/BibleContext';
+import { FacultyChatPage } from '@/pages/faculty/chat';
 import { useEffect } from 'react';
 import { SessionTracker } from '@/components/analytics/SessionTracker';
 
@@ -132,6 +138,7 @@ function App() {
               <Route index element={<SermonsPage />} />
               <Route path="new" element={<SermonNewPage />} />
               <Route path="generate" element={<SermonWizard />} />
+              <Route path="tutor" element={<SermonTutorPage />} />
               <Route path=":id" element={<SermonDetailPage />} />
               <Route path=":id/edit" element={<SermonEditPage />} />
               {/* Preach mode removed - moved outside dashboard layout */}
@@ -147,9 +154,21 @@ function App() {
             <Route path="planner" element={<PlannerWizard />} />
             <Route path="library" element={<LibraryManager />} />
             <Route path="subscription" element={<SubscriptionPage />} />
+            
+            {/* Bible Module */}
+            <Route path="bible" element={
+              <BibleProvider>
+                <BiblePage />
+              </BibleProvider>
+            } />
 
-            {/* AI Sermon Generator */}
             <Route path="generate-sermon" element={<SermonWizard />} />
+
+            {/* Faculty Module */}
+            <Route path="faculty">
+              <Route index element={<FacultyChatPage />} />
+              <Route path=":sessionId" element={<FacultyChatPage />} />
+            </Route>
 
             {/* Greek Tutor - Start page with sidebar for navigation */}
             <Route path="greek-tutor" element={<GreekTutorPage />} />
@@ -169,6 +188,9 @@ function App() {
             <Route path="admin/analytics" element={<AnalyticsDashboard />} />
             <Route path="admin/geographic" element={<GeographicDashboard />} />
             <Route path="admin/users" element={<UserManagement />} />
+            <Route path="admin/tutors" element={<TutorManagement />} />
+            <Route path="admin/tutors/new" element={<TutorEditor />} />
+            <Route path="admin/tutors/:id" element={<TutorEditor />} />
             
             {/* PoC Routes */}
             <Route path="gemini-test" element={<GeminiTest />} />

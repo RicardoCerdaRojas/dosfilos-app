@@ -20,6 +20,7 @@ export interface ISermonGenerator {
     regenerateSermonPoint(point: any, rules: GenerationRules, context: any): Promise<any>;
 
     chat(phase: WorkflowPhase, history: ChatMessage[], context: any): Promise<string>;
+    chatStream(phase: WorkflowPhase, history: ChatMessage[], context: any, onChunk: (chunk: string) => void): Promise<string>;
     refineContent(content: string, instruction: string, context?: any): Promise<string>;
 
     // ========== NEW: TWO-PHASE HOMILETICS GENERATION ==========

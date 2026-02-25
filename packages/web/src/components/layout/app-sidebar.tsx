@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot 
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -98,6 +98,8 @@ export function AppSidebar() {
     // Group 1: Main
     [
       { name: t('menu.dashboard'), href: '/dashboard', icon: Home },
+      { name: 'Biblia', href: '/dashboard/bible', icon: Book },
+      { name: 'Mis Tutores', href: '/dashboard/faculty', icon: MessageSquareQuote },
       { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
       { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
     ],
@@ -117,6 +119,7 @@ export function AppSidebar() {
   const adminNavigation = [
     { name: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
     { name: 'Gestión de Usuarios', href: '/dashboard/admin/users', icon: Users },
+    { name: 'Tutores IA', href: '/dashboard/admin/tutors', icon: Bot },
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
     { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
   ];

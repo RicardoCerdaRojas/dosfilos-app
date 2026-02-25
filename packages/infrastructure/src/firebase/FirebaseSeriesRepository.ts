@@ -57,12 +57,11 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
     }
 
     private seriesToFirestore(series: SermonSeriesEntity): any {
-        // Serialize plannedSermons dates to Timestamps
-        let metadata = series.metadata || null;
+        let metadata: any = series.metadata || null;
         if (metadata && metadata.plannedSermons) {
             metadata = {
                 ...metadata,
-                plannedSermons: metadata.plannedSermons.map(ps => ({
+                plannedSermons: metadata.plannedSermons.map((ps: any) => ({
                     ...ps,
                     scheduledDate: ps.scheduledDate ? Timestamp.fromDate(new Date(ps.scheduledDate)) : null
                 }))

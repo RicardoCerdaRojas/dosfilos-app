@@ -66,59 +66,83 @@ export function useGeneratorChat({
 
     // Send Message Handler
     const handleSendMessage = async (message: string, role: 'user' | 'assistant' = 'user', expandedSectionId?: string | null) => {
-        // Optimistic UI
-        const tempData = {
-            id: Date.now().toString(),
+        // Optimistic UI for User
+        const userMsgId = Date.now().toString();
+        const userTempData = {
+            id: userMsgId,
             role,
             content: message,
             timestamp: new Date()
         };
-        setMessages(prev => [...prev, tempData]);
 
-        if (role === 'assistant') return;
+        // Prepare Assistant placeholder
+        const assistantMsgId = (Date.now() + 1).toString();
+        const assistantTempData = {
+            id: assistantMsgId,
+            role: 'assistant',
+            content: '', // Empty initially for streaming
+            timestamp: new Date()
+        };
+
+        if (role === 'user') {
+            setMessages(prev => [...prev, userTempData, assistantTempData]);
+        } else {
+            setMessages(prev => [...prev, userTempData]);
+            return;
+        }
 
         setIsLoading(true);
 
         try {
-            // General Chat (Global Store Context injected in Service)
-            // Note: We pass empty values for passage/content as they are less critical for Global Store chat
-            // or we could extract them if strictly needed, but getting them cleanly without the helpers is better for now.
             // Determine generic config based on phase
             let phaseKey: string = 'exegesis';
             if (phase === 'homiletics') phaseKey = 'homiletics';
-            if (phase === 'sermon') phaseKey = 'drafting'; // Mapped to WorkflowPhase.DRAFTING
+            if (phase === 'sermon') phaseKey = 'drafting';
 
             const aiModel = config?.advanced?.aiModel;
             const temperature = config?.[phaseKey]?.temperature || config?.advanced?.globalTemperature;
 
-            const response = await generatorChatService.sendMessage(message, {
-                passage: '', // Fallback for now to avoid complexity of helpers
-                currentContent: content,
-                focusedSection: expandedSectionId || null,
-                libraryResources: [], // No manual RAG resources needed
-                phaseResources: [],
-                cacheName: undefined, // No legacy cache
-                aiModel,       // 🎯 NEW
-                temperature    // 🎯 NEW
-            });
+            const response = await generatorChatService.sendMessageStream(
+                message,
+                {
+                    passage: '',
+                    currentContent: content,
+                    focusedSection: expandedSectionId || null,
+                    libraryResources: [],
+                    phaseResources: [],
+                    cacheName: undefined,
+                    aiModel,
+                    temperature
+                },
+                (chunk: string) => {
+                    // Update the specific assistant message as chunks arrive
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === assistantMsgId
+                            ? { ...msg, content: chunk }
+                            : msg
+                    ));
+                }
+            );
 
-            setMessages(prev => [...prev, {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: response.content,
-                timestamp: new Date(),
-                sources: response.sources,
-                strategyUsed: response.strategyUsed
-            }]);
+            // Final update with sources and strategy
+            setMessages(prev => prev.map(msg =>
+                msg.id === assistantMsgId
+                    ? {
+                        ...msg,
+                        content: response.content,
+                        sources: response.sources,
+                        strategyUsed: response.strategyUsed
+                    }
+                    : msg
+            ));
 
         } catch (error: any) {
             console.error('Chat error:', error);
-            setMessages(prev => [...prev, {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: `Error: ${error.message || 'Ocurrió un error inesperado'}`,
-                timestamp: new Date()
-            }]);
+            setMessages(prev => prev.map(msg =>
+                msg.id === assistantMsgId
+                    ? { ...msg, content: `Error: ${error.message || 'Ocurrió un error inesperado'}` }
+                    : msg
+            ));
         } finally {
             setIsLoading(false);
         }
