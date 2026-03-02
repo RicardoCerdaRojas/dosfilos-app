@@ -264,23 +264,56 @@ export function FacultyChatPage() {
     };
 
     // Auto-send the initial orchestrated question passed via ?q= URL param
-    const hasAutoSent = useRef(false);
+    const hasAutoSent = useRef<Record<string, boolean>>({});
+    
     useEffect(() => {
         const initialQuestion = searchParams.get('q');
+        const sessionKey = effectiveSessionId || 'new';
+        
         if (
             initialQuestion &&
-            !hasAutoSent.current &&
-            session &&
-            session.messages.length === 0 &&
+            !hasAutoSent.current[sessionKey] &&
             !isSending &&
             !isStreaming
         ) {
-            hasAutoSent.current = true;
-            // Remove ?q from the URL so a page refresh doesn't re-send
-            setSearchParams({}, { replace: true });
-            sendOrchestratedMessage({ message: initialQuestion, lengthPreference });
+            hasAutoSent.current[sessionKey] = true;
+            
+            const handleInitialQuestion = async () => {
+                // If we're in the 'new' route, we MUST create a session first
+                if (isNewSession) {
+                    const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
+                    if (!targetAgentId) return;
+                    
+                    try {
+                        const newSession = await createSession.mutateAsync({ agentId: targetAgentId });
+                        // We must wait for the new route to mount and the sessionQuery to have data
+                        // Let the navigation happen, and pass the ?q= forward again 
+                        // so the new mounted component handles it.
+                        navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(initialQuestion)}`, { replace: true });
+                        return;
+                    } catch (err) {
+                        console.error('Failed to create initial session:', err);
+                        setInput(initialQuestion);
+                        return;
+                    }
+                }
+                
+                // If we are already in a valid session and it's loaded, we can send
+                if (session && session.messages.length === 0) {
+                     // Remove ?q from the URL so a page refresh doesn't re-send
+                     setSearchParams({}, { replace: true });
+                     setTimeout(() => {
+                         sendOrchestratedMessage({ message: initialQuestion, lengthPreference });
+                     }, 100);
+                } else if (!session) {
+                    // Session is not loaded yet, allow the effect to re-run when it is
+                    hasAutoSent.current[sessionKey] = false;
+                }
+            };
+            
+            handleInitialQuestion();
         }
-    }, [session, searchParams]);
+    }, [isNewSession, effectiveSessionId, session, searchParams, isSending, isStreaming, sendOrchestratedMessage, lengthPreference, setSearchParams, createSession, navigate, agentIdForNew, agents]);
 
     useEffect(() => {
         scrollToBottom();
