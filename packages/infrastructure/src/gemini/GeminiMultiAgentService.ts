@@ -27,7 +27,7 @@ Mantén siempre una actitud de mentoría, paciencia y servicio pastoral.`;
 
     constructor(apiKey: string, modelName?: string) {
         this.genAI = new GoogleGenerativeAI(apiKey);
-        this.modelName = modelName || 'gemini-1.5-flash-latest';
+        this.modelName = modelName || 'gemini-2.5-flash';
     }
 
     private formatHistoryForGemini(history: AIChatMessage[]) {

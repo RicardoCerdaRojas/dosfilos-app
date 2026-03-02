@@ -27,7 +27,7 @@ export class GeminiQuizService implements IQuizService {
         modelName?: string
     ) {
         this.genAI = new GoogleGenerativeAI(apiKey);
-        this.modelName = modelName || 'gemini-1.5-flash-latest';
+        this.modelName = modelName || 'gemini-2.5-flash';
     }
 
     async generateQuizQuestions(
