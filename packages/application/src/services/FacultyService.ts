@@ -45,7 +45,7 @@ class FacultyService {
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-        const modelId = (import.meta as any).env?.VITE_GEMINI_MODEL_ID || 'gemini-1.5-flash-latest';
+        const modelId = (import.meta as any).env?.VITE_GEMINI_MODEL_ID || 'gemini-2.5-flash';
 
         if (!apiKey) {
             console.warn('Gemini API key not configured. Faculty AI features will be disabled.');
