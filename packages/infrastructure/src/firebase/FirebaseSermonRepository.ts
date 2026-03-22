@@ -179,6 +179,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
                 lastSaved: Timestamp.fromDate(sermon.wizardProgress.lastSaved)
             } : null,
             sourceSermonId: sermon.sourceSermonId ?? null,
+            sourceFacultySessionId: sermon.sourceFacultySessionId ?? null,
         };
     }
 
@@ -208,6 +209,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
                 lastSaved: d.wizardProgress.lastSaved?.toDate() || new Date()
             } : undefined,
             sourceSermonId: d.sourceSermonId,
+            sourceFacultySessionId: d.sourceFacultySessionId ?? undefined,
         });
     }
 }

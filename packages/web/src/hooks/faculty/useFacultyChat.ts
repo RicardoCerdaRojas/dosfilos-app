@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { facultyService } from '@dosfilos/application';
+import { facultyService, type ApprovedSermonOutline } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { AIAgent } from '@dosfilos/domain';
 
@@ -92,9 +92,9 @@ export function useFacultyChat(sessionId: string) {
     });
 
     const extractContentMutation = useMutation({
-        mutationFn: async ({ type }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER' }) => {
+        mutationFn: async ({ type, approvedOutline }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER'; approvedOutline?: ApprovedSermonOutline }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return await facultyService.extractContent.execute(user.uid, sessionId, type);
+            return await facultyService.extractContent.execute(user.uid, sessionId, type, approvedOutline);
         }
     });
 

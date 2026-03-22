@@ -6,13 +6,20 @@ import {
 
 export type ExtractionType = 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER';
 
+export interface ApprovedSermonOutline {
+    title: string;
+    passage: string;
+    proposition: string;
+    points: { title: string; verses: string }[];
+}
+
 export class ExtractTheologicalContentUseCase {
     constructor(
         private chatRepository: IAIChatRepository,
         private generatorService: IAIGeneratorService
     ) { }
 
-    async execute(userId: string, sessionId: string, type: ExtractionType): Promise<string> {
+    async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
             throw new Error('Session not found');
@@ -44,8 +51,26 @@ REGLAS:
 - Devuelve SOLO el JSON. Sin explicaciones ni texto adicional.
 `;
                 break;
-            case 'SERMON':
+            case 'SERMON': {
+                // Build the approved structure block if the user edited the outline
+                const outlineBlock = approvedOutline
+                    ? `
+═══════════════════════════════════════════════════
+ESTRUCTURA APROBADA POR EL USUARIO (OBLIGATORIA)
+DEBES usar EXACTAMENTE los siguientes valores.
+No los modifiques, no los reinterpetes.
+═══════════════════════════════════════════════════
+TÍTULO: ${approvedOutline.title}
+PASAJE: ${approvedOutline.passage}
+PROPOSICIÓN HOMILÉTICA: ${approvedOutline.proposition}
+PUNTOS DEL SERMÓN:
+${approvedOutline.points.map((p, i) => `  ${['I', 'II', 'III', 'IV', 'V'][i] ?? i + 1}. ${p.title} (${p.verses})`).join('\n')}
+═══════════════════════════════════════════════════
+`
+                    : '';
+
                 extractionPrompt = `
+${outlineBlock}
 Basándote en la conversación teológica anterior, extrae y redacta un BOSQUEJO DE SERMÓN EXPOSITIVO COMPLETO en Markdown con esta estructura exacta:
 
 # [TÍTULO CREATIVO DEL SERMÓN]
@@ -116,13 +141,14 @@ Basándote en la conversación teológica anterior, extrae y redacta un BOSQUEJO
 REGLAS IMPORTANTES:
 - Usa únicamente lo discutido en la conversación. No inventes datos no cubiertos.
 - Si en la conversación se discutió griego/hebreo, inclúyelo en la Exposición Bíblica.
-- El formato de la proposición debe seguir exactamente este ejemplo:
+${approvedOutline ? `- CRÍTICO: El título, pasaje, proposición y puntos ya fueron aprobados por el usuario. Úsalos EXACTAMENTE como aparecen en la ESTRUCTURA APROBADA de arriba. NO LOS CAMBIES.` : `- El formato de la proposición debe seguir exactamente este ejemplo:
   "En 📖 1 Pedro 2:11-17, aprenderás tres virtudes que todo creyente debe ejercitar en un mundo hostil."
   * Ejercita una conducta ejemplar como extranjero y peregrino (vv. 11-12)
   * Ejercita una sumisión voluntaria a las autoridades humanas por causa del Señor (vv. 13-15)
-  * Ejercita tu libertad en Cristo para el bien, no como pretexto para la maldad (vv. 16-17)
+  * Ejercita tu libertad en Cristo para el bien, no como pretexto para la maldad (vv. 16-17)`}
 `;
                 break;
+            }
             case 'BIBLE_STUDY':
                 extractionPrompt = "Resume la conversación anterior y estructúrala como una guía de estudio bíblico para un grupo pequeño, incluyendo ideas principales, preguntas de discusión para la congregación y aplicación práctica.";
                 break;

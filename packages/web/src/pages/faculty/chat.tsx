@@ -399,8 +399,8 @@ export function FacultyChatPage() {
         }
     };
 
-    const handleGenerateFullSermon = async (_approvedOutline: SermonOutline): Promise<string> => {
-        return await extractContent({ type: 'SERMON' });
+    const handleGenerateFullSermon = async (approvedOutline: SermonOutline): Promise<string> => {
+        return await extractContent({ type: 'SERMON', approvedOutline });
     };
 
     const handleCopy = () => {
@@ -905,6 +905,7 @@ export function FacultyChatPage() {
             {/* Sermon Outline Preview Modal (2-step sermon creation) */}
             <SermonOutlinePreviewModal
                 outline={sermonOutline}
+                sessionId={effectiveSessionId || undefined}
                 onClose={() => setSermonOutline(null)}
                 onGenerateFullSermon={handleGenerateFullSermon}
             />
