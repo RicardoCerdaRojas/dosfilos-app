@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@dosfilos/infrastructure';
 import { User, UserFilters, UserSortOptions } from '@dosfilos/domain';
 
@@ -35,12 +35,15 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
                             displayName: data.displayName || null,
                             photoURL: data.photoURL || null,
                             role: data.role,
+                            status: data.status || 'active',
                             stripeCustomerId: data.stripeCustomerId,
+
                             subscription: data.subscription ? {
                                 id: data.subscription.id || '',
                                 planId: data.subscription.planId || 'free',
                                 status: data.subscription.status || 'active',
                                 stripePriceId: data.subscription.stripePriceId || '',
+                                cancelAtPeriodEnd: data.subscription.cancelAtPeriodEnd ?? false,
                                 startDate: data.subscription.startDate?.toDate(),
                                 currentPeriodStart: data.subscription.currentPeriodStart?.toDate(),
                                 currentPeriodEnd: data.subscription.currentPeriodEnd?.toDate(),
@@ -59,14 +62,22 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
                                 sessionCount: data.analytics.sessionCount || 0,
                                 totalSessionDuration: data.analytics.totalSessionDuration || 0,
                                 sermonsCreated: data.analytics.sermonsCreated || 0,
+                                sermonsPublished: data.analytics.sermonsPublished || 0,
                                 sermonsGenerated: data.analytics.sermonsGenerated || 0,
                                 greekTutorSessions: data.analytics.greekTutorSessions || 0,
+                                greekTutorCompleted: data.analytics.greekTutorCompleted || 0,
                                 libraryUploads: data.analytics.libraryUploads || 0,
+                                seriesCreated: data.analytics.seriesCreated || 0,
+                                preachingPlansCreated: data.analytics.preachingPlansCreated || 0,
+                                contentCreatedToday: data.analytics.contentCreatedToday || 0,
+                                contentCreatedThisWeek: data.analytics.contentCreatedThisWeek || 0,
                                 engagementScore: data.analytics.engagementScore || 0,
                                 riskLevel: data.analytics.riskLevel || 'low',
                                 firstSermonAt: data.analytics.firstSermonAt?.toDate(),
-                                firstAIGenerationAt: data.analytics.firstAIGenerationAt?.toDate()
+                                firstAIGenerationAt: data.analytics.firstAIGenerationAt?.toDate(),
+                                lastContentCreatedAt: data.analytics.lastContentCreatedAt?.toDate(),
                             } : undefined,
+
                             metadata: data.metadata,
                             createdAt: data.createdAt?.toDate() || new Date(),
                             updatedAt: data.updatedAt?.toDate() || new Date()

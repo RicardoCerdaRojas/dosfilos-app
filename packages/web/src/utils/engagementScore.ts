@@ -10,7 +10,8 @@ export interface UserAnalytics {
     lastLoginAt?: Date;
     sermonsCreated?: number;
     lastActivityAt?: Date;
-    greekSessionsCreated?: number;
+    greekTutorSessions?: number;    // Real Firestore field name
+    greekSessionsCreated?: number;  // Legacy alias (kept for backward compat)
 }
 
 export interface EngagementFactors {
@@ -43,11 +44,13 @@ export function calculateEngagementScore(analytics?: UserAnalytics): number {
  * Calculate individual engagement factors
  */
 export function calculateEngagementFactors(analytics: UserAnalytics): EngagementFactors {
+    // Support both field names: greekTutorSessions (real Firestore) and greekSessionsCreated (legacy)
+    const greekSessions = analytics.greekTutorSessions ?? analytics.greekSessionsCreated ?? 0;
     return {
         loginFrequency: calculateLoginFrequencyScore(analytics.loginCount || 0),
         recency: calculateRecencyScore(analytics.lastActivityAt || analytics.lastLoginAt),
         sermonCreation: calculateSermonCreationScore(analytics.sermonsCreated || 0),
-        greekTutorUsage: calculateGreekTutorScore(analytics.greekSessionsCreated || 0),
+        greekTutorUsage: calculateGreekTutorScore(greekSessions),
         consistency: calculateConsistencyScore(analytics),
     };
 }
