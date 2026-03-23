@@ -213,6 +213,9 @@ export function FacultyChatPage() {
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
     const [extractingType, setExtractingType] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const chatScrollRef = useRef<HTMLDivElement>(null);
+    // true = user scrolled up intentionally; we stop forcing the scroll
+    const userScrolledUp = useRef(false);
     // Sidebar state
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
@@ -259,9 +262,34 @@ export function FacultyChatPage() {
         });
     };
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    /**
+     * Scrolls to the bottom of the chat. Used only when the user
+     * explicitly sends a message (force = true) or when auto-scroll
+     * is enabled (user is already near the bottom).
+     */
+    const scrollToBottom = (force = false) => {
+        const container = chatScrollRef.current;
+        if (!container) return;
+        if (force || !userScrolledUp.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
     };
+
+    // Detect when the user scrolls away from the bottom
+    useEffect(() => {
+        const container = chatScrollRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            // Consider "near bottom" if within 150px of the bottom
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+            userScrolledUp.current = distanceFromBottom > 150;
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Auto-send the initial orchestrated question passed via ?q= URL param
     const hasAutoSent = useRef<Record<string, boolean>>({});
@@ -315,9 +343,10 @@ export function FacultyChatPage() {
         }
     }, [isNewSession, effectiveSessionId, session, searchParams, isSending, isStreaming, sendOrchestratedMessage, lengthPreference, setSearchParams, createSession, navigate, agentIdForNew, agents]);
 
+    // Auto-scroll: only follow the bottom when user hasn't scrolled up
     useEffect(() => {
         scrollToBottom();
-    }, [session?.messages, streamingMessage]);
+    }, [streamingMessage, session?.messages]);
 
     const handleRename = (id: string, newTitle: string) => {
         if (!newTitle.trim()) {
@@ -341,6 +370,9 @@ export function FacultyChatPage() {
 
         const userMsg = input;
         setInput('');
+        // User sent a message: always scroll to bottom and re-enable auto-scroll
+        userScrolledUp.current = false;
+        scrollToBottom(true);
 
         // Lazy session creation — only create the DB record on first message
         if (isNewSession) {
@@ -682,7 +714,7 @@ export function FacultyChatPage() {
                             <FacultyHomeContent />
                         </div>
                     )}
-                    <div className="flex-1 overflow-y-auto px-4 py-8 scroll-smooth">
+                    <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-4 py-8 scroll-smooth">
                         <div className="max-w-3xl mx-auto w-full flex flex-col gap-6 pb-28">
                             {/* Loading state - encapsulated inside the message area to prevent layout jumps */}
                             {isLoadingSession ? (
