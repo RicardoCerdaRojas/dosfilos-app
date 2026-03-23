@@ -83,6 +83,7 @@ export function useCreateSermon() {
         tags?: string[];
         category?: string;
         status?: 'working' | 'draft' | 'published' | 'archived';
+        sourceFacultySessionId?: string;
     }) => {
         if (!user) throw new Error('Usuario no autenticado');
 

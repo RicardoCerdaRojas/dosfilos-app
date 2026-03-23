@@ -39,6 +39,7 @@ function stripSermonHeader(markdown: string): string {
 
 interface SermonOutlinePreviewModalProps {
     outline: SermonOutline | null;
+    sessionId?: string;  // ID of the faculty session that originated this sermon
     onClose: () => void;
     onGenerateFullSermon: (approvedOutline: SermonOutline) => Promise<string>;
 }
@@ -47,6 +48,7 @@ type Phase = 'preview' | 'generating';
 
 export function SermonOutlinePreviewModal({
     outline,
+    sessionId,
     onClose,
     onGenerateFullSermon,
 }: SermonOutlinePreviewModalProps) {
@@ -107,6 +109,7 @@ export function SermonOutlinePreviewModal({
                 content: cleanContent,
                 bibleReferences: edited.passage ? [edited.passage] : [],
                 status: 'draft',
+                sourceFacultySessionId: sessionId,
             });
             onClose();
             navigate(`/dashboard/sermons/${sermon.id}`);

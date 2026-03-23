@@ -47,6 +47,9 @@ export interface Sermon {
 
     // If this is a published copy, references the original draft sermon
     sourceSermonId?: string | undefined;
+
+    // Link back to the faculty study session this sermon was generated from
+    sourceFacultySessionId?: string | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -69,7 +72,8 @@ export class SermonEntity implements Sermon {
         public seriesId?: string,
         public scheduledDate?: Date,
         public preachingHistory: PreachingLog[] = [],
-        public sourceSermonId?: string
+        public sourceSermonId?: string,
+        public sourceFacultySessionId?: string
     ) {
         this.validate();
     }
@@ -113,7 +117,8 @@ export class SermonEntity implements Sermon {
             data.seriesId,
             data.scheduledDate,
             data.preachingHistory ?? [],
-            data.sourceSermonId
+            data.sourceSermonId,
+            data.sourceFacultySessionId
         );
     }
 
@@ -138,7 +143,8 @@ export class SermonEntity implements Sermon {
             data.seriesId ?? this.seriesId,
             data.scheduledDate ?? this.scheduledDate,
             data.preachingHistory ?? this.preachingHistory,
-            d.sourceSermonId ?? this.sourceSermonId
+            d.sourceSermonId ?? this.sourceSermonId,
+            d.sourceFacultySessionId ?? this.sourceFacultySessionId
         );
     }
 

@@ -5,9 +5,10 @@ import { useSermon } from '@/hooks/use-sermons';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, Minus, Plus, Clock, Play, Pause, RotateCcw, 
-  Settings, BookOpen, Maximize, Minimize, Eraser, Pen
+  Settings, BookOpen, Maximize, Minimize, Eraser, Pen, GraduationCap
 } from 'lucide-react';
 import { SermonAnnotator } from '@/components/sermons/SermonAnnotator';
+import { StudySessionPanel } from '@/components/sermons/StudySessionPanel';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ export function PreachModePage() {
   const [fontSize, setFontSize] = useState(24); // Base font size in px
   const [showControls, setShowControls] = useState(true);
   const [showAnnotations, setShowAnnotations] = useState(false);
+  const [showStudyPanel, setShowStudyPanel] = useState(false);
   
   // Fullscreen & Focus State
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -461,16 +463,27 @@ export function PreachModePage() {
           >
             <Pen className="h-4 w-4" />
           </Button>
+
+          {/* Study Session Toggle – only when sermon has a linked session */}
+          {sermon?.sourceFacultySessionId && (
+            <Button
+              variant={showStudyPanel ? "default" : "outline"}
+              size="icon"
+              onClick={() => setShowStudyPanel(prev => !prev)}
+              title={showStudyPanel ? 'Ocultar sesión de estudio' : 'Ver sesión de estudio con tutores'}
+              className={showStudyPanel ? '' : 'border-indigo-300 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400'}
+            >
+              <GraduationCap className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Main Content Area */}
-      {/* Main Content Area */}
       {/* Main Content Area with Resizable Panels */}
       <div className="flex-1 w-full h-[calc(100vh-64px)] overflow-hidden">
-        {showAnnotations ? (
+        {(showAnnotations || showStudyPanel) ? (
           <ResizablePanelGroup direction="horizontal" className="h-full w-full rounded-lg border">
-            <ResizablePanel defaultSize={60} minSize={30}>
+            <ResizablePanel defaultSize={showAnnotations && showStudyPanel ? 50 : 60} minSize={30}>
               <div 
                 ref={sermonContentRef}
                 className={cn(
@@ -518,21 +531,36 @@ export function PreachModePage() {
                   </div>
               </div>
             </ResizablePanel>
-            
-            <ResizableHandle withHandle className="bg-border hover:bg-primary/20 transition-colors" />
 
-            
-            <ResizablePanel defaultSize={40} minSize={20}>
-              <div className={cn(
-                "h-full bg-white relative",
-                showControls ? "" : ""
-              )}>
-                <SermonAnnotator 
-                  sermonId={id!} 
-                  scrollContainerRef={sermonContentRef}
-                />
-              </div>
-            </ResizablePanel>
+            {/* Annotations panel */}
+            {showAnnotations && (
+              <>
+                <ResizableHandle withHandle className="bg-border hover:bg-primary/20 transition-colors" />
+                <ResizablePanel defaultSize={showStudyPanel ? 25 : 40} minSize={20}>
+                  <div className="h-full bg-white relative">
+                    <SermonAnnotator 
+                      sermonId={id!} 
+                      scrollContainerRef={sermonContentRef}
+                    />
+                  </div>
+                </ResizablePanel>
+              </>
+            )}
+
+            {/* Study session panel */}
+            {showStudyPanel && sermon.sourceFacultySessionId && (
+              <>
+                <ResizableHandle withHandle className="bg-border hover:bg-indigo-200 dark:hover:bg-indigo-900/40 transition-colors" />
+                <ResizablePanel defaultSize={showAnnotations ? 25 : 40} minSize={20}>
+                  <div className="h-full overflow-hidden">
+                    <StudySessionPanel
+                      sessionId={sermon.sourceFacultySessionId}
+                      onClose={() => setShowStudyPanel(false)}
+                    />
+                  </div>
+                </ResizablePanel>
+              </>
+            )}
           </ResizablePanelGroup>
         ) : (
            <div 

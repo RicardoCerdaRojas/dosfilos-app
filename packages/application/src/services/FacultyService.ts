@@ -13,6 +13,7 @@ import {
     OrchestratedMessageUseCase,
     ExtractTheologicalContentUseCase,
     GetFacultyAgentsUseCase,
+    GetSessionUseCase,
     // Projects
     CreateProjectUseCase,
     UpdateProjectUseCase,
@@ -28,6 +29,7 @@ import {
 class FacultyService {
     public createSession: CreateChatSessionUseCase;
     public getHistory: GetChatHistoryUseCase;
+    public getSession: GetSessionUseCase;
     public sendMessage: SendAgentMessageUseCase;
     public orchestratedMessage: OrchestratedMessageUseCase;
     public extractContent: ExtractTheologicalContentUseCase;
@@ -58,6 +60,7 @@ class FacultyService {
 
         this.createSession = new CreateChatSessionUseCase(agentRepository, chatRepository);
         this.getHistory = new GetChatHistoryUseCase(chatRepository);
+        this.getSession = new GetSessionUseCase(chatRepository);
         this.sendMessage = new SendAgentMessageUseCase(agentRepository, chatRepository, generatorService);
         this.orchestratedMessage = new OrchestratedMessageUseCase(agentRepository, chatRepository, generatorService, projectRepository);
         this.extractContent = new ExtractTheologicalContentUseCase(chatRepository, generatorService);
