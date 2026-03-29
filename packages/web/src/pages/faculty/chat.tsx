@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Send, Loader2, Sparkles, MessageSquareQuote, Download, Briefcase, BookOpen, Clock, GraduationCap, AlignLeft, AlignJustify, ChevronDown, ChevronRight, Copy, Check, Search, Trash2, FolderOpen, FolderPlus, Edit3, X, PanelLeftClose, PanelLeftOpen, SquarePen } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, Sparkles, MessageSquareQuote, Download, Briefcase, BookOpen, Clock, GraduationCap, AlignLeft, AlignJustify, ChevronDown, ChevronRight, Copy, Check, Search, Trash2, FolderOpen, FolderPlus, Edit3, X, PanelLeftClose, PanelLeftOpen, SquarePen, Newspaper, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -904,6 +904,32 @@ export function FacultyChatPage() {
                                 Tareas Noutéticas
                             </div>
                             <span className="text-xs text-slate-500 font-normal text-left whitespace-normal">Asignaciones bíblicas para el aconsejado.</span>
+                        </Button>
+
+                        <Button 
+                            variant="outline" 
+                            onClick={() => handleExtract('NEWSLETTER')}
+                            disabled={!!extractingType || (session?.messages.length || 0) < 2}
+                            className="w-full justify-start h-auto p-4 flex flex-col items-start gap-1 hover:border-indigo-500 hover:bg-indigo-50"
+                        >
+                            <div className="flex items-center gap-2 font-semibold text-slate-800">
+                                {extractingType === 'NEWSLETTER' ? <Loader2 className="w-4 h-4 text-rose-600 animate-spin" /> : <Newspaper className="w-4 h-4 text-rose-600" />}
+                                Boletín Dominical
+                            </div>
+                            <span className="text-xs text-slate-500 font-normal text-left whitespace-normal">Artículo devocional para la newsletter de la iglesia.</span>
+                        </Button>
+
+                        <Button 
+                            variant="outline" 
+                            onClick={() => handleExtract('SYSTEMATIC_THEOLOGY_PAPER')}
+                            disabled={!!extractingType || (session?.messages.length || 0) < 2}
+                            className="w-full justify-start h-auto p-4 flex flex-col items-start gap-1 hover:border-indigo-500 hover:bg-indigo-50"
+                        >
+                            <div className="flex items-center gap-2 font-semibold text-slate-800">
+                                {extractingType === 'SYSTEMATIC_THEOLOGY_PAPER' ? <Loader2 className="w-4 h-4 text-purple-600 animate-spin" /> : <FileText className="w-4 h-4 text-purple-600" />}
+                                Ensayo Teológico
+                            </div>
+                            <span className="text-xs text-slate-500 font-normal text-left whitespace-normal">Paper académico con rigor doctrinal reformado.</span>
                         </Button>
                     </div>
                 </aside>

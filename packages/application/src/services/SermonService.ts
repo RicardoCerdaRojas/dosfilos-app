@@ -20,6 +20,7 @@ export class SermonService {
         seriesId?: string;
         scheduledDate?: Date;
         wizardProgress?: Sermon['wizardProgress'];
+        sourceFacultySessionId?: string;
     }): Promise<SermonEntity> {
         try {
             const sermon = SermonEntity.create({
@@ -35,6 +36,7 @@ export class SermonService {
                 seriesId: data.seriesId,
                 scheduledDate: data.scheduledDate,
                 wizardProgress: data.wizardProgress,
+                sourceFacultySessionId: data.sourceFacultySessionId,
             });
             const createdSermon = await this.sermonRepository.create(sermon);
 
