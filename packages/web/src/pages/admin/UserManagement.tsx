@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/admin/useAdminAuth';
 import { useAllUsers } from '@/hooks/admin/useAllUsers';
 import { useDeleteUser } from '@/hooks/admin/useDeleteUser';
+import { useDisableUser } from '@/hooks/admin/useDisableUser';
+import { useEnableUser } from '@/hooks/admin/useEnableUser';
 import { useResendWelcomeEmail } from '@/hooks/admin/useResendWelcomeEmail';
+import { calculateEngagementScore } from '@/utils/engagementScore';
 import { PlanBadge } from '@/components/admin/PlanBadge';
 import { EngagementBadge } from '@/components/admin/EngagementBadge';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
@@ -47,7 +50,9 @@ import {
     Activity,
     CreditCard,
     Trash2,
-    Mail
+    Mail,
+    UserX,
+    UserCheck,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -65,9 +70,15 @@ export function UserManagement() {
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     
-    // Delete state
+    // Delete (hard) state
     const [userToDelete, setUserToDelete] = useState<any | null>(null);
+    const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
     const { deleteUser, isLoading: isDeleting } = useDeleteUser();
+
+    // Disable / Enable state
+    const [userToDisable, setUserToDisable] = useState<any | null>(null);
+    const { disableUser, isLoading: isDisabling } = useDisableUser();
+    const { enableUser, isLoading: isEnabling } = useEnableUser();
     
     // Resend Email hook
     const { resendEmail, isLoading: isResending } = useResendWelcomeEmail();
@@ -134,17 +145,32 @@ export function UserManagement() {
 
     const handleDeleteClick = (user: any) => {
         setUserToDelete(user);
+        setDeleteConfirmEmail('');
     };
 
     const handleConfirmDelete = async () => {
         if (!userToDelete) return;
+        if (deleteConfirmEmail !== userToDelete.email) return;
         
         const success = await deleteUser(userToDelete.id);
         if (success) {
             setUserToDelete(null);
-            // Refresh logic (handled by useAllUsers subscription or we could reload)
-            // Ideally useAllUsers listens to snapshots, so it updates automatically
+            setDeleteConfirmEmail('');
         }
+    };
+
+    const handleDisableClick = (user: any) => {
+        setUserToDisable(user);
+    };
+
+    const handleConfirmDisable = async () => {
+        if (!userToDisable) return;
+        const success = await disableUser(userToDisable.id, userToDisable.email);
+        if (success) setUserToDisable(null);
+    };
+
+    const handleEnableUser = async (user: any) => {
+        await enableUser(user.id, user.email);
     };
 
     if (authLoading || !isAdmin) {
@@ -302,7 +328,7 @@ export function UserManagement() {
                                     </TableCell>
                                     <TableCell>
                                         <EngagementBadge 
-                                            score={user.analytics?.engagementScore || 0}
+                                            score={calculateEngagementScore(user.analytics)}
                                             showScore={true}
                                         />
                                     </TableCell>
@@ -364,11 +390,45 @@ export function UserManagement() {
                                                     <Mail className="h-4 w-4" />
                                                 )}
                                             </Button>
+                                            {/* Disable / Enable button */}
+                                            {user.status === 'disabled' ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                    onClick={() => handleEnableUser(user)}
+                                                    disabled={isEnabling}
+                                                    title="Habilitar usuario"
+                                                >
+                                                    {isEnabling ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <UserCheck className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                                                    onClick={() => handleDisableClick(user)}
+                                                    disabled={isDisabling}
+                                                    title="Deshabilitar usuario"
+                                                >
+                                                    {isDisabling ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <UserX className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            )}
+                                            {/* Hard delete — always available */}
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
                                                 className="text-red-500 hover:text-red-600 hover:bg-red-50"
                                                 onClick={() => handleDeleteClick(user)}
+                                                title="Eliminar permanentemente"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -392,34 +452,77 @@ export function UserManagement() {
                 onChangePlan={handleChangePlan}
             />
 
-            {/* Delete Confirmation Dialog */}
-            <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+            {/* ── Disable Confirmation Dialog ── */}
+            <AlertDialog open={!!userToDisable} onOpenChange={(open) => !open && setUserToDisable(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogTitle>¿Deshabilitar este usuario?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará permanentemente la cuenta de 
-                            <span className="font-semibold text-slate-900"> {userToDelete?.email} </span>
-                            y todos sus datos asociados (sermones, suscripciones, etc).
+                            La cuenta de{' '}
+                            <span className="font-semibold text-slate-900">{userToDisable?.email}</span>{' '}
+                            quedará bloqueada. El usuario no podrá iniciar sesión, pero todos sus datos
+                            (sermones, notas, sesiones) se conservarán intactos. Puedes reactivar la cuenta en
+                            cualquier momento.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDisabling}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => { e.preventDefault(); handleConfirmDisable(); }}
+                            className="bg-orange-600 hover:bg-orange-700 focus:ring-orange-600"
+                            disabled={isDisabling}
+                        >
+                            {isDisabling ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Deshabilitando...</>
+                            ) : (
+                                'Deshabilitar Usuario'
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Hard Delete Confirmation Dialog (requires email confirmation) ── */}
+            <AlertDialog open={!!userToDelete} onOpenChange={(open) => { if (!open) { setUserToDelete(null); setDeleteConfirmEmail(''); } }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-red-600">⚠️ Eliminar permanentemente</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3">
+                                <p>
+                                    Esta acción <strong>no se puede deshacer</strong>. Se borrarán de forma permanente:
+                                </p>
+                                <ul className="list-disc pl-5 text-sm space-y-1 text-slate-700">
+                                    <li>La cuenta de Firebase Auth</li>
+                                    <li>Todos los sermones, series y borradores</li>
+                                    <li>El historial de sesiones y analytics</li>
+                                    <li>La suscripción en Stripe</li>
+                                </ul>
+                                <p className="text-sm">
+                                    Para confirmar, escribe el email del usuario:{' '}
+                                    <span className="font-mono font-semibold text-slate-900">{userToDelete?.email}</span>
+                                </p>
+                                <Input
+                                    id="delete-confirm-email"
+                                    placeholder="Escribe el email para confirmar..."
+                                    value={deleteConfirmEmail}
+                                    onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+                                    className="border-red-300 focus:ring-red-500"
+                                />
+                            </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handleConfirmDelete();
-                            }}
+                        <AlertDialogAction
+                            onClick={(e) => { e.preventDefault(); handleConfirmDelete(); }}
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                            disabled={isDeleting}
+                            disabled={isDeleting || deleteConfirmEmail !== userToDelete?.email}
                         >
                             {isDeleting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Eliminando...
-                                </>
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Eliminando...</>
                             ) : (
-                                'Eliminar Usuario'
+                                'Eliminar Permanentemente'
                             )}
                         </AlertDialogAction>
                     </AlertDialogFooter>

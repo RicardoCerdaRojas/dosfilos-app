@@ -59,6 +59,9 @@ export interface User {
     displayName: string | null;
     photoURL: string | null;
 
+    // Account status (soft disable/enable)
+    status?: 'active' | 'disabled';
+
     // Role (for admin access)
     role?: UserRole;
 
@@ -88,7 +91,8 @@ export class UserEntity implements User {
         public analytics?: UserAnalytics,
         public metadata?: UserMetadata,
         public createdAt: Date = new Date(),
-        public updatedAt: Date = new Date()
+        public updatedAt: Date = new Date(),
+        public status?: 'active' | 'disabled',
     ) { }
 
     static create(data: Partial<User> & { id: string; email: string }): UserEntity {

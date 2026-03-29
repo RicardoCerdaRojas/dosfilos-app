@@ -36,6 +36,8 @@ export { submitCancellationFeedback } from './subscription/submitCancellationFee
 export { trackUserActivity } from './analytics/trackUserActivity';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
+export { recalculateAnalytics, recalculateAnalyticsHttp, recalculateAnalyticsCallable } from './analytics/recalculateAnalytics';
+
 
 // Export Event-Driven Analytics functions
 export {
@@ -66,6 +68,9 @@ export { trackUserRegistration, trackUserLogin, trackLandingVisit } from './anal
 
 // Export Admin functions
 export { deleteUser } from './admin/deleteUser';
+export { disableUser } from './admin/disableUser';
+export { enableUser } from './admin/enableUser';
 export { resendWelcomeEmail } from './admin/resendWelcomeEmail';
+
 
 

@@ -10,13 +10,14 @@ import {
     TrendingUp,
     ArrowLeft,
     Loader2,
-    Globe
+    Globe,
+    RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function AnalyticsDashboard() {
     const { isAdmin, loading: authLoading } = useAdminAuth();
-    const { metrics, loading: metricsLoading, error } = useAdminMetrics();
+    const { metrics, loading: metricsLoading, refreshing, lastUpdated, error, refreshMetrics } = useAdminMetrics();
     const navigate = useNavigate();
 
     if (authLoading || !isAdmin) {
@@ -54,13 +55,27 @@ export function AnalyticsDashboard() {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
-                        <p className="text-slate-600 mt-1">
+                        <p className="text-slate-500 mt-1 text-sm">
                             Métricas y estadísticas de la plataforma
+                            {lastUpdated && (
+                                <span className="ml-2 text-slate-400">
+                                    · Actualizado {lastUpdated.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            )}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={refreshMetrics}
+                        disabled={refreshing || metricsLoading}
+                        title="Recalcular métricas ahora"
+                    >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                        {refreshing ? 'Recalculando...' : 'Actualizar'}
+                    </Button>
                     <Button
                         variant="outline"
                         onClick={() => navigate('/dashboard/admin/geographic')}
@@ -134,7 +149,9 @@ export function AnalyticsDashboard() {
                                 </p>
                                 <p className="text-sm text-slate-600">Free</p>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    {((metrics.activeSubscriptions.free / metrics.totalUsers) * 100).toFixed(1)}%
+                                    {metrics.totalUsers > 0 
+                                        ? ((metrics.activeSubscriptions.free / metrics.totalUsers) * 100).toFixed(1)
+                                        : 0}%
                                 </p>
                             </div>
 
@@ -144,7 +161,9 @@ export function AnalyticsDashboard() {
                                 </p>
                                 <p className="text-sm text-blue-600">Pro</p>
                                 <p className="text-xs text-blue-500 mt-1">
-                                    {((metrics.activeSubscriptions.pro / metrics.totalUsers) * 100).toFixed(1)}%
+                                    {metrics.totalUsers > 0 
+                                        ? ((metrics.activeSubscriptions.pro / metrics.totalUsers) * 100).toFixed(1)
+                                        : 0}%
                                 </p>
                             </div>
 
@@ -154,13 +173,15 @@ export function AnalyticsDashboard() {
                                 </p>
                                 <p className="text-sm text-purple-600">Team</p>
                                 <p className="text-xs text-purple-500 mt-1">
-                                    {((metrics.activeSubscriptions.team / metrics.totalUsers) * 100).toFixed(1)}%
+                                    {metrics.totalUsers > 0 
+                                        ? ((metrics.activeSubscriptions.team / metrics.totalUsers) * 100).toFixed(1)
+                                        : 0}%
                                 </p>
                             </div>
                         </div>
                     </Card>
 
-                    {/* Activity Metrics - NEW */}
+                    {/* Activity Metrics */}
                     <Card className="p-6 mb-8">
                         <h2 className="text-xl font-bold text-slate-900 mb-4">
                             Métricas de Actividad
@@ -188,12 +209,12 @@ export function AnalyticsDashboard() {
                             </div>
 
                             <div className="border-l-4 border-teal-500 pl-4">
-                                <p className="text-sm text-slate-600">Total Logins</p>
+                                <p className="text-sm text-slate-600">Usuarios Activos Hoy</p>
                                 <p className="text-2xl font-bold text-slate-900">
                                     {metrics.totalLogins || 0}
                                 </p>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    Sesiones iniciadas (total)
+                                    Sesiones iniciadas hoy
                                 </p>
                             </div>
 
@@ -203,7 +224,7 @@ export function AnalyticsDashboard() {
                                     {metrics.totalGreekSessions || 0}
                                 </p>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    Greek Tutor
+                                    Tutor IA · Total
                                 </p>
                             </div>
 
@@ -264,7 +285,11 @@ export function AnalyticsDashboard() {
                 </>
             ) : (
                 <Card className="p-12 text-center">
-                    <p className="text-slate-600">No hay métricas disponibles</p>
+                    <p className="text-slate-600 mb-4">No hay métricas disponibles</p>
+                    <Button onClick={refreshMetrics} disabled={refreshing}>
+                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                        Calcular métricas ahora
+                    </Button>
                 </Card>
             )}
         </div>

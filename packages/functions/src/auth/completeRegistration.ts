@@ -20,6 +20,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { SupportedLocale } from '../services/EmailService';
 import { logger } from 'firebase-functions/v2';
+import { trackGeoEvent, getClientIP } from '../analytics/geoTracking';
 
 // ============================================================================
 // Domain Models
@@ -191,7 +192,18 @@ export const completeRegistration = onCall<CompleteRegistrationRequest>(
             // 4. Mark registration as completed
             await markRegistrationCompleted(sessionId);
 
-            // 5. Create custom token for auto-login
+            // 5. Track geographic registration event (non-blocking)
+            // Captures location data for users who registered via Stripe payment flow
+            trackGeoEvent({
+                type: 'registration',
+                userId: uid,
+                ip: getClientIP(request.rawRequest),
+                userAgent: request.rawRequest.headers['user-agent'] || 'Unknown',
+            }).catch(geoErr =>
+                logger.warn('Geo tracking failed (non-critical)', { error: String(geoErr) })
+            );
+
+            // 6. Create custom token for auto-login
             const auth = getAuth();
             const customToken = await auth.createCustomToken(uid);
 
