@@ -24,7 +24,7 @@ export function SermonEditPage() {
     if (!id) return;
     try {
       await updateSermon(id, data);
-      navigate(`/dashboard/sermons/${id}`);
+      // Removed navigation to stay in edit mode after saving
     } catch {
       // Error already handled by hook with toast
     }
