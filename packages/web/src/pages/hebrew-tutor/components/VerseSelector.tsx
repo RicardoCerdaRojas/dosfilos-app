@@ -13,6 +13,7 @@ interface VerseSelectorProps {
   onBookChange: (key: string) => void;
   onChapterChange: (chapter: number) => void;
   onVerseChange: (verse: number) => void;
+  onNavigate: (book: string, chapter: number, verse: number) => void;
   onAnalyze: () => void;
   isAnalyzing: boolean;
 }
@@ -28,6 +29,7 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
   onBookChange,
   onChapterChange,
   onVerseChange,
+  onNavigate,
   onAnalyze,
   isAnalyzing,
 }) => {
@@ -52,16 +54,13 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
   }, [books, searchQuery]);
 
   const handleBookSelect = (bookKey: string) => {
-    onBookChange(bookKey);
-    onChapterChange(1);
-    onVerseChange(1);
+    onNavigate(bookKey, 1, 1);
     setSearchQuery('');
     setActiveTab('chapter');
   };
 
   const handleChapterSelect = (ch: number) => {
-    onChapterChange(ch);
-    onVerseChange(1);
+    onNavigate(selectedBook, ch, 1);
     setActiveTab('verse');
   };
 
@@ -74,12 +73,14 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
       {/* Tab Navigation */}
       <div className="flex p-1 bg-muted rounded-xl mb-4">
         <button
+          type="button"
           onClick={() => setActiveTab('book')}
           className={`flex-1 py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${activeTab === 'book' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
         >
           <BookIcon className="w-3.5 h-3.5" /> Libro
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('chapter')}
           disabled={!selectedBook}
           className={`flex-1 py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${activeTab === 'chapter' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
@@ -87,6 +88,7 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
           <HashIcon className="w-3.5 h-3.5" /> Cap
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('verse')}
           disabled={!selectedBook}
           className={`flex-1 py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${activeTab === 'verse' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
@@ -117,6 +119,7 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
             <div className="flex-1 overflow-y-auto pr-1 space-y-1">
               {filteredBooks.map((book) => (
                 <button
+                  type="button"
                   key={book.morphhbKey}
                   onClick={() => handleBookSelect(book.morphhbKey)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex justify-between items-center ${selectedBook === book.morphhbKey ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted text-foreground'}`}
@@ -142,6 +145,7 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
               <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                 {chapterOptions.map((ch) => (
                   <button
+                    type="button"
                     key={'ch'+ch}
                     onClick={() => handleChapterSelect(ch)}
                     className={`aspect-square rounded-lg text-sm font-semibold flex items-center justify-center transition-all ${selectedChapter === ch ? 'bg-primary text-primary-foreground shadow-md scale-105' : 'bg-muted/50 hover:bg-muted text-foreground'}`}
@@ -164,6 +168,7 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
               <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                 {verseOptions.map((v) => (
                   <button
+                    type="button"
                     key={'v'+v}
                     onClick={() => onVerseChange(v)}
                     className={`aspect-square rounded-lg text-sm font-semibold flex items-center justify-center transition-all ${selectedVerse === v ? 'bg-primary text-primary-foreground shadow-md scale-105' : 'bg-muted/50 hover:bg-muted text-foreground'}`}
@@ -179,6 +184,7 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
 
       {/* Analyze button */}
       <button
+        type="button"
         id="ht-analyze-btn"
         onClick={onAnalyze}
         disabled={!canAnalyze}

@@ -15,12 +15,15 @@ import {
 import {
   AnalyzeVerseUseCase,
   GetBibleNavigationUseCase,
+  GetVerseTextUseCase,
   SaveDetectiveSessionUseCase,
 } from '@dosfilos/application';
 
 interface HebrewTutorContextType {
   analyzeVerse: AnalyzeVerseUseCase;
   getBibleNavigation: GetBibleNavigationUseCase;
+  getVerseText: GetVerseTextUseCase;
+  checkCache: (reference: string) => Promise<import('@dosfilos/domain').VerseAnalysis | null>;
   saveDetectiveSession: SaveDetectiveSessionUseCase;
 }
 
@@ -47,6 +50,8 @@ export const HebrewTutorProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return {
       analyzeVerse: new AnalyzeVerseUseCase(provider, analysisService, sessionRepository),
       getBibleNavigation: new GetBibleNavigationUseCase(provider),
+      getVerseText: new GetVerseTextUseCase(provider),
+      checkCache: (ref: string) => sessionRepository.getCachedAnalysis(ref),
       saveDetectiveSession: new SaveDetectiveSessionUseCase(detectiveRepository),
     };
   }, [apiKey]);

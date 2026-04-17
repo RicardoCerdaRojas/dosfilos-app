@@ -2,20 +2,25 @@
  * VerseAnalyzerPage
  *
  * Main page for the "Analizador de Versículos" tool.
- * Layout: sidebar selector (left) + result area (right/main).
+ *
+ * Desktop (md+): persistent VerseNavBar replaces the Sheet modal.
+ * Mobile:        compact top bar + improved Sheet drawer.
  */
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookOpenIcon } from 'lucide-react';
+import { BookOpenIcon, MenuIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { VerseSelector } from './components/VerseSelector';
+import { VerseNavBar } from './components/VerseNavBar';
 import { VerseAnalysisResult } from './components/VerseAnalysisResult';
+import { VersePreview } from './components/VersePreview';
 import { HebrewLoadingTips } from './components/HebrewLoadingTips';
 import { useVerseAnalysis } from './hooks/useVerseAnalysis';
+import { HEBREW_BOOKS_CATALOG } from '@dosfilos/infrastructure';
 
 export const VerseAnalyzerPage: React.FC = () => {
-  const [isDrawerOpen, setIsDrawerOpen] = React.useState(true);
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = React.useState(false);
   const { t } = useTranslation('hebrewTutor');
   const {
     selectedBook,
@@ -23,8 +28,10 @@ export const VerseAnalyzerPage: React.FC = () => {
     selectedVerse,
     bookIndex,
     analysis,
+    hebrewVerse,
     isLoadingIndex,
     isAnalyzing,
+    isLoadingVerse,
     error,
     setBook,
     setChapter,
@@ -32,56 +39,87 @@ export const VerseAnalyzerPage: React.FC = () => {
     analyze,
     clearError,
     canReanalyze,
+    navigate,
+    nextVerse,
+    prevVerse,
   } = useVerseAnalysis();
+
+  const currentBookName =
+    HEBREW_BOOKS_CATALOG.find((b) => b.morphhbKey === selectedBook)?.nameSpanish ?? selectedBook;
 
   return (
     <div className="flex flex-col h-full min-h-0 w-full relative print:block print:h-auto">
-      {/* ── Top Header with Actions ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-4 print:hidden">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            {t('verseAnalyzer.title')}
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            {t('verseAnalyzer.description')}
-          </p>
+
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="mb-4 print:hidden">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">{t('verseAnalyzer.title')}</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('verseAnalyzer.description')}</p>
+          </div>
+
+          {/* Mobile only: menu button */}
+          <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+            <SheetTrigger asChild>
+              <button className="md:hidden flex items-center gap-2 px-3 py-2 rounded-xl border border-border/60 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-colors shrink-0">
+                <MenuIcon className="w-4 h-4" />
+                <span className="text-xs">{currentBookName} {selectedChapter}:{selectedVerse}</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto">
+              <SheetHeader className="pb-4 border-b border-border/50">
+                <SheetTitle className="flex items-center gap-2">
+                  <BookOpenIcon className="w-4 h-4 text-primary" />
+                  Navegador Bíblico
+                </SheetTitle>
+                <SheetDescription>
+                  Selecciona libro, capítulo y versículo para analizar
+                </SheetDescription>
+              </SheetHeader>
+              <div className="pt-4">
+                <VerseSelector
+                  selectedBook={selectedBook}
+                  selectedChapter={selectedChapter}
+                  selectedVerse={selectedVerse}
+                  bookIndex={bookIndex}
+                  isLoadingBook={isLoadingIndex}
+                  onBookChange={setBook}
+                  onChapterChange={setChapter}
+                  onVerseChange={setVerse}
+                  onNavigate={navigate}
+                  onAnalyze={() => {
+                    analyze(false);
+                    setIsMobileSheetOpen(false);
+                  }}
+                  isAnalyzing={isAnalyzing}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-        <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <SheetTrigger asChild>
-            <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold shadow-sm hover:bg-primary/90 transition-colors shrink-0">
-               <BookOpenIcon className="w-4 h-4" />
-               Cambiar Versículo
-            </button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[340px] sm:w-[400px] overflow-y-auto">
-            <SheetHeader className="pb-4">
-              <SheetTitle>Navegador Bíblico</SheetTitle>
-              <SheetDescription>Selecciona el libro, capítulo y versículo</SheetDescription>
-            </SheetHeader>
-            <div className="pt-2">
-              <VerseSelector
-                selectedBook={selectedBook}
-                selectedChapter={selectedChapter}
-                selectedVerse={selectedVerse}
-                bookIndex={bookIndex}
-                isLoadingBook={isLoadingIndex}
-                onBookChange={setBook}
-                onChapterChange={setChapter}
-                onVerseChange={setVerse}
-                onAnalyze={() => {
-                  analyze(false);
-                  setIsDrawerOpen(false);
-                }}
-                isAnalyzing={isAnalyzing}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
+
+        {/* Desktop nav bar */}
+        <div className="hidden md:flex">
+          <VerseNavBar
+            selectedBook={selectedBook}
+            selectedChapter={selectedChapter}
+            selectedVerse={selectedVerse}
+            bookIndex={bookIndex}
+            isLoadingIndex={isLoadingIndex}
+            isAnalyzing={isAnalyzing}
+            onBookChange={setBook}
+            onChapterChange={setChapter}
+            onVerseChange={setVerse}
+            onNavigate={navigate}
+            onAnalyze={() => analyze(false)}
+            onNext={nextVerse}
+            onPrev={prevVerse}
+          />
+        </div>
       </div>
 
-      {/* ── Main: analysis result ────────────────────────────────────────── */}
+      {/* ── Main: analysis result ─────────────────────────────────────────── */}
       <main className="flex-1 min-w-0 overflow-y-auto print:overflow-visible print:block">
-        {/* Error banner */}
         {error && (
           <div
             id="ht-error-banner"
@@ -99,7 +137,6 @@ export const VerseAnalyzerPage: React.FC = () => {
 
         {isAnalyzing && <HebrewLoadingTips />}
 
-        {/* Result */}
         {!isAnalyzing && analysis && (
           <VerseAnalysisResult
             analysis={analysis}
@@ -108,10 +145,15 @@ export const VerseAnalyzerPage: React.FC = () => {
           />
         )}
 
-        {/* Empty state */}
-        {!isAnalyzing && !analysis && !error && (
-          <EmptyState t={t} />
+        {!isAnalyzing && !analysis && hebrewVerse && (
+          <VersePreview
+            verse={hebrewVerse}
+            isLoading={isLoadingVerse}
+            onAnalyze={() => analyze(false)}
+          />
         )}
+
+        {!isAnalyzing && !analysis && !hebrewVerse && !error && <EmptyState t={t} />}
       </main>
     </div>
   );
@@ -121,7 +163,6 @@ export const VerseAnalyzerPage: React.FC = () => {
 
 const EmptyState: React.FC<{ t: (key: string) => string }> = ({ t }) => (
   <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-    {/* Decorative Hebrew letters */}
     <div className="text-6xl font-serif text-muted-foreground/20 mb-6 leading-none" dir="rtl" lang="he">
       אָמַר יְהוָה
     </div>

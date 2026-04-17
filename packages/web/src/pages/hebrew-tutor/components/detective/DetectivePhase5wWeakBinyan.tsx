@@ -16,6 +16,7 @@ import React, { useState, useCallback } from 'react';
 import type { WordAnalysis } from '@dosfilos/domain';
 import { Binyan } from '@dosfilos/domain';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
+import { useTranslation } from 'react-i18next';
 import {
   BINYAN_WIZARD_TREE,
   WIZARD_START_NODE,
@@ -38,6 +39,7 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
   word,
   onComplete,
 }) => {
+  const { t } = useTranslation('hebrewTutor');
   const binyan = word.verbMorphology?.binyan;
 
   const [wizardState, setWizardState] = useState<WizardState>({
@@ -91,8 +93,8 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
       <DetectiveHeroCard
         word={word}
         step={5}
-        name="Diagnóstico de Binyan"
-        question="Proceso de eliminación morfológica"
+        name={t('detective.phase5.hero.name', { defaultValue: 'Diagnóstico de Binyan' })}
+        question={t('detective.phase5.hero.question', { defaultValue: 'Proceso de eliminación morfológica' })}
       />
 
       {/* ── Breadcrumb: completed elimination steps ──────────────────────────────────────── */}
@@ -122,9 +124,15 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
 
             {/* Observation hint */}
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
-              <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                🔎 <strong>Observa:</strong> {node.observationHint}
-              </p>
+              <p 
+                className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: t('detective.phase5.hintHtml', {
+                    defaultValue: `🔎 <strong>Observa:</strong> {{hint}}`,
+                    hint: node.observationHint
+                  })
+                }}
+              />
             </div>
 
             {/* Question */}
@@ -138,7 +146,7 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
             {wizardState.error ? (
               <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-700 rounded-xl p-4 space-y-3 animate-in fade-in duration-200">
                 <p className="text-orange-700 dark:text-orange-300 font-semibold text-xs">
-                  ⚠️ No exactamente…
+                  {t('detective.phase5.feedback.errorTitle', { defaultValue: '⚠️ No exactamente…' })}
                 </p>
                 <p className="text-orange-600 dark:text-orange-400 text-xs leading-relaxed">
                   {wizardState.error}
@@ -148,7 +156,7 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
                   className="text-xs font-semibold text-orange-700 dark:text-orange-300
                     underline underline-offset-2 hover:text-orange-900 transition-colors"
                 >
-                  Intentar de nuevo →
+                  {t('detective.phase5.buttons.tryAgain', { defaultValue: 'Intentar de nuevo →' })}
                 </button>
               </div>
             ) : (
@@ -194,7 +202,7 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
           {/* Result card */}
           <div className="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-300 dark:border-emerald-700 rounded-2xl p-5 text-center space-y-3">
             <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-              ✅ ¡Diagnóstico completado!
+              {t('detective.phase5.feedback.successTitle', { defaultValue: '✅ ¡Diagnóstico completado!' })}
             </p>
             <div>
               <div
@@ -215,7 +223,7 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
           {completedSteps.length > 0 && (
             <div className="space-y-1.5 px-1">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                Tu razonamiento deductivo:
+                {t('detective.phase5.feedback.trailTitle', { defaultValue: 'Tu razonamiento deductivo:' })}
               </p>
               {completedSteps.map((step, i) => (
                 <div key={i} className="flex items-start gap-2">
@@ -226,7 +234,7 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
               <div className="flex items-start gap-2 mt-1">
                 <span className="text-emerald-500 font-bold text-xs shrink-0 mt-0.5">★</span>
                 <p className="text-xs font-semibold text-foreground">
-                  Resultado: {wizardState.result.label} ({wizardState.result.hebrewName})
+                  {t('detective.phase5.feedback.resultLabel', { defaultValue: 'Resultado:' })} {wizardState.result.label} ({wizardState.result.hebrewName})
                 </p>
               </div>
             </div>
@@ -238,7 +246,7 @@ export const DetectivePhase5wWeakBinyan: React.FC<DetectivePhase5wWeakBinyanProp
             className="w-full py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm
               hover:bg-indigo-600 transition-colors"
           >
-            Continuar →
+            {t('detective.phase5.buttons.continue', { defaultValue: 'Continuar →' })}
           </button>
         </div>
       )}

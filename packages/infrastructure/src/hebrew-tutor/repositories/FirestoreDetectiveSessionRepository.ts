@@ -1,4 +1,4 @@
-import type { IDetectiveSessionRepository, DetectiveSession } from '@dosfilos/domain';
+import type { IDetectiveSessionRepository, DetectiveSession, VerbDetectiveSession, DetectivePhaseResult } from '@dosfilos/domain';
 import { db } from '../../config/firebase';
 import {
   collection,
@@ -30,9 +30,11 @@ function removeUndefined<T>(obj: T): any {
  *
  * Collection: hebrewDetectiveSessions
  *
- * Each document stores one complete 6-phase investigation by a student.
- * Used for pedagogical analytics: identifying which verbs / binyanim
- * cause the most errors across the student population.
+ * Each document stores one complete investigation by a student (verbal or nominal).
+ * Used for pedagogical analytics: identifying which words / binyanim cause most errors.
+ *
+ * Backward compatibility: legacy documents stored `verbText` instead of `wordText`.
+ * The mapper reads `wordText ?? verbText` so old documents continue to work.
  */
 export class FirestoreDetectiveSessionRepository implements IDetectiveSessionRepository {
   private readonly COLLECTION = 'hebrewDetectiveSessions';
@@ -74,22 +76,45 @@ export class FirestoreDetectiveSessionRepository implements IDetectiveSessionRep
 
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
-        sessions.push({
-          id: docSnap.id,
-          userId: data.userId,
-          tenantId: data.tenantId,
-          verbText: data.verbText,
-          verseReference: data.verseReference,
-          expectedBinyan: data.expectedBinyan,
-          expectedVerbType: data.expectedVerbType,
-          phases: (data.phases ?? []).map((p: any) => ({
-            ...p,
-            completedAt: p.completedAt?.toDate?.() ?? new Date(p.completedAt),
-          })),
-          totalCorrect: data.totalCorrect ?? 0,
-          completed: data.completed ?? false,
-          completedAt: data.completedAt ?? '',
-        });
+
+        // Determine session type — legacy documents have no 'type' field
+        const sessionType: 'verb' | 'nominal' = data.type ?? 'verb';
+
+        if (sessionType === 'nominal') {
+          sessions.push({
+            id: docSnap.id,
+            type: 'nominal',
+            userId: data.userId,
+            tenantId: data.tenantId,
+            wordText: data.wordText ?? data.verbText ?? '',
+            verseReference: data.verseReference,
+            expectedCategory: data.expectedCategory,
+            expectedGender: data.expectedGender,
+            expectedNumber: data.expectedNumber,
+            expectedState: data.expectedState,
+            phases: this.mapPhases(data),
+            totalCorrect: data.totalCorrect ?? 0,
+            completed: data.completed ?? false,
+            completedAt: data.completedAt ?? '',
+          });
+        } else {
+          // Default to 'verb' for new and legacy documents
+          sessions.push({
+            id: docSnap.id,
+            type: 'verb',
+            userId: data.userId,
+            tenantId: data.tenantId,
+            // Backward compat: prefer wordText, fall back to legacy verbText
+            wordText: data.wordText ?? data.verbText ?? '',
+            verseReference: data.verseReference,
+            expectedBinyan: data.expectedBinyan,
+            expectedVerbType: data.expectedVerbType,
+            phases: this.mapPhases(data),
+            totalCorrect: data.totalCorrect ?? 0,
+            completed: data.completed ?? false,
+            completedAt: data.completedAt ?? '',
+          } satisfies VerbDetectiveSession);
+        }
       });
 
       return sessions;
@@ -97,5 +122,12 @@ export class FirestoreDetectiveSessionRepository implements IDetectiveSessionRep
       console.error('[FirestoreDetectiveSessionRepository] Error fetching sessions:', error);
       return [];
     }
+  }
+
+  private mapPhases(data: Record<string, any>): readonly DetectivePhaseResult[] {
+    return (data.phases ?? []).map((p: any) => ({
+      ...p,
+      completedAt: p.completedAt?.toDate?.() ?? new Date(p.completedAt),
+    })) as DetectivePhaseResult[];
   }
 }

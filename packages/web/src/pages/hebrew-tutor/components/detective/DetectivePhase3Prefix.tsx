@@ -9,6 +9,7 @@
 import React, { useState } from 'react';
 import type { WordAnalysis } from '@dosfilos/domain';
 import { Binyan } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
 
 interface DetectivePhase3PrefixProps {
@@ -23,42 +24,42 @@ interface PrefixOption {
   description: string;
 }
 
-const PREFIX_OPTIONS: PrefixOption[] = [
+const getPrefixOptions = (t: any): PrefixOption[] => [
   {
     id: 'nun',
     prefix: 'נִ',
-    binyanHint: '→ Nifal (pasivo/reflexivo del Qal)',
-    description: 'La נ asimila en perfecto; visible en imperfecto y participio',
+    binyanHint: t('detective.phase.prefix.options.nun.binyanHint', { defaultValue: '→ Nifal (pasivo/reflexivo del Qal)' }),
+    description: t('detective.phase.prefix.options.nun.description', { defaultValue: 'La נ asimila en perfecto; visible en imperfecto y participio' }),
   },
   {
     id: 'he_hifil',
     prefix: 'הִ',
-    binyanHint: '→ Hifil (causativo activo)',
-    description: 'Prefijo הִ con pataj en Hifil perfecto',
+    binyanHint: t('detective.phase.prefix.options.he_hifil.binyanHint', { defaultValue: '→ Hifil (causativo activo)' }),
+    description: t('detective.phase.prefix.options.he_hifil.description', { defaultValue: 'Prefijo הִ con pataj en Hifil perfecto' }),
   },
   {
     id: 'he_hofal',
     prefix: 'הָ/הֻ',
-    binyanHint: '→ Hofal (causativo pasivo)',
-    description: 'Prefijo הָ (qamets-hatuf) o הֻ en Hofal',
+    binyanHint: t('detective.phase.prefix.options.he_hofal.binyanHint', { defaultValue: '→ Hofal (causativo pasivo)' }),
+    description: t('detective.phase.prefix.options.he_hofal.description', { defaultValue: 'Prefijo הָ (qamets-hatuf) o הֻ en Hofal' }),
   },
   {
     id: 'hitpael',
     prefix: 'הִתְ',
-    binyanHint: '→ Hitpael (reflexivo intensivo)',
-    description: 'El ת del Hitpael puede metathesizarse con ciertas letras',
+    binyanHint: t('detective.phase.prefix.options.hitpael.binyanHint', { defaultValue: '→ Hitpael (reflexivo intensivo)' }),
+    description: t('detective.phase.prefix.options.hitpael.description', { defaultValue: 'El ת del Hitpael puede metathesizarse con ciertas letras' }),
   },
   {
     id: 'mem',
     prefix: 'מְ',
-    binyanHint: '→ Participio derivado (Piel/Pual/Hifil/Hofal)',
-    description: 'Participio de los binyanim derivados lleva מ-',
+    binyanHint: t('detective.phase.prefix.options.mem.binyanHint', { defaultValue: '→ Participio derivado (Piel/Pual/Hifil/Hofal)' }),
+    description: t('detective.phase.prefix.options.mem.description', { defaultValue: 'Participio de los binyanim derivados lleva מ-' }),
   },
   {
     id: 'none',
     prefix: '—',
-    binyanHint: '→ Qal, Piel o Pual (sin prefijo propio de binyan)',
-    description: 'Sin prefijo de binyan visible (Qal/Piel/Pual perfecto; waw-consecutive)',
+    binyanHint: t('detective.phase.prefix.options.none.binyanHint', { defaultValue: '→ Qal, Piel o Pual (sin prefijo propio de binyan)' }),
+    description: t('detective.phase.prefix.options.none.description', { defaultValue: 'Sin prefijo de binyan visible (Qal/Piel/Pual perfecto; waw-consecutive)' }),
   },
 ];
 
@@ -76,32 +77,33 @@ function getExpectedPrefixId(word: WordAnalysis): string {
 }
 
 export const DetectivePhase3Prefix: React.FC<DetectivePhase3PrefixProps> = ({ word, onComplete }) => {
+  const { t } = useTranslation('hebrewTutor');
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const expectedId = getExpectedPrefixId(word);
   const isCorrect = selected === expectedId;
-  const correctOption = PREFIX_OPTIONS.find(p => p.id === expectedId)!;
+  const options = getPrefixOptions(t);
+  const correctOption = options.find(p => p.id === expectedId)!;
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
       <DetectiveHeroCard
         word={word}
         step={3}
-        name="Inspección de Prefijos"
-        question="¿Reconoces algún prefijo de binyan en este verbo?"
+        name={t('detective.phase.prefix.title', { defaultValue: 'Inspección de Prefijos' })}
+        question={t('detective.phase.prefix.question', { defaultValue: '¿Reconoces algún prefijo de binyan en este verbo?' })}
       />
 
       <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
         <p className="text-xs text-blue-800 dark:text-blue-300">
-          <strong>Regla:</strong> Los binyanim derivados (Nifal, Hifil, Hofal, Hitpael) tienen
-          prefijos propios que los identifican. El Qal, Piel y Pual no tienen prefijo de binyan propio.
+          <span dangerouslySetInnerHTML={{ __html: t('detective.phase.prefix.hint', { defaultValue: '<strong>Regla:</strong> Los binyanim derivados (Nifal, Hifil, Hofal, Hitpael) tienen prefijos propios que los identifican. El Qal, Piel y Pual no tienen prefijo de binyan propio.' }) }} />
         </p>
       </div>
 
       {!submitted ? (
         <div className="space-y-2">
-          {PREFIX_OPTIONS.map(opt => (
+          {options.map(opt => (
             <button
               key={opt.id}
               onClick={() => setSelected(opt.id)}
@@ -131,7 +133,7 @@ export const DetectivePhase3Prefix: React.FC<DetectivePhase3PrefixProps> = ({ wo
             onClick={() => setSubmitted(true)}
             className="w-full mt-2 py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Verificar respuesta
+            {t('detective.phase.prefix.verifyAnswer', { defaultValue: 'Verificar respuesta' })}
           </button>
         </div>
       ) : (
@@ -139,7 +141,7 @@ export const DetectivePhase3Prefix: React.FC<DetectivePhase3PrefixProps> = ({ wo
           {isCorrect ? (
             <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
               <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                ✅ ¡Correcto! Identificaste bien el prefijo.
+                ✅ {t('detective.phase.prefix.correctTitle', { defaultValue: '¡Correcto! Identificaste bien el prefijo.' })}
               </p>
               <p className="text-emerald-600 dark:text-emerald-400 text-xs mt-1">
                 {correctOption.binyanHint}
@@ -148,7 +150,7 @@ export const DetectivePhase3Prefix: React.FC<DetectivePhase3PrefixProps> = ({ wo
           ) : (
             <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4">
               <p className="text-orange-700 dark:text-orange-300 font-semibold text-sm">
-                ✗ No exactamente. La respuesta correcta es:
+                ✗ {t('detective.phase.prefix.incorrectTitle', { defaultValue: 'No exactamente. La respuesta correcta es:' })}
               </p>
               <p className="text-orange-700 dark:text-orange-300 text-sm font-bold mt-1">
                 <span dir="rtl" lang="he">{correctOption.prefix}</span> {correctOption.binyanHint}
@@ -162,7 +164,7 @@ export const DetectivePhase3Prefix: React.FC<DetectivePhase3PrefixProps> = ({ wo
             onClick={() => onComplete(selected!)}
             className="w-full py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm hover:bg-indigo-600 transition-colors"
           >
-            Continuar →
+            {t('common.continue', { defaultValue: 'Continuar →' })}
           </button>
         </div>
       )}

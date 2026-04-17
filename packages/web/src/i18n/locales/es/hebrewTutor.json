@@ -140,12 +140,15 @@
       "I_NUN": "Pe Nun",
       "I_YOD_WAW": "Pe Yod/Waw",
       "II_WAW_YOD": "Cóncavo (Ayin Waw/Yod)",
+      "II_WAW": "Cóncavo (Ayin Waw/Yod)",
       "III_HE": "Lamed He",
       "III_ALEF": "Lamed Alef",
       "GEMINATE": "Geminado (Doble Ayin)",
       "GUTURAL_R1": "Pe Gutural",
       "GUTURAL_R2": "Ayin Gutural",
-      "GUTURAL_R3": "Lamed Gutural"
+      "GUTURAL_R3": "Lamed Gutural",
+      "IRREGULAR": "Irregular",
+      "MIXED": "Tipo mixto"
     },
     "placeholder": {
       "title": "Selecciona un versículo",

@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { TableIcon } from 'lucide-react';
 import type { VerseAnalysis } from '@dosfilos/domain';
 
 interface VerbTableProps {
@@ -22,7 +23,7 @@ export const VerbTable: React.FC<VerbTableProps> = ({ verbTable }) => {
   return (
     <div className="mt-6">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-        <span>📊</span>
+        <TableIcon className="w-4 h-4 opacity-60" />
         {t('verseAnalyzer.analysis.verbTable')}
       </h3>
 

@@ -35,7 +35,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
       "category": "VERB | NOUN | ADJECTIVE | PRONOUN | PERSONAL_PRONOUN | DEMONSTRATIVE_PRONOUN | RELATIVE_PRONOUN | PREPOSITION | CONJUNCTION | DEFINITE_ARTICLE | PARTICLE | ADVERB | INTERJECTION | PROPER_NOUN | OBJECT_MARKER | INTERROGATIVE | NEGATIVE_PARTICLE",
       "syntacticFunction": "string — syntactic role in the clause",
       "translation": "string — contextual translation of this word",
-      "explanation": "string — detailed pedagogical explanation (morphology, recognition clues, typology, temporal/aspectual value)",
+      "explanation": "string — detailed pedagogical explanation (morphology, recognition clues, typology, temporal/aspectual value). FORMATTED WITH MARKDOWN. Use bold text, bullet points, and short paragraphs to make it highly structured and readable.",
       "verbMorphology": {
         "binyan": "QAL | NIFAL | PIEL | PUAL | HITPAEL | HIFIL | HOFAL",
         "verbForm": "PERFECT | IMPERFECT | WAYYIQTOL | WEQATAL | IMPERATIVE | COHORTATIVE | JUSSIVE | INF_CONSTRUCT | INF_ABSOLUTE | PARTICIPLE_ACTIVE | PARTICIPLE_PASSIVE",

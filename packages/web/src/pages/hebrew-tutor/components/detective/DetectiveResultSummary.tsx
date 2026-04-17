@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { CheckCircle2, XCircle, Trophy, BookOpen, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { DetectivePhase } from '@dosfilos/domain';
 import type { PhaseResult, WordAnalysis } from '@dosfilos/domain';
 
@@ -19,34 +20,34 @@ interface DetectiveResultSummaryProps {
   onReset: () => void;
 }
 
-const PHASE_LABELS: Record<DetectivePhase, string> = {
+const getPhaseLabels = (t: any): Record<DetectivePhase, string> => ({
   // Shared
-  [DetectivePhase.OBSERVE]:           'Observación Inicial',
-  [DetectivePhase.TRIAGE]:            'Clasificación: ¿Fuerte o Débil?',
+  [DetectivePhase.OBSERVE]:           t('detective.summary.phase.observe', { defaultValue: 'Observación Inicial' }),
+  [DetectivePhase.TRIAGE]:            t('detective.summary.phase.triage', { defaultValue: 'Clasificación: ¿Fuerte o Débil?' }),
 
   // Strong path
-  [DetectivePhase.COLORS]:            'Identificación de Colores',
-  [DetectivePhase.DAGESH]:            'Inspección de Dagesh',
-  [DetectivePhase.BINYAN]:            'Diagnóstico de Binyan',
-  [DetectivePhase.STRONG_CONFIRM]:    'Confirmación del Tipo Verbal',
-  [DetectivePhase.WEAK_VERB]:         'Fuerte o Débil',
+  [DetectivePhase.COLORS]:            t('detective.summary.phase.colors', { defaultValue: 'Identificación de Colores' }),
+  [DetectivePhase.DAGESH]:            t('detective.summary.phase.dagesh', { defaultValue: 'Inspección de Dagesh' }),
+  [DetectivePhase.BINYAN]:            t('detective.summary.phase.binyan', { defaultValue: 'Diagnóstico de Binyan' }),
+  [DetectivePhase.STRONG_CONFIRM]:    t('detective.summary.phase.strongConfirm', { defaultValue: 'Confirmación del Tipo Verbal' }),
+  [DetectivePhase.WEAK_VERB]:         t('detective.summary.phase.weakVerb', { defaultValue: 'Fuerte o Débil' }),
 
   // Weak path
-  [DetectivePhase.PREFIX]:            'Inspección de Prefijos',
-  [DetectivePhase.PREFORMATIVE]:      'Análisis del Preformativo',
-  [DetectivePhase.WEAK_ROOT]:         'Tipo de Debilidad de la Raíz',
-  [DetectivePhase.WEAK_BINYAN]:       'Diagnóstico de Binyan (Débil)',
+  [DetectivePhase.PREFIX]:            t('detective.summary.phase.prefix', { defaultValue: 'Inspección de Prefijos' }),
+  [DetectivePhase.PREFORMATIVE]:      t('detective.summary.phase.preformative', { defaultValue: 'Análisis del Preformativo' }),
+  [DetectivePhase.WEAK_ROOT]:         t('detective.summary.phase.weakRoot', { defaultValue: 'Tipo de Debilidad de la Raíz' }),
+  [DetectivePhase.WEAK_BINYAN]:       t('detective.summary.phase.weakBinyan', { defaultValue: 'Diagnóstico de Binyan (Débil)' }),
 
   // Both paths — synthesis
-  [DetectivePhase.WEAK_TYPE]:         'Tipo de Verbo Débil',
-  [DetectivePhase.TRANSLATION]:       'Traducción Contextual',
-};
+  [DetectivePhase.WEAK_TYPE]:         t('detective.summary.phase.weakType', { defaultValue: 'Tipo de Verbo Débil' }),
+  [DetectivePhase.TRANSLATION]:       t('detective.summary.phase.translation', { defaultValue: 'Traducción Contextual' }),
+});
 
-const PERFORMANCE_CONFIG = {
-  excellent:      { label: '¡Investigación Magistral!', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-200 dark:border-emerald-800', emoji: '🏆' },
-  good:           { label: 'Buen Trabajo', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-200 dark:border-blue-800', emoji: '👍' },
-  'needs-practice': { label: 'Sigue Practicando', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-800', emoji: '📚' },
-};
+const getPerformanceConfig = (t: any) => ({
+  excellent:      { label: t('detective.summary.perf.excellent', { defaultValue: '¡Investigación Magistral!' }), color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-200 dark:border-emerald-800', emoji: '🏆' },
+  good:           { label: t('detective.summary.perf.good', { defaultValue: 'Buen Trabajo' }), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-200 dark:border-blue-800', emoji: '👍' },
+  'needs-practice': { label: t('detective.summary.perf.needsPractice', { defaultValue: 'Sigue Practicando' }), color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-800', emoji: '📚' },
+});
 
 export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
   word,
@@ -55,7 +56,10 @@ export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
   performanceLabel,
   onReset,
 }) => {
-  const perf = PERFORMANCE_CONFIG[performanceLabel];
+  const { t } = useTranslation('hebrewTutor');
+  const phaseLabels = getPhaseLabels(t);
+  const perfConfig = getPerformanceConfig(t);
+  const perf = perfConfig[performanceLabel];
   const verbMorph = word.verbMorphology;
   const totalCorrect = phases.filter(p => p.correct).length;
 
@@ -71,7 +75,7 @@ export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
             <h3 className={`text-base font-bold leading-tight ${perf.color}`}>{perf.label}</h3>
             <div className="flex items-baseline gap-1.5 mt-0.5">
               <span className={`text-2xl font-black ${perf.color}`}>{score}%</span>
-              <span className="text-xs text-muted-foreground">({totalCorrect}/{phases.length} fases)</span>
+              <span className="text-xs text-muted-foreground">({totalCorrect}/{phases.length} {t('detective.summary.phasesLabel', { defaultValue: 'fases' })})</span>
             </div>
             {/* Score bar */}
             <div className="mt-1.5 h-1.5 w-28 bg-muted rounded-full overflow-hidden">
@@ -107,7 +111,7 @@ export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
       {/* Phase-by-phase breakdown */}
       <div>
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          Desglose por Fase
+          {t('detective.summary.breakdownTitle', { defaultValue: 'Desglose por Fase' })}
         </p>
         <div className="space-y-2">
           {phases.map(p => (
@@ -123,11 +127,11 @@ export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
                 ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                 : <XCircle    className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground">{PHASE_LABELS[p.phase]}</p>
+                <p className="text-xs font-semibold text-foreground">{phaseLabels[p.phase]}</p>
                 {!p.correct && (
                   <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                    Tu respuesta: <span className="text-orange-600 dark:text-orange-400">{p.userAnswer || '—'}</span>
-                    {' · '}Correcto: <span className="text-emerald-600 dark:text-emerald-400">{p.correctAnswer}</span>
+                    {t('detective.summary.yourAnswer', { defaultValue: 'Tu respuesta:' })} <span className="text-orange-600 dark:text-orange-400">{p.userAnswer || '—'}</span>
+                    {' · '}{t('detective.summary.correctAnswer', { defaultValue: 'Correcto:' })} <span className="text-emerald-600 dark:text-emerald-400">{p.correctAnswer}</span>
                   </p>
                 )}
               </div>
@@ -142,7 +146,7 @@ export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
           <div className="flex items-center gap-1.5 mb-2">
             <BookOpen className="w-4 h-4 text-indigo-500" />
             <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
-              Claves de reconocimiento (Farfán)
+              {t('detective.summary.cluesTitle', { defaultValue: 'Claves de reconocimiento (Farfán)' })}
             </p>
           </div>
           <ul className="space-y-1">
@@ -159,19 +163,18 @@ export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
       {word.explanation && (
         <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-border">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            📝 Explicación Pedagógica
+            {t('detective.summary.explanationTitle', { defaultValue: '📝 Explicación Pedagógica' })}
           </p>
           <p className="text-sm text-foreground leading-relaxed">{word.explanation}</p>
         </div>
       )}
 
-      {/* Reset button */}
       <button
         onClick={onReset}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-colors"
       >
         <RotateCcw className="w-4 h-4" />
-        Investigar otro verbo
+        {t('detective.summary.resetBtn', { defaultValue: 'Investigar otro verbo' })}
       </button>
     </div>
   );

@@ -26,8 +26,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
-import type { WordAnalysis, PhaseResult } from '@dosfilos/domain';
-import { DetectivePhase } from '@dosfilos/domain';
+import type { WordAnalysis, DetectivePhaseResult } from '@dosfilos/domain';
+import { DetectivePhase, VerbType } from '@dosfilos/domain';
 import { useHebrewTutor } from '../HebrewTutorProvider';
 import { DetectiveProgress } from './detective/DetectiveProgress';
 import { DetectivePhase1Observe }        from './detective/DetectivePhase1Observe';
@@ -225,6 +225,67 @@ interface VerbDetectivePanelProps {
   onClose: () => void;
 }
 
+// ── Investigation path routing ────────────────────────────────────────────────
+
+/**
+ * Verb types that follow the STRONG investigation path.
+ *
+ * - STRONG:      fully regular — no missing/transformed radicals
+ * - I_ALEF:      Pe-Alef verbs behave near-regularly (alef quiesces quietly)
+ * - GUTURAL_R*:  all 3 radicals present; root is altered by vocal compensation,
+ *                not by radical loss — therefore classified as strong in TRIAGE
+ *
+ * III_ALEF is intentionally excluded: the quiescent final alef causes
+ * visible vowel irregularities (reduced final vowel, hirek-yod in Qal Impf.)
+ * that require the PREFORMATIVE + WEAK_ROOT diagnostic steps.
+ */
+const STRONG_VERB_TYPES = new Set<VerbType>([
+  VerbType.STRONG,
+  VerbType.I_ALEF,
+  VerbType.GUTURAL_R1,
+  VerbType.GUTURAL_R2,
+  VerbType.GUTURAL_R3,
+]);
+
+// ── Preformative vowel derivation (Lección 8 table) ──────────────────────────
+
+/**
+ * Maps a weak VerbType to the expected preformative vowel ID
+ * as defined in Farfán's Lección 8 diagnostic table.
+ *
+ * The returned string must match the `id` field in DetectivePhase3wPreformative
+ * VOWEL_OPTIONS array.
+ */
+function getExpectedPreformativeVowel(word: WordAnalysis): string {
+  // 1. Try to find the exact vowel in the preformative morpheme
+  const preformative = word.morphemes?.find(m => m.role === 'PREFIX_VERB' || m.role === 'PREFIX_PRONOMINAL' || m.role === 'PREFIX');
+  
+  if (preformative && preformative.text) {
+    const text = preformative.text;
+    // Note: order matters. Check specific/composed vowels first.
+    if (text.includes('\u05B8') && text.includes('\u05D5')) return 'jolem-vav'; // Kamatz male / Jolem vav approximation
+    if (text.includes('\u05B9') && text.includes('\u05D5')) return 'jolem-vav'; // Holam haser + vav
+    if (text.includes('\u05B9')) return 'jolem-vav'; // Holam haser
+    if (text.includes('\u05B8')) return 'qamets'; // Qamets (could be hatuf, but visually qamets)
+    if (text.includes('\u05B5')) return 'tsere'; // Tsere
+    if (text.includes('\u05B4')) return 'jireq'; // Jireq
+    if (text.includes('\u05B7')) return 'pataj'; // Pataj
+    if (text.includes('\u05B0')) return 'sheva'; // Sheva
+  }
+
+  // 2. Fallback to theoretical derivation if morpheme parsing fails
+  const verbType = word.verbMorphology?.verbType as VerbType | undefined;
+  switch (verbType) {
+    case VerbType.II_WAW_YOD:  return 'qamets';
+    case VerbType.GEMINATE:    return 'qamets';
+    case VerbType.I_YOD_WAW:   return 'tsere';
+    case VerbType.III_HE:      return 'tsere';
+    case VerbType.III_ALEF:    return 'jireq';
+    case VerbType.I_NUN:       return 'jireq';
+    default:                   return 'pataj';
+  }
+}
+
 // ── Correct-answer derivation ─────────────────────────────────────────────────
 
 function getCorrectAnswer(word: WordAnalysis, phase: DetectivePhase): string {
@@ -233,13 +294,13 @@ function getCorrectAnswer(word: WordAnalysis, phase: DetectivePhase): string {
     // Shared
     case DetectivePhase.OBSERVE:
       return 'verb';
-    case DetectivePhase.TRIAGE:
-      // Correct triage: 'strong' if verb is STRONG, GUTURAL*, or ALEF*, 'weak' otherwise
-      return morph?.verbType === 'STRONG' ||
-        morph?.verbType?.startsWith('GUTURAL') ||
-        morph?.verbType?.includes('ALEF')
-        ? 'strong'
-        : 'weak';
+    case DetectivePhase.TRIAGE: {
+      // Strong path: STRONG, I_ALEF, and all GUTURAL types keep 3 radicals.
+      // III_ALEF goes to weak path because the quiescent final alef is
+      // morphologically significant and requires preformative analysis.
+      const verbType = morph?.verbType as VerbType | undefined;
+      return verbType && STRONG_VERB_TYPES.has(verbType) ? 'strong' : 'weak';
+    }
 
     // Strong path
     case DetectivePhase.COLORS:
@@ -253,7 +314,7 @@ function getCorrectAnswer(word: WordAnalysis, phase: DetectivePhase): string {
 
     // Weak path
     case DetectivePhase.PREFORMATIVE:
-      return 'preformative-identified'; // Observational — any answer accepted
+      return getExpectedPreformativeVowel(word); // validated — not observational
     case DetectivePhase.WEAK_ROOT:
       return morph?.verbType ?? '';
     case DetectivePhase.WEAK_BINYAN:
@@ -277,11 +338,14 @@ function evaluateAnswer(
   const correct = getCorrectAnswer(word, phase);
   const morph   = word.verbMorphology;
 
-  // Observational phases — any answer earns credit
-  if (
-    phase === DetectivePhase.COLORS ||
-    phase === DetectivePhase.PREFORMATIVE
-  ) return true;
+  // COLORS is observational — the student maps morphemes visually;
+  // any answer earns credit (the learning is in the color interaction itself).
+  if (phase === DetectivePhase.COLORS) return true;
+
+  // PREFORMATIVE is now validated against the Lección 8 table.
+  // The student must identify the correct vowel under the preformative prefix.
+  if (phase === DetectivePhase.PREFORMATIVE)
+    return userAnswer === getExpectedPreformativeVowel(word);
 
   // Dagesh
   if (phase === DetectivePhase.DAGESH) {
@@ -339,7 +403,7 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
   const [currentPhase, setCurrentPhase]         = useState<DetectivePhase>(DetectivePhase.OBSERVE);
   const [activePath, setActivePath]             = useState<InvestigationPath>(null);
   const [completedPhases, setCompletedPhases]   = useState<Array<{ phase: DetectivePhase; correct: boolean }>>([]);
-  const [phaseResults, setPhaseResults]         = useState<PhaseResult[]>([]);
+  const [phaseResults, setPhaseResults]         = useState<DetectivePhaseResult[]>([]);
   const [sessionScore, setSessionScore]         = useState<number>(0);
   const [performanceLabel, setPerformanceLabel] = useState<'excellent' | 'good' | 'needs-practice'>('good');
   const [showSummary, setShowSummary]           = useState(false);
@@ -372,7 +436,7 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
     const correctAnswer = getCorrectAnswer(word, phase);
     const isCorrect     = evaluateAnswer(word, phase, userAnswer);
 
-    const result: PhaseResult = {
+    const result: DetectivePhaseResult = {
       phase,
       userAnswer,
       correctAnswer,
@@ -398,9 +462,10 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
       setIsSaving(true);
       try {
         const saved = await saveDetectiveSession.execute({
+          kind: 'verb',
           userId: 'anonymous',
           tenantId: 'global',
-          verbText: word.hebrewText,
+          wordText: word.hebrewText,
           verseReference,
           expectedBinyan:   word.verbMorphology!.binyan,
           expectedVerbType: word.verbMorphology!.verbType,
@@ -626,7 +691,13 @@ const PhaseRenderer: React.FC<PhaseRendererProps> = ({ word, phase, onComplete }
 
     // ── Weak path ────────────────────────────────────────────────────────────
     case DetectivePhase.PREFORMATIVE:
-      return <DetectivePhase3wPreformative word={word} onComplete={wrap(DetectivePhase.PREFORMATIVE)} />;
+      return (
+        <DetectivePhase3wPreformative
+          word={word}
+          onComplete={wrap(DetectivePhase.PREFORMATIVE)}
+          expectedVowelId={getExpectedPreformativeVowel(word)}
+        />
+      );
     case DetectivePhase.WEAK_ROOT:
       return <DetectivePhase4wWeakRoot     word={word} onComplete={wrap(DetectivePhase.WEAK_ROOT)} />;
     case DetectivePhase.WEAK_BINYAN:

@@ -18,6 +18,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { WordAnalysis } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
 
 interface DetectivePhaseTranslationProps {
@@ -45,7 +46,7 @@ function shuffle<T>(arr: T[]): T[] {
  * Generates three plausible distractors from the word's available metadata.
  * Each distractor targets a distinct conceptual error so feedback is specific.
  */
-function buildDistractors(word: WordAnalysis): string[] {
+function buildDistractors(word: WordAnalysis, t: any): string[] {
   const morph = word.verbMorphology;
   const distractors: string[] = [];
 
@@ -87,10 +88,10 @@ function buildDistractors(word: WordAnalysis): string[] {
 
   // Pad to exactly 3 if needed with generic academic distractors
   const fallbacks = [
-    'ser, estar',
-    'él habló',
-    'y sucedió que',
-    'acontecer',
+    t('detective.phaseTranslation.fallback.ser', { defaultValue: 'ser, estar' }),
+    t('detective.phaseTranslation.fallback.hablo', { defaultValue: 'él habló' }),
+    t('detective.phaseTranslation.fallback.sucedio', { defaultValue: 'y sucedió que' }),
+    t('detective.phaseTranslation.fallback.acontecer', { defaultValue: 'acontecer' }),
   ];
   let idx = 0;
   while (unique.length < 3 && idx < fallbacks.length) {
@@ -105,13 +106,14 @@ export const DetectivePhaseTranslation: React.FC<DetectivePhaseTranslationProps>
   word,
   onComplete,
 }) => {
+  const { t } = useTranslation('hebrewTutor');
   const [selected, setSelected]   = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const correct = word.translation;
 
   const options: TranslationOption[] = useMemo(() => {
-    const distractors = buildDistractors(word);
+    const distractors = buildDistractors(word, t);
     const all: TranslationOption[] = [
       { id: 'correct', text: correct, isCorrect: true },
       ...distractors.map((d, i) => ({ id: `d${i}`, text: d, isCorrect: false })),
@@ -132,15 +134,14 @@ export const DetectivePhaseTranslation: React.FC<DetectivePhaseTranslationProps>
       <DetectiveHeroCard
         word={word}
         step={6}
-        name="Traducción Contextual"
-        question="Ahora que analizaste el verbo completo, ¿cómo lo traduce al español en este contexto?"
+        name={t('detective.phaseTranslation.hero.name', { defaultValue: 'Traducción Contextual' })}
+        question={t('detective.phaseTranslation.hero.question', { defaultValue: 'Ahora que analizaste el verbo completo, ¿cómo lo traduce al español en este contexto?' })}
       />
 
       {/* Instructional hint */}
       <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
         <p className="text-xs text-amber-800 dark:text-amber-300">
-          <strong>Recuerda:</strong> La traducción contextual no es solo el significado del lexema (raíz),
-          sino la forma verbal completa con su tiempo, persona y número en el versículo.
+          <strong>{t('detective.phaseTranslation.hint.title', { defaultValue: 'Recuerda:' })}</strong> {t('detective.phaseTranslation.hint.desc', { defaultValue: 'La traducción contextual no es solo el significado del lexema (raíz), sino la forma verbal completa con su tiempo, persona y número en el versículo.' })}
         </p>
       </div>
 
@@ -186,7 +187,7 @@ export const DetectivePhaseTranslation: React.FC<DetectivePhaseTranslationProps>
             onClick={handleSubmit}
             className="w-full mt-2 py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Verificar →
+            {t('detective.phaseTranslation.verifyBtn', { defaultValue: 'Verificar →' })}
           </button>
         </div>
       ) : (
@@ -195,23 +196,22 @@ export const DetectivePhaseTranslation: React.FC<DetectivePhaseTranslationProps>
           {isCorrect ? (
             <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-1">
               <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                Correcto. Esa es la traducción contextual del verbo.
+                {t('detective.phaseTranslation.correct.title', { defaultValue: 'Correcto. Esa es la traducción contextual del verbo.' })}
               </p>
               <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                Lograste cerrar el ciclo completo: identificación morfológica → traducción contextual.
+                {t('detective.phaseTranslation.correct.desc', { defaultValue: 'Lograste cerrar el ciclo completo: identificación morfológica → traducción contextual.' })}
               </p>
             </div>
           ) : (
             <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-2">
               <p className="text-orange-700 dark:text-orange-300 font-semibold text-sm">
-                No exactamente. La traducción contextual correcta es:
+                {t('detective.phaseTranslation.incorrect.title', { defaultValue: 'No exactamente. La traducción contextual correcta es:' })}
               </p>
               <p className="text-base font-bold text-foreground">
                 "{correct}"
               </p>
               <p className="text-xs text-muted-foreground">
-                Recuerda integrar el tiempo verbal ({word.verbMorphology?.temporalValue ?? 'forma verbal'}),
-                la persona y el número al momento de traducir.
+                {t('detective.phaseTranslation.incorrect.desc', { defaultValue: 'Recuerda integrar el tiempo verbal ({{temporalValue}}), la persona y el número al momento de traducir.', temporalValue: word.verbMorphology?.temporalValue ?? 'forma verbal' })}
               </p>
             </div>
           )}
@@ -220,7 +220,7 @@ export const DetectivePhaseTranslation: React.FC<DetectivePhaseTranslationProps>
             onClick={() => onComplete(selected ?? '')}
             className="w-full py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm hover:bg-indigo-600 transition-colors"
           >
-            Ver resultado final →
+            {t('detective.phaseTranslation.continueBtn', { defaultValue: 'Ver resultado final →' })}
           </button>
         </div>
       )}

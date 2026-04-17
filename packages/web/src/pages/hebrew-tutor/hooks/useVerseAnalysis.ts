@@ -10,7 +10,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useHebrewTutor } from '../HebrewTutorProvider';
 import { useAuthorization } from '../../../hooks/useAuthorization';
-import type { VerseAnalysis, BookIndex } from '@dosfilos/domain';
+import type { VerseAnalysis, BookIndex, HebrewVerse } from '@dosfilos/domain';
 
 interface UseVerseAnalysisState {
   /** Currently selected book key (morphhb key) */
@@ -21,8 +21,11 @@ interface UseVerseAnalysisState {
   bookIndex: BookIndex | null;
   /** Most recent analysis result */
   analysis: VerseAnalysis | null;
+  /** Raw Hebrew verse text available without AI (for preview state) */
+  hebrewVerse: HebrewVerse | null;
   isLoadingIndex: boolean;
   isAnalyzing: boolean;
+  isLoadingVerse: boolean;
   error: string | null;
   canReanalyze: boolean;
 }
@@ -33,18 +36,23 @@ interface UseVerseAnalysisActions {
   setVerse: (v: number) => void;
   analyze: (forceRefresh?: boolean) => Promise<void>;
   clearError: () => void;
+  nextVerse: () => void;
+  prevVerse: () => void;
+  navigate: (book: string, chapter: number, verse: number) => void;
 }
 
 export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActions {
-  const { analyzeVerse, getBibleNavigation } = useHebrewTutor();
+  const { analyzeVerse, getBibleNavigation, getVerseText, checkCache } = useHebrewTutor();
 
   const [selectedBook, setSelectedBook] = useState('Jonah');
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [selectedVerse, setSelectedVerse] = useState(1);
   const [bookIndex, setBookIndex] = useState<BookIndex | null>(null);
   const [analysis, setAnalysis] = useState<VerseAnalysis | null>(null);
+  const [hebrewVerse, setHebrewVerse] = useState<HebrewVerse | null>(null);
   const [isLoadingIndex, setIsLoadingIndex] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoadingVerse, setIsLoadingVerse] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const { isAdmin } = useAuthorization();
@@ -53,22 +61,18 @@ export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActi
   const currentKey = `${selectedBook}_${selectedChapter}_${selectedVerse}`;
   const canReanalyze = isAdmin || (refreshCounts[currentKey] || 0) < 2;
 
-  // Load navigation index whenever the book changes
+  // Load navigation index whenever the book changes.
+  // NOTE: Only manages bookIndex/isLoadingIndex.
+  // Analysis and verse preview state are managed by navigateToVerse.
   useEffect(() => {
     let cancelled = false;
     setIsLoadingIndex(true);
     setBookIndex(null);
-    setAnalysis(null);
 
     getBibleNavigation
       .getBookIndex(selectedBook)
       .then(({ bookIndex }) => {
-        if (!cancelled) {
-          setBookIndex(bookIndex);
-          // Reset chapter/verse to 1:1 when switching books
-          setSelectedChapter(1);
-          setSelectedVerse(1);
-        }
+        if (!cancelled) setBookIndex(bookIndex);
       })
       .catch((err) => {
         if (!cancelled)
@@ -120,20 +124,81 @@ export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActi
     [analyzeVerse, selectedBook, selectedChapter, selectedVerse, canReanalyze, currentKey, isAdmin],
   );
 
-  const setBook = useCallback((key: string) => {
-    setSelectedBook(key);
-    setAnalysis(null);
-  }, []);
+  /**
+   * Core navigation action.
+   * 1. Clears current analysis and preview.
+   * 2. Updates selected coordinates.
+   * 3. Checks Firebase cache → loads full analysis if hit.
+   * 4. Falls back to raw MorphHB verse text for preview if miss.
+   *
+   * All state changes triggered by user selection (dropdowns OR ◀/▶)
+   * go through this single function.
+   */
+  const navigateToVerse = useCallback(
+    async (book: string, chapter: number, verse: number) => {
+      setAnalysis(null);
+      setHebrewVerse(null);
+      setSelectedBook(book);
+      setSelectedChapter(chapter);
+      setSelectedVerse(verse);
 
-  const setChapter = useCallback((chap: number) => {
-    setSelectedChapter(chap);
-    setAnalysis(null);
-  }, []);
+      const reference = `${book}.${chapter}.${verse}`;
+      setIsLoadingVerse(true);
+      try {
+        const cached = await checkCache(reference);
+        if (cached) {
+          setAnalysis(cached);
+          return;
+        }
+        const verseData = await getVerseText.execute({ morphhbKey: book, chapter, verse });
+        setHebrewVerse(verseData);
+      } catch (err) {
+        console.warn('[useVerseAnalysis] Could not load verse preview:', err);
+      } finally {
+        setIsLoadingVerse(false);
+      }
+    },
+    [checkCache, getVerseText],
+  );
 
-  const setVerse = useCallback((v: number) => {
-    setSelectedVerse(v);
-    setAnalysis(null);
-  }, []);
+  /** Changes book and resets to chapter 1, verse 1. */
+  const setBook = useCallback(
+    (key: string) => void navigateToVerse(key, 1, 1),
+    [navigateToVerse],
+  );
+
+  /** Changes chapter and resets to verse 1. */
+  const setChapter = useCallback(
+    (chap: number) => void navigateToVerse(selectedBook, chap, 1),
+    [navigateToVerse, selectedBook],
+  );
+
+  /** Changes verse within the current chapter. */
+  const setVerse = useCallback(
+    (v: number) => void navigateToVerse(selectedBook, selectedChapter, v),
+    [navigateToVerse, selectedBook, selectedChapter],
+  );
+
+  const nextVerse = useCallback(() => {
+    if (!bookIndex) return;
+    const versesInChapter = bookIndex.versesPerChapter[selectedChapter - 1] ?? 1;
+    const totalChapters = bookIndex.versesPerChapter.length;
+    if (selectedVerse < versesInChapter) {
+      void navigateToVerse(selectedBook, selectedChapter, selectedVerse + 1);
+    } else if (selectedChapter < totalChapters) {
+      void navigateToVerse(selectedBook, selectedChapter + 1, 1);
+    }
+  }, [bookIndex, selectedBook, selectedChapter, selectedVerse, navigateToVerse]);
+
+  const prevVerse = useCallback(() => {
+    if (!bookIndex) return;
+    if (selectedVerse > 1) {
+      void navigateToVerse(selectedBook, selectedChapter, selectedVerse - 1);
+    } else if (selectedChapter > 1) {
+      const prevChapterVerses = bookIndex.versesPerChapter[selectedChapter - 2] ?? 1;
+      void navigateToVerse(selectedBook, selectedChapter - 1, prevChapterVerses);
+    }
+  }, [bookIndex, selectedBook, selectedChapter, selectedVerse, navigateToVerse]);
 
   return {
     selectedBook,
@@ -141,14 +206,19 @@ export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActi
     selectedVerse,
     bookIndex,
     analysis,
+    hebrewVerse,
     isLoadingIndex,
     isAnalyzing,
+    isLoadingVerse,
     error,
     canReanalyze,
     setBook,
     setChapter,
     setVerse,
     analyze,
+    navigate: (b, c, v) => void navigateToVerse(b, c, v),
+    nextVerse,
+    prevVerse,
     clearError: () => setError(null),
   };
 }

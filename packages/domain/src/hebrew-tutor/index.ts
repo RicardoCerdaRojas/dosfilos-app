@@ -8,7 +8,8 @@ export * from './value-objects/grammar.js';
 // Entities
 export * from './entities/verse-analysis.js';
 export * from './entities/hebrew-bible.js';
-export * from './entities/detective-session.js';
+export { DetectivePhase, createDetectiveSession, createVerbDetectiveSession, createNominalDetectiveSession, getSessionScore, getPerformanceLabel } from './entities/detective-session.js';
+export type { PhaseResult as DetectivePhaseResult, VerbDetectiveSession, NominalDetectiveSession, DetectiveSession } from './entities/detective-session.js';
 export * from './entities/hint.js';
 
 // Ports

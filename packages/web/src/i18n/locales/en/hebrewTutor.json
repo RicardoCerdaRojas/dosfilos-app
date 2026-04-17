@@ -75,12 +75,15 @@
       "I_NUN": "Pe Nun",
       "I_YOD_WAW": "Pe Yod/Waw",
       "II_WAW_YOD": "Hollow (Ayin Waw/Yod)",
+      "II_WAW": "Hollow (Ayin Waw/Yod)",
       "III_HE": "Lamed He",
       "III_ALEF": "Lamed Alef",
       "GEMINATE": "Geminate",
       "GUTURAL_R1": "Pe Guttural",
       "GUTURAL_R2": "Ayin Guttural",
-      "GUTURAL_R3": "Lamed Guttural"
+      "GUTURAL_R3": "Lamed Guttural",
+      "IRREGULAR": "Irregular",
+      "MIXED": "Mixed type"
     },
     "placeholder": {
       "title": "Select a verse",

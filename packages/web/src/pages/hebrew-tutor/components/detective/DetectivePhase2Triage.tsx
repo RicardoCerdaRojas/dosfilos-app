@@ -12,6 +12,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
 import type { WordAnalysis } from '@dosfilos/domain';
 
@@ -29,27 +30,27 @@ interface TriageOption {
   hint: string;
 }
 
-const OPTIONS: TriageOption[] = [
+const getOptions = (t: any): TriageOption[] => [
   {
     id: 'three',
-    label: 'Veo 3 radicales claras',
-    sublabel: 'Todas las letras de la raíz están presentes',
+    label: t('detective.phase.triage.options.three.label', { defaultValue: 'Veo 3 radicales claras' }),
+    sublabel: t('detective.phase.triage.options.three.sublabel', { defaultValue: 'Todas las letras de la raíz están presentes' }),
     emoji: '💪',
-    hint: 'Ejemplo: כָּתַב → ك-ت-ب (k-t-b) todas visibles',
+    hint: t('detective.phase.triage.options.three.hint', { defaultValue: 'Ejemplo: כָּתַב → ك-ت-ب (k-t-b) todas visibles' }),
   },
   {
     id: 'two',
-    label: 'Solo veo 2 radicales',
-    sublabel: 'Una radical parece faltar o estar oculta',
+    label: t('detective.phase.triage.options.two.label', { defaultValue: 'Solo veo 2 radicales' }),
+    sublabel: t('detective.phase.triage.options.two.sublabel', { defaultValue: 'Una radical parece faltar o estar oculta' }),
     emoji: '🔍',
-    hint: 'Puede ser un verbo débil — la raíz se contrajo',
+    hint: t('detective.phase.triage.options.two.hint', { defaultValue: 'Puede ser un verbo débil — la raíz se contrajo' }),
   },
   {
     id: 'one-or-none',
-    label: 'Veo 1 radical o ninguna',
-    sublabel: 'La forma está muy contraída',
+    label: t('detective.phase.triage.options.oneOrNone.label', { defaultValue: 'Veo 1 radical o ninguna' }),
+    sublabel: t('detective.phase.triage.options.oneOrNone.sublabel', { defaultValue: 'La forma está muy contraída' }),
     emoji: '⚠️',
-    hint: 'Verbo débil — requiere la tabla de la Lección 8',
+    hint: t('detective.phase.triage.options.oneOrNone.hint', { defaultValue: 'Verbo débil — requiere la tabla de la Lección 8' }),
   },
 ];
 
@@ -61,6 +62,7 @@ const PATH_MAP: Record<TriageOption['id'], 'strong' | 'weak'> = {
 };
 
 export const DetectivePhase2Triage: React.FC<DetectivePhase2TriageProps> = ({ word, onComplete }) => {
+  const { t } = useTranslation('hebrewTutor');
   const [selected, setSelected] = useState<TriageOption['id'] | null>(null);
 
   const handleConfirm = () => {
@@ -74,22 +76,20 @@ export const DetectivePhase2Triage: React.FC<DetectivePhase2TriageProps> = ({ wo
       <DetectiveHeroCard
         word={word}
         step={2}
-        name="Reconocimiento de Raíz"
-        question="¿Cuántas letras radicales puedes identificar?"
+        name={t('detective.phase.triage.title', { defaultValue: 'Reconocimiento de Raíz' })}
+        question={t('detective.phase.triage.question', { defaultValue: '¿Cuántas letras radicales puedes identificar?' })}
       />
 
       {/* Hint */}
       <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
         <p className="text-xs text-amber-800 dark:text-amber-300">
-          <strong>Clave:</strong> Un verbo hebreo tiene 3 radicales (R1, R2, R3).
-          Los verbos <em>fuertes</em> las muestran todas.
-          Los verbos <em>débiles</em> pueden perder, contraer o transformar alguna de ellas.
+          <span dangerouslySetInnerHTML={{ __html: t('detective.phase.triage.hint', { defaultValue: '<strong>Clave:</strong> Un verbo hebreo tiene 3 radicales (R1, R2, R3). Los verbos <em>fuertes</em> las muestran todas. Los verbos <em>débiles</em> pueden perder, contraer o transformar alguna de ellas.' }) }} />
         </p>
       </div>
 
       {/* Options */}
       <div className="space-y-2">
-        {OPTIONS.map(opt => (
+        {getOptions(t).map(opt => (
           <button
             key={opt.id}
             onClick={() => setSelected(opt.id)}
@@ -128,9 +128,9 @@ export const DetectivePhase2Triage: React.FC<DetectivePhase2TriageProps> = ({ wo
             : 'bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'}
         `}>
           {PATH_MAP[selected] === 'strong' ? (
-            <>💪 <strong>Camino Verbo Fuerte:</strong> Tiraremos los colores morfológicos (Lec. 1-7)</>
+            <span dangerouslySetInnerHTML={{ __html: t('detective.phase.triage.pathStrong', { defaultValue: '💪 <strong>Camino Verbo Fuerte:</strong> Tiraremos los colores morfológicos (Lec. 1-7)' }) }} />
           ) : (
-            <>🔬 <strong>Camino Verbo Débil:</strong> Usaremos la tabla de la vocal del preformativo (Lec. 8)</>
+            <span dangerouslySetInnerHTML={{ __html: t('detective.phase.triage.pathWeak', { defaultValue: '🔬 <strong>Camino Verbo Débil:</strong> Usaremos la tabla de la vocal del preformativo (Lec. 8)' }) }} />
           )}
         </div>
       )}
@@ -141,7 +141,7 @@ export const DetectivePhase2Triage: React.FC<DetectivePhase2TriageProps> = ({ wo
         onClick={handleConfirm}
         className="w-full py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        Continuar investigación →
+        {t('detective.phase.triage.continueInvestigation', { defaultValue: 'Continuar investigación →' })}
       </button>
     </div>
   );

@@ -71,17 +71,21 @@ export const MORPHEME_BADGE_STYLES: Record<MorphemeCategory, string> = {
 };
 
 interface MorphemeSpanProps {
-  segments: MorphemeSegment[];
+  segments: readonly MorphemeSegment[];
   className?: string;
   variant?: 'text' | 'highlight';
   disableColors?: boolean;
+  /** When true, suppresses the native browser title tooltip on each morpheme span.
+   *  Use this when a parent Tooltip component already provides richer information. */
+  disableNativeTooltip?: boolean;
 }
 
-export const MorphemeSpan: React.FC<MorphemeSpanProps> = ({ 
-  segments, 
+export const MorphemeSpan: React.FC<MorphemeSpanProps> = ({
+  segments,
   className = '',
   variant = 'text',
-  disableColors = false
+  disableColors = false,
+  disableNativeTooltip = false,
 }) => {
   if (!segments?.length) return null;
 
@@ -92,7 +96,7 @@ export const MorphemeSpan: React.FC<MorphemeSpanProps> = ({
       {segments.map((seg, i) => (
         <span
           key={i}
-          title={seg.label || seg.role}
+          title={disableNativeTooltip ? undefined : (seg.label || seg.role)}
           className={cn(!disableColors && styles[getMorphemeCategory(seg.role)], "px-[1px]")}
         >
           {seg.text}

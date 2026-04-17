@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { WordAnalysis } from '@dosfilos/domain';
 import { MorphemeSpan } from '../MorphemeSpan';
 
@@ -35,7 +36,9 @@ export const DetectiveHeroCard: React.FC<DetectiveHeroCardProps> = ({
   step,
   name,
   question,
-}) => (
+}) => {
+  const { t } = useTranslation('hebrewTutor');
+  return (
   <div className="mb-5 rounded-2xl overflow-hidden border border-border bg-gradient-to-b from-indigo-50/60 via-slate-50/40 to-background dark:from-indigo-950/25 dark:via-slate-900/20 dark:to-background">
 
     {/* ── ① Verb hero ───────────────────────────────────────────────────────── */}
@@ -66,7 +69,7 @@ export const DetectiveHeroCard: React.FC<DetectiveHeroCardProps> = ({
         {/* Root badge */}
         <div className="px-1.5 py-0.5 rounded-md bg-indigo-500/15 dark:bg-indigo-400/20 flex items-center justify-center flex-shrink-0">
           <span className="text-[9px] font-bold tracking-widest uppercase text-indigo-600 dark:text-indigo-400">
-            Raíz
+            {t('detective.heroCard.rootLabel', { defaultValue: 'Raíz' })}
           </span>
         </div>
         {/* Root letters */}
@@ -110,4 +113,5 @@ export const DetectiveHeroCard: React.FC<DetectiveHeroCardProps> = ({
     </div>
 
   </div>
-);
+  );
+};

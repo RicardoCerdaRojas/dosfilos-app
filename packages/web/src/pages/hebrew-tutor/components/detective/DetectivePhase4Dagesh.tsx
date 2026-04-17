@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import type { WordAnalysis } from '@dosfilos/domain';
 import { Binyan, MorphemeRole } from '@dosfilos/domain';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
+import { useTranslation } from 'react-i18next';
 
 interface DetectivePhase4DageshProps {
   word: WordAnalysis;
@@ -20,23 +21,23 @@ interface DetectivePhase4DageshProps {
 
 type DageshAnswer = 'yes' | 'no' | 'cannot'; // cannot = "SeLVeKiMoNo" consonant
 
-const ANSWERS = [
+const getAnswers = (t: any) => [
   {
     value: 'yes' as DageshAnswer,
-    label: '✓ Sí — hay dagesh forte en R2',
-    description: 'Indica duplicación: probablemente Piel, Pual o Hitpael',
+    label: t('detective.phase4.options.yes.label', { defaultValue: '✓ Sí — hay dagesh forte en R2' }),
+    description: t('detective.phase4.options.yes.description', { defaultValue: 'Indica duplicación: probablemente Piel, Pual o Hitpael' }),
     emoji: '⚡',
   },
   {
     value: 'no' as DageshAnswer,
-    label: '✗ No — no hay dagesh forte en R2',
-    description: 'Sin duplicación: probablemente Qal, Nifal, Hifil u Hofal',
+    label: t('detective.phase4.options.no.label', { defaultValue: '✗ No — no hay dagesh forte en R2' }),
+    description: t('detective.phase4.options.no.description', { defaultValue: 'Sin duplicación: probablemente Qal, Nifal, Hifil u Hofal' }),
     emoji: '❌',
   },
   {
     value: 'cannot' as DageshAnswer,
-    label: '⚠ La consonante no puede recibir dagesh',
-    description: 'Regla "Se Ve eL KIMoNo": ש ו ל כ י מ נ — estas letras no duplican',
+    label: t('detective.phase4.options.cannot.label', { defaultValue: '⚠ La consonante no puede recibir dagesh' }),
+    description: t('detective.phase4.options.cannot.description', { defaultValue: 'Regla "Se Ve eL KIMoNo": ש ו ל כ י מ נ — estas letras no duplican' }),
     emoji: '🚫',
   },
 ];
@@ -54,9 +55,11 @@ function hasVisibleDagesh(word: WordAnalysis): boolean {
 }
 
 export const DetectivePhase4Dagesh: React.FC<DetectivePhase4DageshProps> = ({ word, onComplete }) => {
+  const { t } = useTranslation('hebrewTutor');
   const [selected, setSelected] = useState<DageshAnswer | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
+  const answers = getAnswers(t);
   const expectsDagesh = hasDageshFort(word);
   const visibleDagesh = hasVisibleDagesh(word);
 
@@ -69,27 +72,31 @@ export const DetectivePhase4Dagesh: React.FC<DetectivePhase4DageshProps> = ({ wo
       <DetectiveHeroCard
         word={word}
         step={4}
-        name="Inspección de Dagesh"
-        question="¿Hay dagesh forte en la segunda radical (R2)?"
+        name={t('detective.phase4.hero.name', { defaultValue: 'Inspección de Dagesh' })}
+        question={t('detective.phase4.hero.question', { defaultValue: '¿Hay dagesh forte en la segunda radical (R2)?' })}
       />
 
       {/* Mnemonic reference */}
       <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-xl p-3">
         <p className="text-xs text-purple-800 dark:text-purple-300 font-semibold mb-1">
-          Regla mnemotécnica: "Se Ve eL KIMoNo"
+          {t('detective.phase4.hint.title', { defaultValue: 'Regla mnemotécnica: "Se Ve eL KIMoNo"' })}
         </p>
         <div dir="rtl" lang="he" className="text-lg text-purple-700 dark:text-purple-300 font-serif tracking-widest mb-1">
           ש ו ל כ י מ נ
         </div>
-        <p className="text-xs text-purple-700 dark:text-purple-400">
-          Estas consonantes <strong>no pueden recibir dagesh forte</strong>.
-          Si R2 es una de ellas, el dagesh se compensa con una vocal larga.
-        </p>
+        <p 
+          className="text-xs text-purple-700 dark:text-purple-400"
+          dangerouslySetInnerHTML={{
+            __html: t('detective.phase4.hint.descriptionHtml', {
+              defaultValue: 'Estas consonantes <strong>no pueden recibir dagesh forte</strong>. Si R2 es una de ellas, el dagesh se compensa con una vocal larga.'
+            })
+          }}
+        />
       </div>
 
       {!submitted ? (
         <div className="space-y-2">
-          {ANSWERS.map(ans => (
+          {answers.map(ans => (
             <button
               key={ans.value}
               onClick={() => setSelected(ans.value)}
@@ -113,7 +120,7 @@ export const DetectivePhase4Dagesh: React.FC<DetectivePhase4DageshProps> = ({ wo
             onClick={() => setSubmitted(true)}
             className="w-full mt-2 py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Verificar respuesta
+            {t('detective.phase4.buttons.verify', { defaultValue: 'Verificar respuesta' })}
           </button>
         </div>
       ) : (
@@ -121,30 +128,30 @@ export const DetectivePhase4Dagesh: React.FC<DetectivePhase4DageshProps> = ({ wo
           {isCorrect ? (
             <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
               <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                ✅ ¡Correcto!
+                {t('detective.phase4.feedback.correctTitle', { defaultValue: '✅ ¡Correcto!' })}
               </p>
               <p className="text-emerald-600 dark:text-emerald-400 text-xs mt-1">
                 {visibleDagesh
-                  ? 'El dagesh forte en R2 es una señal clave de Piel, Pual o Hitpael.'
-                  : 'Sin dagesh forte en R2. Esto apunta hacia Qal, Nifal, Hifil u Hofal.'}
+                  ? t('detective.phase4.feedback.correctYes', { defaultValue: 'El dagesh forte en R2 es una señal clave de Piel, Pual o Hitpael.' })
+                  : t('detective.phase4.feedback.correctNo', { defaultValue: 'Sin dagesh forte en R2. Esto apunta hacia Qal, Nifal, Hifil u Hofal.' })}
               </p>
             </div>
           ) : (
             <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4">
               <p className="text-orange-700 dark:text-orange-300 font-semibold text-sm">
-                ✗ Revisa nuevamente. La respuesta correcta es:
+                {t('detective.phase4.feedback.incorrectTitle', { defaultValue: '✗ Revisa nuevamente. La respuesta correcta es:' })}
               </p>
               <p className="text-orange-700 dark:text-orange-300 text-sm font-bold mt-1">
                 {expectedAnswer === 'yes'
-                  ? '✓ Sí hay dagesh forte en R2'
-                  : '✗ No hay dagesh forte en R2'}
+                  ? t('detective.phase4.feedback.incorrectYes', { defaultValue: '✓ Sí hay dagesh forte en R2' })
+                  : t('detective.phase4.feedback.incorrectNo', { defaultValue: '✗ No hay dagesh forte en R2' })}
               </p>
               <p className="text-orange-600 dark:text-orange-400 text-xs mt-1">
                 {visibleDagesh
-                  ? 'Busca el punto en el interior de la segunda radical.'
+                  ? t('detective.phase4.feedback.incorrectExplanationVisible', { defaultValue: 'Busca el punto en el interior de la segunda radical.' })
                   : expectsDagesh
-                    ? 'La consonante de R2 no puede recibir dagesh (regla "Se Ve eL KIMoNo").'
-                    : 'Este binyan no usa dagesh forte como marcador.'}
+                    ? t('detective.phase4.feedback.incorrectExplanationCannot', { defaultValue: 'La consonante de R2 no puede recibir dagesh (regla "Se Ve eL KIMoNo").' })
+                    : t('detective.phase4.feedback.incorrectExplanationExpects', { defaultValue: 'Este binyan no usa dagesh forte como marcador.' })}
               </p>
             </div>
           )}
@@ -152,7 +159,7 @@ export const DetectivePhase4Dagesh: React.FC<DetectivePhase4DageshProps> = ({ wo
             onClick={() => onComplete(selected!)}
             className="w-full py-2.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm hover:bg-indigo-600 transition-colors"
           >
-            Continuar →
+            {t('detective.phase4.buttons.continue', { defaultValue: 'Continuar →' })}
           </button>
         </div>
       )}

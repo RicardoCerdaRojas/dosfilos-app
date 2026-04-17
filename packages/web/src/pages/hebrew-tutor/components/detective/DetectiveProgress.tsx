@@ -14,6 +14,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, XCircle, Circle, Loader2 } from 'lucide-react';
 import { DetectivePhase } from '@dosfilos/domain';
 
@@ -29,31 +30,31 @@ interface PhaseConfig {
 
 // ── Phase configurations per path ─────────────────────────────────────────────
 
-const SHARED_PHASES: PhaseConfig[] = [
-  { phase: DetectivePhase.OBSERVE, label: 'Observación', icon: '', step: 1 },
-  { phase: DetectivePhase.TRIAGE,  label: 'Triage',      icon: '', step: 2 },
+const getSharedPhases = (t: any): PhaseConfig[] => [
+  { phase: DetectivePhase.OBSERVE, label: t('detective.progress.phases.observe', { defaultValue: 'Observación' }), icon: '', step: 1 },
+  { phase: DetectivePhase.TRIAGE,  label: t('detective.progress.phases.triage', { defaultValue: 'Triage' }),      icon: '', step: 2 },
 ];
 
-const STRONG_PHASES: PhaseConfig[] = [
-  { phase: DetectivePhase.COLORS,        label: 'Los Colores',   icon: '', step: 3 },
-  { phase: DetectivePhase.DAGESH,        label: 'Dagesh',        icon: '', step: 4 },
-  { phase: DetectivePhase.BINYAN,        label: 'Binyan',        icon: '', step: 5 },
-  { phase: DetectivePhase.STRONG_CONFIRM,label: 'Clasificación', icon: '', step: 6 },
-  { phase: DetectivePhase.TRANSLATION,   label: 'Traducción',   icon: '', step: 7 },
+const getStrongPhases = (t: any): PhaseConfig[] => [
+  { phase: DetectivePhase.COLORS,        label: t('detective.progress.phases.colors', { defaultValue: 'Los Colores' }),   icon: '', step: 3 },
+  { phase: DetectivePhase.DAGESH,        label: t('detective.progress.phases.dagesh', { defaultValue: 'Dagesh' }),        icon: '', step: 4 },
+  { phase: DetectivePhase.BINYAN,        label: t('detective.progress.phases.binyan', { defaultValue: 'Binyan' }),        icon: '', step: 5 },
+  { phase: DetectivePhase.STRONG_CONFIRM,label: t('detective.progress.phases.strongConfirm', { defaultValue: 'Clasificación' }), icon: '', step: 6 },
+  { phase: DetectivePhase.TRANSLATION,   label: t('detective.progress.phases.translation', { defaultValue: 'Traducción' }),   icon: '', step: 7 },
 ];
 
-const WEAK_PHASES: PhaseConfig[] = [
-  { phase: DetectivePhase.PREFORMATIVE, label: 'Preformativo', icon: '', step: 3 },
-  { phase: DetectivePhase.WEAK_ROOT,    label: 'Raíz Débil',   icon: '', step: 4 },
-  { phase: DetectivePhase.WEAK_BINYAN,  label: 'Binyan',       icon: '', step: 5 },
-  { phase: DetectivePhase.TRANSLATION,  label: 'Traducción',  icon: '', step: 6 },
+const getWeakPhases = (t: any): PhaseConfig[] => [
+  { phase: DetectivePhase.PREFORMATIVE, label: t('detective.progress.phases.preformative', { defaultValue: 'Preformativo' }), icon: '', step: 3 },
+  { phase: DetectivePhase.WEAK_ROOT,    label: t('detective.progress.phases.weakRoot', { defaultValue: 'Raíz Débil' }),   icon: '', step: 4 },
+  { phase: DetectivePhase.WEAK_BINYAN,  label: t('detective.progress.phases.weakBinyan', { defaultValue: 'Binyan' }),       icon: '', step: 5 },
+  { phase: DetectivePhase.TRANSLATION,  label: t('detective.progress.phases.translation', { defaultValue: 'Traducción' }),  icon: '', step: 6 },
 ];
 
 /** Placeholder phases shown before TRIAGE determines the path */
-const PENDING_PATH_PHASES: PhaseConfig[] = [
-  { phase: -1 as DetectivePhase, label: 'Camino por definir…', icon: '', step: 3 },
-  { phase: -2 as DetectivePhase, label: 'Camino por definir…', icon: '', step: 4 },
-  { phase: -3 as DetectivePhase, label: 'Camino por definir…', icon: '', step: 5 },
+const getPendingPathPhases = (t: any): PhaseConfig[] => [
+  { phase: -1 as DetectivePhase, label: t('detective.progress.phases.pending', { defaultValue: 'Camino por definir…' }), icon: '', step: 3 },
+  { phase: -2 as DetectivePhase, label: t('detective.progress.phases.pending', { defaultValue: 'Camino por definir…' }), icon: '', step: 4 },
+  { phase: -3 as DetectivePhase, label: t('detective.progress.phases.pending', { defaultValue: 'Camino por definir…' }), icon: '', step: 5 },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -76,14 +77,17 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
   completedPhases,
   activePath,
 }) => {
+  const { t } = useTranslation('hebrewTutor');
+
   // Build the visible phase list based on the current path
   const pathPhases: PhaseConfig[] = activePath === 'strong'
-    ? STRONG_PHASES
+    ? getStrongPhases(t)
     : activePath === 'weak'
-      ? WEAK_PHASES
-      : PENDING_PATH_PHASES;
+      ? getWeakPhases(t)
+      : getPendingPathPhases(t);
 
-  const allPhases: PhaseConfig[] = [...SHARED_PHASES, ...pathPhases];
+  const sharedPhases = getSharedPhases(t);
+  const allPhases: PhaseConfig[] = [...sharedPhases, ...pathPhases];
 
   const getState = (phase: DetectivePhase): PhaseState => {
     // Placeholder phases are always pending
@@ -104,7 +108,7 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
             ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
             : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'}
         `}>
-          {activePath === 'strong' ? '💪 Camino Fuerte' : '🔬 Camino Débil'}
+          {activePath === 'strong' ? t('detective.progress.strongPathBadge', { defaultValue: '💪 Camino Fuerte' }) : t('detective.progress.weakPathBadge', { defaultValue: '🔬 Camino Débil' })}
         </div>
       )}
 
@@ -114,7 +118,7 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
         const isPending = (config.phase as number) < 0;
 
         // Show a divider between shared and path phases
-        const showDivider = idx === SHARED_PHASES.length && activePath !== null;
+        const showDivider = idx === sharedPhases.length && activePath !== null;
 
         return (
           <React.Fragment key={`${config.phase}-${idx}`}>
@@ -125,7 +129,7 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
                   ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                   : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}
               `}>
-                {activePath === 'strong' ? 'Verbo Fuerte' : 'Verbo Débil'}
+                {activePath === 'strong' ? t('detective.progress.strongVerbLabel', { defaultValue: 'Verbo Fuerte' }) : t('detective.progress.weakVerbLabel', { defaultValue: 'Verbo Débil' })}
               </div>
             )}
 
@@ -173,7 +177,7 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
                     ${state === 'pending'   ? 'text-muted-foreground/50' : ''}
                   `}
                 >
-                  Fase {config.step}
+                  {t('detective.progress.phaseStep', { defaultValue: 'Fase {{step}}', step: config.step })}
                 </span>
 
                 {/* Phase name — primary */}

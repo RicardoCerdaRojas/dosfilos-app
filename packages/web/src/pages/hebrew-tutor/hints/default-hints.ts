@@ -169,4 +169,102 @@ export const DEFAULT_HINTS: HintDefinition[] = [
     order: 1,
   },
 
+  // ── Phase 5: BINYAN (strong path) ────────────────────────────────────────
+
+  {
+    id: 'local_binyan_elimination',
+    phase: 5,
+    severity: 'tip',
+    title: 'Árbol de eliminación (Lec. 1-7)',
+    body: `Aplica el árbol de Farfán en orden:
+1. ¿Ves el prefijo הִתְ? → **Hitpael**
+2. ¿Hay He (הִ/הֻ) antes de la raíz? → **Hifil** (activo) o **Hofal** (pasivo)
+3. ¿Hay Dagesh Forte en R2? → **Piel** (activo) o **Pual** (pasivo)
+4. ¿Hay Nun (נִ) como prefijo? → **Nifal**
+5. Por eliminación → **Qal**`,
+    conditions: [],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+  },
+
+  {
+    id: 'local_binyan_dagesh_piel',
+    phase: 5,
+    severity: 'tip',
+    title: 'Dagesh Forte → Piel/Pual',
+    body: 'El Dagesh Forte en el **segundo radical** (R2) es la marca más clara del Piel (activo) y del Pual (pasivo). Si la vocal temática es pataj, suele ser Pual; si es tsere, suele ser Piel.',
+    conditions: [HintConditionKey.HAS_DAGESH_FORTE, HintConditionKey.IS_PIEL],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+  },
+
+  // ── Phase 6: STRONG_CONFIRM (strong path) ────────────────────────────────
+
+  {
+    id: 'local_strong_confirm_guttural',
+    phase: 6,
+    severity: 'tip',
+    title: 'Raíces guturales — siguen siendo fuertes',
+    body: 'Las guturales (א ה ח ע ר) no eliminan radicales, por eso el TRIAGE las clasificó como **fuertes**. Lo que hacen es alterar las vocales adyacentes: rechazan dagesh, prefieren Clase-A (pataj), y toman shevá compuesto (hatef) en vez de shevá simple.',
+    conditions: [HintConditionKey.IS_GUTURAL],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+  },
+
+  {
+    id: 'local_strong_confirm_generic',
+    phase: 6,
+    severity: 'info',
+    title: 'Clasificación final',
+    body: 'Si las 3 radicales están intactas y ninguna es gutural, tienes un **verbo fuerte puro** — el paradigma de referencia para todos los demás. Si hay gutural, identifica en qué posición (R1, R2 o R3) para saber qué reglas compensatorias aplican.',
+    conditions: [],
+    excludeConditions: [HintConditionKey.IS_GUTURAL],
+    enabled: true,
+    order: 1,
+  },
+
+  // ── Phase 12: WEAK_BINYAN (weak path) ────────────────────────────────────
+
+  {
+    id: 'local_weak_binyan_tip',
+    phase: 12,
+    severity: 'tip',
+    title: 'Binyan en verbos débiles',
+    body: 'En raíces débiles, las marcas del binyan pueden estar alteradas: el Dagesh Forte puede faltar (por gutural o I-Nun asimilada), y las vocales temáticas pueden variar. Usa las claves morfológicas que sobrevivieron para identificar el binyan.',
+    conditions: [],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+  },
+
+  {
+    id: 'local_weak_binyan_iii_he',
+    phase: 12,
+    severity: 'info',
+    title: 'III-He: coda vocálica',
+    body: 'En raíces III-He, el tercer radical (ה) desaparece y es reemplazado por una vocal larga. Busca la terminación vocálica en vez de una consonante final.',
+    conditions: [HintConditionKey.IS_III_HE],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+  },
+
+  // ── Phase 20: TRANSLATION (both paths) ───────────────────────────────────
+
+  {
+    id: 'local_translation_synthesis',
+    phase: 20,
+    severity: 'tip',
+    title: 'Síntesis: Raíz + Binyan + PGN',
+    body: 'Reconstruye el significado en 3 pasos: (1) significado base de la **raíz**, (2) matiz semántico del **binyan** (Piel = intensivo, Hifil = causativo…), (3) ajusta por **persona-género-número** y el contexto narrativo del versículo.',
+    conditions: [],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+  },
+
 ];
+
