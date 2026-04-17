@@ -13,6 +13,7 @@
 import React from 'react';
 import { TooltipContent } from '@/components/ui/tooltip';
 import type { WordAnalysis } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
 
 // ── Category badge colors (mirrors WordCard) ─────────────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
@@ -32,37 +33,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 const getCatColor = (cat?: string | null) =>
   CATEGORY_COLORS[(cat ?? '').toLowerCase()] ?? CATEGORY_COLORS.particle;
 
-const CATEGORY_ES: Record<string, string> = {
-  verb: 'VERBO',
-  noun: 'SUSTANTIVO',
-  adjective: 'ADJETIVO',
-  pronoun: 'PRONOMBRE',
-  personal_pronoun: 'PRONOMBRE PERSONAL',
-  demonstrative_pronoun: 'PRONOMBRE DEMOSTRATIVO',
-  relative_pronoun: 'PRONOMBRE RELATIVO',
-  preposition: 'PREPOSICIÓN',
-  conjunction: 'CONJUNCIÓN',
-  article: 'ARTÍCULO',
-  definite_article: 'ARTÍCULO DEFINIDO',
-  particle: 'PARTÍCULA',
-  adverb: 'ADVERBIO',
-  interjection: 'INTERJECCIÓN',
-  proper_noun: 'NOMBRE PROPIO',
-  numeral: 'NUMERAL',
-  object_marker: 'MARCADOR DE OBJETO',
-  interrogative: 'INTERROGATIVO',
-  negative_particle: 'PARTÍCULA NEGATIVA',
-};
-const translateCategory = (cat?: string | null) =>
-  cat ? (CATEGORY_ES[cat.toLowerCase()] || cat.replace('_', ' ').toUpperCase()) : '';
-
-const STATE_ES: Record<string, string> = {
-  absolute: 'ABSOLUTO',
-  construct: 'CONSTRUCTO',
-};
-const translateState = (state?: string | null) => 
-  state ? (STATE_ES[state.toLowerCase()] || state.toUpperCase()) : '';
-
 /** Robust gloss: tries multiple fields before giving up. */
 const resolveGloss = (w: WordAnalysis): string =>
   w.translation || w.lemmaGloss || w.rootMeaning || w.root || w.hebrewText || '';
@@ -71,10 +41,10 @@ const resolveGloss = (w: WordAnalysis): string =>
 
 const MorphPill: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="flex flex-col items-center min-w-[44px]">
-    <span className="text-[9px] uppercase tracking-widest text-foreground/70 dark:text-gray-400 font-bold leading-none mb-0.5">
+    <span className="text-[9px] uppercase tracking-widest text-foreground/70 dark:text-gray-400 font-bold leading-none mb-1.5" title={label}>
       {label}
     </span>
-    <span className="text-[11px] font-semibold text-foreground leading-none">
+    <span className="text-[11px] font-semibold text-foreground leading-none" title={value}>
       {value}
     </span>
   </div>
@@ -101,6 +71,7 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
   word,
   side = 'bottom',
 }) => {
+  const { t } = useTranslation('hebrewTutor');
   const gloss = resolveGloss(word);
   const vm = word.verbMorphology;
   const nm = word.nominalMorphology;
@@ -112,27 +83,48 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
       sideOffset={8}
       className="p-0 overflow-hidden min-w-[160px] max-w-[280px] border border-border/60 shadow-lg"
     >
-      {/* ── Top row: category + gloss ── */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border/40">
-        {word.category && (
-          <span
-            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 uppercase tracking-wider ${getCatColor(word.category)}`}
-          >
-            {translateCategory(word.category)}
-          </span>
-        )}
-        {gloss && (
-          <span className="text-[12px] font-medium text-primary-foreground leading-snug">
-            {gloss}
-          </span>
-        )}
+      {/* ── Top row: category + hebrew + root + lex + gloss ── */}
+      <div className="flex flex-col gap-1.5 px-3 py-2.5 border-b border-border/40">
+        <div className="flex items-start justify-between gap-4">
+          <div dir="rtl" className="text-xl font-serif text-foreground leading-none">
+            {word.hebrewText}
+          </div>
+          {word.category && (
+            <span
+              className={`text-[9px] font-semibold px-1.5 py-0.5 rounded shrink-0 uppercase tracking-wider ${getCatColor(word.category)}`}
+            >
+              {word.category ? t(`verseAnalyzer.categories.${word.category.toUpperCase()}`, { defaultValue: word.category }) : 'PARTICLE'}
+            </span>
+          )}
+        </div>
+        
+        <div className="flex flex-col gap-1 mt-1">
+          {word.root && (
+             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+               <span className="font-semibold text-foreground/60 w-8">Raíz:</span>
+               <span dir="rtl" className="font-serif text-[14px] text-foreground/90">{word.root}</span>
+             </div>
+          )}
+          {word.lemmaGloss && (
+             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+               <span className="font-semibold text-foreground/60 w-8">Lex:</span>
+               <span className="text-foreground/90">{word.lemmaGloss}</span>
+             </div>
+          )}
+          {gloss && (
+             <div className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+               <span className="font-semibold text-foreground/60 w-8 mt-[1px]">Trad:</span>
+               <span className="text-primary-foreground font-medium leading-snug">{gloss}</span>
+             </div>
+          )}
+        </div>
       </div>
 
       {/* ── Verb morphology row ── */}
       {vm && (
         <div className="flex items-start gap-3 px-3 py-2 bg-blue-50/80 dark:bg-blue-900/20 flex-wrap">
           {vm.binyan    && <MorphPill label="Binyan"  value={vm.binyan} />}
-          {vm.verbForm  && <MorphPill label="Forma"   value={vm.verbForm} />}
+          {vm.verbForm  && <MorphPill label="Forma"   value={t(`verseAnalyzer.verbForms.${vm.verbForm}`, { defaultValue: vm.verbForm })} />}
           {(vm.person || vm.gender || vm.number) && (
             <MorphPill label="P-G-N" value={pgnLabel(vm.person, vm.gender, vm.number)} />
           )}
@@ -151,10 +143,10 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
 
       {/* ── Nominal morphology row ── */}
       {nm && (nm.gender || nm.number || nm.state) && (
-        <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 flex-wrap">
-          {nm.gender && <MorphPill label="Género"  value={nm.gender} />}
-          {nm.number && <MorphPill label="Número"  value={nm.number} />}
-          {nm.state  && <MorphPill label="Estado"  value={translateState(nm.state)}  />}
+        <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 dark:bg-slate-800 flex-wrap">
+          {nm.gender && <MorphPill label="Género"  value={t(`verseAnalyzer.morphology.gender.${nm.gender.toUpperCase()}`, { defaultValue: `${nm.gender}` })} />}
+          {nm.number && <MorphPill label="Número"  value={t(`verseAnalyzer.morphology.number.${nm.number.toUpperCase()}`, { defaultValue: `${nm.number}` })} />}
+          {nm.state  && <MorphPill label="Estado"  value={t(`verseAnalyzer.morphology.state.${nm.state.toUpperCase()}`, { defaultValue: `${nm.state}` })} />}
         </div>
       )}
 
@@ -176,6 +168,22 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
               </div>
             ))}
           </div>
+        </div>
+      )}
+      {/* ── Recognition Clues ── */}
+      {vm && vm.recognitionClues && vm.recognitionClues.length > 0 && (
+        <div className="px-3 py-2.5 bg-yellow-50/50 dark:bg-yellow-900/10 border-t border-yellow-200/50 dark:border-yellow-800/30">
+          <span className="text-[9.5px] uppercase tracking-widest text-yellow-700 dark:text-yellow-500 font-bold leading-none block mb-2">
+            Pistas de Reconocimiento
+          </span>
+          <ul className="flex flex-col gap-1.5">
+            {vm.recognitionClues.map((clue, idx) => (
+              <li key={idx} className="flex items-start gap-1.5 text-[11px]">
+                <span className="text-yellow-500 dark:text-yellow-600 mt-[1px] shrink-0 font-bold">•</span>
+                <span className="text-foreground/85 dark:text-gray-200 leading-relaxed">{clue}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </TooltipContent>

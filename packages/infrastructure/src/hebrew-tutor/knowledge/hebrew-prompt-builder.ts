@@ -34,7 +34,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
       "lemmaGloss": "string — lexical gloss in Spanish",
       "category": "VERB | NOUN | ADJECTIVE | PRONOUN | PERSONAL_PRONOUN | DEMONSTRATIVE_PRONOUN | RELATIVE_PRONOUN | PREPOSITION | CONJUNCTION | DEFINITE_ARTICLE | PARTICLE | ADVERB | INTERJECTION | PROPER_NOUN | OBJECT_MARKER | INTERROGATIVE | NEGATIVE_PARTICLE",
       "syntacticFunction": "string — syntactic role in the clause",
-      "translation": "string — contextual translation of this word",
+      "translation": "string — contextual translation of this word. IMPORTANT: Active and passive participles MUST have this translation field filled, functioning as the noun/adjective meaning in context.",
       "explanation": "string — detailed pedagogical explanation (morphology, recognition clues, typology, temporal/aspectual value). FORMATTED WITH MARKDOWN. Use bold text, bullet points, and short paragraphs to make it highly structured and readable.",
       "verbMorphology": {
         "binyan": "QAL | NIFAL | PIEL | PUAL | HITPAEL | HIFIL | HOFAL",
@@ -44,7 +44,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
         "gender": "M | F | C | null",
         "number": "S | P | D | null",
         "temporalValue": "string — e.g. 'pasado narrativo secuencial'",
-        "recognitionClues": ["string — e.g. 'Preformativo de participio Piel מְ (mə-)'. DEBE incluir el contexto gramatical completo (ej. 'participio Piel'), la letra hebrea y su transliteración."]
+        "recognitionClues": ["string — Pistas visuales. OBLIGATORIO: Debe seguir el formato exacto 'Descripción gramatical + Letra(s) hebrea(s) + (transliteración)'. Ejemplo: 'Preformativo de participio Piel מְ (mə-)'. NO omitir ninguna de las 3 partes."]
       },
       "nominalMorphology": {
         "gender": "M | F | C | null",
@@ -55,7 +55,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
         {
           "text": "string — Hebrew text of this segment",
           "role": "PREFIX_STEM | PREFORMATIVE | ROOT_R1 | ROOT_R2 | ROOT_R3 | THEME_VOWEL | DAGESH_FORTE | AFFORMATIVE | PRONOMINAL_SUFFIX | DEFINITE_ARTICLE | CONSTRUCT_ENDING | PLURAL_ENDING | DUAL_ENDING | FEMININE_ENDING | WAW_CONJUNCTIVE | WAW_CONSECUTIVE | PREPOSITION_PREFIX | CONJUNCTION_PREFIX",
-          "label": "string — detailed tooltip label in Spanish. Homologado con recognitionClues. DEBE incluir la descripción gramatical completa (ej. 'Preformativo de participio Piel'), la letra hebrea y su transliteración (ej. 'מְ (mə-)')."
+          "label": "string — Etiqueta detallada. OBLIGATORIO: Debe tener la misma información exacta que recognitionClues (Descripción gramatical + Letra(s) + transliteración). Ejemplo: 'Preformativo de participio Piel מְ (mə-)'."
         }
       ]
     }

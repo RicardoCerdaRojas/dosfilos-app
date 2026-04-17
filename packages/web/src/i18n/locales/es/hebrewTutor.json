@@ -88,7 +88,7 @@
       "ADVERB": "Adverbio",
       "INTERJECTION": "Interjección",
       "PROPER_NOUN": "Nombre Propio",
-      "OBJECT_MARKER": "Marcador de Objeto",
+      "OBJECT_MARKER": "Marcador de Objeto Directo",
       "INTERROGATIVE": "Interrogativo",
       "NEGATIVE_PARTICLE": "Partícula Negativa"
     },

@@ -318,8 +318,8 @@ export const WordCard: React.FC<WordCardProps> = ({
 };
 
 const MorphCell: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="bg-muted/40 rounded-lg px-3 py-2 flex flex-col justify-center border border-border/40 shadow-sm">
+  <div className="bg-muted/40 rounded-lg px-3 py-2 flex flex-col justify-center border border-border/40 shadow-sm" title={`${label}: ${value}`}>
     <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-0.5">{label}</div>
-    <div className="text-[12px] font-medium text-foreground truncate" title={value}>{value}</div>
+    <div className="text-[12px] font-medium text-foreground truncate">{value}</div>
   </div>
 );
