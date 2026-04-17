@@ -232,6 +232,24 @@ export const WordCard: React.FC<WordCardProps> = ({
       {hasDeepAnalysis && expanded && (
         <div className="mt-3 flex flex-col gap-3">
           
+          {/* Recognition Clues */}
+          {morphology && 'recognitionClues' in morphology && morphology.recognitionClues && morphology.recognitionClues.length > 0 && (
+            <div className="bg-yellow-50/50 dark:bg-yellow-900/10 rounded-lg p-3.5 border border-yellow-200/50 dark:border-yellow-800/30">
+              <h4 className="text-[11px] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-widest flex items-center gap-2 mb-2 pb-1.5 border-b border-yellow-200/50 dark:border-yellow-800/30">
+                <LightbulbIcon className="w-3.5 h-3.5" />
+                {t('verseAnalyzer.analysis.recognitionClues', { defaultValue: 'Pistas de Reconocimiento' })}
+              </h4>
+              <ul className="flex flex-col gap-1.5">
+                {morphology.recognitionClues.map((clue, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-yellow-500 dark:text-yellow-600 text-[12px] mt-[1px] shrink-0">•</span>
+                    <span className="text-[12.5px] text-foreground/80 leading-relaxed">{clue}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Contextual / Pedagogical Explanation */}
           {word.explanation && (
             <div className="bg-primary/5 rounded-lg p-3.5 border border-primary/10 relative overflow-hidden">
@@ -261,24 +279,6 @@ export const WordCard: React.FC<WordCardProps> = ({
                   {word.explanation}
                 </ReactMarkdown>
               </div>
-            </div>
-          )}
-
-          {/* Recognition Clues */}
-          {morphology && 'recognitionClues' in morphology && morphology.recognitionClues && morphology.recognitionClues.length > 0 && (
-            <div className="bg-yellow-50/50 dark:bg-yellow-900/10 rounded-lg p-3.5 border border-yellow-200/50 dark:border-yellow-800/30">
-              <h4 className="text-[11px] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-widest flex items-center gap-2 mb-2 pb-1.5 border-b border-yellow-200/50 dark:border-yellow-800/30">
-                <LightbulbIcon className="w-3.5 h-3.5" />
-                {t('verseAnalyzer.analysis.recognitionClues', { defaultValue: 'Pistas de Reconocimiento' })}
-              </h4>
-              <ul className="flex flex-col gap-1.5">
-                {morphology.recognitionClues.map((clue, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-yellow-500 dark:text-yellow-600 text-[12px] mt-[1px] shrink-0">•</span>
-                    <span className="text-[12.5px] text-foreground/80 leading-relaxed">{clue}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
           )}
 
