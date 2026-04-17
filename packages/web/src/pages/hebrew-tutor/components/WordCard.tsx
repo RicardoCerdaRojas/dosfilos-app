@@ -250,6 +250,34 @@ export const WordCard: React.FC<WordCardProps> = ({
             </div>
           )}
 
+          {/* Morphemes Breakdown */}
+          {hasMorphemes && (
+            <div className="bg-muted/30 rounded-lg p-3.5 border border-border/50">
+              <h4 className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-2.5 pb-1.5 border-b border-border/50">
+                <PuzzleIcon className="w-3.5 h-3.5" />
+                {t('verseAnalyzer.analysis.morphemes', { defaultValue: 'Estructura Morfológica' })}
+              </h4>
+              <div className="flex flex-wrap gap-2" dir="rtl">
+                {word.morphemes!.map((seg, i) => {
+                  const cat = getMorphemeCategory(seg.role);
+                  return (
+                    <div
+                      key={i}
+                      className={`text-[11px] rounded px-2 py-1 flex flex-col items-center min-w-[40px] border shadow-sm ${MORPHEME_BADGE_STYLES[cat] ?? MORPHEME_BADGE_STYLES.neutral} bg-opacity-40 dark:bg-opacity-20`}
+                    >
+                      <span dir="rtl" className="font-serif text-[15px] leading-none mb-1">
+                        <MorphemeSpan segments={[seg]} />
+                      </span>
+                      <span className="text-[9px] text-muted-foreground text-center font-medium opacity-90 tracking-wider">
+                        {t(`verseAnalyzer.morphemeRoles.${seg.role}`, { defaultValue: seg.role })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Contextual / Pedagogical Explanation */}
           {word.explanation && (
             <div className="bg-primary/5 rounded-lg p-3.5 border border-primary/10 relative overflow-hidden">
@@ -278,34 +306,6 @@ export const WordCard: React.FC<WordCardProps> = ({
                 >
                   {word.explanation}
                 </ReactMarkdown>
-              </div>
-            </div>
-          )}
-
-          {/* Morphemes Breakdown */}
-          {hasMorphemes && (
-            <div className="bg-muted/30 rounded-lg p-3.5 border border-border/50">
-              <h4 className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-2.5 pb-1.5 border-b border-border/50">
-                <PuzzleIcon className="w-3.5 h-3.5" />
-                {t('verseAnalyzer.analysis.morphemes', { defaultValue: 'Estructura Morfológica' })}
-              </h4>
-              <div className="flex flex-wrap gap-2" dir="rtl">
-                {word.morphemes!.map((seg, i) => {
-                  const cat = getMorphemeCategory(seg.role);
-                  return (
-                    <div
-                      key={i}
-                      className={`text-[11px] rounded px-2 py-1 flex flex-col items-center min-w-[40px] border shadow-sm ${MORPHEME_BADGE_STYLES[cat] ?? MORPHEME_BADGE_STYLES.neutral} bg-opacity-40 dark:bg-opacity-20`}
-                    >
-                      <span dir="rtl" className="font-serif text-[15px] leading-none mb-1">
-                        <MorphemeSpan segments={[seg]} />
-                      </span>
-                      <span className="text-[9px] text-muted-foreground text-center font-medium opacity-90 tracking-wider">
-                        {t(`verseAnalyzer.morphemeRoles.${seg.role}`, { defaultValue: seg.role })}
-                      </span>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           )}
