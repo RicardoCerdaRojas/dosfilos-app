@@ -99,6 +99,14 @@ service cloud.firestore {
       allow delete: if false; // Cache is permanent (no deletion)
     }
 
+    // Hebrew Tutor - Verse Analysis Cache
+    // Global cache for Hebrew verse analyses, reusable across users/sessions
+    match /hebrew_analysis_cache/{passageId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
     // Greek Tutor - Word Cache (Global lemma-based cache)
     // Stores gloss and grammatical category for Greek lemmata
     // Shared across all users to reduce API costs by ~50-60%
@@ -149,6 +157,12 @@ service cloud.firestore {
     match /tags/{tagId} {
       allow read: if isAuthenticated();
       allow write: if false; // Only created by cloud functions
+    }
+
+    // Hebrew Tutor - Contextual Hints Catalog
+    match /hebrewTutor/config/hints/{hintId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
     }
 
     // AI Agents Collection (Seminary Faculty)

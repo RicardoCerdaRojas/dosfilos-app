@@ -34,3 +34,6 @@ export * from './use-cases/user-activity';
 
 // Faculty Multi-Agent use cases
 export * from './use-cases/faculty';
+
+// Hebrew Tutor
+export * from './hebrew-tutor/index.js';

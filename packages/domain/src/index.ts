@@ -73,3 +73,6 @@ export type { ContentType, WorkflowPhase as ContentWorkflowPhase, QuickAction, C
 
 // Strategies
 export * from './strategies';
+
+// Hebrew Tutor
+export * from './hebrew-tutor/index.js';

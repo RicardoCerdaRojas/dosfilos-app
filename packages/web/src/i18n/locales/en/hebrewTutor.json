@@ -1,0 +1,94 @@
+{
+  "title": "Hebrew Tutor",
+  "subtitle": "Morphological and syntactic analysis with Farfán's grammar rules",
+  "verseAnalyzer": {
+    "title": "Verse Analyzer",
+    "description": "Select an Old Testament verse and get a complete morphological and syntactic analysis applying Farfán's grammar.",
+    "selectVerse": "Select Verse",
+    "book": "Book",
+    "chapter": "Chapter",
+    "verse": "Verse",
+    "selectBook": "Select a book...",
+    "analyze": "Analyze",
+    "analyzing": "Analyzing...",
+    "loadingBook": "Loading book...",
+    "forceRefresh": "Re-analyze",
+    "analysis": {
+      "title": "Analysis Result",
+      "hebrewText": "Hebrew Text",
+      "transliteration": "Transliteration",
+      "literalTranslation": "Literal Translation",
+      "fluidTranslation": "Fluid Translation",
+      "wordAnalysis": "Word Analysis",
+      "verbTable": "Verb Table",
+      "exegeticalNotes": "Exegetical Notes",
+      "morphemeBreakdown": "Morpheme Breakdown",
+      "syntacticFunction": "Syntactic Function",
+      "oshbValidation": "OSHB Validation"
+    },
+    "oshb": {
+      "confirmed": "Confirmed by OSHB",
+      "differs": "Differs from OSHB",
+      "code": "OSHB Code",
+      "farfanAnalysis": "Farfán Analysis"
+    },
+    "colors": {
+      "legend": "Color System",
+      "prefix": "Prefix",
+      "root": "Root",
+      "suffix": "Suffix",
+      "vowel": "Vowel Pattern",
+      "binyan": "Binyan"
+    },
+    "binyanim": {
+      "Qal": "Qal (basic action)",
+      "Niphal": "Niphal (reflexive/passive)",
+      "Piel": "Piel (intensive)",
+      "Pual": "Pual (intensive passive)",
+      "Hiphil": "Hiphil (causative)",
+      "Hophal": "Hophal (causative passive)",
+      "Hithpael": "Hithpael (intensive reflexive)"
+    },
+    "verbForms": {
+      "Perfect": "Perfect",
+      "Imperfect": "Imperfect",
+      "Wayyiqtol": "Wayyiqtol",
+      "Weyiqtol": "Weyiqtol",
+      "Imperative": "Imperative",
+      "IMPERATIVE": "Imperative",
+      "Infinitive Construct": "Infinitive Construct",
+      "INFINITIVE CONSTRUCT": "Infinitive Construct",
+      "INF_CONSTRUCT": "Inf. Construct",
+      "Infinitive Absolute": "Infinitive Absolute",
+      "INFINITIVE ABSOLUTE": "Infinitive Absolute",
+      "INF_ABSOLUTE": "Inf. Absolute",
+      "Participle Active": "Active Participle",
+      "PARTICIPLE ACTIVE": "Active Participle",
+      "PARTICIPLE_ACTIVE": "Active Participle",
+      "Participle Passive": "Passive Participle",
+      "PARTICIPLE PASSIVE": "Passive Participle",
+      "PARTICIPLE_PASSIVE": "Passive Participle"
+    },
+    "verbTypes": {
+      "STRONG": "Strong Verb",
+      "I_ALEF": "Pe Alef",
+      "I_NUN": "Pe Nun",
+      "I_YOD_WAW": "Pe Yod/Waw",
+      "II_WAW_YOD": "Hollow (Ayin Waw/Yod)",
+      "III_HE": "Lamed He",
+      "III_ALEF": "Lamed Alef",
+      "GEMINATE": "Geminate",
+      "GUTURAL_R1": "Pe Guttural",
+      "GUTURAL_R2": "Ayin Guttural",
+      "GUTURAL_R3": "Lamed Guttural"
+    },
+    "placeholder": {
+      "title": "Select a verse",
+      "description": "Choose a book, chapter and verse from the Old Testament and press \"Analyze\" to begin."
+    },
+    "errors": {
+      "loadFailed": "Error loading the analysis. Please try again.",
+      "bookNotFound": "Could not load this book. Check your connection."
+    }
+  }
+}
