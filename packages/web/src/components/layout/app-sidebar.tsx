@@ -101,12 +101,13 @@ export function AppSidebar() {
       { name: 'Biblia', href: '/dashboard/bible', icon: Book },
       { name: 'Mis Tutores', href: '/dashboard/faculty', icon: MessageSquareQuote },
       { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
-      { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
+      { name: 'Entrenador Hebreo', href: '/dashboard/hebrew-tutor', icon: BookOpen },
     ],
     // Group 2: Planning
     [
       { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
       { name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles },
+      { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
     ],
     // Group 3: Resources
     [
@@ -120,6 +121,7 @@ export function AppSidebar() {
     { name: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
     { name: 'Gestión de Usuarios', href: '/dashboard/admin/users', icon: Users },
     { name: 'Tutores IA', href: '/dashboard/admin/tutors', icon: Bot },
+    { name: 'Pistas Hebreo', href: '/dashboard/admin/hebrew-tutor-hints', icon: BookOpen },
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
     { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
   ];

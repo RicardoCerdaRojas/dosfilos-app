@@ -205,6 +205,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   h1,
@@ -275,4 +277,12 @@
 
 .group[data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:w-\(--sidebar-width-icon\) {
   width: var(--sidebar-width-icon);
+}
+
+@media print {
+  .verb-table th, 
+  .verb-table td {
+    padding: 0.25rem 0.35rem !important;
+    font-size: 10px !important;
+  }
 }

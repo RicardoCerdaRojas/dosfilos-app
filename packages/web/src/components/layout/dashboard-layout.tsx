@@ -72,7 +72,7 @@ export function DashboardLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className={cn(
-        isFullScreen ? "h-svh overflow-hidden" : "min-h-svh", 
+        isFullScreen ? "h-svh overflow-hidden print:h-auto print:overflow-visible" : "min-h-svh print:h-auto", 
         isFullScreen && "md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none"
       )}>
         {/* Header with toggle button */}
@@ -96,7 +96,7 @@ export function DashboardLayout() {
         
         {/* Main content */}
         <main className={cn(
-          "flex-1 flex flex-col",
+          "flex-1 flex flex-col print:block print:overflow-visible print:h-auto",
           // Apps that need full height control (no parent scroll, no parent padding)
           isFullScreen ? "overflow-hidden h-full" : "overflow-y-auto bg-muted/40 p-4 md:p-2"
         )}>

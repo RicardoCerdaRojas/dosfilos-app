@@ -34,9 +34,11 @@ import { GeographicDashboard } from '@/pages/admin/GeographicDashboard';
 import { UserManagement } from '@/pages/admin/UserManagement';
 import TutorManagement from '@/pages/admin/TutorManagement';
 import TutorEditor from '@/pages/admin/TutorEditor';
+import HintCatalogPage from '@/pages/admin/HintCatalogPage';
 import { GreekTutorPage } from '@/pages/greek-tutor/GreekTutorPage';
 import { GreekTutorProvider } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorProvider';
 import { GreekTutorDashboardView } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorDashboardView';
+import { HebrewTutorPage } from '@/pages/hebrew-tutor/HebrewTutorPage';
 import { BiblePage } from '@/pages/bible/BiblePage';
 import { BibleProvider } from '@/context/BibleContext';
 import { FacultyChatPage } from '@/pages/faculty/chat';
@@ -180,6 +182,9 @@ function App() {
               </GreekTutorProvider>
             } />
 
+            {/* Hebrew Tutor - Verse Analyzer */}
+            <Route path="hebrew-tutor" element={<HebrewTutorPage />} />
+
             {/* Settings */}
             <Route path="settings" element={<GeneratorSettings />} />
             
@@ -191,6 +196,7 @@ function App() {
             <Route path="admin/tutors" element={<TutorManagement />} />
             <Route path="admin/tutors/new" element={<TutorEditor />} />
             <Route path="admin/tutors/:id" element={<TutorEditor />} />
+            <Route path="admin/hebrew-tutor-hints" element={<HintCatalogPage />} />
             
             {/* PoC Routes */}
             <Route path="gemini-test" element={<GeminiTest />} />

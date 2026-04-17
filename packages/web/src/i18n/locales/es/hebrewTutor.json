@@ -1,0 +1,162 @@
+{
+  "title": "Entrenador de Hebreo",
+  "subtitle": "Análisis morfológico y sintáctico con las reglas de Farfán",
+  "verseAnalyzer": {
+    "title": "Analizador de Versículos",
+    "description": "Selecciona un versículo del Antiguo Testamento y obtén un análisis morfológico y sintáctico completo aplicando la gramática de Farfán.",
+    "selectVerse": "Seleccionar Versículo",
+    "book": "Libro",
+    "chapter": "Capítulo",
+    "verse": "Versículo",
+    "selectBook": "Selecciona un libro...",
+    "analyze": "Analizar",
+    "analyzing": "Analizando...",
+    "loadingBook": "Cargando libro...",
+    "forceRefresh": "Re-analizar",
+    "analysis": {
+      "title": "Resultado del Análisis",
+      "hebrewText": "Texto Hebreo",
+      "transliteration": "Transliteración",
+      "literalTranslation": "Traducción Literal",
+      "fluidTranslation": "Traducción Fluida",
+      "wordAnalysis": "Análisis por Palabra",
+      "verbTable": "Tabla de Verbos",
+      "exegeticalNotes": "Notas Exegéticas",
+      "morphemeBreakdown": "Desglose Morfológico",
+      "syntacticFunction": "Función Sintáctica",
+      "oshbValidation": "Validación OSHB"
+    },
+    "oshb": {
+      "confirmed": "Confirmado por OSHB",
+      "differs": "Difiere de OSHB",
+      "code": "Código OSHB",
+      "farfanAnalysis": "Análisis Farfán"
+    },
+    "colors": {
+      "legend": "Sistema de Colores",
+      "prefix": "Prefijo",
+      "root": "Raíz",
+      "suffix": "Sufijo",
+      "vowel": "Patrón Vocálico",
+      "binyan": "Binyan"
+    },
+    "binyanim": {
+      "Qal": "Qal (acción básica)",
+      "Niphal": "Nifal (reflexivo/pasivo)",
+      "Piel": "Piel (intensivo)",
+      "Pual": "Pual (intensivo pasivo)",
+      "Hiphil": "Hifil (causativo)",
+      "Hophal": "Hofal (causativo pasivo)",
+      "Hithpael": "Hitpael (reflexivo intensivo)"
+    },
+    "verbForms": {
+      "Perfect": "Perfecto",
+      "PERFECT": "Perfecto",
+      "Imperfect": "Imperfecto",
+      "IMPERFECT": "Imperfecto",
+      "Wayyiqtol": "Wayyiqtol",
+      "WAYYIQTOL": "Wayyiqtol",
+      "Weyiqtol": "Weyiqtol",
+      "WEYIQTOL": "Weyiqtol",
+      "Imperative": "Imperativo",
+      "IMPERATIVE": "Imperativo",
+      "Infinitive Construct": "Infinitivo Constructo",
+      "INFINITIVE CONSTRUCT": "Infinitivo Constructo",
+      "INF_CONSTRUCT": "Inf. Constructo",
+      "Infinitive Absolute": "Infinitivo Absoluto",
+      "INFINITIVE ABSOLUTE": "Infinitivo Absoluto",
+      "INF_ABSOLUTE": "Inf. Absoluto",
+      "Participle Active": "Participio Activo",
+      "PARTICIPLE ACTIVE": "Participio Activo",
+      "PARTICIPLE_ACTIVE": "Participio Activo",
+      "Participle Passive": "Participio Pasivo",
+      "PARTICIPLE PASSIVE": "Participio Pasivo",
+      "PARTICIPLE_PASSIVE": "Participio Pasivo"
+    },
+    "categories": {
+      "VERB": "Verbo",
+      "NOUN": "Sustantivo",
+      "ADJECTIVE": "Adjetivo",
+      "PRONOUN": "Pronombre",
+      "PERSONAL_PRONOUN": "Pronombre Personal",
+      "DEMONSTRATIVE_PRONOUN": "Pronombre Demostrativo",
+      "RELATIVE_PRONOUN": "Pronombre Relativo",
+      "PREPOSITION": "Preposición",
+      "CONJUNCTION": "Conjunción",
+      "DEFINITE_ARTICLE": "Artículo Definido",
+      "PARTICLE": "Partícula",
+      "ADVERB": "Adverbio",
+      "INTERJECTION": "Interjección",
+      "PROPER_NOUN": "Nombre Propio",
+      "OBJECT_MARKER": "Marcador de Objeto Directo",
+      "INTERROGATIVE": "Interrogativo",
+      "NEGATIVE_PARTICLE": "Partícula Negativa"
+    },
+    "morphemeRoles": {
+      "PREFIX_STEM": "Prefijo Binyan",
+      "PREFORMATIVE": "Preformativa",
+      "ROOT_R1": "Raíz 1",
+      "ROOT_R2": "Raíz 2",
+      "ROOT_R3": "Raíz 3",
+      "THEME_VOWEL": "Vocal Temática",
+      "DAGESH_FORTE": "Dagesh Forte",
+      "AFFORMATIVE": "Aformativa",
+      "PRONOMINAL_SUFFIX": "Sufijo Pronominal",
+      "DEFINITE_ARTICLE": "Artículo Definido",
+      "CONSTRUCT_ENDING": "Terminación Constructo",
+      "PLURAL_ENDING": "Terminación Plural",
+      "DUAL_ENDING": "Terminación Dual",
+      "FEMININE_ENDING": "Terminación Femenina",
+      "WAW_CONJUNCTIVE": "Waw Conjuntiva",
+      "WAW_CONSECUTIVE": "Waw Consecutiva",
+      "PREPOSITION_PREFIX": "Prefijo Preposicional",
+      "CONJUNCTION_PREFIX": "Prefijo Conjuntivo"
+    },
+    "morphology": {
+      "gender": {
+        "M": "Masculino",
+        "F": "Femenino",
+        "C": "Común",
+        "MASCULINE": "Masculino",
+        "FEMININE": "Femenino",
+        "COMMON": "Común"
+      },
+      "number": {
+        "S": "Singular",
+        "P": "Plural",
+        "D": "Dual",
+        "SINGULAR": "Singular",
+        "PLURAL": "Plural",
+        "DUAL": "Dual"
+      },
+      "state": {
+        "ABSOLUTE": "Absoluto",
+        "CONSTRUCT": "Constructo"
+      }
+    },
+    "verbTypes": {
+      "STRONG": "Fuerte",
+      "I_ALEF": "Pe Alef",
+      "I_NUN": "Pe Nun",
+      "I_YOD_WAW": "Pe Yod/Waw",
+      "II_WAW_YOD": "Cóncavo (Ayin Waw/Yod)",
+      "II_WAW": "Cóncavo (Ayin Waw/Yod)",
+      "III_HE": "Lamed He",
+      "III_ALEF": "Lamed Alef",
+      "GEMINATE": "Geminado (Doble Ayin)",
+      "GUTURAL_R1": "Pe Gutural",
+      "GUTURAL_R2": "Ayin Gutural",
+      "GUTURAL_R3": "Lamed Gutural",
+      "IRREGULAR": "Irregular",
+      "MIXED": "Tipo mixto"
+    },
+    "placeholder": {
+      "title": "Selecciona un versículo",
+      "description": "Elige un libro, capítulo y versículo del Antiguo Testamento y presiona \"Analizar\" para comenzar."
+    },
+    "errors": {
+      "loadFailed": "Error al cargar el análisis. Por favor, intenta de nuevo.",
+      "bookNotFound": "No se pudo cargar este libro. Verifica tu conexión."
+    }
+  }
+}
