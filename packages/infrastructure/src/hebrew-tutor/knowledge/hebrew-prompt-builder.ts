@@ -44,7 +44,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
         "gender": "M | F | C | null",
         "number": "S | P | D | null",
         "temporalValue": "string — e.g. 'pasado narrativo secuencial'",
-        "recognitionClues": ["string — e.g. 'וַיִּ preformativo del wayyiqtol 3ms'"]
+        "recognitionClues": ["string — e.g. 'Preformativo de participio Piel מְ (mə-)'. DEBE incluir el contexto gramatical completo (ej. 'participio Piel'), la letra hebrea y su transliteración."]
       },
       "nominalMorphology": {
         "gender": "M | F | C | null",
@@ -55,7 +55,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
         {
           "text": "string — Hebrew text of this segment",
           "role": "PREFIX_STEM | PREFORMATIVE | ROOT_R1 | ROOT_R2 | ROOT_R3 | THEME_VOWEL | DAGESH_FORTE | AFFORMATIVE | PRONOMINAL_SUFFIX | DEFINITE_ARTICLE | CONSTRUCT_ENDING | PLURAL_ENDING | DUAL_ENDING | FEMININE_ENDING | WAW_CONJUNCTIVE | WAW_CONSECUTIVE | PREPOSITION_PREFIX | CONJUNCTION_PREFIX",
-          "label": "string — short tooltip label in Spanish"
+          "label": "string — detailed tooltip label in Spanish. Homologado con recognitionClues. DEBE incluir la descripción gramatical completa (ej. 'Preformativo de participio Piel'), la letra hebrea y su transliteración (ej. 'מְ (mə-)')."
         }
       ]
     }
