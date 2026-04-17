@@ -22,17 +22,17 @@ interface WordCardProps {
 }
 
 const CATEGORY_STYLES: Record<string, string> = {
-  verb:              'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  noun:              'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
-  pronoun:           'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300',
-  preposition:       'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
-  conjunction:       'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300',
-  article:           'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-  particle:          'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  adverb:            'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  interjection:      'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  proper_noun:       'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
-  numeral:           'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
+  verb:              'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  noun:              'bg-violet-100/80 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
+  pronoun:           'bg-pink-100/80 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+  preposition:       'bg-orange-100/80 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  conjunction:       'bg-teal-100/80 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+  article:           'bg-yellow-100/80 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  particle:          'bg-slate-100/80 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300',
+  adverb:            'bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  interjection:      'bg-red-100/80 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  proper_noun:       'bg-indigo-100/80 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+  numeral:           'bg-cyan-100/80 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
 };
 
 const getCategoryStyle = (cat?: string | null) => {
@@ -207,7 +207,7 @@ export const WordCard: React.FC<WordCardProps> = ({
       {word.syntacticFunction && (
         <p className="text-[13px] text-muted-foreground mb-3 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-border inline-block"></span>
-          <span className="font-medium text-foreground/70">{t('verseAnalyzer.analysis.syntacticFunction', { defaultValue: 'Función Sintáctica' })}:</span>
+          <span className="font-medium text-slate-500 dark:text-slate-400">{t('verseAnalyzer.analysis.syntacticFunction', { defaultValue: 'Función Sintáctica' })}:</span>
           {word.syntacticFunction}
         </p>
       )}
@@ -253,7 +253,7 @@ export const WordCard: React.FC<WordCardProps> = ({
           {/* Morphemes Breakdown */}
           {hasMorphemes && (
             <div className="bg-muted/30 rounded-lg p-3.5 border border-border/50">
-              <h4 className="text-[11px] font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-2.5 pb-1.5 border-b border-border/50">
+              <h4 className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2.5 pb-1.5 border-b border-border/50">
                 <PuzzleIcon className="w-3.5 h-3.5" />
                 {t('verseAnalyzer.analysis.morphemes', { defaultValue: 'Estructura Morfológica' })}
               </h4>
