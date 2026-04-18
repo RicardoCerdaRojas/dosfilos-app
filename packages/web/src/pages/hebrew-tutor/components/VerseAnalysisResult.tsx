@@ -25,9 +25,9 @@ import { StickyVerseHeader } from './StickyVerseHeader';
 import { MorphemeSpan } from './MorphemeSpan';
 import { WordTooltipContent } from './WordTooltipContent';
 import { Tooltip, TooltipTrigger } from '@/components/ui/tooltip';
-import { PaletteIcon, ActivityIcon, PrinterIcon, DownloadIcon, FileTextIcon, ScanTextIcon, BookOpenIcon, LayoutGridIcon, ScrollTextIcon, CopyIcon, CheckIcon, RefreshCwIcon } from 'lucide-react';
+import { PaletteIcon, ActivityIcon, PrinterIcon, DownloadIcon, FileTextIcon, ScanTextIcon, BookOpenIcon, LayoutGridIcon, ScrollTextIcon, CopyIcon, CheckIcon, RefreshCwIcon, BookOpenTextIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { VerseAnalysis, WordAnalysis } from '@dosfilos/domain';
+import type { VerseAnalysis, WordAnalysis, LexicalNote, LexicalNoteType } from '@dosfilos/domain';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { generateVerseMarkdown } from '../utils/exportMarkdown';
 import { toast } from 'sonner';
@@ -51,7 +51,15 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
   const { t } = useTranslation('hebrewTutor');
   const [tutorWord, setTutorWord] = React.useState<any | null>(null);
   const [detectiveWord, setDetectiveWord] = React.useState<WordAnalysis | null>(null);
-  const [showColors, setShowColors] = React.useState(true);
+
+  /**
+   * viewMode controls how the Hebrew text is rendered in both headers:
+   * - 'masoretic':    Full hebrewText string, Ezra SIL, all diacritics intact
+   * - 'morphological': MorphemeSpan with color coding, cantillation stripped
+   */
+  const [viewMode, setViewMode] = React.useState<'masoretic' | 'morphological'>('masoretic');
+  const fullMarks = viewMode === 'masoretic';
+  const showColors = viewMode === 'morphological';
   const [showVerbMarkers, setShowVerbMarkers] = React.useState(true);
 
   /** Index of the currently highlighted word (hover from header or card). null = none. */
@@ -154,6 +162,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
         analysis={analysis}
         showColors={showColors}
         showVerbMarkers={showVerbMarkers}
+        fullMarks={fullMarks}
         sentinelRef={headerSentinelRef}
         activeWordIndex={activeWordIndex}
         onWordHover={handleHeaderWordHover}
@@ -166,22 +175,44 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
           <div className="flex items-center gap-4">
             <h2 className="text-lg font-bold text-foreground">{analysis.reference}</h2>
             <div className="flex items-center gap-2 border-l border-border pl-4">
-              <button 
-                onClick={() => setShowColors(!showColors)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${showColors ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                title={showColors ? "Ocultar colores morfológicos" : "Mostrar colores morfológicos"}
-              >
-                <PaletteIcon className="w-3.5 h-3.5" />
-                {showColors ? 'Colores On' : 'Colores Off'}
-              </button>
-              <button 
-                onClick={() => setShowVerbMarkers(!showVerbMarkers)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${showVerbMarkers ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                title={showVerbMarkers ? "Ocultar indicadores de verbo" : "Mostrar indicadores de verbo"}
-              >
-                <ActivityIcon className="w-3.5 h-3.5" />
-                {showVerbMarkers ? 'Verbos On' : 'Verbos Off'}
-              </button>
+              {/* View mode toggle — Masoretic (full marks) vs Morphological (colors) */}
+              <div className="flex items-center gap-0.5 bg-muted rounded-full p-0.5">
+                <button
+                  onClick={() => setViewMode('masoretic')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                    viewMode === 'masoretic'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Texto masorético completo con todas las marcas"
+                >
+                  <BookOpenTextIcon className="w-3.5 h-3.5" />
+                  Texto
+                </button>
+                <button
+                  onClick={() => setViewMode('morphological')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                    viewMode === 'morphological'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Análisis morfológico con colores por componente"
+                >
+                  <PaletteIcon className="w-3.5 h-3.5" />
+                  Análisis
+                </button>
+              </div>
+              {/* Verb markers — only relevant in morphological mode */}
+              {viewMode === 'morphological' && (
+                <button
+                  onClick={() => setShowVerbMarkers(!showVerbMarkers)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${showVerbMarkers ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                  title={showVerbMarkers ? "Ocultar indicadores de verbo" : "Mostrar indicadores de verbo"}
+                >
+                  <ActivityIcon className="w-3.5 h-3.5" />
+                  {showVerbMarkers ? 'Verbos On' : 'Verbos Off'}
+                </button>
+              )}
             </div>
             {/* ── Text size control ─────────────────────── */}
             <div className="flex items-center gap-0.5 bg-muted rounded-full px-1 py-0.5">
@@ -246,46 +277,55 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
         </div>
 
         {/* Hebrew text — RTL, large serif. Per-word transliteration below each word. */}
-        <div
-        dir="rtl"
-          className="font-serif text-foreground mb-3 tracking-wide flex flex-wrap gap-x-4 justify-center leading-[1.6]"
-          style={{ fontSize: `${2.25 * textScale}rem` }}
-          lang="he"
-        >
-          {analysis.words.map((w, i) => {
-            const isVerb = !!w.verbMorphology && showVerbMarkers;
-            const isActive = activeWordIndex === i;
-            return (
-              <Tooltip key={i} delayDuration={200}>
-                <TooltipTrigger asChild>
-                  <span
-                    onClick={() => handleHeaderWordClick(i)}
-                    onMouseEnter={() => handleHeaderWordHover(i)}
-                    onMouseLeave={() => handleHeaderWordHover(null)}
-                    className={`
-                      inline-flex flex-col items-center
-                      cursor-pointer rounded-md px-1 pt-0.5 pb-1.5 transition-all duration-150 relative
-                      ${isActive
-                        ? 'bg-primary/15 ring-1 ring-primary/40 border-b-2 border-primary scale-105 shadow-sm'
-                        : isVerb
-                          ? 'border-b-2 border-emerald-500/60 hover:border-emerald-500/80 hover:bg-primary/8 hover:shadow-sm'
-                          : 'border-b-2 border-transparent hover:border-primary/30 hover:bg-muted hover:shadow-sm'
-                      }
-                    `}
-                  >
-                    {/* Hebrew */}
-                    <span>
-                      {w.morphemes && w.morphemes.length > 0 ? (
-                        <MorphemeSpan
-                          segments={w.morphemes}
-                          variant="text"
-                          disableColors={!showColors}
-                          disableNativeTooltip
-                        />
-                      ) : (
-                        w.hebrewText
-                      )}
-                    </span>
+          <div
+            dir="rtl"
+            className="font-hebrew text-foreground mb-3 tracking-wide flex flex-wrap gap-x-4 justify-center leading-[1.6]"
+            style={{
+              fontSize: `${2.25 * textScale}rem`,
+              fontFeatureSettings: '"mark" 1, "mkmk" 1',
+            }}
+            lang="he"
+          >
+            {analysis.words.map((w, i) => {
+              const isVerb = !!w.verbMorphology && showVerbMarkers;
+              const isActive = activeWordIndex === i;
+              return (
+                <Tooltip key={i} delayDuration={200}>
+                  <TooltipTrigger asChild>
+                    <span
+                      onClick={() => handleHeaderWordClick(i)}
+                      onMouseEnter={() => handleHeaderWordHover(i)}
+                      onMouseLeave={() => handleHeaderWordHover(null)}
+                      className={`
+                        inline-flex flex-col items-center
+                        cursor-pointer rounded-md px-1 pt-0.5 pb-1.5 transition-all duration-150 relative
+                        ${isActive
+                          ? 'bg-primary/15 ring-1 ring-primary/40 border-b-2 border-primary scale-105 shadow-sm'
+                          : isVerb
+                            ? 'border-b-2 border-emerald-500/60 hover:border-emerald-500/80 hover:bg-primary/8 hover:shadow-sm'
+                            : 'border-b-2 border-transparent hover:border-primary/30 hover:bg-muted hover:shadow-sm'
+                        }
+                      `}
+                    >
+                      {/* Hebrew — dual rendering strategy */}
+                      <span>
+                        {fullMarks ? (
+                          // Masoretic mode: single unbroken string, all marks preserved
+                          <span className="font-hebrew" style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}>
+                            {w.hebrewText}
+                          </span>
+                        ) : w.morphemes && w.morphemes.length > 0 ? (
+                          // Morphological mode: colored spans, cantillation stripped
+                          <MorphemeSpan
+                            segments={w.morphemes}
+                            variant="text"
+                            disableColors={!showColors}
+                            disableNativeTooltip
+                          />
+                        ) : (
+                          w.hebrewText
+                        )}
+                      </span>
                     {/* Per-word transliteration */}
                     {w.transliteration && (
                       <span
@@ -414,7 +454,11 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
         </div>
       )}
 
-      {/* Timestamp */}
+      {/* ── Lexical notes ──────────────────────────────────────────── */}
+      {analysis.lexicalNotes && analysis.lexicalNotes.length > 0 && (
+        <LexicalNotesSection notes={analysis.lexicalNotes} />
+      )}
+
       <p className="text-[11px] text-muted-foreground/40 text-right">
         Analizado: {new Date(analysis.analyzedAt).toLocaleString('es-CL')}
       </p>
@@ -477,6 +521,75 @@ const TranslationPanel: React.FC<{ label: string; text: string; icon: React.Reac
         </button>
       </div>
       <p className="text-sm text-foreground leading-relaxed">{text}</p>
+    </div>
+  );
+};
+
+// ── LexicalNotesSection ──────────────────────────────────────────────────────
+
+const TYPE_STYLES: Record<LexicalNoteType, { badge: string; label: string }> = {
+  idiom:          { badge: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300', label: 'Modismo' },
+  semantic_range: { badge: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',            label: 'Rango Semántico' },
+  cultural_note:  { badge: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300',        label: 'Nota Cultural' },
+  false_friend:   { badge: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',        label: 'Falso Amigo' },
+};
+
+interface LexicalNotesSectionProps {
+  notes: readonly LexicalNote[];
+}
+
+const LexicalNotesSection: React.FC<LexicalNotesSectionProps> = ({ notes }) => {
+  const { t } = useTranslation('hebrewTutor');
+
+  return (
+    <div className="bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800 rounded-xl p-5 print:break-inside-avoid print:mt-6">
+      <h3 className="text-sm font-semibold text-violet-800 dark:text-violet-400 mb-4 flex items-center gap-2">
+        <BookOpenTextIcon className="w-4 h-4 opacity-70" />
+        {t('verseAnalyzer.analysis.lexicalNotes')}
+      </h3>
+      <div className="space-y-4">
+        {notes.map((note, i) => {
+          const style = TYPE_STYLES[note.type] ?? TYPE_STYLES.idiom;
+          return (
+            <div
+              key={i}
+              className="bg-white/60 dark:bg-white/5 rounded-lg border border-violet-100 dark:border-violet-800/50 p-4 space-y-3"
+            >
+              {/* Header row: phrase + type badge */}
+              <div className="flex flex-wrap items-center gap-3">
+                <span
+                  className="font-hebrew text-2xl leading-none text-violet-900 dark:text-violet-200"
+                  dir="rtl"
+                >
+                  {note.hebrewPhrase}
+                </span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${style.badge}`}>
+                  {style.label}
+                </span>
+              </div>
+              {/* Meaning comparison grid */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    {t('verseAnalyzer.analysis.lexicalNoteLiteral')}
+                  </p>
+                  <p className="text-foreground/80 italic">"{note.literalMeaning}"</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                    {t('verseAnalyzer.analysis.lexicalNoteIdiomatic')}
+                  </p>
+                  <p className="text-violet-900 dark:text-violet-200 font-medium">"{note.idiomaticMeaning}"</p>
+                </div>
+              </div>
+              {/* Academic explanation */}
+              <p className="text-xs text-muted-foreground leading-relaxed border-t border-violet-100 dark:border-violet-800/40 pt-3">
+                {note.explanation}
+              </p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

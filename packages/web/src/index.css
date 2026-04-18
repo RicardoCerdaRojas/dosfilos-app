@@ -1,5 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&family=Crimson+Pro:wght@400;500;600;700&display=swap');
 
+/* ── Biblical Hebrew: Ezra SIL (SIL Open Font License) ──────────────────────
+   unicode-range covers the full BHS/WLC Hebrew block:
+     U+0590–U+05FF  Hebrew letters, vowels (nikud), cantillation marks (te'amim)
+     U+0591–U+05AF  Te'amim range: atnah (֑), silluq, zakef, tippeha, etc.
+     U+FB1D–U+FB4F  Hebrew presentation forms (ligatures)
+   EzraSIL has full GPOS support for complex diacritic stacking.
+   ──────────────────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Ezra SIL';
+  src: url('/fonts/SILEOT.woff2') format('woff2'),
+       url('/fonts/SILEOT.ttf')  format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  /* Full Hebrew block including te'amim (U+0591–U+05AF) and presentation forms */
+  unicode-range:
+    U+0590-05FF,  /* Hebrew block: letters, nikud, te'amim, punctuation      */
+    U+FB1D-FB4F;  /* Hebrew presentation forms (ligatures)                   */
+}
+
+@font-face {
+  font-family: 'Ezra SIL SR';
+  src: url('/fonts/SILEOTSR.woff2') format('woff2'),
+       url('/fonts/SILEOTSR.ttf')  format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0590-05FF,
+    U+FB1D-FB4F;
+}
+
+/* ── Hebrew text rendering utility ───────────────────────────────────────────
+   Applied via the Tailwind `font-hebrew` class to every Hebrew text node.
+
+   OpenType features required for correct te'amim (cantillation) rendering:
+     mark  — Mark-to-Base Positioning: places nikud/te'amim on the correct base letter
+     mkmk  — Mark-to-Mark Positioning: stacks multiple diacritics (e.g. hiriq + atnah)
+     kern  — Kerning: correct inter-glyph spacing for complex Hebrew clusters
+
+   text-rendering: optimizeLegibility activates the browser's HarfBuzz shaper
+   for complex RTL scripts, which is required for correct Unicode joining behavior.
+   ──────────────────────────────────────────────────────────────────────────── */
+.font-hebrew {
+  font-feature-settings: "mark" 1, "mkmk" 1, "kern" 1;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

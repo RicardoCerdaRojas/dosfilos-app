@@ -644,7 +644,7 @@ const LexicalAnchor: React.FC<{ word: WordAnalysis }> = ({ word }) => {
         <span
           dir="rtl"
           lang="he"
-          className="text-base font-serif font-semibold text-foreground leading-none"
+          className="text-base font-hebrew font-semibold text-foreground leading-none"
         >
           {word.root}
         </span>

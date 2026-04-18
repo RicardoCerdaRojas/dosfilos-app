@@ -49,7 +49,7 @@ export const VerbTable: React.FC<VerbTableProps> = ({ verbTable }) => {
                 className="hover:bg-muted/20 transition-colors border-b border-border/50 last:border-0 print:break-inside-avoid"
               >
                 <td className="px-3 py-2.5 text-right">
-                  <span dir="rtl" className="font-serif text-base text-foreground">{row.hebrewForm}</span>
+                  <span dir="rtl" className="font-hebrew text-base text-foreground">{row.hebrewForm}</span>
                 </td>
                 <td className="px-3 py-2.5 text-muted-foreground italic text-xs">{row.transliteration}</td>
                 <td className="px-3 py-2.5">
@@ -68,7 +68,7 @@ export const VerbTable: React.FC<VerbTableProps> = ({ verbTable }) => {
                 <td className="px-3 py-2.5">
                   <div className="flex flex-col gap-0.5">
                     {row.root && (
-                      <span dir="rtl" className="font-serif text-sm text-violet-700 dark:text-violet-400">
+                      <span dir="rtl" className="font-hebrew text-sm text-violet-700 dark:text-violet-400">
                         {row.root}
                       </span>
                     )}

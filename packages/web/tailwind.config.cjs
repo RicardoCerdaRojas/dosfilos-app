@@ -76,6 +76,15 @@ export default {
 				bible: [
 					'Crimson Pro',
 					'serif'
+				],
+				// Dedicated family for Biblical Hebrew text — Ezra SIL has full
+				// OpenType mark/mkmk tables for niqqud + cantillation + dagesh
+				hebrew: [
+					'Ezra SIL',
+					'Ezra SIL SR',
+					'SBL Hebrew',
+					'Times New Roman',
+					'serif'
 				]
 			},
 			keyframes: {

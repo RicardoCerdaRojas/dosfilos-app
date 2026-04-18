@@ -117,7 +117,7 @@ export const DetectivePhase3Prefix: React.FC<DetectivePhase3PrefixProps> = ({ wo
               <span
                 dir="rtl"
                 lang="he"
-                className="text-xl font-serif font-bold text-primary w-10 text-center flex-shrink-0"
+                className="text-xl font-hebrew font-bold text-primary w-10 text-center flex-shrink-0"
               >
                 {opt.prefix}
               </span>

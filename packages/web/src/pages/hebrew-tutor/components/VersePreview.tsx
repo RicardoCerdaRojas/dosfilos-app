@@ -37,7 +37,7 @@ export const VersePreview: React.FC<VersePreviewProps> = ({ verse, isLoading, on
         <p
           dir="rtl"
           lang="he"
-          className="text-3xl leading-loose font-serif text-foreground"
+          className="text-3xl leading-loose font-hebrew text-foreground"
           style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
         >
           {verse.hebrewText}

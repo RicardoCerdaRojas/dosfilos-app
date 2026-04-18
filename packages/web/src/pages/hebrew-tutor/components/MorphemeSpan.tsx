@@ -44,7 +44,7 @@ export function getMorphemeCategory(role: string | MorphemeRole): MorphemeCatego
 
 export const MORPHEME_TEXT_STYLES: Record<MorphemeCategory, string> = {
   prefix:    'text-blue-500 dark:text-blue-400',
-  root:      'text-foreground font-semibold',
+  root:      'text-foreground',
   suffix:    'text-violet-500 dark:text-violet-400',
   vowelMark: 'text-amber-500 dark:text-amber-400',
   dagesh:    'text-red-500 dark:text-red-400',
@@ -54,7 +54,7 @@ export const MORPHEME_TEXT_STYLES: Record<MorphemeCategory, string> = {
 export const MORPHEME_HIGHLIGHT_STYLES: Record<MorphemeCategory, string> = {
   // Translucent background with text-foreground to protect reading
   prefix:    'bg-blue-500/15 text-foreground rounded-sm',
-  root:      'text-foreground font-semibold', // Root is usually left plain or lightly tinted
+  root:      'text-foreground', // Root is usually left plain or lightly tinted
   suffix:    'bg-violet-500/15 text-foreground rounded-sm',
   vowelMark: 'bg-amber-500/15 text-foreground rounded-sm',
   dagesh:    'bg-red-500/15 text-foreground rounded-sm',
@@ -92,16 +92,25 @@ export const MorphemeSpan: React.FC<MorphemeSpanProps> = ({
   const styles = variant === 'highlight' ? MORPHEME_HIGHLIGHT_STYLES : MORPHEME_TEXT_STYLES;
 
   return (
-    <span className={cn('font-serif flex-inline items-center', className)} dir="rtl">
-      {segments.map((seg, i) => (
-        <span
-          key={i}
-          title={disableNativeTooltip ? undefined : (seg.label || seg.role)}
-          className={cn(!disableColors && styles[getMorphemeCategory(seg.role)], "px-[1px]")}
-        >
-          {seg.text}
-        </span>
-      ))}
+    <span className={cn('font-hebrew inline', className)} dir="rtl" lang="he" style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}>
+      {segments.map((seg, i) => {
+        // Skip standalone DAGESH_FORTE segments in the inline word rendering.
+        // The dagesh mark is already physically embedded within the base letter of another segment (e.g. the root).
+        // Rendering a standalone combining mark in HTML breaks grapheme clusters and causes floating dots.
+        if (seg.role === 'DAGESH_FORTE') {
+          return null;
+        }
+        
+        return (
+          <span
+            key={i}
+            title={disableNativeTooltip ? undefined : (seg.label || seg.role)}
+            className={cn(!disableColors && styles[getMorphemeCategory(seg.role)], "px-[1px]")}
+          >
+            {seg.text}
+          </span>
+        );
+      })}
     </span>
   );
 };

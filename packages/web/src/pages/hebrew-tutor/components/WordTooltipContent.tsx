@@ -87,7 +87,12 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
         {/* ── Top row: category + hebrew + root + lex + gloss ── */}
         <div className="flex flex-col gap-2 p-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-start justify-between gap-4">
-            <span dir="rtl" className="text-[24px] font-serif font-medium text-slate-900 dark:text-slate-100 leading-none tracking-wide">
+            <span
+              dir="rtl"
+              lang="he"
+              className="text-[24px] font-hebrew font-medium text-slate-900 dark:text-slate-100 leading-none tracking-wide"
+              style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}
+            >
               {word.hebrewText}
             </span>
             {word.category && (
@@ -103,7 +108,7 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
             {word.root && (
                <div className="flex items-baseline gap-2 text-[12px]">
                  <span className="font-semibold text-slate-500 dark:text-slate-400 w-9 shrink-0">Raíz:</span>
-                 <span dir="rtl" className="font-serif text-[16px] text-slate-800 dark:text-slate-200 leading-none">{word.root}</span>
+                 <span dir="rtl" lang="he" className="font-hebrew text-[16px] text-slate-800 dark:text-slate-200 leading-none" style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}>{word.root}</span>
                </div>
             )}
             {word.lemmaGloss && (
@@ -161,16 +166,24 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
               Análisis de morfemas
             </span>
             <div className="flex flex-col gap-2">
-              {word.morphemes.map((m, idx) => (
-                <div key={idx} className="flex items-start gap-3 text-[12px]">
-                  <span dir="rtl" className="font-serif text-[16px] font-bold min-w-[28px] text-center shrink-0 text-slate-800 dark:text-slate-200">
-                    {m.text}
-                  </span>
-                  <span className="text-slate-600 dark:text-slate-400 leading-snug mt-0.5">
-                    {m.label || m.role}
-                  </span>
-                </div>
-              ))}
+              {word.morphemes.map((m, idx) => {
+                const isDageshForte = m.role === 'DAGESH_FORTE';
+                const cleanText = m.text.replace(/[\u0591-\u05AF\u05BD]/g, '');
+                const displayText = isDageshForte ? '\u25CC\u05BC' : cleanText;
+                
+                return (
+                  <div key={idx} className="flex items-start gap-3 text-[12px]">
+                    <span dir="rtl" className="font-hebrew text-[16px] font-bold min-w-[28px] text-center shrink-0 text-slate-800 dark:text-slate-200">
+                      <span className={isDageshForte ? 'text-red-500 dark:text-red-400' : ''}>
+                        {displayText}
+                      </span>
+                    </span>
+                    <span className="text-slate-600 dark:text-slate-400 leading-snug mt-0.5">
+                      {m.label || m.role}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -134,7 +134,7 @@ export const WordCard: React.FC<WordCardProps> = ({
       <div className={`grid ${word.root ? 'grid-cols-2 sm:grid-cols-[1fr_1fr_1fr]' : 'grid-cols-[1fr_1fr]'} gap-x-4 gap-y-3 mb-4`}>
         {/* Left: Hebrew word + transliteration */}
         <div className="flex flex-col gap-1 min-w-0 items-center justify-center">
-          <div dir="rtl" className="text-2xl font-serif text-foreground leading-tight">
+          <div dir="rtl" className="text-2xl font-hebrew text-foreground leading-tight">
             {hasMorphemes ? (
               <MorphemeSpan segments={word.morphemes!} variant="text" />
             ) : (
@@ -148,7 +148,7 @@ export const WordCard: React.FC<WordCardProps> = ({
         {word.root && (
           <div className="flex flex-col gap-1 justify-center min-w-0 border-l border-border/50 pl-3">
             <span className="text-[11px] text-muted-foreground/70 truncate flex items-center gap-1" title={`raíz: ${word.root}`}>
-              raíz: <span dir="rtl" className="font-serif text-foreground/85 text-lg inline-block">{word.root}</span>
+              raíz: <span dir="rtl" className="font-hebrew text-foreground/85 text-lg inline-block">{word.root}</span>
             </span>
             {word.rootMeaning && (
               <p className="text-sm font-medium text-foreground leading-snug truncate" title={word.rootMeaning}>
@@ -162,7 +162,7 @@ export const WordCard: React.FC<WordCardProps> = ({
         <div className={`flex flex-col gap-1 justify-center min-w-0 ${word.root ? 'sm:border-l sm:border-border/50 sm:pl-3 col-span-2 sm:col-span-1 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/50' : 'border-l border-border/50 pl-3'}`}>
           {word.lemmaGloss && (
             <span className="text-[11px] text-muted-foreground/70 truncate" title={`lex: ${word.lemmaGloss}`}>
-              lex: <span className="font-serif text-foreground/85">{word.lemmaGloss}</span>
+              lex: <span className="font-hebrew text-foreground/85">{word.lemmaGloss}</span>
             </span>
           )}
           <p className="text-sm font-medium text-foreground leading-snug truncate" title={word.translation}>
@@ -265,7 +265,7 @@ export const WordCard: React.FC<WordCardProps> = ({
                       key={i}
                       className={`text-[11px] rounded px-2 py-1 flex flex-col items-center min-w-[40px] border shadow-sm ${MORPHEME_BADGE_STYLES[cat] ?? MORPHEME_BADGE_STYLES.neutral} bg-opacity-40 dark:bg-opacity-20`}
                     >
-                      <span dir="rtl" className="font-serif text-[15px] leading-none mb-1">
+                      <span dir="rtl" className="font-hebrew text-[15px] leading-none mb-1">
                         <MorphemeSpan segments={[seg]} />
                       </span>
                       <span className="text-[9px] text-muted-foreground text-center font-medium opacity-90 tracking-wider">

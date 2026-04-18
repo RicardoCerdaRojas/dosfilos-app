@@ -219,7 +219,7 @@ export const VerseNavBar: React.FC<VerseNavBarProps> = ({
   const { t } = useTranslation('hebrewTutor');
 
   const currentBookName =
-    HEBREW_BOOKS_CATALOG.find((b) => b.morphhbKey === selectedBook)?.nameSpanish ?? selectedBook;
+    HEBREW_BOOKS_CATALOG.find((b) => b.morphhbKey === selectedBook)?.nameSpanish || 'Seleccionar Libro';
 
   const chapterCount = bookIndex?.versesPerChapter?.length ?? 1;
   const versesInChapter = bookIndex?.versesPerChapter?.[selectedChapter - 1] ?? 1;
