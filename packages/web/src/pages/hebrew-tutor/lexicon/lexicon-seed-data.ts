@@ -433,6 +433,131 @@ export const GENESIS_SEED_ENTRIES: readonly LexiconSeedEntry[] = [
     enabled: true,
     order: 170,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GENESIS 3:14–24 — Cobertura proactiva de los asuntos exegéticos clave
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Gen 3:15 — El Protoevangelio ──────────────────────────────────────────
+
+  {
+    hebrewPhrase: 'שׁוּף',
+    matchLemmas: [],
+    verseRefs: ['Gen.3.15'],
+    type: 'semantic_range',
+    literalMeaning: 'aplastar / herir / atacar',
+    idiomaticMeaning: 'herir mortalmente (en la cabeza) / herir (en el talón)',
+    explanation:
+      'La raíz שׁוּף (shuph) es una de las más raras del AT: aparece solo 3 veces ' +
+      '(Gen 3:15; Job 9:17; Sal 139:11). Su rango semántico incluye "aplastar", ' +
+      '"herir", "acechar/atacar". En Gen 3:15 se usa SIMÉTRICAMENTE para dos acciones: ' +
+      '1) הוּא יְשׁוּפְךָ רֹאשׁ — él aplastará tu CABEZA (golpe mortal); ' +
+      '2) וְאַתָּה תְּשׁוּפֶנּוּ עָקֵב — tú herirás su TALÓN (golpe menor). ' +
+      'La asimetría anatómica cabeza/talón implica desenlaces de distinta gravedad — ' +
+      'perderla en traducción elimina la clave interpretativa del verso. ' +
+      'La LXX traduce τηρεῖν (acechar/vigilar), sugiriendo conflicto continuo. ' +
+      'La Vulgata usa "conterere" (aplastar), favoreciendo la victoria mesiánica definitiva. ' +
+      'Debate exegético central: ¿promesa de victoria final (protoevangelio) ' +
+      'o descripción de un conflicto permanente? El texto hebreo permite ambas lecturas.',
+    source: 'BDB 1003; HALOT 1460; Wenham, Genesis 1-15, WBC p. 80; Hamilton, NICOT p. 197',
+    enabled: true,
+    order: 175,
+  },
+
+  {
+    hebrewPhrase: 'זַרְעֲךָ / זַרְעָהּ',
+    matchLemmas: [],
+    verseRefs: ['Gen.3.15'],
+    type: 'grammatical_note',
+    literalMeaning: 'tu descendencia / su descendencia',
+    idiomaticMeaning: 'tu linaje / su linaje',
+    explanation:
+      'זֶרַע (zera, "simiente/descendencia") es un sustantivo COLECTIVO: puede referirse ' +
+      'al linaje completo (toda la humanidad) o a un individuo específico. ' +
+      'El debate exegético central gira en torno al pronombre הוּא (él/ello) en el v.15b: ' +
+      '¿remite a la descendencia colectiva (conflicto permanente humanos/serpiente) ' +
+      'o a un individuo futuro (lectura mesiánica)? ' +
+      'La LXX usa αὐτός (él, masculino singular), favoreciendo la lectura individual. ' +
+      'La Vulgata tiene "ipsa" (ella), en referencia a María. ' +
+      'El texto hebreo gramaticalmente apunta al colectivo זֶרַע (neutro/masculino), ' +
+      'pero la ambigüedad es probable e intencionada. ' +
+      'Traducir "su descendencia" y anotar el debate es preferible a resolver la tensión.',
+    source: 'BDB 282; Collins, JETS 48.2 (2005); Dumbrell, Covenant and Creation, p. 34',
+    enabled: true,
+    order: 177,
+  },
+
+  // ── Gen 3:16 — La inclinación de la mujer ─────────────────────────────────
+
+  {
+    hebrewPhrase: 'תְּשׁוּקָתֵךְ',
+    matchLemmas: [],
+    verseRefs: ['Gen.3.16'],
+    type: 'semantic_range',
+    literalMeaning: 'tu deseo',
+    idiomaticMeaning: 'tu anhelo / tu inclinación profunda hacia',
+    explanation:
+      'תְּשׁוּקָה (teshuqah) aparece solo 3 veces en el AT. ' +
+      'Gen 4:7: el pecado tiene תְּשׁוּקָה hacia Caín — "su inclinación es hacia ti, ' +
+      'pero tú debes dominarlo": describe una fuerza que impulsa con potencial de dominación. ' +
+      'Cant 7:11: sentido afectivo/amoroso. ' +
+      'El paralelo con Gen 4:7 es decisivo: no es "deseo romántico" sino una ' +
+      'inclinación profunda que conlleva una dinámica de poder. ' +
+      'La frase completa "hacia tu marido será tu inclinación, pero él te dominará" ' +
+      'describe una tensión estructural entre atracción y subordinación. ' +
+      'Traducciones como "impulso" o "anhelo dominante" capturan mejor el rango semántico ' +
+      'que el simple "deseo".',
+    source: 'BDB 1003; HALOT 1798; Walton, NIVAC Genesis p. 231; Foh, WTJ 37 (1975) p. 376',
+    enabled: true,
+    order: 185,
+  },
+
+  // ── Gen 3:19 — Cláusula nominal: polvo eres ───────────────────────────────
+
+  {
+    hebrewPhrase: 'עָפָר אַתָּה',
+    matchLemmas: [],
+    verseRefs: ['Gen.3.19'],
+    type: 'grammatical_note',
+    literalMeaning: 'polvo tú',
+    idiomaticMeaning: 'polvo eres / tú eres polvo',
+    explanation:
+      'Cláusula nominal (predicado sustantival + pronombre sujeto), idéntica al patrón ' +
+      'de עֵירֹם אָנֹכִי (Gen 3:10) y עֵירֹם אַתָּה (Gen 3:11): ' +
+      'עָפָר (aphar, "polvo/tierra") como predicado; אַתָּה (attah, "tú") como sujeto enfático. ' +
+      'El tiempo PRESENTE es el correcto: "polvo eres", no "serás polvo". ' +
+      'El pronombre independiente אַתָּה declara la verdad con énfasis directo y personal. ' +
+      'La conexión con אָדָם/אֲדָמָה (Gen 2:7) cierra el arco narrativo: ' +
+      'el ser humano fue formado עָפָר מִן הָאֲדָמָה (polvo de la tierra) ' +
+      'y la maldición lo retorna a su origen material. ' +
+      'La versión "polvo eres y en polvo te convertirás" preserva correctamente el presente.',
+    source: 'GKC §141a; Joüon §154b; cf. Gen 2:7 (אָדָם/אֲדָמָה paronomasia)',
+    enabled: true,
+    order: 180,
+  },
+
+  // ── Gen 3:20 — El nombre de Eva ───────────────────────────────────────────
+
+  {
+    hebrewPhrase: 'חַוָּה',
+    matchLemmas: [],
+    verseRefs: ['Gen.3.20'],
+    type: 'cultural_note',
+    literalMeaning: 'Eva',
+    idiomaticMeaning: 'Viviente / Dadora de vida',
+    explanation:
+      'Paronomasia con חַי/חַיָּה (chai, "viviente/vida"): ' +
+      'חַוָּה (Chavvah) deriva de la raíz חָיָה (chayah, "vivir"). ' +
+      'El narrador justifica el nombre de inmediato: ' +
+      '"porque ella es la madre de todo ser viviente" (כִּי הִוא הָיְתָה אֵם כָּל-חָי). ' +
+      'El nombre no es decorativo — es un acto teológico y de fe: ' +
+      'DESPUÉS de escuchar la sentencia de muerte en Gen 3:19, ' +
+      'Adán le pone a su mujer un nombre que celebra la vida. ' +
+      'Esta ironía teológica (muerte anunciada → nombre de vida) es exegéticamente significativa ' +
+      'y se pierde completamente si no se señala la etimología. ' +
+      'En español no hay equivalente fonético; señalar "Eva = Vida en hebreo" en nota es necesario.',
+    source: 'BDB 295; HALOT 296; Wenham, Genesis 1-15, p. 84; Alter, Genesis, p. 22',
+    enabled: true,
+    order: 190,
+  },
 ];
-
-
