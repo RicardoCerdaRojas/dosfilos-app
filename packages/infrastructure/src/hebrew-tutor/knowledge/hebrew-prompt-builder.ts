@@ -82,7 +82,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
       "literalMeaning": "string — the word-for-word meaning (e.g. 'criatura viviente del campo')",
       "idiomaticMeaning": "string — the dynamic-equivalent meaning (e.g. 'animales salvajes')",
       "explanation": "string — academic explanation of why the meanings differ, at seminary level",
-      "type": "idiom | semantic_range | cultural_note | false_friend"
+      "type": "idiom | semantic_range | cultural_note | false_friend | grammatical_note"
     }
   ]
 }
@@ -137,28 +137,79 @@ ${rows}
 
 // ── Lexical glossary context (Level 2 RAG) ────────────────────────────────────
 
+const LEXICAL_TYPE_LABELS: Record<LexicalEntry['type'], string> = {
+  idiom:            'MODISMO',
+  semantic_range:   'RANGO SEMÁNTICO',
+  cultural_note:    'NOTA CULTURAL',
+  false_friend:     'FALSO AMIGO',
+  grammatical_note: 'NOTA GRAMATICAL',
+};
+
+/**
+ * Formats a single lexical entry as a prompt-injectable bullet.
+ */
+function formatLexicalBullet(entry: LexicalEntry): string {
+  const typeTag = LEXICAL_TYPE_LABELS[entry.type];
+  const verseTag = entry.verseRefs?.length
+    ? ` [${(entry.verseRefs as string[]).join(', ')}]`
+    : '';
+  return `• [${typeTag}]${verseTag} ${entry.hebrewPhrase}\n  Literal: "${entry.literalMeaning}"\n  Idiomático: "${entry.idiomaticMeaning}"\n  Explicación: ${entry.explanation}`;
+}
+
 /**
  * Formats the curated lexical entries as a block injected into the prompt.
- * Only called when at least one matching entry exists for the verse.
  *
- * @param entries - Enabled lexical entries that matched this verse's lemmas
+ * Entries are split into two groups:
+ *  1. **Chain entries** (Leitwort threads) — grouped under a "HILO SEMÁNTICO"
+ *     header that instructs the LLM to maintain cross-verse coherence.
+ *  2. **Standalone entries** — individual lexical corrections.
+ *
+ * @param entries - Enabled lexical entries that matched this verse
  */
 function formatLexicalContext(entries: readonly LexicalEntry[]): string {
   if (entries.length === 0) return '';
 
-  const typeLabels: Record<LexicalEntry['type'], string> = {
-    idiom: 'MODISMO',
-    semantic_range: 'RANGO SEMÁNTICO',
-    cultural_note: 'NOTA CULTURAL',
-    false_friend: 'FALSO AMIGO',
-  };
+  // Partition: chain entries vs standalone
+  const chainGroups = new Map<string, LexicalEntry[]>();
+  const standalone: LexicalEntry[] = [];
 
-  const items = entries
-    .map((e) => {
-      const typeTag = typeLabels[e.type];
-      return `• [${typeTag}] ${e.hebrewPhrase}\n  Literal: "${e.literalMeaning}"\n  Idiomático: "${e.idiomaticMeaning}"\n  Explicación: ${e.explanation}`;
-    })
-    .join('\n\n');
+  for (const entry of entries) {
+    if (entry.chainId) {
+      const group = chainGroups.get(entry.chainId) ?? [];
+      group.push(entry);
+      chainGroups.set(entry.chainId, group);
+    } else {
+      standalone.push(entry);
+    }
+  }
+
+  const sections: string[] = [];
+
+  // Format chain groups with discourse-level instructions
+  for (const [chainId, chainEntries] of chainGroups) {
+    const sorted = chainEntries.sort((a, b) => a.order - b.order);
+    const bullets = sorted.map(formatLexicalBullet).join('\n\n');
+
+    sections.push(`
+### HILO SEMÁNTICO: "${chainId}" (cadena léxica / Leitwort)
+
+Las siguientes entradas forman un HILO SEMÁNTICO que atraviesa múltiples versículos.
+DEBES mantener COHERENCIA de traducción entre TODAS las entradas del hilo.
+La decisión traductológica tomada en un versículo CONDICIONA las de los demás.
+
+${bullets}
+`);
+  }
+
+  // Format standalone entries
+  if (standalone.length > 0) {
+    const bullets = standalone.map(formatLexicalBullet).join('\n\n');
+    sections.push(`
+### ENTRADAS LÉXICAS INDIVIDUALES
+
+${bullets}
+`);
+  }
 
   return `
 ## GLOSARIO LEXICOGRÁFICO (conocimiento curado por el profesor)
@@ -169,7 +220,7 @@ que difieren de una traducción literal. DEBES:
 2. MANTENER el significado literal en la "literalTranslation" (no lo cambies).
 3. Reportar CADA entrada como un objeto en el array "lexicalNotes".
 
-${items}
+${sections.join('\n')}
 `;
 }
 
@@ -237,6 +288,29 @@ Para la "fluidTranslation":
 Para la "literalTranslation":
 - SIEMPRE mantén una traducción palabra por palabra. NUNCA apliques equivalencia
   dinámica aquí. Incluso si una frase es un modismo, tradúcela literalmente.
+
+## REGLA DE TRADUCCIÓN PARA FRASES PREPOSICIONALES BENEFACTIVAS
+
+En hebreo bíblico, una preposición (לְ, בְּ, עַל, etc.) con sufijo pronominal
+que sea CORREFERENCIAL con el sujeto del verbo forma una "frase preposicional
+benefactiva": indica que la acción recae en beneficio del propio sujeto.
+
+REGLA: Esta frase DEBE conservarse en AMBAS traducciones, literal y fluida.
+NO puede omitirse ni absorberse implícitamente en un pronombre reflexivo ambiguo.
+
+Ejemplos:
+- וַיַּעֲשׂוּ לָהֶם חֲגֹרֹת (Gén 3:7)
+  Sujeto: "ellos" (Adán y Eva) | לָהֶם = "para ellos" (correferencial)
+  ❌ Fluida incorrecta: "se hicieron fajas" (el 'se' es ambiguo)
+  ✅ Fluida correcta: "se fabricaron delantales para sí mismos"
+
+- Patrón general: preposición + sufijo correferencial con el sujeto:
+  לִי / לְךָ / לוֹ / לָהּ / לָנוּ / לָכֶם / לָהֶם
+  → traducir como "para mí mismo / para ti mismo / para sí mismo" etc.
+
+DISTINGUIR de:
+- Frases preposicionales donde el sufijo NO es correferencial con el sujeto
+  (e.g., "fabricaron para ellos [otros]") — en ese caso traducir normalmente.
 
 ## REGLA DE TRADUCCIÓN PARA WAYYIQTOL (Pasado narrativo secuencial)
 

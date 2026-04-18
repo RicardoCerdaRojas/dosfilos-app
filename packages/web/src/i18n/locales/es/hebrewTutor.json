@@ -168,14 +168,45 @@
     "subtitle": "Gestiona entradas lexicográficas que enriquecen la traducción idiomática.",
     "newEntry": "Nueva Entrada",
     "editEntry": "Editar Entrada",
+    "deleteEntry": "Eliminar Entrada",
     "saveEntry": "Guardar Entrada",
     "cancel": "Cancelar",
     "deleteConfirm": "¿Eliminar esta entrada del glosario?",
     "loading": "Cargando glosario...",
     "empty": "No hay entradas en el glosario. Crea la primera.",
+    "views": {
+      "cards": "Tarjetas",
+      "table": "Tabla",
+      "chains": "Cadenas"
+    },
+    "filters": {
+      "search": "Buscar por hebreo o significado...",
+      "allChains": "Todas las cadenas",
+      "onlyEnabled": "Solo activas"
+    },
+    "table": {
+      "type": "Tipo",
+      "hebrew": "Hebreo",
+      "meaning": "Significado",
+      "chain": "Cadena",
+      "verses": "Versos",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "chains": {
+      "noChain": "Sin cadena",
+      "entries": "entradas",
+      "noChains": "Ninguna entrada pertenece a una cadena léxica aún.",
+      "noChainsHint": "Asigna un 'Cadena Léxica / Leitwort' en el formulario de edición para crear hilos semánticos."
+    },
     "fields": {
       "hebrewPhrase": "Frase Hebrea",
-      "matchLemmas": "Lemas de Búsqueda (separados por coma)",
+      "matchLemmas": "Lemas / Números Strong's (separados por coma)",
+      "matchLemmasHint": "Para coincidencias amplias en cualquier verso. Ej: 6963 a (קוֹל).",
+      "verseRefs": "Versículos Específicos (opcional, separados por coma)",
+      "verseRefsHint": "Formato OSIS: Gen.3.8, Ps.23.1. Restringe la entrada a esos versos exactos.",
+      "chainId": "Cadena Léxica / Leitwort (opcional)",
+      "chainIdHint": "ID de cadena semántica (ej: qol-gen3). Entradas con el mismo ID se inyectan juntas para mantener coherencia discursiva.",
       "type": "Tipo",
       "literalMeaning": "Significado Literal",
       "idiomaticMeaning": "Significado Idiomático",
@@ -188,7 +219,8 @@
       "idiom": "Modismo",
       "semantic_range": "Rango Semántico",
       "cultural_note": "Nota Cultural",
-      "false_friend": "Falso Amigo"
+      "false_friend": "Falso Amigo",
+      "grammatical_note": "Nota Gramatical"
     }
   }
 }

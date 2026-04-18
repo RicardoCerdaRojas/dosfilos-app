@@ -75,7 +75,10 @@ export class AnalyzeVerseUseCase {
     }
 
     // 4. Fetch and match lexical entries for Level 2 RAG injection
-    const lexicalEntries = await this.resolveMatchingLexicalEntries(hebrewVerse.words);
+    const lexicalEntries = await this.resolveMatchingLexicalEntries(
+      hebrewVerse.words,
+      hebrewVerse.reference,
+    );
 
     // 5. Perform the analysis via Gemini + knowledge base + lexical context
     const analysis = await this.analysisService.analyzeVerse(hebrewVerse, language, lexicalEntries);
@@ -91,19 +94,27 @@ export class AnalyzeVerseUseCase {
   // ── Private helpers ──────────────────────────────────────────────────────────
 
   /**
-   * Fetches all enabled lexical entries and returns the subset that matches
-   * at least one lemma from the verse words.
+   * Fetches all enabled lexical entries and returns those that apply to the
+   * current verse. Three strategies are evaluated in order:
    *
-   * Matching strategy: an entry matches if ANY of its `matchLemmas` appears
-   * in ANY of the verse word lemmas (case-insensitive string equality).
-   * This is intentionally simple and broad — false positives are rare because
-   * Hebrew lemmas are specific, and the LLM will ignore irrelevant entries.
+   * 1. **Verse-ref matching** (exact, preferred): the entry's `verseRefs` list
+   *    contains the OSIS ID of the current verse (e.g. "Gen.3.8").
+   *
+   * 2. **Lemma matching** (broad, fallback): any of the entry's `matchLemmas`
+   *    appears in the normalized lemma set derived from the verse words.
+   *
+   * 3. **Chain expansion** (discourse coherence): if ANY directly-matched entry
+   *    has a `chainId`, ALL other entries sharing that chainId are included.
+   *    This implements Leitwort awareness — the LLM receives the full semantic
+   *    thread so it can maintain translation coherence across verses.
    *
    * @param verseWords - Tokenized words of the verse from morphhb
+   * @param osisRef    - OSIS verse reference, e.g. "Gen.3.8"
    * @returns The filtered, deduplicated list of matching LexicalEntry objects
    */
   private async resolveMatchingLexicalEntries(
     verseWords: readonly { lemma?: string }[],
+    osisRef: string,
   ): Promise<readonly LexicalEntry[]> {
     if (!this.lexicalRepository) return [];
 
@@ -118,14 +129,53 @@ export class AnalyzeVerseUseCase {
 
     if (allEntries.length === 0) return [];
 
-    const verseLemmas = new Set(
-      verseWords
-        .map((w) => w.lemma?.trim().toLowerCase())
-        .filter((l): l is string => !!l),
-    );
+    // Build normalized lemma set from the verse words
+    const verseLemmas = new Set<string>();
+    for (const word of verseWords) {
+      if (!word.lemma) continue;
+      const raw = word.lemma.trim().toLowerCase();
+      verseLemmas.add(raw);
+      const base = raw.includes('/') ? raw.split('/').at(-1)!.trim() : raw;
+      verseLemmas.add(base);
+    }
 
-    return allEntries.filter((entry) =>
-      entry.matchLemmas.some((lemma) => verseLemmas.has(lemma.trim().toLowerCase())),
-    );
+    const normalizedOsisRef = osisRef.trim();
+
+    // Phase 1: direct matching (verse-ref + lemma)
+    const directMatches = new Set<string>(); // entry IDs
+    for (const entry of allEntries) {
+      const matchesByRef =
+        entry.verseRefs != null &&
+        entry.verseRefs.length > 0 &&
+        entry.verseRefs.some((ref) => ref.trim() === normalizedOsisRef);
+
+      const matchesByLemma = entry.matchLemmas.some((lemma) =>
+        verseLemmas.has(lemma.trim().toLowerCase()),
+      );
+
+      if (matchesByRef || matchesByLemma) {
+        directMatches.add(entry.id);
+      }
+    }
+
+    // Phase 2: chain expansion — collect chainIds from direct matches
+    const activeChainIds = new Set<string>();
+    for (const entry of allEntries) {
+      if (directMatches.has(entry.id) && entry.chainId) {
+        activeChainIds.add(entry.chainId);
+      }
+    }
+
+    // Phase 3: include all entries from active chains + direct matches
+    const resultIds = new Set(directMatches);
+    if (activeChainIds.size > 0) {
+      for (const entry of allEntries) {
+        if (entry.chainId && activeChainIds.has(entry.chainId)) {
+          resultIds.add(entry.id);
+        }
+      }
+    }
+
+    return allEntries.filter((entry) => resultIds.has(entry.id));
   }
 }

@@ -103,14 +103,45 @@
     "subtitle": "Manage lexicographic entries that enrich idiomatic translation.",
     "newEntry": "New Entry",
     "editEntry": "Edit Entry",
+    "deleteEntry": "Delete Entry",
     "saveEntry": "Save Entry",
     "cancel": "Cancel",
     "deleteConfirm": "Delete this glossary entry?",
     "loading": "Loading glossary...",
     "empty": "No entries in the glossary. Create the first one.",
+    "views": {
+      "cards": "Cards",
+      "table": "Table",
+      "chains": "Chains"
+    },
+    "filters": {
+      "search": "Search by Hebrew or meaning...",
+      "allChains": "All chains",
+      "onlyEnabled": "Active only"
+    },
+    "table": {
+      "type": "Type",
+      "hebrew": "Hebrew",
+      "meaning": "Meaning",
+      "chain": "Chain",
+      "verses": "Verses",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "chains": {
+      "noChain": "No chain",
+      "entries": "entries",
+      "noChains": "No entries belong to a lexical chain yet.",
+      "noChainsHint": "Assign a 'Lexical Chain / Leitwort' in the edit form to create semantic threads."
+    },
     "fields": {
       "hebrewPhrase": "Hebrew Phrase",
-      "matchLemmas": "Search Lemmas (comma-separated)",
+      "matchLemmas": "Lemmas / Strong's Numbers (comma-separated)",
+      "matchLemmasHint": "Broad match across any verse. E.g.: 6963 a (קוֹל).",
+      "verseRefs": "Specific Verses (optional, comma-separated)",
+      "verseRefsHint": "OSIS format: Gen.3.8, Ps.23.1. Restricts the entry to those exact verses.",
+      "chainId": "Lexical Chain / Leitwort (optional)",
+      "chainIdHint": "Semantic chain ID (e.g. qol-gen3). Entries with the same ID are injected together for discourse coherence.",
       "type": "Type",
       "literalMeaning": "Literal Meaning",
       "idiomaticMeaning": "Idiomatic Meaning",
@@ -123,7 +154,10 @@
       "idiom": "Idiom",
       "semantic_range": "Semantic Range",
       "cultural_note": "Cultural Note",
-      "false_friend": "False Friend"
+      "false_friend": "False Friend",
+      "grammatical_note": "Grammatical Note"
     }
   }
 }
+
+
