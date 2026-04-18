@@ -157,7 +157,74 @@
       "false_friend": "False Friend",
       "grammatical_note": "Grammatical Note"
     }
+  },
+  "modes": {
+    "analyzer": "Analyzer",
+    "discovery": "Discovery"
+  },
+  "discovery": {
+    "title": "Discovery Mode",
+    "description": "Translate word by word before seeing the expert analysis.",
+    "navigator": "Bible Navigator",
+    "navigatorDesc": "Select book, chapter and verse to discover",
+    "stepper": {
+      "title": "Verse Words",
+      "progress": "{{completed}}/{{total}} completed"
+    },
+    "builder": {
+      "title": "Your Translation",
+      "empty": "Translations will appear here as you complete each word...",
+      "words": "{{count}} of {{total}} words"
+    },
+    "investigate": {
+      "wordN": "Word {{n}} of {{total}}",
+      "start": "Investigate this word",
+      "finish": "Compose full translation →"
+    },
+    "compose": {
+      "title": "Compose your translation",
+      "description": "From your word-by-word translations, edit the complete verse translation. You can modify it freely.",
+      "placeholder": "Write or edit your full translation...",
+      "submit": "Compare with expert analysis →"
+    },
+    "comparison": {
+      "student": "Your Translation",
+      "expert": "Expert Translation",
+      "literal": "Literal",
+      "fluid": "Fluid",
+      "avgScore": "Average Score",
+      "exactMatches": "Exact Matches",
+      "totalWords": "Words Analyzed",
+      "wordTable": "Word Comparison",
+      "hebrew": "Hebrew",
+      "yours": "Your Transl.",
+      "reference": "Reference",
+      "restart": "Retry this verse",
+      "next": "Next verse →"
+    },
+    "particle": {
+      "title": "Quick Identification",
+      "srDescription": "Quick identification of Hebrew particle.",
+      "root": "Root:",
+      "gloss": "Gloss:",
+      "function": "Function:",
+      "question": "How would you translate this word in the verse context?",
+      "placeholder": "Type your translation...",
+      "verify": "Verify →",
+      "correct": "Correct!",
+      "correctDesc": "Your translation matches the expert's.",
+      "notExact": "Not exactly. The contextual translation is:",
+      "youSaid": "You said:",
+      "continue": "Continue →"
+    },
+    "empty": {
+      "title": "Discover by translating",
+      "description": "Investigate each word of the verse with the detective before seeing the expert analysis.",
+      "search": "Search Passage",
+      "searchDesc": "Open navigator",
+      "genesis": "The beginning of all",
+      "gen310": "The nakedness revealed",
+      "hint": "Use the top navigator to find a verse"
+    }
   }
 }
-
-

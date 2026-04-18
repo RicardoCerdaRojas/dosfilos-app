@@ -222,5 +222,74 @@
       "false_friend": "Falso Amigo",
       "grammatical_note": "Nota Gramatical"
     }
+  },
+  "modes": {
+    "analyzer": "Analizador",
+    "discovery": "Descubrimiento"
+  },
+  "discovery": {
+    "title": "Modo Descubrimiento",
+    "description": "Traduce palabra por palabra antes de ver el análisis experto.",
+    "navigator": "Navegador Bíblico",
+    "navigatorDesc": "Selecciona libro, capítulo y versículo para descubrir",
+    "stepper": {
+      "title": "Palabras del versículo",
+      "progress": "{{completed}}/{{total}} completadas"
+    },
+    "builder": {
+      "title": "Tu Traducción",
+      "empty": "Las traducciones aparecerán aquí a medida que completes cada palabra...",
+      "words": "{{count}} de {{total}} palabras"
+    },
+    "investigate": {
+      "wordN": "Palabra {{n}} de {{total}}",
+      "start": "Investigar esta palabra",
+      "finish": "Componer traducción completa →"
+    },
+    "compose": {
+      "title": "Compón tu traducción",
+      "description": "A partir de tus traducciones palabra por palabra, edita la traducción completa del versículo. Puedes modificarla libremente.",
+      "placeholder": "Escribe o edita tu traducción completa...",
+      "submit": "Comparar con análisis experto →"
+    },
+    "comparison": {
+      "student": "Tu Traducción",
+      "expert": "Traducción Experta",
+      "literal": "Literal",
+      "fluid": "Fluida",
+      "avgScore": "Puntaje Promedio",
+      "exactMatches": "Coincidencias Exactas",
+      "totalWords": "Palabras Analizadas",
+      "wordTable": "Comparación por Palabra",
+      "hebrew": "Hebreo",
+      "yours": "Tu Trad.",
+      "reference": "Referencia",
+      "restart": "Reintentar este versículo",
+      "next": "Siguiente versículo →"
+    },
+    "particle": {
+      "title": "Identificación Rápida",
+      "srDescription": "Identificación rápida de partícula hebrea.",
+      "root": "Raíz:",
+      "gloss": "Glosa:",
+      "function": "Función:",
+      "question": "¿Cómo traducirías esta palabra en el contexto del versículo?",
+      "placeholder": "Escribe tu traducción...",
+      "verify": "Verificar →",
+      "correct": "¡Correcto!",
+      "correctDesc": "Tu traducción coincide con la del experto.",
+      "notExact": "No exactamente. La traducción contextual es:",
+      "youSaid": "Tú dijiste:",
+      "continue": "Continuar →"
+    },
+    "empty": {
+      "title": "Descubre traduciendo",
+      "description": "Investiga cada palabra del versículo con el detective antes de ver el análisis del experto.",
+      "search": "Buscar Pasaje",
+      "searchDesc": "Abre el navegador",
+      "genesis": "El principio de todo",
+      "gen310": "La desnudez revelada",
+      "hint": "Usa el navegador superior para buscar un versículo"
+    }
   }
 }
