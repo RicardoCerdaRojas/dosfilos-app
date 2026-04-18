@@ -12,7 +12,7 @@
  *  - maxOutputTokens 32768 to accommodate long verse analyses with many words
  */
 
-import type { IHebrewAnalysisService, HebrewVerse, VerseAnalysis } from '@dosfilos/domain';
+import type { IHebrewAnalysisService, HebrewVerse, VerseAnalysis, LexicalEntry } from '@dosfilos/domain';
 import { GoogleGenerativeAI, type GenerativeModel } from '@google/generative-ai';
 import { GEMINI_CONFIG } from '../gemini/config.js';
 import { selectRelevantChunks } from './knowledge/knowledge-selector.js';
@@ -35,12 +35,16 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
     });
   }
 
-  async analyzeVerse(verse: HebrewVerse, language = 'es'): Promise<VerseAnalysis> {
+  async analyzeVerse(
+    verse: HebrewVerse,
+    language = 'es',
+    lexicalEntries: readonly LexicalEntry[] = [],
+  ): Promise<VerseAnalysis> {
     // 1. Select the most relevant grammar knowledge chunks for this verse
     const knowledgeChunks = selectRelevantChunks(verse.hebrewText, [], 10);
 
-    // 2. Build the full pedagogical prompt
-    const prompt = buildVerseAnalysisPrompt(verse, knowledgeChunks, language);
+    // 2. Build the full pedagogical prompt (includes lexical glossary context when provided)
+    const prompt = buildVerseAnalysisPrompt(verse, knowledgeChunks, lexicalEntries, language);
 
     // 3. Call Gemini
     let rawResponse: string;
@@ -69,12 +73,24 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
    */
   private parseAnalysisResponse(rawJson: string, verse: HebrewVerse): VerseAnalysis {
     let data: Record<string, unknown>;
+
+    const cleaned = this.cleanJsonResponse(rawJson);
+
+    // First attempt: parse as-is
     try {
-      data = JSON.parse(this.cleanJsonResponse(rawJson)) as Record<string, unknown>;
-    } catch (e) {
-      throw new Error(
-        `GeminiHebrewService: Failed to parse JSON response. Raw: ${rawJson.slice(0, 300)}`,
-      );
+      data = JSON.parse(cleaned) as Record<string, unknown>;
+    } catch {
+      // Second attempt: strip the lexicalNotes array if it may be malformed/truncated.
+      // Gemini sometimes truncates the last array when the response is near the token limit.
+      const fallback = this.stripTrailingLexicalNotes(cleaned);
+      try {
+        data = JSON.parse(fallback) as Record<string, unknown>;
+        console.warn('GeminiHebrewService: lexicalNotes stripped to recover malformed JSON.');
+      } catch (e) {
+        throw new Error(
+          `GeminiHebrewService: Failed to parse JSON response. Raw: ${rawJson.slice(0, 400)}`,
+        );
+      }
     }
 
     // Validate required top-level fields
@@ -84,19 +100,60 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
       );
     }
 
+    // Restore cantillation marks (te'amim) stripped by Gemini during text generation.
+    // morphhb is the authoritative source for the Masoretic Text Unicode codepoints.
+    const reconciledWords = this.reconcileWordTexts(
+      data.words as VerseAnalysis['words'],
+      verse,
+    );
+
     return {
       reference: (data.reference as string) || verse.displayReference,
-      hebrewText: (data.hebrewText as string) || verse.hebrewText,
+      hebrewText: verse.hebrewText, // Always use morphhb text — preserves full te'amim
       transliteration: (data.transliteration as string) || '',
       literalTranslation: (data.literalTranslation as string) || '',
       fluidTranslation: (data.fluidTranslation as string) || '',
-      words: data.words as VerseAnalysis['words'],
+      words: reconciledWords,
       verbTable: Array.isArray(data.verbTable) ? (data.verbTable as VerseAnalysis['verbTable']) : [],
       exegeticalNotes: Array.isArray(data.exegeticalNotes)
         ? (data.exegeticalNotes as string[])
         : undefined,
+      lexicalNotes: Array.isArray(data.lexicalNotes) && data.lexicalNotes.length > 0
+        ? (data.lexicalNotes as VerseAnalysis['lexicalNotes'])
+        : undefined,
       analyzedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Reconciles each WordAnalysis.hebrewText with its corresponding HebrewWordToken
+   * from the morphhb dataset.
+   *
+   * Gemini normalizes Unicode when generating JSON, stripping combining characters
+   * such as cantillation marks (te'amim, U+0591–U+05AF). The morphhb tokens are
+   * the authoritative Masoretic text and preserve all diacritics.
+   *
+   * Matching strategy: positional (by index).
+   *  - If counts match exactly → direct 1-to-1 replacement.
+   *  - If Gemini returned fewer words (e.g. it merged a prefixed token) → replace
+   *    only the words that have a corresponding morphhb token; leave the rest as-is.
+   *  - If Gemini returned more words → extra words keep Gemini's text (safe fallback).
+   */
+  private reconcileWordTexts(
+    geminiWords: VerseAnalysis['words'],
+    verse: HebrewVerse,
+  ): VerseAnalysis['words'] {
+    const morphhbTokens = verse.words ?? [];
+
+    if (morphhbTokens.length === 0) {
+      // No morphhb data available — return as-is
+      return geminiWords;
+    }
+
+    console.log('--- RECONCILE START ---');
+    const mapped = reconcileGlobalWords(geminiWords, morphhbTokens);
+    console.log('--- RECONCILE END ---');
+    return mapped;
   }
 
   /**
@@ -117,4 +174,122 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
 
     return cleaned.substring(firstBrace, lastBrace + 1);
   }
+
+  /**
+   * Strips the `lexicalNotes` key (and its potentially truncated array) from a
+   * JSON string, then closes the object with `}`.
+   *
+   * This is a recovery strategy: when Gemini's output is near the token limit it
+   * sometimes emits an incomplete `lexicalNotes` array. Removing it preserves
+   * the rest of the analysis (words, verbTable, translations, etc.).
+   */
+  private stripTrailingLexicalNotes(json: string): string {
+    // Match "lexicalNotes": [ ... (possibly truncated)
+    const idx = json.lastIndexOf('"lexicalNotes"');
+    if (idx === -1) return json;
+
+    // Cut everything from "lexicalNotes" onwards
+    let truncated = json.substring(0, idx).trimEnd();
+
+    // Remove trailing comma if present
+    if (truncated.endsWith(',')) {
+      truncated = truncated.slice(0, -1).trimEnd();
+    }
+
+    // Close the JSON object
+    return truncated + '}';
+  }
+}
+
+/**
+ * Reconciles each WordAnalysis.hebrewText with its corresponding HebrewWordToken
+ * from the morphhb dataset.
+ *
+ * Gemini normalizes Unicode when generating JSON, stripping combining characters
+ * such as cantillation marks (te'amim, U+0591–U+05AF). The morphhb tokens are
+ * the authoritative Masoretic text and preserve all diacritics.
+ *
+ * Matching strategy: positional (by index).
+ *  - If counts match exactly → direct 1-to-1 replacement.
+ *  - If Gemini returned fewer words (e.g. it merged a prefixed token) → replace
+ *    only the words that have a corresponding morphhb token; leave the rest as-is.
+ *  - If Gemini returned more words → extra words keep Gemini's text (safe fallback).
+ */
+export function reconcileGlobalWords(
+  geminiWords: VerseAnalysis['words'],
+  morphhbTokens: { text: string }[]
+): VerseAnalysis['words'] {
+  if (!morphhbTokens || morphhbTokens.length === 0) {
+    return geminiWords;
+  }
+
+  // Flatten all morphemes from the LLM output
+  const allMorphemes = geminiWords.flatMap((w) => w.morphemes || []);
+  if (allMorphemes.length === 0) return geminiWords;
+
+  const isConsonant = (char: string) => char >= '\u05D0' && char <= '\u05EA';
+  
+  // Create a clean copy of morphemes to build up text
+  const newMorphemes = allMorphemes.map((m) => ({ ...m, text: '' }));
+  
+  // Count how many consonants Gemini generated per morpheme
+  const consCounts = allMorphemes.map((m) => Array.from(m.text).filter(isConsonant).length);
+
+  // Reconstruct authoritative text as a single continuous string
+  const authText = morphhbTokens.map((t) => t.text).join('');
+
+  let currentMorphIdx = 0;
+  let consSeen = 0;
+
+  for (const char of authText) {
+    if (isConsonant(char)) {
+      // Advance past any morphemes that have 0 consonants (e.g. prefix vowels)
+      while (currentMorphIdx < allMorphemes.length && consCounts[currentMorphIdx] === 0) {
+        currentMorphIdx++;
+      }
+      consSeen++;
+      if (currentMorphIdx < allMorphemes.length) {
+        newMorphemes[currentMorphIdx].text += char;
+        if (consSeen >= consCounts[currentMorphIdx]) {
+          currentMorphIdx++;
+          consSeen = 0;
+        }
+      } else {
+        // Excess consonants go to the last morpheme
+        if (newMorphemes.length > 0) newMorphemes[newMorphemes.length - 1].text += char;
+      }
+    } else {
+      // Non-consonant (vowel, cantillation/te'amim, dagesh, maqaf)
+      // Attach to the morpheme of the PREVIOUS consonant, or the current one if at the start
+      let attachIdx = currentMorphIdx;
+      if (consSeen === 0) {
+        attachIdx = Math.max(0, currentMorphIdx - 1);
+      }
+      if (attachIdx >= newMorphemes.length) {
+        attachIdx = newMorphemes.length - 1;
+      }
+      if (newMorphemes.length > 0) {
+        newMorphemes[attachIdx].text += char;
+      }
+    }
+  }
+
+  // Restore 0-consonant morphemes if they remained completely empty
+  for (let i = 0; i < newMorphemes.length; i++) {
+    if (newMorphemes[i].text === '') {
+      newMorphemes[i].text = allMorphemes[i].text;
+    }
+  }
+
+  // Distribute back to the words
+  let mIdx = 0;
+  return geminiWords.map((w) => {
+    const wordMorphemes = w.morphemes ? newMorphemes.slice(mIdx, mIdx + w.morphemes.length) : [];
+    mIdx += w.morphemes?.length || 0;
+    return {
+      ...w,
+      hebrewText: wordMorphemes.map((m) => m.text).join(''),
+      morphemes: wordMorphemes,
+    };
+  });
 }

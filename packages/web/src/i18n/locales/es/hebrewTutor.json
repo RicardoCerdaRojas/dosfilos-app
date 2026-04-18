@@ -22,6 +22,10 @@
       "wordAnalysis": "Análisis por Palabra",
       "verbTable": "Tabla de Verbos",
       "exegeticalNotes": "Notas Exegéticas",
+      "lexicalNotes": "Notas Lexicográficas",
+      "lexicalNotePhrase": "Frase",
+      "lexicalNoteLiteral": "Literal",
+      "lexicalNoteIdiomatic": "Idiomático",
       "morphemeBreakdown": "Desglose Morfológico",
       "syntacticFunction": "Función Sintáctica",
       "oshbValidation": "Validación OSHB"
@@ -157,6 +161,34 @@
     "errors": {
       "loadFailed": "Error al cargar el análisis. Por favor, intenta de nuevo.",
       "bookNotFound": "No se pudo cargar este libro. Verifica tu conexión."
+    }
+  },
+  "lexiconAdmin": {
+    "title": "Glosario Léxico Hebreo",
+    "subtitle": "Gestiona entradas lexicográficas que enriquecen la traducción idiomática.",
+    "newEntry": "Nueva Entrada",
+    "editEntry": "Editar Entrada",
+    "saveEntry": "Guardar Entrada",
+    "cancel": "Cancelar",
+    "deleteConfirm": "¿Eliminar esta entrada del glosario?",
+    "loading": "Cargando glosario...",
+    "empty": "No hay entradas en el glosario. Crea la primera.",
+    "fields": {
+      "hebrewPhrase": "Frase Hebrea",
+      "matchLemmas": "Lemas de Búsqueda (separados por coma)",
+      "type": "Tipo",
+      "literalMeaning": "Significado Literal",
+      "idiomaticMeaning": "Significado Idiomático",
+      "explanation": "Explicación Académica",
+      "source": "Fuente (opcional, ej: HALOT 310)",
+      "order": "Orden",
+      "enabled": "Activa"
+    },
+    "types": {
+      "idiom": "Modismo",
+      "semantic_range": "Rango Semántico",
+      "cultural_note": "Nota Cultural",
+      "false_friend": "Falso Amigo"
     }
   }
 }

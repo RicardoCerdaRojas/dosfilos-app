@@ -24,6 +24,10 @@ interface StickyVerseHeaderProps {
   analysis: VerseAnalysis;
   showColors: boolean;
   showVerbMarkers: boolean;
+  /** When true, renders hebrewText as a single unbroken string so the browser
+   *  can correctly shape all diacritics (niqqud + cantillation). When false,
+   *  renders via MorphemeSpan with morphological color coding. */
+  fullMarks: boolean;
   sentinelRef: React.RefObject<HTMLDivElement>;
   activeWordIndex: number | null;
   onWordHover: (index: number | null) => void;
@@ -37,6 +41,7 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
   analysis,
   showColors,
   showVerbMarkers,
+  fullMarks,
   sentinelRef,
   activeWordIndex,
   onWordHover,
@@ -75,15 +80,19 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
         </span>
 
         {/* Divider */}
-        <span className="w-px h-16 bg-border shrink-0" />
+        <span className="w-px self-stretch min-h-[3rem] bg-border shrink-0 my-1" />
 
         {/* Hebrew word strip */}
-        <div className="flex-1 overflow-x-auto overflow-y-hidden">
+        <div className="flex-1 py-1">
           <div
             dir="rtl"
             lang="he"
-            className="font-serif text-foreground flex flex-nowrap gap-x-5 items-start pb-1"
-            style={{ fontSize: `${1.75 * textScale}rem`, lineHeight: 1.2 }}
+            className="font-hebrew text-foreground flex flex-wrap justify-center gap-x-5 gap-y-4 items-start pb-1"
+            style={{
+              fontSize: `${1.75 * textScale}rem`,
+              lineHeight: 1.6,
+              fontFeatureSettings: '"mark" 1, "mkmk" 1',
+            }}
           >
             {analysis.words.map((w, i) => {
               const isVerb = !!w.verbMorphology && showVerbMarkers;
@@ -109,9 +118,16 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
                         }
                       `}
                     >
-                      {/* Hebrew text */}
+                      {/* Hebrew text — dual rendering strategy:
+                          fullMarks=true  → single string, perfect diacritic shaping (Masoretic mode)
+                          fullMarks=false → MorphemeSpan with color coding (Morphological mode) */}
                       <span>
-                        {w.morphemes && w.morphemes.length > 0 ? (
+                        {fullMarks ? (
+                          // Single unbroken string: browser shapes all grapheme clusters correctly
+                          <span className="font-hebrew" style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}>
+                            {w.hebrewText}
+                          </span>
+                        ) : w.morphemes && w.morphemes.length > 0 ? (
                           <MorphemeSpan
                             segments={w.morphemes}
                             variant="text"

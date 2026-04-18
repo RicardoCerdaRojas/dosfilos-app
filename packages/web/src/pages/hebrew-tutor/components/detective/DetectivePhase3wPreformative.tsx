@@ -148,7 +148,7 @@ export const DetectivePhase3wPreformative: React.FC<DetectivePhase3wPreformative
               <span
                 dir="rtl"
                 lang="he"
-                className="text-2xl font-serif w-10 text-center flex-shrink-0 text-foreground"
+                className="text-2xl font-hebrew w-10 text-center flex-shrink-0 text-foreground"
               >
                 {opt.unicode}
               </span>

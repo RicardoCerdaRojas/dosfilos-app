@@ -106,7 +106,7 @@ export const WordTutorSheet: React.FC<WordTutorSheetProps> = ({ word, isOpen, on
             <TabsContent value="summary" className="space-y-6 mt-0">
               {/* Header principal de la palabra */}
               <div className="text-center space-y-2">
-                <div dir="rtl" className="text-[4.5rem] font-serif text-foreground leading-tight pb-2">
+                <div dir="rtl" className="text-[4.5rem] font-hebrew text-foreground leading-tight pb-2">
                   {word.morphemes && word.morphemes.length > 0 ? (
                     <MorphemeSpan segments={word.morphemes} variant="text" />
                   ) : (
@@ -146,7 +146,7 @@ export const WordTutorSheet: React.FC<WordTutorSheetProps> = ({ word, isOpen, on
                           <div className="flex flex-wrap gap-2 mt-1.5">
                             {matchingMorphemes.map((m, i) => (
                               <div key={i} className="text-xs bg-muted/50 border border-border/80 px-3 py-1.5 rounded-lg inline-flex items-center gap-2.5 shadow-sm">
-                                <span dir="rtl" className="font-serif text-lg"><MorphemeSpan segments={[m]} variant="text"/></span>
+                                <span dir="rtl" className="font-hebrew text-lg"><MorphemeSpan segments={[m]} variant="text"/></span>
                                 <span className="text-foreground font-medium">{m.label || m.role}</span>
                               </div>
                             ))}

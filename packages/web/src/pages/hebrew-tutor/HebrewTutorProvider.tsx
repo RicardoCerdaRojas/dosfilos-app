@@ -12,6 +12,7 @@ import {
   FirebaseHebrewSessionRepository,
   FirestoreDetectiveSessionRepository,
 } from '@dosfilos/infrastructure';
+import { FirebaseLexiconRepository } from './lexicon/FirebaseLexiconRepository';
 import {
   AnalyzeVerseUseCase,
   GetBibleNavigationUseCase,
@@ -43,12 +44,13 @@ export const HebrewTutorProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const analysisService = new GeminiHebrewService(apiKey);
     const sessionRepository = new FirebaseHebrewSessionRepository();
     const detectiveRepository = new FirestoreDetectiveSessionRepository();
+    const lexiconRepository = new FirebaseLexiconRepository();
 
     // Cast to include loadBook — MorphhbBibleProvider exposes it publicly
     const provider = bibleProvider as typeof bibleProvider & { loadBook(key: string): Promise<void> };
 
     return {
-      analyzeVerse: new AnalyzeVerseUseCase(provider, analysisService, sessionRepository),
+      analyzeVerse: new AnalyzeVerseUseCase(provider, analysisService, sessionRepository, lexiconRepository),
       getBibleNavigation: new GetBibleNavigationUseCase(provider),
       getVerseText: new GetVerseTextUseCase(provider),
       checkCache: (ref: string) => sessionRepository.getCachedAnalysis(ref),

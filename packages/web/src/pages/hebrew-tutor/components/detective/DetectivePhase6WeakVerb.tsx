@@ -118,7 +118,7 @@ export const DetectivePhase6WeakVerb: React.FC<DetectivePhase6WeakVerbProps> = (
 
       {/* The verb display */}
       <div className="bg-gradient-to-br from-indigo-50 to-slate-50 dark:from-indigo-950/30 dark:to-slate-950/30 rounded-2xl p-6 text-center">
-        <div dir="rtl" lang="he" className="text-5xl font-serif leading-relaxed mb-2 text-foreground">
+        <div dir="rtl" lang="he" className="text-5xl font-hebrew leading-relaxed mb-2 text-foreground">
           {word.morphemes && word.morphemes.length > 0 ? (
             <MorphemeSpan segments={word.morphemes} variant="text" />
           ) : (
@@ -126,7 +126,7 @@ export const DetectivePhase6WeakVerb: React.FC<DetectivePhase6WeakVerbProps> = (
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          {t('detective.phase6.rootLabel', { defaultValue: 'Raíz:' })} <span dir="rtl" lang="he" className="font-serif">{word.root}</span> — {word.rootMeaning}
+          {t('detective.phase6.rootLabel', { defaultValue: 'Raíz:' })} <span dir="rtl" lang="he" className="font-hebrew">{word.root}</span> — {word.rootMeaning}
         </p>
       </div>
 
@@ -198,7 +198,7 @@ export const DetectivePhase6WeakVerb: React.FC<DetectivePhase6WeakVerbProps> = (
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span dir="rtl" lang="he" className="font-serif text-sm text-primary">{opt.rootTemplate}</span>
+                        <span dir="rtl" lang="he" className="font-hebrew text-sm text-primary">{opt.rootTemplate}</span>
                         <span className="font-semibold text-xs text-foreground">{opt.label}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">{opt.indicator}</p>

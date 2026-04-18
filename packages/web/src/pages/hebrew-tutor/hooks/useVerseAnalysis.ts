@@ -44,7 +44,7 @@ interface UseVerseAnalysisActions {
 export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActions {
   const { analyzeVerse, getBibleNavigation, getVerseText, checkCache } = useHebrewTutor();
 
-  const [selectedBook, setSelectedBook] = useState('Jonah');
+  const [selectedBook, setSelectedBook] = useState('');
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [selectedVerse, setSelectedVerse] = useState(1);
   const [bookIndex, setBookIndex] = useState<BookIndex | null>(null);
@@ -65,6 +65,12 @@ export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActi
   // NOTE: Only manages bookIndex/isLoadingIndex.
   // Analysis and verse preview state are managed by navigateToVerse.
   useEffect(() => {
+    if (!selectedBook) {
+      setBookIndex(null);
+      setIsLoadingIndex(false);
+      return;
+    }
+
     let cancelled = false;
     setIsLoadingIndex(true);
     setBookIndex(null);

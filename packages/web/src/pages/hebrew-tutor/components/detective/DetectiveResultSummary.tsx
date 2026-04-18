@@ -95,7 +95,7 @@ export const DetectiveResultSummary: React.FC<DetectiveResultSummaryProps> = ({
 
         {/* Right column — verb */}
         <div className="flex items-center gap-3 flex-1 min-w-[160px]">
-          <div dir="rtl" lang="he" className="text-3xl font-serif text-foreground flex-shrink-0">
+          <div dir="rtl" lang="he" className="text-3xl font-hebrew text-foreground flex-shrink-0">
             {word.hebrewText}
           </div>
           <div className="min-w-0">

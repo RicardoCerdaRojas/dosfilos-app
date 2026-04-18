@@ -35,6 +35,7 @@ import { UserManagement } from '@/pages/admin/UserManagement';
 import TutorManagement from '@/pages/admin/TutorManagement';
 import TutorEditor from '@/pages/admin/TutorEditor';
 import HintCatalogPage from '@/pages/admin/HintCatalogPage';
+import LexiconCatalogPage from '@/pages/admin/LexiconCatalogPage';
 import { GreekTutorPage } from '@/pages/greek-tutor/GreekTutorPage';
 import { GreekTutorProvider } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorProvider';
 import { GreekTutorDashboardView } from './pages/sermons/generator/exegesis/greek-tutor/GreekTutorDashboardView';
@@ -197,6 +198,7 @@ function App() {
             <Route path="admin/tutors/new" element={<TutorEditor />} />
             <Route path="admin/tutors/:id" element={<TutorEditor />} />
             <Route path="admin/hebrew-tutor-hints" element={<HintCatalogPage />} />
+            <Route path="admin/hebrew-lexicon" element={<LexiconCatalogPage />} />
             
             {/* PoC Routes */}
             <Route path="gemini-test" element={<GeminiTest />} />

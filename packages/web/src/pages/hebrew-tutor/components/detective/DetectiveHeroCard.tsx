@@ -47,7 +47,7 @@ export const DetectiveHeroCard: React.FC<DetectiveHeroCardProps> = ({
       <div
         dir="rtl"
         lang="he"
-        className="text-5xl font-serif leading-relaxed text-foreground mb-1"
+        className="text-5xl font-hebrew leading-relaxed text-foreground mb-1"
       >
         {word.morphemes && word.morphemes.length > 0 ? (
           <MorphemeSpan segments={word.morphemes} variant="text" />
@@ -77,7 +77,7 @@ export const DetectiveHeroCard: React.FC<DetectiveHeroCardProps> = ({
           <span
             dir="rtl"
             lang="he"
-            className="text-base font-serif font-semibold text-foreground leading-none"
+            className="text-base font-hebrew font-semibold text-foreground leading-none"
           >
             {word.root}
           </span>

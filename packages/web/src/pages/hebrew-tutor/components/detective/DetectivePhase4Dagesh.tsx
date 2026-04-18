@@ -81,7 +81,7 @@ export const DetectivePhase4Dagesh: React.FC<DetectivePhase4DageshProps> = ({ wo
         <p className="text-xs text-purple-800 dark:text-purple-300 font-semibold mb-1">
           {t('detective.phase4.hint.title', { defaultValue: 'Regla mnemotécnica: "Se Ve eL KIMoNo"' })}
         </p>
-        <div dir="rtl" lang="he" className="text-lg text-purple-700 dark:text-purple-300 font-serif tracking-widest mb-1">
+        <div dir="rtl" lang="he" className="text-lg text-purple-700 dark:text-purple-300 font-hebrew tracking-widest mb-1">
           ש ו ל כ י מ נ
         </div>
         <p 

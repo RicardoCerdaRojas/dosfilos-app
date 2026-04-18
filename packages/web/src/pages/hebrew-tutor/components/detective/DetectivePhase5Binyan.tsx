@@ -201,7 +201,7 @@ export const DetectivePhase5Binyan: React.FC<DetectivePhase5BinyanProps> = ({
               <div
                 dir="rtl"
                 lang="he"
-                className="text-4xl font-serif font-bold text-emerald-700 dark:text-emerald-300"
+                className="text-4xl font-hebrew font-bold text-emerald-700 dark:text-emerald-300"
               >
                 {wizardState.result.hebrewName}
               </div>

@@ -11,6 +11,7 @@ export * from './entities/hebrew-bible.js';
 export { DetectivePhase, createDetectiveSession, createVerbDetectiveSession, createNominalDetectiveSession, getSessionScore, getPerformanceLabel } from './entities/detective-session.js';
 export type { PhaseResult as DetectivePhaseResult, VerbDetectiveSession, NominalDetectiveSession, DetectiveSession } from './entities/detective-session.js';
 export * from './entities/hint.js';
+export * from './entities/lexical-entry.js';
 
 // Ports
 export * from './ports/ports.js';

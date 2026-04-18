@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot 
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -122,6 +122,7 @@ export function AppSidebar() {
     { name: 'Gestión de Usuarios', href: '/dashboard/admin/users', icon: Users },
     { name: 'Tutores IA', href: '/dashboard/admin/tutors', icon: Bot },
     { name: 'Pistas Hebreo', href: '/dashboard/admin/hebrew-tutor-hints', icon: BookOpen },
+    { name: 'Glosario Léxico', href: '/dashboard/admin/hebrew-lexicon', icon: BookOpenText },
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
     { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
   ];

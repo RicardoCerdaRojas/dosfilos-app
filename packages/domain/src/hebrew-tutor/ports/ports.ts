@@ -9,6 +9,7 @@
 import type { HebrewBook, HebrewVerse, BookIndex } from '../entities/hebrew-bible.js';
 import type { VerseAnalysis } from '../entities/verse-analysis.js';
 import type { DetectiveSession } from '../entities/detective-session.js';
+import type { LexicalEntry } from '../entities/lexical-entry.js';
 
 // ── IHebrewBibleProvider ──────────────────────────────────────────────────────
 
@@ -55,8 +56,15 @@ export interface IHebrewAnalysisService {
    * Produces a complete morphological and syntactic analysis of a verse.
    * @param verse - The verse from the Bible provider (text from morphhb)
    * @param language - UI language for the response ("es" | "en"), defaults "es"
+   * @param lexicalEntries - Optional curated lexical entries matched to this verse.
+   *   When provided, they are injected into the prompt to guide idiomatic translation
+   *   without altering the literal translation.
    */
-  analyzeVerse(verse: HebrewVerse, language?: string): Promise<VerseAnalysis>;
+  analyzeVerse(
+    verse: HebrewVerse,
+    language?: string,
+    lexicalEntries?: readonly LexicalEntry[],
+  ): Promise<VerseAnalysis>;
 }
 
 // ── IHebrewSessionRepository ──────────────────────────────────────────────────
@@ -102,4 +110,19 @@ export interface IDetectiveSessionRepository {
    * @param limit - Maximum number of sessions to return (default 20)
    */
   getSessionsByUser(userId: string, limit?: number): Promise<DetectiveSession[]>;
+}
+
+// ── ILexicalRepository ────────────────────────────────────────────────────────
+
+/**
+ * Port for the administrable Hebrew lexical glossary.
+ * Implemented by FirebaseLexiconRepository.
+ *
+ * Enabled entries are fetched at analysis time and matched against the verse
+ * words. Matching entries are injected into the Gemini prompt to guide
+ * idiomatic translation without altering the literal translation.
+ */
+export interface ILexicalRepository {
+  /** Returns all enabled lexical entries ordered by `order` asc. */
+  getAll(): Promise<readonly LexicalEntry[]>;
 }

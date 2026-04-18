@@ -22,6 +22,10 @@
       "wordAnalysis": "Word Analysis",
       "verbTable": "Verb Table",
       "exegeticalNotes": "Exegetical Notes",
+      "lexicalNotes": "Lexicographic Notes",
+      "lexicalNotePhrase": "Phrase",
+      "lexicalNoteLiteral": "Literal",
+      "lexicalNoteIdiomatic": "Idiomatic",
       "morphemeBreakdown": "Morpheme Breakdown",
       "syntacticFunction": "Syntactic Function",
       "oshbValidation": "OSHB Validation"
@@ -92,6 +96,34 @@
     "errors": {
       "loadFailed": "Error loading the analysis. Please try again.",
       "bookNotFound": "Could not load this book. Check your connection."
+    }
+  },
+  "lexiconAdmin": {
+    "title": "Hebrew Lexical Glossary",
+    "subtitle": "Manage lexicographic entries that enrich idiomatic translation.",
+    "newEntry": "New Entry",
+    "editEntry": "Edit Entry",
+    "saveEntry": "Save Entry",
+    "cancel": "Cancel",
+    "deleteConfirm": "Delete this glossary entry?",
+    "loading": "Loading glossary...",
+    "empty": "No entries in the glossary. Create the first one.",
+    "fields": {
+      "hebrewPhrase": "Hebrew Phrase",
+      "matchLemmas": "Search Lemmas (comma-separated)",
+      "type": "Type",
+      "literalMeaning": "Literal Meaning",
+      "idiomaticMeaning": "Idiomatic Meaning",
+      "explanation": "Academic Explanation",
+      "source": "Source (optional, e.g. HALOT 310)",
+      "order": "Order",
+      "enabled": "Active"
+    },
+    "types": {
+      "idiom": "Idiom",
+      "semantic_range": "Semantic Range",
+      "cultural_note": "Cultural Note",
+      "false_friend": "False Friend"
     }
   }
 }

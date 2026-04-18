@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookOpenIcon, MenuIcon } from 'lucide-react';
+import { BookOpenIcon, MenuIcon, SparklesIcon, SearchIcon, ArrowRightIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { VerseSelector } from './components/VerseSelector';
 import { VerseNavBar } from './components/VerseNavBar';
@@ -153,7 +153,13 @@ export const VerseAnalyzerPage: React.FC = () => {
           />
         )}
 
-        {!isAnalyzing && !analysis && !hebrewVerse && !error && <EmptyState t={t} />}
+        {!isAnalyzing && !analysis && !hebrewVerse && !error && (
+          <EmptyState 
+            t={t} 
+            onQuickStart={(b, c, v) => navigate(b, c, v)}
+            openMobileSheet={() => setIsMobileSheetOpen(true)}
+          />
+        )}
       </main>
     </div>
   );
@@ -161,16 +167,85 @@ export const VerseAnalyzerPage: React.FC = () => {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-const EmptyState: React.FC<{ t: (key: string) => string }> = ({ t }) => (
-  <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-    <div className="text-6xl font-serif text-muted-foreground/20 mb-6 leading-none" dir="rtl" lang="he">
-      אָמַר יְהוָה
+const EmptyState: React.FC<{ 
+  t: (key: string) => string;
+  onQuickStart: (book: string, chapter: number, verse: number) => void;
+  openMobileSheet: () => void;
+}> = ({ t, onQuickStart, openMobileSheet }) => (
+  <div className="flex flex-col items-center justify-center h-full py-12 px-4 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-500">
+    {/* Visual Header */}
+    <div className="relative mb-10 group">
+      <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full opacity-50 group-hover:opacity-70 transition-opacity duration-700"></div>
+      <div className="relative bg-background/40 backdrop-blur-xl border border-white/10 dark:border-slate-800/50 p-10 rounded-3xl shadow-2xl flex flex-col items-center justify-center min-w-[280px]">
+        <div className="text-8xl md:text-9xl font-hebrew text-foreground/80 leading-none drop-shadow-sm transition-transform duration-500 group-hover:scale-105" dir="rtl" lang="he">
+          אָמַר יְהוָה
+        </div>
+      </div>
     </div>
-    <h2 className="text-lg font-semibold text-foreground mb-2">
-      {t('verseAnalyzer.placeholder.title')}
+
+    {/* Main Copy */}
+    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-tight text-center">
+      {t('verseAnalyzer.placeholder.title') || "Explora el texto original"}
     </h2>
-    <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-      {t('verseAnalyzer.placeholder.description')}
+    <p className="text-base md:text-lg text-muted-foreground max-w-md text-center leading-relaxed mb-10">
+      {t('verseAnalyzer.placeholder.description') || "Descubre la riqueza del hebreo bíblico con análisis morfológico detallado, traducción contextual y herramientas pedagógicas."}
     </p>
+
+    {/* Quick Actions */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg">
+      {/* Mobile: open sheet / Desktop: pointer to nav */}
+      <button
+        onClick={openMobileSheet}
+        className="md:hidden group flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <SearchIcon className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className="font-semibold text-foreground text-sm">Buscar Pasaje</div>
+            <div className="text-xs text-muted-foreground">Abre el navegador</div>
+          </div>
+        </div>
+        <ArrowRightIcon className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+      </button>
+
+      <button
+        onClick={() => onQuickStart('Genesis', 1, 1)}
+        className="group flex items-center justify-between p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/20 shadow-sm hover:shadow-md hover:border-blue-500/40 transition-all active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400">
+            <SparklesIcon className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className="font-semibold text-foreground text-sm">Génesis 1:1</div>
+            <div className="text-xs text-muted-foreground">El principio de todo</div>
+          </div>
+        </div>
+        <ArrowRightIcon className="w-4 h-4 text-muted-foreground group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+      </button>
+
+      <button
+        onClick={() => onQuickStart('Jonah', 1, 1)}
+        className="group flex items-center justify-between p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 shadow-sm hover:shadow-md hover:border-amber-500/40 transition-all active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400">
+            <BookOpenIcon className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className="font-semibold text-foreground text-sm">Jonás 1:1</div>
+            <div className="text-xs text-muted-foreground">Un llamado divino</div>
+          </div>
+        </div>
+        <ArrowRightIcon className="w-4 h-4 text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
+      </button>
+    </div>
+    
+    <div className="hidden md:flex mt-12 items-center gap-2 text-sm text-muted-foreground opacity-70">
+      <ArrowRightIcon className="w-4 h-4 -rotate-90 animate-bounce" />
+      <span>Usa el navegador superior para buscar un versículo</span>
+    </div>
   </div>
 );

@@ -6,13 +6,15 @@
  *  2. Selected Farfán grammar knowledge chunks
  *  3. The professor's pedagogical methodology (from 3_prompt-analisis-versiculos.md)
  *  4. The Hebrew verse text from morphhb
- *  5. Expected JSON output schema
+ *  5. [NEW] Lexical glossary entries relevant to this verse (Level 2 RAG)
+ *  6. Expected JSON output schema (includes lexicalNotes)
  *
  * The morphhb data (OSHB codes) is provided as optional context for
  * cross-validation but is explicitly NOT presented as authoritative.
  */
 
 import type { HebrewVerse } from '@dosfilos/domain';
+import type { LexicalEntry } from '@dosfilos/domain';
 import type { KnowledgeChunk } from '../knowledge/farfan-chunks.js';
 
 // ── Expected output schema (as TypeScript comment for LLM) ───────────────────
@@ -23,8 +25,8 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
   "reference": "string — human-readable reference, e.g. 'Jonás 2:3'",
   "hebrewText": "string — full vocalized Hebrew text",
   "transliteration": "string — full academic transliteration of the verse",
-  "literalTranslation": "string — word-for-word translation",
-  "fluidTranslation": "string — natural, fluent Spanish translation",
+  "literalTranslation": "string — STRICT word-for-word translation. DO NOT apply idiomatic meaning here. Even if a phrase is an idiom, translate each word literally.",
+  "fluidTranslation": "string — natural, fluent Spanish translation using IDIOMATIC equivalents where applicable. Use the lexical glossary when provided.",
   "words": [
     {
       "hebrewText": "string — vocalized Hebrew of this word",
@@ -73,14 +75,26 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
       "pgn": "string — e.g. '3ms', '2fp'"
     }
   ],
-  "exegeticalNotes": ["string — optional observations"]
+  "exegeticalNotes": ["string — optional observations"],
+  "lexicalNotes": [
+    {
+      "hebrewPhrase": "string — the Hebrew phrase or word (e.g. 'חַיַּת הַשָּׂדֶה')",
+      "literalMeaning": "string — the word-for-word meaning (e.g. 'criatura viviente del campo')",
+      "idiomaticMeaning": "string — the dynamic-equivalent meaning (e.g. 'animales salvajes')",
+      "explanation": "string — academic explanation of why the meanings differ, at seminary level",
+      "type": "idiom | semantic_range | cultural_note | false_friend"
+    }
+  ]
 }
 
 CRITICAL RULES:
 - Every key must be present. Use null for unknown optional fields.
 - verbMorphology is REQUIRED for VERB words; nominalMorphology for all others.
 - morphemes array must include ALL morpheme segments for visual color rendering.
+- The concatenation of "text" for all "morphemes" MUST EXACTLY MATCH the original "hebrewText" of the word. DO NOT omit ANY vowel (nikkud) or cantillation mark (te'amim).
 - Do NOT include markdown, code fences, or any text outside the JSON object.
+- lexicalNotes MUST be an array. Return [] if no idiomatic observations exist.
+- literalTranslation MUST remain literal even when a phrase is an idiom. Do not apply idiomatic meaning there.
 `;
 
 // ── Knowledge context formatter ───────────────────────────────────────────────
@@ -121,6 +135,44 @@ ${rows}
 `;
 }
 
+// ── Lexical glossary context (Level 2 RAG) ────────────────────────────────────
+
+/**
+ * Formats the curated lexical entries as a block injected into the prompt.
+ * Only called when at least one matching entry exists for the verse.
+ *
+ * @param entries - Enabled lexical entries that matched this verse's lemmas
+ */
+function formatLexicalContext(entries: readonly LexicalEntry[]): string {
+  if (entries.length === 0) return '';
+
+  const typeLabels: Record<LexicalEntry['type'], string> = {
+    idiom: 'MODISMO',
+    semantic_range: 'RANGO SEMÁNTICO',
+    cultural_note: 'NOTA CULTURAL',
+    false_friend: 'FALSO AMIGO',
+  };
+
+  const items = entries
+    .map((e) => {
+      const typeTag = typeLabels[e.type];
+      return `• [${typeTag}] ${e.hebrewPhrase}\n  Literal: "${e.literalMeaning}"\n  Idiomático: "${e.idiomaticMeaning}"\n  Explicación: ${e.explanation}`;
+    })
+    .join('\n\n');
+
+  return `
+## GLOSARIO LEXICOGRÁFICO (conocimiento curado por el profesor)
+
+Las siguientes expresiones del versículo tienen significados idiomáticos o semánticos
+que difieren de una traducción literal. DEBES:
+1. Usar el significado idiomático en la "fluidTranslation".
+2. MANTENER el significado literal en la "literalTranslation" (no lo cambies).
+3. Reportar CADA entrada como un objeto en el array "lexicalNotes".
+
+${items}
+`;
+}
+
 // ── Main prompt builder ───────────────────────────────────────────────────────
 
 /**
@@ -128,11 +180,13 @@ ${rows}
  *
  * @param verse - The Hebrew verse with text and OSHB tokens
  * @param knowledgeChunks - Relevant grammar chunks from the knowledge selector
+ * @param lexicalEntries - Curated lexical entries matching this verse (Level 2 RAG)
  * @param language - Response language; currently only "es" is supported
  */
 export function buildVerseAnalysisPrompt(
   verse: HebrewVerse,
   knowledgeChunks: readonly KnowledgeChunk[],
+  lexicalEntries: readonly LexicalEntry[] = [],
   language = 'es',
 ): string {
   const langInstruction =
@@ -142,6 +196,7 @@ export function buildVerseAnalysisPrompt(
 
   const knowledgeContext = formatKnowledgeContext(knowledgeChunks);
   const oshbContext = formatOshbContext(verse);
+  const lexicalContext = formatLexicalContext(lexicalEntries);
 
   return `
 You are an expert Biblical Hebrew tutor at seminary level, specialized in grammatical and exegetical analysis (BHS/BHQ text).
@@ -170,12 +225,27 @@ Para CADA palabra debes:
 5. Relacionar la forma morfológica con su valor temporal/aspectual en el contexto
 6. Si hay ambigüedad, declararla explícitamente
 
+## INSTRUCCIONES DE TRADUCCIÓN IDIOMÁTICA
+
+Para la "fluidTranslation":
+- Identifica expresiones idiomáticas hebreas y tradúcelas por su equivalente dinámico
+  en español. NO las traduzcas literalmente.
+- Ejemplo: חַיַּת הַשָּׂדֶה → "animales salvajes" (no "animales del campo")
+- Si detectas un modismo, rango semántico especial, nota cultural, o falso amigo:
+  repórtalo en el array "lexicalNotes".
+
+Para la "literalTranslation":
+- SIEMPRE mantén una traducción palabra por palabra. NUNCA apliques equivalencia
+  dinámica aquí. Incluso si una frase es un modismo, tradúcela literalmente.
+
 REGLAS ABSOLUTAS:
 - NUNCA omitir una palabra
 - NUNCA asumir sin explicar
 - Aplicar SOLO las reglas del hebreo bíblico (no hebreo moderno)
 - Mantener terminología consistente (según Farfán)
 - Dar claridad pedagógica, no solo etiquetas
+
+${lexicalContext}
 
 ## VERSO A ANALIZAR
 

@@ -30,7 +30,7 @@ export class FirebaseHebrewSessionRepository implements IHebrewSessionRepository
 
     async getCachedAnalysis(reference: string): Promise<VerseAnalysis | null> {
         try {
-            const cacheKey = reference.replace(/\./g, '_'); // e.g. Jonah.2.3 -> Jonah_2_3
+            const cacheKey = reference.replace(/\./g, '_') + '_v2'; // e.g. Jonah.2.3 -> Jonah_2_3_v2
             const docRef = doc(db, this.cacheCollection, cacheKey);
             const snapshot = await getDoc(docRef);
 
@@ -49,7 +49,7 @@ export class FirebaseHebrewSessionRepository implements IHebrewSessionRepository
 
     async cacheAnalysis(reference: string, analysis: VerseAnalysis): Promise<void> {
         try {
-            const cacheKey = reference.replace(/\./g, '_');
+            const cacheKey = reference.replace(/\./g, '_') + '_v2';
             const docRef = doc(db, this.cacheCollection, cacheKey);
 
             await setDoc(docRef, removeUndefined({
