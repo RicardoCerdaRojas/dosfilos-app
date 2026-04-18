@@ -70,6 +70,25 @@ export const MORPHEME_BADGE_STYLES: Record<MorphemeCategory, string> = {
   neutral:   'bg-muted/40 border-border text-muted-foreground',
 };
 
+/**
+ * Returns true if the given text consists *entirely* of Unicode combining marks
+ * (Hebrew niqqud, cantillation, dagesh). These characters need a base consonant
+ * to render correctly; showing them alone produces orphaned dots / marks.
+ *
+ * Ranges covered:
+ *   U+0591–U+05BD  Cantillation + niqqud
+ *   U+05BF         Rafe
+ *   U+05C1–U+05C2  Shin/Sin dot
+ *   U+05C4–U+05C5  Upper/Lower dot
+ *   U+05C7         Qamats Qatan
+ *   U+FB1E         Judeo-Spanish varika
+ */
+function isOnlyCombiningMarks(text: string): boolean {
+  if (!text) return true;
+  // eslint-disable-next-line no-control-regex
+  return /^[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\uFB1E]+$/.test(text);
+}
+
 interface MorphemeSpanProps {
   segments: readonly MorphemeSegment[];
   className?: string;
@@ -94,10 +113,12 @@ export const MorphemeSpan: React.FC<MorphemeSpanProps> = ({
   return (
     <span className={cn('font-hebrew inline', className)} dir="rtl" lang="he" style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}>
       {segments.map((seg, i) => {
-        // Skip standalone DAGESH_FORTE segments in the inline word rendering.
-        // The dagesh mark is already physically embedded within the base letter of another segment (e.g. the root).
-        // Rendering a standalone combining mark in HTML breaks grapheme clusters and causes floating dots.
-        if (seg.role === 'DAGESH_FORTE') {
+        // Skip segments whose text consists entirely of Unicode combining marks.
+        // Hebrew vowel points (niqqud U+0591–U+05C7), dagesh, and cantillation marks
+        // are combining characters that require a preceding base consonant.
+        // Rendering them alone in their own <span> breaks grapheme clusters and
+        // produces orphaned floating dots/marks.
+        if (isOnlyCombiningMarks(seg.text)) {
           return null;
         }
         
