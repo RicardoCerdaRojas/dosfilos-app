@@ -238,6 +238,34 @@ Para la "literalTranslation":
 - SIEMPRE mantén una traducción palabra por palabra. NUNCA apliques equivalencia
   dinámica aquí. Incluso si una frase es un modismo, tradúcela literalmente.
 
+## REGLA DE TRADUCCIÓN PARA WAYYIQTOL (Pasado narrativo secuencial)
+
+El Wayyiqtol es la forma verbal narrativa por excelencia del hebreo bíblico.
+Su valor temporal/aspectual es "pasado narrativo secuencial": indica una acción
+completada que SIGUE a la acción anterior en la cadena narrativa.
+
+DISTINCIÓN CLAVE: וַ (waw consecutiva) ≠ וְ (waw conjuntiva simple)
+- Si el autor hebreo solo quisiera expresar "y + verbo", usaría la conjunción
+  simple וְ (waw conjuntiva) + forma verbal.
+- La elección del Wayyiqtol (וַ + imperfecto corto) es DELIBERADA para marcar
+  secuencia narrativa. Por tanto, TODO Wayyiqtol debe reflejar esta secuencia.
+
+REGLAS DE TRADUCCIÓN:
+1. TODO Wayyiqtol debe traducirse con un conector que refleje secuencia
+   narrativa: "entonces", "luego", "después", "a continuación".
+   - Ejemplo: וַתֹּאמֶר → "Entonces dijo" (NO simplemente "Y dijo")
+   - Ejemplo: וַתֵּרֶא...וַתִּקַּח...וַתֹּאכַל → "Entonces vio… luego tomó… después comió"
+   - NO traducir como simples pasados con "y":
+     ❌ "Y vio… y tomó… y comió" (pierde la progresión narrativa)
+     ✅ "Entonces vio… luego tomó… después comió" (refleja la secuencia)
+2. En la traducción individual de cada palabra (campo "translation"), incluir
+   el conector secuencial apropiado (e.g. "entonces dijo", no solo "dijo").
+3. Esta regla aplica tanto para la "fluidTranslation" como para la
+   "literalTranslation", ya que el valor secuencial es parte inherente de
+   la forma Wayyiqtol, no una interpretación idiomática.
+4. En contraste, cuando encuentres un verbo con waw conjuntiva simple (וְ),
+   tradúcelo simplemente con "y" sin conector secuencial.
+
 REGLAS ABSOLUTAS:
 - NUNCA omitir una palabra
 - NUNCA asumir sin explicar

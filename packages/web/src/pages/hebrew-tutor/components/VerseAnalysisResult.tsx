@@ -57,7 +57,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
    * - 'masoretic':    Full hebrewText string, Ezra SIL, all diacritics intact
    * - 'morphological': MorphemeSpan with color coding, cantillation stripped
    */
-  const [viewMode, setViewMode] = React.useState<'masoretic' | 'morphological'>('masoretic');
+   const [viewMode, setViewMode] = React.useState<'masoretic' | 'morphological'>('morphological');
   const fullMarks = viewMode === 'masoretic';
   const showColors = viewMode === 'morphological';
   const [showVerbMarkers, setShowVerbMarkers] = React.useState(true);
@@ -175,33 +175,19 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
           <div className="flex items-center gap-4">
             <h2 className="text-lg font-bold text-foreground">{analysis.reference}</h2>
             <div className="flex items-center gap-2 border-l border-border pl-4">
-              {/* View mode toggle — Masoretic (full marks) vs Morphological (colors) */}
-              <div className="flex items-center gap-0.5 bg-muted rounded-full p-0.5">
-                <button
-                  onClick={() => setViewMode('masoretic')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                    viewMode === 'masoretic'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="Texto masorético completo con todas las marcas"
-                >
-                  <BookOpenTextIcon className="w-3.5 h-3.5" />
-                  Texto
-                </button>
-                <button
-                  onClick={() => setViewMode('morphological')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                    viewMode === 'morphological'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="Análisis morfológico con colores por componente"
-                >
-                  <PaletteIcon className="w-3.5 h-3.5" />
-                  Análisis
-                </button>
-              </div>
+              {/* Análisis toggle — ON = morphological (colors), OFF = masoretic (plain text) */}
+              <button
+                onClick={() => setViewMode(viewMode === 'morphological' ? 'masoretic' : 'morphological')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                  viewMode === 'morphological'
+                    ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+                title={viewMode === 'morphological' ? 'Cambiar a texto masorético' : 'Activar análisis morfológico con colores'}
+              >
+                <PaletteIcon className="w-3.5 h-3.5" />
+                {viewMode === 'morphological' ? 'Análisis On' : 'Análisis Off'}
+              </button>
               {/* Verb markers — only relevant in morphological mode */}
               {viewMode === 'morphological' && (
                 <button
