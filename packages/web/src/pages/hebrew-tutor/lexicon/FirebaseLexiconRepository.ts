@@ -36,6 +36,8 @@ const COLLECTION_PATH = 'hebrewTutor/config/lexicon';
 interface LexicalDocument {
   hebrewPhrase: string;
   matchLemmas: string[];
+  verseRefs?: string[];
+  chainId?: string;
   type: LexicalEntryType;
   literalMeaning: string;
   idiomaticMeaning: string;
@@ -52,6 +54,8 @@ function docToEntry(id: string, data: LexicalDocument): LexicalEntry {
     id,
     hebrewPhrase: data.hebrewPhrase ?? '',
     matchLemmas: Array.isArray(data.matchLemmas) ? data.matchLemmas : [],
+    verseRefs: Array.isArray(data.verseRefs) ? data.verseRefs : undefined,
+    chainId: data.chainId || undefined,
     type: data.type ?? 'idiom',
     literalMeaning: data.literalMeaning ?? '',
     idiomaticMeaning: data.idiomaticMeaning ?? '',
