@@ -223,6 +223,8 @@ interface VerbDetectivePanelProps {
   verseReference: string;
   isOpen: boolean;
   onClose: () => void;
+  /** Discovery Mode callback — fired when the full investigation finishes. */
+  onDiscoveryComplete?: (translation: string, score: number) => void;
 }
 
 // ── Investigation path routing ────────────────────────────────────────────────
@@ -379,6 +381,7 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
   verseReference,
   isOpen,
   onClose,
+  onDiscoveryComplete,
 }) => {
   const { saveDetectiveSession } = useHebrewTutor();
 
@@ -481,6 +484,11 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
       } finally {
         setIsSaving(false);
         setShowSummary(true);
+        // Notify Discovery Mode if callback is provided
+        if (onDiscoveryComplete && word) {
+          const finalScore = sessionScore || Math.round((updatedResults.filter(r => r.correct).length / updatedResults.length) * 100);
+          onDiscoveryComplete(word.translation, finalScore);
+        }
       }
     } else {
       setCurrentPhase(nextPhase);
