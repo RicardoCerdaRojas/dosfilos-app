@@ -1,6 +1,7 @@
 import {
     IAIChatRepository,
     IAIGeneratorService,
+    IAIProjectRepository,
     AIAgentRole
 } from '@dosfilos/domain';
 
@@ -16,13 +17,23 @@ export interface ApprovedSermonOutline {
 export class ExtractTheologicalContentUseCase {
     constructor(
         private chatRepository: IAIChatRepository,
-        private generatorService: IAIGeneratorService
+        private generatorService: IAIGeneratorService,
+        private projectRepository?: IAIProjectRepository
     ) { }
 
     async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
             throw new Error('Session not found');
+        }
+
+        // Load project context if the session belongs to a project
+        let projectContext = '';
+        if (session.projectId && this.projectRepository) {
+            const project = await this.projectRepository.getProject(session.projectId);
+            if (project?.contextNote) {
+                projectContext = `\n\n═══ CONTEXTO DEL PROYECTO ═══\n${project.contextNote}\n═════════════════════════════\n\nConsidera este contexto al generar el contenido. Adapta el tono, profundidad y aplicaciones según la descripción de la congregación y la serie de predicación.\n`;
+            }
         }
 
         let extractionPrompt = '';
@@ -397,10 +408,21 @@ REGLAS:
             systemInstruction: systemInstructions[type] ?? "Eres un asistente pastoral experto en redactar y dar formato a contenido teológico. Tu trabajo exclusivo es leer historiales de chat completos y extraer el contenido en un formato Markdown de altísima calidad. No agregues saludos, introducciones coloquiales ni comentarios finales, solo entrega el documento formateado y listo para exportar."
         };
 
+        // Enable deeper reasoning for rich-content extractions.
+        // JSON-only outputs (SERMON_OUTLINE) keep thinking disabled to avoid
+        // polluting the structured response.
+        const enableThinking = type !== 'SERMON_OUTLINE';
+
+        const enrichedPrompt = projectContext
+            ? `${projectContext}\n${extractionPrompt}`
+            : extractionPrompt;
+
         const result = await this.generatorService.sendMessage(
             extractionAgent,
             session.messages,
-            extractionPrompt
+            enrichedPrompt,
+            undefined,
+            enableThinking
         );
 
         return result;

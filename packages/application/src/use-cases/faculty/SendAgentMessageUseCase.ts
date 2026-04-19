@@ -4,6 +4,7 @@ import {
     IAIGeneratorService,
     AIChatMessage
 } from '@dosfilos/domain';
+import { generateId } from '../../utils/generateId';
 
 export class SendAgentMessageUseCase {
     constructor(
@@ -30,14 +31,6 @@ export class SendAgentMessageUseCase {
         }
 
         // 1. Create and save the User message
-        const generateId = () => {
-            try {
-                return (globalThis.crypto as any)?.randomUUID?.() ||
-                    Math.random().toString(36).substring(2) + Date.now().toString(36);
-            } catch (e) {
-                return Math.random().toString(36).substring(2) + Date.now().toString(36);
-            }
-        };
 
         const userMessage: AIChatMessage = {
             id: generateId(),

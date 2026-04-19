@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Send, Loader2, Sparkles, MessageSquareQuote, Download, Briefcase, BookOpen, Clock, GraduationCap, AlignLeft, AlignJustify, ChevronDown, ChevronRight, Copy, Check, Search, Trash2, FolderOpen, FolderPlus, Edit3, X, PanelLeftClose, PanelLeftOpen, SquarePen, Newspaper, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -426,6 +427,7 @@ export function FacultyChatPage() {
             });
         } catch (error) {
             console.error('Extraction failed:', error);
+            toast.error('No se pudo generar el contenido. Intenta de nuevo.');
         } finally {
             setExtractingType(null);
         }

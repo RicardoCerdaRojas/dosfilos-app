@@ -63,7 +63,7 @@ class FacultyService {
         this.getSession = new GetSessionUseCase(chatRepository);
         this.sendMessage = new SendAgentMessageUseCase(agentRepository, chatRepository, generatorService);
         this.orchestratedMessage = new OrchestratedMessageUseCase(agentRepository, chatRepository, generatorService, projectRepository);
-        this.extractContent = new ExtractTheologicalContentUseCase(chatRepository, generatorService);
+        this.extractContent = new ExtractTheologicalContentUseCase(chatRepository, generatorService, projectRepository);
         this.getAgents = new GetFacultyAgentsUseCase(agentRepository);
         // Projects
         this.getProjects = new GetUserProjectsUseCase(projectRepository);
