@@ -97,7 +97,8 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
             {analysis.words.map((w, i) => {
               const isVerb = !!w.verbMorphology && showVerbMarkers;
               const isActive = activeWordIndex === i;
-
+              // Maqaf (U+05BE ־): collapse flex gap when the previous word ends with maqaf
+              const prevHasMaqaf = i > 0 && analysis.words[i - 1].hebrewText.endsWith('\u05BE');
 
               return (
                 <Tooltip key={i} delayDuration={200}>
@@ -106,6 +107,7 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
                       onClick={() => onWordClick(i)}
                       onMouseEnter={() => onWordHover(i)}
                       onMouseLeave={() => onWordHover(null)}
+                      style={prevHasMaqaf ? { marginInlineStart: '-0.75rem' } : undefined}
                       className={`
                         inline-flex flex-col items-center shrink-0
                         cursor-pointer rounded-md px-1 pt-0.5

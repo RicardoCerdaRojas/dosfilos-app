@@ -78,7 +78,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
   "exegeticalNotes": ["string — optional observations"],
   "lexicalNotes": [
     {
-      "hebrewPhrase": "string — the Hebrew phrase or word (e.g. 'חַיַּת הַשָּׂדֶה')",
+      "hebrewPhrase": "string — the Hebrew phrase or word",
       "literalMeaning": "string — the word-for-word meaning (e.g. 'criatura viviente del campo')",
       "idiomaticMeaning": "string — the dynamic-equivalent meaning (e.g. 'animales salvajes')",
       "explanation": "string — academic explanation of why the meanings differ, at seminary level",
@@ -95,6 +95,8 @@ CRITICAL RULES:
 - Do NOT include markdown, code fences, or any text outside the JSON object.
 - lexicalNotes MUST be an array. Return [] if no idiomatic observations exist.
 - literalTranslation MUST remain literal even when a phrase is an idiom. Do not apply idiomatic meaning there.
+- PASEQ (Unicode U+05C0, the vertical bar cantillation separator): When this character appears after a word in the source text, include it at the END of the "hebrewText" string for that word. Do NOT strip it. Example: if the source has the word for "he said" followed by a paseq, the hebrewText must end with that U+05C0 character.
+- MAQAF (Unicode U+05BE, the Hebrew hyphen that joins words): Words connected by a maqaf MUST be split into separate word objects in the "words" array, one object per lexical unit. The maqaf character (U+05BE) MUST be appended to the end of the "hebrewText" of the FIRST word. The second word is a normal independent entry. This preserves lexical granularity while keeping the prosodic bond visible.
 `;
 
 // ── Knowledge context formatter ───────────────────────────────────────────────
