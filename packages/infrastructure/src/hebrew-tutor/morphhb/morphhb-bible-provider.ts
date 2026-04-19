@@ -36,6 +36,37 @@ const MORPHHB_BASE_URL =
   'https://raw.githubusercontent.com/openscriptures/morphhb/master/wlc';
 
 /**
+ * Inlines morphhb `<seg>` markers into the text of the preceding `<w>` element.
+ *
+ * morphhb stores special markers as standalone `<seg>` elements between `<w>` words.
+ * Verified against the actual XML source (e.g. Gen.3.22):
+ *
+ *  • Maqaf  (x-maqqef) U+05BE ־  — prosodic hyphen:
+ *      `</w><seg type="x-maqqef">־</seg><w ...>`
+ *    → The maqaf char is appended to the FIRST word's text.
+ *
+ *  • Paseq  (x-paseq) U+05C0 ׀  — cantillation pause separator:
+ *      `</w>\n<seg type="x-paseq">׀</seg>`
+ *    → The paseq char is appended to the preceding word's text.
+ *
+ *  • Sof Pasuq (x-sof-pasuq) U+05C3 ׃  — verse-ending marker:
+ *      `</w><seg type="x-sof-pasuq">׃</seg>`
+ *    → Appended to the last word so the full stop renders inline.
+ *
+ * By mutating the XML string BEFORE the `<w>` regex runs, both characters are
+ * captured naturally without changing the rest of the parser logic.
+ */
+function inlineSegMarkers(verseContent: string): string {
+  return verseContent
+    // Maqaf: <seg type="x-maqqef">־</seg> (with content, NOT self-closing)
+    .replace(/<\/w>(\s*)<seg\s+type="x-maqqef">[^<]*<\/seg>/g, '\u05BE</w>$1')
+    // Paseq: <seg type="x-paseq">׀</seg> (note: x-paseq, NOT x-pe)
+    .replace(/<\/w>(\s*)<seg\s+type="x-paseq">[^<]*<\/seg>/g, '\u05C0</w>$1')
+    // Sof Pasuq: <seg type="x-sof-pasuq">׃</seg>
+    .replace(/<\/w>(\s*)<seg\s+type="x-sof-pasuq">[^<]*<\/seg>/g, '\u05C3</w>$1');
+}
+
+/**
  * Parses a morphhb OSIS XML string into a structured map of verseId → tokens.
  */
 function parseMorphhbXml(xmlText: string): ParsedBook {
@@ -48,9 +79,13 @@ function parseMorphhbXml(xmlText: string): ParsedBook {
   let verseMatch: RegExpExecArray | null;
 
   while ((verseMatch = verseRegex.exec(xmlText)) !== null) {
-    const [, osisId, verseContent] = verseMatch;
+    const [, osisId, rawVerseContent] = verseMatch;
     const parts = osisId.split('.');
     const chapter = parseInt(parts[1] ?? '0', 10);
+
+    // Inline maqaf (x-maqqef) and paseq (x-pe) seg markers into adjacent <w> elements
+    // BEFORE running the word regex, so they are captured as part of the word text.
+    const verseContent = inlineSegMarkers(rawVerseContent);
 
     // Collect word tokens from <w> elements
     const words: HebrewWordToken[] = [];
@@ -61,7 +96,9 @@ function parseMorphhbXml(xmlText: string): ParsedBook {
       const [, attrs, rawText] = wMatch;
       const lemma = extractAttr(attrs, 'lemma');
       const morph = extractAttr(attrs, 'morph');
-      // Remove OSIS markup from the text (ketiv/qere etc.), slashes, and normalize spaces
+      // Remove OSIS markup from the text (ketiv/qere etc.), slashes, and normalize spaces.
+      // NOTE: the replace(/\//g) strips morphhb's morpheme slash notation (e.g. "וַ/יֹּאמֶר")
+      // but must NOT strip the maqaf U+05BE or paseq U+05C0 that were just inlined.
       const text = rawText.replace(/<[^>]+>/g, '').replace(/\//g, '').replace(/\s+/g, ' ').trim();
 
       if (text) {
@@ -69,7 +106,14 @@ function parseMorphhbXml(xmlText: string): ParsedBook {
       }
     }
 
-    const hebrewText = words.map((w) => w.text).join(' ');
+
+    // Join word tokens with spaces, but omit the space after a maqaf (U+05BE ־).
+    // Maqaf binds words prosodically: "פֶּן־יִשְׁלַח" not "פֶּן־ יִשְׁלַח".
+    const hebrewText = words.reduce((acc, w, i) => {
+      if (i === 0) return w.text;
+      const prevEndsMaqaf = words[i - 1].text.endsWith('\u05BE');
+      return acc + (prevEndsMaqaf ? '' : ' ') + w.text;
+    }, '');
     verseMap.set(osisId, { hebrewText, words });
 
     // Track max verse per chapter

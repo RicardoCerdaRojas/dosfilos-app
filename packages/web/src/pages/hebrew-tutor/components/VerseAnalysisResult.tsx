@@ -275,6 +275,10 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
             {analysis.words.map((w, i) => {
               const isVerb = !!w.verbMorphology && showVerbMarkers;
               const isActive = activeWordIndex === i;
+              // Maqaf (U+05BE ־): when the PREVIOUS word ends with maqaf, this word
+              // is prosodically bound to it. We collapse the flex gap with a negative
+              // inline-start margin so they appear visually connected in RTL layout.
+              const prevHasMaqaf = i > 0 && analysis.words[i - 1].hebrewText.endsWith('\u05BE');
               return (
                 <Tooltip key={i} delayDuration={200}>
                   <TooltipTrigger asChild>
@@ -282,6 +286,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
                       onClick={() => handleHeaderWordClick(i)}
                       onMouseEnter={() => handleHeaderWordHover(i)}
                       onMouseLeave={() => handleHeaderWordHover(null)}
+                      style={prevHasMaqaf ? { marginInlineStart: '-0.75rem' } : undefined}
                       className={`
                         inline-flex flex-col items-center
                         cursor-pointer rounded-md px-1 pt-0.5 pb-1.5 transition-all duration-150 relative
