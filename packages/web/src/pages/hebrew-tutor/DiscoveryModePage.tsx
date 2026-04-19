@@ -219,21 +219,37 @@ export const DiscoveryModePage: React.FC = () => {
         {/* Phase: Preparing (loading screen) */}
         {dm.phase === 'preparing' && <HebrewLoadingTips />}
 
-        {/* Phase: Investigating */}
         {dm.phase === 'investigating' && dm.activeWord && (
-          <div className="space-y-5 animate-in fade-in duration-300">
+          <div className="space-y-4 animate-in fade-in duration-300">
             {/* Hebrew verse display */}
-            <div className="rounded-2xl border border-border/60 bg-muted/20 p-5 text-center">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">
+            <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-slate-50/50 via-background to-indigo-50/20 dark:from-slate-950/50 dark:via-background dark:to-indigo-950/10 p-4 sm:p-5 text-center">
+              <p className="text-[10px] font-semibold text-indigo-500/70 dark:text-indigo-400/60 uppercase tracking-[0.2em] mb-2">
                 {dm.verseDisplayReference}
               </p>
               <p
                 dir="rtl"
                 lang="he"
-                className="text-2xl sm:text-3xl leading-loose font-hebrew text-foreground"
+                className="text-xl sm:text-2xl md:text-3xl leading-loose text-foreground/90"
                 style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
               >
-                {dm.hebrewVerse?.hebrewText ?? dm.discoveryWords.map(w => w.word.hebrewText).join(' ')}
+                {/* Highlight the active word within the verse */}
+                {dm.discoveryWords.map((dw, i) => (
+                  <span
+                    key={i}
+                    className={`
+                      inline px-0.5 transition-all duration-300
+                      ${i === dm.activeWordIndex
+                        ? 'text-indigo-600 dark:text-indigo-400 font-bold underline decoration-indigo-500/30 decoration-2 underline-offset-4'
+                        : dw.status === 'completed'
+                          ? 'text-emerald-700/70 dark:text-emerald-400/70'
+                          : 'text-foreground/40'
+                      }
+                    `}
+                  >
+                    {dw.word.hebrewText}
+                    {i < dm.discoveryWords.length - 1 && ' '}
+                  </span>
+                ))}
               </p>
             </div>
 
@@ -244,32 +260,67 @@ export const DiscoveryModePage: React.FC = () => {
               onWordClick={handleWordClick}
             />
 
-            {/* Active word CTA */}
-            <div className="flex flex-col items-center gap-3 py-4">
-              <div className="flex flex-col items-center gap-1">
-                <span
-                  dir="rtl"
-                  lang="he"
-                  className="text-4xl font-semibold text-indigo-700 dark:text-indigo-300"
-                  style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
-                >
-                  {dm.activeWord.hebrewText}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {t('discovery.investigate.wordN', {
-                    defaultValue: 'Palabra {{n}} de {{total}}',
-                    n: dm.activeWordIndex + 1,
-                    total: dm.totalWords,
-                  })}
-                </span>
+            {/* ── Active word spotlight ── */}
+            <div className="relative">
+              {/* Glow background */}
+              <div className="absolute inset-0 bg-indigo-500/5 dark:bg-indigo-500/10 blur-2xl rounded-3xl" />
+
+              <div className="relative rounded-2xl border-2 border-indigo-200/60 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50/60 via-background to-violet-50/40 dark:from-indigo-950/30 dark:via-background dark:to-violet-950/20 p-6 sm:p-8">
+                <div className="flex flex-col items-center gap-4">
+                  {/* Category badge */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-500/70 dark:text-indigo-400/60 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/40">
+                      {t('discovery.investigate.wordN', {
+                        defaultValue: 'Palabra {{n}} de {{total}}',
+                        n: dm.activeWordIndex + 1,
+                        total: dm.totalWords,
+                      })}
+                    </span>
+                  </div>
+
+                  {/* Hebrew word */}
+                  <div className="flex flex-col items-center gap-2">
+                    <span
+                      dir="rtl"
+                      lang="he"
+                      className="text-5xl sm:text-6xl font-semibold text-indigo-700 dark:text-indigo-300 drop-shadow-sm transition-all duration-500"
+                      style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
+                    >
+                      {dm.activeWord.hebrewText}
+                    </span>
+
+                    {/* Transliteration hint */}
+                    {dm.activeWord.transliteration && (
+                      <span className="text-xs text-muted-foreground/60 italic tracking-wide">
+                        {dm.activeWord.transliteration}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Category + grammatical info */}
+                  <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <span className="text-[11px] font-semibold text-muted-foreground bg-muted/40 px-2.5 py-1 rounded-lg border border-border/40">
+                      {dm.activeWord.category}
+                    </span>
+                    {dm.activeWord.root && (
+                      <span className="text-[11px] text-muted-foreground/70 bg-muted/20 px-2 py-1 rounded-lg border border-border/30">
+                        <span dir="rtl" lang="he" style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}>
+                          {dm.activeWord.root}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={openDetective}
+                    className="mt-2 flex items-center gap-2.5 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold text-sm shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:from-indigo-600 hover:to-violet-600 active:scale-[0.97] transition-all duration-200"
+                  >
+                    <SearchIcon className="w-4.5 h-4.5" />
+                    {t('discovery.investigate.start', { defaultValue: 'Investigar esta palabra' })}
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={openDetective}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-500 text-white font-semibold text-sm shadow-lg hover:bg-indigo-600 active:scale-[0.98] transition-all"
-              >
-                <SearchIcon className="w-4 h-4" />
-                {t('discovery.investigate.start', { defaultValue: 'Investigar esta palabra' })}
-              </button>
             </div>
 
             {/* Translation builder */}
@@ -282,10 +333,10 @@ export const DiscoveryModePage: React.FC = () => {
 
             {/* Finish investigation button */}
             {dm.completedCount === dm.totalWords && dm.totalWords > 0 && (
-              <div className="flex items-center justify-center py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center justify-center py-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <button
                   onClick={dm.finishInvestigation}
-                  className="flex items-center gap-2 px-8 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm shadow-lg hover:bg-emerald-600 active:scale-[0.98] transition-all"
+                  className="flex items-center gap-2.5 px-10 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-600 active:scale-[0.97] transition-all duration-200"
                 >
                   <ArrowRightIcon className="w-4 h-4" />
                   {t('discovery.investigate.finish', { defaultValue: 'Componer traducción completa →' })}
