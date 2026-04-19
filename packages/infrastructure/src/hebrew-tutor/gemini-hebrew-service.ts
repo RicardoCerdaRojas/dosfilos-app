@@ -217,7 +217,7 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
  */
 export function reconcileGlobalWords(
   geminiWords: VerseAnalysis['words'],
-  morphhbTokens: { text: string }[]
+  morphhbTokens: readonly { text: string }[]
 ): VerseAnalysis['words'] {
   if (!morphhbTokens || morphhbTokens.length === 0) {
     return geminiWords;
