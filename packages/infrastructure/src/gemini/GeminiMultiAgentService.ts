@@ -99,14 +99,15 @@ Mantén siempre una actitud de mentoría, paciencia y servicio pastoral.`;
         agent: AIAgent,
         history: AIChatMessage[],
         message: string,
-        lengthPreference?: 'concise' | 'detailed'
+        lengthPreference?: 'concise' | 'detailed',
+        enableThinking?: boolean
     ): Promise<string> {
         const options: any = {
             model: this.modelName,
             systemInstruction: this.getInstructionWithPreference(agent.systemInstruction, lengthPreference),
-            generationConfig: {
-                thinkingConfig: { thinkingBudget: 0 }
-            }
+            generationConfig: enableThinking
+                ? {} // Let the model use its default thinking budget
+                : { thinkingConfig: { thinkingBudget: 0 } }
         };
 
         if (agent.corpusIds && agent.corpusIds.length > 0) {
@@ -128,3 +129,4 @@ Mantén siempre una actitud de mentoría, paciencia y servicio pastoral.`;
         return response.text();
     }
 }
+

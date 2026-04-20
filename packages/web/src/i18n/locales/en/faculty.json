@@ -1,0 +1,92 @@
+{
+    "header": {
+        "title": "My Tutors",
+        "newSession": "New session — type your first question",
+        "sessionActive": "Active Session",
+        "professorId": "Professor ID: {{id}}",
+        "responseBrief": "Brief Response",
+        "responseDetailed": "Detailed Response",
+        "briefDescription": "Brief and concise",
+        "detailedDescription": "Detailed and exhaustive",
+        "responseLength": "AI response length",
+        "sessions": "Sessions",
+        "extract": "Extract",
+        "projectsAndSessions": "Projects and Sessions",
+        "contentExtraction": "Content Extraction"
+    },
+    "sidebar": {
+        "mySessions": "My Sessions",
+        "newConversation": "New conversation",
+        "newProject": "New project",
+        "collapsePanel": "Collapse panel",
+        "openPanel": "Open panel",
+        "searchPlaceholder": "Search sessions...",
+        "noProject": "No project",
+        "noPreviousSessions": "No previous sessions.",
+        "noResults": "No results"
+    },
+    "timeGroups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "thisWeek": "This week",
+        "thisMonth": "This month",
+        "older": "Older"
+    },
+    "sessionItem": {
+        "defaultTitle": "Conversation",
+        "moveToProject": "Move to project",
+        "moveTo": "Move to",
+        "rename": "Rename conversation",
+        "delete": "Delete session",
+        "removeFromProject": "Remove from project",
+        "noSessionsYet": "No sessions yet",
+        "editProject": "Edit project",
+        "deleteProject": "Delete project"
+    },
+    "chat": {
+        "loadingConversation": "Loading conversation...",
+        "emptyNewTitle": "{{agentName}}",
+        "emptyNewDescription": "Type your first question to start the conversation.",
+        "emptyExistingTitle": "Start the Session",
+        "emptyExistingDescription": "Ask this professor about their area of theological or pastoral expertise.",
+        "inputPlaceholder": "Continue the theological conversation...",
+        "inputLoading": "Loading...",
+        "selectingSpecialist": "Selecting specialist...",
+        "deleteMessage": "Delete message"
+    },
+    "extraction": {
+        "title": "Content Extraction",
+        "description": "Turn this conversation into structured documents ready for use.",
+        "sermonOutline": "Sermon Outline",
+        "sermonOutlineDesc": "Complete expository structure with points and application.",
+        "bibleStudy": "Study Guide",
+        "bibleStudyDesc": "Small group questions derived from the topic.",
+        "counselingTask": "Nouthetic Tasks",
+        "counselingTaskDesc": "Biblical assignments for the counselee.",
+        "newsletter": "Sunday Bulletin",
+        "newsletterDesc": "Devotional article for the church newsletter.",
+        "theologyPaper": "Theological Essay",
+        "theologyPaperDesc": "Academic paper with reformed doctrinal rigor.",
+        "extractedDocument": "Extracted Document",
+        "extractionFailed": "Could not generate content. Please try again."
+    },
+    "dialogs": {
+        "deleteSessionTitle": "Delete this session?",
+        "deleteSessionDescription": "This action cannot be undone. All messages in this conversation will be permanently deleted.",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "copied": "Copied",
+        "copy": "Copy"
+    },
+    "editor": {
+        "title": "Co-authoring Editor",
+        "processing": "Processing with AI...",
+        "actions": {
+            "rewrite": "Rewrite",
+            "expand": "Expand",
+            "quote": "Quote",
+            "academic": "Academic",
+            "pastoral": "Pastoral"
+        }
+    }
+}

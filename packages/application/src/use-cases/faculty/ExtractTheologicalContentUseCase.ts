@@ -1,7 +1,10 @@
 import {
     IAIChatRepository,
     IAIGeneratorService,
-    AIAgentRole
+    IAIProjectRepository,
+    AIAgentRole,
+    SermonPersonalization,
+    SERMON_TONE_LABELS,
 } from '@dosfilos/domain';
 
 export type ExtractionType = 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER';
@@ -16,13 +19,23 @@ export interface ApprovedSermonOutline {
 export class ExtractTheologicalContentUseCase {
     constructor(
         private chatRepository: IAIChatRepository,
-        private generatorService: IAIGeneratorService
+        private generatorService: IAIGeneratorService,
+        private projectRepository?: IAIProjectRepository
     ) { }
 
-    async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline): Promise<string> {
+    async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline, personalization?: SermonPersonalization, onChunk?: (chunk: string) => void): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
             throw new Error('Session not found');
+        }
+
+        // Load project context if the session belongs to a project
+        let projectContext = '';
+        if (session.projectId && this.projectRepository) {
+            const project = await this.projectRepository.getProject(session.projectId);
+            if (project?.contextNote) {
+                projectContext = `\n\n═══ CONTEXTO DEL PROYECTO ═══\n${project.contextNote}\n═════════════════════════════\n\nConsidera este contexto al generar el contenido. Adapta el tono, profundidad y aplicaciones según la descripción de la congregación y la serie de predicación.\n`;
+            }
         }
 
         let extractionPrompt = '';
@@ -69,8 +82,11 @@ ${approvedOutline.points.map((p, i) => `  ${['I', 'II', 'III', 'IV', 'V'][i] ?? 
 `
                     : '';
 
+                // Build pastoral personalization block
+                const personalizationBlock = this.buildPersonalizationBlock(personalization);
+
                 extractionPrompt = `
-${outlineBlock}
+${outlineBlock}${personalizationBlock}
 Basándote en la conversación teológica anterior, extrae y redacta un BOSQUEJO DE SERMÓN EXPOSITIVO COMPLETO en Markdown con esta estructura exacta:
 
 # [TÍTULO CREATIVO DEL SERMÓN]
@@ -397,12 +413,80 @@ REGLAS:
             systemInstruction: systemInstructions[type] ?? "Eres un asistente pastoral experto en redactar y dar formato a contenido teológico. Tu trabajo exclusivo es leer historiales de chat completos y extraer el contenido en un formato Markdown de altísima calidad. No agregues saludos, introducciones coloquiales ni comentarios finales, solo entrega el documento formateado y listo para exportar."
         };
 
+        // Enable deeper reasoning for rich-content extractions.
+        // JSON-only outputs (SERMON_OUTLINE) keep thinking disabled to avoid
+        // polluting the structured response.
+        const enableThinking = type !== 'SERMON_OUTLINE';
+
+        const enrichedPrompt = projectContext
+            ? `${projectContext}\n${extractionPrompt}`
+            : extractionPrompt;
+
+        // If onChunk is provided and it's not a JSON outline extraction, use stream
+        if (onChunk && type !== 'SERMON_OUTLINE') {
+            const result = await this.generatorService.sendMessageStream(
+                extractionAgent,
+                session.messages,
+                enrichedPrompt,
+                onChunk
+            );
+            return result;
+        }
+
         const result = await this.generatorService.sendMessage(
             extractionAgent,
             session.messages,
-            extractionPrompt
+            enrichedPrompt,
+            undefined,
+            enableThinking
         );
 
         return result;
     }
+
+    /**
+     * Builds a prompt section from the preacher's personalization input.
+     * Only populated fields are included, so an empty personalization
+     * produces an empty string (no impact on the prompt).
+     */
+    private buildPersonalizationBlock(personalization?: SermonPersonalization): string {
+        if (!personalization) return '';
+
+        const lines: string[] = [];
+
+        if (personalization.tone) {
+            lines.push(`TONO DEL SERMÓN: ${SERMON_TONE_LABELS[personalization.tone]}`);
+        }
+        if (personalization.situationalContext?.trim()) {
+            lines.push(`CONTEXTO SITUACIONAL: ${personalization.situationalContext.trim()}`);
+        }
+        if (personalization.congregationDescription?.trim()) {
+            lines.push(`CONGREGACIÓN: ${personalization.congregationDescription.trim()}`);
+        }
+        if (personalization.pastoralEmphasis?.trim()) {
+            lines.push(`ÉNFASIS PASTORAL (lo que la congregación debe sentir/hacer): ${personalization.pastoralEmphasis.trim()}`);
+        }
+        if (personalization.illustrations?.trim()) {
+            lines.push(`ILUSTRACIONES DEL PREDICADOR (incorporar literalmente en el cuerpo del sermón):\n${personalization.illustrations.trim()}`);
+        }
+        if (personalization.preacherNotes?.trim()) {
+            lines.push(`NOTAS DEL PREDICADOR (ideas a desarrollar e integrar):\n${personalization.preacherNotes.trim()}`);
+        }
+
+        if (lines.length === 0) return '';
+
+        return `
+═══ VOZ DEL PREDICADOR ═══
+${lines.join('\n\n')}
+═════════════════════════
+
+INSTRUCCIONES SOBRE LA VOZ DEL PREDICADOR:
+- El contenido de arriba refleja la voz, intención y contexto del predicador.
+- Integra sus ilustraciones y notas de forma orgánica en el sermón.
+- El tono general del sermón debe alinearse con la indicación de tono.
+- Las aplicaciones deben ser relevantes para la congregación descrita.
+
+`;
+    }
 }
+

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { facultyService, type ApprovedSermonOutline } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import { AIAgent } from '@dosfilos/domain';
+import { AIAgent, SermonPersonalization } from '@dosfilos/domain';
 
 import { useState } from 'react';
 
@@ -92,9 +92,24 @@ export function useFacultyChat(sessionId: string) {
     });
 
     const extractContentMutation = useMutation({
-        mutationFn: async ({ type, approvedOutline }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER'; approvedOutline?: ApprovedSermonOutline }) => {
+        mutationFn: async ({ type, approvedOutline, personalization, onChunk }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER'; approvedOutline?: ApprovedSermonOutline; personalization?: SermonPersonalization; onChunk?: (chunk: string) => void }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return await facultyService.extractContent.execute(user.uid, sessionId, type, approvedOutline);
+            return await facultyService.extractContent.execute(user.uid, sessionId, type, approvedOutline, personalization, onChunk);
+        }
+    });
+
+    const processMicroActionMutation = useMutation({
+        mutationFn: async ({ selectedText, actionType, documentContext, customPrompt, onChunk }: { selectedText: string; actionType: 'REWRITE' | 'EXPAND' | 'SUMMARIZE' | 'BULLET_POINTS' | 'QUOTE_SEARCH' | 'MAKE_ACADEMIC' | 'MAKE_PASTORAL' | 'CUSTOM'; documentContext?: string; customPrompt?: string; onChunk?: (chunk: string) => void }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return await facultyService.processMicroAction.execute({
+                userId: user.uid,
+                sessionId,
+                selectedText,
+                actionType,
+                documentContext,
+                customPrompt,
+                onChunk
+            });
         }
     });
 
@@ -113,6 +128,8 @@ export function useFacultyChat(sessionId: string) {
         isStreaming,
         extractContent: extractContentMutation.mutateAsync,
         isExtracting: extractContentMutation.isPending,
+        processMicroAction: processMicroActionMutation.mutateAsync,
+        isProcessingMicroAction: processMicroActionMutation.isPending,
         deleteMessage: deleteMessageMutation.mutateAsync,
         isDeleting: deleteMessageMutation.isPending
     };

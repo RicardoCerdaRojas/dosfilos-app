@@ -25,6 +25,7 @@ export * from './models/Plan'; // 🎯 Plan models (refactored system)
 export * from './entities/AIAgent';
 export * from './entities/AIChatSession';
 export * from './entities/AIProject';
+export * from './entities/SermonPersonalization';
 
 // Repositories
 export * from './repositories/ISermonRepository';
