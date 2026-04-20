@@ -24,7 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SermonOutlinePreviewModal, type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
 import { ProjectEditDialog } from './ProjectEditDialog';
-import { type AIChatSession, type AIProject } from '@dosfilos/domain';
+import { type AIChatSession, type AIProject, type SermonPersonalization } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
 
 // ── Module-level helpers ─────────────────────────────────────────────────────
@@ -433,8 +433,8 @@ export function FacultyChatPage() {
         }
     };
 
-    const handleGenerateFullSermon = async (approvedOutline: SermonOutline): Promise<string> => {
-        return await extractContent({ type: 'SERMON', approvedOutline });
+    const handleGenerateFullSermon = async (approvedOutline: SermonOutline, personalization?: SermonPersonalization): Promise<string> => {
+        return await extractContent({ type: 'SERMON', approvedOutline, personalization });
     };
 
     const handleCopy = () => {
