@@ -1,0 +1,81 @@
+{
+    "header": {
+        "title": "Mis Tutores",
+        "newSession": "Nueva sesión — escribe tu primera pregunta",
+        "sessionActive": "Sesión Activa",
+        "professorId": "Profesor ID: {{id}}",
+        "responseBrief": "Respuesta Breve",
+        "responseDetailed": "Respuesta Detallada",
+        "briefDescription": "Breve y concisa",
+        "detailedDescription": "Detallada y exhaustiva",
+        "responseLength": "Longitud de la respuesta de la IA",
+        "sessions": "Sesiones",
+        "extract": "Extraer",
+        "projectsAndSessions": "Proyectos y Sesiones",
+        "contentExtraction": "Extracción de Contenido"
+    },
+    "sidebar": {
+        "mySessions": "Mis Sesiones",
+        "newConversation": "Nueva conversación",
+        "newProject": "Nuevo proyecto",
+        "collapsePanel": "Colapsar panel",
+        "openPanel": "Abrir panel",
+        "searchPlaceholder": "Buscar sesiones...",
+        "noProject": "Sin proyecto",
+        "noPreviousSessions": "No hay sesiones previas.",
+        "noResults": "Sin resultados"
+    },
+    "timeGroups": {
+        "today": "Hoy",
+        "yesterday": "Ayer",
+        "thisWeek": "Esta semana",
+        "thisMonth": "Este mes",
+        "older": "Anteriores"
+    },
+    "sessionItem": {
+        "defaultTitle": "Conversación",
+        "moveToProject": "Mover a proyecto",
+        "moveTo": "Mover a",
+        "rename": "Renombrar conversación",
+        "delete": "Eliminar sesión",
+        "removeFromProject": "Quitar del proyecto",
+        "noSessionsYet": "Sin sesiones aún",
+        "editProject": "Editar proyecto",
+        "deleteProject": "Eliminar proyecto"
+    },
+    "chat": {
+        "loadingConversation": "Cargando conversación...",
+        "emptyNewTitle": "{{agentName}}",
+        "emptyNewDescription": "Escribe tu primera pregunta para comenzar la conversación.",
+        "emptyExistingTitle": "Comienza la Sesión",
+        "emptyExistingDescription": "Hazle una pregunta a este profesor sobre su área de especialidad teológica o pastoral.",
+        "inputPlaceholder": "Continúa la conversación teológica...",
+        "inputLoading": "Cargando...",
+        "selectingSpecialist": "Seleccionando especialista...",
+        "deleteMessage": "Eliminar mensaje"
+    },
+    "extraction": {
+        "title": "Extracción de Contenido",
+        "description": "Convierte esta conversación en documentos estructurados listos para usar.",
+        "sermonOutline": "Bosquejo de Sermón",
+        "sermonOutlineDesc": "Estructura expositiva completa con puntos y aplicación.",
+        "bibleStudy": "Guía de Estudio",
+        "bibleStudyDesc": "Preguntas para grupos pequeños derivadas del tema.",
+        "counselingTask": "Tareas Noutéticas",
+        "counselingTaskDesc": "Asignaciones bíblicas para el aconsejado.",
+        "newsletter": "Boletín Dominical",
+        "newsletterDesc": "Artículo devocional para la newsletter de la iglesia.",
+        "theologyPaper": "Ensayo Teológico",
+        "theologyPaperDesc": "Paper académico con rigor doctrinal reformado.",
+        "extractedDocument": "Documento Extraído",
+        "extractionFailed": "No se pudo generar el contenido. Intenta de nuevo."
+    },
+    "dialogs": {
+        "deleteSessionTitle": "¿Eliminar esta sesión?",
+        "deleteSessionDescription": "Esta acción no se puede deshacer. Se eliminarán permanentemente todos los mensajes de esta conversación.",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "copied": "Copiado",
+        "copy": "Copiar"
+    }
+}

@@ -42,6 +42,8 @@ import hebrewTutorEn from '../locales/en/hebrewTutor.json';
 import hebrewTutorEs from '../locales/es/hebrewTutor.json';
 import sermonDetailEn from '../locales/en/sermonDetail.json';
 import sermonDetailEs from '../locales/es/sermonDetail.json';
+import facultyEn from '../locales/en/faculty.json';
+import facultyEs from '../locales/es/faculty.json';
 
 /**
  * Initialize i18next with best practices:
@@ -76,6 +78,7 @@ export const initI18n = () => {
                     greekTutor: greekTutorEn,
                     hebrewTutor: hebrewTutorEn,
                     sermonDetail: sermonDetailEn,
+                    faculty: facultyEn,
                 },
                 es: {
                     common: commonEs,
@@ -93,6 +96,7 @@ export const initI18n = () => {
                     greekTutor: greekTutorEs,
                     hebrewTutor: hebrewTutorEs,
                     sermonDetail: sermonDetailEs,
+                    faculty: facultyEs,
                 },
             },
 
