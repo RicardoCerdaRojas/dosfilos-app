@@ -92,21 +92,23 @@ export function useFacultyChat(sessionId: string) {
     });
 
     const extractContentMutation = useMutation({
-        mutationFn: async ({ type, approvedOutline, personalization }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER'; approvedOutline?: ApprovedSermonOutline; personalization?: SermonPersonalization }) => {
+        mutationFn: async ({ type, approvedOutline, personalization, onChunk }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER'; approvedOutline?: ApprovedSermonOutline; personalization?: SermonPersonalization; onChunk?: (chunk: string) => void }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return await facultyService.extractContent.execute(user.uid, sessionId, type, approvedOutline, personalization);
+            return await facultyService.extractContent.execute(user.uid, sessionId, type, approvedOutline, personalization, onChunk);
         }
     });
 
     const processMicroActionMutation = useMutation({
-        mutationFn: async ({ selectedText, actionType, documentContext }: { selectedText: string; actionType: 'REWRITE' | 'EXPAND' | 'SUMMARIZE' | 'QUOTE_SEARCH' | 'MAKE_ACADEMIC' | 'MAKE_PASTORAL'; documentContext?: string }) => {
+        mutationFn: async ({ selectedText, actionType, documentContext, customPrompt, onChunk }: { selectedText: string; actionType: 'REWRITE' | 'EXPAND' | 'SUMMARIZE' | 'BULLET_POINTS' | 'QUOTE_SEARCH' | 'MAKE_ACADEMIC' | 'MAKE_PASTORAL' | 'CUSTOM'; documentContext?: string; customPrompt?: string; onChunk?: (chunk: string) => void }) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return await facultyService.processMicroAction.execute({
                 userId: user.uid,
                 sessionId,
                 selectedText,
                 actionType,
-                documentContext
+                documentContext,
+                customPrompt,
+                onChunk
             });
         }
     });

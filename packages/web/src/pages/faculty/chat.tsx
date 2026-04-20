@@ -86,6 +86,7 @@ export function FacultyChatPage() {
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [renameConfirmId, setRenameConfirmId] = useState<string | null>(null);
+    const [isZenMode, setIsZenMode] = useState(false);
 
     // ── Scroll management ────────────────────────────────────────────────────
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -213,6 +214,8 @@ export function FacultyChatPage() {
                 title: t(EXTRACTION_TITLE_KEYS[type] || 'extraction.extractedDocument'),
                 markdown: result,
             });
+            setIsLeftSidebarOpen(false);
+            setIsRightSidebarOpen(false);
         } catch (error) {
             console.error('Extraction failed:', error);
             toast.error(t('extraction.extractionFailed'));
@@ -269,7 +272,7 @@ export function FacultyChatPage() {
 
                 <div className="flex-1 flex overflow-hidden">
                     {/* Main chat area */}
-                    <main className={cn("flex flex-col min-w-0 relative transition-all duration-300", extractedContent ? "w-1/2 border-r" : "w-full")}>
+                    <main className={cn("flex flex-col min-w-0 relative transition-all duration-300", extractedContent ? (isZenMode ? "hidden" : "w-1/2 border-r") : "w-full")}>
                         {isHomeState ? (
                             <div className="flex-1 overflow-y-auto">
                                 <FacultyHomeContent />
@@ -316,10 +319,10 @@ export function FacultyChatPage() {
 
                     {/* Editor Panel */}
                     {extractedContent && (
-                        <aside className="w-1/2 flex flex-col bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l">
+                        <aside className={cn("flex flex-col bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l transition-all duration-300", isZenMode ? "w-full" : "w-1/2")}>
                             <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/10 h-14 shrink-0">
                                 <h3 className="font-semibold text-sm truncate pr-4 text-foreground/80">{extractedContent.title}</h3>
-                                <button onClick={() => setExtractedContent(null)} className="p-1.5 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors">
+                                <button onClick={() => { setExtractedContent(null); setIsZenMode(false); }} className="p-1.5 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors">
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
@@ -327,8 +330,10 @@ export function FacultyChatPage() {
                                 <FacultyDocumentEditor
                                     markdown={extractedContent.markdown}
                                     onChange={(md) => setExtractedContent(prev => prev ? { ...prev, markdown: md } : null)}
-                                    onMicroAction={(actionType, selectedText, context) => processMicroAction({ actionType, selectedText, documentContext: context })}
+                                    onMicroAction={(actionType, selectedText, context, customPrompt) => processMicroAction({ actionType, selectedText, documentContext: context, customPrompt })}
                                     isProcessing={isProcessingMicroAction}
+                                    isZenMode={isZenMode}
+                                    onToggleZenMode={() => setIsZenMode(prev => !prev)}
                                 />
                             </div>
                         </aside>
@@ -350,6 +355,11 @@ export function FacultyChatPage() {
                 sessionId={effectiveSessionId || undefined}
                 onClose={() => setSermonOutline(null)}
                 onGenerateFullSermon={handleGenerateFullSermon}
+                onSuccess={(sermonId, content, title) => {
+                    setExtractedContent({ title, markdown: content });
+                    setIsLeftSidebarOpen(false);
+                    setIsRightSidebarOpen(false);
+                }}
             />
 
             {/* Project create/edit dialog */}

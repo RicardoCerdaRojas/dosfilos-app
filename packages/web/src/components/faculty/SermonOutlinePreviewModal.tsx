@@ -50,6 +50,7 @@ interface SermonOutlinePreviewModalProps {
     sessionId?: string;  // ID of the faculty session that originated this sermon
     onClose: () => void;
     onGenerateFullSermon: (approvedOutline: SermonOutline, personalization?: SermonPersonalization) => Promise<string>;
+    onSuccess?: (sermonId: string, content: string, title: string) => void;
 }
 
 type Phase = 'preview' | 'personalize' | 'generating';
@@ -67,8 +68,9 @@ export function SermonOutlinePreviewModal({
     sessionId,
     onClose,
     onGenerateFullSermon,
+    onSuccess,
 }: SermonOutlinePreviewModalProps) {
-    const navigate = useNavigate();
+    // Removed useNavigate since we use onSuccess now
     const { user } = useFirebase();
     const { createSermon } = useCreateSermon();
 
@@ -142,8 +144,11 @@ export function SermonOutlinePreviewModal({
                 status: 'draft',
                 sourceFacultySessionId: sessionId,
             });
+            
+            if (onSuccess) {
+                onSuccess(sermon.id, cleanContent, edited.title || 'Sermón sin título');
+            }
             onClose();
-            navigate(`/dashboard/sermons/${sermon.id}`);
         } catch (error) {
             console.error('Error generating sermon:', error);
             setPhase('personalize');

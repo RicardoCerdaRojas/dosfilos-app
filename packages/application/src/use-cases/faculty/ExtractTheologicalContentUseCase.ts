@@ -23,7 +23,7 @@ export class ExtractTheologicalContentUseCase {
         private projectRepository?: IAIProjectRepository
     ) { }
 
-    async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline, personalization?: SermonPersonalization): Promise<string> {
+    async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline, personalization?: SermonPersonalization, onChunk?: (chunk: string) => void): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
             throw new Error('Session not found');
@@ -421,6 +421,17 @@ REGLAS:
         const enrichedPrompt = projectContext
             ? `${projectContext}\n${extractionPrompt}`
             : extractionPrompt;
+
+        // If onChunk is provided and it's not a JSON outline extraction, use stream
+        if (onChunk && type !== 'SERMON_OUTLINE') {
+            const result = await this.generatorService.sendMessageStream(
+                extractionAgent,
+                session.messages,
+                enrichedPrompt,
+                onChunk
+            );
+            return result;
+        }
 
         const result = await this.generatorService.sendMessage(
             extractionAgent,
