@@ -98,6 +98,19 @@ export function useFacultyChat(sessionId: string) {
         }
     });
 
+    const processMicroActionMutation = useMutation({
+        mutationFn: async ({ selectedText, actionType, documentContext }: { selectedText: string; actionType: 'REWRITE' | 'EXPAND' | 'SUMMARIZE' | 'QUOTE_SEARCH' | 'MAKE_ACADEMIC' | 'MAKE_PASTORAL'; documentContext?: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return await facultyService.processMicroAction.execute({
+                userId: user.uid,
+                sessionId,
+                selectedText,
+                actionType,
+                documentContext
+            });
+        }
+    });
+
     return {
         session: sessionQuery.data,
         isLoadingSession: sessionQuery.isLoading,
@@ -113,6 +126,8 @@ export function useFacultyChat(sessionId: string) {
         isStreaming,
         extractContent: extractContentMutation.mutateAsync,
         isExtracting: extractContentMutation.isPending,
+        processMicroAction: processMicroActionMutation.mutateAsync,
+        isProcessingMicroAction: processMicroActionMutation.isPending,
         deleteMessage: deleteMessageMutation.mutateAsync,
         isDeleting: deleteMessageMutation.isPending
     };

@@ -77,5 +77,16 @@
         "delete": "Delete",
         "copied": "Copied",
         "copy": "Copy"
+    },
+    "editor": {
+        "title": "Co-authoring Editor",
+        "processing": "Processing with AI...",
+        "actions": {
+            "rewrite": "Rewrite",
+            "expand": "Expand",
+            "quote": "Quote",
+            "academic": "Academic",
+            "pastoral": "Pastoral"
+        }
     }
 }

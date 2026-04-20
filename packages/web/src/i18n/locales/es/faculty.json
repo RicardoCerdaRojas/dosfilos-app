@@ -77,5 +77,16 @@
         "delete": "Eliminar",
         "copied": "Copiado",
         "copy": "Copiar"
+    },
+    "editor": {
+        "title": "Editor de Co-autoría",
+        "processing": "Procesando con IA...",
+        "actions": {
+            "rewrite": "Mejorar",
+            "expand": "Desarrollar",
+            "quote": "Citar",
+            "academic": "Académico",
+            "pastoral": "Pastoral"
+        }
     }
 }

@@ -24,6 +24,7 @@ import {
     UpdateSessionProjectUseCase,
     RenameChatSessionUseCase,
     DeleteChatMessageUseCase,
+    ProcessMicroActionUseCase,
 } from '../use-cases/faculty';
 
 class FacultyService {
@@ -33,6 +34,7 @@ class FacultyService {
     public sendMessage: SendAgentMessageUseCase;
     public orchestratedMessage: OrchestratedMessageUseCase;
     public extractContent: ExtractTheologicalContentUseCase;
+    public processMicroAction: ProcessMicroActionUseCase;
     public getAgents: GetFacultyAgentsUseCase;
     // Projects
     public getProjects: GetUserProjectsUseCase;
@@ -64,6 +66,7 @@ class FacultyService {
         this.sendMessage = new SendAgentMessageUseCase(agentRepository, chatRepository, generatorService);
         this.orchestratedMessage = new OrchestratedMessageUseCase(agentRepository, chatRepository, generatorService, projectRepository);
         this.extractContent = new ExtractTheologicalContentUseCase(chatRepository, generatorService, projectRepository);
+        this.processMicroAction = new ProcessMicroActionUseCase(chatRepository, generatorService);
         this.getAgents = new GetFacultyAgentsUseCase(agentRepository);
         // Projects
         this.getProjects = new GetUserProjectsUseCase(projectRepository);

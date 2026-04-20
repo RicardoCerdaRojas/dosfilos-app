@@ -15,4 +15,4 @@ export * from './GetUserProjectsUseCase';
 export * from './UpdateSessionProjectUseCase';
 export * from './RenameChatSessionUseCase';
 export * from './DeleteChatMessageUseCase';
-
+export * from './ProcessMicroActionUseCase';

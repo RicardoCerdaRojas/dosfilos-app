@@ -11,7 +11,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { useFacultyChat, useFacultySessions, useFacultyAgents } from '../../hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
@@ -21,7 +22,7 @@ import { FacultySessionSidebar } from '@/components/faculty/FacultySessionSideba
 import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPanel';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
-import { ExtractionResultDialog } from '@/components/faculty/ExtractionResultDialog';
+import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { ProjectEditDialog } from './ProjectEditDialog';
 import { type AIProject, type SermonPersonalization } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
@@ -62,6 +63,8 @@ export function FacultyChatPage() {
         extractContent,
         deleteMessage,
         isDeleting,
+        processMicroAction,
+        isProcessingMicroAction,
     } = useFacultyChat(effectiveSessionId);
 
     const isSending = isOrchestrating;
@@ -264,51 +267,73 @@ export function FacultyChatPage() {
                     onDeleteProject={(pid) => deleteProjectMutation.mutate(pid)}
                 />
 
-                {/* Main chat area */}
-                <main className="flex-1 flex flex-col min-w-0 relative">
-                    {isHomeState ? (
-                        <div className="flex-1 overflow-y-auto">
-                            <FacultyHomeContent />
-                        </div>
-                    ) : isLoadingSession && !isNewSession ? (
-                        <div className="flex-1 flex items-center justify-center">
-                            <div className="flex flex-col items-center gap-3 text-slate-400">
-                                <Loader2 className="w-6 h-6 animate-spin" />
-                                <p className="text-sm">{t('chat.loadingConversation')}</p>
+                <div className="flex-1 flex overflow-hidden">
+                    {/* Main chat area */}
+                    <main className={cn("flex flex-col min-w-0 relative transition-all duration-300", extractedContent ? "w-1/2 border-r" : "w-full")}>
+                        {isHomeState ? (
+                            <div className="flex-1 overflow-y-auto">
+                                <FacultyHomeContent />
                             </div>
-                        </div>
-                    ) : (
-                        <>
-                            <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
-                                <div className="max-w-3xl mx-auto space-y-6 w-full">
-                                    <FacultyChatMessages
-                                        messages={session?.messages || []}
-                                        isNewSession={isNewSession}
-                                        isStreaming={isStreaming}
-                                        isSending={isSending}
-                                        isDeleting={isDeleting}
-                                        streamingMessage={streamingMessage}
-                                        activeAgents={activeAgents}
-                                        agentNameForNew={agentNameForNew}
-                                        onDeleteMessage={(messageId) => deleteMessage.mutate({ sessionId: effectiveSessionId, messageId })}
-                                    />
-                                    <div ref={messagesEndRef} />
+                        ) : isLoadingSession && !isNewSession ? (
+                            <div className="flex-1 flex items-center justify-center">
+                                <div className="flex flex-col items-center gap-3 text-slate-400">
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                    <p className="text-sm">{t('chat.loadingConversation')}</p>
                                 </div>
                             </div>
+                        ) : (
+                            <>
+                                <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
+                                    <div className="max-w-3xl mx-auto space-y-6 w-full">
+                                        <FacultyChatMessages
+                                            messages={session?.messages || []}
+                                            isNewSession={isNewSession}
+                                            isStreaming={isStreaming}
+                                            isSending={isSending}
+                                            isDeleting={isDeleting}
+                                            streamingMessage={streamingMessage}
+                                            activeAgents={activeAgents}
+                                            agentNameForNew={agentNameForNew}
+                                            onDeleteMessage={(messageId) => deleteMessage.mutate({ sessionId: effectiveSessionId, messageId })}
+                                        />
+                                        <div ref={messagesEndRef} />
+                                    </div>
+                                </div>
 
-                            <FacultyChatInput
-                                input={input}
-                                isSending={isSending}
-                                isStreaming={isStreaming}
-                                isLoading={isLoadingSession}
-                                streamingMessage={streamingMessage}
-                                isHidden={isHomeState}
-                                onInputChange={setInput}
-                                onSubmit={handleSendMessage}
-                            />
-                        </>
+                                <FacultyChatInput
+                                    input={input}
+                                    isSending={isSending}
+                                    isStreaming={isStreaming}
+                                    isLoading={isLoadingSession}
+                                    streamingMessage={streamingMessage}
+                                    isHidden={isHomeState}
+                                    onInputChange={setInput}
+                                    onSubmit={handleSendMessage}
+                                />
+                            </>
+                        )}
+                    </main>
+
+                    {/* Editor Panel */}
+                    {extractedContent && (
+                        <aside className="w-1/2 flex flex-col bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l">
+                            <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/10 h-14 shrink-0">
+                                <h3 className="font-semibold text-sm truncate pr-4 text-foreground/80">{extractedContent.title}</h3>
+                                <button onClick={() => setExtractedContent(null)} className="p-1.5 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-hidden bg-background">
+                                <FacultyDocumentEditor
+                                    markdown={extractedContent.markdown}
+                                    onChange={(md) => setExtractedContent(prev => prev ? { ...prev, markdown: md } : null)}
+                                    onMicroAction={(actionType, selectedText, context) => processMicroAction({ actionType, selectedText, documentContext: context })}
+                                    isProcessing={isProcessingMicroAction}
+                                />
+                            </div>
+                        </aside>
                     )}
-                </main>
+                </div>
 
                 {/* Right extraction panel */}
                 <FacultyExtractionPanel
@@ -318,12 +343,6 @@ export function FacultyChatPage() {
                     onExtract={handleExtract}
                 />
             </div>
-
-            {/* Extraction Result Dialog */}
-            <ExtractionResultDialog
-                content={extractedContent}
-                onClose={() => setExtractedContent(null)}
-            />
 
             {/* Sermon Outline Preview Modal */}
             <SermonOutlinePreviewModal
