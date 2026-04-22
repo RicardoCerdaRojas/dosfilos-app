@@ -79,6 +79,8 @@ export interface WordAnalysis {
   readonly transliteration: string;
   /** Trilateral (or other) root form */
   readonly root: string;
+  /** Academic transliteration of the root, e.g. "m-n-h" for מנה */
+  readonly rootTransliteration?: string;
   /** Meaning of the root, e.g. "arrojar, lanzar" */
   readonly rootMeaning: string;
   /** Lexical/dictionary gloss */

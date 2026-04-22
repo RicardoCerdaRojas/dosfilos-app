@@ -579,18 +579,69 @@ const TranslationPanel: React.FC<TranslationPanelProps> = ({
           <span className="text-muted-foreground/70">{icon}</span>
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
         </div>
-        <button
-          onClick={handleCopy}
-          title="Copiar traducción"
-          className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-primary transition-colors px-1.5 py-0.5 rounded hover:bg-primary/5 print:hidden"
-        >
-          {copied
-            ? <CheckIcon className="w-3 h-3 text-emerald-500" />
-            : <CopyIcon className="w-3 h-3" />
-          }
-        </button>
+        <div className="flex items-center gap-1">
+          {canEdit && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              title="Editar traducción"
+              className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-primary transition-colors px-1.5 py-0.5 rounded hover:bg-primary/5 print:hidden"
+            >
+              <PencilIcon className="w-3 h-3" />
+            </button>
+          )}
+          {editing && (
+            <button
+              onClick={handleCancel}
+              title="Cancelar"
+              className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-destructive transition-colors px-1.5 py-0.5 rounded hover:bg-destructive/5 print:hidden"
+            >
+              <XIcon className="w-3 h-3" />
+            </button>
+          )}
+          <button
+            onClick={handleCopy}
+            title="Copiar traducción"
+            className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-primary transition-colors px-1.5 py-0.5 rounded hover:bg-primary/5 print:hidden"
+          >
+            {copied
+              ? <CheckIcon className="w-3 h-3 text-emerald-500" />
+              : <CopyIcon className="w-3 h-3" />
+            }
+          </button>
+        </div>
       </div>
-      <p className="text-sm text-foreground leading-relaxed">{text}</p>
+
+      {editing ? (
+        <div className="space-y-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={4}
+            className="w-full text-sm text-foreground leading-relaxed bg-muted/40 border border-border rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+            autoFocus
+          />
+          {saveError && (
+            <p className="text-xs text-destructive">{saveError}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={handleCancel}
+              className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || draft.trim() === text.trim()}
+              className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {saving ? 'Guardando…' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-foreground leading-relaxed">{text}</p>
+      )}
     </div>
   );
 };
