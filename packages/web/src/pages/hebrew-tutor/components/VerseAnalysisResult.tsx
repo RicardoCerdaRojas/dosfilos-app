@@ -241,7 +241,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
                       ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20'
                       : 'bg-muted text-muted-foreground hover:bg-muted/80'
                   }`}
-                  title={showSyntaxMarkers ? 'Ocultar marcas sintácticas' : 'Mostrar frases prep., constructos y aposiciones'}
+                  title={showSyntaxMarkers ? 'Ocultar marcas sintácticas' : 'Mostrar frases prep., cadenas constructas y aposiciones'}
                 >
                   <ScrollTextIcon className="w-3.5 h-3.5" />
                   {showSyntaxMarkers ? 'Sintaxis On' : 'Sintaxis Off'}
@@ -430,7 +430,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
               </div>
               <div className="flex items-center gap-0.5">
                 <span className="inline-block w-4 h-[2px] rounded-full bg-amber-500/80" />
-                <span className="text-[10px] text-muted-foreground ml-1">Constructo</span>
+                <span className="text-[10px] text-muted-foreground ml-1">Cadena constructa</span>
               </div>
               <div className="flex items-center gap-0.5">
                 <span className="inline-block w-4 h-[2px] rounded-full bg-violet-500/80" />
@@ -502,7 +502,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="inline-block w-5 h-0.5 rounded-full bg-amber-500/70" />
-                <span className="text-[11px] text-muted-foreground">Constructo (semikut)</span>
+                <span className="text-[11px] text-muted-foreground">Cadena constructa (semikut)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="inline-block w-5 h-0.5 rounded-full bg-violet-500/70" />
