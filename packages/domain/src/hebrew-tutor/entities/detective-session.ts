@@ -16,6 +16,7 @@ import type {
   Gender,
   GrammaticalNumber,
   NominalState,
+  Person,
 } from '../value-objects/grammar.js';
 
 // ── Phase Result ──────────────────────────────────────────────────────────────
@@ -49,15 +50,20 @@ export enum DetectivePhase {
   WEAK_ROOT      = 11,  // ¿Qué radical falta o se transforma?
   WEAK_BINYAN    = 12,  // Diagnóstico del binyan con claves de la Lec. 8
 
+  // ── Shared: verb form identification — both paths ──────────────────────
+  VERB_FORM      = 8,   // ¿Cuál es la forma verbal? (Perfect, Imperfect, etc.)
+
   // ── Final synthesis — all paths ───────────────────────────────────────────
   TRANSLATION    = 20,  // Síntesis: ¿Cómo se traduce esta palabra en contexto?
 
   // ── Nominal (non-verb) path ───────────────────────────────────────────────
   NOMINAL_CLASSIFY = 30,  // ¿Sustantivo, adjetivo, pronombre o partícula?
   NOMINAL_ARTICLE  = 31,  // ¿Tiene artículo definido (הַ)?
+  NOMINAL_PERSON   = 35,  // ¿Primera, segunda o tercera persona? (pronombres)
   NOMINAL_GENDER   = 32,  // ¿Masculino, femenino o común?
   NOMINAL_NUMBER   = 33,  // ¿Singular, plural o dual?
   NOMINAL_STATE    = 34,  // ¿Estado absoluto o constructo?
+  NOMINAL_SUFFIX   = 36,  // ¿PGN del sufijo pronominal?
 }
 
 /** Result for a single phase in the detective investigation. */
@@ -119,6 +125,14 @@ export interface NominalDetectiveSession extends DetectiveSessionBase {
   readonly expectedNumber?: GrammaticalNumber;
   /** Expected state (absolute / construct) for nouns and adjectives */
   readonly expectedState?: NominalState;
+  /** Expected person for pronouns */
+  readonly expectedPerson?: Person;
+  /** Expected PGN for pronominal suffixes */
+  readonly expectedSuffix?: {
+    readonly person: Person;
+    readonly gender: Gender;
+    readonly number: GrammaticalNumber;
+  };
 }
 
 /**
@@ -160,6 +174,12 @@ export function createNominalDetectiveSession(params: {
   expectedGender?: Gender;
   expectedNumber?: GrammaticalNumber;
   expectedState?: NominalState;
+  expectedPerson?: Person;
+  expectedSuffix?: {
+    readonly person: Person;
+    readonly gender: Gender;
+    readonly number: GrammaticalNumber;
+  };
 }): Omit<NominalDetectiveSession, 'id'> {
   return {
     type: 'nominal',

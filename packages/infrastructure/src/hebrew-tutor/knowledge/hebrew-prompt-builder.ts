@@ -42,6 +42,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
         "binyan": "QAL | NIFAL | PIEL | PUAL | HITPAEL | HIFIL | HOFAL",
         "verbForm": "PERFECT | IMPERFECT | WAYYIQTOL | WEQATAL | IMPERATIVE | COHORTATIVE | JUSSIVE | INF_CONSTRUCT | INF_ABSOLUTE | PARTICIPLE_ACTIVE | PARTICIPLE_PASSIVE",
         "verbType": "STRONG | I_ALEF | I_NUN | I_YOD_WAW | II_WAW_YOD | III_HE | III_ALEF | GEMINATE | GUTURAL_R1 | GUTURAL_R2 | GUTURAL_R3",
+        "rootClassification": "string | null — Lexical root classification when it DIFFERS from verbType behavior. Example: for הלך (root Pe-He that behaves like Pe-Yod), set verbType='I_YOD_WAW' and rootClassification='Pe-He (פ״ה) — se comporta como Pe-Yod en esta forma'. For most verbs where identity = behavior, set null.",
         "person": 1 | 2 | 3 | null,
         "gender": "M | F | C | null",
         "number": "S | P | D | null",
@@ -51,7 +52,13 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
       "nominalMorphology": {
         "gender": "M | F | C | null",
         "number": "S | P | D | null",
-        "state": "ABSOLUTE | CONSTRUCT | null"
+        "state": "ABSOLUTE | CONSTRUCT | null",
+        "person": "1 | 2 | 3 | null",
+        "suffix": {
+          "person": "1 | 2 | 3 | null",
+          "gender": "M | F | C | null",
+          "number": "S | P | D | null"
+        }
       },
       "morphemes": [
         {
@@ -71,6 +78,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
       "binyan": "QAL | NIFAL | PIEL | PUAL | HITPAEL | HIFIL | HOFAL",
       "verbForm": "PERFECT | IMPERFECT | WAYYIQTOL | ...",
       "verbType": "STRONG | I_NUN | ...",
+      "rootClassification": "string | null — same as in verbMorphology",
       "temporalValue": "string",
       "pgn": "string — e.g. '3ms', '2fp'"
     }
@@ -95,8 +103,8 @@ CRITICAL RULES:
 - Do NOT include markdown, code fences, or any text outside the JSON object.
 - lexicalNotes MUST be an array. Return [] if no idiomatic observations exist.
 - literalTranslation MUST remain literal even when a phrase is an idiom. Do not apply idiomatic meaning there.
-- PASEQ (Unicode U+05C0, the vertical bar cantillation separator): When this character appears after a word in the source text, include it at the END of the "hebrewText" string for that word. Do NOT strip it. Example: if the source has the word for "he said" followed by a paseq, the hebrewText must end with that U+05C0 character.
-- MAQAF (Unicode U+05BE, the Hebrew hyphen that joins words): Words connected by a maqaf MUST be split into separate word objects in the "words" array, one object per lexical unit. The maqaf character (U+05BE) MUST be appended to the end of the "hebrewText" of the FIRST word. The second word is a normal independent entry. This preserves lexical granularity while keeping the prosodic bond visible.
+- MAQAF (Unicode U+05BE, the Hebrew hyphen that joins words): Words connected by a maqaf MUST be split into separate word objects in the "words" array, one object per lexical unit. Ensure the "hebrewText" of the FIRST word includes the maqaf at the end, but DO NOT duplicate the maqaf if the source text already has it.
+- SOF PASUQ (Unicode U+05C3 ׃) and PASEQ (Unicode U+05C0 ׀) are verse-level punctuation marks, NOT part of any individual word. Do NOT include them in any word's "hebrewText" or in any morpheme "text" field. They are handled separately by the rendering pipeline.
 `;
 
 // ── Knowledge context formatter ───────────────────────────────────────────────

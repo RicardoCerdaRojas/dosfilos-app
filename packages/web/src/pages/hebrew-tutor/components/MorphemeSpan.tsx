@@ -20,9 +20,9 @@ import React from 'react';
 import type { MorphemeSegment, MorphemeRole } from '@dosfilos/domain';
 import { cn } from '@/lib/utils';
 
-export type MorphemeCategory = 'prefix' | 'root' | 'suffix' | 'vowelMark' | 'dagesh' | 'neutral';
+export type MorphemeCategory = 'prefix' | 'root' | 'suffix' | 'vowel_a' | 'vowel_ei' | 'vowel_ou' | 'sheva' | 'vowel_generic' | 'dagesh' | 'neutral';
 
-export function getMorphemeCategory(role: string | MorphemeRole): MorphemeCategory {
+export function getMorphemeCategory(role: string | MorphemeRole, text?: string): MorphemeCategory {
   if (!role) return 'neutral';
   
   if ([
@@ -31,7 +31,16 @@ export function getMorphemeCategory(role: string | MorphemeRole): MorphemeCatego
   ].includes(role)) return 'prefix';
 
   if (['ROOT_R1', 'ROOT_R2', 'ROOT_R3'].includes(role)) return 'root';
-  if (['THEME_VOWEL'].includes(role)) return 'vowelMark';
+  
+  if (['THEME_VOWEL'].includes(role)) {
+    if (!text) return 'vowel_generic';
+    if (text.includes('\u05B7') || text.includes('\u05B8')) return 'vowel_a';
+    if (text.includes('\u05B6') || text.includes('\u05B5') || text.includes('\u05B4')) return 'vowel_ei';
+    if (text.includes('\u05B9') || text.includes('\u05BB') || text.includes('\u05D5\u05BC')) return 'vowel_ou';
+    if (text.includes('\u05B0') || text.includes('\u05B1') || text.includes('\u05B2') || text.includes('\u05B3')) return 'sheva';
+    return 'vowel_generic';
+  }
+
   if (['DAGESH_FORTE'].includes(role)) return 'dagesh';
 
   if ([
@@ -46,27 +55,38 @@ export const MORPHEME_TEXT_STYLES: Record<MorphemeCategory, string> = {
   prefix:    'text-blue-500 dark:text-blue-400',
   root:      'text-foreground',
   suffix:    'text-violet-500 dark:text-violet-400',
-  vowelMark: 'text-amber-500 dark:text-amber-400',
-  dagesh:    'text-red-500 dark:text-red-400',
+  vowel_a:   'text-red-500 dark:text-red-400',
+  vowel_ei:  'text-green-500 dark:text-green-400',
+  vowel_ou:  'text-orange-500 dark:text-orange-400',
+  sheva:     'text-purple-500 dark:text-purple-400',
+  vowel_generic: 'text-amber-500 dark:text-amber-400',
+  dagesh:    'text-[#928854]',
   neutral:   'text-muted-foreground',
 };
 
 export const MORPHEME_HIGHLIGHT_STYLES: Record<MorphemeCategory, string> = {
-  // Translucent background with text-foreground to protect reading
   prefix:    'bg-blue-500/15 text-foreground rounded-sm',
-  root:      'text-foreground', // Root is usually left plain or lightly tinted
+  root:      'text-foreground',
   suffix:    'bg-violet-500/15 text-foreground rounded-sm',
-  vowelMark: 'bg-amber-500/15 text-foreground rounded-sm',
-  dagesh:    'bg-red-500/15 text-foreground rounded-sm',
-  neutral:   'text-muted-foreground',
+  vowel_a:   'bg-red-500/15 text-foreground rounded-sm',
+  vowel_ei:  'bg-green-500/15 text-foreground rounded-sm',
+  vowel_ou:  'bg-orange-500/15 text-foreground rounded-sm',
+  sheva:     'bg-purple-500/15 text-foreground rounded-sm',
+  vowel_generic: 'bg-amber-500/15 text-foreground rounded-sm',
+  dagesh:    'bg-[#928854]/20 text-foreground rounded-sm',
+  neutral:   'bg-muted/50 text-foreground rounded-sm',
 };
 
 export const MORPHEME_BADGE_STYLES: Record<MorphemeCategory, string> = {
   prefix:    'bg-blue-500/10 border-blue-500/30 text-blue-800 dark:text-blue-300',
   root:      'bg-muted/40 border-border text-foreground',
   suffix:    'bg-violet-500/10 border-violet-500/30 text-violet-800 dark:text-violet-300',
-  vowelMark: 'bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300',
-  dagesh:    'bg-red-500/10 border-red-500/30 text-red-800 dark:text-red-300',
+  vowel_a:   'bg-red-500/10 border-red-500/30 text-red-800 dark:text-red-300',
+  vowel_ei:  'bg-green-500/10 border-green-500/30 text-green-800 dark:text-green-300',
+  vowel_ou:  'bg-orange-500/10 border-orange-500/30 text-orange-800 dark:text-orange-300',
+  sheva:     'bg-purple-500/10 border-purple-500/30 text-purple-800 dark:text-purple-300',
+  vowel_generic: 'bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300',
+  dagesh:    'bg-[#928854]/10 border-[#928854]/30 text-[#928854]',
   neutral:   'bg-muted/40 border-border text-muted-foreground',
 };
 
@@ -126,7 +146,7 @@ export const MorphemeSpan: React.FC<MorphemeSpanProps> = ({
           <span
             key={i}
             title={disableNativeTooltip ? undefined : (seg.label || seg.role)}
-            className={cn(!disableColors && styles[getMorphemeCategory(seg.role)], "px-[1px]")}
+            className={cn(!disableColors && styles[getMorphemeCategory(seg.role, seg.text)], "px-[1px]")}
           >
             {seg.text}
           </span>

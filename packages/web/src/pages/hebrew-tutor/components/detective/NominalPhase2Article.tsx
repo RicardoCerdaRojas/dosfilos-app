@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DetectivePhase, MorphemeRole } from '@dosfilos/domain';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
-import { HintList } from './HintList';
+import { ProgressiveHintList } from './ProgressiveHintList';
 import { useContextualHints } from '../../hooks/useContextualHints';
 import type { WordAnalysis } from '@dosfilos/domain';
 
@@ -40,7 +40,7 @@ export const NominalPhase2Article: React.FC<NominalPhase2ArticleProps> = ({ word
         question={t('detective.phase.nominalArticle.question', { defaultValue: '¿Esta palabra tiene el artículo definido (הַ)?' })}
       />
 
-      <HintList hints={hints} />
+      <ProgressiveHintList hints={hints} />
 
       {!submitted ? (
         <div className="grid grid-cols-2 gap-4">

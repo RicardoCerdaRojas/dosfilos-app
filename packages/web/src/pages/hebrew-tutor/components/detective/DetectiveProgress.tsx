@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { CheckCircle2, XCircle, Circle, Loader2 } from 'lucide-react';
 import { DetectivePhase } from '@dosfilos/domain';
 
-type InvestigationPath = 'strong' | 'weak' | null;
+type InvestigationPath = 'strong' | 'weak' | 'nominal' | null;
 
 interface PhaseConfig {
   phase: DetectivePhase;
@@ -27,6 +27,17 @@ interface PhaseConfig {
   /** Visual step number (1-6) */
   step: number;
 }
+
+export const NOMINAL_PHASE_CONFIGS: Record<DetectivePhase, Omit<PhaseConfig, 'step'>> = {
+  [DetectivePhase.NOMINAL_CLASSIFY]: { phase: DetectivePhase.NOMINAL_CLASSIFY, label: 'Categoría', icon: '' },
+  [DetectivePhase.NOMINAL_ARTICLE]:  { phase: DetectivePhase.NOMINAL_ARTICLE,  label: 'Artículo',  icon: '' },
+  [DetectivePhase.NOMINAL_PERSON]:   { phase: DetectivePhase.NOMINAL_PERSON,   label: 'Persona',   icon: '' },
+  [DetectivePhase.NOMINAL_GENDER]:   { phase: DetectivePhase.NOMINAL_GENDER,   label: 'Género',    icon: '' },
+  [DetectivePhase.NOMINAL_NUMBER]:   { phase: DetectivePhase.NOMINAL_NUMBER,   label: 'Número',    icon: '' },
+  [DetectivePhase.NOMINAL_STATE]:    { phase: DetectivePhase.NOMINAL_STATE,    label: 'Estado',    icon: '' },
+  [DetectivePhase.NOMINAL_SUFFIX]:   { phase: DetectivePhase.NOMINAL_SUFFIX,   label: 'Sufijo',    icon: '' },
+  [DetectivePhase.TRANSLATION]:      { phase: DetectivePhase.TRANSLATION,      label: 'Traducción',icon: '' },
+} as const;
 
 // ── Phase configurations per path ─────────────────────────────────────────────
 
@@ -39,15 +50,17 @@ const getStrongPhases = (t: any): PhaseConfig[] => [
   { phase: DetectivePhase.COLORS,        label: t('detective.progress.phases.colors', { defaultValue: 'Los Colores' }),   icon: '', step: 3 },
   { phase: DetectivePhase.DAGESH,        label: t('detective.progress.phases.dagesh', { defaultValue: 'Dagesh' }),        icon: '', step: 4 },
   { phase: DetectivePhase.BINYAN,        label: t('detective.progress.phases.binyan', { defaultValue: 'Binyan' }),        icon: '', step: 5 },
-  { phase: DetectivePhase.STRONG_CONFIRM,label: t('detective.progress.phases.strongConfirm', { defaultValue: 'Clasificación' }), icon: '', step: 6 },
-  { phase: DetectivePhase.TRANSLATION,   label: t('detective.progress.phases.translation', { defaultValue: 'Traducción' }),   icon: '', step: 7 },
+  { phase: DetectivePhase.VERB_FORM,     label: t('detective.progress.phases.verbForm', { defaultValue: 'Forma Verbal' }), icon: '', step: 6 },
+  { phase: DetectivePhase.STRONG_CONFIRM,label: t('detective.progress.phases.strongConfirm', { defaultValue: 'Clasificación' }), icon: '', step: 7 },
+  { phase: DetectivePhase.TRANSLATION,   label: t('detective.progress.phases.translation', { defaultValue: 'Traducción' }),   icon: '', step: 8 },
 ];
 
 const getWeakPhases = (t: any): PhaseConfig[] => [
   { phase: DetectivePhase.PREFORMATIVE, label: t('detective.progress.phases.preformative', { defaultValue: 'Preformativo' }), icon: '', step: 3 },
   { phase: DetectivePhase.WEAK_ROOT,    label: t('detective.progress.phases.weakRoot', { defaultValue: 'Raíz Débil' }),   icon: '', step: 4 },
   { phase: DetectivePhase.WEAK_BINYAN,  label: t('detective.progress.phases.weakBinyan', { defaultValue: 'Binyan' }),       icon: '', step: 5 },
-  { phase: DetectivePhase.TRANSLATION,  label: t('detective.progress.phases.translation', { defaultValue: 'Traducción' }),  icon: '', step: 6 },
+  { phase: DetectivePhase.VERB_FORM,    label: t('detective.progress.phases.verbForm', { defaultValue: 'Forma Verbal' }),  icon: '', step: 6 },
+  { phase: DetectivePhase.TRANSLATION,  label: t('detective.progress.phases.translation', { defaultValue: 'Traducción' }),  icon: '', step: 7 },
 ];
 
 /** Placeholder phases shown before TRIAGE determines the path */
@@ -68,6 +81,9 @@ interface DetectiveProgressProps {
   currentPhase: DetectivePhase;
   completedPhases: PhaseStatus[];
   activePath: InvestigationPath;
+  customPhases?: PhaseConfig[];
+  /** Phases to exclude from the sidebar (e.g., PREFORMATIVE for Perfect forms) */
+  skipPhases?: Set<DetectivePhase>;
 }
 
 type PhaseState = 'pending' | 'active' | 'correct' | 'incorrect';
@@ -76,18 +92,27 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
   currentPhase,
   completedPhases,
   activePath,
+  customPhases,
+  skipPhases,
 }) => {
   const { t } = useTranslation('hebrewTutor');
 
   // Build the visible phase list based on the current path
-  const pathPhases: PhaseConfig[] = activePath === 'strong'
-    ? getStrongPhases(t)
-    : activePath === 'weak'
-      ? getWeakPhases(t)
-      : getPendingPathPhases(t);
+  const pathPhases: PhaseConfig[] = activePath === 'nominal'
+    ? (customPhases || [])
+    : activePath === 'strong'
+      ? getStrongPhases(t)
+      : activePath === 'weak'
+        ? getWeakPhases(t)
+        : getPendingPathPhases(t);
 
-  const sharedPhases = getSharedPhases(t);
-  const allPhases: PhaseConfig[] = [...sharedPhases, ...pathPhases];
+  const sharedPhases = activePath === 'nominal' ? [] : getSharedPhases(t);
+  const rawPhases: PhaseConfig[] = [...sharedPhases, ...pathPhases];
+
+  // Filter out skipped phases and re-number steps
+  const allPhases: PhaseConfig[] = rawPhases
+    .filter(p => !skipPhases?.has(p.phase))
+    .map((p, i) => ({ ...p, step: i + 1 }));
 
   const getState = (phase: DetectivePhase): PhaseState => {
     // Placeholder phases are always pending
@@ -106,9 +131,11 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
           mb-3 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-center
           ${activePath === 'strong'
             ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
-            : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'}
+            : activePath === 'nominal'
+              ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300'
+              : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'}
         `}>
-          {activePath === 'strong' ? t('detective.progress.strongPathBadge', { defaultValue: '💪 Camino Fuerte' }) : t('detective.progress.weakPathBadge', { defaultValue: '🔬 Camino Débil' })}
+          {activePath === 'strong' ? t('detective.progress.strongPathBadge', { defaultValue: '💪 Camino Fuerte' }) : activePath === 'nominal' ? t('detective.progress.nominalPathBadge', { defaultValue: '🏷️ Camino Nominal' }) : t('detective.progress.weakPathBadge', { defaultValue: '🔬 Camino Débil' })}
         </div>
       )}
 
@@ -127,9 +154,11 @@ export const DetectiveProgress: React.FC<DetectiveProgressProps> = ({
                 mx-1 mb-2 mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest text-center
                 ${activePath === 'strong'
                   ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}
+                  : activePath === 'nominal'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}
               `}>
-                {activePath === 'strong' ? t('detective.progress.strongVerbLabel', { defaultValue: 'Verbo Fuerte' }) : t('detective.progress.weakVerbLabel', { defaultValue: 'Verbo Débil' })}
+                {activePath === 'strong' ? t('detective.progress.strongVerbLabel', { defaultValue: 'Verbo Fuerte' }) : activePath === 'nominal' ? t('detective.progress.nominalLabel', { defaultValue: 'Nominal' }) : t('detective.progress.weakVerbLabel', { defaultValue: 'Verbo Débil' })}
               </div>
             )}
 

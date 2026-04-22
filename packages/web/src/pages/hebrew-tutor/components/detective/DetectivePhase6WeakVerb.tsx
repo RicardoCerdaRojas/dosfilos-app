@@ -49,29 +49,29 @@ const getGutturalOptions = (t: any): GutturalOption[] => [
     type: VerbType.STRONG,
     label: t('detective.phase6.options.strong.label', { defaultValue: 'Ninguna — Fuerte Puro' }),
     rootTemplate: 'פָּקַד',
-    description: t('detective.phase6.options.strong.desc', { defaultValue: 'Las 3 radicales son consonantes regulares sin efectos vocálicos especiales' }),
-    indicator: t('detective.phase6.options.strong.indicator', { defaultValue: 'Sin dagesh compensatorio, sin vocal hatef en la raíz' }),
+    description: t('detective.phase6.options.strong.desc', { defaultValue: 'La raíz no contiene ninguna letra gutural.' }),
+    indicator: t('detective.phase6.options.strong.indicator', { defaultValue: 'Comportamiento regular en todas sus conjugaciones.' }),
   },
   {
     type: VerbType.GUTURAL_R1,
     label: t('detective.phase6.options.r1.label', { defaultValue: 'Gutural en R1 (Pe)' }),
     rootTemplate: 'עָמַד',
-    description: t('detective.phase6.options.r1.desc', { defaultValue: 'Primera radical gutural (א ה ח ע ר) — afecta las vocales que preceden al verbo' }),
-    indicator: t('detective.phase6.options.r1.indicator', { defaultValue: 'Shevá compuesto (hatef) bajo la gutural inicial en vez de shevá simple' }),
+    description: t('detective.phase6.options.r1.desc', { defaultValue: 'Primera radical de la raíz es gutural (א ה ח ע ר).' }),
+    indicator: t('detective.phase6.options.r1.indicator', { defaultValue: 'Efecto común: Rechaza shevá simple inicial y prefiere shevá compuesto (hatef), aunque a veces la gutural queda silente (quiescente).' }),
   },
   {
     type: VerbType.GUTURAL_R2,
     label: t('detective.phase6.options.r2.label', { defaultValue: 'Gutural en R2 (Ayin)' }),
     rootTemplate: 'בָּחַר',
-    description: t('detective.phase6.options.r2.desc', { defaultValue: 'Segunda radical gutural — impide dagesh forte en Piel/Pual; fuerza compensación vocal' }),
-    indicator: t('detective.phase6.options.r2.indicator', { defaultValue: 'Ausencia de dagesh forte en R2 aunque el binyan lo requeriría; vocal larga compensatoria' }),
+    description: t('detective.phase6.options.r2.desc', { defaultValue: 'Segunda radical de la raíz es gutural.' }),
+    indicator: t('detective.phase6.options.r2.indicator', { defaultValue: 'Efecto común: Impide dagesh forte en Piel/Pual/Hitpael, forzando alargamiento compensatorio de la vocal anterior.' }),
   },
   {
     type: VerbType.GUTURAL_R3,
     label: t('detective.phase6.options.r3.label', { defaultValue: 'Gutural en R3 (Lamed)' }),
     rootTemplate: 'שָׁמַע',
-    description: t('detective.phase6.options.r3.desc', { defaultValue: 'Tercera radical gutural — genera patah furtivo antes de la gutural final' }),
-    indicator: t('detective.phase6.options.r3.indicator', { defaultValue: 'Patah furtivo (patah breve) antes de la gutural en la sílaba final' }),
+    description: t('detective.phase6.options.r3.desc', { defaultValue: 'Tercera radical de la raíz es gutural.' }),
+    indicator: t('detective.phase6.options.r3.indicator', { defaultValue: 'Efecto común: Exige una vocal Clase-A (pataj) antes de ella, a veces insertando un "pataj furtivo" al final de la palabra.' }),
   },
 ];
 
@@ -86,20 +86,43 @@ export const DetectivePhase6WeakVerb: React.FC<DetectivePhase6WeakVerbProps> = (
   const [submitted, setSubmitted]           = useState(false);
 
   const gutturalOptions = getGutturalOptions(t);
-  const expectedType    = word.verbMorphology?.verbType as VerbType | undefined ?? VerbType.STRONG;
+  
+  // Normalize the expected type for this Strong/Guttural check.
+  // Since the Triage now correctly routes weak verbs to the Weak path,
+  // this phase will ONLY receive: STRONG, I_ALEF, GUTURAL_R1/R2/R3.
+  let expectedType = (word.verbMorphology?.verbType as VerbType | undefined) ?? VerbType.STRONG;
+
+  // Normalize Alef types to their corresponding guttural positions
+  if (expectedType === VerbType.I_ALEF) expectedType = VerbType.GUTURAL_R1;
+  if (expectedType === VerbType.III_ALEF) expectedType = VerbType.GUTURAL_R3;
+
   const isGutturalType  = expectedType === VerbType.GUTURAL_R1 ||
                           expectedType === VerbType.GUTURAL_R2 ||
                           expectedType === VerbType.GUTURAL_R3;
 
-  // Final answer is the guttural option selected, or STRONG if radicals not intact
-  // (edge case: weak verb that reached strong path — send raw selectedType)
-  const finalAnswer = radicalsIntact === false
-    ? (selectedType ?? VerbType.STRONG)
-    : (selectedType ?? VerbType.STRONG);
+  // ── Evaluation logic ────────────────────────────────────────────────────
+  // Simple and clean: the student says radicals are intact (they should be,
+  // since only strong/guttural verbs reach this phase), then identifies
+  // the guttural type or confirms it's a pure strong verb.
 
-  const isCorrect    = finalAnswer === expectedType;
-  const correctLabel = gutturalOptions.find(o => o.type === expectedType) ?? gutturalOptions[0];
-  const canSubmit    = radicalsIntact !== null && selectedType !== null;
+  let isCorrect = false;
+  let correctLabel = gutturalOptions.find(o => o.type === expectedType) ?? gutturalOptions[0];
+
+  if (radicalsIntact === false) {
+    // Wrong — all radicals ARE intact for strong/guttural verbs
+    isCorrect = false;
+    correctLabel = gutturalOptions.find(o => o.type === expectedType) ?? gutturalOptions[0];
+  } else if (radicalsIntact === true) {
+    // Correct first step — now check if they identified the right type
+    isCorrect = selectedType === expectedType;
+    if (!isCorrect) {
+      correctLabel = gutturalOptions.find(o => o.type === expectedType) ?? gutturalOptions[0];
+    }
+  }
+
+  // Final answer for the summary panel
+  const finalAnswer = radicalsIntact === false ? expectedType : (selectedType ?? VerbType.STRONG);
+  const canSubmit    = radicalsIntact !== null && (radicalsIntact === false || selectedType !== null);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

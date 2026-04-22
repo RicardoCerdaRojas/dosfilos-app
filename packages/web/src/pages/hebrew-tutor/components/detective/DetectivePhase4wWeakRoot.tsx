@@ -18,6 +18,11 @@ import { useTranslation } from 'react-i18next';
 interface DetectivePhase4wWeakRootProps {
   word: WordAnalysis;
   onComplete: (answer: string) => void;
+  /**
+   * The morphologically cross-validated verb type from the orchestrator.
+   * Overrides the raw backend verbType when morpheme evidence contradicts it.
+   */
+  effectiveVerbType?: string;
 }
 
 interface WeaknessOption {
@@ -77,12 +82,15 @@ const getWeaknessOptions = (t: any): WeaknessOption[] => [
 export const DetectivePhase4wWeakRoot: React.FC<DetectivePhase4wWeakRootProps> = ({
   word,
   onComplete,
+  effectiveVerbType,
 }) => {
   const { t } = useTranslation('hebrewTutor');
   const [selected, setSelected]   = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const expectedVerbType = word.verbMorphology?.verbType ?? '';
+  // Use the orchestrator-provided effective type (cross-validated against morphemes)
+  // rather than the raw backend value, which may be incorrect.
+  const expectedVerbType = effectiveVerbType ?? word.verbMorphology?.verbType ?? '';
   const weaknessOptions = getWeaknessOptions(t);
 
   const isCorrect = (): boolean => {

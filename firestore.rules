@@ -107,6 +107,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Hebrew Tutor - Detective Sessions
+    // Stores completed detective sessions for analytics and progress tracking
+    match /hebrewDetectiveSessions/{sessionId} {
+      allow get: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow list: if isAuthenticated() || isSuperAdmin();
+      allow update, delete: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+    }
+
     // Greek Tutor - Word Cache (Global lemma-based cache)
     // Stores gloss and grammatical category for Greek lemmata
     // Shared across all users to reduce API costs by ~50-60%

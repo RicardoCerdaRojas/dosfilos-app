@@ -16,6 +16,7 @@ import type { WordAnalysis } from '@dosfilos/domain';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SearchIcon } from 'lucide-react';
+import { getGrammaticalCategoryLabel } from '../../utils/grammarLabels';
 
 interface ParticleQuickPanelProps {
   readonly word: WordAnalysis | null;
@@ -25,20 +26,6 @@ interface ParticleQuickPanelProps {
   readonly onComplete: (translation: string) => void;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  preposition: 'Preposición',
-  conjunction: 'Conjunción',
-  article: 'Artículo',
-  particle: 'Partícula',
-  adverb: 'Adverbio',
-  interjection: 'Interjección',
-  numeral: 'Numeral',
-};
-
-function getCategoryLabel(category?: string): string {
-  if (!category) return 'Partícula';
-  return CATEGORY_LABELS[category.toLowerCase()] ?? category;
-}
 
 export const ParticleQuickPanel: React.FC<ParticleQuickPanelProps> = ({
   word,
@@ -88,7 +75,7 @@ export const ParticleQuickPanel: React.FC<ParticleQuickPanelProps> = ({
                 {t('discovery.particle.title', { defaultValue: 'Identificación Rápida' })}
               </SheetTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {getCategoryLabel(word.category)}
+                {getGrammaticalCategoryLabel(word.category, 'Partícula')}
               </p>
             </div>
           </div>
@@ -110,7 +97,7 @@ export const ParticleQuickPanel: React.FC<ParticleQuickPanelProps> = ({
 
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-medium">
-                  {getCategoryLabel(word.category)}
+                  {getGrammaticalCategoryLabel(word.category, 'Partícula')}
                 </span>
                 {word.transliteration && (
                   <span className="text-xs text-muted-foreground italic">

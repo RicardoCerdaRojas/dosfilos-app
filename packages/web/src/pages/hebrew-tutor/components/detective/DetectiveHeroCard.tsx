@@ -19,6 +19,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WordAnalysis } from '@dosfilos/domain';
 import { MorphemeSpan } from '../MorphemeSpan';
+import { useDetectiveContext } from './DetectiveContext';
+
+/** Minimal word info needed for the adjacent context display */
+interface AdjacentWord {
+  hebrewText: string;
+  transliteration?: string;
+}
 
 interface DetectiveHeroCardProps {
   /** Full word analysis, used for verb display and root information */
@@ -29,6 +36,11 @@ interface DetectiveHeroCardProps {
   name: string;
   /** The primary question the student must answer in this phase */
   question: string;
+  /** Adjacent words for contextual display (muted, non-interactive) */
+  adjacentWords?: {
+    prev?: AdjacentWord | null;
+    next?: AdjacentWord | null;
+  };
 }
 
 export const DetectiveHeroCard: React.FC<DetectiveHeroCardProps> = ({
@@ -36,28 +48,55 @@ export const DetectiveHeroCard: React.FC<DetectiveHeroCardProps> = ({
   step,
   name,
   question,
+  adjacentWords: adjacentWordsProp,
 }) => {
   const { t } = useTranslation('hebrewTutor');
+  const { adjacentWords: adjacentWordsCtx } = useDetectiveContext();
+  // Props take precedence over context
+  const adjacentWords = adjacentWordsProp ?? adjacentWordsCtx;
   return (
   <div className="mb-5 rounded-2xl overflow-hidden border border-border bg-gradient-to-b from-indigo-50/60 via-slate-50/40 to-background dark:from-indigo-950/25 dark:via-slate-900/20 dark:to-background">
 
-    {/* ── ① Verb hero ───────────────────────────────────────────────────────── */}
+    {/* ── ① Verb hero with adjacent context ─────────────────────────────── */}
     <div className="px-6 pt-6 pb-3 text-center">
-      {/* The verb itself — large, morpheme-coloured, RTL */}
+      {/* Adjacent words + main word row (RTL) */}
       <div
         dir="rtl"
         lang="he"
-        className="text-5xl font-hebrew leading-relaxed text-foreground mb-1"
+        className="flex items-baseline justify-center gap-4"
       >
-        {word.morphemes && word.morphemes.length > 0 ? (
-          <MorphemeSpan segments={word.morphemes} variant="text" />
-        ) : (
-          word.hebrewText
+        {/* Next word (RTL: appears on the right → left visually) */}
+        {adjacentWords?.next && (
+          <span
+            className="text-xl font-hebrew text-muted-foreground/30 select-none shrink-0 hidden sm:inline"
+            title={adjacentWords.next.transliteration}
+          >
+            {adjacentWords.next.hebrewText}
+          </span>
+        )}
+
+        {/* Main word — large, morpheme-coloured */}
+        <span className="text-5xl font-hebrew leading-relaxed text-foreground">
+          {word.morphemes && word.morphemes.length > 0 ? (
+            <MorphemeSpan segments={word.morphemes} variant="text" />
+          ) : (
+            word.hebrewText
+          )}
+        </span>
+
+        {/* Previous word (RTL: appears on the left → right visually) */}
+        {adjacentWords?.prev && (
+          <span
+            className="text-xl font-hebrew text-muted-foreground/30 select-none shrink-0 hidden sm:inline"
+            title={adjacentWords.prev.transliteration}
+          >
+            {adjacentWords.prev.hebrewText}
+          </span>
         )}
       </div>
       {/* Transliteration */}
       {word.transliteration && (
-        <p className="text-xs italic text-muted-foreground tracking-wide">
+        <p className="text-xs italic text-muted-foreground tracking-wide mt-1">
           {word.transliteration}
         </p>
       )}

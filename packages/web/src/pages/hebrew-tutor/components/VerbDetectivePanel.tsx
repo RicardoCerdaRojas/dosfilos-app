@@ -29,6 +29,7 @@ import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import type { WordAnalysis, DetectivePhaseResult } from '@dosfilos/domain';
 import { DetectivePhase, VerbType } from '@dosfilos/domain';
 import { useHebrewTutor } from '../HebrewTutorProvider';
+import { useFirebase } from '@/context/firebase-context';
 import { DetectiveProgress } from './detective/DetectiveProgress';
 import { DetectivePhase1Observe }        from './detective/DetectivePhase1Observe';
 import { DetectivePhase2Triage }         from './detective/DetectivePhase2Triage';
@@ -41,7 +42,9 @@ import { DetectivePhase3wPreformative }  from './detective/DetectivePhase3wPrefo
 import { DetectivePhase4wWeakRoot }      from './detective/DetectivePhase4wWeakRoot';
 import { DetectivePhase5wWeakBinyan }    from './detective/DetectivePhase5wWeakBinyan';
 import { DetectivePhaseTranslation }     from './detective/DetectivePhaseTranslation';
+import { DetectivePhaseVerbForm }        from './detective/DetectivePhaseVerbForm';
 import { DetectiveResultSummary }        from './detective/DetectiveResultSummary';
+import { DetectiveContextProvider }      from './detective/DetectiveContext';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -63,6 +66,10 @@ type InvestigationPath = 'strong' | 'weak' | null;
  * Phases 1-2 are shared; the rest diverge based on TRIAGE result.
  * The weak path ends at WEAK_BINYAN (Phase 5) — no Phase 6 needed
  * since the verb type was already established in WEAK_ROOT (Phase 4).
+ *
+ * The weak path is DYNAMIC: the PREFORMATIVE phase is only included
+ * when the verb actually has a preformative morpheme (Imperfect forms).
+ * Perfect, Infinitive, Imperative, and Participle forms skip it.
  */
 const STRONG_PATH: DetectivePhase[] = [
   DetectivePhase.OBSERVE,
@@ -70,28 +77,53 @@ const STRONG_PATH: DetectivePhase[] = [
   DetectivePhase.COLORS,
   DetectivePhase.DAGESH,
   DetectivePhase.BINYAN,
+  DetectivePhase.VERB_FORM,
   DetectivePhase.STRONG_CONFIRM,
   DetectivePhase.TRANSLATION,
 ];
 
-const WEAK_PATH: DetectivePhase[] = [
-  DetectivePhase.OBSERVE,
-  DetectivePhase.TRIAGE,
-  DetectivePhase.PREFORMATIVE,
-  DetectivePhase.WEAK_ROOT,
-  DetectivePhase.WEAK_BINYAN,
-  DetectivePhase.TRANSLATION,
-];
+/** Checks whether the word has a preformative morpheme (Imperfect prefix). */
+function hasPreformative(word: WordAnalysis): boolean {
+  return (word.morphemes ?? []).some(m => m.role === 'PREFORMATIVE');
+}
+
+/** Builds the weak path sequence, conditionally including PREFORMATIVE. */
+function getWeakPath(word: WordAnalysis): DetectivePhase[] {
+  const phases = [
+    DetectivePhase.OBSERVE,
+    DetectivePhase.TRIAGE,
+  ];
+  if (hasPreformative(word)) {
+    phases.push(DetectivePhase.PREFORMATIVE);
+  }
+  phases.push(
+    DetectivePhase.WEAK_ROOT,
+    DetectivePhase.WEAK_BINYAN,
+    DetectivePhase.VERB_FORM,
+    DetectivePhase.TRANSLATION,
+  );
+  return phases;
+}
 
 /** Returns the next phase for the given path, or null if session is complete. */
 function getNextPhase(
   current: DetectivePhase,
   path: InvestigationPath,
+  word: WordAnalysis,
 ): DetectivePhase | null {
-  const sequence = path === 'weak' ? WEAK_PATH : STRONG_PATH;
+  const sequence = path === 'weak' ? getWeakPath(word) : STRONG_PATH;
   const idx = sequence.indexOf(current);
   if (idx === -1 || idx >= sequence.length - 1) return null;
   return sequence[idx + 1];
+}
+
+/** Returns the set of phases that should be skipped for this word. */
+function getSkippedPhases(word: WordAnalysis, path: InvestigationPath): Set<DetectivePhase> {
+  const skipped = new Set<DetectivePhase>();
+  if (path === 'weak' && !hasPreformative(word)) {
+    skipped.add(DetectivePhase.PREFORMATIVE);
+  }
+  return skipped;
 }
 
 // ── Resize hooks ─────────────────────────────────────────────────────────────
@@ -225,6 +257,11 @@ interface VerbDetectivePanelProps {
   onClose: () => void;
   /** Discovery Mode callback — fired when the full investigation finishes. */
   onDiscoveryComplete?: (translation: string, score: number) => void;
+  /** Adjacent words for contextual display in the hero card */
+  adjacentWords?: {
+    prev?: { hebrewText: string; transliteration?: string } | null;
+    next?: { hebrewText: string; transliteration?: string } | null;
+  };
 }
 
 // ── Investigation path routing ────────────────────────────────────────────────
@@ -234,37 +271,107 @@ interface VerbDetectivePanelProps {
  *
  * - STRONG:      fully regular — no missing/transformed radicals
  * - I_ALEF:      Pe-Alef verbs behave near-regularly (alef quiesces quietly)
+ * - III_ALEF:    Lamed-Alef verbs show all 3 radicals as consonants. The final
+ *                alef is quiescent but visually present — a student correctly
+ *                observes "3 clear radicals" in triage. The STRONG_CONFIRM phase
+ *                normalises III_ALEF → GUTURAL_R3 for the sub-classification step.
  * - GUTURAL_R*:  all 3 radicals present; root is altered by vocal compensation,
  *                not by radical loss — therefore classified as strong in TRIAGE
- *
- * III_ALEF is intentionally excluded: the quiescent final alef causes
- * visible vowel irregularities (reduced final vowel, hirek-yod in Qal Impf.)
- * that require the PREFORMATIVE + WEAK_ROOT diagnostic steps.
  */
 const STRONG_VERB_TYPES = new Set<VerbType>([
   VerbType.STRONG,
   VerbType.I_ALEF,
+  VerbType.III_ALEF,
   VerbType.GUTURAL_R1,
   VerbType.GUTURAL_R2,
   VerbType.GUTURAL_R3,
 ]);
 
+/**
+ * Cross-validates the backend's verbType against the actual morpheme evidence.
+ *
+ * Strategy:
+ *  1. Strip the lexical root (word.root) down to its base consonants (הלך → [ה,ל,ך]).
+ *  2. Extract the consonants actually present in root morphemes (ROOT_R1/R2/R3).
+ *  3. Find which root consonant is missing from the surface form.
+ *  4. Map the missing position to a grammatical weak-verb type.
+ *
+ * This is fully pattern-based and does NOT hardcode specific verbs.
+ * It handles the case where the backend re-numbers radicals in shortened forms
+ * (e.g., הלך → לֵךְ: backend labels ל as ROOT_R1, ך as ROOT_R3, making it look
+ * like R2 is missing — but comparing against the root ה·ל·ך shows R1 (ה) dropped).
+ */
+function getEffectiveVerbClassification(word: WordAnalysis): {
+  verbType: VerbType;
+  path: 'strong' | 'weak';
+} {
+  const backendType = (word.verbMorphology?.verbType as VerbType | undefined) ?? VerbType.STRONG;
+  const morphemes = word.morphemes ?? [];
+
+  // ── Step 1: Extract base root consonants from the lexical root string ─────
+  // Hebrew base consonants are U+05D0–U+05EA. Strip vowels, cantillation, dagesh.
+  const rootConsonants = (word.root ?? '')
+    .replace(/[\u0591-\u05C7\uFB1E]/g, '')  // strip niqqud, cantillation, dagesh
+    .split('')
+    .filter(c => c >= '\u05D0' && c <= '\u05EA');
+
+  // ── Step 2: Consonants actually present in root morphemes ─────────────────
+  const rootMorphemeRoles = new Set(['ROOT_R1', 'ROOT_R2', 'ROOT_R3']);
+  const presentConsonants = new Set<string>();
+  for (const m of morphemes) {
+    if (!rootMorphemeRoles.has(m.role)) continue;
+    const clean = (m.text ?? '').replace(/[\u0591-\u05C7\uFB1E]/g, '');
+    for (const c of clean) {
+      if (c >= '\u05D0' && c <= '\u05EA') presentConsonants.add(c);
+    }
+  }
+
+  // ── Step 3: Find missing root consonant(s) ────────────────────────────────
+  const missingPositions: number[] = [];
+  for (let i = 0; i < rootConsonants.length; i++) {
+    if (!presentConsonants.has(rootConsonants[i])) {
+      missingPositions.push(i); // 0=R1, 1=R2, 2=R3
+    }
+  }
+
+  const missingCount = missingPositions.length;
+
+  // ── Step 4: If backend says strong but consonants are missing → override ──
+  if (STRONG_VERB_TYPES.has(backendType) && missingCount > 0) {
+    let inferredType = backendType;
+    const firstMissing = missingPositions[0];
+
+    if (firstMissing === 0) {
+      // R1 dropped: Pe-Yod/Waw (הלך→לך, ילד→לד) or Pe-Nun (נתן→תן)
+      // Distinguish: if R1 is נ → I_NUN, otherwise I_YOD_WAW
+      const r1 = rootConsonants[0];
+      inferredType = r1 === '\u05E0' ? VerbType.I_NUN : VerbType.I_YOD_WAW;
+    } else if (firstMissing === 1) {
+      // R2 absent / acting as vowel: Hollow verb (קום→קם, שים→שם)
+      inferredType = VerbType.II_WAW_YOD;
+    } else if (firstMissing === 2) {
+      // R3 dropped: Lamed-He (גלה→גל) or Lamed-Alef (מצא→מצ)
+      inferredType = VerbType.III_HE;
+    }
+
+    console.warn(
+      `[Detective] Backend classified "${word.root}" as ${backendType} but ` +
+      `${missingCount} root consonant(s) missing at position(s) [${missingPositions.join(',')}]. ` +
+      `Overriding to ${inferredType} (weak path).`
+    );
+
+    return { verbType: inferredType, path: 'weak' };
+  }
+
+  // Backend classification is consistent with morpheme evidence
+  const path = STRONG_VERB_TYPES.has(backendType) ? 'strong' as const : 'weak' as const;
+  return { verbType: backendType, path };
+}
+
 // ── Preformative vowel derivation (Lección 8 table) ──────────────────────────
 
-/**
- * Maps a weak VerbType to the expected preformative vowel ID
- * as defined in Farfán's Lección 8 diagnostic table.
- *
- * The returned string must match the `id` field in DetectivePhase3wPreformative
- * VOWEL_OPTIONS array.
- */
 function getExpectedPreformativeVowel(word: WordAnalysis): string {
-  // 1. Try to find the exact vowel in the preformative morpheme
-  const preformative = word.morphemes?.find(m => m.role === 'PREFIX_VERB' || m.role === 'PREFIX_PRONOMINAL' || m.role === 'PREFIX');
-  
-  if (preformative && preformative.text) {
-    const text = preformative.text;
-    // Note: order matters. Check specific/composed vowels first.
+  const extractVowel = (text: string): string | null => {
     if (text.includes('\u05B8') && text.includes('\u05D5')) return 'jolem-vav'; // Kamatz male / Jolem vav approximation
     if (text.includes('\u05B9') && text.includes('\u05D5')) return 'jolem-vav'; // Holam haser + vav
     if (text.includes('\u05B9')) return 'jolem-vav'; // Holam haser
@@ -273,9 +380,51 @@ function getExpectedPreformativeVowel(word: WordAnalysis): string {
     if (text.includes('\u05B4')) return 'jireq'; // Jireq
     if (text.includes('\u05B7')) return 'pataj'; // Pataj
     if (text.includes('\u05B0')) return 'sheva'; // Sheva
+    return null;
+  };
+
+  // 1. Try to find the exact vowel in the preformative morpheme (strictly verb/pronominal prefix)
+  const preformative = word.morphemes?.find(m => m.role === 'PREFIX_VERB' || m.role === 'PREFIX_PRONOMINAL');
+  if (preformative && preformative.text) {
+    const vowel = extractVowel(preformative.text);
+    if (vowel) return vowel;
   }
 
-  // 2. Fallback to theoretical derivation if morpheme parsing fails
+  // 2. Scan the full word text for the preformative consonant (א, י, ת, נ)
+  // This correctly captures visual vowel reductions caused by Waw Consecutives.
+  const text = word.hebrewText;
+  const eitan = ['\u05D0', '\u05D9', '\u05EA', '\u05E0']; // Alef, Yod, Tav, Nun
+  let preformativeCharIndex = -1;
+
+  for (let i = 0; i < text.length; i++) {
+    if (eitan.includes(text[i])) {
+      // The preformative should be near the start of the word (within first 5 chars)
+      // to avoid matching radical letters.
+      if (i <= 4) {
+        preformativeCharIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (preformativeCharIndex !== -1) {
+    let j = preformativeCharIndex + 1;
+    let vowelStr = '';
+    // Collect all diacritics immediately following the preformative consonant
+    while (j < text.length && text.charCodeAt(j) >= 0x0591 && text.charCodeAt(j) <= 0x05C7) {
+      vowelStr += text[j];
+      j++;
+    }
+    // Also include following waw if it might be a holam vav
+    if (j < text.length && text[j] === '\u05D5') {
+      vowelStr += text[j];
+    }
+    
+    const vowel = extractVowel(vowelStr);
+    if (vowel) return vowel;
+  }
+
+  // 3. Fallback to theoretical derivation if visual parsing completely fails
   const verbType = word.verbMorphology?.verbType as VerbType | undefined;
   switch (verbType) {
     case VerbType.II_WAW_YOD:  return 'qamets';
@@ -297,11 +446,9 @@ function getCorrectAnswer(word: WordAnalysis, phase: DetectivePhase): string {
     case DetectivePhase.OBSERVE:
       return 'verb';
     case DetectivePhase.TRIAGE: {
-      // Strong path: STRONG, I_ALEF, and all GUTURAL types keep 3 radicals.
-      // III_ALEF goes to weak path because the quiescent final alef is
-      // morphologically significant and requires preformative analysis.
-      const verbType = morph?.verbType as VerbType | undefined;
-      return verbType && STRONG_VERB_TYPES.has(verbType) ? 'strong' : 'weak';
+      // Uses morphological cross-validation to override backend misclassifications
+      const { path } = getEffectiveVerbClassification(word);
+      return path;
     }
 
     // Strong path
@@ -321,6 +468,10 @@ function getCorrectAnswer(word: WordAnalysis, phase: DetectivePhase): string {
       return morph?.verbType ?? '';
     case DetectivePhase.WEAK_BINYAN:
       return morph?.binyan ?? '';
+
+    // Both paths — verb form
+    case DetectivePhase.VERB_FORM:
+      return morph?.verbForm ?? '';
 
     // Both paths — synthesis
     case DetectivePhase.TRANSLATION:
@@ -361,11 +512,20 @@ function evaluateAnswer(
     phase === DetectivePhase.WEAK_BINYAN
   ) return userAnswer === morph?.binyan;
 
-  // Verb type (strong confirm + weak root)
-  if (
-    phase === DetectivePhase.STRONG_CONFIRM ||
-    phase === DetectivePhase.WEAK_ROOT
-  ) return userAnswer === morph?.verbType;
+  // Verb type — weak root: use cross-validated verbType so the student is evaluated
+  // against observable morpheme evidence, not the backend's potentially wrong classification.
+  if (phase === DetectivePhase.WEAK_ROOT) {
+    const { verbType: effectiveType } = getEffectiveVerbClassification(word);
+    return userAnswer === effectiveType;
+  }
+
+  // Strong confirm: compare directly against backend verbType (always reliable here
+  // since only genuine strong/guttural verbs reach this phase after our Triage fix)
+  if (phase === DetectivePhase.STRONG_CONFIRM) return userAnswer === morph?.verbType;
+
+  // Verb form — both paths
+  if (phase === DetectivePhase.VERB_FORM)
+    return userAnswer === morph?.verbForm;
 
   // Translation synthesis — both paths
   if (phase === DetectivePhase.TRANSLATION)
@@ -382,8 +542,10 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
   isOpen,
   onClose,
   onDiscoveryComplete,
+  adjacentWords,
 }) => {
   const { saveDetectiveSession } = useHebrewTutor();
+  const { user } = useFirebase();
 
   // Outer panel width (dragged from left edge)
   const {
@@ -451,22 +613,23 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
     setPhaseResults(updatedResults);
     setCompletedPhases(prev => [...prev, { phase, correct: isCorrect }]);
 
-    // If TRIAGE completed, determine path from student's answer
+    // If TRIAGE completed, determine path from the CORRECT grammatical classification.
+    // The Triage component always emits the correct path (not the student's raw guess).
     let resolvedPath = activePath;
     if (phase === DetectivePhase.TRIAGE) {
       resolvedPath = userAnswer === 'strong' ? 'strong' : 'weak';
       setActivePath(resolvedPath);
     }
 
-    const nextPhase = getNextPhase(phase, resolvedPath);
+    const nextPhase = getNextPhase(phase, resolvedPath, word);
 
     if (nextPhase === null) {
-      // All 6 phases complete — persist to Firestore
+      // All phases complete — persist to Firestore
       setIsSaving(true);
       try {
         const saved = await saveDetectiveSession.execute({
           kind: 'verb',
-          userId: 'anonymous',
+          userId: user?.uid ?? 'anonymous',
           tenantId: 'global',
           wordText: word.hebrewText,
           verseReference,
@@ -497,10 +660,18 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
 
   if (!word) return null;
 
-  const totalPhases = 6;
+  const currentSequence = activePath === 'weak' ? getWeakPath(word) : STRONG_PATH;
+  const totalPhases = currentSequence.length;
   const progressPercent = (completedPhases.length / totalPhases) * 100;
 
+  // Memoize context value to avoid unnecessary re-renders
+  const detectiveCtxValue = React.useMemo(
+    () => ({ adjacentWords }),
+    [adjacentWords],
+  );
+
   return (
+    <DetectiveContextProvider value={detectiveCtxValue}>
     <Sheet open={isOpen} onOpenChange={open => { if (!open) onClose(); }}>
       <SheetContent
         side="right"
@@ -580,6 +751,7 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
                 currentPhase={currentPhase}
                 completedPhases={completedPhases}
                 activePath={activePath}
+                skipPhases={getSkippedPhases(word, activePath)}
               />
 
               {/* ── Inner drag handle (right edge of sidebar) ─────── */}
@@ -630,6 +802,7 @@ export const VerbDetectivePanel: React.FC<VerbDetectivePanelProps> = ({
         </div>
       </SheetContent>
     </Sheet>
+    </DetectiveContextProvider>
   );
 };
 
@@ -684,8 +857,25 @@ const PhaseRenderer: React.FC<PhaseRendererProps> = ({ word, phase, onComplete }
     // ── Shared ──────────────────────────────────────────────────────────────
     case DetectivePhase.OBSERVE:
       return <DetectivePhase1Observe word={word} onComplete={wrap(DetectivePhase.OBSERVE)} />;
-    case DetectivePhase.TRIAGE:
-      return <DetectivePhase2Triage  word={word} onComplete={wrap(DetectivePhase.TRIAGE)} />;
+    case DetectivePhase.TRIAGE: {
+      const { verbType, path: expectedTriagePath } = getEffectiveVerbClassification(word);
+      console.log('[Detective TRIAGE]', {
+        hebrewText: word.hebrewText,
+        root: word.root,
+        rawVerbType: word.verbMorphology?.verbType,
+        effectiveVerbType: verbType,
+        expectedPath: expectedTriagePath,
+        morphemes: word.morphemes?.map(m => `${m.role}:${m.text}`),
+      });
+      return (
+        <DetectivePhase2Triage
+          word={word}
+          expectedPath={expectedTriagePath}
+          verbType={verbType}
+          onComplete={wrap(DetectivePhase.TRIAGE)}
+        />
+      );
+    }
 
     // ── Strong path ──────────────────────────────────────────────────────────
     case DetectivePhase.COLORS:
@@ -706,10 +896,22 @@ const PhaseRenderer: React.FC<PhaseRendererProps> = ({ word, phase, onComplete }
           expectedVowelId={getExpectedPreformativeVowel(word)}
         />
       );
-    case DetectivePhase.WEAK_ROOT:
-      return <DetectivePhase4wWeakRoot     word={word} onComplete={wrap(DetectivePhase.WEAK_ROOT)} />;
+    case DetectivePhase.WEAK_ROOT: {
+      const { verbType: effectiveVerbType } = getEffectiveVerbClassification(word);
+      return (
+        <DetectivePhase4wWeakRoot
+          word={word}
+          effectiveVerbType={effectiveVerbType}
+          onComplete={wrap(DetectivePhase.WEAK_ROOT)}
+        />
+      );
+    }
     case DetectivePhase.WEAK_BINYAN:
       return <DetectivePhase5wWeakBinyan   word={word} onComplete={wrap(DetectivePhase.WEAK_BINYAN)} />;
+
+    // ── Shared: verb form identification — both paths ─────────────────────
+    case DetectivePhase.VERB_FORM:
+      return <DetectivePhaseVerbForm   word={word} onComplete={wrap(DetectivePhase.VERB_FORM)} />;
 
     // ── Synthesis — both paths ────────────────────────────────────────────
     case DetectivePhase.TRANSLATION:

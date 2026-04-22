@@ -266,5 +266,265 @@ export const DEFAULT_HINTS: HintDefinition[] = [
     order: 1,
   },
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // NOMINAL HINTS — Progressive Disclosure (levels 1-3)
+  //
+  // Design principle: NO hint at any level should give the answer directly.
+  //  Level 1 → Open-ended observational question (forces the student to look)
+  //  Level 2 → Morphological clue pointing at a region of the word
+  //  Level 3 → Remedial: shown only AFTER an incorrect answer
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── Phase 30: NOMINAL_CLASSIFY ────────────────────────────────────────────
+
+  // Level 1: Guide observation — does the word show verbal or nominal features?
+  {
+    id: 'local_nominal_classify_observe',
+    phase: 30,
+    severity: 'info',
+    title: 'Observa la forma',
+    body: '¿Ves algún **preformativo verbal** (י, ת, א, נ) antes de la raíz? ¿La palabra parece expresar una _acción_ o nombrar una _entidad_? Busca marcas morfológicas que revelen su función.',
+    conditions: [HintConditionKey.ALWAYS],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+    level: 1,
+  },
+
+  // Level 2: Deeper morphological guidance — for nouns
+  {
+    id: 'local_nominal_classify_morph_noun',
+    phase: 30,
+    severity: 'tip',
+    title: 'Sin marcas verbales',
+    body: 'No hay preformativo, ni vocales temáticas de conjugación, ni aformativo de persona. Las consonantes radicales forman un **patrón nominal**. ¿Qué tipo de palabra nombra algo sin expresar acción?',
+    conditions: [HintConditionKey.IS_NOUN],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // Level 2: Deeper morphological guidance — for adjectives
+  {
+    id: 'local_nominal_classify_morph_adj',
+    phase: 30,
+    severity: 'tip',
+    title: 'Patrón similar a un sustantivo',
+    body: 'Esta palabra comparte forma con los sustantivos pero funciona como _modificador_ en la cláusula. Observa su relación con la palabra adyacente: ¿la describe o la califica?',
+    conditions: [HintConditionKey.IS_ADJECTIVE],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // Level 2: Deeper morphological guidance — for pronouns
+  {
+    id: 'local_nominal_classify_morph_pron',
+    phase: 30,
+    severity: 'tip',
+    title: 'Forma independiente corta',
+    body: 'Fíjate si esta es una forma independiente reconocible (como הוּא, אֲנִי, הֵם). Los pronombres personales tienen formas fijas que **no derivan** de una raíz trilítera verbal.',
+    conditions: [HintConditionKey.IS_PRONOUN],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // Level 2: Deeper morphological guidance — for particles
+  {
+    id: 'local_nominal_classify_morph_part',
+    phase: 30,
+    severity: 'tip',
+    title: 'Palabra funcional',
+    body: 'Esta palabra es muy corta y no tiene raíz trilítera reconocible. Las palabras funcionales (preposiciones, conjunciones, partículas) conectan o relacionan otras palabras sin variar en género ni número.',
+    conditions: [HintConditionKey.IS_PARTICLE],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // ── Phase 31: NOMINAL_ARTICLE ─────────────────────────────────────────────
+
+  {
+    id: 'local_nominal_article_observe',
+    phase: 31,
+    severity: 'info',
+    title: 'Observa el inicio',
+    body: 'Busca al inicio de la palabra el patrón **הַ** (he + pataj) seguido de dagesh forte en la siguiente consonante. ¿Lo ves?',
+    conditions: [HintConditionKey.ALWAYS],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+    level: 1,
+  },
+
+  {
+    id: 'local_nominal_article_gutural',
+    phase: 31,
+    severity: 'tip',
+    title: 'Ante guturales',
+    body: 'Ante consonantes guturales (א, ה, ח, ע, ר), el dagesh forte **no aparece** y la vocal del artículo puede cambiar a qamets (הָ) o segol (הֶ). No te dejes engañar por la ausencia del dagesh.',
+    conditions: [HintConditionKey.ALWAYS],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // ── Phase 32: NOMINAL_GENDER ──────────────────────────────────────────────
+
+  {
+    id: 'local_nominal_gender_observe',
+    phase: 32,
+    severity: 'info',
+    title: 'Examina la terminación',
+    body: 'Para determinar el género, busca la **marca morfológica femenina**: una **ה con qamets** (הָ) final, o una **ת** (tav) final. ¡Cuidado! No toda ה al final indica femenino — muchos nombres propios y otras palabras terminan en ה sin que sea una marca de género.',
+    conditions: [HintConditionKey.ALWAYS],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+    level: 1,
+  },
+
+  {
+    id: 'local_nominal_gender_fem_clue',
+    phase: 32,
+    severity: 'tip',
+    title: 'Marcas femeninas',
+    body: 'Las terminaciones **ה ָ** y **ת** son las marcas más comunes del femenino en hebreo. Si ves una de estas, es una señal fuerte.',
+    conditions: [HintConditionKey.IS_FEMININE],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  {
+    id: 'local_nominal_gender_masc_clue',
+    phase: 32,
+    severity: 'tip',
+    title: 'Forma no marcada',
+    body: 'En hebreo, el masculino es la **forma no marcada**: si no ves terminación femenina (ה ָ, ת), es probable que sea masculino. Pero atención: existen excepciones.',
+    conditions: [HintConditionKey.IS_MASCULINE],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // ── Phase 33: NOMINAL_NUMBER ──────────────────────────────────────────────
+
+  {
+    id: 'local_nominal_number_observe',
+    phase: 33,
+    severity: 'info',
+    title: 'Observa la terminación',
+    body: '¿Ves **ים** (yod-mem) o **וֹת** (waw-tav) al final? ¿O quizás **ַיִם** (pataj-yod-mem)? Estas terminaciones son clave para el número.',
+    conditions: [HintConditionKey.ALWAYS],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+    level: 1,
+  },
+
+  {
+    id: 'local_nominal_number_plural_clue',
+    phase: 33,
+    severity: 'tip',
+    title: 'Terminaciones plurales',
+    body: 'La terminación **ים** indica plural masculino y **וֹת** indica plural femenino. Aunque existen excepciones (como אָבוֹת, plural femenino de un sustantivo masculino).',
+    conditions: [HintConditionKey.IS_PLURAL],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  {
+    id: 'local_nominal_number_dual_clue',
+    phase: 33,
+    severity: 'tip',
+    title: 'Terminación dual',
+    body: 'La terminación **ַיִם** (con pataj) es la marca del dual: indica cosas que vienen en pares naturales (manos, ojos, pies).',
+    conditions: [HintConditionKey.IS_DUAL],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // ── Phase 34: NOMINAL_STATE ───────────────────────────────────────────────
+
+  {
+    id: 'local_nominal_state_observe',
+    phase: 34,
+    severity: 'info',
+    title: 'Relación con la siguiente palabra',
+    body: '¿Esta palabra está unida a la siguiente por un maqaf (guion)? ¿Notas alguna **reducción vocálica** comparada con la forma de diccionario? Esto es clave para determinar su estado.',
+    conditions: [HintConditionKey.ALWAYS],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+    level: 1,
+  },
+
+  {
+    id: 'local_nominal_state_construct_clue',
+    phase: 34,
+    severity: 'tip',
+    title: 'Señales del constructo',
+    body: 'En estado constructo, las vocales largas se acortan y las terminaciones cambian: **ים → י**, **וֹת → וֹת**. La palabra "pierde peso" porque está ligada a la siguiente.',
+    conditions: [HintConditionKey.IS_CONSTRUCT],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  {
+    id: 'local_nominal_state_absolute_clue',
+    phase: 34,
+    severity: 'tip',
+    title: 'Forma independiente',
+    body: 'El estado absoluto es la forma independiente — la que encuentras en el diccionario, sin reducciones vocálicas ni dependencia de otra palabra.',
+    conditions: [],
+    excludeConditions: [HintConditionKey.IS_CONSTRUCT],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
+  // ── Phase 36: NOMINAL_SUFFIX ──────────────────────────────────────────────
+
+  {
+    id: 'local_nominal_suffix_observe',
+    phase: 36,
+    severity: 'info',
+    title: 'Busca el sufijo',
+    body: '¿Ves letras adicionales al final de la palabra, después de la raíz y sus terminaciones de género/número? Los sufijos pronominales indican posesión.',
+    conditions: [HintConditionKey.HAS_PRONOMINAL_SUFFIX],
+    excludeConditions: [],
+    enabled: true,
+    order: 1,
+    level: 1,
+  },
+
+  {
+    id: 'local_nominal_suffix_clue',
+    phase: 36,
+    severity: 'tip',
+    title: 'Sufijos comunes',
+    body: 'Algunos sufijos frecuentes: **יִ** = 1cs ("mi"), **ךָ** = 2ms ("tu"), **וֹ** = 3ms ("su"), **ם** / **הֶם** = 3mp ("su" de ellos). Observa la terminación e identifica la persona.',
+    conditions: [HintConditionKey.HAS_PRONOMINAL_SUFFIX],
+    excludeConditions: [],
+    enabled: true,
+    order: 2,
+    level: 2,
+  },
+
 ];
 

@@ -33,56 +33,158 @@ interface ColorOption {
   checkFn: (morphemes: readonly MorphemeSegment[]) => boolean;
 }
 
+
+// ── Helper: is this morpheme a prefixed particle (not a verbal morpheme)? ──
+const PARTICLE_PREFIX_ROLES = new Set([
+  MorphemeRole.PREPOSITION_PREFIX,
+  MorphemeRole.CONJUNCTION_PREFIX,
+  MorphemeRole.WAW_CONJUNCTIVE,
+  MorphemeRole.WAW_CONSECUTIVE,
+]);
+
+const VERBAL_PREFIX_ROLES = new Set([
+  MorphemeRole.PREFIX_STEM,
+  MorphemeRole.PREFORMATIVE,
+]);
+
+const ROOT_ROLES = new Set([
+  MorphemeRole.ROOT_R1,
+  MorphemeRole.ROOT_R2,
+  MorphemeRole.ROOT_R3,
+]);
+
+// ── Unicode-aware vowel detection helpers ─────────────────────────────────────
+
+/** Hebrew combining marks that are true vowel indicators (not dagesh/meteg) */
+const HEBREW_VOWEL_POINTS = new Set([
+  0x05B0, 0x05B1, 0x05B2, 0x05B3, // Sheva family
+  0x05B4, 0x05B5, 0x05B6,         // E/I class
+  0x05B7, 0x05B8,                  // A class
+  0x05B9, 0x05BA, 0x05BB,         // O/U class (holam, holam haser, qubuts)
+]);
+
+/** Returns true if any code point in the range is a Hebrew combining mark. */
+function isHebrewCombining(cp: number): boolean {
+  return (cp >= 0x0591 && cp <= 0x05BD) || (cp >= 0x05BF && cp <= 0x05C7);
+}
+
+/**
+ * Check if NFC-normalized text contains any of the given vowel code points.
+ * Safe for single-codepoint vowel indicators (patah, hireq, etc.).
+ */
+function hasVowelPoint(text: string, ...codePoints: number[]): boolean {
+  const normalized = text.normalize('NFC');
+  return codePoints.some(cp => normalized.includes(String.fromCodePoint(cp)));
+}
+
+/**
+ * Detects a true shureq (וּ as a vowel), distinguishing it from a
+ * consonantal vav with dagesh forte (e.g. waw consecutive וִּ).
+ *
+ * A shureq is: vav (U+05D5) carrying ONLY dagesh (U+05BC) with
+ * NO other vowel point on the same base character. If the vav also
+ * carries hireq, patah, etc., its dagesh is dagesh forte, not shureq.
+ */
+function hasShureq(text: string): boolean {
+  const s = text.normalize('NFC');
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) !== 0x05D5) continue; // Not a vav
+    let hasDagesh = false;
+    let hasVowel = false;
+    let j = i + 1;
+    while (j < s.length && isHebrewCombining(s.charCodeAt(j))) {
+      const cp = s.charCodeAt(j);
+      if (cp === 0x05BC) hasDagesh = true;
+      if (HEBREW_VOWEL_POINTS.has(cp)) hasVowel = true;
+      j++;
+    }
+    // Shureq: vav has dagesh but NO other vowel point
+    if (hasDagesh && !hasVowel) return true;
+  }
+  return false;
+}
+
+/**
+ * Returns morphemes that belong to the verbal form proper,
+ * excluding prefixed particles (prepositions, waw, conjunctions).
+ */
+function verbalMorphemes(ms: readonly MorphemeSegment[]): MorphemeSegment[] {
+  return ms.filter(m => !PARTICLE_PREFIX_ROLES.has(m.role));
+}
+
 const getColorOptions = (t: any): ColorOption[] => [
+  // ── Prefixed particles ──────────────────────────────────────────────────
+  {
+    id: 'preposition',
+    label: t('detective.phase.colors.options.preposition.label', { defaultValue: 'Preposición / Partícula prefijada (Celeste)' }),
+    hex: '#0ea5e9', // sky-500 — distinct from any vowel color
+    description: t('detective.phase.colors.options.preposition.description', { defaultValue: 'Preposición o conjunción unida al verbo (ל, ב, כ, מ, ו). ¡Diferente al preformativo verbal!' }),
+    checkFn: (ms) => ms.some(m => PARTICLE_PREFIX_ROLES.has(m.role)),
+  },
+  // ── Verbal preformatives & binyan prefixes ──────────────────────────────
+  // Color: TEAL — visually distinct from vowel-green (E/I) so students
+  // don't confuse a binyan prefix with a vowel pattern.
   {
     id: 'prefix',
-    label: t('detective.phase.colors.options.prefix.label', { defaultValue: 'Prefijo de Binyan (Verde)' }),
-    hex: '#22c55e', // text-green-500
-    description: t('detective.phase.colors.options.prefix.description', { defaultValue: 'Preformativos o prefijos característicos (נ, ה, י, ת, etc.)' }),
-    checkFn: (ms) => ms.some(m => [MorphemeRole.PREFIX_STEM, MorphemeRole.PREFORMATIVE].includes(m.role)),
+    label: t('detective.phase.colors.options.prefix.label', { defaultValue: 'Prefijo de Binyan (Marrón)' }),
+    hex: '#59382F', // dark brown — visually distinct from all vowel colors
+    description: t('detective.phase.colors.options.prefix.description', { defaultValue: 'Preformativos de persona/número (י, ת, א, נ) o prefijos de binyan (נ de Nifal, ה de Hifil, הת de Hitpael)' }),
+    checkFn: (ms) => ms.some(m => VERBAL_PREFIX_ROLES.has(m.role)),
   },
   {
     id: 'root',
-    label: t('detective.phase.colors.options.root.label', { defaultValue: 'Raíz Intacta' }),
+    label: t('detective.phase.colors.options.root.label', { defaultValue: 'Raíz Intacta (Gris)' }),
     hex: '#64748b', // slate-500
     description: t('detective.phase.colors.options.root.description', { defaultValue: 'Letras radicales que contienen el significado base (sin color fonético)' }),
-    checkFn: (ms) => ms.some(m => [MorphemeRole.ROOT_R1, MorphemeRole.ROOT_R2, MorphemeRole.ROOT_R3].includes(m.role)),
+    checkFn: (ms) => ms.some(m => ROOT_ROLES.has(m.role)),
   },
+  // Color: YELLOW — visually distinct from orange (Clase O/U) so students
+  // don't confuse the dagesh with a vowel.
   {
     id: 'dagesh',
-    label: t('detective.phase.colors.options.dagesh.label', { defaultValue: 'Dagesh Forte' }),
-    hex: '#b91c1c', // text-red-700
-    description: t('detective.phase.colors.options.dagesh.description', { defaultValue: 'Duplicación de la consonante, típicamente en R2' }),
+    label: t('detective.phase.colors.options.dagesh.label', { defaultValue: 'Dagesh Forte (Dorado)' }),
+    hex: '#928854', // custom olive/gold requested by user to avoid vowel clash
+    description: t('detective.phase.colors.options.dagesh.description', { defaultValue: 'Duplicación de la consonante, típicamente en R2 (clave para Piel, Pual, Hitpael)' }),
     checkFn: (ms) => ms.some(m => m.role === MorphemeRole.DAGESH_FORTE),
   },
+  // ── Vowel classes — Prof. Farfán's official color coding ────────────────
+  // These four colors are the ones defined in 1_codigo-colores.md and must
+  // remain consistent so students can memorize the system.
+  //
+  // All vowel checks use NFC-normalized text to avoid combining character
+  // ordering issues. Shureq uses a dedicated helper to prevent false
+  // positives from consonantal vav + dagesh forte (e.g. waw consecutive).
   {
     id: 'vowel_a',
     label: t('detective.phase.colors.options.vowelA.label', { defaultValue: 'Vocal Clase A (Rojo)' }),
-    hex: '#ef4444',
+    hex: '#ef4444', // red-500
     description: t('detective.phase.colors.options.vowelA.description', { defaultValue: 'Pataj ( ַ ) o Qamets ( ָ )' }),
-    checkFn: (ms) => ms.some(m => m.text.includes('\u05B7') || m.text.includes('\u05B8')),
+    checkFn: (ms) => ms.some(m => hasVowelPoint(m.text, 0x05B7, 0x05B8)),
   },
   {
     id: 'vowel_ei',
     label: t('detective.phase.colors.options.vowelEI.label', { defaultValue: 'Vocal Clase E/I (Verde)' }),
-    hex: '#22c55e',
+    hex: '#22c55e', // green-500 — official Prof. Farfán color
     description: t('detective.phase.colors.options.vowelEI.description', { defaultValue: 'Segol ( ֶ ), Tsere ( ֵ ) o Jireq ( ִ )' }),
-    checkFn: (ms) => ms.some(m => m.text.includes('\u05B6') || m.text.includes('\u05B5') || m.text.includes('\u05B4')),
+    checkFn: (ms) => ms.some(m => hasVowelPoint(m.text, 0x05B6, 0x05B5, 0x05B4)),
   },
   {
     id: 'vowel_ou',
     label: t('detective.phase.colors.options.vowelOU.label', { defaultValue: 'Vocal Clase O/U (Naranja)' }),
-    hex: '#f97316', // text-orange-500
+    hex: '#f97316', // orange-500 — official Prof. Farfán color
     description: t('detective.phase.colors.options.vowelOU.description', { defaultValue: 'Jolem ( ֹ ), Qibbuts ( ֻ ) o Shureq ( וּ )' }),
-    checkFn: (ms) => ms.some(m => m.text.includes('\u05B9') || m.text.includes('\u05BB') || m.text.includes('\u05D5\u05BC')),
+    checkFn: (ms) => ms.some(m =>
+      hasVowelPoint(m.text, 0x05B9, 0x05BB) || hasShureq(m.text)
+    ),
   },
   {
     id: 'sheva',
     label: t('detective.phase.colors.options.sheva.label', { defaultValue: 'Shevá / Reducidas (Púrpura)' }),
-    hex: '#a855f7', // text-purple-500
+    hex: '#a855f7', // purple-500 — official Prof. Farfán color
     description: t('detective.phase.colors.options.sheva.description', { defaultValue: 'Shevá ( ְ ) y semivocales ( ֱ ,  ֲ ,  ֳ )' }),
-    checkFn: (ms) => ms.some(m => m.text.includes('\u05B0') || m.text.includes('\u05B1') || m.text.includes('\u05B2') || m.text.includes('\u05B3')),
+    checkFn: (ms) => ms.some(m => hasVowelPoint(m.text, 0x05B0, 0x05B1, 0x05B2, 0x05B3)),
   },
+
 ];
 
 /** Derive the "expected" sequence from the word's actual morphemes and text */
@@ -95,6 +197,7 @@ function deriveExpectedColorSequence(morphemes: readonly MorphemeSegment[], opti
   }
   return sequence;
 }
+
 
 export const DetectivePhase2Colors: React.FC<DetectivePhase2ColorsProps> = ({ word, onComplete }) => {
   const { t } = useTranslation('hebrewTutor');

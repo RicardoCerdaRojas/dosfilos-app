@@ -38,6 +38,14 @@ export interface VerbMorphology {
   readonly binyan: Binyan;
   readonly verbForm: VerbForm;
   readonly verbType: VerbType;
+  /**
+   * Lexical root classification — the actual identity of the root.
+   * Separates root identity from morphological behavior.
+   * Example: הלך → rootClassification = "Pe-He (פ״ה)"
+   *          verbType = I_YOD_WAW (because it behaves like Pe-Yod)
+   * When absent, verbType is used for both display and routing.
+   */
+  readonly rootClassification?: string;
   readonly person?: Person;
   readonly gender?: Gender;
   readonly number?: GrammaticalNumber;
@@ -52,6 +60,12 @@ export interface NominalMorphology {
   readonly gender?: Gender;
   readonly number?: GrammaticalNumber;
   readonly state?: NominalState;
+  readonly person?: Person;
+  readonly suffix?: {
+    readonly person: Person;
+    readonly gender: Gender;
+    readonly number: GrammaticalNumber;
+  };
 }
 
 /**
@@ -119,6 +133,8 @@ export interface VerbTableEntry {
   readonly binyan: Binyan;
   readonly verbForm: VerbForm;
   readonly verbType: VerbType;
+  /** Lexical root classification, e.g. "Pe-He (פ״ה)" when it differs from verbType behavior. */
+  readonly rootClassification?: string;
   readonly temporalValue: string;
   /** Person, gender, number abbreviated label, e.g. "3ms" */
   readonly pgn: string;

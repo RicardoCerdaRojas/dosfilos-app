@@ -87,17 +87,24 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
         {/* ── Top row: category + hebrew + root + lex + gloss ── */}
         <div className="flex flex-col gap-2 p-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-start justify-between gap-4">
-            <span
-              dir="rtl"
-              lang="he"
-              className="text-[24px] font-hebrew font-medium text-slate-900 dark:text-slate-100 leading-none tracking-wide"
-              style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}
-            >
-              {word.hebrewText}
-            </span>
+            <div className="flex flex-col">
+              <span
+                dir="rtl"
+                lang="he"
+                className="text-[24px] font-hebrew font-medium text-slate-900 dark:text-slate-100 leading-none tracking-wide"
+                style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}
+              >
+                {word.hebrewText}
+              </span>
+              {word.transliteration && (
+                <span className="text-[11px] italic text-slate-500 dark:text-slate-400 mt-1">
+                  {word.transliteration}
+                </span>
+              )}
+            </div>
             {word.category && (
               <span
-                className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getCatColor(word.category)}`}
+                className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${getCatColor(word.category)}`}
               >
                 {word.category ? t(`verseAnalyzer.categories.${word.category.toUpperCase()}`, { defaultValue: word.category }) : 'PARTICLE'}
               </span>

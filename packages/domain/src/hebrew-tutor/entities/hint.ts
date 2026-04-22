@@ -60,12 +60,23 @@ export enum HintConditionKey {
   IS_PARTICIPLE        = 'IS_PARTICIPLE',
   IS_IMPERATIVE        = 'IS_IMPERATIVE',
 
-  // ── Binyan ───────────────────────────────────────────────────────────────
   IS_QAL               = 'IS_QAL',
   IS_NIFAL             = 'IS_NIFAL',
   IS_PIEL              = 'IS_PIEL',
   IS_HIFIL             = 'IS_HIFIL',
   IS_HITPAEL           = 'IS_HITPAEL',
+
+  // ── Nominal conditions ───────────────────────────────────────────────────
+  IS_NOUN              = 'IS_NOUN',
+  IS_ADJECTIVE         = 'IS_ADJECTIVE',
+  IS_PRONOUN           = 'IS_PRONOUN',
+  IS_PARTICLE          = 'IS_PARTICLE',
+  
+  IS_MASCULINE         = 'IS_MASCULINE',
+  IS_FEMININE          = 'IS_FEMININE',
+  IS_PLURAL            = 'IS_PLURAL',
+  IS_DUAL              = 'IS_DUAL',
+  IS_CONSTRUCT         = 'IS_CONSTRUCT',
 }
 
 /** Visual severity of a hint, which drives its color scheme in the UI. */
@@ -117,4 +128,15 @@ export interface HintDefinition {
 
   /** Display order within a phase. Lower = earlier. */
   readonly order: number;
+
+  /**
+   * Progressive disclosure level.
+   *  0 = always visible (default — backward compatible with existing hints)
+   *  1 = shown after student requests first hint
+   *  2 = shown after student requests second hint
+   *  3 = shown only after an incorrect answer (remedial)
+   *
+   * Omitted or 0 means the hint behaves exactly as before.
+   */
+  readonly level?: number;
 }
