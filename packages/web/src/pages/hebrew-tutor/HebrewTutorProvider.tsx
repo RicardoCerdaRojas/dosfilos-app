@@ -18,6 +18,7 @@ import {
   GetBibleNavigationUseCase,
   GetVerseTextUseCase,
   SaveDetectiveSessionUseCase,
+  UpdateVerseTranslationUseCase,
 } from '@dosfilos/application';
 
 interface HebrewTutorContextType {
@@ -26,6 +27,7 @@ interface HebrewTutorContextType {
   getVerseText: GetVerseTextUseCase;
   checkCache: (reference: string) => Promise<import('@dosfilos/domain').VerseAnalysis | null>;
   saveDetectiveSession: SaveDetectiveSessionUseCase;
+  updateVerseTranslation: UpdateVerseTranslationUseCase;
 }
 
 const HebrewTutorContext = createContext<HebrewTutorContextType | null>(null);
@@ -55,6 +57,7 @@ export const HebrewTutorProvider: React.FC<{ children: React.ReactNode }> = ({ c
       getVerseText: new GetVerseTextUseCase(provider),
       checkCache: (ref: string) => sessionRepository.getCachedAnalysis(ref),
       saveDetectiveSession: new SaveDetectiveSessionUseCase(detectiveRepository),
+      updateVerseTranslation: new UpdateVerseTranslationUseCase(sessionRepository),
     };
   }, [apiKey]);
 

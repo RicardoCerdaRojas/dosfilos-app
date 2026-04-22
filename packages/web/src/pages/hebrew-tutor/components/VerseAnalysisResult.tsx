@@ -25,17 +25,22 @@ import { StickyVerseHeader } from './StickyVerseHeader';
 import { MorphemeSpan } from './MorphemeSpan';
 import { WordTooltipContent } from './WordTooltipContent';
 import { Tooltip, TooltipTrigger } from '@/components/ui/tooltip';
-import { PaletteIcon, ActivityIcon, PrinterIcon, DownloadIcon, FileTextIcon, ScanTextIcon, BookOpenIcon, LayoutGridIcon, ScrollTextIcon, CopyIcon, CheckIcon, RefreshCwIcon, BookOpenTextIcon } from 'lucide-react';
+import { PaletteIcon, ActivityIcon, PrinterIcon, DownloadIcon, FileTextIcon, ScanTextIcon, BookOpenIcon, LayoutGridIcon, ScrollTextIcon, CopyIcon, CheckIcon, RefreshCwIcon, BookOpenTextIcon, PencilIcon, XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { VerseAnalysis, WordAnalysis, LexicalNote, LexicalNoteType } from '@dosfilos/domain';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { generateVerseMarkdown } from '../utils/exportMarkdown';
 import { toast } from 'sonner';
+import { useHebrewTutor } from '../HebrewTutorProvider';
 
 interface VerseAnalysisResultProps {
   analysis: VerseAnalysis;
+  /** Verse reference used to persist translation edits, e.g. "Jonah.3.2" */
+  verseReference?: string;
   onForceRefresh?: () => void;
   canForceRefresh?: boolean;
+  /** Called after a translation is saved so the parent can update local state */
+  onTranslationUpdate?: (updates: { literalTranslation?: string; fluidTranslation?: string }) => void;
 }
 
 // Color legend items — pedagogical vowel classes + Dagesh
@@ -50,7 +55,13 @@ const LEGEND_ITEMS = [
   { role: 'suffix',    hex: '#8B5CF6', label: 'Sufijo' },
 ];
 
-export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analysis, onForceRefresh, canForceRefresh = true }) => {
+export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
+  analysis,
+  verseReference,
+  onForceRefresh,
+  canForceRefresh = true,
+  onTranslationUpdate,
+}) => {
   const { t } = useTranslation('hebrewTutor');
   const [tutorWord, setTutorWord] = React.useState<any | null>(null);
   const [detectiveWord, setDetectiveWord] = React.useState<WordAnalysis | null>(null);
@@ -387,6 +398,9 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
             label={t('verseAnalyzer.analysis.literalTranslation')}
             text={analysis.literalTranslation}
             icon={<ScanTextIcon className="w-3.5 h-3.5" />}
+            verseReference={analysis.reference}
+            field="literalTranslation"
+            onSaved={(text) => onTranslationUpdate?.({ literalTranslation: text })}
           />
         </div>
         <div className="print:mb-4">
@@ -394,6 +408,9 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
             label={t('verseAnalyzer.analysis.fluidTranslation')}
             text={analysis.fluidTranslation}
             icon={<BookOpenIcon className="w-3.5 h-3.5" />}
+            verseReference={analysis.reference}
+            field="fluidTranslation"
+            onSaved={(text) => onTranslationUpdate?.({ fluidTranslation: text })}
           />
         </div>
       </div>
@@ -499,18 +516,61 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
   );
 };
 
-// ── Sub-component ──────────────────────────────────────────────────────────────
+// ── Sub-component ─────────────────────────────────────────────────────
 
-const TranslationPanel: React.FC<{ label: string; text: string; icon: React.ReactNode }> = ({
-  label, text, icon,
+interface TranslationPanelProps {
+  label: string;
+  text: string;
+  icon: React.ReactNode;
+  verseReference?: string;
+  field?: 'literalTranslation' | 'fluidTranslation';
+  onSaved?: (newText: string) => void;
+}
+
+const TranslationPanel: React.FC<TranslationPanelProps> = ({
+  label, text, icon, verseReference, field, onSaved,
 }) => {
+  const { updateVerseTranslation } = useHebrewTutor();
   const [copied, setCopied] = React.useState(false);
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(text);
+  const [saving, setSaving] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+
+  // Keep draft in sync if the parent text changes (e.g. on re-analysis)
+  React.useEffect(() => { setDraft(text); setEditing(false); }, [text]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(editing ? draft : text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleSave = async () => {
+    if (!verseReference || !field) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateVerseTranslation.execute({
+        reference: verseReference,
+        [field]: draft,
+      });
+      onSaved?.(draft);
+      setEditing(false);
+    } catch (_e) { /* localStorage unavailable (e.g. private mode) */
+      setSaveError('No se pudo guardar. Intenta de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setDraft(text);
+    setEditing(false);
+    setSaveError(null);
+  };
+
+  const canEdit = Boolean(verseReference && field);
 
   return (
     <div className="bg-card border border-border rounded-xl p-4">

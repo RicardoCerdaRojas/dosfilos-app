@@ -26,6 +26,7 @@ export const VerseAnalyzerPage: React.FC = () => {
     selectedBook,
     selectedChapter,
     selectedVerse,
+    verseReference,
     bookIndex,
     analysis,
     hebrewVerse,
@@ -43,6 +44,9 @@ export const VerseAnalyzerPage: React.FC = () => {
     nextVerse,
     prevVerse,
   } = useVerseAnalysis();
+
+  const [localAnalysis, setLocalAnalysis] = React.useState(analysis);
+  React.useEffect(() => { setLocalAnalysis(analysis); }, [analysis]);
 
   const currentBookName =
     HEBREW_BOOKS_CATALOG.find((b) => b.morphhbKey === selectedBook)?.nameSpanish ?? selectedBook;
@@ -137,11 +141,17 @@ export const VerseAnalyzerPage: React.FC = () => {
 
         {isAnalyzing && <HebrewLoadingTips />}
 
-        {!isAnalyzing && analysis && (
+        {!isAnalyzing && localAnalysis && (
           <VerseAnalysisResult
-            analysis={analysis}
+            analysis={localAnalysis}
+            verseReference={verseReference}
             canForceRefresh={canReanalyze}
             onForceRefresh={() => analyze(true)}
+            onTranslationUpdate={(updates) =>
+              setLocalAnalysis(prev =>
+                prev ? { ...prev, ...updates } : prev
+              )
+            }
           />
         )}
 

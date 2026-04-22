@@ -19,6 +19,8 @@ interface UseVerseAnalysisState {
   selectedVerse: number;
   /** Navigation data for the selected book */
   bookIndex: BookIndex | null;
+  /** Verse reference string, e.g. "Jonah.3.2" — used for cache updates */
+  verseReference: string;
   /** Most recent analysis result */
   analysis: VerseAnalysis | null;
   /** Raw Hebrew verse text available without AI (for preview state) */
@@ -210,6 +212,7 @@ export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActi
     selectedBook,
     selectedChapter,
     selectedVerse,
+    verseReference: `${selectedBook}.${selectedChapter}.${selectedVerse}`,
     bookIndex,
     analysis,
     hebrewVerse,
