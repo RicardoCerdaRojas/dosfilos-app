@@ -106,7 +106,7 @@ export function AppSidebar() {
     // Group 2: Planning
     [
       { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
-      { name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles },
+      ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
       { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
     ],
     // Group 3: Resources
