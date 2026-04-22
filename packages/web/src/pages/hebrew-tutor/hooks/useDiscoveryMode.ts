@@ -400,7 +400,7 @@ export function useDiscoveryMode(): UseDiscoveryModeReturn {
     if (selectedBook) {
       try {
         localStorage.removeItem(getStorageKey(selectedBook, selectedChapter, selectedVerse));
-      } catch (e) {}
+      } catch (_e) { /* localStorage unavailable (e.g. private mode) */ }
     }
   }, [selectedBook, selectedChapter, selectedVerse, getStorageKey]);
 

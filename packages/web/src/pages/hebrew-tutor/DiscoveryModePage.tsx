@@ -73,7 +73,7 @@ export const DiscoveryModePage: React.FC = () => {
   const updateTextScale = useCallback((delta: number) => {
     setTextScale(prev => {
       const next = Math.max(0.7, Math.min(2.5, prev + delta));
-      try { localStorage.setItem('discoveryTextScale', next.toString()); } catch {}
+      try { localStorage.setItem('discoveryTextScale', next.toString()); } catch (_e) { /* localStorage unavailable (e.g. private mode) */ }
       return next;
     });
   }, []);
