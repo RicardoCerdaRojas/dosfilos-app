@@ -415,6 +415,31 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
           </div>
         </div>
 
+        {/* ── Inline syntax color legend — visible only when Sintaxis On ── */}
+        {showSyntaxMarkers && (
+          <div className="mt-3 flex items-center justify-center gap-1 flex-wrap print:hidden">
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-background/60 border border-border/50 backdrop-blur-sm">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Marcas sintácticas:</span>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-emerald-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Verbo</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-cyan-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Frase prep.</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-amber-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Constructo</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-violet-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Aposición</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Sentinel: IntersectionObserver tracks this to trigger the sticky header */}
         <div ref={headerSentinelRef} aria-hidden="true" className="h-px" />
       </div>
