@@ -83,8 +83,8 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
   const [activeWordIndex, setActiveWordIndex] = React.useState<number | null>(null);
 
   // ── Text scale (persisted in localStorage) ─────────────────────────────────
-  // Steps: ~20% per jump — more perceptible than the previous ~15% increments
-  const SCALE_STEPS = [0.7, 0.85, 1.0, 1.2, 1.45] as const;
+  // Steps: ~20% per jump — 7 levels total for wide accessibility range
+  const SCALE_STEPS = [0.7, 0.85, 1.0, 1.2, 1.45, 1.75, 2.1] as const;
   const DEFAULT_SCALE_IDX = 2; // 1.0
   const [scaleIdx, setScaleIdx] = React.useState<number>(() => {
     try {
