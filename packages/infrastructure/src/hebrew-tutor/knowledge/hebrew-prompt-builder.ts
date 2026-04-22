@@ -67,7 +67,8 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
           "role": "PREFIX_STEM | PREFORMATIVE | ROOT_R1 | ROOT_R2 | ROOT_R3 | THEME_VOWEL | DAGESH_FORTE | AFFORMATIVE | PRONOMINAL_SUFFIX | DEFINITE_ARTICLE | CONSTRUCT_ENDING | PLURAL_ENDING | DUAL_ENDING | FEMININE_ENDING | WAW_CONJUNCTIVE | WAW_CONSECUTIVE | PREPOSITION_PREFIX | CONJUNCTION_PREFIX",
           "label": "string — Etiqueta detallada. OBLIGATORIO: Debe tener la misma información exacta que recognitionClues (Descripción gramatical + Letra(s) + transliteración). Ejemplo: 'Preformativo de participio Piel מְ (mə-)'."
         }
-      ]
+      ],
+      "clauseTag": "PREP_PHRASE | CONSTRUCT | APPOSITION | null — Syntactic clause marker for visual overlays. Use PREP_PHRASE for any preposition heading a prepositional phrase. Use CONSTRUCT for any noun/adjective in construct state (semikut). Use APPOSITION for a word or phrase in apposition to another. Use null for all other words."
     }
   ],
   "verbTable": [
