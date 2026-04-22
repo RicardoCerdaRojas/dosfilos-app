@@ -135,6 +135,12 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
                  <span className="text-slate-900 dark:text-slate-100 font-semibold leading-snug">{gloss}</span>
                </div>
             )}
+            {word.syntacticFunction && (
+              <div className="mt-2 flex items-start gap-2 px-2 py-1.5 rounded-lg bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/50">
+                <span className="text-[9px] uppercase tracking-widest font-bold text-indigo-500 dark:text-indigo-400 shrink-0 pt-0.5">Función</span>
+                <span className="text-[11.5px] text-indigo-800 dark:text-indigo-200 font-medium leading-snug">{word.syntacticFunction}</span>
+              </div>
+            )}
           </div>
         </div>
 

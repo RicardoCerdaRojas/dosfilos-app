@@ -103,6 +103,13 @@ export interface WordAnalysis {
   readonly morphemes: readonly MorphemeSegment[];
 
   /**
+   * Explicit syntactic clause tag used for visual overlay markers.
+   * Derived by Gemini for new analyses; absent in legacy cached analyses
+   * (the UI falls back to category/nominalMorphology.state/syntacticFunction).
+   */
+  readonly clauseTag?: 'PREP_PHRASE' | 'CONSTRUCT' | 'APPOSITION' | null;
+
+  /**
    * Optional cross-reference data from OSHB (morphhb database).
    * Visible in the UI so the user can evaluate discrepancies.
    */

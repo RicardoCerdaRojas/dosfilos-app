@@ -19,11 +19,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { VerseAnalysis } from '@dosfilos/domain';
+import { getSyntacticMark, SYNTACTIC_BORDER, SYNTACTIC_DOT } from '../utils/syntacticMark';
 
 interface StickyVerseHeaderProps {
   analysis: VerseAnalysis;
   showColors: boolean;
   showVerbMarkers: boolean;
+  showSyntaxMarkers: boolean;
   /** When true, renders hebrewText as a single unbroken string so the browser
    *  can correctly shape all diacritics (niqqud + cantillation). When false,
    *  renders via MorphemeSpan with morphological color coding. */
@@ -41,6 +43,7 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
   analysis,
   showColors,
   showVerbMarkers,
+  showSyntaxMarkers,
   fullMarks,
   sentinelRef,
   activeWordIndex,
@@ -96,9 +99,19 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
           >
             {analysis.words.map((w, i) => {
               const isVerb = !!w.verbMorphology && showVerbMarkers;
+              const syntacticMark = showSyntaxMarkers ? getSyntacticMark(w) : null;
               const isActive = activeWordIndex === i;
               // Maqaf (U+05BE ־): collapse flex gap when the previous word ends with maqaf
               const prevHasMaqaf = i > 0 && analysis.words[i - 1].hebrewText.endsWith('\u05BE');
+
+              // Border priority: active > verb > syntactic > none
+              const borderClass = isActive
+                ? 'bg-primary/15 ring-1 ring-primary/40 border-b-2 border-primary scale-105 shadow-sm'
+                : isVerb
+                  ? 'border-b-2 border-emerald-500/60 hover:bg-primary/8 hover:border-primary/60 hover:shadow-sm'
+                  : syntacticMark
+                    ? `${SYNTACTIC_BORDER[syntacticMark]} hover:shadow-sm`
+                    : 'border-b-2 border-transparent hover:bg-muted hover:border-primary/30 hover:shadow-sm';
 
               return (
                 <Tooltip key={i} delayDuration={200}>
@@ -109,17 +122,16 @@ export const StickyVerseHeader: React.FC<StickyVerseHeaderProps> = ({
                       onMouseLeave={() => onWordHover(null)}
                       style={prevHasMaqaf ? { marginInlineStart: '-0.75rem' } : undefined}
                       className={`
-                        inline-flex flex-col items-center shrink-0
+                        inline-flex flex-col items-center shrink-0 relative
                         cursor-pointer rounded-md px-1 pt-0.5
                         transition-all duration-150
-                        ${isActive
-                          ? 'bg-primary/15 ring-1 ring-primary/40 border-b-2 border-primary scale-105 shadow-sm'
-                          : isVerb
-                            ? 'border-b-2 border-emerald-500/60 hover:bg-primary/8 hover:border-primary/60 hover:shadow-sm'
-                            : 'border-b-2 border-transparent hover:bg-muted hover:border-primary/30 hover:shadow-sm'
-                        }
+                        ${borderClass}
                       `}
                     >
+                      {/* Syntactic pip dot — shown when verb underline is already in use */}
+                      {isVerb && syntacticMark && (
+                        <span className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${SYNTACTIC_DOT[syntacticMark]}`} />
+                      )}
                       {/* Hebrew text — dual rendering strategy:
                           fullMarks=true  → single string, perfect diacritic shaping (Masoretic mode)
                           fullMarks=false → MorphemeSpan with color coding (Morphological mode) */}

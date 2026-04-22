@@ -220,11 +220,10 @@ export const WordCard: React.FC<WordCardProps> = ({
 
       {/* Syntactic function */}
       {word.syntacticFunction && (
-        <p className="text-[13px] text-muted-foreground mb-3 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-border inline-block"></span>
-          <span className="font-medium text-slate-500 dark:text-slate-400">{t('verseAnalyzer.analysis.syntacticFunction', { defaultValue: 'Función Sintáctica' })}:</span>
-          {word.syntacticFunction}
-        </p>
+        <div className="flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/50 mb-3">
+          <span className="text-[9px] uppercase tracking-widest font-bold text-indigo-500 dark:text-indigo-400 shrink-0 pt-0.5">Función</span>
+          <span className="text-[12px] text-indigo-800 dark:text-indigo-200 font-medium leading-snug">{word.syntacticFunction}</span>
+        </div>
       )}
 
       {/* Deep Analysis Toggler */}

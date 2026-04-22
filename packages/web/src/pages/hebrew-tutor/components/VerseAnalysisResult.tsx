@@ -32,6 +32,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { generateVerseMarkdown } from '../utils/exportMarkdown';
 import { toast } from 'sonner';
 import { useHebrewTutor } from '../HebrewTutorProvider';
+import { getSyntacticMark, SYNTACTIC_BORDER, SYNTACTIC_DOT } from '../utils/syntacticMark';
 
 interface VerseAnalysisResultProps {
   analysis: VerseAnalysis;
@@ -76,12 +77,14 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
   const fullMarks = viewMode === 'masoretic';
   const showColors = viewMode === 'morphological';
   const [showVerbMarkers, setShowVerbMarkers] = React.useState(true);
+  const [showSyntaxMarkers, setShowSyntaxMarkers] = React.useState(false);
 
   /** Index of the currently highlighted word (hover from header or card). null = none. */
   const [activeWordIndex, setActiveWordIndex] = React.useState<number | null>(null);
 
   // ── Text scale (persisted in localStorage) ─────────────────────────────────
-  const SCALE_STEPS = [0.75, 0.875, 1.0, 1.125, 1.3] as const;
+  // Steps: ~20% per jump — 7 levels total for wide accessibility range
+  const SCALE_STEPS = [0.7, 0.85, 1.0, 1.2, 1.45, 1.75, 2.1] as const;
   const DEFAULT_SCALE_IDX = 2; // 1.0
   const [scaleIdx, setScaleIdx] = React.useState<number>(() => {
     try {
@@ -191,6 +194,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
         analysis={analysis}
         showColors={showColors}
         showVerbMarkers={showVerbMarkers}
+        showSyntaxMarkers={showSyntaxMarkers}
         fullMarks={fullMarks}
         sentinelRef={headerSentinelRef}
         activeWordIndex={activeWordIndex}
@@ -226,6 +230,21 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
                 >
                   <ActivityIcon className="w-3.5 h-3.5" />
                   {showVerbMarkers ? 'Verbos On' : 'Verbos Off'}
+                </button>
+              )}
+              {/* Syntax markers (prepositional phrases, construct chains, appositions) */}
+              {viewMode === 'morphological' && (
+                <button
+                  onClick={() => setShowSyntaxMarkers(!showSyntaxMarkers)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                    showSyntaxMarkers
+                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                  title={showSyntaxMarkers ? 'Ocultar marcas sintácticas' : 'Mostrar frases prep., constructos y aposiciones'}
+                >
+                  <ScrollTextIcon className="w-3.5 h-3.5" />
+                  {showSyntaxMarkers ? 'Sintaxis On' : 'Sintaxis Off'}
                 </button>
               )}
             </div>
@@ -303,11 +322,21 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
           >
             {analysis.words.map((w, i) => {
               const isVerb = !!w.verbMorphology && showVerbMarkers;
+              const syntacticMark = showSyntaxMarkers ? getSyntacticMark(w) : null;
               const isActive = activeWordIndex === i;
               // Maqaf (U+05BE ־): when the PREVIOUS word ends with maqaf, this word
               // is prosodically bound to it. We collapse the flex gap with a negative
               // inline-start margin so they appear visually connected in RTL layout.
               const prevHasMaqaf = i > 0 && analysis.words[i - 1].hebrewText.endsWith('\u05BE');
+
+              // Border priority: active > verb > syntactic > none
+              const borderClass = isActive
+                ? 'bg-primary/15 ring-1 ring-primary/40 border-b-2 border-primary scale-105 shadow-sm'
+                : isVerb
+                  ? 'border-b-2 border-emerald-500/60 hover:border-emerald-500/80 hover:bg-primary/8 hover:shadow-sm'
+                  : syntacticMark
+                    ? `${SYNTACTIC_BORDER[syntacticMark]} hover:shadow-sm`
+                    : 'border-b-2 border-transparent hover:border-primary/30 hover:bg-muted hover:shadow-sm';
               return (
                 <Tooltip key={i} delayDuration={200}>
                   <TooltipTrigger asChild>
@@ -317,16 +346,15 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
                       onMouseLeave={() => handleHeaderWordHover(null)}
                       style={prevHasMaqaf ? { marginInlineStart: '-0.75rem' } : undefined}
                       className={`
-                        inline-flex flex-col items-center
-                        cursor-pointer rounded-md px-1 pt-0.5 pb-1.5 transition-all duration-150 relative
-                        ${isActive
-                          ? 'bg-primary/15 ring-1 ring-primary/40 border-b-2 border-primary scale-105 shadow-sm'
-                          : isVerb
-                            ? 'border-b-2 border-emerald-500/60 hover:border-emerald-500/80 hover:bg-primary/8 hover:shadow-sm'
-                            : 'border-b-2 border-transparent hover:border-primary/30 hover:bg-muted hover:shadow-sm'
-                        }
+                        inline-flex flex-col items-center relative
+                        cursor-pointer rounded-md px-1 pt-0.5 pb-1.5 transition-all duration-150
+                        ${borderClass}
                       `}
                     >
+                      {/* Syntactic pip dot — shown when verb underline already occupies the bottom border */}
+                      {isVerb && syntacticMark && (
+                        <span className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${SYNTACTIC_DOT[syntacticMark]}`} />
+                      )}
                       {/* Hebrew — dual rendering strategy */}
                       <span>
                         {fullMarks ? (
@@ -351,7 +379,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
                       <span
                         dir="ltr"
                         lang="la"
-                        style={{ fontSize: `${11 * textScale}px` }}
+                        style={{ fontSize: `${12 * textScale}px` }}
                         className="font-normal italic text-muted-foreground leading-none mt-2.5 pb-2 tracking-tight block"
                       >
                         {w.transliteration}
@@ -387,6 +415,31 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
           </div>
         </div>
 
+        {/* ── Inline syntax color legend — visible only when Sintaxis On ── */}
+        {showSyntaxMarkers && (
+          <div className="mt-3 flex items-center justify-center gap-1 flex-wrap print:hidden">
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-background/60 border border-border/50 backdrop-blur-sm">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Marcas sintácticas:</span>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-emerald-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Verbo</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-cyan-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Frase prep.</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-amber-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Constructo</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <span className="inline-block w-4 h-[2px] rounded-full bg-violet-500/80" />
+                <span className="text-[10px] text-muted-foreground ml-1">Aposición</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Sentinel: IntersectionObserver tracks this to trigger the sticky header */}
         <div ref={headerSentinelRef} aria-hidden="true" className="h-px" />
       </div>
@@ -398,7 +451,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
             label={t('verseAnalyzer.analysis.literalTranslation')}
             text={analysis.literalTranslation}
             icon={<ScanTextIcon className="w-3.5 h-3.5" />}
-            verseReference={analysis.reference}
+            verseReference={verseReference}
             field="literalTranslation"
             onSaved={(text) => onTranslationUpdate?.({ literalTranslation: text })}
           />
@@ -408,7 +461,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
             label={t('verseAnalyzer.analysis.fluidTranslation')}
             text={analysis.fluidTranslation}
             icon={<BookOpenIcon className="w-3.5 h-3.5" />}
-            verseReference={analysis.reference}
+            verseReference={verseReference}
             field="fluidTranslation"
             onSaved={(text) => onTranslationUpdate?.({ fluidTranslation: text })}
           />
@@ -431,6 +484,33 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
             </div>
           ))}
         </div>
+
+        {/* Syntactic markers legend — only shown when toggle is ON */}
+        {showSyntaxMarkers && (
+          <div className="mt-3 pt-3 border-t border-border/50">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Marcas sintácticas
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-5 h-0.5 rounded-full bg-emerald-500/70" />
+                <span className="text-[11px] text-muted-foreground">Verbo</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-5 h-0.5 rounded-full bg-cyan-500/70" />
+                <span className="text-[11px] text-muted-foreground">Frase preposicional</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-5 h-0.5 rounded-full bg-amber-500/70" />
+                <span className="text-[11px] text-muted-foreground">Constructo (semikut)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-5 h-0.5 rounded-full bg-violet-500/70" />
+                <span className="text-[11px] text-muted-foreground">Aposición</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Word analysis grid ─────────────────────────────────────────────── */}
