@@ -451,7 +451,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
             label={t('verseAnalyzer.analysis.literalTranslation')}
             text={analysis.literalTranslation}
             icon={<ScanTextIcon className="w-3.5 h-3.5" />}
-            verseReference={analysis.reference}
+            verseReference={verseReference}
             field="literalTranslation"
             onSaved={(text) => onTranslationUpdate?.({ literalTranslation: text })}
           />
@@ -461,7 +461,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
             label={t('verseAnalyzer.analysis.fluidTranslation')}
             text={analysis.fluidTranslation}
             icon={<BookOpenIcon className="w-3.5 h-3.5" />}
-            verseReference={analysis.reference}
+            verseReference={verseReference}
             field="fluidTranslation"
             onSaved={(text) => onTranslationUpdate?.({ fluidTranslation: text })}
           />
