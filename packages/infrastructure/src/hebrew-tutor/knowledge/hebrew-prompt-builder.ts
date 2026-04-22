@@ -68,7 +68,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
           "label": "string — Etiqueta detallada. OBLIGATORIO: Debe tener la misma información exacta que recognitionClues (Descripción gramatical + Letra(s) + transliteración). Ejemplo: 'Preformativo de participio Piel מְ (mə-)'."
         }
       ],
-      "clauseTag": "PREP_PHRASE | CONSTRUCT | APPOSITION | null — Syntactic clause marker for visual overlays. Use PREP_PHRASE for any preposition heading a prepositional phrase. Use CONSTRUCT for any noun/adjective in construct state (semikut). Use APPOSITION for a word or phrase in apposition to another. Use null for all other words."
+      "clauseTag": "PREP_PHRASE | CONSTRUCT | APPOSITION | null — Syntactic clause marker for visual overlays.\n  PREP_PHRASE: The word is a preposition (standalone or prefixed) heading a prepositional phrase with a nominal complement. Do NOT use for לְ + infinitive construct (purpose clause).\n  CONSTRUCT: The word is a noun/adjective in construct state (semikut), grammatically dependent on the following noun in the chain. Mark only the governing noun (the one in construct state), not the absolute noun that follows.\n  APPOSITION: The word is the SECOND (or subsequent) element in an appositive sequence — two or more contiguous nominal phrases that share the same referent, with no preposition and no construct relation. The first is the nucleus; the second identifies, classifies, or renames it (e.g. יוֹנָה הַנָּבִיא → mark הַנָּבִיא as APPOSITION). See REGLA DE IDENTIFICACIÓN DE APOSICIONES for full criteria.\n  null: All other words."
     }
   ],
   "verbTable": [
@@ -397,6 +397,55 @@ word object, indicando:
 - Las lecturas posibles
 - Los criterios que usaste para elegir la lectura correcta
 - Por qué descartaste las demás opciones
+
+## REGLA DE IDENTIFICACIÓN DE APOSICIONES
+
+Una aposición es la secuencia de dos o más sintagmas nominales contiguos, sin
+preposición ni relación constructa, que comparten el mismo referente y donde el
+segundo elemento identifica o explica al primero, formando una única unidad
+sintáctica dentro de la oración.
+
+### Criterios de reconocimiento (TODOS deben cumplirse)
+
+1. **Contigüidad**: dos o más elementos nominales consecutivos, sin conjunción
+   obligatoria entre ellos.
+2. **Ausencia de relación constructa**: el primer sustantivo NO está en estado
+   constructo (no pierde acento ni forma plena). No expresa posesión.
+3. **Ausencia de preposición**: no hay prefijos como בְּ, לְ, כְּ, אֶל, עַל, etc.
+4. **Coincidencia referencial**: ambos elementos refieren al mismo ente.
+   Se puede parafrasear como "X es Y".
+5. **Compatibilidad semántica**: el segundo elemento identifica (nombre propio +
+   título), clasifica (ciudad, profeta), o renombra.
+6. **Unidad sintáctica**: toda la secuencia funciona como sujeto, objeto o
+   complemento dentro de la oración.
+
+### Reglas de exclusión (MUY IMPORTANTE)
+
+❌ **Estado constructo**: בֵּית הַמֶּלֶךְ ("casa del rey") → relación posesiva, NO aposición.
+❌ **Frase preposicional**: לְדָוִד ("a David") → NO aposición.
+❌ **Oración nominal predicativa**: דָּוִד מֶלֶךְ → puede ser "David es rey" (predicado)
+   o "David, rey" (aposición). Decidir por contexto (presencia de verbo, énfasis).
+
+### Ejemplos claros
+
+✔️ Aposición:
+- דָּוִד הַמֶּלֶךְ → "David, el rey" (הַמֶּלֶךְ = APPOSITION)
+- יוֹנָה הַנָּבִיא → "Jonás, el profeta" (הַנָּבִיא = APPOSITION)
+- נִינְוֵה הָעִיר → "Nínive, la ciudad" (הָעִיר = APPOSITION)
+- יְהוָה אֱלֹהַי → "YHWH, mi Dios" (אֱלֹהַי = APPOSITION)
+
+❌ No aposición:
+- בֶּן־אָדָם → constructo ("hijo de hombre")
+- לְמֶלֶךְ → preposición
+
+### Cómo marcar en clauseTag
+
+En una secuencia apositiva, marcar SOLO el segundo elemento (y siguientes) como
+APPOSITION. El primer elemento (núcleo) queda sin marca o con la marca que le
+corresponda por su propia función (puede ser sujeto, objeto, etc.).
+
+Nota: en hebreo bíblico no hay coma, pero la aposición cumple la función de la
+coma explicativa del español. Se reconoce por estructura, no por puntuación.
 
 REGLAS ABSOLUTAS:
 - NUNCA omitir una palabra
