@@ -38,12 +38,15 @@ interface VerseAnalysisResultProps {
   canForceRefresh?: boolean;
 }
 
-// Color legend items from docs/hebreo/2_sistema-colores-unificado.md
+// Color legend items — pedagogical vowel classes + Dagesh
 const LEGEND_ITEMS = [
   { role: 'prefix',    hex: '#2563EB', label: 'Prefijo' },
   { role: 'root',      hex: '#64748B', label: 'Raíz' },
-  { role: 'vowelMark', hex: '#F59E0B', label: 'Vocal temática' },
-  { role: 'dagesh',    hex: '#EF4444', label: 'Dagesh' },
+  { role: 'vowel_a',   hex: '#EF4444', label: 'Vocal A' },
+  { role: 'vowel_ei',  hex: '#22C55E', label: 'Vocal E/I' },
+  { role: 'vowel_ou',  hex: '#F97316', label: 'Vocal O/U' },
+  { role: 'sheva',     hex: '#A855F7', label: 'Shevá' },
+  { role: 'dagesh',    hex: '#928854', label: 'Dagesh' },
   { role: 'suffix',    hex: '#8B5CF6', label: 'Sufijo' },
 ];
 
@@ -51,6 +54,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
   const { t } = useTranslation('hebrewTutor');
   const [tutorWord, setTutorWord] = React.useState<any | null>(null);
   const [detectiveWord, setDetectiveWord] = React.useState<WordAnalysis | null>(null);
+  const [detectiveWordIndex, setDetectiveWordIndex] = React.useState<number>(-1);
 
   /**
    * viewMode controls how the Hebrew text is rendered in both headers:
@@ -126,8 +130,22 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
    * Nominal words → NominalDetectivePanel (⚠️ pending — shows informative toast meanwhile).
    */
   const handleInvestigate = React.useCallback((word: WordAnalysis) => {
+    // Find the index in the words array for adjacent word lookup
+    const idx = analysis.words.indexOf(word);
     setDetectiveWord(word);
-  }, []);
+    setDetectiveWordIndex(idx !== -1 ? idx : analysis.words.findIndex(w => w.hebrewText === word.hebrewText));
+  }, [analysis.words]);
+
+  /** Prev/next words for contextual display in the detective hero card */
+  const detectiveAdjacentWords = React.useMemo(() => {
+    if (!detectiveWord || detectiveWordIndex === -1) return undefined;
+    const prev = detectiveWordIndex > 0 ? analysis.words[detectiveWordIndex - 1] : null;
+    const next = detectiveWordIndex < analysis.words.length - 1 ? analysis.words[detectiveWordIndex + 1] : null;
+    return {
+      prev: prev ? { hebrewText: prev.hebrewText, transliteration: prev.transliteration } : null,
+      next: next ? { hebrewText: next.hebrewText, transliteration: next.transliteration } : null,
+    };
+  }, [detectiveWord, detectiveWordIndex, analysis.words]);
 
   const [copiedHebrew, setCopiedHebrew] = React.useState(false);
   const [copiedTranslit, setCopiedTranslit] = React.useState(false);
@@ -461,20 +479,21 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
         onClose={() => setTutorWord(null)} 
       />
 
-      {/* Verb Detective Panel */}
+      {/* ── Detective Panels (Verb + Nominal) ── */}
       <VerbDetectivePanel
         word={detectiveWord}
         verseReference={analysis.verseReference ?? ''}
         isOpen={!!detectiveWord && detectiveWord.category?.toUpperCase() === 'VERB'}
-        onClose={() => setDetectiveWord(null)}
+        onClose={() => { setDetectiveWord(null); setDetectiveWordIndex(-1); }}
+        adjacentWords={detectiveAdjacentWords}
       />
 
-      {/* Nominal Detective Panel */}
       <NominalDetectivePanel
         word={detectiveWord}
         verseReference={analysis.verseReference ?? ''}
         isOpen={!!detectiveWord && ['NOUN', 'PROPER_NOUN', 'ADJECTIVE', 'PRONOUN', 'PERSONAL_PRONOUN', 'DEMONSTRATIVE_PRONOUN', 'RELATIVE_PRONOUN'].includes(detectiveWord.category?.toUpperCase() ?? '')}
-        onClose={() => setDetectiveWord(null)}
+        onClose={() => { setDetectiveWord(null); setDetectiveWordIndex(-1); }}
+        adjacentWords={detectiveAdjacentWords}
       />
     </div>
   );

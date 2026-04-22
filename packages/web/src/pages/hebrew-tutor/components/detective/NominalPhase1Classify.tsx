@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DetectivePhase, GrammaticalCategory } from '@dosfilos/domain';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
+import { ProgressiveHintList, getRemedialHints } from './ProgressiveHintList';
 import { HintList } from './HintList';
 import { useContextualHints } from '../../hooks/useContextualHints';
 import type { WordAnalysis } from '@dosfilos/domain';
@@ -62,7 +63,7 @@ export const NominalPhase1Classify: React.FC<NominalPhase1ClassifyProps> = ({ wo
         question={t('detective.phase.nominalClassify.question', { defaultValue: 'Observa esta palabra. ¿Qué tipo de palabra es?' })}
       />
 
-      <HintList hints={hints} />
+      <ProgressiveHintList hints={hints} />
 
       {!submitted ? (
         <div className="space-y-2">
@@ -111,6 +112,12 @@ export const NominalPhase1Classify: React.FC<NominalPhase1ClassifyProps> = ({ wo
               <p className="text-orange-600 dark:text-orange-400 text-xs mt-1">
                 {word.syntacticFunction}
               </p>
+              {/* Remedial hints (level 3) — shown only after error */}
+              {getRemedialHints(hints).length > 0 && (
+                <div className="mt-3 pt-2 border-t border-orange-200 dark:border-orange-800">
+                  <HintList hints={getRemedialHints(hints)} />
+                </div>
+              )}
             </div>
           )}
           <button

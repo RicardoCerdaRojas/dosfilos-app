@@ -19,6 +19,7 @@ import { FARFAN_CHUNKS, KnowledgeChunk } from './farfan-chunks.js';
 const ALWAYS_INCLUDE_IDS = new Set<string>([
   'farfan-verb-intro',
   'farfan-wayyiqtol',
+  'farfan-verb-type-classification-rules',
 ]);
 
 /**

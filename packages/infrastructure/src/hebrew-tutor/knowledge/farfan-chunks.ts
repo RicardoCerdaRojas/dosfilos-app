@@ -503,6 +503,166 @@ Hifil: הִגְלָה perfecto, יַגְלֶה imperfecto.
 `,
   },
 
+  {
+    id: 'farfan-verb-weak-i-yod-waw',
+    topics: ['verbo débil', 'I-yod', 'I-waw', 'Pe-Yod', 'Pe-Waw', 'הלך', 'ילד', 'ישב', 'ידע', 'ירד', 'יצא'],
+    content: `
+## Verbos Débiles I-Yod / I-Waw (§ 48–49, Farfán + Lección 7)
+
+Los verbos I-Yod (R1 = י) y I-Waw (R1 = ו) pierden o transforman su primera radical
+en ciertas formas.
+
+**CASO ESPECIAL: הלך** — La raíz הלך es Pe-He (פ״ה) por identidad léxica (R1 = ה),
+pero en Qal imperfecto, imperativo e infinitivo constructo, la ה se elide y el verbo
+**sigue el patrón vocálico** de los verbos Pe-Yod. NO se debe decir que הלך "es" un
+verbo I-Yod/Waw; se debe decir que "se comporta como" Pe-Yod en estas formas.
+
+### Qal Imperfecto
+La י/ו (R1) se ELIDE y la vocal se compensa:
+- ילד → יֵלֵד «parirá» (R1 י desaparece; preformativo recibe ṣêrê)
+- ישב → יֵשֵׁב «se sentará»
+- הלך → יֵלֵךְ «irá» (la ה cae; el verbo adopta el patrón vocálico de Pe-Yod)
+
+### Qal Imperativo
+Pierde la R1 (como el imperfecto sin preformativo):
+- ישב → שֵׁב «¡siéntate!»
+- הלך → לֵךְ «¡ve!» (solo quedan R2 + R3: ל + ך; sigue el patrón de Pe-Yod)
+- ירד → רֵד «¡baja!»
+
+### Qal Infinitivo Constructo
+Pierde la R1 y recibe terminación ת-:
+- ישב → שֶׁבֶת «sentarse»
+- הלך → לֶכֶת «ir»
+
+### Hifil
+Preformativo הוֹ-: הוֹלִיד «engendró», הוֹרִיד «bajó», הוֹלִיךְ «condujo»
+
+**CLASIFICACIÓN:** Para verbos genuinamente Pe-Yod (ילד, ישב, ידע, ירד, יצא):
+verbType = I_YOD_WAW, rootClassification = null.
+Para הלך: verbType = I_YOD_WAW (comportamiento), rootClassification = "Pe-He (פ״ה)".
+NUNCA clasificar estos verbos como STRONG.
+`,
+  },
+
+  {
+    id: 'farfan-verb-weak-ii-waw-yod',
+    topics: ['verbo débil', 'II-waw', 'II-yod', 'hueco', 'hollow', 'קום', 'שׂים', 'בוא', 'מות'],
+    content: `
+## Verbos Débiles II-Waw / II-Yod — Verbos Huecos (§ 51, Farfán + Lección 8)
+
+Los verbos «huecos» (II-Waw/Yod) tienen como R2 una semivocal (ו o י) que se
+comporta como VOCAL, no como consonante. Aunque visualmente la letra está presente,
+NO funciona como una radical consonántica.
+
+### Qal Perfecto
+La ו/י de R2 se contrae en vocal larga:
+- קום → קָם «se levantó» (R2 ו → qameṣ)
+- מות → מֵת «murió» (R2 ו → ṣêrê)
+- שׂים → שָׂם «puso»
+
+### Qal Imperfecto
+R2 se mantiene como vocal larga (ū/î):
+- קום → יָקוּם «se levantará» (R2 = ו con shureq, función vocálica)
+- בוא → יָבוֹא «vendrá» (R2 = ו con ḥolem)
+
+### Qal Imperativo / Infinitivo Constructo
+- קוּם «¡levántate!»; לָקוּם «levantarse»
+
+**CLASIFICACIÓN verbType:** Estos verbos SON DÉBILES (verbType = II_WAW_YOD),
+NUNCA deben clasificarse como STRONG. La Waw o Yod de R2 funciona como VOCAL,
+no como consonante. La pista visual es: si R2 lleva shureq (וּ), ḥolem (וֹ), o
+ḥireq gadol (י), está actuando como vocal → verbo hueco → verbType = II_WAW_YOD.
+`,
+  },
+
+  {
+    id: 'farfan-verb-weak-geminate',
+    topics: ['verbo débil', 'geminado', 'II-duplicada', 'סבב', 'גלל', 'ארר'],
+    content: `
+## Verbos Débiles Geminados (II-Duplicada) (§ 52, Farfán)
+
+Los verbos geminados tienen R2 = R3 (la misma consonante). Se comportan de manera
+similar a los verbos huecos porque se contraen frecuentemente.
+
+### Qal Perfecto
+- סבב → סָבַב «rodeó» (puede contraerse a סַב con sufijos)
+### Qal Imperfecto
+- סבב → יָסֹב «rodeará» (contracción: solo una consonante visible)
+
+**CLASIFICACIÓN verbType:** Estos verbos SON DÉBILES (verbType = GEMINATE).
+R2 y R3 son idénticas. No confundir con un verbo fuerte bisilábico.
+`,
+  },
+
+  {
+    id: 'farfan-verb-type-classification-rules',
+    topics: ['verbo', 'verbType', 'clasificación', 'fuerte', 'débil', 'raíz', 'tipo raíz'],
+    content: `
+## REGLAS DE CLASIFICACIÓN DE verbType y rootClassification
+
+Estos dos campos son CRÍTICOS para el análisis pedagógico. Debes clasificar CADA verbo
+usando DOS NIVELES DISTINTOS:
+
+### NIVEL 1: verbType — COMPORTAMIENTO MORFOLÓGICO (cómo actúa el verbo en esta forma)
+Indica el patrón funcional que el verbo sigue. Se usa para el análisis morfológico.
+
+### NIVEL 2: rootClassification — IDENTIDAD LÉXICA DE LA RAÍZ (qué ES la raíz)
+Indica la clasificación REAL de la raíz lexicográfica. Solo se usa cuando DIFIERE
+del verbType. Si son iguales, rootClassification = null.
+
+### EJEMPLO CLAVE: הלך
+- Raíz: ה-ל-ך → R1 es ה → identidad léxica = Pe-He (פ״ה)
+- Pero en Qal imperfecto/imperativo, la ה cae como si fuera י → comportamiento = Pe-Yod
+- Resultado:
+  - verbType = "I_YOD_WAW" (comportamiento funcional)
+  - rootClassification = "Pe-He (פ״ה) — se comporta como Pe-Yod en esta forma"
+
+### CUÁNDO rootClassification = null (la mayoría de los verbos):
+Si la identidad léxica coincide con el comportamiento, rootClassification es null:
+- ילד: R1 = י → identidad = Pe-Yod → verbType = I_YOD_WAW → rootClassification = null
+- קום: R2 = ו vocálica → identidad = Hueco → verbType = II_WAW_YOD → rootClassification = null
+- נפל: R1 = נ → identidad = Pe-Nun → verbType = I_NUN → rootClassification = null
+
+### VALORES DE verbType (seleccionar según el COMPORTAMIENTO):
+
+1. **STRONG**: Las 3 radicales presentes como consonantes. Ejemplo: כתב, שׁמר, קטל.
+2. **I_YOD_WAW**: R1 cae o se vocaliza (incluye verbos Pe-He que se comportan así).
+3. **I_NUN**: R1 = נ que se asimila (dagesh forte en R2).
+4. **I_ALEF**: R1 = א que quiesce.
+5. **II_WAW_YOD**: R2 = ו/י que funciona como vocal (verbos huecos).
+6. **III_HE**: R3 = ה que se elide o muta.
+7. **III_ALEF**: R3 = א quiescente.
+8. **GEMINATE**: R2 = R3 (misma consonante).
+9. **GUTURAL_R1/R2/R3**: Radical gutural con compensación vocálica menor.
+
+### REGLA DE MORFEMAS:
+Si una radical de la raíz NO aparece en los morfemas de la forma analizada,
+el verbo NO PUEDE ser clasificado como STRONG. La ausencia de una radical indica
+un verbo débil.
+
+### REGLA DE REDACCIÓN PEDAGÓGICA (explanation y recognitionClues):
+
+Cuando rootClassification ≠ null (es decir, la identidad léxica de la raíz DIFIERE
+de su comportamiento morfológico), la redacción en "explanation" y "recognitionClues"
+DEBE distinguir claramente entre los dos niveles. NUNCA reclasificar implícitamente la raíz.
+
+**TERMINOLOGÍA CORRECTA (usar siempre):**
+- "La raíz הלך es Pe-He (פ״ה), pero en esta forma **sigue el patrón** de los verbos Pe-Yod."
+- "La R1 (ה) se elide, y el verbo **adopta un patrón vocálico similar al** de los verbos I-Yod/Waw."
+- "Aunque la raíz es Pe-He, en imperativo Qal **se comporta como** un verbo Pe-Yod."
+
+**TERMINOLOGÍA INCORRECTA (NUNCA usar):**
+- ❌ "Es un verbo de tipo I-Yod-Waw" (reclasifica la raíz)
+- ❌ "Las características son propias de los verbos I-Yod/Waw" (sugiere pertenencia)
+- ❌ "Es un verbo débil de tipo I-Yod-Waw, aunque su raíz léxica es Pe-He" (contradice)
+
+**PRINCIPIO:** La raíz es una entidad léxica ESTABLE (הלך siempre es Pe-He).
+El comportamiento es un fenómeno CONTEXTUAL que varía según la forma verbal.
+Separarlos explícitamente es fundamental para que el alumno no internalice
+una clasificación errónea de la raíz.
+`,
+  },
+
   // ── Wayyiqtol and Narrative ──────────────────────────────────────────────────
 
   {

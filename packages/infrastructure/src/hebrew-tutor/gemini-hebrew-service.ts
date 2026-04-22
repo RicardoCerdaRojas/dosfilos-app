@@ -223,6 +223,13 @@ export function reconcileGlobalWords(
     return geminiWords;
   }
 
+  // Verse-level punctuation that should not appear inside word morphemes.
+  // - U+05C3 ׃ SOF PASUQ    — end-of-verse double dot
+  // - U+05C0 ׀ PASEQ        — pause separator between clauses
+  // These are attached by morphhb to the last token of a verse/clause
+  // but have no morphological significance for a single word.
+  const VERSE_PUNCT_RE = /[\u05C3\u05C0]/g;
+
   // Flatten all morphemes from the LLM output
   const allMorphemes = geminiWords.flatMap((w) => w.morphemes || []);
   if (allMorphemes.length === 0) return geminiWords;
@@ -277,7 +284,9 @@ export function reconcileGlobalWords(
   // Restore 0-consonant morphemes if they remained completely empty
   for (let i = 0; i < newMorphemes.length; i++) {
     if (newMorphemes[i].text === '') {
-      newMorphemes[i].text = allMorphemes[i].text;
+      // The authoritative text already distributed its maqafs (\u05BE).
+      // We must not restore hallucinated/duplicated maqafs from the LLM.
+      newMorphemes[i].text = allMorphemes[i].text.replace(/\u05BE/g, '');
     }
   }
 
@@ -286,10 +295,20 @@ export function reconcileGlobalWords(
   return geminiWords.map((w) => {
     const wordMorphemes = w.morphemes ? newMorphemes.slice(mIdx, mIdx + w.morphemes.length) : [];
     mIdx += w.morphemes?.length || 0;
+
+    // Strip verse-level punctuation from every morpheme text so sof pasuq
+    // doesn't render as a visible repeated character inside the word display.
+    const cleanMorphemes = wordMorphemes.map((m) => ({
+      ...m,
+      text: m.text.replace(VERSE_PUNCT_RE, ''),
+    }));
+
     return {
       ...w,
+      // wordMorphemes keeps the punctuation so it appears in the full verse display
       hebrewText: wordMorphemes.map((m) => m.text).join(''),
-      morphemes: wordMorphemes,
+      // cleanMorphemes omits punctuation so it doesn't render inside the single-word view
+      morphemes: cleanMorphemes,
     };
   });
 }

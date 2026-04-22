@@ -123,6 +123,41 @@ export function useDiscoveryMode(): UseDiscoveryModeReturn {
   const [activeWordIndex, setActiveWordIndex] = useState(0);
   const [studentFullTranslation, setStudentFullTranslation] = useState('');
 
+  // ── Persistence helpers ─────────────────────────────────────────────────
+
+  const getStorageKey = useCallback((book: string, chapter: number, verse: number) => {
+    return `hebrew_tutor_discovery_${book}_${chapter}_${verse}`;
+  }, []);
+
+  const saveProgress = useCallback((
+    ph: DiscoveryPhase, 
+    words: DiscoveryWordState[], 
+    activeIdx: number, 
+    fullTrans: string,
+    analysis: VerseAnalysis | null
+  ) => {
+    if (!selectedBook || !analysis) return;
+    try {
+      const data = {
+        phase: ph,
+        discoveryWords: words,
+        activeWordIndex: activeIdx,
+        studentFullTranslation: fullTrans,
+        hiddenAnalysis: analysis,
+      };
+      localStorage.setItem(getStorageKey(selectedBook, selectedChapter, selectedVerse), JSON.stringify(data));
+    } catch (e) {
+      console.warn('Failed to save discovery progress', e);
+    }
+  }, [selectedBook, selectedChapter, selectedVerse, getStorageKey]);
+
+  // Save progress whenever these change
+  useEffect(() => {
+    if (phase !== 'idle' && phase !== 'preparing') {
+      saveProgress(phase, discoveryWords, activeWordIndex, studentFullTranslation, hiddenAnalysis);
+    }
+  }, [phase, discoveryWords, activeWordIndex, studentFullTranslation, hiddenAnalysis, saveProgress]);
+
   // ── Book index loading ──────────────────────────────────────────────────
 
   useEffect(() => {
@@ -220,6 +255,34 @@ export function useDiscoveryMode(): UseDiscoveryModeReturn {
     setError(null);
 
     try {
+      // 1. Try to restore progress
+      const storageKey = getStorageKey(selectedBook, selectedChapter, selectedVerse);
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.discoveryWords && parsed.hiddenAnalysis) {
+            setHiddenAnalysis(parsed.hiddenAnalysis);
+            setDiscoveryWords(parsed.discoveryWords);
+            setActiveWordIndex(parsed.activeWordIndex || 0);
+            setStudentFullTranslation(parsed.studentFullTranslation || '');
+            setPhase(parsed.phase || 'investigating');
+            
+            // Fetch the raw verse text so the preview has full punctuation (like sof pasuq)
+            // even when restoring from local storage.
+            getVerseText
+              .execute({ morphhbKey: selectedBook, chapter: selectedChapter, verse: selectedVerse })
+              .then(setHebrewVerse)
+              .catch(() => { /* silent fallback */ });
+              
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to restore discovery progress', e);
+      }
+
+      // 2. Fresh analysis
       const analysis = await analyzeVerse.execute({
         morphhbKey: selectedBook,
         chapter: selectedChapter,
@@ -229,6 +292,12 @@ export function useDiscoveryMode(): UseDiscoveryModeReturn {
       });
 
       setHiddenAnalysis(analysis);
+
+      // Fetch the raw verse text so the preview has full punctuation
+      getVerseText
+        .execute({ morphhbKey: selectedBook, chapter: selectedChapter, verse: selectedVerse })
+        .then(setHebrewVerse)
+        .catch(() => { /* silent fallback */ });
 
       // Build discovery word states — first word is active
       const words: DiscoveryWordState[] = analysis.words.map((w, i) => ({
@@ -242,13 +311,16 @@ export function useDiscoveryMode(): UseDiscoveryModeReturn {
       setDiscoveryWords(words);
       setActiveWordIndex(0);
       setPhase('investigating');
+      
+      // Initial save
+      saveProgress('investigating', words, 0, '', analysis);
     } catch (err) {
       setError(
         `Error al preparar el versículo: ${err instanceof Error ? err.message : String(err)}`,
       );
       setPhase('idle');
     }
-  }, [analyzeVerse, selectedBook, selectedChapter, selectedVerse]);
+  }, [analyzeVerse, selectedBook, selectedChapter, selectedVerse, getStorageKey, saveProgress]);
 
   // ── Word completion ─────────────────────────────────────────────────────
 
@@ -323,7 +395,14 @@ export function useDiscoveryMode(): UseDiscoveryModeReturn {
     setDiscoveryWords([]);
     setActiveWordIndex(0);
     setStudentFullTranslation('');
-  }, []);
+    
+    // Clear storage for this verse
+    if (selectedBook) {
+      try {
+        localStorage.removeItem(getStorageKey(selectedBook, selectedChapter, selectedVerse));
+      } catch (e) {}
+    }
+  }, [selectedBook, selectedChapter, selectedVerse, getStorageKey]);
 
   // ── Derived values ──────────────────────────────────────────────────────
 

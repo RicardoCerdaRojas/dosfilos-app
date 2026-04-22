@@ -5,6 +5,7 @@ import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import type { WordAnalysis, DetectivePhaseResult } from '@dosfilos/domain';
 import { DetectivePhase, GrammaticalCategory } from '@dosfilos/domain';
 import { useHebrewTutor } from '../HebrewTutorProvider';
+import { useFirebase } from '@/context/firebase-context';
 import { DetectiveProgress } from './detective/DetectiveProgress';
 
 import { NominalPhase1Classify } from './detective/NominalPhase1Classify';
@@ -12,8 +13,12 @@ import { NominalPhase2Article }  from './detective/NominalPhase2Article';
 import { NominalPhase3Gender }   from './detective/NominalPhase3Gender';
 import { NominalPhase4Number }   from './detective/NominalPhase4Number';
 import { NominalPhase5State }    from './detective/NominalPhase5State';
+import { NominalPhasePerson }    from './detective/NominalPhasePerson';
+import { NominalPhaseSuffixPGN } from './detective/NominalPhaseSuffixPGN';
 import { DetectivePhaseTranslation } from './detective/DetectivePhaseTranslation';
 import { DetectiveResultSummary } from './detective/DetectiveResultSummary';
+import { DetectiveContextProvider } from './detective/DetectiveContext';
+import { NOMINAL_PHASE_CONFIGS } from './detective/DetectiveProgress';
 
 const PANEL_STORAGE_KEY   = 'nominal-detective-panel-width';
 const SIDEBAR_STORAGE_KEY = 'nominal-detective-sidebar-width';
@@ -24,19 +29,37 @@ const DEFAULT_SIDEBAR_WIDTH = 176;   // ~w-44
 const MIN_SIDEBAR_WIDTH     = 130;
 const MAX_SIDEBAR_WIDTH     = 260;
 
-const NOMINAL_PATH: DetectivePhase[] = [
-  DetectivePhase.NOMINAL_CLASSIFY,
-  DetectivePhase.NOMINAL_ARTICLE,
-  DetectivePhase.NOMINAL_GENDER,
-  DetectivePhase.NOMINAL_NUMBER,
-  DetectivePhase.NOMINAL_STATE,
-  DetectivePhase.TRANSLATION,
-];
+const getNominalPath = (word: WordAnalysis | null): DetectivePhase[] => {
+  if (!word) return [];
+  const path: DetectivePhase[] = [DetectivePhase.NOMINAL_CLASSIFY];
 
-function getNextPhase(current: DetectivePhase): DetectivePhase | null {
-  const idx = NOMINAL_PATH.indexOf(current);
-  if (idx === -1 || idx >= NOMINAL_PATH.length - 1) return null;
-  return NOMINAL_PATH[idx + 1];
+  if (word.category === GrammaticalCategory.PRONOUN || 
+      word.category === GrammaticalCategory.PERSONAL_PRONOUN ||
+      word.category === GrammaticalCategory.DEMONSTRATIVE_PRONOUN ||
+      word.category === GrammaticalCategory.RELATIVE_PRONOUN) {
+    path.push(DetectivePhase.NOMINAL_PERSON);
+    path.push(DetectivePhase.NOMINAL_GENDER);
+    path.push(DetectivePhase.NOMINAL_NUMBER);
+  } else {
+    path.push(DetectivePhase.NOMINAL_ARTICLE);
+    path.push(DetectivePhase.NOMINAL_GENDER);
+    path.push(DetectivePhase.NOMINAL_NUMBER);
+    path.push(DetectivePhase.NOMINAL_STATE);
+  }
+
+  const hasSuffix = (word.morphemes ?? []).some(m => m.role === 'PRONOMINAL_SUFFIX');
+  if (hasSuffix) {
+    path.push(DetectivePhase.NOMINAL_SUFFIX);
+  }
+
+  path.push(DetectivePhase.TRANSLATION);
+  return path;
+};
+
+function getNextPhase(current: DetectivePhase, path: DetectivePhase[]): DetectivePhase | null {
+  const idx = path.indexOf(current);
+  if (idx === -1 || idx >= path.length - 1) return null;
+  return path[idx + 1];
 }
 
 function useDragResizeLeft(
@@ -160,6 +183,11 @@ interface NominalDetectivePanelProps {
   onClose: () => void;
   /** Discovery Mode callback — fired when the full investigation finishes. */
   onDiscoveryComplete?: (translation: string, score: number) => void;
+  /** Adjacent words for contextual display in the hero card */
+  adjacentWords?: {
+    prev?: { hebrewText: string; transliteration?: string } | null;
+    next?: { hebrewText: string; transliteration?: string } | null;
+  };
 }
 
 function getCategoryGroup(category: GrammaticalCategory): string {
@@ -185,12 +213,17 @@ function getCorrectAnswer(word: WordAnalysis, phase: DetectivePhase): string {
       return getCategoryGroup(word.category);
     case DetectivePhase.NOMINAL_ARTICLE:
       return (word.morphemes ?? []).some(m => m.role === 'DEFINITE_ARTICLE') ? 'yes' : 'no';
+    case DetectivePhase.NOMINAL_PERSON:
+      return morph?.person?.toString() ?? '';
     case DetectivePhase.NOMINAL_GENDER:
       return morph?.gender ?? '';
     case DetectivePhase.NOMINAL_NUMBER:
       return morph?.number ?? '';
     case DetectivePhase.NOMINAL_STATE:
       return morph?.state ?? '';
+    case DetectivePhase.NOMINAL_SUFFIX:
+      if (!morph?.suffix) return '';
+      return `${morph.suffix.person}${morph.suffix.gender}${morph.suffix.number}`;
     case DetectivePhase.TRANSLATION:
       return word.translation ?? '';
     default:
@@ -218,8 +251,10 @@ export const NominalDetectivePanel: React.FC<NominalDetectivePanelProps> = ({
   isOpen,
   onClose,
   onDiscoveryComplete,
+  adjacentWords,
 }) => {
   const { saveDetectiveSession } = useHebrewTutor();
+  const { user } = useFirebase();
 
   const {
     width: panelWidth,
@@ -278,14 +313,15 @@ export const NominalDetectivePanel: React.FC<NominalDetectivePanelProps> = ({
     setPhaseResults(updatedResults);
     setCompletedPhases(prev => [...prev, { phase, correct: isCorrect }]);
 
-    const nextPhase = getNextPhase(phase);
+    const path = getNominalPath(word);
+    const nextPhase = getNextPhase(phase, path);
 
     if (nextPhase === null) {
       setIsSaving(true);
       try {
         const saved = await saveDetectiveSession.execute({
           kind: 'nominal',
-          userId: 'anonymous',
+          userId: user?.uid ?? 'anonymous',
           tenantId: 'global',
           wordText: word.hebrewText,
           verseReference,
@@ -293,6 +329,8 @@ export const NominalDetectivePanel: React.FC<NominalDetectivePanelProps> = ({
           expectedGender: word.nominalMorphology?.gender,
           expectedNumber: word.nominalMorphology?.number,
           expectedState: word.nominalMorphology?.state,
+          expectedPerson: word.nominalMorphology?.person,
+          expectedSuffix: word.nominalMorphology?.suffix,
           phases: updatedResults,
         });
         setSessionScore(saved.score);
@@ -318,10 +356,22 @@ export const NominalDetectivePanel: React.FC<NominalDetectivePanelProps> = ({
 
   if (!word) return null;
 
-  const totalPhases = NOMINAL_PATH.length;
+  const dynamicPath = getNominalPath(word);
+  const totalPhases = dynamicPath.length;
   const progressPercent = (completedPhases.length / totalPhases) * 100;
+  
+  const customPhases = dynamicPath.map((p, idx) => ({
+    ...NOMINAL_PHASE_CONFIGS[p],
+    step: idx + 1
+  }));
+
+  const detectiveCtxValue = React.useMemo(
+    () => ({ adjacentWords }),
+    [adjacentWords],
+  );
 
   return (
+    <DetectiveContextProvider value={detectiveCtxValue}>
     <Sheet open={isOpen} onOpenChange={open => { if (!open) onClose(); }}>
       <SheetContent
         side="right"
@@ -386,6 +436,7 @@ export const NominalDetectivePanel: React.FC<NominalDetectivePanelProps> = ({
                 currentPhase={currentPhase}
                 completedPhases={completedPhases}
                 activePath="nominal"
+                customPhases={customPhases}
               />
 
               <div
@@ -433,6 +484,7 @@ export const NominalDetectivePanel: React.FC<NominalDetectivePanelProps> = ({
         </div>
       </SheetContent>
     </Sheet>
+    </DetectiveContextProvider>
   );
 };
 
@@ -456,6 +508,10 @@ const PhaseRenderer: React.FC<PhaseRendererProps> = ({ word, phase, onComplete }
       return <NominalPhase4Number word={word} onComplete={wrap(DetectivePhase.NOMINAL_NUMBER)} />;
     case DetectivePhase.NOMINAL_STATE:
       return <NominalPhase5State word={word} onComplete={wrap(DetectivePhase.NOMINAL_STATE)} />;
+    case DetectivePhase.NOMINAL_PERSON:
+      return <NominalPhasePerson word={word} onComplete={wrap(DetectivePhase.NOMINAL_PERSON)} />;
+    case DetectivePhase.NOMINAL_SUFFIX:
+      return <NominalPhaseSuffixPGN word={word} onComplete={wrap(DetectivePhase.NOMINAL_SUFFIX)} />;
     case DetectivePhase.TRANSLATION:
       return <DetectivePhaseTranslation word={word} onComplete={wrap(DetectivePhase.TRANSLATION)} />;
     default:

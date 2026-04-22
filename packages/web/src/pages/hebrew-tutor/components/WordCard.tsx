@@ -181,12 +181,27 @@ export const WordCard: React.FC<WordCardProps> = ({
             <MorphCell label="Forma" value={t(`verseAnalyzer.verbForms.${morphology.verbForm}`, { defaultValue: morphology.verbForm })} />
           )}
           {'verbType' in morphology && morphology.verbType && (
-            <MorphCell 
-              label="Tipo Raíz" 
-              value={(Array.isArray(morphology.verbType) ? morphology.verbType : String(morphology.verbType).split(','))
+            (() => {
+              const verbTypeLabel = (Array.isArray(morphology.verbType) ? morphology.verbType : String(morphology.verbType).split(','))
                 .map(v => t(`verseAnalyzer.verbTypes.${v.trim()}`, { defaultValue: v.trim() }))
-                .join(', ')} 
-            />
+                .join(', ');
+
+              // If rootClassification exists, it means the lexical identity differs from behavior
+              const rootClass = 'rootClassification' in morphology
+                ? (morphology as { rootClassification?: string | null }).rootClassification
+                : null;
+
+              if (rootClass) {
+                return (
+                  <div className="bg-muted/40 rounded-lg px-3 py-2 flex flex-col justify-center border border-border/40 shadow-sm" title={`Tipo Raíz: ${rootClass} (comportamiento: ${verbTypeLabel})`}>
+                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-0.5">Tipo Raíz</div>
+                    <div className="text-[12px] font-medium text-foreground truncate">{rootClass}</div>
+                  </div>
+                );
+              }
+
+              return <MorphCell label="Tipo Raíz" value={verbTypeLabel} />;
+            })()
           )}
           {'person' in morphology && morphology.person && (
             <MorphCell label="Persona" value={`${morphology.person}`} />

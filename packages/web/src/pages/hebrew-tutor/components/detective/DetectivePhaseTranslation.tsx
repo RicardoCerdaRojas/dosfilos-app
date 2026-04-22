@@ -21,6 +21,27 @@ import type { WordAnalysis } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
 import { DetectiveHeroCard } from './DetectiveHeroCard';
 
+// ── Spanish labels for morphological enums ────────────────────────────────────
+
+const VERB_FORM_LABELS: Record<string, string> = {
+  PERFECT:            'Perfecto (Qatal)',
+  IMPERFECT:          'Imperfecto (Yiqtol)',
+  WAYYIQTOL:          'Wayyiqtol (Impf. Consecutivo)',
+  WEQATAL:            'Weqatal (Pf. Consecutivo)',
+  IMPERATIVE:         'Imperativo',
+  COHORTATIVE:        'Cohortativo',
+  JUSSIVE:            'Yusivo',
+  INF_CONSTRUCT:      'Infinitivo Constructo',
+  INF_ABSOLUTE:       'Infinitivo Absoluto',
+  PARTICIPLE_ACTIVE:  'Participio Activo',
+  PARTICIPLE_PASSIVE: 'Participio Pasivo',
+};
+
+/** Returns a user-friendly Spanish label for a verb form enum key. */
+function verbFormLabel(raw: string): string {
+  return VERB_FORM_LABELS[raw] ?? raw;
+}
+
 interface DetectivePhaseTranslationProps {
   word: WordAnalysis;
   onComplete: (answer: string) => void;
@@ -137,6 +158,63 @@ export const DetectivePhaseTranslation: React.FC<DetectivePhaseTranslationProps>
         name={t('detective.phaseTranslation.hero.name', { defaultValue: 'Traducción Contextual' })}
         question={t('detective.phaseTranslation.hero.question', { defaultValue: 'Ahora que analizaste el verbo completo, ¿cómo lo traduce al español en este contexto?' })}
       />
+
+      {/* ── Investigation summary — compact recap of findings ─────────── */}
+      {word.verbMorphology && (
+        <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            {t('detective.phaseTranslation.summary.title', { defaultValue: 'Resumen de tu investigación' })}
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+            {/* Root */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground">
+                {t('detective.phaseTranslation.summary.root', { defaultValue: 'Raíz:' })}
+              </span>
+              <span dir="rtl" lang="he" className="font-hebrew font-semibold text-foreground">
+                {word.root}
+              </span>
+              <span className="text-muted-foreground/70 truncate">— {word.rootMeaning}</span>
+            </div>
+            {/* Binyan */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground">
+                {t('detective.phaseTranslation.summary.binyan', { defaultValue: 'Binyan:' })}
+              </span>
+              <span className="font-semibold text-foreground">{word.verbMorphology.binyan}</span>
+            </div>
+            {/* Form */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground">
+                {t('detective.phaseTranslation.summary.form', { defaultValue: 'Forma:' })}
+              </span>
+              <span className="font-semibold text-foreground">{verbFormLabel(word.verbMorphology.verbForm)}</span>
+            </div>
+            {/* PGN */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground">
+                {t('detective.phaseTranslation.summary.pgn', { defaultValue: 'PGN:' })}
+              </span>
+              <span className="font-semibold text-foreground">
+                {[
+                  word.verbMorphology.person,
+                  word.verbMorphology.gender,
+                  word.verbMorphology.number,
+                ].filter(Boolean).join(' · ') || '—'}
+              </span>
+            </div>
+            {/* Temporal value — full width */}
+            <div className="col-span-2 flex items-center gap-1.5 pt-1 border-t border-slate-200 dark:border-slate-700">
+              <span className="text-muted-foreground">
+                {t('detective.phaseTranslation.summary.temporal', { defaultValue: 'Valor temporal:' })}
+              </span>
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                {word.verbMorphology.temporalValue}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Instructional hint */}
       <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3">

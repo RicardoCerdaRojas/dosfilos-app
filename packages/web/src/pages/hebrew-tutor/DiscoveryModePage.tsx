@@ -10,7 +10,7 @@
  * Flow:  idle → preparing → investigating → composing → comparing
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BookOpenIcon,
@@ -35,6 +35,7 @@ import { DiscoveryWordStepper } from './components/discovery/DiscoveryWordSteppe
 import { TranslationBuilder } from './components/discovery/TranslationBuilder';
 import { TranslationComparison } from './components/discovery/TranslationComparison';
 import { ParticleQuickPanel } from './components/discovery/ParticleQuickPanel';
+import { getGrammaticalCategoryLabel } from './utils/grammarLabels';
 
 // ── Word category routing ─────────────────────────────────────────────────────
 
@@ -62,6 +63,21 @@ export const DiscoveryModePage: React.FC = () => {
   const { t } = useTranslation('hebrewTutor');
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
 
+  // Font size scale
+  const [textScale, setTextScale] = useState(() => {
+    try {
+      return parseFloat(localStorage.getItem('discoveryTextScale') || '1') || 1;
+    } catch { return 1; }
+  });
+
+  const updateTextScale = useCallback((delta: number) => {
+    setTextScale(prev => {
+      const next = Math.max(0.7, Math.min(2.5, prev + delta));
+      try { localStorage.setItem('discoveryTextScale', next.toString()); } catch {}
+      return next;
+    });
+  }, []);
+
   // Detective panel state
   const [detectiveOpen, setDetectiveOpen] = useState(false);
   const [detectiveType, setDetectiveType] = useState<'verb' | 'nominal' | 'particle'>('particle');
@@ -70,6 +86,19 @@ export const DiscoveryModePage: React.FC = () => {
 
   const currentBookName =
     HEBREW_BOOKS_CATALOG.find((b) => b.morphhbKey === dm.selectedBook)?.nameSpanish ?? dm.selectedBook;
+
+  /** Prev/next words for contextual display in the detective hero card */
+  const detectiveAdjacentWords = useMemo(() => {
+    if (!dm.activeWord || dm.activeWordIndex < 0) return undefined;
+    const words = dm.discoveryWords;
+    const idx = dm.activeWordIndex;
+    const prev = idx > 0 ? words[idx - 1]?.word : null;
+    const next = idx < words.length - 1 ? words[idx + 1]?.word : null;
+    return {
+      prev: prev ? { hebrewText: prev.hebrewText, transliteration: prev.transliteration } : null,
+      next: next ? { hebrewText: next.hebrewText, transliteration: next.transliteration } : null,
+    };
+  }, [dm.activeWord, dm.activeWordIndex, dm.discoveryWords]);
 
   // ── Detective routing ──────────────────────────────────────────────────
 
@@ -176,6 +205,26 @@ export const DiscoveryModePage: React.FC = () => {
               </div>
             </SheetContent>
           </Sheet>
+
+          {/* Font size controls (Desktop & Mobile) */}
+          <div className="flex items-center gap-1 bg-muted/40 rounded-lg p-1 border border-border/50 shrink-0">
+            <button 
+              onClick={() => updateTextScale(-0.15)} 
+              disabled={textScale <= 0.7}
+              className="p-1.5 hover:bg-background rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30" 
+              title="Reducir tamaño de fuente"
+            >
+              <span className="text-xs font-bold leading-none">A-</span>
+            </button>
+            <button 
+              onClick={() => updateTextScale(0.15)} 
+              disabled={textScale >= 2.5}
+              className="p-1.5 hover:bg-background rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30" 
+              title="Agrandar tamaño de fuente"
+            >
+              <span className="text-sm font-bold leading-none">A+</span>
+            </button>
+          </div>
         </div>
 
         {/* Desktop nav bar */}
@@ -229,8 +278,11 @@ export const DiscoveryModePage: React.FC = () => {
               <p
                 dir="rtl"
                 lang="he"
-                className="text-xl sm:text-2xl md:text-3xl leading-loose text-foreground/90"
-                style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
+                className="leading-loose text-foreground/90 transition-all duration-300"
+                style={{ 
+                  fontFamily: "'SBL Hebrew', 'Ezra SIL', serif",
+                  fontSize: `${1.75 * textScale}rem` // base text-2xl/3xl approx
+                }}
               >
                 {/* Highlight the active word within the verse */}
                 {dm.discoveryWords.map((dw, i) => (
@@ -283,8 +335,11 @@ export const DiscoveryModePage: React.FC = () => {
                     <span
                       dir="rtl"
                       lang="he"
-                      className="text-5xl sm:text-6xl font-semibold text-indigo-700 dark:text-indigo-300 drop-shadow-sm transition-all duration-500"
-                      style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
+                      className="font-semibold text-indigo-700 dark:text-indigo-300 drop-shadow-sm transition-all duration-500"
+                      style={{ 
+                        fontFamily: "'SBL Hebrew', 'Ezra SIL', serif",
+                        fontSize: `${3.75 * textScale}rem` // base text-6xl approx
+                      }}
                     >
                       {dm.activeWord.hebrewText}
                     </span>
@@ -300,7 +355,7 @@ export const DiscoveryModePage: React.FC = () => {
                   {/* Category + grammatical info */}
                   <div className="flex items-center gap-2 flex-wrap justify-center">
                     <span className="text-[11px] font-semibold text-muted-foreground bg-muted/40 px-2.5 py-1 rounded-lg border border-border/40">
-                      {dm.activeWord.category}
+                      {getGrammaticalCategoryLabel(dm.activeWord.category)}
                     </span>
                     {dm.activeWord.root && (
                       <span className="text-[11px] text-muted-foreground/70 bg-muted/20 px-2 py-1 rounded-lg border border-border/30">
@@ -369,8 +424,11 @@ export const DiscoveryModePage: React.FC = () => {
               <p
                 dir="rtl"
                 lang="he"
-                className="text-2xl leading-loose font-hebrew text-foreground"
-                style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
+                className="leading-loose font-hebrew text-foreground transition-all duration-300"
+                style={{ 
+                  fontFamily: "'SBL Hebrew', 'Ezra SIL', serif",
+                  fontSize: `${1.5 * textScale}rem` // base text-2xl approx
+                }}
               >
                 {dm.hebrewVerse?.hebrewText ?? dm.discoveryWords.map(w => w.word.hebrewText).join(' ')}
               </p>
@@ -386,8 +444,11 @@ export const DiscoveryModePage: React.FC = () => {
                   <span
                     dir="rtl"
                     lang="he"
-                    className="text-sm font-semibold text-foreground"
-                    style={{ fontFamily: "'SBL Hebrew', 'Ezra SIL', serif" }}
+                    className="font-semibold text-foreground transition-all duration-300"
+                    style={{ 
+                      fontFamily: "'SBL Hebrew', 'Ezra SIL', serif",
+                      fontSize: `${1.125 * textScale}rem` // base text-lg approx
+                    }}
                   >
                     {dw.word.hebrewText}
                   </span>
@@ -453,6 +514,7 @@ export const DiscoveryModePage: React.FC = () => {
           verseReference={dm.verseDisplayReference}
           isOpen={detectiveOpen}
           onClose={handleDetectiveCloseWithTranslation}
+          adjacentWords={detectiveAdjacentWords}
           onDiscoveryComplete={(translation, score) => {
             dm.completeWord(translation, score);
             setDetectiveOpen(false);
@@ -466,6 +528,7 @@ export const DiscoveryModePage: React.FC = () => {
           verseReference={dm.verseDisplayReference}
           isOpen={detectiveOpen}
           onClose={handleDetectiveCloseWithTranslation}
+          adjacentWords={detectiveAdjacentWords}
           onDiscoveryComplete={(translation, score) => {
             dm.completeWord(translation, score);
             setDetectiveOpen(false);

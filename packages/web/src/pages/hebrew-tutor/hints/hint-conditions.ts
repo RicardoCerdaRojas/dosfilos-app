@@ -12,7 +12,7 @@
  */
 
 import type { WordAnalysis } from '@dosfilos/domain';
-import { HintConditionKey, MorphemeRole, VerbType, VerbForm, Binyan } from '@dosfilos/domain';
+import { HintConditionKey, MorphemeRole, VerbType, VerbForm, Binyan, Gender, GrammaticalNumber, NominalState, GrammaticalCategory } from '@dosfilos/domain';
 
 export type ConditionFn = (word: WordAnalysis) => boolean;
 
@@ -95,4 +95,34 @@ export const HINT_CONDITIONS: Record<HintConditionKey, ConditionFn> = {
   [HintConditionKey.IS_PIEL]:     (w) => isBinyan(w, Binyan.PIEL),
   [HintConditionKey.IS_HIFIL]:    (w) => isBinyan(w, Binyan.HIFIL),
   [HintConditionKey.IS_HITPAEL]:  (w) => isBinyan(w, Binyan.HITPAEL),
+
+  // ── Nominal conditions ───────────────────────────────────────────────────
+  [HintConditionKey.IS_NOUN]: (w) => 
+    w.category === GrammaticalCategory.NOUN || w.category === GrammaticalCategory.PROPER_NOUN,
+    
+  [HintConditionKey.IS_ADJECTIVE]: (w) => 
+    w.category === GrammaticalCategory.ADJECTIVE,
+    
+  [HintConditionKey.IS_PRONOUN]: (w) => 
+    w.category === GrammaticalCategory.PRONOUN || 
+    w.category === GrammaticalCategory.PERSONAL_PRONOUN || 
+    w.category === GrammaticalCategory.DEMONSTRATIVE_PRONOUN || 
+    w.category === GrammaticalCategory.RELATIVE_PRONOUN,
+    
+  [HintConditionKey.IS_PARTICLE]: (w) => 
+    w.category === GrammaticalCategory.PARTICLE ||
+    w.category === GrammaticalCategory.PREPOSITION ||
+    w.category === GrammaticalCategory.CONJUNCTION ||
+    w.category === GrammaticalCategory.DEFINITE_ARTICLE ||
+    w.category === GrammaticalCategory.ADVERB ||
+    w.category === GrammaticalCategory.INTERJECTION ||
+    w.category === GrammaticalCategory.OBJECT_MARKER ||
+    w.category === GrammaticalCategory.INTERROGATIVE ||
+    w.category === GrammaticalCategory.NEGATIVE_PARTICLE,
+
+  [HintConditionKey.IS_MASCULINE]: (w) => w.nominalMorphology?.gender === Gender.MASCULINE,
+  [HintConditionKey.IS_FEMININE]:  (w) => w.nominalMorphology?.gender === Gender.FEMININE,
+  [HintConditionKey.IS_PLURAL]:    (w) => w.nominalMorphology?.number === GrammaticalNumber.PLURAL,
+  [HintConditionKey.IS_DUAL]:      (w) => w.nominalMorphology?.number === GrammaticalNumber.DUAL,
+  [HintConditionKey.IS_CONSTRUCT]: (w) => w.nominalMorphology?.state === NominalState.CONSTRUCT,
 };
