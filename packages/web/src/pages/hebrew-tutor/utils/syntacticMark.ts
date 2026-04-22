@@ -6,10 +6,12 @@
  * structural inference for legacy cached analyses.
  *
  * Priority:
- *  1. word.clauseTag   — explicit, authoritative (new analyses)
- *  2. PREPOSITION cat  — any preposition heads a prepositional phrase
- *  3. CONSTRUCT state  — any nominal in construct state (semikut)
- *  4. syntacticFn text — text-based heuristic for apposition detection
+ *  1. word.clauseTag          — explicit, authoritative (new analyses)
+ *  2. PREPOSITION category    — standalone prepositions (עַל, אֶל, מִן...)
+ *  3. PREPOSITION_PREFIX role — inseparable prefix prepositions (לְ, בְּ, כְּ, מִ)
+ *     fused to the next word; category will be NOUN/ADJ, not PREPOSITION
+ *  4. CONSTRUCT state         — nominal in construct state (semikut)
+ *  5. syntacticFn text        — text-based heuristic for apposition detection
  */
 
 import type { WordAnalysis } from '@dosfilos/domain';
@@ -22,12 +24,19 @@ export function getSyntacticMark(word: WordAnalysis): SyntacticMark {
   if (word.clauseTag === 'CONSTRUCT')   return 'CONSTRUCT';
   if (word.clauseTag === 'APPOSITION')  return 'APPOSITION';
 
-  // 2. Structural fallback for legacy cached analyses
+  // 2. Standalone preposition (independent token, e.g. עַל, אֶל, מִן)
   const cat = word.category?.toUpperCase() ?? '';
   if (cat === 'PREPOSITION') return 'PREP_PHRASE';
+
+  // 3. Inseparable preposition prefix (לְ, בְּ, כְּ, מִ) fused to noun/adjective.
+  //    These tokens have category=NOUN/ADJ but carry a PREPOSITION_PREFIX morpheme.
+  const hasPrepositionPrefix = word.morphemes?.some(m => m.role === 'PREPOSITION_PREFIX') ?? false;
+  if (hasPrepositionPrefix) return 'PREP_PHRASE';
+
+  // 4. Construct state (semikut)
   if (word.nominalMorphology?.state === 'CONSTRUCT') return 'CONSTRUCT';
 
-  // 3. Text heuristic for apposition (Spanish: "aposición")
+  // 5. Text heuristic for apposition (Spanish: "aposición")
   const fn = word.syntacticFunction?.toLowerCase() ?? '';
   if (fn.includes('aposic') || fn.includes('apósi')) return 'APPOSITION';
 
