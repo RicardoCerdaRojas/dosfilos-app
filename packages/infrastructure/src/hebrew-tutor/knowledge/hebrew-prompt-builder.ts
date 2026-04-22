@@ -352,6 +352,52 @@ REGLAS DE TRADUCCIÓN:
 4. En contraste, cuando encuentres un verbo con waw conjuntiva simple (וְ),
    tradúcelo simplemente con "y" sin conector secuencial.
 
+## REGLAS DE DESAMBIGUACIÓN MORFOLÓGICA
+
+Muchas formas verbales hebreas son ambiguas en superficie y comparten la misma
+escritura para binyanim distintos. NO asumas un binyan basándote solo en la forma
+vocálica aislada. DEBES considerar el CONTEXTO SINTÁCTICO completo:
+
+### 1. Criterios de desambiguación (en orden de prioridad)
+
+1. **Transitividad / valencia verbal**: si el verbo lleva objeto directo explícito,
+   evalúa si el binyan propuesto admite transitividad. Qal de verbos intransitivos
+   (e.g. עָלָה "subir") NO puede llevar objeto directo — si lo hay, sospecha Hifil.
+2. **Identificación del agente**: si el contexto señala un agente que no coincide
+   con la persona/género del binyan propuesto, reconsidera.
+3. **Coherencia del discurso**: analiza los versículos adyacentes para determinar
+   quién habla, a quién se dirige y cuál es la acción lógica.
+
+### 2. Caso especial: verbos III-ה en Hifil wayyiqtol
+
+En verbos III-ה (como עָלָה, בָּנָה, עָשָׂה), el Hifil wayyiqtol puede aparecer
+en FORMA ABREVIADA que es idéntica superficialmente al Qal wayyiqtol 3fs.
+
+**Ejemplo clave: וַתַּעַל**
+- Lectura superficial: Qal wayyiqtol 3fs "y ella subió"
+- Lectura correcta en Jonás 2:7: Hifil wayyiqtol 2ms "y tú sacaste / hiciste subir"
+  
+**Cómo desambiguar:**
+- חַיַּי funciona como OBJETO DIRECTO ("mi vida") → requiere verbo transitivo
+- El contexto identifica a יְהוָה אֱלֹהָי como agente en 2ms ("tú")
+- El Qal de עָלָה es INTRANSITIVO ("subir"), no puede llevar objeto directo
+- El Hifil de עָלָה es CAUSATIVO/TRANSITIVO ("hacer subir, sacar")
+- En verbos III-ה el Hifil wayyiqtol pierde la ה final: תַעֲלֶה → וַתַּעַל
+
+**REGLA**: Cuando la forma superficial es ambigua, el análisis DEBE basarse en
+la TRANSITIVIDAD y el CONTEXTO DISCURSIVO, no en la vocalización aislada.
+Si el verbo es claramente transitivo en contexto, declara el Hifil y explica
+la ambigüedad en el campo "explanation".
+
+### 3. Deber de declarar ambigüedad
+
+Si una forma verbal puede corresponder a más de un binyan/persona/género,
+DEBES declarar la ambigüedad explícitamente en el campo "explanation" del
+word object, indicando:
+- Las lecturas posibles
+- Los criterios que usaste para elegir la lectura correcta
+- Por qué descartaste las demás opciones
+
 REGLAS ABSOLUTAS:
 - NUNCA omitir una palabra
 - NUNCA asumir sin explicar
