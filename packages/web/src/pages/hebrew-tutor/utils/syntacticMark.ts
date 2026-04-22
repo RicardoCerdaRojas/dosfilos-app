@@ -6,12 +6,17 @@
  * structural inference for legacy cached analyses.
  *
  * Priority:
- *  1. word.clauseTag          — explicit, authoritative (new analyses)
- *  2. PREPOSITION category    — standalone prepositions (עַל, אֶל, מִן...)
- *  3. PREPOSITION_PREFIX role — inseparable prefix prepositions (לְ, בְּ, כְּ, מִ)
- *     fused to the next word; category will be NOUN/ADJ, not PREPOSITION
- *  4. CONSTRUCT state         — nominal in construct state (semikut)
- *  5. syntacticFn text        — text-based heuristic for apposition detection
+ *  1. word.clauseTag            — explicit, authoritative (Gemini, new analyses)
+ *  2. PREPOSITION category      — standalone prepositions (עַל, אֶל, מִן...)
+ *  3. PREPOSITION_PREFIX role   — inseparable prefix prepositions (לְ, בְּ, כְּ, מִ)
+ *     fused to a nominal; excluded when category=VERB because לְ + infinitive
+ *     construct is a purpose/result marker, NOT a prepositional phrase
+ *  4. CONSTRUCT state           — nominal in construct state (semikut)
+ *  5. syntacticFn text          — text-based heuristic for apposition detection
+ *
+ * ⚠️  The structural fallback (steps 2-5) is a heuristic for legacy cached
+ *     analyses that predate clauseTag. Re-analyzing a verse lets Gemini set
+ *     clauseTag with full semantic context, which is always more accurate.
  */
 
 import type { WordAnalysis } from '@dosfilos/domain';
@@ -19,21 +24,26 @@ import type { WordAnalysis } from '@dosfilos/domain';
 export type SyntacticMark = 'PREP_PHRASE' | 'CONSTRUCT' | 'APPOSITION' | null;
 
 export function getSyntacticMark(word: WordAnalysis): SyntacticMark {
-  // 1. Explicit tag from Gemini (new analyses)
+  // 1. Explicit tag from Gemini — full semantic authority
   if (word.clauseTag === 'PREP_PHRASE') return 'PREP_PHRASE';
   if (word.clauseTag === 'CONSTRUCT')   return 'CONSTRUCT';
   if (word.clauseTag === 'APPOSITION')  return 'APPOSITION';
 
-  // 2. Standalone preposition (independent token, e.g. עַל, אֶל, מִן)
   const cat = word.category?.toUpperCase() ?? '';
+
+  // 2. Standalone preposition (independent token, e.g. עַל, אֶל, מִן)
   if (cat === 'PREPOSITION') return 'PREP_PHRASE';
 
-  // 3. Inseparable preposition prefix (לְ, בְּ, כְּ, מִ) fused to noun/adjective.
-  //    These tokens have category=NOUN/ADJ but carry a PREPOSITION_PREFIX morpheme.
-  const hasPrepositionPrefix = word.morphemes?.some(m => m.role === 'PREPOSITION_PREFIX') ?? false;
-  if (hasPrepositionPrefix) return 'PREP_PHRASE';
+  // 3. Inseparable preposition prefix (לְ, בְּ, כְּ, מִ) fused to a nominal.
+  //    IMPORTANT: Exclude VERB category — לְ + infinitive construct is a
+  //    purpose/result clause marker (e.g. לְהַבִּיט = "to look toward"),
+  //    NOT a prepositional phrase in Biblical Hebrew grammar.
+  if (cat !== 'VERB') {
+    const hasPrepositionPrefix = word.morphemes?.some(m => m.role === 'PREPOSITION_PREFIX') ?? false;
+    if (hasPrepositionPrefix) return 'PREP_PHRASE';
+  }
 
-  // 4. Construct state (semikut)
+  // 4. Construct state (semikut) — nominal governing the following genitive
   if (word.nominalMorphology?.state === 'CONSTRUCT') return 'CONSTRUCT';
 
   // 5. Text heuristic for apposition (Spanish: "aposición")
