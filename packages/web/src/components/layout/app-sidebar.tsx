@@ -179,21 +179,21 @@ export function AppSidebar() {
         <div className="flex items-center px-2 py-3 relative h-16">
           
           {/* Logo Expanded State */}
-          <div className="group-data-[collapsible=icon]:hidden flex items-center h-full w-full">
+          <div className="group-data-[collapsible=icon]:hidden flex items-center justify-center h-full w-full overflow-hidden">
             <img 
               src="/logo_dfp.png" 
               alt="DosFilos.Preach" 
-              className="h-10 w-auto object-contain dark:brightness-0 dark:invert transition-all"
+              className="h-12 w-auto object-contain transition-all scale-[2.2] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
             />
           </div>
 
           {/* Logo Collapsed State (Cropped to show only DFP) */}
           <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-full h-full">
-            <div className="w-8 h-8 overflow-hidden relative rounded-sm flex items-center">
+            <div className="w-8 h-8 overflow-hidden relative rounded-sm flex items-center justify-center">
               <img 
                 src="/logo_dfp.png" 
                 alt="DFP" 
-                className="absolute left-0 h-9 w-auto max-w-none dark:brightness-0 dark:invert"
+                className="absolute left-1/2 -translate-x-[75%] h-12 w-auto max-w-none transition-all scale-[2.2] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
               />
             </div>
           </div>
