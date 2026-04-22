@@ -1,6 +1,6 @@
 import type { IHebrewSessionRepository, VerseAnalysis } from '@dosfilos/domain';
 import { db } from '../../config/firebase';
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 
 // Helper to recursively remove undefined fields (Firestore doesn't accept undefined)
 function removeUndefined<T>(obj: T): any {
@@ -85,6 +85,34 @@ export class FirebaseHebrewSessionRepository implements IHebrewSessionRepository
         } catch (error) {
             console.error('[FirebaseHebrewSessionRepository] Error reading saved analyses:', error);
             return [];
+        }
+    }
+
+    async updateTranslation(
+        reference: string,
+        updates: { literalTranslation?: string; fluidTranslation?: string },
+    ): Promise<void> {
+        try {
+            const cacheKey = reference.replace(/\./g, '_') + '_v2';
+            const docRef = doc(db, this.cacheCollection, cacheKey);
+
+            // Build a partial update using Firestore dot-notation paths so that
+            // only the patched translation fields are overwritten.
+            const patch: Record<string, string> = {};
+            if (updates.literalTranslation !== undefined) {
+                patch['analysis.literalTranslation'] = updates.literalTranslation;
+            }
+            if (updates.fluidTranslation !== undefined) {
+                patch['analysis.fluidTranslation'] = updates.fluidTranslation;
+            }
+
+            if (Object.keys(patch).length === 0) return;
+
+            await updateDoc(docRef, patch);
+            console.log(`[FirebaseHebrewSessionRepository] Updated translation for ${reference}`);
+        } catch (error) {
+            console.error('[FirebaseHebrewSessionRepository] Error updating translation:', error);
+            throw error; // Surface to the UI so the user knows it failed
         }
     }
 }

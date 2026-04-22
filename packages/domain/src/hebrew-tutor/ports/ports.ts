@@ -89,6 +89,17 @@ export interface IHebrewSessionRepository {
 
   /** Returns all saved analyses for the current user session. */
   getSavedAnalyses(): Promise<VerseAnalysis[]>;
+
+  /**
+   * Patches the literal and/or fluid translation of a cached analysis.
+   * Useful for editorial corrections without discarding the full analysis.
+   * @param reference - e.g. "Jonah.3.2"
+   * @param updates   - partial translation fields to overwrite
+   */
+  updateTranslation(
+    reference: string,
+    updates: { literalTranslation?: string; fluidTranslation?: string },
+  ): Promise<void>;
 }
 
 // ── IDetectiveSessionRepository ───────────────────────────────────────────────

@@ -116,6 +116,11 @@ export const WordTooltipContent: React.FC<WordTooltipContentProps> = ({
                <div className="flex items-baseline gap-2 text-[12px]">
                  <span className="font-semibold text-slate-500 dark:text-slate-400 w-9 shrink-0">Raíz:</span>
                  <span dir="rtl" lang="he" className="font-hebrew text-[16px] text-slate-800 dark:text-slate-200 leading-none" style={{ fontFeatureSettings: '"mark" 1, "mkmk" 1' }}>{word.root}</span>
+                 {word.rootTransliteration && (
+                   <span className="text-[11px] italic text-slate-400 dark:text-slate-500 leading-none">
+                     {word.rootTransliteration}
+                   </span>
+                 )}
                </div>
             )}
             {word.lemmaGloss && (

@@ -25,17 +25,22 @@ import { StickyVerseHeader } from './StickyVerseHeader';
 import { MorphemeSpan } from './MorphemeSpan';
 import { WordTooltipContent } from './WordTooltipContent';
 import { Tooltip, TooltipTrigger } from '@/components/ui/tooltip';
-import { PaletteIcon, ActivityIcon, PrinterIcon, DownloadIcon, FileTextIcon, ScanTextIcon, BookOpenIcon, LayoutGridIcon, ScrollTextIcon, CopyIcon, CheckIcon, RefreshCwIcon, BookOpenTextIcon } from 'lucide-react';
+import { PaletteIcon, ActivityIcon, PrinterIcon, DownloadIcon, FileTextIcon, ScanTextIcon, BookOpenIcon, LayoutGridIcon, ScrollTextIcon, CopyIcon, CheckIcon, RefreshCwIcon, BookOpenTextIcon, PencilIcon, XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { VerseAnalysis, WordAnalysis, LexicalNote, LexicalNoteType } from '@dosfilos/domain';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { generateVerseMarkdown } from '../utils/exportMarkdown';
 import { toast } from 'sonner';
+import { useHebrewTutor } from '../HebrewTutorProvider';
 
 interface VerseAnalysisResultProps {
   analysis: VerseAnalysis;
+  /** Verse reference used to persist translation edits, e.g. "Jonah.3.2" */
+  verseReference?: string;
   onForceRefresh?: () => void;
   canForceRefresh?: boolean;
+  /** Called after a translation is saved so the parent can update local state */
+  onTranslationUpdate?: (updates: { literalTranslation?: string; fluidTranslation?: string }) => void;
 }
 
 // Color legend items — pedagogical vowel classes + Dagesh
@@ -50,7 +55,13 @@ const LEGEND_ITEMS = [
   { role: 'suffix',    hex: '#8B5CF6', label: 'Sufijo' },
 ];
 
-export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analysis, onForceRefresh, canForceRefresh = true }) => {
+export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
+  analysis,
+  verseReference,
+  onForceRefresh,
+  canForceRefresh = true,
+  onTranslationUpdate,
+}) => {
   const { t } = useTranslation('hebrewTutor');
   const [tutorWord, setTutorWord] = React.useState<any | null>(null);
   const [detectiveWord, setDetectiveWord] = React.useState<WordAnalysis | null>(null);
@@ -387,6 +398,9 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
             label={t('verseAnalyzer.analysis.literalTranslation')}
             text={analysis.literalTranslation}
             icon={<ScanTextIcon className="w-3.5 h-3.5" />}
+            verseReference={analysis.reference}
+            field="literalTranslation"
+            onSaved={(text) => onTranslationUpdate?.({ literalTranslation: text })}
           />
         </div>
         <div className="print:mb-4">
@@ -394,6 +408,9 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
             label={t('verseAnalyzer.analysis.fluidTranslation')}
             text={analysis.fluidTranslation}
             icon={<BookOpenIcon className="w-3.5 h-3.5" />}
+            verseReference={analysis.reference}
+            field="fluidTranslation"
+            onSaved={(text) => onTranslationUpdate?.({ fluidTranslation: text })}
           />
         </div>
       </div>
@@ -499,18 +516,61 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({ analys
   );
 };
 
-// ── Sub-component ──────────────────────────────────────────────────────────────
+// ── Sub-component ─────────────────────────────────────────────────────
 
-const TranslationPanel: React.FC<{ label: string; text: string; icon: React.ReactNode }> = ({
-  label, text, icon,
+interface TranslationPanelProps {
+  label: string;
+  text: string;
+  icon: React.ReactNode;
+  verseReference?: string;
+  field?: 'literalTranslation' | 'fluidTranslation';
+  onSaved?: (newText: string) => void;
+}
+
+const TranslationPanel: React.FC<TranslationPanelProps> = ({
+  label, text, icon, verseReference, field, onSaved,
 }) => {
+  const { updateVerseTranslation } = useHebrewTutor();
   const [copied, setCopied] = React.useState(false);
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(text);
+  const [saving, setSaving] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+
+  // Keep draft in sync if the parent text changes (e.g. on re-analysis)
+  React.useEffect(() => { setDraft(text); setEditing(false); }, [text]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(editing ? draft : text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleSave = async () => {
+    if (!verseReference || !field) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateVerseTranslation.execute({
+        reference: verseReference,
+        [field]: draft,
+      });
+      onSaved?.(draft);
+      setEditing(false);
+    } catch (_e) { /* localStorage unavailable (e.g. private mode) */
+      setSaveError('No se pudo guardar. Intenta de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setDraft(text);
+    setEditing(false);
+    setSaveError(null);
+  };
+
+  const canEdit = Boolean(verseReference && field);
 
   return (
     <div className="bg-card border border-border rounded-xl p-4">
@@ -519,18 +579,69 @@ const TranslationPanel: React.FC<{ label: string; text: string; icon: React.Reac
           <span className="text-muted-foreground/70">{icon}</span>
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
         </div>
-        <button
-          onClick={handleCopy}
-          title="Copiar traducción"
-          className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-primary transition-colors px-1.5 py-0.5 rounded hover:bg-primary/5 print:hidden"
-        >
-          {copied
-            ? <CheckIcon className="w-3 h-3 text-emerald-500" />
-            : <CopyIcon className="w-3 h-3" />
-          }
-        </button>
+        <div className="flex items-center gap-1">
+          {canEdit && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              title="Editar traducción"
+              className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-primary transition-colors px-1.5 py-0.5 rounded hover:bg-primary/5 print:hidden"
+            >
+              <PencilIcon className="w-3 h-3" />
+            </button>
+          )}
+          {editing && (
+            <button
+              onClick={handleCancel}
+              title="Cancelar"
+              className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-destructive transition-colors px-1.5 py-0.5 rounded hover:bg-destructive/5 print:hidden"
+            >
+              <XIcon className="w-3 h-3" />
+            </button>
+          )}
+          <button
+            onClick={handleCopy}
+            title="Copiar traducción"
+            className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-primary transition-colors px-1.5 py-0.5 rounded hover:bg-primary/5 print:hidden"
+          >
+            {copied
+              ? <CheckIcon className="w-3 h-3 text-emerald-500" />
+              : <CopyIcon className="w-3 h-3" />
+            }
+          </button>
+        </div>
       </div>
-      <p className="text-sm text-foreground leading-relaxed">{text}</p>
+
+      {editing ? (
+        <div className="space-y-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={4}
+            className="w-full text-sm text-foreground leading-relaxed bg-muted/40 border border-border rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+            autoFocus
+          />
+          {saveError && (
+            <p className="text-xs text-destructive">{saveError}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={handleCancel}
+              className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || draft.trim() === text.trim()}
+              className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {saving ? 'Guardando…' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-foreground leading-relaxed">{text}</p>
+      )}
     </div>
   );
 };

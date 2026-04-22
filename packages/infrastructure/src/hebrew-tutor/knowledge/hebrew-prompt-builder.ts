@@ -32,6 +32,7 @@ Return ONLY a valid JSON object with the following structure (no markdown, no ex
       "hebrewText": "string — vocalized Hebrew of this word",
       "transliteration": "string",
       "root": "string — trilateral root in Hebrew",
+      "rootTransliteration": "string — academic transliteration of the root, e.g. 'm-n-h' for מנה. Use consonant-hyphen format.",
       "rootMeaning": "string — basic meaning of root, e.g. 'arrojar, lanzar'",
       "lemmaGloss": "string — lexical gloss in Spanish",
       "category": "VERB | NOUN | ADJECTIVE | PRONOUN | PERSONAL_PRONOUN | DEMONSTRATIVE_PRONOUN | RELATIVE_PRONOUN | PREPOSITION | CONJUNCTION | DEFINITE_ARTICLE | PARTICLE | ADVERB | INTERJECTION | PROPER_NOUN | OBJECT_MARKER | INTERROGATIVE | NEGATIVE_PARTICLE",
