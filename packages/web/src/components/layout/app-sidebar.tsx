@@ -176,29 +176,37 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       {/* Header */}
       <SidebarHeader className="border-b border-sidebar-border/50">
-        <div className="flex items-center gap-3 px-1 py-3 relative">
-          <div className="relative group">
-            <div className="p-1.5 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-500 to-cyan-400 shadow-md shadow-indigo-500/20 ring-1 ring-white/10 transition-transform group-hover:scale-105">
-              <BookOpen className="h-5 w-5 text-white stroke-[2.5]" />
+        <div className="flex items-center px-2 py-3 relative h-16">
+          
+          {/* Logo Expanded State */}
+          <div className="group-data-[collapsible=icon]:hidden flex items-center h-full w-full">
+            <img 
+              src="/logo_dfp.png" 
+              alt="DosFilos.Preach" 
+              className="h-10 w-auto object-contain dark:brightness-0 dark:invert transition-all"
+            />
+          </div>
+
+          {/* Logo Collapsed State (Cropped to show only DFP) */}
+          <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-full h-full">
+            <div className="w-8 h-8 overflow-hidden relative rounded-sm flex items-center">
+              <img 
+                src="/logo_dfp.png" 
+                alt="DFP" 
+                className="absolute left-0 h-9 w-auto max-w-none dark:brightness-0 dark:invert"
+              />
             </div>
-            {/* Badge - Always visible, positioned over icon */}
-            {planBadge && (
-              <Badge 
-                variant="outline" 
-                className={`absolute -top-2 -right-2 text-[9px] font-bold px-1.5 py-0 h-4 shadow-sm border ${planBadge.colorClass}`}
-              >
-                {planBadge.planName}
-              </Badge>
-            )}
           </div>
-          <div className="flex flex-col justify-center group-data-[collapsible=icon]:hidden mt-0.5">
-            <span className="text-xl tracking-tight leading-none flex items-baseline">
-              <span className="font-extrabold text-foreground">DosFilos</span>
-              <span className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-500">
-                .Preach
-              </span>
-            </span>
-          </div>
+
+          {/* Badge - Floating on top right */}
+          {planBadge && (
+            <Badge 
+              variant="outline" 
+              className={`absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0 h-4 shadow-sm border bg-background/90 backdrop-blur-sm z-10 ${planBadge.colorClass}`}
+            >
+              {planBadge.planName}
+            </Badge>
+          )}
         </div>
       </SidebarHeader>
 
