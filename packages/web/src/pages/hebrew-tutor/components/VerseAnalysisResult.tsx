@@ -81,7 +81,8 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
   const [activeWordIndex, setActiveWordIndex] = React.useState<number | null>(null);
 
   // ── Text scale (persisted in localStorage) ─────────────────────────────────
-  const SCALE_STEPS = [0.75, 0.875, 1.0, 1.125, 1.3] as const;
+  // Steps: ~20% per jump — more perceptible than the previous ~15% increments
+  const SCALE_STEPS = [0.7, 0.85, 1.0, 1.2, 1.45] as const;
   const DEFAULT_SCALE_IDX = 2; // 1.0
   const [scaleIdx, setScaleIdx] = React.useState<number>(() => {
     try {
@@ -351,7 +352,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
                       <span
                         dir="ltr"
                         lang="la"
-                        style={{ fontSize: `${11 * textScale}px` }}
+                        style={{ fontSize: `${12 * textScale}px` }}
                         className="font-normal italic text-muted-foreground leading-none mt-2.5 pb-2 tracking-tight block"
                       >
                         {w.transliteration}
