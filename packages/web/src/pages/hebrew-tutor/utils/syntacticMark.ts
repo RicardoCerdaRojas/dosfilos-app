@@ -55,14 +55,14 @@ export function getSyntacticMark(word: WordAnalysis): SyntacticMark {
 
 /** Tailwind border-bottom classes for each syntactic mark */
 export const SYNTACTIC_BORDER: Record<NonNullable<SyntacticMark>, string> = {
-  PREP_PHRASE: 'border-b-2 border-cyan-500/70 hover:border-cyan-500 hover:bg-cyan-50/40 dark:hover:bg-cyan-950/20',
+  PREP_PHRASE: 'border-b-2 border-rose-500/70 hover:border-rose-500 hover:bg-rose-50/40 dark:hover:bg-rose-950/20',
   CONSTRUCT:   'border-b-2 border-amber-500/70 hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-950/20',
   APPOSITION:  'border-b-2 border-violet-500/70 hover:border-violet-500 hover:bg-violet-50/40 dark:hover:bg-violet-950/20',
 };
 
 /** Dot color classes for syntactic pip indicator (coexists with verb underline) */
 export const SYNTACTIC_DOT: Record<NonNullable<SyntacticMark>, string> = {
-  PREP_PHRASE: 'bg-cyan-500',
+  PREP_PHRASE: 'bg-rose-500',
   CONSTRUCT:   'bg-amber-500',
   APPOSITION:  'bg-violet-500',
 };

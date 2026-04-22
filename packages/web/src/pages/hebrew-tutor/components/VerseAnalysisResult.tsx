@@ -425,7 +425,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
                 <span className="text-[10px] text-muted-foreground ml-1">Verbo</span>
               </div>
               <div className="flex items-center gap-0.5">
-                <span className="inline-block w-4 h-[2px] rounded-full bg-cyan-500/80" />
+                <span className="inline-block w-4 h-[2px] rounded-full bg-rose-500/80" />
                 <span className="text-[10px] text-muted-foreground ml-1">Frase prep.</span>
               </div>
               <div className="flex items-center gap-0.5">
@@ -497,7 +497,7 @@ export const VerseAnalysisResult: React.FC<VerseAnalysisResultProps> = ({
                 <span className="text-[11px] text-muted-foreground">Verbo</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="inline-block w-5 h-0.5 rounded-full bg-cyan-500/70" />
+                <span className="inline-block w-5 h-0.5 rounded-full bg-rose-500/70" />
                 <span className="text-[11px] text-muted-foreground">Frase preposicional</span>
               </div>
               <div className="flex items-center gap-1.5">
