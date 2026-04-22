@@ -183,7 +183,7 @@ export function AppSidebar() {
             <img 
               src="/logo_dfp.png" 
               alt="DosFilos.Preach" 
-              className="h-10 w-auto object-contain transition-all scale-[1.9] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
+              className="h-10 w-auto object-contain transition-all scale-[2.1] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
             />
           </div>
 
