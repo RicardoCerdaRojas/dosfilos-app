@@ -181,9 +181,9 @@ export function AppSidebar() {
           {/* Logo Expanded State */}
           <div className="group-data-[collapsible=icon]:hidden flex items-center justify-center h-full w-full overflow-hidden">
             <img 
-              src="/logo_dfp.png" 
+              src="/logo_dfp.svg" 
               alt="DosFilos.Preach" 
-              className="h-10 w-auto object-contain transition-all scale-[2.5] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
+              className="h-10 w-auto object-contain transition-all scale-105 mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
             />
           </div>
 
@@ -191,9 +191,9 @@ export function AppSidebar() {
           <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-full h-full">
             <div className="w-8 h-8 overflow-hidden relative rounded-sm flex items-center justify-center">
               <img 
-                src="/logo_dfp.png" 
+                src="/logo_dfp.svg" 
                 alt="DFP" 
-                className="absolute left-1/2 -translate-x-[75%] h-12 w-auto max-w-none transition-all scale-[2.5] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
+                className="absolute left-1/2 -translate-x-[75%] h-12 w-auto max-w-none transition-all scale-125 mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
               />
             </div>
           </div>
