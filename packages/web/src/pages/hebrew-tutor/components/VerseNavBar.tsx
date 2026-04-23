@@ -20,6 +20,7 @@ import {
   SparklesIcon,
   LoaderIcon,
 } from 'lucide-react';
+import { VerseSearchInput } from './VerseSearchInput';
 
 interface VerseNavBarProps {
   selectedBook: string;
@@ -232,6 +233,16 @@ export const VerseNavBar: React.FC<VerseNavBarProps> = ({
 
   return (
     <div className="flex items-center gap-2 flex-wrap print:hidden">
+      {/* ── Quick search ── */}
+      <VerseSearchInput
+        onNavigate={onNavigate}
+        disabled={isAnalyzing}
+        placeholder="Ir a versículo…"
+        inputClassName="w-44"
+      />
+
+      <div className="h-5 w-px bg-border/60 mx-1" />
+
       {/* ── Book ── */}
       <NavDropdown label={currentBookName} disabled={isAnalyzing}>
         <BookPicker
@@ -319,6 +330,11 @@ export const VerseNavBar: React.FC<VerseNavBarProps> = ({
           <>
             <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
             Cargando...
+          </>
+        ) : selectedBook ? (
+          <>
+            <SparklesIcon className="w-3.5 h-3.5" />
+            {currentBookName} {selectedChapter}:{selectedVerse}
           </>
         ) : (
           <>
