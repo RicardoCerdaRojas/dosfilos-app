@@ -106,7 +106,7 @@ export function AppSidebar() {
     // Group 2: Planning
     [
       { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
-      { name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles },
+      ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
       { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
     ],
     // Group 3: Resources
@@ -175,25 +175,38 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       {/* Header */}
-      <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3 px-1 py-3 relative">
-          <div className="relative">
-            <div className="p-1 rounded-lg bg-gradient-to-br from-primary to-primary/80">
-              <BookOpen className="h-5 w-5 text-primary-foreground" />
+      <SidebarHeader className="border-b border-sidebar-border/50">
+        <div className="flex items-center px-2 py-3 relative h-16">
+          
+          {/* Logo Expanded State */}
+          <div className="group-data-[collapsible=icon]:hidden flex items-center justify-center h-full w-full overflow-hidden">
+            <img 
+              src="/logo_dfp.svg" 
+              alt="DosFilos.Preach" 
+              className="h-10 w-auto object-contain transition-all scale-[1.65] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
+            />
+          </div>
+
+          {/* Logo Collapsed State (Cropped to show only DFP) */}
+          <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-full h-full">
+            <div className="w-8 h-8 overflow-hidden relative rounded-sm flex items-center justify-center">
+              <img 
+                src="/logo_dfp.svg" 
+                alt="DFP" 
+                className="absolute left-1/2 -translate-x-[75%] h-12 w-auto max-w-none transition-all scale-[1.65] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
+              />
             </div>
-            {/* Badge - Always visible, positioned over icon */}
-            {planBadge && (
-              <Badge 
-                variant="outline" 
-                className={`absolute -top-1 -right-1 text-[10px] font-semibold px-1 py-0 h-4 ${planBadge.colorClass}`}
-              >
-                {planBadge.planName}
-              </Badge>
-            )}
           </div>
-          <div className="flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
-            <span className="text-xl font-bold">DosFilos.Preach</span>
-          </div>
+
+          {/* Badge - Floating on top right */}
+          {planBadge && (
+            <Badge 
+              variant="outline" 
+              className={`absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0 h-4 shadow-sm border bg-background/90 backdrop-blur-sm z-10 ${planBadge.colorClass}`}
+            >
+              {planBadge.planName}
+            </Badge>
+          )}
         </div>
       </SidebarHeader>
 
