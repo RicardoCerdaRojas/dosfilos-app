@@ -15,19 +15,23 @@ import { useTranslation } from 'react-i18next';
 import {
   BookOpenIcon,
   MenuIcon,
-  SparklesIcon,
-  CompassIcon,
   ArrowRightIcon,
   SearchIcon,
   SendIcon,
+  ClockIcon,
+  CheckIcon,
 } from 'lucide-react';
+import { useRecentVerses, addRecentVerse } from './hooks/useRecentVerses';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { GrammaticalCategory } from '@dosfilos/domain';
 import { HEBREW_BOOKS_CATALOG } from '@dosfilos/infrastructure';
+import type { TutorMode } from './HebrewTutorPage';
 
 import { useDiscoveryMode } from './hooks/useDiscoveryMode';
 import { VerseSelector } from './components/VerseSelector';
 import { VerseNavBar } from './components/VerseNavBar';
+import { ModeSelectorInline } from './components/ModeSelectorInline';
+import { HebrewToolbar } from './components/HebrewToolbar';
 import { HebrewLoadingTips } from './components/HebrewLoadingTips';
 import { VerbDetectivePanel } from './components/VerbDetectivePanel';
 import { NominalDetectivePanel } from './components/NominalDetectivePanel';
@@ -59,7 +63,19 @@ function getDetectiveType(category: GrammaticalCategory): 'verb' | 'nominal' | '
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export const DiscoveryModePage: React.FC = () => {
+interface DiscoveryModePageProps {
+  mode: TutorMode;
+  onModeChange: (mode: TutorMode) => void;
+  toolbarCollapsed: boolean;
+  onToggleToolbar: () => void;
+}
+
+export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
+  mode,
+  onModeChange,
+  toolbarCollapsed,
+  onToggleToolbar,
+}) => {
   const { t } = useTranslation('hebrewTutor');
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
 
@@ -83,6 +99,15 @@ export const DiscoveryModePage: React.FC = () => {
   const [detectiveType, setDetectiveType] = useState<'verb' | 'nominal' | 'particle'>('particle');
 
   const dm = useDiscoveryMode();
+  const { recents, refresh: refreshRecents } = useRecentVerses();
+
+  // Register verse in history when the comparing phase starts
+  React.useEffect(() => {
+    if (dm.phase === 'comparing' && dm.selectedBook) {
+      addRecentVerse(dm.selectedBook, dm.selectedChapter, dm.selectedVerse);
+      refreshRecents();
+    }
+  }, [dm.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentBookName =
     HEBREW_BOOKS_CATALOG.find((b) => b.morphhbKey === dm.selectedBook)?.nameSpanish ?? dm.selectedBook;
@@ -130,9 +155,8 @@ export const DiscoveryModePage: React.FC = () => {
 
   // Word click on stepper (for reviewing completed words)
   const handleWordClick = useCallback(
-    (index: number) => {
+    (_index: number) => {
       // Currently we only allow reviewing, not re-investigating
-      // Could open a read-only view in the future
     },
     [],
   );
@@ -144,91 +168,34 @@ export const DiscoveryModePage: React.FC = () => {
   }, [dm]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-full relative">
+    <div className="flex flex-col h-full min-h-0 w-full">
 
-      {/* ── Page header ──────────────────────────────────────────────────── */}
-      <div className="mb-4 print:hidden">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <CompassIcon className="w-5 h-5 text-indigo-500" />
-              <h1 className="text-xl font-bold text-foreground">
-                {t('discovery.title', { defaultValue: 'Modo Descubrimiento' })}
-              </h1>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t('discovery.description', {
-                defaultValue: 'Traduce palabra por palabra antes de ver el análisis experto.',
-              })}
-            </p>
-          </div>
-
-          {/* Mobile only: menu button */}
-          <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-            <SheetTrigger asChild>
-              <button className="md:hidden flex items-center gap-2 px-3 py-2 rounded-xl border border-border/60 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-colors shrink-0">
-                <MenuIcon className="w-4 h-4" />
-                <span className="text-xs">
+      {/* ── Professional toolbar ─────────────────────────────────────────── */}
+      <HebrewToolbar
+        collapsed={toolbarCollapsed}
+        onToggle={onToggleToolbar}
+        collapsedSummary={
+          <>
+            <SearchIcon className="w-3.5 h-3.5 text-indigo-500/60 shrink-0" />
+            <span className="font-medium text-foreground/70">Modo Traducción</span>
+            {dm.selectedBook && (
+              <>
+                <span className="text-border">·</span>
+                <span className="font-semibold text-foreground">
                   {currentBookName} {dm.selectedChapter}:{dm.selectedVerse}
                 </span>
-              </button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto">
-              <SheetHeader className="pb-4 border-b border-border/50">
-                <SheetTitle className="flex items-center gap-2">
-                  <BookOpenIcon className="w-4 h-4 text-primary" />
-                  {t('discovery.navigator', { defaultValue: 'Navegador Bíblico' })}
-                </SheetTitle>
-                <SheetDescription>
-                  {t('discovery.navigatorDesc', {
-                    defaultValue: 'Selecciona libro, capítulo y versículo para descubrir',
-                  })}
-                </SheetDescription>
-              </SheetHeader>
-              <div className="pt-4">
-                <VerseSelector
-                  selectedBook={dm.selectedBook}
-                  selectedChapter={dm.selectedChapter}
-                  selectedVerse={dm.selectedVerse}
-                  bookIndex={dm.bookIndex}
-                  isLoadingBook={dm.isLoadingIndex}
-                  onBookChange={dm.setBook}
-                  onChapterChange={dm.setChapter}
-                  onVerseChange={dm.setVerse}
-                  onNavigate={dm.navigate}
-                  onAnalyze={() => {
-                    dm.startDiscovery();
-                    setIsMobileSheetOpen(false);
-                  }}
-                  isAnalyzing={dm.phase === 'preparing'}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
+              </>
+            )}
+          </>
+        }
+      >
+        {/* Mode selector */}
+        <ModeSelectorInline mode={mode} onModeChange={onModeChange} />
 
-          {/* Font size controls (Desktop & Mobile) */}
-          <div className="flex items-center gap-1 bg-muted/40 rounded-lg p-1 border border-border/50 shrink-0">
-            <button 
-              onClick={() => updateTextScale(-0.15)} 
-              disabled={textScale <= 0.7}
-              className="p-1.5 hover:bg-background rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30" 
-              title="Reducir tamaño de fuente"
-            >
-              <span className="text-xs font-bold leading-none">A-</span>
-            </button>
-            <button 
-              onClick={() => updateTextScale(0.15)} 
-              disabled={textScale >= 2.5}
-              className="p-1.5 hover:bg-background rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30" 
-              title="Agrandar tamaño de fuente"
-            >
-              <span className="text-sm font-bold leading-none">A+</span>
-            </button>
-          </div>
-        </div>
+        <div className="h-5 w-px bg-border/50 shrink-0" />
 
-        {/* Desktop nav bar */}
-        <div className="hidden md:flex">
+        {/* Desktop navbar */}
+        <div className="hidden md:flex flex-1 min-w-0">
           <VerseNavBar
             selectedBook={dm.selectedBook}
             selectedChapter={dm.selectedChapter}
@@ -245,10 +212,62 @@ export const DiscoveryModePage: React.FC = () => {
             onPrev={dm.prevVerse}
           />
         </div>
-      </div>
+
+        {/* Font size controls */}
+        <div className="hidden md:flex items-center gap-0.5 shrink-0">
+          <button
+            onClick={() => updateTextScale(-0.15)}
+            disabled={textScale <= 0.7}
+            className="px-2 py-1 rounded-md text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30"
+            title="Reducir tamaño"
+          >A-</button>
+          <button
+            onClick={() => updateTextScale(0.15)}
+            disabled={textScale >= 2.5}
+            className="px-2 py-1 rounded-md text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30"
+            title="Agrandar tamaño"
+          >A+</button>
+        </div>
+
+        {/* Mobile: sheet trigger */}
+        <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+          <SheetTrigger asChild>
+            <button className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-indigo-400/40 hover:bg-indigo-50/50 transition-colors shrink-0">
+              <MenuIcon className="w-3.5 h-3.5" />
+              <span>{currentBookName} {dm.selectedChapter}:{dm.selectedVerse}</span>
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto">
+            <SheetHeader className="pb-4 border-b border-border/50">
+              <SheetTitle className="flex items-center gap-2">
+                <BookOpenIcon className="w-4 h-4 text-primary" />
+                {t('discovery.navigator', { defaultValue: 'Navegador Bíblico' })}
+              </SheetTitle>
+              <SheetDescription>
+                {t('discovery.navigatorDesc', { defaultValue: 'Selecciona libro, capítulo y versículo para traducir' })}
+              </SheetDescription>
+            </SheetHeader>
+            <div className="pt-4">
+              <VerseSelector
+                selectedBook={dm.selectedBook}
+                selectedChapter={dm.selectedChapter}
+                selectedVerse={dm.selectedVerse}
+                bookIndex={dm.bookIndex}
+                isLoadingBook={dm.isLoadingIndex}
+                onBookChange={dm.setBook}
+                onChapterChange={dm.setChapter}
+                onVerseChange={dm.setVerse}
+                onNavigate={dm.navigate}
+                onAnalyze={() => { dm.startDiscovery(); setIsMobileSheetOpen(false); }}
+                isAnalyzing={dm.phase === 'preparing'}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </HebrewToolbar>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 overflow-y-auto">
+      <main className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
         {/* Error banner */}
         {dm.error && (
           <div className="mb-4 flex items-start gap-3 bg-destructive/10 border border-destructive/30 rounded-xl p-4">
@@ -500,9 +519,9 @@ export const DiscoveryModePage: React.FC = () => {
         {/* Phase: Idle (empty state) */}
         {dm.phase === 'idle' && !dm.error && (
           <DiscoveryEmptyState
-            t={t}
             onQuickStart={(b, c, v) => dm.navigate(b, c, v)}
             openMobileSheet={() => setIsMobileSheetOpen(true)}
+            recents={recents}
           />
         )}
       </main>
@@ -548,105 +567,214 @@ export const DiscoveryModePage: React.FC = () => {
   );
 };
 
+// ── Curated quick-start verses (Translation mode) ─────────────────────────────
+
+const TRANSLATION_QUICK_VERSES = [
+  {
+    book: 'Gen',  chapter: 1, verse: 1,
+    ref: 'Génesis 1:1',  subtitle: 'El principio de todo',
+    grammar: 'Verbo Qal · Sust.',  words: 7,  level: 'Introductorio',
+    gradient: 'from-blue-500/10 to-indigo-500/10',
+    border: 'border-blue-500/20 hover:border-blue-500/40',
+    levelColor: 'text-blue-600 dark:text-blue-400',
+  },
+  {
+    book: 'Gen',  chapter: 3, verse: 10,
+    ref: 'Génesis 3:10',  subtitle: 'La desnudez revelada',
+    grammar: 'Qal Impf. · Estado constr.',  words: 9,  level: 'Intermedio',
+    gradient: 'from-amber-500/10 to-orange-500/10',
+    border: 'border-amber-500/20 hover:border-amber-500/40',
+    levelColor: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    book: 'Ps',  chapter: 23, verse: 1,
+    ref: 'Salmos 23:1',  subtitle: 'El Señor es mi pastor',
+    grammar: 'Participio · Sufijo pron.',  words: 4,  level: 'Básico',
+    gradient: 'from-emerald-500/10 to-teal-500/10',
+    border: 'border-emerald-500/20 hover:border-emerald-500/40',
+    levelColor: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    book: 'Jonah', chapter: 1, verse: 1,
+    ref: 'Jonás 1:1',  subtitle: 'Un llamado divino',
+    grammar: 'Wayyiqtol · Prepos.',  words: 8,  level: 'Introductorio',
+    gradient: 'from-violet-500/10 to-purple-500/10',
+    border: 'border-violet-500/20 hover:border-violet-500/40',
+    levelColor: 'text-violet-600 dark:text-violet-400',
+  },
+  {
+    book: 'Prov', chapter: 3, verse: 5,
+    ref: 'Proverbios 3:5',  subtitle: 'Confía en el Señor',
+    grammar: 'Imperativo · Sufijo pron.',  words: 6,  level: 'Básico',
+    gradient: 'from-rose-500/10 to-pink-500/10',
+    border: 'border-rose-500/20 hover:border-rose-500/40',
+    levelColor: 'text-rose-600 dark:text-rose-400',
+  },
+  {
+    book: 'Isa',  chapter: 6, verse: 1,
+    ref: 'Isaías 6:1',  subtitle: 'La visión del trono',
+    grammar: 'Wayyiqtol · Hiphil',  words: 12,  level: 'Avanzado',
+    gradient: 'from-sky-500/10 to-cyan-500/10',
+    border: 'border-sky-500/20 hover:border-sky-500/40',
+    levelColor: 'text-sky-600 dark:text-sky-400',
+  },
+] as const;
+
+// ── Flow steps for preview ────────────────────────────────────────────────────
+
+const FLOW_STEPS = [
+  { n: 1, label: 'Elige un versículo', icon: '📖' },
+  { n: 2, label: 'Investiga cada palabra', icon: '🔍' },
+  { n: 3, label: 'Compón tu traducción', icon: '✍️' },
+  { n: 4, label: 'Compara con el experto', icon: '⚖️' },
+] as const;
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 const DiscoveryEmptyState: React.FC<{
-  t: (key: string, opts?: Record<string, string>) => string;
   onQuickStart: (book: string, chapter: number, verse: number) => void;
   openMobileSheet: () => void;
-}> = ({ t, onQuickStart, openMobileSheet }) => (
-  <div className="flex flex-col items-center justify-center h-full py-12 px-4 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-500">
-    {/* Visual header */}
-    <div className="relative mb-10 group">
-      <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full opacity-50 group-hover:opacity-70 transition-opacity duration-700" />
-      <div className="relative bg-background/40 backdrop-blur-xl border border-white/10 dark:border-slate-800/50 p-10 rounded-3xl shadow-2xl flex flex-col items-center justify-center min-w-[280px]">
-        <CompassIcon className="w-16 h-16 text-indigo-500 mb-4" />
-        <div
-          className="text-6xl md:text-7xl font-hebrew text-foreground/80 leading-none drop-shadow-sm transition-transform duration-500 group-hover:scale-105"
-          dir="rtl"
-          lang="he"
-        >
-          חֲקֹר
+  recents: import('./hooks/useRecentVerses').RecentVerse[];
+}> = ({ onQuickStart, openMobileSheet, recents }) => (
+  <div className="flex flex-col items-center justify-center h-full py-8 px-4 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-500">
+
+    {/* Flow preview card */}
+    <div className="w-full max-w-2xl mb-8 rounded-2xl border border-indigo-200/60 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50/40 via-background to-violet-50/20 dark:from-indigo-950/20 dark:via-background dark:to-violet-950/10 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500/5 border-b border-indigo-200/40 dark:border-indigo-800/30">
+        <SearchIcon className="w-3.5 h-3.5 text-indigo-500" />
+        <span className="text-xs font-semibold text-indigo-600/80 dark:text-indigo-400/80 uppercase tracking-wider">
+          Cómo funciona el Modo Traducción
+        </span>
+      </div>
+
+      <div className="p-5">
+        {/* Flow steps */}
+        <div className="grid grid-cols-4 gap-2 mb-5">
+          {FLOW_STEPS.map((step, i) => (
+            <div key={step.n} className="flex flex-col items-center gap-1.5 text-center">
+              <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-300/40 dark:border-indigo-700/40 flex items-center justify-center text-base">
+                {step.icon}
+              </div>
+              {i < FLOW_STEPS.length - 1 && (
+                <div className="hidden sm:block absolute" style={{ display: 'none' }} />
+              )}
+              <div className="text-[10px] text-muted-foreground leading-tight font-medium">{step.label}</div>
+            </div>
+          ))}
         </div>
-        <p className="text-sm text-muted-foreground mt-2 italic">&ldquo;Investiga&rdquo;</p>
+
+        {/* Connector arrows between steps (desktop) */}
+        <div className="hidden sm:flex items-center justify-center gap-1 -mt-3 mb-4">
+          {FLOW_STEPS.map((_, i) => i < FLOW_STEPS.length - 1 && (
+            <React.Fragment key={i}>
+              <div className="flex-1 h-px bg-indigo-200/60 dark:bg-indigo-800/40" />
+              <ArrowRightIcon className="w-3 h-3 text-indigo-400/60 shrink-0" />
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Mock investigation card */}
+        <div className="rounded-xl border border-indigo-200/50 dark:border-indigo-800/30 bg-background/60 p-4">
+          <div className="text-[10px] font-semibold text-indigo-500/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[9px] font-bold text-indigo-600">2</span>
+            Investigando palabra
+          </div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-3xl font-hebrew text-indigo-700 dark:text-indigo-300" dir="rtl" lang="he">בָּרָא</span>
+              <span className="text-[10px] text-muted-foreground italic">bā-rāʾ</span>
+              <span className="text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border">Verbo Qal</span>
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="rounded-lg bg-muted/30 border border-border/40 px-3 py-2">
+                <div className="text-[9px] text-muted-foreground mb-0.5">Tu traducción</div>
+                <div className="text-xs text-foreground/40 italic">________________</div>
+              </div>
+              <div className="rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/40 dark:border-emerald-800/30 px-3 py-2 flex items-start gap-1.5">
+                <CheckIcon className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-[9px] text-emerald-600/70 mb-0.5">Experto (visible al final)</div>
+                  <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">creó — Qal Perf. 3ms</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    {/* Copy */}
-    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-tight text-center">
-      {t('discovery.empty.title', { defaultValue: 'Descubre traduciendo' })}
-    </h2>
-    <p className="text-base md:text-lg text-muted-foreground max-w-md text-center leading-relaxed mb-10">
-      {t('discovery.empty.description', {
-        defaultValue:
-          'Investiga cada palabra del versículo con el detective antes de ver el análisis del experto.',
-      })}
-    </p>
+    {/* Recent verses */}
+    {recents.length > 0 && (
+      <div className="w-full max-w-2xl mb-5">
+        <div className="flex items-center gap-2 mb-2">
+          <ClockIcon className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Recientes
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {recents.map((r) => (
+            <button
+              key={`${r.book}-${r.chapter}-${r.verse}`}
+              onClick={() => onQuickStart(r.book, r.chapter, r.verse)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/40 text-sm text-foreground hover:bg-muted hover:border-indigo-300/40 transition-all active:scale-[0.97]"
+            >
+              <span className="font-medium">{r.bookName} {r.chapter}:{r.verse}</span>
+              <ArrowRightIcon className="w-3 h-3 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
 
     {/* Quick actions */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg">
+    <div className="w-full max-w-2xl">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Versículos sugeridos
+        </span>
+      </div>
+
+      {/* Mobile: search button */}
       <button
         onClick={openMobileSheet}
-        className="md:hidden group flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.98]"
+        className="md:hidden w-full group flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:border-indigo-300/40 transition-all active:scale-[0.98] mb-3"
       >
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
             <SearchIcon className="w-5 h-5" />
           </div>
           <div className="text-left">
-            <div className="font-semibold text-foreground text-sm">
-              {t('discovery.empty.search', { defaultValue: 'Buscar Pasaje' })}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {t('discovery.empty.searchDesc', { defaultValue: 'Abre el navegador' })}
-            </div>
+            <div className="font-semibold text-foreground text-sm">Buscar Pasaje</div>
+            <div className="text-xs text-muted-foreground">Abre el navegador</div>
           </div>
         </div>
         <ArrowRightIcon className="w-4 h-4 text-muted-foreground group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
       </button>
 
-      <button
-        onClick={() => onQuickStart('Genesis', 1, 1)}
-        className="group flex items-center justify-between p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/20 shadow-sm hover:shadow-md hover:border-blue-500/40 transition-all active:scale-[0.98]"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400">
-            <SparklesIcon className="w-5 h-5" />
-          </div>
-          <div className="text-left">
-            <div className="font-semibold text-foreground text-sm">Génesis 1:1</div>
-            <div className="text-xs text-muted-foreground">
-              {t('discovery.empty.genesis', { defaultValue: 'El principio de todo' })}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+        {TRANSLATION_QUICK_VERSES.map((v) => (
+          <button
+            key={`${v.book}-${v.chapter}-${v.verse}`}
+            onClick={() => onQuickStart(v.book, v.chapter, v.verse)}
+            className={`group flex flex-col gap-2 p-3.5 rounded-2xl bg-gradient-to-br ${v.gradient} border ${v.border} shadow-sm hover:shadow-md transition-all active:scale-[0.98] text-left`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="font-semibold text-foreground text-sm leading-tight">{v.ref}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{v.subtitle}</div>
+              </div>
+              <ArrowRightIcon className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 mt-0.5" />
             </div>
-          </div>
-        </div>
-        <ArrowRightIcon className="w-4 h-4 text-muted-foreground group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-      </button>
-
-      <button
-        onClick={() => onQuickStart('Genesis', 3, 10)}
-        className="group flex items-center justify-between p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 shadow-sm hover:shadow-md hover:border-amber-500/40 transition-all active:scale-[0.98]"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400">
-            <BookOpenIcon className="w-5 h-5" />
-          </div>
-          <div className="text-left">
-            <div className="font-semibold text-foreground text-sm">Génesis 3:10</div>
-            <div className="text-xs text-muted-foreground">
-              {t('discovery.empty.gen310', { defaultValue: 'La desnudez revelada' })}
+            <div className="flex flex-col gap-1 pt-1 border-t border-border/20">
+              <div className={`text-[10px] font-semibold ${v.levelColor}`}>{v.level}</div>
+              <div className="text-[10px] text-muted-foreground">{v.grammar}</div>
+              <div className="text-[10px] text-muted-foreground/70">{v.words} palabras</div>
             </div>
-          </div>
-        </div>
-        <ArrowRightIcon className="w-4 h-4 text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
-      </button>
-    </div>
-
-    <div className="hidden md:flex mt-12 items-center gap-2 text-sm text-muted-foreground opacity-70">
-      <ArrowRightIcon className="w-4 h-4 -rotate-90 animate-bounce" />
-      <span>
-        {t('discovery.empty.hint', { defaultValue: 'Usa el navegador superior para buscar un versículo' })}
-      </span>
+          </button>
+        ))}
+      </div>
     </div>
   </div>
 );

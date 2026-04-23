@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { HEBREW_BOOKS_CATALOG } from '@dosfilos/infrastructure';
 import type { BookIndex } from '@dosfilos/domain';
 import { SearchIcon, ChevronRightIcon, BookIcon, HashIcon, ListIcon } from 'lucide-react';
+import { VerseSearchInput } from './VerseSearchInput';
 
 interface VerseSelectorProps {
   selectedBook: string;
@@ -70,6 +71,25 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
 
   return (
     <div className="flex flex-col h-[500px] sm:h-[600px] bg-background">
+      {/* Quick search */}
+      <div className="mb-3">
+        <VerseSearchInput
+          onNavigate={(book, chapter, verse) => {
+            onNavigate(book, chapter, verse);
+            setActiveTab('verse');
+          }}
+          disabled={isAnalyzing}
+          placeholder="Ir directo… (ej: Salmos 23:1)"
+          inputClassName="w-full"
+        />
+      </div>
+
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex-1 h-px bg-border/40" />
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">o navega por pasos</span>
+        <div className="flex-1 h-px bg-border/40" />
+      </div>
+
       {/* Tab Navigation */}
       <div className="flex p-1 bg-muted rounded-xl mb-4">
         <button
@@ -200,10 +220,15 @@ export const VerseSelector: React.FC<VerseSelectorProps> = ({
             <span className="inline-block h-4 w-4 border-2 border-current border-r-transparent rounded-full animate-spin" />
             Analizando...
           </>
+        ) : selectedBook ? (
+          <>
+            <span>✦</span>
+            {currentBookName} {selectedChapter}:{selectedVerse}
+          </>
         ) : (
           <>
             <span>✦</span>
-            Analizar Versículo
+            Selecciona un versículo
           </>
         )}
       </button>
