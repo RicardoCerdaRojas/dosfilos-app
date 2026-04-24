@@ -4,6 +4,14 @@ export type ResourceType = 'theology' | 'grammar' | 'commentary' | 'article' | '
 
 export type TextExtractionStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
+/**
+ * Which extractor produced the text content.
+ * - '3.0-llamaparse': Primary, best quality (structured pages, preserves Greek/Hebrew/tables)
+ * - '2.0-gemini': Fallback, Gemini 2.0 Flash extraction
+ * - 'fallback-pdfparse': Last resort, local pdf-parse library
+ */
+export type ExtractionVersion = '3.0-llamaparse' | '2.0-gemini' | 'fallback-pdfparse';
+
 export interface LibraryResource {
     id: string;
     userId: string;
@@ -12,7 +20,10 @@ export interface LibraryResource {
     type: ResourceType;
     storageUrl: string;
     textContent?: string | undefined; // Legacy: Extracted text directly (deprecated)
-    textContentUrl?: string | undefined; // New: URL to text file in Cloud Storage
+    textContentUrl?: string | undefined; // URL to text file in Cloud Storage
+    structuredContentUrl?: string | undefined; // URL to structured Markdown (LlamaParse output)
+    extractionVersion?: ExtractionVersion; // Which extractor produced textContent
+    extractedWithLlamaParse?: boolean; // Convenience flag
     textExtractionStatus: TextExtractionStatus;
     mimeType: string;
     sizeBytes: number;

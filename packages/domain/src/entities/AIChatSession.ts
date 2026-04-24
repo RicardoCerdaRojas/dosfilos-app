@@ -1,3 +1,5 @@
+import { SourceReference } from '../services/IAIGeneratorService';
+
 export type MessageRole = 'user' | 'model' | 'system';
 
 export interface AIChatMessage {
@@ -5,6 +7,7 @@ export interface AIChatMessage {
     role: MessageRole;
     content: string;
     timestamp: Date;
+    sources?: SourceReference[];
 }
 
 export interface AIChatSession {

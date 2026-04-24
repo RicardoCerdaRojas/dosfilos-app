@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { facultyService, type ApprovedSermonOutline } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { AIAgent, SermonPersonalization } from '@dosfilos/domain';
+import { toast } from 'sonner';
 
 import { useState } from 'react';
 
@@ -48,6 +49,11 @@ export function useFacultyChat(sessionId: string) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid, sessionId] });
+        },
+        onError: (error) => {
+            console.error('[useFacultyChat] Direct message failed:', error);
+            toast.error('No se pudo guardar la respuesta. Por favor intenta de nuevo.');
+            queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid, sessionId] });
         }
     });
 
@@ -77,6 +83,11 @@ export function useFacultyChat(sessionId: string) {
             }
         },
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid, sessionId] });
+        },
+        onError: (error) => {
+            console.error('[useFacultyChat] Orchestrated message failed:', error);
+            toast.error('No se pudo guardar la respuesta. Por favor intenta de nuevo.');
             queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid, sessionId] });
         }
     });

@@ -111,7 +111,7 @@ export function AppSidebar() {
     ],
     // Group 3: Resources
     [
-      { name: t('menu.library'), href: '/dashboard/library', icon: Library },
+      ...(isAdmin ? [{ name: t('menu.library'), href: '/dashboard/library', icon: Library }] : []),
       { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
       { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
     ],

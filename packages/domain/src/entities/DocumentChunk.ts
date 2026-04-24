@@ -6,23 +6,29 @@
 export interface DocumentChunkData {
     id: string;
     resourceId: string;           // Reference to LibraryResource
-    resourceTitle: string;        // "Rediscovering Expository Preaching"
-    resourceAuthor: string;       // "John MacArthur"
+    resourceTitle: string;        // "Gramática Griega"
+    resourceAuthor: string;       // "Daniel B. Wallace"
     userId: string;               // Owner of the resource
     chunkIndex: number;           // Position in document (0, 1, 2...)
-    text: string;                 // Actual text content (~500-1000 chars)
+    text: string;                 // Actual text content (~500-2000 chars)
     embedding?: number[];         // Vector embedding from Gemini (optional)
     metadata: {
-        page?: number;            // Page number if available
-        section?: string;         // Chapter/section name if parseable
+        page?: number;            // Real page number from LlamaParse extraction
+        section?: string;         // Deepest heading (e.g. "1.2 El aoristo")
+        sectionPath?: string[];   // Full breadcrumb: ["Parte III", "Cap 11", "El aoristo"]
+        chunkType?: 'narrative' | 'table' | 'list' | 'heading-only';
         startChar?: number;       // Character offset in original
         endChar?: number;
     };
+    stores?: string[];            // Core Library stores this chunk belongs to (scoping for RAG)
+    indexerVersion?: string;      // '1.0-legacy' | '2.0-structured' (LlamaParse-aware)
     createdAt: Date;
 }
 
 export class DocumentChunkEntity implements DocumentChunkData {
     public embedding?: number[];
+    public stores?: string[];
+    public indexerVersion?: string;
 
     constructor(
         public id: string,
@@ -33,15 +39,14 @@ export class DocumentChunkEntity implements DocumentChunkData {
         public chunkIndex: number,
         public text: string,
         embedding: number[] | undefined,
-        public metadata: {
-            page?: number;
-            section?: string;
-            startChar?: number;
-            endChar?: number;
-        },
-        public createdAt: Date = new Date()
+        public metadata: DocumentChunkData['metadata'],
+        public createdAt: Date = new Date(),
+        stores?: string[],
+        indexerVersion?: string,
     ) {
         this.embedding = embedding;
+        this.stores = stores;
+        this.indexerVersion = indexerVersion;
     }
 
     static create(data: Omit<DocumentChunkData, 'id' | 'createdAt'> & { id?: string }): DocumentChunkEntity {
@@ -55,17 +60,29 @@ export class DocumentChunkEntity implements DocumentChunkData {
             data.text,
             data.embedding,
             data.metadata,
-            new Date()
+            new Date(),
+            data.stores,
+            data.indexerVersion,
         );
     }
 
     /**
-     * Get a formatted citation string for this chunk
+     * Get a formatted citation string for this chunk. Uses the deepest section + page.
      */
     getCitation(): string {
         const pageInfo = this.metadata.page ? `, p. ${this.metadata.page}` : '';
-        const sectionInfo = this.metadata.section ? ` - ${this.metadata.section}` : '';
+        const sectionInfo = this.metadata.section ? ` — ${this.metadata.section}` : '';
         return `${this.resourceAuthor}, "${this.resourceTitle}"${sectionInfo}${pageInfo}`;
+    }
+
+    /**
+     * Section breadcrumb as a string, useful for prompts.
+     */
+    getSectionBreadcrumb(): string {
+        if (this.metadata.sectionPath && this.metadata.sectionPath.length > 0) {
+            return this.metadata.sectionPath.join(' › ');
+        }
+        return this.metadata.section ?? '';
     }
 
     /**

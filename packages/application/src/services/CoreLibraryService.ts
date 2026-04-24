@@ -60,8 +60,6 @@ export class CoreLibraryService implements ICoreLibraryService {
 
             await this.createAllStores();
 
-            await this.createAllStores();
-
             this.initialized = true;
         } catch (error: any) {
             // ... error handling ...
@@ -276,9 +274,10 @@ export class CoreLibraryService implements ICoreLibraryService {
      */
     private prepareFileMetadata(resources: LibraryResourceEntity[]): FileSearchFileMetadata[] {
         return resources
-            .filter(r => r.metadata?.geminiUri) // Only resources synced to Gemini
+            .filter(r => r.metadata?.annotatedGeminiUri || r.metadata?.geminiUri)
             .map(r => ({
-                geminiUri: r.metadata!.geminiUri,
+                // Prefer annotated text URI (Strategy 1) over raw PDF URI
+                geminiUri: r.metadata!.annotatedGeminiUri ?? r.metadata!.geminiUri,
                 name: r.title,
                 storagePath: r.storageUrl,
                 author: r.author,

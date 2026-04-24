@@ -4,9 +4,81 @@ import {
     IAIGeneratorService,
     IAIProjectRepository,
     AIChatMessage,
-    AIAgent
+    AIAgent,
+    SourceReference
 } from '@dosfilos/domain';
 import { generateId } from '../../utils/generateId';
+import { CoreLibraryRAGService, RetrievedChunk } from '../../services/CoreLibraryRAGService';
+
+// Phase 2 RAG retrieval — shared instance
+const ragService = new CoreLibraryRAGService();
+
+function chunksToSourcesP2(chunks: RetrievedChunk[]): SourceReference[] {
+    const byDoc = new Map<string, { title: string; author: string; pages: Set<number>; sections: Set<string>; snippet: string }>();
+    for (const c of chunks) {
+        const key = `${c.resourceAuthor}||${c.resourceTitle}`;
+        const entry = byDoc.get(key) ?? {
+            title: c.resourceTitle,
+            author: c.resourceAuthor,
+            pages: new Set<number>(),
+            sections: new Set<string>(),
+            snippet: c.text.substring(0, 240).trim(),
+        };
+        if (c.metadata.page !== undefined) entry.pages.add(c.metadata.page);
+        if (c.sectionBreadcrumb) entry.sections.add(c.sectionBreadcrumb);
+        byDoc.set(key, entry);
+    }
+    return Array.from(byDoc.values()).map(entry => {
+        const ref: SourceReference = { title: entry.title };
+        if (entry.author) ref.author = entry.author;
+        const pagesArr = Array.from(entry.pages).sort((a, b) => a - b);
+        if (pagesArr.length > 0) {
+            ref.page = pagesArr[0];
+            const sectionStr = entry.sections.size > 0
+                ? Array.from(entry.sections).slice(0, 2).join(' · ')
+                : '';
+            const pagesStr = pagesArr.length === 1 ? `p. ${pagesArr[0]}` : `pp. ${pagesArr.join(', ')}`;
+            ref.snippet = sectionStr ? `${pagesStr} — ${sectionStr}` : pagesStr;
+        } else if (entry.snippet) {
+            ref.snippet = entry.snippet;
+        }
+        return ref;
+    });
+}
+
+/**
+ * Defensive post-processor: strip bogus citations that slipped past the prompt.
+ */
+function cleanCitations(text: string, agentNames: string[] = []): string {
+    let out = text;
+    // 1) "Basado en <chunk-id-like-token>[, pág N][, citado por X]"
+    out = out.replace(/\(Basado en [a-z0-9]{8,}[^)]*\)\.?/g, '');
+    out = out.replace(/Basado en [a-z0-9]{8,},\s*pág\.?\s*\d+[^.]*\./gi, '');
+    // 2) "(chunk-id, pág. N)" patterns — 10+ lowercase alphanumerics
+    out = out.replace(/\([a-z0-9]{10,}\s*,\s*p(?:á|a)g\.?\s*\d+[^)]*\)/gi, '');
+    // 3) Self-citations of known agents
+    const defaultAgents = [
+        'Dr\\. Al[eé]theia', 'Dr\\. Berith', 'Dr\\. Cris[oó]stomo',
+        'Dr\\. Calvino', 'Pastor Nout[eé]tico', 'Tutor Pastoral',
+    ];
+    const allAgents = [
+        ...defaultAgents,
+        ...agentNames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+    ];
+    for (const name of allAgents) {
+        out = out.replace(new RegExp(`\\(${name}(?:,\\s*[^)]*)?\\)\\.?`, 'g'), '');
+        out = out.replace(new RegExp(`Seg[uú]n\\s+${name}\\s*,?\\s*`, 'g'), '');
+    }
+    // 4) "citado por Dr. X" residuals
+    out = out.replace(/,?\s*citado\s+por\s+(Dr\.|Pastor)\s+[^).,]+\)?/gi, ')');
+    // 5) Clean up orphan punctuation — IMPORTANT: preserve newlines for markdown
+    out = out.replace(/\s*\(\s*\)/g, '');
+    out = out.replace(/[ \t]{2,}/g, ' ');              // only collapse horizontal whitespace
+    out = out.replace(/[ \t]+([.,;:])/g, '$1');        // remove space before punctuation (not newlines)
+    out = out.replace(/\.{2,}/g, '.');                  // repeated dots
+    out = out.replace(/\n{3,}/g, '\n\n');              // max 2 consecutive newlines (preserves paragraphs)
+    return out.trim();
+}
 
 /**
  * OrchestratedMessageUseCase — Fan-out Multi-Agent Coordinator
@@ -54,7 +126,8 @@ export class OrchestratedMessageUseCase {
         messageContent: string,
         onChunk?: (text: string) => void,
         onAgentsSelected?: (agents: AIAgent[]) => void,
-        lengthPreference?: 'concise' | 'detailed'
+        lengthPreference?: 'concise' | 'detailed',
+        onSources?: (sources: SourceReference[]) => void
     ): Promise<{ response: string; selectedAgents: AIAgent[] }> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) throw new Error('Session not found');
@@ -104,23 +177,104 @@ export class OrchestratedMessageUseCase {
 
         const history = [...session.messages, userMessage];
         let finalResponse = '';
+        let capturedSources: SourceReference[] = [];
+
+        const handleSources = (sources: SourceReference[]) => {
+            capturedSources = sources;
+            onSources?.(sources);
+        };
+
+        // PHASE 2 — Retrieve relevant chunks for each participating specialist.
+        // We aggregate by corpus so each specialist gets its own context.
+        const retrievedContextByAgent = new Map<string, { context: string; chunks: RetrievedChunk[] }>();
+        try {
+            const uniqueCorpusSets = new Map<string, string[]>();
+            for (const a of finalAgents) {
+                if (a.corpusIds && a.corpusIds.length > 0) {
+                    const key = [...a.corpusIds].sort().join('|');
+                    if (!uniqueCorpusSets.has(key)) uniqueCorpusSets.set(key, a.corpusIds);
+                }
+            }
+            // Retrieve once per unique corpus set (usually 1-2 calls)
+            const retrievalResults = await Promise.all(
+                Array.from(uniqueCorpusSets.entries()).map(async ([key, corpusIds]) => {
+                    const chunks = await ragService.retrieve(enrichedMessage, {
+                        corpusIds,
+                        topK: 10,
+                        minSimilarity: 0.3,
+                    });
+                    return { key, chunks };
+                })
+            );
+            // Assign to each agent by its corpus set
+            for (const a of finalAgents) {
+                if (!a.corpusIds || a.corpusIds.length === 0) continue;
+                const key = [...a.corpusIds].sort().join('|');
+                const result = retrievalResults.find(r => r.key === key);
+                if (result && result.chunks.length > 0) {
+                    retrievedContextByAgent.set(a.id, {
+                        context: CoreLibraryRAGService.formatContextForPrompt(result.chunks),
+                        chunks: result.chunks,
+                    });
+                }
+            }
+
+            // Aggregate all sources for the UI
+            const allChunks = retrievalResults.flatMap(r => r.chunks);
+            if (allChunks.length > 0) {
+                const aggregatedSources = chunksToSourcesP2(allChunks);
+                capturedSources = aggregatedSources;
+                onSources?.(aggregatedSources);
+                console.log(`[OrchestratedMessage] Phase 2 RAG: ${allChunks.length} chunks across ${retrievedContextByAgent.size} agent(s)`);
+            }
+        } catch (err: any) {
+            console.warn('[OrchestratedMessage] Phase 2 RAG retrieval failed:', err?.message ?? err);
+        }
 
         if (decision.strategy === 'fanout' && finalAgents.length > 1) {
-            // ── Step 3a: Fan-out — call all specialists in parallel ────────────────
+            // ── Step 3a: Fan-out — call all specialists in parallel.
+            // With Phase 2 RAG, we inject retrieved context per agent (no more grounding metadata).
             const specialistResponses = await Promise.all(
-                finalAgents.map(agent =>
-                    this.generatorService
-                        .sendMessage(agent, history, enrichedMessage, lengthPreference)
-                        .then(response => ({ agent, response }))
-                        .catch(() => null)
-                )
+                finalAgents.map(async (agent) => {
+                    const agentContext = retrievedContextByAgent.get(agent.id)?.context;
+                    try {
+                        if (agentContext) {
+                            // Phase 2 path: use sendMessageStream with no-op chunker + retrievedContext
+                            // We need the full response here, so collect via stream (ignoring chunks).
+                            let full = '';
+                            await this.generatorService.sendMessageStream(
+                                agent, history, enrichedMessage,
+                                (c) => { full += c; },
+                                lengthPreference,
+                                undefined,
+                                agentContext,
+                            );
+                            return { agent, response: full, sources: [] as SourceReference[] };
+                        } else {
+                            // Legacy path: sendMessageWithSources (Gemini fileSearch)
+                            const result = await this.generatorService.sendMessageWithSources(
+                                agent, history, enrichedMessage, lengthPreference
+                            );
+                            return { agent, response: result.response, sources: result.sources };
+                        }
+                    } catch {
+                        return null;
+                    }
+                })
             );
 
             const validResponses = specialistResponses.filter(
-                (r): r is { agent: AIAgent; response: string } => !!r
+                (r): r is { agent: AIAgent; response: string; sources: SourceReference[] } => !!r
             );
 
             if (validResponses.length === 0) throw new Error('All specialist calls failed');
+
+            // Merge legacy-path sources (if any) with Phase 2 sources already captured
+            const legacySources = this.dedupSources(validResponses.flatMap(r => r.sources));
+            if (legacySources.length > 0 && capturedSources.length === 0) {
+                capturedSources = legacySources;
+                onSources?.(legacySources);
+            }
 
             // ── Step 3b: Synthesis — consolidate & stream ─────────────────────────
             finalResponse = await this.synthesize(
@@ -131,13 +285,16 @@ export class OrchestratedMessageUseCase {
             );
         } else {
             // ── Step 3 (single): Stream directly from the selected specialist ──────
+            const soloContext = retrievedContextByAgent.get(finalAgents[0].id)?.context;
             if (onChunk) {
                 finalResponse = await this.generatorService.sendMessageStream(
                     finalAgents[0],
                     history,
                     enrichedMessage,
                     onChunk,
-                    lengthPreference
+                    lengthPreference,
+                    soloContext ? undefined : handleSources,  // Skip legacy sources if Phase 2 provides context
+                    soloContext,
                 );
             } else {
                 finalResponse = await this.generatorService.sendMessage(
@@ -149,15 +306,32 @@ export class OrchestratedMessageUseCase {
             }
         }
 
+        // Defensive cleanup: strip self-citations and chunk-ID citations that leaked past the prompt
+        const agentNames = finalAgents.map(a => a.name);
+        const cleanedResponse = cleanCitations(finalResponse, agentNames);
+
         const modelMessage: AIChatMessage = {
             id: generateId(),
             role: 'model',
-            content: finalResponse,
-            timestamp: new Date()
+            content: cleanedResponse,
+            timestamp: new Date(),
+            ...(capturedSources.length > 0 && { sources: capturedSources }),
         };
         await this.chatRepository.addMessageToSession(userId, sessionId, modelMessage);
 
-        return { response: finalResponse, selectedAgents: finalAgents };
+        // Generate contextual session title on the FIRST exchange — awaited so UI refetch sees it
+        if (session.messages.length === 0) {
+            try {
+                const title = await this.generateSessionTitle(messageContent);
+                if (title) {
+                    await this.chatRepository.renameSession(userId, sessionId, title);
+                }
+            } catch (err) {
+                console.warn('[OrchestratedMessage] Title generation failed:', err);
+            }
+        }
+
+        return { response: cleanedResponse, selectedAgents: finalAgents };
     }
 
     /**
@@ -240,21 +414,32 @@ Responde ÚNICAMENTE con JSON válido sin texto adicional:
             .join('\n\n');
 
         const synthesisPrompt = `
-Eres un sintetizador de respuestas teológicas especializadas.
-Integra las siguientes respuestas de diferentes especialistas en UN SOLO documento
-cohesivo, bien estructurado y sin repeticiones innecesarias.
+Eres un sintetizador de respuestas teológicas. Tu trabajo es integrar las contribuciones de varios especialistas en UN SOLO documento cohesivo.
 
 PREGUNTA ORIGINAL: "${originalQuestion}"
 
 RESPUESTAS DE LOS ESPECIALISTAS:
 ${specialistSection}
 
-INSTRUCCIONES:
-- Integra las perspectivas de forma natural, indicando de qué especialidad proviene cada idea
-- Mantén el rigor teológico de cada especialista
-- Crea UN documento unificado, no concatenes las respuestas
-- Usa Markdown para estructurar la respuesta final
-- Comienza directamente con el contenido integrado
+REGLAS DE SÍNTESIS (CRÍTICAS):
+
+1. NUNCA atribuyas ideas a los tutores/especialistas. Los tutores NO son fuentes.
+   PROHIBIDO: "(Dr. Berith, Exégesis Hebrea)", "(Pastor Noutético)", "Según Dr. Crisóstomo...", "Basado en la perspectiva del Dr. X"
+   Los tutores son internos; el usuario final no debe verlos citados.
+
+2. PRESERVA las citas válidas a documentos reales que usen el formato (Autor, Título, p. N).
+   Ejemplos válidos que debes mantener: "(Kidner, Psalms 1-72, p. 45)", "(Wallace, Gramática Griega, p. 213)"
+
+3. ELIMINA cualquier cita sospechosa:
+   - Secuencias alfanuméricas sin sentido como "(lkxxzy9wx7z7, pág. 184)" — bórralas.
+   - Citas genéricas como "(Pastor Noutético)" o "(Dr. Berith)" — bórralas.
+   - Si un especialista dijo "Basado en <algo_extraño>, citado por Dr. X" — elimina esa atribución.
+
+4. Integra las perspectivas SIN decir de qué especialista provienen. El resultado debe leerse como UN solo autor experto.
+
+5. Si una misma cita aparece en varios especialistas, inclúyela UNA VEZ.
+
+6. Usa Markdown para estructurar. Comienza directamente con el contenido integrado, sin preámbulos.
 `.trim();
 
         const synthAgent: AIAgent = {
@@ -273,5 +458,63 @@ INSTRUCCIONES:
             );
         }
         return this.generatorService.sendMessage(synthAgent, [], synthesisPrompt, lengthPreference);
+    }
+
+    /**
+     * Generate a concise contextual title from the first user message.
+     * Keeps session list readable (e.g., "Salmo 1: Consejería Pastoral" instead of "Sesión con Dr. Alétheia").
+     */
+    private async generateSessionTitle(firstMessage: string): Promise<string | null> {
+        const titleAgent: AIAgent = {
+            id: '__title_gen__',
+            name: 'TitleGenerator',
+            role: 'title',
+            systemInstruction: 'Generas títulos breves y descriptivos en español. Responde SOLO con el título, sin comillas, sin puntuación final, sin prefijos.',
+            expertiseArea: 'title-generation',
+            description: 'Internal title generator',
+            isActive: true,
+        };
+
+        const prompt = `Genera un título MUY breve (máximo 6 palabras) que resuma el tema de esta pregunta teológica:
+
+"${firstMessage}"
+
+Ejemplos de buenos títulos:
+- "Salmo 1: Consejería Pastoral"
+- "Exégesis de Hebreos 1:1-4"
+- "Griego Koiné: Aoristo"
+- "Consejería Prematrimonial"
+- "Teología del Pacto"
+
+Responde solo con el título, sin comillas.`;
+
+        try {
+            const raw = await this.generatorService.sendMessage(titleAgent, [], prompt);
+            const cleaned = raw
+                .trim()
+                .replace(/^["'«]|["'»]$/g, '')
+                .replace(/\.$/, '')
+                .trim();
+            // Validate: non-empty, not too long
+            if (cleaned.length > 0 && cleaned.length <= 80) return cleaned;
+        } catch {
+            // Silent fail — title generation is non-critical
+        }
+        return null;
+    }
+
+    /**
+     * Deduplicate sources by author+title, merging page lists when applicable.
+     */
+    private dedupSources(sources: SourceReference[]): SourceReference[] {
+        const byKey = new Map<string, SourceReference>();
+        for (const src of sources) {
+            const key = src.author ? `${src.author}||${src.title}` : `store||${src.title}`;
+            if (!byKey.has(key)) {
+                byKey.set(key, { ...src });
+            }
+            // If duplicate, keep the first one (pages already aggregated per specialist)
+        }
+        return Array.from(byKey.values());
     }
 }
