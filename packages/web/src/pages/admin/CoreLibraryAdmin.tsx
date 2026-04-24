@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { libraryService, categoryService } from '@dosfilos/application';
 import { LibraryCategory, ResourceType } from '@dosfilos/domain';
 import { Upload } from 'lucide-react';
-import { doc, getDoc, getFirestore, collection, query, where, getDocs, writeBatch, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, getFirestore, collection, query, where, getDocs, writeBatch, arrayUnion, updateDoc, setDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { RefreshCw, Database, FileText, CheckCircle, AlertTriangle, Loader2, BookOpen, Mic2, Library } from 'lucide-react';
+import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
+import { RefreshCw, Database, FileText, CheckCircle, AlertTriangle, Loader2, BookOpen, Mic2, Library, Wand2, HelpCircle, ChevronDown, ChevronRight, GraduationCap, Folder, Sparkles, Activity } from 'lucide-react';
+import { RAGAuditDialog } from '@/components/admin/RAGAuditDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
@@ -39,6 +53,132 @@ interface SyncStatus {
 
 type StoreContext = string;
 
+// ── Small UI helpers ──────────────────────────────────────────────────────────
+
+function MetricCard({
+    icon: Icon, label, value, subtitle, highlight,
+}: {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    value: string | number;
+    subtitle?: string;
+    highlight?: boolean;
+}) {
+    return (
+        <div className={cn(
+            "rounded-lg border bg-card p-4 flex items-start gap-3",
+            highlight && "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-900"
+        )}>
+            <div className={cn(
+                "h-10 w-10 rounded-md flex items-center justify-center shrink-0 bg-muted",
+                highlight && "bg-emerald-100 dark:bg-emerald-900/40"
+            )}>
+                <Icon className={cn(
+                    "h-5 w-5 text-muted-foreground",
+                    highlight && "text-emerald-600 dark:text-emerald-400"
+                )} />
+            </div>
+            <div className="min-w-0 flex-1">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
+                <div className="text-xl font-bold leading-tight">{value}</div>
+                {subtitle && (
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate" title={subtitle}>
+                        {subtitle}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ── Annotation helpers ────────────────────────────────────────────────────────
+
+function annotateDocumentText(rawText: string, author: string, title: string): string {
+    // Character-based strategy with UNIQUE markers — each marker includes an incremental
+    // segment number so Gemini can't dedup them as repeated boilerplate. This is critical:
+    // identical markers repeated thousands of times get filtered during indexing.
+    const INTERVAL = 350;
+    let segmentCounter = 0;
+    const marker = (page: number) => {
+        segmentCounter++;
+        return ` Fragmento ${segmentCounter} · ${author} · "${title}" · p. ${page}. `;
+    };
+
+    // First pass: split by page markers (if present) to track page numbers
+    const pageRegex = /---\s*PAGE\s*(\d+)\s*---/g;
+    const segments: Array<{ text: string; page: number }> = [];
+    let lastIndex = 0;
+    let currentPage = 1;
+    let match: RegExpExecArray | null;
+
+    while ((match = pageRegex.exec(rawText)) !== null) {
+        segments.push({ text: rawText.substring(lastIndex, match.index), page: currentPage });
+        currentPage = parseInt(match[1]);
+        lastIndex = match.index + match[0].length;
+    }
+    segments.push({ text: rawText.substring(lastIndex), page: currentPage });
+
+    // Second pass: for each page segment, insert markers every INTERVAL chars at word boundaries
+    let out = '';
+    for (const { text, page } of segments) {
+        if (!text.trim()) continue;
+        let i = 0;
+        while (i < text.length) {
+            out += marker(page);
+            let end = Math.min(i + INTERVAL, text.length);
+            if (end < text.length) {
+                const lastSpace = text.lastIndexOf(' ', end);
+                if (lastSpace > i + INTERVAL / 2) end = lastSpace;
+            }
+            out += text.substring(i, end);
+            i = end;
+        }
+    }
+
+    return out;
+}
+
+async function uploadAnnotatedTextToGemini(
+    text: string,
+    displayName: string,
+    apiKey: string
+): Promise<{ uri: string; name: string }> {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const init = await fetch(
+        `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+        {
+            method: 'POST',
+            headers: {
+                'X-Goog-Upload-Protocol': 'resumable',
+                'X-Goog-Upload-Command': 'start',
+                'X-Goog-Upload-Header-Content-Length': String(blob.size),
+                'X-Goog-Upload-Header-Content-Type': 'text/plain',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ file: { displayName } }),
+        }
+    );
+    if (!init.ok) throw new Error(`Gemini init upload failed: ${init.statusText}`);
+    const uploadUrl = init.headers.get('x-goog-upload-url');
+    if (!uploadUrl) throw new Error('No upload URL from Gemini');
+
+    const upload = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+            'X-Goog-Upload-Protocol': 'resumable',
+            'X-Goog-Upload-Command': 'upload, finalize',
+            'X-Goog-Upload-Offset': '0',
+            'Content-Length': String(blob.size),
+        },
+        body: blob,
+    });
+    if (!upload.ok) throw new Error(`Gemini upload failed: ${upload.statusText}`);
+    const r = await upload.json() as { file: { uri: string; name: string } };
+    return { uri: r.file.uri, name: r.file.name };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function CoreLibraryAdmin() {
     const firebase = useFirebase();
     const [config, setConfig] = useState<StoreConfig | null>(null);
@@ -63,8 +203,443 @@ export default function CoreLibraryAdmin() {
     // Manual Retry state
     const [isRetrying, setIsRetrying] = useState<string | null>(null);
 
+    // Annotation state
+    const [annotating, setAnnotating] = useState<Record<string, boolean>>({});
+    const [annotationProgress, setAnnotationProgress] = useState<Record<string, string>>({});
+
+    // Reprocess (LlamaParse) state
+    const [reprocessing, setReprocessing] = useState<Record<string, boolean>>({});
+    const [reprocessProgress, setReprocessProgress] = useState<Record<string, string>>({});
+
+    // Index (Phase 2 vector search) state
+    const [indexing, setIndexing] = useState<Record<string, boolean>>({});
+    const [indexProgress, setIndexProgress] = useState<Record<string, string>>({});
+
+    // Audit dialog state
+    const [isAuditOpen, setIsAuditOpen] = useState(false);
+
+    const handleIndexDocument = async (resourceId: string, title: string) => {
+        setIndexing(prev => ({ ...prev, [resourceId]: true }));
+        try {
+            const functions = getFunctions();
+            const indexFn = httpsCallable(functions, 'indexStructuredDocument', {
+                timeout: 900_000,
+            });
+            const result = await indexFn({ resourceId, force: true }) as any;
+            const data = result.data ?? {};
+            if (data.skipped) {
+                toast.info(`"${title}" ya estaba indexado`);
+            } else if (data.success) {
+                const range = data.pageRange ? ` (págs ${data.pageRange.min}–${data.pageRange.max})` : '';
+                toast.success(`"${title}": ${data.chunkCount} chunks indexados${range}`);
+            }
+            await loadConfig();
+        } catch (err: any) {
+            console.error('[Index]', err);
+            toast.error(`Error indexando "${title}": ${err.message}`);
+        } finally {
+            setIndexing(prev => ({ ...prev, [resourceId]: false }));
+        }
+    };
+
+    const handleIndexStore = async (storeKey: string) => {
+        const docs = (storeResources[storeKey] ?? []) as any[];
+        const indexable = docs.filter(d => d.extractionVersion === '3.0-llamaparse');
+        const alreadyIndexed = indexable.filter(d => d.indexingStatus === 'ready').length;
+        const pending = indexable.length - alreadyIndexed;
+
+        if (indexable.length === 0) {
+            toast.warning('Ningún documento con LlamaParse en este store. Reprocesa primero.');
+            return;
+        }
+        if (pending === 0) {
+            toast.info(`Los ${indexable.length} documentos ya están indexados. Usa el botón individual para re-indexar uno específico.`);
+            return;
+        }
+
+        const ok = await askConfirm({
+            title: `Indexar ${pending} documentos pendientes (Phase 2)`,
+            description: alreadyIndexed > 0
+                ? `Se procesarán ${pending} documentos. ${alreadyIndexed} ya están indexados y se saltarán automáticamente.`
+                : `Se indexarán ${pending} documentos generando chunks semánticos + embeddings para el retrieval de los tutores. Puede tardar varios minutos.`,
+            confirmLabel: 'Indexar pendientes',
+        });
+        if (!ok) return;
+
+        setIndexing(prev => ({ ...prev, [`__store__${storeKey}`]: true }));
+        let done = 0;
+        let skipped = 0;
+        let failed = 0;
+        for (const doc of indexable) {
+            setIndexProgress(prev => ({
+                ...prev,
+                [`__store__${storeKey}`]: `Indexando "${doc.title}" (${done + skipped + 1}/${indexable.length})…`
+            }));
+            try {
+                const functions = getFunctions();
+                const indexFn = httpsCallable(functions, 'indexStructuredDocument', {
+                    timeout: 900_000,
+                });
+                // force: false → server skips docs with current indexerVersion (already indexed)
+                const result = await indexFn({ resourceId: doc.id, force: false }) as any;
+                const data = result.data ?? {};
+                if (data.skipped) {
+                    skipped++;
+                } else {
+                    done++;
+                }
+                // Pause between docs to give Gemini embedding quota time to replenish
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            } catch (err: any) {
+                console.error(`[Index ${doc.title}]`, err);
+                failed++;
+                // If rate limited, wait longer before next doc
+                const msg = err?.message ?? '';
+                if (/429|RESOURCE_EXHAUSTED/i.test(msg)) {
+                    console.log('[Index] Rate limited, waiting 30s before next doc...');
+                    await new Promise(resolve => setTimeout(resolve, 30_000));
+                }
+            }
+        }
+        setIndexing(prev => ({ ...prev, [`__store__${storeKey}`]: false }));
+        setIndexProgress(prev => ({ ...prev, [`__store__${storeKey}`]: '' }));
+
+        if (failed > 0) {
+            toast.warning(`Indexados: ${done} · Saltados: ${skipped} · Fallidos: ${failed}`);
+        } else if (skipped > 0) {
+            toast.success(`✅ ${done} nuevos indexados · ${skipped} ya estaban listos.`);
+        } else {
+            toast.success(`✅ ${done} documentos indexados. Los tutores ya pueden citar con páginas reales.`);
+        }
+        await loadConfig();
+    };
+
+    const handleReprocessDocument = async (resourceId: string, title: string) => {
+        setReprocessing(prev => ({ ...prev, [resourceId]: true }));
+        try {
+            const functions = getFunctions();
+            const reprocessFn = httpsCallable(functions, 'reprocessWithLlamaParse', {
+                timeout: 900_000,  // 15 minutes — LlamaParse can take several minutes for large PDFs
+            });
+            const result = await reprocessFn({ resourceId, force: true }) as any;
+            const data = result.data ?? {};
+            if (data.skipped) {
+                toast.info(`"${title}" ya estaba procesado con LlamaParse`);
+            } else if (data.success) {
+                toast.success(`"${title}": ${data.pageCount} páginas · ${data.creditsUsed} créditos usados`);
+            }
+            await loadConfig();
+        } catch (err: any) {
+            console.error('[Reprocess]', err);
+            toast.error(`Error en "${title}": ${err.message}`);
+        } finally {
+            setReprocessing(prev => ({ ...prev, [resourceId]: false }));
+        }
+    };
+
+    const handleReprocessStore = async (storeKey: string) => {
+        const docs = (storeResources[storeKey] ?? []) as any[];
+        if (docs.length === 0) return;
+
+        const ok = await askConfirm({
+            title: `Reprocesar ${docs.length} documentos con LlamaParse`,
+            description: `Se reprocesarán todos los documentos del store "${storeKey}" con LlamaParse (fast mode, ~1 crédito por página). Los documentos ya en LlamaParse se saltan. Esta operación puede tardar varios minutos.`,
+            confirmLabel: 'Reprocesar todos',
+        });
+        if (!ok) return;
+
+        setReprocessing(prev => ({ ...prev, [`__store__${storeKey}`]: true }));
+        let done = 0;
+        let skipped = 0;
+        let failed = 0;
+
+        for (const doc of docs) {
+            if (doc.extractionVersion === '3.0-llamaparse') {
+                skipped++;
+                continue;
+            }
+            setReprocessProgress(prev => ({
+                ...prev,
+                [`__store__${storeKey}`]: `Procesando "${doc.title}" (${done + 1}/${docs.length - skipped})…`
+            }));
+            try {
+                const functions = getFunctions();
+                const reprocessFn = httpsCallable(functions, 'reprocessWithLlamaParse', {
+                timeout: 900_000,  // 15 minutes — LlamaParse can take several minutes for large PDFs
+            });
+                await reprocessFn({ resourceId: doc.id, force: false });
+                done++;
+            } catch (err: any) {
+                console.error(`[Reprocess ${doc.title}]`, err);
+                failed++;
+            }
+        }
+
+        setReprocessing(prev => ({ ...prev, [`__store__${storeKey}`]: false }));
+        setReprocessProgress(prev => ({ ...prev, [`__store__${storeKey}`]: '' }));
+
+        if (failed > 0) {
+            toast.warning(`Reprocesados: ${done} · Saltados: ${skipped} · Fallidos: ${failed}`);
+        } else {
+            toast.success(`Reprocesados: ${done} · Saltados: ${skipped}`);
+        }
+        await loadConfig();
+    };
+
+    // Agents (tutors) — used to show which tutors reference each store
+    const [agents, setAgents] = useState<Array<{ id: string; name: string; icon?: string; isActive?: boolean; corpusIds?: string[] }>>([]);
+
+    useEffect(() => {
+        const loadAgents = async () => {
+            const db = getFirestore();
+            const snap = await getDocs(collection(db, 'ai_agents'));
+            setAgents(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
+        };
+        loadAgents().catch(err => console.error('Failed to load agents:', err));
+    }, []);
+
+    const tutorsForStoreId = (storeId: string | null | undefined) =>
+        storeId ? agents.filter(a => a.corpusIds?.includes(storeId)) : [];
+
+    // Batch operation state
+    const [batchOperation, setBatchOperation] = useState<{ type: 'annotate' | 'sync' | null; current: number; total: number; storeKey: string | null }>({
+        type: null, current: 0, total: 0, storeKey: null,
+    });
+
+    // Reusable promise-based confirmation dialog
+    type ConfirmState = {
+        open: boolean;
+        title: string;
+        description: string;
+        confirmLabel?: string;
+        variant?: 'default' | 'destructive';
+    };
+    const [confirmState, setConfirmState] = useState<ConfirmState>({
+        open: false, title: '', description: '',
+    });
+    const confirmResolveRef = useRef<((v: boolean) => void) | null>(null);
+
+    const askConfirm = (opts: Omit<ConfirmState, 'open'>): Promise<boolean> =>
+        new Promise(resolve => {
+            confirmResolveRef.current = resolve;
+            setConfirmState({ ...opts, open: true });
+        });
+
+    const settleConfirm = (result: boolean) => {
+        confirmResolveRef.current?.(result);
+        confirmResolveRef.current = null;
+        setConfirmState(s => ({ ...s, open: false }));
+    };
+
+    const handleAnnotateAll = async (force: boolean = false) => {
+        const keys = config?.stores ? Object.keys(config.stores).sort((a, b) => a.localeCompare(b, 'es')) : [];
+        if (keys.length === 0) return;
+        const ok = await askConfirm({
+            title: force
+                ? `Forzar re-anotación de ${keys.length} stores`
+                : `Anotar y recrear ${keys.length} stores`,
+            description: force
+                ? 'Esto RE-ANOTA TODOS los documentos con el formato actual, incluidos los que ya estaban anotados, y recrea todos los stores. Puede tardar varios minutos.'
+                : 'Esta operación procesa todos los stores secuencialmente. Los documentos ya anotados se saltan automáticamente.',
+            confirmLabel: force ? 'Forzar re-anotar todos' : 'Anotar todos',
+        });
+        if (!ok) return;
+
+        for (let i = 0; i < keys.length; i++) {
+            setBatchOperation({ type: 'annotate', current: i + 1, total: keys.length, storeKey: keys[i] });
+            // Pass force through — but skip the inner per-store confirm since we already confirmed globally
+            await handleAnnotateStore(keys[i], force, true);
+        }
+        setBatchOperation({ type: null, current: 0, total: 0, storeKey: null });
+        toast.success(`${keys.length} stores procesados`);
+    };
+
+    const handleSyncAll = async () => {
+        const keys = config?.stores ? Object.keys(config.stores).sort((a, b) => a.localeCompare(b, 'es')) : [];
+        if (keys.length === 0) return;
+        const ok = await askConfirm({
+            title: `Sincronizar ${keys.length} stores`,
+            description: 'Esto sincroniza cada store con su estado deseado en Firestore. Puede tardar varios minutos.',
+            confirmLabel: 'Sincronizar todos',
+        });
+        if (!ok) return;
+
+        for (let i = 0; i < keys.length; i++) {
+            setBatchOperation({ type: 'sync', current: i + 1, total: keys.length, storeKey: keys[i] });
+            await handleSyncStore(keys[i]);
+        }
+        setBatchOperation({ type: null, current: 0, total: 0, storeKey: null });
+        toast.success(`${keys.length} stores sincronizados`);
+    };
+
+    const handleAnnotateStore = async (storeKey: string, force: boolean = false, skipConfirm: boolean = false) => {
+        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+        if (!apiKey) { toast.error('API key de Gemini no configurada'); return; }
+
+        if (force && !skipConfirm) {
+            const ok = await askConfirm({
+                title: 'Forzar re-anotación de todos los documentos',
+                description: 'Esto volverá a generar las anotaciones con el formato actualizado. Los documentos serán re-subidos a Gemini.',
+                confirmLabel: 'Re-anotar todos',
+            });
+            if (!ok) return;
+        }
+
+        const resources = (storeResources[storeKey] || []) as any[];
+        // Include docs with textContent OR textContentUrl (large docs stored in Cloud Storage)
+        const candidates = resources.filter(
+            (r: any) => (r.textContent && r.textContent.length > 100) || r.textContentUrl
+        );
+
+        if (candidates.length === 0) {
+            toast.warning('Ningún documento tiene texto extraído. Espera a que se completen las extracciones.');
+            return;
+        }
+
+        setAnnotating(prev => ({ ...prev, [storeKey]: true }));
+        const db = getFirestore();
+        let done = 0;
+        let failed = 0;
+
+        // Step 1: Upload annotated text files to Gemini (browser-compatible endpoint)
+        for (const r of candidates) {
+            setAnnotationProgress(prev => ({
+                ...prev,
+                [storeKey]: `Anotando "${r.title}" (${done + 1}/${candidates.length})…`
+            }));
+            try {
+                // Reuse if already annotated (unless forcing re-annotation)
+                if (!force && r.metadata?.annotatedGeminiUri && r.metadata?.annotatedGeminiName) {
+                    done++;
+                    continue;
+                }
+
+                // Get text — prefer inline textContent, fallback to textContentUrl (large docs)
+                let rawText: string = r.textContent || '';
+                if ((!rawText || rawText.length < 100) && r.textContentUrl) {
+                    setAnnotationProgress(prev => ({
+                        ...prev,
+                        [storeKey]: `Descargando texto de "${r.title}"…`
+                    }));
+                    // textContentUrl is a gs:// URI — must convert to HTTPS via Firebase Storage SDK
+                    const storage = getStorage();
+                    const fileRef = storageRef(storage, r.textContentUrl);
+                    const httpsUrl = await getDownloadURL(fileRef);
+                    const res = await fetch(httpsUrl);
+                    if (!res.ok) throw new Error(`Failed to fetch text: ${res.statusText}`);
+                    rawText = await res.text();
+                }
+
+                if (!rawText || rawText.length < 100) {
+                    throw new Error('Texto insuficiente para anotar');
+                }
+
+                const annotated = annotateDocumentText(
+                    rawText,
+                    r.author || 'Autor desconocido',
+                    r.title
+                );
+
+                // Diagnostic logs to verify annotation
+                const markerCount = (annotated.match(/\(Fuente:/g) ?? []).length;
+                console.log(`[Annotate] "${r.title}"`);
+                console.log(`[Annotate]   rawText length: ${rawText.length}`);
+                console.log(`[Annotate]   annotated length: ${annotated.length} (delta: +${annotated.length - rawText.length})`);
+                console.log(`[Annotate]   "(Fuente:" markers inserted: ${markerCount}`);
+                console.log(`[Annotate]   First 400 chars of annotated:`, annotated.substring(0, 400));
+                console.log(`[Annotate]   Middle 400 chars:`, annotated.substring(Math.floor(annotated.length / 2), Math.floor(annotated.length / 2) + 400));
+
+                const { uri, name } = await uploadAnnotatedTextToGemini(
+                    annotated,
+                    `${r.title} [anotado]`,
+                    apiKey
+                );
+                console.log(`[Annotate]   Uploaded → uri: ${uri}, name: ${name}`);
+
+                // Save annotated URIs — Cloud Function will prefer these over PDF URIs
+                await updateDoc(doc(db, 'library_resources', r.id), {
+                    'metadata.annotatedGeminiUri': uri,
+                    'metadata.annotatedGeminiName': name,
+                });
+
+                done++;
+            } catch (err: any) {
+                console.error(`Error annotating "${r.title}":`, err);
+                failed++;
+            }
+        }
+
+        if (done === 0 && failed > 0) {
+            toast.error('No se pudo anotar ningún documento. Revisa la consola.');
+            setAnnotating(prev => ({ ...prev, [storeKey]: false }));
+            setAnnotationProgress(prev => ({ ...prev, [storeKey]: '' }));
+            return;
+        }
+
+        // Step 2: Trigger Cloud Function to recreate the store using annotated files
+        // (Store operations require server-side execution — CORS not allowed from browser)
+        setAnnotationProgress(prev => ({ ...prev, [storeKey]: 'Recreando store en Gemini (Cloud Function)…' }));
+        try {
+            // Save old store ID before sync — the Cloud Function may create a new one
+            const oldStoreId = config?.stores?.[storeKey] ?? null;
+
+            const functions = getFunctions();
+            const syncFn = httpsCallable(functions, 'syncCoreLibraryStore');
+            const result = await syncFn({ context: storeKey }) as any;
+
+            if (!result.data?.success) throw new Error('Cloud Function returned unsuccessful');
+
+            // Step 3: Reload config to get the NEW store ID assigned by the Cloud Function
+            const db = getFirestore();
+            const configSnap = await getDoc(doc(db, 'config/coreLibraryStores'));
+            const newStoreId: string | null = configSnap.data()?.stores?.[storeKey] ?? null;
+
+            // Step 4: Update any agents whose corpusIds still reference the OLD store ID
+            if (newStoreId && oldStoreId && newStoreId !== oldStoreId) {
+                setAnnotationProgress(prev => ({ ...prev, [storeKey]: 'Actualizando tutores con nuevo store ID…' }));
+                const agentsSnap = await getDocs(collection(db, 'ai_agents'));
+                const batch = writeBatch(db);
+                let agentsUpdated = 0;
+
+                agentsSnap.forEach(agentDoc => {
+                    const data = agentDoc.data();
+                    const ids: string[] = data.corpusIds || [];
+                    if (ids.includes(oldStoreId)) {
+                        const updated = ids.map((id: string) => id === oldStoreId ? newStoreId : id);
+                        batch.update(agentDoc.ref, { corpusIds: updated });
+                        agentsUpdated++;
+                    }
+                });
+
+                if (agentsUpdated > 0) {
+                    await batch.commit();
+                    console.log(`[Annotation] Updated ${agentsUpdated} agent(s) with new store ID: ${newStoreId}`);
+                }
+            }
+
+            if (failed > 0) {
+                toast.warning(`${done} anotados, ${failed} fallaron. Store recreado y tutores actualizados.`);
+            } else {
+                toast.success(`${done} documentos anotados. Store recreado y tutores actualizados. Las citas aparecerán en futuras respuestas.`);
+            }
+
+            await loadConfig();
+        } catch (err: any) {
+            toast.error(`Anotación completada pero error en store: ${err.message}. Usa "Sincronizar" manualmente y actualiza los tutores.`);
+        } finally {
+            setAnnotating(prev => ({ ...prev, [storeKey]: false }));
+            setAnnotationProgress(prev => ({ ...prev, [storeKey]: '' }));
+        }
+    };
+
     const handleUnlinkFile = async (docTitle: string, context: string) => {
-        if (!confirm(`¿Estás seguro de desvincular "${docTitle}" del store "${context}"? Deberás sincronizar después para aplicar los cambios a Gemini.`)) return;
+        const ok = await askConfirm({
+            title: `Desvincular "${docTitle}"`,
+            description: `Este documento será desvinculado del store "${context}". Deberás sincronizar después para que Gemini aplique el cambio.`,
+            confirmLabel: 'Desvincular',
+            variant: 'destructive',
+        });
+        if (!ok) return;
         
         try {
             setIsUnlinking(docTitle);
@@ -278,7 +853,7 @@ export default function CoreLibraryAdmin() {
             const result = await syncResourceFn({ resourceId }) as any;
             
             if (result.data?.success) {
-                toast.success(`✅ Documento procesado correctamente.`);
+                toast.success(`Documento procesado correctamente.`);
                 await loadConfig();
             } else {
                 toast.error(`Error procesando documento: ${result.data?.error || 'Desconocido'}`);
@@ -320,9 +895,16 @@ export default function CoreLibraryAdmin() {
         }
     };
 
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
     const loadConfig = async () => {
+        // Only show full-screen loader on initial mount (no config yet).
+        // Subsequent refreshes use a subtle indicator so the UI stays visible.
+        const isInitialLoad = !config;
         try {
-            setLoading(true);
+            if (isInitialLoad) setLoading(true);
+            else setIsRefreshing(true);
+
             const db = getFirestore();
             const docRef = doc(db, 'config/coreLibraryStores');
             const docSnap = await getDoc(docRef);
@@ -336,11 +918,13 @@ export default function CoreLibraryAdmin() {
                     createdAt: data.createdAt?.toDate() || new Date(),
                     lastValidatedAt: data.lastValidatedAt?.toDate() || new Date()
                 });
-                
-                // Initialize sync state for all stores
-                const keys = Object.keys(data.stores || {});
-                if (keys.length > 0 && !keys.includes(activeTab)) {
-                    setActiveTab(keys[0] as string);
+
+                // Initialize sync state for all stores (only on first load)
+                if (isInitialLoad) {
+                    const keys = Object.keys(data.stores || {});
+                    if (keys.length > 0 && !keys.includes(activeTab)) {
+                        setActiveTab(keys[0] as string);
+                    }
                 }
 
                 await validateAllStores(data);
@@ -351,6 +935,7 @@ export default function CoreLibraryAdmin() {
             toast.error('Error cargando configuración: ' + err.message);
         } finally {
             setLoading(false);
+            setIsRefreshing(false);
         }
     };
 
@@ -416,18 +1001,18 @@ export default function CoreLibraryAdmin() {
 
             if (data.success) {
                 if (data.alreadySynced) {
-                    toast.success(`✅ ${context} ya estaba sincronizado`);
+                    toast.success(`${context} ya estaba sincronizado`);
                 } else if (data.storeCreated) {
-                    toast.success(`✅ Store ${context} creado con ${data.filesAdded} archivos`);
+                    toast.success(`Store ${context} creado con ${data.filesAdded} archivos`);
                 } else {
-                    toast.success(`✅ ${context} sincronizado: +${data.filesAdded} archivos`);
+                    toast.success(`${context} sincronizado: +${data.filesAdded} archivos`);
                 }
                 await loadConfig();
             } else {
                 throw new Error('Sync failed');
             }
         } catch (err: any) {
-            toast.error(`❌ Error: ${err.message}`);
+            toast.error(`Error: ${err.message}`);
         } finally {
             setSyncing(prev => ({ ...prev, [context]: false }));
         }
@@ -488,24 +1073,25 @@ export default function CoreLibraryAdmin() {
         );
     }
 
-    const defaultMeta: Record<string, { name: string, icon: any, description: string, emoji: string }> = {
-        exegesis: { name: 'Exégesis', icon: BookOpen, description: 'Léxicos griego/hebreo, hermenéutica, gramática', emoji: '📖' },
-        homiletics: { name: 'Homilética', icon: Mic2, description: 'Predicación, teología sistemática', emoji: '🎤' },
-        generic: { name: 'Genérico', icon: Library, description: 'Recursos de uso general', emoji: '📚' }
+    const defaultMeta: Record<string, { name: string, icon: any, description: string }> = {
+        exegesis: { name: 'Exégesis', icon: BookOpen, description: 'Léxicos griego/hebreo, hermenéutica, gramática' },
+        homiletics: { name: 'Homilética', icon: Mic2, description: 'Predicación, teología sistemática' },
+        generic: { name: 'Genérico', icon: Library, description: 'Recursos de uso general' }
     };
 
-    // Generate dynamic contexts from config
-    const storeKeys = config?.stores ? Object.keys(config.stores) : [];
-    
-    // Ensure we default to showing something if empty
-    const displayKeys = storeKeys.length > 0 ? storeKeys : [];
+    // Generate dynamic contexts from config — sorted alphabetically for stable UI order.
+    // (Firestore merges reassign keys to the end, which would otherwise shuffle the list.)
+    const storeKeys = config?.stores
+        ? Object.keys(config.stores).sort((a, b) => a.localeCompare(b, 'es'))
+        : [];
+
+    const displayKeys = storeKeys;
 
     const storeContexts = displayKeys.map(key => {
         const meta = defaultMeta[key] || {
-            name: config?.displayNames?.[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '), 
-            icon: Database,
+            name: config?.displayNames?.[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
+            icon: Folder,
             description: config?.descriptions?.[key] || 'Contexto personalizado',
-            emoji: '📂'
         };
         return {
             ...meta,
@@ -520,9 +1106,35 @@ export default function CoreLibraryAdmin() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Biblioteca Core - File Search Stores</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Gestión de contextos de conocimiento teológico
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tight">Biblioteca Core</h1>
+                        {isRefreshing && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>Actualizando…</span>
+                            </div>
+                        )}
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                    <HelpCircle className="h-4 w-4" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-96 text-sm" side="bottom" align="start">
+                                <div className="space-y-2">
+                                    <p className="font-semibold">Cómo funciona</p>
+                                    <ul className="space-y-1.5 text-muted-foreground">
+                                        <li>• Los stores son contextos permanentes indexados por Gemini File Search.</li>
+                                        <li>• Crea contextos específicos (Exégesis, Homilética, etc.) para organizar el conocimiento.</li>
+                                        <li>• Al desvincular un documento, pulsa "Sincronizar" para que Gemini recree el store sin él.</li>
+                                        <li>• "Anotar y Recrear" inyecta marcadores <code className="text-xs bg-muted px-1 rounded">[FUENTE:]</code> en los documentos para que los tutores puedan citar autor, título y página.</li>
+                                    </ul>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Contextos de conocimiento teológico para tutores IA
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -583,12 +1195,87 @@ export default function CoreLibraryAdmin() {
                         </DialogContent>
                     </Dialog>
 
-                    <Button onClick={loadConfig} variant="outline" size="sm">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAnnotateAll(false)}
+                        disabled={!!batchOperation.type || storeContexts.length === 0}
+                        title="Anota todos los stores — salta los documentos ya anotados"
+                    >
+                        {batchOperation.type === 'annotate'
+                            ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            : <Wand2 className="h-4 w-4 mr-2" />}
+                        Anotar todos
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => handleAnnotateAll(true)}
+                        disabled={!!batchOperation.type || storeContexts.length === 0}
+                        title="Forzar re-anotación de TODOS los stores y documentos (incluso los ya anotados). Usa esto cuando cambió el formato de anotación."
+                    >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSyncAll}
+                        disabled={!!batchOperation.type || storeContexts.length === 0}
+                        title="Sincroniza TODOS los stores secuencialmente"
+                    >
+                        {batchOperation.type === 'sync'
+                            ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            : <RefreshCw className="h-4 w-4 mr-2" />}
+                        Sincronizar todos
+                    </Button>
+                    <Button onClick={() => setIsAuditOpen(true)} variant="outline" size="sm" disabled={!!batchOperation.type}>
+                        <Activity className="h-4 w-4 mr-2" />
+                        Auditoría RAG
+                    </Button>
+                    <Button onClick={loadConfig} variant="outline" size="sm" disabled={!!batchOperation.type}>
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Actualizar
                     </Button>
                 </div>
             </div>
+
+            {/* Dashboard — Key metrics */}
+            {config && (() => {
+                const allResources = Object.values(storeResources).flat();
+                const uniqueDocs = new Map<string, any>();
+                allResources.forEach((r: any) => { if (r.id) uniqueDocs.set(r.id, r); });
+                const uniqueDocsList = Array.from(uniqueDocs.values());
+                const annotatedCount = uniqueDocsList.filter((r: any) => r.metadata?.annotatedGeminiUri).length;
+                const totalPages = uniqueDocsList.reduce((sum: number, r: any) => sum + (r.pageCount || 0), 0);
+                const storeIds = Object.values(config.stores).filter(Boolean) as string[];
+                const connectedTutors = agents.filter(a =>
+                    a.isActive && a.corpusIds?.some(id => storeIds.includes(id))
+                );
+                const annotationPct = uniqueDocsList.length > 0
+                    ? Math.round((annotatedCount / uniqueDocsList.length) * 100)
+                    : 0;
+
+                return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <MetricCard icon={Library} label="Stores" value={storeContexts.length} />
+                        <MetricCard icon={FileText} label="Documentos" value={uniqueDocsList.length} subtitle={`${totalPages.toLocaleString()} págs`} />
+                        <MetricCard icon={Sparkles} label="Anotados" value={`${annotatedCount}/${uniqueDocsList.length}`} subtitle={`${annotationPct}%`} highlight={annotationPct === 100} />
+                        <MetricCard icon={GraduationCap} label="Tutores conectados" value={connectedTutors.length} subtitle={connectedTutors.length > 0 ? connectedTutors.map(t => t.name).join(' · ') : '—'} />
+                    </div>
+                );
+            })()}
+
+            {/* Batch operation progress */}
+            {batchOperation.type && (
+                <Alert>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <AlertDescription>
+                        {batchOperation.type === 'annotate' ? 'Anotando' : 'Sincronizando'} store{' '}
+                        <strong>{batchOperation.storeKey}</strong> ({batchOperation.current}/{batchOperation.total})…
+                    </AlertDescription>
+                </Alert>
+            )}
 
             {/* Master-Detail Layout */}
             <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -605,9 +1292,15 @@ export default function CoreLibraryAdmin() {
                         const files = config.files[context.key] || [];
                         const Icon = context.icon;
                         const isSynced = status?.isSynced ?? true;
-                        
+
+                        const storeDocs = storeResources[context.key] || [];
+                        const docCount = storeDocs.length;
+                        const annotatedInStore = storeDocs.filter((d: any) => d.metadata?.annotatedGeminiUri).length;
+                        const storePages = storeDocs.reduce((sum: number, d: any) => sum + (d.pageCount || 0), 0);
+                        const storeTutors = tutorsForStoreId(config?.stores?.[context.key]);
+
                         return (
-                            <Card 
+                            <Card
                                 key={context.key}
                                 className={cn(
                                     "cursor-pointer transition-all hover:shadow-md",
@@ -615,44 +1308,67 @@ export default function CoreLibraryAdmin() {
                                 )}
                                 onClick={() => setActiveTab(context.key)}
                             >
-                                <CardContent className="p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <Icon className="h-4 w-4" />
-                                            <span className="text-sm font-medium">{context.name}</span>
+                                <CardContent className="p-4 space-y-2.5">
+                                    {/* Row 1: name + sync indicator */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <Icon className="h-4 w-4 shrink-0" />
+                                            <span className="text-sm font-medium truncate">{context.name}</span>
                                         </div>
                                         {isSynced ? (
-                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                            <CheckCircle className="h-4 w-4 text-green-600 shrink-0" title="Sincronizado" />
                                         ) : (
-                                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                                            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" title="Desincronizado" />
                                         )}
                                     </div>
-                                    
-                                    <div className="flex items-center justify-between">
+
+                                    {/* Row 2: stats */}
+                                    <div className="text-xs text-muted-foreground leading-relaxed">
                                         <div>
-                                            <p className="text-xs text-muted-foreground font-medium">
-                                                {storeResources[context.key]?.length || 0} doc{(storeResources[context.key]?.length || 0) !== 1 ? 's' : ''} • {isSynced 
-                                                    ? `${status?.currentCount || 0}/${status?.desiredCount || 0} sync`
-                                                    : `${status?.currentCount || 0}/${status?.desiredCount || 0} sync`
-                                                }
-                                            </p>
+                                            <span className="font-medium text-foreground">{docCount}</span> doc{docCount !== 1 ? 's' : ''}
+                                            {storePages > 0 && <> · <span className="font-medium text-foreground">{storePages.toLocaleString()}</span> págs</>}
                                         </div>
-                                        <Button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleSyncStore(context.key);
-                                            }}
+                                        <div className="flex items-center gap-1">
+                                            <Wand2 className="h-3 w-3" />
+                                            <span className={cn(
+                                                "font-medium",
+                                                annotatedInStore === docCount && docCount > 0 ? "text-emerald-600" : "text-amber-600"
+                                            )}>
+                                                {annotatedInStore}/{docCount}
+                                            </span>
+                                            <span>anotados</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Row 3: tutor chips */}
+                                    {storeTutors.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 pt-1 border-t">
+                                            {storeTutors.slice(0, 3).map(t => (
+                                                <Badge key={t.id} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                                                    {t.name}
+                                                </Badge>
+                                            ))}
+                                            {storeTutors.length > 3 && (
+                                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                                                    +{storeTutors.length - 3}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Row 4: sync button */}
+                                    <div className="flex items-center justify-end pt-1">
+                                        <Button
+                                            onClick={(e) => { e.stopPropagation(); handleSyncStore(context.key); }}
                                             disabled={syncing[context.key]}
                                             size="icon"
                                             className="h-7 w-7"
                                             variant={isSynced ? "ghost" : "secondary"}
                                             title="Sincronizar Store"
                                         >
-                                            {syncing[context.key] ? (
-                                                <Loader2 className="h-3 w-3 animate-spin" />
-                                            ) : (
-                                                <RefreshCw className="h-3 w-3" />
-                                            )}
+                                            {syncing[context.key]
+                                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                                : <RefreshCw className="h-3 w-3" />}
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -682,10 +1398,11 @@ export default function CoreLibraryAdmin() {
                         {/* Store Info Card */}
                         <Card>
                             <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <CardTitle className="flex items-center gap-2">
-                                            {context.emoji} {context.name}
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <CardTitle className="flex items-center gap-2 flex-wrap">
+                                            <context.icon className="h-5 w-5 text-muted-foreground" />
+                                            {context.name}
                                             <Badge variant="secondary">
                                                 {files.length} archivo{files.length !== 1 ? 's' : ''}
                                             </Badge>
@@ -693,39 +1410,85 @@ export default function CoreLibraryAdmin() {
                                         <CardDescription className="mt-2 text-base">
                                             {context.description}
                                         </CardDescription>
+                                        {/* Tutor badges */}
+                                        {(() => {
+                                            const detailTutors = tutorsForStoreId(storeId);
+                                            if (detailTutors.length === 0) {
+                                                return (
+                                                    <div className="mt-3 text-xs text-muted-foreground italic">
+                                                        Ningún tutor tiene este store asignado todavía.
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                                                    <span className="text-xs text-muted-foreground mr-1">Usado por:</span>
+                                                    {detailTutors.map(t => (
+                                                        <Badge
+                                                            key={t.id}
+                                                            variant="outline"
+                                                            className={cn(
+                                                                "font-normal flex items-center gap-1",
+                                                                !t.isActive && "opacity-50"
+                                                            )}
+                                                            title={t.isActive ? 'Tutor activo' : 'Tutor inactivo'}
+                                                        >
+                                                            <GraduationCap className="h-3 w-3" />
+                                                            {t.name}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
-                                    <div className="text-right flex flex-col items-end gap-2">
+                                    <div className="text-right flex flex-col items-end gap-2 shrink-0">
                                         <div>
-                                            <div className="text-sm font-medium">{totalPages} páginas</div>
+                                            <div className="text-sm font-medium">{totalPages.toLocaleString()} páginas</div>
                                             <div className="text-xs text-muted-foreground">Total indexado</div>
                                         </div>
                                     </div>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {/* Store ID */}
-                                {storeId && (
-                                    <div className="bg-muted/50 p-3 rounded-md flex items-center justify-between">
-                                        <div>
-                                            <div className="text-xs font-medium text-muted-foreground mb-1">ID de Store (Google Gemini)</div>
-                                            <code className="text-xs text-primary">{storeId}</code>
-                                        </div>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-8"
-                                            onClick={() => {
-                                                setEditingStoreKey(context.key);
-                                                setEditStoreName(context.name);
-                                                setEditStoreDesc(context.description || '');
-                                                setIsEditOpen(true);
-                                            }}
-                                        >
-                                            <Settings className="h-4 w-4 mr-2" />
-                                            Editar Store
-                                        </Button>
-                                    </div>
-                                )}
+                                {/* Store actions + collapsible technical details */}
+                                <div className="flex items-center justify-between">
+                                    {storeId ? (
+                                        <Collapsible>
+                                            <CollapsibleTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 text-xs text-muted-foreground hover:text-foreground -ml-2"
+                                                >
+                                                    <ChevronRight className="h-3.5 w-3.5 mr-1 transition-transform data-[state=open]:rotate-90 group-data-[state=open]:rotate-90" />
+                                                    Detalles técnicos
+                                                </Button>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent className="mt-2">
+                                                <div className="bg-muted/50 p-3 rounded-md">
+                                                    <div className="text-xs font-medium text-muted-foreground mb-1">
+                                                        ID de Store (Google Gemini)
+                                                    </div>
+                                                    <code className="text-xs text-primary break-all">{storeId}</code>
+                                                </div>
+                                            </CollapsibleContent>
+                                        </Collapsible>
+                                    ) : <div />}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8"
+                                        onClick={() => {
+                                            setEditingStoreKey(context.key);
+                                            setEditStoreName(context.name);
+                                            setEditStoreDesc(context.description || '');
+                                            setIsEditOpen(true);
+                                        }}
+                                    >
+                                        <Settings className="h-4 w-4 mr-2" />
+                                        Editar Store
+                                    </Button>
+                                </div>
 
                                 {/* Files Table */}
                                 <div>
@@ -734,26 +1497,91 @@ export default function CoreLibraryAdmin() {
                                             <FileText className="h-4 w-4" />
                                             Documentos Exclusivos de este Store
                                         </div>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => handleOpenAddDocs(context.key)}
-                                        >
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Añadir Archivos
-                                        </Button>
+                                        <div className="flex items-center gap-2">
+                                            {reprocessProgress[`__store__${context.key}`] && (
+                                                <span className="text-xs text-emerald-600 animate-pulse">
+                                                    {reprocessProgress[`__store__${context.key}`]}
+                                                </span>
+                                            )}
+                                            {indexProgress[`__store__${context.key}`] && (
+                                                <span className="text-xs text-indigo-600 animate-pulse">
+                                                    {indexProgress[`__store__${context.key}`]}
+                                                </span>
+                                            )}
+                                            {annotationProgress[context.key] && (
+                                                <span className="text-xs text-muted-foreground animate-pulse">
+                                                    {annotationProgress[context.key]}
+                                                </span>
+                                            )}
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleIndexStore(context.key)}
+                                                disabled={!!indexing[`__store__${context.key}`] || !!reprocessing[`__store__${context.key}`] || annotating[context.key]}
+                                                title="Genera embeddings + chunks semánticos (Phase 2 RAG). Requiere LlamaParse previo."
+                                            >
+                                                {indexing[`__store__${context.key}`]
+                                                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                    : <Database className="h-4 w-4 mr-2 text-indigo-600" />}
+                                                Indexar (Phase 2)
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleReprocessStore(context.key)}
+                                                disabled={!!reprocessing[`__store__${context.key}`] || annotating[context.key]}
+                                                title="Re-extrae todos los documentos con LlamaParse (mejor calidad, páginas reales, estructura preservada). Salta los que ya estén procesados."
+                                            >
+                                                {reprocessing[`__store__${context.key}`]
+                                                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                    : <Sparkles className="h-4 w-4 mr-2 text-emerald-600" />}
+                                                Reprocesar con LlamaParse
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleAnnotateStore(context.key)}
+                                                disabled={annotating[context.key]}
+                                                title="Anota cada documento con marcadores [FUENTE:] y recrea el store para que las citas aparezcan en las respuestas del tutor"
+                                            >
+                                                {annotating[context.key]
+                                                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                    : <Wand2 className="h-4 w-4 mr-2" />}
+                                                Anotar y Recrear
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleAnnotateStore(context.key, true)}
+                                                disabled={annotating[context.key]}
+                                                title="Forzar re-anotación de TODOS los documentos (incluso los ya anotados). Usa esto si cambió el formato de anotación."
+                                            >
+                                                <RefreshCw className="h-3 w-3" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleOpenAddDocs(context.key)}
+                                            >
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Añadir Archivos
+                                            </Button>
+                                        </div>
                                     </div>
                                     
                                     {files.length > 0 ? (
-                                        <div className="border rounded-md bg-background overflow-hidden">
-                                            <Table>
+                                        <div className="border rounded-md bg-background overflow-x-auto">
+                                            <Table className="min-w-[960px]">
                                                 <TableHeader className="bg-muted/30">
                                                     <TableRow>
                                                         <TableHead>Documento</TableHead>
                                                         <TableHead>Autor</TableHead>
                                                         <TableHead className="w-[100px]">Páginas</TableHead>
-                                                        <TableHead className="w-[120px]">Estado</TableHead>
-                                                        <TableHead className="text-right w-[100px]">Acciones</TableHead>
+                                                        <TableHead className="w-[100px]">Estado</TableHead>
+                                                        <TableHead className="w-[110px]">Extracción</TableHead>
+                                                        <TableHead className="w-[100px]">Indexing</TableHead>
+                                                        <TableHead className="w-[90px]">Citación</TableHead>
+                                                        <TableHead className="text-right w-[180px]">Acciones</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -819,17 +1647,95 @@ export default function CoreLibraryAdmin() {
                                                                         </div>
                                                                     )}
                                                                 </TableCell>
+                                                                <TableCell>
+                                                                    {file.extractionVersion === '3.0-llamaparse' ? (
+                                                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-transparent text-xs" title="Extraído con LlamaParse — páginas reales, estructura preservada">
+                                                                            LlamaParse
+                                                                        </Badge>
+                                                                    ) : file.extractionVersion === '2.0-gemini' ? (
+                                                                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-transparent text-xs" title="Extraído con Gemini 2.0 Flash (legacy)">
+                                                                            Gemini
+                                                                        </Badge>
+                                                                    ) : file.extractionVersion === 'fallback-pdfparse' ? (
+                                                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-transparent text-xs" title="Extraído con pdf-parse (fallback básico)">
+                                                                            pdf-parse
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <span className="text-xs text-muted-foreground">—</span>
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {file.indexingStatus === 'ready' ? (
+                                                                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 border-transparent text-xs" title={`Indexado con ${file.indexedChunkCount ?? '?'} chunks`}>
+                                                                            <Database className="h-2.5 w-2.5 mr-1" />
+                                                                            Indexado
+                                                                        </Badge>
+                                                                    ) : file.indexingStatus === 'processing' ? (
+                                                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-transparent text-xs">
+                                                                            <Loader2 className="h-2.5 w-2.5 mr-1 animate-spin" />
+                                                                            Procesando
+                                                                        </Badge>
+                                                                    ) : file.indexingStatus === 'failed' ? (
+                                                                        <Badge variant="secondary" className="bg-red-100 text-red-800 border-transparent text-xs" title={file.indexingError}>
+                                                                            Error
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <span className="text-xs text-muted-foreground">—</span>
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {file.metadata?.annotatedGeminiUri ? (
+                                                                        <Badge variant="secondary" className="bg-violet-100 text-violet-800 border-transparent text-xs" title="Documento anotado con marcadores [FUENTE:] para citar documentos individuales">
+                                                                            <Wand2 className="h-2.5 w-2.5 mr-1" />
+                                                                            Anotado
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <span className="text-xs text-muted-foreground">—</span>
+                                                                    )}
+                                                                </TableCell>
                                                                 <TableCell className="text-right">
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="sm" 
-                                                                        className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                                                        onClick={() => handleUnlinkFile(file.title || file.name, context.key)}
-                                                                        disabled={isUnlinking === (file.title || file.name)}
-                                                                        title="Desvincular del Store"
-                                                                    >
-                                                                        {isUnlinking === (file.title || file.name) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                                                    </Button>
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8"
+                                                                            onClick={() => handleReprocessDocument(file.id, file.title || file.name)}
+                                                                            disabled={!!reprocessing[file.id]}
+                                                                            title={file.extractionVersion === '3.0-llamaparse'
+                                                                                ? "Re-extraer con LlamaParse (forzar)"
+                                                                                : "Extraer con LlamaParse (recomendado)"}
+                                                                        >
+                                                                            {reprocessing[file.id]
+                                                                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                                                : <Sparkles className={cn("h-4 w-4", file.extractionVersion === '3.0-llamaparse' ? "text-emerald-600" : "text-muted-foreground")} />}
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8"
+                                                                            onClick={() => handleIndexDocument(file.id, file.title || file.name)}
+                                                                            disabled={!!indexing[file.id] || file.extractionVersion !== '3.0-llamaparse'}
+                                                                            title={file.extractionVersion !== '3.0-llamaparse'
+                                                                                ? "Requiere extracción con LlamaParse primero"
+                                                                                : file.indexingStatus === 'ready'
+                                                                                    ? "Re-indexar (Phase 2)"
+                                                                                    : "Indexar con Phase 2 (chunks + embeddings)"}
+                                                                        >
+                                                                            {indexing[file.id]
+                                                                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                                                : <Database className={cn("h-4 w-4", file.indexingStatus === 'ready' ? "text-indigo-600" : "text-muted-foreground")} />}
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                                            onClick={() => handleUnlinkFile(file.title || file.name, context.key)}
+                                                                            disabled={isUnlinking === (file.title || file.name)}
+                                                                            title="Desvincular del Store"
+                                                                        >
+                                                                            {isUnlinking === (file.title || file.name) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                                        </Button>
+                                                                    </div>
                                                                 </TableCell>
                                                             </TableRow>
                                                         );
@@ -862,17 +1768,36 @@ export default function CoreLibraryAdmin() {
             </div>
             </div>
 
-            {/* Info Card - Reduced */}
-            <Card className="border-blue-200 bg-blue-50/50">
-                <CardHeader className="py-3">
-                    <CardTitle className="text-sm">ℹ️ Cómo Funciona</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground space-y-1 pb-3">
-                    <p>• Los stores son permanentes y contienen índices de archivos procesados por Gemini.</p>
-                    <p>• Crea contextos específicos (ej: Historia, Sistemática) para organizar el conocimiento.</p>
-                    <p>• Si desvinculas un documento, debes pulsar "Sincronizar" para que Gemini recree el Store sin ese documento.</p>
-                </CardContent>
-            </Card>
+            {/* Reusable confirmation dialog */}
+            <AlertDialog
+                open={confirmState.open}
+                onOpenChange={(open) => { if (!open) settleConfirm(false); }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{confirmState.title}</AlertDialogTitle>
+                        <AlertDialogDescription>{confirmState.description}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => settleConfirm(false)}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => settleConfirm(true)}
+                            className={cn(
+                                confirmState.variant === 'destructive' && "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            )}
+                        >
+                            {confirmState.confirmLabel ?? 'Confirmar'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* RAG Audit + Playground Dialog */}
+            <RAGAuditDialog
+                open={isAuditOpen}
+                onOpenChange={setIsAuditOpen}
+                availableStores={storeContexts.map(c => ({ key: c.key, displayName: c.name }))}
+            />
 
             {/* Edit Store Dialog */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

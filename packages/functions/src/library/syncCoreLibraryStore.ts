@@ -63,12 +63,15 @@ export const syncCoreLibraryStore = onCall<SyncCoreLibraryStoreRequest>(
 
             const allDesiredDocs = desiredDocsSnapshot.docs.map(doc => {
                 const data = doc.data();
+                // Prefer annotated text file when available — enables document-level citation in tutors
+                const geminiUri = data.metadata?.annotatedGeminiUri ?? data.metadata?.geminiUri;
+                const geminiName = data.metadata?.annotatedGeminiName ?? data.metadata?.geminiName;
                 return {
                     id: doc.id,
                     title: data.title,
                     author: data.author,
-                    geminiUri: data.metadata?.geminiUri,
-                    geminiName: data.metadata?.geminiName,
+                    geminiUri,
+                    geminiName,
                     pageCount: data.pageCount || 0
                 };
             });

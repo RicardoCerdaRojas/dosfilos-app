@@ -6,12 +6,15 @@ import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
 
 // Gemini file size limit is 50MB
 const MAX_GEMINI_FILE_SIZE = 50 * 1024 * 1024;
+// LlamaParse supports up to 100MB (and we've verified free-tier covers typical theology books)
+const MAX_LLAMAPARSE_FILE_SIZE = 100 * 1024 * 1024;
 
 // Get API key from environment
 const getApiKey = (): string => {
@@ -21,6 +24,35 @@ const getApiKey = (): string => {
     }
     return apiKey;
 };
+
+const getLlamaParseKey = (): string | null => {
+    return process.env.LLAMAPARSE_API_KEY ?? null;
+};
+
+/**
+ * LlamaParse extraction — primary path.
+ * Returns structured pages with reliable page numbers.
+ */
+async function extractWithLlamaParse(
+    tempFilePath: string,
+    resourceId: string,
+    apiKey: string
+): Promise<{ text: string; markdown: string; pageCount: number }> {
+    const buffer = fs.readFileSync(tempFilePath);
+    const client = new LlamaParseClient(apiKey);
+
+    const result = await client.parseDocument(buffer, `${resourceId}.pdf`, {
+        mode: 'fast',
+        language: 'es',  // Most of the corpus is Spanish; Greek/Hebrew inline survives
+        parsingInstruction: 'Preserva con precisión los caracteres griegos (α-ω) y hebreos (א-ת). Mantén la estructura de capítulos, secciones, tablas y notas al pie. No traduzcas términos teológicos ni citas bíblicas.',
+    });
+
+    console.log(`[LlamaParse] Parsed ${result.pages.length} pages. Credits used: ${result.jobMetadata.job_credits_usage ?? '?'}`);
+
+    const text = pagesToMarkedText(result.pages);
+    const markdown = pagesToMarkdown(result.pages);
+    return { text, markdown, pageCount: result.pages.length };
+}
 
 interface PageData {
     pageNumber: number;
@@ -204,8 +236,10 @@ export const extractPdfWithGemini = onObjectFinalized(
         bucket: 'dosfilosapp.firebasestorage.app',
         region: 'us-central1',
         memory: '2GiB',
+        // Storage triggers are capped at 540s. For very large PDFs that need more time,
+        // use the reprocessWithLlamaParse callable (up to 3600s).
         timeoutSeconds: 540,
-        secrets: ['GEMINI_API_KEY'],
+        secrets: ['GEMINI_API_KEY', 'LLAMAPARSE_API_KEY'],
     },
     async (event) => {
         const db = getFirestore();
@@ -276,34 +310,74 @@ export const extractPdfWithGemini = onObjectFinalized(
 
             let extractedText: string;
             let pageCount: number;
-            let usedGemini: boolean;
+            let extractionVersion: string;
+            let structuredMarkdown: string | null = null;
 
-            // Choose extraction method based on file size
-            if (stats.size <= MAX_GEMINI_FILE_SIZE) {
-                console.log(`🤖 [Extract] Using Gemini (file size under 50MB)`);
-                const apiKey = getApiKey();
+            const llamaKey = getLlamaParseKey();
+            const canUseLlamaParse = llamaKey && stats.size <= MAX_LLAMAPARSE_FILE_SIZE;
+
+            // Extraction priority:
+            //   1. LlamaParse (primary) — best structure/page preservation
+            //   2. Gemini 2.0 Flash (fallback) — reliable text extraction
+            //   3. pdf-parse (last resort) — local, free, basic
+            if (canUseLlamaParse) {
+                console.log(`🦙 [Extract] Using LlamaParse (primary path)`);
                 try {
-                    const result = await extractWithGemini(tempFilePath, resourceId, apiKey);
+                    const result = await extractWithLlamaParse(tempFilePath, resourceId, llamaKey);
                     extractedText = result.text;
                     pageCount = result.pageCount;
-                    usedGemini = true;
+                    structuredMarkdown = result.markdown;
+                    extractionVersion = '3.0-llamaparse';
+                } catch (llamaError) {
+                    console.warn(`⚠️ [Extract] LlamaParse failed, falling back to Gemini:`, llamaError);
+                    if (stats.size <= MAX_GEMINI_FILE_SIZE) {
+                        try {
+                            const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
+                            extractedText = result.text;
+                            pageCount = result.pageCount;
+                            extractionVersion = '2.0-gemini';
+                        } catch (geminiError) {
+                            console.warn(`⚠️ [Extract] Gemini also failed, using pdf-parse:`, geminiError);
+                            const buffer = fs.readFileSync(tempFilePath);
+                            const result = await extractWithPdfParse(buffer);
+                            extractedText = result.text;
+                            pageCount = result.pageCount;
+                            extractionVersion = 'fallback-pdfparse';
+                        }
+                    } else {
+                        const buffer = fs.readFileSync(tempFilePath);
+                        const result = await extractWithPdfParse(buffer);
+                        extractedText = result.text;
+                        pageCount = result.pageCount;
+                        extractionVersion = 'fallback-pdfparse';
+                    }
+                }
+            } else if (stats.size <= MAX_GEMINI_FILE_SIZE) {
+                console.log(`🤖 [Extract] Using Gemini (no LlamaParse key or file size limit)`);
+                try {
+                    const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
+                    extractedText = result.text;
+                    pageCount = result.pageCount;
+                    extractionVersion = '2.0-gemini';
                 } catch (geminiError) {
-                    // Fallback to pdf-parse if Gemini fails (e.g., response too large)
                     console.warn(`⚠️ [Extract] Gemini failed, falling back to pdf-parse:`, geminiError);
                     const buffer = fs.readFileSync(tempFilePath);
                     const result = await extractWithPdfParse(buffer);
                     extractedText = result.text;
                     pageCount = result.pageCount;
-                    usedGemini = false;
+                    extractionVersion = 'fallback-pdfparse';
                 }
             } else {
-                console.log(`📄 [Extract] Using pdf-parse fallback (file size ${fileSizeMB.toFixed(2)}MB exceeds 50MB limit)`);
+                console.log(`📄 [Extract] Using pdf-parse (file > 100MB or no LlamaParse)`);
                 const buffer = fs.readFileSync(tempFilePath);
                 const result = await extractWithPdfParse(buffer);
                 extractedText = result.text;
                 pageCount = result.pageCount;
-                usedGemini = false;
+                extractionVersion = 'fallback-pdfparse';
             }
+
+            const usedGemini = extractionVersion === '2.0-gemini';
+            const usedLlamaParse = extractionVersion === '3.0-llamaparse';
 
             console.log(`📝 [Extract] Extracted ${extractedText.length} characters from ${pageCount} pages`);
 
@@ -319,20 +393,42 @@ export const extractPdfWithGemini = onObjectFinalized(
                 wasTruncated = true;
             }
 
+            // If structured Markdown is available (LlamaParse), store it in Storage
+            // so it doesn't hit Firestore's 1MB limit and is available for Phase 2 chunking.
+            let structuredContentUrl: string | null = null;
+            if (structuredMarkdown) {
+                try {
+                    const mdPath = `users/${userId}/library/${resourceId}/structured.md`;
+                    const mdFile = bucket.file(mdPath);
+                    await mdFile.save(structuredMarkdown, {
+                        contentType: 'text/markdown; charset=utf-8',
+                        metadata: { resourceId, extractionVersion },
+                    });
+                    structuredContentUrl = `gs://${event.data.bucket}/${mdPath}`;
+                    console.log(`📦 [Extract] Stored structured Markdown at ${structuredContentUrl}`);
+                } catch (mdErr) {
+                    console.warn(`⚠️ [Extract] Failed to store structured Markdown:`, mdErr);
+                }
+            }
+
             // Update Firestore document with extracted text and ready status
-            await resourceRef.update({
+            const updateData: Record<string, any> = {
                 textContent: finalText,
                 textExtractionStatus: 'ready',
                 extractedAt: new Date(),
                 pageCount,
                 characterCount: extractedText.length,
                 extractedWithGemini: usedGemini,
-                extractionVersion: usedGemini ? '2.0-gemini' : '2.0-pdfparse',
+                extractedWithLlamaParse: usedLlamaParse,
+                extractionVersion,
                 needsReindex: true,
                 wasTruncated,
                 updatedAt: new Date()
-            });
-            console.log(`✅ [Extract] Updated resource ${resourceId} (${usedGemini ? 'Gemini' : 'pdf-parse'}, status: ready)`);
+            };
+            if (structuredContentUrl) updateData.structuredContentUrl = structuredContentUrl;
+
+            await resourceRef.update(updateData);
+            console.log(`✅ [Extract] Updated resource ${resourceId} (${extractionVersion}, status: ready)`);
 
             // Cleanup temp file
             fs.unlinkSync(tempFilePath);

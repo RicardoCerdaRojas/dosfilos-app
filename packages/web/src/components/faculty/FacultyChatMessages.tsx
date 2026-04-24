@@ -1,13 +1,56 @@
-import React from 'react';
-import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from '@/i18n';
+import type { SourceReference } from '@dosfilos/domain';
 
 interface ChatMessage {
     id: string;
     role: 'user' | 'assistant' | 'system';
     content: string;
+    sources?: SourceReference[];
+}
+
+function SourcesPanel({ sources }: { sources: SourceReference[] }) {
+    const [open, setOpen] = useState(false);
+    const hasAnnotated = sources.some(s => s.author);
+    const label = hasAnnotated
+        ? sources.length === 1 ? 'fuente citada' : 'fuentes citadas'
+        : sources.length === 1 ? 'base de conocimiento consultada' : 'bases de conocimiento consultadas';
+
+    return (
+        <div className="mt-3 border-t border-slate-100 dark:border-zinc-800 pt-2">
+            <button
+                onClick={() => setOpen(v => !v)}
+                className="flex items-center gap-1.5 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+            >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>{sources.length} {label}</span>
+                {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+            {open && (
+                <div className="mt-2 space-y-2">
+                    {sources.map((s, i) => (
+                        <div key={i} className="text-xs bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-lg px-3 py-2.5">
+                            <div className="flex items-start gap-1.5">
+                                <BookOpen className="h-3 w-3 text-indigo-500 shrink-0 mt-0.5" />
+                                <div className="min-w-0">
+                                    <span className="font-semibold text-indigo-700 dark:text-indigo-300">{s.title}</span>
+                                    {s.author && (
+                                        <span className="text-slate-500 dark:text-slate-400"> — {s.author}</span>
+                                    )}
+                                    {s.snippet && (
+                                        <p className="text-slate-500 dark:text-slate-400 mt-0.5">{s.snippet}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 }
 
 interface ActiveAgent {
@@ -80,9 +123,14 @@ export function FacultyChatMessages({
                         {msg.role === 'user' ? (
                             <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                         ) : (
-                            <div className="prose prose-slate prose-sm md:prose-base dark:prose-invert max-w-none break-words">
-                                <ReactMarkdown>{msg.content}</ReactMarkdown>
-                            </div>
+                            <>
+                                <div className="prose prose-slate prose-sm md:prose-base dark:prose-invert max-w-none break-words">
+                                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                </div>
+                                {msg.sources && msg.sources.length > 0 && (
+                                    <SourcesPanel sources={msg.sources} />
+                                )}
+                            </>
                         )}
 
                         {msg.id && (

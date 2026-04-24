@@ -6,6 +6,10 @@ initializeApp();
 // Export library functions
 export { extractPdfText } from './library/extractPdfText';
 export { extractPdfWithGemini } from './library/extractPdfWithGemini';
+export { reprocessWithLlamaParse } from './library/reprocessWithLlamaParse';
+export { indexStructuredDocument } from './library/indexStructuredDocument';
+export { retrieveChunks } from './library/retrieveChunks';
+export { auditIndexing } from './library/auditIndexing';
 export { createGeminiStore } from './library/createGeminiStore';
 export { syncResourceToGemini } from './library/syncResourceToGemini';
 export { createCoreLibraryStores } from './library/createCoreLibraryStores';
