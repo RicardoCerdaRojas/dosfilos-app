@@ -58,7 +58,7 @@ export function Hero() {
                             className="flex flex-col sm:flex-row gap-3 items-start sm:items-center animate-fade-up"
                             style={{ animationDelay: '300ms' }}
                         >
-                            <Link to="/register">
+                            <Link to="/pricing">
                                 <Button className="bg-white text-slate-900 hover:bg-slate-200 h-11 px-6 rounded-md text-[14px] font-medium gap-1.5">
                                     Empezar 30 días gratis
                                     <ArrowRight className="h-3.5 w-3.5" />
