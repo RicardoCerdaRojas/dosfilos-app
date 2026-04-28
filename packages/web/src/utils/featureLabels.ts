@@ -8,7 +8,7 @@
 export const featureLabels: Record<string, string> = {
     // ── Bible & Library (entry-tier hooks) ──────────────────────────────────
     'bible:read': 'Biblia interactiva',
-    'library:curated': 'Biblioteca curada',
+    'library:curated': 'Biblioteca especializada',
     'library:upload': 'Biblioteca personal',
     'library:semantic_search': 'Búsqueda semántica',
 

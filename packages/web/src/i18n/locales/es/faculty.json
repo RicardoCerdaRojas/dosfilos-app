@@ -164,11 +164,11 @@
     },
     "freeStarter": {
         "eyebrow": "Empieza por aquí",
-        "intro": "Tu plan Free incluye 50 consultas mensuales sobre la biblioteca curada. Toca cualquiera para arrancar — los tutores citarán las fuentes que respaldan la respuesta.",
+        "intro": "Tu plan Free incluye 50 consultas mensuales sobre la biblioteca especializada. Toca cualquiera para arrancar — los tutores citarán las fuentes que respaldan la respuesta.",
         "prompts": {
             "expository": {
-                "title": "¿Qué dice la biblioteca curada sobre el sermón expositivo?",
-                "prompt": "¿Qué características esenciales tiene un sermón expositivo según los autores de la biblioteca curada?"
+                "title": "¿Qué dice la biblioteca especializada sobre el sermón expositivo?",
+                "prompt": "¿Qué características esenciales tiene un sermón expositivo según los autores de la biblioteca especializada?"
             },
             "passage": {
                 "title": "Ayúdame a entender un pasaje que voy a predicar",

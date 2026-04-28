@@ -6,7 +6,7 @@ import { Reveal } from '../shared/Reveal';
 const FAQ_ITEMS = [
     {
         q: '¿Qué significa que el sistema tiene citas con estándar académico?',
-        a: 'Cada respuesta del tutor cita sus fuentes indicando autor, título y página exacta. La referencia es rastreable al documento original que tú subiste o que vive en la biblioteca curada. La bibliografía completa aparece al pie de cada consulta.',
+        a: 'Cada respuesta del tutor cita sus fuentes indicando autor, título y página exacta. La referencia es rastreable al documento original que tú subiste o que vive en la biblioteca especializada. La bibliografía completa aparece al pie de cada consulta.',
     },
     {
         q: '¿Pueden usar mi contenido para entrenar modelos de IA?',
@@ -17,7 +17,7 @@ const FAQ_ITEMS = [
         a: 'Material del que poseas los derechos legales: libros que hayas comprado (incluyendo ediciones digitales), material de dominio público, o texto con licencia que permita uso personal. Al subir declaras que tienes el derecho de usar ese material para tu estudio personal.',
     },
     {
-        q: '¿Qué incluye la biblioteca curada?',
+        q: '¿Qué incluye la biblioteca especializada?',
         a: 'Obras de dominio público y material con licencia explícita: comentarios clásicos (Calvino, Henry, Spurgeon, Agustín), léxicos académicos (Gesenius, Thayer, Strong), gramáticas y tratados patrísticos. Todo este material es citable públicamente.',
     },
     {
