@@ -60,8 +60,8 @@
         "title": "Bibliography",
         "viewSourceAria": "View source {{num}}: {{author}}, {{title}}",
         "pagesConsulted": "Pages consulted",
-        "protectedFootnote_one": "1 curated source with protected citation — material consulted but not publicly citable due to rights protection.",
-        "protectedFootnote_other": "{{count}} curated sources with protected citation — material consulted but not publicly citable due to rights protection."
+        "protectedFootnote_one": "1 specialized source with protected citation — material consulted but not publicly citable due to rights protection.",
+        "protectedFootnote_other": "{{count}} specialized sources with protected citation — material consulted but not publicly citable due to rights protection."
     },
     "modeMenu": {
         "buttonTitle": "Response mode",
@@ -164,11 +164,11 @@
     },
     "freeStarter": {
         "eyebrow": "Start here",
-        "intro": "Your Free plan includes 50 monthly queries against the curated library. Tap any prompt to get started — the tutors will cite the sources backing their answer.",
+        "intro": "Your Free plan includes 50 monthly queries against the specialized library. Tap any prompt to get started — the tutors will cite the sources backing their answer.",
         "prompts": {
             "expository": {
-                "title": "What does the curated library say about expository preaching?",
-                "prompt": "What are the essential characteristics of an expository sermon according to the authors in the curated library?"
+                "title": "What does the specialized library say about expository preaching?",
+                "prompt": "What are the essential characteristics of an expository sermon according to the authors in the specialized library?"
             },
             "passage": {
                 "title": "Help me understand a passage I'm going to preach",

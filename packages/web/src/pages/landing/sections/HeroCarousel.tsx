@@ -16,7 +16,7 @@ const PANELS: CarouselPanel[] = [
     { label: '01 · Hebreo bíblico', sub: 'Entrenador con análisis morfológico', render: () => <HebrewMock /> },
     { label: '02 · Griego koiné', sub: 'Tutor con morfología del NT', render: () => <GreekMock /> },
     { label: '03 · Consulta con citas', sub: 'Tutores expertos por área', render: () => <HeroChatMock /> },
-    { label: '04 · Tu biblioteca', sub: 'Corpus personal y curado', render: () => <LibraryMock /> },
+    { label: '04 · Tu biblioteca', sub: 'Corpus personal y especializado', render: () => <LibraryMock /> },
     { label: '05 · Producción ministerial', sub: 'Sermones con respaldo exegético', render: () => <SermonMock /> },
 ];
 

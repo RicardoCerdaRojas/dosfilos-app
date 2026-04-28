@@ -95,9 +95,9 @@ export function TermsOfServicePage() {
                     <li>Vende o cede el contenido de los usuarios a terceros</li>
                 </ul>
 
-                <h2>6. Biblioteca Core (Curada)</h2>
+                <h2>6. Biblioteca Core (Especializada)</h2>
                 <p>
-                    La Plataforma incluye una biblioteca curada por el equipo de Dos Filos con
+                    La Plataforma incluye una biblioteca especializada por el equipo de Dos Filos con
                     material de dominio público o licenciado. Las citas provenientes de esta
                     biblioteca pueden estar sujetas a restricciones según el estado de licencia
                     de cada obra.

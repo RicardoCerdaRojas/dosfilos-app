@@ -26,7 +26,7 @@ export function PillarBiblioteca() {
             bullets={[
                 'Extracción estructurada de PDFs con páginas reales',
                 'Búsqueda semántica tipo RAG con bibliografía automática',
-                'Biblioteca curada de dominio público + tu material privado',
+                'Biblioteca especializada de dominio público + tu material privado',
                 'Tu contenido nunca entrena modelos de IA',
             ]}
             mockup={<LibraryMock />}
