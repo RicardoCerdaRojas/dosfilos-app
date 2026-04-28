@@ -41,7 +41,8 @@ export function StepExegesis() {
 }
 
 function StepExegesisContent() {
-    const { t } = useTranslation('generator');
+    const { t, language } = useTranslation('generator');
+    const activeLanguage = language === 'en' ? 'en' : 'es';
     const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
     const { user } = useFirebase();
     const contentHistory = useContentHistory('exegesis', config?.id);
@@ -101,7 +102,7 @@ function StepExegesisContent() {
                 temperature: config[WorkflowPhase.EXEGESIS]?.temperature || config.advanced?.globalTemperature // Fallback to global temp
             } : undefined;
 
-            const result = await sermonGeneratorService.generateExegesis(passage, rules, exegesisConfig, user?.uid);
+            const result = await sermonGeneratorService.generateExegesis(passage, rules, exegesisConfig, user?.uid, activeLanguage);
             setExegesis(result.exegesis);
             
             // toast.dismiss('context-prep');

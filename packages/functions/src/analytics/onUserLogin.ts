@@ -40,6 +40,14 @@ export const onUserLogin = onCall(async (request) => {
             const newLoginCount = (currentAnalytics.loginCount || 0) + 1;
             const now = new Date();
 
+            // Hebrew + Faculty have no analytics counter today, so query them
+            // live. Two cheap reads on login is acceptable and removes the
+            // dependency on counter-update plumbing we don't have yet.
+            const [hebrewSessions, facultySessions] = await Promise.all([
+                countWhere(db.collection('hebrew_user_sessions').where('userId', '==', userId)),
+                countWhere(db.collection('users').doc(userId).collection('ai_sessions')),
+            ]);
+
             // Calculate updated engagement score with the new login count
             const engagementScore = computeEngagementScore({
                 loginCount: newLoginCount,
@@ -47,6 +55,8 @@ export const onUserLogin = onCall(async (request) => {
                 lastActivityAt: currentAnalytics.lastActivityAt?.toDate?.() ?? now,
                 sermonsCreated: currentAnalytics.sermonsCreated || 0,
                 greekTutorSessions: currentAnalytics.greekTutorSessions || 0,
+                hebrewSessions,
+                facultySessions,
             });
 
             await userRef.update({
@@ -87,6 +97,8 @@ interface AnalyticsSnapshot {
     lastActivityAt: Date;
     sermonsCreated: number;
     greekTutorSessions: number;
+    hebrewSessions: number;
+    facultySessions: number;
 }
 
 function computeEngagementScore(a: AnalyticsSnapshot): number {
@@ -95,8 +107,35 @@ function computeEngagementScore(a: AnalyticsSnapshot): number {
         recencyScore(a.lastActivityAt ?? a.lastLoginAt) +
         sermonScore(a.sermonsCreated) +
         greekScore(a.greekTutorSessions) +
-        consistencyScore(a.loginCount, a.sermonsCreated);
+        consistencyScore(a.loginCount, a.sermonsCreated) +
+        breadthScore(a);
     return Math.min(100, Math.max(0, Math.round(total)));
+}
+
+/**
+ * Breadth bonus — rewards users who explore multiple modules. Each feature
+ * touched contributes 2.5pts up to 10. Keeps the score honest about
+ * power-users who don't fit the "30 sermons" archetype but use Hebrew, Greek
+ * and Faculty heavily.
+ */
+function breadthScore(a: AnalyticsSnapshot): number {
+    let modulesUsed = 0;
+    if (a.sermonsCreated > 0) modulesUsed++;
+    if (a.greekTutorSessions > 0) modulesUsed++;
+    if (a.hebrewSessions > 0) modulesUsed++;
+    if (a.facultySessions > 0) modulesUsed++;
+    return Math.min(10, modulesUsed * 2.5);
+}
+
+async function countWhere(q: FirebaseFirestore.Query): Promise<number> {
+    try {
+        const snap = await q.count().get();
+        return snap.data().count;
+    } catch {
+        // Fallback for emulator or older SDK without aggregation.
+        const snap = await q.get();
+        return snap.size;
+    }
 }
 
 function loginFrequencyScore(count: number): number {

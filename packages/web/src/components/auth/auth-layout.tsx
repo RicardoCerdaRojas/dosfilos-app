@@ -1,145 +1,124 @@
 import { ReactNode } from 'react';
-import { BookOpen, Check, Sparkles, Brain, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
 import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
+import { cn } from '@/lib/utils';
 
 interface AuthLayoutProps {
   children: ReactNode;
   title: string;
   subtitle?: string;
+  /** Optional eyebrow text above the title (e.g., plan name, step indicator) */
+  eyebrow?: string;
 }
 
-export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+/**
+ * Auth layout — monochromatic, landing-aligned.
+ * Left: dark slate panel with logo, headline, philosophy quote.
+ * Right: clean white panel with title, form content, language switcher.
+ */
+export function AuthLayout({ children, title, subtitle, eyebrow }: AuthLayoutProps) {
   const { t } = useTranslation('auth');
-  
-  const benefits = [
-    { icon: Clock, text: t('layout.benefits.0') },
-    { icon: Brain, text: t('layout.benefits.1') },
-    { icon: Sparkles, text: t('layout.benefits.2') },
-  ];
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Enhanced Branding */}
-      <div 
-        className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white relative overflow-hidden"
-        style={{ 
-          background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%)' 
-        }}
-      >
-        {/* Decorative elements */}
-        <div 
-          className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-20"
-          style={{ background: 'radial-gradient(circle, #60a5fa 0%, transparent 70%)' }}
-        />
-        <div 
-          className="absolute bottom-0 left-0 w-80 h-80 rounded-full blur-3xl opacity-15"
-          style={{ background: 'radial-gradient(circle, #a5b4fc 0%, transparent 70%)' }}
+    <div className="min-h-screen flex bg-white text-slate-900 antialiased" style={{ colorScheme: 'light' }}>
+      {/* LEFT — dark editorial panel */}
+      <aside className="hidden lg:flex lg:w-[44%] xl:w-[40%] bg-slate-950 text-white relative flex-col justify-between p-12 xl:p-16">
+        {/* Subtle radial accent */}
+        <div
+          className="absolute inset-0 opacity-[0.35] pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse 80% 60% at 20% 0%, rgba(99,102,241,0.25) 0%, transparent 60%)',
+          }}
         />
 
-        {/* Content */}
-        <div className="relative z-10 space-y-8">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-sm">
-              <BookOpen className="h-8 w-8" />
-            </div>
-            <span className="text-2xl font-bold">DosFilos.Preach</span>
-          </div>
+        {/* Top: logo */}
+        <Link to="/" className="relative z-10 inline-flex items-center group" aria-label="Preach DosFilos">
+          <span
+            className="block h-12 w-[144px] bg-white transition-transform group-hover:scale-[1.02]"
+            style={{
+              WebkitMaskImage: 'url(/logo_dfp.png)',
+              maskImage: 'url(/logo_dfp.png)',
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskPosition: 'left center',
+              maskPosition: 'left center',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+            }}
+          />
+        </Link>
+
+        {/* Middle: philosophy */}
+        <div className="relative z-10 max-w-md space-y-8">
+          <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500 font-medium">
+            {t('layout.eyebrow', { defaultValue: 'Gestión del conocimiento pastoral' })}
+          </p>
+          <h1 className="font-reading text-4xl xl:text-5xl leading-[1.1] tracking-tight text-white">
+            {t('layout.tagline')}
+          </h1>
+          <p className="text-[15px] leading-relaxed text-slate-400">
+            {t('layout.subtitle')}
+          </p>
         </div>
 
-        <div className="relative z-10 space-y-8 max-w-md">
-          {/* Main Message */}
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold leading-tight">
-              {t('layout.tagline')}
-            </h1>
-            <p className="text-xl text-blue-100">
-              {t('layout.subtitle')}
-            </p>
-          </div>
-
-          {/* Benefits */}
-          <div className="space-y-4">
-            {benefits.map((benefit, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                  <benefit.icon className="h-5 w-5" />
-                </div>
-                <span className="text-blue-100">{benefit.text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Trust indicator */}
-          <div 
-            className="flex items-center gap-3 p-4 rounded-xl"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)' }}
-          >
-            <div className="flex -space-x-2">
-              {[1, 2, 3, 4].map((n) => (
-                <div 
-                  key={n}
-                  className="w-8 h-8 rounded-full border-2 border-white/30"
-                  style={{ 
-                    background: `linear-gradient(135deg, hsl(${n * 60}, 70%, 60%) 0%, hsl(${n * 60 + 30}, 70%, 50%) 100%)` 
-                  }}
-                />
-              ))}
-            </div>
-            <div>
-              <div className="font-semibold">{t('layout.social.count')}</div>
-              <div className="text-sm text-blue-200">{t('layout.social.description')}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom quote */}
-        <div className="relative z-10 pt-8 border-t border-white/20">
-          <blockquote className="text-blue-100 italic">
+        {/* Bottom: scripture anchor */}
+        <div className="relative z-10 max-w-md pt-8 border-t border-white/5">
+          <blockquote className="font-reading text-lg italic leading-relaxed text-slate-300">
             "{t('layout.quote')}"
           </blockquote>
-          <div className="mt-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600" />
-            <div>
-              <div className="font-semibold">{t('layout.quoteAuthor')}</div>
-              <div className="text-sm text-blue-200">{t('layout.quoteRole')}</div>
+          <cite className="not-italic block mt-4 text-[11px] uppercase tracking-[0.2em] text-slate-500 font-medium">
+            {t('layout.quoteAuthor')}
+          </cite>
+        </div>
+      </aside>
+
+      {/* RIGHT — form panel */}
+      <main className="flex-1 flex flex-col relative">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-6 lg:px-10 py-6">
+          <Link to="/" className="lg:hidden inline-flex items-center" aria-label="Preach DosFilos">
+            <span
+              className="block h-9 w-[108px] bg-slate-900"
+              style={{
+                WebkitMaskImage: 'url(/logo_dfp.png)',
+                maskImage: 'url(/logo_dfp.png)',
+                WebkitMaskSize: 'contain',
+                maskSize: 'contain',
+                WebkitMaskPosition: 'left center',
+                maskPosition: 'left center',
+                WebkitMaskRepeat: 'no-repeat',
+                maskRepeat: 'no-repeat',
+              }}
+            />
+          </Link>
+          <div className="ml-auto">
+            <LanguageSwitcher variant="ghost" showLabel={false} />
+          </div>
+        </div>
+
+        {/* Centered form */}
+        <div className="flex-1 flex items-center justify-center px-6 lg:px-10 pb-12">
+          <div className={cn('w-full max-w-[400px] space-y-8')}>
+            <div className="space-y-2">
+              {eyebrow && (
+                <p className="text-[11px] tracking-[0.2em] uppercase text-indigo-600 font-medium">
+                  {eyebrow}
+                </p>
+              )}
+              <h2 className="font-reading text-3xl leading-tight tracking-tight text-slate-900">
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="text-[15px] leading-relaxed text-slate-500">{subtitle}</p>
+              )}
             </div>
+
+            {children}
           </div>
         </div>
-      </div>
-
-      {/* Right side - Form */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8 bg-background relative">
-        {/* Language Switcher - Top Right */}
-        <div className="absolute top-4 right-4">
-          <LanguageSwitcher variant="ghost" showLabel={false} />
-        </div>
-        
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex flex-col items-center gap-3">
-            <div 
-              className="p-3 rounded-xl"
-              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}
-            >
-              <BookOpen className="h-8 w-8 text-white" />
-            </div>
-            <span className="text-2xl font-bold">DosFilos.Preach</span>
-          </div>
-
-          {/* Title */}
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
-            {subtitle && (
-              <p className="text-muted-foreground">{subtitle}</p>
-            )}
-          </div>
-
-          {/* Form content */}
-          {children}
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -17,7 +17,11 @@
         "archive": "Archive",
         "markComplete": "Mark Complete",
         "markingComplete": "Marking...",
-        "exportPdf": "Export PDF"
+        "exportPdf": "Export PDF",
+        "history": "History",
+        "notes": "Notes",
+        "hideNotes": "Hide Notes",
+        "present": "Preach"
     },
     "status": {
         "draft": "Draft",
@@ -38,6 +42,9 @@
     },
     "history": {
         "title": "History",
+        "description": "Record of preachings and details.",
+        "logTitle": "Preaching Log",
+        "addLog": "Add",
         "empty": "No preaching logs.",
         "logButton": "Log Preaching"
     },
@@ -129,6 +136,15 @@
         "highlights_other": "{{count}} highlights",
         "clearHighlights": "Clear all highlights",
         "blackout": "Press B or click to continue",
+        "annotations": "Notes",
+        "studyPanel": {
+            "show": "Show study session with tutors",
+            "hide": "Hide study session"
+        },
+        "highlight": {
+            "removeUnderline": "Click to remove underline",
+            "removeMark": "Click to remove highlight"
+        },
         "shortcuts": {
             "blackout": "Blackout",
             "exit": "Exit fullscreen"

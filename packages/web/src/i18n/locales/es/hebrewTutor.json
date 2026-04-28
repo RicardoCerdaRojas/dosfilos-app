@@ -290,6 +290,57 @@
       "genesis": "El principio de todo",
       "gen310": "La desnudez revelada",
       "hint": "Usa el navegador superior para buscar un versículo"
+    },
+    "translationMode": "Modo Traducción",
+    "fontSize": {
+      "smaller": "Reducir tamaño",
+      "larger": "Agrandar tamaño"
+    },
+    "flow": {
+      "title": "Cómo funciona el Modo Traducción",
+      "investigating": "Investigando palabra",
+      "yourTranslation": "Tu traducción",
+      "expertHidden": "Experto (visible al final)",
+      "expertExample": "creó — Qal Perf. 3ms",
+      "qalVerb": "Verbo Qal",
+      "steps": {
+        "choose": "Elige un versículo",
+        "investigate": "Investiga cada palabra",
+        "compose": "Compón tu traducción",
+        "compare": "Compara con el experto"
+      }
+    },
+    "recent": "Recientes",
+    "suggested": "Versículos sugeridos",
+    "words": "palabras",
+    "verses": {
+      "gen11": { "subtitle": "El principio de todo" },
+      "gen310": { "subtitle": "La desnudez revelada" },
+      "ps231": { "subtitle": "El Señor es mi pastor" },
+      "jonah11": { "subtitle": "Un llamado divino" },
+      "prov35": { "subtitle": "Confía en el Señor" },
+      "isa61": { "subtitle": "La visión del trono" }
+    },
+    "levels": {
+      "intro": "Introductorio",
+      "basic": "Básico",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    }
+  },
+  "detective": {
+    "title": "Modo Detective",
+    "subtitle": "Investigación de verbos",
+    "srDescription": "Investigación morfológica paso a paso del verbo hebreo seleccionado.",
+    "progressLabel": "Progreso de investigación",
+    "phaseCount": "{{completed}}/{{total}} fases",
+    "saving": "Guardando resultados…",
+    "rootLabel": "raíz",
+    "dragHandlePanel": "Arrastra para cambiar el ancho del panel",
+    "dragHandleSidebar": "Arrastra para cambiar el ancho del menú",
+    "path": {
+      "strong": "💪 Verbo Fuerte",
+      "weak": "🔬 Verbo Débil"
     }
   }
 }

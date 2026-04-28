@@ -1,67 +1,108 @@
 {
     "header": {
-        "title": "Dashboard",
-        "subtitle": "Resumen de tu actividad en DosFilos.Preach"
+        "eyebrow": "Tu taller",
+        "greeting": "Hola, {{name}}.",
+        "subtitle": "Esto es lo que tienes hoy en tu espacio de estudio."
     },
-    "stats": {
-        "totalSermons": {
-            "title": "Total Sermones",
-            "description": "Sermones guardados"
+    "activeProjects": {
+        "eyebrow": "Proyectos activos",
+        "title": "Tu trabajo en curso.",
+        "subtitle": "Continúa donde lo dejaste, o comienza una nueva unidad de trabajo.",
+        "newProject": "Nuevo proyecto",
+        "viewAll": "Ver todos los proyectos",
+        "empty": {
+            "title": "Aún no tienes proyectos.",
+            "subtitle": "Un proyecto agrupa la biblioteca, conversaciones y material que produces para una unidad de trabajo — un sermón, una serie, un estudio.",
+            "create": "Crear mi primer proyecto",
+            "explore": "O explora la facultad sin proyecto"
         },
-        "newThisMonth": {
-            "title": "Nuevos este Mes",
-            "description": "Sermones creados"
-        },
-        "avgTime": {
-            "title": "Tiempo Promedio",
-            "description": "Duración de predicación",
-            "minutes": "min"
-        },
-        "bibleCoverage": {
-            "title": "Cobertura Bíblica",
-            "description": "libros citados (aprox)",
-            "books": "libros"
+        "card": {
+            "sessions_one": "{{count}} sesión",
+            "sessions_other": "{{count}} sesiones",
+            "sources_one": "{{count}} fuente",
+            "sources_other": "{{count}} fuentes",
+            "noActivity": "Sin actividad aún"
         }
     },
-    "recentSermons": {
-        "title": "Sermones Recientes",
-        "subtitle": "Últimos sermones modificados",
-        "empty": "No hay sermones recientes",
+    "ecosystem": {
+        "eyebrow": "Tu ecosistema",
+        "title": "Herramientas y recursos disponibles."
+    },
+    "pillars": {
+        "library": {
+            "eyebrow": "Biblioteca",
+            "title": "Tu acervo",
+            "metric_one": "{{count}} recurso",
+            "metric_other": "{{count}} recursos",
+            "empty": "Aún no has subido recursos",
+            "lastAdded": "Último: {{title}}",
+            "cta": "Ver biblioteca"
+        },
+        "languages": {
+            "eyebrow": "Lenguas originales",
+            "title": "Tu estudio",
+            "greekSessions_one": "{{count}} sesión de griego",
+            "greekSessions_other": "{{count}} sesiones de griego",
+            "noGreek": "Sin sesiones de griego aún",
+            "lastPassage": "Último: {{passage}}",
+            "ctaGreek": "Continuar griego",
+            "ctaHebrew": "Estudiar hebreo"
+        },
+        "faculty": {
+            "eyebrow": "Facultad teológica",
+            "title": "Tus conversaciones",
+            "metric_one": "{{count}} conversación",
+            "metric_other": "{{count}} conversaciones",
+            "empty": "Aún no has conversado con un tutor",
+            "lastSession": "Última: {{title}}",
+            "cta": "Abrir facultad"
+        },
+        "projects": {
+            "eyebrow": "Proyectos",
+            "title": "Tus workspaces",
+            "metric_one": "{{count}} proyecto",
+            "metric_other": "{{count}} proyectos",
+            "empty": "Aún no tienes proyectos",
+            "lastProject": "Último: {{title}}",
+            "cta": "Ver proyectos"
+        }
+    },
+    "recentMaterial": {
+        "eyebrow": "Material reciente",
+        "title": "Lo que has estado preparando.",
+        "empty": "Aún no has creado material. Comienza una conversación o sube un recurso a tu biblioteca.",
         "status": {
             "published": "Publicado",
             "draft": "Borrador",
             "archived": "Archivado"
-        }
-    },
-    "bibleProgress": {
-        "title": "Progreso Bíblico",
-        "subtitle": "Cobertura estimada de la Biblia",
-        "oldTestament": "Antiguo Testamento",
-        "newTestament": "Nuevo Testamento",
-        "comingSoon": "Próximamente: desglose detallado",
-        "yearlyGoal": "Meta anual: Profundidad y fidelidad"
+        },
+        "viewAll": "Ver todos los sermones"
     },
     "welcomeModal": {
-        "title": "¡Bienvenido a DosFilos.Preach!",
-        "subtitle": "El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.",
+        "eyebrow": "Tu taller está listo",
+        "title": "Bienvenido al taller.",
+        "subtitle": "Un espacio único para tu estudio, tus lenguas originales, tus tutores teológicos y la producción de tu material para el ministerio.",
         "features": {
-            "studyBible": {
-                "title": "Estudia el texto bíblico",
-                "description": "Analiza el contexto, trabaja la exégesis y construye la proposición exegética"
+            "library": {
+                "title": "Biblioteca",
+                "description": "Sube tus libros y recursos. Consulta con citas exactas a página y autor."
             },
-            "homiletics": {
-                "title": "Trabaja la homilética",
-                "description": "Trabaja el enfoque homilético para tu sermón, construye la proposición homilética"
+            "languages": {
+                "title": "Lenguas originales",
+                "description": "Griego y hebreo con léxicos, gramáticas y morfología — un mentor al lado."
             },
-            "saveTime": {
-                "title": "Ahorra tiempo de Preparación",
-                "description": "Todas tus recursos en un solo lugar, con acceso rápido y fácil"
+            "faculty": {
+                "title": "Facultad teológica",
+                "description": "Tutores especialistas en exégesis, homilética y consejería pastoral."
+            },
+            "production": {
+                "title": "Producción",
+                "description": "Del estudio al púlpito, sin perder el hilo exegético que construiste."
             }
         },
-        "tip": "Tip: Empieza con un pasaje conocido como Juan 3:16 o Salmo 23",
         "buttons": {
             "later": "Lo haré después",
-            "createSermon": "Crear mi primer sermón"
+            "explore": "Empezar por la biblioteca"
         }
     },
     "firstSermonBanner": {

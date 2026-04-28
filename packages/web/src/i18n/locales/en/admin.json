@@ -1,0 +1,473 @@
+{
+    "common": {
+        "accessDenied": {
+            "title": "Access Denied",
+            "description": "You don't have permission to view this page.",
+            "homeButton": "Back to home"
+        },
+        "noPermission": "You don't have permission to access this page"
+    },
+    "users": {
+        "title": "User Management",
+        "subtitle_one": "1 total user",
+        "subtitle_other": "{{total}} total users",
+        "subtitleVisible_one": "Showing 1 of {{total}}",
+        "subtitleVisible_other": "Showing {{visible}} of {{total}}",
+        "backToAnalytics": "Analytics",
+        "exportCsv": "Export CSV",
+        "exportCsvFiltered": "Export CSV ({{count}} filtered)",
+        "exportCsvAll": "Export CSV (all)",
+        "csvHeaders": {
+            "email": "Email",
+            "name": "Name",
+            "plan": "Plan",
+            "status": "Status",
+            "engagement": "Engagement",
+            "lastLogin": "Last Login",
+            "registeredAt": "Registered At"
+        },
+        "filters": {
+            "search": "Search by name or email...",
+            "plan": "Plan",
+            "status": "Status",
+            "allPlans": "All plans",
+            "allStatuses": "All statuses",
+            "active": "Active",
+            "trialing": "Trialing",
+            "cancelled": "Cancelled",
+            "pastDue": "Past due",
+            "disabled": "Disabled"
+        },
+        "loading": "Loading users...",
+        "loadingMore": "Loading more...",
+        "loadMore": "Load more",
+        "endOfList": "No more users to show",
+        "empty": {
+            "title": "No users found",
+            "noResults": "Try adjusting the filters",
+            "noUsers": "No registered users yet"
+        },
+        "table": {
+            "user": "User",
+            "plan": "Plan",
+            "status": "Status",
+            "activity": "Activity",
+            "engagement": "Engagement",
+            "lastLogin": "Last Login",
+            "registered": "Registered",
+            "actions": "Actions",
+            "noName": "No name",
+            "sermonsCount_one": "1 sermon",
+            "sermonsCount_other": "{{count}} sermons",
+            "tutorAndDrafts": "{{greek}} Greek · {{drafts}} drafts",
+            "neverLogged": "Never",
+            "defaultStatus": "active",
+            "selectAria": "Select user {{email}}",
+            "selectAllAria": "Select all visible users",
+            "trialEndsIn": "Trial ends {{when}}",
+            "trialEnded": "Trial expired",
+            "disabledBadge": "Disabled"
+        },
+        "sort": {
+            "name": "Name",
+            "registered": "Registered",
+            "lastLogin": "Last login",
+            "engagement": "Engagement",
+            "ascending": "ascending",
+            "descending": "descending",
+            "clickToSort": "Click to sort"
+        },
+        "rowActions": {
+            "activity": "Activity",
+            "view": "View",
+            "viewActivity": "View detailed activity",
+            "changePlan": "Change plan",
+            "resendEmail": "Resend welcome email",
+            "enable": "Enable user",
+            "disable": "Disable user",
+            "delete": "Delete permanently"
+        },
+        "bulkActions": {
+            "selectedCount_one": "1 selected",
+            "selectedCount_other": "{{count}} selected",
+            "clearSelection": "Clear selection",
+            "disable": "Disable selected",
+            "enable": "Enable selected",
+            "confirmDisableTitle": "Disable {{count}} user(s)",
+            "confirmDisableDescription": "These users won't be able to sign in, but their data is preserved. You can re-enable them at any time.",
+            "confirmEnableTitle": "Enable {{count}} user(s)",
+            "confirmEnableDescription": "These users will recover full access to the platform.",
+            "running": "Processing {{done}} of {{total}}...",
+            "successAll": "{{count}} user(s) processed successfully",
+            "successPartial": "{{ok}} ok · {{failed}} failed",
+            "errorAll": "Could not process any user"
+        },
+        "disableDialog": {
+            "title": "Disable this user?",
+            "description": "The account for <strong>{{email}}</strong> will be locked. The user won't be able to sign in, but all their data (sermons, notes, sessions) will remain intact. You can reactivate the account at any time.",
+            "cancel": "Cancel",
+            "confirm": "Disable User",
+            "loading": "Disabling..."
+        },
+        "deleteDialog": {
+            "title": "⚠️ Delete permanently",
+            "warning": "This action <strong>cannot be undone</strong>. The following will be permanently deleted:",
+            "items": {
+                "auth": "The Firebase Auth account",
+                "content": "All sermons, series and drafts",
+                "history": "Session history and analytics",
+                "subscription": "The Stripe subscription"
+            },
+            "confirmPrompt": "To confirm, type the user's email:",
+            "placeholder": "Type the email to confirm...",
+            "cancel": "Cancel",
+            "confirm": "Delete Permanently",
+            "loading": "Deleting..."
+        },
+        "changePlanDialog": {
+            "title": "Change plan for {{name}}",
+            "description": "Pick the new plan. The change applies immediately and Stripe handles proration automatically.",
+            "currentPlan": "Current plan",
+            "newPlan": "New plan",
+            "billingCycle": "Billing cycle",
+            "monthly": "Monthly",
+            "yearly": "Yearly",
+            "proration": "Stripe will prorate the charge based on the time remaining in the current period.",
+            "noChange": "Pick a plan different from the current one.",
+            "cancel": "Cancel",
+            "confirm": "Apply change",
+            "loading": "Applying..."
+        },
+        "details": {
+            "title": "User details",
+            "description": "Full information for {{name}}",
+            "sections": {
+                "basic": "Basic information",
+                "subscription": "Subscription",
+                "activity": "Activity & engagement",
+                "revenue": "Revenue",
+                "sensitive": "Internal identifiers"
+            },
+            "fields": {
+                "name": "Name",
+                "email": "Email",
+                "userId": "User ID",
+                "stripeCustomerId": "Stripe Customer ID",
+                "created": "Created",
+                "plan": "Plan",
+                "status": "Status",
+                "startDate": "Start date",
+                "nextBilling": "Next billing",
+                "trialEnd": "Trial end",
+                "engagementScore": "Engagement score",
+                "totalLogins": "Total logins",
+                "sermonsCreated": "Sermons created",
+                "lastLogin": "Last login",
+                "lastActivity": "Last activity",
+                "totalRevenue": "Total revenue"
+            },
+            "trialActive": "Trial active · ends {{when}}",
+            "trialExpired": "Trial expired · {{when}}",
+            "showSensitive": "Show internal identifiers",
+            "hideSensitive": "Hide internal identifiers",
+            "changePlanButton": "Change plan",
+            "close": "Close"
+        },
+        "detail": {
+            "backToList": "Users",
+            "noName": "No name",
+            "notFound": "User not found",
+            "disabled": "Disabled",
+            "tabs": {
+                "overview": "Overview",
+                "timeline": "Timeline",
+                "usage": "Usage & quotas",
+                "subscription": "Subscription",
+                "audit": "Audit log"
+            }
+        },
+        "timeline": {
+            "title": "Last {{days}} days",
+            "range": "{{days}} days",
+            "allTypes": "All types",
+            "itemCount_one": "1 event",
+            "itemCount_other": "{{count}} events",
+            "empty": "No activity in this range"
+        },
+        "usage": {
+            "period": "Current period",
+            "planLabel": "Plan: {{plan}}",
+            "loadError": "Could not load usage",
+            "pagesProcessed": "Pages processed",
+            "pagesHint": "Pages extracted via LlamaParse this month",
+            "queriesUsed": "Queries used",
+            "queriesHint": "Tutor messages sent this month",
+            "docsUploaded": "Documents uploaded",
+            "docsHint": "Documents in personal library",
+            "unlimited": "unlimited",
+            "noQuota": "no quota",
+            "remaining_one": "1 remaining",
+            "remaining_other": "{{count}} remaining",
+            "balance": {
+                "title": "Processing balance",
+                "standardAvailable": "Std available",
+                "premiumAvailable": "Premium available",
+                "standardSpent": "Std spent",
+                "premiumSpent": "Premium spent"
+            }
+        },
+        "subscription": {
+            "none": "This user has no active subscription",
+            "openStripe": "Open in Stripe",
+            "cancelAtPeriodEnd": "Cancels at period end",
+            "startDate": "Start date",
+            "currentPeriod": "Current period",
+            "trialEnd": "Trial end",
+            "cancelledAt": "Cancelled at",
+            "gracePeriodEnd": "Grace period end",
+            "paymentIssues": "Payment issues",
+            "failedAttempts_one": "1 failed payment attempt",
+            "failedAttempts_other": "{{count}} failed payment attempts",
+            "status": {
+                "active": "Active",
+                "trialing": "Trialing",
+                "past_due": "Past due",
+                "cancelled": "Cancelled",
+                "incomplete": "Incomplete"
+            }
+        },
+        "audit": {
+            "scopedHint": "Admin actions on this user",
+            "openFull": "Open full audit log",
+            "empty": "No actions recorded for this user"
+        },
+        "activity": {
+            "title": "User activity",
+            "loading": "Loading activity...",
+            "errorPrefix": "Error",
+            "notFound": "User information not found",
+            "noName": "No name",
+            "lastLoginRelative": "Last login: {{when}}",
+            "totalLogins_one": "1 total login",
+            "totalLogins_other": "{{count}} total logins",
+            "createdToday_one": "Created today (1)",
+            "createdToday_other": "Created today ({{count}})",
+            "createdThisWeek_one": "This week (1)",
+            "createdThisWeek_other": "This week ({{count}})",
+            "summary": {
+                "title": "Activity summary",
+                "sermons": "Sermons",
+                "published": "Published",
+                "series": "Series",
+                "plans": "Plans",
+                "greekTutor": "Greek Tutor",
+                "hebrewTutor": "Hebrew Tutor",
+                "faculty": "Faculty",
+                "projects": "Projects",
+                "library": "Library"
+            },
+            "recent": {
+                "defaultTitle": "Recent content",
+                "empty": "No recent content",
+                "itemCount_one": "1 item",
+                "itemCount_other": "{{count}} items",
+                "showMore": "Show {{count}} more...",
+                "showLess": "Show less",
+                "types": {
+                    "sermon": "Sermon",
+                    "greek_session": "Greek Tutor",
+                    "hebrew_session": "Hebrew Tutor",
+                    "faculty_session": "Faculty",
+                    "project": "Project",
+                    "series": "Series",
+                    "library_upload": "Library",
+                    "preaching_plan": "Plan"
+                },
+                "status": {
+                    "published": "Published",
+                    "draft": "Draft",
+                    "completed": "Completed",
+                    "in_progress": "In progress",
+                    "active": "Active"
+                }
+            }
+        },
+        "toasts": {
+            "deleteSuccess": "User deleted permanently",
+            "deleteError": "Error deleting user",
+            "disableSuccess": "User {{email}} disabled successfully",
+            "disableError": "Error disabling user",
+            "enableSuccess": "User {{email}} enabled successfully",
+            "enableError": "Error enabling user",
+            "resendSuccess": "Welcome email sent to {{email}}",
+            "resendError": "Error resending email",
+            "changePlanSuccess": "Plan updated successfully",
+            "changePlanError": "Error changing plan",
+            "grantSuccess": "Credits granted successfully",
+            "grantError": "Error granting pages",
+            "extendTrialSuccess": "Trial extended successfully",
+            "extendTrialError": "Error extending trial"
+        },
+        "grantCreditsDialog": {
+            "title": "Grant pages to {{name}}",
+            "description": "Add pages to the user's balance. This action is logged in the audit log with the reason you provide.",
+            "standardPages": "Standard pages (Gemini)",
+            "premiumPages": "Premium pages (LlamaParse)",
+            "reason": "Reason (logged in audit log)",
+            "reasonPlaceholder": "e.g., Compensation for extraction bug on 04/27, ticket #423",
+            "currentBalance": "Current balance",
+            "afterGrant": "After grant",
+            "missingValues": "Provide at least 1 page and a reason.",
+            "cancel": "Cancel",
+            "confirm": "Grant",
+            "loading": "Granting..."
+        },
+        "extendTrialDialog": {
+            "title": "Extend trial for {{name}}",
+            "description": "Add days to the trial period. If the trial has expired, it reopens from today + N days. Stripe is synced automatically.",
+            "days": "Days to add",
+            "currentTrialEnd": "Trial currently ends",
+            "newTrialEnd": "New trial end",
+            "noTrial": "No active trial (one will be created from today)",
+            "reason": "Reason (logged in audit log)",
+            "reasonPlaceholder": "e.g., Sales request, prospective Team customer",
+            "daysOutOfRange": "Days must be between 1 and 90.",
+            "cancel": "Cancel",
+            "confirm": "Extend",
+            "loading": "Extending..."
+        },
+        "stats": {
+            "total": "Total",
+            "subscribers": "Subscribers",
+            "subscribersHint": "Paying now",
+            "trialing": "Trialing",
+            "newThisMonth": "New this month",
+            "mrr": "Estimated MRR",
+            "conversion": "Conversion",
+            "conversionHint": "{{paying}} of {{total}} paying"
+        }
+    },
+    "audit": {
+        "title": "Audit Log",
+        "subtitle": "Immutable record of every admin action against user accounts.",
+        "backToUsers": "Users",
+        "loading": "Loading log...",
+        "loadError": "Could not load audit log",
+        "empty": {
+            "title": "No entries",
+            "description": "No actions have been recorded yet — or your filters are too restrictive."
+        },
+        "filters": {
+            "search": "Search by email or uid...",
+            "action": "Action",
+            "allActions": "All actions",
+            "actor": "Actor",
+            "allActors": "All actors",
+            "dateFrom": "From",
+            "dateTo": "To",
+            "clear": "Clear filters"
+        },
+        "table": {
+            "when": "When",
+            "actor": "Admin",
+            "action": "Action",
+            "target": "Affected user",
+            "details": "Details"
+        },
+        "actions": {
+            "user.delete": "Deleted user",
+            "user.disable": "Disabled",
+            "user.enable": "Enabled",
+            "user.resend_welcome_email": "Resent welcome",
+            "user.change_plan": "Changed plan",
+            "user.bulk_disable": "Bulk: disabled",
+            "user.bulk_enable": "Bulk: enabled",
+            "user.grant_credits": "Granted pages",
+            "user.extend_trial": "Extended trial"
+        },
+        "viewForUser": "View full history",
+        "showingCount_one": "1 entry",
+        "showingCount_other": "{{count}} entries"
+    },
+    "llamaParse": {
+        "title": "LlamaParse — Account monitoring",
+        "subtitle": "API key rotation and per-account credit consumption.",
+        "refresh": "Refresh",
+        "loadError": "Error loading accounts",
+        "toggleError": "Error toggling status",
+        "activated": "Account activated",
+        "deactivated": "Account deactivated",
+        "empty": "No accounts configured. Create docs in `llamaparseAccounts` to enable rotation.",
+        "summary": {
+            "accounts": "Accounts",
+            "totalRemaining": "Credits remaining (total)",
+            "totalUsed": "Period usage"
+        },
+        "table": {
+            "name": "Name",
+            "priority": "Priority",
+            "usage": "Usage",
+            "resetDate": "Next reset",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "status": {
+            "healthy": "Healthy",
+            "warning": "Warning",
+            "critical": "Critical",
+            "inactive": "Inactive"
+        },
+        "actions": {
+            "activate": "Activate",
+            "deactivate": "Deactivate"
+        }
+    },
+    "leads": {
+        "title": "Contact Leads",
+        "subtitle": "{{total}} total leads · {{newCount}} new",
+        "backToDashboard": "Dashboard",
+        "loading": "Loading leads...",
+        "loadError": "Error loading leads",
+        "filters": {
+            "search": "Search by name, email or church...",
+            "type": "Type",
+            "status": "Status",
+            "allTypes": "All types",
+            "allStatuses": "All statuses"
+        },
+        "types": {
+            "sales": "Sales",
+            "scholarship": "Scholarship",
+            "demo": "Demo",
+            "support": "Support"
+        },
+        "statuses": {
+            "new": "New",
+            "contacted": "Contacted",
+            "converted": "Converted",
+            "closed": "Closed"
+        },
+        "statusOptions": {
+            "new": "New",
+            "contacted": "Contacted",
+            "converted": "Converted",
+            "closed": "Closed"
+        },
+        "empty": {
+            "title": "No leads",
+            "noResults": "No leads found with those filters",
+            "noLeads": "No contact leads yet"
+        },
+        "actions": {
+            "delete": "Delete",
+            "deleteConfirm": "Are you sure you want to delete this lead?",
+            "updateSuccess": "Status updated",
+            "updateError": "Update failed",
+            "deleteSuccess": "Lead deleted",
+            "deleteError": "Delete failed"
+        },
+        "card": {
+            "unknownDate": "Unknown date"
+        }
+    }
+}

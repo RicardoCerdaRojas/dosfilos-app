@@ -13,10 +13,10 @@ import rvrBible from '../data/rvr1960.json';
 export class RVR1960Repository implements IBibleVersionRepository {
     private readonly BOOK_MAPPING: Record<string, string> = {
         // Antiguo Testamento
-        'Génesis': 'gn', 'Genesis': 'gn', 'Gn': 'gn', 'Gen': 'gn',
-        'Éxodo': 'ex', 'Exodo': 'ex', 'Ex': 'ex',
+        'Génesis': 'gn', 'Genesis': 'gn', 'Gn': 'gn', 'Gen': 'gn', 'Gén': 'gn',
+        'Éxodo': 'ex', 'Exodo': 'ex', 'Ex': 'ex', 'Éx': 'ex',
         'Levítico': 'lv', 'Levitico': 'lv', 'Lv': 'lv', 'Lev': 'lv',
-        'Números': 'nm', 'Numeros': 'nm', 'Nm': 'nm', 'Num': 'nm',
+        'Números': 'nm', 'Numeros': 'nm', 'Nm': 'nm', 'Num': 'nm', 'Núm': 'nm',
         'Deuteronomio': 'dt', 'Dt': 'dt', 'Deut': 'dt',
         'Josué': 'js', 'Josue': 'js', 'Jos': 'js',
         'Jueces': 'jud', 'Jue': 'jud',

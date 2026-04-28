@@ -29,8 +29,9 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { useHighlights } from '@/hooks/useHighlights';
 import { HighlightToolbar } from '@/components/preach/HighlightToolbar';
+import { applyHighlights as applyHighlightsRenderer } from './preach/highlightRenderer';
+import { FloatingTimer } from './preach/FloatingTimer';
 
-// Helper to format time
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -225,73 +226,8 @@ export function PreachModePage() {
     return processed;
   };
   
-  // Helper to get highlight color class
-  const getHighlightClass = (color: string) => {
-    switch (color) {
-      case 'yellow': return 'bg-yellow-200 dark:bg-yellow-900/40';
-      case 'green': return 'bg-green-200 dark:bg-green-900/40';
-      case 'pink': return 'bg-pink-200 dark:bg-pink-900/40';
-      case 'blue': return 'bg-blue-200 dark:bg-blue-900/40';
-      default: return '';
-    }
-  };
-  
-  // Apply highlights to content
-  const applyHighlights = (content: string) => {
-    if (highlights.length === 0) return content;
-    
-    let result = content;
-    // Sort highlights by length (longest first) to avoid nested replacements
-    const sortedHighlights = [...highlights].sort((a, b) => b.text.length - a.text.length);
-    
-    sortedHighlights.forEach(highlight => {
-      // Build the search pattern with context
-      const searchPattern = `${highlight.contextBefore}${highlight.text}${highlight.contextAfter}`;
-      const patternIndex = result.indexOf(searchPattern);
-      
-      if (patternIndex === -1) {
-        // Fallback: try without context if not found (for old highlights or edited content)
-        const regex = new RegExp(highlight.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        applyHighlightWithRegex(result, highlight, regex);
-        return;
-      }
-      
-      // Calculate exact position of the text within the pattern
-      const textStart = patternIndex + highlight.contextBefore.length;
-      const textEnd = textStart + highlight.text.length;
-      
-      // Build mark tag based on style
-      let markTag = '';
-      if (highlight.style === 'underline') {
-        markTag = `<mark class="bg-transparent border-b-2 border-primary cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar subrayado">${highlight.text}</mark>`;
-      } else {
-        const colorClass = getHighlightClass(highlight.color!);
-        markTag = `<mark class="${colorClass} rounded px-0.5 cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar resaltado">${highlight.text}</mark>`;
-      }
-      
-      // Replace only this specific occurrence
-      result = result.substring(0, textStart) + markTag + result.substring(textEnd);
-    });
-    
-    return result;
-  };
-  
-  // Helper for regex-based fallback
-  const applyHighlightWithRegex = (content: string, highlight: any, regex: RegExp) => {
-    if (highlight.style === 'underline') {
-      return content.replace(
-        regex, 
-        `<mark class="bg-transparent border-b-2 border-primary cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar subrayado">$&</mark>`
-      );
-    } else {
-      const colorClass = getHighlightClass(highlight.color!);
-      return content.replace(
-        regex, 
-        `<mark class="${colorClass} rounded px-0.5 cursor-pointer hover:opacity-80 transition-opacity" data-highlight-id="${highlight.id}" title="Click para quitar resaltado">$&</mark>`
-      );
-    }
-  };
-  
+  const applyHighlights = (content: string) => applyHighlightsRenderer(content, highlights, t);
+
   // Handle click on highlighted text to remove it
   useEffect(() => {
     const handleHighlightClick = (e: MouseEvent) => {
@@ -331,7 +267,7 @@ export function PreachModePage() {
           </span>
         );
       }
-      return <a {...props} className="text-blue-500 underline" />;
+      return <a {...props} className="text-primary underline" />;
     },
     // Custom blockquote styling
     blockquote: ({ node, ...props }: any) => (
@@ -349,11 +285,10 @@ export function PreachModePage() {
     return <div className="flex items-center justify-center h-screen">{t('preachMode.loading')}</div>;
   }
 
-  // Timer Color Logic
   const getTimerColor = () => {
-    if (timeLeft <= 0) return 'text-red-500 animate-pulse';
-    if (timeLeft <= 5 * 60) return 'text-red-500';
-    if (timeLeft <= 10 * 60) return 'text-yellow-500';
+    if (timeLeft <= 0) return 'text-destructive animate-pulse';
+    if (timeLeft <= 5 * 60) return 'text-destructive';
+    if (timeLeft <= 10 * 60) return 'text-warning';
     return 'text-muted-foreground';
   };
 
@@ -459,7 +394,7 @@ export function PreachModePage() {
             variant={showAnnotations ? "default" : "outline"}
             size="icon"
             onClick={() => setShowAnnotations(!showAnnotations)}
-            title={t('preachMode.annotations', { defaultValue: 'Notas' })}
+            title={t('preachMode.annotations')}
           >
             <Pen className="h-4 w-4" />
           </Button>
@@ -470,8 +405,8 @@ export function PreachModePage() {
               variant={showStudyPanel ? "default" : "outline"}
               size="icon"
               onClick={() => setShowStudyPanel(prev => !prev)}
-              title={showStudyPanel ? 'Ocultar sesión de estudio' : 'Ver sesión de estudio con tutores'}
-              className={showStudyPanel ? '' : 'border-indigo-300 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400'}
+              title={showStudyPanel ? t('preachMode.studyPanel.hide') : t('preachMode.studyPanel.show')}
+              className={showStudyPanel ? '' : 'border-primary/40 text-primary hover:bg-primary/5'}
             >
               <GraduationCap className="h-4 w-4" />
             </Button>
@@ -550,7 +485,7 @@ export function PreachModePage() {
             {/* Study session panel */}
             {showStudyPanel && sermon.sourceFacultySessionId && (
               <>
-                <ResizableHandle withHandle className="bg-border hover:bg-indigo-200 dark:hover:bg-indigo-900/40 transition-colors" />
+                <ResizableHandle withHandle className="bg-border hover:bg-primary/20 transition-colors" />
                 <ResizablePanel defaultSize={showAnnotations ? 25 : 40} minSize={20}>
                   <div className="h-full overflow-hidden">
                     <StudySessionPanel
@@ -617,33 +552,7 @@ export function PreachModePage() {
 
       {/* Floating Timer - Visible when running and controls are hidden */}
       {isRunning && !showControls && (
-        <div 
-          className={cn(
-            "fixed bottom-8 right-8 z-50 px-6 py-3 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300",
-            timeLeft <= 5 * 60 
-              ? "bg-red-500/90 text-white animate-pulse" 
-              : timeLeft <= 10 * 60 
-                ? "bg-amber-500/90 text-white"
-                : "bg-background/90 border"
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowControls(true);
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <Clock className={cn("h-5 w-5", timeLeft <= 10 * 60 ? "text-white" : "text-muted-foreground")} />
-            <span className={cn(
-              "font-mono text-2xl font-bold tabular-nums",
-              timeLeft <= 10 * 60 ? "text-white" : "text-foreground"
-            )}>
-              {formatTime(timeLeft)}
-            </span>
-            {timeLeft <= 5 * 60 && (
-              <span className="text-xs font-medium opacity-80">{t('preachMode.timeUp')}</span>
-            )}
-          </div>
-        </div>
+        <FloatingTimer timeLeft={timeLeft} onShowControls={() => setShowControls(true)} />
       )}
 
       {/* Timer Settings Dialog */}

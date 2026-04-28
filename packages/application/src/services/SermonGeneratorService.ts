@@ -1,4 +1,5 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infrastructure';
 
 import { PhaseConfiguration } from '@dosfilos/domain';
@@ -135,7 +136,8 @@ export class SermonGeneratorService {
         passage: string,
         rules: GenerationRules,
         config?: ExtendedPhaseConfiguration,
-        userId?: string
+        userId?: string,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<{ exegesis: ExegeticalStudy; cacheName?: string }> {
         let fileSearchStoreId: string | undefined = config?.fileSearchStoreId; // 🎯 NEW: check config first
 
@@ -171,7 +173,7 @@ export class SermonGeneratorService {
             ? { ...hydratedConfig, fileSearchStoreId }
             : { ...defaultConfig, fileSearchStoreId };
 
-        const exegesis = await this.generator.generateExegesis(passage, rules, finalConfig);
+        const exegesis = await this.generator.generateExegesis(passage, rules, finalConfig, language);
         return { exegesis };
     }
 
@@ -179,7 +181,8 @@ export class SermonGeneratorService {
         exegesis: ExegeticalStudy,
         rules: GenerationRules,
         config?: ExtendedPhaseConfiguration,
-        userId?: string
+        userId?: string,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<{ homiletics: HomileticalAnalysis; cacheName?: string }> {
         let fileSearchStoreId: string | undefined = config?.fileSearchStoreId; // 🎯 NEW
 
@@ -209,7 +212,7 @@ export class SermonGeneratorService {
             ? { ...hydratedConfig, fileSearchStoreId: fileSearchStoreId || hydratedConfig.fileSearchStoreId }
             : { ...defaultConfig, fileSearchStoreId };
 
-        const homiletics = await this.generator.generateHomiletics(exegesis, rules, finalConfig);
+        const homiletics = await this.generator.generateHomiletics(exegesis, rules, finalConfig, language);
         return { homiletics };
     }
 
@@ -217,7 +220,8 @@ export class SermonGeneratorService {
         analysis: HomileticalAnalysis,
         rules: GenerationRules,
         config?: ExtendedPhaseConfiguration,
-        userId?: string
+        userId?: string,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<{ draft: SermonContent; cacheName?: string }> {
         // Use homiletical proposition as search query
         const searchQuery = analysis.homileticalProposition;
@@ -246,7 +250,7 @@ export class SermonGeneratorService {
             ? { ...hydratedConfig, fileSearchStoreId }
             : { ...defaultConfig, fileSearchStoreId };
 
-        const draft = await this.generator.generateSermonDraft(analysis, rules, finalConfig);
+        const draft = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language);
         return { draft };
     }
 
@@ -265,7 +269,8 @@ export class SermonGeneratorService {
         exegesis: ExegeticalStudy,
         rules: GenerationRules,
         config?: ExtendedPhaseConfiguration,
-        userId?: string
+        userId?: string,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<{ previews: import('@dosfilos/domain').HomileticalApproachPreview[]; cacheName?: string; cachedResources?: Array<{ title: string; author: string }> }> {
         // Use passage + proposition as search query for better relevance
         const searchQuery = `${exegesis.passage} ${exegesis.exegeticalProposition} `;
@@ -297,7 +302,7 @@ export class SermonGeneratorService {
             : { ...config, fileSearchStoreId } as PhaseConfiguration; // Fallback if no hydration needed for previews
 
         // 🎯 Call NEW generator method for previews
-        const previews = await this.generator.generateHomileticsPreview(exegesis, rules, finalConfig);
+        const previews = await this.generator.generateHomileticsPreview(exegesis, rules, finalConfig, language);
         return { previews };
     }
 
@@ -315,7 +320,8 @@ export class SermonGeneratorService {
         selectedPreview: import('@dosfilos/domain').HomileticalApproachPreview,
         rules: GenerationRules,
         config?: ExtendedPhaseConfiguration,
-        userId?: string
+        userId?: string,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<{ approach: import('@dosfilos/domain').HomileticalApproach; cacheName?: string }> {
         // Use passage + proposition as search query
         const searchQuery = `${exegesis.passage} ${exegesis.exegeticalProposition} `;
@@ -347,11 +353,11 @@ export class SermonGeneratorService {
             : { ...defaultConfig, fileSearchStoreId };
 
         // 🎯 Call NEW generator method to develop approach
-        const approach = await this.generator.developSelectedApproach(exegesis, selectedPreview, rules, finalConfig);
+        const approach = await this.generator.developSelectedApproach(exegesis, selectedPreview, rules, finalConfig, language);
         return { approach };
     }
 
-    async refineContent(content: string, instruction: string, context?: any): Promise<string> {
+    async refineContent(content: string, instruction: string, context?: any, language: SupportedLanguage = DEFAULT_LANGUAGE): Promise<string> {
         const enrichedContext = { ...context };
 
         // 🎯 NEW: Inject File Search Store ID based on phase
@@ -378,7 +384,7 @@ export class SermonGeneratorService {
             }
         }
 
-        return this.generator.refineContent(content, instruction, enrichedContext);
+        return this.generator.refineContent(content, instruction, enrichedContext, language);
     }
 
     isAvailable(): boolean {

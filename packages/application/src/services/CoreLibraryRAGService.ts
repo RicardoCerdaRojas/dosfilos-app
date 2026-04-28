@@ -1,4 +1,29 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import type { ConcreteResponseMode } from '@dosfilos/domain';
+
+/**
+ * Retrieval tuning per response mode.
+ *
+ * Rationale:
+ *  - concise/layperson: fewer chunks, higher similarity bar — short answers get
+ *    muddled when the model sees too much context.
+ *  - detailed: balanced default.
+ *  - academic: wider net + lower bar — exhaustive analysis benefits from more
+ *    potentially-relevant material, even if loosely related.
+ *  - pastoral: medium-small — scripture-forward answers focus on 1–2 passages
+ *    plus a bit of theological backdrop.
+ */
+const RETRIEVAL_CONFIG_BY_MODE: Record<ConcreteResponseMode, { topK: number; minSimilarity: number }> = {
+    concise: { topK: 4, minSimilarity: 0.40 },
+    detailed: { topK: 10, minSimilarity: 0.30 },
+    academic: { topK: 15, minSimilarity: 0.25 },
+    pastoral: { topK: 6, minSimilarity: 0.35 },
+    layperson: { topK: 5, minSimilarity: 0.35 },
+};
+
+export function getRetrievalConfigForMode(mode: ConcreteResponseMode): { topK: number; minSimilarity: number } {
+    return RETRIEVAL_CONFIG_BY_MODE[mode] ?? RETRIEVAL_CONFIG_BY_MODE.detailed;
+}
 
 /**
  * RetrievedChunk — a chunk retrieved by semantic search, with full metadata and score.
@@ -19,13 +44,26 @@ export interface RetrievedChunk {
     };
     score: number;
     sectionBreadcrumb: string;
+    /** Whether the underlying source may be cited to non-admin users. */
+    publiclyCitable?: boolean;
 }
 
 export interface RetrievalOptions {
     topK?: number;
-    stores?: string[];    // Preferred: store keys (e.g. 'exegesis')
-    corpusIds?: string[]; // Legacy: agent.corpusIds (store URIs); server reverse-resolves to keys
+    stores?: string[];         // Core Library store keys (e.g. 'exegesis')
+    corpusIds?: string[];      // Legacy: agent.corpusIds (store URIs); server reverse-resolves to keys
+    userId?: string;           // Personal Library scope — restricts to this user's uploads
+    resourceIds?: string[];    // Project scope — restricts to specific documents
     minSimilarity?: number;
+    /**
+     * When set together with `resourceIds`, runs one findNearest per resource (in parallel)
+     * with this limit each, instead of a single global findNearest with topK.
+     *
+     * Use this for project scope so every curated source contributes its best chunks.
+     * A single global query can starve sources whose chunks score lower than dominant
+     * sources — even when those sources are highly relevant to the user's intent.
+     */
+    perResourceTopK?: number;
 }
 
 /**
@@ -55,8 +93,11 @@ export class CoreLibraryRAGService {
                 query: queryText,
                 stores: options.stores ?? [],
                 corpusIds: options.corpusIds ?? [],
+                userId: options.userId,
+                resourceIds: options.resourceIds ?? [],
                 topK: options.topK ?? 10,
                 minSimilarity: options.minSimilarity ?? 0,
+                perResourceTopK: options.perResourceTopK ?? 0,
             });
 
             const data = response.data as { chunks: RetrievedChunk[] };
@@ -69,18 +110,43 @@ export class CoreLibraryRAGService {
 
     /**
      * Format retrieved chunks as a context block for the LLM prompt.
-     * Structured so Gemini can cite naturally: [Fuente N: Autor, Título, p. N, Sección].
+     *
+     * Citation protection (legal):
+     *   Sources whose `publiclyCitable !== true` are anonymised in the header
+     *   shown to the model — only the protection sentinel is exposed instead
+     *   of `Autor, "Título"`. The chunk TEXT is still included verbatim (the
+     *   model needs the content to answer); only the bibliographic attribution
+     *   is masked, so the model cannot leak author/title in its response.
+     *
+     *   Cleared sources (admin opted them in via `publiclyCitable=true`) keep
+     *   the rich `[Fuente N: Autor, Título, p. N, §Sección]` header.
+     *
+     * The protected sentinel uses a marker pattern (`__PROTECTED__`) the
+     * downstream prompt rules and the client-side extractor both recognise,
+     * so the model NEVER produces an inline `(Author, "Title")` for protected
+     * material — and if it leaks one, the extractor strips it defensively.
      */
-    static formatContextForPrompt(chunks: RetrievedChunk[]): string {
+    static formatContextForPrompt(chunks: RetrievedChunk[], language: 'es' | 'en' = 'es'): string {
         if (chunks.length === 0) return '';
+        const sourceWord = language === 'en' ? 'Source' : 'Fuente';
+        const protectedLabel = language === 'en'
+            ? 'Curated material · internal reference (do NOT cite inline)'
+            : 'Material especializado · referencia interna (NO citar inline)';
+
         return chunks
             .map((c, i) => {
-                const page = c.metadata.page ? `p. ${c.metadata.page}` : '';
-                const section = c.sectionBreadcrumb ? `§ ${c.sectionBreadcrumb}` : '';
-                const locator = [page, section].filter(Boolean).join(', ');
-                const header = locator
-                    ? `[Fuente ${i + 1}: ${c.resourceAuthor}, "${c.resourceTitle}", ${locator}]`
-                    : `[Fuente ${i + 1}: ${c.resourceAuthor}, "${c.resourceTitle}"]`;
+                const cleared = c.publiclyCitable === true;
+                let header: string;
+                if (cleared) {
+                    const page = c.metadata.page ? `p. ${c.metadata.page}` : '';
+                    const section = c.sectionBreadcrumb ? `§ ${c.sectionBreadcrumb}` : '';
+                    const locator = [page, section].filter(Boolean).join(', ');
+                    header = locator
+                        ? `[${sourceWord} ${i + 1}: ${c.resourceAuthor}, "${c.resourceTitle}", ${locator}]`
+                        : `[${sourceWord} ${i + 1}: ${c.resourceAuthor}, "${c.resourceTitle}"]`;
+                } else {
+                    header = `[${sourceWord} ${i + 1}: ${protectedLabel}]`;
+                }
                 return `${header}\n${c.text}`;
             })
             .join('\n\n---\n\n');

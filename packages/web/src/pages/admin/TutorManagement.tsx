@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Users, Edit, BookOpen, Scroll, HeartHandshake, Mic2, Library } from 'lucide-react';
 import { useTutors } from '@/hooks/admin/useTutors';
 import { Skeleton } from '@/components/ui/skeleton';
+import { resolveLocalized } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
 
 // Helper to render lucide icon by string name (mock agents have string icons like 'book-a', 'scroll', etc.)
 const renderIcon = (iconName: string = 'users', className: string = 'h-5 w-5') => {
@@ -21,6 +24,8 @@ const renderIcon = (iconName: string = 'users', className: string = 'h-5 w-5') =
 export default function TutorManagement() {
     const navigate = useNavigate();
     const { data: tutors, isLoading } = useTutors();
+    const { i18n } = useTranslation();
+    const lang: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
     return (
         <div className="space-y-6">
@@ -59,8 +64,8 @@ export default function TutorManagement() {
                                     {renderIcon(tutor.icon)}
                                 </div>
                                 <div>
-                                    <CardTitle className="text-lg">{tutor.name}</CardTitle>
-                                    <CardDescription>{tutor.expertiseArea}</CardDescription>
+                                    <CardTitle className="text-lg">{resolveLocalized(tutor.name, lang)}</CardTitle>
+                                    <CardDescription>{resolveLocalized(tutor.expertiseArea, lang)}</CardDescription>
                                 </div>
                             </div>
                             <Badge variant={tutor.isActive ? 'default' : 'secondary'}>
@@ -69,7 +74,7 @@ export default function TutorManagement() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px] mb-4">
-                                {tutor.description}
+                                {resolveLocalized(tutor.description, lang)}
                             </p>
                             <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-4">
                                 <span>Rol UUID: {tutor.role}</span>

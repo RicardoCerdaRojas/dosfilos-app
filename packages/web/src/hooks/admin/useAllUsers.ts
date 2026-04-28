@@ -4,8 +4,16 @@ import { db } from '@dosfilos/infrastructure';
 import { User, UserFilters, UserSortOptions } from '@dosfilos/domain';
 
 /**
- * Hook to fetch and manage all users with real-time updates
- * Includes client-side filtering and sorting
+ * Subscribes to the full `users` collection in real time and applies filters
+ * + sort client-side.
+ *
+ * Why client-side filtering: the admin dashboard has <10K users in the
+ * foreseeable future. With this volume the bandwidth cost is negligible vs
+ * the engineering cost of maintaining Firestore composite indexes for every
+ * (plan, status, engagement, lastLogin) combination an admin might want.
+ *
+ * If the user count grows past ~50K, switch to server-side queries with
+ * cursor pagination — this hook is the only call site that matters.
  */
 export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
     const [users, setUsers] = useState<User[]>([]);
@@ -23,8 +31,6 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                console.log('[useAllUsers] Fetched users count:', snapshot.size);
-
                 const usersData: User[] = snapshot.docs.map(doc => {
                     const data = doc.data();
 
@@ -37,7 +43,7 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
                             role: data.role,
                             status: data.status || 'active',
                             stripeCustomerId: data.stripeCustomerId,
-
+                            preferredLanguage: data.preferredLanguage,
                             subscription: data.subscription ? {
                                 id: data.subscription.id || '',
                                 planId: data.subscription.planId || 'free',
@@ -96,7 +102,6 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
                     }
                 });
 
-                console.log('[useAllUsers] Successfully mapped users:', usersData.length);
                 setUsers(usersData);
                 setLoading(false);
             },
@@ -117,10 +122,14 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
         // Apply filters
         if (filters) {
             if (filters.planId) {
-                result = result.filter(user => user.subscription?.planId === filters.planId);
+                result = result.filter(user => (user.subscription?.planId ?? 'free') === filters.planId);
             }
 
-            if (filters.status) {
+            // `status` is overloaded: 'disabled' filters by the soft-disable
+            // flag on the user doc; everything else filters Stripe subscription status.
+            if (filters.status === 'disabled') {
+                result = result.filter(user => user.status === 'disabled');
+            } else if (filters.status) {
                 result = result.filter(user => user.subscription?.status === filters.status);
             }
 
@@ -160,13 +169,13 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
         // Apply sorting
         if (sort) {
             result.sort((a, b) => {
-                let aValue: any;
-                let bValue: any;
+                let aValue: number | string;
+                let bValue: number | string;
 
                 switch (sort.field) {
                     case 'displayName':
-                        aValue = a.displayName || '';
-                        bValue = b.displayName || '';
+                        aValue = (a.displayName || '').toLowerCase();
+                        bValue = (b.displayName || '').toLowerCase();
                         break;
                     case 'createdAt':
                         aValue = a.createdAt.getTime();
@@ -184,11 +193,9 @@ export function useAllUsers(filters?: UserFilters, sort?: UserSortOptions) {
                         return 0;
                 }
 
-                if (sort.direction === 'asc') {
-                    return aValue > bValue ? 1 : -1;
-                } else {
-                    return aValue < bValue ? 1 : -1;
-                }
+                if (aValue === bValue) return 0;
+                const cmp = aValue > bValue ? 1 : -1;
+                return sort.direction === 'asc' ? cmp : -cmp;
             });
         }
 

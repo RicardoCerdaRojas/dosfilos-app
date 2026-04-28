@@ -1,9 +1,10 @@
 import {
     IUserProfileRepository,
     IPlanRepository,
+    currentPeriodKey,
 } from '@dosfilos/domain';
 import { db } from '@dosfilos/infrastructure';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
 
 export interface LimitCheckResult {
     allowed: boolean;
@@ -137,6 +138,168 @@ export class UsageLimitsService {
             used,
             limit,
             percentage: limit > 0 ? (used / limit) * 100 : 0
+        };
+    }
+
+    // ── Personal Library quotas (Phase 2 RAG model) ─────────────────────────
+    // These gate the new business model. All three return LimitCheckResult so the
+    // UI can display remaining quota + upgrade prompts.
+
+    /**
+     * Check if user can upload another document (vs plan.libraryDocsLimit).
+     * Undefined limit = no quota enforced (legacy plans).
+     */
+    async canUploadDocument(userId: string): Promise<LimitCheckResult> {
+        const user = await this.userProfileRepo.getProfile(userId);
+        if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
+        if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
+
+        const limit = plan.limits.libraryDocsLimit;
+        if (limit === undefined || limit < 0) {
+            return { allowed: true };  // No quota on this plan
+        }
+
+        const current = await this.countUserDocuments(userId);
+        if (current >= limit) {
+            return {
+                allowed: false,
+                limit,
+                remaining: 0,
+                reason: `Has alcanzado el límite de ${limit} documentos de tu plan. Haz upgrade para subir más.`,
+            };
+        }
+        return { allowed: true, limit, remaining: limit - current };
+    }
+
+    /**
+     * Check if user can process N more pages this month (vs plan.pagesProcessedPerMonth).
+     * Call this BEFORE kicking off LlamaParse extraction to avoid paying for pages
+     * the user won't be billed/allowed for.
+     */
+    async canProcessPages(userId: string, pagesToAdd: number): Promise<LimitCheckResult> {
+        const user = await this.userProfileRepo.getProfile(userId);
+        if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
+        if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
+
+        const limit = plan.limits.pagesProcessedPerMonth;
+        if (limit === undefined || limit < 0) {
+            return { allowed: true };
+        }
+
+        const counter = await this.getUsageCounter(userId);
+        const projected = counter.pagesProcessed + pagesToAdd;
+        if (projected > limit) {
+            return {
+                allowed: false,
+                limit,
+                remaining: Math.max(0, limit - counter.pagesProcessed),
+                reason: `Este documento tiene ${pagesToAdd} páginas y excedería tu límite mensual de ${limit} páginas procesadas (llevas ${counter.pagesProcessed}). Haz upgrade o espera al próximo ciclo.`,
+            };
+        }
+        return { allowed: true, limit, remaining: limit - projected };
+    }
+
+    /**
+     * Check if user can send another chat query this month (vs plan.queriesPerMonth).
+     * `-1` on the plan means unlimited.
+     */
+    async canQuery(userId: string): Promise<LimitCheckResult> {
+        const user = await this.userProfileRepo.getProfile(userId);
+        if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
+        if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
+
+        const limit = plan.limits.queriesPerMonth;
+        if (limit === undefined || limit < 0) {
+            return { allowed: true };  // Unlimited
+        }
+
+        const counter = await this.getUsageCounter(userId);
+        if (counter.queriesUsed >= limit) {
+            return {
+                allowed: false,
+                limit,
+                remaining: 0,
+                reason: `Has alcanzado tu límite de ${limit} consultas este mes. Haz upgrade para más.`,
+            };
+        }
+        return { allowed: true, limit, remaining: limit - counter.queriesUsed };
+    }
+
+    /**
+     * Whether the user's current plan permits creating Faculty projects.
+     *
+     * Hito 5.2 rule: Free tier doesn't get projects (it's a read-only window
+     * into the curated Core Library). Any plan with `libraryDocsLimit > 0`
+     * — i.e. has a personal library — also gets projects, so Personal / Pro /
+     * Equipo all qualify. Plans with `libraryDocsLimit` undefined (legacy
+     * accounts created before Hito 4) fall through to "allowed".
+     */
+    async canCreateProject(userId: string): Promise<LimitCheckResult> {
+        const user = await this.userProfileRepo.getProfile(userId);
+        if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
+        if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
+
+        const docsLimit = plan.limits.libraryDocsLimit;
+        if (docsLimit !== undefined && docsLimit <= 0) {
+            return {
+                allowed: false,
+                reason: 'Tu plan actual no incluye proyectos. Haz upgrade para crear espacios dedicados de trabajo.',
+            };
+        }
+        return { allowed: true };
+    }
+
+    /**
+     * Returns the full usage snapshot for the current month — used by the dashboard
+     * to display progress bars for every quota at once.
+     */
+    async getMonthlyUsage(userId: string): Promise<{
+        docs: { current: number; limit?: number };
+        pagesProcessed: { current: number; limit?: number };
+        queries: { current: number; limit?: number };
+        periodKey: string;
+    }> {
+        const user = await this.userProfileRepo.getProfile(userId);
+        const plan = user ? await this.planRepo.getById(user.subscription?.planId || 'basic') : null;
+        const counter = await this.getUsageCounter(userId);
+        const docs = await this.countUserDocuments(userId);
+
+        return {
+            docs: { current: docs, limit: plan?.limits.libraryDocsLimit },
+            pagesProcessed: { current: counter.pagesProcessed, limit: plan?.limits.pagesProcessedPerMonth },
+            queries: { current: counter.queriesUsed, limit: plan?.limits.queriesPerMonth },
+            periodKey: counter.periodKey,
+        };
+    }
+
+    // ── Internal helpers for new quotas ──────────────────────────────────────
+
+    private async countUserDocuments(userId: string): Promise<number> {
+        const q = query(
+            collection(db, 'library_resources'),
+            where('userId', '==', userId)
+        );
+        const snap = await getDocs(q);
+        return snap.size;
+    }
+
+    private async getUsageCounter(userId: string): Promise<{ pagesProcessed: number; queriesUsed: number; docsUploadedThisMonth: number; periodKey: string }> {
+        const periodKey = currentPeriodKey();
+        const ref = doc(db, 'users', userId, 'usage_counters', periodKey);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) {
+            return { pagesProcessed: 0, queriesUsed: 0, docsUploadedThisMonth: 0, periodKey };
+        }
+        const d = snap.data();
+        return {
+            pagesProcessed: d.pagesProcessed ?? 0,
+            queriesUsed: d.queriesUsed ?? 0,
+            docsUploadedThisMonth: d.docsUploadedThisMonth ?? 0,
+            periodKey,
         };
     }
 

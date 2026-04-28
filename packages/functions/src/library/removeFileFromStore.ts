@@ -40,14 +40,44 @@ export const removeFileFromStore = onCall<RemoveFileFromStoreRequest>(
                 throw new HttpsError('failed-precondition', 'Document is not in this store');
             }
 
-            // Remove context from array
+            // 1. Remove context from library_resources.coreStores
             await docRef.update({
                 coreStores: FieldValue.arrayRemove(context)
             });
 
+            // 2. Remove context from all chunks that belong to this resource.
+            //    If the chunk only belonged to this store, delete it; otherwise just unlink.
+            const chunksSnap = await db.collection('document_chunks')
+                .where('resourceId', '==', documentId)
+                .where('stores', 'array-contains', context)
+                .get();
+
+            const batchSize = 450;
+            let chunksUnlinked = 0;
+            let chunksDeleted = 0;
+            for (let i = 0; i < chunksSnap.docs.length; i += batchSize) {
+                const batch = db.batch();
+                chunksSnap.docs.slice(i, i + batchSize).forEach(d => {
+                    const data = d.data() as any;
+                    const stores: string[] = Array.isArray(data.stores) ? data.stores : [];
+                    if (stores.length > 1) {
+                        batch.update(d.ref, { stores: FieldValue.arrayRemove(context) });
+                        chunksUnlinked++;
+                    } else {
+                        batch.delete(d.ref);
+                        chunksDeleted++;
+                    }
+                });
+                await batch.commit();
+            }
+
+            console.log(`[removeFileFromStore] doc=${documentId} store=${context} chunksUnlinked=${chunksUnlinked} chunksDeleted=${chunksDeleted}`);
+
             return {
                 success: true,
-                message: `File unlinked from ${context}. Store needs to be synced.`
+                chunksUnlinked,
+                chunksDeleted,
+                message: `Documento desvinculado de ${context}.`,
             };
 
         } catch (error: any) {

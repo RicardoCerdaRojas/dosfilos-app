@@ -68,6 +68,13 @@ export interface StudySession {
 
     // Phase 3A: Session-level progress tracking
     sessionProgress?: SessionProgress;
+
+    /**
+     * Optional link to a project workspace. When set, this study session
+     * appears inside the project's "Estudio de lenguas" panel and inherits
+     * the project's context (RAG scope, displayed in cross-references, etc.).
+     */
+    projectId?: string;
 }
 
 export interface ExegeticalInsight {

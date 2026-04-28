@@ -5,6 +5,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
+import { consumePagesAdmin } from './processingBalance';
+import { recordLlamaParseUsage, selectLlamaParseAccount } from './llamaParseAccountSelector';
 
 interface ReprocessRequest {
     resourceId: string;
@@ -23,7 +25,13 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
         region: 'us-central1',
         memory: '2GiB',
         timeoutSeconds: 900,  // 15 minutes — enough for 700+ page documents in fast mode
-        secrets: ['LLAMAPARSE_API_KEY'],
+        // All possible LlamaParse account secrets must be declared so the
+        // multi-account selector can resolve any of them at runtime. Add new
+        // ones here when you provision additional accounts.
+        secrets: [
+            'LLAMAPARSE_API_KEY',          // account #1 (existing, legacy env name)
+            'LLAMAPARSE_API_KEY_FREE_1',   // account #2
+        ],
     },
     async (request) => {
         console.log(`[Reprocess] Called by ${request.auth?.token?.email ?? 'unauthenticated'}`);
@@ -32,12 +40,18 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
             throw new HttpsError('permission-denied', 'Only admin can reprocess documents');
         }
 
-        const apiKey = process.env.LLAMAPARSE_API_KEY;
-        if (!apiKey) {
-            console.error('[Reprocess] LLAMAPARSE_API_KEY environment variable is not set!');
-            throw new HttpsError('failed-precondition', 'LLAMAPARSE_API_KEY not configured');
+        // Pick a LlamaParse account from the multi-account pool (Hito 6).
+        // Throws when nothing is configured — clearer error than a blank API key.
+        let selected;
+        try {
+            selected = await selectLlamaParseAccount();
+        } catch (err: any) {
+            console.error('[Reprocess] LlamaParse account selection failed:', err.message);
+            throw new HttpsError('failed-precondition', err.message);
         }
-        console.log(`[Reprocess] API key present (length: ${apiKey.length})`);
+        console.log(
+            `[Reprocess] Using account ${selected.accountId} (${selected.accountName}); ${selected.availableCredits} credits available`,
+        );
 
         const { resourceId, force = false } = request.data;
         if (!resourceId) throw new HttpsError('invalid-argument', 'resourceId is required');
@@ -80,7 +94,7 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
             });
 
             const buffer = fs.readFileSync(tempFilePath);
-            const client = new LlamaParseClient(apiKey);
+            const client = new LlamaParseClient(selected.apiKey);
             const result = await client.parseDocument(buffer, `${resourceId}.pdf`, {
                 mode: 'fast',
                 language: 'es',
@@ -126,6 +140,27 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
                 wasTruncated,
                 updatedAt: new Date(),
             });
+
+            // Debit the premium processing balance for the actual pages consumed.
+            // Non-fatal on error — extraction already succeeded.
+            try {
+                await consumePagesAdmin(data.userId, 'premium', result.pages.length);
+            } catch (balanceErr: any) {
+                console.warn(
+                    `[Reprocess] Balance update skipped for ${data.userId}: ${balanceErr.message}`,
+                );
+            }
+
+            // Track usage on the selected LlamaParse account so the rotation
+            // logic knows when to switch. Non-fatal — billing is the source of
+            // truth, this counter is for our own dashboards.
+            try {
+                await recordLlamaParseUsage(selected.accountId, result.pages.length);
+            } catch (accountErr: any) {
+                console.warn(
+                    `[Reprocess] Account usage update skipped for ${selected.accountId}: ${accountErr.message}`,
+                );
+            }
 
             console.log(`[Reprocess] ✅ ${resourceId}: ${result.pages.length} pages, ${result.jobMetadata.job_credits_usage ?? '?'} credits`);
 

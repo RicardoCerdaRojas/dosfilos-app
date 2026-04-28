@@ -15,6 +15,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTranslation } from '../hooks/useTranslation';
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../types';
+import { useFirebase } from '@/context/firebase-context';
+import { FirebaseUserProfileRepository } from '@dosfilos/infrastructure';
+
+// Singleton — created once at module load. The repo only writes via setDoc/merge,
+// so no per-instance state to worry about.
+const userProfileRepo = new FirebaseUserProfileRepository();
 
 interface LanguageSwitcherProps {
   /**
@@ -36,18 +42,28 @@ interface LanguageSwitcherProps {
 /**
  * Language switcher component with dropdown menu
  */
-export function LanguageSwitcher({ 
-  variant = 'ghost', 
+export function LanguageSwitcher({
+  variant = 'ghost',
   showLabel = true,
   className = ''
 }: LanguageSwitcherProps) {
   const { language, changeLanguage } = useTranslation();
+  const { user } = useFirebase();
 
-  const currentLanguage = SUPPORTED_LANGUAGES[language as SupportedLanguage] 
+  const currentLanguage = SUPPORTED_LANGUAGES[language as SupportedLanguage]
     || SUPPORTED_LANGUAGES.es;
 
+  // Persist the choice to the user doc so the AI engine reads the same locale
+  // on the next request (and so the preference survives device changes). The
+  // i18next change is fire-first so the UI flips immediately; the Firestore
+  // write happens in the background.
   const handleLanguageChange = (langCode: SupportedLanguage) => {
     changeLanguage(langCode);
+    if (user?.uid) {
+      userProfileRepo.updatePreferredLanguage(user.uid, langCode).catch((err) => {
+        console.warn('[LanguageSwitcher] Failed to persist preferredLanguage:', err);
+      });
+    }
   };
 
   return (

@@ -1,9 +1,13 @@
 import { Button } from '@/components/ui/button';
-import { X, Sparkles } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTranslation } from '@/i18n';
 
+/**
+ * Persistent welcome banner shown on the dashboard until the user dismisses it.
+ * Editorial dark slate panel — same family as the landing's CTA section.
+ */
 export function ActivationBanner() {
     const navigate = useNavigate();
     const [dismissed, setDismissed] = useState(false);
@@ -12,45 +16,46 @@ export function ActivationBanner() {
     if (dismissed) return null;
 
     return (
-        <div className="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-                <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
-                </svg>
-            </div>
+        <div className="mb-8 relative overflow-hidden rounded-xl bg-slate-950 text-white border border-slate-900 animate-in fade-in slide-in-from-top-4 duration-500">
+            {/* Subtle indigo glow */}
+            <div
+                aria-hidden
+                className="absolute inset-0 opacity-50 pointer-events-none"
+                style={{
+                    background:
+                        'radial-gradient(ellipse 600px 200px at 20% 0%, rgba(99,102,241,0.18), transparent 60%)',
+                }}
+            />
 
-            <div className="relative flex flex-col md:flex-row items-center justify-between p-6 gap-6">
-                <div className="flex items-center gap-5 flex-1 text-center md:text-left">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl shrink-0 border border-white/20 shadow-inner">
-                        <Sparkles className="h-8 w-8 text-white" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5 p-6 md:p-7">
+                <div className="space-y-1.5 max-w-xl">
+                    <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-300 font-medium">
+                        {t('welcomeModal.eyebrow')}
                     </div>
-                    <div className="space-y-1">
-                        <h3 className="text-lg font-semibold text-white tracking-tight">
-                            {t('welcomeModal.title')}
-                        </h3>
-                        <p className="text-blue-100 text-sm md:text-base max-w-xl leading-relaxed">
-                            {t('welcomeModal.subtitle')}
-                        </p>
-                    </div>
+                    <h3 className="font-reading text-[22px] md:text-[24px] leading-[1.15] tracking-[-0.01em] text-white">
+                        {t('welcomeModal.title')}
+                    </h3>
+                    <p className="text-[14px] leading-relaxed text-slate-400">
+                        {t('welcomeModal.subtitle')}
+                    </p>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 shrink-0">
                     <Button
-                        size="lg"
-                        onClick={() => navigate('/dashboard/generate-sermon')}
-                        className="bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700 font-semibold shadow-md whitespace-nowrap w-full md:w-auto border-0"
+                        onClick={() => navigate('/dashboard/library')}
+                        className="bg-white text-slate-900 hover:bg-slate-200 font-medium gap-1.5 h-10"
                     >
-                        {t('welcomeModal.buttons.createSermon')}
-                        <Sparkles className="ml-2 h-4 w-4" />
+                        {t('welcomeModal.buttons.explore')}
+                        <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => setDismissed(true)}
-                        className="text-blue-100 hover:text-white hover:bg-white/20 shrink-0"
+                        className="text-slate-400 hover:text-white hover:bg-white/5 shrink-0 h-10 w-10"
+                        aria-label="Cerrar"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-4 w-4" />
                     </Button>
                 </div>
             </div>

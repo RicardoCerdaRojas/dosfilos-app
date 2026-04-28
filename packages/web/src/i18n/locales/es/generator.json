@@ -195,7 +195,21 @@
             "notFound": "No se encontró el enfoque seleccionado",
             "develop": "Error al desarrollar el enfoque seleccionado",
             "refine": "Error al refinar la sección",
-            "update": "Error al actualizar la sección"
+            "update": "Error al actualizar la sección",
+            "readonlySection": "Esta sección es de solo lectura y no puede ser editada directamente",
+            "processFailed": "No se pudo procesar la solicitud"
+        },
+        "regenerateConfirm": {
+            "title": "¿Regenerar Estudio Homilético?",
+            "description": "Esta acción reiniciará todo el proceso homilético. Generará nuevos enfoques y perderás la selección actual y los refinamientos manuales.",
+            "cancel": "Cancelar",
+            "confirm": "Regenerar"
+        },
+        "saved": "Guardado",
+        "versions": {
+            "beforeManualEdit": "Antes de edición manual",
+            "manualEdit": "Edición manual",
+            "manualEditSummary": "Cambios guardados manualmente"
         }
     },
     "drafting": {
@@ -249,7 +263,26 @@
             "refining": "Error al refinar la sección",
             "updating": "Error al actualizar la sección",
             "regeneratingPoint": "Error al regenerar el punto",
-            "noHomiletics": "Error: Falta el análisis homilético."
+            "noHomiletics": "Error: Falta el análisis homilético.",
+            "processFailed": "No se pudo procesar la solicitud"
+        },
+        "regenerateConfirm": {
+            "title": "¿Regenerar Borrador del Sermón?",
+            "description": "Esta acción creará un nuevo borrador basado en tus elecciones homiléticas. Cualquier edición manual en el texto actual se perderá permanentemente.",
+            "cancel": "Cancelar",
+            "confirm": "Regenerar"
+        },
+        "saved": "Guardado",
+        "fullContent": {
+            "crossReferences": "Referencias Cruzadas",
+            "practicalImplications": "Implicaciones Prácticas"
+        },
+        "versions": {
+            "beforeManualEdit": "Antes de edición manual",
+            "manualEdit": "Edición manual",
+            "manualEditSummary": "Cambios guardados manualmente",
+            "beforeRefinement": "Antes de: {{summary}}...",
+            "refinedSummary": "✅ Sección \"{{section}}\" refinada exitosamente."
         }
     }
 }

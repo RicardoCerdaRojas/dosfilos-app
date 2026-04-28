@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { stripe } from '../config/stripe';
+import { writeAuditLog } from './auditLog';
 
 /**
  * Cloud Function: Disable User (Soft)
@@ -13,7 +14,9 @@ import { stripe } from '../config/stripe';
  * Additionally pauses any active Stripe subscription so billing stops
  * without permanently cancelling the customer record.
  */
-export const disableUser = onCall(async (request) => {
+export const disableUser = onCall(
+    { secrets: ['STRIPE_SECRET_KEY'] },
+    async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
@@ -79,6 +82,14 @@ export const disableUser = onCall(async (request) => {
         });
 
         console.log(`User ${userId} disabled by admin ${callerUid}`);
+        writeAuditLog({
+            actorUid: callerUid,
+            actorEmail: callerDoc.data()?.email,
+            action: 'user.disable',
+            targetUid: userId,
+            targetEmail: userData.email,
+            details: { hadStripeCustomer: !!userData.stripeCustomerId },
+        });
         return { success: true, message: `User ${userId} has been disabled.` };
 
     } catch (error: any) {

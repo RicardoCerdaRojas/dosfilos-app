@@ -33,6 +33,15 @@ export interface LibraryResource {
     // 🎯 Core Library: Stores this document is included in (can be multiple)
     coreStores?: ('exegesis' | 'homiletics' | 'generic')[];
 
+    /**
+     * Whether this document's citations may be shown to non-admin users.
+     * When false (default), the document is still used for RAG retrieval (admin sees
+     * citations + bibliography) but non-admin users see responses with citations stripped.
+     * Flip to true ONLY for public-domain / openly-licensed material (Calvino, Spurgeon,
+     * Patrística, Gesenius, etc.) or material with an explicit signed license.
+     */
+    publiclyCitable?: boolean;
+
     // Phase preference: documents preferred for specific workflow phases
     preferredForPhases?: WorkflowPhase[];
 

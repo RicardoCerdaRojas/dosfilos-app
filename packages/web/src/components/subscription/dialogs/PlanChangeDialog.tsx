@@ -33,7 +33,11 @@ export function PlanChangeDialog({
   const [loading, setLoading] = useState(false);
 
   const handleChange = async () => {
-    if (!newPlan?.stripeProductIds?.[0]) {
+    // Plan changes default to the same billing cycle the user already has
+    // (monthly here as MVP). When the upgrade UI gains a yearly toggle, swap
+    // this to read the user's selection.
+    const newPriceId = newPlan?.stripePriceIds?.monthly;
+    if (!newPriceId) {
       toast.error('No se pudo obtener el ID del plan');
       return;
     }
@@ -41,7 +45,7 @@ export function PlanChangeDialog({
     try {
       setLoading(true);
       const changePlan = httpsCallable(functions, 'changePlan');
-      await changePlan({ newPriceId: newPlan.stripeProductIds[0] });
+      await changePlan({ newPriceId });
       
       toast.success('Plan actualizado', {
         description: 'Tu plan se ha cambiado exitosamente',

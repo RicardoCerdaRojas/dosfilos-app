@@ -152,12 +152,13 @@ export class CoreLibraryService implements ICoreLibraryService {
 
             const adminUserId = adminSnapshot.docs[0].id;
 
-            // Get core library resources for admin
+            // Get core library resources for admin.
+            // Post-RAG refactor: the source of truth is `coreStores: string[]` (array of store keys)
+            // on each doc. The legacy `isCore`/`coreContext` fields are no longer written.
             const libraryRef = collection(db, 'library_resources');
             const coreQuery = query(
                 libraryRef,
                 where('userId', '==', adminUserId),
-                where('isCore', '==', true)
             );
 
             const snapshot = await getDocs(coreQuery);
@@ -169,6 +170,9 @@ export class CoreLibraryService implements ICoreLibraryService {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
+                const coreStores: string[] | undefined = Array.isArray(data.coreStores) ? data.coreStores : undefined;
+                if (!coreStores || coreStores.length === 0) return;
+
                 const resource = new LibraryResourceEntity(
                     doc.id,
                     data.userId,
@@ -185,13 +189,14 @@ export class CoreLibraryService implements ICoreLibraryService {
                     data.preferredForPhases,
                     data.metadata,
                     data.pageCount,
-                    data.isCore,
-                    data.coreContext
+                    coreStores as ('exegesis' | 'homiletics' | 'generic')[]
                 );
 
-                const context = resource.coreContext || 'generic';
-                if (coreDocsByContext[context]) {
-                    coreDocsByContext[context].push(resource);
+                // Bucket the resource into each built-in store it belongs to.
+                for (const store of coreStores) {
+                    if (coreDocsByContext[store]) {
+                        coreDocsByContext[store].push(resource);
+                    }
                 }
             });
 

@@ -70,7 +70,8 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
                 status: data.status,
                 units: data.units || [],
                 responses: data.responses || {},
-                sessionProgress: data.sessionProgress
+                sessionProgress: data.sessionProgress,
+                projectId: data.projectId,
             });
         });
 

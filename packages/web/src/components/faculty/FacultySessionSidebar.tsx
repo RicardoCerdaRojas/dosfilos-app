@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Search, X, SquarePen, FolderPlus, PanelLeftClose, PanelLeftOpen, ChevronRight, Edit3, Trash2, FolderOpen, Loader2 } from 'lucide-react';
+import { Search, X, SquarePen, FolderPlus, PanelLeftClose, PanelLeftOpen, ChevronRight, Edit3, Trash2, FolderOpen, Loader2, LayoutGrid } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -338,6 +339,14 @@ export function FacultySessionSidebar({
                                                             {pSessions.length > 0 && <span className="ml-auto text-[10px] text-slate-400 tabular-nums shrink-0 pl-1">{pSessions.length}</span>}
                                                         </button>
                                                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1">
+                                                            <Link
+                                                                to={`/dashboard/faculty/project/${project.id}`}
+                                                                onClick={e => e.stopPropagation()}
+                                                                className="p-0.5 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-400 hover:text-indigo-600"
+                                                                title="Abrir panel del proyecto"
+                                                            >
+                                                                <LayoutGrid className="w-3 h-3" />
+                                                            </Link>
                                                             <button onClick={e => { e.stopPropagation(); onEditProject(project); }}
                                                                 className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-400 hover:text-slate-600" title={t('sessionItem.editProject')}>
                                                                 <Edit3 className="w-3 h-3" />

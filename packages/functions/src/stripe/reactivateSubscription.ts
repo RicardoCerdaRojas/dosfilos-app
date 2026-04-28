@@ -2,7 +2,9 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { stripe } from '../config/stripe';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-export const reactivateSubscription = onCall(async (request) => {
+export const reactivateSubscription = onCall(
+    { secrets: ['STRIPE_SECRET_KEY'] },
+    async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }

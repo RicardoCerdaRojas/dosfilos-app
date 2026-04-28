@@ -22,16 +22,20 @@ import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
 import { RegistrationSuccessPage } from '@/pages/auth/registration-success';
 import { PublicSermonPage } from '@/pages/public/sermon';
 import { PricingPage } from '@/pages/public/pricing';
-import { WelcomePage } from '@/pages/onboarding/WelcomePage';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
-import { GeminiTest } from '@/pages/GeminiTest';
 import { Landing } from '@/pages/Landing';
+import { TermsOfServicePage } from '@/pages/legal/TermsOfService';
+import { PrivacyPolicyPage } from '@/pages/legal/PrivacyPolicy';
+import { DMCAPolicyPage } from '@/pages/legal/DMCAPolicy';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
 import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { AnalyticsDashboard } from '@/pages/admin/AnalyticsDashboard';
 import { GeographicDashboard } from '@/pages/admin/GeographicDashboard';
 import { UserManagement } from '@/pages/admin/UserManagement';
+import { UserDetailPage } from '@/pages/admin/users/UserDetailPage';
+import { AuditLogPage } from '@/pages/admin/AuditLogPage';
+import LlamaParseMonitoring from '@/pages/admin/LlamaParseMonitoring';
 import TutorManagement from '@/pages/admin/TutorManagement';
 import TutorEditor from '@/pages/admin/TutorEditor';
 import HintCatalogPage from '@/pages/admin/HintCatalogPage';
@@ -43,8 +47,21 @@ import { HebrewTutorPage } from '@/pages/hebrew-tutor/HebrewTutorPage';
 import { BiblePage } from '@/pages/bible/BiblePage';
 import { BibleProvider } from '@/context/BibleContext';
 import { FacultyChatPage } from '@/pages/faculty/chat';
+import { ProjectDashboard } from '@/pages/faculty/ProjectDashboard';
+import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { useEffect } from 'react';
 import { SessionTracker } from '@/components/analytics/SessionTracker';
+import { LanguageSyncBridge } from '@/i18n';
+
+// Redirect: old /faculty/project/:projectId → /projects/:projectId
+function RedirectFacultyProject() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (projectId) navigate(`/dashboard/projects/${projectId}`, { replace: true });
+  }, [projectId, navigate]);
+  return null;
+}
 
 // Redirect component for old sermon routes
 function RedirectToSermon({ suffix = '' }: { suffix?: string }) {
@@ -65,15 +82,18 @@ function App() {
     <FirebaseProvider>
       <BrowserRouter>
         <SessionTracker />
+        <LanguageSyncBridge />
         <Routes>
           {/* Public Landing Page - Root */}
           <Route path="/" element={<Landing />} />
-          
+
           {/* Public Pricing Page */}
           <Route path="/pricing" element={<PricingPage />} />
-          
-          {/* Onboarding - Welcome/Plan Selection */}
-          <Route path="/welcome" element={<WelcomePage />} />
+
+          {/* Legal pages (publicly accessible — linked from upload consent modal and footer) */}
+          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/dmca" element={<DMCAPolicyPage />} />
           
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -167,7 +187,19 @@ function App() {
 
             <Route path="generate-sermon" element={<SermonWizard />} />
 
-            {/* Faculty Module */}
+            {/* Projects — first-class workspace entity */}
+            <Route path="projects">
+              <Route index element={<ProjectsListPage />} />
+              <Route path=":projectId" element={<ProjectDashboard />} />
+            </Route>
+
+            {/* Legacy redirect: old project URL → new */}
+            <Route
+              path="faculty/project/:projectId"
+              element={<RedirectFacultyProject />}
+            />
+
+            {/* Faculty Module — free conversations & directory */}
             <Route path="faculty">
               <Route index element={<FacultyChatPage />} />
               <Route path=":sessionId" element={<FacultyChatPage />} />
@@ -194,14 +226,14 @@ function App() {
             <Route path="admin/analytics" element={<AnalyticsDashboard />} />
             <Route path="admin/geographic" element={<GeographicDashboard />} />
             <Route path="admin/users" element={<UserManagement />} />
+            <Route path="admin/users/:uid" element={<UserDetailPage />} />
+            <Route path="admin/audit-log" element={<AuditLogPage />} />
+            <Route path="admin/llamaparse-monitoring" element={<LlamaParseMonitoring />} />
             <Route path="admin/tutors" element={<TutorManagement />} />
             <Route path="admin/tutors/new" element={<TutorEditor />} />
             <Route path="admin/tutors/:id" element={<TutorEditor />} />
             <Route path="admin/hebrew-tutor-hints" element={<HintCatalogPage />} />
             <Route path="admin/hebrew-lexicon" element={<LexiconCatalogPage />} />
-            
-            {/* PoC Routes */}
-            <Route path="gemini-test" element={<GeminiTest />} />
           </Route>
         </Routes>
       </BrowserRouter>

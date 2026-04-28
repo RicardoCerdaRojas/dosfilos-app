@@ -15,7 +15,8 @@ import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
 
 export function SermonTutorPage() {
-    const { t } = useTranslation('sermons');
+    const { t, i18n } = useTranslation('sermons');
+    const activeLanguage: 'es' | 'en' = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
     const navigate = useNavigate();
     const { user } = useFirebase();
     
@@ -116,22 +117,31 @@ export function SermonTutorPage() {
             // Step 1: Exegesis
             setGenerationStep(t('tutor.steps.exegesis'));
             const { exegesis } = await sermonGeneratorService.generateExegesis(
-                analysisResult.passage, 
-                { targetAudience: 'general', tone: 'inspirational', customInstructions: `Enfoque: ${analysisResult.idea}` }
+                analysisResult.passage,
+                { targetAudience: 'general', tone: 'inspirational', customInstructions: `Enfoque: ${analysisResult.idea}` },
+                undefined,
+                undefined,
+                activeLanguage,
             );
 
             // Step 2: Homiletics
             setGenerationStep(t('tutor.steps.homiletics'));
             const { homiletics } = await sermonGeneratorService.generateHomiletics(
                 exegesis,
-                { targetAudience: 'general', tone: 'inspirational', customInstructions: `Idea central: ${analysisResult.idea}` }
+                { targetAudience: 'general', tone: 'inspirational', customInstructions: `Idea central: ${analysisResult.idea}` },
+                undefined,
+                undefined,
+                activeLanguage,
             );
 
             // Step 3: Drafting
             setGenerationStep(t('tutor.steps.drafting'));
             const { draft } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,
-                { targetAudience: 'general', tone: 'inspirational' }
+                { targetAudience: 'general', tone: 'inspirational' },
+                undefined,
+                undefined,
+                activeLanguage,
             );
 
             // Success

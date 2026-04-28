@@ -1,67 +1,108 @@
 {
     "header": {
-        "title": "Dashboard",
-        "subtitle": "Summary of your activity on DosFilos.Preach"
+        "eyebrow": "Your workshop",
+        "greeting": "Hello, {{name}}.",
+        "subtitle": "Here's what you have today in your study space."
     },
-    "stats": {
-        "totalSermons": {
-            "title": "Total Sermons",
-            "description": "Saved sermons"
+    "activeProjects": {
+        "eyebrow": "Active projects",
+        "title": "Your work in progress.",
+        "subtitle": "Pick up where you left off, or start a new unit of work.",
+        "newProject": "New project",
+        "viewAll": "View all projects",
+        "empty": {
+            "title": "No projects yet.",
+            "subtitle": "A project groups the library, conversations, and material you produce for a unit of work — a sermon, a series, a study.",
+            "create": "Create my first project",
+            "explore": "Or explore faculty without a project"
         },
-        "newThisMonth": {
-            "title": "New This Month",
-            "description": "Sermons created"
-        },
-        "avgTime": {
-            "title": "Average Time",
-            "description": "Preaching duration",
-            "minutes": "min"
-        },
-        "bibleCoverage": {
-            "title": "Bible Coverage",
-            "description": "books cited (approx)",
-            "books": "books"
+        "card": {
+            "sessions_one": "{{count}} session",
+            "sessions_other": "{{count}} sessions",
+            "sources_one": "{{count}} source",
+            "sources_other": "{{count}} sources",
+            "noActivity": "No activity yet"
         }
     },
-    "recentSermons": {
-        "title": "Recent Sermons",
-        "subtitle": "Last modified sermons",
-        "empty": "No recent sermons",
+    "ecosystem": {
+        "eyebrow": "Your ecosystem",
+        "title": "Tools and resources available."
+    },
+    "pillars": {
+        "library": {
+            "eyebrow": "Library",
+            "title": "Your collection",
+            "metric_one": "{{count}} resource",
+            "metric_other": "{{count}} resources",
+            "empty": "No resources yet",
+            "lastAdded": "Latest: {{title}}",
+            "cta": "Open library"
+        },
+        "languages": {
+            "eyebrow": "Original languages",
+            "title": "Your study",
+            "greekSessions_one": "{{count}} Greek session",
+            "greekSessions_other": "{{count}} Greek sessions",
+            "noGreek": "No Greek sessions yet",
+            "lastPassage": "Latest: {{passage}}",
+            "ctaGreek": "Continue Greek",
+            "ctaHebrew": "Study Hebrew"
+        },
+        "faculty": {
+            "eyebrow": "Theological faculty",
+            "title": "Your conversations",
+            "metric_one": "{{count}} conversation",
+            "metric_other": "{{count}} conversations",
+            "empty": "No conversations yet",
+            "lastSession": "Latest: {{title}}",
+            "cta": "Open faculty"
+        },
+        "projects": {
+            "eyebrow": "Projects",
+            "title": "Your workspaces",
+            "metric_one": "{{count}} project",
+            "metric_other": "{{count}} projects",
+            "empty": "No projects yet",
+            "lastProject": "Latest: {{title}}",
+            "cta": "View projects"
+        }
+    },
+    "recentMaterial": {
+        "eyebrow": "Recent material",
+        "title": "What you've been preparing.",
+        "empty": "You haven't created material yet. Start a conversation or upload a resource.",
         "status": {
             "published": "Published",
             "draft": "Draft",
             "archived": "Archived"
-        }
-    },
-    "bibleProgress": {
-        "title": "Bible Progress",
-        "subtitle": "Estimated Bible coverage",
-        "oldTestament": "Old Testament",
-        "newTestament": "New Testament",
-        "comingSoon": "Coming soon: detailed breakdown",
-        "yearlyGoal": "Annual goal: Preach 10 new books"
+        },
+        "viewAll": "View all sermons"
     },
     "welcomeModal": {
-        "title": "Welcome to DosFilos.Preach!",
-        "subtitle": "The ecosystem of tools for biblical study and sermon preparation.",
+        "eyebrow": "Your workshop is ready",
+        "title": "Welcome to the workshop.",
+        "subtitle": "A single space for your study, your original languages, your theological tutors, and the production of your ministry material.",
         "features": {
-            "studyBible": {
-                "title": "Study the Biblical Text",
-                "description": "Analyze context, work on exegesis, and build the exegetical proposition"
+            "library": {
+                "title": "Library",
+                "description": "Upload your books and resources. Query with exact page and author citations."
             },
-            "homiletics": {
-                "title": "Work on Homiletics",
-                "description": "Work on the homiletic approach for your sermon, build the homiletic proposition"
+            "languages": {
+                "title": "Original languages",
+                "description": "Greek and Hebrew with lexicons, grammars, and morphology — a mentor beside you."
             },
-            "saveTime": {
-                "title": "Save Preparation Time",
-                "description": "All your resources in one place, with quick and easy access"
+            "faculty": {
+                "title": "Theological faculty",
+                "description": "Specialist tutors in exegesis, homiletics, and pastoral counseling."
+            },
+            "production": {
+                "title": "Production",
+                "description": "From study to pulpit, without losing the exegetical thread you built."
             }
         },
-        "tip": "Tip: Start with a familiar passage like John 3:16 or Psalm 23",
         "buttons": {
             "later": "I'll do it later",
-            "createSermon": "Create my first sermon"
+            "explore": "Start with the library"
         }
     },
     "firstSermonBanner": {

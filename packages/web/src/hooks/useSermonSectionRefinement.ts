@@ -1,7 +1,14 @@
 import { useCallback } from 'react';
 import { sermonGeneratorService } from '@dosfilos/application';
 import { toast } from 'sonner';
-import { WorkflowPhase, LibraryResourceEntity } from '@dosfilos/domain';
+import { WorkflowPhase, LibraryResourceEntity, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
+
+function resolveActiveLanguage(raw: string | undefined): SupportedLanguage {
+    if (!raw) return DEFAULT_LANGUAGE;
+    return raw.split('-')[0] === 'en' ? 'en' : 'es';
+}
 
 export interface UseSermonSectionRefinementProps {
     phase: WorkflowPhase;
@@ -32,6 +39,7 @@ export function useSermonSectionRefinement({
     config,
     selectedResourceIds = []
 }: UseSermonSectionRefinementProps) {
+    const { i18n } = useTranslation();
 
     const refineSectionWithCache = useCallback(async (
         sectionId: string,
@@ -69,10 +77,12 @@ IMPORTANTE:
 - NO agregues prefijos como "Aquí está..." o "El contenido refinado es..."
 ${formattingInstructions}`;
 
-            const aiResponse = await sermonGeneratorService.refineContent(contentString, instruction, {
-                cacheName,
-                cachedResources
-            });
+            const aiResponse = await sermonGeneratorService.refineContent(
+                contentString,
+                instruction,
+                { cacheName, cachedResources },
+                resolveActiveLanguage(i18n.language),
+            );
 
             // Parse the response based on original type
             let parsedContent: any;

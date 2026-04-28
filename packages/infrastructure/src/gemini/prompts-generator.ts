@@ -1,6 +1,31 @@
-import { GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration } from '@dosfilos/domain';
+import { GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 
 const JSON_INSTRUCTION = `IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido. No incluyas NADA de texto antes ni después del JSON (ni "Aquí está el JSON", ni bloques de código markdown como \`\`\`json). Solo el objeto JSON crudo.`;
+
+/**
+ * Defense-in-depth language directive prepended to every sermon-generator
+ * prompt. Authoring of the underlying prompts is in Spanish (the launch
+ * language); this directive keeps Gemini emitting in the user's locale until
+ * a content authoring pass produces fully-translated EN variants.
+ *
+ * Why prepend (not append): models attend more strongly to leading tokens, and
+ * the JSON instruction sits at the bottom of many prompts — keeping the
+ * language directive at the top avoids it getting shadowed.
+ */
+function languageDirective(language: SupportedLanguage): string {
+    if (language === 'en') {
+        return 'IMPORTANT: Respond entirely in English. Field values inside any JSON output must also be in English. The instructions below are authored in Spanish — translate them mentally and respond in English.';
+    }
+    return 'IMPORTANTE: Responde completamente en español. Los valores dentro de cualquier JSON también deben ir en español.';
+}
+
+/**
+ * Wraps any prompt body with the language directive on top.
+ */
+function withLanguage(language: SupportedLanguage | undefined, body: string): string {
+    return `${languageDirective(language ?? DEFAULT_LANGUAGE)}\n\n${body}`;
+}
 
 const DEFAULT_BASE_PROMPT = `Actúa como un experto teólogo, exégeta bíblico y predicador evangélico con décadas de experiencia.
 
@@ -15,7 +40,11 @@ Tu objetivo es ayudar a pastores a crear sermones bíblicamente fieles, teológi
 
 const BASE_SYSTEM_PROMPT = `${DEFAULT_BASE_PROMPT}\n${JSON_INSTRUCTION}`;
 
-export function buildExegesisPrompt(passage: string, rules: GenerationRules, config?: PhaseConfiguration): string {
+export function buildExegesisPrompt(passage: string, rules: GenerationRules, config?: PhaseConfiguration, language?: SupportedLanguage): string {
+  return withLanguage(language, buildExegesisPromptBody(passage, rules, config));
+}
+
+function buildExegesisPromptBody(passage: string, rules: GenerationRules, config?: PhaseConfiguration): string {
   const basePersona = config?.basePrompt || DEFAULT_BASE_PROMPT;
   const userPrompts = config?.userPrompts?.map(p => `- ${p}`).join('\n') || 'Ninguna';
 
@@ -155,7 +184,11 @@ REGLAS DE GENERACIÓN:
 `;
 }
 
-export function buildHomileticsPrompt(exegesis: ExegeticalStudy, rules: GenerationRules): string {
+export function buildHomileticsPrompt(exegesis: ExegeticalStudy, rules: GenerationRules, language?: SupportedLanguage): string {
+  return withLanguage(language, buildHomileticsPromptBody(exegesis, rules));
+}
+
+function buildHomileticsPromptBody(exegesis: ExegeticalStudy, rules: GenerationRules): string {
   return `
 ${BASE_SYSTEM_PROMPT}
 
@@ -191,7 +224,11 @@ Formato de Salida (JSON):
 `;
 }
 
-export function buildSermonDraftPrompt(analysis: HomileticalAnalysis, rules: GenerationRules): string {
+export function buildSermonDraftPrompt(analysis: HomileticalAnalysis, rules: GenerationRules, language?: SupportedLanguage): string {
+  return withLanguage(language, buildSermonDraftPromptBody(analysis, rules));
+}
+
+function buildSermonDraftPromptBody(analysis: HomileticalAnalysis, rules: GenerationRules): string {
   // Format exegetical study for context
   const exegesisContext = analysis.exegeticalStudy ? `
 
@@ -385,7 +422,11 @@ REGLAS DE GENERACIÓN:
 `;
 }
 
-export function buildChatSystemPrompt(phase: WorkflowPhase, context: any): string {
+export function buildChatSystemPrompt(phase: WorkflowPhase, context: any, language?: SupportedLanguage): string {
+  return withLanguage(language, buildChatSystemPromptBody(phase, context));
+}
+
+function buildChatSystemPromptBody(phase: WorkflowPhase, context: any): string {
   const base = "Actúa como un experto teólogo y mentor. Tu objetivo es colaborar con el pastor en una mesa de trabajo.";
 
   // RAG Context Generation (Reusable for all phases)

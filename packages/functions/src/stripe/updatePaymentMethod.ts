@@ -6,7 +6,9 @@ interface UpdatePaymentMethodData {
     paymentMethodId: string;
 }
 
-export const updatePaymentMethod = onCall<UpdatePaymentMethodData>(async (request) => {
+export const updatePaymentMethod = onCall<UpdatePaymentMethodData>(
+    { secrets: ['STRIPE_SECRET_KEY'] },
+    async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }

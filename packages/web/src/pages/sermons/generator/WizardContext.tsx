@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent, WorkflowConfiguration } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { ConfigService } from '@dosfilos/application';
@@ -35,6 +36,11 @@ const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
     const { user } = useFirebase();
+    const [searchParams] = useSearchParams();
+    // If the wizard was launched from a project workspace, the URL carries
+    // ?projectId=... — we read it once on mount so the draft sermon is born
+    // already linked to the right project.
+    const projectIdFromUrl = searchParams.get('projectId') ?? undefined;
     const [step, setStep] = useState(1);
     const [passage, setPassage] = useState('');
     const [rules, setRules] = useState<GenerationRules>({
@@ -86,6 +92,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
                     const newSermonId = await sermonService.createDraft({
                         userId: user.uid,
                         passage,
+                        projectId: projectIdFromUrl,
                         wizardProgress: {
                             currentStep: step,
                             passage,

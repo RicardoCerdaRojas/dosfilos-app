@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
+import { useTranslation } from 'react-i18next';
+import type { SupportedLanguage } from '@dosfilos/domain';
 
 
 export function useFacultySessions() {
     const { user } = useFirebase();
     const queryClient = useQueryClient();
+    const { i18n } = useTranslation();
+    const language: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
     const historyQuery = useQuery({
         queryKey: ['faculty', 'sessions', user?.uid],
@@ -17,9 +21,13 @@ export function useFacultySessions() {
     });
 
     const createSession = useMutation({
-        mutationFn: async ({ agentId, initialMessage }: { agentId: string; initialMessage?: string }) => {
+        mutationFn: async ({
+            agentId,
+            initialMessage,
+            projectId,
+        }: { agentId: string; initialMessage?: string; projectId?: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return await facultyService.createSession.execute(user.uid, agentId, initialMessage);
+            return await facultyService.createSession.execute(user.uid, agentId, initialMessage, projectId, language);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid] });

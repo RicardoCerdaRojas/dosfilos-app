@@ -129,10 +129,14 @@ export class PlanService {
     }
 
     /**
-     * Get Stripe price ID for a plan
+     * Resolve the Stripe Price ID for a plan. Defaults to the monthly price;
+     * pass `'yearly'` from a billing-cycle toggle to fetch the annual one
+     * instead.
      */
-    async getStripePriceId(planId: string): Promise<string | null> {
+    async getStripePriceId(planId: string, billing: 'monthly' | 'yearly' = 'monthly'): Promise<string | null> {
         const plan = await this.planRepository.getById(planId);
-        return plan?.stripeProductIds?.[0] || null;
+        if (!plan?.stripePriceIds) return null;
+        if (billing === 'yearly') return plan.stripePriceIds.yearly ?? plan.stripePriceIds.monthly ?? null;
+        return plan.stripePriceIds.monthly ?? null;
     }
 }

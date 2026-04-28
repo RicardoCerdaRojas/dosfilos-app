@@ -410,6 +410,9 @@
             "analyzing": "Generating analysis..."
         },
         "errors": {
+            "startTitle": "Error starting session",
+            "startMessage": "We couldn't connect to the exegetical assistant.",
+            "retry": "Retry",
             "syntaxUnavailable": "⚠️ Analysis not available",
             "syntaxErrorMessage": "Sorry, we couldn't complete the syntactic analysis of this passage at this time.",
             "whatCanYouDo": "What can you do?",

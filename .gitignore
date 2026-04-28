@@ -28,6 +28,11 @@ dist-ssr
 .env.local
 .env.*.local
 .env.production
+.env.bak*
+.env.backup*
+
+# Claude Code agent config (per-user)
+.claude/
 
 # Firebase
 .firebase/

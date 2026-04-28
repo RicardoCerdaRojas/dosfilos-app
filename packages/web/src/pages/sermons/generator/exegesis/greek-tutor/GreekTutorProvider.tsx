@@ -30,7 +30,6 @@ import { LocalBibleService } from '@/services/LocalBibleService';
 import { FirestoreWordCacheRepository } from '@dosfilos/infrastructure/src/greek-tutor/cache/FirestoreWordCacheRepository';
 // Phase 3A: Quiz service
 import { GeminiQuizService } from '@dosfilos/infrastructure/src/greek-tutor/gemini/GeminiQuizService';
-import { getFirestore } from 'firebase/firestore';
 
 interface GreekTutorContextType {
     generateTrainingUnits: GenerateTrainingUnitsUseCase;
@@ -61,9 +60,8 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Determine API Key from environment
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
     
-    // Instantiate Infrastructure
-    const firestore = getFirestore();
-    const wordCacheRepository = new FirestoreWordCacheRepository(firestore);
+    // Instantiate Infrastructure (repository encapsulates the Firestore singleton)
+    const wordCacheRepository = new FirestoreWordCacheRepository();
     const greekTutorService = new GeminiGreekTutorService(apiKey, wordCacheRepository);
     const sessionRepository = new FirestoreGreekSessionRepository();
     // Phase 3A: Quiz service (hybrid caching)

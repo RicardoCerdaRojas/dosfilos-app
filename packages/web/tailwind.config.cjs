@@ -32,6 +32,38 @@ export default {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
+				// ── Semantic status tokens ──────────────────────────────────────
+				// Theme-agnostic colours for stateful UI (success/warning/info).
+				// Each has a solid + subtle variant. Don't use raw colour literals
+				// (text-amber-X, bg-emerald-X) — use these tokens instead.
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))',
+					subtle: 'hsl(var(--success-subtle))',
+					'subtle-foreground': 'hsl(var(--success-subtle-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))',
+					subtle: 'hsl(var(--warning-subtle))',
+					'subtle-foreground': 'hsl(var(--warning-subtle-foreground))'
+				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))',
+					subtle: 'hsl(var(--info-subtle))',
+					'subtle-foreground': 'hsl(var(--info-subtle-foreground))'
+				},
+				// ── Sermon-workflow phase brand colours ─────────────────────────
+				// Identity for the three workflow phases + a generic/fallback.
+				// These are brand colours (not status). Use for icons, accents,
+				// and chips that mark a phase or store.
+				phase: {
+					exegesis: 'hsl(var(--phase-exegesis))',
+					homiletics: 'hsl(var(--phase-homiletics))',
+					drafting: 'hsl(var(--phase-drafting))',
+					generic: 'hsl(var(--phase-generic))'
+				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
@@ -84,6 +116,24 @@ export default {
 					'Ezra SIL SR',
 					'SBL Hebrew',
 					'Times New Roman',
+					'serif'
+				],
+				// Dedicated family for Biblical/Koine Greek — polytonic accents + breathings
+				greek: [
+					'SBL Greek',
+					'GFS Didot',
+					'Gentium Plus',
+					'Gentium',
+					'Times New Roman',
+					'serif'
+				],
+				// Reading-optimized serif for assistant message bodies (long-form theology)
+				reading: [
+					'Source Serif 4',
+					'Source Serif Pro',
+					'Charter',
+					'Iowan Old Style',
+					'Georgia',
 					'serif'
 				]
 			},

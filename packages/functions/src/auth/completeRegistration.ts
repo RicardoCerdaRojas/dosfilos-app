@@ -96,7 +96,8 @@ async function validatePendingRegistration(
 }
 
 /**
- * Creates Firebase Auth user
+ * Creates Firebase Auth user. Throws with a clear code if the email is taken
+ * (user hit checkout twice, or the email already belongs to another account).
  */
 async function createFirebaseUser(
     email: string,
@@ -116,10 +117,13 @@ async function createFirebaseUser(
 
     } catch (error: any) {
         if (error.code === 'auth/email-already-exists') {
-            // User exists - might be from abandoned registration
-            const existingUser = await auth.getUserByEmail(email);
-            logger.warn(`User already exists: ${existingUser.uid}`, { email });
-            return { uid: existingUser.uid };
+            // Do NOT silently reuse the existing uid — that would let a second payment
+            // overwrite the original user's Firestore profile.
+            logger.warn('Registration attempt with existing email', { email });
+            throw new HttpsError(
+                'already-exists',
+                'An account with this email already exists. Please log in instead.'
+            );
         }
         throw error;
     }
@@ -134,10 +138,17 @@ async function createUserProfile(
 ): Promise<void> {
     const db = getFirestore();
 
+    // `preferredLanguage` is the canonical field consumed by the AI engine and
+    // the web `useLanguageSync` listener. Kept alongside the legacy `locale` /
+    // `settings.language` for compatibility with email/notification code paths
+    // that haven't migrated yet.
+    const preferredLanguage = pending.locale === 'en' ? 'en' : 'es';
+
     await db.collection('users').doc(userId).set({
         email: pending.email,
         displayName: pending.displayName,
         locale: pending.locale || 'es',
+        preferredLanguage,
         subscription: {
             ...pending.subscription,
             // Convert Dates if needed
@@ -160,6 +171,72 @@ async function createUserProfile(
 }
 
 /**
+ * Credits the plan's `bonusInitial` to the new user's processing balance.
+ * Idempotent via `users/{uid}/bonus_grants/{subscriptionId}` marker doc, so
+ * the same subscription never grants twice.
+ */
+async function creditPlanBonusForNewUser(
+    userId: string,
+    pendingSubscription: PendingRegistration['subscription'],
+): Promise<void> {
+    const db = getFirestore();
+    const planSnap = await db.collection('plans').doc(pendingSubscription.planId).get();
+    if (!planSnap.exists) {
+        logger.warn(`[BonusInitial] plan ${pendingSubscription.planId} not found; skipping bonus`);
+        return;
+    }
+    const planData = planSnap.data();
+    const bonus = planData?.bonusInitial ?? {};
+    const standardPages = Math.max(0, Number(bonus.standardPages) || 0);
+    const premiumPages = Math.max(0, Number(bonus.premiumPages) || 0);
+    if (standardPages === 0 && premiumPages === 0) return;
+
+    const grantRef = db
+        .collection('users').doc(userId)
+        .collection('bonus_grants').doc(pendingSubscription.stripeSubscriptionId);
+
+    if ((await grantRef.get()).exists) {
+        logger.info(`[BonusInitial] subscription=${pendingSubscription.stripeSubscriptionId} already granted; skipping`);
+        return;
+    }
+
+    const userRef = db.collection('users').doc(userId);
+    // Ensure the nested object exists for first-time users.
+    await userRef.set(
+        {
+            processingBalance: {
+                standardPagesAvailable: 0,
+                premiumPagesAvailable: 0,
+                standardSpentTotal: 0,
+                premiumSpentTotal: 0,
+            },
+        },
+        { merge: true },
+    );
+
+    const updates: Record<string, FirebaseFirestore.FieldValue> = {};
+    if (standardPages > 0) {
+        updates['processingBalance.standardPagesAvailable'] = FieldValue.increment(standardPages);
+    }
+    if (premiumPages > 0) {
+        updates['processingBalance.premiumPagesAvailable'] = FieldValue.increment(premiumPages);
+    }
+    updates['processingBalance.updatedAt'] = FieldValue.serverTimestamp();
+    await userRef.update(updates);
+
+    await grantRef.set({
+        subscriptionId: pendingSubscription.stripeSubscriptionId,
+        standardPages,
+        premiumPages,
+        grantedAt: FieldValue.serverTimestamp(),
+    });
+
+    logger.info(
+        `[BonusInitial] credited ${standardPages} standard + ${premiumPages} premium to ${userId} (subscription=${pendingSubscription.stripeSubscriptionId})`,
+    );
+}
+
+/**
  * Marks pending registration as completed
  */
 async function markRegistrationCompleted(sessionId: string): Promise<void> {
@@ -179,21 +256,27 @@ export const completeRegistration = onCall<CompleteRegistrationRequest>(
 
         logger.info('Starting registration completion', { sessionId, locale });
 
+        // Track uid outside the try so a rollback can see it if a later step fails
+        let createdUid: string | null = null;
         try {
             // 1. Validate pending registration
             const pending = await validatePendingRegistration(sessionId);
 
             // 2. Create Firebase Auth user
             const { uid } = await createFirebaseUser(pending.email, pending.displayName);
+            createdUid = uid;
 
             // 3. Create user profile with subscription data
+            //    If this throws, the catch block deletes the Auth user to avoid orphans.
             await createUserProfile(uid, pending);
 
-            // 4. Mark registration as completed
+            // 4. Credit the plan's bonusInitial (idempotent via subscription id).
+            await creditPlanBonusForNewUser(uid, pending.subscription);
+
+            // 5. Mark registration as completed
             await markRegistrationCompleted(sessionId);
 
             // 5. Track geographic registration event (non-blocking)
-            // Captures location data for users who registered via Stripe payment flow
             trackGeoEvent({
                 type: 'registration',
                 userId: uid,
@@ -222,6 +305,24 @@ export const completeRegistration = onCall<CompleteRegistrationRequest>(
             };
 
         } catch (error: any) {
+            // If we created an Auth user but a later step failed, delete it to avoid
+            // leaving a half-initialized account. The pending_registrations doc stays
+            // intact (completedAt unset), so the user can safely retry.
+            if (createdUid) {
+                try {
+                    await getAuth().deleteUser(createdUid);
+                    logger.warn('Rolled back Auth user after failed registration', {
+                        userId: createdUid,
+                        sessionId,
+                    });
+                } catch (rollbackErr) {
+                    logger.error('Rollback failed — orphaned Auth user remains', {
+                        userId: createdUid,
+                        sessionId,
+                        rollbackError: String(rollbackErr),
+                    });
+                }
+            }
             logger.error('Registration completion failed', {
                 error: error.message,
                 sessionId,

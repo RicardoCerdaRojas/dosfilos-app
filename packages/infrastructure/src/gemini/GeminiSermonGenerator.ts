@@ -5,8 +5,10 @@ import {
     ExegeticalStudy,
     HomileticalAnalysis,
     SermonContent,
-    WorkflowPhase
+    WorkflowPhase,
+    DEFAULT_LANGUAGE,
 } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 import { ChatMessage } from '@dosfilos/domain/src/entities/SermonWorkflow';
 import {
     buildExegesisPrompt,
@@ -100,9 +102,9 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         ];
     }
 
-    async generateExegesis(passage: string, rules: GenerationRules, config?: any): Promise<ExegeticalStudy> {
+    async generateExegesis(passage: string, rules: GenerationRules, config?: any, language: SupportedLanguage = DEFAULT_LANGUAGE): Promise<ExegeticalStudy> {
         try {
-            const prompt = buildExegesisPrompt(passage, rules, config);
+            const prompt = buildExegesisPrompt(passage, rules, config, language);
 
             // 🧪 TESTING: Log prompt to verify hermeneutical method
 
@@ -147,7 +149,8 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     async generateHomiletics(
         exegesis: ExegeticalStudy,
         rules: GenerationRules,
-        _config?: any
+        _config?: any,
+        _language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<HomileticalAnalysis> {
         try {
             const { HomileticsPromptBuilder } = await import('./prompts/HomileticsPromptBuilder');
@@ -214,10 +217,11 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     async generateSermonDraft(
         analysis: HomileticalAnalysis,
         rules: GenerationRules,
-        _config?: any
+        _config?: any,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<SermonContent> {
         try {
-            const prompt = buildSermonDraftPrompt(analysis, rules);
+            const prompt = buildSermonDraftPrompt(analysis, rules, language);
             const model = this.getModel({
                 fileSearchStoreId: _config?.fileSearchStoreId,
                 temperature: _config?.temperature,
@@ -245,11 +249,12 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     async regenerateSermonPoint(
         point: any,
         rules: GenerationRules,
-        context: any
+        context: any,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<any> {
         try {
             const fullPrompt = `
-${buildChatSystemPrompt(WorkflowPhase.DRAFTING, context)}
+${buildChatSystemPrompt(WorkflowPhase.DRAFTING, context, language)}
 
 TAREA: REGENERAR UN PUNTO ESPECÍFICO DEL SERMÓN
 
@@ -301,9 +306,9 @@ FORMATO JSON REQUERIDO:
         }
     }
 
-    async chat(phase: WorkflowPhase, history: ChatMessage[], context: any): Promise<string> {
+    async chat(phase: WorkflowPhase, history: ChatMessage[], context: any, language: SupportedLanguage = DEFAULT_LANGUAGE): Promise<string> {
         try {
-            const systemPrompt = buildChatSystemPrompt(phase, context);
+            const systemPrompt = buildChatSystemPrompt(phase, context, language);
             const geminiHistory = history.slice(0, -1).map(msg => ({
                 role: msg.role === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.content }]
@@ -354,9 +359,9 @@ FORMATO JSON REQUERIDO:
         }
     }
 
-    async chatStream(phase: WorkflowPhase, history: ChatMessage[], context: any, onChunk: (text: string) => void): Promise<string> {
+    async chatStream(phase: WorkflowPhase, history: ChatMessage[], context: any, onChunk: (text: string) => void, language: SupportedLanguage = DEFAULT_LANGUAGE): Promise<string> {
         try {
-            const systemPrompt = buildChatSystemPrompt(phase, context);
+            const systemPrompt = buildChatSystemPrompt(phase, context, language);
             const geminiHistory = history.slice(0, -1).map(msg => ({
                 role: msg.role === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.content }]
@@ -410,12 +415,19 @@ FORMATO JSON REQUERIDO:
         }
     }
 
-    async refineContent(content: string, instruction: string, context?: any): Promise<string> {
+    async refineContent(content: string, instruction: string, context?: any, language: SupportedLanguage = DEFAULT_LANGUAGE): Promise<string> {
         try {
             let librarySection = '';
             if (context?.cachedResources && context.cachedResources.length > 0) {
                 const resourcesList = context.cachedResources.map((r: any) => `- ${r.title} (${r.author})`).join('\n');
-                librarySection = `
+                librarySection = language === 'en'
+                    ? `
+## 📚 FULL ACCESS TO PASTOR'S LIBRARY:
+You have access to the FULL CONTENT of these books in your context:
+${resourcesList}
+WHENEVER you use information from these books, CITE the source (Author, Title).
+`
+                    : `
 ## 📚 ACCESO COMPLETO A BIBLIOTECA DEL PASTOR:
 Tienes acceso al CONTENIDO COMPLETO de estos libros en tu contexto:
 ${resourcesList}
@@ -423,8 +435,23 @@ SIEMPRE que uses información de estos libros, CITÁ la fuente (Autor, Título).
 `;
             }
 
-            const prompt = `
-ACTÚA COMO UN EDITOR Y TEÓLOGO EXPERTO.
+            const promptBody = language === 'en'
+                ? `ACT AS AN EXPERT EDITOR AND THEOLOGIAN.
+Your task is to refine the following content per the provided instructions.
+
+ORIGINAL CONTENT:
+${content}
+
+REFINEMENT INSTRUCTIONS:
+${instruction}
+${librarySection}
+
+RULES:
+1. Preserve the JSON or Markdown format.
+2. Be precise and theologically faithful.
+3. Cite sources.
+`
+                : `ACTÚA COMO UN EDITOR Y TEÓLOGO EXPERTO.
 Tu tarea es refinar el siguiente contenido según las instrucciones proporcionadas.
 
 CONTENIDO ORIGINAL:
@@ -439,6 +466,10 @@ REGLAS:
 2. Sé preciso y teológicamente fiel.
 3. Cita fuentes.
 `;
+            const directive = language === 'en'
+                ? 'IMPORTANT: Respond entirely in English.'
+                : 'IMPORTANTE: Responde completamente en español.';
+            const prompt = `${directive}\n\n${promptBody}`;
             const model = this.getModel({
                 fileSearchStoreId: context?.fileSearchStoreId,
                 temperature: context?.temperature,
@@ -648,11 +679,15 @@ REGLAS:
     async generateHomileticsPreview(
         exegesis: ExegeticalStudy,
         rules: GenerationRules,
-        _config?: any
+        _config?: any,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<import('@dosfilos/domain').HomileticalApproachPreview[]> {
         try {
             const { HomileticsPreviewPromptBuilder } = await import('./prompts/HomileticsPreviewPromptBuilder');
-            const prompt = new HomileticsPreviewPromptBuilder()
+            const directive = language === 'en'
+                ? 'IMPORTANT: Respond entirely in English. Field values inside any JSON output must also be in English.\n\n'
+                : '';
+            const prompt = directive + new HomileticsPreviewPromptBuilder()
                 .withExegesis(exegesis)
                 .withRules(rules)
                 .build();
@@ -694,11 +729,15 @@ REGLAS:
         exegesis: ExegeticalStudy,
         selectedPreview: import('@dosfilos/domain').HomileticalApproachPreview,
         rules: GenerationRules,
-        _config?: any
+        _config?: any,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<import('@dosfilos/domain').HomileticalApproach> {
         try {
             const { ApproachDevelopmentPromptBuilder } = await import('./prompts/ApproachDevelopmentPromptBuilder');
-            const prompt = new ApproachDevelopmentPromptBuilder()
+            const directive = language === 'en'
+                ? 'IMPORTANT: Respond entirely in English. Field values inside any JSON output must also be in English.\n\n'
+                : '';
+            const prompt = directive + new ApproachDevelopmentPromptBuilder()
                 .withExegesis(exegesis)
                 .withSelectedPreview(selectedPreview)
                 .withRules(rules)

@@ -4,18 +4,19 @@ import { initializeApp } from 'firebase-admin/app';
 initializeApp();
 
 // Export library functions
-export { extractPdfText } from './library/extractPdfText';
 export { extractPdfWithGemini } from './library/extractPdfWithGemini';
 export { reprocessWithLlamaParse } from './library/reprocessWithLlamaParse';
+export { processWithGemini } from './library/processWithGemini';
+export { resetLlamaParseCounters } from './library/resetLlamaParseCounters';
+export { alertLlamaParseUsage } from './library/alertLlamaParseUsage';
 export { indexStructuredDocument } from './library/indexStructuredDocument';
+export { autoIndexOnExtractionReady } from './library/autoIndexOnExtractionReady';
+export { incrementUsage } from './usage/incrementUsage';
 export { retrieveChunks } from './library/retrieveChunks';
 export { auditIndexing } from './library/auditIndexing';
-export { createGeminiStore } from './library/createGeminiStore';
-export { syncResourceToGemini } from './library/syncResourceToGemini';
-export { createCoreLibraryStores } from './library/createCoreLibraryStores';
 export { createCoreLibraryStore } from './library/createCoreLibraryStore';
 export { updateCoreLibraryStore } from './library/updateCoreLibraryStore';
-export { syncCoreLibraryStore } from './library/syncCoreLibraryStore';
+export { deleteCoreLibraryStore } from './library/deleteCoreLibraryStore';
 export { removeFileFromStore } from './library/removeFileFromStore';
 
 // Export Stripe functions
@@ -75,6 +76,12 @@ export { deleteUser } from './admin/deleteUser';
 export { disableUser } from './admin/disableUser';
 export { enableUser } from './admin/enableUser';
 export { resendWelcomeEmail } from './admin/resendWelcomeEmail';
+export { migratePlanQuotas } from './admin/migratePlanQuotas';
+export { migrateLegacySermons } from './admin/migrateLegacySermons';
+export { changePlanForUser } from './admin/changePlanForUser';
+export { bulkUserAction } from './admin/bulkUserAction';
+export { grantUserCredits } from './admin/grantUserCredits';
+export { extendUserTrialAdmin } from './admin/extendUserTrialAdmin';
 
 
 

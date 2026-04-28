@@ -225,6 +225,57 @@
       "genesis": "The beginning of all",
       "gen310": "The nakedness revealed",
       "hint": "Use the top navigator to find a verse"
+    },
+    "translationMode": "Translation Mode",
+    "fontSize": {
+      "smaller": "Smaller text",
+      "larger": "Larger text"
+    },
+    "flow": {
+      "title": "How Translation Mode works",
+      "investigating": "Investigating word",
+      "yourTranslation": "Your translation",
+      "expertHidden": "Expert (visible at the end)",
+      "expertExample": "created — Qal Perf. 3ms",
+      "qalVerb": "Qal Verb",
+      "steps": {
+        "choose": "Pick a verse",
+        "investigate": "Investigate each word",
+        "compose": "Compose your translation",
+        "compare": "Compare with the expert"
+      }
+    },
+    "recent": "Recent",
+    "suggested": "Suggested verses",
+    "words": "words",
+    "verses": {
+      "gen11": { "subtitle": "The beginning of all" },
+      "gen310": { "subtitle": "The nakedness revealed" },
+      "ps231": { "subtitle": "The Lord is my shepherd" },
+      "jonah11": { "subtitle": "A divine calling" },
+      "prov35": { "subtitle": "Trust in the Lord" },
+      "isa61": { "subtitle": "The throne vision" }
+    },
+    "levels": {
+      "intro": "Introductory",
+      "basic": "Basic",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    }
+  },
+  "detective": {
+    "title": "Detective Mode",
+    "subtitle": "Verb investigation",
+    "srDescription": "Step-by-step morphological investigation of the selected Hebrew verb.",
+    "progressLabel": "Investigation progress",
+    "phaseCount": "{{completed}}/{{total}} phases",
+    "saving": "Saving results…",
+    "rootLabel": "root",
+    "dragHandlePanel": "Drag to resize the panel",
+    "dragHandleSidebar": "Drag to resize the menu",
+    "path": {
+      "strong": "💪 Strong Verb",
+      "weak": "🔬 Weak Verb"
     }
   }
 }

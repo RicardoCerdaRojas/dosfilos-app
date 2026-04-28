@@ -5,16 +5,21 @@ import {
     IAIProjectRepository,
     AIChatMessage,
     AIAgent,
-    SourceReference
+    SourceReference,
+    ResponseMode,
+    ConcreteResponseMode,
+    DEFAULT_LANGUAGE,
+    resolveLocalized,
 } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 import { generateId } from '../../utils/generateId';
-import { CoreLibraryRAGService, RetrievedChunk } from '../../services/CoreLibraryRAGService';
+import { CoreLibraryRAGService, RetrievedChunk, getRetrievalConfigForMode } from '../../services/CoreLibraryRAGService';
 
 // Phase 2 RAG retrieval — shared instance
 const ragService = new CoreLibraryRAGService();
 
 function chunksToSourcesP2(chunks: RetrievedChunk[]): SourceReference[] {
-    const byDoc = new Map<string, { title: string; author: string; pages: Set<number>; sections: Set<string>; snippet: string }>();
+    const byDoc = new Map<string, { title: string; author: string; pages: Set<number>; sections: Set<string>; snippet: string; publiclyCitable: boolean }>();
     for (const c of chunks) {
         const key = `${c.resourceAuthor}||${c.resourceTitle}`;
         const entry = byDoc.get(key) ?? {
@@ -23,9 +28,11 @@ function chunksToSourcesP2(chunks: RetrievedChunk[]): SourceReference[] {
             pages: new Set<number>(),
             sections: new Set<string>(),
             snippet: c.text.substring(0, 240).trim(),
+            publiclyCitable: c.publiclyCitable === true,
         };
         if (c.metadata.page !== undefined) entry.pages.add(c.metadata.page);
         if (c.sectionBreadcrumb) entry.sections.add(c.sectionBreadcrumb);
+        if (c.publiclyCitable === true) entry.publiclyCitable = true;
         byDoc.set(key, entry);
     }
     return Array.from(byDoc.values()).map(entry => {
@@ -42,6 +49,7 @@ function chunksToSourcesP2(chunks: RetrievedChunk[]): SourceReference[] {
         } else if (entry.snippet) {
             ref.snippet = entry.snippet;
         }
+        ref.publiclyCitable = entry.publiclyCitable;
         return ref;
     });
 }
@@ -51,11 +59,23 @@ function chunksToSourcesP2(chunks: RetrievedChunk[]): SourceReference[] {
  */
 function cleanCitations(text: string, agentNames: string[] = []): string {
     let out = text;
+    // 0) Strip leaked RAG context headers (ES + EN)
+    out = out.replace(/\[(?:Fuente|Source)\s+\d+:[^\]]*\]\s*/g, '');
+    // 0.b) Strip the retrieved-context preamble if the model echoes it literally
+    out = out.replace(/^\s*(?:CONTEXTO RECUPERADO|RETRIEVED CONTEXT)\s*:?\s*\n+/i, '');
     // 1) "Basado en <chunk-id-like-token>[, pág N][, citado por X]"
     out = out.replace(/\(Basado en [a-z0-9]{8,}[^)]*\)\.?/g, '');
     out = out.replace(/Basado en [a-z0-9]{8,},\s*pág\.?\s*\d+[^.]*\./gi, '');
     // 2) "(chunk-id, pág. N)" patterns — 10+ lowercase alphanumerics
     out = out.replace(/\([a-z0-9]{10,}\s*,\s*p(?:á|a)g\.?\s*\d+[^)]*\)/gi, '');
+    // 2.b) Protected-source leaks. The system prompt forbids citing
+    //      `Material especializado` / `Curated material` inline, but Gemini
+    //      occasionally regurgitates the sentinel — including the multi-cite
+    //      form with semicolon separators that the client extractor misses.
+    out = out.replace(
+        /\((?:Material\s+(?:especializado|curado)|Curated\s+material)[^)]*\)\.?/gi,
+        '',
+    );
     // 3) Self-citations of known agents
     const defaultAgents = [
         'Dr\\. Al[eé]theia', 'Dr\\. Berith', 'Dr\\. Cris[oó]stomo',
@@ -110,6 +130,8 @@ interface RouterDecision {
     strategy: 'single' | 'fanout';
     agentIds: string[];
     reasoning?: string;
+    /** Response mode inferred by the router; consumed when the user picked 'auto'. */
+    suggestedMode?: ConcreteResponseMode;
 }
 
 export class OrchestratedMessageUseCase {
@@ -126,9 +148,11 @@ export class OrchestratedMessageUseCase {
         messageContent: string,
         onChunk?: (text: string) => void,
         onAgentsSelected?: (agents: AIAgent[]) => void,
-        lengthPreference?: 'concise' | 'detailed',
-        onSources?: (sources: SourceReference[]) => void
-    ): Promise<{ response: string; selectedAgents: AIAgent[] }> {
+        lengthPreference?: ResponseMode,
+        onSources?: (sources: SourceReference[]) => void,
+        onModeInferred?: (mode: ConcreteResponseMode, wasAuto: boolean) => void,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
+    ): Promise<{ response: string; selectedAgents: AIAgent[]; effectiveMode: ConcreteResponseMode }> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) throw new Error('Session not found');
 
@@ -137,7 +161,7 @@ export class OrchestratedMessageUseCase {
         if (activeAgents.length === 0) throw new Error('No active agents available');
 
         // ── Step 1: Route ─────────────────────────────────────────────────────────
-        const decision = await this.routeQuestion(activeAgents, session.messages, messageContent);
+        const decision = await this.routeQuestion(activeAgents, session.messages, messageContent, language);
 
         const selectedAgents = decision.agentIds
             .map(id => activeAgents.find(a => a.id === id))
@@ -146,6 +170,17 @@ export class OrchestratedMessageUseCase {
         const finalAgents = selectedAgents.length > 0 ? selectedAgents : [activeAgents[0]];
 
         onAgentsSelected?.(finalAgents);
+
+        // Resolve the effective response mode. When the user selected 'auto', take
+        // the router's suggestion; otherwise honor the user's explicit choice.
+        const wasAuto = lengthPreference === 'auto' || !lengthPreference;
+        const effectiveMode: ConcreteResponseMode = wasAuto
+            ? (decision.suggestedMode ?? 'detailed')
+            : (lengthPreference as ConcreteResponseMode);
+        if (wasAuto) {
+            console.log(`[Orchestrator] Auto-detected mode: "${effectiveMode}" (reasoning: ${decision.reasoning ?? 'n/a'})`);
+        }
+        onModeInferred?.(effectiveMode, wasAuto);
 
         // ── Step 2: Save user message ─────────────────────────────────────────────
 
@@ -163,15 +198,23 @@ export class OrchestratedMessageUseCase {
             throw error;
         }
 
-        // ── Project contextNote injection ─────────────────────────────────────────
-        // If the session belongs to a project with a contextNote, prepend it to the
-        // message so the specialist gets enriched context without the user needing
-        // to repeat it every time.
+        // ── Project context injection ─────────────────────────────────────────
+        // If the session belongs to a project, extract:
+        //   1. contextNote  → prepended to the message (behavioural framing)
+        //   2. sourceIds    → used below to scope RAG retrieval to just those docs
+        //                     (NotebookLM-style workspace behavior)
         let enrichedMessage = messageContent;
+        let projectSourceIds: string[] | undefined;
         if (session.projectId && this.projectRepository) {
             const project = await this.projectRepository.getProject(session.projectId);
             if (project?.contextNote) {
-                enrichedMessage = `[Contexto del proyecto "${project.title}": ${project.contextNote}]\n\n${messageContent}`;
+                enrichedMessage = language === 'en'
+                    ? `[Project context "${project.title}": ${project.contextNote}]\n\n${messageContent}`
+                    : `[Contexto del proyecto "${project.title}": ${project.contextNote}]\n\n${messageContent}`;
+            }
+            if (project?.sourceIds && project.sourceIds.length > 0) {
+                projectSourceIds = project.sourceIds;
+                console.log(`[Orchestrator] Project "${project.title}" scopes RAG to ${projectSourceIds.length} source(s)`);
             }
         }
 
@@ -186,46 +229,105 @@ export class OrchestratedMessageUseCase {
 
         // PHASE 2 — Retrieve relevant chunks for each participating specialist.
         // We aggregate by corpus so each specialist gets its own context.
+        //
+        // Scope resolution order per agent:
+        //   1. agent.stores (Core Library keys, e.g. ['exegesis']) — preferred
+        //   2. agent.corpusIds (legacy Gemini URIs) — server reverse-resolves to keys
+        //
+        // After the migrateAgentStores admin function runs, every agent has `stores`
+        // populated and the corpusIds path becomes dead code.
         const retrievedContextByAgent = new Map<string, { context: string; chunks: RetrievedChunk[] }>();
+        const agentScope = (a: { stores?: string[]; corpusIds?: string[] }) => {
+            const stores = a.stores && a.stores.length > 0 ? a.stores : undefined;
+            const corpusIds = a.corpusIds && a.corpusIds.length > 0 ? a.corpusIds : undefined;
+            return { stores, corpusIds };
+        };
+        const agentScopeKey = (a: { stores?: string[]; corpusIds?: string[] }) => {
+            const { stores, corpusIds } = agentScope(a);
+            if (stores) return `stores:${[...stores].sort().join('|')}`;
+            if (corpusIds) return `corpus:${[...corpusIds].sort().join('|')}`;
+            return '';
+        };
+
         try {
-            const uniqueCorpusSets = new Map<string, string[]>();
+            const uniqueScopes = new Map<string, { stores?: string[]; corpusIds?: string[] }>();
             for (const a of finalAgents) {
-                if (a.corpusIds && a.corpusIds.length > 0) {
-                    const key = [...a.corpusIds].sort().join('|');
-                    if (!uniqueCorpusSets.has(key)) uniqueCorpusSets.set(key, a.corpusIds);
-                }
+                const key = agentScopeKey(a);
+                if (!key) continue;
+                if (!uniqueScopes.has(key)) uniqueScopes.set(key, agentScope(a));
             }
-            // Retrieve once per unique corpus set (usually 1-2 calls)
+            // Retrieve once per unique scope (usually 1-2 calls).
+            // topK and minSimilarity are tuned per response mode so that concise queries
+            // get tight context and academic queries get a wider net.
+            const retrievalConfig = getRetrievalConfigForMode(effectiveMode);
+            console.log(`[Orchestrator] Retrieval tuned for mode "${effectiveMode}": topK=${retrievalConfig.topK}, minSim=${retrievalConfig.minSimilarity}`);
             const retrievalResults = await Promise.all(
-                Array.from(uniqueCorpusSets.entries()).map(async ([key, corpusIds]) => {
+                Array.from(uniqueScopes.entries()).map(async ([key, scope]) => {
                     const chunks = await ragService.retrieve(enrichedMessage, {
-                        corpusIds,
-                        topK: 10,
-                        minSimilarity: 0.3,
+                        stores: scope.stores,
+                        corpusIds: scope.corpusIds,
+                        topK: retrievalConfig.topK,
+                        minSimilarity: retrievalConfig.minSimilarity,
                     });
                     return { key, chunks };
                 })
             );
-            // Assign to each agent by its corpus set
+            // Parallel retrieval: user's personal library (always scoped to userId).
+            // Scale topK down so personal library complements but doesn't swamp the
+            // Core Library context. Safe to call even when the user has no uploads —
+            // returns empty instantly.
+            //
+            // When the session belongs to a project with attached sources, we further
+            // restrict retrieval to only those resourceIds — NotebookLM-style scoping,
+            // so a sermon series project retrieves only from the books the user
+            // curated for that project, not their whole library. We also switch to
+            // per-source retrieval (one findNearest per source) so every curated source
+            // contributes its top chunks. Without this, a single global topK can starve
+            // sources whose chunks happen to score below dominant ones — even when the
+            // user explicitly named that source's author.
+            const personalTopK = Math.max(3, Math.floor(retrievalConfig.topK / 2));
+            const isProjectScope = !!projectSourceIds && projectSourceIds.length > 0;
+            const perResourceTopK = isProjectScope
+                ? Math.max(2, Math.ceil(personalTopK / Math.max(1, projectSourceIds!.length)))
+                : 0;
+            const personalChunks = await ragService.retrieve(enrichedMessage, {
+                userId,
+                resourceIds: projectSourceIds,
+                topK: personalTopK,
+                minSimilarity: retrievalConfig.minSimilarity,
+                perResourceTopK,
+            });
+            if (personalChunks.length > 0) {
+                const scope = projectSourceIds ? `project (${projectSourceIds.length} docs)` : 'personal library';
+                console.log(`[Orchestrator] ${scope}: ${personalChunks.length} chunks retrieved`);
+            }
+
+            // Assign to each agent by its scope (stores or corpusIds), appending personal
+            // library chunks so the model sees both Core and user's own material.
             for (const a of finalAgents) {
-                if (!a.corpusIds || a.corpusIds.length === 0) continue;
-                const key = [...a.corpusIds].sort().join('|');
-                const result = retrievalResults.find(r => r.key === key);
-                if (result && result.chunks.length > 0) {
+                const key = agentScopeKey(a);
+                const coreChunks = key
+                    ? (retrievalResults.find(r => r.key === key)?.chunks ?? [])
+                    : [];
+                const combined = [...coreChunks, ...personalChunks];
+                if (combined.length > 0) {
                     retrievedContextByAgent.set(a.id, {
-                        context: CoreLibraryRAGService.formatContextForPrompt(result.chunks),
-                        chunks: result.chunks,
+                        context: CoreLibraryRAGService.formatContextForPrompt(combined, language),
+                        chunks: combined,
                     });
                 }
             }
 
-            // Aggregate all sources for the UI
-            const allChunks = retrievalResults.flatMap(r => r.chunks);
+            // Aggregate all sources for the UI (Core + Personal, deduped by doc)
+            const allChunks = [
+                ...retrievalResults.flatMap(r => r.chunks),
+                ...personalChunks,
+            ];
             if (allChunks.length > 0) {
                 const aggregatedSources = chunksToSourcesP2(allChunks);
                 capturedSources = aggregatedSources;
                 onSources?.(aggregatedSources);
-                console.log(`[OrchestratedMessage] Phase 2 RAG: ${allChunks.length} chunks across ${retrievedContextByAgent.size} agent(s)`);
+                console.log(`[OrchestratedMessage] Phase 2 RAG: ${allChunks.length} chunks total (${personalChunks.length} personal) across ${retrievedContextByAgent.size} agent(s)`);
             }
         } catch (err: any) {
             console.warn('[OrchestratedMessage] Phase 2 RAG retrieval failed:', err?.message ?? err);
@@ -245,15 +347,16 @@ export class OrchestratedMessageUseCase {
                             await this.generatorService.sendMessageStream(
                                 agent, history, enrichedMessage,
                                 (c) => { full += c; },
-                                lengthPreference,
+                                effectiveMode,
                                 undefined,
                                 agentContext,
+                                language,
                             );
                             return { agent, response: full, sources: [] as SourceReference[] };
                         } else {
                             // Legacy path: sendMessageWithSources (Gemini fileSearch)
                             const result = await this.generatorService.sendMessageWithSources(
-                                agent, history, enrichedMessage, lengthPreference
+                                agent, history, enrichedMessage, effectiveMode, language,
                             );
                             return { agent, response: result.response, sources: result.sources };
                         }
@@ -281,7 +384,8 @@ export class OrchestratedMessageUseCase {
                 validResponses,
                 enrichedMessage,
                 onChunk,
-                lengthPreference
+                effectiveMode,
+                language,
             );
         } else {
             // ── Step 3 (single): Stream directly from the selected specialist ──────
@@ -292,22 +396,25 @@ export class OrchestratedMessageUseCase {
                     history,
                     enrichedMessage,
                     onChunk,
-                    lengthPreference,
+                    effectiveMode,
                     soloContext ? undefined : handleSources,  // Skip legacy sources if Phase 2 provides context
                     soloContext,
+                    language,
                 );
             } else {
                 finalResponse = await this.generatorService.sendMessage(
                     finalAgents[0],
                     history,
                     enrichedMessage,
-                    lengthPreference
+                    effectiveMode,
+                    undefined,
+                    language,
                 );
             }
         }
 
         // Defensive cleanup: strip self-citations and chunk-ID citations that leaked past the prompt
-        const agentNames = finalAgents.map(a => a.name);
+        const agentNames = finalAgents.map(a => resolveLocalized(a.name, language));
         const cleanedResponse = cleanCitations(finalResponse, agentNames);
 
         const modelMessage: AIChatMessage = {
@@ -316,13 +423,15 @@ export class OrchestratedMessageUseCase {
             content: cleanedResponse,
             timestamp: new Date(),
             ...(capturedSources.length > 0 && { sources: capturedSources }),
+            modeUsed: effectiveMode,
+            modeWasAuto: wasAuto,
         };
         await this.chatRepository.addMessageToSession(userId, sessionId, modelMessage);
 
         // Generate contextual session title on the FIRST exchange — awaited so UI refetch sees it
         if (session.messages.length === 0) {
             try {
-                const title = await this.generateSessionTitle(messageContent);
+                const title = await this.generateSessionTitle(messageContent, language);
                 if (title) {
                     await this.chatRepository.renameSession(userId, sessionId, title);
                 }
@@ -331,62 +440,64 @@ export class OrchestratedMessageUseCase {
             }
         }
 
-        return { response: cleanedResponse, selectedAgents: finalAgents };
+        return { response: cleanedResponse, selectedAgents: finalAgents, effectiveMode };
     }
 
     /**
      * Router: lightweight Gemini call that decides strategy and which agents to use.
+     *
+     * Why localized: the manifest lists agent names + routing descriptions to
+     * the model so it can match the user's question. If the user asks in
+     * English, an all-Spanish manifest forces the model to translate-and-match
+     * which adds latency and routing errors. We hand it the manifest in the
+     * same language as the question.
      */
     private async routeQuestion(
         agents: AIAgent[],
         history: AIChatMessage[],
-        message: string
+        message: string,
+        language: SupportedLanguage,
     ): Promise<RouterDecision> {
         const agentManifest = agents
-            .map(a =>
-                `  - id: "${a.id}" | name: "${a.name}"\n` +
-                `    routing: "${a.routingDescription ?? a.expertiseArea}"`
-            )
+            .map(a => {
+                const name = resolveLocalized(a.name, language);
+                const routing = resolveLocalized(a.routingDescription, language)
+                    || resolveLocalized(a.expertiseArea, language);
+                return `  - id: "${a.id}" | name: "${name}"\n    routing: "${routing}"`;
+            })
             .join('\n');
 
-        const routerPrompt = `
-Eres el enrutador de un sistema multi-agente para un seminario teológico.
-Analiza la pregunta y decide qué especialistas deben responderla.
-
-ESPECIALISTAS DISPONIBLES:
-${agentManifest}
-
-PREGUNTA: "${message}"
-
-HISTORIAL RECIENTE:
-${history.slice(-2).map(m => `${m.role}: ${m.content.substring(0, 120)}`).join('\n')}
-
-REGLAS:
-1. Si la pregunta cae claramente en UNA sola especialidad → strategy: "single"
-2. Si la pregunta abarca EXPLÍCITAMENTE 2+ especialidades distintas → strategy: "fanout"
-3. Prefiere "single" cuando tengas dudas (menor costo y latencia)
-4. Máximo 3 agentes en fanout
-
-Responde ÚNICAMENTE con JSON válido sin texto adicional:
-{"strategy":"single","agentIds":["id1"],"reasoning":"una línea"}
-`.trim();
+        const routerPrompt = language === 'en'
+            ? buildRouterPromptEn(agentManifest, message, history)
+            : buildRouterPromptEs(agentManifest, message, history);
 
         const routerAgent: AIAgent = {
             id: '__router__',
-            name: 'Router',
+            name: { es: 'Router', en: 'Router' },
             role: 'orchestrator',
-            systemInstruction: 'Responde SOLO con JSON válido.',
-            expertiseArea: 'routing',
-            description: 'Internal routing agent',
+            systemInstruction: {
+                es: 'Responde SOLO con JSON válido.',
+                en: 'Respond ONLY with valid JSON.',
+            },
+            expertiseArea: { es: 'routing', en: 'routing' },
+            description: { es: 'Internal routing agent', en: 'Internal routing agent' },
             isActive: true,
         };
 
         try {
-            const raw = await this.generatorService.sendMessage(routerAgent, [], routerPrompt);
+            const raw = await this.generatorService.sendMessage(
+                routerAgent, [], routerPrompt, undefined, undefined, language,
+            );
             const jsonMatch = raw.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 const parsed = JSON.parse(jsonMatch[0]) as RouterDecision;
                 if (parsed.strategy && Array.isArray(parsed.agentIds) && parsed.agentIds.length > 0) {
+                    // Validate suggestedMode — drop it if the LLM returned something unknown
+                    const validModes: ConcreteResponseMode[] = ['concise', 'detailed', 'academic', 'pastoral', 'layperson'];
+                    if (parsed.suggestedMode && !validModes.includes(parsed.suggestedMode)) {
+                        console.warn(`[Router] Invalid suggestedMode "${parsed.suggestedMode}", defaulting to "detailed"`);
+                        parsed.suggestedMode = 'detailed';
+                    }
                     return parsed;
                 }
             }
@@ -394,7 +505,7 @@ Responde ÚNICAMENTE con JSON válido sin texto adicional:
             // Fallthrough to fallback
         }
 
-        return { strategy: 'single', agentIds: [agents[0].id] };
+        return { strategy: 'single', agentIds: [agents[0].id], suggestedMode: 'detailed' };
     }
 
     /**
@@ -405,77 +516,77 @@ Responde ÚNICAMENTE con JSON válido sin texto adicional:
         specialistResponses: { agent: AIAgent; response: string }[],
         originalQuestion: string,
         onChunk?: (text: string) => void,
-        lengthPreference?: 'concise' | 'detailed'
+        lengthPreference?: ResponseMode,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<string> {
         const specialistSection = specialistResponses
             .map(({ agent, response }) =>
-                `=== ${agent.name} (${agent.expertiseArea}) ===\n${response}`
+                `=== ${resolveLocalized(agent.name, language)} (${resolveLocalized(agent.expertiseArea, language)}) ===\n${response}`
             )
             .join('\n\n');
 
-        const synthesisPrompt = `
-Eres un sintetizador de respuestas teológicas. Tu trabajo es integrar las contribuciones de varios especialistas en UN SOLO documento cohesivo.
-
-PREGUNTA ORIGINAL: "${originalQuestion}"
-
-RESPUESTAS DE LOS ESPECIALISTAS:
-${specialistSection}
-
-REGLAS DE SÍNTESIS (CRÍTICAS):
-
-1. NUNCA atribuyas ideas a los tutores/especialistas. Los tutores NO son fuentes.
-   PROHIBIDO: "(Dr. Berith, Exégesis Hebrea)", "(Pastor Noutético)", "Según Dr. Crisóstomo...", "Basado en la perspectiva del Dr. X"
-   Los tutores son internos; el usuario final no debe verlos citados.
-
-2. PRESERVA las citas válidas a documentos reales que usen el formato (Autor, Título, p. N).
-   Ejemplos válidos que debes mantener: "(Kidner, Psalms 1-72, p. 45)", "(Wallace, Gramática Griega, p. 213)"
-
-3. ELIMINA cualquier cita sospechosa:
-   - Secuencias alfanuméricas sin sentido como "(lkxxzy9wx7z7, pág. 184)" — bórralas.
-   - Citas genéricas como "(Pastor Noutético)" o "(Dr. Berith)" — bórralas.
-   - Si un especialista dijo "Basado en <algo_extraño>, citado por Dr. X" — elimina esa atribución.
-
-4. Integra las perspectivas SIN decir de qué especialista provienen. El resultado debe leerse como UN solo autor experto.
-
-5. Si una misma cita aparece en varios especialistas, inclúyela UNA VEZ.
-
-6. Usa Markdown para estructurar. Comienza directamente con el contenido integrado, sin preámbulos.
-`.trim();
+        const synthesisPrompt = language === 'en'
+            ? buildSynthesisPromptEn(originalQuestion, specialistSection)
+            : buildSynthesisPromptEs(originalQuestion, specialistSection);
 
         const synthAgent: AIAgent = {
             id: '__synthesizer__',
-            name: 'Sintetizador',
+            name: { es: 'Sintetizador', en: 'Synthesizer' },
             role: 'synthesizer',
-            systemInstruction: 'Integras respuestas de múltiples especialistas teológicos en un documento cohesivo.',
-            expertiseArea: 'synthesis',
-            description: 'Internal synthesis agent',
+            systemInstruction: {
+                es: 'Integras respuestas de múltiples especialistas teológicos en un documento cohesivo.',
+                en: 'You integrate responses from multiple theological specialists into a cohesive document.',
+            },
+            expertiseArea: { es: 'synthesis', en: 'synthesis' },
+            description: { es: 'Internal synthesis agent', en: 'Internal synthesis agent' },
             isActive: true,
         };
 
         if (onChunk) {
             return this.generatorService.sendMessageStream(
-                synthAgent, [], synthesisPrompt, onChunk, lengthPreference
+                synthAgent, [], synthesisPrompt, onChunk, lengthPreference, undefined, undefined, language,
             );
         }
-        return this.generatorService.sendMessage(synthAgent, [], synthesisPrompt, lengthPreference);
+        return this.generatorService.sendMessage(
+            synthAgent, [], synthesisPrompt, lengthPreference, undefined, language,
+        );
     }
 
     /**
      * Generate a concise contextual title from the first user message.
      * Keeps session list readable (e.g., "Salmo 1: Consejería Pastoral" instead of "Sesión con Dr. Alétheia").
      */
-    private async generateSessionTitle(firstMessage: string): Promise<string | null> {
+    private async generateSessionTitle(
+        firstMessage: string,
+        language: SupportedLanguage,
+    ): Promise<string | null> {
         const titleAgent: AIAgent = {
             id: '__title_gen__',
-            name: 'TitleGenerator',
+            name: { es: 'TitleGenerator', en: 'TitleGenerator' },
             role: 'title',
-            systemInstruction: 'Generas títulos breves y descriptivos en español. Responde SOLO con el título, sin comillas, sin puntuación final, sin prefijos.',
-            expertiseArea: 'title-generation',
-            description: 'Internal title generator',
+            systemInstruction: {
+                es: 'Generas títulos breves y descriptivos en español. Responde SOLO con el título, sin comillas, sin puntuación final, sin prefijos.',
+                en: 'You generate brief, descriptive titles in English. Respond ONLY with the title, no quotes, no trailing punctuation, no prefixes.',
+            },
+            expertiseArea: { es: 'title-generation', en: 'title-generation' },
+            description: { es: 'Internal title generator', en: 'Internal title generator' },
             isActive: true,
         };
 
-        const prompt = `Genera un título MUY breve (máximo 6 palabras) que resuma el tema de esta pregunta teológica:
+        const prompt = language === 'en'
+            ? `Generate a VERY brief title (max 6 words) summarizing the topic of this theological question:
+
+"${firstMessage}"
+
+Examples of good titles:
+- "Psalm 1: Pastoral Counseling"
+- "Exegesis of Hebrews 1:1-4"
+- "Koine Greek: Aorist"
+- "Premarital Counseling"
+- "Covenant Theology"
+
+Respond only with the title, no quotes.`
+            : `Genera un título MUY breve (máximo 6 palabras) que resuma el tema de esta pregunta teológica:
 
 "${firstMessage}"
 
@@ -489,7 +600,9 @@ Ejemplos de buenos títulos:
 Responde solo con el título, sin comillas.`;
 
         try {
-            const raw = await this.generatorService.sendMessage(titleAgent, [], prompt);
+            const raw = await this.generatorService.sendMessage(
+                titleAgent, [], prompt, undefined, undefined, language,
+            );
             const cleaned = raw
                 .trim()
                 .replace(/^["'«]|["'»]$/g, '')
@@ -517,4 +630,173 @@ Responde solo con el título, sin comillas.`;
         }
         return Array.from(byKey.values());
     }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Localized prompt builders. Kept at module scope so the class body shows the
+// orchestration flow without 200 lines of prompt copy interleaved.
+// Both variants must enforce identical contracts (JSON schema for the router,
+// citation rules for the synthesizer); when you edit one, mirror in the other.
+// ────────────────────────────────────────────────────────────────────────────
+
+function buildRouterPromptEs(
+    agentManifest: string,
+    message: string,
+    history: AIChatMessage[],
+): string {
+    return `
+Eres el enrutador de un sistema multi-agente para un seminario teológico.
+Analiza la pregunta y decide DOS cosas: (A) qué especialistas deben responderla y (B) qué modo de respuesta le conviene al usuario.
+
+ESPECIALISTAS DISPONIBLES:
+${agentManifest}
+
+PREGUNTA: "${message}"
+
+HISTORIAL RECIENTE:
+${history.slice(-2).map(m => `${m.role}: ${m.content.substring(0, 120)}`).join('\n')}
+
+REGLAS DE ENRUTAMIENTO:
+1. Si la pregunta cae claramente en UNA sola especialidad → strategy: "single"
+2. Si la pregunta abarca EXPLÍCITAMENTE 2+ especialidades distintas → strategy: "fanout"
+3. Prefiere "single" cuando tengas dudas (menor costo y latencia)
+4. Máximo 3 agentes en fanout
+
+REGLAS DE MODO DE RESPUESTA (clasifica a UNO de estos 5 valores):
+
+• "concise" — pregunta muy corta, pide un resumen/dato puntual, usa palabras como "breve", "resume", "en una frase", "rápido". También cuando el mensaje es <6 palabras sin contexto pidiendo elaboración.
+  Ejemplos: "¿qué significa qatal?", "dame una definición corta de aoristo", "resume el cap 3 de Gén"
+
+• "academic" — pregunta técnica exegética/morfológica/gramatical con jerga del campo; pide análisis profundo, paradigmas, comparación entre binyanim/casos, etimología, crítica textual.
+  Ejemplos: "analiza morfológicamente ἐγένετο en Jn 1:14", "compara el perfecto con el imperfecto hebreo", "explica exhaustivamente el aoristo"
+
+• "pastoral" — pregunta sobre predicación, aplicación al rebaño, consejería, sermón, homilética práctica, cómo enseñar/aplicar un pasaje a la congregación.
+  Ejemplos: "cómo predico Rom 12:1-2", "qué aplicación pastoral tiene este texto", "cómo explico el evangelio a una familia en duelo"
+
+• "layperson" — pregunta de alguien SIN formación teológica; pide explicación simple, sin tecnicismos, con analogías, "para principiantes", "sin jerga", "para niños", "sencillo".
+  Ejemplos: "explícame el bautismo como si fuera nuevo en la fe", "qué significa gracia en lenguaje simple", "por qué los cristianos leen la Biblia (sin tecnicismos)"
+
+• "detailed" — DEFAULT cuando la pregunta merece explicación completa pero no cae claramente en ninguna de las 4 categorías anteriores. Preguntas genuinas de estudio que no son ni super técnicas, ni pastorales, ni para laicos.
+
+PRINCIPIOS:
+- Prefiere "detailed" cuando dudes. Es el modo neutro.
+- "academic" solo si la pregunta USA jerga del campo o pide explícitamente rigor técnico.
+- "pastoral" solo si hay contexto claro de predicación/aplicación, no solo porque mencione la Biblia.
+- "layperson" solo si hay señal explícita de falta de formación o pedido de simplicidad.
+
+Responde ÚNICAMENTE con JSON válido sin texto adicional:
+{"strategy":"single","agentIds":["id1"],"reasoning":"una línea","suggestedMode":"detailed"}
+`.trim();
+}
+
+function buildRouterPromptEn(
+    agentManifest: string,
+    message: string,
+    history: AIChatMessage[],
+): string {
+    return `
+You are the router for a multi-agent system serving a theological seminary.
+Analyze the question and decide TWO things: (A) which specialists should answer it and (B) which response mode best fits the user.
+
+AVAILABLE SPECIALISTS:
+${agentManifest}
+
+QUESTION: "${message}"
+
+RECENT HISTORY:
+${history.slice(-2).map(m => `${m.role}: ${m.content.substring(0, 120)}`).join('\n')}
+
+ROUTING RULES:
+1. If the question clearly falls in ONE single specialty → strategy: "single"
+2. If the question EXPLICITLY spans 2+ different specialties → strategy: "fanout"
+3. Prefer "single" when in doubt (lower cost and latency)
+4. Maximum 3 agents in fanout
+
+RESPONSE MODE RULES (classify into ONE of these 5 values):
+
+• "concise" — very short question, asks for a summary/specific datum, uses words like "brief", "summarize", "in one sentence", "quick". Also when the message is <6 words without context asking for elaboration.
+  Examples: "what does qatal mean?", "give me a short definition of aorist", "summarize Gen ch. 3"
+
+• "academic" — technical exegetical/morphological/grammatical question with field jargon; asks for in-depth analysis, paradigms, comparison between binyanim/cases, etymology, textual criticism.
+  Examples: "morphologically analyze ἐγένετο in Jn 1:14", "compare the Hebrew perfect with the imperfect", "exhaustively explain the aorist"
+
+• "pastoral" — question about preaching, application to the flock, counseling, sermon, practical homiletics, how to teach/apply a passage to the congregation.
+  Examples: "how do I preach Rom 12:1-2", "what pastoral application does this text have", "how do I explain the gospel to a family in mourning"
+
+• "layperson" — question from someone WITHOUT theological training; asks for simple explanation, no jargon, with analogies, "for beginners", "no jargon", "for kids", "simple".
+  Examples: "explain baptism to me as if I were new in the faith", "what does grace mean in simple language", "why do Christians read the Bible (no jargon)"
+
+• "detailed" — DEFAULT when the question deserves a full explanation but does not clearly fit any of the 4 categories above. Genuine study questions that are not super technical, pastoral, or for laypeople.
+
+PRINCIPLES:
+- Prefer "detailed" when in doubt. It is the neutral mode.
+- "academic" only if the question USES field jargon or explicitly demands technical rigor.
+- "pastoral" only if there is clear preaching/application context, not just because it mentions the Bible.
+- "layperson" only if there is an explicit signal of lack of training or request for simplicity.
+
+Respond ONLY with valid JSON, no additional text:
+{"strategy":"single","agentIds":["id1"],"reasoning":"one line","suggestedMode":"detailed"}
+`.trim();
+}
+
+function buildSynthesisPromptEs(originalQuestion: string, specialistSection: string): string {
+    return `
+Eres un sintetizador de respuestas teológicas. Tu trabajo es integrar las contribuciones de varios especialistas en UN SOLO documento cohesivo.
+
+PREGUNTA ORIGINAL: "${originalQuestion}"
+
+RESPUESTAS DE LOS ESPECIALISTAS:
+${specialistSection}
+
+REGLAS DE SÍNTESIS (CRÍTICAS):
+
+1. NUNCA atribuyas ideas a los tutores/especialistas. Los tutores NO son fuentes.
+   PROHIBIDO: "(Dr. Berith, Exégesis Hebrea)", "(Pastor Noutético)", "Según Dr. Crisóstomo...", "Basado en la perspectiva del Dr. X"
+   Los tutores son internos; el usuario final no debe verlos citados.
+
+2. PRESERVA las citas válidas a documentos reales que usen el formato (Autor, Título, p. N).
+   Ejemplos válidos que debes mantener: "(Kidner, Psalms 1-72, p. 45)", "(Wallace, Gramática Griega, p. 213)"
+
+3. ELIMINA cualquier cita sospechosa:
+   - Secuencias alfanuméricas sin sentido como "(lkxxzy9wx7z7, pág. 184)" — bórralas.
+   - Citas genéricas como "(Pastor Noutético)" o "(Dr. Berith)" — bórralas.
+   - Si un especialista dijo "Basado en <algo_extraño>, citado por Dr. X" — elimina esa atribución.
+
+4. Integra las perspectivas SIN decir de qué especialista provienen. El resultado debe leerse como UN solo autor experto.
+
+5. Si una misma cita aparece en varios especialistas, inclúyela UNA VEZ.
+
+6. Usa Markdown para estructurar. Comienza directamente con el contenido integrado, sin preámbulos.
+`.trim();
+}
+
+function buildSynthesisPromptEn(originalQuestion: string, specialistSection: string): string {
+    return `
+You are a synthesizer of theological responses. Your job is to integrate the contributions of several specialists into ONE cohesive document.
+
+ORIGINAL QUESTION: "${originalQuestion}"
+
+SPECIALIST RESPONSES:
+${specialistSection}
+
+SYNTHESIS RULES (CRITICAL):
+
+1. NEVER attribute ideas to the tutors/specialists. Tutors are NOT sources.
+   FORBIDDEN: "(Dr. Berith, Hebrew Exegesis)", "(Pastor Noutetic)", "According to Dr. Crisóstomo...", "Based on Dr. X's perspective"
+   Tutors are internal; the end user must not see them cited.
+
+2. PRESERVE valid citations to real documents using the format (Author, Title, p. N).
+   Valid examples to keep: "(Kidner, Psalms 1-72, p. 45)", "(Wallace, Greek Grammar, p. 213)"
+
+3. REMOVE any suspicious citation:
+   - Meaningless alphanumeric sequences like "(lkxxzy9wx7z7, p. 184)" — delete them.
+   - Generic citations like "(Pastor Noutetic)" or "(Dr. Berith)" — delete them.
+   - If a specialist said "Based on <strange_thing>, cited by Dr. X" — remove that attribution.
+
+4. Integrate the perspectives WITHOUT stating which specialist they come from. The result must read as ONE expert author.
+
+5. If the same citation appears in several specialists, include it ONCE.
+
+6. Use Markdown for structure. Begin directly with the integrated content, no preambles.
+`.trim();
 }

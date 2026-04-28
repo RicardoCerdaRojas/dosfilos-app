@@ -1,5 +1,26 @@
 import { AIAgent } from '../entities/AIAgent';
 import { AIChatMessage } from '../entities/AIChatSession';
+import type { SupportedLanguage } from '../types/i18n';
+
+/**
+ * Response modes control both length and style/audience of the generated reply.
+ *
+ * Auto:
+ *   - auto:      system infers the best mode from the user's message via the router LLM
+ *
+ * Length-oriented:
+ *   - concise:   2–4 lines, no structure, minimal citation
+ *   - detailed:  default thorough response with structure and callouts
+ *
+ * Style-oriented:
+ *   - academic:  max rigor, tecnicismos, paradigms, Hebrew/Greek, dense bibliography
+ *   - pastoral:  sermon prep / practical application, scripture-forward, minimal jargon
+ *   - layperson: accessible language, analogies, no Greek/Hebrew unless indispensable
+ */
+export type ResponseMode = 'auto' | 'concise' | 'detailed' | 'academic' | 'pastoral' | 'layperson';
+
+/** The concrete mode actually applied to the prompt — never 'auto'. */
+export type ConcreteResponseMode = Exclude<ResponseMode, 'auto'>;
 
 export interface SourceReference {
     title: string;
@@ -7,6 +28,12 @@ export interface SourceReference {
     uri?: string;
     snippet?: string;
     page?: number;
+    /**
+     * Whether this source may be cited publicly (non-admin users).
+     * Propagated from LibraryResource.publiclyCitable through the retrieval pipeline.
+     * Defaults to false (safe) when absent.
+     */
+    publiclyCitable?: boolean;
 }
 
 export interface IAIGeneratorService {
@@ -21,14 +48,21 @@ export interface IAIGeneratorService {
         history: AIChatMessage[],
         message: string,
         onChunk: (text: string) => void,
-        lengthPreference?: 'concise' | 'detailed',
+        lengthPreference?: ResponseMode,
         onSources?: (sources: SourceReference[]) => void,
         /**
          * Phase 2 RAG: formatted context block retrieved via semantic search.
          * When provided, it's prepended to the message and the Gemini fileSearch
          * tool is skipped. Sources come from the caller (not grounding metadata).
          */
-        retrievedContext?: string
+        retrievedContext?: string,
+        /**
+         * Locale of the response. Drives both the resolution of the agent's
+         * localized `systemInstruction` and a defense-in-depth directive that
+         * forces the model to reply in this language regardless of the
+         * authoring language of the system prompt.
+         */
+        language?: SupportedLanguage,
     ): Promise<string>;
 
     /**
@@ -43,8 +77,9 @@ export interface IAIGeneratorService {
         agent: AIAgent,
         history: AIChatMessage[],
         message: string,
-        lengthPreference?: 'concise' | 'detailed',
-        enableThinking?: boolean
+        lengthPreference?: ResponseMode,
+        enableThinking?: boolean,
+        language?: SupportedLanguage,
     ): Promise<string>;
 
     /**
@@ -56,6 +91,7 @@ export interface IAIGeneratorService {
         agent: AIAgent,
         history: AIChatMessage[],
         message: string,
-        lengthPreference?: 'concise' | 'detailed'
+        lengthPreference?: ResponseMode,
+        language?: SupportedLanguage,
     ): Promise<{ response: string; sources: SourceReference[] }>;
 }

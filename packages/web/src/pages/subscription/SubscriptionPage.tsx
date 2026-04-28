@@ -4,10 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crown } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@dosfilos/infrastructure';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '@dosfilos/infrastructure';
+import { authService } from '@dosfilos/application';
+import { FirebaseUserProfileRepository } from '@dosfilos/infrastructure';
 import { toast } from 'sonner';
 import { CancelSubscriptionDialog } from '@/components/subscription/dialogs/CancelSubscriptionDialog';
 import { PlanChangeDialog } from '@/components/subscription/dialogs/PlanChangeDialog';
@@ -15,6 +13,9 @@ import { ReactivateSubscriptionDialog } from '@/components/subscription/dialogs/
 import { useTranslation } from '@/i18n';
 import { usePlans } from '@/hooks/usePlans';
 import { PlanCard } from '@/components/plans';
+import { UsageDashboard } from '@/components/usage/UsageDashboard';
+
+const userProfileRepository = new FirebaseUserProfileRepository();
 
 export default function SubscriptionPage() {
   const { user } = useFirebase();
@@ -35,10 +36,8 @@ export default function SubscriptionPage() {
 
     const loadProfile = async () => {
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserProfile(userDoc.data());
-        }
+        const profile = await userProfileRepository.getProfile(user.uid);
+        if (profile) setUserProfile(profile);
       } catch (error) {
         console.error('Error loading profile:', error);
       } finally {
@@ -52,16 +51,12 @@ export default function SubscriptionPage() {
   const handleSubscribe = async (priceId: string) => {
     try {
       setLoading(true);
-      const createCheckout = httpsCallable(functions, 'createCheckoutSession');
-      const result: any = await createCheckout({
+      const { url } = await authService.createCheckoutSession({
         priceId,
         successUrl: `${window.location.origin}/dashboard/subscription?success=true`,
         cancelUrl: `${window.location.origin}/dashboard/subscription?canceled=true`,
       });
-
-      if (result.data.url) {
-        window.location.href = result.data.url;
-      }
+      if (url) window.location.href = url;
     } catch (error: any) {
       console.error('Error creating checkout:', error);
       toast.error(error.message || t('errors.checkoutError'));
@@ -76,12 +71,9 @@ export default function SubscriptionPage() {
   };
 
   const handleDialogSuccess = async () => {
-    // Reload user profile
     if (!user) return;
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (userDoc.exists()) {
-      setUserProfile(userDoc.data());
-    }
+    const profile = await userProfileRepository.getProfile(user.uid);
+    if (profile) setUserProfile(profile);
   };
 
   const currentPlanId = userProfile?.subscription?.planId || 'free';
@@ -125,6 +117,11 @@ export default function SubscriptionPage() {
         <p className="text-muted-foreground">
           {t('subtitle')}
         </p>
+      </div>
+
+      {/* Usage this month — personal library quotas */}
+      <div className="mb-8">
+        <UsageDashboard />
       </div>
 
       {/* Current Plan Badge */}
@@ -219,8 +216,11 @@ export default function SubscriptionPage() {
                 
                 // If user doesn't have a subscription, create checkout
                 if (!userProfile?.subscription || !isSubscriptionActive) {
-                  if (selectedPlanData.stripeProductIds && selectedPlanData.stripeProductIds.length > 0) {
-                    handleSubscribe(selectedPlanData.stripeProductIds[0] || '');
+                  // Default to monthly billing for now. Swap to a billing-cycle
+                  // toggle here when the UI for yearly checkout lands.
+                  const priceId = selectedPlanData.stripePriceIds?.monthly;
+                  if (priceId) {
+                    handleSubscribe(priceId);
                   }
                 } else {
                   // User has active subscription - show change dialog

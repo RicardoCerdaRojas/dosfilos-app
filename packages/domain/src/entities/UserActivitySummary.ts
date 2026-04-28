@@ -3,7 +3,15 @@
  */
 export interface ContentActivity {
     id: string;
-    type: 'sermon' | 'greek_session' | 'series' | 'library_upload' | 'preaching_plan';
+    type:
+        | 'sermon'
+        | 'greek_session'
+        | 'hebrew_session'
+        | 'faculty_session'
+        | 'project'
+        | 'series'
+        | 'library_upload'
+        | 'preaching_plan';
     title: string;
     createdAt: Date;
     status?: string;
@@ -25,6 +33,9 @@ export interface UserActivitySummary {
     totalSermonsGenerated: number;      // AI-generated
     totalGreekSessions: number;
     totalGreekSessionsCompleted: number;
+    totalHebrewSessions: number;
+    totalFacultySessions: number;
+    totalProjectsCreated: number;
     totalSeriesCreated: number;
     totalLibraryUploads: number;
     totalPreachingPlans: number;

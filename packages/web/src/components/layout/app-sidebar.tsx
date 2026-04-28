@@ -1,8 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { 
-  Home, FileText, Sparkles, Settings, LogOut, 
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText
+import {
+  Home, FileText, Sparkles, Settings, LogOut,
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -15,6 +15,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -94,27 +95,52 @@ export function AppSidebar() {
     checkAdminRole();
   }, [user]);
 
-  const navigationGroups = [
-    // Group 1: Main
-    [
-      { name: t('menu.dashboard'), href: '/dashboard', icon: Home },
-      { name: 'Biblia', href: '/dashboard/bible', icon: Book },
-      { name: 'Mis Tutores', href: '/dashboard/faculty', icon: MessageSquareQuote },
-      { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
-      { name: 'Entrenador Hebreo', href: '/dashboard/hebrew-tutor', icon: BookOpen },
-    ],
-    // Group 2: Planning
-    [
-      { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
-      ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
-      { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
-    ],
-    // Group 3: Resources
-    [
-      ...(isAdmin ? [{ name: t('menu.library'), href: '/dashboard/library', icon: Library }] : []),
-      { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
-      { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
-    ],
+  // Sidebar groups follow the user's mental model, not the feature taxonomy:
+  //   Tu trabajo  — what you produce (projects, sermons, planning)
+  //   Tu estudio  — ongoing disciplines (Bible, Greek, Hebrew)
+  //   Tu entorno  — tools always available (library, faculty)
+  //   Cuenta      — settings, subscription
+  const navigationGroups: Array<{ label?: string; items: Array<{ name: string; href: string; icon: any }> }> = [
+    {
+      // Dashboard — no label, sits at the very top
+      items: [
+        { name: t('menu.dashboard'), href: '/dashboard', icon: Home },
+      ],
+    },
+    {
+      label: t('groups.work'),
+      items: [
+        { name: t('menu.projects'), href: '/dashboard/projects', icon: FolderKanban },
+        { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
+        { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
+        ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
+      ],
+    },
+    {
+      label: t('groups.study'),
+      items: [
+        { name: t('menu.bible'), href: '/dashboard/bible', icon: Book },
+        { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
+        { name: t('menu.hebrewTutor'), href: '/dashboard/hebrew-tutor', icon: BookOpen },
+      ],
+    },
+    {
+      label: t('groups.environment'),
+      items: [
+        // Biblioteca personal — cada usuario tiene la suya (tenant isolation por userId).
+        // El material subido es responsabilidad del usuario (ver TOS); la plataforma
+        // actúa como herramienta de procesamiento, no como distribuidor.
+        { name: t('menu.library'), href: '/dashboard/library', icon: Library },
+        { name: t('menu.faculty'), href: '/dashboard/faculty', icon: MessageSquareQuote },
+      ],
+    },
+    {
+      label: t('groups.account'),
+      items: [
+        { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
+        { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
+      ],
+    },
   ];
 
   const adminNavigation = [
@@ -125,6 +151,8 @@ export function AppSidebar() {
     { name: 'Glosario Léxico', href: '/dashboard/admin/hebrew-lexicon', icon: BookOpenText },
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
     { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
+    { name: 'LlamaParse Monitor', href: '/dashboard/admin/llamaparse-monitoring', icon: Gauge },
+    { name: 'Audit Log', href: '/dashboard/admin/audit-log', icon: ScrollText },
   ];
 
   // Subscribe to new leads count for admin
@@ -215,9 +243,14 @@ export function AppSidebar() {
         {navigationGroups.map((group, groupIndex) => (
           <div key={groupIndex}>
             <SidebarGroup>
+              {group.label && (
+                <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">
+                  {group.label}
+                </SidebarGroupLabel>
+              )}
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.map((item) => {
+                  {group.items.map((item) => {
                     const isActive = isRouteActive(item.href);
                     return (
                       <SidebarMenuItem key={item.name}>

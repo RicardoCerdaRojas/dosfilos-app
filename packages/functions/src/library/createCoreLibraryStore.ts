@@ -7,28 +7,33 @@ interface CreateCoreLibraryStoreRequest {
     description?: string;
 }
 
+/**
+ * Creates a new Core Library store.
+ *
+ * Post Phase-2-only cleanup: this function NO LONGER creates a Gemini File Search
+ * store. Stores are pure logical keys that document_chunks are tagged with via the
+ * `stores: string[]` array. Retrieval filters chunks by those keys through
+ * findNearest — no external Gemini store is needed.
+ *
+ * The `config/coreLibraryStores.stores[key]` entry is kept for backwards
+ * compatibility with older code that expected a URI value there, but it now
+ * stores `null`.
+ */
 export const createCoreLibraryStore = onCall<CreateCoreLibraryStoreRequest>(
     {
         cors: true,
-        memory: '1GiB',
-        timeoutSeconds: 180,
-        secrets: ['GEMINI_API_KEY']
+        memory: '256MiB',
+        timeoutSeconds: 30,
     },
     async (request) => {
         const db = getFirestore();
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            throw new HttpsError('failed-precondition', 'GEMINI_API_KEY not configured');
-        }
 
-        // Only admin can call this
         if (!request.auth || request.auth.token?.email !== 'rdocerda@gmail.com') {
             throw new HttpsError('permission-denied', 'Only admin can create core library stores');
         }
 
         const { key, displayName, description } = request.data;
 
-        // Validation
         if (!key || !/^[a-z0-9-]+$/.test(key)) {
             throw new HttpsError('invalid-argument', 'Invalid key. Must be lowercase alphanumeric with hyphens.');
         }
@@ -37,64 +42,45 @@ export const createCoreLibraryStore = onCall<CreateCoreLibraryStoreRequest>(
         }
 
         try {
-            console.log(`📦 Creating new Core Store: ${displayName} (${key})...`);
+            console.log(`📦 Creating Core Store: ${displayName} (${key}) — Phase 2 only, no Gemini store`);
 
-            // 1. Check if key already exists
             const configRef = db.doc('config/coreLibraryStores');
             const configSnap = await configRef.get();
             const config = configSnap.exists ? configSnap.data() : null;
 
-            if (config?.stores?.[key]) {
+            if (config?.stores && key in config.stores) {
                 throw new HttpsError('already-exists', `Store with key '${key}' already exists`);
             }
 
-            // 2. Create Store in Gemini
-            const createResponse = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/fileSearchStores?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ displayName: `Dos Filos - ${displayName}` })
-                }
-            );
-
-            if (!createResponse.ok) {
-                const errorText = await createResponse.text();
-                throw new HttpsError('internal', `Failed to create store in Gemini: ${errorText}`);
-            }
-
-            const storeData = await createResponse.json() as { name: string };
-            const newStoreId = storeData.name;
-            console.log(`✅ Gemini Store created: ${newStoreId}`);
-
-            // 3. Update Config in Firestore
+            // Write the store metadata — the value is kept as `null` for backwards
+            // compatibility with code paths that read `config.stores[key]` expecting
+            // either a Gemini URI or null.
             await configRef.set({
                 stores: {
                     ...(config?.stores || {}),
-                    [key]: newStoreId
+                    [key]: null,
                 },
                 files: {
                     ...(config?.files || {}),
-                    [key]: []
+                    [key]: [],
                 },
-                descriptions: { // New field for descriptions
+                descriptions: {
                     ...(config?.descriptions || {}),
-                    [key]: description || ''
+                    [key]: description || '',
                 },
-                displayNames: { // Save display name explicitly
+                displayNames: {
                     ...(config?.displayNames || {}),
-                    [key]: displayName
+                    [key]: displayName,
                 },
-                lastValidatedAt: new Date()
+                lastValidatedAt: new Date(),
             }, { merge: true });
 
+            console.log(`✅ Core Store registered: ${key}`);
             return {
                 success: true,
                 key,
-                storeId: newStoreId,
-                message: `Store '${displayName}' created successfully`
+                message: `Store '${displayName}' creado (Phase 2 RAG)`,
             };
-
         } catch (error: any) {
             console.error(`❌ Error creating store ${key}:`, error);
             if (error instanceof HttpsError) throw error;

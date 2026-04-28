@@ -1,0 +1,473 @@
+{
+    "common": {
+        "accessDenied": {
+            "title": "Acceso Denegado",
+            "description": "No tienes permisos para ver esta página.",
+            "homeButton": "Volver al inicio"
+        },
+        "noPermission": "No tienes permisos para acceder a esta página"
+    },
+    "users": {
+        "title": "Gestión de Usuarios",
+        "subtitle_one": "1 usuario en total",
+        "subtitle_other": "{{total}} usuarios en total",
+        "subtitleVisible_one": "Mostrando 1 de {{total}}",
+        "subtitleVisible_other": "Mostrando {{visible}} de {{total}}",
+        "backToAnalytics": "Analytics",
+        "exportCsv": "Exportar CSV",
+        "exportCsvFiltered": "Exportar CSV ({{count}} filtrados)",
+        "exportCsvAll": "Exportar CSV (todos)",
+        "csvHeaders": {
+            "email": "Email",
+            "name": "Nombre",
+            "plan": "Plan",
+            "status": "Estado",
+            "engagement": "Engagement",
+            "lastLogin": "Último Login",
+            "registeredAt": "Fecha Registro"
+        },
+        "filters": {
+            "search": "Buscar por nombre o email...",
+            "plan": "Plan",
+            "status": "Estado",
+            "allPlans": "Todos los planes",
+            "allStatuses": "Todos los estados",
+            "active": "Activos",
+            "trialing": "En prueba",
+            "cancelled": "Cancelados",
+            "pastDue": "Pago pendiente",
+            "disabled": "Deshabilitados"
+        },
+        "loading": "Cargando usuarios...",
+        "loadingMore": "Cargando más...",
+        "loadMore": "Cargar más",
+        "endOfList": "No hay más usuarios para mostrar",
+        "empty": {
+            "title": "No se encontraron usuarios",
+            "noResults": "Intenta ajustar los filtros",
+            "noUsers": "Aún no hay usuarios registrados"
+        },
+        "table": {
+            "user": "Usuario",
+            "plan": "Plan",
+            "status": "Estado",
+            "activity": "Actividad",
+            "engagement": "Engagement",
+            "lastLogin": "Último Login",
+            "registered": "Registrado",
+            "actions": "Acciones",
+            "noName": "Sin nombre",
+            "sermonsCount_one": "1 sermón",
+            "sermonsCount_other": "{{count}} sermones",
+            "tutorAndDrafts": "{{greek}} Greek · {{drafts}} borradores",
+            "neverLogged": "Nunca",
+            "defaultStatus": "activo",
+            "selectAria": "Seleccionar usuario {{email}}",
+            "selectAllAria": "Seleccionar todos los usuarios visibles",
+            "trialEndsIn": "Trial termina {{when}}",
+            "trialEnded": "Trial expirado",
+            "disabledBadge": "Deshabilitado"
+        },
+        "sort": {
+            "name": "Nombre",
+            "registered": "Registro",
+            "lastLogin": "Último login",
+            "engagement": "Engagement",
+            "ascending": "ascendente",
+            "descending": "descendente",
+            "clickToSort": "Click para ordenar"
+        },
+        "rowActions": {
+            "activity": "Actividad",
+            "view": "Ver",
+            "viewActivity": "Ver actividad detallada",
+            "changePlan": "Cambiar plan",
+            "resendEmail": "Reenviar correo de bienvenida",
+            "enable": "Habilitar usuario",
+            "disable": "Deshabilitar usuario",
+            "delete": "Eliminar permanentemente"
+        },
+        "bulkActions": {
+            "selectedCount_one": "1 seleccionado",
+            "selectedCount_other": "{{count}} seleccionados",
+            "clearSelection": "Limpiar selección",
+            "disable": "Deshabilitar seleccionados",
+            "enable": "Habilitar seleccionados",
+            "confirmDisableTitle": "Deshabilitar {{count}} usuario(s)",
+            "confirmDisableDescription": "Estos usuarios no podrán iniciar sesión, pero sus datos se preservan. Puedes habilitarlos de nuevo en cualquier momento.",
+            "confirmEnableTitle": "Habilitar {{count}} usuario(s)",
+            "confirmEnableDescription": "Estos usuarios recuperarán acceso completo a la plataforma.",
+            "running": "Procesando {{done}} de {{total}}...",
+            "successAll": "{{count}} usuario(s) procesado(s) correctamente",
+            "successPartial": "{{ok}} ok · {{failed}} fallaron",
+            "errorAll": "No se pudo procesar ningún usuario"
+        },
+        "disableDialog": {
+            "title": "¿Deshabilitar este usuario?",
+            "description": "La cuenta de <strong>{{email}}</strong> quedará bloqueada. El usuario no podrá iniciar sesión, pero todos sus datos (sermones, notas, sesiones) se conservarán intactos. Puedes reactivar la cuenta en cualquier momento.",
+            "cancel": "Cancelar",
+            "confirm": "Deshabilitar Usuario",
+            "loading": "Deshabilitando..."
+        },
+        "deleteDialog": {
+            "title": "⚠️ Eliminar permanentemente",
+            "warning": "Esta acción <strong>no se puede deshacer</strong>. Se borrarán de forma permanente:",
+            "items": {
+                "auth": "La cuenta de Firebase Auth",
+                "content": "Todos los sermones, series y borradores",
+                "history": "El historial de sesiones y analytics",
+                "subscription": "La suscripción en Stripe"
+            },
+            "confirmPrompt": "Para confirmar, escribe el email del usuario:",
+            "placeholder": "Escribe el email para confirmar...",
+            "cancel": "Cancelar",
+            "confirm": "Eliminar Permanentemente",
+            "loading": "Eliminando..."
+        },
+        "changePlanDialog": {
+            "title": "Cambiar plan de {{name}}",
+            "description": "Selecciona el nuevo plan. El cambio se aplicará inmediatamente y Stripe prorrateará la diferencia automáticamente.",
+            "currentPlan": "Plan actual",
+            "newPlan": "Nuevo plan",
+            "billingCycle": "Ciclo de facturación",
+            "monthly": "Mensual",
+            "yearly": "Anual",
+            "proration": "Stripe ajustará el cobro proporcionalmente al tiempo restante del periodo actual.",
+            "noChange": "Selecciona un plan distinto al actual.",
+            "cancel": "Cancelar",
+            "confirm": "Aplicar cambio",
+            "loading": "Aplicando..."
+        },
+        "details": {
+            "title": "Detalles del usuario",
+            "description": "Información completa de {{name}}",
+            "sections": {
+                "basic": "Información básica",
+                "subscription": "Suscripción",
+                "activity": "Actividad y engagement",
+                "revenue": "Ingresos",
+                "sensitive": "Identificadores internos"
+            },
+            "fields": {
+                "name": "Nombre",
+                "email": "Email",
+                "userId": "User ID",
+                "stripeCustomerId": "Stripe Customer ID",
+                "created": "Creado",
+                "plan": "Plan",
+                "status": "Estado",
+                "startDate": "Inicio",
+                "nextBilling": "Próximo cobro",
+                "trialEnd": "Fin del trial",
+                "engagementScore": "Score de engagement",
+                "totalLogins": "Logins totales",
+                "sermonsCreated": "Sermones creados",
+                "lastLogin": "Último login",
+                "lastActivity": "Última actividad",
+                "totalRevenue": "Ingresos totales"
+            },
+            "trialActive": "Trial activo · termina {{when}}",
+            "trialExpired": "Trial expirado · {{when}}",
+            "showSensitive": "Mostrar identificadores internos",
+            "hideSensitive": "Ocultar identificadores internos",
+            "changePlanButton": "Cambiar plan",
+            "close": "Cerrar"
+        },
+        "detail": {
+            "backToList": "Usuarios",
+            "noName": "Sin nombre",
+            "notFound": "Usuario no encontrado",
+            "disabled": "Deshabilitado",
+            "tabs": {
+                "overview": "Resumen",
+                "timeline": "Timeline",
+                "usage": "Uso & cuotas",
+                "subscription": "Suscripción",
+                "audit": "Audit log"
+            }
+        },
+        "timeline": {
+            "title": "Últimos {{days}} días",
+            "range": "{{days}} días",
+            "allTypes": "Todos los tipos",
+            "itemCount_one": "1 evento",
+            "itemCount_other": "{{count}} eventos",
+            "empty": "Sin actividad en este rango"
+        },
+        "usage": {
+            "period": "Periodo actual",
+            "planLabel": "Plan: {{plan}}",
+            "loadError": "No se pudo cargar el uso",
+            "pagesProcessed": "Páginas procesadas",
+            "pagesHint": "Páginas extraídas vía LlamaParse este mes",
+            "queriesUsed": "Consultas usadas",
+            "queriesHint": "Mensajes a tutores enviados este mes",
+            "docsUploaded": "Documentos subidos",
+            "docsHint": "Documentos en biblioteca personal",
+            "unlimited": "ilimitado",
+            "noQuota": "sin cuota",
+            "remaining_one": "1 restante",
+            "remaining_other": "{{count}} restantes",
+            "balance": {
+                "title": "Balance de procesamiento",
+                "standardAvailable": "Std disponibles",
+                "premiumAvailable": "Premium disponibles",
+                "standardSpent": "Std gastadas",
+                "premiumSpent": "Premium gastadas"
+            }
+        },
+        "subscription": {
+            "none": "Este usuario no tiene suscripción activa",
+            "openStripe": "Abrir en Stripe",
+            "cancelAtPeriodEnd": "Se cancela al fin del periodo",
+            "startDate": "Inicio",
+            "currentPeriod": "Periodo actual",
+            "trialEnd": "Fin del trial",
+            "cancelledAt": "Cancelada",
+            "gracePeriodEnd": "Fin gracia",
+            "paymentIssues": "Problemas de pago",
+            "failedAttempts_one": "1 intento de pago fallido",
+            "failedAttempts_other": "{{count}} intentos de pago fallidos",
+            "status": {
+                "active": "Activa",
+                "trialing": "En trial",
+                "past_due": "Pago vencido",
+                "cancelled": "Cancelada",
+                "incomplete": "Incompleta"
+            }
+        },
+        "audit": {
+            "scopedHint": "Acciones admin sobre este usuario",
+            "openFull": "Ver audit log completo",
+            "empty": "Sin acciones registradas para este usuario"
+        },
+        "activity": {
+            "title": "Actividad del usuario",
+            "loading": "Cargando actividad...",
+            "errorPrefix": "Error",
+            "notFound": "No se encontró información del usuario",
+            "noName": "Sin nombre",
+            "lastLoginRelative": "Último login: {{when}}",
+            "totalLogins_one": "1 login total",
+            "totalLogins_other": "{{count}} logins totales",
+            "createdToday_one": "Creado hoy (1)",
+            "createdToday_other": "Creado hoy ({{count}})",
+            "createdThisWeek_one": "Esta semana (1)",
+            "createdThisWeek_other": "Esta semana ({{count}})",
+            "summary": {
+                "title": "Resumen de actividad",
+                "sermons": "Sermones",
+                "published": "Publicados",
+                "series": "Series",
+                "plans": "Planes",
+                "greekTutor": "Greek Tutor",
+                "hebrewTutor": "Hebrew Tutor",
+                "faculty": "Faculty",
+                "projects": "Proyectos",
+                "library": "Biblioteca"
+            },
+            "recent": {
+                "defaultTitle": "Contenido reciente",
+                "empty": "No hay contenido reciente",
+                "itemCount_one": "1 item",
+                "itemCount_other": "{{count}} items",
+                "showMore": "Ver {{count}} más...",
+                "showLess": "Ver menos",
+                "types": {
+                    "sermon": "Sermón",
+                    "greek_session": "Greek Tutor",
+                    "hebrew_session": "Hebrew Tutor",
+                    "faculty_session": "Faculty",
+                    "project": "Proyecto",
+                    "series": "Serie",
+                    "library_upload": "Biblioteca",
+                    "preaching_plan": "Plan"
+                },
+                "status": {
+                    "published": "Publicado",
+                    "draft": "Borrador",
+                    "completed": "Completado",
+                    "in_progress": "En progreso",
+                    "active": "Activo"
+                }
+            }
+        },
+        "toasts": {
+            "deleteSuccess": "Usuario eliminado permanentemente",
+            "deleteError": "Error al eliminar usuario",
+            "disableSuccess": "Usuario {{email}} deshabilitado correctamente",
+            "disableError": "Error al deshabilitar usuario",
+            "enableSuccess": "Usuario {{email}} habilitado correctamente",
+            "enableError": "Error al habilitar usuario",
+            "resendSuccess": "Email de bienvenida enviado a {{email}}",
+            "resendError": "Error al reenviar el correo",
+            "changePlanSuccess": "Plan actualizado correctamente",
+            "changePlanError": "Error al cambiar el plan",
+            "grantSuccess": "Créditos acreditados correctamente",
+            "grantError": "Error al acreditar páginas",
+            "extendTrialSuccess": "Trial extendido correctamente",
+            "extendTrialError": "Error al extender el trial"
+        },
+        "grantCreditsDialog": {
+            "title": "Acreditar páginas a {{name}}",
+            "description": "Suma páginas al balance del usuario. La acción queda registrada en el audit log con el motivo que indiques.",
+            "standardPages": "Páginas Estándar (Gemini)",
+            "premiumPages": "Páginas Premium (LlamaParse)",
+            "reason": "Motivo (queda en el audit log)",
+            "reasonPlaceholder": "Ej. Compensación por bug en extracción del 27/04, ticket #423",
+            "currentBalance": "Balance actual",
+            "afterGrant": "Después del grant",
+            "missingValues": "Indica al menos 1 página y un motivo.",
+            "cancel": "Cancelar",
+            "confirm": "Acreditar",
+            "loading": "Acreditando..."
+        },
+        "extendTrialDialog": {
+            "title": "Extender trial de {{name}}",
+            "description": "Suma días al periodo de prueba. Si el trial ya expiró, se reabre desde hoy + N días. Stripe se sincroniza automáticamente.",
+            "days": "Días a agregar",
+            "currentTrialEnd": "Trial termina actualmente",
+            "newTrialEnd": "Nuevo fin de trial",
+            "noTrial": "Sin trial activo (se creará uno desde hoy)",
+            "reason": "Motivo (queda en el audit log)",
+            "reasonPlaceholder": "Ej. Solicitud de ventas, cliente potencial Equipo",
+            "daysOutOfRange": "Días debe estar entre 1 y 90.",
+            "cancel": "Cancelar",
+            "confirm": "Extender",
+            "loading": "Extendiendo..."
+        },
+        "stats": {
+            "total": "Total",
+            "subscribers": "Suscriptores",
+            "subscribersHint": "Pagando ahora",
+            "trialing": "En trial",
+            "newThisMonth": "Nuevos este mes",
+            "mrr": "MRR estimado",
+            "conversion": "Conversión",
+            "conversionHint": "{{paying}} de {{total}} pagando"
+        }
+    },
+    "audit": {
+        "title": "Audit Log",
+        "subtitle": "Registro inmutable de toda acción admin sobre cuentas de usuario.",
+        "backToUsers": "Usuarios",
+        "loading": "Cargando registro...",
+        "loadError": "No se pudo cargar el audit log",
+        "empty": {
+            "title": "Sin entradas",
+            "description": "Todavía no hay acciones registradas — o tus filtros son demasiado restrictivos."
+        },
+        "filters": {
+            "search": "Buscar por email o uid...",
+            "action": "Acción",
+            "allActions": "Todas las acciones",
+            "actor": "Actor",
+            "allActors": "Todos los actores",
+            "dateFrom": "Desde",
+            "dateTo": "Hasta",
+            "clear": "Limpiar filtros"
+        },
+        "table": {
+            "when": "Cuándo",
+            "actor": "Admin",
+            "action": "Acción",
+            "target": "Usuario afectado",
+            "details": "Detalles"
+        },
+        "actions": {
+            "user.delete": "Eliminó usuario",
+            "user.disable": "Deshabilitó",
+            "user.enable": "Habilitó",
+            "user.resend_welcome_email": "Reenvió bienvenida",
+            "user.change_plan": "Cambió plan",
+            "user.bulk_disable": "Bulk: deshabilitó",
+            "user.bulk_enable": "Bulk: habilitó",
+            "user.grant_credits": "Acreditó páginas",
+            "user.extend_trial": "Extendió trial"
+        },
+        "viewForUser": "Ver historial completo",
+        "showingCount_one": "1 entrada",
+        "showingCount_other": "{{count}} entradas"
+    },
+    "llamaParse": {
+        "title": "LlamaParse — Monitoreo de cuentas",
+        "subtitle": "Rotación de API keys y consumo de créditos por cuenta.",
+        "refresh": "Actualizar",
+        "loadError": "Error al cargar las cuentas",
+        "toggleError": "Error al alternar el estado",
+        "activated": "Cuenta activada",
+        "deactivated": "Cuenta desactivada",
+        "empty": "No hay cuentas configuradas. Crea documentos en `llamaparseAccounts` para empezar la rotación.",
+        "summary": {
+            "accounts": "Cuentas",
+            "totalRemaining": "Créditos disponibles (total)",
+            "totalUsed": "Consumo del periodo"
+        },
+        "table": {
+            "name": "Nombre",
+            "priority": "Prioridad",
+            "usage": "Uso",
+            "resetDate": "Próximo reset",
+            "status": "Estado",
+            "actions": "Acciones"
+        },
+        "status": {
+            "healthy": "Saludable",
+            "warning": "Advertencia",
+            "critical": "Crítica",
+            "inactive": "Inactiva"
+        },
+        "actions": {
+            "activate": "Activar",
+            "deactivate": "Desactivar"
+        }
+    },
+    "leads": {
+        "title": "Leads de Contacto",
+        "subtitle": "{{total}} leads totales · {{newCount}} nuevos",
+        "backToDashboard": "Dashboard",
+        "loading": "Cargando leads...",
+        "loadError": "Error al cargar los leads",
+        "filters": {
+            "search": "Buscar por nombre, email o iglesia...",
+            "type": "Tipo",
+            "status": "Estado",
+            "allTypes": "Todos los tipos",
+            "allStatuses": "Todos los estados"
+        },
+        "types": {
+            "sales": "Ventas",
+            "scholarship": "Beca",
+            "demo": "Demo",
+            "support": "Soporte"
+        },
+        "statuses": {
+            "new": "Nuevo",
+            "contacted": "Contactado",
+            "converted": "Convertido",
+            "closed": "Cerrado"
+        },
+        "statusOptions": {
+            "new": "Nuevos",
+            "contacted": "Contactados",
+            "converted": "Convertidos",
+            "closed": "Cerrados"
+        },
+        "empty": {
+            "title": "No hay leads",
+            "noResults": "No se encontraron leads con esos filtros",
+            "noLeads": "Aún no tienes leads de contacto"
+        },
+        "actions": {
+            "delete": "Eliminar",
+            "deleteConfirm": "¿Estás seguro de eliminar este lead?",
+            "updateSuccess": "Estado actualizado",
+            "updateError": "Error al actualizar",
+            "deleteSuccess": "Lead eliminado",
+            "deleteError": "Error al eliminar"
+        },
+        "card": {
+            "unknownDate": "Fecha desconocida"
+        }
+    }
+}

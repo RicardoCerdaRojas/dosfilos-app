@@ -3,9 +3,23 @@ import { User, UserAnalytics } from '../entities/User';
 /**
  * Filter options for user queries
  */
+/**
+ * Subscription statuses surfaced in admin filters. `disabled` is a synthetic
+ * value (not a real Stripe status) that maps to `users/{uid}.status === 'disabled'`
+ * — the admin-facing soft-disable flag. The other values mirror Stripe's own
+ * subscription.status enum.
+ */
+export type UserAdminStatus =
+    | 'active'
+    | 'trialing'
+    | 'past_due'
+    | 'cancelled'
+    | 'suspended'
+    | 'disabled';
+
 export interface UserFilters {
-    planId?: string; // 'free', 'pro', 'team'
-    status?: 'active' | 'cancelled' | 'suspended';
+    planId?: string; // 'free', 'basic', 'pro', 'team'
+    status?: UserAdminStatus;
     engagementLevel?: 'low' | 'medium' | 'high';
     lastLoginBefore?: Date;
     lastLoginAfter?: Date;

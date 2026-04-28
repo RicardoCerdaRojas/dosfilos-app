@@ -1,6 +1,5 @@
 import {
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
     updateProfile as firebaseUpdateProfile,
     sendPasswordResetEmail,
@@ -8,7 +7,7 @@ import {
     GoogleAuthProvider,
     User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { IAuthRepository } from '@dosfilos/domain';
 import { UserEntity } from '@dosfilos/domain';
@@ -33,51 +32,35 @@ export class FirebaseAuthRepository implements IAuthRepository {
         const userCredential = await signInWithPopup(auth, provider);
         const user = userCredential.user;
 
-        // Check if this is a new user by looking at metadata
-        const isNewUser = userCredential.user.metadata.creationTime === userCredential.user.metadata.lastSignInTime;
-
-        // Create or update user document in Firestore
-        const userData: any = {
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            updatedAt: serverTimestamp(),
-        };
-
-        // Only set createdAt for new users
-        if (isNewUser) {
-            userData.createdAt = serverTimestamp();
+        // Google is LOGIN-ONLY. Registration is strictly payment-first, so a Google
+        // account with no matching Firestore profile means the user hasn't completed
+        // the trial sign-up yet. Delete the Auth user we just created to keep the
+        // system clean and throw a typed error so the UI can redirect to /pricing.
+        const userRef = doc(db, 'users', user.uid);
+        const profileSnap = await getDoc(userRef);
+        if (!profileSnap.exists()) {
+            try {
+                await user.delete();
+            } catch {
+                await firebaseSignOut(auth);
+            }
+            const err = new Error('GOOGLE_ACCOUNT_NOT_REGISTERED');
+            (err as any).code = 'auth/not-registered';
+            throw err;
         }
 
+        // Existing user — refresh profile metadata.
         await setDoc(
-            doc(db, 'users', user.uid),
-            userData,
+            userRef,
+            {
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                updatedAt: serverTimestamp(),
+            },
             { merge: true }
         );
 
-        // Track login
-        this.trackLogin().catch(err => console.warn('[Auth] Failed to track login:', err));
-
-        return this.mapFirebaseUserToEntity(user);
-    }
-
-    async signUp(email: string, password: string, displayName: string): Promise<UserEntity> {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Update profile with display name
-        await firebaseUpdateProfile(user, { displayName });
-
-        // Create user document in Firestore
-        await setDoc(doc(db, 'users', user.uid), {
-            email: user.email,
-            displayName,
-            photoURL: null,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-
-        // Track login (first login for new user)
         this.trackLogin().catch(err => console.warn('[Auth] Failed to track login:', err));
 
         return this.mapFirebaseUserToEntity(user);

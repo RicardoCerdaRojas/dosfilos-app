@@ -353,6 +353,37 @@ service cloud.firestore {
       allow write: if false; // Only webhook/Cloud Functions
     }
 
+    // ============================================================================
+    // Admin audit log
+    // ============================================================================
+
+    // Records every super-admin action against a user account (delete, disable,
+    // enable, plan change, bulk ops). Read-only from the client; writes happen
+    // via Cloud Functions using the admin SDK (which bypasses these rules).
+    match /admin_audit_log/{entryId} {
+        allow read: if isSuperAdmin();
+        allow write: if false;
+    }
+
+    // ============================================================================
+    // LlamaParse multi-account rotation (Hito 6)
+    // ============================================================================
+
+    // LlamaParse account registry — admin reads list/toggle status; Cloud
+    // Functions own the consumption counters via admin SDK (bypasses rules).
+    match /llamaparseAccounts/{accountId} {
+      // Super admin sees the monitoring dashboard at
+      // /dashboard/admin/llamaparse-monitoring and toggles `active` to flip an
+      // account out of the rotation.
+      allow read: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      // Creation + deletion intentionally left out: account docs are seeded via
+      // the `seedLlamaParseAccounts` script using the admin SDK. Restricting
+      // create/delete here prevents an admin UI bug from accidentally adding
+      // or removing an account in production.
+      allow create, delete: if false;
+    }
+
     // ============================================================
     // FACULTY AI MODULE - Personal Ministerial Data
     // ============================================================

@@ -20,3 +20,6 @@ export { FirebaseHebrewSessionRepository } from './repositories/FirebaseHebrewSe
 
 // Detective session persistence
 export { FirestoreDetectiveSessionRepository } from './repositories/FirestoreDetectiveSessionRepository.js';
+
+// Per-user study sessions (project-linkable)
+export { FirestoreHebrewStudySessionRepository } from './repositories/FirestoreHebrewStudySessionRepository.js';

@@ -8,15 +8,25 @@
     "register": "Get Started",
     "menu": {
         "dashboard": "Dashboard",
+        "projects": "Projects",
         "sermons": "Sermons",
         "plans": "Preaching Plans",
         "generateSermon": "Generate Sermon",
+        "bible": "Bible",
         "greekTutor": "Greek Tutor",
+        "hebrewTutor": "Hebrew Tutor",
         "library": "Library",
+        "faculty": "Theological Faculty",
         "subscription": "My Subscription",
         "settings": "Settings",
         "admin": "Admin",
         "contactLeads": "Contact Leads"
+    },
+    "groups": {
+        "work": "Your Work",
+        "study": "Your Study",
+        "environment": "Your Environment",
+        "account": "Account"
     },
     "user": {
         "defaultName": "User",

@@ -11,9 +11,11 @@ export { default as i18n } from './config/i18n';
 
 // Hooks
 export { useTranslation } from './hooks/useTranslation';
+export { useLanguageSync } from './hooks/useLanguageSync';
 
 // Components
 export { LanguageSwitcher } from './components/LanguageSwitcher';
+export { LanguageSyncBridge } from './components/LanguageSyncBridge';
 
 // Types
 export type {

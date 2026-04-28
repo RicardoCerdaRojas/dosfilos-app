@@ -1,4 +1,5 @@
 import { Subscription } from './Subscription';
+import type { SupportedLanguage } from '../types/i18n';
 
 /**
  * User role enumeration
@@ -41,6 +42,28 @@ export interface UserAnalytics {
 }
 
 /**
+ * Processing balance for the credit-pack model (see PRICING_PROCESSING_ROADMAP).
+ *
+ * Two separate counters because the underlying extractors have different unit
+ * economics:
+ *   - `standardPagesAvailable`: pages that can be processed via Gemini Flash
+ *     (cheap path, default for narrative books).
+ *   - `premiumPagesAvailable`: pages that can be processed via LlamaParse
+ *     (complex layouts, tables, scanned PDFs).
+ *
+ * Pages added via the bonus inicial of a plan or via credit packs go into the
+ * matching counter. Spent counters are kept for analytics / dashboard.
+ */
+export interface ProcessingBalance {
+    standardPagesAvailable: number;
+    premiumPagesAvailable: number;
+    standardSpentTotal: number;
+    premiumSpentTotal: number;
+    /** Last time the balance changed, used in admin/usage dashboards. */
+    updatedAt?: Date;
+}
+
+/**
  * User metadata for tracking source and context
  */
 export interface UserMetadata {
@@ -68,6 +91,18 @@ export interface User {
     // Subscription fields
     stripeCustomerId?: string;    // Stripe customer ID (at root level)
     subscription?: Subscription;  // Current subscription details
+
+    // Processing balance (credit-pack model)
+    processingBalance?: ProcessingBalance;
+
+    /**
+     * UI + AI output language. Drives both the i18n bundle picked by the client
+     * and the locale resolved for tutor/orchestrator system prompts. Stored at
+     * the user-doc level (not under metadata) so it can be read in a single
+     * Firestore round-trip from any AI use-case. Undefined = inherit
+     * `DEFAULT_LANGUAGE` from `domain/types/i18n.ts`.
+     */
+    preferredLanguage?: SupportedLanguage;
 
     // Analytics & Engagement
     analytics?: UserAnalytics;

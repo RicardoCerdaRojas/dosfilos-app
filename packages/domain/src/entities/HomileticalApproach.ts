@@ -24,7 +24,7 @@ export type ApproachType =
 /**
  * Tone options for sermon delivery
  */
-export type SermonTone =
+export type HomileticalTone =
     | 'exhortativo'     // Encouraging, uplifting
     | 'de ánimo'        // Comforting, hope-giving, faith-strengthening
     | 'didáctico'       // Teaching, instructional
@@ -66,7 +66,7 @@ export interface HomileticalApproachPreview {
     /**
      * Recommended tone for sermon delivery
      */
-    tone: SermonTone;
+    tone: HomileticalTone;
 
     /**
      * Primary purpose or goal of the sermon with this approach
@@ -126,7 +126,7 @@ export interface HomileticalApproach {
     /**
      * Recommended tone for sermon delivery
      */
-    tone: SermonTone;
+    tone: HomileticalTone;
 
     /**
      * Primary purpose or goal of the sermon with this approach

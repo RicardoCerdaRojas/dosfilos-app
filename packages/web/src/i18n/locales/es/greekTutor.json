@@ -295,6 +295,9 @@
             "component": "Componente"
         },
         "errors": {
+            "startTitle": "Error al iniciar sesión",
+            "startMessage": "No pudimos conectar con el asistente exegético.",
+            "retry": "Reintentar",
             "syntaxUnavailable": "⚠️ Análisis no disponible",
             "syntaxErrorMessage": "Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.",
             "whatCanYouDo": "¿Qué puedes hacer?",

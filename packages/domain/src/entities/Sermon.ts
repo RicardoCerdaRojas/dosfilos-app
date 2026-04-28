@@ -50,6 +50,14 @@ export interface Sermon {
 
     // Link back to the faculty study session this sermon was generated from
     sourceFacultySessionId?: string | undefined;
+
+    /**
+     * Optional link to the project this sermon belongs to. Established by:
+     *  - the legacy migration (assigns orphan sermons to a "Material previo" project per user)
+     *  - new sermons created from within a project workspace
+     * Sermons without a `projectId` are still valid (free-form / pre-migration).
+     */
+    projectId?: string | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -73,7 +81,8 @@ export class SermonEntity implements Sermon {
         public scheduledDate?: Date,
         public preachingHistory: PreachingLog[] = [],
         public sourceSermonId?: string,
-        public sourceFacultySessionId?: string
+        public sourceFacultySessionId?: string,
+        public projectId?: string
     ) {
         this.validate();
     }
@@ -95,7 +104,9 @@ export class SermonEntity implements Sermon {
     }
 
     static create(
-        data: Omit<Sermon, 'id' | 'createdAt' | 'updatedAt' | 'preachingHistory'> & { id?: string, preachingHistory?: PreachingLog[] }
+        data: Pick<Sermon, 'userId' | 'title' | 'content'>
+            & Partial<Omit<Sermon, 'userId' | 'title' | 'content' | 'id' | 'createdAt' | 'updatedAt'>>
+            & { id?: string; preachingHistory?: PreachingLog[] }
     ): SermonEntity {
         const d = data as any;
         return new SermonEntity(
@@ -118,7 +129,8 @@ export class SermonEntity implements Sermon {
             data.scheduledDate,
             data.preachingHistory ?? [],
             data.sourceSermonId,
-            data.sourceFacultySessionId
+            data.sourceFacultySessionId,
+            data.projectId
         );
     }
 
@@ -144,7 +156,8 @@ export class SermonEntity implements Sermon {
             data.scheduledDate ?? this.scheduledDate,
             data.preachingHistory ?? this.preachingHistory,
             d.sourceSermonId ?? this.sourceSermonId,
-            d.sourceFacultySessionId ?? this.sourceFacultySessionId
+            d.sourceFacultySessionId ?? this.sourceFacultySessionId,
+            d.projectId ?? this.projectId
         );
     }
 
@@ -168,7 +181,9 @@ export class SermonEntity implements Sermon {
             this.seriesId,
             this.scheduledDate,
             this.preachingHistory,
-            this.sourceSermonId
+            this.sourceSermonId,
+            this.sourceFacultySessionId,
+            this.projectId
         );
     }
 
@@ -210,7 +225,9 @@ export class SermonEntity implements Sermon {
             this.seriesId,
             this.scheduledDate,
             [],
-            this.id // Link back to the source draft
+            this.id, // Link back to the source draft
+            this.sourceFacultySessionId,
+            this.projectId
         );
     }
 
@@ -234,7 +251,9 @@ export class SermonEntity implements Sermon {
             this.seriesId,
             this.scheduledDate,
             this.preachingHistory,
-            this.sourceSermonId
+            this.sourceSermonId,
+            this.sourceFacultySessionId,
+            this.projectId
         );
     }
 
@@ -258,7 +277,9 @@ export class SermonEntity implements Sermon {
             this.seriesId,
             this.scheduledDate,
             this.preachingHistory,
-            this.sourceSermonId
+            this.sourceSermonId,
+            this.sourceFacultySessionId,
+            this.projectId
         );
     }
 
@@ -282,7 +303,9 @@ export class SermonEntity implements Sermon {
             this.seriesId,
             this.scheduledDate,
             this.preachingHistory,
-            this.sourceSermonId
+            this.sourceSermonId,
+            this.sourceFacultySessionId,
+            this.projectId
         );
     }
 

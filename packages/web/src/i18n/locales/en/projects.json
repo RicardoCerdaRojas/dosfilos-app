@@ -1,0 +1,143 @@
+{
+    "breadcrumb": {
+        "back": "Projects"
+    },
+    "notFound": {
+        "title": "Project not found",
+        "back": "Back to projects"
+    },
+    "roadmap": {
+        "label": "Roadmap · {{type}}",
+        "phaseLabel": "Phase {{number}}",
+        "allComplete": {
+            "title": "All phases complete",
+            "description": "Keep polishing the material or archive the project when you're done."
+        },
+        "activePhase": {
+            "label": "Next step · Phase {{number}}"
+        }
+    },
+    "resources": {
+        "sources": {
+            "label": "Sources",
+            "empty": "Attach books and commentaries to scope this project's queries.",
+            "ctaEdit": "Edit sources",
+            "ctaAttach": "Attach sources",
+            "byProcess": "· To process",
+            "process": "Process",
+            "processing": "Processing…",
+            "processTitle": "Process source"
+        },
+        "conversations": {
+            "label": "Conversations",
+            "empty": "Chat with theological tutors. Replies feed your notes.",
+            "ctaStart": "Start conversation"
+        },
+        "greek": {
+            "label": "Greek",
+            "empty": "Study the Greek of the passage. Identify forms, syntax and key words.",
+            "ctaStudy": "Study passage",
+            "ctaLink": "Link existing"
+        },
+        "hebrew": {
+            "label": "Hebrew",
+            "empty": "Analyse a verse in Hebrew: morphology, words and semantics.",
+            "ctaAnalyze": "Analyse verse",
+            "ctaLink": "Link existing"
+        }
+    },
+    "material": {
+        "sectionLabel": "Produced material",
+        "newButton": "New",
+        "empty": "Your notes, outlines, drafts and sermons will accumulate here in chronological order.",
+        "outputKind": {
+            "note": "Note",
+            "draft": "Draft",
+            "outline": "Outline",
+            "sermon": "Sermon"
+        },
+        "sermonStatus": {
+            "published": "Published",
+            "archived": "Archived",
+            "draft": "Draft"
+        },
+        "actions": {
+            "downloadMarkdown": "Download as Markdown",
+            "edit": "Edit",
+            "delete": "Delete"
+        }
+    },
+    "linkSession": {
+        "greek": {
+            "title": "Link existing session",
+            "description": "Greek sessions — choose one to link to this project.",
+            "empty": "No Greek sessions available to link.",
+            "linkButton": "Link",
+            "linking": "Linking…"
+        },
+        "hebrew": {
+            "title": "Link existing session",
+            "description": "Hebrew sessions — choose one to link to this project.",
+            "empty": "No Hebrew sessions available to link.",
+            "linkButton": "Link",
+            "linking": "Linking…"
+        },
+        "toastSuccess": "Session linked to project",
+        "toastError": "Error linking session"
+    },
+    "sourcePicker": {
+        "title": "Project sources",
+        "description": "Select the documents from your library to use as sources in this project.",
+        "searchPlaceholder": "Search your library…",
+        "loading": "Loading your library…",
+        "emptyLibrary": "Your library is empty. Upload documents first.",
+        "noResults": "No results for your search.",
+        "byProcess": "· To process",
+        "summaryNoneSelected": "No sources selected — will use your whole library",
+        "summarySelected_one": "{{count}} source selected",
+        "summarySelected_other": "{{count}} sources selected",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "toastSuccess_one": "{{count}} source linked to the project",
+        "toastSuccess_other": "{{count}} sources linked to the project",
+        "toastError": "Error saving sources"
+    },
+    "outputEditor": {
+        "createTitle": "New material",
+        "editTitle": "Edit material",
+        "description": "Save notes, drafts and outlines associated with the project.",
+        "fields": {
+            "titleLabel": "Title",
+            "titlePlaceholder": "e.g. Exegesis of Rom 12:1-2",
+            "kindLabel": "Type",
+            "contentLabel": "Content",
+            "contentPlaceholder": "Write your content here (Markdown supported)…"
+        },
+        "kindOptions": {
+            "note": "Note",
+            "draft": "Draft",
+            "outline": "Outline",
+            "sermon": "Sermon"
+        },
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "errorTitleRequired": "Title is required",
+        "toastCreated": "Material saved",
+        "toastUpdated": "Material updated"
+    },
+    "deleteOutput": {
+        "title": "Delete \"{{title}}\"?",
+        "description": "This action cannot be undone. The material will be permanently removed from the project.",
+        "cancel": "Cancel",
+        "confirm": "Delete",
+        "toastSuccess": "Material deleted",
+        "toastError": "Error deleting material"
+    },
+    "reprocess": {
+        "successReextracted": "\"{{title}}\" re-extracted — processing will complete in the background.",
+        "successReady": "\"{{title}}\" ready.",
+        "error": "Error processing \"{{title}}\": {{message}}"
+    }
+}

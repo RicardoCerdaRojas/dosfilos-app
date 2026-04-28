@@ -17,7 +17,11 @@
         "archive": "Archivar",
         "markComplete": "Marcar Completado",
         "markingComplete": "Marcando...",
-        "exportPdf": "Exportar PDF"
+        "exportPdf": "Exportar PDF",
+        "history": "Historial",
+        "notes": "Notas",
+        "hideNotes": "Ocultar Notas",
+        "present": "Predicar"
     },
     "status": {
         "draft": "Borrador",
@@ -38,6 +42,9 @@
     },
     "history": {
         "title": "Historial",
+        "description": "Registro de predicaciones y detalles.",
+        "logTitle": "Registro de Predicaciones",
+        "addLog": "Agregar",
         "empty": "No hay registros de predicación.",
         "logButton": "Registrar Predicación"
     },
@@ -130,6 +137,15 @@
         "highlights_other": "{{count}} resaltados",
         "clearHighlights": "Limpiar todos los resaltados",
         "blackout": "Presiona B o haz clic para continuar",
+        "annotations": "Notas",
+        "studyPanel": {
+            "show": "Ver sesión de estudio con tutores",
+            "hide": "Ocultar sesión de estudio"
+        },
+        "highlight": {
+            "removeUnderline": "Click para quitar subrayado",
+            "removeMark": "Click para quitar resaltado"
+        },
         "shortcuts": {
             "blackout": "Pantalla negra",
             "exit": "Salir de pantalla completa"

@@ -9,10 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authService } from '../../../../application/src/services/AuthService';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@dosfilos/infrastructure';
 import { useTranslation } from '@/i18n';
-
 import { useTrackActivity } from '@/hooks/useTrackActivity';
 
 export function LoginPage() {
@@ -21,7 +18,7 @@ export function LoginPage() {
   const { trackLogin } = useTrackActivity();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  
+
   const loginSchema = z.object({
     email: z.string().email(t('login.errors.invalidEmail')),
     password: z.string().min(6, t('login.errors.passwordMin')),
@@ -37,35 +34,13 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const checkSubscriptionAndRedirect = async (userId: string) => {
-    try {
-      // Get user profile to check subscription
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      const userData = userDoc.data();
-      
-      // If user has no subscription or free plan, redirect to welcome
-      if (!userData?.subscription || userData.subscription.planId === 'free') {
-        toast.info(t('login.subscriptionPrompt'), {
-          duration: 5000,
-        });
-        navigate('/welcome');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      // Fallback to dashboard on error
-      navigate('/dashboard');
-    }
-  };
-
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const user = await authService.login(data.email, data.password);
-      trackLogin(); // Track login event
+      await authService.login(data.email, data.password);
+      trackLogin();
       toast.success(t('login.welcome'));
-      await checkSubscriptionAndRedirect(user.id);
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || t('login.errors.loginFailed'));
     } finally {
@@ -76,11 +51,19 @@ export function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      const user = await authService.loginWithGoogle();
-      trackLogin(); // Track login event
+      await authService.loginWithGoogle();
+      trackLogin();
       toast.success(t('login.welcome'));
-      await checkSubscriptionAndRedirect(user.id);
+      navigate('/dashboard');
     } catch (error: any) {
+      if (error?.code === 'auth/not-registered') {
+        toast.error(t('login.errors.googleNotRegistered'), {
+          description: t('login.errors.googleNotRegisteredDesc'),
+          duration: 5000,
+        });
+        setTimeout(() => navigate('/pricing'), 1200);
+        return;
+      }
       toast.error(error.message || t('login.errors.googleFailed'));
     } finally {
       setIsGoogleLoading(false);
@@ -88,16 +71,13 @@ export function LoginPage() {
   };
 
   return (
-    <AuthLayout
-      title={t('login.title')}
-      subtitle={t('login.subtitle')}
-    >
+    <AuthLayout title={t('login.title')} subtitle={t('login.subtitle')}>
       <div className="space-y-6">
-        {/* Google Sign-In Button */}
+        {/* Google */}
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full h-11 border-slate-300 text-slate-700 hover:bg-slate-50 font-medium"
           onClick={handleGoogleSignIn}
           disabled={isGoogleLoading || isLoading}
         >
@@ -131,70 +111,70 @@ export function LoginPage() {
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
+            <span className="w-full border-t border-slate-200" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              {t('login.divider')}
-            </span>
+          <div className="relative flex justify-center text-[11px] uppercase tracking-[0.18em]">
+            <span className="bg-white px-3 text-slate-400">{t('login.divider')}</span>
           </div>
         </div>
 
-        {/* Email/Password Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-4">
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('login.email')}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder={t('login.emailPlaceholder')}
-                {...register('email')}
-                disabled={isLoading || isGoogleLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t('login.password')}</Label>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
-                  {t('login.forgotPassword')}
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder={t('login.passwordPlaceholder')}
-                {...register('password')}
-                disabled={isLoading || isGoogleLoading}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
-            </div>
+        {/* Email/Password */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-[13px] font-medium text-slate-700">
+              {t('login.email')}
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder={t('login.emailPlaceholder')}
+              autoComplete="email"
+              {...register('email')}
+              disabled={isLoading || isGoogleLoading}
+              className="h-11 border-slate-300 focus-visible:ring-indigo-600"
+            />
+            {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
           </div>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-[13px] font-medium text-slate-700">
+                {t('login.password')}
+              </Label>
+              <Link
+                to="/forgot-password"
+                className="text-[13px] text-slate-500 hover:text-indigo-600"
+              >
+                {t('login.forgotPassword')}
+              </Link>
+            </div>
+            <Input
+              id="password"
+              type="password"
+              placeholder={t('login.passwordPlaceholder')}
+              autoComplete="current-password"
+              {...register('password')}
+              disabled={isLoading || isGoogleLoading}
+              className="h-11 border-slate-300 focus-visible:ring-indigo-600"
+            />
+            {errors.password && <p className="text-xs text-red-600">{errors.password.message}</p>}
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium"
+            disabled={isLoading || isGoogleLoading}
+          >
             {isLoading ? t('login.submitting') : t('login.submit')}
           </Button>
         </form>
 
-        {/* Register Link */}
-        <p className="text-center text-sm text-muted-foreground">
+        <div className="pt-4 border-t border-slate-200 text-center text-sm text-slate-500">
           {t('login.noAccount')}{' '}
-          <Link to="/register" className="text-primary hover:underline font-medium">
+          <Link to="/pricing" className="text-slate-900 hover:text-indigo-600 font-medium">
             {t('login.register')}
           </Link>
-        </p>
+        </div>
       </div>
     </AuthLayout>
   );

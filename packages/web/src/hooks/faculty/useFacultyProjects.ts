@@ -1,11 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import { ProjectColor } from '@dosfilos/domain';
+import { ProjectColor, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
+
+function resolveActiveLanguage(raw: string | undefined): SupportedLanguage {
+    if (!raw) return DEFAULT_LANGUAGE;
+    return raw.split('-')[0] === 'en' ? 'en' : 'es';
+}
 
 export function useFacultyProjects() {
     const { user } = useFirebase();
     const queryClient = useQueryClient();
+    const { i18n } = useTranslation();
 
     const projectsQuery = useQuery({
         queryKey: ['faculty', 'projects', user?.uid],
@@ -42,6 +50,24 @@ export function useFacultyProjects() {
         },
     });
 
+    const archiveProject = useMutation({
+        mutationFn: async ({ projectId, archived }: { projectId: string; archived: boolean }) => {
+            return facultyService.setProjectArchived.execute(projectId, archived);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculty', 'projects', user?.uid] }),
+    });
+
+    /**
+     * Soft-delete: moves the project to the Papelera tab. Reversible via
+     * `softDeleteProject.mutate({ projectId, deleted: false })`.
+     */
+    const softDeleteProject = useMutation({
+        mutationFn: async ({ projectId, deleted }: { projectId: string; deleted: boolean }) => {
+            return facultyService.setProjectDeleted.execute(projectId, deleted);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculty', 'projects', user?.uid] }),
+    });
+
     const assignToProject = useMutation({
         mutationFn: async ({ sessionId, projectId }: { sessionId: string; projectId: string | null }) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -53,7 +79,9 @@ export function useFacultyProjects() {
     const generateContext = useMutation({
         mutationFn: async (projectId: string) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return facultyService.generateProjectContext.execute(user.uid, projectId);
+            return facultyService.generateProjectContext.execute(
+                user.uid, projectId, resolveActiveLanguage(i18n.language),
+            );
         },
     });
 
@@ -63,6 +91,8 @@ export function useFacultyProjects() {
         createProject,
         updateProject,
         deleteProject,
+        archiveProject,
+        softDeleteProject,
         assignToProject,
         generateContext,
     };

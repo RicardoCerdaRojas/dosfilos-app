@@ -6,7 +6,9 @@ interface ChangePlanData {
     newPriceId: string;
 }
 
-export const changePlan = onCall<ChangePlanData>(async (request) => {
+export const changePlan = onCall<ChangePlanData>(
+    { secrets: ['STRIPE_SECRET_KEY'] },
+    async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
@@ -48,18 +50,25 @@ export const changePlan = onCall<ChangePlanData>(async (request) => {
             proration_behavior: 'create_prorations',
         });
 
-        // Get new plan from Firestore
-        const plansSnapshot = await db.collection('plans')
-            .where('stripeProductIds', 'array-contains', newPriceId)
-            .limit(1)
-            .get();
+        // Reverse-resolve the plan from the price id, supporting both the new
+        // labelled shape (`stripePriceIds.{monthly,yearly}`) and the legacy
+        // `stripeProductIds` array. Firestore can't OR across fields cleanly,
+        // so iterate the small plans collection in memory.
+        const allPlans = await db.collection('plans').get();
+        const matchedPlan = allPlans.docs.find(d => {
+            const data = d.data();
+            const labelled = data.stripePriceIds;
+            if (labelled && (labelled.monthly === newPriceId || labelled.yearly === newPriceId)) return true;
+            const legacy = Array.isArray(data.stripeProductIds) ? data.stripeProductIds : null;
+            return !!legacy && legacy.includes(newPriceId);
+        });
 
-        if (plansSnapshot.empty) {
+        if (!matchedPlan) {
             console.error(`No plan found for priceId: ${newPriceId}`);
             throw new HttpsError('not-found', 'Plan not found');
         }
 
-        const newPlanId = plansSnapshot.docs[0].id;
+        const newPlanId = matchedPlan.id;
 
         // Update Firestore
         await db.collection('users').doc(userId).update({

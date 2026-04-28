@@ -87,6 +87,19 @@ export class SermonService {
         }
     }
 
+    /**
+     * Links (or unlinks, when `projectId` is null) a sermon to a faculty project.
+     * Encapsulates the persistence so UI components don't import Firestore directly.
+     */
+    async linkSermonToProject(sermonId: string, projectId: string | null): Promise<SermonEntity> {
+        const sermon = await this.sermonRepository.findById(sermonId);
+        if (!sermon) {
+            throw new Error('Sermón no encontrado');
+        }
+        const updated = sermon.update({ projectId: projectId ?? undefined });
+        return await this.sermonRepository.update(updated);
+    }
+
     async getSermon(id: string): Promise<SermonEntity | null> {
         try {
             return await this.sermonRepository.findById(id);
@@ -208,6 +221,8 @@ export class SermonService {
         userId: string;
         passage: string;
         wizardProgress?: Sermon['wizardProgress'];
+        /** Optional: link this sermon to a project workspace from creation. */
+        projectId?: string;
     }): Promise<string> {
         try {
             const sermon = SermonEntity.create({
@@ -223,7 +238,8 @@ export class SermonService {
                     currentStep: 1,
                     passage: data.passage,
                     lastSaved: new Date()
-                }
+                },
+                projectId: data.projectId,
             });
             const created = await this.sermonRepository.create(sermon);
             return created.id;

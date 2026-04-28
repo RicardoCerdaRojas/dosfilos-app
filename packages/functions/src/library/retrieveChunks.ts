@@ -5,8 +5,13 @@ interface RetrieveRequest {
     query: string;
     stores?: string[];       // Core Library store keys (e.g. ['exegesis', 'tutor-griego'])
     corpusIds?: string[];    // Agent's legacy corpus URIs (fileSearchStores/...); server reverse-resolves to keys
+    userId?: string;         // When set, restrict to chunks whose `userId` matches (personal library scope)
+    resourceIds?: string[];  // When set, restrict to chunks of these specific documents (project scope)
     topK?: number;           // Default 10
     minSimilarity?: number;  // Default 0
+    perResourceTopK?: number; // When set with resourceIds: run N parallel findNearest, one per resource, with this limit each.
+                              // Guarantees every source contributes — important for NotebookLM-style project scope where
+                              // a single global topK can starve smaller / less semantically dominant sources.
 }
 
 export interface RetrievedChunkPayload {
@@ -24,6 +29,8 @@ export interface RetrievedChunkPayload {
     };
     score: number;
     sectionBreadcrumb: string;
+    /** Whether this source may be cited publicly. Joined from library_resources at retrieval time. */
+    publiclyCitable?: boolean;
 }
 
 const EMBEDDING_MODEL = 'models/gemini-embedding-001';
@@ -55,9 +62,16 @@ export const retrieveChunks = onCall<RetrieveRequest>(
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) throw new HttpsError('failed-precondition', 'GEMINI_API_KEY not configured');
 
-        const { query: queryText, stores = [], corpusIds = [], topK = 10, minSimilarity = 0 } = request.data;
+        const { query: queryText, stores = [], corpusIds = [], userId, resourceIds = [], topK = 10, minSimilarity = 0, perResourceTopK = 0 } = request.data;
         if (!queryText || typeof queryText !== 'string' || !queryText.trim()) {
             return { chunks: [] };
+        }
+
+        // Security: if userId is specified, it must match the authenticated caller.
+        // This prevents an admin-impersonation scenario where a compromised client
+        // could read another user's private chunks.
+        if (userId && userId !== request.auth.uid) {
+            throw new HttpsError('permission-denied', 'userId must match authenticated user');
         }
 
         const db = getFirestore();
@@ -74,32 +88,146 @@ export const retrieveChunks = onCall<RetrieveRequest>(
             // 1. Embed the query (task=RETRIEVAL_QUERY gives best retrieval quality)
             const queryEmbedding = await embedQuery(queryText, apiKey);
 
-            // 2. Build Firestore query with optional store filter
-            let q: FirebaseFirestore.Query = db.collection(CHUNK_COLLECTION);
-            if (effectiveStores.length > 0) {
-                q = q.where('stores', 'array-contains-any', effectiveStores.slice(0, 30));
+            // 2. Build Firestore query with optional filters.
+            //    Scope rules:
+            //      - stores: Core Library scope (shared, curated content)
+            //      - userId: Personal Library scope (only the user's uploads)
+            //      - resourceIds: Project scope (explicit whitelist, e.g. a research project)
+            //    Filters combine via AND — specify only what you need for the caller's intent.
+            //
+            // Per-source mode: when `perResourceTopK > 0` and `resourceIds` are provided, we
+            // run N parallel findNearest queries (one per resourceId) instead of a single
+            // global query. This guarantees every source gets to contribute its top-K — a
+            // single global query can starve sources whose chunks happen to score lower than
+            // dominant sources, even when those sources are highly relevant to the user's
+            // intent.
+            const usePerSource = perResourceTopK > 0 && resourceIds.length > 0;
+
+            let docsToProcess: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+            // Per-source mode skips the minSimilarity filter further down: the user has
+            // explicitly curated this set of sources, so we want each to contribute its
+            // best-K regardless of absolute score. A global threshold makes sense for
+            // unscoped queries (noise filtering) but starves dense commentaries that
+            // match abstract queries weakly even when they're the most authoritative source.
+            let skipMinSimilarity = false;
+            if (usePerSource) {
+                skipMinSimilarity = true;
+                // Strategy: we can't run one findNearest per resourceId because Firestore's
+                // vector index for `resourceId == X` alone doesn't exist (and creating it
+                // would mean managing yet another vector index). Instead, we issue ONE
+                // findNearest with the existing (userId, resourceId IN [...]) prefix index
+                // but pull a wider pool (perResourceTopK * N * 5, capped at 100). Then we
+                // group the results by resourceId in code and take perResourceTopK per
+                // source. This guarantees per-source fairness within the pool — no source
+                // gets starved unless it has zero chunks among the wider net.
+                const cappedIds = resourceIds.slice(0, 30);
+                const widerLimit = Math.min(100, Math.max(perResourceTopK * cappedIds.length * 5, 30));
+                // IMPORTANT: keep this where-clause order identical to the single-shot path
+                // below (stores → userId → resourceId). Firestore vector index selection is
+                // sensitive to the chain order; matching the working shape lets us reuse the
+                // existing index instead of creating a new (resourceId, userId, embedding)
+                // composite.
+                let q: FirebaseFirestore.Query = db.collection(CHUNK_COLLECTION);
+                if (effectiveStores.length > 0) {
+                    q = q.where('stores', 'array-contains-any', effectiveStores.slice(0, 30));
+                }
+                if (userId) {
+                    q = q.where('userId', '==', userId);
+                }
+                q = q.where('resourceId', 'in', cappedIds);
+                const snap = await q.findNearest({
+                    vectorField: 'embedding',
+                    queryVector: queryEmbedding,
+                    limit: widerLimit,
+                    distanceMeasure: 'COSINE',
+                    distanceResultField: '_distance',
+                }).get();
+
+                // Group by resourceId; take top-K per source. Snap docs are already sorted
+                // by similarity so the first perResourceTopK we see per source ARE its top-K.
+                const grouped = new Map<string, FirebaseFirestore.QueryDocumentSnapshot[]>();
+                for (const d of snap.docs) {
+                    const rid = (d.data().resourceId as string | undefined) ?? '';
+                    if (!rid) continue;
+                    let arr = grouped.get(rid);
+                    if (!arr) {
+                        arr = [];
+                        grouped.set(rid, arr);
+                    }
+                    if (arr.length < perResourceTopK) arr.push(d);
+                }
+                docsToProcess = Array.from(grouped.values()).flat();
+
+                const perSourceCounts: Record<string, number> = {};
+                for (const rid of cappedIds) {
+                    perSourceCounts[rid.substring(0, 8)] = grouped.get(rid)?.length ?? 0;
+                }
+                console.log(`[RetrieveChunks] per-source counts (pool=${snap.size}, kept=${docsToProcess.length}): ${JSON.stringify(perSourceCounts)}`);
+            } else {
+                let q: FirebaseFirestore.Query = db.collection(CHUNK_COLLECTION);
+                if (effectiveStores.length > 0) {
+                    q = q.where('stores', 'array-contains-any', effectiveStores.slice(0, 30));
+                }
+                if (userId) {
+                    q = q.where('userId', '==', userId);
+                }
+                if (resourceIds.length > 0) {
+                    // Firestore limits array-contains-any / in to 30 values; documents larger than
+                    // that should be sliced client-side before calling.
+                    q = q.where('resourceId', 'in', resourceIds.slice(0, 30));
+                }
+
+                const vectorQuery = q.findNearest({
+                    vectorField: 'embedding',
+                    queryVector: queryEmbedding,
+                    limit: topK,
+                    distanceMeasure: 'COSINE',
+                    distanceResultField: '_distance',
+                });
+                const snap = await vectorQuery.get();
+                docsToProcess = snap.docs;
             }
 
-            // 3. findNearest — Firestore native vector search
-            const vectorQuery = q.findNearest({
-                vectorField: 'embedding',
-                queryVector: queryEmbedding,
-                limit: topK,
-                distanceMeasure: 'COSINE',
-                distanceResultField: '_distance',
-            });
+            const scopeDesc = [
+                effectiveStores.length ? `stores=${effectiveStores.join(',')}` : null,
+                userId ? `userId=${userId.substring(0, 8)}...` : null,
+                resourceIds.length ? `resourceIds=${resourceIds.length}` : null,
+                usePerSource ? `perResourceTopK=${perResourceTopK}` : null,
+            ].filter(Boolean).join(' | ') || 'ALL';
+            console.log(`[RetrieveChunks] query="${queryText.substring(0, 60)}..." | scope: ${scopeDesc} | found=${docsToProcess.length}`);
 
-            const snapshot = await vectorQuery.get();
-            console.log(`[RetrieveChunks] query="${queryText.substring(0, 60)}..." | stores=${effectiveStores.join(',') || 'ALL'} | found=${snapshot.size}`);
+            // Build a synthetic snapshot-like object for the rest of the pipeline
+            const snapshot = { docs: docsToProcess, size: docsToProcess.length };
 
-            // 4. Map to payload
+            // 4. Pre-pass: collect unique resourceIds to join with library_resources for
+            //    the publiclyCitable flag. One getAll() batch is cheap (<20 docs typical).
+            const uniqueResourceIds = Array.from(new Set(
+                snapshot.docs.map(d => d.data().resourceId).filter(Boolean)
+            )) as string[];
+            const citableMap = new Map<string, boolean>();
+            if (uniqueResourceIds.length > 0) {
+                const refs = uniqueResourceIds.map(id => db.collection('library_resources').doc(id));
+                const docs = await db.getAll(...refs);
+                for (const d of docs) {
+                    if (d.exists) {
+                        citableMap.set(d.id, d.data()?.publiclyCitable === true);
+                    }
+                }
+            }
+
+            // 5. Map to payload
             const chunks: RetrievedChunkPayload[] = [];
+            const droppedByMinSim: Record<string, number> = {};
             for (const doc of snapshot.docs) {
                 const data = doc.data();
                 const distance = (data._distance as number) ?? 0;
                 const score = Math.max(0, 1 - (distance / 2));  // cosine distance [0,2] → sim [0,1]
 
-                if (minSimilarity && score < minSimilarity) continue;
+                if (!skipMinSimilarity && minSimilarity && score < minSimilarity) {
+                    const key = (data.resourceId ?? 'unknown').substring(0, 8);
+                    droppedByMinSim[key] = (droppedByMinSim[key] ?? 0) + 1;
+                    continue;
+                }
 
                 const sectionPath = (data.metadata?.sectionPath as string[]) ?? [];
                 chunks.push({
@@ -119,8 +247,24 @@ export const retrieveChunks = onCall<RetrieveRequest>(
                     sectionBreadcrumb: sectionPath.length > 0
                         ? sectionPath.join(' › ')
                         : (data.metadata?.section ?? ''),
+                    publiclyCitable: citableMap.get(data.resourceId) ?? false,
                 });
             }
+
+            // Per-source mode returns chunks grouped by source (each source's top-K back to back).
+            // Sort the combined list by similarity so downstream consumers see them in the
+            // same descending-score order as the single-shot path.
+            chunks.sort((a, b) => b.score - a.score);
+
+            if (Object.keys(droppedByMinSim).length > 0) {
+                console.log(`[RetrieveChunks] minSim=${minSimilarity} dropped: ${JSON.stringify(droppedByMinSim)}`);
+            }
+            const finalCounts: Record<string, number> = {};
+            for (const c of chunks) {
+                const k = c.resourceId.substring(0, 8);
+                finalCounts[k] = (finalCounts[k] ?? 0) + 1;
+            }
+            console.log(`[RetrieveChunks] returning ${chunks.length} chunks; per-resource: ${JSON.stringify(finalCounts)}`);
 
             return { chunks };
         } catch (err: any) {

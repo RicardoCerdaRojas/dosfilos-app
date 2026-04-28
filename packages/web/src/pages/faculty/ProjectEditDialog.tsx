@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AIProject, ProjectColor } from '@dosfilos/domain';
+import { AIProject, ProjectColor, ProjectType } from '@dosfilos/domain';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { PROJECT_TYPES } from '@/pages/projects/projectRoadmaps';
+import { cn } from '@/lib/utils';
 
 const COLOR_OPTIONS: { value: ProjectColor; label: string; bg: string; ring: string }[] = [
     { value: 'amber',   label: 'Ámbar',    bg: 'bg-amber-500',   ring: 'ring-amber-500' },
@@ -23,6 +25,7 @@ interface ProjectEditDialogProps {
 export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) {
     const [title, setTitle] = useState(project?.title || '');
     const [color, setColor] = useState<ProjectColor>(project?.color || 'amber');
+    const [type, setType] = useState<ProjectType>(project?.type || 'sermon');
     const [contextNote, setContextNote] = useState(project?.contextNote || '');
 
     const { createProject, updateProject, generateContext } = useFacultyProjects();
@@ -35,6 +38,7 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
     useEffect(() => {
         setTitle(project?.title || '');
         setColor(project?.color || 'amber');
+        setType(project?.type || 'sermon');
         setContextNote(project?.contextNote || '');
     }, [project]);
 
@@ -45,9 +49,9 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
         setError(null);
         try {
             if (isEditing) {
-                await updateProject.mutateAsync({ projectId: project.id, title, color, contextNote: contextNote || undefined });
+                await updateProject.mutateAsync({ projectId: project.id, title, color, type, contextNote: contextNote || undefined });
             } else {
-                await createProject.mutateAsync({ title, color, contextNote: contextNote || undefined });
+                await createProject.mutateAsync({ title, color, type, contextNote: contextNote || undefined });
             }
             onClose();
         } catch (err: any) {
@@ -68,20 +72,58 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-            <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-700 p-6 mx-4">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-5">
+            <div className="relative w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border p-6 mx-4 max-h-[90vh] overflow-y-auto">
+                <h2 className="text-lg font-semibold text-foreground mb-5">
                     {isEditing ? 'Editar proyecto' : 'Nuevo proyecto'}
                 </h2>
 
+                {/* Type — only on create (changing type later breaks roadmap continuity) */}
+                {!isEditing && (
+                    <div className="mb-5">
+                        <span className="text-sm font-medium text-muted-foreground mb-2 block">
+                            Tipo de proyecto
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {(Object.values(PROJECT_TYPES) as Array<typeof PROJECT_TYPES[keyof typeof PROJECT_TYPES]>).map((meta) => {
+                                const Icon = meta.icon;
+                                const selected = type === meta.type;
+                                return (
+                                    <button
+                                        key={meta.type}
+                                        type="button"
+                                        onClick={() => setType(meta.type)}
+                                        className={cn(
+                                            'flex items-start gap-2.5 p-3 rounded-lg border text-left transition-all',
+                                            selected
+                                                ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20'
+                                                : 'border-border hover:border-foreground/30 hover:bg-muted/40'
+                                        )}
+                                    >
+                                        <Icon className={cn('h-4 w-4 mt-0.5 shrink-0', selected ? 'text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground')} />
+                                        <div className="min-w-0">
+                                            <div className={cn('text-[13px] font-medium', selected ? 'text-foreground' : 'text-foreground/90')}>
+                                                {meta.label}
+                                            </div>
+                                            <div className="text-[11.5px] leading-snug text-muted-foreground mt-0.5">
+                                                {meta.description}
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Title */}
                 <label className="block mb-4">
-                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">Nombre del proyecto</span>
+                    <span className="text-sm font-medium text-muted-foreground mb-1.5 block">Nombre del proyecto</span>
                     <input
                         type="text"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         placeholder="Ej: Serie: El Sermón del Monte"
-                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-slate-400"
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-muted-foreground/60"
                         maxLength={60}
                         autoFocus
                     />
@@ -89,7 +131,7 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
 
                 {/* Color picker */}
                 <div className="mb-4">
-                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">Color</span>
+                    <span className="text-sm font-medium text-muted-foreground mb-2 block">Color</span>
                     <div className="flex flex-wrap gap-2">
                         {COLOR_OPTIONS.map(opt => (
                             <button
@@ -97,7 +139,7 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
                                 type="button"
                                 title={opt.label}
                                 onClick={() => setColor(opt.value)}
-                                className={`w-7 h-7 rounded-full transition-all ${opt.bg} ${color === opt.value ? `ring-2 ring-offset-2 ${opt.ring}` : 'opacity-60 hover:opacity-100'}`}
+                                className={`w-7 h-7 rounded-full transition-all ${opt.bg} ${color === opt.value ? `ring-2 ring-offset-2 ring-offset-card ${opt.ring}` : 'opacity-60 hover:opacity-100'}`}
                             />
                         ))}
                     </div>
@@ -106,13 +148,13 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
                 {/* contextNote */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Contexto del proyecto</span>
+                        <span className="text-sm font-medium text-muted-foreground">Contexto del proyecto</span>
                         {isEditing && (
                             <button
                                 type="button"
                                 onClick={handleGenerateContext}
                                 disabled={isGenerating}
-                                className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 disabled:opacity-50 transition-colors"
+                                className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 disabled:opacity-50 transition-colors"
                             >
                                 {isGenerating
                                     ? <><Loader2 className="w-3 h-3 animate-spin" /> Generando...</>
@@ -126,16 +168,16 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
                         onChange={e => setContextNote(e.target.value)}
                         placeholder="Descripción opcional: audiencia, nivel teológico, objetivo... El orquestador la usará en cada sesión de este proyecto."
                         rows={3}
-                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-slate-400 resize-none"
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-muted-foreground/60 resize-none"
                         maxLength={400}
                     />
-                    <p className="text-xs text-slate-400 mt-1 text-right">{contextNote.length}/400</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1 text-right">{contextNote.length}/400</p>
                 </div>
 
                 {/* Actions */}
                 <div className="flex flex-col gap-3">
                     {error && (
-                        <p className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 rounded-lg px-3 py-2 border border-rose-200 dark:border-rose-800">
+                        <p className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 rounded-lg px-3 py-2 border border-rose-200 dark:border-rose-900">
                             {error}
                         </p>
                     )}
@@ -143,7 +185,7 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                            className="px-4 py-2 text-sm rounded-lg text-muted-foreground hover:bg-muted transition-colors"
                         >
                             Cancelar
                         </button>
@@ -151,7 +193,7 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
                             type="button"
                             onClick={handleSave}
                             disabled={!title.trim() || isLoading}
-                            className="px-4 py-2 text-sm rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-4 py-2 text-sm rounded-lg bg-foreground hover:bg-foreground/90 text-background font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             {isLoading ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear proyecto'}
                         </button>

@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run compliance gate in --staged mode (Firebase + i18n fail-loud are hard fails;
+# file-size + colour literals are warnings only). See scripts/check-compliance.sh
+# for full rule set.
+./scripts/check-compliance.sh --staged

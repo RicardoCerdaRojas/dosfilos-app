@@ -1,15 +1,27 @@
 {
     "header": {
-        "title": "Biblioteca Teológica",
-        "resources": "recursos",
-        "indexed": "indexados",
-        "indexAllButton": "Indexar Todo",
-        "addButton": "Agregar",
+        "category": "Tu entorno · Biblioteca",
+        "title": "Biblioteca",
+        "metaCount_one": "{{count}} recurso",
+        "metaCount_other": "{{count}} recursos",
+        "metaReady_one": "{{count}} listo",
+        "metaReady_other": "{{count}} listos",
+        "metaPending": "{{count}} por procesar",
+        "addButton": "Agregar recurso",
         "closeButton": "Cerrar"
     },
+    "attentionCallout": {
+        "label": "Atención requerida",
+        "title_one": "{{count}} recurso por procesar",
+        "title_other": "{{count}} recursos por procesar",
+        "description": "Procesar el recurso lo prepara para búsqueda — solo los recursos listos pueden usarse como fuente en proyectos y consultas teológicas.",
+        "actionButton": "Procesar pendientes"
+    },
+    "progress": {
+        "processing": "Procesando {{current}}/{{total}} — {{title}}"
+    },
     "upload": {
-        "title": "Agregar Nuevo Recurso",
-        "description": "Sube PDFs o EPUBs para tu biblioteca teológica",
+        "sectionLabel": "Nuevo recurso",
         "fileLabel": "Archivo",
         "titleLabel": "Título",
         "titlePlaceholder": "Título del documento",
@@ -17,29 +29,154 @@
         "authorPlaceholder": "Nombre del autor",
         "categoryLabel": "Categoría",
         "uploadButton": "Subir",
-        "fileSizeWarning": "Archivo >50MB: calidad reducida"
+        "fileSizeWarning": "Archivo >50MB: calidad de extracción puede reducirse"
     },
     "filters": {
-        "searchPlaceholder": "Buscar por título o autor...",
-        "allCategories": "Todas las categorías"
+        "searchPlaceholder": "Buscar título o autor",
+        "allCategories": "Todas las categorías",
+        "viewGridTitle": "Vista en cuadrícula",
+        "viewListTitle": "Vista en lista"
     },
     "empty": {
-        "title": "Tu biblioteca está vacía",
-        "emptyLibrary": "Agrega tu primer recurso para comenzar",
-        "noResults": "No se encontraron resultados",
-        "tryOtherTerms": "Intenta con otros términos de búsqueda"
+        "titleEmpty": "Tu biblioteca está vacía",
+        "titleNoResults": "Sin resultados",
+        "descriptionEmpty": "Sube tu primer PDF o EPUB para empezar a usarlo como fuente en proyectos y consultas.",
+        "descriptionNoResults": "Prueba con otros términos o cambia el filtro de categoría.",
+        "ctaFirstResource": "Agregar primer recurso"
     },
-    "indexing": {
-        "preparing": "Preparando...",
-        "indexAllButton": "Indexar Todo",
-        "noUnindexed": "No hay documentos sin indexar"
+    "card": {
+        "metaPagesEstimated": "~{{count}} p. (est.)",
+        "metaPagesActual_one": "{{count}} pág.",
+        "metaPagesActual_other": "{{count}} págs.",
+        "metaPagesTitleActual": "Páginas reales",
+        "metaPagesTitleEstimated": "Páginas estimadas (aprox.)",
+        "actions": {
+            "preview": "Ver documento",
+            "edit": "Editar metadata",
+            "process": "Procesar",
+            "reprocess": "Reprocesar",
+            "moreActions": "Más acciones",
+            "configurePhases": "Configurar fases",
+            "assignToCore": "Asignar a Core",
+            "delete": "Eliminar"
+        }
+    },
+    "status": {
+        "pending": "En cola",
+        "processing": "Procesando…",
+        "failed": "Error al procesar",
+        "verifying": "Verificando",
+        "ready": "Listo",
+        "notReady": "Por procesar"
+    },
+    "stores": {
+        "exegesis": "Exégesis",
+        "homiletics": "Homilética",
+        "generic": "Genérico",
+        "exegesisTitle": "Asignado a Core Library: Exégesis",
+        "homileticsTitle": "Asignado a Core Library: Homilética",
+        "genericTitle": "Asignado a Core Library: Genérico"
+    },
+    "phases": {
+        "exegesis": "Exégesis",
+        "homiletics": "Homilética",
+        "drafting": "Redacción"
     },
     "deleteDialog": {
         "title": "¿Eliminar recurso?",
         "description": "Estás a punto de eliminar",
-        "warning": "Esta acción no se puede deshacer y eliminará también los datos de indexación.",
+        "warning": "Esta acción no se puede deshacer y eliminará también los datos de procesamiento.",
         "cancel": "Cancelar",
         "confirm": "Eliminar"
+    },
+    "editModal": {
+        "title": "Editar Recurso",
+        "description": "Modifica los metadatos del documento.",
+        "titleLabel": "Título",
+        "titlePlaceholder": "Título del documento",
+        "authorLabel": "Autor",
+        "authorPlaceholder": "Nombre del autor",
+        "categoryLabel": "Categoría",
+        "categoryOptions": {
+            "theology": "Teología Sistemática",
+            "grammar": "Gramática / Idiomas",
+            "commentary": "Comentario Bíblico",
+            "article": "Artículo / Paper",
+            "other": "Otro"
+        },
+        "cancel": "Cancelar",
+        "save": "Guardar"
+    },
+    "phaseModal": {
+        "title": "Fases Preferidas",
+        "description": "Selecciona en qué fases del sermón este documento será prioritario para RAG",
+        "byAuthor": "{{title}} por {{author}}",
+        "phases": {
+            "exegesisLabel": "Exégesis",
+            "exegesisDescription": "El experto en análisis del texto bíblico original",
+            "homileticsLabel": "Homilética",
+            "homileticsDescription": "El experto en estructurar el sermón",
+            "draftingLabel": "Redacción",
+            "draftingDescription": "El experto en redactar el contenido final"
+        },
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "toastSuccess": "Preferencias de fase actualizadas",
+        "toastError": "Error al actualizar preferencias"
+    },
+    "coreStoresModal": {
+        "title": "Configurar Stores Core",
+        "description": "Selecciona en qué stores de la Biblioteca Core incluir este documento",
+        "byAuthor": "{{title}} por {{author}}",
+        "documentInStores_one": "✓ Documento en {{count}} store",
+        "documentInStores_other": "✓ Documento en {{count}} stores",
+        "stores": {
+            "exegesisLabel": "Exégesis",
+            "exegesisDescription": "Léxicos griego/hebreo, hermenéutica, gramática",
+            "homileticsLabel": "Homilética",
+            "homileticsDescription": "Predicación, teología sistemática, sermones",
+            "genericLabel": "Genérico",
+            "genericDescription": "Recursos de uso general para todos los contextos",
+            "customDescription": "Contexto personalizado"
+        },
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "toastSuccessAdded_one": "Agregado a {{count}} store Core",
+        "toastSuccessAdded_other": "Agregado a {{count}} stores Core",
+        "toastSuccessRemoved": "Removido de todos los stores Core",
+        "toastError": "Error al actualizar stores"
+    },
+    "usage": {
+        "queriesLabel": "Consultas / mes",
+        "docsLabel": "Documentos propios",
+        "upgradeButton": "Mejorar plan"
+    },
+    "balance": {
+        "title": "Páginas de procesamiento",
+        "subtitle": "Saldo disponible para extraer documentos",
+        "standard": "Estándar",
+        "premium": "Premium",
+        "standardHelp": "Gemini 2.0 Flash · libros narrativos",
+        "premiumHelp": "LlamaParse · tablas, multi-columna, escaneados",
+        "buyButton": "Comprar páginas",
+        "loading": "Cargando saldo…",
+        "redirecting": "Redirigiendo a Stripe…",
+        "checkoutError": "Error al crear sesión de pago",
+        "purchaseSuccess": "¡Compra confirmada! Tu saldo se actualiza en segundos.",
+        "purchaseCanceled": "Compra cancelada"
+    },
+    "creditPacks": {
+        "title": "Comprar páginas de procesamiento",
+        "subtitle": "Las páginas no caducan durante 12 meses desde la compra.",
+        "standardHeader": "Páginas Estándar (Gemini)",
+        "standardHelp": "Para libros narrativos, ensayos, sermones — bajo costo, alta velocidad.",
+        "premiumHeader": "Páginas Premium (LlamaParse)",
+        "premiumHelp": "Para tablas complejas, multi-columna, PDFs escaneados — máxima fidelidad.",
+        "pages_one": "{{count}} página",
+        "pages_other": "{{count}} páginas",
+        "perPage": "${{rate}}/página",
+        "buy": "Comprar",
+        "close": "Cerrar"
     },
     "toast": {
         "uploadSuccess": "Recurso agregado a la biblioteca",
@@ -48,16 +185,17 @@
         "deleteError": "Error al eliminar el recurso",
         "updateSuccess": "Recurso actualizado",
         "updateError": "Error al actualizar el recurso",
-        "indexSuccess": "indexado con",
-        "indexWarning": "No se generaron fragmentos para",
-        "indexError": "Error al indexar el recurso",
+        "processSuccess": "\"{{title}}\" listo ({{chunks}} fragmentos)",
+        "processWarning": "No se generaron fragmentos para \"{{title}}\". El texto puede no ser reconocible o ser muy corto.",
+        "processError": "Error al procesar el recurso",
         "textNotReady": "El texto aún se está extrayendo. Espera unos segundos y vuelve a intentar.",
-        "reindexSuccess": "re-indexado exitosamente",
-        "reindexWarning": "No se generaron nuevos fragmentos durante la re-indexación",
-        "reindexError": "Error al re-indexar el recurso",
-        "syncSuccess": "sincronizado correctamente con IA",
-        "syncError": "Error al sincronizar",
-        "indexingComplete": "Indexación completada con",
-        "indexingSuccess": "Biblioteca indexada"
+        "reprocessConfirm": "¿Reprocesar \"{{title}}\"? Se eliminarán los fragmentos existentes y se volverán a generar.",
+        "reprocessSuccess": "\"{{title}}\" reprocesado ({{chunks}} fragmentos)",
+        "reprocessWarning": "No se generaron nuevos fragmentos durante el reprocesamiento",
+        "reprocessError": "Error al reprocesar el recurso",
+        "noUnindexed": "No hay documentos por procesar",
+        "processingComplete": "Procesamiento completado con {{count}} errores. {{chunks}} fragmentos creados.",
+        "processingSuccess": "Biblioteca lista: {{chunks}} fragmentos creados",
+        "processingError": "Error al procesar la biblioteca"
     }
 }
