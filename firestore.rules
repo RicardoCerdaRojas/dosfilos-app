@@ -160,6 +160,28 @@ service cloud.firestore {
         allow update: if isOwner(userId) && resource.data.userId == userId;
         allow delete: if isOwner(userId) && resource.data.userId == userId;
       }
+
+      // Usage counters — monthly quota counters per period key (YYYY-MM).
+      // Read by the dashboard UsageBanner / SubscriptionPage so the user can
+      // see their progress vs plan limits. Cloud Functions write the counter
+      // increments; the user can read but never modify directly.
+      match /usage_counters/{periodKey} {
+        allow read: if isOwner(userId);
+        allow write: if isFunction();
+      }
+
+      // Bonus grants (Stripe webhook idempotency markers for plan-bonus pages).
+      // Read-only for the owner so the dashboard can show grant history.
+      match /bonus_grants/{grantId} {
+        allow read: if isOwner(userId);
+        allow write: if isFunction();
+      }
+
+      // Credit-pack purchases (Stripe webhook records for one-time pack buys).
+      match /credit_pack_purchases/{purchaseId} {
+        allow read: if isOwner(userId);
+        allow write: if isFunction();
+      }
     }
     
     // Tags collection (shared across users)
