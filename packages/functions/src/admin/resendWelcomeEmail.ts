@@ -49,7 +49,8 @@ export const resendWelcomeEmail = onCall(async (request) => {
         }
 
         // 4. Send Email via Resend
-        const htmlContent = getWelcomeEmailTemplate(name, DASHBOARD_URL);
+        // Admin resend is a manual nudge — no verify or set-password link.
+        const htmlContent = getWelcomeEmailTemplate(name, DASHBOARD_URL, {});
 
         const { data, error } = await resend.emails.send({
             from: SENDER_EMAIL,

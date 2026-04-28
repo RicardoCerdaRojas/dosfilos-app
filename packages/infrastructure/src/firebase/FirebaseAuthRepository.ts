@@ -4,7 +4,6 @@ import {
     signOut as firebaseSignOut,
     updateProfile as firebaseUpdateProfile,
     sendPasswordResetEmail,
-    sendEmailVerification,
     signInWithPopup,
     GoogleAuthProvider,
     User as FirebaseUser,
@@ -90,23 +89,18 @@ export class FirebaseAuthRepository implements IAuthRepository {
         // reads the value at call time, so reload to be safe across SDK versions.
         await credential.user.reload();
 
-        // Send the verification email using Firebase Auth's native flow.
-        // The template can be customized in Firebase Console → Authentication
-        // → Templates → Email verification (limited HTML, but sender name
-        // and basic copy can match the brand). A fully-branded Resend version
-        // exists at packages/functions/src/auth/sendVerificationEmail.ts but
-        // is currently unexported pending Cloud Run debug — see comment in
-        // packages/functions/src/index.ts.
-        sendEmailVerification(credential.user).catch(err => {
-            console.warn('[Auth] sendEmailVerification failed at signup:', err);
-        });
+        // The verification email is dispatched server-side by the
+        // `sendWelcomeEmail` auth onCreate trigger, which embeds the branded
+        // verify link inside the welcome email (Resend, not Firebase native).
 
         return this.mapFirebaseUserToEntity(credential.user);
     }
 
     /**
-     * Resends the email-verification link to the currently signed-in user.
-     * Used by /auth/verify-email when the original email was lost.
+     * Resends the branded verification email to the currently signed-in user.
+     * Routes through the `resendVerificationEmail` callable (Resend) instead
+     * of Firebase's native `sendEmailVerification`, which has been failing
+     * silently in this project.
      */
     async resendVerificationEmail(): Promise<void> {
         const user = auth.currentUser;
@@ -116,7 +110,8 @@ export class FirebaseAuthRepository implements IAuthRepository {
         if (user.emailVerified) {
             throw new Error('Email already verified');
         }
-        await sendEmailVerification(user);
+        const fn = httpsCallable(functions, 'resendVerificationEmail');
+        await fn();
     }
 
     async signOut(): Promise<void> {
