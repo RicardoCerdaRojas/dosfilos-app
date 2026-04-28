@@ -4,6 +4,8 @@ import { getFirestore, FieldValue, type Firestore } from 'firebase-admin/firesto
 import Stripe from 'stripe';
 import { addPackAdmin, type ProcessingMode } from '../library/processingBalance';
 import { getPackById } from './creditPackCatalog';
+import { resend } from '../emails/resendClient';
+import { getPaymentFailedTemplate, getPaymentFailedSubject } from '../emails/templates/paymentFailed';
 
 /**
  * Reverse-resolves a Stripe Price ID to the matching plan doc id by iterating
@@ -373,7 +375,8 @@ async function handlePaymentFailed(
 
     const userRef = db.collection('users').doc(firebaseUID);
     const userDoc = await userRef.get();
-    const currentAttempts = userDoc.data()?.subscription?.failedPaymentAttempts || 0;
+    const userData = userDoc.data();
+    const currentAttempts = userData?.subscription?.failedPaymentAttempts || 0;
 
     await userRef.update({
         'subscription.status': 'past_due',
@@ -386,6 +389,28 @@ async function handlePaymentFailed(
     });
 
     console.log(`Payment failed for user ${firebaseUID}, attempt ${currentAttempts + 1}`);
+
+    // Recovery email — only on the FIRST failure to avoid spam. Stripe retries
+    // the charge automatically over the next ~3 days; if those also fail, the
+    // subscription gets cancelled via customer.subscription.deleted, at which
+    // point a different (win-back) flow takes over.
+    if (currentAttempts === 0 && userData?.email) {
+        const locale: 'es' | 'en' = userData?.preferredLanguage === 'en' ? 'en' : 'es';
+        const name = userData?.displayName || (locale === 'en' ? 'Preacher' : 'Predicador');
+        const dashboardUrl = 'https://preach.dosfilos.com/dashboard';
+
+        try {
+            await resend.emails.send({
+                from: 'DosFilos <onboarding@dosfilos.com>',
+                to: userData.email,
+                subject: getPaymentFailedSubject(locale),
+                html: getPaymentFailedTemplate(name, dashboardUrl, locale),
+            });
+            console.log(`Payment-failed recovery email sent to ${userData.email} (${locale})`);
+        } catch (e) {
+            console.error(`Failed to send payment-failed email to ${userData.email}`, e);
+        }
+    }
 }
 
 async function handlePaymentSucceeded(
