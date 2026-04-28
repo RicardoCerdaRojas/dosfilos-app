@@ -25,7 +25,13 @@ export { stripeWebhook } from './stripe/webhook';
 
 // Export Auth functions
 export { completeRegistration } from './auth/completeRegistration';
-export { sendVerificationEmail } from './auth/sendVerificationEmail';
+// NOTE: sendVerificationEmail (custom branded verification email via Resend)
+// is intentionally NOT exported — every deploy attempt failed with Cloud Run
+// container health-check errors that didn't surface a specific cause in the
+// build logs. We're using Firebase Auth's native `sendEmailVerification` for
+// the launch (template can be customized in Firebase Console). The function
+// file is kept at packages/functions/src/auth/sendVerificationEmail.ts for
+// post-launch revival once we can debug the Cloud Run logs properly.
 
 // Custom portal functions
 export { updatePaymentMethod } from './stripe/updatePaymentMethod';
