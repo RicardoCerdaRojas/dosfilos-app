@@ -372,16 +372,6 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "daily_metrics",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "user_activities",
       "queryScope": "COLLECTION",
       "fields": [
