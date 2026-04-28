@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { PlanCard } from '@/components/subscription/PlanCard';
+import { FreeTierBanner } from '@/components/subscription/FreeTierBanner';
 import { getPlanPriceId } from '@/hooks/usePlans';
 import { Reveal } from '../shared/Reveal';
 
@@ -33,13 +34,12 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                 {loading ? (
                     <div className="text-center text-slate-500 mt-10">Cargando planes...</div>
                 ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
-                        {plans
-                            .filter(p => p.isPublic)
-                            .sort((a, b) => a.sortOrder - b.sortOrder)
-                            .map(plan => {
-                                const isFree = plan.pricing.monthly === 0;
-                                return (
+                    <>
+                        <div className="grid md:grid-cols-3 gap-5 mt-12">
+                            {plans
+                                .filter(p => p.isPublic && p.pricing.monthly > 0)
+                                .sort((a, b) => a.sortOrder - b.sortOrder)
+                                .map(plan => (
                                     <PlanCard
                                         key={plan.id}
                                         plan={{
@@ -53,13 +53,14 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                                             isPublic: plan.isPublic,
                                         }}
                                         isPopular={plan.highlightText === 'Más Popular'}
-                                        ctaLabel={isFree ? 'Empezar gratis' : 'Empezar 30 días gratis'}
+                                        ctaLabel="Empezar 30 días gratis"
                                         onCtaClick={() => onPlanSelect(plan.id)}
-                                        ctaVariant="default"
                                     />
-                                );
-                            })}
-                    </div>
+                                ))}
+                        </div>
+
+                        <FreeTierBanner onCtaClick={() => onPlanSelect('free')} />
+                    </>
                 )}
 
                 <div className="text-center mt-10">

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { PlanCard } from '@/components/subscription/PlanCard';
+import { FreeTierBanner } from '@/components/subscription/FreeTierBanner';
 import { usePlans, getPlanPriceId } from '@/hooks/usePlans';
 import { LanguageSwitcher } from '@/i18n';
 
@@ -73,38 +74,40 @@ export function PricingPage() {
             </div>
           </div>
 
-          {/* Plans */}
+          {/* Paid plans grid — Free is promoted to a standalone CTA below */}
           {loading ? (
             <div className="text-center text-slate-500 py-12">Cargando planes…</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              {plans
-                .filter((p) => p.isPublic)
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((plan) => {
-                  const isPopular = plan.highlightText === 'Más Popular';
-                  const isFree = plan.pricing.monthly === 0;
-                  return (
-                    <PlanCard
-                      key={plan.id}
-                      plan={{
-                        id: plan.id,
-                        name: plan.name,
-                        description: plan.description,
-                        priceMonthly: plan.pricing.monthly,
-                        stripePriceId: getPlanPriceId(plan),
-                        features: plan.features,
-                        sortOrder: plan.sortOrder,
-                        isPublic: plan.isPublic,
-                      }}
-                      isPopular={isPopular}
-                      ctaLabel={isFree ? 'Empezar gratis' : 'Empezar 30 días gratis'}
-                      onCtaClick={() => handlePlanSelect(plan.id)}
-                      ctaVariant="default"
-                    />
-                  );
-                })}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {plans
+                  .filter((p) => p.isPublic && p.pricing.monthly > 0)
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((plan) => {
+                    const isPopular = plan.highlightText === 'Más Popular';
+                    return (
+                      <PlanCard
+                        key={plan.id}
+                        plan={{
+                          id: plan.id,
+                          name: plan.name,
+                          description: plan.description,
+                          priceMonthly: plan.pricing.monthly,
+                          stripePriceId: getPlanPriceId(plan),
+                          features: plan.features,
+                          sortOrder: plan.sortOrder,
+                          isPublic: plan.isPublic,
+                        }}
+                        isPopular={isPopular}
+                        ctaLabel="Empezar 30 días gratis"
+                        onCtaClick={() => handlePlanSelect(plan.id)}
+                      />
+                    );
+                  })}
+              </div>
+
+              <FreeTierBanner onCtaClick={() => handlePlanSelect('free')} />
+            </>
           )}
 
         </div>
