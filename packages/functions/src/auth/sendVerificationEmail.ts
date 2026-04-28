@@ -10,10 +10,6 @@ const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
 const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
 const CONTINUE_URL = 'https://preach.dosfilos.com/auth/verify-email';
 
-interface Input {
-    locale?: 'es' | 'en';
-}
-
 /**
  * Custom email-verification send. Replaces Firebase Auth's default
  * sendEmailVerification (which produces a generic, unbranded email) with
@@ -28,19 +24,27 @@ interface Input {
  * Authenticated callable: the user must be signed in (just-registered,
  * usually). If the user is already verified we no-op rather than wasting
  * a Resend send.
+ *
+ * NOTE on signatures: firebase-functions 4.9 has a quirk where the
+ * single-arg `onCall<T>(handler)` form (typed handler, no options) can
+ * deploy as a Cloud Run service that fails its container health check.
+ * We match the pattern used by `onUserLogin` etc — bare `onCall(handler)`
+ * with the request shape narrowed inside — which deploys cleanly.
+ *
+ * NOTE on secrets: this function uses the legacy
+ * `functions.config().resend.apikey` pattern (via resendClient.ts) like
+ * the rest of our email senders, NOT Secret Manager. If/when we migrate
+ * the email stack to Secret Manager, add `{ secrets: ['RESEND_API_KEY'] }`
+ * here and to the other senders.
  */
-// NOTE: this function uses the legacy `functions.config().resend.apikey`
-// pattern (via resendClient.ts) like the rest of our email senders, NOT
-// Secret Manager. If/when we migrate the email stack to Secret Manager,
-// add `{ secrets: ['RESEND_API_KEY'] }` here and to the other senders.
-export const sendVerificationEmail = onCall<Input>(
-    async (request) => {
+export const sendVerificationEmail = onCall(async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in to request verification.');
         }
 
         const uid = request.auth.uid;
-        const locale: 'es' | 'en' = request.data?.locale === 'en' ? 'en' : 'es';
+        const data = (request.data ?? {}) as { locale?: 'es' | 'en' };
+        const locale: 'es' | 'en' = data.locale === 'en' ? 'en' : 'es';
 
         const userRecord = await getAuth().getUser(uid);
         if (userRecord.emailVerified) {
