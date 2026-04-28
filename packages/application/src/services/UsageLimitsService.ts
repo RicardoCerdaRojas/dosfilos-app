@@ -30,6 +30,7 @@ export class UsageLimitsService {
         if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
 
         const limit = plan.limits.sermonsPerMonth;
+        if (limit === -1) return { allowed: true };
 
         // Count sermons created this month
         const sermonsThisMonth = await this.countSermonsThisMonth(userId);
@@ -61,9 +62,10 @@ export class UsageLimitsService {
         const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
         if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
 
-        // All plans now use monthly limits (Basic, Pro, Team)
+        const limit = plan.limits.maxPreachingPlansPerMonth ?? 0;
+        if (limit === -1) return { allowed: true };
+
         const plansThisMonth = await this.countPreachingPlansThisMonth(userId);
-        const limit = plan.limits.maxPreachingPlansPerMonth || 0;
 
         if (plansThisMonth >= limit) {
             return {
@@ -78,7 +80,8 @@ export class UsageLimitsService {
     }
 
     /**
-     * Check if user can start a new Greek Tutor session
+     * Check if user can start a new Greek Tutor session.
+     * Limit semantics: -1 = unlimited (Pro/Equipo), 0 = blocked, n>0 = monthly cap.
      */
     async canStartGreekSession(userId: string): Promise<LimitCheckResult> {
         const user = await this.userProfileRepo.getProfile(userId);
@@ -88,6 +91,8 @@ export class UsageLimitsService {
         if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
 
         const limit = plan.limits.greekSessionsPerMonth;
+        if (limit === -1) return { allowed: true };
+
         const sessionsThisMonth = await this.countGreekSessionsThisMonth(userId);
 
         if (sessionsThisMonth >= limit) {
@@ -103,6 +108,40 @@ export class UsageLimitsService {
             allowed: true,
             remaining: limit - sessionsThisMonth,
             limit
+        };
+    }
+
+    /**
+     * Check if user can start a new Hebrew Tutor session. Mirrors Greek —
+     * Free / Personal get a small monthly cap as a conversion hook into Pro.
+     */
+    async canStartHebrewSession(userId: string): Promise<LimitCheckResult> {
+        const user = await this.userProfileRepo.getProfile(userId);
+        if (!user) return { allowed: false, reason: 'Usuario no encontrado' };
+
+        const plan = await this.planRepo.getById(user.subscription?.planId || 'basic');
+        if (!plan) return { allowed: false, reason: 'Plan no encontrado' };
+
+        // `hebrewSessionsPerMonth` is optional — legacy plans without it fall
+        // through to "allowed" so we don't break existing accounts.
+        const limit = plan.limits.hebrewSessionsPerMonth;
+        if (limit === undefined || limit === -1) return { allowed: true };
+
+        const sessionsThisMonth = await this.countHebrewSessionsThisMonth(userId);
+
+        if (sessionsThisMonth >= limit) {
+            return {
+                allowed: false,
+                reason: this.getLimitMessage(plan.id, 'hebrew', limit),
+                remaining: 0,
+                limit,
+            };
+        }
+
+        return {
+            allowed: true,
+            remaining: limit - sessionsThisMonth,
+            limit,
         };
     }
 
@@ -303,23 +342,20 @@ export class UsageLimitsService {
         };
     }
 
-    private getLimitMessage(planId: string, type: 'sermon' | 'greek', limit: number): string {
-        const messages = {
-            basic: {
-                sermon: `Plan Basic: ${limit} sermón por mes. Haz upgrade a Pro para 4 sermones/mes.`,
-                greek: `Plan Basic: ${limit} estudio por mes. Haz upgrade a Pro para 3 estudios/mes.`
-            },
-            pro: {
-                sermon: `Plan Pro: ${limit} sermones por mes. Haz upgrade a Team para 12 sermones/mes.`,
-                greek: `Plan Pro: ${limit} estudios por mes. Haz upgrade a Team para 15 estudios/mes.`
-            },
-            team: {
-                sermon: `Has alcanzado tu límite mensual de ${limit} sermones.`,
-                greek: `Has alcanzado tu límite mensual de ${limit} estudios.`
-            }
+    private getLimitMessage(planId: string, type: 'sermon' | 'greek' | 'hebrew', limit: number): string {
+        const noun: Record<typeof type, string> = {
+            sermon: 'sermones',
+            greek: 'estudios de Griego',
+            hebrew: 'estudios de Hebreo',
         };
-
-        return messages[planId as keyof typeof messages]?.[type] || `Límite alcanzado: ${limit} por mes`;
+        const upgradeHint: Record<string, string> = {
+            free: 'Haz upgrade a Personal para más uso o a Pro para acceso ilimitado.',
+            basic: 'Haz upgrade a Pro para acceso ilimitado.',
+            pro: '',
+            team: '',
+        };
+        const hint = upgradeHint[planId] ?? '';
+        return `Has alcanzado tu límite mensual de ${limit} ${noun[type]}.${hint ? ' ' + hint : ''}`.trim();
     }
 
     private async countSermonsThisMonth(userId: string): Promise<number> {
@@ -364,7 +400,21 @@ export class UsageLimitsService {
     private async countGreekSessionsThisMonth(userId: string): Promise<number> {
         const startOfMonth = this.getStartOfMonth();
 
-        const sessionsRef = collection(db, 'greek_sessions');
+        const sessionsRef = collection(db, 'greek_tutor_sessions');
+        const q = query(
+            sessionsRef,
+            where('userId', '==', userId),
+            where('createdAt', '>=', Timestamp.fromDate(startOfMonth))
+        );
+
+        const snapshot = await getDocs(q);
+        return snapshot.size;
+    }
+
+    private async countHebrewSessionsThisMonth(userId: string): Promise<number> {
+        const startOfMonth = this.getStartOfMonth();
+
+        const sessionsRef = collection(db, 'hebrew_user_sessions');
         const q = query(
             sessionsRef,
             where('userId', '==', userId),
