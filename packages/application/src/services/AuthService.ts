@@ -1,7 +1,8 @@
-import { FirebaseAuthRepository } from '@dosfilos/infrastructure';
+import { FirebaseAuthRepository, db } from '@dosfilos/infrastructure';
 import { UserEntity } from '@dosfilos/domain';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { signInWithCustomToken, getAuth } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface CompleteRegistrationResult {
     success: boolean;
@@ -107,6 +108,57 @@ export class AuthService {
     async getCurrentUser(): Promise<UserEntity | null> {
         try {
             return await this.authRepository.getCurrentUser();
+        } catch (error: any) {
+            throw this.translateError(error);
+        }
+    }
+
+    /**
+     * Registers a Free-tier user without going through Stripe.
+     *
+     * Flow:
+     *   1. Create Firebase Auth account (email + password + displayName)
+     *   2. Write the Firestore `users/{uid}` profile with `subscription: { planId: 'free', ... }`
+     *
+     * Side-effects (handled by Cloud Function triggers, not here):
+     *   - `sendWelcomeEmail` fires on Auth user creation
+     *   - `onUserCreated` analytics trigger fires on Firestore user doc creation
+     *
+     * Paid signups must NOT use this — they go through Stripe Checkout +
+     * webhook + completeRegistration so the subscription is provisioned
+     * server-side with the right Stripe customer/subscription ids.
+     */
+    async registerFree(input: {
+        email: string;
+        password: string;
+        displayName: string;
+        locale: 'en' | 'es';
+    }): Promise<UserEntity> {
+        try {
+            const user = await this.authRepository.signUpWithEmailPassword(
+                input.email,
+                input.password,
+                input.displayName,
+            );
+
+            await setDoc(doc(db, 'users', user.id), {
+                email: input.email,
+                displayName: input.displayName,
+                photoURL: null,
+                status: 'active',
+                preferredLanguage: input.locale,
+                subscription: {
+                    planId: 'free',
+                    status: 'active',
+                    stripePriceId: null,
+                    cancelAtPeriodEnd: false,
+                },
+                metadata: { source: 'organic' },
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+
+            return user;
         } catch (error: any) {
             throw this.translateError(error);
         }

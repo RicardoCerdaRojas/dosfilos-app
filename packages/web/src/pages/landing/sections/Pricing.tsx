@@ -33,28 +33,32 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                 {loading ? (
                     <div className="text-center text-slate-500 mt-10">Cargando planes...</div>
                 ) : (
-                    <div className="grid md:grid-cols-3 gap-5 mt-12">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
                         {plans
-                            .filter(p => p.isPublic && p.pricing.monthly > 0)
-                            .map(plan => (
-                                <PlanCard
-                                    key={plan.id}
-                                    plan={{
-                                        id: plan.id,
-                                        name: plan.name,
-                                        description: plan.description,
-                                        priceMonthly: plan.pricing.monthly,
-                                        stripePriceId: getPlanPriceId(plan),
-                                        features: plan.features,
-                                        sortOrder: plan.sortOrder,
-                                        isPublic: plan.isPublic,
-                                    }}
-                                    isPopular={plan.highlightText === 'Más Popular'}
-                                    ctaLabel="Empezar 30 días gratis"
-                                    onCtaClick={() => onPlanSelect(plan.id)}
-                                    ctaVariant="default"
-                                />
-                            ))}
+                            .filter(p => p.isPublic)
+                            .sort((a, b) => a.sortOrder - b.sortOrder)
+                            .map(plan => {
+                                const isFree = plan.pricing.monthly === 0;
+                                return (
+                                    <PlanCard
+                                        key={plan.id}
+                                        plan={{
+                                            id: plan.id,
+                                            name: plan.name,
+                                            description: plan.description,
+                                            priceMonthly: plan.pricing.monthly,
+                                            stripePriceId: getPlanPriceId(plan),
+                                            features: plan.features,
+                                            sortOrder: plan.sortOrder,
+                                            isPublic: plan.isPublic,
+                                        }}
+                                        isPopular={plan.highlightText === 'Más Popular'}
+                                        ctaLabel={isFree ? 'Empezar gratis' : 'Empezar 30 días gratis'}
+                                        onCtaClick={() => onPlanSelect(plan.id)}
+                                        ctaVariant="default"
+                                    />
+                                );
+                            })}
                     </div>
                 )}
 

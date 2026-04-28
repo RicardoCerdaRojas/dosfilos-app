@@ -1,5 +1,6 @@
 import {
     signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
     updateProfile as firebaseUpdateProfile,
     sendPasswordResetEmail,
@@ -64,6 +65,30 @@ export class FirebaseAuthRepository implements IAuthRepository {
         this.trackLogin().catch(err => console.warn('[Auth] Failed to track login:', err));
 
         return this.mapFirebaseUserToEntity(user);
+    }
+
+    /**
+     * Direct email+password signup — used by the public Free signup flow.
+     *
+     * Paid users go through Stripe Checkout → webhook → completeRegistration
+     * (server-side admin SDK). Free users skip Stripe entirely, so we create
+     * the Auth account client-side and let the caller (AuthService.registerFree)
+     * write the Firestore profile and trigger the welcome email.
+     *
+     * Returns the created UserEntity. Caller is responsible for writing the
+     * `users/{uid}` doc — this method only handles Auth.
+     */
+    async signUpWithEmailPassword(
+        email: string,
+        password: string,
+        displayName: string,
+    ): Promise<UserEntity> {
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        await firebaseUpdateProfile(credential.user, { displayName });
+        // updateProfile mutates the in-memory user but `mapFirebaseUserToEntity`
+        // reads the value at call time, so reload to be safe across SDK versions.
+        await credential.user.reload();
+        return this.mapFirebaseUserToEntity(credential.user);
     }
 
     async signOut(): Promise<void> {

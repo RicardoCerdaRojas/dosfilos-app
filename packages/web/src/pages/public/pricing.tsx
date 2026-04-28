@@ -77,11 +77,13 @@ export function PricingPage() {
           {loading ? (
             <div className="text-center text-slate-500 py-12">Cargando planes…</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {plans
-                .filter((p) => p.isPublic && p.pricing.monthly > 0)
+                .filter((p) => p.isPublic)
+                .sort((a, b) => a.sortOrder - b.sortOrder)
                 .map((plan) => {
                   const isPopular = plan.highlightText === 'Más Popular';
+                  const isFree = plan.pricing.monthly === 0;
                   return (
                     <PlanCard
                       key={plan.id}
@@ -96,7 +98,7 @@ export function PricingPage() {
                         isPublic: plan.isPublic,
                       }}
                       isPopular={isPopular}
-                      ctaLabel="Empezar 30 días gratis"
+                      ctaLabel={isFree ? 'Empezar gratis' : 'Empezar 30 días gratis'}
                       onCtaClick={() => handlePlanSelect(plan.id)}
                       ctaVariant="default"
                     />
