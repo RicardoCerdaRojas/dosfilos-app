@@ -4,6 +4,8 @@ import { resend } from './resendClient';
 import { getDay3GreekTemplate, getDay3GreekSubject } from './templates/nurture/day3Greek';
 import { getDay7LibraryTemplate, getDay7LibrarySubject } from './templates/nurture/day7Library';
 import { getDay14UpgradeTemplate, getDay14UpgradeSubject } from './templates/nurture/day14Upgrade';
+import { getTrialEnding5dTemplate, getTrialEnding5dSubject } from './templates/nurture/trialEnding5d';
+import { getTrialEnding1dTemplate, getTrialEnding1dSubject } from './templates/nurture/trialEnding1d';
 
 const db = admin.firestore();
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
@@ -48,6 +50,14 @@ export const sendNurtureEmails = onSchedule('every day 10:00', async () => {
     await processDay3Emails();
     await processDay7Emails();
     await processDay14Emails();
+
+    // Trial-expiration warnings — keyed off subscription.trialEnd, not createdAt.
+    // Run AFTER the onboarding nurture cohort so a user that signed up on day N
+    // and is approaching trial-end doesn't get both a "day 14 upgrade" and a
+    // "5 days left" email on the same morning (the trial-end emails win because
+    // they're more time-sensitive).
+    await processTrialEnding5dEmails();
+    await processTrialEnding1dEmails();
 
     console.log('Daily nurture email check completed.');
 });
@@ -155,6 +165,106 @@ async function processDay14Emails() {
             console.log(`Day 14 email sent to ${email} (${locale})`);
         } catch (e) {
             console.error(`Failed to send Day 14 email to ${email}`, e);
+        }
+    }
+}
+
+/**
+ * Date window N days from NOW (forward-looking). Used for trial-expiration
+ * warnings — opposite direction from `getDateRange` which looks backward
+ * from today (used for onboarding nurture).
+ */
+function getFutureDayRange(daysFromNow: number) {
+    const target = new Date();
+    target.setDate(target.getDate() + daysFromNow);
+
+    const start = new Date(target);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(target);
+    end.setHours(23, 59, 59, 999);
+
+    return { start, end };
+}
+
+/**
+ * 5-day trial expiration warning. Queries users whose `subscription.trialEnd`
+ * falls within the day 5 days from now. Status filter is applied in code
+ * (Firestore range queries can only have one ordered field).
+ */
+async function processTrialEnding5dEmails() {
+    const { start, end } = getFutureDayRange(5);
+    const snapshot = await db.collection('users')
+        .where('subscription.trialEnd', '>=', start)
+        .where('subscription.trialEnd', '<=', end)
+        .get();
+
+    for (const doc of snapshot.docs) {
+        const userData = doc.data();
+        if (userData.subscription?.status !== 'trialing') continue;
+        if (userData.metadata?.emailsSent?.trialEnding5d) continue;
+
+        const email = userData.email;
+        if (!email) continue;
+        const locale = userLocale(userData);
+        const name = userData.displayName || fallbackName(locale);
+
+        try {
+            await resend.emails.send({
+                from: SENDER_EMAIL,
+                to: email,
+                subject: getTrialEnding5dSubject(locale),
+                html: getTrialEnding5dTemplate(name, DASHBOARD_URL, locale),
+            });
+
+            await doc.ref.set({
+                metadata: { emailsSent: { trialEnding5d: true } },
+            }, { merge: true });
+
+            console.log(`Trial-ending-5d email sent to ${email} (${locale})`);
+        } catch (e) {
+            console.error(`Failed to send trial-ending-5d email to ${email}`, e);
+        }
+    }
+}
+
+/**
+ * 1-day (last) trial expiration warning. Same query shape as 5d but tighter
+ * window. Idempotency: trialEnding1d marker prevents duplicate sends if the
+ * cron is retried.
+ */
+async function processTrialEnding1dEmails() {
+    const { start, end } = getFutureDayRange(1);
+    const snapshot = await db.collection('users')
+        .where('subscription.trialEnd', '>=', start)
+        .where('subscription.trialEnd', '<=', end)
+        .get();
+
+    for (const doc of snapshot.docs) {
+        const userData = doc.data();
+        if (userData.subscription?.status !== 'trialing') continue;
+        if (userData.metadata?.emailsSent?.trialEnding1d) continue;
+
+        const email = userData.email;
+        if (!email) continue;
+        const locale = userLocale(userData);
+        const name = userData.displayName || fallbackName(locale);
+
+        try {
+            await resend.emails.send({
+                from: SENDER_EMAIL,
+                to: email,
+                subject: getTrialEnding1dSubject(locale),
+                html: getTrialEnding1dTemplate(name, DASHBOARD_URL, locale),
+            });
+
+            await doc.ref.set({
+                metadata: { emailsSent: { trialEnding1d: true } },
+            }, { merge: true });
+
+            console.log(`Trial-ending-1d email sent to ${email} (${locale})`);
+        } catch (e) {
+            console.error(`Failed to send trial-ending-1d email to ${email}`, e);
         }
     }
 }

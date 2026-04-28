@@ -20,6 +20,7 @@ import { LoginPage } from '@/pages/auth/login';
 import { RegisterPage } from '@/pages/auth/register';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
 import { RegistrationSuccessPage } from '@/pages/auth/registration-success';
+import { VerifyEmailPage } from '@/pages/auth/verify-email';
 import { PublicSermonPage } from '@/pages/public/sermon';
 import { PricingPage } from '@/pages/public/pricing';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
@@ -100,6 +101,14 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/registration-success" element={<RegistrationSuccessPage />} />
+          <Route
+            path="/auth/verify-email"
+            element={
+              <ProtectedRoute>
+                <VerifyEmailPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/share/:token" element={<PublicSermonPage />} />
 
           {/* Redirect old sermon routes to new dashboard routes */}

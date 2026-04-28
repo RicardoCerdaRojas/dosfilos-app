@@ -114,6 +114,18 @@ export class AuthService {
     }
 
     /**
+     * Resends the email-verification link to the currently signed-in user.
+     * Used by /auth/verify-email when the original email was lost.
+     */
+    async resendVerificationEmail(): Promise<void> {
+        try {
+            await this.authRepository.resendVerificationEmail();
+        } catch (error: any) {
+            throw this.translateError(error);
+        }
+    }
+
+    /**
      * Registers a Free-tier user without going through Stripe.
      *
      * Flow:

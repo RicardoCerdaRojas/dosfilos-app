@@ -88,7 +88,46 @@ export class FirebaseAuthRepository implements IAuthRepository {
         // updateProfile mutates the in-memory user but `mapFirebaseUserToEntity`
         // reads the value at call time, so reload to be safe across SDK versions.
         await credential.user.reload();
+
+        // Send the verification email via our custom branded flow (Cloud
+        // Function generates the Firebase link, Resend delivers it with
+        // our template). Failures here are non-fatal — the user can resend
+        // from /auth/verify-email. Detecting locale from the navigator so the
+        // first email matches their language preference.
+        try {
+            const locale: 'es' | 'en' = navigator.language?.startsWith('en') ? 'en' : 'es';
+            const callable = httpsCallable<{ locale: 'es' | 'en' }, { sent: boolean }>(
+                functions,
+                'sendVerificationEmail',
+            );
+            await callable({ locale });
+        } catch (err) {
+            console.warn('[Auth] sendVerificationEmail failed at signup:', err);
+        }
+
         return this.mapFirebaseUserToEntity(credential.user);
+    }
+
+    /**
+     * Resends the email-verification link to the currently signed-in user.
+     * Goes through our branded Cloud Function (same path as the initial
+     * send) so the user always gets the editorial email, never the
+     * Firebase default.
+     */
+    async resendVerificationEmail(): Promise<void> {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('No user is currently signed in');
+        }
+        if (user.emailVerified) {
+            throw new Error('Email already verified');
+        }
+        const locale: 'es' | 'en' = navigator.language?.startsWith('en') ? 'en' : 'es';
+        const callable = httpsCallable<{ locale: 'es' | 'en' }, { sent: boolean }>(
+            functions,
+            'sendVerificationEmail',
+        );
+        await callable({ locale });
     }
 
     async signOut(): Promise<void> {

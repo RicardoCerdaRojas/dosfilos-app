@@ -293,24 +293,50 @@ export class UsageLimitsService {
     }
 
     /**
-     * Returns the full usage snapshot for the current month — used by the dashboard
-     * to display progress bars for every quota at once.
+     * Returns the full usage snapshot for the current month — used by the
+     * `/dashboard/subscription` UsageDashboard so the user can see every quota
+     * in their plan at a glance, not just the few that involve a counter doc.
+     *
+     * Limit semantics:
+     *   - `undefined` → quota field not present on this plan (legacy or new tier)
+     *   - `0` → feature explicitly NOT included in this tier (e.g. Free has no
+     *     personal library, so libraryDocsLimit=0). The UI should hide these
+     *     rows rather than show "0/0".
+     *   - `-1` → unlimited (Pro/Equipo).
+     *   - `n>0` → enforce monthly cap.
      */
     async getMonthlyUsage(userId: string): Promise<{
         docs: { current: number; limit?: number };
         pagesProcessed: { current: number; limit?: number };
         queries: { current: number; limit?: number };
+        sermons: { current: number; limit?: number };
+        series: { current: number; limit?: number };
+        greekSessions: { current: number; limit?: number };
+        hebrewSessions: { current: number; limit?: number };
         periodKey: string;
     }> {
         const user = await this.userProfileRepo.getProfile(userId);
-        const plan = user ? await this.planRepo.getById(user.subscription?.planId || 'basic') : null;
+        const plan = user ? await this.planRepo.getById(user.subscription?.planId || 'free') : null;
         const counter = await this.getUsageCounter(userId);
-        const docs = await this.countUserDocuments(userId);
+
+        // Parallelize the count queries — these are 5 independent Firestore
+        // reads, no need to serialize them.
+        const [docs, sermonsCount, seriesCount, greekCount, hebrewCount] = await Promise.all([
+            this.countUserDocuments(userId),
+            this.countSermonsThisMonth(userId),
+            this.countPreachingPlansThisMonth(userId),
+            this.countGreekSessionsThisMonth(userId),
+            this.countHebrewSessionsThisMonth(userId),
+        ]);
 
         return {
             docs: { current: docs, limit: plan?.limits.libraryDocsLimit },
             pagesProcessed: { current: counter.pagesProcessed, limit: plan?.limits.pagesProcessedPerMonth },
             queries: { current: counter.queriesUsed, limit: plan?.limits.queriesPerMonth },
+            sermons: { current: sermonsCount, limit: plan?.limits.sermonsPerMonth },
+            series: { current: seriesCount, limit: plan?.limits.maxPreachingPlansPerMonth },
+            greekSessions: { current: greekCount, limit: plan?.limits.greekSessionsPerMonth },
+            hebrewSessions: { current: hebrewCount, limit: plan?.limits.hebrewSessionsPerMonth },
             periodKey: counter.periodKey,
         };
     }
