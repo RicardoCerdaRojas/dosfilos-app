@@ -30,9 +30,21 @@
  */
 
 const admin = require('firebase-admin');
+const path = require('path');
 
-admin.initializeApp();
+// Read project id from .firebaserc so the script targets the right Firebase
+// project regardless of what gcloud's active config is. Avoids the silent
+// "plan no existe" failure when the default credentials point elsewhere.
+const firebaserc = require(path.join(__dirname, '..', '.firebaserc'));
+const projectId = firebaserc?.projects?.default;
+if (!projectId) {
+    console.error('❌ No project id in .firebaserc/projects.default');
+    process.exit(1);
+}
+
+admin.initializeApp({ projectId });
 const db = admin.firestore();
+console.log(`📍 Connected to Firestore on project "${projectId}"\n`);
 
 const PLAN_UPDATES = {
     free: {
