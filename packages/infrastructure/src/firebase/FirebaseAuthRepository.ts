@@ -7,6 +7,10 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     User as FirebaseUser,
+    applyActionCode as firebaseApplyActionCode,
+    verifyPasswordResetCode as firebaseVerifyPasswordResetCode,
+    confirmPasswordReset as firebaseConfirmPasswordReset,
+    checkActionCode as firebaseCheckActionCode,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -149,6 +153,28 @@ export class FirebaseAuthRepository implements IAuthRepository {
 
     async resetPassword(email: string): Promise<void> {
         await sendPasswordResetEmail(auth, email);
+    }
+
+    async applyActionCode(oobCode: string): Promise<void> {
+        await firebaseApplyActionCode(auth, oobCode);
+    }
+
+    async verifyPasswordResetCode(oobCode: string): Promise<string> {
+        return firebaseVerifyPasswordResetCode(auth, oobCode);
+    }
+
+    async confirmPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+        await firebaseConfirmPasswordReset(auth, oobCode, newPassword);
+    }
+
+    async checkActionCode(oobCode: string): Promise<void> {
+        await firebaseCheckActionCode(auth, oobCode);
+    }
+
+    async reloadCurrentUser(): Promise<void> {
+        if (auth.currentUser) {
+            await auth.currentUser.reload();
+        }
     }
 
     private mapFirebaseUserToEntity(firebaseUser: FirebaseUser): UserEntity {

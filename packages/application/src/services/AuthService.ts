@@ -126,6 +126,41 @@ export class AuthService {
     }
 
     /**
+     * Applies an emailVerification or recoverEmail action code. After this
+     * resolves, the user's `emailVerified` flag is true server-side; we also
+     * refresh the locally cached user so ProtectedRoute reflects it on the
+     * next render.
+     *
+     * Errors from these methods preserve the original Firebase `code`
+     * (`auth/expired-action-code`, etc.) so the UI can render a typed message
+     * — translation happens in the page, not here.
+     */
+    async applyAuthActionCode(oobCode: string): Promise<void> {
+        await this.authRepository.applyActionCode(oobCode);
+        await this.authRepository.reloadCurrentUser().catch(() => {
+            // Reload is best-effort — the action already succeeded server-side.
+        });
+    }
+
+    /** Validates a reset code and returns the email it was issued for. */
+    async verifyPasswordResetCode(oobCode: string): Promise<string> {
+        return this.authRepository.verifyPasswordResetCode(oobCode);
+    }
+
+    /** Sets the new password for a previously-verified reset code. */
+    async confirmPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+        await this.authRepository.confirmPasswordReset(oobCode, newPassword);
+    }
+
+    /**
+     * Fallback validation for action modes we don't explicitly handle —
+     * lets the UI render a clean error instead of a blank screen.
+     */
+    async checkAuthActionCode(oobCode: string): Promise<void> {
+        await this.authRepository.checkActionCode(oobCode);
+    }
+
+    /**
      * Registers a Free-tier user without going through Stripe.
      *
      * Flow:
