@@ -1,7 +1,17 @@
 {
     "title": "Mi Suscripción",
     "subtitle": "Administra tu plan y facturación",
-    "currentPlan": "Plan Actual",
+    "currentPlan": {
+        "title": "Plan Actual",
+        "renewalDate": "Próxima renovación",
+        "accessUntil": "Acceso hasta",
+        "notActive": "Sin suscripción activa",
+        "cancelButton": "Cancelar suscripción",
+        "reactivateButton": "Reactivar suscripción",
+        "badges": {
+            "cancelled": "Cancelada"
+        }
+    },
     "status": {
         "active": "Activo",
         "trialing": "Período de Prueba",
@@ -10,7 +20,7 @@
     },
     "freePlan": {
         "upgradeTitle": "🎁 Estás usando el Plan Gratuito",
-        "upgradeMessage": "Desbloquea todo el potencial de DosFilos.Preach con acceso a generación de sermones con IA, análisis homilético avanzado, y mucho más."
+        "upgradeMessage": "Desbloquea todo el potencial de DosFilos.Preach con acceso a tutores Griego/Hebreo ilimitados, búsqueda semántica en tu biblioteca personal, y mucho más."
     },
     "trialExtension": {
         "title": "¡Espera! Te regalamos 7 días más",

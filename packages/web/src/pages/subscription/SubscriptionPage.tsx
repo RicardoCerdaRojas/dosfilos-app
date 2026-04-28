@@ -132,7 +132,7 @@ export default function SubscriptionPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-primary" />
-                  {t('currentPlan')}
+                  {t('currentPlan.title')}
                 </CardTitle>
                   {isSubscriptionCancelled && (
                     <Badge variant="outline" className="ml-2 text-orange-600">
@@ -200,39 +200,43 @@ export default function SubscriptionPage() {
         </Card>
       )}
 
-      {/* Plans Grid */}
+      {/* Paid plans grid — Free is promoted to a standalone CTA below for
+          consistency with the public /pricing surface. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map((plan) => {
-          const isCurrent = plan.id === currentPlanId;
-          
-          return (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              isCurrentPlan={isCurrent}
-              onSelect={(planId) => {
-                const selectedPlanData = plans.find(p => p.id === planId);
-                if (!selectedPlanData || isCurrent) return;
-                
-                // If user doesn't have a subscription, create checkout
-                if (!userProfile?.subscription || !isSubscriptionActive) {
-                  // Default to monthly billing for now. Swap to a billing-cycle
-                  // toggle here when the UI for yearly checkout lands.
-                  const priceId = selectedPlanData.stripePriceIds?.monthly;
-                  if (priceId) {
-                    handleSubscribe(priceId);
+        {plans
+          .filter((plan) => plan.id !== 'free')
+          .map((plan) => {
+            const isCurrent = plan.id === currentPlanId;
+
+            return (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                isCurrentPlan={isCurrent}
+                onSelect={(planId) => {
+                  const selectedPlanData = plans.find(p => p.id === planId);
+                  if (!selectedPlanData || isCurrent) return;
+
+                  // If user doesn't have a subscription, create checkout
+                  if (!userProfile?.subscription || !isSubscriptionActive) {
+                    // Default to monthly billing for now. Swap to a billing-cycle
+                    // toggle here when the UI for yearly checkout lands.
+                    const priceId = selectedPlanData.stripePriceIds?.monthly;
+                    if (priceId) {
+                      handleSubscribe(priceId);
+                    }
+                  } else {
+                    // User has active subscription - show change dialog
+                    handlePlanChange(selectedPlanData);
                   }
-                } else {
-                  // User has active subscription - show change dialog
-                  handlePlanChange(selectedPlanData);
-                }
-              }}
-              loading={loading}
-              className=""
-            />
-          );
-        })}
+                }}
+                loading={loading}
+                className=""
+              />
+            );
+          })}
       </div>
+
 
       {/* Dialogs */}
       <CancelSubscriptionDialog 
