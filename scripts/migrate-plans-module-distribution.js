@@ -30,12 +30,15 @@
  */
 
 const admin = require('firebase-admin');
+const fs = require('fs');
 const path = require('path');
 
 // Read project id from .firebaserc so the script targets the right Firebase
 // project regardless of what gcloud's active config is. Avoids the silent
 // "plan no existe" failure when the default credentials point elsewhere.
-const firebaserc = require(path.join(__dirname, '..', '.firebaserc'));
+// `.firebaserc` is JSON without a .json extension, so we parse it manually.
+const firebasercPath = path.join(__dirname, '..', '.firebaserc');
+const firebaserc = JSON.parse(fs.readFileSync(firebasercPath, 'utf-8'));
 const projectId = firebaserc?.projects?.default;
 if (!projectId) {
     console.error('❌ No project id in .firebaserc/projects.default');
