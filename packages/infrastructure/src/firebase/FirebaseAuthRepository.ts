@@ -4,7 +4,6 @@ import {
     signOut as firebaseSignOut,
     updateProfile as firebaseUpdateProfile,
     sendPasswordResetEmail,
-    sendEmailVerification,
     signInWithPopup,
     GoogleAuthProvider,
     User as FirebaseUser,
@@ -90,19 +89,30 @@ export class FirebaseAuthRepository implements IAuthRepository {
         // reads the value at call time, so reload to be safe across SDK versions.
         await credential.user.reload();
 
-        // Send the verification email. Failures here are non-fatal — the user
-        // can resend from /auth/verify-email if the first send drops. We don't
-        // want a Resend hiccup to block the signup itself.
-        sendEmailVerification(credential.user).catch(err => {
-            console.warn('[Auth] sendEmailVerification failed at signup:', err);
-        });
+        // Send the verification email via our custom branded flow (Cloud
+        // Function generates the Firebase link, Resend delivers it with
+        // our template). Failures here are non-fatal — the user can resend
+        // from /auth/verify-email. Detecting locale from the navigator so the
+        // first email matches their language preference.
+        try {
+            const locale: 'es' | 'en' = navigator.language?.startsWith('en') ? 'en' : 'es';
+            const callable = httpsCallable<{ locale: 'es' | 'en' }, { sent: boolean }>(
+                functions,
+                'sendVerificationEmail',
+            );
+            await callable({ locale });
+        } catch (err) {
+            console.warn('[Auth] sendVerificationEmail failed at signup:', err);
+        }
 
         return this.mapFirebaseUserToEntity(credential.user);
     }
 
     /**
      * Resends the email-verification link to the currently signed-in user.
-     * Used by the verify-email page when the original email got lost.
+     * Goes through our branded Cloud Function (same path as the initial
+     * send) so the user always gets the editorial email, never the
+     * Firebase default.
      */
     async resendVerificationEmail(): Promise<void> {
         const user = auth.currentUser;
@@ -112,7 +122,12 @@ export class FirebaseAuthRepository implements IAuthRepository {
         if (user.emailVerified) {
             throw new Error('Email already verified');
         }
-        await sendEmailVerification(user);
+        const locale: 'es' | 'en' = navigator.language?.startsWith('en') ? 'en' : 'es';
+        const callable = httpsCallable<{ locale: 'es' | 'en' }, { sent: boolean }>(
+            functions,
+            'sendVerificationEmail',
+        );
+        await callable({ locale });
     }
 
     async signOut(): Promise<void> {

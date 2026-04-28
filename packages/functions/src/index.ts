@@ -25,6 +25,7 @@ export { stripeWebhook } from './stripe/webhook';
 
 // Export Auth functions
 export { completeRegistration } from './auth/completeRegistration';
+export { sendVerificationEmail } from './auth/sendVerificationEmail';
 
 // Custom portal functions
 export { updatePaymentMethod } from './stripe/updatePaymentMethod';
