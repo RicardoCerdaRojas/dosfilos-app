@@ -305,21 +305,12 @@
     --accent-foreground: 0 0% 100%;
   }
 
-  /* Color Theme: Blue Celestial */
-  [data-theme="blue"] {
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
-    --accent: 213 94% 68%;
-    --accent-foreground: 0 0% 100%;
-    --ring: 221 83% 53%;
-  }
-
-  [data-theme="blue"].dark {
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
-    --accent: 213 94% 68%;
-    --accent-foreground: 0 0% 100%;
-  }
+  /* Color theme "blue" intentionally has no override block.
+     ThemeProvider sets `data-theme="blue"` as the default, which falls
+     through to `:root` / `.dark` (indigo brand primary). Removing the
+     duplicate override is what unifies the brand colour app-wide. If a
+     pure-blue alternative theme is ever needed, add a new id (e.g.
+     "blue-celestial") rather than reusing "blue". */
 
   /* Color Theme: Orange Warm */
   [data-theme="orange"] {
