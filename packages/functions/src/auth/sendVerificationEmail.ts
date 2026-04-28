@@ -29,8 +29,11 @@ interface Input {
  * usually). If the user is already verified we no-op rather than wasting
  * a Resend send.
  */
+// NOTE: this function uses the legacy `functions.config().resend.apikey`
+// pattern (via resendClient.ts) like the rest of our email senders, NOT
+// Secret Manager. If/when we migrate the email stack to Secret Manager,
+// add `{ secrets: ['RESEND_API_KEY'] }` here and to the other senders.
 export const sendVerificationEmail = onCall<Input>(
-    { secrets: ['RESEND_API_KEY'] },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in to request verification.');
