@@ -23,9 +23,9 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                         <h2 className="font-reading text-[36px] md:text-[52px] leading-[1.05] tracking-[-0.02em] text-slate-900 mb-6">
                             Elige el plan que se ajusta a tu ministerio.
                         </h2>
-                        <div className="inline-flex items-center gap-2 text-[13px] text-slate-600 bg-white border border-slate-200 rounded-full px-3.5 py-1.5">
+                        <div className="inline-flex items-center gap-2 text-[13px] text-slate-600 bg-white border border-slate-200 rounded-full px-3.5 py-1.5 shadow-sm">
                             <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-                            30 días gratis en cualquier plan · cancela cuando quieras
+                            Plan gratis · 30 días en planes pagados · sin compromiso
                         </div>
                     </div>
                 </Reveal>

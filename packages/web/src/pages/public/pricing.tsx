@@ -19,7 +19,7 @@ export function PricingPage() {
 
   return (
     <div
-      className="bg-white text-slate-900 antialiased min-h-screen flex flex-col"
+      className="bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900 antialiased min-h-screen flex flex-col"
       style={{ colorScheme: 'light' }}
     >
       {/* Header */}
@@ -67,9 +67,9 @@ export function PricingPage() {
             <h1 className="font-reading text-[26px] md:text-[34px] leading-[1.1] tracking-[-0.02em] text-slate-900 mb-3">
               Elige tu plan.
             </h1>
-            <div className="inline-flex items-center gap-2 text-[12.5px] text-slate-600 bg-white border border-slate-200 rounded-full px-3 py-1">
+            <div className="inline-flex items-center gap-2 text-[12.5px] text-slate-600 bg-white border border-slate-200 rounded-full px-3.5 py-1.5 shadow-sm">
               <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-              30 días gratis · cancela cuando quieras
+              Plan gratis disponible · 30 días en planes pagados · cancela cuando quieras
             </div>
           </div>
 
