@@ -10,6 +10,7 @@ import {
 
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
 const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
+const LOGIN_URL = 'https://preach.dosfilos.com/login';
 
 type Locale = 'es' | 'en';
 
@@ -48,16 +49,28 @@ async function resolveUserLocale(uid: string): Promise<Locale> {
 async function buildWelcomeOptions(user: UserRecord): Promise<WelcomeEmailOptions> {
     const email = user.email!;
     if (user.emailVerified) {
+        // Paid flow: after the user sets their password we send them to /login
+        // (they need to authenticate with the new password before the
+        // dashboard's auth gate will let them in).
         try {
-            const setPasswordUrl = await getAuth().generatePasswordResetLink(email);
+            const setPasswordUrl = await getAuth().generatePasswordResetLink(email, {
+                url: LOGIN_URL,
+                handleCodeInApp: false,
+            });
             return { setPasswordUrl };
         } catch (err) {
             console.warn('[sendWelcomeEmail] Could not generate password reset link:', err);
             return {};
         }
     }
+    // Free flow: after verification the user is already authed in their
+    // browser (createUserWithEmailAndPassword logged them in client-side), so
+    // /dashboard is the natural continueUrl.
     try {
-        const verifyEmailUrl = await getAuth().generateEmailVerificationLink(email);
+        const verifyEmailUrl = await getAuth().generateEmailVerificationLink(email, {
+            url: DASHBOARD_URL,
+            handleCodeInApp: false,
+        });
         return { verifyEmailUrl };
     } catch (err) {
         console.error('[sendWelcomeEmail] Could not generate verification link:', err);
