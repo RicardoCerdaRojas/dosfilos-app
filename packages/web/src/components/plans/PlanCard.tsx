@@ -8,9 +8,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Zap } from 'lucide-react';
+import { Check, Zap } from 'lucide-react';
 import type { LocalizedPlan } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
+import { getFeatureLabel } from '@/utils/featureLabels';
 
 interface PlanCardProps {
   plan: LocalizedPlan;
@@ -75,67 +76,26 @@ export function PlanCard({
       </CardHeader>
       
       <CardContent>
-        {/* Modules Section (NEW) */}
-        {plan.localizedModules && plan.localizedModules.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-              {t('modulesIncluded', { defaultValue: 'Módulos Incluidos' })}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {plan.localizedModules.map((module) => (
-                <Badge key={module.id} variant="secondary" className="text-xs">
-                  {module.label}
-                </Badge>
-              ))}
-            </div>
-          </div>
+        {/* Feature list — uses our static featureLabels map (same source as
+            public PlanCard) so labels stay consistent and don't depend on
+            plan_translations being fully seeded. Modules are intentionally
+            not rendered here: they're identical across paid plans and
+            duplicate the feature list. */}
+        {plan.features && plan.features.length > 0 && (
+          <ul className="space-y-2 mb-6">
+            {plan.features.map((featureId) => (
+              <li key={featureId} className="flex items-start gap-2">
+                <span className="flex-shrink-0 mt-[3px] flex h-4 w-4 items-center justify-center rounded-full bg-primary/10">
+                  <Check className="h-2.5 w-2.5 text-primary" strokeWidth={3.5} />
+                </span>
+                <span className="text-[13.5px] text-foreground/80 leading-snug">
+                  {getFeatureLabel(featureId)}
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
-        
-        {/* Features List - HIDDEN as per user request */}
-        {/* 
-        <div className="space-y-3 mb-4">
-          {plan.localizedFeatures.map((feature) => (
-            <div key={feature.id} className="flex items-start gap-2">
-              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-              <span className="text-sm">{feature.label}</span>
-            </div>
-          ))}
-        </div>
-        */}
-        
-        {/* Limits Section (REFACTORED - using translations) */}
-        {plan.localizedLimits && plan.localizedLimits.length > 0 && (
-          <div className="border-t pt-4 mb-6 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              {t('limits', { defaultValue: 'Límites' })}
-            </p>
-            
-            {plan.localizedLimits.map((limit) => {
-              // Skip unlimited items (value 999) or zero values
-              if (limit.value === 999 || limit.value === 0) return null;
-              
-              // Icon mapping
-              const icons: Record<string, string> = {
-                sermonsPerMonth: '📝',
-                libraryStorageMB: '💾',
-                greekSessionsPerMonth: '🏛️',
-                maxPreachingPlans: '📅',
-                maxPreachingPlansPerMonth: '📅',
-                maxMembers: '👥'
-              };
-              
-              return (
-                <div key={limit.key} className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">
-                    {icons[limit.key] || '•'}
-                  </span>
-                  <span>{limit.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        
+
         {/* CTA Button */}
         <Button
           className="w-full"
@@ -143,7 +103,7 @@ export function PlanCard({
           disabled={loading || isCurrentPlan}
           onClick={() => onSelect(plan.id)}
         >
-          {isCurrentPlan ? 'Plan Actual' : 'Seleccionar'}
+          {isCurrentPlan ? t('currentPlan', { defaultValue: 'Plan Actual' }) : t('select', { defaultValue: 'Seleccionar' })}
         </Button>
       </CardContent>
     </Card>
