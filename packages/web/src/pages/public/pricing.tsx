@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { PlanCard } from '@/components/subscription/PlanCard';
 import { FreeTierBanner } from '@/components/subscription/FreeTierBanner';
 import { usePlans, getPlanPriceId } from '@/hooks/usePlans';
@@ -60,18 +60,18 @@ export function PricingPage() {
       {/* Main */}
       <main className="flex-1 px-6 lg:px-10 py-6 md:py-8">
         <div className="max-w-[1100px] mx-auto">
-          {/* Compact hero — single line on desktop */}
-          <div className="text-center max-w-2xl mx-auto mb-6 md:mb-8">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-2">
-              Planes
+          {/* Compact hero — eyebrow + title in tight stack */}
+          <div className="text-center max-w-2xl mx-auto mb-6">
+            <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-3">
+              <span>Precios</span>
+              <span className="text-slate-300 normal-case tracking-normal">·</span>
+              <span className="text-slate-500 normal-case tracking-normal">
+                Plan gratis · 30 días en pagados · sin compromiso
+              </span>
             </div>
-            <h1 className="font-reading text-[26px] md:text-[34px] leading-[1.1] tracking-[-0.02em] text-slate-900 mb-3">
+            <h1 className="font-reading text-[26px] md:text-[34px] leading-[1.05] tracking-[-0.02em] text-slate-900">
               Elige tu plan.
             </h1>
-            <div className="inline-flex items-center gap-2 text-[12.5px] text-slate-600 bg-white border border-slate-200 rounded-full px-3.5 py-1.5 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-              Plan gratis disponible · 30 días en planes pagados · cancela cuando quieras
-            </div>
           </div>
 
           {/* Paid plans grid — Free is promoted to a standalone CTA below */}
