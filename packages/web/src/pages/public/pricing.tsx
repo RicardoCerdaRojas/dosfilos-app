@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { PlanCard } from '@/components/subscription/PlanCard';
+import { FreeTierBanner } from '@/components/subscription/FreeTierBanner';
 import { usePlans, getPlanPriceId } from '@/hooks/usePlans';
 import { LanguageSwitcher } from '@/i18n';
 
@@ -19,7 +20,7 @@ export function PricingPage() {
 
   return (
     <div
-      className="bg-white text-slate-900 antialiased min-h-screen flex flex-col"
+      className="bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900 antialiased min-h-screen flex flex-col"
       style={{ colorScheme: 'light' }}
     >
       {/* Header */}
@@ -59,50 +60,54 @@ export function PricingPage() {
       {/* Main */}
       <main className="flex-1 px-6 lg:px-10 py-6 md:py-8">
         <div className="max-w-[1100px] mx-auto">
-          {/* Compact hero — single line on desktop */}
-          <div className="text-center max-w-2xl mx-auto mb-6 md:mb-8">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-2">
-              Planes
+          {/* Compact hero — eyebrow + title in tight stack */}
+          <div className="text-center max-w-2xl mx-auto mb-6">
+            <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-3">
+              <span>Precios</span>
+              <span className="text-slate-300 normal-case tracking-normal">·</span>
+              <span className="text-slate-500 normal-case tracking-normal">
+                Plan gratis · 30 días en pagados · sin compromiso
+              </span>
             </div>
-            <h1 className="font-reading text-[26px] md:text-[34px] leading-[1.1] tracking-[-0.02em] text-slate-900 mb-3">
+            <h1 className="font-reading text-[26px] md:text-[34px] leading-[1.05] tracking-[-0.02em] text-slate-900">
               Elige tu plan.
             </h1>
-            <div className="inline-flex items-center gap-2 text-[12.5px] text-slate-600 bg-white border border-slate-200 rounded-full px-3 py-1">
-              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-              30 días gratis · cancela cuando quieras
-            </div>
           </div>
 
-          {/* Plans */}
+          {/* Paid plans grid — Free is promoted to a standalone CTA below */}
           {loading ? (
             <div className="text-center text-slate-500 py-12">Cargando planes…</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {plans
-                .filter((p) => p.isPublic && p.pricing.monthly > 0)
-                .map((plan) => {
-                  const isPopular = plan.highlightText === 'Más Popular';
-                  return (
-                    <PlanCard
-                      key={plan.id}
-                      plan={{
-                        id: plan.id,
-                        name: plan.name,
-                        description: plan.description,
-                        priceMonthly: plan.pricing.monthly,
-                        stripePriceId: getPlanPriceId(plan),
-                        features: plan.features,
-                        sortOrder: plan.sortOrder,
-                        isPublic: plan.isPublic,
-                      }}
-                      isPopular={isPopular}
-                      ctaLabel="Empezar 30 días gratis"
-                      onCtaClick={() => handlePlanSelect(plan.id)}
-                      ctaVariant="default"
-                    />
-                  );
-                })}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {plans
+                  .filter((p) => p.isPublic && p.pricing.monthly > 0)
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((plan) => {
+                    const isPopular = plan.highlightText === 'Más Popular';
+                    return (
+                      <PlanCard
+                        key={plan.id}
+                        plan={{
+                          id: plan.id,
+                          name: plan.name,
+                          description: plan.description,
+                          priceMonthly: plan.pricing.monthly,
+                          stripePriceId: getPlanPriceId(plan),
+                          features: plan.features,
+                          sortOrder: plan.sortOrder,
+                          isPublic: plan.isPublic,
+                        }}
+                        isPopular={isPopular}
+                        ctaLabel="Empezar 30 días gratis"
+                        onCtaClick={() => handlePlanSelect(plan.id)}
+                      />
+                    );
+                  })}
+              </div>
+
+              <FreeTierBanner onCtaClick={() => handlePlanSelect('free')} />
+            </>
           )}
 
         </div>

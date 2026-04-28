@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { PlanCard } from '@/components/subscription/PlanCard';
+import { FreeTierBanner } from '@/components/subscription/FreeTierBanner';
 import { getPlanPriceId } from '@/hooks/usePlans';
 import { Reveal } from '../shared/Reveal';
 
@@ -13,55 +14,57 @@ interface PricingProps {
 /** Pricing section — fetches plans via hook in parent and shows public ones. */
 export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
     return (
-        <section id="precios" className="bg-slate-50 py-28 md:py-36 px-6 lg:px-10 border-t border-slate-200">
+        <section id="precios" className="bg-slate-50 py-16 md:py-20 px-6 lg:px-10 border-t border-slate-200">
             <div className="max-w-[1200px] mx-auto">
                 <Reveal>
-                    <div className="text-center max-w-2xl mx-auto mb-4">
-                        <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-4">
-                            Precios
+                    <div className="text-center max-w-2xl mx-auto mb-8">
+                        <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-3">
+                            <span>Precios</span>
+                            <span className="text-slate-300 normal-case tracking-normal">·</span>
+                            <span className="text-slate-500 normal-case tracking-normal">Plan gratis · 30 días en pagados · sin compromiso</span>
                         </div>
-                        <h2 className="font-reading text-[36px] md:text-[52px] leading-[1.05] tracking-[-0.02em] text-slate-900 mb-6">
-                            Elige el plan que se ajusta a tu ministerio.
+                        <h2 className="font-reading text-[32px] md:text-[42px] leading-[1.05] tracking-[-0.02em] text-slate-900">
+                            Elige tu plan.
                         </h2>
-                        <div className="inline-flex items-center gap-2 text-[13px] text-slate-600 bg-white border border-slate-200 rounded-full px-3.5 py-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-                            30 días gratis en cualquier plan · cancela cuando quieras
-                        </div>
                     </div>
                 </Reveal>
 
                 {loading ? (
                     <div className="text-center text-slate-500 mt-10">Cargando planes...</div>
                 ) : (
-                    <div className="grid md:grid-cols-3 gap-5 mt-12">
-                        {plans
-                            .filter(p => p.isPublic && p.pricing.monthly > 0)
-                            .map(plan => (
-                                <PlanCard
-                                    key={plan.id}
-                                    plan={{
-                                        id: plan.id,
-                                        name: plan.name,
-                                        description: plan.description,
-                                        priceMonthly: plan.pricing.monthly,
-                                        stripePriceId: getPlanPriceId(plan),
-                                        features: plan.features,
-                                        sortOrder: plan.sortOrder,
-                                        isPublic: plan.isPublic,
-                                    }}
-                                    isPopular={plan.highlightText === 'Más Popular'}
-                                    ctaLabel="Empezar 30 días gratis"
-                                    onCtaClick={() => onPlanSelect(plan.id)}
-                                    ctaVariant="default"
-                                />
-                            ))}
-                    </div>
+                    <>
+                        <div className="grid md:grid-cols-3 gap-4 mt-6">
+                            {plans
+                                .filter(p => p.isPublic && p.pricing.monthly > 0)
+                                .sort((a, b) => a.sortOrder - b.sortOrder)
+                                .map(plan => (
+                                    <PlanCard
+                                        key={plan.id}
+                                        plan={{
+                                            id: plan.id,
+                                            name: plan.name,
+                                            description: plan.description,
+                                            priceMonthly: plan.pricing.monthly,
+                                            stripePriceId: getPlanPriceId(plan),
+                                            features: plan.features,
+                                            sortOrder: plan.sortOrder,
+                                            isPublic: plan.isPublic,
+                                        }}
+                                        isPopular={plan.highlightText === 'Más Popular'}
+                                        ctaLabel="Empezar 30 días gratis"
+                                        onCtaClick={() => onPlanSelect(plan.id)}
+                                    />
+                                ))}
+                        </div>
+
+                        <FreeTierBanner onCtaClick={() => onPlanSelect('free')} />
+                    </>
                 )}
 
-                <div className="text-center mt-10">
+                <div className="text-center mt-6">
                     <Link
                         to="/pricing"
-                        className="inline-flex items-center gap-1 text-[13px] text-slate-600 hover:text-indigo-700 transition-colors"
+                        className="inline-flex items-center gap-1 text-[12.5px] text-slate-500 hover:text-indigo-700 transition-colors"
                     >
                         Ver detalle completo de planes
                         <ChevronRight className="h-3.5 w-3.5" />

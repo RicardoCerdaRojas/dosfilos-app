@@ -16,17 +16,23 @@ import { useTranslation } from '@/i18n';
 
 const planService = new PlanService(new FirebasePlanRepository());
 
-const ALLOWED_PLANS = ['basic', 'pro', 'team'] as const;
+const ALLOWED_PLANS = ['free', 'basic', 'pro', 'team'] as const;
 
 /**
- * Register page — payment-first, trial-included.
+ * Register page — two flows behind one URL, branched by `?plan=`.
  *
- * Flow (single path, no branches):
+ * Paid (basic/pro/team):
  *   /pricing → /register?plan=<id> → Stripe Checkout (30-day trial)
  *     → webhook stores pending_registrations → /auth/registration-success
  *     → completeRegistration creates Auth + Firestore user → /dashboard
  *
- * No free plan. No Google OAuth here (Google is login-only for existing users).
+ * Free:
+ *   /pricing → /register?plan=free → registerFree (client-side Auth + Firestore)
+ *     → /dashboard
+ *
+ * Google OAuth is intentionally absent: it's login-only for existing users.
+ * New users come through one of the two paths above so we always have an
+ * explicit plan choice + welcome-email trigger fires uniformly.
  */
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -35,17 +41,21 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<FirestorePlan | null>(null);
 
+  const selectedPlanId = searchParams.get('plan');
+  const isFree = selectedPlanId === 'free';
+
   const registerSchema = z.object({
     displayName: z
       .string()
       .min(2, t('register.errors.nameMin'))
       .max(50, t('register.errors.nameMax')),
     email: z.string().email(t('register.errors.invalidEmail')),
+    password: isFree
+      ? z.string().min(6, t('register.errors.passwordMin', { defaultValue: 'Mínimo 6 caracteres' }))
+      : z.string().optional(),
   });
 
   type RegisterFormData = z.infer<typeof registerSchema>;
-
-  const selectedPlanId = searchParams.get('plan');
 
   useEffect(() => {
     const loadPlan = async () => {
@@ -88,6 +98,26 @@ export function RegisterPage() {
     if (!selectedPlan) return;
     setIsLoading(true);
 
+    // ── Free path: skip Stripe entirely ──────────────────────────────────
+    if (isFree) {
+      try {
+        await authService.registerFree({
+          email: data.email,
+          password: data.password!,
+          displayName: data.displayName,
+          locale: i18n.language as 'en' | 'es',
+        });
+        toast.success(t('register.freeSuccess', { defaultValue: '¡Cuenta creada!' }));
+        navigate('/dashboard');
+      } catch (error: any) {
+        console.error('Free signup error:', error);
+        toast.error(error?.message ?? t('register.errors.signupFailed', { defaultValue: 'Error al crear la cuenta' }));
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // ── Paid path: Stripe Checkout ───────────────────────────────────────
     const priceId = getPlanPriceId(selectedPlan);
     if (!priceId) {
       toast.error(t('register.errors.planNotAvailable'));
@@ -129,11 +159,19 @@ export function RegisterPage() {
                 <p className="mt-1 font-reading text-xl text-slate-900">{selectedPlan.name}</p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-slate-500">{t('register.trialBadge', { defaultValue: '30 días gratis' })}</div>
-                <div className="text-sm text-slate-900 font-medium">
-                  ${selectedPlan.pricing.monthly}
-                  <span className="text-slate-500">{t('register.perMonth')}</span>
-                </div>
+                {isFree ? (
+                  <div className="text-sm text-slate-900 font-medium">
+                    {t('register.freeBadge', { defaultValue: 'Gratis · sin tarjeta' })}
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-sm text-slate-500">{t('register.trialBadge', { defaultValue: '30 días gratis' })}</div>
+                    <div className="text-sm text-slate-900 font-medium">
+                      ${selectedPlan.pricing.monthly}
+                      <span className="text-slate-500">{t('register.perMonth')}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -177,19 +215,46 @@ export function RegisterPage() {
             )}
           </div>
 
+          {isFree && (
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-[13px] font-medium text-slate-700">
+                {t('register.password', { defaultValue: 'Contraseña' })}
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder={t('register.passwordPlaceholder', { defaultValue: 'Mínimo 6 caracteres' })}
+                autoComplete="new-password"
+                {...register('password')}
+                disabled={isLoading}
+                className="h-11 border-slate-300 focus-visible:ring-indigo-600"
+              />
+              {errors.password && (
+                <p className="text-xs text-red-600">{errors.password.message}</p>
+              )}
+            </div>
+          )}
+
           <Button
             type="submit"
             className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium"
             disabled={isLoading || !selectedPlan}
           >
-            {isLoading ? t('register.submitting') : t('register.continueToPayment', { defaultValue: 'Continuar al pago' })}
+            {isLoading
+              ? t('register.submitting')
+              : isFree
+                ? t('register.createFreeAccount', { defaultValue: 'Crear cuenta gratis' })
+                : t('register.continueToPayment', { defaultValue: 'Continuar al pago' })}
           </Button>
 
           <p className="text-[12px] leading-relaxed text-slate-500 text-center">
-            {t('register.trialDisclaimer', {
-              defaultValue:
-                'Crearás tu contraseña después del pago. Sin cargo durante 30 días; cancela cuando quieras.',
-            })}
+            {isFree
+              ? t('register.freeDisclaimer', {
+                  defaultValue: 'Sin tarjeta de crédito. Puedes hacer upgrade a un plan pagado en cualquier momento.',
+                })
+              : t('register.trialDisclaimer', {
+                  defaultValue: 'Crearás tu contraseña después del pago. Sin cargo durante 30 días; cancela cuando quieras.',
+                })}
           </p>
         </form>
 

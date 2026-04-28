@@ -26,6 +26,11 @@ export function useUsageLimits() {
         return usageLimitsService.canStartGreekSession(user.uid);
     }, [user]);
 
+    const checkCanStartHebrewSession = useCallback(async (): Promise<LimitCheckResult> => {
+        if (!user) return { allowed: false, reason: 'No autenticado' };
+        return usageLimitsService.canStartHebrewSession(user.uid);
+    }, [user]);
+
     const checkCanAccessLibrary = useCallback(async (): Promise<boolean> => {
         if (!user) return false;
         return usageLimitsService.canAccessLibrary(user.uid);
@@ -64,6 +69,7 @@ export function useUsageLimits() {
         checkCanCreateSermon,
         checkCanCreatePreachingPlan,
         checkCanStartGreekSession,
+        checkCanStartHebrewSession,
         checkCanAccessLibrary,
         getLibraryStorageUsage,
         checkCanQuery,

@@ -20,6 +20,12 @@ export interface PlanDefinition {
         // Greek Tutor limits
         greekSessionsPerMonth: number; // Monthly Greek Tutor study sessions
 
+        // Hebrew Tutor limits — gated identically to Greek (entry-tier hook).
+        // Free / Personal get a small monthly cap so curious users can sample
+        // the differentiator and have a concrete reason to upgrade. Pro+ use
+        // -1 for unlimited.
+        hebrewSessionsPerMonth?: number;
+
         // Library limits
         libraryStorageMB: number; // Storage limit in MB (0 = no access)
 
