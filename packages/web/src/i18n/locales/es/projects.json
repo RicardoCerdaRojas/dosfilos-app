@@ -1,0 +1,143 @@
+{
+    "breadcrumb": {
+        "back": "Proyectos"
+    },
+    "notFound": {
+        "title": "Proyecto no encontrado",
+        "back": "Volver a Proyectos"
+    },
+    "roadmap": {
+        "label": "Roadmap · {{type}}",
+        "phaseLabel": "Fase {{number}}",
+        "allComplete": {
+            "title": "Todas las fases completadas",
+            "description": "Continúa puliendo el material o archiva el proyecto cuando termines."
+        },
+        "activePhase": {
+            "label": "Próximo paso · Fase {{number}}"
+        }
+    },
+    "resources": {
+        "sources": {
+            "label": "Fuentes",
+            "empty": "Adjunta libros y comentarios para acotar las consultas a este proyecto.",
+            "ctaEdit": "Editar fuentes",
+            "ctaAttach": "Adjuntar fuentes",
+            "byProcess": "· Por procesar",
+            "process": "Procesar",
+            "processing": "Procesando…",
+            "processTitle": "Procesar fuente"
+        },
+        "conversations": {
+            "label": "Conversaciones",
+            "empty": "Conversa con tutores teológicos. Las respuestas alimentan tus notas.",
+            "ctaStart": "Iniciar conversación"
+        },
+        "greek": {
+            "label": "Griego",
+            "empty": "Estudia el griego del pasaje. Identifica formas, sintaxis y palabras clave.",
+            "ctaStudy": "Estudiar pasaje",
+            "ctaLink": "Vincular existente"
+        },
+        "hebrew": {
+            "label": "Hebreo",
+            "empty": "Analiza un versículo en hebreo: morfología, palabras y semántica.",
+            "ctaAnalyze": "Analizar versículo",
+            "ctaLink": "Vincular existente"
+        }
+    },
+    "material": {
+        "sectionLabel": "Material producido",
+        "newButton": "Nuevo",
+        "empty": "Aquí se acumularán tus notas, bosquejos, borradores y sermones en orden cronológico.",
+        "outputKind": {
+            "note": "Nota",
+            "draft": "Borrador",
+            "outline": "Bosquejo",
+            "sermon": "Sermón"
+        },
+        "sermonStatus": {
+            "published": "Publicado",
+            "archived": "Archivado",
+            "draft": "Borrador"
+        },
+        "actions": {
+            "downloadMarkdown": "Descargar como Markdown",
+            "edit": "Editar",
+            "delete": "Eliminar"
+        }
+    },
+    "linkSession": {
+        "greek": {
+            "title": "Vincular sesión existente",
+            "description": "Sesiones de griego — elige una para vincularla a este proyecto.",
+            "empty": "No hay sesiones de griego disponibles para vincular.",
+            "linkButton": "Vincular",
+            "linking": "Vinculando…"
+        },
+        "hebrew": {
+            "title": "Vincular sesión existente",
+            "description": "Sesiones de hebreo — elige una para vincularla a este proyecto.",
+            "empty": "No hay sesiones de hebreo disponibles para vincular.",
+            "linkButton": "Vincular",
+            "linking": "Vinculando…"
+        },
+        "toastSuccess": "Sesión vinculada al proyecto",
+        "toastError": "Error al vincular"
+    },
+    "sourcePicker": {
+        "title": "Fuentes del proyecto",
+        "description": "Selecciona los documentos de tu biblioteca que quieres usar como fuentes en este proyecto.",
+        "searchPlaceholder": "Buscar en tu biblioteca…",
+        "loading": "Cargando tu biblioteca…",
+        "emptyLibrary": "Tu biblioteca está vacía. Sube documentos primero.",
+        "noResults": "Sin resultados para tu búsqueda.",
+        "byProcess": "· Por procesar",
+        "summaryNoneSelected": "Sin fuentes seleccionadas — usará toda tu biblioteca",
+        "summarySelected_one": "{{count}} fuente seleccionada",
+        "summarySelected_other": "{{count}} fuentes seleccionadas",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "saving": "Guardando…",
+        "toastSuccess_one": "{{count}} fuente vinculada al proyecto",
+        "toastSuccess_other": "{{count}} fuentes vinculadas al proyecto",
+        "toastError": "Error al guardar fuentes"
+    },
+    "outputEditor": {
+        "createTitle": "Nuevo material",
+        "editTitle": "Editar material",
+        "description": "Guarda notas, borradores y bosquejos asociados al proyecto.",
+        "fields": {
+            "titleLabel": "Título",
+            "titlePlaceholder": "Ej. Exégesis de Rom 12:1-2",
+            "kindLabel": "Tipo",
+            "contentLabel": "Contenido",
+            "contentPlaceholder": "Escribe aquí tu contenido (Markdown soportado)…"
+        },
+        "kindOptions": {
+            "note": "Nota",
+            "draft": "Borrador",
+            "outline": "Bosquejo",
+            "sermon": "Sermón"
+        },
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "saving": "Guardando…",
+        "errorTitleRequired": "El título es obligatorio",
+        "toastCreated": "Material guardado",
+        "toastUpdated": "Material actualizado"
+    },
+    "deleteOutput": {
+        "title": "¿Eliminar \"{{title}}\"?",
+        "description": "Esta acción no se puede deshacer. El material será eliminado permanentemente del proyecto.",
+        "cancel": "Cancelar",
+        "confirm": "Eliminar",
+        "toastSuccess": "Material eliminado",
+        "toastError": "Error al eliminar el material"
+    },
+    "reprocess": {
+        "successReextracted": "\"{{title}}\" reextraído — el procesamiento se completará en segundo plano.",
+        "successReady": "\"{{title}}\" listo.",
+        "error": "Error procesando \"{{title}}\": {{message}}"
+    }
+}

@@ -1,8 +1,11 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { stripe } from '../config/stripe';
+import { writeAuditLog } from './auditLog';
 
-export const deleteUser = onCall(async (request) => {
+export const deleteUser = onCall(
+    { secrets: ['STRIPE_SECRET_KEY'] },
+    async (request) => {
     // 1. Verify Authentication
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
@@ -59,6 +62,18 @@ export const deleteUser = onCall(async (request) => {
         // 6. Delete from Firebase Auth
         await admin.auth().deleteUser(userId);
         console.log(`Deleted Firebase Auth account for ${userId}`);
+
+        writeAuditLog({
+            actorUid: callerUid,
+            actorEmail: callerDoc.data()?.email,
+            action: 'user.delete',
+            targetUid: userId,
+            targetEmail: userData?.email,
+            details: {
+                hadStripeCustomer: !!userData?.stripeCustomerId,
+                planId: userData?.subscription?.planId ?? null,
+            },
+        });
 
         return { success: true, message: `User ${userId} completely removed.` };
 

@@ -195,7 +195,21 @@
             "notFound": "Selected approach not found",
             "develop": "Error developing selected approach",
             "refine": "Error refining section",
-            "update": "Error updating section"
+            "update": "Error updating section",
+            "readonlySection": "This section is read-only and cannot be edited directly",
+            "processFailed": "Could not process the request"
+        },
+        "regenerateConfirm": {
+            "title": "Regenerate Homiletical Study?",
+            "description": "This action will restart the entire homiletical process. New approaches will be generated and you'll lose the current selection and manual refinements.",
+            "cancel": "Cancel",
+            "confirm": "Regenerate"
+        },
+        "saved": "Saved",
+        "versions": {
+            "beforeManualEdit": "Before manual edit",
+            "manualEdit": "Manual edit",
+            "manualEditSummary": "Changes saved manually"
         }
     },
     "drafting": {
@@ -249,7 +263,26 @@
             "refining": "Error refining section",
             "updating": "Error updating section",
             "regeneratingPoint": "Error regenerating point",
-            "noHomiletics": "Error: Homiletical analysis is missing."
+            "noHomiletics": "Error: Homiletical analysis is missing.",
+            "processFailed": "Could not process the request"
+        },
+        "regenerateConfirm": {
+            "title": "Regenerate Sermon Draft?",
+            "description": "This action will create a new draft based on your homiletical choices. Any manual edits to the current text will be permanently lost.",
+            "cancel": "Cancel",
+            "confirm": "Regenerate"
+        },
+        "saved": "Saved",
+        "fullContent": {
+            "crossReferences": "Cross References",
+            "practicalImplications": "Practical Implications"
+        },
+        "versions": {
+            "beforeManualEdit": "Before manual edit",
+            "manualEdit": "Manual edit",
+            "manualEditSummary": "Changes saved manually",
+            "beforeRefinement": "Before: {{summary}}...",
+            "refinedSummary": "✅ Section \"{{section}}\" refined successfully."
         }
     }
 }

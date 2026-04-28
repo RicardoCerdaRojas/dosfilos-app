@@ -11,6 +11,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useHebrewTutor } from '../HebrewTutorProvider';
 import { useAuthorization } from '../../../hooks/useAuthorization';
 import type { VerseAnalysis, BookIndex, HebrewVerse } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
 
 interface UseVerseAnalysisState {
   /** Currently selected book key (morphhb key) */
@@ -45,6 +46,8 @@ interface UseVerseAnalysisActions {
 
 export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActions {
   const { analyzeVerse, getBibleNavigation, getVerseText, checkCache } = useHebrewTutor();
+  const { i18n } = useTranslation();
+  const language = i18n.language?.startsWith('en') ? 'en' : 'es';
 
   const [selectedBook, setSelectedBook] = useState('');
   const [selectedChapter, setSelectedChapter] = useState(1);
@@ -109,7 +112,7 @@ export function useVerseAnalysis(): UseVerseAnalysisState & UseVerseAnalysisActi
           morphhbKey: selectedBook,
           chapter: selectedChapter,
           verse: selectedVerse,
-          language: 'es',
+          language,
           forceRefresh,
         });
 

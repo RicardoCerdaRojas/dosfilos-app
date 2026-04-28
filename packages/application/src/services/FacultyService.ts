@@ -18,6 +18,8 @@ import {
     CreateProjectUseCase,
     UpdateProjectUseCase,
     DeleteProjectUseCase,
+    SetProjectArchivedUseCase,
+    SetProjectDeletedUseCase,
     DeleteChatSessionUseCase,
     GenerateProjectContextUseCase,
     GetUserProjectsUseCase,
@@ -25,6 +27,10 @@ import {
     RenameChatSessionUseCase,
     DeleteChatMessageUseCase,
     ProcessMicroActionUseCase,
+    ListProjectOutputsUseCase,
+    CreateProjectOutputUseCase,
+    UpdateProjectOutputUseCase,
+    DeleteProjectOutputUseCase,
 } from '../use-cases/faculty';
 
 class FacultyService {
@@ -41,11 +47,18 @@ class FacultyService {
     public createProject: CreateProjectUseCase;
     public updateProject: UpdateProjectUseCase;
     public deleteProject: DeleteProjectUseCase;
+    public setProjectArchived: SetProjectArchivedUseCase;
+    public setProjectDeleted: SetProjectDeletedUseCase;
     public deleteSession: DeleteChatSessionUseCase;
     public deleteMessage: DeleteChatMessageUseCase;
     public renameSession: RenameChatSessionUseCase;
     public generateProjectContext: GenerateProjectContextUseCase;
     public updateSessionProject: UpdateSessionProjectUseCase;
+    // Project outputs
+    public listOutputs: ListProjectOutputsUseCase;
+    public createOutput: CreateProjectOutputUseCase;
+    public updateOutput: UpdateProjectOutputUseCase;
+    public deleteOutput: DeleteProjectOutputUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -73,11 +86,17 @@ class FacultyService {
         this.createProject = new CreateProjectUseCase(projectRepository);
         this.updateProject = new UpdateProjectUseCase(projectRepository);
         this.deleteProject = new DeleteProjectUseCase(projectRepository, chatRepository);
+        this.setProjectArchived = new SetProjectArchivedUseCase(projectRepository);
+        this.setProjectDeleted = new SetProjectDeletedUseCase(projectRepository);
         this.deleteSession = new DeleteChatSessionUseCase(chatRepository);
         this.deleteMessage = new DeleteChatMessageUseCase(chatRepository);
         this.renameSession = new RenameChatSessionUseCase(chatRepository);
         this.generateProjectContext = new GenerateProjectContextUseCase(chatRepository, projectRepository, generatorService);
         this.updateSessionProject = new UpdateSessionProjectUseCase(chatRepository);
+        this.listOutputs = new ListProjectOutputsUseCase(projectRepository);
+        this.createOutput = new CreateProjectOutputUseCase(projectRepository);
+        this.updateOutput = new UpdateProjectOutputUseCase(projectRepository);
+        this.deleteOutput = new DeleteProjectOutputUseCase(projectRepository);
     }
 }
 

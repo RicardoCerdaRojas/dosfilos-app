@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WorkflowPhase, ContentType, CoachingStyle, LibraryResourceEntity } from '@dosfilos/domain';
+import { WorkflowPhase, ContentType, CoachingStyle, LibraryResourceEntity, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 import { sermonGeneratorService, generatorChatService, libraryService } from '@dosfilos/application';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+
+function resolveActiveLanguage(raw: string | undefined): SupportedLanguage {
+    if (!raw) return DEFAULT_LANGUAGE;
+    return raw.split('-')[0] === 'en' ? 'en' : 'es';
+}
 
 export interface UseSermonStepChatProps {
     phase: WorkflowPhase;
@@ -41,6 +48,7 @@ export function useSermonStepChat({
     cacheName: externalCacheName,
     setCacheName: externalSetCacheName
 }: UseSermonStepChatProps) {
+    const { i18n } = useTranslation();
     const [messages, setMessages] = useState<any[]>([]);
     const [isAiProcessing, setIsAiProcessing] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
@@ -208,7 +216,8 @@ export function useSermonStepChat({
                     focusedSection: null,
                     libraryResources: effectiveResources,
                     phaseResources: phaseResources as any,
-                    cacheName: cacheName || undefined
+                    cacheName: cacheName || undefined,
+                    language: resolveActiveLanguage(i18n.language),
                 });
 
                 const aiMessage = {

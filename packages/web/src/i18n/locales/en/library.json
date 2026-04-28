@@ -1,15 +1,27 @@
 {
     "header": {
-        "title": "Theological Library",
-        "resources": "resources",
-        "indexed": "indexed",
-        "indexAllButton": "Index All",
-        "addButton": "Add",
+        "category": "Your environment · Library",
+        "title": "Library",
+        "metaCount_one": "{{count}} resource",
+        "metaCount_other": "{{count}} resources",
+        "metaReady_one": "{{count}} ready",
+        "metaReady_other": "{{count}} ready",
+        "metaPending": "{{count}} to process",
+        "addButton": "Add resource",
         "closeButton": "Close"
     },
+    "attentionCallout": {
+        "label": "Attention required",
+        "title_one": "{{count}} resource to process",
+        "title_other": "{{count}} resources to process",
+        "description": "Processing prepares a resource for search — only ready resources can be cited as sources in projects and theological queries.",
+        "actionButton": "Process pending"
+    },
+    "progress": {
+        "processing": "Processing {{current}}/{{total}} — {{title}}"
+    },
     "upload": {
-        "title": "Add New Resource",
-        "description": "Upload PDFs or EPUBs to your theological library",
+        "sectionLabel": "New resource",
         "fileLabel": "File",
         "titleLabel": "Title",
         "titlePlaceholder": "Document title",
@@ -17,29 +29,154 @@
         "authorPlaceholder": "Author name",
         "categoryLabel": "Category",
         "uploadButton": "Upload",
-        "fileSizeWarning": "File >50MB: reduced quality"
+        "fileSizeWarning": "File >50MB: extraction quality may be reduced"
     },
     "filters": {
-        "searchPlaceholder": "Search by title or author...",
-        "allCategories": "All categories"
+        "searchPlaceholder": "Search title or author",
+        "allCategories": "All categories",
+        "viewGridTitle": "Grid view",
+        "viewListTitle": "List view"
     },
     "empty": {
-        "title": "Your library is empty",
-        "emptyLibrary": "Add your first resource to get started",
-        "noResults": "No results found",
-        "tryOtherTerms": "Try different search terms"
+        "titleEmpty": "Your library is empty",
+        "titleNoResults": "No results",
+        "descriptionEmpty": "Upload your first PDF or EPUB to start using it as a source in projects and queries.",
+        "descriptionNoResults": "Try different search terms or change the category filter.",
+        "ctaFirstResource": "Add first resource"
     },
-    "indexing": {
-        "preparing": "Preparing...",
-        "indexAllButton": "Index All",
-        "noUnindexed": "No documents to index"
+    "card": {
+        "metaPagesEstimated": "~{{count}} p. (est.)",
+        "metaPagesActual_one": "{{count}} page",
+        "metaPagesActual_other": "{{count}} pages",
+        "metaPagesTitleActual": "Actual pages",
+        "metaPagesTitleEstimated": "Estimated pages (approx.)",
+        "actions": {
+            "preview": "View document",
+            "edit": "Edit metadata",
+            "process": "Process",
+            "reprocess": "Reprocess",
+            "moreActions": "More actions",
+            "configurePhases": "Configure phases",
+            "assignToCore": "Assign to Core",
+            "delete": "Delete"
+        }
+    },
+    "status": {
+        "pending": "Queued",
+        "processing": "Processing…",
+        "failed": "Processing error",
+        "verifying": "Verifying",
+        "ready": "Ready",
+        "notReady": "To process"
+    },
+    "stores": {
+        "exegesis": "Exegesis",
+        "homiletics": "Homiletics",
+        "generic": "Generic",
+        "exegesisTitle": "Assigned to Core Library: Exegesis",
+        "homileticsTitle": "Assigned to Core Library: Homiletics",
+        "genericTitle": "Assigned to Core Library: Generic"
+    },
+    "phases": {
+        "exegesis": "Exegesis",
+        "homiletics": "Homiletics",
+        "drafting": "Drafting"
     },
     "deleteDialog": {
         "title": "Delete resource?",
         "description": "You are about to delete",
-        "warning": "This action cannot be undone and will also delete the indexing data.",
+        "warning": "This action cannot be undone and will also delete the processing data.",
         "cancel": "Cancel",
         "confirm": "Delete"
+    },
+    "editModal": {
+        "title": "Edit Resource",
+        "description": "Edit the document metadata.",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Document title",
+        "authorLabel": "Author",
+        "authorPlaceholder": "Author name",
+        "categoryLabel": "Category",
+        "categoryOptions": {
+            "theology": "Systematic Theology",
+            "grammar": "Grammar / Languages",
+            "commentary": "Biblical Commentary",
+            "article": "Article / Paper",
+            "other": "Other"
+        },
+        "cancel": "Cancel",
+        "save": "Save"
+    },
+    "phaseModal": {
+        "title": "Preferred Phases",
+        "description": "Choose the sermon phases where this document should be prioritized for RAG",
+        "byAuthor": "{{title}} by {{author}}",
+        "phases": {
+            "exegesisLabel": "Exegesis",
+            "exegesisDescription": "Expert in analyzing the original biblical text",
+            "homileticsLabel": "Homiletics",
+            "homileticsDescription": "Expert in structuring the sermon",
+            "draftingLabel": "Drafting",
+            "draftingDescription": "Expert in writing the final content"
+        },
+        "cancel": "Cancel",
+        "save": "Save",
+        "toastSuccess": "Phase preferences updated",
+        "toastError": "Error updating preferences"
+    },
+    "coreStoresModal": {
+        "title": "Configure Core Stores",
+        "description": "Choose which Core Library stores include this document",
+        "byAuthor": "{{title}} by {{author}}",
+        "documentInStores_one": "✓ Document in {{count}} store",
+        "documentInStores_other": "✓ Document in {{count}} stores",
+        "stores": {
+            "exegesisLabel": "Exegesis",
+            "exegesisDescription": "Greek/Hebrew lexicons, hermeneutics, grammar",
+            "homileticsLabel": "Homiletics",
+            "homileticsDescription": "Preaching, systematic theology, sermons",
+            "genericLabel": "Generic",
+            "genericDescription": "General-use resources for any context",
+            "customDescription": "Custom context"
+        },
+        "cancel": "Cancel",
+        "save": "Save",
+        "toastSuccessAdded_one": "Added to {{count}} Core store",
+        "toastSuccessAdded_other": "Added to {{count}} Core stores",
+        "toastSuccessRemoved": "Removed from all Core stores",
+        "toastError": "Error updating stores"
+    },
+    "usage": {
+        "queriesLabel": "Queries / month",
+        "docsLabel": "Personal docs",
+        "upgradeButton": "Upgrade plan"
+    },
+    "balance": {
+        "title": "Processing pages",
+        "subtitle": "Available balance for document extraction",
+        "standard": "Standard",
+        "premium": "Premium",
+        "standardHelp": "Gemini 2.0 Flash · narrative books",
+        "premiumHelp": "LlamaParse · tables, multi-column, scanned",
+        "buyButton": "Buy pages",
+        "loading": "Loading balance…",
+        "redirecting": "Redirecting to Stripe…",
+        "checkoutError": "Error creating checkout session",
+        "purchaseSuccess": "Purchase confirmed! Your balance updates in seconds.",
+        "purchaseCanceled": "Purchase canceled"
+    },
+    "creditPacks": {
+        "title": "Buy processing pages",
+        "subtitle": "Pages don't expire for 12 months from purchase date.",
+        "standardHeader": "Standard pages (Gemini)",
+        "standardHelp": "For narrative books, essays, sermons — low cost, high speed.",
+        "premiumHeader": "Premium pages (LlamaParse)",
+        "premiumHelp": "For complex tables, multi-column, scanned PDFs — maximum fidelity.",
+        "pages_one": "{{count}} page",
+        "pages_other": "{{count}} pages",
+        "perPage": "${{rate}}/page",
+        "buy": "Buy",
+        "close": "Close"
     },
     "toast": {
         "uploadSuccess": "Resource added to library",
@@ -48,16 +185,17 @@
         "deleteError": "Error deleting resource",
         "updateSuccess": "Resource updated",
         "updateError": "Error updating resource",
-        "indexSuccess": "indexed with",
-        "indexWarning": "No fragments generated for",
-        "indexError": "Error indexing resource",
-        "textNotReady": "Text is still being extracted. Wait a few seconds and try again.",
-        "reindexSuccess": "re-indexed successfully",
-        "reindexWarning": "No new fragments generated during re-indexing",
-        "reindexError": "Error re-indexing resource",
-        "syncSuccess": "synced successfully with AI",
-        "syncError": "Error syncing",
-        "indexingComplete": "Indexing completed with",
-        "indexingSuccess": "Library indexed"
+        "processSuccess": "\"{{title}}\" ready ({{chunks}} fragments)",
+        "processWarning": "No fragments generated for \"{{title}}\". The text may be unreadable or too short.",
+        "processError": "Error processing resource",
+        "textNotReady": "The text is still being extracted. Wait a few seconds and try again.",
+        "reprocessConfirm": "Reprocess \"{{title}}\"? Existing fragments will be deleted and regenerated.",
+        "reprocessSuccess": "\"{{title}}\" reprocessed ({{chunks}} fragments)",
+        "reprocessWarning": "No new fragments generated during reprocessing",
+        "reprocessError": "Error reprocessing resource",
+        "noUnindexed": "No documents to process",
+        "processingComplete": "Processing completed with {{count}} errors. {{chunks}} fragments created.",
+        "processingSuccess": "Library ready: {{chunks}} fragments created",
+        "processingError": "Error processing library"
     }
 }

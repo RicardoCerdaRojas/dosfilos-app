@@ -1,8 +1,11 @@
 // Entities
 export * from './entities/User';
+export * from './entities/CreditPack';
+export * from './entities/LlamaParseAccount';
 export * from './entities/Feature';
 export * from './entities/Subscription';
 export * from './entities/PlanDefinition';
+export * from './entities/UsageCounter';
 export * from './entities/Organization';
 export * from './entities/Sermon';
 export * from './entities/SermonSeries';
@@ -71,6 +74,7 @@ export * from './entities/WorkflowConfiguration';
 export * from './repositories/IWorkflowRepository';
 export * from './repositories/IConfigRepository';
 export type { ContentType, WorkflowPhase as ContentWorkflowPhase, QuickAction, CanvasChatMessage, ContentAdapter, CanvasChatProps } from './types/content-types';
+export * from './types/i18n';
 
 // Strategies
 export * from './strategies';

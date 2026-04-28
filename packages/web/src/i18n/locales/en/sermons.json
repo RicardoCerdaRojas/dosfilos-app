@@ -84,7 +84,12 @@
         "references": "references"
     },
     "actions": {
-        "delete": "Delete"
+        "delete": "Delete",
+        "view": "View sermon",
+        "edit": "Edit",
+        "preachMode": "Preach mode",
+        "linkToProject": "Link to project…",
+        "viewProject": "View project \"{{title}}\""
     },
     "deleteDialog": {
         "title": "Are you sure?",
@@ -92,5 +97,17 @@
         "cancel": "Cancel",
         "confirm": "Delete",
         "deleting": "Deleting..."
+    },
+    "linkProject": {
+        "eyebrow": "Link to project",
+        "fallbackTitle": "Sermon",
+        "description": "Move this sermon into a project so it appears in that workspace alongside the related sources, conversations and material.",
+        "noProjects": "You don't have any projects yet.",
+        "createOne": "Create one →",
+        "noProject": "No project",
+        "unlink": "Unlink from any project",
+        "linkSuccess": "Sermon linked to project",
+        "unlinkSuccess": "Sermon unlinked from project",
+        "error": "Linking failed"
     }
 }

@@ -4,7 +4,7 @@ import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
 import { sermonGeneratorService, sermonService, generatorChatService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
@@ -19,24 +19,27 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
-// import { PassageQuickView } from '@/components/sermons/PassageQuickView';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
-import { BookOpen, RefreshCw } from 'lucide-react';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useTranslation } from '@/i18n';
+import { buildFullContent } from './draft/sermonContent';
+import { useDraftRefinement } from './draft/useDraftRefinement';
+import { useDraftVersions } from './draft/useDraftVersions';
+import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 
 export function StepDraft() {
-    const { t } = useTranslation('generator');
+    const { t, language } = useTranslation('generator');
+    const activeLanguage = language === 'en' ? 'en' : 'es';
     const navigate = useNavigate();
     const { user } = useFirebase();
     const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, reset, saving } = useWizard();
@@ -53,58 +56,44 @@ export function StepDraft() {
         phase: 'sermon',
         content: draft,
         config,
-        user
+        user,
     });
 
-    const [isAiProcessing, setIsAiProcessing] = useState(false);
-    
-    // 🎯 NEW: Restore missing state
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
     const [showPreview, setShowPreview] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
     const [rightPanelMode, setRightPanelMode] = useState<'chat' | 'bible'>('chat');
 
-    // Combine loading states
-    const isTotalAiLoading = isAiProcessing || isChatLoading;
-
-
-    // Initialize content history hook
     const contentHistory = useContentHistory('sermon', config?.id);
 
-    // REMOVED: Manual Service Init & Library Loading (Handled by hook)
-
-    // Version getters for history modal
-    const getSectionVersions = (sectionId: string) => {
-        return contentHistory.getVersions(sectionId);
-    };
-
-    const getCurrentVersionId = (sectionId: string) => {
-        const currentVersion = contentHistory.getCurrentVersion(sectionId);
-        return currentVersion?.id;
-    };
+    const getSectionVersions = (sectionId: string) => contentHistory.getVersions(sectionId);
+    const getCurrentVersionId = (sectionId: string) => contentHistory.getCurrentVersion(sectionId)?.id;
 
     const handleGenerate = async () => {
         if (!homiletics) return;
 
         setLoading(true);
         try {
-            console.log('🔍 handleGenerate (Draft) - Generating via Global Context');
-            
             const baseConfig = config ? config[WorkflowPhase.DRAFTING] : undefined;
-            
-            // Just pass base config, global context handles everything else
-            const draftConfig = baseConfig ? {
-                ...baseConfig,
-                aiModel: config?.advanced?.aiModel,
-                temperature: config?.[WorkflowPhase.DRAFTING]?.temperature || config?.advanced?.globalTemperature
-            } : undefined;
-            
-            const { draft: result } = 
-                await sermonGeneratorService.generateSermonDraft(homiletics, rules, draftConfig, user?.uid);
-            
+            const draftConfig = baseConfig
+                ? {
+                      ...baseConfig,
+                      aiModel: config?.advanced?.aiModel,
+                      temperature:
+                          config?.[WorkflowPhase.DRAFTING]?.temperature || config?.advanced?.globalTemperature,
+                  }
+                : undefined;
+
+            const { draft: result } = await sermonGeneratorService.generateSermonDraft(
+                homiletics,
+                rules,
+                draftConfig,
+                user?.uid,
+                activeLanguage,
+            );
+
             setDraft(result);
-            
             toast.success(t('drafting.success.generated'));
         } catch (error: any) {
             console.error(error);
@@ -114,76 +103,13 @@ export function StepDraft() {
         }
     };
 
-    // 🎯 REFACTOR: Replaced manual refresh with hook's handleRefreshContext
-    // Removed old handleRefreshContext implementation
+    const getFullContent = () => buildFullContent(draft, t);
 
-    const getFullContent = () => {
-        if (!draft) return '';
-        return `
-${draft.introduction}
-<br/>
-${draft.body.map(point => {
-    let pointContent = `## ${point.point}
-<br/>
-${point.content}`;
-
-    // Add Scripture References if available
-    if (point.scriptureReferences && point.scriptureReferences.length > 0) {
-        pointContent += `
-<br/>
-### Referencias Cruzadas
-${point.scriptureReferences.map(ref => `- ${ref}`).join('\n')}`;
-    }
-
-    // Add Illustration if available
-    if (point.illustration) {
-        pointContent += `
-<br/>
-**${t('drafting.illustrationLabel')}:**
-${point.illustration}`;
-    }
-
-    // Add Implications if available
-    if (point.implications && point.implications.length > 0) {
-        pointContent += `
-<br/>
-### Implicaciones Prácticas
-${point.implications.map((impl, idx) => `${idx + 1}. ${impl}`).join('\n')}`;
-    }
-
-    // Add Authority Quote if available
-    if (point.authorityQuote) {
-        pointContent += `
-<br/>
-${point.authorityQuote}`;
-    }
-
-    // Add Transition if available
-    if (point.transition) {
-        pointContent += `
-<br/>
-*${point.transition}*`;
-    }
-
-    return pointContent;
-}).join('\n<br/>\n---\n<br/>\n')}
-<br/>
-## ${t('drafting.conclusionLabel')}
-${draft.conclusion}
-${draft.callToAction ? `
-<br/>
-> **${t('drafting.callToActionLabel')}:** ${draft.callToAction}` : ''}
-        `.trim();
-    };
-
-    // Save and exit - just navigate back without publishing
     const handleSaveAndExit = async () => {
-        // Auto-save is already handling the save
         toast.success(t('drafting.success.saved'));
         navigate('/dashboard');
     };
 
-    // Publish as copy - creates a published version without losing the draft
     const handlePublish = async () => {
         if (!draft || !user || !exegesis || !sermonId) {
             toast.error(t('drafting.errors.noDraft'));
@@ -192,20 +118,18 @@ ${draft.callToAction ? `
 
         setPublishing(true);
         try {
-            // First update the draft with the final content
             const content = getFullContent();
             await sermonService.updateSermon(sermonId, {
                 title: draft.title,
                 content,
                 bibleReferences: [exegesis.passage],
-                tags: exegesis.keyWords.map(kw => kw.original),
+                tags: exegesis.keyWords.map((kw) => kw.original),
             });
 
-            // Then publish as copy
             const publishedSermon = await sermonService.publishSermonAsCopy(sermonId);
 
             toast.success(t('drafting.success.published'));
-            reset(); // Clear wizard state
+            reset();
             navigate(`/dashboard/sermons/${publishedSermon.id}`);
         } catch (error: any) {
             console.error(error);
@@ -215,356 +139,37 @@ ${draft.callToAction ? `
         }
     };
 
-    const handleSendMessage = async (message: string, role: 'user' | 'assistant' = 'user') => {
-        // 🎯 NEW: Only add to state manually if NOT using hook's sendGeneralMessage
-        if (expandedSectionId || role === 'assistant') {
-            const newMessage = {
-                id: Date.now().toString(),
-                role,
-                content: message,
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, newMessage]);
-        }
+    const { isAiProcessing, handleSendMessage } = useDraftRefinement({
+        draft,
+        setDraft,
+        expandedSectionId,
+        setMessages,
+        setModifiedSections,
+        sendGeneralMessage,
+        contentHistory,
+        config,
+        rules,
+        homiletics,
+        exegesis,
+        passage,
+    });
 
+    const isTotalAiLoading = isAiProcessing || isChatLoading;
 
-        // Context Validation for ALL user messages
-        if (role === 'user') {
-            setIsAiProcessing(true);
-            try {
-                const { GeminiAIService } = await import('@dosfilos/infrastructure');
-                const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
-                const { getValueByPath } = await import('@/utils/path-utils');
-
-                // Initialize AI Service
-                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    throw new Error('API key not configured');
-                }
-                const aiService = new GeminiAIService(apiKey);
-
-                // Get context if available
-                let currentContextStr = "";
-                if (expandedSectionId && draft) {
-                    const sectionConfig = getSectionConfig('sermon', expandedSectionId);
-                    if (sectionConfig) {
-                        const currentContent = getValueByPath(draft, sectionConfig.path);
-                        currentContextStr = typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent);
-                    }
-                }
-
-                const validation = await aiService.validateContext(message, currentContextStr.substring(0, 500));
-
-                if (!validation.isValid) {
-                    const refusalMessage = {
-                        id: (Date.now() + 1).toString(),
-                        role: 'assistant' as const,
-                        content: validation.refusalMessage || t('drafting.errors.refine'),
-                        timestamp: new Date()
-                    };
-                    setMessages(prev => [...prev, refusalMessage]);
-                    setIsAiProcessing(false);
-                    return; // Stop processing if invalid
-                }
-            } catch (error) {
-                console.error('Error in context validation:', error);
-                // Continue if validation fails
-            }
-        }
-
-        // If it's a user message and we have an expanded section, refine that section
-        if (role === 'user' && expandedSectionId && draft) {
-            try {
-                const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
-                const { getValueByPath, setValueByPath } = await import('@/utils/path-utils');
-                // Initialize AI Service - NOT NEEDED, using sermonGeneratorService
-                
-                const sectionConfig = getSectionConfig('sermon', expandedSectionId);
-                if (!sectionConfig) {
-                    throw new Error('Section configuration not found');
-                }
-                
-                // Get current section content
-                let currentContent = getValueByPath(draft, sectionConfig.path);
-                
-                // If currentContent is a string that looks like JSON, try to parse it first
-                if (typeof currentContent === 'string') {
-                    const trimmed = currentContent.trim();
-                    if (trimmed.startsWith('[') || trimmed.startsWith('{') || trimmed.startsWith('```')) {
-                        try {
-                            let cleaned = trimmed;
-                            cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
-                            cleaned = cleaned.replace(/\s*```$/, '');
-                            cleaned = cleaned.trim();
-                            currentContent = JSON.parse(cleaned);
-                        } catch (e) {
-                            console.log('⚠️ Could not parse stored content, treating as string');
-                        }
-                    }
-                }
-                
-                const contentString = typeof currentContent === 'string' ? currentContent : JSON.stringify(currentContent, null, 2);
-
-                // Get markdown formatting instructions based on section type
-                const getFormattingInstructions = (sectionId: string): string => {
-                    switch (sectionId) {
-                        case 'body':
-                            return `
-FORMATO: Devuelve un array JSON de objetos con esta estructura exacta:
-[
-  {
-    "point": "Título del punto",
-    "content": "Desarrollo del contenido...",
-    "illustration": "Ilustración opcional..."
-  }
-]`;
-                        default:
-                            return `
-FORMATO: Usa markdown para mejor legibilidad:
-- **Negritas** para énfasis
-- Párrafos separados para ideas distintas`;
-                    }
-                };
-                
-                
-                // Library usage for refinement is now handled by the global context
-                const refinementSources: Array<{author: string; title: string; page?: number; snippet: string}> = [];
-                const libraryContextStr = '';
-                
-                // Build sermon context for AI (draft step has full context)
-                const homileticalApproach = homiletics?.homileticalApproach;
-                const exegeticalProposition = exegesis?.exegeticalProposition;
-                const homileticalProposition = homiletics?.homileticalProposition;
-                
-                let sermonContextStr = '';
-                if (passage || homileticalApproach) {
-                    sermonContextStr = `
-
-CONTEXTO COMPLETO DEL SERMÓN (usa esta información para mantener coherencia):
-- Pasaje: ${passage || 'No especificado'}
-- Enfoque Homilético: ${homileticalApproach === 'expository' ? 'Expositivo' : 
-                      homileticalApproach === 'thematic' ? 'Temático' :
-                      homileticalApproach === 'narrative' ? 'Narrativo' :
-                      homileticalApproach === 'topical' ? 'Tópico' : 'No especificado'}
-- Proposición Exegética: ${exegeticalProposition || 'No especificada'}
-- Proposición Homilética: ${homileticalProposition || 'No especificada'}
-${rules?.targetAudience ? `- Audiencia: ${rules.targetAudience}` : ''}
-${rules?.tone ? `- Tono: ${rules.tone}` : ''}
-
-El contenido refinado DEBE mantener coherencia con el enfoque y las proposiciones del sermón.
-`;
-                }
-                
-                // Create instruction for AI
-                const instruction = `Refina el contenido de la sección "${sectionConfig.label}" según esta instrucción: ${message}
-${sermonContextStr}${libraryContextStr}
-IMPORTANTE: 
-- Devuelve SOLO el contenido refinado, sin explicaciones adicionales
-- NO agregues prefijos como "Aquí está..." o "El contenido refinado es..."
-${getFormattingInstructions(sectionConfig.id)}`;
-
-
-                // Call AI service
-                // Call AI service
-                // Use global service with proper phase context for Global Store access
-                const aiResponse = await sermonGeneratorService.refineContent(contentString, instruction, { 
-                    phase: 'sermon',
-                    aiModel: config?.advanced?.aiModel,
-                    temperature: config?.[WorkflowPhase.DRAFTING]?.temperature || config?.advanced?.globalTemperature
-                });
-                
-                // Parse the refined content based on the original type
-                let parsedContent;
-                if (Array.isArray(currentContent) || sectionConfig.type === 'array') {
-                    try {
-                        let cleanedResponse = aiResponse.trim();
-                        cleanedResponse = cleanedResponse.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
-                        cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
-                        cleanedResponse = cleanedResponse.trim();
-                        parsedContent = JSON.parse(cleanedResponse);
-                        if (!Array.isArray(parsedContent)) throw new Error('Expected array');
-                    } catch (parseError) {
-                        console.error('Failed to parse array response:', parseError);
-                        toast.error(t('exegesis.errors.parseError'));
-                        throw new Error(t('exegesis.errors.invalidArray'));
-                    }
-                } else if (typeof currentContent === 'object' || sectionConfig.type === 'object') {
-                    try {
-                        let cleanedResponse = aiResponse.trim();
-                        cleanedResponse = cleanedResponse.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
-                        cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
-                        cleanedResponse = cleanedResponse.trim();
-                        parsedContent = JSON.parse(cleanedResponse);
-                    } catch (parseError) {
-                        console.error('Failed to parse object response:', parseError);
-                        parsedContent = aiResponse;
-                    }
-                } else {
-                    parsedContent = aiResponse.trim();
-                }
-                
-                // Save version BEFORE updating
-                if (expandedSectionId) {
-                    contentHistory.saveVersion(
-                        expandedSectionId,
-                        currentContent,
-                        `Antes de: ${message.substring(0, 50)}...`,
-                        undefined
-                    );
-                }
-                
-                // Update only this section
-                const updatedDraft = JSON.parse(JSON.stringify(draft));
-                setValueByPath(updatedDraft, sectionConfig.path, parsedContent);
-
-                setDraft(updatedDraft);
-                setModifiedSections(prev => new Set(prev).add(expandedSectionId));
-                
-                // Save version AFTER updating
-                if (expandedSectionId) {
-                    contentHistory.saveVersion(
-                        expandedSectionId,
-                        parsedContent,
-                        message.substring(0, 100),
-                        `✅ Sección "${sectionConfig.label}" refinada exitosamente.`
-                    );
-                }
-                
-                const aiMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant' as const,
-                    content: refinementSources.length > 0 
-                        ? `✅ ${t('drafting.success.refinedSectionWithSources', { section: `"${sectionConfig.label}"`, count: refinementSources.length })}`
-                        : `✅ ${t('drafting.success.refinedSection', { section: `"${sectionConfig.label}"` })}`,
-                    timestamp: new Date(),
-                    sources: refinementSources.length > 0 ? refinementSources : undefined
-                };
-                setMessages(prev => [...prev, aiMessage]);
-                toast.success(t('drafting.success.refined'));
-
-            } catch (error: any) {
-                console.error('Error refining section:', error);
-                toast.error(error.message || t('drafting.errors.refining'));
-                
-                const errorMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant' as const,
-                    content: `Error: ${error.message || 'No se pudo procesar la solicitud'}`,
-                    timestamp: new Date()
-                };
-                setMessages(prev => [...prev, errorMessage]);
-            } finally {
-                setIsAiProcessing(false);
-            }
-        } 
-        // General Chat (No section expanded) - Use Hook
-        else if (role === 'user' && !expandedSectionId) {
-             await sendGeneralMessage(message, role);
-        }
-    };
+    const { handleUndo, handleRedo, handleRestoreVersion, handleSectionUpdate } = useDraftVersions({
+        draft,
+        setDraft,
+        contentHistory,
+        setModifiedSections,
+    });
 
     const handleApplyChange = (messageId: string, newContent: any) => {
         setDraft(newContent);
-        setMessages(prev =>
-            prev.map(msg =>
-                msg.id === messageId ? { ...msg, appliedChange: true } : msg
-            )
-        );
+        setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, appliedChange: true } : msg)));
     };
 
     const handleContentUpdate = (newContent: any) => {
         setDraft(newContent);
-    };
-
-    const handleSectionUpdate = async (sectionId: string, newContent: any) => {
-        if (!draft) return;
-
-        try {
-            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
-            const { setValueByPath, getValueByPath } = await import('@/utils/path-utils');
-            
-            const sectionConfig = getSectionConfig('sermon', sectionId);
-            if (sectionConfig) {
-                // Get current content for history
-                const currentContent = getValueByPath(draft, sectionConfig.path);
-                
-                // Save version BEFORE updating
-                contentHistory.saveVersion(
-                    sectionId,
-                    currentContent,
-                    'Antes de edición manual',
-                    undefined
-                );
-
-                // Update content
-                const updatedDraft = JSON.parse(JSON.stringify(draft));
-                setValueByPath(updatedDraft, sectionConfig.path, newContent);
-                setDraft(updatedDraft);
-                setModifiedSections(prev => new Set(prev).add(sectionId));
-
-                // Save version AFTER updating
-                contentHistory.saveVersion(
-                    sectionId,
-                    newContent,
-                    'Edición manual',
-                    'Cambios guardados manualmente'
-                );
-
-                toast.success(t('drafting.success.updated'));
-            }
-        } catch (error) {
-            console.error('Error updating section:', error);
-            toast.error(t('drafting.errors.updating'));
-        }
-    };
-
-    // Undo/Redo handlers
-    const handleUndo = async (sectionId: string) => {
-        const previousVersion = contentHistory.undo(sectionId);
-        if (previousVersion && draft) {
-            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
-            const { setValueByPath } = await import('@/utils/path-utils');
-            
-            const sectionConfig = getSectionConfig('sermon', sectionId);
-            if (sectionConfig) {
-                const updatedDraft = JSON.parse(JSON.stringify(draft));
-                setValueByPath(updatedDraft, sectionConfig.path, previousVersion.content);
-                setDraft(updatedDraft);
-                toast.success(t('drafting.success.undo'));
-            }
-        }
-    };
-
-    const handleRedo = async (sectionId: string) => {
-        const nextVersion = contentHistory.redo(sectionId);
-        if (nextVersion && draft) {
-            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
-            const { setValueByPath } = await import('@/utils/path-utils');
-            
-            const sectionConfig = getSectionConfig('sermon', sectionId);
-            if (sectionConfig) {
-                const updatedDraft = JSON.parse(JSON.stringify(draft));
-                setValueByPath(updatedDraft, sectionConfig.path, nextVersion.content);
-                setDraft(updatedDraft);
-                toast.success(t('drafting.success.redo'));
-            }
-        }
-    };
-
-    const handleRestoreVersion = async (sectionId: string, versionId: string) => {
-        const version = contentHistory.goToVersion(sectionId, versionId);
-        if (version && draft) {
-            const { getSectionConfig } = await import('@/components/canvas-chat/section-configs');
-            const { setValueByPath } = await import('@/utils/path-utils');
-            
-            const sectionConfig = getSectionConfig('sermon', sectionId);
-            if (sectionConfig) {
-                const updatedDraft = JSON.parse(JSON.stringify(draft));
-                setValueByPath(updatedDraft, sectionConfig.path, version.content);
-                setDraft(updatedDraft);
-                toast.success(t('drafting.success.restored'));
-            }
-        }
     };
 
     if (!homiletics) {
@@ -583,7 +188,6 @@ ${getFormattingInstructions(sectionConfig.id)}`;
         );
     }
 
-    // Left Panel Content
     const leftPanel = !draft ? (
         <div className="h-full flex flex-col">
             <div className="space-y-4 mb-6">
@@ -591,9 +195,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     <FileText className="h-6 w-6 text-primary" />
                     <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
                 </div>
-                <p className="text-muted-foreground">
-                    {t('drafting.subtitle')}
-                </p>
+                <p className="text-muted-foreground">{t('drafting.subtitle')}</p>
             </div>
 
             <Card className="p-6 space-y-4 bg-muted/50 mb-6">
@@ -603,8 +205,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 <div className="text-lg font-medium italic">
                     <MarkdownRenderer content={homiletics.homileticalProposition} />
                 </div>
-                
-                {/* Outline Preview - Use live outline.mainPoints instead of static outlinePreview */}
+
                 {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-border/50">
                         <h4 className="font-semibold text-sm text-muted-foreground mb-2">
@@ -629,16 +230,9 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     </div>
                     <div>
                         <h3 className="font-semibold mb-2">{t('drafting.readyToGenerate')}</h3>
-                        <p className="text-sm text-muted-foreground">
-                            {t('drafting.readyDesc')}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{t('drafting.readyDesc')}</p>
                     </div>
-                    <Button
-                        onClick={handleGenerate}
-                        disabled={loading}
-                        size="lg"
-                        className="w-full max-w-md mx-auto"
-                    >
+                    <Button onClick={handleGenerate} disabled={loading} size="lg" className="w-full max-w-md mx-auto">
                         <Sparkles className="mr-2 h-4 w-4" />
                         {t('drafting.generateBtn')}
                     </Button>
@@ -648,24 +242,20 @@ ${getFormattingInstructions(sectionConfig.id)}`;
     ) : (
         <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
-                {/* Left: Content Canvas */}
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
                     <div className="mb-4 flex-shrink-0 flex items-center justify-between">
                         <div>
                             <h3 className="text-lg font-semibold">{draft.title}</h3>
                             <p className="text-sm text-muted-foreground">
-                                {expandedSectionId 
-                                    ? t('drafting.refiningStatus')
-                                    : t('drafting.defaultStatus')
-                                }
+                                {expandedSectionId ? t('drafting.refiningStatus') : t('drafting.defaultStatus')}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 size="sm"
                                 className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
-                                onClick={() => setRightPanelMode(prev => prev === 'bible' ? 'chat' : 'bible')}
+                                onClick={() => setRightPanelMode((prev) => (prev === 'bible' ? 'chat' : 'bible'))}
                             >
                                 <BookOpen className="h-4 w-4" />
                                 <span className="text-xs font-medium">{passage}</span>
@@ -673,11 +263,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={loading}
-                                    >
+                                    <Button variant="outline" size="sm" disabled={loading}>
                                         {loading ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -693,15 +279,18 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('drafting.regenerateConfirmTitle', '¿Regenerar Borrador del Sermón?')}</AlertDialogTitle>
+                                        <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            {t('drafting.confirmRegenerateDesc', 'Esta acción creará un nuevo borrador basado en tus elecciones homiléticas. Cualquier edición manual en el texto actual se perderá permanentemente.')}
+                                            {t('drafting.regenerateConfirm.description')}
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>{t('common.cancel', 'Cancelar')}</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleGenerate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                            {t('common.regenerate', 'Regenerar')}
+                                        <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleGenerate}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            {t('drafting.regenerateConfirm.confirm')}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -715,11 +304,11 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                             expandedSectionId={expandedSectionId}
                             onSectionExpand={(sectionId) => {
                                 setExpandedSectionId(sectionId);
-                                setMessages([]); // Clear chat when expanding section
+                                setMessages([]);
                             }}
                             onSectionClose={() => {
                                 setExpandedSectionId(null);
-                                setMessages([]); // Clear chat when closing section
+                                setMessages([]);
                             }}
                             onSectionUndo={handleUndo}
                             onSectionRedo={handleRedo}
@@ -732,10 +321,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                             onRegenerate={async (sectionId, itemIndex) => {
                                 if (sectionId === 'body' && typeof itemIndex === 'number' && draft.body[itemIndex]) {
                                     const pointToRegenerate = draft.body[itemIndex];
-                                    
-                                    // Show loading state (could be improved with a toast or specific loading indicator)
                                     const toastId = toast.loading(t('drafting.loadingRegeneratePoint'));
-                                    
                                     try {
                                         const result = await generatorChatService.regenerateSermonPoint(
                                             pointToRegenerate,
@@ -746,25 +332,24 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                                 customInstructions: rules.customInstructions,
                                                 libraryResources: [],
                                                 aiModel: config?.advanced?.aiModel,
-                                                temperature: config?.[WorkflowPhase.DRAFTING]?.temperature || config?.advanced?.globalTemperature
-                                            }
+                                                temperature:
+                                                    config?.[WorkflowPhase.DRAFTING]?.temperature ||
+                                                    config?.advanced?.globalTemperature,
+                                            },
                                         );
-                                        
-                                        // Update the draft with the new point
+
                                         const newBody = [...draft.body];
                                         newBody[itemIndex] = result.point;
                                         await handleSectionUpdate('body', newBody);
-                                        
-                                        // Show sources if any were used
+
                                         if (result.sources && result.sources.length > 0) {
                                             toast.success(
-                                                t('drafting.success.generatedWithSources', { count: result.sources.length }), 
-                                                { id: toastId, duration: 4000 }
+                                                t('drafting.success.generatedWithSources', { count: result.sources.length }),
+                                                { id: toastId, duration: 4000 },
                                             );
                                         } else {
                                             toast.success(t('drafting.success.regeneratedPoint'), { id: toastId });
                                         }
-                                        
                                     } catch (error) {
                                         console.error('Failed to regenerate point:', error);
                                         toast.error(t('drafting.errors.regeneratingPoint'), { id: toastId });
@@ -773,21 +358,11 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                             }}
                         />
                     </div>
-                    
-                    {/* RAG Sources - Temporarily hidden: AI-generated sources are not verified against real library */}
-                    {/* TODO: Implement verified bibliography from RAG chunks when available */}
-                    {/* {draft?.ragSources && draft.ragSources.length > 0 && (
-                        <RAGSourcesDisplay sources={draft.ragSources} className="mx-0 mt-3" />
-                    )} */}
                 </div>
 
-                {/* Right: Resizable Chat Interface */}
                 <ResizableChatPanel storageKey="draftChatWidth">
                     {rightPanelMode === 'bible' && exegesis ? (
-                        <BibleReaderPanel 
-                            passage={exegesis.passage} 
-                            onClose={() => setRightPanelMode('chat')} 
-                        />
+                        <BibleReaderPanel passage={exegesis.passage} onClose={() => setRightPanelMode('chat')} />
                     ) : (
                         <ChatInterface
                             messages={messages}
@@ -815,39 +390,23 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 </ResizableChatPanel>
             </div>
 
-            {/* Navigation Buttons */}
             <div className="flex-shrink-0 flex gap-2">
                 <Button onClick={() => setStep(2)} variant="outline" size="lg" className="flex-1">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {t('drafting.backToHomiletics')}
                 </Button>
-                
-                <Button 
-                    onClick={() => setShowPreview(true)} 
-                    variant="outline" 
-                    size="lg" 
-                    className="flex-1"
-                >
+
+                <Button onClick={() => setShowPreview(true)} variant="outline" size="lg" className="flex-1">
                     <Eye className="mr-2 h-4 w-4" />
                     {t('drafting.preview')}
                 </Button>
-                
-                <Button 
-                    onClick={handleSaveAndExit} 
-                    variant="secondary"
-                    size="lg" 
-                    className="flex-1"
-                >
+
+                <Button onClick={handleSaveAndExit} variant="secondary" size="lg" className="flex-1">
                     <Save className="mr-2 h-4 w-4" />
                     {t('drafting.saveAndExit')}
                 </Button>
-                
-                <Button 
-                    onClick={handlePublish} 
-                    disabled={publishing || !sermonId}
-                    size="lg" 
-                    className="flex-1"
-                >
+
+                <Button onClick={handlePublish} disabled={publishing || !sermonId} size="lg" className="flex-1">
                     {publishing ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -864,7 +423,6 @@ ${getFormattingInstructions(sectionConfig.id)}`;
         </div>
     );
 
-    // Right Panel Content - Only show when no draft
     const rightPanel = !draft ? (
         <Card className="p-6 h-full flex flex-col justify-start">
             <div className="text-center space-y-4">
@@ -873,9 +431,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 </div>
                 <div>
                     <h3 className="font-semibold mb-2">{t('drafting.finalDraftTitle')}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {t('drafting.finalDraftDesc')}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t('drafting.finalDraftDesc')}</p>
                 </div>
                 <div className="pt-4 border-t">
                     <h4 className="font-medium text-sm mb-2">{t('homiletics.afterGenerateTitle')}</h4>
@@ -891,27 +447,10 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
     return (
         <>
-            {/* Saving Indicator */}
-            {saving && (
-                <div className="fixed top-4 right-4 flex items-center gap-2 bg-background border rounded-lg px-3 py-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-sm text-muted-foreground">{t('exegesis.saved')}</span>
-                </div>
-            )}
-            
-            {/* Render layout based on whether draft exists */}
-            {draft ? (
-                // When draft exists, render integrated layout directly
-                leftPanel
-            ) : (
-                // When no draft, use WizardLayout with two panels
-                <WizardLayout
-                    leftPanel={leftPanel}
-                    rightPanel={rightPanel}
-                />
-            )}
+            <HomileticsSavedIndicator visible={saving} />
 
-            {/* Preview Dialog */}
+            {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="!max-w-[95vw] !w-full sm:!w-[1200px] lg:!w-[1600px] h-[90vh] max-h-[90vh] flex flex-col p-0 overflow-hidden">
                     <VisuallyHidden>
@@ -925,15 +464,13 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                                 authorName={user?.displayName || t('drafting.authorDefault')}
                                 date={new Date()}
                                 bibleReferences={[exegesis.passage]}
-                                tags={exegesis.keyWords.map(kw => kw.original)}
+                                tags={exegesis.keyWords.map((kw) => kw.original)}
                                 status="draft"
                             />
                         )}
                     </div>
                     <div className="p-4 border-t bg-background flex justify-end">
-                        <Button onClick={() => setShowPreview(false)}>
-                            {t('drafting.closePreview')}
-                        </Button>
+                        <Button onClick={() => setShowPreview(false)}>{t('drafting.closePreview')}</Button>
                     </div>
                 </DialogContent>
             </Dialog>

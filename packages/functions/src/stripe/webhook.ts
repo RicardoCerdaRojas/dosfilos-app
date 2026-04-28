@@ -1,9 +1,38 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { stripe, STRIPE_WEBHOOK_SECRET } from '../config/stripe';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, type Firestore } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
+import { addPackAdmin, type ProcessingMode } from '../library/processingBalance';
+import { getPackById } from './creditPackCatalog';
 
-export const stripeWebhook = onRequest(async (request, response) => {
+/**
+ * Reverse-resolves a Stripe Price ID to the matching plan doc id by iterating
+ * the (small) `plans` collection in memory. Handles both the new
+ * `stripePriceIds: { monthly, yearly? }` shape and the legacy
+ * `stripeProductIds: string[]` shape so we can deploy this code before the
+ * Firestore docs are migrated to the labelled shape.
+ */
+async function findPlanIdByPriceId(db: Firestore, priceId: string): Promise<string | null> {
+    const snap = await db.collection('plans').get();
+    for (const doc of snap.docs) {
+        const data = doc.data();
+        const labelled = data.stripePriceIds;
+        if (labelled && (labelled.monthly === priceId || labelled.yearly === priceId)) {
+            return doc.id;
+        }
+        const legacy = Array.isArray(data.stripeProductIds) ? data.stripeProductIds : null;
+        if (legacy && legacy.includes(priceId)) {
+            return doc.id;
+        }
+    }
+    return null;
+}
+
+export const stripeWebhook = onRequest(
+    {
+        secrets: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
+    },
+    async (request, response) => {
     const sig = request.headers['stripe-signature'];
 
     if (!sig) {
@@ -82,6 +111,17 @@ async function handleCheckoutCompleted(
     session: Stripe.Checkout.Session
 ) {
     // ========================================================================
+    // CREDIT-PACK ONE-TIME PURCHASE
+    // ========================================================================
+    // Detected by metadata.packId set in createCheckoutSession. The session is
+    // mode=payment (no subscription created), so we credit the user balance
+    // and stop. Idempotent via session.id deduplication.
+    if (session.metadata?.packId) {
+        await handleCreditPackPurchase(db, session);
+        return;
+    }
+
+    // ========================================================================
     // NEW REGISTRATION FLOW
     // ========================================================================
     // Check if this is a new registration (payment-first flow)
@@ -95,13 +135,9 @@ async function handleCheckoutCompleted(
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
         const priceId = subscription.items.data[0].price.id;
 
-        // Get plan from plans collection by Stripe price ID
-        const plansSnapshot = await db.collection('plans')
-            .where('stripeProductIds', 'array-contains', priceId)
-            .limit(1)
-            .get();
-
-        const planId = plansSnapshot.empty ? 'basic' : plansSnapshot.docs[0].id;
+        // Resolve plan id from price id (handles both monthly + yearly).
+        const resolvedPlanId = await findPlanIdByPriceId(db, priceId);
+        const planId = resolvedPlanId ?? 'basic';
 
         // Store pending registration for completeRegistration function
         await db.collection('pending_registrations').doc(session.id).set({
@@ -145,19 +181,12 @@ async function handleCheckoutCompleted(
     const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
     const priceId = subscription.items.data[0].price.id;
 
-    // Get plan from plans collection by Stripe price ID
-    const plansSnapshot = await db.collection('plans')
-        .where('stripeProductIds', 'array-contains', priceId)
-        .limit(1)
-        .get();
-
-    if (plansSnapshot.empty) {
+    // Resolve plan id from price id (handles both monthly + yearly).
+    const planId = await findPlanIdByPriceId(db, priceId);
+    if (!planId) {
         console.error(`No plan found for priceId: ${priceId}`);
         return;
     }
-
-    const planDoc = plansSnapshot.docs[0];
-    const planId = planDoc.id;
 
     // Prepare subscription data
     const subscriptionData: any = {
@@ -183,7 +212,105 @@ async function handleCheckoutCompleted(
         subscription: subscriptionData,
     });
 
+    // Credit the plan's bonusInitial to processingBalance — once per subscription id.
+    const planSnap = await db.collection('plans').doc(planId).get();
+    await creditBonusInitialIfPending(db, firebaseUID, subscription.id, planSnap.data() ?? {});
+
     console.log(`Subscription activated for user ${firebaseUID}, trial: ${subscription.trial_end ? 'yes' : 'no'}`);
+}
+
+/**
+ * Credits a plan's `bonusInitial` standard/premium pages to a user's processing
+ * balance. Idempotent: writes a marker doc at
+ * `users/{uid}/bonus_grants/{subscriptionId}` so the same subscription never
+ * triggers two grants (re-deliveries, manual webhook replays, etc.).
+ */
+async function creditBonusInitialIfPending(
+    db: FirebaseFirestore.Firestore,
+    firebaseUID: string,
+    subscriptionId: string,
+    planData: any,
+) {
+    const bonus = planData?.bonusInitial ?? {};
+    const standardPages = Math.max(0, Number(bonus.standardPages) || 0);
+    const premiumPages = Math.max(0, Number(bonus.premiumPages) || 0);
+    if (standardPages === 0 && premiumPages === 0) return;
+
+    const grantRef = db
+        .collection('users').doc(firebaseUID)
+        .collection('bonus_grants').doc(subscriptionId);
+
+    const existing = await grantRef.get();
+    if (existing.exists) {
+        console.log(`[BonusInitial] subscription=${subscriptionId} already granted to ${firebaseUID}; skipping`);
+        return;
+    }
+
+    if (standardPages > 0) {
+        await addPackAdmin(firebaseUID, 'standard', standardPages);
+    }
+    if (premiumPages > 0) {
+        await addPackAdmin(firebaseUID, 'premium', premiumPages);
+    }
+    await grantRef.set({
+        subscriptionId,
+        standardPages,
+        premiumPages,
+        grantedAt: FieldValue.serverTimestamp(),
+    });
+
+    console.log(
+        `[BonusInitial] credited ${standardPages} standard + ${premiumPages} premium to ${firebaseUID} (subscription=${subscriptionId})`,
+    );
+}
+
+/**
+ * Credits a credit-pack purchase to the user's balance and records the
+ * transaction in `users/{uid}/credit_pack_purchases/{sessionId}` for audit /
+ * de-duplication. The doc id is the Stripe session id, so retrying the
+ * webhook with the same event is naturally idempotent.
+ */
+async function handleCreditPackPurchase(
+    db: FirebaseFirestore.Firestore,
+    session: Stripe.Checkout.Session,
+) {
+    const firebaseUID = session.metadata?.firebaseUID;
+    const packId = session.metadata?.packId;
+    if (!firebaseUID || !packId) {
+        console.error('Credit-pack checkout missing firebaseUID or packId', { firebaseUID, packId });
+        return;
+    }
+
+    const pack = getPackById(packId);
+    if (!pack) {
+        console.error(`Unknown credit pack id received from Stripe: ${packId}`);
+        return;
+    }
+
+    // Idempotency: short-circuit if we already processed this session.
+    const purchaseRef = db
+        .collection('users').doc(firebaseUID)
+        .collection('credit_pack_purchases').doc(session.id);
+    const existing = await purchaseRef.get();
+    if (existing.exists) {
+        console.log(`[CreditPack] Session ${session.id} already credited; skipping`);
+        return;
+    }
+
+    await addPackAdmin(firebaseUID, pack.mode as ProcessingMode, pack.pages);
+    await purchaseRef.set({
+        sessionId: session.id,
+        packId: pack.id,
+        mode: pack.mode,
+        pages: pack.pages,
+        amountTotal: session.amount_total ?? null,
+        currency: session.currency ?? null,
+        createdAt: FieldValue.serverTimestamp(),
+    });
+
+    console.log(
+        `[CreditPack] Credited ${pack.pages} ${pack.mode} pages to ${firebaseUID} (pack=${pack.id}, session=${session.id})`,
+    );
 }
 
 async function handleSubscriptionUpdated(

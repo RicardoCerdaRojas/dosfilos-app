@@ -14,18 +14,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { httpsCallable } from 'firebase/functions';
-import { signInWithCustomToken } from 'firebase/auth';
-import { functions, auth } from '@dosfilos/infrastructure';
+import { authService } from '@dosfilos/application';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-
-interface CompleteRegistrationResponse {
-  success: boolean;
-  userId: string;
-  customToken: string;
-  message: string;
-}
 
 export function RegistrationSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -49,23 +40,12 @@ export function RegistrationSuccessPage() {
 
       try {
         setStatus('processing');
-        
-        // Call Cloud Function to create user
-        const completeReg = httpsCallable<
-          { sessionId: string; locale: string },
-          CompleteRegistrationResponse
-        >(functions, 'completeRegistration');
-        
-        const result = await completeReg({
+
+        const { message } = await authService.completeRegistration({
           sessionId,
           locale: i18n.language as 'en' | 'es',
         });
-        
-        const { customToken, message } = result.data;
-        
-        // Sign in with custom token
-        await signInWithCustomToken(auth, customToken);
-        
+
         setStatus('success');
         toast.success(message);
         
@@ -123,12 +103,12 @@ export function RegistrationSuccessPage() {
 
         {status === 'success' && (
           <>
-            <div className="text-green-500">
+            <div className="text-success">
               <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-green-600">
+            <h1 className="text-2xl font-bold text-success">
               {t('registrationSuccess.success.title', {
                 defaultValue: '¡Registro completado!'
               })}

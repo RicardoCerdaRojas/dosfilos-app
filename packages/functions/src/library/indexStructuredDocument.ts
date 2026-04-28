@@ -36,8 +36,8 @@ export const indexStructuredDocument = onCall<IndexRequest>(
     async (request) => {
         console.log(`[IndexStructured] Called by ${request.auth?.token?.email ?? 'unauthenticated'}`);
 
-        if (!request.auth || request.auth.token?.email !== 'rdocerda@gmail.com') {
-            throw new HttpsError('permission-denied', 'Only admin can index documents');
+        if (!request.auth) {
+            throw new HttpsError('unauthenticated', 'Sign-in required');
         }
 
         const geminiKey = process.env.GEMINI_API_KEY;
@@ -54,11 +54,23 @@ export const indexStructuredDocument = onCall<IndexRequest>(
 
         const data = snap.data()!;
 
-        // Preconditions
-        if (data.extractionVersion !== '3.0-llamaparse') {
+        // Authorization: document owner OR admin can index.
+        // This is the same document-ownership model we use in other callables and
+        // allows the personal library feature to work without escalating to admin.
+        const isOwner = data.userId === request.auth.uid;
+        const isAdmin = request.auth.token?.email === 'rdocerda@gmail.com';
+        if (!isOwner && !isAdmin) {
+            throw new HttpsError('permission-denied', 'Only the document owner or admin can index this resource');
+        }
+
+        // Preconditions: indexer expects a `structured.md` produced by either
+        // extraction path (premium = LlamaParse, standard = Gemini). Both emit
+        // the same `<!-- page: N -->` markdown contract.
+        const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard'];
+        if (!SUPPORTED_VERSIONS.includes(data.extractionVersion)) {
             throw new HttpsError(
                 'failed-precondition',
-                `Resource ${resourceId} must be extracted with LlamaParse first (current: ${data.extractionVersion ?? 'unknown'})`
+                `Resource ${resourceId} must be processed first (current: ${data.extractionVersion ?? 'unknown'})`,
             );
         }
         if (!data.structuredContentUrl) {
@@ -193,6 +205,130 @@ export const indexStructuredDocument = onCall<IndexRequest>(
         }
     }
 );
+
+// ── Reusable core ──────────────────────────────────────────────────────────
+
+/**
+ * Core indexing routine — called by both the manual callable (indexStructuredDocument)
+ * and the automatic Firestore trigger (autoIndexOnExtractionReady). No auth check;
+ * callers are responsible for authorization.
+ *
+ * Returns either the chunk count on success, or a skip reason. Updates the resource's
+ * `indexingStatus` in Firestore throughout the process.
+ */
+export async function indexResourceChunks(
+    resourceId: string,
+    options: { force?: boolean; geminiKey: string } = { geminiKey: '' }
+): Promise<
+    | { success: true; chunkCount: number; pageRange?: { min: number; max: number } }
+    | { success: true; skipped: true; reason: string; chunkCount?: number }
+> {
+    const { force = false, geminiKey } = options;
+    if (!geminiKey) throw new Error('GEMINI_API_KEY is required');
+
+    const db = getFirestore();
+    const storage = getStorage();
+    const resourceRef = db.collection('library_resources').doc(resourceId);
+    const snap = await resourceRef.get();
+    if (!snap.exists) throw new Error(`Resource ${resourceId} not found`);
+    const data = snap.data()!;
+
+    const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard'];
+    if (!SUPPORTED_VERSIONS.includes(data.extractionVersion)) {
+        return { success: true, skipped: true, reason: 'not-extracted' };
+    }
+    if (!data.structuredContentUrl) {
+        return { success: true, skipped: true, reason: 'no-structured-content' };
+    }
+    if (!force && data.indexerVersion === INDEXER_VERSION) {
+        return { success: true, skipped: true, reason: 'already-indexed' };
+    }
+
+    const title: string = data.title ?? 'Documento sin título';
+    const author: string = data.author ?? 'Autor desconocido';
+    const userId: string = data.userId;
+    const stores: string[] = data.coreStores ?? [];
+
+    const { bucket: bucketName, path: mdPath } = parseFirebaseStorageLocation(
+        data.structuredContentUrl,
+        'dosfilosapp.firebasestorage.app'
+    );
+    if (!mdPath) throw new Error(`Bad structuredContentUrl: ${data.structuredContentUrl}`);
+    const [mdBuffer] = await storage.bucket(bucketName).file(mdPath).download();
+    let markdown = mdBuffer.toString('utf-8');
+
+    let chunks = chunkStructuredMarkdown(markdown, { maxChars: 2000, minChars: 200, overlapChars: 150 });
+    if (chunks.length < 3 && data.textContent && data.textContent.length > 1000) {
+        markdown = (data.textContent as string).replace(/\[PAGE\s+(\d+)\]/gi, '<!-- page: $1 -->');
+        chunks = chunkStructuredMarkdown(markdown, { maxChars: 2000, minChars: 200, overlapChars: 150 });
+    }
+    if (chunks.length === 0) {
+        return { success: true, skipped: true, reason: 'empty-document', chunkCount: 0 };
+    }
+
+    try {
+        await resourceRef.update({ indexingStatus: 'processing', updatedAt: new Date() });
+
+        const embeddings = await embedChunksBatched(chunks.map(c => c.text), geminiKey);
+        if (embeddings.length !== chunks.length) {
+            throw new Error(`Embedding count mismatch: ${embeddings.length} vs ${chunks.length}`);
+        }
+
+        await deleteExistingChunks(db, resourceId);
+
+        const now = new Date();
+        for (let i = 0; i < chunks.length; i++) {
+            const c = chunks[i];
+            const id = `${resourceId}_chunk_${i}`;
+            await db.collection(CHUNK_COLLECTION).doc(id).set({
+                resourceId,
+                resourceTitle: title,
+                resourceAuthor: author,
+                userId,
+                chunkIndex: i,
+                text: c.text,
+                embedding: FieldValue.vector(embeddings[i]),
+                metadata: {
+                    page: c.page,
+                    section: c.section ?? null,
+                    sectionPath: c.sectionPath,
+                    chunkType: c.chunkType,
+                    startChar: c.charStart,
+                    endChar: c.charEnd,
+                },
+                stores,
+                indexerVersion: INDEXER_VERSION,
+                createdAt: now,
+            });
+        }
+
+        await resourceRef.update({
+            indexingStatus: 'ready',
+            indexerVersion: INDEXER_VERSION,
+            indexedChunkCount: chunks.length,
+            indexedAt: now,
+            needsReindex: false,
+            updatedAt: now,
+        });
+
+        return {
+            success: true,
+            chunkCount: chunks.length,
+            pageRange: {
+                min: Math.min(...chunks.map(c => c.page)),
+                max: Math.max(...chunks.map(c => c.page)),
+            },
+        };
+    } catch (err: any) {
+        const errorMessage = err?.message ?? 'Unknown error';
+        await resourceRef.update({
+            indexingStatus: 'failed',
+            indexingError: errorMessage,
+            updatedAt: new Date(),
+        });
+        throw err;
+    }
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

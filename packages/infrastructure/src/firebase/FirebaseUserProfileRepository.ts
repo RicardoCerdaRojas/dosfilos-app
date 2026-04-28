@@ -1,4 +1,5 @@
 import { IUserProfileRepository, User, Subscription } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -21,9 +22,18 @@ export class FirebaseUserProfileRepository implements IUserProfileRepository {
             photoURL: data.photoURL ?? null,
             stripeCustomerId: data.stripeCustomerId,
             subscription: data.subscription ? this.mapSubscription(data.subscription) : undefined,
+            preferredLanguage: data.preferredLanguage,
             createdAt: data.createdAt?.toDate() ?? new Date(),
             updatedAt: data.updatedAt?.toDate() ?? new Date(),
         };
+    }
+
+    async updatePreferredLanguage(userId: string, language: SupportedLanguage): Promise<void> {
+        const docRef = doc(db, this.collection, userId);
+        await setDoc(docRef, {
+            preferredLanguage: language,
+            updatedAt: serverTimestamp(),
+        }, { merge: true });
     }
 
     async updateSubscription(userId: string, subscription: Subscription): Promise<void> {

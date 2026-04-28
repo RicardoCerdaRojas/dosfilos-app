@@ -1,6 +1,7 @@
 {
     "header": {
         "title": "My Tutors",
+        "orchestratorFallbackName": "Tutor Orchestrator",
         "newSession": "New session — type your first question",
         "sessionActive": "Active Session",
         "professorId": "Professor ID: {{id}}",
@@ -52,7 +53,47 @@
         "inputPlaceholder": "Continue the theological conversation...",
         "inputLoading": "Loading...",
         "selectingSpecialist": "Selecting specialist...",
-        "deleteMessage": "Delete message"
+        "deleteMessage": "Delete message",
+        "inferredModeLabel": "Detected mode:"
+    },
+    "bibliography": {
+        "title": "Bibliography",
+        "viewSourceAria": "View source {{num}}: {{author}}, {{title}}",
+        "pagesConsulted": "Pages consulted",
+        "protectedFootnote_one": "1 curated source with protected citation — material consulted but not publicly citable due to rights protection.",
+        "protectedFootnote_other": "{{count}} curated sources with protected citation — material consulted but not publicly citable due to rights protection."
+    },
+    "modeMenu": {
+        "buttonTitle": "Response mode",
+        "groupRecommended": "Recommended",
+        "groupLength": "Length",
+        "groupStyle": "Style and audience"
+    },
+    "modes": {
+        "auto": {
+            "label": "Auto",
+            "description": "The system detects the best mode for your question"
+        },
+        "concise": {
+            "label": "Concise",
+            "description": "Brief response, 2-4 sentences"
+        },
+        "detailed": {
+            "label": "Detailed",
+            "description": "Full structured explanation"
+        },
+        "academic": {
+            "label": "Academic",
+            "description": "Exegetical rigor, paradigms, dense bibliography"
+        },
+        "pastoral": {
+            "label": "Pastoral",
+            "description": "Preaching and practical application"
+        },
+        "layperson": {
+            "label": "For laypeople",
+            "description": "Accessible, no jargon, with analogies"
+        }
     },
     "extraction": {
         "title": "Content Extraction",
@@ -87,6 +128,56 @@
             "quote": "Quote",
             "academic": "Academic",
             "pastoral": "Pastoral"
+        }
+    },
+    "directory": {
+        "badge": "Expert Tutors for Expository Preachers",
+        "heroTitle": "My Tutors",
+        "heroSubtitle": "Ask the faculty a question — the orchestrator will automatically select and coordinate the specialists you need.",
+        "inputPlaceholder": "What do you want to study, prepare, or resolve today?",
+        "quickPrompts": {
+            "outline": {
+                "label": "Sermon Outline",
+                "prompt": "Help me develop an expository sermon outline."
+            },
+            "counseling": {
+                "label": "Pastoral Counseling",
+                "prompt": "How do I pastorally counsel someone who is suffering?"
+            },
+            "exegesis": {
+                "label": "Biblical Exegesis",
+                "prompt": "I need help with the exegetical analysis of a biblical passage."
+            },
+            "theology": {
+                "label": "Systematic Theology",
+                "prompt": "Can you help me explain a concept of systematic theology?"
+            }
+        },
+        "specialistsTitle": "Consult a specialist directly",
+        "specialistsSubtitle": "When you know exactly which area you need, go straight to the tutor.",
+        "specialistsSearchPlaceholder": "Search by name or specialty...",
+        "specialistsEmpty": "No tutors found.",
+        "card": {
+            "directSession": "Direct session",
+            "start": "Start"
+        }
+    },
+    "freeStarter": {
+        "eyebrow": "Start here",
+        "intro": "Your Free plan includes 50 monthly queries against the curated library. Tap any prompt to get started — the tutors will cite the sources backing their answer.",
+        "prompts": {
+            "expository": {
+                "title": "What does the curated library say about expository preaching?",
+                "prompt": "What are the essential characteristics of an expository sermon according to the authors in the curated library?"
+            },
+            "passage": {
+                "title": "Help me understand a passage I'm going to preach",
+                "prompt": "I'm going to preach Philippians 1:6 — help me with exegetical analysis and pastoral application."
+            },
+            "firstSermon": {
+                "title": "Advise me before my first sermon",
+                "prompt": "What practical advice do you have before I preach my first sermon to a congregation?"
+            }
         }
     }
 }

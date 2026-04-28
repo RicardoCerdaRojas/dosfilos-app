@@ -1,13 +1,29 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import { resend } from './resendClient';
-import { getDay3GreekTemplate } from './templates/nurture/day3Greek';
-import { getDay7LibraryTemplate } from './templates/nurture/day7Library';
-import { getDay14UpgradeTemplate } from './templates/nurture/day14Upgrade';
+import { getDay3GreekTemplate, getDay3GreekSubject } from './templates/nurture/day3Greek';
+import { getDay7LibraryTemplate, getDay7LibrarySubject } from './templates/nurture/day7Library';
+import { getDay14UpgradeTemplate, getDay14UpgradeSubject } from './templates/nurture/day14Upgrade';
 
 const db = admin.firestore();
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
 const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
+
+type Locale = 'es' | 'en';
+
+/**
+ * Reads the user's preferred language from the Firestore doc. Falls back to
+ * Spanish when missing — older accounts that predate the Phase 2 persistence
+ * change won't have the field set.
+ */
+function userLocale(userData: any): Locale {
+    const raw = userData?.preferredLanguage ?? userData?.locale;
+    return raw === 'en' ? 'en' : 'es';
+}
+
+function fallbackName(locale: Locale): string {
+    return locale === 'en' ? 'Preacher' : 'Predicador';
+}
 
 // Helper to calculate date range for query
 const getDateRange = (daysAgo: number) => {
@@ -49,20 +65,22 @@ async function processDay3Emails() {
 
         const email = userData.email;
         if (!email) continue;
+        const locale = userLocale(userData);
+        const name = userData.displayName || fallbackName(locale);
 
         try {
             await resend.emails.send({
                 from: SENDER_EMAIL,
                 to: email,
-                subject: 'Descubre el Poder del Griego 🏛️',
-                html: getDay3GreekTemplate(userData.displayName || 'Predicador', DASHBOARD_URL)
+                subject: getDay3GreekSubject(locale),
+                html: getDay3GreekTemplate(name, DASHBOARD_URL, locale),
             });
 
             await doc.ref.set({
                 metadata: { emailsSent: { day3_greek: true } }
             }, { merge: true });
 
-            console.log(`Day 3 email sent to ${email}`);
+            console.log(`Day 3 email sent to ${email} (${locale})`);
         } catch (e) {
             console.error(`Failed to send Day 3 email to ${email}`, e);
         }
@@ -82,20 +100,22 @@ async function processDay7Emails() {
 
         const email = userData.email;
         if (!email) continue;
+        const locale = userLocale(userData);
+        const name = userData.displayName || fallbackName(locale);
 
         try {
             await resend.emails.send({
                 from: SENDER_EMAIL,
                 to: email,
-                subject: 'Organiza tu Predicación 📚',
-                html: getDay7LibraryTemplate(userData.displayName || 'Predicador', DASHBOARD_URL)
+                subject: getDay7LibrarySubject(locale),
+                html: getDay7LibraryTemplate(name, DASHBOARD_URL, locale),
             });
 
             await doc.ref.set({
                 metadata: { emailsSent: { day7_library: true } }
             }, { merge: true });
 
-            console.log(`Day 7 email sent to ${email}`);
+            console.log(`Day 7 email sent to ${email} (${locale})`);
         } catch (e) {
             console.error(`Failed to send Day 7 email to ${email}`, e);
         }
@@ -117,20 +137,22 @@ async function processDay14Emails() {
 
         const email = userData.email;
         if (!email) continue;
+        const locale = userLocale(userData);
+        const name = userData.displayName || fallbackName(locale);
 
         try {
             await resend.emails.send({
                 from: SENDER_EMAIL,
                 to: email,
-                subject: 'Lleva tu Ministerio al Siguiente Nivel 🚀',
-                html: getDay14UpgradeTemplate(userData.displayName || 'Predicador', DASHBOARD_URL)
+                subject: getDay14UpgradeSubject(locale),
+                html: getDay14UpgradeTemplate(name, DASHBOARD_URL, locale),
             });
 
             await doc.ref.set({
                 metadata: { emailsSent: { day14_upgrade: true } }
             }, { merge: true });
 
-            console.log(`Day 14 email sent to ${email}`);
+            console.log(`Day 14 email sent to ${email} (${locale})`);
         } catch (e) {
             console.error(`Failed to send Day 14 email to ${email}`, e);
         }

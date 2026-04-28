@@ -1,5 +1,6 @@
 import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySelector, GeminiFileSearchService } from '@dosfilos/infrastructure';
-import { LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext } from '@dosfilos/domain';
+import { LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 import { ChatMessage, WorkflowPhase } from '@dosfilos/domain/src/entities/SermonWorkflow';
 import { SourceReference, ChatResponseWithSources } from './PlannerChatService';
 
@@ -117,6 +118,7 @@ export class GeneratorChatService {
             libraryResources: LibraryResourceEntity[];
             aiModel?: string;      // 🎯 NEW
             temperature?: number;  // 🎯 NEW
+            language?: SupportedLanguage;
         }
     ): Promise<{ point: any; sources: SourceReference[] }> {
         // 1. Search for relevant content in library (RAG)
@@ -173,7 +175,8 @@ export class GeneratorChatService {
                 tone: (context.tone as any) || 'inspirational',
                 customInstructions: context.customInstructions
             },
-            regenerateContext
+            regenerateContext,
+            context.language ?? DEFAULT_LANGUAGE,
         );
 
         return { point: regeneratedPoint, sources };
@@ -193,6 +196,7 @@ export class GeneratorChatService {
             cacheName?: string;
             aiModel?: string;      // 🎯 NEW
             temperature?: number;  // 🎯 NEW
+            language?: SupportedLanguage;
         }
     ): Promise<ChatResponseWithSources> {
         // Add user message to history
@@ -338,7 +342,8 @@ export class GeneratorChatService {
             const response = await this.generator.chat(
                 workflowPhase,
                 this.history,
-                enrichedContext
+                enrichedContext,
+                context.language ?? DEFAULT_LANGUAGE,
             );
 
             // Add assistant response to history
@@ -383,6 +388,7 @@ export class GeneratorChatService {
             cacheName?: string;
             aiModel?: string;      // 🎯 NEW
             temperature?: number;  // 🎯 NEW
+            language?: SupportedLanguage;
         },
         onChunk: (chunk: string) => void
     ): Promise<ChatResponseWithSources> {
@@ -530,7 +536,8 @@ export class GeneratorChatService {
                 workflowPhase,
                 this.history,
                 enrichedContext,
-                onChunk
+                onChunk,
+                context.language ?? DEFAULT_LANGUAGE,
             );
 
             // Add assistant response to history

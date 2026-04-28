@@ -18,8 +18,6 @@ import {
   ArrowRightIcon,
   SearchIcon,
   SendIcon,
-  ClockIcon,
-  CheckIcon,
 } from 'lucide-react';
 import { useRecentVerses, addRecentVerse } from './hooks/useRecentVerses';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -39,6 +37,7 @@ import { DiscoveryWordStepper } from './components/discovery/DiscoveryWordSteppe
 import { TranslationBuilder } from './components/discovery/TranslationBuilder';
 import { TranslationComparison } from './components/discovery/TranslationComparison';
 import { ParticleQuickPanel } from './components/discovery/ParticleQuickPanel';
+import { DiscoveryEmptyState } from './components/discovery/DiscoveryEmptyState';
 import { getGrammaticalCategoryLabel } from './utils/grammarLabels';
 
 // ── Word category routing ─────────────────────────────────────────────────────
@@ -176,8 +175,8 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
         onToggle={onToggleToolbar}
         collapsedSummary={
           <>
-            <SearchIcon className="w-3.5 h-3.5 text-indigo-500/60 shrink-0" />
-            <span className="font-medium text-foreground/70">Modo Traducción</span>
+            <SearchIcon className="w-3.5 h-3.5 text-primary/60 shrink-0" />
+            <span className="font-medium text-foreground/70">{t('discovery.translationMode')}</span>
             {dm.selectedBook && (
               <>
                 <span className="text-border">·</span>
@@ -219,20 +218,20 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
             onClick={() => updateTextScale(-0.15)}
             disabled={textScale <= 0.7}
             className="px-2 py-1 rounded-md text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30"
-            title="Reducir tamaño"
+            title={t('discovery.fontSize.smaller')}
           >A-</button>
           <button
             onClick={() => updateTextScale(0.15)}
             disabled={textScale >= 2.5}
             className="px-2 py-1 rounded-md text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30"
-            title="Agrandar tamaño"
+            title={t('discovery.fontSize.larger')}
           >A+</button>
         </div>
 
         {/* Mobile: sheet trigger */}
         <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
           <SheetTrigger asChild>
-            <button className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-indigo-400/40 hover:bg-indigo-50/50 transition-colors shrink-0">
+            <button className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-colors shrink-0">
               <MenuIcon className="w-3.5 h-3.5" />
               <span>{currentBookName} {dm.selectedChapter}:{dm.selectedVerse}</span>
             </button>
@@ -241,10 +240,10 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
             <SheetHeader className="pb-4 border-b border-border/50">
               <SheetTitle className="flex items-center gap-2">
                 <BookOpenIcon className="w-4 h-4 text-primary" />
-                {t('discovery.navigator', { defaultValue: 'Navegador Bíblico' })}
+                {t('discovery.navigator')}
               </SheetTitle>
               <SheetDescription>
-                {t('discovery.navigatorDesc', { defaultValue: 'Selecciona libro, capítulo y versículo para traducir' })}
+                {t('discovery.navigatorDesc')}
               </SheetDescription>
             </SheetHeader>
             <div className="pt-4">
@@ -290,15 +289,15 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
         {dm.phase === 'investigating' && dm.activeWord && (
           <div className="space-y-4 animate-in fade-in duration-300">
             {/* Hebrew verse display */}
-            <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-slate-50/50 via-background to-indigo-50/20 dark:from-slate-950/50 dark:via-background dark:to-indigo-950/10 p-4 sm:p-5 text-center">
-              <p className="text-[10px] font-semibold text-indigo-500/70 dark:text-indigo-400/60 uppercase tracking-[0.2em] mb-2">
+            <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-muted/40 via-background to-primary/5 p-4 sm:p-5 text-center">
+              <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-[0.2em] mb-2">
                 {dm.verseDisplayReference}
               </p>
               <p
                 dir="rtl"
                 lang="he"
                 className="leading-loose text-foreground/90 transition-all duration-300"
-                style={{ 
+                style={{
                   fontFamily: "'SBL Hebrew', 'Ezra SIL', serif",
                   fontSize: `${1.75 * textScale}rem` // base text-2xl/3xl approx
                 }}
@@ -310,9 +309,9 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
                     className={`
                       inline px-0.5 transition-all duration-300
                       ${i === dm.activeWordIndex
-                        ? 'text-indigo-600 dark:text-indigo-400 font-bold underline decoration-indigo-500/30 decoration-2 underline-offset-4'
+                        ? 'text-primary font-bold underline decoration-primary/40 decoration-2 underline-offset-4'
                         : dw.status === 'completed'
-                          ? 'text-emerald-700/70 dark:text-emerald-400/70'
+                          ? 'text-success/80'
                           : 'text-foreground/40'
                       }
                     `}
@@ -333,28 +332,24 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
 
             {/* ── Active word spotlight ── */}
             <div className="relative">
-              {/* Glow background */}
-              <div className="absolute inset-0 bg-indigo-500/5 dark:bg-indigo-500/10 blur-2xl rounded-3xl" />
+              <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-3xl" />
 
-              <div className="relative rounded-2xl border-2 border-indigo-200/60 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50/60 via-background to-violet-50/40 dark:from-indigo-950/30 dark:via-background dark:to-violet-950/20 p-6 sm:p-8">
+              <div className="relative rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-background to-primary/5 p-6 sm:p-8">
                 <div className="flex flex-col items-center gap-4">
-                  {/* Category badge */}
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-500/70 dark:text-indigo-400/60 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/40">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary/80 bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
                       {t('discovery.investigate.wordN', {
-                        defaultValue: 'Palabra {{n}} de {{total}}',
                         n: dm.activeWordIndex + 1,
                         total: dm.totalWords,
                       })}
                     </span>
                   </div>
 
-                  {/* Hebrew word */}
                   <div className="flex flex-col items-center gap-2">
                     <span
                       dir="rtl"
                       lang="he"
-                      className="font-semibold text-indigo-700 dark:text-indigo-300 drop-shadow-sm transition-all duration-500"
+                      className="font-semibold text-primary drop-shadow-sm transition-all duration-500"
                       style={{ 
                         fontFamily: "'SBL Hebrew', 'Ezra SIL', serif",
                         fontSize: `${3.75 * textScale}rem` // base text-6xl approx
@@ -385,13 +380,12 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
                     )}
                   </div>
 
-                  {/* CTA Button */}
                   <button
                     onClick={openDetective}
-                    className="mt-2 flex items-center gap-2.5 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold text-sm shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:from-indigo-600 hover:to-violet-600 active:scale-[0.97] transition-all duration-200"
+                    className="mt-2 flex items-center gap-2.5 px-8 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:bg-primary/90 active:scale-[0.97] transition-all duration-200"
                   >
                     <SearchIcon className="w-4.5 h-4.5" />
-                    {t('discovery.investigate.start', { defaultValue: 'Investigar esta palabra' })}
+                    {t('discovery.investigate.start')}
                   </button>
                 </div>
               </div>
@@ -410,10 +404,10 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
               <div className="flex items-center justify-center py-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <button
                   onClick={dm.finishInvestigation}
-                  className="flex items-center gap-2.5 px-10 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-600 active:scale-[0.97] transition-all duration-200"
+                  className="flex items-center gap-2.5 px-10 py-3.5 rounded-2xl bg-success text-success-foreground font-bold text-sm shadow-xl shadow-success/20 hover:shadow-success/30 hover:bg-success/90 active:scale-[0.97] transition-all duration-200"
                 >
                   <ArrowRightIcon className="w-4 h-4" />
-                  {t('discovery.investigate.finish', { defaultValue: 'Componer traducción completa →' })}
+                  {t('discovery.investigate.finish')}
                 </button>
               </div>
             )}
@@ -425,13 +419,10 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
           <div className="space-y-5 max-w-2xl mx-auto animate-in fade-in duration-300">
             <div className="text-center space-y-2">
               <h2 className="text-lg font-bold text-foreground">
-                {t('discovery.compose.title', { defaultValue: 'Compón tu traducción' })}
+                {t('discovery.compose.title')}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {t('discovery.compose.description', {
-                  defaultValue:
-                    'A partir de tus traducciones palabra por palabra, edita la traducción completa del versículo. Puedes modificarla libremente.',
-                })}
+                {t('discovery.compose.description')}
               </p>
             </div>
 
@@ -471,7 +462,7 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
                   >
                     {dw.word.hebrewText}
                   </span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="text-[10px] text-success font-medium">
                     {dw.studentTranslation || '—'}
                   </span>
                 </div>
@@ -483,10 +474,8 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
               value={dm.studentFullTranslation}
               onChange={(e) => dm.setStudentFullTranslation(e.target.value)}
               rows={4}
-              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-sm font-medium focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none transition-colors resize-none"
-              placeholder={t('discovery.compose.placeholder', {
-                defaultValue: 'Escribe o edita tu traducción completa...',
-              })}
+              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-colors resize-none"
+              placeholder={t('discovery.compose.placeholder')}
             />
 
             <div className="flex items-center justify-center gap-3">
@@ -496,7 +485,7 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
                 className="flex items-center gap-2 px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
               >
                 <SendIcon className="w-4 h-4" />
-                {t('discovery.compose.submit', { defaultValue: 'Comparar con análisis experto →' })}
+                {t('discovery.compose.submit')}
               </button>
             </div>
           </div>
@@ -566,215 +555,3 @@ export const DiscoveryModePage: React.FC<DiscoveryModePageProps> = ({
     </div>
   );
 };
-
-// ── Curated quick-start verses (Translation mode) ─────────────────────────────
-
-const TRANSLATION_QUICK_VERSES = [
-  {
-    book: 'Gen',  chapter: 1, verse: 1,
-    ref: 'Génesis 1:1',  subtitle: 'El principio de todo',
-    grammar: 'Verbo Qal · Sust.',  words: 7,  level: 'Introductorio',
-    gradient: 'from-blue-500/10 to-indigo-500/10',
-    border: 'border-blue-500/20 hover:border-blue-500/40',
-    levelColor: 'text-blue-600 dark:text-blue-400',
-  },
-  {
-    book: 'Gen',  chapter: 3, verse: 10,
-    ref: 'Génesis 3:10',  subtitle: 'La desnudez revelada',
-    grammar: 'Qal Impf. · Estado constr.',  words: 9,  level: 'Intermedio',
-    gradient: 'from-amber-500/10 to-orange-500/10',
-    border: 'border-amber-500/20 hover:border-amber-500/40',
-    levelColor: 'text-amber-600 dark:text-amber-400',
-  },
-  {
-    book: 'Ps',  chapter: 23, verse: 1,
-    ref: 'Salmos 23:1',  subtitle: 'El Señor es mi pastor',
-    grammar: 'Participio · Sufijo pron.',  words: 4,  level: 'Básico',
-    gradient: 'from-emerald-500/10 to-teal-500/10',
-    border: 'border-emerald-500/20 hover:border-emerald-500/40',
-    levelColor: 'text-emerald-600 dark:text-emerald-400',
-  },
-  {
-    book: 'Jonah', chapter: 1, verse: 1,
-    ref: 'Jonás 1:1',  subtitle: 'Un llamado divino',
-    grammar: 'Wayyiqtol · Prepos.',  words: 8,  level: 'Introductorio',
-    gradient: 'from-violet-500/10 to-purple-500/10',
-    border: 'border-violet-500/20 hover:border-violet-500/40',
-    levelColor: 'text-violet-600 dark:text-violet-400',
-  },
-  {
-    book: 'Prov', chapter: 3, verse: 5,
-    ref: 'Proverbios 3:5',  subtitle: 'Confía en el Señor',
-    grammar: 'Imperativo · Sufijo pron.',  words: 6,  level: 'Básico',
-    gradient: 'from-rose-500/10 to-pink-500/10',
-    border: 'border-rose-500/20 hover:border-rose-500/40',
-    levelColor: 'text-rose-600 dark:text-rose-400',
-  },
-  {
-    book: 'Isa',  chapter: 6, verse: 1,
-    ref: 'Isaías 6:1',  subtitle: 'La visión del trono',
-    grammar: 'Wayyiqtol · Hiphil',  words: 12,  level: 'Avanzado',
-    gradient: 'from-sky-500/10 to-cyan-500/10',
-    border: 'border-sky-500/20 hover:border-sky-500/40',
-    levelColor: 'text-sky-600 dark:text-sky-400',
-  },
-] as const;
-
-// ── Flow steps for preview ────────────────────────────────────────────────────
-
-const FLOW_STEPS = [
-  { n: 1, label: 'Elige un versículo', icon: '📖' },
-  { n: 2, label: 'Investiga cada palabra', icon: '🔍' },
-  { n: 3, label: 'Compón tu traducción', icon: '✍️' },
-  { n: 4, label: 'Compara con el experto', icon: '⚖️' },
-] as const;
-
-// ── Empty state ───────────────────────────────────────────────────────────────
-
-const DiscoveryEmptyState: React.FC<{
-  onQuickStart: (book: string, chapter: number, verse: number) => void;
-  openMobileSheet: () => void;
-  recents: import('./hooks/useRecentVerses').RecentVerse[];
-}> = ({ onQuickStart, openMobileSheet, recents }) => (
-  <div className="flex flex-col items-center justify-center h-full py-8 px-4 max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-500">
-
-    {/* Flow preview card */}
-    <div className="w-full max-w-2xl mb-8 rounded-2xl border border-indigo-200/60 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50/40 via-background to-violet-50/20 dark:from-indigo-950/20 dark:via-background dark:to-violet-950/10 shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500/5 border-b border-indigo-200/40 dark:border-indigo-800/30">
-        <SearchIcon className="w-3.5 h-3.5 text-indigo-500" />
-        <span className="text-xs font-semibold text-indigo-600/80 dark:text-indigo-400/80 uppercase tracking-wider">
-          Cómo funciona el Modo Traducción
-        </span>
-      </div>
-
-      <div className="p-5">
-        {/* Flow steps */}
-        <div className="grid grid-cols-4 gap-2 mb-5">
-          {FLOW_STEPS.map((step, i) => (
-            <div key={step.n} className="flex flex-col items-center gap-1.5 text-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-300/40 dark:border-indigo-700/40 flex items-center justify-center text-base">
-                {step.icon}
-              </div>
-              {i < FLOW_STEPS.length - 1 && (
-                <div className="hidden sm:block absolute" style={{ display: 'none' }} />
-              )}
-              <div className="text-[10px] text-muted-foreground leading-tight font-medium">{step.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Connector arrows between steps (desktop) */}
-        <div className="hidden sm:flex items-center justify-center gap-1 -mt-3 mb-4">
-          {FLOW_STEPS.map((_, i) => i < FLOW_STEPS.length - 1 && (
-            <React.Fragment key={i}>
-              <div className="flex-1 h-px bg-indigo-200/60 dark:bg-indigo-800/40" />
-              <ArrowRightIcon className="w-3 h-3 text-indigo-400/60 shrink-0" />
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Mock investigation card */}
-        <div className="rounded-xl border border-indigo-200/50 dark:border-indigo-800/30 bg-background/60 p-4">
-          <div className="text-[10px] font-semibold text-indigo-500/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <span className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[9px] font-bold text-indigo-600">2</span>
-            Investigando palabra
-          </div>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-3xl font-hebrew text-indigo-700 dark:text-indigo-300" dir="rtl" lang="he">בָּרָא</span>
-              <span className="text-[10px] text-muted-foreground italic">bā-rāʾ</span>
-              <span className="text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border">Verbo Qal</span>
-            </div>
-            <div className="flex-1 space-y-2">
-              <div className="rounded-lg bg-muted/30 border border-border/40 px-3 py-2">
-                <div className="text-[9px] text-muted-foreground mb-0.5">Tu traducción</div>
-                <div className="text-xs text-foreground/40 italic">________________</div>
-              </div>
-              <div className="rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/40 dark:border-emerald-800/30 px-3 py-2 flex items-start gap-1.5">
-                <CheckIcon className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
-                <div>
-                  <div className="text-[9px] text-emerald-600/70 mb-0.5">Experto (visible al final)</div>
-                  <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">creó — Qal Perf. 3ms</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Recent verses */}
-    {recents.length > 0 && (
-      <div className="w-full max-w-2xl mb-5">
-        <div className="flex items-center gap-2 mb-2">
-          <ClockIcon className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Recientes
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {recents.map((r) => (
-            <button
-              key={`${r.book}-${r.chapter}-${r.verse}`}
-              onClick={() => onQuickStart(r.book, r.chapter, r.verse)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/40 text-sm text-foreground hover:bg-muted hover:border-indigo-300/40 transition-all active:scale-[0.97]"
-            >
-              <span className="font-medium">{r.bookName} {r.chapter}:{r.verse}</span>
-              <ArrowRightIcon className="w-3 h-3 text-muted-foreground" />
-            </button>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Quick actions */}
-    <div className="w-full max-w-2xl">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Versículos sugeridos
-        </span>
-      </div>
-
-      {/* Mobile: search button */}
-      <button
-        onClick={openMobileSheet}
-        className="md:hidden w-full group flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:border-indigo-300/40 transition-all active:scale-[0.98] mb-3"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
-            <SearchIcon className="w-5 h-5" />
-          </div>
-          <div className="text-left">
-            <div className="font-semibold text-foreground text-sm">Buscar Pasaje</div>
-            <div className="text-xs text-muted-foreground">Abre el navegador</div>
-          </div>
-        </div>
-        <ArrowRightIcon className="w-4 h-4 text-muted-foreground group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
-      </button>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-        {TRANSLATION_QUICK_VERSES.map((v) => (
-          <button
-            key={`${v.book}-${v.chapter}-${v.verse}`}
-            onClick={() => onQuickStart(v.book, v.chapter, v.verse)}
-            className={`group flex flex-col gap-2 p-3.5 rounded-2xl bg-gradient-to-br ${v.gradient} border ${v.border} shadow-sm hover:shadow-md transition-all active:scale-[0.98] text-left`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="font-semibold text-foreground text-sm leading-tight">{v.ref}</div>
-                <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{v.subtitle}</div>
-              </div>
-              <ArrowRightIcon className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 mt-0.5" />
-            </div>
-            <div className="flex flex-col gap-1 pt-1 border-t border-border/20">
-              <div className={`text-[10px] font-semibold ${v.levelColor}`}>{v.level}</div>
-              <div className="text-[10px] text-muted-foreground">{v.grammar}</div>
-              <div className="text-[10px] text-muted-foreground/70">{v.words} palabras</div>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  </div>
-);

@@ -5,16 +5,20 @@ import {
     AIChatMessage,
     SourceReference,
     AIAgent,
+    ResponseMode,
+    DEFAULT_LANGUAGE,
+    resolveLocalized,
 } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 import { generateId } from '../../utils/generateId';
-import { CoreLibraryRAGService, RetrievedChunk } from '../../services/CoreLibraryRAGService';
+import { CoreLibraryRAGService, RetrievedChunk, getRetrievalConfigForMode } from '../../services/CoreLibraryRAGService';
 
 // Phase 2 RAG: retrieve once per user message, pass as context to Gemini
 const ragService = new CoreLibraryRAGService();
 
 function chunksToSources(chunks: RetrievedChunk[]): SourceReference[] {
     // Dedup by (author + title) and merge page lists
-    const byDoc = new Map<string, { title: string; author: string; pages: Set<number>; sections: Set<string>; snippet: string }>();
+    const byDoc = new Map<string, { title: string; author: string; pages: Set<number>; sections: Set<string>; snippet: string; publiclyCitable: boolean }>();
     for (const c of chunks) {
         const key = `${c.resourceAuthor}||${c.resourceTitle}`;
         const entry = byDoc.get(key) ?? {
@@ -23,9 +27,12 @@ function chunksToSources(chunks: RetrievedChunk[]): SourceReference[] {
             pages: new Set<number>(),
             sections: new Set<string>(),
             snippet: c.text.substring(0, 240).trim(),
+            publiclyCitable: c.publiclyCitable === true,
         };
         if (c.metadata.page !== undefined) entry.pages.add(c.metadata.page);
         if (c.sectionBreadcrumb) entry.sections.add(c.sectionBreadcrumb);
+        // All chunks of the same doc share the same citable flag; keep true if any chunk says true.
+        if (c.publiclyCitable === true) entry.publiclyCitable = true;
         byDoc.set(key, entry);
     }
     return Array.from(byDoc.values()).map(entry => {
@@ -42,18 +49,41 @@ function chunksToSources(chunks: RetrievedChunk[]): SourceReference[] {
         } else if (entry.snippet) {
             ref.snippet = entry.snippet;
         }
+        ref.publiclyCitable = entry.publiclyCitable;
         return ref;
     });
 }
 
 /**
- * Defensive cleaner: strip bogus citations (chunk-IDs, self-citations) that leaked past the prompt.
+ * Defensive cleaner: strip bogus citations (chunk-IDs, self-citations,
+ * leaked protected-source attributions) that escaped past the system prompt.
+ *
+ * The protection sentinel is a phrase the model is forbidden to cite — but
+ * Gemini occasionally regurgitates it as `(Material especializado, "Capítulo
+ * X", p. N; Material especializado, "Capítulo Y", p. M)`. We strip these
+ * here as a hard fail-safe, including the multi-citation form with semicolon
+ * separators that the client-side extractor's regex misses.
  */
 function cleanCitations(text: string, agentNames: string[] = []): string {
     let out = text;
+    // Strip leaked RAG context headers "[Fuente N: ...]" / "[Source N: ...]"
+    out = out.replace(/\[(?:Fuente|Source)\s+\d+:[^\]]*\]\s*/g, '');
+    // Also strip the "CONTEXTO RECUPERADO" / "RETRIEVED CONTEXT" preamble if echoed literally
+    out = out.replace(/^\s*(?:CONTEXTO RECUPERADO|RETRIEVED CONTEXT)\s*:?\s*\n+/i, '');
     out = out.replace(/\(Basado en [a-z0-9]{8,}[^)]*\)\.?/g, '');
     out = out.replace(/Basado en [a-z0-9]{8,},\s*pág\.?\s*\d+[^.]*\./gi, '');
     out = out.replace(/\([a-z0-9]{10,}\s*,\s*p(?:á|a)g\.?\s*\d+[^)]*\)/gi, '');
+
+    // Protected-source leaks. Cover both languages and any mix of single + multi
+    // citation inside the same parens. Examples we want to remove:
+    //   (Material especializado, "Capítulo 1", p. 54)
+    //   (Material curado, "Capítulo 1", p. 54; Material curado, "Capítulo 7", p. 49)
+    //   (Curated material, "Chapter 1", p. 54)
+    out = out.replace(
+        /\((?:Material\s+(?:especializado|curado)|Curated\s+material)[^)]*\)\.?/gi,
+        '',
+    );
+
     const defaultAgents = [
         'Dr\\. Al[eé]theia', 'Dr\\. Berith', 'Dr\\. Cris[oó]stomo',
         'Dr\\. Calvino', 'Pastor Nout[eé]tico', 'Tutor Pastoral',
@@ -88,8 +118,9 @@ export class SendAgentMessageUseCase {
         sessionId: string,
         messageContent: string,
         onChunk?: (text: string) => void,
-        lengthPreference?: 'concise' | 'detailed',
-        onSources?: (sources: SourceReference[]) => void
+        lengthPreference?: ResponseMode,
+        onSources?: (sources: SourceReference[]) => void,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
@@ -100,6 +131,11 @@ export class SendAgentMessageUseCase {
         if (!agent) {
             throw new Error('Agent not found');
         }
+
+        // Normalize 'auto' → 'detailed' (this direct path has no router for inference)
+        const effectiveMode: ResponseMode | undefined = lengthPreference === 'auto'
+            ? 'detailed'
+            : lengthPreference;
 
         // 1. Create and save the User message
 
@@ -114,26 +150,48 @@ export class SendAgentMessageUseCase {
         // 2. Prepare the full history for the LLM
         const history = [...session.messages, userMessage];
 
-        // 3. PHASE 2 — Retrieve relevant chunks from our vector index BEFORE generation
+        // 3. PHASE 2 — Retrieve relevant chunks from our vector index BEFORE generation.
+        // Retrieval is tuned per response mode: concise → fewer/tighter chunks,
+        // academic → wider net. Direct-agent path has no router, so we use effectiveMode
+        // (which collapses 'auto' → 'detailed' as a safe default).
+        // effectiveMode is already 'auto'-free (see normalization above), but we default
+        // to 'detailed' when the caller didn't pass any mode at all.
+        const retrievalConfig = getRetrievalConfigForMode(effectiveMode ?? 'detailed');
         let retrievedContext: string | undefined;
         let capturedSources: SourceReference[] = [];
-        if (agent.corpusIds && agent.corpusIds.length > 0) {
-            try {
-                const chunks = await ragService.retrieve(messageContent, {
-                    corpusIds: agent.corpusIds,
-                    topK: 10,
-                    minSimilarity: 0.3,
-                });
-                console.log(`[SendAgentMessage] Retrieved ${chunks.length} chunks for agent "${agent.name}"`);
-                if (chunks.length > 0) {
-                    retrievedContext = CoreLibraryRAGService.formatContextForPrompt(chunks);
-                    capturedSources = chunksToSources(chunks);
-                    // Notify UI immediately — sources are known before Gemini even replies
-                    onSources?.(capturedSources);
-                }
-            } catch (err: any) {
-                console.warn('[SendAgentMessage] RAG retrieval failed, continuing without context:', err?.message ?? err);
+        try {
+            // Core Library retrieval — prefer agent.stores (keys), fall back to the
+            // legacy agent.corpusIds (Gemini URIs; server reverse-resolves to keys).
+            const hasStores = agent.stores && agent.stores.length > 0;
+            const hasCorpus = agent.corpusIds && agent.corpusIds.length > 0;
+            const coreChunks = (hasStores || hasCorpus)
+                ? await ragService.retrieve(messageContent, {
+                      stores: hasStores ? agent.stores : undefined,
+                      corpusIds: hasStores ? undefined : agent.corpusIds,
+                      topK: retrievalConfig.topK,
+                      minSimilarity: retrievalConfig.minSimilarity,
+                  })
+                : [];
+
+            // Personal library retrieval (user's own uploads, tenant-isolated).
+            // Half the topK of core so personal content complements without swamping.
+            const personalTopK = Math.max(3, Math.floor(retrievalConfig.topK / 2));
+            const personalChunks = await ragService.retrieve(messageContent, {
+                userId,
+                topK: personalTopK,
+                minSimilarity: retrievalConfig.minSimilarity,
+            });
+
+            const allChunks = [...coreChunks, ...personalChunks];
+            console.log(`[SendAgentMessage] Retrieved ${coreChunks.length} core + ${personalChunks.length} personal chunks for "${resolveLocalized(agent.name, language)}" (mode=${effectiveMode ?? 'default'})`);
+            if (allChunks.length > 0) {
+                retrievedContext = CoreLibraryRAGService.formatContextForPrompt(allChunks, language);
+                capturedSources = chunksToSources(allChunks);
+                // Notify UI immediately — sources are known before Gemini even replies
+                onSources?.(capturedSources);
             }
+        } catch (err: any) {
+            console.warn('[SendAgentMessage] RAG retrieval failed, continuing without context:', err?.message ?? err);
         }
 
         // 4. Request generation (streaming or bulk)
@@ -150,21 +208,24 @@ export class SendAgentMessageUseCase {
                 history,
                 messageContent,
                 onChunk,
-                lengthPreference,
+                effectiveMode,
                 retrievedContext ? undefined : handleSources,  // Skip legacy path if we have Phase 2 context
                 retrievedContext,
+                language,
             );
         } else {
             responseContent = await this.generatorService.sendMessage(
                 agent,
                 history,
                 messageContent,
-                lengthPreference
+                effectiveMode,
+                undefined,
+                language,
             );
         }
 
         // 4. Defensive cleanup + save
-        const cleanedResponse = cleanCitations(responseContent, [agent.name]);
+        const cleanedResponse = cleanCitations(responseContent, [resolveLocalized(agent.name, language)]);
 
         const modelMessage: AIChatMessage = {
             id: generateId(),
@@ -172,13 +233,14 @@ export class SendAgentMessageUseCase {
             content: cleanedResponse,
             timestamp: new Date(),
             ...(capturedSources.length > 0 && { sources: capturedSources }),
+            ...(effectiveMode && { modeUsed: effectiveMode, modeWasAuto: lengthPreference === 'auto' }),
         };
         await this.chatRepository.addMessageToSession(userId, sessionId, modelMessage);
 
         // Generate contextual session title on first exchange — awaited so UI refetch sees it
         if (session.messages.length === 0) {
             try {
-                const title = await this.generateSessionTitle(messageContent);
+                const title = await this.generateSessionTitle(messageContent, language);
                 if (title) {
                     await this.chatRepository.renameSession(userId, sessionId, title);
                 }
@@ -190,23 +252,37 @@ export class SendAgentMessageUseCase {
         return cleanedResponse;
     }
 
-    private async generateSessionTitle(firstMessage: string): Promise<string | null> {
+    private async generateSessionTitle(
+        firstMessage: string,
+        language: SupportedLanguage,
+    ): Promise<string | null> {
         const titleAgent: AIAgent = {
             id: '__title_gen__',
-            name: 'TitleGenerator',
+            name: { es: 'TitleGenerator', en: 'TitleGenerator' },
             role: 'title',
-            systemInstruction: 'Generas títulos breves y descriptivos en español. Responde SOLO con el título, sin comillas, sin puntuación final, sin prefijos.',
-            expertiseArea: 'title-generation',
-            description: 'Internal title generator',
+            systemInstruction: {
+                es: 'Generas títulos breves y descriptivos en español. Responde SOLO con el título, sin comillas, sin puntuación final, sin prefijos.',
+                en: 'You generate brief, descriptive titles in English. Respond ONLY with the title, no quotes, no trailing punctuation, no prefixes.',
+            },
+            expertiseArea: { es: 'title-generation', en: 'title-generation' },
+            description: { es: 'Internal title generator', en: 'Internal title generator' },
             isActive: true,
         };
-        const prompt = `Genera un título MUY breve (máximo 6 palabras) que resuma el tema de esta pregunta teológica:
+        const prompt = language === 'en'
+            ? `Generate a VERY brief title (max 6 words) summarizing the topic of this theological question:
+
+"${firstMessage}"
+
+Respond only with the title, no quotes.`
+            : `Genera un título MUY breve (máximo 6 palabras) que resuma el tema de esta pregunta teológica:
 
 "${firstMessage}"
 
 Responde solo con el título, sin comillas.`;
         try {
-            const raw = await this.generatorService.sendMessage(titleAgent, [], prompt);
+            const raw = await this.generatorService.sendMessage(
+                titleAgent, [], prompt, undefined, undefined, language,
+            );
             const cleaned = raw.trim().replace(/^["'«]|["'»]$/g, '').replace(/\.$/, '').trim();
             if (cleaned.length > 0 && cleaned.length <= 80) return cleaned;
         } catch {}

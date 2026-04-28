@@ -2,10 +2,11 @@ import { ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent } 
 import { ChatMessage, WorkflowPhase } from '../entities/SermonWorkflow';
 
 import { PhaseConfiguration } from '../entities/WorkflowConfiguration';
+import type { SupportedLanguage } from '../types/i18n';
 
 export interface ISermonGenerator {
     // ========== EXISTING METHODS ==========
-    generateExegesis(passage: string, rules: GenerationRules, config?: PhaseConfiguration): Promise<ExegeticalStudy>;
+    generateExegesis(passage: string, rules: GenerationRules, config?: PhaseConfiguration, language?: SupportedLanguage): Promise<ExegeticalStudy>;
 
     /**
      * @deprecated Use generateHomileticsPreview + developSelectedApproach instead
@@ -14,14 +15,14 @@ export interface ISermonGenerator {
      * 
      * Kept for backward compatibility during migration.
      */
-    generateHomiletics(exegesis: ExegeticalStudy, rules: GenerationRules, config?: PhaseConfiguration): Promise<HomileticalAnalysis>;
+    generateHomiletics(exegesis: ExegeticalStudy, rules: GenerationRules, config?: PhaseConfiguration, language?: SupportedLanguage): Promise<HomileticalAnalysis>;
 
-    generateSermonDraft(analysis: HomileticalAnalysis, rules: GenerationRules, config?: PhaseConfiguration): Promise<SermonContent>;
-    regenerateSermonPoint(point: any, rules: GenerationRules, context: any): Promise<any>;
+    generateSermonDraft(analysis: HomileticalAnalysis, rules: GenerationRules, config?: PhaseConfiguration, language?: SupportedLanguage): Promise<SermonContent>;
+    regenerateSermonPoint(point: any, rules: GenerationRules, context: any, language?: SupportedLanguage): Promise<any>;
 
-    chat(phase: WorkflowPhase, history: ChatMessage[], context: any): Promise<string>;
-    chatStream(phase: WorkflowPhase, history: ChatMessage[], context: any, onChunk: (chunk: string) => void): Promise<string>;
-    refineContent(content: string, instruction: string, context?: any): Promise<string>;
+    chat(phase: WorkflowPhase, history: ChatMessage[], context: any, language?: SupportedLanguage): Promise<string>;
+    chatStream(phase: WorkflowPhase, history: ChatMessage[], context: any, onChunk: (chunk: string) => void, language?: SupportedLanguage): Promise<string>;
+    refineContent(content: string, instruction: string, context?: any, language?: SupportedLanguage): Promise<string>;
 
     // ========== NEW: TWO-PHASE HOMILETICS GENERATION ==========
 
@@ -44,7 +45,8 @@ export interface ISermonGenerator {
     generateHomileticsPreview(
         exegesis: ExegeticalStudy,
         rules: GenerationRules,
-        config?: PhaseConfiguration
+        config?: PhaseConfiguration,
+        language?: SupportedLanguage,
     ): Promise<import('../entities/HomileticalApproach').HomileticalApproachPreview[]>;
 
     /**
@@ -68,6 +70,7 @@ export interface ISermonGenerator {
         exegesis: ExegeticalStudy,
         selectedPreview: import('../entities/HomileticalApproach').HomileticalApproachPreview,
         rules: GenerationRules,
-        config?: PhaseConfiguration
+        config?: PhaseConfiguration,
+        language?: SupportedLanguage,
     ): Promise<import('../entities/HomileticalApproach').HomileticalApproach>;
 }

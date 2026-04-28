@@ -1,52 +1,40 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Pencil, Archive, Trash2, FileText, 
-  BookOpen, MapPin, Clock, History, Plus,
-  Share2, MoreVertical, Download, Globe, Eye, Check, Copy, CheckCircle,
-  Type, Minus, Pen, PenTool, PenLine
+import {
+    Archive, Trash2, FileText,
+    BookOpen, History, Plus,
+    Share2, MoreVertical, Download, Globe, Eye, CheckCircle,
+    Type, Minus, PenTool, PenLine,
 } from 'lucide-react';
 import { useRef } from 'react';
-import { 
-  ResizableHandle, 
-  ResizablePanel, 
-  ResizablePanelGroup 
-} from "@/components/ui/resizable";
-import { useSidebar } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
+import {
+    ResizableHandle,
+    ResizablePanel,
+    ResizablePanelGroup,
+} from '@/components/ui/resizable';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
 import { SermonAnnotator } from '@/components/sermons/SermonAnnotator';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { useSermon, useDeleteSermon, usePublishSermon, useArchiveSermon } from '@/hooks/use-sermons';
 import { useState, useEffect } from 'react';
 import { exportService, sermonService, seriesService } from '@dosfilos/application';
@@ -54,6 +42,9 @@ import { SermonSeriesEntity, PreachingLog } from '@dosfilos/domain';
 import { toast } from 'sonner';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { useTranslation } from 'react-i18next';
+import { ShareSermonDialog } from './components/detail/ShareSermonDialog';
+import { LogPreachingDialog } from './components/detail/LogPreachingDialog';
+import { SermonHistoryDialog } from './components/detail/SermonHistoryDialog';
 
 export function SermonDetailPage() {
   const { t } = useTranslation('sermonDetail');
@@ -350,7 +341,7 @@ export function SermonDetailPage() {
             {/* Annotations Toggle */}
             <Button variant="ghost" size="sm" onClick={() => setShowHistory(true)}>
               <History className="h-4 w-4 2xl:mr-2" />
-              <span className="hidden 2xl:inline">{t('actions.history', { defaultValue: 'Historial' })}</span>
+              <span className="hidden 2xl:inline">{t('actions.history')}</span>
             </Button>
 
             <Button 
@@ -359,7 +350,7 @@ export function SermonDetailPage() {
               onClick={() => setShowAnnotations(!showAnnotations)}
             >
               <PenTool className="h-4 w-4 2xl:mr-2" />
-              <span className="hidden 2xl:inline">{showAnnotations ? t('actions.hideNotes', { defaultValue: 'Ocultar Notas' }) : t('actions.notes', { defaultValue: 'Notas' })}</span>
+              <span className="hidden 2xl:inline">{showAnnotations ? t('actions.hideNotes') : t('actions.notes')}</span>
             </Button>
             
             <Separator orientation="vertical" className="h-6" />
@@ -379,7 +370,7 @@ export function SermonDetailPage() {
               className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
             >
               <BookOpen className="h-4 w-4 xl:mr-2" />
-              <span className="hidden xl:inline">{t('actions.present', { defaultValue: 'Predicar' })}</span>
+              <span className="hidden xl:inline">{t('actions.present')}</span>
             </Button>
 
             <DropdownMenu>
@@ -511,195 +502,38 @@ export function SermonDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Share Dialog */}
-      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('dialogs.share.title')}</DialogTitle>
-            <DialogDescription>
-              {t('dialogs.share.description')}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6 py-4">
-            <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg bg-muted/50">
-              <Label htmlFor="share-mode" className="flex flex-col space-y-1 cursor-pointer">
-                <span className="font-medium">{t('dialogs.share.publicMode')}</span>
-                <span className="font-normal text-xs text-muted-foreground">
-                  {t('dialogs.share.publicModeDesc')}
-                </span>
-              </Label>
-              <Switch
-                id="share-mode"
-                checked={sermon.isShared}
-                onCheckedChange={handleShareToggle}
-                disabled={sharing}
-              />
-            </div>
+      <ShareSermonDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        sermon={sermon}
+        sharing={sharing}
+        copied={copied}
+        onShareToggle={handleShareToggle}
+        onCopyLink={copyToClipboard}
+      />
 
-            {sermon.isShared && sermon.shareToken && (
-              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                <Label>{t('dialogs.share.publicLink')}</Label>
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <Input
-                      id="link"
-                      defaultValue={`${window.location.origin}/share/${sermon.shareToken}`}
-                      readOnly
-                      className="pr-10"
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground">
-                      <Globe className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <Button size="icon" variant="outline" onClick={copyToClipboard}>
-                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t('dialogs.share.copyTip')}
-                </p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LogPreachingDialog
+        open={showLogDialog}
+        onOpenChange={setShowLogDialog}
+        logDate={logDate}
+        logLocation={logLocation}
+        logDuration={logDuration}
+        logNotes={logNotes}
+        logging={logging}
+        onDateChange={setLogDate}
+        onLocationChange={setLogLocation}
+        onDurationChange={setLogDuration}
+        onNotesChange={setLogNotes}
+        onSubmit={handleLogPreaching}
+      />
 
-      {/* Log Preaching Dialog */}
-      <Dialog open={showLogDialog} onOpenChange={setShowLogDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('dialogs.log.title')}</DialogTitle>
-            <DialogDescription>
-              {t('dialogs.log.description')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="log-date">{t('dialogs.log.date')}</Label>
-                <Input
-                  id="log-date"
-                  type="date"
-                  value={logDate}
-                  onChange={(e) => setLogDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="log-duration">{t('dialogs.log.duration')}</Label>
-                <div className="relative">
-                  <Input
-                    id="log-duration"
-                    type="number"
-                    value={logDuration}
-                    onChange={(e) => setLogDuration(e.target.value)}
-                    className="pl-8"
-                  />
-                  <Clock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="log-location">{t('dialogs.log.location')}</Label>
-              <div className="relative">
-                <Input
-                  id="log-location"
-                  value={logLocation}
-                  onChange={(e) => setLogLocation(e.target.value)}
-                  placeholder={t('dialogs.log.locationPlaceholder')}
-                  className="pl-8"
-                />
-                <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="log-notes">{t('dialogs.log.notes')}</Label>
-              <Textarea
-                id="log-notes"
-                value={logNotes}
-                onChange={(e) => setLogNotes(e.target.value)}
-                placeholder={t('dialogs.log.notesPlaceholder')}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLogDialog(false)}>{t('dialogs.delete.cancel')}</Button>
-            <Button onClick={handleLogPreaching} disabled={logging || !logLocation}>
-              {logging ? t('dialogs.log.saving') : t('dialogs.log.save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {/* History Dialog */}
-      <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('history.title')}</DialogTitle>
-            <DialogDescription>
-              {t('history.description', { defaultValue: 'Registro de predicaciones y detalles.' })}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-             {/* Series Info */}
-             {series && (
-              <div className="space-y-2 pb-4 border-b">
-                <div className="flex items-center gap-2 text-primary font-medium text-sm">
-                  <BookOpen className="h-4 w-4" />
-                  <h3>{t('series.partOf')}</h3>
-                </div>
-                <div>
-                  <h4 className="font-bold text-base cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
-                    {series.title}
-                  </h4>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                    {series.description}
-                  </p>
-                </div>
-                <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/dashboard/plans/${series.id}`)}>
-                  {t('series.viewFull')}
-                </Button>
-              </div>
-            )}
-
-            {/* Preaching Log List */}
-            <div className="space-y-4">
-               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-muted-foreground">Registro de Predicaciones</h4>
-                <Button variant="ghost" size="sm" onClick={() => setShowLogDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar
-                </Button>
-              </div>
-              
-              {(!sermon.preachingHistory || sermon.preachingHistory.length === 0) ? (
-                <p className="text-sm text-muted-foreground text-center py-4 bg-muted/30 rounded-lg">
-                  {t('history.empty')}
-                </p>
-              ) : (
-                sermon.preachingHistory.map((log, index) => (
-                  <div key={index} className="text-sm border-l-2 border-primary/30 pl-3 space-y-1 py-1">
-                    <div className="font-medium flex items-center justify-between">
-                      <span>{new Date(log.date || new Date()).toLocaleDateString()}</span>
-                      <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{log.durationMinutes} min</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{log.location}</span>
-                    </div>
-                    {log.notes && (
-                      <p className="text-xs text-muted-foreground italic mt-1 bg-muted/20 p-2 rounded">
-                        "{log.notes}"
-                      </p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SermonHistoryDialog
+        open={showHistory}
+        onOpenChange={setShowHistory}
+        sermon={sermon}
+        series={series}
+        onAddLog={() => setShowLogDialog(true)}
+      />
     </div>
   );
 }

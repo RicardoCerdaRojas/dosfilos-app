@@ -36,11 +36,39 @@ export function useUsageLimits() {
         return usageLimitsService.getLibraryStorageUsage(user.uid);
     }, [user]);
 
+    /** Hito 5 — pre-check before sending a query to a tutor. */
+    const checkCanQuery = useCallback(async (): Promise<LimitCheckResult> => {
+        if (!user) return { allowed: false, reason: 'No autenticado' };
+        return usageLimitsService.canQuery(user.uid);
+    }, [user]);
+
+    /** Hito 5 — pre-check before allowing the user to upload a personal-library doc. */
+    const checkCanUploadDocument = useCallback(async (): Promise<LimitCheckResult> => {
+        if (!user) return { allowed: false, reason: 'No autenticado' };
+        return usageLimitsService.canUploadDocument(user.uid);
+    }, [user]);
+
+    /** Hito 5.2 — pre-check before opening the create-project dialog. */
+    const checkCanCreateProject = useCallback(async (): Promise<LimitCheckResult> => {
+        if (!user) return { allowed: false, reason: 'No autenticado' };
+        return usageLimitsService.canCreateProject(user.uid);
+    }, [user]);
+
+    /** Hito 5 — full monthly snapshot for usage banners and quota dashboards. */
+    const getMonthlyUsage = useCallback(async () => {
+        if (!user) return null;
+        return usageLimitsService.getMonthlyUsage(user.uid);
+    }, [user]);
+
     return {
         checkCanCreateSermon,
         checkCanCreatePreachingPlan,
         checkCanStartGreekSession,
         checkCanAccessLibrary,
         getLibraryStorageUsage,
+        checkCanQuery,
+        checkCanUploadDocument,
+        checkCanCreateProject,
+        getMonthlyUsage,
     };
 }

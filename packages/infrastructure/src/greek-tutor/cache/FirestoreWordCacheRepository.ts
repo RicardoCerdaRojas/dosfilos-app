@@ -1,16 +1,24 @@
-import { Firestore, doc, setDoc } from 'firebase/firestore';
+import { Firestore, doc, getFirestore, setDoc } from 'firebase/firestore';
 import { IWordCacheRepository, WordCacheEntry } from '@dosfilos/domain';
 
 /**
  * Firestore implementation of word cache repository
- * 
+ *
  * Cache is stored in /greekWordCache collection
  * Document ID format: {lemma}_{language} (e.g., "ἀγαθός_Spanish")
  */
 export class FirestoreWordCacheRepository implements IWordCacheRepository {
     private readonly COLLECTION_NAME = 'greekWordCache';
+    private readonly firestore: Firestore;
 
-    constructor(private firestore: Firestore) { }
+    /**
+     * Accepts an optional Firestore instance for tests / multi-app setups.
+     * Defaults to the singleton from `getFirestore()` so UI code doesn't need
+     * to import `firebase/firestore` just to construct this repository.
+     */
+    constructor(firestore?: Firestore) {
+        this.firestore = firestore ?? getFirestore();
+    }
 
     /**
      * Generate cache document ID from lemma and language

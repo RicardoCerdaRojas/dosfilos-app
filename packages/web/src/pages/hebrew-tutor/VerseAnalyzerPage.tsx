@@ -8,6 +8,8 @@
  */
 
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { BookOpenIcon, MenuIcon, SparklesIcon, SearchIcon, ArrowRightIcon, ClockIcon, BookOpenCheckIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { VerseSelector } from './components/VerseSelector';
@@ -20,6 +22,8 @@ import { HebrewLoadingTips } from './components/HebrewLoadingTips';
 import { useVerseAnalysis } from './hooks/useVerseAnalysis';
 import { addRecentVerse, useRecentVerses } from './hooks/useRecentVerses';
 import { HEBREW_BOOKS_CATALOG } from '@dosfilos/infrastructure';
+import { hebrewStudySessionRepo } from '@/hooks/useHebrewSessions';
+import { useFirebase } from '@/context/firebase-context';
 import type { TutorMode } from './HebrewTutorPage';
 
 interface VerseAnalyzerPageProps {
@@ -63,10 +67,30 @@ export const VerseAnalyzerPage: React.FC<VerseAnalyzerPageProps> = ({
   React.useEffect(() => { setLocalAnalysis(analysis); }, [analysis]);
 
   const { recents, refresh } = useRecentVerses();
+  const { user } = useFirebase();
+  const [searchParams] = useSearchParams();
+  const projectIdFromUrl = searchParams.get('projectId') || undefined;
+  const queryClient = useQueryClient();
+
   React.useEffect(() => {
     if (analysis && selectedBook) {
       addRecentVerse(selectedBook, selectedChapter, selectedVerse);
       refresh();
+
+      // Record per-user activity (idempotent on userId+passage). When the user
+      // landed via /dashboard/hebrew-tutor?projectId=X this also links the
+      // session to that project automatically.
+      if (user?.uid) {
+        const passage = `${currentBookName} ${selectedChapter}:${selectedVerse}`;
+        hebrewStudySessionRepo
+          .recordActivity({
+            userId: user.uid,
+            passage,
+            projectId: projectIdFromUrl,
+          })
+          .then(() => queryClient.invalidateQueries({ queryKey: ['hebrew', 'sessions'] }))
+          .catch((err) => console.warn('[HebrewTutor] could not record activity:', err));
+      }
     }
   }, [analysis]); // eslint-disable-line react-hooks/exhaustive-deps
 

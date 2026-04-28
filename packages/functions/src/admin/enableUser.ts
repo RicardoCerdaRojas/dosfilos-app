@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { stripe } from '../config/stripe';
+import { writeAuditLog } from './auditLog';
 
 /**
  * Cloud Function: Enable User
@@ -10,7 +11,9 @@ import { stripe } from '../config/stripe';
  * disabled status from Firestore, and resumes the paused Stripe subscription
  * (if any).
  */
-export const enableUser = onCall(async (request) => {
+export const enableUser = onCall(
+    { secrets: ['STRIPE_SECRET_KEY'] },
+    async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
@@ -73,6 +76,13 @@ export const enableUser = onCall(async (request) => {
         });
 
         console.log(`User ${userId} re-enabled by admin ${callerUid}`);
+        writeAuditLog({
+            actorUid: callerUid,
+            actorEmail: callerDoc.data()?.email,
+            action: 'user.enable',
+            targetUid: userId,
+            targetEmail: userData.email,
+        });
         return { success: true, message: `User ${userId} has been re-enabled.` };
 
     } catch (error: any) {

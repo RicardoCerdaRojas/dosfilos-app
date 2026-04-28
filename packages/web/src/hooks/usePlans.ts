@@ -150,12 +150,18 @@ export interface FirestorePlan extends PlanDefinition {
 
 
 /**
- * Get Stripe price ID for a plan
- * Helper function for checkout flows
- * Accepts both PlanDefinition and LocalizedPlan
+ * Resolve the Stripe Price ID a checkout call should target. Defaults to
+ * monthly because that's what the current pricing/landing pages display; pass
+ * `'yearly'` from a billing-cycle toggle when you add one.
  */
-export function getPlanPriceId(plan: PlanDefinition | LocalizedPlan): string | null {
-    return plan.stripeProductIds?.[0] || null;
+export function getPlanPriceId(
+    plan: PlanDefinition | LocalizedPlan,
+    billing: 'monthly' | 'yearly' = 'monthly',
+): string | null {
+    const ids = plan.stripePriceIds;
+    if (!ids) return null;
+    if (billing === 'yearly') return ids.yearly ?? ids.monthly ?? null;
+    return ids.monthly ?? null;
 }
 
 /**

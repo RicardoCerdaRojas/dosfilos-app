@@ -20,6 +20,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useHebrewTutor } from '../HebrewTutorProvider';
 import type { VerseAnalysis, WordAnalysis, BookIndex, HebrewVerse } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -106,6 +107,8 @@ export interface UseDiscoveryModeReturn {
 
 export function useDiscoveryMode(): UseDiscoveryModeReturn {
   const { analyzeVerse, getBibleNavigation, getVerseText } = useHebrewTutor();
+  const { i18n } = useTranslation();
+  const language = i18n.language?.startsWith('en') ? 'en' : 'es';
 
   // Navigation state
   const [selectedBook, setSelectedBook] = useState('');
@@ -287,7 +290,7 @@ export function useDiscoveryMode(): UseDiscoveryModeReturn {
         morphhbKey: selectedBook,
         chapter: selectedChapter,
         verse: selectedVerse,
-        language: 'es',
+        language,
         forceRefresh: false,
       });
 

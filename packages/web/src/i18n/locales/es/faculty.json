@@ -1,6 +1,7 @@
 {
     "header": {
         "title": "Mis Tutores",
+        "orchestratorFallbackName": "Orquestador de Tutores",
         "newSession": "Nueva sesión — escribe tu primera pregunta",
         "sessionActive": "Sesión Activa",
         "professorId": "Profesor ID: {{id}}",
@@ -52,7 +53,47 @@
         "inputPlaceholder": "Continúa la conversación teológica...",
         "inputLoading": "Cargando...",
         "selectingSpecialist": "Seleccionando especialista...",
-        "deleteMessage": "Eliminar mensaje"
+        "deleteMessage": "Eliminar mensaje",
+        "inferredModeLabel": "Modo detectado:"
+    },
+    "bibliography": {
+        "title": "Bibliografía",
+        "viewSourceAria": "Ver fuente {{num}}: {{author}}, {{title}}",
+        "pagesConsulted": "Páginas consultadas",
+        "protectedFootnote_one": "1 fuente especializada con cita protegida — material consultado pero no citable públicamente por protección de derechos.",
+        "protectedFootnote_other": "{{count}} fuentes especializadas con cita protegida — material consultado pero no citable públicamente por protección de derechos."
+    },
+    "modeMenu": {
+        "buttonTitle": "Modo de respuesta",
+        "groupRecommended": "Recomendado",
+        "groupLength": "Longitud",
+        "groupStyle": "Estilo y audiencia"
+    },
+    "modes": {
+        "auto": {
+            "label": "Auto",
+            "description": "El sistema detecta el mejor modo según tu pregunta"
+        },
+        "concise": {
+            "label": "Concisa",
+            "description": "Respuesta breve, 2-4 frases"
+        },
+        "detailed": {
+            "label": "Detallada",
+            "description": "Explicación estructurada completa"
+        },
+        "academic": {
+            "label": "Académica",
+            "description": "Rigor exegético, paradigmas, bibliografía densa"
+        },
+        "pastoral": {
+            "label": "Pastoral",
+            "description": "Predicación y aplicación práctica"
+        },
+        "layperson": {
+            "label": "Para laicos",
+            "description": "Accesible, sin jerga, con analogías"
+        }
     },
     "extraction": {
         "title": "Extracción de Contenido",
@@ -87,6 +128,56 @@
             "quote": "Citar",
             "academic": "Académico",
             "pastoral": "Pastoral"
+        }
+    },
+    "directory": {
+        "badge": "Tutores Expertos para Predicadores Expositivos",
+        "heroTitle": "Mis Tutores",
+        "heroSubtitle": "Hazle una pregunta al cuerpo docente — el orquestador seleccionará y coordinará automáticamente los especialistas que tu necesitas.",
+        "inputPlaceholder": "¿Qué quieres estudiar, preparar o resolver hoy?",
+        "quickPrompts": {
+            "outline": {
+                "label": "Bosquejo de Sermón",
+                "prompt": "Ayúdame a desarrollar un bosquejo de sermón expositivo."
+            },
+            "counseling": {
+                "label": "Consejería Pastoral",
+                "prompt": "¿Cómo aconsejo pastoralmente a alguien que está sufriendo?"
+            },
+            "exegesis": {
+                "label": "Exégesis Bíblica",
+                "prompt": "Necesito ayuda con el análisis exegético de un pasaje bíblico."
+            },
+            "theology": {
+                "label": "Teología Sistemática",
+                "prompt": "¿Puedes ayudarme a explicar un concepto de teología sistemática?"
+            }
+        },
+        "specialistsTitle": "Consulta directamente a un especialista",
+        "specialistsSubtitle": "Cuando sabes exactamente qué área necesitas, ve directo al tutor.",
+        "specialistsSearchPlaceholder": "Buscar por nombre o especialidad...",
+        "specialistsEmpty": "No se encontraron tutores.",
+        "card": {
+            "directSession": "Sesión directa",
+            "start": "Iniciar"
+        }
+    },
+    "freeStarter": {
+        "eyebrow": "Empieza por aquí",
+        "intro": "Tu plan Free incluye 50 consultas mensuales sobre la biblioteca curada. Toca cualquiera para arrancar — los tutores citarán las fuentes que respaldan la respuesta.",
+        "prompts": {
+            "expository": {
+                "title": "¿Qué dice la biblioteca curada sobre el sermón expositivo?",
+                "prompt": "¿Qué características esenciales tiene un sermón expositivo según los autores de la biblioteca curada?"
+            },
+            "passage": {
+                "title": "Ayúdame a entender un pasaje que voy a predicar",
+                "prompt": "Voy a predicar Filipenses 1:6 — ayúdame con un análisis exegético y aplicación pastoral."
+            },
+            "firstSermon": {
+                "title": "Aconséjame antes de mi primera predicación",
+                "prompt": "¿Qué consejos prácticos me das antes de predicar mi primer sermón a una congregación?"
+            }
         }
     }
 }

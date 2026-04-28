@@ -21,7 +21,7 @@ import { FirebaseConfigRepository, FirebaseStorageService } from '@dosfilos/infr
 
 import { Loader2, Upload, X, FileText, Database } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { libraryService } from '@dosfilos/application';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -164,22 +164,7 @@ export function SettingsPage() {
 
     const loadStoreConfig = async () => {
         try {
-            const db = getFirestore();
-            const docRef = doc(db, 'config/coreLibraryStores');
-            const docSnap = await getDoc(docRef);
-            
-            let storeKeys: string[] = ['exegesis', 'homiletics', 'generic']; // Defaults
-            let descriptions: Record<string, string> = {};
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.stores) {
-                    storeKeys = Object.keys(data.stores);
-                }
-                if (data.descriptions) {
-                    descriptions = data.descriptions;
-                }
-            }
+            const { keys: storeKeys, descriptions } = await libraryService.getCoreStoresConfig();
 
             const defaultMeta: Record<string, any> = {
                 exegesis: { name: 'Biblioteca de Exégesis' },
@@ -459,7 +444,7 @@ export function SettingsPage() {
             </div>
 
             <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-                <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'} h-14 p-1 bg-muted/50`}>
+                <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} h-14 p-1 bg-muted/50`}>
                     <TabsTrigger value="sermons" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 h-12 gap-2">
                         <Layers className="h-4 w-4" /> Sermones
                     </TabsTrigger>
@@ -469,11 +454,12 @@ export function SettingsPage() {
                      <TabsTrigger value="greek" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 h-12 gap-2">
                         <GraduationCap className="h-4 w-4" /> Entrenador Griego
                     </TabsTrigger>
-                    {isAdmin && (
-                        <TabsTrigger value="library" className="data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 h-12 gap-2">
-                            <Library className="h-4 w-4" /> Biblioteca
-                        </TabsTrigger>
-                    )}
+                    {/* Biblioteca: accesible a todos desde el lanzamiento de biblioteca personal.
+                        Los usuarios regulares gestionan sus propias categorías; admin además
+                        configura la Core Library (en /dashboard/admin/core-library). */}
+                    <TabsTrigger value="library" className="data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 h-12 gap-2">
+                        <Library className="h-4 w-4" /> Biblioteca
+                    </TabsTrigger>
                     {isAdmin && (
                         <TabsTrigger value="advanced" className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700 h-12 gap-2">
                             <Cog className="h-4 w-4" /> Avanzado

@@ -1,55 +1,115 @@
-import React, { useState } from 'react';
-import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import React from 'react';
+import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { useTranslation } from '@/i18n';
-import type { SourceReference } from '@dosfilos/domain';
+import type { SourceReference, ConcreteResponseMode, SupportedLanguage } from '@dosfilos/domain';
+import { resolveLocalized } from '@dosfilos/domain';
+import { extractCitations, CitationSup, Bibliography, wrapLanguageRuns, transformCallouts, Callout, wrapScriptureRefs, ScriptureRef } from '@/lib/citations';
+import { useModeMeta } from './FacultyChatHeader';
+import { useAuthorization } from '@/hooks/useAuthorization';
 
 interface ChatMessage {
     id: string;
     role: 'user' | 'assistant' | 'system';
     content: string;
     sources?: SourceReference[];
+    modeUsed?: ConcreteResponseMode;
+    modeWasAuto?: boolean;
 }
 
-function SourcesPanel({ sources }: { sources: SourceReference[] }) {
-    const [open, setOpen] = useState(false);
-    const hasAnnotated = sources.some(s => s.author);
-    const label = hasAnnotated
-        ? sources.length === 1 ? 'fuente citada' : 'fuentes citadas'
-        : sources.length === 1 ? 'base de conocimiento consultada' : 'bases de conocimiento consultadas';
+/**
+ * Small badge shown below a response when the mode was auto-inferred by the router.
+ * Non-intrusive hint so the user understands why a particular style/length was chosen
+ * and can override if needed.
+ */
+function InferredModeBadge({ mode }: { mode: ConcreteResponseMode }) {
+    const { t } = useTranslation('faculty');
+    const modeMeta = useModeMeta();
+    const meta = modeMeta[mode];
+    if (!meta) return null;
+    const Icon = meta.icon;
+    return (
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-indigo-500" />
+            <span>{t('chat.inferredModeLabel')}</span>
+            <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
+                <Icon className={cn("h-3 w-3", meta.iconColor)} />
+                {meta.label}
+            </span>
+        </div>
+    );
+}
+
+/**
+ * Renders an assistant message: transforms inline citations into numbered superscripts
+ * with a Popover preview, and appends a Bibliography panel at the bottom.
+ */
+function AssistantMessageContent({ content, sources, isAdmin }: { content: string; sources?: SourceReference[]; isAdmin: boolean }) {
+    const { rendered, citations, protectedSourcesCount } = React.useMemo(() => {
+        // Pipeline: citations → scripture refs → callouts → hebrew/greek language tagging.
+        // Order matters: citations have a latin format that scripture regex won't match;
+        // scripture must run before language tagging so the wrapping span stays intact.
+        //
+        // Gating: non-admin users only see citations whose source has `publiclyCitable=true`
+        // (per-document flag managed by admin in Core Library). Citations of private/
+        // pending-licensed material are stripped entirely from the prose, and those
+        // sources are excluded from the Bibliography panel.
+        const step1 = extractCitations(content, sources ?? [], { onlyCitableSources: !isAdmin });
+        const step2 = wrapScriptureRefs(step1.rendered);
+        const step3 = transformCallouts(step2);
+        const step4 = wrapLanguageRuns(step3);
+        // Count protected sources (only relevant for non-admin readers — admin
+        // sees the real attribution in the citation list itself).
+        const protectedCount = isAdmin
+            ? 0
+            : (sources ?? []).filter(s => s.publiclyCitable !== true).length;
+        return { rendered: step4, citations: step1.citations, protectedSourcesCount: protectedCount };
+    }, [content, sources, isAdmin]);
 
     return (
-        <div className="mt-3 border-t border-slate-100 dark:border-zinc-800 pt-2">
-            <button
-                onClick={() => setOpen(v => !v)}
-                className="flex items-center gap-1.5 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
-            >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>{sources.length} {label}</span>
-                {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </button>
-            {open && (
-                <div className="mt-2 space-y-2">
-                    {sources.map((s, i) => (
-                        <div key={i} className="text-xs bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-lg px-3 py-2.5">
-                            <div className="flex items-start gap-1.5">
-                                <BookOpen className="h-3 w-3 text-indigo-500 shrink-0 mt-0.5" />
-                                <div className="min-w-0">
-                                    <span className="font-semibold text-indigo-700 dark:text-indigo-300">{s.title}</span>
-                                    {s.author && (
-                                        <span className="text-slate-500 dark:text-slate-400"> — {s.author}</span>
-                                    )}
-                                    {s.snippet && (
-                                        <p className="text-slate-500 dark:text-slate-400 mt-0.5">{s.snippet}</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+        <>
+            <div className={cn(
+                "prose prose-slate prose-sm md:prose-base dark:prose-invert max-w-none break-words",
+                // Reading-optimized serif body for long-form theology
+                "font-reading",
+                // Generous leading for prose paragraphs (long-form reading comfort)
+                "prose-p:leading-[1.75]",
+                // Tighter leading AND margins inside lists — dense bullets read better than airy ones
+                "prose-li:leading-normal prose-li:my-0.5",
+                "prose-ul:my-3 prose-ol:my-3",
+                // Paragraphs nested inside list items should not add extra vertical gap
+                "prose-li:marker:text-slate-400",
+                // Tighter, modern sans-serif for headings to contrast with serif body
+                "prose-headings:font-sans prose-headings:tracking-tight",
+                "prose-h2:mt-5 prose-h2:mb-2 prose-h3:mt-4 prose-h3:mb-1.5",
+                // Subtle indigo accent for strong emphasis
+                "prose-strong:text-slate-900 dark:prose-strong:text-slate-100",
+                // Tables (paradigms, conjugations) — cleaner borders
+                "prose-table:text-sm prose-th:bg-slate-50 dark:prose-th:bg-zinc-800/60"
+            )}>
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                        sup: (props: any) => <CitationSup citations={citations} {...props} />,
+                        div: (props: any) => {
+                            if (props['data-callout']) return <Callout {...props} />;
+                            return <div {...props} />;
+                        },
+                        span: (props: any) => {
+                            if (props['data-scripture']) return <ScriptureRef {...props} />;
+                            return <span {...props} />;
+                        },
+                    }}
+                >
+                    {rendered}
+                </ReactMarkdown>
+            </div>
+            <Bibliography citations={citations} protectedSourcesCount={protectedSourcesCount} />
+        </>
     );
 }
 
@@ -80,7 +140,14 @@ export function FacultyChatMessages({
     agentNameForNew,
     onDeleteMessage,
 }: FacultyChatMessagesProps) {
-    const { t } = useTranslation('faculty');
+    const { t, language } = useTranslation('faculty');
+    const activeLanguage: SupportedLanguage = language === 'en' ? 'en' : 'es';
+    // Citations are gated to admin users while book licensing approval is pending.
+    // Non-admin users see the prose without inline `(Autor, "Título", p. N)` markers
+    // and without the Bibliography panel.
+    // Admin sees citations from all sources; non-admin only sees citations whose
+    // source is marked `publiclyCitable=true` in the Core Library.
+    const { isAdmin } = useAuthorization();
 
     return (
         <>
@@ -124,12 +191,8 @@ export function FacultyChatMessages({
                             <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                         ) : (
                             <>
-                                <div className="prose prose-slate prose-sm md:prose-base dark:prose-invert max-w-none break-words">
-                                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                                </div>
-                                {msg.sources && msg.sources.length > 0 && (
-                                    <SourcesPanel sources={msg.sources} />
-                                )}
+                                <AssistantMessageContent content={msg.content} sources={msg.sources} isAdmin={isAdmin} />
+                                {msg.modeWasAuto && msg.modeUsed && <InferredModeBadge mode={msg.modeUsed} />}
                             </>
                         )}
 
@@ -160,12 +223,12 @@ export function FacultyChatMessages({
                         <div className="text-xs text-indigo-500 font-semibold mb-2 flex items-center gap-1.5">
                             <Sparkles className="h-3 w-3" />
                             {activeAgents.length > 0
-                                ? activeAgents.map(a => a.name).join(' + ')
+                                ? activeAgents.map(a => resolveLocalized(a.name, activeLanguage)).join(' + ')
                                 : t('chat.selectingSpecialist')}
                         </div>
                         {streamingMessage ? (
-                            <div className="prose prose-slate prose-sm md:prose-base dark:prose-invert max-w-none break-words">
-                                <ReactMarkdown>{streamingMessage}</ReactMarkdown>
+                            <div className="relative">
+                                <AssistantMessageContent content={streamingMessage} isAdmin={isAdmin} />
                                 <span className="inline-block w-1.5 h-4 ml-1 bg-indigo-500 animate-pulse align-middle" />
                             </div>
                         ) : (

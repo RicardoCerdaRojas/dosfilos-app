@@ -18,7 +18,13 @@ export class GenerateTrainingUnitsUseCase {
         fileSearchStoreId: string,
         userId: string,
         config?: { basePrompt?: string; userPrompts?: string[] },
-        language?: string
+        language?: string,
+        /**
+         * Optional: when this session is started from a project workspace,
+         * the projectId binds the resulting StudySession to that project so
+         * it appears inside the project's "Estudio de lenguas" panel.
+         */
+        projectId?: string
     ): Promise<TrainingUnit[]> {
         // 1. Identify forms
         const formTexts = await this.greekTutorService.identifyForms(passage, fileSearchStoreId, config, language);
@@ -42,7 +48,8 @@ export class GenerateTrainingUnitsUseCase {
             updatedAt: new Date(),
             status: 'ACTIVE',
             units: unitsWithSession,
-            responses: {}
+            responses: {},
+            ...(projectId ? { projectId } : {}),
         };
 
         await this.sessionRepository.createSession(session);

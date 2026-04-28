@@ -180,6 +180,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             } : null,
             sourceSermonId: sermon.sourceSermonId ?? null,
             sourceFacultySessionId: sermon.sourceFacultySessionId ?? null,
+            projectId: sermon.projectId ?? null,
         };
     }
 
@@ -210,6 +211,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             } : undefined,
             sourceSermonId: d.sourceSermonId,
             sourceFacultySessionId: d.sourceFacultySessionId ?? undefined,
+            projectId: d.projectId ?? undefined,
         });
     }
 }

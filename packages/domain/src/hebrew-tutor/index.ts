@@ -12,6 +12,7 @@ export { DetectivePhase, createDetectiveSession, createVerbDetectiveSession, cre
 export type { PhaseResult as DetectivePhaseResult, VerbDetectiveSession, NominalDetectiveSession, DetectiveSession } from './entities/detective-session.js';
 export * from './entities/hint.js';
 export * from './entities/lexical-entry.js';
+export * from './entities/hebrew-study-session.js';
 
 // Ports
 export * from './ports/ports.js';

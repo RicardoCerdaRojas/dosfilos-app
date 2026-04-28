@@ -6,7 +6,21 @@ import {
     MemoryCacheService,
     FirestoreVectorRepository
 } from '@dosfilos/infrastructure';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { RAGService } from './RAGService';
+
+/**
+ * Generic shape returned by `getCoreStoresConfig` — keys + optional descriptions
+ * for custom (admin-defined) stores. Decouples consumers from the underlying
+ * Firestore document structure and from the strict 3-context typing of
+ * `CoreLibraryStoresConfig`.
+ */
+export interface CoreStoresConfigSummary {
+    /** Available store keys (e.g. ['exegesis', 'homiletics', 'generic', 'patristic']). */
+    keys: string[];
+    /** Optional human-readable description per key — typically used for custom (non-standard) stores. */
+    descriptions: Record<string, string>;
+}
 
 /**
  * LibraryService
@@ -258,39 +272,64 @@ export class LibraryService {
     }
 
     /**
-     * Self-healing: Refresh Gemini links for expired 403/404 resources
-     * Re-uses the robust server-side Cloud Function 'syncResourceToGemini'
+     * @deprecated Legacy Gemini File Search URI refresh — now a no-op.
+     * Phase 2 RAG uses Firestore vector search + Storage-triggered extraction,
+     * so there are no expiring URIs to refresh. Kept as a stub so residual
+     * callers (e.g. the legacy library-context sync routine) don't crash.
      */
-    async refreshGeminiLinks(resourceIds: string[]): Promise<void> {
-        console.log(`🔄 Self-Healing: Refreshing Gemini links for ${resourceIds.length} resources via Server Function...`);
+    async refreshGeminiLinks(_resourceIds: string[]): Promise<void> {
+        // Intentionally empty. Remove all callers in a follow-up cleanup.
+    }
 
-        // Dynamic import for Firebase Functions to avoid loading if not needed
-        const { getFunctions, httpsCallable } = await import('firebase/functions');
-        const functions = getFunctions();
-        const syncFn = httpsCallable(functions, 'syncResourceToGemini');
-
-        const promises = resourceIds.map(async (id) => {
-            try {
-                const resource = await this.getResource(id);
-                if (!resource) return;
-
-                console.log(`☁️ Calling syncResourceToGemini for: ${resource.title}...`);
-                const result = await syncFn({ resourceId: id });
-                const data = result.data as any;
-
-                if (data.success) {
-                    console.log(`✅ Resource ${id} healed via Cloud Function. New URI: ${data.geminiUri}`);
-                } else {
-                    console.error(`❌ Cloud Function failed for ${id}:`, data.error);
-                    throw new Error(data.error);
-                }
-            } catch (error) {
-                console.error(`❌ Failed to heal resource ${id}:`, error);
-                throw error;
+    /**
+     * Read the Core Library stores configuration. Returns the available store
+     * keys + optional descriptions per key (used for custom admin-defined stores).
+     *
+     * Falls back to the standard 3 keys (`exegesis`, `homiletics`, `generic`) if
+     * the config document doesn't exist or fails to load.
+     *
+     * Used by UI components that need to render the list of stores a resource
+     * can be assigned to (e.g. `ConfigureCoreStoresModal`). Keeps consumers
+     * decoupled from Firestore internals.
+     */
+    async getCoreStoresConfig(): Promise<CoreStoresConfigSummary> {
+        const FALLBACK_KEYS = ['exegesis', 'homiletics', 'generic'];
+        try {
+            const db = getFirestore();
+            const snap = await getDoc(doc(db, 'config/coreLibraryStores'));
+            if (!snap.exists()) {
+                return { keys: FALLBACK_KEYS, descriptions: {} };
             }
-        });
+            const data = snap.data();
+            const stores = (data?.stores ?? {}) as Record<string, string | null>;
+            const descriptions = (data?.descriptions ?? {}) as Record<string, string>;
+            const keys = Object.keys(stores);
+            return {
+                keys: keys.length > 0 ? keys : FALLBACK_KEYS,
+                descriptions,
+            };
+        } catch (error) {
+            console.error('[LibraryService] Failed to load Core stores config:', error);
+            return { keys: FALLBACK_KEYS, descriptions: {} };
+        }
+    }
 
-        await Promise.all(promises);
+    /**
+     * Resolves a store key (e.g. `'exegesis'`, `'patristic'`) to its underlying
+     * provider store ID. Returns `null` when the key is not configured or the
+     * config document doesn't exist. Abstracts Firestore from UI consumers.
+     */
+    async resolveStoreId(storeKey: string): Promise<string | null> {
+        try {
+            const db = getFirestore();
+            const snap = await getDoc(doc(db, 'config/coreLibraryStores'));
+            if (!snap.exists()) return null;
+            const stores = (snap.data()?.stores ?? {}) as Record<string, string | null>;
+            return stores[storeKey] ?? null;
+        } catch (error) {
+            console.error('[LibraryService] Failed to resolve store id:', error);
+            return null;
+        }
     }
 }
 

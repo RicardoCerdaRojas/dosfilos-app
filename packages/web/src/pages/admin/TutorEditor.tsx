@@ -10,23 +10,53 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Trash2, Library } from 'lucide-react';
 import { useTutor, useCreateTutor, useUpdateTutor, useDeleteTutor, useCoreLibraryStores } from '@/hooks/admin/useTutors';
+import type { LocalizedString } from '@dosfilos/domain';
 import { toast } from 'sonner';
 
+/**
+ * Bilingual tutor editor. Each authored field is stored as `{ es, en }` in
+ * Firestore (Phase 1 of the i18n overhaul). The form keeps the variants in
+ * separate flat fields and assembles the localized object on save — simpler
+ * than nesting into react-hook-form's structured paths and lets zod validate
+ * each language independently.
+ */
 const tutorSchema = z.object({
-    name: z.string().min(1, 'El nombre es requerido'),
     role: z.string().min(1, 'El rol UUID es requerido'),
-    expertiseArea: z.string().min(1, 'El área de especialidad es requerida'),
-    description: z.string().min(1, 'La descripción es requerida'),
-    systemInstruction: z.string().min(1, 'Las instrucciones del sistema son requeridas'),
-    routingDescription: z.string().optional(),
     icon: z.string().optional(),
     isActive: z.boolean(),
     corpusIds: z.array(z.string()).optional(),
+
+    name_es: z.string().min(1, 'El nombre (ES) es requerido'),
+    name_en: z.string().optional(),
+    expertiseArea_es: z.string().min(1, 'El área de especialidad (ES) es requerida'),
+    expertiseArea_en: z.string().optional(),
+    description_es: z.string().min(1, 'La descripción (ES) es requerida'),
+    description_en: z.string().optional(),
+    systemInstruction_es: z.string().min(1, 'Las instrucciones del sistema (ES) son requeridas'),
+    systemInstruction_en: z.string().optional(),
+    routingDescription_es: z.string().optional(),
+    routingDescription_en: z.string().optional(),
 });
 
 type TutorFormData = z.infer<typeof tutorSchema>;
+
+/**
+ * Coerces a Firestore field that may be either a legacy plain string (pre-Phase-5
+ * docs) or a `{ es, en }` object into the two flat fields the form expects.
+ */
+function splitLocalized(value: LocalizedString | string | undefined): { es: string; en: string } {
+    if (!value) return { es: '', en: '' };
+    if (typeof value === 'string') return { es: value, en: '' };
+    return { es: value.es ?? '', en: value.en ?? '' };
+}
+
+function joinLocalized(es: string, en?: string): LocalizedString {
+    const trimmedEn = (en ?? '').trim();
+    return trimmedEn ? { es, en: trimmedEn } : { es };
+}
 
 export default function TutorEditor() {
     const { id } = useParams<{ id: string }>();
@@ -44,33 +74,66 @@ export default function TutorEditor() {
         defaultValues: {
             isActive: true,
             icon: 'users',
-            corpusIds: []
-        }
+            corpusIds: [],
+            name_es: '',
+            name_en: '',
+            expertiseArea_es: '',
+            expertiseArea_en: '',
+            description_es: '',
+            description_en: '',
+            systemInstruction_es: '',
+            systemInstruction_en: '',
+            routingDescription_es: '',
+            routingDescription_en: '',
+        },
     });
 
     useEffect(() => {
         if (tutor && isEditing) {
+            const name = splitLocalized(tutor.name);
+            const expertise = splitLocalized(tutor.expertiseArea);
+            const description = splitLocalized(tutor.description);
+            const sysInstr = splitLocalized(tutor.systemInstruction);
+            const routing = splitLocalized(tutor.routingDescription);
             reset({
-                name: tutor.name,
                 role: tutor.role,
-                expertiseArea: tutor.expertiseArea,
-                description: tutor.description,
-                systemInstruction: tutor.systemInstruction,
-                routingDescription: tutor.routingDescription || '',
                 icon: tutor.icon || 'users',
                 isActive: tutor.isActive,
-                corpusIds: tutor.corpusIds || []
+                corpusIds: tutor.corpusIds || [],
+                name_es: name.es,
+                name_en: name.en,
+                expertiseArea_es: expertise.es,
+                expertiseArea_en: expertise.en,
+                description_es: description.es,
+                description_en: description.en,
+                systemInstruction_es: sysInstr.es,
+                systemInstruction_en: sysInstr.en,
+                routingDescription_es: routing.es,
+                routingDescription_en: routing.en,
             });
         }
     }, [tutor, isEditing, reset]);
 
     const onSubmit = async (data: TutorFormData) => {
+        const payload = {
+            role: data.role,
+            icon: data.icon,
+            isActive: data.isActive,
+            corpusIds: data.corpusIds,
+            name: joinLocalized(data.name_es, data.name_en),
+            expertiseArea: joinLocalized(data.expertiseArea_es, data.expertiseArea_en),
+            description: joinLocalized(data.description_es, data.description_en),
+            systemInstruction: joinLocalized(data.systemInstruction_es, data.systemInstruction_en),
+            ...(data.routingDescription_es?.trim() || data.routingDescription_en?.trim()
+                ? { routingDescription: joinLocalized(data.routingDescription_es ?? '', data.routingDescription_en) }
+                : {}),
+        };
         try {
             if (isEditing) {
-                await updateTutor({ id, updates: data });
+                await updateTutor({ id, updates: payload });
                 toast.success('Tutor actualizado correctamente');
             } else {
-                await createTutor(data);
+                await createTutor(payload as any);
                 toast.success('Tutor creado correctamente');
                 navigate('/dashboard/admin/tutors');
             }
@@ -105,7 +168,7 @@ export default function TutorEditor() {
                             {isEditing ? 'Editar Tutor' : 'Nuevo Tutor IA'}
                         </h1>
                         <p className="text-muted-foreground mt-2">
-                            Configura la experticia y las instrucciones maestras (System Prompt) del agente.
+                            Configura la experticia y las instrucciones maestras del agente. Cada idioma se edita por separado en su pestaña.
                         </p>
                     </div>
                 </div>
@@ -124,92 +187,91 @@ export default function TutorEditor() {
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+                {/* Configuración base — language-agnostic */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Información Básica</CardTitle>
-                        <CardDescription>Detalles públicos que verán los usuarios en el directorio.</CardDescription>
+                        <CardTitle>Configuración</CardTitle>
+                        <CardDescription>Identificadores y configuración técnica del tutor.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nombre / Título</Label>
-                                <Input id="name" placeholder="Ej. Dr. Aletheia" {...register('name')} />
-                                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
-                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="role">ID del Rol (Sistema)</Label>
                                 <Input id="role" placeholder="Ej. GREEK_EXEGETE" {...register('role')} />
                                 {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="expertiseArea">Área de Especialidad</Label>
-                            <Input id="expertiseArea" placeholder="Ej. Exégesis de Griego y Hebreo" {...register('expertiseArea')} />
-                            {errors.expertiseArea && <p className="text-sm text-red-500">{errors.expertiseArea.message}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Descripción</Label>
-                            <Textarea id="description" placeholder="Breve descripción de su enfoque y utilidad." {...register('description')} rows={3} />
-                            {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="icon">Ícono (Lucide className)</Label>
                                 <Input id="icon" placeholder="Ej. book-open, mic, users" {...register('icon')} />
                             </div>
-                            <div className="flex items-center space-x-2 pt-8">
-                                <Switch 
-                                    id="isActive" 
-                                    checked={watch('isActive')} 
-                                    onCheckedChange={(val) => setValue('isActive', val)} 
-                                />
-                                <Label htmlFor="isActive">Tutor Activo</Label>
-                            </div>
                         </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Instrucciones Maestras (System Prompt)</CardTitle>
-                        <CardDescription>Define la personalidad, restricciones y conocimientos base del agente.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Textarea 
-                                id="systemInstruction" 
-                                className="font-mono text-sm"
-                                placeholder="Eres un erudito en griego koiné..." 
-                                {...register('systemInstruction')} 
-                                rows={15} 
+                        <div className="flex items-center space-x-2 pt-2">
+                            <Switch
+                                id="isActive"
+                                checked={watch('isActive')}
+                                onCheckedChange={(val) => setValue('isActive', val)}
                             />
-                            {errors.systemInstruction && <p className="text-sm text-red-500">{errors.systemInstruction.message}</p>}
+                            <Label htmlFor="isActive">Tutor Activo</Label>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Routing Description */}
+                {/* Contenido bilingüe */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Descripción de Enrutamiento (Orchestrator)</CardTitle>
+                        <CardTitle>Contenido del Tutor</CardTitle>
                         <CardDescription>
-                            Instrucciones que el orquestador usará para decidir cuándo derivar al usuario a este tutor.
-                            Usa el formato: <code className="text-xs bg-slate-100 dark:bg-zinc-800 px-1 rounded">USAR PARA: ...</code> y{' '}
-                            <code className="text-xs bg-slate-100 dark:bg-zinc-800 px-1 rounded">NO USAR PARA: ...</code>.
-                            Si se omite, el orquestador usará el Área de Especialidad.
+                            Cada idioma se autorea por separado. El motor de IA elige la variante según
+                            el <code className="text-xs bg-slate-100 dark:bg-zinc-800 px-1 rounded">preferredLanguage</code> del usuario.
+                            Si dejas el inglés en blanco, el sistema usa el español como fallback.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Textarea
-                            id="routingDescription"
-                            className="font-mono text-sm"
-                            placeholder="USAR PARA: consejería pastoral, matrimonio, familia... NO USAR PARA: exégesis académica pura..."
-                            {...register('routingDescription')}
-                            rows={6}
-                        />
+                        <Tabs defaultValue="es" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2 max-w-xs mb-6">
+                                <TabsTrigger value="es">🇪🇸 Español</TabsTrigger>
+                                <TabsTrigger value="en">🇺🇸 English</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="es" className="space-y-4 mt-0">
+                                <LocalizedFieldSet
+                                    suffix="es"
+                                    register={register}
+                                    errors={errors}
+                                    namePlaceholder="Ej. Dr. Aletheia"
+                                    expertisePlaceholder="Ej. Exégesis de Griego y Hebreo"
+                                    descriptionPlaceholder="Breve descripción de su enfoque y utilidad."
+                                    systemInstructionPlaceholder="Eres un erudito en griego koiné..."
+                                    routingPlaceholder="USAR PARA: consejería pastoral, matrimonio... NO USAR PARA: exégesis académica..."
+                                    nameLabel="Nombre / Título"
+                                    expertiseLabel="Área de Especialidad"
+                                    descriptionLabel="Descripción"
+                                    systemInstructionLabel="Instrucciones Maestras (System Prompt)"
+                                    routingLabel="Descripción de Enrutamiento"
+                                />
+                            </TabsContent>
+
+                            <TabsContent value="en" className="space-y-4 mt-0">
+                                <p className="text-sm text-muted-foreground">
+                                    English variants are optional but recommended. Empty fields fall back to the Spanish version.
+                                </p>
+                                <LocalizedFieldSet
+                                    suffix="en"
+                                    register={register}
+                                    errors={errors}
+                                    namePlaceholder="e.g., Dr. Aletheia"
+                                    expertisePlaceholder="e.g., Greek and Hebrew Exegesis"
+                                    descriptionPlaceholder="Brief description of focus and usefulness."
+                                    systemInstructionPlaceholder="You are a scholar of Koine Greek..."
+                                    routingPlaceholder="USE FOR: pastoral counseling, marriage... NOT FOR: pure academic exegesis..."
+                                    nameLabel="Name / Title"
+                                    expertiseLabel="Area of Specialty"
+                                    descriptionLabel="Description"
+                                    systemInstructionLabel="Master Instructions (System Prompt)"
+                                    routingLabel="Routing Description"
+                                />
+                            </TabsContent>
+                        </Tabs>
                     </CardContent>
                 </Card>
 
@@ -230,11 +292,11 @@ export default function TutorEditor() {
                                 {Object.entries(storesObj).map(([key, corpusUri]) => {
                                     if (!corpusUri) return null;
                                     const isChecked = watch('corpusIds')?.includes(corpusUri);
-                                    
+
                                     return (
                                         <div key={key} className="flex items-center space-x-2 border p-3 rounded-md">
-                                            <Checkbox 
-                                                id={`corpus-${key}`} 
+                                            <Checkbox
+                                                id={`corpus-${key}`}
                                                 checked={isChecked}
                                                 onCheckedChange={(checked) => {
                                                     const current = watch('corpusIds') || [];
@@ -260,6 +322,83 @@ export default function TutorEditor() {
                 </Card>
 
             </form>
+        </div>
+    );
+}
+
+interface LocalizedFieldSetProps {
+    suffix: 'es' | 'en';
+    register: ReturnType<typeof useForm<TutorFormData>>['register'];
+    errors: ReturnType<typeof useForm<TutorFormData>>['formState']['errors'];
+    nameLabel: string;
+    expertiseLabel: string;
+    descriptionLabel: string;
+    systemInstructionLabel: string;
+    routingLabel: string;
+    namePlaceholder: string;
+    expertisePlaceholder: string;
+    descriptionPlaceholder: string;
+    systemInstructionPlaceholder: string;
+    routingPlaceholder: string;
+}
+
+function LocalizedFieldSet(props: LocalizedFieldSetProps) {
+    const {
+        suffix, register, errors,
+        nameLabel, expertiseLabel, descriptionLabel, systemInstructionLabel, routingLabel,
+        namePlaceholder, expertisePlaceholder, descriptionPlaceholder,
+        systemInstructionPlaceholder, routingPlaceholder,
+    } = props;
+
+    const nameKey = `name_${suffix}` as const;
+    const expertiseKey = `expertiseArea_${suffix}` as const;
+    const descriptionKey = `description_${suffix}` as const;
+    const sysKey = `systemInstruction_${suffix}` as const;
+    const routingKey = `routingDescription_${suffix}` as const;
+
+    return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor={nameKey}>{nameLabel}</Label>
+                    <Input id={nameKey} placeholder={namePlaceholder} {...register(nameKey)} />
+                    {errors[nameKey] && <p className="text-sm text-red-500">{errors[nameKey]?.message as string}</p>}
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor={expertiseKey}>{expertiseLabel}</Label>
+                    <Input id={expertiseKey} placeholder={expertisePlaceholder} {...register(expertiseKey)} />
+                    {errors[expertiseKey] && <p className="text-sm text-red-500">{errors[expertiseKey]?.message as string}</p>}
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor={descriptionKey}>{descriptionLabel}</Label>
+                <Textarea id={descriptionKey} placeholder={descriptionPlaceholder} {...register(descriptionKey)} rows={3} />
+                {errors[descriptionKey] && <p className="text-sm text-red-500">{errors[descriptionKey]?.message as string}</p>}
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor={sysKey}>{systemInstructionLabel}</Label>
+                <Textarea
+                    id={sysKey}
+                    className="font-mono text-sm"
+                    placeholder={systemInstructionPlaceholder}
+                    {...register(sysKey)}
+                    rows={15}
+                />
+                {errors[sysKey] && <p className="text-sm text-red-500">{errors[sysKey]?.message as string}</p>}
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor={routingKey}>{routingLabel}</Label>
+                <Textarea
+                    id={routingKey}
+                    className="font-mono text-sm"
+                    placeholder={routingPlaceholder}
+                    {...register(routingKey)}
+                    rows={6}
+                />
+            </div>
         </div>
     );
 }

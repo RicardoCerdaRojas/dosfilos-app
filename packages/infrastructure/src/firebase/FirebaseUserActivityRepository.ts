@@ -24,6 +24,11 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
     private readonly usersCollection = 'users';
     private readonly sermonsCollection = 'sermons';
     private readonly greekSessionsCollection = 'greek_tutor_sessions';
+    private readonly hebrewSessionsCollection = 'hebrew_user_sessions';
+    private readonly projectsCollection = 'ai_projects';
+    // Faculty chat sessions are stored as a subcollection per user, addressed
+    // as `users/{userId}/ai_sessions`. We resolve the path at query time.
+    private readonly facultySubcollection = 'ai_sessions';
     private readonly seriesCollection = 'sermon_series';
     private readonly libraryCollection = 'library_resources';
     private readonly plansCollection = 'preaching_plans';
@@ -69,6 +74,9 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
                 totalSermonsGenerated: analytics.sermonsGenerated || 0,
                 totalGreekSessions: await this.countUserGreekSessions(userId),
                 totalGreekSessionsCompleted: await this.countUserGreekSessions(userId, true),
+                totalHebrewSessions: await this.countUserHebrewSessions(userId),
+                totalFacultySessions: await this.countUserFacultySessions(userId),
+                totalProjectsCreated: await this.countUserProjects(userId),
                 totalSeriesCreated: await this.countUserSeries(userId),
                 totalLibraryUploads: await this.countUserLibraryUploads(userId),
                 totalPreachingPlans: await this.countUserPreachingPlans(userId),
@@ -179,16 +187,37 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
 
         try {
             // Query all content types in parallel
-            const [sermons, greekSessions, series, libraryUploads, plans] = await Promise.all([
+            const [
+                sermons,
+                greekSessions,
+                hebrewSessions,
+                facultySessions,
+                projects,
+                series,
+                libraryUploads,
+                plans,
+            ] = await Promise.all([
                 this.getRecentSermons(userId, sinceTimestamp),
                 this.getRecentGreekSessions(userId, sinceTimestamp),
+                this.getRecentHebrewSessions(userId, sinceTimestamp),
+                this.getRecentFacultySessions(userId, sinceTimestamp),
+                this.getRecentProjects(userId, sinceTimestamp),
                 this.getRecentSeries(userId, sinceTimestamp),
                 this.getRecentLibraryUploads(userId, sinceTimestamp),
                 this.getRecentPlans(userId, sinceTimestamp),
             ]);
 
             // Combine and sort by date descending
-            const allContent = [...sermons, ...greekSessions, ...series, ...libraryUploads, ...plans];
+            const allContent = [
+                ...sermons,
+                ...greekSessions,
+                ...hebrewSessions,
+                ...facultySessions,
+                ...projects,
+                ...series,
+                ...libraryUploads,
+                ...plans,
+            ];
             return allContent.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         } catch (error) {
             console.error('Error getting recent content:', error);
@@ -357,12 +386,21 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
                 return this.sermonsCollection;
             case 'greek_session':
                 return this.greekSessionsCollection;
+            case 'hebrew_session':
+                return this.hebrewSessionsCollection;
+            case 'project':
+                return this.projectsCollection;
             case 'series':
                 return this.seriesCollection;
             case 'library_upload':
                 return this.libraryCollection;
             case 'preaching_plan':
                 return this.plansCollection;
+            case 'faculty_session':
+                // Faculty sessions live under a user subcollection; callers
+                // that need a per-user query should use the dedicated helper
+                // rather than this top-level path.
+                throw new Error('faculty_session has no top-level collection — use the per-user helper');
             default:
                 throw new Error(`Unknown content type: ${type}`);
         }
@@ -456,6 +494,120 @@ export class FirebaseUserActivityRepository implements IUserActivityRepository {
         } catch (error) {
             console.error('Error counting preaching plans:', error);
             return 0;
+        }
+    }
+
+    private async countUserHebrewSessions(userId: string): Promise<number> {
+        try {
+            const q = query(
+                collection(this.db, this.hebrewSessionsCollection),
+                where('userId', '==', userId)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting Hebrew sessions:', error);
+            return 0;
+        }
+    }
+
+    private async countUserFacultySessions(userId: string): Promise<number> {
+        try {
+            const snapshot = await getDocs(
+                collection(this.db, this.usersCollection, userId, this.facultySubcollection)
+            );
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting Faculty sessions:', error);
+            return 0;
+        }
+    }
+
+    private async countUserProjects(userId: string): Promise<number> {
+        try {
+            const q = query(
+                collection(this.db, this.projectsCollection),
+                where('userId', '==', userId)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error('Error counting projects:', error);
+            return 0;
+        }
+    }
+
+    private async getRecentHebrewSessions(userId: string, since: Timestamp): Promise<ContentActivity[]> {
+        try {
+            const q = query(
+                collection(this.db, this.hebrewSessionsCollection),
+                where('userId', '==', userId),
+                where('createdAt', '>=', since),
+                orderBy('createdAt', 'desc')
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    type: 'hebrew_session' as const,
+                    title: data.passage || 'Sesión Hebrew Tutor',
+                    createdAt: data.createdAt?.toDate() || new Date(),
+                    status: data.isCompleted ? 'completed' : 'in_progress',
+                };
+            });
+        } catch (error) {
+            console.error('Error fetching recent Hebrew sessions:', error);
+            return [];
+        }
+    }
+
+    private async getRecentFacultySessions(userId: string, since: Timestamp): Promise<ContentActivity[]> {
+        try {
+            const q = query(
+                collection(this.db, this.usersCollection, userId, this.facultySubcollection),
+                where('createdAt', '>=', since),
+                orderBy('createdAt', 'desc')
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    type: 'faculty_session' as const,
+                    title: data.title || 'Sesión Faculty',
+                    createdAt: data.createdAt?.toDate() || new Date(),
+                    status: data.status || 'active',
+                };
+            });
+        } catch (error) {
+            console.error('Error fetching recent Faculty sessions:', error);
+            return [];
+        }
+    }
+
+    private async getRecentProjects(userId: string, since: Timestamp): Promise<ContentActivity[]> {
+        try {
+            const q = query(
+                collection(this.db, this.projectsCollection),
+                where('userId', '==', userId),
+                where('createdAt', '>=', since),
+                orderBy('createdAt', 'desc')
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    type: 'project' as const,
+                    title: data.title || 'Proyecto',
+                    createdAt: data.createdAt?.toDate() || new Date(),
+                    status: data.status || 'active',
+                };
+            });
+        } catch (error) {
+            console.error('Error fetching recent projects:', error);
+            return [];
         }
     }
 }

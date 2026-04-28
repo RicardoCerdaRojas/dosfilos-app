@@ -5,7 +5,9 @@ import {
     AIAgentRole,
     SermonPersonalization,
     SERMON_TONE_LABELS,
+    DEFAULT_LANGUAGE,
 } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
 
 export type ExtractionType = 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER';
 
@@ -23,7 +25,7 @@ export class ExtractTheologicalContentUseCase {
         private projectRepository?: IAIProjectRepository
     ) { }
 
-    async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline, personalization?: SermonPersonalization, onChunk?: (chunk: string) => void): Promise<string> {
+    async execute(userId: string, sessionId: string, type: ExtractionType, approvedOutline?: ApprovedSermonOutline, personalization?: SermonPersonalization, onChunk?: (chunk: string) => void, language: SupportedLanguage = DEFAULT_LANGUAGE): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
             throw new Error('Session not found');
@@ -428,7 +430,11 @@ REGLAS:
                 extractionAgent,
                 session.messages,
                 enrichedPrompt,
-                onChunk
+                onChunk,
+                undefined,
+                undefined,
+                undefined,
+                language,
             );
             return result;
         }
@@ -438,7 +444,8 @@ REGLAS:
             session.messages,
             enrichedPrompt,
             undefined,
-            enableThinking
+            enableThinking,
+            language,
         );
 
         return result;

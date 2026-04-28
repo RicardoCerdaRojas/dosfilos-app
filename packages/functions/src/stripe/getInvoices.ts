@@ -11,7 +11,9 @@ interface Invoice {
     pdfUrl: string | null;
 }
 
-export const getInvoices = onCall(async (request) => {
+export const getInvoices = onCall(
+    { secrets: ['STRIPE_SECRET_KEY'] },
+    async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }

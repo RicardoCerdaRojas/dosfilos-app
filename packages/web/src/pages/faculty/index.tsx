@@ -1,20 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Search, GraduationCap, Library, ScrollText, HeartHandshake,
     Mic, Send, Sparkles, ArrowRight, Loader2, BookOpen, Brain, MessageCircle, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFacultyAgents } from '../../hooks/faculty';
-import { AIAgent } from '@dosfilos/domain';
+import { useFacultyAgents, useFacultySessions } from '../../hooks/faculty';
+import { useFirebase } from '@/context/firebase-context';
+import { AIAgent, resolveLocalized } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { FreeStarterCard } from './components/FreeStarterCard';
 
-const QUICK_PROMPTS = [
-    { label: 'Bosquejo de Sermón', icon: BookOpen, prompt: 'Ayúdame a desarrollar un bosquejo de sermón expositivo.' },
-    { label: 'Consejería Pastoral', icon: HeartHandshake, prompt: '¿Cómo aconsejo pastoralmente a alguien que está sufriendo?' },
-    { label: 'Exégesis Bíblica', icon: ScrollText, prompt: 'Necesito ayuda con el análisis exegético de un pasaje bíblico.' },
-    { label: 'Teología Sistemática', icon: Brain, prompt: '¿Puedes ayudarme a explicar un concepto de teología sistemática?' },
+// Icon + i18n key map. Both label and prompt are resolved per-render so the
+// chip row reflects the active locale without a remount.
+const QUICK_PROMPT_KEYS: Array<{ key: 'outline' | 'counseling' | 'exegesis' | 'theology'; icon: React.ElementType }> = [
+    { key: 'outline', icon: BookOpen },
+    { key: 'counseling', icon: HeartHandshake },
+    { key: 'exegesis', icon: ScrollText },
+    { key: 'theology', icon: Brain },
 ];
 
 // Role-specific icon config — each agent has its own palette
@@ -30,11 +36,35 @@ const DEFAULT_ICON_CONFIG = ICON_CONFIG['users'];
 
 export function FacultyDirectoryPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     const [orchestratorInput, setOrchestratorInput] = useState('');
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const { data: agents = [], isLoading: isLoadingAgents } = useFacultyAgents();
+    const { user } = useFirebase();
+    const { sessions, isLoading: isLoadingSessions } = useFacultySessions();
+    const { t, i18n } = useTranslation('faculty');
+    const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+
+    // Free-tier starter card — visible only until the user fires their first
+    // query. Hito 5.1: closes the activation gap that the existing always-on
+    // chips weren't moving the needle on.
+    const planId = user?.subscription?.planId;
+    const isFreeTier = !planId || planId === 'free';
+    const showFreeStarter = isFreeTier && !isLoadingSessions && sessions.length === 0;
+
+    // When this directory is opened from a project workspace
+    // (`/dashboard/faculty?projectId=...`), every link to `/faculty/new` MUST
+    // carry the projectId forward — otherwise the new session is born orphan
+    // and the orchestrator can't scope RAG to the project's source set.
+    const projectIdFromUrl = searchParams.get('projectId');
+    const newSessionQuery = (extra: string) => {
+        const params = new URLSearchParams(extra);
+        if (projectIdFromUrl) params.set('projectId', projectIdFromUrl);
+        const q = params.toString();
+        return q ? `?${q}` : '';
+    };
 
     // Auto-resize textarea
     useEffect(() => {
@@ -48,7 +78,7 @@ export function FacultyDirectoryPage() {
     const handleStartOrchestrated = (question: string) => {
         const q = question.trim();
         if (!q || agents.length === 0) return;
-        navigate(`/dashboard/faculty/new?q=${encodeURIComponent(q)}`);
+        navigate(`/dashboard/faculty/new${newSessionQuery(`q=${encodeURIComponent(q)}`)}`);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -59,13 +89,15 @@ export function FacultyDirectoryPage() {
     };
 
     const handleStartSession = (agent: AIAgent) => {
-        navigate(`/dashboard/faculty/new?agent=${agent.id}&agentName=${encodeURIComponent(agent.name)}`);
+        const name = resolveLocalized(agent.name, activeLanguage);
+        navigate(`/dashboard/faculty/new${newSessionQuery(`agent=${agent.id}&agentName=${encodeURIComponent(name)}`)}`);
     };
 
-    const filteredAgents = agents.filter(agent =>
-        agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        agent.expertiseArea.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredAgents = agents.filter(agent => {
+        const q = searchQuery.toLowerCase();
+        return resolveLocalized(agent.name, activeLanguage).toLowerCase().includes(q)
+            || resolveLocalized(agent.expertiseArea, activeLanguage).toLowerCase().includes(q);
+    });
 
     const isBusy = isLoadingAgents;
 
@@ -92,15 +124,14 @@ export function FacultyDirectoryPage() {
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/25 text-amber-300 text-sm font-medium mb-5 backdrop-blur-sm">
                         <GraduationCap className="w-4 h-4" />
-                        <span>Tutores Expertos para Predicadores Expositivos</span>
+                        <span>{t('directory.badge')}</span>
                     </div>
 
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3 leading-tight font-serif drop-shadow-md">
-                        Mis Tutores
+                        {t('directory.heroTitle')}
                     </h1>
                     <p className="text-slate-300/80 mb-8 text-base leading-relaxed">
-                        Hazle una pregunta al cuerpo docente — el orquestador seleccionará
-                        y coordinará automáticamente los especialistas que tu necesitas.
+                        {t('directory.heroSubtitle')}
                     </p>
 
                     {/* Orchestrator input */}
@@ -112,7 +143,7 @@ export function FacultyDirectoryPage() {
                                 value={orchestratorInput}
                                 onChange={e => setOrchestratorInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="¿Qué quieres estudiar, preparar o resolver hoy?"
+                                placeholder={t('directory.inputPlaceholder')}
                                 rows={1}
                                 className="flex-1 resize-none bg-transparent text-white placeholder:text-slate-400/70 text-[15px] leading-relaxed outline-none py-2.5 px-1 max-h-40 overflow-y-hidden"
                             />
@@ -128,18 +159,29 @@ export function FacultyDirectoryPage() {
 
                     {/* Quick prompt chips */}
                     <div className="flex flex-wrap justify-center gap-2 mt-4">
-                        {QUICK_PROMPTS.map(({ label, icon: Icon, prompt }) => (
-                            <button
-                                key={label}
-                                onClick={() => handleStartOrchestrated(prompt)}
-                                disabled={isBusy || agents.length === 0}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.14] border border-white/[0.12] text-slate-300 hover:text-white text-xs font-medium transition-colors disabled:opacity-40"
-                            >
-                                <Icon className="h-3 w-3" />
-                                {label}
-                            </button>
-                        ))}
+                        {QUICK_PROMPT_KEYS.map(({ key, icon: Icon }) => {
+                            const label = t(`directory.quickPrompts.${key}.label`);
+                            const prompt = t(`directory.quickPrompts.${key}.prompt`);
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => handleStartOrchestrated(prompt)}
+                                    disabled={isBusy || agents.length === 0}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.14] border border-white/[0.12] text-slate-300 hover:text-white text-xs font-medium transition-colors disabled:opacity-40"
+                                >
+                                    <Icon className="h-3 w-3" />
+                                    {label}
+                                </button>
+                            );
+                        })}
                     </div>
+
+                    {showFreeStarter && (
+                        <FreeStarterCard
+                            onPickPrompt={handleStartOrchestrated}
+                            disabled={isBusy || agents.length === 0}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -151,18 +193,18 @@ export function FacultyDirectoryPage() {
                         <div className="flex items-center gap-2 mb-1">
                             <div className="w-1 h-5 rounded-full bg-amber-500" />
                             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 font-serif">
-                                Consulta directamente a un especialista
+                                {t('directory.specialistsTitle')}
                             </h2>
                         </div>
                         <p className="text-sm text-slate-500 dark:text-slate-400 pl-3">
-                            Cuando sabes exactamente qué área necesitas, ve directo al tutor.
+                            {t('directory.specialistsSubtitle')}
                         </p>
                     </div>
                     <div className="relative w-full md:w-72 shrink-0">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                             type="text"
-                            placeholder="Buscar por nombre o especialidad..."
+                            placeholder={t('directory.specialistsSearchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-9 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 focus:ring-amber-500 rounded-full shadow-sm text-sm"
@@ -177,7 +219,7 @@ export function FacultyDirectoryPage() {
                 ) : filteredAgents.length === 0 ? (
                     <div className="py-16 text-center text-slate-400">
                         <MessageCircle className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                        <p>No se encontraron tutores.</p>
+                        <p>{t('directory.specialistsEmpty')}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -202,15 +244,15 @@ export function FacultyDirectoryPage() {
                                     </div>
 
                                     <div className="flex-1 mb-6">
-                                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{agent.name}</h2>
-                                        <p className={cn('text-sm font-medium mb-3', cfg.text)}>{agent.expertiseArea}</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">{agent.description}</p>
+                                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{resolveLocalized(agent.name, activeLanguage)}</h2>
+                                        <p className={cn('text-sm font-medium mb-3', cfg.text)}>{resolveLocalized(agent.expertiseArea, activeLanguage)}</p>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">{resolveLocalized(agent.description, activeLanguage)}</p>
                                     </div>
 
                                     <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/50 flex items-center justify-between mt-auto">
-                                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sesión directa</span>
+                                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('directory.card.directSession')}</span>
                                         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                                            Iniciar
+                                            {t('directory.card.start')}
                                             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                                         </div>
                                     </div>

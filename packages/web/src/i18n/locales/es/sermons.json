@@ -84,7 +84,12 @@
         "references": "referencias"
     },
     "actions": {
-        "delete": "Eliminar"
+        "delete": "Eliminar",
+        "view": "Ver sermón",
+        "edit": "Editar",
+        "preachMode": "Modo predicación",
+        "linkToProject": "Vincular a proyecto…",
+        "viewProject": "Ver proyecto \"{{title}}\""
     },
     "deleteDialog": {
         "title": "¿Estás seguro?",
@@ -92,5 +97,17 @@
         "cancel": "Cancelar",
         "confirm": "Eliminar",
         "deleting": "Eliminando..."
+    },
+    "linkProject": {
+        "eyebrow": "Vincular a proyecto",
+        "fallbackTitle": "Sermón",
+        "description": "Mueve este sermón a un proyecto para que aparezca en su workspace junto a las fuentes, conversaciones y material relacionado.",
+        "noProjects": "Aún no tienes proyectos.",
+        "createOne": "Crear uno →",
+        "noProject": "Sin proyecto",
+        "unlink": "Desvincular de cualquier proyecto",
+        "linkSuccess": "Sermón vinculado al proyecto",
+        "unlinkSuccess": "Sermón desvinculado del proyecto",
+        "error": "Error al vincular"
     }
 }

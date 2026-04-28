@@ -24,6 +24,7 @@ interface ExtendTrialResponse {
 }
 
 export const extendTrial = onCall<ExtendTrialRequest>(
+    { secrets: ['STRIPE_SECRET_KEY'] },
     async (request): Promise<ExtendTrialResponse> => {
         // Verify authentication
         if (!request.auth) {

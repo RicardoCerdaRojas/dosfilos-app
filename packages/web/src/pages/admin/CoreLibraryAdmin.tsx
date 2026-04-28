@@ -4,13 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { libraryService, categoryService } from '@dosfilos/application';
+import { libraryService, categoryService, coreLibraryAdminService } from '@dosfilos/application';
 import { LibraryCategory, ResourceType } from '@dosfilos/domain';
 import { Upload } from 'lucide-react';
-import { doc, getDoc, getFirestore, collection, query, where, getDocs, writeBatch, arrayUnion, updateDoc, setDoc } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
-import { RefreshCw, Database, FileText, CheckCircle, AlertTriangle, Loader2, BookOpen, Mic2, Library, Wand2, HelpCircle, ChevronDown, ChevronRight, GraduationCap, Folder, Sparkles, Activity } from 'lucide-react';
+import { RefreshCw, Database, FileText, CheckCircle, AlertTriangle, Loader2, BookOpen, Mic2, Library, Wand2, HelpCircle, ChevronDown, ChevronRight, GraduationCap, Folder, Sparkles, Activity, Pencil } from 'lucide-react';
 import { RAGAuditDialog } from '@/components/admin/RAGAuditDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -30,10 +27,13 @@ import { useFirebase } from '@/context/firebase-context';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, Settings } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { MetricCard } from './core-library/MetricCard';
+import { annotateDocumentText, uploadAnnotatedTextToGemini } from './core-library/annotateDocument';
 
 interface StoreConfig {
     stores: Record<string, string | null>;
@@ -52,132 +52,6 @@ interface SyncStatus {
 }
 
 type StoreContext = string;
-
-// ── Small UI helpers ──────────────────────────────────────────────────────────
-
-function MetricCard({
-    icon: Icon, label, value, subtitle, highlight,
-}: {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    value: string | number;
-    subtitle?: string;
-    highlight?: boolean;
-}) {
-    return (
-        <div className={cn(
-            "rounded-lg border bg-card p-4 flex items-start gap-3",
-            highlight && "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-900"
-        )}>
-            <div className={cn(
-                "h-10 w-10 rounded-md flex items-center justify-center shrink-0 bg-muted",
-                highlight && "bg-emerald-100 dark:bg-emerald-900/40"
-            )}>
-                <Icon className={cn(
-                    "h-5 w-5 text-muted-foreground",
-                    highlight && "text-emerald-600 dark:text-emerald-400"
-                )} />
-            </div>
-            <div className="min-w-0 flex-1">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
-                <div className="text-xl font-bold leading-tight">{value}</div>
-                {subtitle && (
-                    <div className="text-xs text-muted-foreground mt-0.5 truncate" title={subtitle}>
-                        {subtitle}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
-
-// ── Annotation helpers ────────────────────────────────────────────────────────
-
-function annotateDocumentText(rawText: string, author: string, title: string): string {
-    // Character-based strategy with UNIQUE markers — each marker includes an incremental
-    // segment number so Gemini can't dedup them as repeated boilerplate. This is critical:
-    // identical markers repeated thousands of times get filtered during indexing.
-    const INTERVAL = 350;
-    let segmentCounter = 0;
-    const marker = (page: number) => {
-        segmentCounter++;
-        return ` Fragmento ${segmentCounter} · ${author} · "${title}" · p. ${page}. `;
-    };
-
-    // First pass: split by page markers (if present) to track page numbers
-    const pageRegex = /---\s*PAGE\s*(\d+)\s*---/g;
-    const segments: Array<{ text: string; page: number }> = [];
-    let lastIndex = 0;
-    let currentPage = 1;
-    let match: RegExpExecArray | null;
-
-    while ((match = pageRegex.exec(rawText)) !== null) {
-        segments.push({ text: rawText.substring(lastIndex, match.index), page: currentPage });
-        currentPage = parseInt(match[1]);
-        lastIndex = match.index + match[0].length;
-    }
-    segments.push({ text: rawText.substring(lastIndex), page: currentPage });
-
-    // Second pass: for each page segment, insert markers every INTERVAL chars at word boundaries
-    let out = '';
-    for (const { text, page } of segments) {
-        if (!text.trim()) continue;
-        let i = 0;
-        while (i < text.length) {
-            out += marker(page);
-            let end = Math.min(i + INTERVAL, text.length);
-            if (end < text.length) {
-                const lastSpace = text.lastIndexOf(' ', end);
-                if (lastSpace > i + INTERVAL / 2) end = lastSpace;
-            }
-            out += text.substring(i, end);
-            i = end;
-        }
-    }
-
-    return out;
-}
-
-async function uploadAnnotatedTextToGemini(
-    text: string,
-    displayName: string,
-    apiKey: string
-): Promise<{ uri: string; name: string }> {
-    const blob = new Blob([text], { type: 'text/plain' });
-    const init = await fetch(
-        `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
-        {
-            method: 'POST',
-            headers: {
-                'X-Goog-Upload-Protocol': 'resumable',
-                'X-Goog-Upload-Command': 'start',
-                'X-Goog-Upload-Header-Content-Length': String(blob.size),
-                'X-Goog-Upload-Header-Content-Type': 'text/plain',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ file: { displayName } }),
-        }
-    );
-    if (!init.ok) throw new Error(`Gemini init upload failed: ${init.statusText}`);
-    const uploadUrl = init.headers.get('x-goog-upload-url');
-    if (!uploadUrl) throw new Error('No upload URL from Gemini');
-
-    const upload = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-            'X-Goog-Upload-Protocol': 'resumable',
-            'X-Goog-Upload-Command': 'upload, finalize',
-            'X-Goog-Upload-Offset': '0',
-            'Content-Length': String(blob.size),
-        },
-        body: blob,
-    });
-    if (!upload.ok) throw new Error(`Gemini upload failed: ${upload.statusText}`);
-    const r = await upload.json() as { file: { uri: string; name: string } };
-    return { uri: r.file.uri, name: r.file.name };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function CoreLibraryAdmin() {
     const firebase = useFirebase();
@@ -218,15 +92,15 @@ export default function CoreLibraryAdmin() {
     // Audit dialog state
     const [isAuditOpen, setIsAuditOpen] = useState(false);
 
+    // Legacy Gemini File Search controls have been retired. Kept as a const false so
+    // all `{advancedMode && ...}` branches compile out to nothing without requiring
+    // invasive edits (Fase B/C will delete those branches entirely).
+    const advancedMode = false;
+
     const handleIndexDocument = async (resourceId: string, title: string) => {
         setIndexing(prev => ({ ...prev, [resourceId]: true }));
         try {
-            const functions = getFunctions();
-            const indexFn = httpsCallable(functions, 'indexStructuredDocument', {
-                timeout: 900_000,
-            });
-            const result = await indexFn({ resourceId, force: true }) as any;
-            const data = result.data ?? {};
+            const data = await coreLibraryAdminService.indexDocument(resourceId, true);
             if (data.skipped) {
                 toast.info(`"${title}" ya estaba indexado`);
             } else if (data.success) {
@@ -276,13 +150,7 @@ export default function CoreLibraryAdmin() {
                 [`__store__${storeKey}`]: `Indexando "${doc.title}" (${done + skipped + 1}/${indexable.length})…`
             }));
             try {
-                const functions = getFunctions();
-                const indexFn = httpsCallable(functions, 'indexStructuredDocument', {
-                    timeout: 900_000,
-                });
-                // force: false → server skips docs with current indexerVersion (already indexed)
-                const result = await indexFn({ resourceId: doc.id, force: false }) as any;
-                const data = result.data ?? {};
+                const data = await coreLibraryAdminService.indexDocument(doc.id, false);
                 if (data.skipped) {
                     skipped++;
                 } else {
@@ -317,12 +185,7 @@ export default function CoreLibraryAdmin() {
     const handleReprocessDocument = async (resourceId: string, title: string) => {
         setReprocessing(prev => ({ ...prev, [resourceId]: true }));
         try {
-            const functions = getFunctions();
-            const reprocessFn = httpsCallable(functions, 'reprocessWithLlamaParse', {
-                timeout: 900_000,  // 15 minutes — LlamaParse can take several minutes for large PDFs
-            });
-            const result = await reprocessFn({ resourceId, force: true }) as any;
-            const data = result.data ?? {};
+            const data = await coreLibraryAdminService.reprocessWithLlamaParse(resourceId, true);
             if (data.skipped) {
                 toast.info(`"${title}" ya estaba procesado con LlamaParse`);
             } else if (data.success) {
@@ -331,6 +194,24 @@ export default function CoreLibraryAdmin() {
             await loadConfig();
         } catch (err: any) {
             console.error('[Reprocess]', err);
+            toast.error(`Error en "${title}": ${err.message}`);
+        } finally {
+            setReprocessing(prev => ({ ...prev, [resourceId]: false }));
+        }
+    };
+
+    const handleProcessDocumentStandard = async (resourceId: string, title: string) => {
+        setReprocessing(prev => ({ ...prev, [resourceId]: true }));
+        try {
+            const data = await coreLibraryAdminService.processWithGemini(resourceId, true);
+            if (data.skipped) {
+                toast.info(`"${title}" ya estaba procesado con Gemini estándar`);
+            } else if (data.success) {
+                toast.success(`"${title}": ${data.pageCount} páginas extraídas (Gemini estándar)`);
+            }
+            await loadConfig();
+        } catch (err: any) {
+            console.error('[ProcessGemini]', err);
             toast.error(`Error en "${title}": ${err.message}`);
         } finally {
             setReprocessing(prev => ({ ...prev, [resourceId]: false }));
@@ -363,11 +244,7 @@ export default function CoreLibraryAdmin() {
                 [`__store__${storeKey}`]: `Procesando "${doc.title}" (${done + 1}/${docs.length - skipped})…`
             }));
             try {
-                const functions = getFunctions();
-                const reprocessFn = httpsCallable(functions, 'reprocessWithLlamaParse', {
-                timeout: 900_000,  // 15 minutes — LlamaParse can take several minutes for large PDFs
-            });
-                await reprocessFn({ resourceId: doc.id, force: false });
+                await coreLibraryAdminService.reprocessWithLlamaParse(doc.id, false);
                 done++;
             } catch (err: any) {
                 console.error(`[Reprocess ${doc.title}]`, err);
@@ -390,12 +267,10 @@ export default function CoreLibraryAdmin() {
     const [agents, setAgents] = useState<Array<{ id: string; name: string; icon?: string; isActive?: boolean; corpusIds?: string[] }>>([]);
 
     useEffect(() => {
-        const loadAgents = async () => {
-            const db = getFirestore();
-            const snap = await getDocs(collection(db, 'ai_agents'));
-            setAgents(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
-        };
-        loadAgents().catch(err => console.error('Failed to load agents:', err));
+        coreLibraryAdminService
+            .getAgents()
+            .then(setAgents)
+            .catch(err => console.error('Failed to load agents:', err));
     }, []);
 
     const tutorsForStoreId = (storeId: string | null | undefined) =>
@@ -497,7 +372,6 @@ export default function CoreLibraryAdmin() {
         }
 
         setAnnotating(prev => ({ ...prev, [storeKey]: true }));
-        const db = getFirestore();
         let done = 0;
         let failed = 0;
 
@@ -521,10 +395,7 @@ export default function CoreLibraryAdmin() {
                         ...prev,
                         [storeKey]: `Descargando texto de "${r.title}"…`
                     }));
-                    // textContentUrl is a gs:// URI — must convert to HTTPS via Firebase Storage SDK
-                    const storage = getStorage();
-                    const fileRef = storageRef(storage, r.textContentUrl);
-                    const httpsUrl = await getDownloadURL(fileRef);
+                    const httpsUrl = await coreLibraryAdminService.getDownloadUrl(r.textContentUrl);
                     const res = await fetch(httpsUrl);
                     if (!res.ok) throw new Error(`Failed to fetch text: ${res.statusText}`);
                     rawText = await res.text();
@@ -557,10 +428,7 @@ export default function CoreLibraryAdmin() {
                 console.log(`[Annotate]   Uploaded → uri: ${uri}, name: ${name}`);
 
                 // Save annotated URIs — Cloud Function will prefer these over PDF URIs
-                await updateDoc(doc(db, 'library_resources', r.id), {
-                    'metadata.annotatedGeminiUri': uri,
-                    'metadata.annotatedGeminiName': name,
-                });
+                await coreLibraryAdminService.setAnnotatedGeminiInfo(r.id, uri, name);
 
                 done++;
             } catch (err: any) {
@@ -580,39 +448,17 @@ export default function CoreLibraryAdmin() {
         // (Store operations require server-side execution — CORS not allowed from browser)
         setAnnotationProgress(prev => ({ ...prev, [storeKey]: 'Recreando store en Gemini (Cloud Function)…' }));
         try {
-            // Save old store ID before sync — the Cloud Function may create a new one
             const oldStoreId = config?.stores?.[storeKey] ?? null;
+            const syncResult = await coreLibraryAdminService.syncStore(storeKey);
+            if (!syncResult.success) throw new Error('Cloud Function returned unsuccessful');
 
-            const functions = getFunctions();
-            const syncFn = httpsCallable(functions, 'syncCoreLibraryStore');
-            const result = await syncFn({ context: storeKey }) as any;
+            // Pick up the (possibly new) store id assigned by the Cloud Function.
+            const newStoreId = await coreLibraryAdminService.getStoreIdForKey(storeKey);
 
-            if (!result.data?.success) throw new Error('Cloud Function returned unsuccessful');
-
-            // Step 3: Reload config to get the NEW store ID assigned by the Cloud Function
-            const db = getFirestore();
-            const configSnap = await getDoc(doc(db, 'config/coreLibraryStores'));
-            const newStoreId: string | null = configSnap.data()?.stores?.[storeKey] ?? null;
-
-            // Step 4: Update any agents whose corpusIds still reference the OLD store ID
             if (newStoreId && oldStoreId && newStoreId !== oldStoreId) {
                 setAnnotationProgress(prev => ({ ...prev, [storeKey]: 'Actualizando tutores con nuevo store ID…' }));
-                const agentsSnap = await getDocs(collection(db, 'ai_agents'));
-                const batch = writeBatch(db);
-                let agentsUpdated = 0;
-
-                agentsSnap.forEach(agentDoc => {
-                    const data = agentDoc.data();
-                    const ids: string[] = data.corpusIds || [];
-                    if (ids.includes(oldStoreId)) {
-                        const updated = ids.map((id: string) => id === oldStoreId ? newStoreId : id);
-                        batch.update(agentDoc.ref, { corpusIds: updated });
-                        agentsUpdated++;
-                    }
-                });
-
+                const agentsUpdated = await coreLibraryAdminService.replaceAgentCorpusReference(oldStoreId, newStoreId);
                 if (agentsUpdated > 0) {
-                    await batch.commit();
                     console.log(`[Annotation] Updated ${agentsUpdated} agent(s) with new store ID: ${newStoreId}`);
                 }
             }
@@ -635,7 +481,7 @@ export default function CoreLibraryAdmin() {
     const handleUnlinkFile = async (docTitle: string, context: string) => {
         const ok = await askConfirm({
             title: `Desvincular "${docTitle}"`,
-            description: `Este documento será desvinculado del store "${context}". Deberás sincronizar después para que Gemini aplique el cambio.`,
+            description: `Este documento será desvinculado del store "${context}". El archivo permanece en tu biblioteca y sus chunks indexados dejarán de aparecer en las búsquedas de este store.`,
             confirmLabel: 'Desvincular',
             variant: 'destructive',
         });
@@ -643,31 +489,20 @@ export default function CoreLibraryAdmin() {
         
         try {
             setIsUnlinking(docTitle);
-            
-            // 1. Find the document Id in Firestore by querying the title
-            const db = getFirestore();
-            const libraryRef = collection(db, 'library_resources');
-            const q = query(
-                libraryRef,
-                where('userId', '==', firebase!.user!.uid),
-                where('title', '==', docTitle),
-                where('coreStores', 'array-contains', context)
+
+            const found = await coreLibraryAdminService.findResourceByTitleInStore(
+                firebase!.user!.uid,
+                docTitle,
+                context,
             );
-            const snapshot = await getDocs(q);
-            
-            if (snapshot.empty) {
+
+            if (!found) {
                 toast.error('No se pudo encontrar el documento original en tu biblioteca.');
                 return;
             }
-            
-            const docId = snapshot.docs[0]!.id;
-            
-            // 2. Call cloud function
-            const functions = getFunctions();
-            const unlinkFn = httpsCallable(functions, 'removeFileFromStore');
-            const result = await unlinkFn({ documentId: docId, context });
-            const data = result.data as any;
-            
+
+            const data = await coreLibraryAdminService.unlinkFileFromStore(found.id, context);
+
             if (data.success) {
                 toast.success(data.message);
                 // We purposefully DO NOT auto-sync to avoid slow UI, admin will click Sync.
@@ -735,13 +570,7 @@ export default function CoreLibraryAdmin() {
         setIsUploading(true);
         try {
             const resource = await libraryService.uploadResource(firebase.user.uid, uploadFile, uploadMetadata);
-            const db = getFirestore();
-            const docRef = doc(db, 'library_resources', resource.id);
-            const batch = writeBatch(db);
-            batch.update(docRef, {
-                coreStores: arrayUnion(contextKey)
-            });
-            await batch.commit();
+            await coreLibraryAdminService.addResourceToStore(resource.id, contextKey);
 
             toast.success(`Documento subido y añadido a ${contextKey}. Procesando IA en segundo plano...`);
             setUploadFile(null);
@@ -750,17 +579,8 @@ export default function CoreLibraryAdmin() {
             setIsAddDocsOpen(false);
             await loadConfig();
 
-            // Trigger background sync to generate Gemini URI immediately
-            try {
-                const functions = getFunctions();
-                const syncResourceFn = httpsCallable(functions, 'syncResourceToGemini');
-                // We don't await this so it runs in the background and doesn't block UI
-                syncResourceFn({ resourceId: resource.id }).catch(err => {
-                    console.error("Background sync resource to gemini failed:", err);
-                });
-            } catch(e) { 
-                console.error("Failed to trigger background sync:", e);
-            }
+            // Phase 2: extraction + indexing fires automatically via Storage trigger
+            // (extractPdfWithGemini → autoIndexOnExtractionReady). No manual sync needed.
 
         } catch (error: any) {
             console.error('Upload error:', error);
@@ -775,26 +595,10 @@ export default function CoreLibraryAdmin() {
         setSelectedDocs(new Set());
         setIsLoadingDocs(true);
         try {
-            const db = getFirestore();
-            const libraryRef = collection(db, 'library_resources');
-            const q = query(
-                libraryRef,
-                where('userId', '==', firebase!.user!.uid)
-            );
-            const snapshot = await getDocs(q);
-            
-            // Filter out docs already in this store
-            const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as any);
-            const currentFiles = config?.files?.[contextKey] || [];
-            const currentUris = new Set(currentFiles.map(f => f.geminiUri));
-
-            const available = docs.filter(d => 
-                d.metadata?.geminiUri && 
-                !currentUris.has(d.metadata.geminiUri) && 
-                !d.coreStores?.includes(contextKey)
-            );
-            
-            setAvailableDocs(available);
+            const docs = await coreLibraryAdminService.getUserResources(firebase!.user!.uid);
+            // Phase 2 RAG does not require a Gemini File Search URI — any doc in the
+            // user's library is eligible, as long as it isn't already linked here.
+            setAvailableDocs(docs.filter(d => !d.coreStores?.includes(contextKey)));
         } catch (error: any) {
             toast.error('Error cargando documentos: ' + error.message);
         } finally {
@@ -806,33 +610,15 @@ export default function CoreLibraryAdmin() {
         if (selectedDocs.size === 0) return;
         setIsAddingDocs(true);
         try {
-            const db = getFirestore();
-            const batch = writeBatch(db);
-            
-            selectedDocs.forEach(docId => {
-                const docRef = doc(db, 'library_resources', docId);
-                batch.update(docRef, {
-                    coreStores: arrayUnion(contextKey)
-                });
-            });
-            
-            await batch.commit();
-            
+            await coreLibraryAdminService.addResourcesToStore(Array.from(selectedDocs), contextKey);
+
             toast.success(`${selectedDocs.size} documentos añadidos al store`);
             setIsAddDocsOpen(false);
-            
-            // Reload config to update the frontend
             await loadConfig();
-            
-            // Reload available docs to remove them from the list
+
             if (firebase?.user) {
-                const db = getFirestore();
-                const libraryRef = collection(db, 'library_resources');
-                const q = query(libraryRef, where('userId', '==', firebase.user.uid));
-                const snapshot = await getDocs(q);
-                const docs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }) as any);
-                const currentUris = new Set((config?.files?.[contextKey] || []).map((f: any) => f.geminiUri));
-                setAvailableDocs(docs.filter((d: any) => d.metadata?.geminiUri && !currentUris.has(d.metadata.geminiUri) && !d.coreStores?.includes(contextKey)));
+                const docs = await coreLibraryAdminService.getUserResources(firebase.user.uid);
+                setAvailableDocs(docs.filter(d => !d.coreStores?.includes(contextKey)));
             }
             
         } catch (error: any) {
@@ -845,24 +631,123 @@ export default function CoreLibraryAdmin() {
     const handleRetrySync = async (resourceId: string, title: string) => {
         setIsRetrying(resourceId);
         try {
-            toast.info(`Iniciando procesamiento manual para "${title}"...`);
-            const functions = getFunctions();
-            const syncResourceFn = httpsCallable(functions, 'syncResourceToGemini');
-            
-            // Wait for it because user triggered it manually
-            const result = await syncResourceFn({ resourceId }) as any;
-            
-            if (result.data?.success) {
-                toast.success(`Documento procesado correctamente.`);
+            toast.info(`Re-procesando "${title}" con LlamaParse...`);
+            const data = await coreLibraryAdminService.reprocessWithLlamaParse(resourceId, true);
+            if (data.success) {
+                toast.success(`"${title}" reprocesado: ${data.pageCount ?? '?'} pp.`);
                 await loadConfig();
+            } else if (data.skipped) {
+                toast.info(`"${title}" ya estaba procesado.`);
             } else {
-                toast.error(`Error procesando documento: ${result.data?.error || 'Desconocido'}`);
+                toast.error(`Error: ${data.error || 'Desconocido'}`);
             }
         } catch (error: any) {
-            console.error('Manual sync error:', error);
+            console.error('Reprocess error:', error);
             toast.error(`Error: ${error.message}`);
         } finally {
             setIsRetrying(null);
+        }
+    };
+
+    const [deletingStore, setDeletingStore] = useState<string | null>(null);
+    const [migratingCitableFlag, setMigratingCitableFlag] = useState(false);
+
+    /**
+     * One-shot migration: find all core library docs where `publiclyCitable` is
+     * missing/undefined and set it to `false` (safe default — admin opts docs into
+     * public citation manually, one by one).
+     *
+     * Runs client-side using the admin user's Firestore credentials. Reusable in
+     * case new docs land without the flag (e.g. via direct Firestore imports).
+     */
+    const handleMigrateCitableFlag = async (unsetDocs: any[]) => {
+        if (unsetDocs.length === 0) return;
+        const ok = await askConfirm({
+            title: `Marcar ${unsetDocs.length} documento(s) como restringidos`,
+            description: `Los documentos sin estado de cita definido se marcarán como "Restringidos" (solo admin ve sus citas). Es el valor seguro por defecto — después podrás cambiar a "Pública" uno a uno los documentos que estén en dominio público o con licencia firmada.`,
+            confirmLabel: 'Marcar como restringidos',
+            variant: 'default',
+        });
+        if (!ok) return;
+
+        try {
+            setMigratingCitableFlag(true);
+            const total = await coreLibraryAdminService.markResourcesAsRestrictedCitable(
+                unsetDocs.map((d: any) => d.id),
+            );
+            toast.success(`${total} documento(s) marcado(s) como restringidos`);
+            await loadConfig();
+        } catch (error: any) {
+            toast.error(`Error en la migración: ${error.message}`);
+        } finally {
+            setMigratingCitableFlag(false);
+        }
+    };
+
+    // Edit document metadata state
+    const [editDocOpen, setEditDocOpen] = useState(false);
+    const [editingDocId, setEditingDocId] = useState<string | null>(null);
+    const [editDocTitle, setEditDocTitle] = useState('');
+    const [editDocAuthor, setEditDocAuthor] = useState('');
+    const [editDocPubliclyCitable, setEditDocPubliclyCitable] = useState(false);
+    const [isSavingDoc, setIsSavingDoc] = useState(false);
+
+    const handleOpenEditDoc = (doc: any) => {
+        setEditingDocId(doc.id);
+        setEditDocTitle(doc.title ?? '');
+        setEditDocAuthor(doc.author ?? '');
+        setEditDocPubliclyCitable(doc.publiclyCitable === true);
+        setEditDocOpen(true);
+    };
+
+    const handleSaveDocMetadata = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingDocId || !editDocTitle.trim()) {
+            toast.error('El título es obligatorio');
+            return;
+        }
+        try {
+            setIsSavingDoc(true);
+            await coreLibraryAdminService.updateResourceMetadata(editingDocId, {
+                title: editDocTitle.trim(),
+                author: editDocAuthor.trim(),
+                publiclyCitable: editDocPubliclyCitable,
+            });
+            toast.success('Metadata actualizada');
+            setEditDocOpen(false);
+            setEditingDocId(null);
+            await loadConfig();
+        } catch (error: any) {
+            toast.error(`Error actualizando metadata: ${error.message}`);
+        } finally {
+            setIsSavingDoc(false);
+        }
+    };
+
+    const handleDeleteStore = async (key: string, name: string, fileCount: number) => {
+        const ok = await askConfirm({
+            title: `Eliminar store "${name}"`,
+            description: `Esta acción es irreversible. Se eliminará el store y todos sus datos asociados:\n\n• ${fileCount} documento(s) serán desvinculados (los archivos permanecen en tu biblioteca)\n• Todos los chunks indexados (Phase 2 RAG) de este store serán eliminados\n• El store en Gemini File Search será eliminado\n\nLos tutores que usen este store dejarán de recibir contexto de él.`,
+            confirmLabel: 'Eliminar Store',
+            variant: 'destructive',
+        });
+        if (!ok) return;
+
+        try {
+            setDeletingStore(key);
+            const data = await coreLibraryAdminService.deleteStore(key);
+
+            if (data?.success) {
+                toast.success(data.message || `Store '${name}' eliminado`);
+                // Switch to a remaining store (or clear selection)
+                const remaining = Object.keys(config?.stores ?? {}).filter(k => k !== key);
+                setActiveTab(remaining[0] ?? '');
+                await loadConfig();
+            }
+        } catch (error: any) {
+            toast.error(`Error eliminando store: ${error.message}`);
+        } finally {
+            setDeletingStore(null);
         }
     };
 
@@ -875,14 +760,11 @@ export default function CoreLibraryAdmin() {
 
         try {
             setIsEditing(true);
-            const functions = getFunctions();
-            const updateStoreFn = httpsCallable(functions, 'updateCoreLibraryStore');
-            
-            await updateStoreFn({
-                key: editingStoreKey,
-                displayName: editStoreName.trim(),
-                description: editStoreDesc.trim()
-            });
+            await coreLibraryAdminService.updateStore(
+                editingStoreKey,
+                editStoreName.trim(),
+                editStoreDesc.trim(),
+            );
 
             toast.success('Store actualizado exitosamente');
             setIsEditOpen(false);
@@ -905,21 +787,17 @@ export default function CoreLibraryAdmin() {
             if (isInitialLoad) setLoading(true);
             else setIsRefreshing(true);
 
-            const db = getFirestore();
-            const docRef = doc(db, 'config/coreLibraryStores');
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+            const data = await coreLibraryAdminService.getStoreConfig();
+            if (data) {
                 setConfig({
-                    stores: data.stores || {},
-                    files: data.files || {},
-                    descriptions: data.descriptions || {},
-                    createdAt: data.createdAt?.toDate() || new Date(),
-                    lastValidatedAt: data.lastValidatedAt?.toDate() || new Date()
+                    stores: data.stores,
+                    files: data.files,
+                    descriptions: data.descriptions ?? {},
+                    displayNames: data.displayNames ?? {},
+                    createdAt: data.createdAt ?? new Date(),
+                    lastValidatedAt: data.lastValidatedAt ?? new Date(),
                 });
 
-                // Initialize sync state for all stores (only on first load)
                 if (isInitialLoad) {
                     const keys = Object.keys(data.stores || {});
                     if (keys.length > 0 && !keys.includes(activeTab)) {
@@ -941,25 +819,14 @@ export default function CoreLibraryAdmin() {
 
     const validateAllStores = async (configData: any) => {
         if (!firebase?.user) return;
-        
-        const db = getFirestore();
+
         const contexts = Object.keys(configData.stores || {});
-        
         const newSyncStatus: Record<string, SyncStatus> = {};
         const newStoreResources: Record<string, any[]> = {};
 
         for (const context of contexts) {
             try {
-                // Get desired state from library
-                const libraryRef = collection(db, 'library_resources');
-                const q = query(
-                    libraryRef,
-                    where('userId', '==', firebase.user.uid),
-                    where('coreStores', 'array-contains', context)
-                );
-                const snapshot = await getDocs(q);
-                
-                const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const allDocs = await coreLibraryAdminService.getResourcesInStore(firebase.user.uid, context);
                 newStoreResources[context] = allDocs;
 
                 const desiredDocs = allDocs.filter((d: any) => d.metadata?.geminiUri);
@@ -993,11 +860,8 @@ export default function CoreLibraryAdmin() {
         try {
             setSyncing(prev => ({ ...prev, [context]: true }));
             toast.info(`Sincronizando ${context}...`);
-            
-            const functions = getFunctions();
-            const syncFn = httpsCallable(functions, 'syncCoreLibraryStore');
-            const result = await syncFn({ context });
-            const data = result.data as any;
+
+            const data = await coreLibraryAdminService.syncStore(context) as any;
 
             if (data.success) {
                 if (data.alreadySynced) {
@@ -1032,13 +896,10 @@ export default function CoreLibraryAdmin() {
 
         try {
             setIsCreating(true);
-            const functions = getFunctions();
-            const createFn = httpsCallable(functions, 'createCoreLibraryStore');
-            
-            await createFn({
+            await coreLibraryAdminService.createStore({
                 key: newStoreKey,
                 displayName: newStoreName,
-                description: newStoreDesc
+                description: newStoreDesc,
             });
 
             toast.success(`Store '${newStoreName}' creado correctamente`);
@@ -1088,15 +949,17 @@ export default function CoreLibraryAdmin() {
     const displayKeys = storeKeys;
 
     const storeContexts = displayKeys.map(key => {
-        const meta = defaultMeta[key] || {
-            name: config?.displayNames?.[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
-            icon: Folder,
-            description: config?.descriptions?.[key] || 'Contexto personalizado',
-        };
-        return {
-            ...meta,
-            key 
-        };
+        const defaults = defaultMeta[key];
+        // Config is the source of truth for name/description; defaultMeta only
+        // provides the built-in icon + fallback name.
+        const name = config?.displayNames?.[key]
+            ?? defaults?.name
+            ?? (key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '));
+        const description = config?.descriptions?.[key]
+            ?? defaults?.description
+            ?? 'Contexto personalizado';
+        const icon = defaults?.icon ?? Folder;
+        return { key, name, description, icon };
     });
 
     const activeStoreData = storeContexts.find(c => c.key === activeTab);
@@ -1124,10 +987,11 @@ export default function CoreLibraryAdmin() {
                                 <div className="space-y-2">
                                     <p className="font-semibold">Cómo funciona</p>
                                     <ul className="space-y-1.5 text-muted-foreground">
-                                        <li>• Los stores son contextos permanentes indexados por Gemini File Search.</li>
-                                        <li>• Crea contextos específicos (Exégesis, Homilética, etc.) para organizar el conocimiento.</li>
-                                        <li>• Al desvincular un documento, pulsa "Sincronizar" para que Gemini recree el store sin él.</li>
-                                        <li>• "Anotar y Recrear" inyecta marcadores <code className="text-xs bg-muted px-1 rounded">[FUENTE:]</code> en los documentos para que los tutores puedan citar autor, título y página.</li>
+                                        <li>• Los stores organizan el conocimiento en contextos (Exégesis, Homilética, etc.) que los tutores consultan.</li>
+                                        <li>• <strong>Reprocesar con LlamaParse</strong> extrae el contenido con páginas reales y estructura preservada.</li>
+                                        <li>• <strong>Indexar (Phase 2)</strong> genera chunks semánticos + embeddings para RAG con citación precisa.</li>
+                                        <li>• Usa <strong>Auditoría RAG</strong> para verificar la salud del índice y probar queries.</li>
+                                        <li>• El <strong>Modo Avanzado</strong> revela controles legacy de Gemini File Search (anotación, sincronización de stores).</li>
                                     </ul>
                                 </div>
                             </PopoverContent>
@@ -1195,44 +1059,110 @@ export default function CoreLibraryAdmin() {
                         </DialogContent>
                     </Dialog>
 
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAnnotateAll(false)}
-                        disabled={!!batchOperation.type || storeContexts.length === 0}
-                        title="Anota todos los stores — salta los documentos ya anotados"
-                    >
-                        {batchOperation.type === 'annotate'
-                            ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            : <Wand2 className="h-4 w-4 mr-2" />}
-                        Anotar todos
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9"
-                        onClick={() => handleAnnotateAll(true)}
-                        disabled={!!batchOperation.type || storeContexts.length === 0}
-                        title="Forzar re-anotación de TODOS los stores y documentos (incluso los ya anotados). Usa esto cuando cambió el formato de anotación."
-                    >
-                        <RefreshCw className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSyncAll}
-                        disabled={!!batchOperation.type || storeContexts.length === 0}
-                        title="Sincroniza TODOS los stores secuencialmente"
-                    >
-                        {batchOperation.type === 'sync'
-                            ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            : <RefreshCw className="h-4 w-4 mr-2" />}
-                        Sincronizar todos
-                    </Button>
+                    {advancedMode && (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAnnotateAll(false)}
+                                disabled={!!batchOperation.type || storeContexts.length === 0}
+                                title="Legacy — Anota todos los stores con marcadores [FUENTE:] para Gemini File Search"
+                            >
+                                {batchOperation.type === 'annotate'
+                                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    : <Wand2 className="h-4 w-4 mr-2" />}
+                                Anotar todos
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9"
+                                onClick={() => handleAnnotateAll(true)}
+                                disabled={!!batchOperation.type || storeContexts.length === 0}
+                                title="Legacy — Forzar re-anotación de TODOS los documentos"
+                            >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleSyncAll}
+                                disabled={!!batchOperation.type || storeContexts.length === 0}
+                                title="Legacy — Sincroniza TODOS los stores de Gemini File Search"
+                            >
+                                {batchOperation.type === 'sync'
+                                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    : <RefreshCw className="h-4 w-4 mr-2" />}
+                                Sincronizar todos
+                            </Button>
+                        </>
+                    )}
                     <Button onClick={() => setIsAuditOpen(true)} variant="outline" size="sm" disabled={!!batchOperation.type}>
                         <Activity className="h-4 w-4 mr-2" />
                         Auditoría RAG
                     </Button>
+                    <Button
+                        onClick={async () => {
+                            const ok = await askConfirm({
+                                title: 'Migrar sermones legacy a proyectos',
+                                description: 'Asigna cada sermón sin proyecto a un proyecto "Material previo" por usuario. Idempotente — seguro re-ejecutar.',
+                                confirmLabel: 'Ejecutar migración',
+                            });
+                            if (!ok) return;
+                            try {
+                                toast.info('Migrando sermones legacy...');
+                                const data = (await coreLibraryAdminService.runMigration('migrateLegacySermons')) as any;
+                                console.log('[migrateLegacySermons]', data);
+                                if (data?.success) {
+                                    toast.success(
+                                        `Migración completa — ${data.usersProcessed} usuarios, ${data.projectsCreated} proyectos creados, ${data.sermonsAssigned} sermones asignados, ${data.sermonsSkipped} ya estaban`
+                                    );
+                                } else {
+                                    toast.warning(
+                                        `Completada con ${data.errors?.length ?? 0} errores — ver consola`
+                                    );
+                                }
+                            } catch (err: any) {
+                                console.error('[migrateLegacySermons] error:', err);
+                                toast.error(`Error: ${err.message}`);
+                            }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        disabled={!!batchOperation.type}
+                        title="One-shot: asigna sermones huérfanos al proyecto 'Material previo'. Idempotente."
+                    >
+                        <Database className="h-4 w-4 mr-2" />
+                        Migrar sermones
+                    </Button>
+                    {advancedMode && (
+                        <Button
+                            onClick={async () => {
+                                try {
+                                    toast.info('Ejecutando migración de quotas...');
+                                    const data = (await coreLibraryAdminService.runMigration('migratePlanQuotas')) as any;
+                                    console.log('[migratePlanQuotas]', data);
+                                    if (data?.success) {
+                                        const summary = (data.results ?? [])
+                                            .map((r: any) => `${r.planId}: ${r.action}`)
+                                            .join(', ');
+                                        toast.success(`Migración completa — ${summary}`);
+                                    } else {
+                                        toast.error('Migración completada sin success:true');
+                                    }
+                                } catch (err: any) {
+                                    console.error('[migratePlanQuotas] error:', err);
+                                    toast.error(`Error: ${err.message}`);
+                                }
+                            }}
+                            variant="outline"
+                            size="sm"
+                            title="Legacy — Actualiza Firestore plans con las quotas de biblioteca personal (basic/pro/team)"
+                        >
+                            <Database className="h-4 w-4 mr-2" />
+                            Migrar Quotas
+                        </Button>
+                    )}
                     <Button onClick={loadConfig} variant="outline" size="sm" disabled={!!batchOperation.type}>
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Actualizar
@@ -1240,7 +1170,7 @@ export default function CoreLibraryAdmin() {
                 </div>
             </div>
 
-            {/* Dashboard — Key metrics */}
+            {/* Compact KPI bar */}
             {config && (() => {
                 const allResources = Object.values(storeResources).flat();
                 const uniqueDocs = new Map<string, any>();
@@ -1248,6 +1178,7 @@ export default function CoreLibraryAdmin() {
                 const uniqueDocsList = Array.from(uniqueDocs.values());
                 const annotatedCount = uniqueDocsList.filter((r: any) => r.metadata?.annotatedGeminiUri).length;
                 const totalPages = uniqueDocsList.reduce((sum: number, r: any) => sum + (r.pageCount || 0), 0);
+                const publicCount = uniqueDocsList.filter((r: any) => r.publiclyCitable === true).length;
                 const storeIds = Object.values(config.stores).filter(Boolean) as string[];
                 const connectedTutors = agents.filter(a =>
                     a.isActive && a.corpusIds?.some(id => storeIds.includes(id))
@@ -1257,12 +1188,77 @@ export default function CoreLibraryAdmin() {
                     : 0;
 
                 return (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <MetricCard icon={Library} label="Stores" value={storeContexts.length} />
-                        <MetricCard icon={FileText} label="Documentos" value={uniqueDocsList.length} subtitle={`${totalPages.toLocaleString()} págs`} />
-                        <MetricCard icon={Sparkles} label="Anotados" value={`${annotatedCount}/${uniqueDocsList.length}`} subtitle={`${annotationPct}%`} highlight={annotationPct === 100} />
-                        <MetricCard icon={GraduationCap} label="Tutores conectados" value={connectedTutors.length} subtitle={connectedTutors.length > 0 ? connectedTutors.map(t => t.name).join(' · ') : '—'} />
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 rounded-md border bg-muted/20 text-sm">
+                        <div className="flex items-center gap-2">
+                            <Library className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Stores</span>
+                            <span className="font-semibold">{storeContexts.length}</span>
+                        </div>
+                        <div className="h-4 w-px bg-border" />
+                        <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Documentos</span>
+                            <span className="font-semibold">{uniqueDocsList.length}</span>
+                            <span className="text-xs text-muted-foreground">· {totalPages.toLocaleString()} págs</span>
+                        </div>
+                        <div className="h-4 w-px bg-border" />
+                        <div className="flex items-center gap-2" title="Documentos cuyas citas son visibles para usuarios regulares (publiclyCitable=true)">
+                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Públicos</span>
+                            <span className="font-semibold text-success">{publicCount}</span>
+                            <span className="text-xs text-muted-foreground">/ {uniqueDocsList.length}</span>
+                        </div>
+                        {advancedMode && (
+                            <>
+                                <div className="h-4 w-px bg-border" />
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className={cn("h-4 w-4", annotationPct === 100 ? "text-success" : "text-muted-foreground")} />
+                                    <span className="text-muted-foreground">Anotados</span>
+                                    <span className="font-semibold">{annotatedCount}/{uniqueDocsList.length}</span>
+                                    <span className="text-xs text-muted-foreground">· {annotationPct}%</span>
+                                </div>
+                            </>
+                        )}
+                        <div className="h-4 w-px bg-border" />
+                        <div className="flex items-center gap-2 min-w-0">
+                            <GraduationCap className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="text-muted-foreground shrink-0">Tutores</span>
+                            <span className="font-semibold shrink-0">{connectedTutors.length}</span>
+                            {connectedTutors.length > 0 && (
+                                <span className="text-xs text-muted-foreground truncate">· {connectedTutors.map(t => t.name).join(' · ')}</span>
+                            )}
+                        </div>
                     </div>
+                );
+            })()}
+
+            {/* Migration banner — appears only when some docs have undefined publiclyCitable */}
+            {config && (() => {
+                const allResources = Object.values(storeResources).flat();
+                const unsetDocs = allResources.filter((r: any) => r.publiclyCitable === undefined);
+                if (unsetDocs.length === 0) return null;
+                return (
+                    <Alert className="bg-warning/5 border-warning/30">
+                        <AlertTriangle className="h-4 w-4 text-warning" />
+                        <AlertDescription className="flex items-center justify-between gap-3 flex-wrap">
+                            <span className="text-warning">
+                                Hay <strong>{unsetDocs.length}</strong> documento(s) sin estado de cita definido.
+                                Márcalos como <strong>Restringidos</strong> (default seguro) — podrás cambiar a Pública
+                                los que sean de dominio público desde el botón de editar cada uno.
+                            </span>
+                            <Button
+                                size="sm"
+                                onClick={() => handleMigrateCitableFlag(unsetDocs)}
+                                disabled={migratingCitableFlag}
+                                className="shrink-0"
+                            >
+                                {migratingCitableFlag
+                                    ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                                    : null}
+                                Marcar como restringidos
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
                 );
             })()}
 
@@ -1277,113 +1273,63 @@ export default function CoreLibraryAdmin() {
                 </Alert>
             )}
 
-            {/* Master-Detail Layout */}
-            <div className="flex flex-col lg:flex-row gap-6 items-start">
-                
-                {/* LEFTSIDE (MASTER) */}
-                <div className="w-full lg:w-72 flex flex-col gap-3 shrink-0">
-                    <div className="font-semibold text-sm text-foreground px-1 border-b pb-2 mb-1 flex items-center justify-between">
-                        <span>Stores Configurados</span>
-                        <Badge variant="secondary">{storeContexts.length}</Badge>
-                    </div>
-                    {config ? (
-                        storeContexts.map(context => {
-                        const status = syncStatus[context.key];
-                        const files = config.files[context.key] || [];
-                        const Icon = context.icon;
-                        const isSynced = status?.isSynced ?? true;
+            {/* Store tabs + detail — stacked vertically, detail full-width */}
+            <div className="space-y-4">
 
-                        const storeDocs = storeResources[context.key] || [];
-                        const docCount = storeDocs.length;
-                        const annotatedInStore = storeDocs.filter((d: any) => d.metadata?.annotatedGeminiUri).length;
-                        const storePages = storeDocs.reduce((sum: number, d: any) => sum + (d.pageCount || 0), 0);
-                        const storeTutors = tutorsForStoreId(config?.stores?.[context.key]);
+                {/* Store tabs (horizontal scrollable) */}
+                {config ? (
+                    <div className="border-b">
+                        <div className="flex gap-1 overflow-x-auto pb-px scrollbar-thin">
+                            {storeContexts.map(context => {
+                                const status = syncStatus[context.key];
+                                const Icon = context.icon;
+                                const isSynced = status?.isSynced ?? true;
+                                const storeDocs = storeResources[context.key] || [];
+                                const docCount = storeDocs.length;
+                                const storePages = storeDocs.reduce((sum: number, d: any) => sum + (d.pageCount || 0), 0);
+                                const isActive = activeTab === context.key;
+                                const isSyncing = syncing[context.key];
 
-                        return (
-                            <Card
-                                key={context.key}
-                                className={cn(
-                                    "cursor-pointer transition-all hover:shadow-md",
-                                    activeTab === context.key && "ring-2 ring-primary"
-                                )}
-                                onClick={() => setActiveTab(context.key)}
-                            >
-                                <CardContent className="p-4 space-y-2.5">
-                                    {/* Row 1: name + sync indicator */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <Icon className="h-4 w-4 shrink-0" />
-                                            <span className="text-sm font-medium truncate">{context.name}</span>
-                                        </div>
-                                        {isSynced ? (
-                                            <CheckCircle className="h-4 w-4 text-green-600 shrink-0" title="Sincronizado" />
-                                        ) : (
-                                            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" title="Desincronizado" />
+                                return (
+                                    <button
+                                        key={context.key}
+                                        onClick={() => setActiveTab(context.key)}
+                                        className={cn(
+                                            "group relative flex items-center gap-2 px-4 py-2.5 rounded-t-md border-b-2 transition-all whitespace-nowrap shrink-0",
+                                            "hover:bg-muted/50",
+                                            isActive
+                                                ? "border-primary bg-muted/30 text-foreground"
+                                                : "border-transparent text-muted-foreground"
                                         )}
-                                    </div>
-
-                                    {/* Row 2: stats */}
-                                    <div className="text-xs text-muted-foreground leading-relaxed">
-                                        <div>
-                                            <span className="font-medium text-foreground">{docCount}</span> doc{docCount !== 1 ? 's' : ''}
-                                            {storePages > 0 && <> · <span className="font-medium text-foreground">{storePages.toLocaleString()}</span> págs</>}
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Wand2 className="h-3 w-3" />
-                                            <span className={cn(
-                                                "font-medium",
-                                                annotatedInStore === docCount && docCount > 0 ? "text-emerald-600" : "text-amber-600"
-                                            )}>
-                                                {annotatedInStore}/{docCount}
-                                            </span>
-                                            <span>anotados</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Row 3: tutor chips */}
-                                    {storeTutors.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 pt-1 border-t">
-                                            {storeTutors.slice(0, 3).map(t => (
-                                                <Badge key={t.id} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
-                                                    {t.name}
-                                                </Badge>
-                                            ))}
-                                            {storeTutors.length > 3 && (
-                                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
-                                                    +{storeTutors.length - 3}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Row 4: sync button */}
-                                    <div className="flex items-center justify-end pt-1">
-                                        <Button
-                                            onClick={(e) => { e.stopPropagation(); handleSyncStore(context.key); }}
-                                            disabled={syncing[context.key]}
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            variant={isSynced ? "ghost" : "secondary"}
-                                            title="Sincronizar Store"
-                                        >
-                                            {syncing[context.key]
-                                                ? <Loader2 className="h-3 w-3 animate-spin" />
-                                                : <RefreshCw className="h-3 w-3" />}
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })
-                    ) : (
-                        <div className="text-sm text-muted-foreground p-4 text-center border rounded-md border-dashed">
-                            Cargando stores...
+                                    >
+                                        <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
+                                        <span className={cn("text-sm", isActive && "font-semibold text-foreground")}>
+                                            {context.name}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground tabular-nums">
+                                            {docCount}
+                                            {storePages > 0 && ` · ${storePages.toLocaleString()}p`}
+                                        </span>
+                                        {isSyncing ? (
+                                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />
+                                        ) : isSynced ? (
+                                            <span className="h-1.5 w-1.5 rounded-full bg-success shrink-0" title="Sincronizado" />
+                                        ) : (
+                                            <AlertTriangle className="h-3 w-3 text-warning shrink-0" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <div className="text-sm text-muted-foreground p-4 text-center border rounded-md border-dashed">
+                        Cargando stores...
+                    </div>
+                )}
 
-                {/* RIGHTSIDE (DETAIL) */}
-                <div className="w-full flex-1 min-w-0">
+                {/* Detail panel — full width */}
+                <div className="w-full min-w-0">
                     {/* Active Store Details Area */}
                     {activeStoreData ? (() => {
                 const context = activeStoreData;
@@ -1474,20 +1420,35 @@ export default function CoreLibraryAdmin() {
                                             </CollapsibleContent>
                                         </Collapsible>
                                     ) : <div />}
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8"
-                                        onClick={() => {
-                                            setEditingStoreKey(context.key);
-                                            setEditStoreName(context.name);
-                                            setEditStoreDesc(context.description || '');
-                                            setIsEditOpen(true);
-                                        }}
-                                    >
-                                        <Settings className="h-4 w-4 mr-2" />
-                                        Editar Store
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8"
+                                            onClick={() => {
+                                                setEditingStoreKey(context.key);
+                                                setEditStoreName(context.name);
+                                                setEditStoreDesc(context.description || '');
+                                                setIsEditOpen(true);
+                                            }}
+                                        >
+                                            <Settings className="h-4 w-4 mr-2" />
+                                            Editar Store
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                                            onClick={() => handleDeleteStore(context.key, context.name, files.length)}
+                                            disabled={!!deletingStore}
+                                            title="Eliminar Store permanentemente"
+                                        >
+                                            {deletingStore === context.key
+                                                ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                : <Trash2 className="h-4 w-4 mr-2" />}
+                                            Eliminar
+                                        </Button>
+                                    </div>
                                 </div>
 
                                 {/* Files Table */}
@@ -1499,12 +1460,12 @@ export default function CoreLibraryAdmin() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {reprocessProgress[`__store__${context.key}`] && (
-                                                <span className="text-xs text-emerald-600 animate-pulse">
+                                                <span className="text-xs text-success animate-pulse">
                                                     {reprocessProgress[`__store__${context.key}`]}
                                                 </span>
                                             )}
                                             {indexProgress[`__store__${context.key}`] && (
-                                                <span className="text-xs text-indigo-600 animate-pulse">
+                                                <span className="text-xs text-primary animate-pulse">
                                                     {indexProgress[`__store__${context.key}`]}
                                                 </span>
                                             )}
@@ -1522,7 +1483,7 @@ export default function CoreLibraryAdmin() {
                                             >
                                                 {indexing[`__store__${context.key}`]
                                                     ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                    : <Database className="h-4 w-4 mr-2 text-indigo-600" />}
+                                                    : <Database className="h-4 w-4 mr-2 text-primary" />}
                                                 Indexar (Phase 2)
                                             </Button>
                                             <Button
@@ -1534,30 +1495,34 @@ export default function CoreLibraryAdmin() {
                                             >
                                                 {reprocessing[`__store__${context.key}`]
                                                     ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                    : <Sparkles className="h-4 w-4 mr-2 text-emerald-600" />}
+                                                    : <Sparkles className="h-4 w-4 mr-2 text-success" />}
                                                 Reprocesar con LlamaParse
                                             </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleAnnotateStore(context.key)}
-                                                disabled={annotating[context.key]}
-                                                title="Anota cada documento con marcadores [FUENTE:] y recrea el store para que las citas aparezcan en las respuestas del tutor"
-                                            >
-                                                {annotating[context.key]
-                                                    ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                    : <Wand2 className="h-4 w-4 mr-2" />}
-                                                Anotar y Recrear
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleAnnotateStore(context.key, true)}
-                                                disabled={annotating[context.key]}
-                                                title="Forzar re-anotación de TODOS los documentos (incluso los ya anotados). Usa esto si cambió el formato de anotación."
-                                            >
-                                                <RefreshCw className="h-3 w-3" />
-                                            </Button>
+                                            {advancedMode && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleAnnotateStore(context.key)}
+                                                        disabled={annotating[context.key]}
+                                                        title="Legacy — Anota cada documento con marcadores [FUENTE:] y recrea el store Gemini File Search (reemplazado por Phase 2 RAG)"
+                                                    >
+                                                        {annotating[context.key]
+                                                            ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                            : <Wand2 className="h-4 w-4 mr-2" />}
+                                                        Anotar y Recrear
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleAnnotateStore(context.key, true)}
+                                                        disabled={annotating[context.key]}
+                                                        title="Legacy — Forzar re-anotación de TODOS los documentos (incluso los ya anotados)"
+                                                    >
+                                                        <RefreshCw className="h-3 w-3" />
+                                                    </Button>
+                                                </>
+                                            )}
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -1571,16 +1536,17 @@ export default function CoreLibraryAdmin() {
                                     
                                     {files.length > 0 ? (
                                         <div className="border rounded-md bg-background overflow-x-auto">
-                                            <Table className="min-w-[960px]">
+                                            <Table>
                                                 <TableHeader className="bg-muted/30">
                                                     <TableRow>
                                                         <TableHead>Documento</TableHead>
                                                         <TableHead>Autor</TableHead>
                                                         <TableHead className="w-[100px]">Páginas</TableHead>
-                                                        <TableHead className="w-[100px]">Estado</TableHead>
+                                                        {advancedMode && <TableHead className="w-[100px]">Estado</TableHead>}
                                                         <TableHead className="w-[110px]">Extracción</TableHead>
                                                         <TableHead className="w-[100px]">Indexing</TableHead>
-                                                        <TableHead className="w-[90px]">Citación</TableHead>
+                                                        <TableHead className="w-[110px]">Cita pública</TableHead>
+                                                        {advancedMode && <TableHead className="w-[90px]">Citación</TableHead>}
                                                         <TableHead className="text-right w-[180px]">Acciones</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
@@ -1596,68 +1562,70 @@ export default function CoreLibraryAdmin() {
                                                                 <TableCell>
                                                                     <Badge variant="outline">{file.pageCount || file.pages || '?'} pág</Badge>
                                                                 </TableCell>
-                                                                <TableCell>
-                                                                    {isSynced ? (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100 border-transparent">
-                                                                                Activo
-                                                                            </Badge>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                                                                title="Re-indexar con marcadores de página"
-                                                                                onClick={() => handleRetrySync(file.id, file.title || file.name)}
-                                                                                disabled={isRetrying === file.id}
-                                                                            >
-                                                                                <RefreshCw className={`h-3 w-3 ${isRetrying === file.id ? 'animate-spin' : ''}`} />
-                                                                            </Button>
-                                                                        </div>
-                                                                    ) : !hasGeminiUri ? (
-                                                                        <div className="flex items-center gap-2">
-                                                                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
-                                                                                Procesando IA
-                                                                            </Badge>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-6 w-6"
-                                                                                title="Reintentar Procesamiento"
-                                                                                onClick={() => handleRetrySync(file.id, file.title || file.name)}
-                                                                                disabled={isRetrying === file.id}
-                                                                            >
-                                                                                <RefreshCw className={`h-3 w-3 ${isRetrying === file.id ? 'animate-spin' : ''}`} />
-                                                                            </Button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-transparent">
-                                                                                Pendiente Sync
-                                                                            </Badge>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-6 w-6"
-                                                                                title="Reintentar Procesamiento"
-                                                                                onClick={() => handleRetrySync(file.id, file.title || file.name)}
-                                                                                disabled={isRetrying === file.id}
-                                                                            >
-                                                                                <RefreshCw className={`h-3 w-3 ${isRetrying === file.id ? 'animate-spin' : ''}`} />
-                                                                            </Button>
-                                                                        </div>
-                                                                    )}
-                                                                </TableCell>
+                                                                {advancedMode && (
+                                                                    <TableCell>
+                                                                        {isSynced ? (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Badge variant="secondary" className="bg-success/15 text-success hover:bg-success/15 border-transparent">
+                                                                                    Activo
+                                                                                </Badge>
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                                                                    title="Re-indexar con marcadores de página"
+                                                                                    onClick={() => handleRetrySync(file.id, file.title || file.name)}
+                                                                                    disabled={isRetrying === file.id}
+                                                                                >
+                                                                                    <RefreshCw className={`h-3 w-3 ${isRetrying === file.id ? 'animate-spin' : ''}`} />
+                                                                                </Button>
+                                                                            </div>
+                                                                        ) : !hasGeminiUri ? (
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
+                                                                                    Procesando IA
+                                                                                </Badge>
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-6 w-6"
+                                                                                    title="Reintentar Procesamiento"
+                                                                                    onClick={() => handleRetrySync(file.id, file.title || file.name)}
+                                                                                    disabled={isRetrying === file.id}
+                                                                                >
+                                                                                    <RefreshCw className={`h-3 w-3 ${isRetrying === file.id ? 'animate-spin' : ''}`} />
+                                                                                </Button>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Badge variant="secondary" className="bg-info/15 text-info hover:bg-info/15 border-transparent">
+                                                                                    Pendiente Sync
+                                                                                </Badge>
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-6 w-6"
+                                                                                    title="Reintentar Procesamiento"
+                                                                                    onClick={() => handleRetrySync(file.id, file.title || file.name)}
+                                                                                    disabled={isRetrying === file.id}
+                                                                                >
+                                                                                    <RefreshCw className={`h-3 w-3 ${isRetrying === file.id ? 'animate-spin' : ''}`} />
+                                                                                </Button>
+                                                                            </div>
+                                                                        )}
+                                                                    </TableCell>
+                                                                )}
                                                                 <TableCell>
                                                                     {file.extractionVersion === '3.0-llamaparse' ? (
-                                                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-transparent text-xs" title="Extraído con LlamaParse — páginas reales, estructura preservada">
+                                                                        <Badge variant="secondary" className="bg-success/15 text-success border-transparent text-xs" title="Extraído con LlamaParse — páginas reales, estructura preservada">
                                                                             LlamaParse
                                                                         </Badge>
                                                                     ) : file.extractionVersion === '2.0-gemini' ? (
-                                                                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-transparent text-xs" title="Extraído con Gemini 2.0 Flash (legacy)">
+                                                                        <Badge variant="secondary" className="bg-info/15 text-info border-transparent text-xs" title="Extraído con Gemini 2.0 Flash (legacy)">
                                                                             Gemini
                                                                         </Badge>
                                                                     ) : file.extractionVersion === 'fallback-pdfparse' ? (
-                                                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-transparent text-xs" title="Extraído con pdf-parse (fallback básico)">
+                                                                        <Badge variant="secondary" className="bg-warning/15 text-warning border-transparent text-xs" title="Extraído con pdf-parse (fallback básico)">
                                                                             pdf-parse
                                                                         </Badge>
                                                                     ) : (
@@ -1666,17 +1634,17 @@ export default function CoreLibraryAdmin() {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {file.indexingStatus === 'ready' ? (
-                                                                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 border-transparent text-xs" title={`Indexado con ${file.indexedChunkCount ?? '?'} chunks`}>
+                                                                        <Badge variant="secondary" className="bg-primary/15 text-primary border-transparent text-xs" title={`Indexado con ${file.indexedChunkCount ?? '?'} chunks`}>
                                                                             <Database className="h-2.5 w-2.5 mr-1" />
                                                                             Indexado
                                                                         </Badge>
                                                                     ) : file.indexingStatus === 'processing' ? (
-                                                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-transparent text-xs">
+                                                                        <Badge variant="secondary" className="bg-warning/15 text-warning border-transparent text-xs">
                                                                             <Loader2 className="h-2.5 w-2.5 mr-1 animate-spin" />
                                                                             Procesando
                                                                         </Badge>
                                                                     ) : file.indexingStatus === 'failed' ? (
-                                                                        <Badge variant="secondary" className="bg-red-100 text-red-800 border-transparent text-xs" title={file.indexingError}>
+                                                                        <Badge variant="secondary" className="bg-destructive/15 text-destructive border-transparent text-xs" title={file.indexingError}>
                                                                             Error
                                                                         </Badge>
                                                                     ) : (
@@ -1684,17 +1652,53 @@ export default function CoreLibraryAdmin() {
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {file.metadata?.annotatedGeminiUri ? (
-                                                                        <Badge variant="secondary" className="bg-violet-100 text-violet-800 border-transparent text-xs" title="Documento anotado con marcadores [FUENTE:] para citar documentos individuales">
-                                                                            <Wand2 className="h-2.5 w-2.5 mr-1" />
-                                                                            Anotado
+                                                                    {file.publiclyCitable === true ? (
+                                                                        <Badge variant="secondary" className="bg-success/15 text-success border-transparent text-xs" title="Las citas de este documento son visibles para usuarios regulares (dominio público / licencia firmada)">
+                                                                            Pública
                                                                         </Badge>
                                                                     ) : (
-                                                                        <span className="text-xs text-muted-foreground">—</span>
+                                                                        <Badge variant="secondary" className="bg-warning/15 text-warning border-transparent text-xs" title="Solo admin ve las citas de este documento (licencia pendiente)">
+                                                                            Restringida
+                                                                        </Badge>
                                                                     )}
                                                                 </TableCell>
+                                                                {advancedMode && (
+                                                                    <TableCell>
+                                                                        {file.metadata?.annotatedGeminiUri ? (
+                                                                            <Badge variant="secondary" className="bg-primary/15 text-primary border-transparent text-xs" title="Documento anotado con marcadores [FUENTE:] para citar documentos individuales">
+                                                                                <Wand2 className="h-2.5 w-2.5 mr-1" />
+                                                                                Anotado
+                                                                            </Badge>
+                                                                        ) : (
+                                                                            <span className="text-xs text-muted-foreground">—</span>
+                                                                        )}
+                                                                    </TableCell>
+                                                                )}
                                                                 <TableCell className="text-right">
                                                                     <div className="flex items-center justify-end gap-1">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8"
+                                                                            onClick={() => handleOpenEditDoc(file)}
+                                                                            title="Editar título y autor"
+                                                                        >
+                                                                            <Pencil className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8"
+                                                                            onClick={() => handleProcessDocumentStandard(file.id, file.title || file.name)}
+                                                                            disabled={!!reprocessing[file.id]}
+                                                                            title={file.extractionVersion === '4.0-gemini-standard'
+                                                                                ? "Re-extraer con Gemini estándar (forzar)"
+                                                                                : "Extraer con Gemini estándar (bajo costo)"}
+                                                                        >
+                                                                            {reprocessing[file.id]
+                                                                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                                                : <Wand2 className={cn("h-4 w-4", file.extractionVersion === '4.0-gemini-standard' ? "text-info" : "text-muted-foreground")} />}
+                                                                        </Button>
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="icon"
@@ -1702,12 +1706,12 @@ export default function CoreLibraryAdmin() {
                                                                             onClick={() => handleReprocessDocument(file.id, file.title || file.name)}
                                                                             disabled={!!reprocessing[file.id]}
                                                                             title={file.extractionVersion === '3.0-llamaparse'
-                                                                                ? "Re-extraer con LlamaParse (forzar)"
-                                                                                : "Extraer con LlamaParse (recomendado)"}
+                                                                                ? "Re-extraer con LlamaParse premium (forzar)"
+                                                                                : "Extraer con LlamaParse premium (alta calidad, costo elevado)"}
                                                                         >
                                                                             {reprocessing[file.id]
                                                                                 ? <Loader2 className="h-4 w-4 animate-spin" />
-                                                                                : <Sparkles className={cn("h-4 w-4", file.extractionVersion === '3.0-llamaparse' ? "text-emerald-600" : "text-muted-foreground")} />}
+                                                                                : <Sparkles className={cn("h-4 w-4", file.extractionVersion === '3.0-llamaparse' ? "text-success" : "text-muted-foreground")} />}
                                                                         </Button>
                                                                         <Button
                                                                             variant="ghost"
@@ -1723,7 +1727,7 @@ export default function CoreLibraryAdmin() {
                                                                         >
                                                                             {indexing[file.id]
                                                                                 ? <Loader2 className="h-4 w-4 animate-spin" />
-                                                                                : <Database className={cn("h-4 w-4", file.indexingStatus === 'ready' ? "text-indigo-600" : "text-muted-foreground")} />}
+                                                                                : <Database className={cn("h-4 w-4", file.indexingStatus === 'ready' ? "text-primary" : "text-muted-foreground")} />}
                                                                         </Button>
                                                                         <Button
                                                                             variant="ghost"
@@ -1761,7 +1765,7 @@ export default function CoreLibraryAdmin() {
                     <div className="text-center text-muted-foreground">
                         <Database className="h-10 w-10 mx-auto mb-3 opacity-20" />
                         <p className="font-medium text-foreground">Ningún Store Seleccionado</p>
-                        <p className="text-sm mt-1">Selecciona un store de la izquierda para ver y gestionar sus documentos.</p>
+                        <p className="text-sm mt-1">Selecciona un store en la barra superior para ver y gestionar sus documentos.</p>
                     </div>
                 </div>
             )}
@@ -1798,6 +1802,66 @@ export default function CoreLibraryAdmin() {
                 onOpenChange={setIsAuditOpen}
                 availableStores={storeContexts.map(c => ({ key: c.key, displayName: c.name }))}
             />
+
+            {/* Edit Document Metadata Dialog */}
+            <Dialog open={editDocOpen} onOpenChange={(open) => { if (!open) { setEditDocOpen(false); setEditingDocId(null); } }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Editar metadata del documento</DialogTitle>
+                        <DialogDescription>
+                            Corrige el título y autor si fueron extraídos incorrectamente. No afecta el contenido indexado.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSaveDocMetadata} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="editDocTitle">Título <span className="text-destructive">*</span></Label>
+                            <Input
+                                id="editDocTitle"
+                                value={editDocTitle}
+                                onChange={e => setEditDocTitle(e.target.value)}
+                                placeholder="Título del documento"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="editDocAuthor">Autor</Label>
+                            <Input
+                                id="editDocAuthor"
+                                value={editDocAuthor}
+                                onChange={e => setEditDocAuthor(e.target.value)}
+                                placeholder="Nombre del autor"
+                            />
+                        </div>
+                        <div className="flex items-start justify-between gap-4 rounded-lg border p-4 bg-muted/30">
+                            <div className="space-y-1 flex-1 min-w-0">
+                                <Label htmlFor="editDocPubliclyCitable" className="text-sm font-semibold">
+                                    Citable públicamente
+                                </Label>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Activa este switch SOLO para material de dominio público (Calvino, Spurgeon,
+                                    Matthew Henry, patrística, Gesenius, etc.) o con licencia explícita firmada.
+                                    Cuando está apagado, los usuarios regulares NO ven las citas de este documento
+                                    aunque se use para RAG interno.
+                                </p>
+                            </div>
+                            <Switch
+                                id="editDocPubliclyCitable"
+                                checked={editDocPubliclyCitable}
+                                onCheckedChange={setEditDocPubliclyCitable}
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setEditDocOpen(false)} disabled={isSavingDoc}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={isSavingDoc}>
+                                {isSavingDoc && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Guardar
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Edit Store Dialog */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -1941,9 +2005,9 @@ export default function CoreLibraryAdmin() {
                                         required
                                     />
                                     {fileSizeWarning && (
-                                        <Alert variant="destructive" className="bg-amber-50 border-amber-200 py-2">
-                                            <AlertTriangle className="h-3 w-3 text-amber-600" />
-                                            <AlertDescription className="text-amber-700 text-xs">
+                                        <Alert variant="destructive" className="bg-warning/5 border-warning/30 py-2">
+                                            <AlertTriangle className="h-3 w-3 text-warning" />
+                                            <AlertDescription className="text-warning text-xs">
                                                 Archivo &gt;50MB: calidad reducida o posible rechazo de la API de IA.
                                             </AlertDescription>
                                         </Alert>

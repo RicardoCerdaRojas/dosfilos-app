@@ -24,7 +24,7 @@ import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { ProjectEditDialog } from './ProjectEditDialog';
-import { type AIProject, type SermonPersonalization } from '@dosfilos/domain';
+import { type AIProject, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
 
 // ── Extraction type-to-key mapping ───────────────────────────────────────────
@@ -70,8 +70,15 @@ export function FacultyChatPage() {
     const isSending = isOrchestrating;
 
     // ── Agent context for new sessions ───────────────────────────────────────
-    const agentNameForNew = searchParams.get('agentName') ?? 'Orquestador de Tutores';
+    const agentNameForNew = searchParams.get('agentName') ?? t('header.orchestratorFallbackName');
     const agentIdForNew = searchParams.get('agent') ?? '';
+    /**
+     * When the user lands here from a project workspace (link
+     * `/dashboard/faculty?projectId=...`), we propagate that id into the new
+     * session so the orchestrator scopes RAG to the project's `sourceIds` and
+     * injects `contextNote` into every message.
+     */
+    const projectIdForNew = searchParams.get('projectId') ?? undefined;
 
     // ── Local state ──────────────────────────────────────────────────────────
     const [input, setInput] = useState('');
@@ -79,7 +86,7 @@ export function FacultyChatPage() {
         () => localStorage.getItem('faculty-sidebar') !== 'false'
     );
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
-    const [lengthPreference, setLengthPreference] = useState<'concise' | 'detailed'>('detailed');
+    const [lengthPreference, setLengthPreference] = useState<ResponseMode>('auto');
     const [extractedContent, setExtractedContent] = useState<{ title: string; markdown: string } | null>(null);
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
     const [extractingType, setExtractingType] = useState<string | null>(null);
@@ -115,21 +122,31 @@ export function FacultyChatPage() {
     useEffect(() => { scrollToBottom(); }, [streamingMessage, session?.messages]);
 
     // ── Auto-send initial question from ?q= ──────────────────────────────────
+    // The key combines route + question so a second visit to `/new?q=...` with
+    // a DIFFERENT question is not blocked by an earlier success on the same
+    // route. React Router reuses this component instance between `/faculty/new`
+    // and `/faculty/{id}`, so a per-route key alone (the previous design)
+    // misfires after the first auto-send because the ref persists.
     const hasAutoSent = useRef<Record<string, boolean>>({});
 
     useEffect(() => {
         const initialQuestion = searchParams.get('q');
-        const sessionKey = effectiveSessionId || 'new';
+        if (!initialQuestion) return;
+        const sessionKey = `${effectiveSessionId || 'new'}::${initialQuestion}`;
 
-        if (initialQuestion && !hasAutoSent.current[sessionKey] && !isSending && !isStreaming) {
+        if (!hasAutoSent.current[sessionKey] && !isSending && !isStreaming) {
             hasAutoSent.current[sessionKey] = true;
 
             const handleInitialQuestion = async () => {
                 if (isNewSession) {
                     const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
-                    if (!targetAgentId) return;
+                    if (!targetAgentId) {
+                        // Agents not loaded yet — let useEffect re-fire when they are.
+                        hasAutoSent.current[sessionKey] = false;
+                        return;
+                    }
                     try {
-                        const newSession = await createSession.mutateAsync({ agentId: targetAgentId });
+                        const newSession = await createSession.mutateAsync({ agentId: targetAgentId, projectId: projectIdForNew });
                         navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(initialQuestion)}`, { replace: true });
                         return;
                     } catch (err) {
@@ -181,7 +198,7 @@ export function FacultyChatPage() {
             const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
             if (!targetAgentId) { setInput(userMsg); return; }
             try {
-                const newSession = await createSession.mutateAsync({ agentId: targetAgentId });
+                const newSession = await createSession.mutateAsync({ agentId: targetAgentId, projectId: projectIdForNew });
                 navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
             } catch (err) {
                 console.error('Failed to create session:', err);
@@ -258,7 +275,11 @@ export function FacultyChatPage() {
                     isLoading={isLoadingSessions}
                     renameConfirmId={renameConfirmId}
                     onToggle={toggleSidebar}
-                    onNewConversation={() => navigate('/dashboard/faculty/new')}
+                    onNewConversation={() => navigate(
+                        projectIdForNew
+                            ? `/dashboard/faculty/new?projectId=${projectIdForNew}`
+                            : '/dashboard/faculty/new'
+                    )}
                     onNewProject={() => setProjectDialog({ mode: 'create' })}
                     onNavigateSession={(id) => navigate(`/dashboard/faculty/${id}`)}
                     onDeleteSession={(id) => setDeleteConfirmId(id)}

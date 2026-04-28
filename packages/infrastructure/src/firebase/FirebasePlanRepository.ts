@@ -40,19 +40,22 @@ export class FirebasePlanRepository implements IPlanRepository {
     }
 
     async getByStripePriceId(priceId: string): Promise<PlanDefinition | null> {
-        const q = query(
-            collection(db, this.plansCollection),
-            where('stripeProductIds', 'array-contains', priceId)
-        );
-
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            return null;
-        }
-
-        const doc = querySnapshot.docs[0];
-        return this.mapToPlanDefinition(doc.id, doc.data());
+        // Iterate the (small) plans collection in memory rather than juggling
+        // two Firestore queries against the new `stripePriceIds.{monthly,yearly}`
+        // shape. With at most a handful of paid plans the cost is negligible
+        // and the code stays simple. We also fall back to the legacy
+        // `stripeProductIds` array so docs that haven't been migrated yet keep
+        // resolving.
+        const allPlans = await this.getAll();
+        const match = allPlans.find(p => {
+            if (p.stripePriceIds?.monthly === priceId) return true;
+            if (p.stripePriceIds?.yearly === priceId) return true;
+            // Legacy shape — coerced into stripePriceIds.monthly by mapToPlanDefinition,
+            // but a doc may still carry the raw array if it was written by older code.
+            const legacy = (p as any).stripeProductIds as string[] | undefined;
+            return Array.isArray(legacy) && legacy.includes(priceId);
+        });
+        return match ?? null;
     }
 
     async getTranslations(planId: string, locale: string): Promise<PlanTranslation | null> {
@@ -100,7 +103,7 @@ export class FirebasePlanRepository implements IPlanRepository {
                 monthly: data.pricing?.monthly ?? 0,
                 yearly: data.pricing?.yearly ?? 0,
             },
-            stripeProductIds: data.stripeProductIds ?? [],
+            stripePriceIds: this.coerceStripePriceIds(data),
             isActive: data.isActive ?? false,
             isPublic: data.isPublic ?? true,
             isLegacy: data.isLegacy ?? false,
@@ -108,6 +111,26 @@ export class FirebasePlanRepository implements IPlanRepository {
             sortOrder: data.sortOrder ?? 0,
             createdAt: data.createdAt?.toDate() ?? new Date(),
             updatedAt: data.updatedAt?.toDate() ?? new Date(),
+        };
+    }
+
+    /**
+     * Reads either the new `stripePriceIds: { monthly, yearly? }` shape or the
+     * legacy `stripeProductIds: string[]` and returns the canonical labelled
+     * shape. Legacy docs collapse to `{ monthly: <first id> }` because the old
+     * code path also returned `[0]` — same default behavior.
+     */
+    private coerceStripePriceIds(data: any): { monthly: string; yearly?: string } {
+        if (data.stripePriceIds && typeof data.stripePriceIds === 'object' && data.stripePriceIds.monthly) {
+            return {
+                monthly: data.stripePriceIds.monthly,
+                ...(data.stripePriceIds.yearly && { yearly: data.stripePriceIds.yearly }),
+            };
+        }
+        const legacy = Array.isArray(data.stripeProductIds) ? data.stripeProductIds : [];
+        return {
+            monthly: legacy[0] ?? '',
+            ...(legacy[1] && { yearly: legacy[1] }),
         };
     }
 }

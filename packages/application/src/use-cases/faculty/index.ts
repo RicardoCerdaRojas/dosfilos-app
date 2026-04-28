@@ -9,6 +9,8 @@ export * from './GetFacultyAgentsUseCase';
 export * from './CreateProjectUseCase';
 export * from './UpdateProjectUseCase';
 export * from './DeleteProjectUseCase';
+export * from './SetProjectArchivedUseCase';
+export * from './SetProjectDeletedUseCase';
 export * from './DeleteChatSessionUseCase';
 export * from './GenerateProjectContextUseCase';
 export * from './GetUserProjectsUseCase';
@@ -16,3 +18,5 @@ export * from './UpdateSessionProjectUseCase';
 export * from './RenameChatSessionUseCase';
 export * from './DeleteChatMessageUseCase';
 export * from './ProcessMicroActionUseCase';
+// Project outputs
+export * from './ProjectOutputUseCases';

@@ -1,5 +1,6 @@
 import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySelector } from '@dosfilos/infrastructure';
-import { ChatMessage, WorkflowPhase, LibraryResourceEntity, DocumentChunkEntity, CoachingStyle } from '@dosfilos/domain';
+import { WorkflowPhase, LibraryResourceEntity, DocumentChunkEntity, CoachingStyle } from '@dosfilos/domain';
+import { ChatMessage } from '@dosfilos/domain/src/entities/SermonWorkflow';
 
 // Type for sources info to display in UI
 export interface SourceReference {

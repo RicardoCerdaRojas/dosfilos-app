@@ -3,44 +3,25 @@ import {
     IAIGeneratorService,
     AIAgent,
     AIChatMessage,
-    SourceReference
+    SourceReference,
+    ResponseMode,
+    DEFAULT_LANGUAGE,
+    resolveLocalized,
 } from '@dosfilos/domain';
+import type { SupportedLanguage } from '@dosfilos/domain';
+import {
+    getGlobalBehaviorPrompt,
+    getModeInstruction,
+    getLanguageDirective,
+} from './prompts/geminiMultiAgentPrompts';
 
 export class GeminiMultiAgentService implements IAIGeneratorService {
     private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    private readonly GLOBAL_BEHAVIOR_PROMPT = `
-Eres un tutor experto en formación teológica y pastoral. Tu objetivo es ayudar al usuario de forma clara y precisa.
-
-REGLA DE INTERACCIÓN (APLICA SOLO A MENSAJES CLARAMENTE INCOMPLETOS):
-Si el mensaje del usuario es una frase inacabada o contiene menos de 5 palabras sin un tema identificable, pide amablemente que complete la pregunta.
-NO apliques esta regla a preguntas bien formadas, aunque sean similares a mensajes anteriores, o de seguimiento.
-
-REGLA DE FORMATO:
-NO incluyas tu nombre, cargo ni especialidad como encabezado en tus respuestas. Comienza directamente con el contenido.
-
-USO DEL CONTEXTO RECUPERADO Y CITACIÓN:
-
-1. Cuando tu respuesta incluya "CONTEXTO RECUPERADO" al inicio, ese es tu MATERIAL PRIMARIO. Úsalo para construir la respuesta.
-   Cada fuente aparece con un encabezado del tipo:
-     [Fuente N: Autor, "Título", p. N, § Sección]
-   seguido del texto del fragmento.
-
-2. Cuando cites en tu respuesta, usa el formato: (Autor, "Título", p. N)
-   Ejemplo: "El aoristo indicativo presenta la acción como completa (Wallace, "Gramática Griega", p. 608)."
-   Si no hay página disponible, omítela: (Autor, "Título").
-
-3. NUNCA te cites a ti mismo. Tú eres un TUTOR, no una fuente bibliográfica.
-   PROHIBIDO: "(Dr. Berith, Exégesis Hebrea)", "(Pastor Noutético)".
-
-4. NUNCA inventes autores o títulos. Solo cita lo que aparece LITERALMENTE en los encabezados [Fuente N: ...].
-
-5. Cuando una idea provenga de tu conocimiento general (no del contexto recuperado), indícalo con: "Según la tradición teológica..." o "Los comentaristas clásicos sostienen...". No uses nombres específicos en ese caso.
-
-6. Si el CONTEXTO RECUPERADO está vacío o no es relevante a la pregunta, responde desde tu conocimiento general y declara: "Basado en conocimiento teológico general..."
-
-Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
+    // System prompts (es/en) live in ./prompts/geminiMultiAgentPrompts.ts so
+    // each language variant can be edited side-by-side without touching service
+    // logic. See `getGlobalBehaviorPrompt()` and `getModeInstruction()`.
 
     constructor(apiKey: string, modelName?: string) {
         this.genAI = new GoogleGenerativeAI(apiKey);
@@ -54,16 +35,36 @@ Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
         }));
     }
 
-    private getInstructionWithPreference(agentInstruction: string, preference?: 'concise' | 'detailed'): string {
-        let fullInstruction = `${this.GLOBAL_BEHAVIOR_PROMPT}\n\nINSTRUCCIONES ESPECÍFICAS DEL ESPECIALISTA:\n${agentInstruction}`;
+    /**
+     * Builds the full system instruction for a request:
+     *   1. Localized global behavior prompt (citation rules, callout taxonomy,
+     *      Hebrew ortography, ideal-response example).
+     *   2. Defense-in-depth language directive (forces output language even
+     *      when the agent's personality prompt is authored only in Spanish).
+     *   3. The agent's resolved `systemInstruction` (es/en variant).
+     *   4. Optional response-mode instruction (concise / detailed / academic …).
+     *
+     * Steps 1, 2 and 4 are localized; step 3 falls back to Spanish via
+     * `resolveLocalized` when the agent doesn't have an EN variant yet.
+     */
+    private buildSystemInstruction(
+        agent: AIAgent,
+        preference: ResponseMode | undefined,
+        language: SupportedLanguage,
+    ): string {
+        const agentInstruction = resolveLocalized(agent.systemInstruction, language);
+        const sections: string[] = [
+            getGlobalBehaviorPrompt(language),
+            getLanguageDirective(language),
+            language === 'en'
+                ? `SPECIALIST-SPECIFIC INSTRUCTIONS:\n${agentInstruction}`
+                : `INSTRUCCIONES ESPECÍFICAS DEL ESPECIALISTA:\n${agentInstruction}`,
+        ];
 
-        if (preference === 'concise') {
-            fullInstruction += `\n\nPREFERENCIA DE FORMATO: El usuario ha solicitado una respuesta CONCISA. Sé breve, directo y ve al grano, enfocándote solo en lo esencial.`;
-        } else if (preference === 'detailed') {
-            fullInstruction += `\n\nPREFERENCIA DE FORMATO: El usuario ha solicitado una respuesta DETALLADA. Proporciona una explicación exhaustiva, con abundante contexto, ejemplos y análisis profundo.`;
-        }
+        const modeInstruction = getModeInstruction(preference, language);
+        if (modeInstruction) sections.push(modeInstruction);
 
-        return fullInstruction;
+        return sections.join('\n\n');
     }
 
     async sendMessageStream(
@@ -71,15 +72,17 @@ Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
         history: AIChatMessage[],
         message: string,
         onChunk: (text: string) => void,
-        lengthPreference?: 'concise' | 'detailed',
+        lengthPreference?: ResponseMode,
         onSources?: (sources: SourceReference[]) => void,
-        retrievedContext?: string
+        retrievedContext?: string,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<string> {
         const usingPhase2RAG = !!retrievedContext;
+        const agentName = resolveLocalized(agent.name, language);
 
         const options: any = {
             model: this.modelName,
-            systemInstruction: this.getInstructionWithPreference(agent.systemInstruction, lengthPreference),
+            systemInstruction: this.buildSystemInstruction(agent, lengthPreference, language),
             generationConfig: {
                 thinkingConfig: { thinkingBudget: 0 }
             }
@@ -101,10 +104,13 @@ Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
             history: this.formatHistoryForGemini(history),
         });
 
-        // Prepend the retrieved context to the user's message so Gemini has
-        // the specific chunks + metadata it needs to cite accurately.
+        // Prepend the retrieved context to the user's message. Header text
+        // matches the language so the model parses the Source-N markers under
+        // the same locale as the rest of the system prompt.
         const finalMessage = usingPhase2RAG
-            ? `CONTEXTO RECUPERADO (usa esto como material primario y cita según indican los encabezados [Fuente N: ...]):\n\n${retrievedContext}\n\n---\n\nPREGUNTA DEL USUARIO: ${message}`
+            ? (language === 'en'
+                ? `RETRIEVED CONTEXT (use as primary material and cite per the [Source N: ...] headers):\n\n${retrievedContext}\n\n---\n\nUSER QUESTION: ${message}`
+                : `CONTEXTO RECUPERADO (usa esto como material primario y cita según indican los encabezados [Fuente N: ...]):\n\n${retrievedContext}\n\n---\n\nPREGUNTA DEL USUARIO: ${message}`)
             : message;
 
         const result = await chat.sendMessageStream(finalMessage);
@@ -125,7 +131,7 @@ Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
         if (!usingPhase2RAG && agent.corpusIds && agent.corpusIds.length > 0) {
             try {
                 const finalResponse = await result.response;
-                const sources = this.extractSourcesFromResponse(finalResponse, agent.name);
+                const sources = this.extractSourcesFromResponse(finalResponse, agentName);
                 if (sources.length > 0 && onSources) onSources(sources);
             } catch (err) {
                 console.warn('[GeminiMultiAgent] Could not extract grounding metadata (stream):', err);
@@ -218,12 +224,13 @@ Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
         agent: AIAgent,
         history: AIChatMessage[],
         message: string,
-        lengthPreference?: 'concise' | 'detailed',
-        enableThinking?: boolean
+        lengthPreference?: ResponseMode,
+        enableThinking?: boolean,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<string> {
         const options: any = {
             model: this.modelName,
-            systemInstruction: this.getInstructionWithPreference(agent.systemInstruction, lengthPreference),
+            systemInstruction: this.buildSystemInstruction(agent, lengthPreference, language),
             generationConfig: enableThinking
                 ? {} // Let the model use its default thinking budget
                 : { thinkingConfig: { thinkingBudget: 0 } }
@@ -252,11 +259,13 @@ Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
         agent: AIAgent,
         history: AIChatMessage[],
         message: string,
-        lengthPreference?: 'concise' | 'detailed'
+        lengthPreference?: ResponseMode,
+        language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<{ response: string; sources: SourceReference[] }> {
+        const agentName = resolveLocalized(agent.name, language);
         const options: any = {
             model: this.modelName,
-            systemInstruction: this.getInstructionWithPreference(agent.systemInstruction, lengthPreference),
+            systemInstruction: this.buildSystemInstruction(agent, lengthPreference, language),
             generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
         };
 
@@ -276,7 +285,7 @@ Mantén una actitud de mentoría, paciencia y servicio pastoral.`;
         let sources: SourceReference[] = [];
         if (agent.corpusIds && agent.corpusIds.length > 0) {
             try {
-                sources = this.extractSourcesFromResponse(response, agent.name);
+                sources = this.extractSourcesFromResponse(response, agentName);
             } catch (err) {
                 console.warn('[GeminiMultiAgent] Could not extract grounding (non-stream):', err);
             }

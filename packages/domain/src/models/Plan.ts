@@ -20,8 +20,11 @@ export interface Plan {
     modules: string[];
     limits: Record<string, number>;
 
-    // Stripe integration
-    stripeProductIds: string[];
+    // Stripe integration — see PlanDefinition for full doc.
+    stripePriceIds: {
+        monthly: string;
+        yearly?: string;
+    };
 
     // Display and ordering
     sortOrder: number;

@@ -1,12 +1,13 @@
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
 import { getStorage } from 'firebase-admin/storage';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
+import { recordLlamaParseUsage, selectLlamaParseAccount } from './llamaParseAccountSelector';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
@@ -23,10 +24,6 @@ const getApiKey = (): string => {
         throw new Error('GEMINI_API_KEY environment variable not set');
     }
     return apiKey;
-};
-
-const getLlamaParseKey = (): string | null => {
-    return process.env.LLAMAPARSE_API_KEY ?? null;
 };
 
 /**
@@ -239,7 +236,22 @@ export const extractPdfWithGemini = onObjectFinalized(
         // Storage triggers are capped at 540s. For very large PDFs that need more time,
         // use the reprocessWithLlamaParse callable (up to 3600s).
         timeoutSeconds: 540,
-        secrets: ['GEMINI_API_KEY', 'LLAMAPARSE_API_KEY'],
+        secrets: [
+            'GEMINI_API_KEY',
+            // Two free-tier LlamaParse accounts at launch:
+            //   - `LLAMAPARSE_API_KEY`         → account #1 (preserved from the
+            //     legacy single-account env so the existing prod key keeps
+            //     working untouched)
+            //   - `LLAMAPARSE_API_KEY_FREE_1`  → account #2 (added for
+            //     rotation capacity)
+            // Both are referenced from docs in the `llamaparseAccounts`
+            // Firestore collection via the `apiKeySecretEnv` field. To scale
+            // beyond 2 accounts, add the new secret name here and in
+            // `reprocessWithLlamaParse.ts`, then create the matching account
+            // doc in Firestore.
+            'LLAMAPARSE_API_KEY',
+            'LLAMAPARSE_API_KEY_FREE_1',
+        ],
     },
     async (event) => {
         const db = getFirestore();
@@ -313,21 +325,37 @@ export const extractPdfWithGemini = onObjectFinalized(
             let extractionVersion: string;
             let structuredMarkdown: string | null = null;
 
-            const llamaKey = getLlamaParseKey();
-            const canUseLlamaParse = llamaKey && stats.size <= MAX_LLAMAPARSE_FILE_SIZE;
+            // Pick a LlamaParse account from the multi-account pool (Hito 6).
+            // null when no account configured / has capacity → skip to Gemini.
+            let llamaSelected: Awaited<ReturnType<typeof selectLlamaParseAccount>> | null = null;
+            try {
+                if (stats.size <= MAX_LLAMAPARSE_FILE_SIZE) {
+                    llamaSelected = await selectLlamaParseAccount();
+                }
+            } catch (selectErr: any) {
+                console.warn(`⚠️ [Extract] No LlamaParse account available: ${selectErr.message}`);
+            }
+            const canUseLlamaParse = llamaSelected !== null;
 
             // Extraction priority:
             //   1. LlamaParse (primary) — best structure/page preservation
             //   2. Gemini 2.0 Flash (fallback) — reliable text extraction
             //   3. pdf-parse (last resort) — local, free, basic
-            if (canUseLlamaParse) {
-                console.log(`🦙 [Extract] Using LlamaParse (primary path)`);
+            if (canUseLlamaParse && llamaSelected) {
+                const account = llamaSelected;
+                console.log(`🦙 [Extract] Using LlamaParse account ${account.accountId}`);
                 try {
-                    const result = await extractWithLlamaParse(tempFilePath, resourceId, llamaKey);
+                    const result = await extractWithLlamaParse(tempFilePath, resourceId, account.apiKey);
                     extractedText = result.text;
                     pageCount = result.pageCount;
                     structuredMarkdown = result.markdown;
                     extractionVersion = '3.0-llamaparse';
+                    // Record account usage. Non-fatal if it fails — billing is the source of truth.
+                    try {
+                        await recordLlamaParseUsage(account.accountId, result.pageCount);
+                    } catch (usageErr: any) {
+                        console.warn(`[Extract] Account usage update skipped: ${usageErr.message}`);
+                    }
                 } catch (llamaError) {
                     console.warn(`⚠️ [Extract] LlamaParse failed, falling back to Gemini:`, llamaError);
                     if (stats.size <= MAX_GEMINI_FILE_SIZE) {
@@ -429,6 +457,29 @@ export const extractPdfWithGemini = onObjectFinalized(
 
             await resourceRef.update(updateData);
             console.log(`✅ [Extract] Updated resource ${resourceId} (${extractionVersion}, status: ready)`);
+
+            // Increment the user's monthly pagesProcessed counter. Server-side so the
+            // client can't understate usage. Best-effort — logs but doesn't fail the
+            // extraction if the counter update errors.
+            try {
+                const now = new Date();
+                const periodKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+                const counterRef = db.doc(`users/${userId}/usage_counters/${periodKey}`);
+                await counterRef.set({
+                    userId,
+                    periodKey,
+                    pagesProcessed: FieldValue.increment(pageCount),
+                    docsUploadedThisMonth: FieldValue.increment(1),
+                    lastEventAt: now,
+                }, { merge: true });
+                const counterSnap = await counterRef.get();
+                if (!counterSnap.data()?.firstEventAt) {
+                    await counterRef.set({ firstEventAt: now }, { merge: true });
+                }
+                console.log(`📊 [Extract] Incremented usage: +${pageCount} pages, +1 doc for user ${userId.substring(0, 8)}...`);
+            } catch (counterErr) {
+                console.warn(`⚠️ [Extract] Failed to update usage counter:`, counterErr);
+            }
 
             // Cleanup temp file
             fs.unlinkSync(tempFilePath);
