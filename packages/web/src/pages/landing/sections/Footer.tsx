@@ -44,7 +44,7 @@ const LEGAL_LINKS: Array<[string, string]> = [
 
 const ACCOUNT_LINKS: Array<[string, string]> = [
     ['Iniciar sesión', '/login'],
-    ['Registrarse', '/register'],
+    ['Registrarse', '/pricing'],
 ];
 
 /** Landing page footer — logo, three link columns, copyright, and tagline. */

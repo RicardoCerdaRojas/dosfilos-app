@@ -77,7 +77,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                                 Iniciar sesión
                             </Button>
                         </Link>
-                        <Link to="/register">
+                        <Link to="/register?plan=free">
                             <Button className="bg-white text-slate-900 hover:bg-slate-200 text-[13px] font-medium h-8 rounded-md ml-1 px-3.5">
                                 Empezar gratis
                             </Button>
@@ -112,7 +112,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                             <Link to="/login" className="flex-1">
                                 <Button variant="ghost" className="w-full text-slate-300">Iniciar sesión</Button>
                             </Link>
-                            <Link to="/register" className="flex-1">
+                            <Link to="/register?plan=free" className="flex-1">
                                 <Button className="w-full bg-white text-slate-900">Empezar gratis</Button>
                             </Link>
                         </div>

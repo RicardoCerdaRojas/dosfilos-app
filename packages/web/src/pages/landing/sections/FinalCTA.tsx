@@ -24,14 +24,14 @@ export function FinalCTA() {
                         Empieza hoy. 30 días para probarlo sin costo.
                         Cancela antes del día 30 y no pagarás nada.
                     </p>
-                    <Link to="/register">
+                    <Link to="/pricing">
                         <Button className="bg-white text-slate-900 hover:bg-slate-200 h-12 px-7 rounded-md text-[14px] font-medium gap-1.5">
                             Empezar 30 días gratis
                             <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                     </Link>
                     <p className="text-[12px] text-slate-500 mt-6">
-                        Sin tarjeta al registrarte · Cancela cuando quieras
+                        Sin compromiso · Cancela cuando quieras
                     </p>
                 </Reveal>
             </div>
