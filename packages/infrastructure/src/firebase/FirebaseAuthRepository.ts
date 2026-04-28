@@ -4,6 +4,7 @@ import {
     signOut as firebaseSignOut,
     updateProfile as firebaseUpdateProfile,
     sendPasswordResetEmail,
+    sendEmailVerification,
     signInWithPopup,
     GoogleAuthProvider,
     User as FirebaseUser,
@@ -88,7 +89,30 @@ export class FirebaseAuthRepository implements IAuthRepository {
         // updateProfile mutates the in-memory user but `mapFirebaseUserToEntity`
         // reads the value at call time, so reload to be safe across SDK versions.
         await credential.user.reload();
+
+        // Send the verification email. Failures here are non-fatal — the user
+        // can resend from /auth/verify-email if the first send drops. We don't
+        // want a Resend hiccup to block the signup itself.
+        sendEmailVerification(credential.user).catch(err => {
+            console.warn('[Auth] sendEmailVerification failed at signup:', err);
+        });
+
         return this.mapFirebaseUserToEntity(credential.user);
+    }
+
+    /**
+     * Resends the email-verification link to the currently signed-in user.
+     * Used by the verify-email page when the original email got lost.
+     */
+    async resendVerificationEmail(): Promise<void> {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('No user is currently signed in');
+        }
+        if (user.emailVerified) {
+            throw new Error('Email already verified');
+        }
+        await sendEmailVerification(user);
     }
 
     async signOut(): Promise<void> {

@@ -98,7 +98,10 @@ export function RegisterPage() {
     if (!selectedPlan) return;
     setIsLoading(true);
 
-    // ── Free path: skip Stripe entirely ──────────────────────────────────
+    // ── Free path: skip Stripe, then gate on email verification ──────────
+    // Auth user gets created and a verification email is sent. The user
+    // lands on /auth/verify-email and must click the link before
+    // ProtectedRoute lets them into /dashboard. Closes the bot/typo loophole.
     if (isFree) {
       try {
         await authService.registerFree({
@@ -108,7 +111,7 @@ export function RegisterPage() {
           locale: i18n.language as 'en' | 'es',
         });
         toast.success(t('register.freeSuccess', { defaultValue: '¡Cuenta creada!' }));
-        navigate('/dashboard');
+        navigate('/auth/verify-email', { replace: true });
       } catch (error: any) {
         console.error('Free signup error:', error);
         toast.error(error?.message ?? t('register.errors.signupFailed', { defaultValue: 'Error al crear la cuenta' }));

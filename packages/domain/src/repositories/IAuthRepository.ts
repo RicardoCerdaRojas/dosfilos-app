@@ -8,6 +8,7 @@ export interface IAuthRepository {
         password: string,
         displayName: string,
     ): Promise<UserEntity>;
+    resendVerificationEmail(): Promise<void>;
     signOut(): Promise<void>;
     getCurrentUser(): Promise<UserEntity | null>;
     updateProfile(displayName: string, photoURL?: string): Promise<UserEntity>;

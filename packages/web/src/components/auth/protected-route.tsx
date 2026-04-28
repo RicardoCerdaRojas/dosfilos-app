@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useFirebase } from '@/context/firebase-context';
 
 interface ProtectedRouteProps {
@@ -8,6 +8,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useFirebase();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -22,6 +23,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Email-verification gate: Free signups must verify before reaching the
+  // dashboard. Paid users come in pre-verified via completeRegistration so
+  // they skip this entirely. The verify-email page itself is exempt to
+  // avoid an infinite redirect loop.
+  if (!user.emailVerified && location.pathname !== '/auth/verify-email') {
+    return <Navigate to="/auth/verify-email" replace />;
   }
 
   return <>{children}</>;
