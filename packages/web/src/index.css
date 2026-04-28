@@ -60,8 +60,12 @@
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
-    /* Primary - Azul profundo (confianza, espiritualidad) */
-    --primary: 221 83% 53%;
+    /* Primary — Indigo (more editorial than pure blue, warmer for the
+       ministry audience). Hex equivalent: #4f46e5 (Tailwind indigo-600).
+       The landing was already built around indigo; promoting it to the
+       theme primary unifies CTAs, badges, focus rings, and the dashboard
+       under one brand colour. */
+    --primary: 244 76% 59%;
     --primary-foreground: 210 40% 98%;
 
     /* Secondary - Dorado (sabiduría, divinidad) */
@@ -89,7 +93,7 @@
     --input: 214 32% 91%;
 
     /* Ring */
-    --ring: 221 83% 53%;
+    --ring: 244 76% 59%;
 
     /* Destructive */
     --destructive: 0 84% 60%;
@@ -156,7 +160,7 @@
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --primary: 221 83% 53%;
+    --primary: 244 76% 59%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 45 93% 47%;
@@ -177,7 +181,7 @@
     --border: 217 33% 17%;
     --input: 217 33% 17%;
 
-    --ring: 221 83% 53%;
+    --ring: 244 76% 59%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
@@ -220,7 +224,7 @@
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
-    --primary: 221 83% 53%;
+    --primary: 244 76% 59%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 45 93% 47%;
@@ -241,7 +245,7 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
 
-    --ring: 221 83% 53%;
+    --ring: 244 76% 59%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
