@@ -84,6 +84,16 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
             model: this.modelName,
             systemInstruction: this.buildSystemInstruction(agent, lengthPreference, language),
             generationConfig: {
+                // Hard ceiling on output. Gemini 2.5 Flash with no cap has been
+                // observed degenerating into token-repetition loops mid-table
+                // (a markdown separator row repeating hundreds of times). 8192
+                // is enough for a long detailed answer with a sourced table.
+                maxOutputTokens: 8192,
+                // Default (~1.0) was prone to the same loop. 0.7 keeps answers
+                // varied without enabling runaway sampling, and topP narrows
+                // the nucleus enough to cut off the repetition basin.
+                temperature: 0.7,
+                topP: 0.95,
                 thinkingConfig: { thinkingBudget: 0 }
             }
         };

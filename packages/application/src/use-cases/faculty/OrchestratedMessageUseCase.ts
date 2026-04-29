@@ -97,6 +97,16 @@ function cleanCitations(text: string, agentNames: string[] = []): string {
     out = out.replace(/[ \t]+([.,;:])/g, '$1');        // remove space before punctuation (not newlines)
     out = out.replace(/\.{2,}/g, '.');                  // repeated dots
     out = out.replace(/\n{3,}/g, '\n\n');              // max 2 consecutive newlines (preserves paragraphs)
+    // 6) Markdown table degeneration — Gemini occasionally enters a token
+    //    repetition loop on a table separator row, emitting hundreds of
+    //    `|:----- |:----- |` lines (or a single row of thousands of dashes).
+    //    Generation-config caps prevent it now, but if anything slips through
+    //    we collapse the run so the table still renders as a table.
+    //    Repeated separator rows: keep just the first.
+    out = out.replace(/(\|[\s:|-]+\|\s*\n)(?:\|[\s:|-]+\|\s*\n){2,}/g, '$1');
+    //    Runaway dash row: any single line with 80+ consecutive dashes is
+    //    almost certainly a degeneration — truncate to a sane separator.
+    out = out.replace(/^[-]{80,}$/gm, '---');
     return out.trim();
 }
 
