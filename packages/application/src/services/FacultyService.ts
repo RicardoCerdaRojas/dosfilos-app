@@ -63,6 +63,7 @@ class FacultyService {
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
         const modelId = (import.meta as any).env?.VITE_GEMINI_MODEL_ID || 'gemini-2.5-flash';
+        const visionModelId = (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
 
         if (!apiKey) {
             console.warn('Gemini API key not configured. Faculty AI features will be disabled.');
@@ -71,7 +72,7 @@ class FacultyService {
         const agentRepository = new FirestoreAIAgentRepository();
         const chatRepository = new FirestoreAIChatRepository();
         const projectRepository = new FirestoreAIProjectRepository();
-        const generatorService = new GeminiMultiAgentService(apiKey || '', modelId);
+        const generatorService = new GeminiMultiAgentService(apiKey || '', modelId, visionModelId);
 
         this.createSession = new CreateChatSessionUseCase(agentRepository, chatRepository);
         this.getHistory = new GetChatHistoryUseCase(chatRepository);

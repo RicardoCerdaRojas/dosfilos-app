@@ -60,7 +60,8 @@
             "remove": "Remove image",
             "dropHere": "Drop the image here",
             "unsupportedType": "Only images are allowed (jpg, png, webp).",
-            "tooLarge": "Image is too large. Max 5 MB."
+            "tooLarge": "Image is too large. Max 5 MB.",
+            "ocrHint": "Tip: for Hebrew or Greek words, pasting the text directly gives better accuracy than sending the image."
         }
     },
     "bibliography": {

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Send, Loader2, Paperclip, X, ImageIcon } from 'lucide-react';
+import { Send, Loader2, Paperclip, X, ImageIcon, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -145,7 +145,7 @@ export function FacultyChatInput({
                     )}
                 >
                     {attachment && previewUrl && (
-                        <div className="px-4 pt-3">
+                        <div className="px-4 pt-3 space-y-2">
                             <div className="inline-flex items-start gap-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 p-2 pr-3">
                                 <img
                                     src={previewUrl}
@@ -165,6 +165,13 @@ export function FacultyChatInput({
                                 >
                                     <X className="h-3.5 w-3.5" />
                                 </button>
+                            </div>
+                            <div
+                                role="note"
+                                className="flex items-start gap-2 rounded-lg border border-info/30 bg-info-subtle px-3 py-2 text-[12px] leading-snug text-info-subtle-foreground"
+                            >
+                                <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+                                <span>{t('chat.attachment.ocrHint')}</span>
                             </div>
                         </div>
                     )}
