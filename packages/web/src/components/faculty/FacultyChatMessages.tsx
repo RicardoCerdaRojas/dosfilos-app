@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap, Copy } from 'lucide-react';
+import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap, Copy, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,6 +11,12 @@ import { extractCitations, CitationSup, Bibliography, wrapLanguageRuns, transfor
 import { useModeMeta } from './FacultyChatHeader';
 import { useAuthorization } from '@/hooks/useAuthorization';
 
+interface AttachmentMeta {
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+}
+
 interface ChatMessage {
     id: string;
     role: 'user' | 'assistant' | 'system';
@@ -18,6 +24,13 @@ interface ChatMessage {
     sources?: SourceReference[];
     modeUsed?: ConcreteResponseMode;
     modeWasAuto?: boolean;
+    attachments?: AttachmentMeta[];
+}
+
+function formatAttachmentSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /**
@@ -200,7 +213,26 @@ export function FacultyChatMessages({
                         )}
                     >
                         {msg.role === 'user' ? (
-                            <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                            <>
+                                {msg.content && (
+                                    <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                                )}
+                                {msg.attachments && msg.attachments.length > 0 && (
+                                    <div className={cn("flex flex-wrap gap-1.5", msg.content ? "mt-2" : "")}>
+                                        {msg.attachments.map((att, idx) => (
+                                            <span
+                                                key={idx}
+                                                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/20 transition-colors px-2.5 py-1 text-[12px]"
+                                                title={`${att.filename} · ${formatAttachmentSize(att.sizeBytes)}`}
+                                            >
+                                                <Paperclip className="h-3 w-3 opacity-80" />
+                                                <span className="truncate max-w-[200px]">{att.filename}</span>
+                                                <span className="opacity-70">· {formatAttachmentSize(att.sizeBytes)}</span>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <>
                                 <AssistantMessageContent content={msg.content} sources={msg.sources} isAdmin={isAdmin} />

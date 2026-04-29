@@ -379,6 +379,27 @@ Ver [PRICING_PROCESSING_ROADMAP.md](./PRICING_PROCESSING_ROADMAP.md) para detall
 | `canCreateProject` para Free | 5.2 | 1 hora | Usuarios free crean proyectos sin sentido |
 | Email alert al 90% LlamaParse | 6.1 | medio día | Admin debe revisar dashboard manualmente |
 | Sync con LlamaParse usage API | 6.2 | medio día | Drift entre nuestro contador y billing real |
+| Multimodal input en Faculty chat (imágenes) | F1 | medio día (MVP) – 2-3 días (full) | Limita análisis exegético a texto; usuarios no pueden compartir manuscritos, notas a mano, capturas de comentarios. |
+
+### F1 — Multimodal input en Faculty chat (imágenes)
+
+Permitir que el usuario adjunte imágenes a un mensaje del chat de Facultad. Gemini 2.5 Flash es nativamente multimodal — el bloqueo está solo en cliente y persistencia.
+
+**MVP (medio día):** 1 imagen por mensaje, máx 5MB, base64 inline en el request a Gemini. Solo se persiste el texto del mensaje y la respuesta del modelo (la imagen es efímera al exchange). UI: botón de attach + preview thumbnail + botón quitar + drag-and-drop.
+
+**Versión completa (2-3 días):** persistencia en Firebase Storage (`users/{uid}/chat-attachments/...`), thumbnails, soporte multi-archivo, también PDFs no-curated (subir y discutir un PDF puntual sin sumarlo a la library).
+
+**Casos de uso:**
+- Foto de manuscrito hebreo/griego → análisis morfológico (Dra. Alétheia)
+- Foto de nota a mano del sermón → transcripción / expansión
+- Captura de un comentario impreso → discusión en chat
+- Foto del pizarrón de un estudio bíblico → estructuración
+
+**Frentes técnicos:**
+1. UI: `FacultyChatInput.tsx` (attach button, preview, drag-drop)
+2. Domain: `AIChatMessage.content` debe aceptar `Part[]` o agregar `attachments: Attachment[]`
+3. Service: `GeminiMultiAgentService.sendMessageStream` debe aceptar `Part[]` en lugar de `message: string`
+4. Persistencia: decidir entre base64-en-Firestore (límite 1MB → mala idea para >1 imagen) vs Storage (correcto, requiere subida + URL)
 
 ## Hito 7 — Métricas + iteración (post-launch)
 

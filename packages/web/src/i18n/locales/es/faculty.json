@@ -54,7 +54,15 @@
         "inputLoading": "Cargando...",
         "selectingSpecialist": "Seleccionando especialista...",
         "deleteMessage": "Eliminar mensaje",
-        "inferredModeLabel": "Modo detectado:"
+        "inferredModeLabel": "Modo detectado:",
+        "attachment": {
+            "attach": "Adjuntar imagen",
+            "remove": "Quitar imagen",
+            "dropHere": "Suelta la imagen aquí",
+            "unsupportedType": "Solo se permiten imágenes (jpg, png, webp).",
+            "tooLarge": "La imagen es demasiado grande. Máximo 5 MB.",
+            "ocrHint": "Tip: para palabras en hebreo o griego, copiar y pegar el texto da mejor precisión que enviar la imagen."
+        }
     },
     "bibliography": {
         "title": "Bibliografía",

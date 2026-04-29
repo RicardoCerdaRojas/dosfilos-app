@@ -11,7 +11,7 @@ import {
     DEFAULT_LANGUAGE,
     resolveLocalized,
 } from '@dosfilos/domain';
-import type { SupportedLanguage } from '@dosfilos/domain';
+import type { SupportedLanguage, InlineAttachment, MessageAttachmentMeta } from '@dosfilos/domain';
 import { generateId } from '../../utils/generateId';
 import { CoreLibraryRAGService, RetrievedChunk, getRetrievalConfigForMode } from '../../services/CoreLibraryRAGService';
 
@@ -171,6 +171,8 @@ export class OrchestratedMessageUseCase {
         onSources?: (sources: SourceReference[]) => void,
         onModeInferred?: (mode: ConcreteResponseMode, wasAuto: boolean) => void,
         language: SupportedLanguage = DEFAULT_LANGUAGE,
+        attachments?: InlineAttachment[],
+        attachmentsMeta?: MessageAttachmentMeta[],
     ): Promise<{ response: string; selectedAgents: AIAgent[]; effectiveMode: ConcreteResponseMode }> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) throw new Error('Session not found');
@@ -207,7 +209,8 @@ export class OrchestratedMessageUseCase {
             id: generateId(),
             role: 'user',
             content: messageContent,
-            timestamp: new Date()
+            timestamp: new Date(),
+            ...(attachmentsMeta && attachmentsMeta.length > 0 && { attachments: attachmentsMeta }),
         };
 
         try {
@@ -419,6 +422,7 @@ export class OrchestratedMessageUseCase {
                     soloContext ? undefined : handleSources,  // Skip legacy sources if Phase 2 provides context
                     soloContext,
                     language,
+                    attachments,
                 );
             } else {
                 finalResponse = await this.generatorService.sendMessage(

@@ -38,6 +38,34 @@ const EXTRACTION_TITLE_KEYS: Record<string, string> = {
 };
 
 /**
+ * Reads a File as base64 (no `data:` URI prefix) and returns the inline
+ * payload Gemini expects plus the small metadata we persist alongside the
+ * user message so the bubble can show a "📎 photo.jpg · 2.4 MB" badge
+ * after reload. The binary itself is not stored.
+ */
+async function prepareAttachmentForSend(file: File): Promise<{
+    inline: { mimeType: string; data: string };
+    meta: { filename: string; mimeType: string; sizeBytes: number };
+}> {
+    const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            // FileReader returns "data:image/png;base64,iVBOR..." — strip
+            // the URI scheme so we hand Gemini just the base64 payload.
+            const result = String(reader.result ?? '');
+            const comma = result.indexOf(',');
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+        reader.readAsDataURL(file);
+    });
+    return {
+        inline: { mimeType: file.type || 'application/octet-stream', data },
+        meta: { filename: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size },
+    };
+}
+
+/**
  * Injects inline CSS into the rendered prose HTML so it survives a paste
  * into Word, Google Docs, or Notion. Those editors strip `class`
  * attributes but preserve inline `style="..."`, so tables would otherwise
@@ -123,6 +151,7 @@ export function FacultyChatPage() {
     const [deleteMessageConfirmId, setDeleteMessageConfirmId] = useState<string | null>(null);
     const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
     const [isZenMode, setIsZenMode] = useState(false);
+    const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
 
     // ── Scroll management ────────────────────────────────────────────────────
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -268,31 +297,85 @@ export function FacultyChatPage() {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isSending || isStreaming) return;
+        // Allow image-only sends — the model is multimodal so a question
+        // can live entirely in the picture (e.g. "what does this say?").
+        const hasAttachment = !!pendingAttachment;
+        if ((!input.trim() && !hasAttachment) || isSending || isStreaming) return;
 
         const userMsg = input;
+        const stagedAttachment = pendingAttachment;
         setInput('');
+        setPendingAttachment(null);
         userScrolledUp.current = false;
         scrollToBottom(true);
 
+        // Convert the file once up front so both the new-session path
+        // (which waits on createSession before sending) and the existing
+        // session path can reuse the same payload.
+        let inlineAndMeta: {
+            inline?: { mimeType: string; data: string };
+            meta?: { filename: string; mimeType: string; sizeBytes: number };
+        } = {};
+        if (stagedAttachment) {
+            try {
+                const prepared = await prepareAttachmentForSend(stagedAttachment);
+                inlineAndMeta = { inline: prepared.inline, meta: prepared.meta };
+                console.log('[FacultyChat] attachment ready:', {
+                    name: prepared.meta.filename,
+                    mime: prepared.meta.mimeType,
+                    bytes: prepared.meta.sizeBytes,
+                });
+            } catch (err) {
+                console.error('[FacultyChat] attachment encoding failed:', err);
+                toast.error(t('chat.attachment.tooLarge'));
+                setInput(userMsg);
+                setPendingAttachment(stagedAttachment);
+                return;
+            }
+        }
+
         if (isNewSession) {
             const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
-            if (!targetAgentId) { setInput(userMsg); return; }
+            if (!targetAgentId) {
+                setInput(userMsg);
+                if (stagedAttachment) setPendingAttachment(stagedAttachment);
+                return;
+            }
             try {
                 const newSession = await createSession.mutateAsync({ agentId: targetAgentId, projectId: projectIdForNew });
-                navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
+                // The auto-send path via `?q=` can't carry an attachment, so
+                // when there's a file we send directly here instead, then
+                // navigate to the canonical session URL afterwards.
+                if (inlineAndMeta.inline) {
+                    navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
+                    await sendOrchestratedMessage({
+                        message: userMsg,
+                        lengthPreference,
+                        attachments: [inlineAndMeta.inline],
+                        ...(inlineAndMeta.meta && { attachmentsMeta: [inlineAndMeta.meta] }),
+                    });
+                } else {
+                    navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
+                }
             } catch (err) {
                 console.error('Failed to create session:', err);
                 setInput(userMsg);
+                if (stagedAttachment) setPendingAttachment(stagedAttachment);
             }
             return;
         }
 
         try {
-            await sendOrchestratedMessage({ message: userMsg, lengthPreference });
+            await sendOrchestratedMessage({
+                message: userMsg,
+                lengthPreference,
+                ...(inlineAndMeta.inline && { attachments: [inlineAndMeta.inline] }),
+                ...(inlineAndMeta.meta && { attachmentsMeta: [inlineAndMeta.meta] }),
+            });
         } catch (error) {
             console.error('Failed to send message:', error);
             setInput(userMsg);
+            if (stagedAttachment) setPendingAttachment(stagedAttachment);
         }
     };
 
@@ -415,6 +498,8 @@ export function FacultyChatPage() {
                                     isHidden={isHomeState}
                                     onInputChange={setInput}
                                     onSubmit={handleSendMessage}
+                                    attachment={pendingAttachment}
+                                    onAttach={setPendingAttachment}
                                 />
                             </>
                         )}

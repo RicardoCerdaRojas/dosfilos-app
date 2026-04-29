@@ -8,7 +8,7 @@ import {
     DEFAULT_LANGUAGE,
     resolveLocalized,
 } from '@dosfilos/domain';
-import type { SupportedLanguage } from '@dosfilos/domain';
+import type { SupportedLanguage, InlineAttachment } from '@dosfilos/domain';
 import {
     getGlobalBehaviorPrompt,
     getModeInstruction,
@@ -18,14 +18,21 @@ import {
 export class GeminiMultiAgentService implements IAIGeneratorService {
     private genAI: GoogleGenerativeAI;
     private modelName: string;
+    private visionModelName: string;
 
     // System prompts (es/en) live in ./prompts/geminiMultiAgentPrompts.ts so
     // each language variant can be edited side-by-side without touching service
     // logic. See `getGlobalBehaviorPrompt()` and `getModeInstruction()`.
 
-    constructor(apiKey: string, modelName?: string) {
+    constructor(apiKey: string, modelName?: string, visionModelName?: string) {
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.modelName = modelName || 'gemini-2.5-flash';
+        // Pro has materially better vision than Flash. We pay the premium only
+        // when the request actually includes an image/PDF attachment; text-only
+        // turns continue to use Flash. Flash misreads vocalized Hebrew letters
+        // (e.g. confusing רֵיזְעֵק with לְהַזִּיק) which is unacceptable for
+        // exegesis. See `sendMessageStream` for the per-request swap.
+        this.visionModelName = visionModelName || 'gemini-2.5-pro';
     }
 
     private formatHistoryForGemini(history: AIChatMessage[]) {
@@ -76,11 +83,19 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
         onSources?: (sources: SourceReference[]) => void,
         retrievedContext?: string,
         language: SupportedLanguage = DEFAULT_LANGUAGE,
+        attachments?: InlineAttachment[],
     ): Promise<string> {
         const usingPhase2RAG = !!retrievedContext;
         const agentName = resolveLocalized(agent.name, language);
 
-        const generationConfig = {
+        const hasAttachments = !!(attachments && attachments.length > 0);
+        const modelForRequest = hasAttachments ? this.visionModelName : this.modelName;
+        // Gemini 2.5 Pro requires thinking mode (rejects `thinkingBudget: 0`),
+        // while Flash supports disabling it. We disable thinking on Flash to
+        // keep latency/cost low; on Pro we let it think (image reading benefits
+        // from the extra reasoning anyway).
+        const isProModel = /\bpro\b/i.test(modelForRequest);
+        const generationConfig: Record<string, unknown> = {
             // Hard ceiling on output. Gemini 2.5 Flash with no cap has been
             // observed degenerating into token-repetition loops mid-table
             // (a markdown separator row repeating thousands of times).
@@ -90,11 +105,13 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
             // the nucleus enough to cut off the repetition basin.
             temperature: 0.6,
             topP: 0.9,
-            thinkingConfig: { thinkingBudget: 0 },
         };
-        console.log('[GeminiMultiAgent.stream] generationConfig:', generationConfig);
+        if (!isProModel) {
+            generationConfig.thinkingConfig = { thinkingBudget: 0 };
+        }
+        console.log('[GeminiMultiAgent.stream] generationConfig:', generationConfig, 'model:', modelForRequest);
         const options: any = {
-            model: this.modelName,
+            model: modelForRequest,
             systemInstruction: this.buildSystemInstruction(agent, lengthPreference, language),
             generationConfig,
         };
@@ -124,7 +141,23 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
                 : `CONTEXTO RECUPERADO (usa esto como material primario y cita según indican los encabezados [Fuente N: ...]):\n\n${retrievedContext}\n\n---\n\nPREGUNTA DEL USUARIO: ${message}`)
             : message;
 
-        const result = await chat.sendMessageStream(finalMessage);
+        // Multimodal request: when the user attached images / PDFs, send
+        // them as `inlineData` parts alongside the text. The Gemini SDK
+        // accepts either a string or `Part[]` here; passing `Part[]` is
+        // what unlocks vision/document understanding.
+        const sendArg = attachments && attachments.length > 0
+            ? [
+                { text: finalMessage },
+                ...attachments.map(a => ({
+                    inlineData: { mimeType: a.mimeType, data: a.data },
+                })),
+            ]
+            : finalMessage;
+        if (attachments && attachments.length > 0) {
+            console.log('[GeminiMultiAgent.stream] sending with attachments:',
+                attachments.map(a => ({ mime: a.mimeType, bytes: a.data.length })));
+        }
+        const result = await chat.sendMessageStream(sendArg as any);
 
         let fullResponse = '';
         for await (const chunk of result.stream) {

@@ -12,6 +12,40 @@ export interface AIChatMessage {
     modeUsed?: ConcreteResponseMode;
     /** True when `modeUsed` was auto-inferred by the router (user picked 'auto'). */
     modeWasAuto?: boolean;
+    /**
+     * MVP multimodal: metadata of files the user attached when sending
+     * this message. The binary is NOT persisted — only enough to show
+     * "user shared photo.jpg" in the bubble after reload. The image
+     * itself travels inline to Gemini for the single exchange and is
+     * discarded thereafter.
+     */
+    attachments?: MessageAttachmentMeta[];
+}
+
+/**
+ * Metadata for a file the user attached to a chat message. The binary
+ * itself is NOT persisted in the MVP — it travels to the model as an
+ * inline part of the request and then the request is discarded. We keep
+ * just enough info to render a small "📎 photo.jpg · 2.4 MB" badge on
+ * the user bubble after the exchange is saved.
+ */
+export interface MessageAttachmentMeta {
+    /** Original filename, used as the badge label. */
+    filename: string;
+    /** MIME type — used for the icon and to validate against allowed types. */
+    mimeType: string;
+    /** Size in bytes; rendered as "X.X MB" / "X KB" in the badge. */
+    sizeBytes: number;
+}
+
+/**
+ * Inline-encoded attachment used when CALLING the model. Carries the
+ * actual bytes (base64) plus the mime type Gemini needs. Never stored.
+ */
+export interface InlineAttachment {
+    mimeType: string;
+    /** Base64-encoded bytes (no data: URI prefix). */
+    data: string;
 }
 
 export interface AIChatSession {

@@ -4,7 +4,14 @@ import { UsageLimitsService } from '@dosfilos/application/src/services/UsageLimi
 import { FirebaseUserProfileRepository, FirebasePlanRepository } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
 import { AIAgent, SermonPersonalization, ResponseMode, ConcreteResponseMode, DEFAULT_LANGUAGE } from '@dosfilos/domain';
-import type { SupportedLanguage, SourceReference, AIChatMessage, AIChatSession } from '@dosfilos/domain';
+import type {
+    SupportedLanguage,
+    SourceReference,
+    AIChatMessage,
+    AIChatSession,
+    InlineAttachment,
+    MessageAttachmentMeta,
+} from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
@@ -99,6 +106,7 @@ export function useFacultyChat(sessionId: string) {
         sources: SourceReference[],
         modeUsed: ConcreteResponseMode | undefined,
         modeWasAuto: boolean,
+        attachmentsMeta?: MessageAttachmentMeta[],
     ) => {
         queryClient.setQueryData<AIChatSession | null>(sessionQueryKey, (prev) => {
             if (!prev) return prev;
@@ -108,6 +116,7 @@ export function useFacultyChat(sessionId: string) {
                 role: 'user',
                 content: userText,
                 timestamp: now,
+                ...(attachmentsMeta && attachmentsMeta.length > 0 && { attachments: attachmentsMeta }),
             };
             const modelMsg: AIChatMessage = {
                 id: `optimistic-model-${now.getTime()}`,
@@ -184,7 +193,19 @@ export function useFacultyChat(sessionId: string) {
 
     // Orchestrated message — router picks the best specialist automatically
     const sendOrchestratedMessageMutation = useMutation({
-        mutationFn: async ({ message, lengthPreference }: { message: string, lengthPreference?: ResponseMode }) => {
+        mutationFn: async ({
+            message,
+            lengthPreference,
+            attachments,
+            attachmentsMeta,
+        }: {
+            message: string;
+            lengthPreference?: ResponseMode;
+            /** Inline-encoded files for the model (not persisted). */
+            attachments?: InlineAttachment[];
+            /** Display metadata for the user bubble (persisted to Firestore). */
+            attachmentsMeta?: MessageAttachmentMeta[];
+        }) => {
             if (!user?.uid) throw new Error('User not authenticated');
             if (!sessionQuery.data) throw new Error('Session not found');
 
@@ -217,6 +238,8 @@ export function useFacultyChat(sessionId: string) {
                         capturedWasAuto = wasAuto;
                     },
                     resolveActiveLanguage(i18n.language),
+                    attachments,
+                    attachmentsMeta,
                 );
                 // Inject the user message + the streamed model response into
                 // the cache before clearing the streaming state — otherwise
@@ -228,6 +251,7 @@ export function useFacultyChat(sessionId: string) {
                     capturedSources,
                     capturedMode ?? effectiveMode,
                     capturedWasAuto,
+                    attachmentsMeta,
                 );
                 // Increment the monthly query counter server-side. Fire-and-forget
                 // so it doesn't delay the response rendering.

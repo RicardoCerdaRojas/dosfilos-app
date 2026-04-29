@@ -1,5 +1,5 @@
 import { AIAgent } from '../entities/AIAgent';
-import { AIChatMessage } from '../entities/AIChatSession';
+import { AIChatMessage, InlineAttachment } from '../entities/AIChatSession';
 import type { SupportedLanguage } from '../types/i18n';
 
 /**
@@ -63,6 +63,13 @@ export interface IAIGeneratorService {
          * authoring language of the system prompt.
          */
         language?: SupportedLanguage,
+        /**
+         * Multimodal: optional inline files (images, PDFs) sent alongside
+         * the text. Each is base64-encoded and passed to the model as an
+         * `inlineData` Part. The bytes are not persisted — they belong to
+         * this single exchange only.
+         */
+        attachments?: InlineAttachment[],
     ): Promise<string>;
 
     /**
