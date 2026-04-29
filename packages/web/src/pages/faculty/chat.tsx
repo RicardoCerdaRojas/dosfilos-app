@@ -37,6 +37,33 @@ const EXTRACTION_TITLE_KEYS: Record<string, string> = {
     SYSTEMATIC_THEOLOGY_PAPER: 'extraction.theologyPaper',
 };
 
+/**
+ * Injects inline CSS into the rendered prose HTML so it survives a paste
+ * into Word, Google Docs, or Notion. Those editors strip `class`
+ * attributes but preserve inline `style="..."`, so tables would otherwise
+ * render as borderless grids. We walk the parsed fragment with the
+ * browser's DOMParser, tag the structural elements we care about, and
+ * serialize back. Non-table content (headings, paragraphs, lists) keeps
+ * its semantics — Word and Docs handle those out of the box, so we add
+ * only enough styling to look intentional.
+ */
+function injectInlineStylesForCopy(html: string): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+
+    const tableStyle = 'border-collapse: collapse; width: 100%; margin: 12px 0; font-family: inherit;';
+    const headerCellStyle = 'border: 1px solid #999; padding: 8px 10px; background: #f3f3f3; text-align: left; vertical-align: top; font-weight: 600;';
+    const bodyCellStyle = 'border: 1px solid #999; padding: 8px 10px; vertical-align: top;';
+    const blockquoteStyle = 'margin: 12px 0; padding: 8px 14px; border-left: 4px solid #94a3b8; background: #f8fafc; color: #334155;';
+
+    doc.querySelectorAll('table').forEach((el) => el.setAttribute('style', tableStyle));
+    doc.querySelectorAll('th').forEach((el) => el.setAttribute('style', headerCellStyle));
+    doc.querySelectorAll('td').forEach((el) => el.setAttribute('style', bodyCellStyle));
+    doc.querySelectorAll('blockquote').forEach((el) => el.setAttribute('style', blockquoteStyle));
+
+    return doc.body.firstElementChild?.innerHTML ?? html;
+}
+
 export function FacultyChatPage() {
     const { t } = useTranslation('faculty');
     const { sessionId } = useParams();
@@ -93,6 +120,8 @@ export function FacultyChatPage() {
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [renameConfirmId, setRenameConfirmId] = useState<string | null>(null);
+    const [deleteMessageConfirmId, setDeleteMessageConfirmId] = useState<string | null>(null);
+    const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
     const [isZenMode, setIsZenMode] = useState(false);
 
     // ── Scroll management ────────────────────────────────────────────────────
@@ -183,6 +212,58 @@ export function FacultyChatPage() {
         if (!newTitle.trim()) { setRenameConfirmId(null); return; }
         renameSession.mutate({ sessionId: id, title: newTitle.trim() });
         setRenameConfirmId(null);
+    };
+
+    /**
+     * Copies a chat message to the clipboard in BOTH formats:
+     *   - text/html: the rendered markdown with inline styles injected so
+     *     tables, headings, and blockquotes look correct after paste in
+     *     Word, Google Docs, Notion, etc. Those editors strip `class`
+     *     attributes but keep inline `style="..."`.
+     *   - text/plain: the raw markdown source, as a fallback for plain-text
+     *     editors and "paste as plain text".
+     *
+     * Falls back to writeText when the modern API is unavailable (older
+     * browsers or non-secure contexts).
+     */
+    const handleCopyMessage = async (content: string, messageId: string) => {
+        try {
+            const node = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+            const rawHtml = node?.innerHTML?.trim();
+
+            if (rawHtml && typeof window !== 'undefined' && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+                const styled = injectInlineStylesForCopy(rawHtml);
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([styled], { type: 'text/html' }),
+                        'text/plain': new Blob([content], { type: 'text/plain' }),
+                    }),
+                ]);
+            } else {
+                await navigator.clipboard.writeText(content);
+            }
+            toast.success(t('dialogs.copied'));
+        } catch (err) {
+            console.warn('[FacultyChat] clipboard write failed:', err);
+            try {
+                await navigator.clipboard.writeText(content);
+                toast.success(t('dialogs.copied'));
+            } catch {
+                toast.error(t('dialogs.copyFailed'));
+            }
+        }
+    };
+
+    const handleConfirmDeleteMessage = async () => {
+        if (!deleteMessageConfirmId) return;
+        const id = deleteMessageConfirmId;
+        setDeleteMessageConfirmId(null);
+        setDeletingMessageId(id);
+        try {
+            await deleteMessage(id);
+        } finally {
+            setDeletingMessageId(null);
+        }
     };
 
     const handleSendMessage = async (e: React.FormEvent) => {
@@ -314,11 +395,12 @@ export function FacultyChatPage() {
                                             isNewSession={isNewSession}
                                             isStreaming={isStreaming}
                                             isSending={isSending}
-                                            isDeleting={isDeleting}
+                                            deletingMessageId={deletingMessageId}
                                             streamingMessage={streamingMessage}
                                             activeAgents={activeAgents}
                                             agentNameForNew={agentNameForNew}
-                                            onDeleteMessage={(messageId) => deleteMessage.mutate({ sessionId: effectiveSessionId, messageId })}
+                                            onRequestDeleteMessage={(messageId) => setDeleteMessageConfirmId(messageId)}
+                                            onCopyMessage={handleCopyMessage}
                                         />
                                         <div ref={messagesEndRef} />
                                     </div>
@@ -409,6 +491,30 @@ export function FacultyChatPage() {
                                     setDeleteConfirmId(null);
                                 }
                             }}
+                            className="bg-rose-600 hover:bg-rose-700 text-white"
+                        >
+                            {t('dialogs.delete')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete Message Confirmation */}
+            <AlertDialog
+                open={!!deleteMessageConfirmId}
+                onOpenChange={(open) => !open && setDeleteMessageConfirmId(null)}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('dialogs.deleteMessageTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('dialogs.deleteMessageDescription')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>{t('dialogs.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDeleteMessage}
                             className="bg-rose-600 hover:bg-rose-700 text-white"
                         >
                             {t('dialogs.delete')}

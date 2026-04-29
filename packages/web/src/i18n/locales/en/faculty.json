@@ -114,10 +114,13 @@
     "dialogs": {
         "deleteSessionTitle": "Delete this session?",
         "deleteSessionDescription": "This action cannot be undone. All messages in this conversation will be permanently deleted.",
+        "deleteMessageTitle": "Delete this message?",
+        "deleteMessageDescription": "This message will be permanently removed from the conversation. This action cannot be undone.",
         "cancel": "Cancel",
         "delete": "Delete",
-        "copied": "Copied",
-        "copy": "Copy"
+        "copied": "Message copied",
+        "copyFailed": "Couldn't copy the message",
+        "copy": "Copy message"
     },
     "editor": {
         "title": "Co-authoring Editor",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap } from 'lucide-react';
+import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -122,11 +122,19 @@ interface FacultyChatMessagesProps {
     isNewSession: boolean;
     isStreaming: boolean;
     isSending: boolean;
-    isDeleting: boolean;
+    /** Message id currently being deleted; only that row shows a spinner. */
+    deletingMessageId: string | null;
     streamingMessage: string;
     activeAgents: ActiveAgent[];
     agentNameForNew: string;
-    onDeleteMessage: (messageId: string) => void;
+    /** Asks the page to open the delete-confirmation dialog for this message. */
+    onRequestDeleteMessage: (messageId: string) => void;
+    /**
+     * Copies the message body to clipboard; the page handles the toast.
+     * Receives both the raw markdown (for plain-text paste) and the
+     * message id (used to look up the rendered DOM for rich-text paste).
+     */
+    onCopyMessage: (content: string, messageId: string) => void;
 }
 
 export function FacultyChatMessages({
@@ -134,11 +142,12 @@ export function FacultyChatMessages({
     isNewSession,
     isStreaming,
     isSending,
-    isDeleting,
+    deletingMessageId,
     streamingMessage,
     activeAgents,
     agentNameForNew,
-    onDeleteMessage,
+    onRequestDeleteMessage,
+    onCopyMessage,
 }: FacultyChatMessagesProps) {
     const { t, language } = useTranslation('faculty');
     const activeLanguage: SupportedLanguage = language === 'en' ? 'en' : 'es';
@@ -181,12 +190,15 @@ export function FacultyChatMessages({
                             <MessageSquareQuote className="h-4 w-4 text-indigo-700 dark:text-indigo-300" />
                         </div>
                     )}
-                    <div className={cn(
-                        "relative text-[15px] leading-relaxed",
-                        msg.role === 'user'
-                            ? "bg-indigo-600 text-white rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
-                            : "flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5"
-                    )}>
+                    <div
+                        data-message-id={msg.id || undefined}
+                        className={cn(
+                            "relative text-[15px] leading-relaxed",
+                            msg.role === 'user'
+                                ? "bg-indigo-600 text-white rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
+                                : "flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5"
+                        )}
+                    >
                         {msg.role === 'user' ? (
                             <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                         ) : (
@@ -197,17 +209,34 @@ export function FacultyChatMessages({
                         )}
 
                         {msg.id && (
-                            <button
-                                onClick={() => onDeleteMessage(msg.id)}
-                                disabled={isDeleting}
+                            <div
                                 className={cn(
-                                    "absolute top-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30",
-                                    msg.role === 'user' ? "-left-10 text-slate-400 hover:text-rose-500" : "right-2 text-slate-400 hover:text-rose-500"
+                                    "absolute top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+                                    msg.role === 'user' ? "-left-[5.25rem]" : "right-2",
                                 )}
-                                title={t('chat.deleteMessage')}
                             >
-                                {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onCopyMessage(msg.content, msg.id)}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                    title={t('dialogs.copy')}
+                                    aria-label={t('dialogs.copy')}
+                                >
+                                    <Copy className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onRequestDeleteMessage(msg.id)}
+                                    disabled={deletingMessageId === msg.id}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30"
+                                    title={t('chat.deleteMessage')}
+                                    aria-label={t('chat.deleteMessage')}
+                                >
+                                    {deletingMessageId === msg.id
+                                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        : <Trash2 className="w-3.5 h-3.5" />}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>

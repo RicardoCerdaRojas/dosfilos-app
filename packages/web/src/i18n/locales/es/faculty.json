@@ -114,10 +114,13 @@
     "dialogs": {
         "deleteSessionTitle": "¿Eliminar esta sesión?",
         "deleteSessionDescription": "Esta acción no se puede deshacer. Se eliminarán permanentemente todos los mensajes de esta conversación.",
+        "deleteMessageTitle": "¿Eliminar este mensaje?",
+        "deleteMessageDescription": "El mensaje se eliminará de esta conversación de forma permanente. Esta acción no se puede deshacer.",
         "cancel": "Cancelar",
         "delete": "Eliminar",
-        "copied": "Copiado",
-        "copy": "Copiar"
+        "copied": "Mensaje copiado",
+        "copyFailed": "No pudimos copiar el mensaje",
+        "copy": "Copiar mensaje"
     },
     "editor": {
         "title": "Editor de Co-autoría",
