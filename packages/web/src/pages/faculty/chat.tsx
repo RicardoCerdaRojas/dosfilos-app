@@ -318,7 +318,7 @@ export function FacultyChatPage() {
                                             streamingMessage={streamingMessage}
                                             activeAgents={activeAgents}
                                             agentNameForNew={agentNameForNew}
-                                            onDeleteMessage={(messageId) => deleteMessage.mutate({ sessionId: effectiveSessionId, messageId })}
+                                            onDeleteMessage={(messageId) => deleteMessage(messageId)}
                                         />
                                         <div ref={messagesEndRef} />
                                     </div>
