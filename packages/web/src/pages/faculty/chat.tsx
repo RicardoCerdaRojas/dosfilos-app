@@ -26,6 +26,7 @@ import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEdito
 import { ProjectEditDialog } from './ProjectEditDialog';
 import { type AIProject, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
+import { prepareAttachmentForSend, consumeStagedAttachment, hasStagedAttachment } from '@/lib/facultyAttachment';
 
 // ── Extraction type-to-key mapping ───────────────────────────────────────────
 
@@ -36,34 +37,6 @@ const EXTRACTION_TITLE_KEYS: Record<string, string> = {
     NEWSLETTER: 'extraction.newsletter',
     SYSTEMATIC_THEOLOGY_PAPER: 'extraction.theologyPaper',
 };
-
-/**
- * Reads a File as base64 (no `data:` URI prefix) and returns the inline
- * payload Gemini expects plus the small metadata we persist alongside the
- * user message so the bubble can show a "📎 photo.jpg · 2.4 MB" badge
- * after reload. The binary itself is not stored.
- */
-async function prepareAttachmentForSend(file: File): Promise<{
-    inline: { mimeType: string; data: string };
-    meta: { filename: string; mimeType: string; sizeBytes: number };
-}> {
-    const data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            // FileReader returns "data:image/png;base64,iVBOR..." — strip
-            // the URI scheme so we hand Gemini just the base64 payload.
-            const result = String(reader.result ?? '');
-            const comma = result.indexOf(',');
-            resolve(comma >= 0 ? result.slice(comma + 1) : result);
-        };
-        reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
-        reader.readAsDataURL(file);
-    });
-    return {
-        inline: { mimeType: file.type || 'application/octet-stream', data },
-        meta: { filename: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size },
-    };
-}
 
 /**
  * Injects inline CSS into the rendered prose HTML so it survives a paste
@@ -189,7 +162,9 @@ export function FacultyChatPage() {
 
     useEffect(() => {
         const initialQuestion = searchParams.get('q');
-        if (!initialQuestion) return;
+        if (initialQuestion === null) return;
+        // Allow `?q=` (empty) when the welcome page staged an image-only send.
+        if (!initialQuestion && !hasStagedAttachment()) return;
         const sessionKey = `${effectiveSessionId || 'new'}::${initialQuestion}`;
 
         if (!hasAutoSent.current[sessionKey] && !isSending && !isStreaming) {
@@ -203,9 +178,24 @@ export function FacultyChatPage() {
                         hasAutoSent.current[sessionKey] = false;
                         return;
                     }
+                    // Welcome page may have staged a one-shot image attachment in
+                    // sessionStorage. The ?q= URL flow can't carry binaries, so
+                    // when one is staged we route through the create+send-with-
+                    // attachment path and skip the second `?q=` round-trip.
+                    const staged = consumeStagedAttachment();
                     try {
                         const newSession = await createSession.mutateAsync({ agentId: targetAgentId, projectId: projectIdForNew });
-                        navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(initialQuestion)}`, { replace: true });
+                        if (staged) {
+                            navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
+                            await sendOrchestratedMessage({
+                                message: initialQuestion,
+                                lengthPreference,
+                                attachments: [staged.inline],
+                                attachmentsMeta: [staged.meta],
+                            });
+                        } else {
+                            navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(initialQuestion)}`, { replace: true });
+                        }
                         return;
                     } catch (err) {
                         console.error('Failed to create initial session:', err);

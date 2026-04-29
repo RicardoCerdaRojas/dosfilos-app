@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Search, GraduationCap, Library, ScrollText, HeartHandshake,
-    Mic, Send, Sparkles, ArrowRight, Loader2, BookOpen, Brain, MessageCircle, Users
+    Mic, Send, Sparkles, ArrowRight, Loader2, BookOpen, Brain, MessageCircle, Users,
+    Paperclip, X, ImageIcon, Lightbulb
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFacultyAgents, useFacultySessions } from '../../hooks/faculty';
@@ -13,6 +15,13 @@ import type { SupportedLanguage } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { FreeStarterCard } from './components/FreeStarterCard';
+import {
+    formatBytes,
+    isAcceptedImage,
+    MAX_ATTACHMENT_BYTES,
+    prepareAttachmentForSend,
+    stageAttachment,
+} from '@/lib/facultyAttachment';
 
 // Icon + i18n key map. Both label and prompt are resolved per-render so the
 // chip row reflects the active locale without a remount.
@@ -39,7 +48,12 @@ export function FacultyDirectoryPage() {
     const [searchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     const [orchestratorInput, setOrchestratorInput] = useState('');
+    const [attachment, setAttachment] = useState<File | null>(null);
+    const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
+    const [isDraggingAttachment, setIsDraggingAttachment] = useState(false);
+    const [isPreparingAttachment, setIsPreparingAttachment] = useState(false);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data: agents = [], isLoading: isLoadingAgents } = useFacultyAgents();
     const { user } = useFirebase();
@@ -74,10 +88,85 @@ export function FacultyDirectoryPage() {
         }
     }, [orchestratorInput]);
 
-    // Lazy navigation — no session created until the user sends a first message
-    const handleStartOrchestrated = (question: string) => {
+    // Build / tear down the object URL whenever the staged file changes.
+    useEffect(() => {
+        if (!attachment) {
+            setAttachmentPreviewUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(attachment);
+        setAttachmentPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [attachment]);
+
+    const acceptAttachment = (file: File): boolean => {
+        if (!isAcceptedImage(file)) {
+            toast.error(t('chat.attachment.unsupportedType'));
+            return false;
+        }
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+            toast.error(t('chat.attachment.tooLarge'));
+            return false;
+        }
+        setAttachment(file);
+        return true;
+    };
+
+    const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) acceptAttachment(file);
+        // Reset so the same file can be re-selected after removal.
+        e.target.value = '';
+    };
+
+    const handleAttachmentPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    e.preventDefault();
+                    acceptAttachment(file);
+                    return;
+                }
+            }
+        }
+    };
+
+    const handleAttachmentDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDraggingAttachment(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) acceptAttachment(file);
+    };
+
+    // Lazy navigation — no session created until the user sends a first message.
+    // When an image is staged we prepare it (base64 + meta) and hand it to the
+    // chat page via sessionStorage; the URL `?q=` flow can't carry binaries.
+    const handleStartOrchestrated = async (question: string) => {
         const q = question.trim();
-        if (!q || agents.length === 0) return;
+        const stagedFile = attachment;
+        if ((!q && !stagedFile) || agents.length === 0) return;
+
+        if (stagedFile) {
+            setIsPreparingAttachment(true);
+            try {
+                const prepared = await prepareAttachmentForSend(stagedFile);
+                stageAttachment(prepared);
+            } catch (err) {
+                console.error('[FacultyDirectory] attachment encoding failed:', err);
+                toast.error(t('chat.attachment.tooLarge'));
+                setIsPreparingAttachment(false);
+                return;
+            }
+            setIsPreparingAttachment(false);
+        }
+
+        // The chat auto-send tolerates an empty `q=` when a staged attachment
+        // is present (image-only send). Always carry q in the URL — even
+        // empty — so the effect sees a present-but-empty value and proceeds.
         navigate(`/dashboard/faculty/new${newSessionQuery(`q=${encodeURIComponent(q)}`)}`);
     };
 
@@ -135,7 +224,52 @@ export function FacultyDirectoryPage() {
                     </p>
 
                     {/* Orchestrator input */}
-                    <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl p-2 shadow-2xl shadow-black/40">
+                    <div
+                        className={cn(
+                            'relative bg-white/[0.07] backdrop-blur-md border rounded-2xl p-2 shadow-2xl shadow-black/40 transition-colors',
+                            isDraggingAttachment ? 'border-amber-400/60 ring-2 ring-amber-300/30' : 'border-white/[0.12]'
+                        )}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            if (!isDraggingAttachment) setIsDraggingAttachment(true);
+                        }}
+                        onDragLeave={(e) => {
+                            e.preventDefault();
+                            if (e.currentTarget === e.target) setIsDraggingAttachment(false);
+                        }}
+                        onDrop={handleAttachmentDrop}
+                    >
+                        {attachment && attachmentPreviewUrl && (
+                            <div className="px-2 pt-2 pb-1 space-y-2 text-left">
+                                <div className="inline-flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.06] p-2 pr-3">
+                                    <img
+                                        src={attachmentPreviewUrl}
+                                        alt={attachment.name}
+                                        className="h-12 w-12 rounded-lg object-cover"
+                                    />
+                                    <div className="flex flex-col text-[12px] leading-tight pt-0.5 max-w-[200px]">
+                                        <span className="font-medium text-slate-100 truncate">{attachment.name}</span>
+                                        <span className="text-slate-400">{formatBytes(attachment.size)}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setAttachment(null)}
+                                        className="ml-1 p-1 rounded-md text-slate-300 hover:text-rose-300 hover:bg-white/10 transition-colors"
+                                        title={t('chat.attachment.remove')}
+                                        aria-label={t('chat.attachment.remove')}
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                                <div
+                                    role="note"
+                                    className="flex items-start gap-2 rounded-lg border border-amber-300/30 bg-amber-400/10 px-3 py-2 text-[12px] leading-snug text-amber-100"
+                                >
+                                    <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+                                    <span>{t('chat.attachment.ocrHint')}</span>
+                                </div>
+                            </div>
+                        )}
                         <div className="flex items-end gap-2">
                             <Sparkles className="h-5 w-5 text-amber-400/80 shrink-0 mb-3 ml-2" />
                             <textarea
@@ -143,18 +277,45 @@ export function FacultyDirectoryPage() {
                                 value={orchestratorInput}
                                 onChange={e => setOrchestratorInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
+                                onPaste={handleAttachmentPaste}
                                 placeholder={t('directory.inputPlaceholder')}
                                 rows={1}
                                 className="flex-1 resize-none bg-transparent text-white placeholder:text-slate-400/70 text-[15px] leading-relaxed outline-none py-2.5 px-1 max-h-40 overflow-y-hidden"
                             />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isBusy || isPreparingAttachment}
+                                className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-xl text-slate-300 hover:text-amber-300 hover:bg-white/10 disabled:opacity-30 transition-colors"
+                                title={t('chat.attachment.attach')}
+                                aria-label={t('chat.attachment.attach')}
+                            >
+                                <Paperclip className="h-5 w-5" />
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFilePick}
+                                className="hidden"
+                            />
                             <Button
                                 onClick={() => handleStartOrchestrated(orchestratorInput)}
-                                disabled={!orchestratorInput.trim() || isBusy || agents.length === 0}
+                                disabled={(!orchestratorInput.trim() && !attachment) || isBusy || agents.length === 0 || isPreparingAttachment}
                                 className="shrink-0 h-10 w-10 p-0 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-900 shadow-sm transition-all"
                             >
-                                <Send className="h-4 w-4" />
+                                {isPreparingAttachment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                             </Button>
                         </div>
+
+                        {isDraggingAttachment && (
+                            <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-amber-400/10 rounded-2xl">
+                                <div className="flex items-center gap-2 text-sm font-medium text-amber-200">
+                                    <ImageIcon className="h-4 w-4" />
+                                    {t('chat.attachment.dropHere')}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Quick prompt chips */}
