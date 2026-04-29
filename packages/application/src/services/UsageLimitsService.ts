@@ -426,7 +426,12 @@ export class UsageLimitsService {
     private async countGreekSessionsThisMonth(userId: string): Promise<number> {
         const startOfMonth = this.getStartOfMonth();
 
-        const sessionsRef = collection(db, 'greek_tutor_sessions');
+        // `greek_sessions` is the canonical collection written by
+        // FirestoreGreekSessionRepository; an earlier mistake pointed at
+        // `greek_tutor_sessions` (a collection nobody writes to), so the
+        // count was silently 0 — and the read failed once Firestore rules
+        // were tightened because no rule existed for it.
+        const sessionsRef = collection(db, 'greek_sessions');
         const q = query(
             sessionsRef,
             where('userId', '==', userId),
