@@ -137,6 +137,10 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
                 })),
             ]
             : finalMessage;
+        if (attachments && attachments.length > 0) {
+            console.log('[GeminiMultiAgent.stream] sending with attachments:',
+                attachments.map(a => ({ mime: a.mimeType, bytes: a.data.length })));
+        }
         const result = await chat.sendMessageStream(sendArg as any);
 
         let fullResponse = '';

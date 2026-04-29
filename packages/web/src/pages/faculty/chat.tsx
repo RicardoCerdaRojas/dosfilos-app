@@ -297,40 +297,80 @@ export function FacultyChatPage() {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isSending || isStreaming) return;
+        // Allow image-only sends — the model is multimodal so a question
+        // can live entirely in the picture (e.g. "what does this say?").
+        const hasAttachment = !!pendingAttachment;
+        if ((!input.trim() && !hasAttachment) || isSending || isStreaming) return;
 
         const userMsg = input;
+        const stagedAttachment = pendingAttachment;
         setInput('');
+        setPendingAttachment(null);
         userScrolledUp.current = false;
         scrollToBottom(true);
 
+        // Convert the file once up front so both the new-session path
+        // (which waits on createSession before sending) and the existing
+        // session path can reuse the same payload.
+        let inlineAndMeta: {
+            inline?: { mimeType: string; data: string };
+            meta?: { filename: string; mimeType: string; sizeBytes: number };
+        } = {};
+        if (stagedAttachment) {
+            try {
+                const prepared = await prepareAttachmentForSend(stagedAttachment);
+                inlineAndMeta = { inline: prepared.inline, meta: prepared.meta };
+                console.log('[FacultyChat] attachment ready:', {
+                    name: prepared.meta.filename,
+                    mime: prepared.meta.mimeType,
+                    bytes: prepared.meta.sizeBytes,
+                });
+            } catch (err) {
+                console.error('[FacultyChat] attachment encoding failed:', err);
+                toast.error(t('chat.attachment.tooLarge'));
+                setInput(userMsg);
+                setPendingAttachment(stagedAttachment);
+                return;
+            }
+        }
+
         if (isNewSession) {
             const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
-            if (!targetAgentId) { setInput(userMsg); return; }
+            if (!targetAgentId) {
+                setInput(userMsg);
+                if (stagedAttachment) setPendingAttachment(stagedAttachment);
+                return;
+            }
             try {
                 const newSession = await createSession.mutateAsync({ agentId: targetAgentId, projectId: projectIdForNew });
-                navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
+                // The auto-send path via `?q=` can't carry an attachment, so
+                // when there's a file we send directly here instead, then
+                // navigate to the canonical session URL afterwards.
+                if (inlineAndMeta.inline) {
+                    navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
+                    await sendOrchestratedMessage({
+                        message: userMsg,
+                        lengthPreference,
+                        attachments: [inlineAndMeta.inline],
+                        ...(inlineAndMeta.meta && { attachmentsMeta: [inlineAndMeta.meta] }),
+                    });
+                } else {
+                    navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
+                }
             } catch (err) {
                 console.error('Failed to create session:', err);
                 setInput(userMsg);
+                if (stagedAttachment) setPendingAttachment(stagedAttachment);
             }
             return;
         }
 
-        // Snapshot the staged attachment so we can restore it on failure and
-        // clear the input optimistically. Convert to base64 in parallel with
-        // the network round-trip so the user perceives no extra latency.
-        const stagedAttachment = pendingAttachment;
-        setPendingAttachment(null);
         try {
-            const { inline, meta } = stagedAttachment
-                ? await prepareAttachmentForSend(stagedAttachment)
-                : { inline: undefined, meta: undefined };
             await sendOrchestratedMessage({
                 message: userMsg,
                 lengthPreference,
-                ...(inline && { attachments: [inline] }),
-                ...(meta && { attachmentsMeta: [meta] }),
+                ...(inlineAndMeta.inline && { attachments: [inlineAndMeta.inline] }),
+                ...(inlineAndMeta.meta && { attachmentsMeta: [inlineAndMeta.meta] }),
             });
         } catch (error) {
             console.error('Failed to send message:', error);
