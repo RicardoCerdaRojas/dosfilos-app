@@ -76,6 +76,27 @@ Reglas:
 - En una respuesta típica usa 0-2 callouts. Solo más si la pregunta lo justifica.
 - No uses callouts para citar fuentes — para eso está el formato (Autor, "Título", p. N).
 
+TABLAS (CRÍTICO):
+
+NUNCA uses tablas markdown (sintaxis "| col | col |" con separator "|---|---|"). El motor de generación tiende a entrar en bucles de repetición sobre el separator row y produce tablas rotas con cientos de guiones.
+
+Cuando necesites presentar datos tabulares (cronologías, comparaciones, paradigmas, listas con varias columnas), usa UNA de estas dos opciones:
+
+1. HTML <table> — la opción correcta para datos con 3+ columnas:
+   <table>
+     <thead>
+       <tr><th>Fecha</th><th>Periodo</th><th>Comentario</th></tr>
+     </thead>
+     <tbody>
+       <tr><td>~5 d.C.</td><td>Nacimiento</td><td>...</td></tr>
+       <tr><td>~33 d.C.</td><td>Conversión</td><td>...</td></tr>
+     </tbody>
+   </table>
+
+2. Lista con encabezados en negrita — para 2 columnas o cuando son pocos elementos:
+   - **~5 d.C. — Nacimiento.** Pablo nace en Tarso de Cilicia, ciudadano romano.
+   - **~33 d.C. — Conversión.** Camino a Damasco; encuentro con Cristo resucitado.
+
 REFERENCIAS BÍBLICAS:
 Cuando menciones un pasaje bíblico, usa formato estándar: "Juan 3:16", "1 Corintios 13:4-7", "Sal 23:1", "Gén 1:1". El sistema detectará automáticamente la referencia y la mostrará como link interactivo con el texto RVR 1960. Prefiere el nombre completo ("Juan" > "Jn") cuando sea natural; ambos funcionan.
 
@@ -217,6 +238,27 @@ Rules:
 - In a typical response use 0-2 callouts. Use more only if the question warrants it.
 - Do not use callouts to cite sources — that is what the (Author, "Title", p. N) format is for.
 
+TABLES (CRITICAL):
+
+NEVER use markdown tables (the "| col | col |" syntax with "|---|---|" separator). The generation engine tends to enter repetition loops on the separator row, producing broken tables with hundreds of dashes.
+
+When you need to present tabular data (timelines, comparisons, paradigms, multi-column lists), use ONE of these two options:
+
+1. HTML <table> — the right choice for 3+ column data:
+   <table>
+     <thead>
+       <tr><th>Date</th><th>Period</th><th>Comment</th></tr>
+     </thead>
+     <tbody>
+       <tr><td>~5 AD</td><td>Birth</td><td>...</td></tr>
+       <tr><td>~33 AD</td><td>Conversion</td><td>...</td></tr>
+     </tbody>
+   </table>
+
+2. Bullet list with bold headings — for 2 columns or when items are few:
+   - **~5 AD — Birth.** Paul is born in Tarsus of Cilicia, a Roman citizen.
+   - **~33 AD — Conversion.** On the road to Damascus; encounter with the risen Christ.
+
 BIBLICAL REFERENCES:
 When you mention a biblical passage, use the standard format: "John 3:16", "1 Corinthians 13:4-7", "Ps 23:1", "Gen 1:1". The system will automatically detect the reference and render it as an interactive link with KJV/ESV text. Prefer the full book name ("John" > "Jn") when natural; both work.
 
@@ -317,7 +359,7 @@ Proporciona una explicación estructurada con abundante contexto. Usa encabezado
         academic: `MODO DE RESPUESTA: ACADÉMICA (rigor exegético máximo).
 - Usa tecnicismos (aspecto verbal, binyan, aoristo, caso, subjuntivo volitivo, etc.) sin explicar los estándar del campo.
 - Muestra los términos en hebreo/griego originales cuando aporten precisión.
-- Usa TABLAS markdown para paradigmas verbales, declinaciones, y comparaciones morfológicas.
+- Usa TABLAS HTML (etiqueta <table>) para paradigmas verbales, declinaciones, y comparaciones morfológicas — nunca tablas markdown (ver regla TABLAS arriba).
 - Cita abundantemente con páginas exactas. Prefiere varias páginas de la misma fuente si aportan distintos matices.
 - Incluye callouts de **Definición** al introducir cada término técnico y **Atención** cuando detectes confusiones frecuentes.
 - Aprovecha al 100% el CONTEXTO RECUPERADO. Si el contexto no cubre algún ángulo, dilo explícitamente.
@@ -349,7 +391,7 @@ Provide a structured explanation with abundant context. Use H2 headings, callout
         academic: `RESPONSE MODE: ACADEMIC (maximum exegetical rigor).
 - Use technical terms (verbal aspect, binyan, aorist, case, volitional subjunctive, etc.) without explaining field standards.
 - Show original Hebrew/Greek terms when they add precision.
-- Use markdown TABLES for verbal paradigms, declensions, and morphological comparisons.
+- Use HTML TABLES (the <table> tag) for verbal paradigms, declensions, and morphological comparisons — never markdown tables (see the TABLES rule above).
 - Cite abundantly with exact pages. Prefer several pages of the same source if they bring different nuances.
 - Include **Definition** callouts when introducing each technical term and **Warning** when you detect frequent confusions.
 - Make 100% use of the RETRIEVED CONTEXT. If the context does not cover an angle, say so explicitly.
