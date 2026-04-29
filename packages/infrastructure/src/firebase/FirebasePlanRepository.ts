@@ -88,11 +88,17 @@ export class FirebasePlanRepository implements IPlanRepository {
                 maxPreachingPlans: data.limits?.maxPreachingPlans, // Total limit (Free plan)
                 maxPreachingPlansPerMonth: data.limits?.maxPreachingPlansPerMonth, // Monthly limit (Pro/Team)
 
-                // Greek Tutor limits
+                // Tutor limits
                 greekSessionsPerMonth: data.limits?.greekSessionsPerMonth ?? 0,
+                // Pass through `undefined` when the doc doesn't define the field —
+                // the dashboard treats undefined as "no quota" vs 0 as "not included".
+                hebrewSessionsPerMonth: data.limits?.hebrewSessionsPerMonth,
 
                 // Library limits
                 libraryStorageMB: data.limits?.libraryStorageMB ?? 0,
+                libraryDocsLimit: data.limits?.libraryDocsLimit,
+                pagesProcessedPerMonth: data.limits?.pagesProcessedPerMonth,
+                queriesPerMonth: data.limits?.queriesPerMonth,
 
                 // Legacy/deprecated fields
                 aiRequestsPerDay: data.limits?.aiRequestsPerDay ?? 0,
