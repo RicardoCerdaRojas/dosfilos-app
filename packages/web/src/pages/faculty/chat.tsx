@@ -93,6 +93,8 @@ export function FacultyChatPage() {
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [renameConfirmId, setRenameConfirmId] = useState<string | null>(null);
+    const [deleteMessageConfirmId, setDeleteMessageConfirmId] = useState<string | null>(null);
+    const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
     const [isZenMode, setIsZenMode] = useState(false);
 
     // ── Scroll management ────────────────────────────────────────────────────
@@ -183,6 +185,28 @@ export function FacultyChatPage() {
         if (!newTitle.trim()) { setRenameConfirmId(null); return; }
         renameSession.mutate({ sessionId: id, title: newTitle.trim() });
         setRenameConfirmId(null);
+    };
+
+    const handleCopyMessage = async (content: string) => {
+        try {
+            await navigator.clipboard.writeText(content);
+            toast.success(t('dialogs.copied'));
+        } catch (err) {
+            console.warn('[FacultyChat] clipboard write failed:', err);
+            toast.error(t('dialogs.copyFailed'));
+        }
+    };
+
+    const handleConfirmDeleteMessage = async () => {
+        if (!deleteMessageConfirmId) return;
+        const id = deleteMessageConfirmId;
+        setDeleteMessageConfirmId(null);
+        setDeletingMessageId(id);
+        try {
+            await deleteMessage(id);
+        } finally {
+            setDeletingMessageId(null);
+        }
     };
 
     const handleSendMessage = async (e: React.FormEvent) => {
@@ -314,11 +338,12 @@ export function FacultyChatPage() {
                                             isNewSession={isNewSession}
                                             isStreaming={isStreaming}
                                             isSending={isSending}
-                                            isDeleting={isDeleting}
+                                            deletingMessageId={deletingMessageId}
                                             streamingMessage={streamingMessage}
                                             activeAgents={activeAgents}
                                             agentNameForNew={agentNameForNew}
-                                            onDeleteMessage={(messageId) => deleteMessage(messageId)}
+                                            onRequestDeleteMessage={(messageId) => setDeleteMessageConfirmId(messageId)}
+                                            onCopyMessage={handleCopyMessage}
                                         />
                                         <div ref={messagesEndRef} />
                                     </div>
@@ -409,6 +434,30 @@ export function FacultyChatPage() {
                                     setDeleteConfirmId(null);
                                 }
                             }}
+                            className="bg-rose-600 hover:bg-rose-700 text-white"
+                        >
+                            {t('dialogs.delete')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete Message Confirmation */}
+            <AlertDialog
+                open={!!deleteMessageConfirmId}
+                onOpenChange={(open) => !open && setDeleteMessageConfirmId(null)}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('dialogs.deleteMessageTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('dialogs.deleteMessageDescription')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>{t('dialogs.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDeleteMessage}
                             className="bg-rose-600 hover:bg-rose-700 text-white"
                         >
                             {t('dialogs.delete')}
