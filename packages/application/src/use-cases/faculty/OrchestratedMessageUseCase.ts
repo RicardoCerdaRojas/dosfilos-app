@@ -98,15 +98,24 @@ function cleanCitations(text: string, agentNames: string[] = []): string {
     out = out.replace(/\.{2,}/g, '.');                  // repeated dots
     out = out.replace(/\n{3,}/g, '\n\n');              // max 2 consecutive newlines (preserves paragraphs)
     // 6) Markdown table degeneration — Gemini occasionally enters a token
-    //    repetition loop on a table separator row, emitting hundreds of
-    //    `|:----- |:----- |` lines (or a single row of thousands of dashes).
-    //    Generation-config caps prevent it now, but if anything slips through
-    //    we collapse the run so the table still renders as a table.
-    //    Repeated separator rows: keep just the first.
+    //    repetition loop on a table separator row, emitting thousands of
+    //    consecutive dashes that wreck the layout. Generation-config caps
+    //    catch most cases, but the degeneration can finish before the cap
+    //    kicks in, so we always sanitize the response.
+    //
+    //    a) Collapse any run of 20+ consecutive dashes anywhere in the text.
+    //       Real markdown separators use ≤6 dashes per cell, so 20 is safe.
+    //       We replace with three dashes (a valid separator cell or hr).
+    out = out.replace(/-{20,}/g, '---');
+    //    b) Squash sequences of repeated separator rows down to one.
     out = out.replace(/(\|[\s:|-]+\|\s*\n)(?:\|[\s:|-]+\|\s*\n){2,}/g, '$1');
-    //    Runaway dash row: any single line with 80+ consecutive dashes is
-    //    almost certainly a degeneration — truncate to a sane separator.
-    out = out.replace(/^[-]{80,}$/gm, '---');
+    //    c) When the model fuses header + separator on a single line — e.g.
+    //       `| A | B | C | |:--- |:--- |:--- |` — split them onto two lines so
+    //       remark-gfm can recognize the table.
+    out = out.replace(
+        /(\|[^\n|]+(?:\|[^\n|]+)+\|)\s+(\|:?-+(?:\s*\|:?-+)+\s*\|?)/g,
+        '$1\n$2',
+    );
     return out.trim();
 }
 

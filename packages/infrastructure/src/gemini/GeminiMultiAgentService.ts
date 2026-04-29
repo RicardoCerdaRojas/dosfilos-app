@@ -80,22 +80,23 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
         const usingPhase2RAG = !!retrievedContext;
         const agentName = resolveLocalized(agent.name, language);
 
+        const generationConfig = {
+            // Hard ceiling on output. Gemini 2.5 Flash with no cap has been
+            // observed degenerating into token-repetition loops mid-table
+            // (a markdown separator row repeating thousands of times).
+            maxOutputTokens: 8192,
+            // Default (~1.0) was prone to the same loop. 0.6 keeps answers
+            // varied without enabling runaway sampling, and topP narrows
+            // the nucleus enough to cut off the repetition basin.
+            temperature: 0.6,
+            topP: 0.9,
+            thinkingConfig: { thinkingBudget: 0 },
+        };
+        console.log('[GeminiMultiAgent.stream] generationConfig:', generationConfig);
         const options: any = {
             model: this.modelName,
             systemInstruction: this.buildSystemInstruction(agent, lengthPreference, language),
-            generationConfig: {
-                // Hard ceiling on output. Gemini 2.5 Flash with no cap has been
-                // observed degenerating into token-repetition loops mid-table
-                // (a markdown separator row repeating hundreds of times). 8192
-                // is enough for a long detailed answer with a sourced table.
-                maxOutputTokens: 8192,
-                // Default (~1.0) was prone to the same loop. 0.7 keeps answers
-                // varied without enabling runaway sampling, and topP narrows
-                // the nucleus enough to cut off the repetition basin.
-                temperature: 0.7,
-                topP: 0.95,
-                thinkingConfig: { thinkingBudget: 0 }
-            }
+            generationConfig,
         };
 
         // Only use fileSearch tool in LEGACY path (Phase 1). When Phase 2 retrieval
