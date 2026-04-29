@@ -61,6 +61,30 @@ export function FacultyChatInput({
         }
     };
 
+    /**
+     * Pasting an image (e.g. a screenshot) lands here as a clipboard item
+     * of `kind: 'file'` with a mime type like `image/png`. We hijack only
+     * those items — any text portion of the paste is left for the textarea
+     * to handle natively.
+     */
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    // Clipboard images often arrive with a generic name like
+                    // "image.png". That's fine for the badge.
+                    e.preventDefault();
+                    acceptFile(file);
+                    return;
+                }
+            }
+        }
+    };
+
     const acceptFile = (file: File): boolean => {
         if (!isAcceptedImage(file)) {
             alert(t('chat.attachment.unsupportedType'));
@@ -150,6 +174,7 @@ export function FacultyChatInput({
                             value={input}
                             onChange={(e) => onInputChange(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            onPaste={handlePaste}
                             placeholder={isLoading ? t('chat.inputLoading') : t('chat.inputPlaceholder')}
                             className="border-0 outline-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 rounded-none w-full min-h-[56px] max-h-[200px] py-4 pl-14 pr-14 text-[15px] bg-transparent font-medium shadow-none resize-none transition-[height]"
                             style={{ fieldSizing: 'content' } as React.CSSProperties}
