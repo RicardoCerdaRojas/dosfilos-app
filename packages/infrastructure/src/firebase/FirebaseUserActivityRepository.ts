@@ -23,7 +23,10 @@ import {
 export class FirebaseUserActivityRepository implements IUserActivityRepository {
     private readonly usersCollection = 'users';
     private readonly sermonsCollection = 'sermons';
-    private readonly greekSessionsCollection = 'greek_tutor_sessions';
+    // Canonical collection used by FirestoreGreekSessionRepository. The
+    // earlier `greek_tutor_sessions` value pointed at an empty mirror that
+    // no code writes to — analytics counts were silently zero.
+    private readonly greekSessionsCollection = 'greek_sessions';
     private readonly hebrewSessionsCollection = 'hebrew_user_sessions';
     private readonly projectsCollection = 'ai_projects';
     // Faculty chat sessions are stored as a subcollection per user, addressed
