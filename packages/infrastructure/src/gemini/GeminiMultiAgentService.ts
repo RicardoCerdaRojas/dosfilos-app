@@ -8,7 +8,7 @@ import {
     DEFAULT_LANGUAGE,
     resolveLocalized,
 } from '@dosfilos/domain';
-import type { SupportedLanguage } from '@dosfilos/domain';
+import type { SupportedLanguage, InlineAttachment } from '@dosfilos/domain';
 import {
     getGlobalBehaviorPrompt,
     getModeInstruction,
@@ -76,6 +76,7 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
         onSources?: (sources: SourceReference[]) => void,
         retrievedContext?: string,
         language: SupportedLanguage = DEFAULT_LANGUAGE,
+        attachments?: InlineAttachment[],
     ): Promise<string> {
         const usingPhase2RAG = !!retrievedContext;
         const agentName = resolveLocalized(agent.name, language);
@@ -124,7 +125,19 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
                 : `CONTEXTO RECUPERADO (usa esto como material primario y cita según indican los encabezados [Fuente N: ...]):\n\n${retrievedContext}\n\n---\n\nPREGUNTA DEL USUARIO: ${message}`)
             : message;
 
-        const result = await chat.sendMessageStream(finalMessage);
+        // Multimodal request: when the user attached images / PDFs, send
+        // them as `inlineData` parts alongside the text. The Gemini SDK
+        // accepts either a string or `Part[]` here; passing `Part[]` is
+        // what unlocks vision/document understanding.
+        const sendArg = attachments && attachments.length > 0
+            ? [
+                { text: finalMessage },
+                ...attachments.map(a => ({
+                    inlineData: { mimeType: a.mimeType, data: a.data },
+                })),
+            ]
+            : finalMessage;
+        const result = await chat.sendMessageStream(sendArg as any);
 
         let fullResponse = '';
         for await (const chunk of result.stream) {

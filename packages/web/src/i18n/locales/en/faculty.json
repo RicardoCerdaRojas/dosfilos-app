@@ -54,7 +54,14 @@
         "inputLoading": "Loading...",
         "selectingSpecialist": "Selecting specialist...",
         "deleteMessage": "Delete message",
-        "inferredModeLabel": "Detected mode:"
+        "inferredModeLabel": "Detected mode:",
+        "attachment": {
+            "attach": "Attach image",
+            "remove": "Remove image",
+            "dropHere": "Drop the image here",
+            "unsupportedType": "Only images are allowed (jpg, png, webp).",
+            "tooLarge": "Image is too large. Max 5 MB."
+        }
     },
     "bibliography": {
         "title": "Bibliography",

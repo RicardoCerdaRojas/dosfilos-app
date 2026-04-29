@@ -38,6 +38,34 @@ const EXTRACTION_TITLE_KEYS: Record<string, string> = {
 };
 
 /**
+ * Reads a File as base64 (no `data:` URI prefix) and returns the inline
+ * payload Gemini expects plus the small metadata we persist alongside the
+ * user message so the bubble can show a "📎 photo.jpg · 2.4 MB" badge
+ * after reload. The binary itself is not stored.
+ */
+async function prepareAttachmentForSend(file: File): Promise<{
+    inline: { mimeType: string; data: string };
+    meta: { filename: string; mimeType: string; sizeBytes: number };
+}> {
+    const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            // FileReader returns "data:image/png;base64,iVBOR..." — strip
+            // the URI scheme so we hand Gemini just the base64 payload.
+            const result = String(reader.result ?? '');
+            const comma = result.indexOf(',');
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+        reader.readAsDataURL(file);
+    });
+    return {
+        inline: { mimeType: file.type || 'application/octet-stream', data },
+        meta: { filename: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size },
+    };
+}
+
+/**
  * Injects inline CSS into the rendered prose HTML so it survives a paste
  * into Word, Google Docs, or Notion. Those editors strip `class`
  * attributes but preserve inline `style="..."`, so tables would otherwise
@@ -123,6 +151,7 @@ export function FacultyChatPage() {
     const [deleteMessageConfirmId, setDeleteMessageConfirmId] = useState<string | null>(null);
     const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
     const [isZenMode, setIsZenMode] = useState(false);
+    const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
 
     // ── Scroll management ────────────────────────────────────────────────────
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -288,11 +317,25 @@ export function FacultyChatPage() {
             return;
         }
 
+        // Snapshot the staged attachment so we can restore it on failure and
+        // clear the input optimistically. Convert to base64 in parallel with
+        // the network round-trip so the user perceives no extra latency.
+        const stagedAttachment = pendingAttachment;
+        setPendingAttachment(null);
         try {
-            await sendOrchestratedMessage({ message: userMsg, lengthPreference });
+            const { inline, meta } = stagedAttachment
+                ? await prepareAttachmentForSend(stagedAttachment)
+                : { inline: undefined, meta: undefined };
+            await sendOrchestratedMessage({
+                message: userMsg,
+                lengthPreference,
+                ...(inline && { attachments: [inline] }),
+                ...(meta && { attachmentsMeta: [meta] }),
+            });
         } catch (error) {
             console.error('Failed to send message:', error);
             setInput(userMsg);
+            if (stagedAttachment) setPendingAttachment(stagedAttachment);
         }
     };
 
@@ -415,6 +458,8 @@ export function FacultyChatPage() {
                                     isHidden={isHomeState}
                                     onInputChange={setInput}
                                     onSubmit={handleSendMessage}
+                                    attachment={pendingAttachment}
+                                    onAttach={setPendingAttachment}
                                 />
                             </>
                         )}
