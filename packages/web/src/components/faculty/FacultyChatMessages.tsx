@@ -129,8 +129,12 @@ interface FacultyChatMessagesProps {
     agentNameForNew: string;
     /** Asks the page to open the delete-confirmation dialog for this message. */
     onRequestDeleteMessage: (messageId: string) => void;
-    /** Copies the message body to clipboard; the page handles the toast. */
-    onCopyMessage: (content: string) => void;
+    /**
+     * Copies the message body to clipboard; the page handles the toast.
+     * Receives both the raw markdown (for plain-text paste) and the
+     * message id (used to look up the rendered DOM for rich-text paste).
+     */
+    onCopyMessage: (content: string, messageId: string) => void;
 }
 
 export function FacultyChatMessages({
@@ -186,12 +190,15 @@ export function FacultyChatMessages({
                             <MessageSquareQuote className="h-4 w-4 text-indigo-700 dark:text-indigo-300" />
                         </div>
                     )}
-                    <div className={cn(
-                        "relative text-[15px] leading-relaxed",
-                        msg.role === 'user'
-                            ? "bg-indigo-600 text-white rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
-                            : "flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5"
-                    )}>
+                    <div
+                        data-message-id={msg.id || undefined}
+                        className={cn(
+                            "relative text-[15px] leading-relaxed",
+                            msg.role === 'user'
+                                ? "bg-indigo-600 text-white rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
+                                : "flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5"
+                        )}
+                    >
                         {msg.role === 'user' ? (
                             <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                         ) : (
@@ -210,7 +217,7 @@ export function FacultyChatMessages({
                             >
                                 <button
                                     type="button"
-                                    onClick={() => onCopyMessage(msg.content)}
+                                    onClick={() => onCopyMessage(msg.content, msg.id)}
                                     className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-black/5 dark:hover:bg-white/5"
                                     title={t('dialogs.copy')}
                                     aria-label={t('dialogs.copy')}

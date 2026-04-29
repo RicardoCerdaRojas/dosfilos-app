@@ -187,13 +187,48 @@ export function FacultyChatPage() {
         setRenameConfirmId(null);
     };
 
-    const handleCopyMessage = async (content: string) => {
+    /**
+     * Copies a chat message to the clipboard in BOTH formats:
+     *   - text/html: the rendered markdown (so Word, Google Docs, Notion,
+     *     email clients paste a styled block — table cells, headings,
+     *     italics — instead of literal `<table>` tags or `## Heading`).
+     *   - text/plain: the raw markdown source, as a fallback for plain-text
+     *     editors and as the value most paste-special menus expose.
+     *
+     * If the modern `clipboard.write` API is unavailable (older browsers,
+     * non-secure contexts) we degrade to the plain-text path.
+     */
+    const handleCopyMessage = async (content: string, messageId: string) => {
         try {
-            await navigator.clipboard.writeText(content);
+            const node = document.querySelector(`[data-message-id="${messageId}"] .prose`);
+            const html = node?.innerHTML?.trim();
+
+            if (html && typeof window !== 'undefined' && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+                // Wrap the prose fragment so paste targets that expect a
+                // full document (e.g. Word) get a valid root. Whitespace
+                // preservation matters because newlines inside table cells
+                // shouldn't collapse on paste.
+                const wrapped = `<div>${html}</div>`;
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([wrapped], { type: 'text/html' }),
+                        'text/plain': new Blob([content], { type: 'text/plain' }),
+                    }),
+                ]);
+            } else {
+                await navigator.clipboard.writeText(content);
+            }
             toast.success(t('dialogs.copied'));
         } catch (err) {
             console.warn('[FacultyChat] clipboard write failed:', err);
-            toast.error(t('dialogs.copyFailed'));
+            // Last-ditch attempt: plain text. If that also fails the toast
+            // surfaces the failure to the user.
+            try {
+                await navigator.clipboard.writeText(content);
+                toast.success(t('dialogs.copied'));
+            } catch {
+                toast.error(t('dialogs.copyFailed'));
+            }
         }
     };
 
