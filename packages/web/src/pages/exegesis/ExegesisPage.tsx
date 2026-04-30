@@ -1,25 +1,25 @@
-import { NotebookPen, Plus, Sparkles, Construction } from 'lucide-react';
+import { NotebookPen, Plus, Sparkles, Construction, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
+import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { formatPassageReference, type ExegeticalPaper, type SupportedLanguage } from '@dosfilos/domain';
 
 /**
  * Exégesis — landing del módulo de redacción exegética asistida.
  *
- * v1 (en construcción): wizard paso-a-paso para producir trabajos
- * exegéticos del NT/AT con corpus por proyecto y guía de estilo
- * a nivel de usuario. La verificación programática de citas
- * (`CitationVerifier`) llega en v1.5 — es el diferenciador real
- * frente a NotebookLM.
- *
- * Esta primera ruta solo monta el shell de navegación: hero,
- * CTA deshabilitada (todavía no hay setup wizard) y nota
- * "coming soon". Se llena en commits sucesivos.
+ * Renders the user's papers list (live from Firestore via TanStack Query)
+ * plus the entry point to the setup wizard. Empty state and loading state
+ * keep the page coherent before the data arrives. The "v1 en construcción"
+ * banner stays put as honest comms while step generation and citation
+ * verification land in subsequent commits.
  */
 export function ExegesisPage() {
-    const { t } = useTranslation('exegesis');
+    const { t, i18n } = useTranslation('exegesis');
     const navigate = useNavigate();
     const goToSetup = () => navigate('/dashboard/exegesis/new');
+    const { papers, isLoading, error } = useExegesisPapers();
+    const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 font-sans overflow-y-auto">
@@ -76,29 +76,47 @@ export function ExegesisPage() {
                         {t('directory.papersSubtitle')}
                     </p>
 
-                    {/* Empty state — v1 no carga papers todavía */}
-                    <div className="rounded-2xl border border-dashed border-slate-300 dark:border-zinc-700 bg-white/40 dark:bg-zinc-900/40 px-8 py-12 text-center">
-                        <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 flex items-center justify-center mb-4">
-                            <NotebookPen className="h-6 w-6" />
+                    {isLoading ? (
+                        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-zinc-700 bg-white/40 dark:bg-zinc-900/40 px-8 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                            <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2 text-emerald-500" />
+                            {t('list.loading')}
                         </div>
-                        <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                            {t('directory.empty.title')}
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-5">
-                            {t('directory.empty.body')}
-                        </p>
-                        <Button
-                            onClick={goToSetup}
-                            variant="outline"
-                            className="border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300"
-                        >
-                            <Sparkles className="h-4 w-4 mr-1.5" />
-                            {t('directory.empty.cta')}
-                        </Button>
-                    </div>
+                    ) : error ? (
+                        <div className="rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 px-6 py-5 text-sm text-rose-700 dark:text-rose-300 inline-flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                            <span>{t('list.loadFailed')}</span>
+                        </div>
+                    ) : papers.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-zinc-700 bg-white/40 dark:bg-zinc-900/40 px-8 py-12 text-center">
+                            <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 flex items-center justify-center mb-4">
+                                <NotebookPen className="h-6 w-6" />
+                            </div>
+                            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                {t('directory.empty.title')}
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-5">
+                                {t('directory.empty.body')}
+                            </p>
+                            <Button
+                                onClick={goToSetup}
+                                variant="outline"
+                                className="border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300"
+                            >
+                                <Sparkles className="h-4 w-4 mr-1.5" />
+                                {t('directory.empty.cta')}
+                            </Button>
+                        </div>
+                    ) : (
+                        <ul className="space-y-2">
+                            {papers.map(p => (
+                                <PaperRow key={p.id} paper={p} language={activeLanguage} t={t} />
+                            ))}
+                        </ul>
+                    )}
                 </section>
 
                 {/* Coming-soon banner — comunicación honesta sobre el alcance de v1 */}
+                {/* (rendered below the list/empty/loading branch) */}
                 <section className="rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/60 dark:bg-amber-950/20 p-5">
                     <div className="flex items-start gap-3">
                         <div className="shrink-0 w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center justify-center">
@@ -116,5 +134,44 @@ export function ExegesisPage() {
                 </section>
             </main>
         </div>
+    );
+}
+
+interface PaperRowProps {
+    paper: ExegeticalPaper;
+    language: SupportedLanguage;
+    t: (key: string) => string;
+}
+
+function PaperRow({ paper, language, t }: PaperRowProps) {
+    const navigate = useNavigate();
+    // Future detail route (`/dashboard/exegesis/:paperId`) lands when the
+    // step wizard exists. For now clicking the row toasts via console only.
+    const open = () => {
+        console.log('[exegesis] open paper', paper.id);
+        navigate(`/dashboard/exegesis/${paper.id}`);
+    };
+    const passageDisplay = paper.title || formatPassageReference(paper.passage, language);
+
+    return (
+        <li>
+            <button
+                type="button"
+                onClick={open}
+                className="w-full text-left rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-400/60 hover:shadow-sm transition-all px-4 py-3 flex items-center gap-3"
+            >
+                <div className="shrink-0 w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
+                    <NotebookPen className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                        {passageDisplay}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {t(`list.phase.${paper.phase}`)} · {t('list.updatedAt')} {paper.updatedAt.toLocaleDateString()}
+                    </p>
+                </div>
+            </button>
+        </li>
     );
 }

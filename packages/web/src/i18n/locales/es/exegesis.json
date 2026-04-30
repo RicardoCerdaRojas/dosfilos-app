@@ -48,6 +48,25 @@
             "stepTitle": "Corpus del trabajo",
             "stepSubtitle": "Extractos específicos para este pasaje (comentarios, léxicos, aparato crítico). No se mezclan con tu biblioteca.",
             "placeholder": "Próximamente: subir extractos + tagging por rol (comentario primario, léxico, aparato crítico, etc.)."
+        },
+        "toast": {
+            "created": "Trabajo creado",
+            "createFailed": "No se pudo crear el trabajo. Intentá de nuevo."
         }
+    },
+    "list": {
+        "loading": "Cargando trabajos...",
+        "loadFailed": "No se pudieron cargar tus trabajos.",
+        "passageLabel": "Pasaje",
+        "phaseLabel": "Estado",
+        "phase": {
+            "configuring": "En configuración",
+            "in-progress": "En curso",
+            "assembled": "Ensamblado",
+            "archived": "Archivado"
+        },
+        "openPaper": "Abrir trabajo",
+        "createdAt": "Creado",
+        "updatedAt": "Actualizado"
     }
 }

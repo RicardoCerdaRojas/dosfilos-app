@@ -41,11 +41,16 @@ export interface ExegeticalPaper {
 
     /**
      * Reference to the user-level style guide active for this paper. The
-     * guide is uploaded once per user and reused across papers; we store the
-     * id (not a snapshot) so seminary updates flow through automatically
+     * guide is uploaded once per user and reused across papers; we store
+     * the id (not a snapshot) so seminary updates flow through automatically
      * unless the user pins a specific version on a per-paper basis later.
+     *
+     * Nullable during the 'configuring' phase: the v1 setup wizard does NOT
+     * collect a guide (that step is v1.5 placeholder). Phase transition to
+     * 'in-progress' must enforce non-null before any generation runs — the
+     * orchestrator needs an actual guide to inject into prompts.
      */
-    styleGuideId: string;
+    styleGuideId: string | null;
 
     /**
      * Project-scoped corpus — extracts of commentaries, lexicons, and the

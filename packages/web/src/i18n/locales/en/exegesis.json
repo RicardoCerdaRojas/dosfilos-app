@@ -48,6 +48,25 @@
             "stepTitle": "Project corpus",
             "stepSubtitle": "Extracts specific to this passage (commentaries, lexicons, critical apparatus). They don't mix with your library.",
             "placeholder": "Coming soon: upload extracts + role tagging (primary commentary, lexicon, critical apparatus, etc.)."
+        },
+        "toast": {
+            "created": "Paper created",
+            "createFailed": "Couldn't create the paper. Please try again."
         }
+    },
+    "list": {
+        "loading": "Loading papers...",
+        "loadFailed": "Couldn't load your papers.",
+        "passageLabel": "Passage",
+        "phaseLabel": "Status",
+        "phase": {
+            "configuring": "Configuring",
+            "in-progress": "In progress",
+            "assembled": "Assembled",
+            "archived": "Archived"
+        },
+        "openPaper": "Open paper",
+        "createdAt": "Created",
+        "updatedAt": "Updated"
     }
 }

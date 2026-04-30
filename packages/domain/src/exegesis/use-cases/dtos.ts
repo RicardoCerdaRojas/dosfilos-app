@@ -34,12 +34,13 @@ export interface CreateExegeticalPaperInput {
      */
     title?: string;
     /**
-     * Reference to a `UserStyleGuide` already uploaded by the user. The use
-     * case validates that the guide exists and belongs to the user. If the
-     * user has no active guide, the UI must surface an upload step BEFORE
-     * calling this — the use case will reject otherwise.
+     * Reference to a `UserStyleGuide` already uploaded by the user. May be
+     * null in v1 — the wizard's style-guide step is a v1.5 placeholder, so
+     * papers are created without a guide and the orchestrator validates
+     * non-null only when the user attempts to generate. The use case still
+     * verifies that any provided id exists and belongs to the user.
      */
-    styleGuideId: string;
+    styleGuideId: string | null;
     /**
      * Optional initial sources. May also be empty — the user can add them
      * later via `AddProjectSource` while the paper is in 'configuring'.

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookText, FileStack, FileCheck2, Lock } from 'lucide-react';
+import { toast } from 'sonner';
+import { ArrowLeft, BookText, FileStack, FileCheck2, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
-import type { PassageReference } from '@dosfilos/domain';
+import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import type { PassageReference, SupportedLanguage } from '@dosfilos/domain';
 
 /**
  * Setup wizard for a new exegetical paper.
@@ -14,18 +16,38 @@ import type { PassageReference } from '@dosfilos/domain';
  * sees the wizard's full shape and we can wire each in subsequent commits
  * without introducing dead UI later.
  *
- * State for v1 lives in `useState`; the "Crear" button currently doesn't
- * persist anywhere. Persistence to Firestore lands in the next pass when
- * the repository implementations exist.
+ * On submit: creates the paper in Firestore via `useExegesisPapers().createPaper`
+ * and navigates back to the list. The paper is born in 'configuring' phase
+ * with `styleGuideId: null` and an empty source list — the (still-locked)
+ * steps 2 and 3 will populate those once they're built out.
  */
 export function ExegesisSetupPage() {
     const navigate = useNavigate();
-    const { t } = useTranslation('exegesis');
+    const { t, i18n } = useTranslation('exegesis');
+    const { createPaper } = useExegesisPapers();
 
     const [passage, setPassage] = useState<PassageReference | null>(null);
     const [passageError, setPassageError] = useState<string | null>(null);
 
-    const canCreate = !!passage;
+    const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+    const isCreating = createPaper.isPending;
+    const canCreate = !!passage && !isCreating;
+
+    const handleCreate = async () => {
+        if (!passage) return;
+        try {
+            await createPaper.mutateAsync({
+                passage,
+                displayLanguage: activeLanguage,
+                styleGuideId: null,
+            });
+            toast.success(t('setup.toast.created'));
+            navigate('/dashboard/exegesis');
+        } catch (err) {
+            console.error('[exegesis] create failed:', err);
+            toast.error(t('setup.toast.createFailed'));
+        }
+    };
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 font-sans overflow-y-auto">
@@ -102,14 +124,10 @@ export function ExegesisSetupPage() {
                     </Button>
                     <Button
                         disabled={!canCreate}
-                        onClick={() => {
-                            // Persistence to Firestore lands once the repos exist.
-                            // For now the click is a no-op so users see the wizard
-                            // and the validated passage roundtrip works end-to-end.
-                            console.log('[exegesis] would create paper with:', passage);
-                        }}
+                        onClick={handleCreate}
                         className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
                     >
+                        {isCreating && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
                         {t('setup.create')}
                     </Button>
                 </div>

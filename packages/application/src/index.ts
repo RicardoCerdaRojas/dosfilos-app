@@ -39,5 +39,9 @@ export * from './use-cases/user-activity';
 // Faculty Multi-Agent use cases
 export * from './use-cases/faculty';
 
+// Exegesis Module
+export * from './services/ExegesisService';
+export * from './use-cases/exegesis';
+
 // Hebrew Tutor
 export * from './hebrew-tutor/index.js';
