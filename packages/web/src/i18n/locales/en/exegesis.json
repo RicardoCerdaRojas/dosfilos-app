@@ -17,6 +17,80 @@
             "body": "This first version focuses on the assisted writing flow: project setup, step-by-step verse generation with interaction, and final assembly. Programmatic citation verification (the real differentiator vs NotebookLM) arrives in the next version."
         }
     },
+    "sourceTypeGroups": {
+        "primary-text": "Biblical text",
+        "lexical": "Lexical / linguistic",
+        "commentaries": "Commentaries",
+        "background": "Context & monographs",
+        "methodological": "Methodological support"
+    },
+    "sourceTypes": {
+        "biblical-text-edition": {
+            "label": "Biblical text edition",
+            "description": "The original-language text edition you are exegeting.",
+            "examples": "NA28, BHS, Rahlfs LXX, GNT5"
+        },
+        "critical-apparatus": {
+            "label": "Critical apparatus",
+            "description": "Manuscript variants used when the received text is disputed.",
+            "examples": "NA28 apparatus, BHS, ECM"
+        },
+        "lexicon-technical": {
+            "label": "Technical lexicon",
+            "description": "Academic lexicons with full entries, glosses, and semantics.",
+            "examples": "BDAG, HALOT, LSJ"
+        },
+        "theological-dictionary": {
+            "label": "Theological dictionary",
+            "description": "Multi-volume dictionaries that treat semantic fields and theological trajectories.",
+            "examples": "TDNT, NIDNTTE, EDNT"
+        },
+        "grammar-syntax": {
+            "label": "Grammar / syntax",
+            "description": "Technical grammars to back up syntactic claims.",
+            "examples": "BDF, Wallace, Robertson"
+        },
+        "commentary-critical": {
+            "label": "Critical commentary",
+            "description": "Academic exegetical commentaries that engage the original-language text technically.",
+            "examples": "WBC, NIGTC, Hermeneia, ICC, Anchor"
+        },
+        "commentary-expository": {
+            "label": "Expository commentary",
+            "description": "Mid-level academic-pastoral commentaries that bridge exegesis to theology.",
+            "examples": "NICOT/NICNT, BECNT, Pillar, Tyndale, NIVAC"
+        },
+        "historical-background": {
+            "label": "Historical/cultural background",
+            "description": "Studies of the historical and cultural setting of the passage.",
+            "examples": "deSilva, Sanders, Keener IVP, ABD"
+        },
+        "theological-monograph": {
+            "label": "Theological monograph",
+            "description": "Academic books focused on a specific theological topic.",
+            "examples": "Bateman on warning passages, Beale on intertextuality"
+        },
+        "journal-article": {
+            "label": "Journal article",
+            "description": "Peer-reviewed articles reflecting current scholarly debate.",
+            "examples": "JBL, NTS, JETS, NovT"
+        },
+        "primary-source-ancient": {
+            "label": "Ancient primary source",
+            "description": "Sources contemporary with the biblical text.",
+            "examples": "Josephus, Philo, Apostolic Fathers, Pseudepigrapha"
+        },
+        "style-template-paper": {
+            "label": "Style template (never cited)",
+            "description": "Sample paper the agent imitates in form — never cited inline.",
+            "examples": "Your prior paper, seminary exemplar"
+        },
+        "other": {
+            "label": "Other",
+            "description": "A source that doesn't cleanly fit another category. Use sparingly.",
+            "examples": "Seminary handouts, personal notes"
+        }
+    },
     "create": {
         "title": "New exegetical paper",
         "subtitle": "Set the passage and frame the work for the agent. We'll define rubric, sources, and structural plan next.",
@@ -72,7 +146,42 @@
                 "tab": "Corpus",
                 "heading": "Paper corpus",
                 "description": "Upload extracts specific to this passage with their academic type. We flag what's missing per the rubric.",
-                "placeholderHint": "You have {{count}} sources attached. The granular corpus picker + gap detection lands in the next commit."
+                "gap": {
+                    "metTitle": "Your corpus meets the rubric",
+                    "metBody": "{{count}} sources attached — every minimum is satisfied. You can move on to the structural plan.",
+                    "gapsTitle": "{{satisfied}} of {{total}} requirements met",
+                    "gapsBody": "You are {{missing}} sources short of meeting the rubric. The details below indicate what types to add.",
+                    "noRubric": "No rubric is attached yet. Configure the rubric in the first tab before loading the corpus."
+                },
+                "list": {
+                    "title": "Attached sources",
+                    "empty": "No sources yet. Upload the first extract below.",
+                    "remove": "Remove source"
+                },
+                "upload": {
+                    "title": "Add a source",
+                    "fileLabel": "File (PDF or EPUB)",
+                    "displayNameLabel": "Corpus label",
+                    "displayNamePlaceholder": "e.g. Lane WBC 47a, pp. 1-30",
+                    "typeLabel": "Academic type",
+                    "typeDescription": "Pick the type that best describes the source. The rubric uses this type to decide whether it satisfies minimums.",
+                    "citationKeyLabel": "Citation key",
+                    "citationKeyPlaceholder": "e.g. Lane",
+                    "citationKeyHint": "Used in footnotes. Leave empty and we derive it from the corpus.",
+                    "submit": "Upload and add to corpus",
+                    "uploading": "Uploading... {{progress}}%",
+                    "modelPaperHint": "Style templates are used as form models only. They are NEVER cited inline.",
+                    "fileRequired": "Choose a file first",
+                    "labelTooShort": "Label is too short (3 characters minimum)"
+                },
+                "toast": {
+                    "added": "Source added to corpus",
+                    "addFailed": "Could not add the source. Please try again.",
+                    "removed": "Source removed",
+                    "removeFailed": "Could not remove the source.",
+                    "typeUpdated": "Type updated",
+                    "typeUpdateFailed": "Could not update the type"
+                }
             },
             "plan": {
                 "tab": "Structural plan",

@@ -17,6 +17,80 @@
             "body": "Esta primera versión enfoca el flujo de redacción asistida: configuración del proyecto, generación verso por verso con interacción y ensamble final. La verificación programática de citas (el diferenciador frente a NotebookLM) llega en la siguiente versión."
         }
     },
+    "sourceTypeGroups": {
+        "primary-text": "Texto bíblico",
+        "lexical": "Lexical / lingüístico",
+        "commentaries": "Comentarios",
+        "background": "Contexto y monografías",
+        "methodological": "Apoyo metodológico"
+    },
+    "sourceTypes": {
+        "biblical-text-edition": {
+            "label": "Edición del texto bíblico",
+            "description": "El texto en lengua original que vas a exegetizar.",
+            "examples": "NA28, BHS, Rahlfs LXX, GNT5"
+        },
+        "critical-apparatus": {
+            "label": "Aparato crítico",
+            "description": "Variantes textuales del manuscrito utilizadas cuando el texto recibido es disputado.",
+            "examples": "Aparato de NA28, BHS, ECM"
+        },
+        "lexicon-technical": {
+            "label": "Léxico técnico",
+            "description": "Léxicos académicos con entradas completas, glosas y semántica.",
+            "examples": "BDAG, HALOT, LSJ"
+        },
+        "theological-dictionary": {
+            "label": "Diccionario teológico",
+            "description": "Diccionarios multivolumen que tratan campos semánticos y trayectorias teológicas.",
+            "examples": "TDNT, NIDNTTE, EDNT"
+        },
+        "grammar-syntax": {
+            "label": "Gramática / sintaxis",
+            "description": "Gramáticas técnicas para sustentar afirmaciones sintácticas.",
+            "examples": "BDF, Wallace, Robertson"
+        },
+        "commentary-critical": {
+            "label": "Comentario crítico-técnico",
+            "description": "Comentarios académicos exegéticos con tratamiento técnico del original.",
+            "examples": "WBC, NIGTC, Hermeneia, ICC, Anchor"
+        },
+        "commentary-expository": {
+            "label": "Comentario expositivo",
+            "description": "Comentarios académico-pastorales de nivel medio que conectan exégesis con teología.",
+            "examples": "NICOT/NICNT, BECNT, Pillar, Tyndale, NIVAC"
+        },
+        "historical-background": {
+            "label": "Contexto histórico/cultural",
+            "description": "Estudios sobre el trasfondo histórico y cultural del pasaje.",
+            "examples": "deSilva, Sanders, Keener IVP, ABD"
+        },
+        "theological-monograph": {
+            "label": "Monografía teológica",
+            "description": "Libros académicos enfocados en un tema teológico específico.",
+            "examples": "Bateman sobre advertencias, Beale sobre intertextualidad"
+        },
+        "journal-article": {
+            "label": "Artículo de revista",
+            "description": "Artículos peer-reviewed que reflejan el debate académico actual.",
+            "examples": "JBL, NTS, JETS, NovT"
+        },
+        "primary-source-ancient": {
+            "label": "Fuente primaria antigua",
+            "description": "Fuentes contemporáneas al texto bíblico.",
+            "examples": "Josefo, Filón, Padres apostólicos, Pseudoepígrafos"
+        },
+        "style-template-paper": {
+            "label": "Plantilla de estilo (no se cita)",
+            "description": "Trabajo modelo del que el agente imita la forma — nunca se cita inline.",
+            "examples": "Tu paper anterior, ejemplo del seminario"
+        },
+        "other": {
+            "label": "Otro",
+            "description": "Fuente que no encaja claramente en otra categoría. Usalo con moderación.",
+            "examples": "Documentos de seminario, notas personales"
+        }
+    },
     "create": {
         "title": "Nuevo trabajo exegético",
         "subtitle": "Configurá el pasaje y dale contexto al agente. Después definimos rúbrica, fuentes y plan estructural.",
@@ -72,7 +146,42 @@
                 "tab": "Corpus",
                 "heading": "Corpus del trabajo",
                 "description": "Subí los extractos específicos para este pasaje con tipo académico. Te avisamos qué falta según la rúbrica.",
-                "placeholderHint": "Tenés {{count}} fuentes adjuntas. El corpus picker granular + gap detection llega en el próximo commit."
+                "gap": {
+                    "metTitle": "Tu corpus cumple la rúbrica",
+                    "metBody": "{{count}} fuentes adjuntas — todos los mínimos están satisfechos. Podés avanzar al plan estructural.",
+                    "gapsTitle": "{{satisfied}} de {{total}} requisitos satisfechos",
+                    "gapsBody": "Te faltan {{missing}} fuentes para cumplir la rúbrica. Los detalles abajo indican qué tipos sumar.",
+                    "noRubric": "Aún no hay rúbrica asociada al trabajo. Configurá la rúbrica en el primer tab antes de cargar el corpus."
+                },
+                "list": {
+                    "title": "Fuentes adjuntas",
+                    "empty": "Aún no agregaste fuentes. Subí el primer extracto abajo.",
+                    "remove": "Quitar fuente"
+                },
+                "upload": {
+                    "title": "Agregar una fuente",
+                    "fileLabel": "Archivo (PDF o EPUB)",
+                    "displayNameLabel": "Etiqueta para el corpus",
+                    "displayNamePlaceholder": "Ej. Lane WBC 47a, pp. 1-30",
+                    "typeLabel": "Tipo académico",
+                    "typeDescription": "Elegí el tipo que mejor describe la fuente. La rúbrica usa este tipo para decidir si cumple los mínimos.",
+                    "citationKeyLabel": "Clave de cita",
+                    "citationKeyPlaceholder": "Ej. Lane",
+                    "citationKeyHint": "Se usa en las notas al pie. Si lo dejás vacío, lo derivamos del corpus.",
+                    "submit": "Subir y agregar al corpus",
+                    "uploading": "Subiendo... {{progress}}%",
+                    "modelPaperHint": "Las plantillas de estilo se usan solo como modelo de forma. NUNCA se citan inline.",
+                    "fileRequired": "Subí un archivo",
+                    "labelTooShort": "La etiqueta es muy corta (mínimo 3 caracteres)"
+                },
+                "toast": {
+                    "added": "Fuente agregada al corpus",
+                    "addFailed": "No se pudo agregar la fuente. Intentá de nuevo.",
+                    "removed": "Fuente quitada",
+                    "removeFailed": "No se pudo quitar la fuente.",
+                    "typeUpdated": "Tipo actualizado",
+                    "typeUpdateFailed": "No se pudo actualizar el tipo"
+                }
             },
             "plan": {
                 "tab": "Plan estructural",

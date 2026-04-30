@@ -326,3 +326,44 @@ export interface RequirementCheck {
     /** Justification copied verbatim from the matching `SourceRequirement`. */
     justification: string;
 }
+
+/**
+ * Computes how a list of source types stacks up against a rubric's
+ * `sourceRequirements`. Pure function: same inputs → same output.
+ *
+ * Lives on the entity module (not in application or web) because
+ * (a) it depends only on domain types and (b) both surfaces — the
+ * setup UI's gap card and the future generation gate — need to call
+ * it identically. Co-locating with the entity keeps the rule "what
+ * counts as compliant" anchored to the rubric definition.
+ *
+ * Counts every requirement listed on the rubric, including those
+ * with `minimum: 0` (which always end up satisfied). The UI hides
+ * zero-minimum requirements that are also empty so the card stays
+ * focused; the report itself stays exhaustive so analytics and the
+ * orchestrator can audit "are optional types being engaged?".
+ */
+export function computeRubricCompliance(
+    sourceTypes: ReadonlyArray<SourceType>,
+    rubric: PaperRubric,
+): RubricComplianceReport {
+    const counts = new Map<SourceType, number>();
+    for (const t of sourceTypes) {
+        counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+    const requirements: RequirementCheck[] = rubric.sourceRequirements.map(req => {
+        const have = counts.get(req.sourceType) ?? 0;
+        const missing = Math.max(0, req.minimum - have);
+        return {
+            sourceType: req.sourceType,
+            required: req.minimum,
+            have,
+            missing,
+            satisfied: have >= req.minimum,
+            justification: req.justification,
+        };
+    });
+    const meetsMinimums = requirements.every(r => r.satisfied);
+    const totalMissing = requirements.reduce((sum, r) => sum + r.missing, 0);
+    return { requirements, meetsMinimums, totalMissing };
+}

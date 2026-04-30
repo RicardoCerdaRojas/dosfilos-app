@@ -1,24 +1,37 @@
-import { FileStack } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { FileStack, FileText, Loader2, Upload, X, BookOpenText } from 'lucide-react';
+import { toast } from 'sonner';
+import { libraryService } from '@dosfilos/application';
+import {
+    CITABLE_SOURCE_TYPES,
+    type ExegeticalPaper,
+    type ProjectSource,
+    type SourceType,
+} from '@dosfilos/domain';
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
-import type { ExegeticalPaper } from '@dosfilos/domain';
+import { useFirebase } from '@/context/firebase-context';
+import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { SourceTypePicker } from './SourceTypePicker';
+import { RubricGapCard } from './RubricGapCard';
 
 /**
- * Corpus sub-step (Phase 2D placeholder shell).
+ * Corpus sub-step — the main pedagogical surface of the rubric-driven
+ * setup.
  *
- * What lands here in 2D:
- *   - Granular `SourceType` picker grouped by family (Primary text,
- *     Lexical, Commentaries, Background, Methodological).
- *   - Per-type tooltip explaining what it is + examples (BDAG,
- *     WBC, deSilva, etc.) — pedagogical layer for novices.
- *   - Gap-detection card: "Tu rúbrica pide ≥2 commentary-critical;
- *     tenés 1. Faltan: 1 lexicon-technical, 1 historical-background."
- *     Computed by walking `paper.sources` against
- *     `paper.rubric.sourceRequirements`.
- *   - Suggested-source list (from a curated catalog) for each missing
- *     type — accepted in v1 as static suggestions; v1.5 may add
- *     "buy/find on Logos/online".
- *   - Generation gate: cannot proceed to writing without minimums met
- *     (or explicit waiver with reason).
+ * Three sections, top to bottom:
+ *   1. **Gap card** (`RubricGapCard`) — instant feedback on what the
+ *      rubric needs vs. what's loaded. Re-renders on every source
+ *      change.
+ *   2. **Attached sources list** — what's already on the paper, with
+ *      inline edit of `sourceType` (so the student can re-classify
+ *      without re-uploading) and remove.
+ *   3. **Upload form** — file → library_resource → addSource. Uses
+ *      the granular `SourceTypePicker` grouped by academic family.
+ *
+ * Differs from the old wizard's `SourcesStep`: the paper already
+ * exists when this sub-step runs, so uploads attach immediately
+ * (`addSource.mutateAsync`). No "pending sources" buffer.
  */
 interface CorpusSubStepProps {
     paper: ExegeticalPaper;
@@ -26,10 +39,9 @@ interface CorpusSubStepProps {
 
 export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     const { t } = useTranslation('exegesis');
-    const sourceCount = paper.sources.length;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             <header className="flex items-start gap-3">
                 <FileStack className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                 <div>
@@ -42,11 +54,285 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </div>
             </header>
 
-            <div className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 p-4">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('paperSetup.subSteps.corpus.placeholderHint', { count: sourceCount })}
-                </p>
-            </div>
+            <RubricGapCard paper={paper} />
+
+            <CorpusSourcesList paper={paper} />
+
+            <CorpusUploadForm paper={paper} />
         </div>
+    );
+}
+
+// ── Sources list ────────────────────────────────────────────────────────
+
+function CorpusSourcesList({ paper }: { paper: ExegeticalPaper }) {
+    const { t } = useTranslation('exegesis');
+    const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
+
+    return (
+        <section className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
+            </h3>
+            {sorted.length === 0 ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                    {t('paperSetup.subSteps.corpus.list.empty')}
+                </p>
+            ) : (
+                <ul className="space-y-2">
+                    {sorted.map(source => (
+                        <SourceRow key={source.id} paperId={paper.id} source={source} />
+                    ))}
+                </ul>
+            )}
+        </section>
+    );
+}
+
+function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource }) {
+    const { t } = useTranslation('exegesis');
+    const { updateSource, removeSource } = useExegesisPapers();
+    const isCitable = CITABLE_SOURCE_TYPES.has(source.sourceType);
+
+    const handleTypeChange = async (next: SourceType) => {
+        try {
+            await updateSource.mutateAsync({
+                paperId,
+                sourceId: source.id,
+                sourceType: next,
+            });
+            toast.success(t('paperSetup.subSteps.corpus.toast.typeUpdated'));
+        } catch (err) {
+            console.error('[exegesis] update source type failed:', err);
+            toast.error(t('paperSetup.subSteps.corpus.toast.typeUpdateFailed'));
+        }
+    };
+
+    const handleRemove = async () => {
+        try {
+            await removeSource.mutateAsync({ paperId, sourceId: source.id });
+            toast.success(t('paperSetup.subSteps.corpus.toast.removed'));
+        } catch (err) {
+            console.error('[exegesis] remove source failed:', err);
+            toast.error(t('paperSetup.subSteps.corpus.toast.removeFailed'));
+        }
+    };
+
+    return (
+        <li className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-2">
+            <div className="flex items-start gap-2.5">
+                <FileText className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                        {source.displayLabel}
+                    </p>
+                    {source.citationKey && (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}: {source.citationKey}
+                        </p>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    onClick={handleRemove}
+                    disabled={removeSource.isPending}
+                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                    aria-label={t('paperSetup.subSteps.corpus.list.remove')}
+                    title={t('paperSetup.subSteps.corpus.list.remove')}
+                >
+                    <X className="h-3.5 w-3.5" />
+                </button>
+            </div>
+            <SourceTypePicker
+                value={source.sourceType}
+                onChange={handleTypeChange}
+                disabled={updateSource.isPending}
+                className="w-full text-xs"
+            />
+            {!isCitable && (
+                <p className="text-[10px] text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
+                    <BookOpenText className="h-3 w-3" />
+                    {t('paperSetup.subSteps.corpus.upload.modelPaperHint')}
+                </p>
+            )}
+        </li>
+    );
+}
+
+// ── Upload form ────────────────────────────────────────────────────────
+
+function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
+    const { t } = useTranslation('exegesis');
+    const { user } = useFirebase();
+    const { addSource } = useExegesisPapers();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [file, setFile] = useState<File | null>(null);
+    const [displayName, setDisplayName] = useState('');
+    const [sourceType, setSourceType] = useState<SourceType>('commentary-critical');
+    const [citationKey, setCitationKey] = useState('');
+    const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState<number | null>(null);
+
+    const labelOk = displayName.trim().length >= 3;
+    const canSubmit = !!file && labelOk && !!user?.uid && !uploading;
+
+    const handleFile = (f: File | null) => {
+        setFile(f);
+        if (f && !displayName) {
+            setDisplayName(f.name.replace(/\.[^/.]+$/, ''));
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!canSubmit || !file || !user?.uid) return;
+        setUploading(true);
+        setProgress(0);
+        try {
+            // Upload through the library pipeline. `type: 'other'` is a
+            // pragmatic default; the real source-type signal lives on
+            // the ProjectSource link, not on the library_resource.
+            const resource = await libraryService.uploadResource(
+                user.uid,
+                file,
+                {
+                    title: displayName.trim(),
+                    author: '',
+                    type: 'other',
+                },
+                (p) => setProgress(p),
+            );
+            await addSource.mutateAsync({
+                paperId: paper.id,
+                corpusId: resource.id,
+                sourceType,
+                displayLabel: displayName.trim(),
+                citationKey: citationKey.trim() || undefined,
+            });
+            // Reset form for "add another" loop.
+            setFile(null);
+            setDisplayName('');
+            setCitationKey('');
+            setSourceType('commentary-critical');
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            toast.success(t('paperSetup.subSteps.corpus.toast.added'));
+        } catch (err) {
+            console.error('[exegesis] add source failed:', err);
+            toast.error(t('paperSetup.subSteps.corpus.toast.addFailed'));
+        } finally {
+            setUploading(false);
+            setProgress(null);
+        }
+    };
+
+    const isCitable = CITABLE_SOURCE_TYPES.has(sourceType);
+
+    return (
+        <form
+            onSubmit={handleSubmit}
+            className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 p-4 space-y-3"
+        >
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {t('paperSetup.subSteps.corpus.upload.title')}
+            </h3>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {t('paperSetup.subSteps.corpus.upload.fileLabel')}
+                </label>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf,.pdf,application/epub+zip,.epub"
+                    onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                    disabled={uploading}
+                    className="block w-full text-sm text-slate-700 dark:text-slate-200 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-300 hover:file:bg-emerald-200 dark:hover:file:bg-emerald-900/50"
+                />
+                {file && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                        {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
+                    </p>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_220px] gap-2">
+                <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
+                    </label>
+                    <input
+                        type="text"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        disabled={uploading}
+                        placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
+                        className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('paperSetup.subSteps.corpus.upload.typeLabel')}
+                    </label>
+                    <SourceTypePicker
+                        value={sourceType}
+                        onChange={setSourceType}
+                        disabled={uploading}
+                        className="w-full"
+                    />
+                </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {t('paperSetup.subSteps.corpus.upload.typeDescription')}
+            </p>
+
+            {isCitable && (
+                <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}
+                    </label>
+                    <input
+                        type="text"
+                        value={citationKey}
+                        onChange={(e) => setCitationKey(e.target.value)}
+                        disabled={uploading}
+                        placeholder={t('paperSetup.subSteps.corpus.upload.citationKeyPlaceholder')}
+                        className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                    />
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                        {t('paperSetup.subSteps.corpus.upload.citationKeyHint')}
+                    </p>
+                </div>
+            )}
+
+            {!isCitable && (
+                <p className="text-[11px] text-amber-700 dark:text-amber-300 inline-flex items-start gap-1">
+                    <BookOpenText className="h-3 w-3 mt-0.5 shrink-0" />
+                    {t('paperSetup.subSteps.corpus.upload.modelPaperHint')}
+                </p>
+            )}
+
+            {uploading && progress !== null && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t('paperSetup.subSteps.corpus.upload.uploading', { progress })}
+                </p>
+            )}
+
+            <div className="flex justify-end">
+                <Button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                >
+                    {uploading ? (
+                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
+                        <Upload className="h-4 w-4 mr-1.5" />
+                    )}
+                    {t('paperSetup.subSteps.corpus.upload.submit')}
+                </Button>
+            </div>
+        </form>
     );
 }
