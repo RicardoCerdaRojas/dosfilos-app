@@ -7,6 +7,7 @@ export { UpdateStepPlanUseCase } from './UpdateStepPlanUseCase';
 export { UpdateRubricUseCase } from './UpdateRubricUseCase';
 export { ResetRubricUseCase } from './ResetRubricUseCase';
 export { ExtractRubricFromTextUseCase } from './ExtractRubricFromTextUseCase';
+export { ExtractStyleGuideManifestUseCase } from './ExtractStyleGuideManifestUseCase';
 
 // User style guides
 export { ListUserStyleGuidesUseCase } from './ListUserStyleGuidesUseCase';

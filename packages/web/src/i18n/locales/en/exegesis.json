@@ -212,8 +212,76 @@
                 "tab": "Style guide",
                 "heading": "Style guide manifest",
                 "description": "Verify the mechanical rules extracted from your guide (footnotes, ibid, quotation marks). Correct anything before generating.",
-                "placeholderHint": "The manifest viewer + citation samples lands in a later commit.",
-                "noGuide": "No active guide attached. Upload one from your profile so the manifest can be extracted automatically."
+                "noGuide": "No active guide attached. Upload one from your profile so the manifest can be extracted.",
+                "noManifest": {
+                    "title": "Manifest not extracted yet",
+                    "body": "Your guide is loaded but the mechanical rules haven't been extracted. This converts them to a structured format the orchestrator can enforce deterministically.",
+                    "extractCta": "Extract rules now",
+                    "extracting": "Extracting...",
+                    "extracted": "Rules extracted",
+                    "failed": "Could not extract the manifest",
+                    "overloaded": "Gemini is overloaded. Try again in a few seconds.",
+                    "corpusNotReady": "The guide's text hasn't finished processing yet. Wait a few seconds and retry."
+                },
+                "card": {
+                    "citationStyleLabel": "Citation style",
+                    "extractedAt": "Extracted",
+                    "model": "Model",
+                    "confidence": {
+                        "label": "Confidence",
+                        "high": "high",
+                        "medium": "medium",
+                        "low": "low"
+                    },
+                    "reExtract": "Re-extract",
+                    "reExtractConfirm": "This will replace the current manifest with a new extraction. Continue?"
+                },
+                "footnotes": {
+                    "title": "Footnotes",
+                    "firstMention": "First mention",
+                    "subsequentMention": "Subsequent mention",
+                    "ibidEnabled": "Ibid allowed",
+                    "ibidDisabled": "Ibid NOT allowed",
+                    "ibidPageOverride": "Allows \"Ibid., 47\" when the page differs",
+                    "examplesTitle": "Rendered examples",
+                    "exampleEmpty": "The extractor produced no examples. Consider re-extracting."
+                },
+                "bibliography": {
+                    "title": "Bibliography",
+                    "entryTemplate": "Entry template",
+                    "sortByLabel": "Sort by",
+                    "sortBy": {
+                        "author-surname": "Author surname",
+                        "order-of-appearance": "Order of appearance"
+                    },
+                    "useDashTrue": "Uses 3-em dash for repeated authors",
+                    "useDashFalse": "Does NOT use 3-em dash (full name each time)"
+                },
+                "quotations": {
+                    "title": "Quotations",
+                    "blockThreshold": "Block-quote threshold",
+                    "blockThresholdValue": "{{count}} words",
+                    "primaryQuoteMark": "Primary quote mark",
+                    "secondaryQuoteMark": "Secondary quote mark",
+                    "ellipsis": "Ellipsis",
+                    "interpolationBrackets": "Interpolation brackets"
+                },
+                "transliteration": {
+                    "title": "Transliteration",
+                    "scheme": "Scheme",
+                    "useDiacriticsTrue": "Preserves diacritics / macrons",
+                    "useDiacriticsFalse": "No diacritics",
+                    "bodyRequired": "Transliteration required in body",
+                    "bodyOptional": "Transliteration optional in body",
+                    "none": "The guide doesn't specify transliteration"
+                },
+                "additionalRules": {
+                    "title": "Additional rules",
+                    "empty": "No additional free-form rules."
+                },
+                "extractionNotes": {
+                    "title": "Extractor notes"
+                }
             },
             "corpus": {
                 "tab": "Corpus",

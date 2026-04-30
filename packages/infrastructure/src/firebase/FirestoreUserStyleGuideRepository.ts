@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type {
+    StyleGuideManifest,
     UserStyleGuide,
     UserStyleGuideDraft,
     IUserStyleGuideRepository,
@@ -109,6 +110,25 @@ export class FirestoreUserStyleGuideRepository implements IUserStyleGuideReposit
         await updateDoc(this.docRef(guideId), { ...clean, updatedAt: new Date() });
         const fresh = await this.getGuide(ownerId, guideId);
         if (!fresh) throw new Error(`Guide ${guideId} not found after update`);
+        return fresh;
+    }
+
+    async setManifest(
+        ownerId: string,
+        guideId: string,
+        manifest: StyleGuideManifest | null,
+    ): Promise<UserStyleGuide> {
+        await this.requireOwned(ownerId, guideId);
+        const now = new Date();
+        // Stamp the manifest's extractedAt at persist time so the
+        // viewer can show "extracted at X" without forcing the use
+        // case layer to track timestamps.
+        const payload = manifest === null
+            ? { manifest: null, updatedAt: now }
+            : { manifest: { ...manifest, extractedAt: manifest.extractedAt ?? now }, updatedAt: now };
+        await updateDoc(this.docRef(guideId), payload);
+        const fresh = await this.getGuide(ownerId, guideId);
+        if (!fresh) throw new Error(`Guide ${guideId} not found after setManifest`);
         return fresh;
     }
 

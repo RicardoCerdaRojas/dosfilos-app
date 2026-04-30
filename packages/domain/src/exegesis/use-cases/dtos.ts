@@ -129,6 +129,33 @@ export interface ResetRubricInput {
     paperId: string;
 }
 
+// ── ExtractStyleGuideManifest ──────────────────────────────────────────
+//
+// Reads the corpus text of a UserStyleGuide and extracts the
+// structured `StyleGuideManifest` via the configured
+// `IStyleGuideManifestExtractor`. The resulting manifest is saved
+// on the guide so the orchestrator can read it on every paper that
+// pins the guide.
+//
+// One-shot: re-running overwrites the previous manifest. The UI
+// confirms before re-extraction so the student doesn't lose any
+// manual tweaks (provenance flips back to 'extracted', losing
+// 'user-edited' state).
+
+export interface ExtractStyleGuideManifestInput {
+    ownerId: string;
+    guideId: string;
+    /** Optional language override; defaults to 'es' when omitted. */
+    language?: 'es' | 'en';
+}
+
+export interface ExtractStyleGuideManifestOutput {
+    /** The updated guide carrying the new manifest. */
+    guide: import('../entities/UserStyleGuide').UserStyleGuide;
+    /** Tokens consumed for cost attribution. Null when unavailable. */
+    tokensUsed: number | null;
+}
+
 // ── ExtractRubricFromText ──────────────────────────────────────────────
 //
 // Hands the rubric extractor (`IPaperRubricExtractor`) raw text the

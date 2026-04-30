@@ -212,8 +212,76 @@
                 "tab": "Guía de estilo",
                 "heading": "Manifiesto de la guía de estilo",
                 "description": "Verificá las reglas mecánicas extraídas de tu guía (notas al pie, ibid, comillas). Si algo está mal, corregilo antes de generar.",
-                "placeholderHint": "El visor del manifiesto + samples de citas llega en un commit posterior.",
-                "noGuide": "No hay guía activa adjunta. Subí una desde tu perfil para que el manifiesto se extraiga automáticamente."
+                "noGuide": "No hay guía activa adjunta. Subí una desde tu perfil para que el manifiesto se pueda extraer.",
+                "noManifest": {
+                    "title": "Manifiesto aún no extraído",
+                    "body": "Tu guía está cargada pero las reglas mecánicas no se extrajeron todavía. Esto las lleva a formato estructurado para que el orquestador las aplique de forma determinística.",
+                    "extractCta": "Extraer reglas ahora",
+                    "extracting": "Extrayendo...",
+                    "extracted": "Reglas extraídas",
+                    "failed": "No se pudo extraer el manifiesto",
+                    "overloaded": "Gemini está sobrecargado. Probá de nuevo en unos segundos.",
+                    "corpusNotReady": "El texto de la guía aún no terminó de procesarse. Esperá unos segundos y reintentá."
+                },
+                "card": {
+                    "citationStyleLabel": "Estilo de citación",
+                    "extractedAt": "Extraído",
+                    "model": "Modelo",
+                    "confidence": {
+                        "label": "Confianza",
+                        "high": "alta",
+                        "medium": "media",
+                        "low": "baja"
+                    },
+                    "reExtract": "Re-extraer",
+                    "reExtractConfirm": "Esto va a reemplazar el manifiesto actual con una nueva extracción. ¿Continuar?"
+                },
+                "footnotes": {
+                    "title": "Notas al pie",
+                    "firstMention": "Primera mención",
+                    "subsequentMention": "Mención posterior",
+                    "ibidEnabled": "Ibid permitido",
+                    "ibidDisabled": "Ibid NO permitido",
+                    "ibidPageOverride": "Permite \"Ibid., 47\" cuando cambia la página",
+                    "examplesTitle": "Ejemplos renderizados",
+                    "exampleEmpty": "El extractor no produjo ejemplos. Considerá re-extraer."
+                },
+                "bibliography": {
+                    "title": "Bibliografía",
+                    "entryTemplate": "Plantilla de entrada",
+                    "sortByLabel": "Ordenar por",
+                    "sortBy": {
+                        "author-surname": "Apellido del autor",
+                        "order-of-appearance": "Orden de aparición"
+                    },
+                    "useDashTrue": "Usa guion 3-em para autores repetidos",
+                    "useDashFalse": "NO usa guion 3-em (apellido completo cada vez)"
+                },
+                "quotations": {
+                    "title": "Citas y comillas",
+                    "blockThreshold": "Umbral de bloque",
+                    "blockThresholdValue": "{{count}} palabras",
+                    "primaryQuoteMark": "Comilla primaria",
+                    "secondaryQuoteMark": "Comilla secundaria",
+                    "ellipsis": "Elipsis",
+                    "interpolationBrackets": "Brackets de interpolación"
+                },
+                "transliteration": {
+                    "title": "Transliteración",
+                    "scheme": "Esquema",
+                    "useDiacriticsTrue": "Conserva diacríticos / macrones",
+                    "useDiacriticsFalse": "Sin diacríticos",
+                    "bodyRequired": "Transliteración requerida en el cuerpo",
+                    "bodyOptional": "Transliteración opcional en el cuerpo",
+                    "none": "La guía no especifica transliteración"
+                },
+                "additionalRules": {
+                    "title": "Reglas adicionales",
+                    "empty": "Sin reglas libres adicionales."
+                },
+                "extractionNotes": {
+                    "title": "Notas del extractor"
+                }
             },
             "corpus": {
                 "tab": "Corpus",

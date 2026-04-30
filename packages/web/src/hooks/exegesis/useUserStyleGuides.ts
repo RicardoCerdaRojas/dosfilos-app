@@ -94,6 +94,22 @@ export function useUserStyleGuides() {
         },
     });
 
+    const extractManifest = useMutation({
+        mutationFn: async (input: { guideId: string; language?: 'es' | 'en' }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.extractStyleGuideManifest.execute({
+                ownerId: user.uid,
+                guideId: input.guideId,
+                language: input.language,
+            });
+        },
+        onSuccess: () => {
+            // Invalidate the guides query so the manifest viewer
+            // re-renders with the freshly-extracted rules.
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'styleGuides', user?.uid] });
+        },
+    });
+
     return {
         guides: guidesQuery.data ?? [],
         activeGuide: (guidesQuery.data ?? []).find(g => g.isActive) ?? null,
@@ -102,5 +118,6 @@ export function useUserStyleGuides() {
         uploadGuide,
         setActive,
         deleteGuide,
+        extractManifest,
     };
 }
