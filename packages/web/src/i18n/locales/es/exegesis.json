@@ -63,8 +63,34 @@
         },
         "sources": {
             "stepTitle": "Corpus del trabajo",
-            "stepSubtitle": "Extractos específicos para este pasaje (comentarios, léxicos, aparato crítico). No se mezclan con tu biblioteca.",
-            "placeholder": "Próximamente: subir extractos + tagging por rol (comentario primario, léxico, aparato crítico, etc.)."
+            "stepSubtitle": "Extractos específicos para este pasaje. Cada uno con su rol — el orquestador respeta esos roles al citar.",
+            "addAnother": "Agregar otra fuente",
+            "remove": "Quitar",
+            "fileLabel": "Archivo (PDF o EPUB)",
+            "displayNameLabel": "Etiqueta",
+            "displayNamePlaceholder": "Ej. Lane WBC 47a, pp. 1-30",
+            "roleLabel": "Rol",
+            "citationKeyLabel": "Clave de cita",
+            "citationKeyPlaceholder": "Ej. Lane",
+            "uploadCta": "Subir y agregar",
+            "uploading": "Subiendo... {{progress}}%",
+            "scopeHint": "Las fuentes acá son específicas para este trabajo. Después podés promover una a tu biblioteca general (próximamente).",
+            "modelPaperHint": "Los trabajos modelo se usan solo como plantilla de estilo. NO se citan inline.",
+            "roles": {
+                "primary-commentary": "Comentario principal",
+                "secondary-commentary": "Comentario secundario",
+                "lexicon": "Léxico",
+                "critical-apparatus": "Aparato crítico",
+                "historical-context": "Contexto histórico/cultural",
+                "theological-context": "Contexto teológico",
+                "model-paper": "Trabajo modelo (solo estilo)",
+                "misc": "Otro"
+            },
+            "toast": {
+                "uploaded": "Fuente subida correctamente",
+                "uploadFailed": "No se pudo subir la fuente. Intentá de nuevo.",
+                "attachFailed": "El trabajo se creó pero algunas fuentes no quedaron adjuntas. Las podés agregar desde el detalle."
+            }
         },
         "toast": {
             "created": "Trabajo creado",

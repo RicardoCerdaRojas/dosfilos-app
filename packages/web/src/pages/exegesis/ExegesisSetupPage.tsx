@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
 import { StyleGuideStep } from '@/components/exegesis/StyleGuideStep';
+import { SourcesStep, type PendingSource } from '@/components/exegesis/SourcesStep';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import type { PassageReference, SupportedLanguage } from '@dosfilos/domain';
 
@@ -27,24 +28,59 @@ import type { PassageReference, SupportedLanguage } from '@dosfilos/domain';
 export function ExegesisSetupPage() {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation('exegesis');
-    const { createPaper } = useExegesisPapers();
+    const { createPaper, addSource } = useExegesisPapers();
 
     const [passage, setPassage] = useState<PassageReference | null>(null);
     const [passageError, setPassageError] = useState<string | null>(null);
     const [selectedStyleGuideId, setSelectedStyleGuideId] = useState<string | null>(null);
+    const [pendingSources, setPendingSources] = useState<PendingSource[]>([]);
+    const [attachingSources, setAttachingSources] = useState(false);
 
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
-    const isCreating = createPaper.isPending;
+    const isCreating = createPaper.isPending || attachingSources;
     const canCreate = !!passage && !isCreating;
 
+    /**
+     * Two-phase create:
+     *   1. Create the paper (atomic) → returns paperId.
+     *   2. Loop pending sources → addSource per row.
+     *
+     * Done sequentially (not Promise.all) so a failed source doesn't
+     * leave the wizard in a half-attached state — the loop bails on
+     * first error and the user can retry from the paper detail page
+     * (still pending implementation) when that lands.
+     */
     const handleCreate = async () => {
         if (!passage) return;
         try {
-            await createPaper.mutateAsync({
+            const paper = await createPaper.mutateAsync({
                 passage,
                 displayLanguage: activeLanguage,
                 styleGuideId: selectedStyleGuideId,
             });
+
+            if (pendingSources.length > 0) {
+                setAttachingSources(true);
+                try {
+                    for (const s of pendingSources) {
+                        await addSource.mutateAsync({
+                            paperId: paper.id,
+                            corpusId: s.corpusId,
+                            role: s.role,
+                            displayLabel: s.displayLabel,
+                            citationKey: s.citationKey || undefined,
+                        });
+                    }
+                } catch (err) {
+                    console.error('[exegesis] attaching sources failed:', err);
+                    toast.error(t('setup.sources.toast.attachFailed'));
+                    // Paper exists; user can attach the rest from the detail
+                    // page later. Still navigate to the list so they see it.
+                } finally {
+                    setAttachingSources(false);
+                }
+            }
+
             toast.success(t('setup.toast.created'));
             navigate('/dashboard/exegesis');
         } catch (err) {
@@ -109,17 +145,18 @@ export function ExegesisSetupPage() {
                     />
                 </Step>
 
-                {/* Step 3 — Sources (locked placeholder) */}
+                {/* Step 3 — Project corpus */}
                 <Step
                     number={3}
                     icon={<FileStack className="h-4 w-4" />}
                     title={t('setup.sources.stepTitle')}
                     subtitle={t('setup.sources.stepSubtitle')}
-                    locked
+                    locked={false}
                 >
-                    <div className="rounded-lg border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/40 px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                        {t('setup.sources.placeholder')}
-                    </div>
+                    <SourcesStep
+                        sources={pendingSources}
+                        onChange={setPendingSources}
+                    />
                 </Step>
 
                 {/* Footer actions */}

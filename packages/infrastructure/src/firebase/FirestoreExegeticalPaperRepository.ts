@@ -8,6 +8,7 @@ import {
     deleteDoc,
     query,
     where,
+    runTransaction,
     type DocumentData,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -165,23 +166,117 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         await deleteDoc(this.docRef(paperId));
     }
 
-    // ── Sources, steps — v1 stubs ─────────────────────────────────────────
+    // ── Sources ───────────────────────────────────────────────────────────
     //
-    // These are declared on the interface so the wizard and orchestrator can
-    // depend on the contract; v1 doesn't exercise them yet (the setup
-    // wizard's source step is a v1.5 placeholder, and generation hasn't
-    // been wired). Stubbing as 'not implemented' makes the gap explicit
-    // rather than silently passing back stale data.
+    // Sources are stored inline in `paper.sources`. Mutations run inside a
+    // Firestore transaction so two tabs of the same user adding sources at
+    // the same time can't lose writes (read-modify-write race). Owner check
+    // happens inside the transaction against `data.ownerId`.
 
-    async addSource(): Promise<ProjectSource> {
-        throw notImplemented('addSource');
+    async addSource(
+        ownerId: string,
+        paperId: string,
+        source: Omit<ProjectSource, 'id' | 'paperId' | 'createdAt'>
+    ): Promise<ProjectSource> {
+        const ref = this.docRef(paperId);
+        const newSource: ProjectSource = {
+            id: crypto.randomUUID(),
+            paperId,
+            createdAt: new Date(),
+            corpusId: source.corpusId,
+            role: source.role,
+            displayLabel: source.displayLabel,
+            citationKey: source.citationKey,
+            order: source.order,
+        };
+
+        await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists()) {
+                throw new Error(`Paper ${paperId} not found`);
+            }
+            const data = snap.data();
+            if (data.ownerId !== ownerId) {
+                throw new Error(`Paper ${paperId} not owned by ${ownerId}`);
+            }
+            const sources: ProjectSource[] = Array.isArray(data.sources) ? data.sources : [];
+            sources.push(newSource);
+            tx.update(ref, {
+                sources,
+                updatedAt: new Date(),
+            });
+        });
+
+        return newSource;
     }
-    async updateSource(): Promise<ProjectSource> {
-        throw notImplemented('updateSource');
+
+    async updateSource(
+        ownerId: string,
+        paperId: string,
+        sourceId: string,
+        patch: Partial<Pick<ProjectSource, 'role' | 'displayLabel' | 'citationKey' | 'order'>>
+    ): Promise<ProjectSource> {
+        const ref = this.docRef(paperId);
+        let updated: ProjectSource | null = null;
+
+        await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists()) {
+                throw new Error(`Paper ${paperId} not found`);
+            }
+            const data = snap.data();
+            if (data.ownerId !== ownerId) {
+                throw new Error(`Paper ${paperId} not owned by ${ownerId}`);
+            }
+            const sources: ProjectSource[] = Array.isArray(data.sources) ? [...data.sources] : [];
+            const idx = sources.findIndex(s => s.id === sourceId);
+            if (idx === -1) {
+                throw new Error(`Source ${sourceId} not found in paper ${paperId}`);
+            }
+            // Only apply defined keys — undefined would erase the existing value.
+            const merged: ProjectSource = { ...sources[idx] };
+            if (patch.role !== undefined) merged.role = patch.role;
+            if (patch.displayLabel !== undefined) merged.displayLabel = patch.displayLabel;
+            if (patch.citationKey !== undefined) merged.citationKey = patch.citationKey;
+            if (patch.order !== undefined) merged.order = patch.order;
+            sources[idx] = merged;
+            updated = merged;
+            tx.update(ref, {
+                sources,
+                updatedAt: new Date(),
+            });
+        });
+
+        if (!updated) throw new Error('Source update failed');
+        return updated;
     }
-    async removeSource(): Promise<void> {
-        throw notImplemented('removeSource');
+
+    async removeSource(ownerId: string, paperId: string, sourceId: string): Promise<void> {
+        const ref = this.docRef(paperId);
+
+        await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists()) {
+                throw new Error(`Paper ${paperId} not found`);
+            }
+            const data = snap.data();
+            if (data.ownerId !== ownerId) {
+                throw new Error(`Paper ${paperId} not owned by ${ownerId}`);
+            }
+            const sources: ProjectSource[] = Array.isArray(data.sources) ? data.sources : [];
+            const filtered = sources.filter(s => s.id !== sourceId);
+            tx.update(ref, {
+                sources: filtered,
+                updatedAt: new Date(),
+            });
+        });
     }
+
+    // ── Steps — v1 stubs ──────────────────────────────────────────────────
+    //
+    // Step generation lands when the orchestrator is wired. Stubbed as
+    // 'not implemented' to keep the gap explicit rather than silently
+    // returning empty results.
 
     async seedStepsForPassage(): Promise<ExegeticalStep[]> {
         throw notImplemented('seedStepsForPassage');

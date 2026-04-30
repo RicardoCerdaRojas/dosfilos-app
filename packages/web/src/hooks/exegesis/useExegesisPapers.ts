@@ -1,13 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exegesisService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import type { CreateExegeticalPaperInput } from '@dosfilos/domain';
+import type {
+    AddProjectSourceInput,
+    CreateExegeticalPaperInput,
+    UpdateProjectSourceInput,
+} from '@dosfilos/domain';
 
 /**
  * React Query hook for the exegetical papers list + paper-level mutations.
  * Mirrors the cache-key conventions of `useFacultyProjects`:
  * `['exegesis', 'papers', userId]` for the list, and any mutation
  * invalidates that key on success.
+ *
+ * Source mutations (add/update/remove) live here too — sources are stored
+ * inline on the paper document, so changing them invalidates the same
+ * cache key as paper updates would.
  */
 export function useExegesisPapers() {
     const { user } = useFirebase();
@@ -44,11 +52,44 @@ export function useExegesisPapers() {
         },
     });
 
+    const addSource = useMutation({
+        mutationFn: async (input: AddProjectSourceInput & { paperId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.addSource.execute({ ...input, ownerId: user.uid });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const updateSource = useMutation({
+        mutationFn: async (input: UpdateProjectSourceInput & { paperId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.updateSource.execute({ ...input, ownerId: user.uid });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const removeSource = useMutation({
+        mutationFn: async ({ paperId, sourceId }: { paperId: string; sourceId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.removeSource.execute({ ownerId: user.uid, paperId, sourceId });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     return {
         papers: papersQuery.data ?? [],
         isLoading: papersQuery.isLoading,
         error: papersQuery.error,
         createPaper,
         archivePaper,
+        addSource,
+        updateSource,
+        removeSource,
     };
 }

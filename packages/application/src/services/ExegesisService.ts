@@ -13,6 +13,9 @@ import {
     CreateUserStyleGuideUseCase,
     SetActiveStyleGuideUseCase,
     DeleteUserStyleGuideUseCase,
+    AddProjectSourceUseCase,
+    UpdateProjectSourceUseCase,
+    RemoveProjectSourceUseCase,
 } from '../use-cases/exegesis';
 
 /**
@@ -42,6 +45,11 @@ class ExegesisService {
     public setActiveStyleGuide: SetActiveStyleGuideUseCase;
     public deleteStyleGuide: DeleteUserStyleGuideUseCase;
 
+    // Project sources
+    public addSource: AddProjectSourceUseCase;
+    public updateSource: UpdateProjectSourceUseCase;
+    public removeSource: RemoveProjectSourceUseCase;
+
     constructor() {
         const paperRepository = new FirestoreExegeticalPaperRepository();
         const styleGuideRepository = new FirestoreUserStyleGuideRepository();
@@ -58,6 +66,11 @@ class ExegesisService {
         this.createStyleGuide = new CreateUserStyleGuideUseCase(styleGuideRepository);
         this.setActiveStyleGuide = new SetActiveStyleGuideUseCase(styleGuideRepository);
         this.deleteStyleGuide = new DeleteUserStyleGuideUseCase(styleGuideRepository);
+
+        // Project sources (operate on the paper repo since sources live inline)
+        this.addSource = new AddProjectSourceUseCase(paperRepository);
+        this.updateSource = new UpdateProjectSourceUseCase(paperRepository);
+        this.removeSource = new RemoveProjectSourceUseCase(paperRepository);
     }
 }
 

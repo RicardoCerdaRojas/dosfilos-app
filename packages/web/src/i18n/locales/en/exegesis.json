@@ -63,8 +63,34 @@
         },
         "sources": {
             "stepTitle": "Project corpus",
-            "stepSubtitle": "Extracts specific to this passage (commentaries, lexicons, critical apparatus). They don't mix with your library.",
-            "placeholder": "Coming soon: upload extracts + role tagging (primary commentary, lexicon, critical apparatus, etc.)."
+            "stepSubtitle": "Extracts specific to this passage. Each tagged with a role — the orchestrator honors those roles when citing.",
+            "addAnother": "Add another source",
+            "remove": "Remove",
+            "fileLabel": "File (PDF or EPUB)",
+            "displayNameLabel": "Label",
+            "displayNamePlaceholder": "e.g. Lane WBC 47a, pp. 1-30",
+            "roleLabel": "Role",
+            "citationKeyLabel": "Citation key",
+            "citationKeyPlaceholder": "e.g. Lane",
+            "uploadCta": "Upload & add",
+            "uploading": "Uploading... {{progress}}%",
+            "scopeHint": "Sources here are specific to this paper. You can promote one to your general library later (coming soon).",
+            "modelPaperHint": "Model papers are used as a STYLE template only. They are NOT cited inline.",
+            "roles": {
+                "primary-commentary": "Primary commentary",
+                "secondary-commentary": "Secondary commentary",
+                "lexicon": "Lexicon",
+                "critical-apparatus": "Critical apparatus",
+                "historical-context": "Historical/cultural context",
+                "theological-context": "Theological context",
+                "model-paper": "Model paper (style only)",
+                "misc": "Other"
+            },
+            "toast": {
+                "uploaded": "Source uploaded successfully",
+                "uploadFailed": "Couldn't upload the source. Please try again.",
+                "attachFailed": "Paper was created but some sources weren't attached. You can add them from the detail page."
+            }
         },
         "toast": {
             "created": "Paper created",
