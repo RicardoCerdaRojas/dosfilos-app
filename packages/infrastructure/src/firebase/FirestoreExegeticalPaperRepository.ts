@@ -17,11 +17,13 @@ import type {
     ExegeticalPaperDraft,
     ExegeticalPaperPhase,
     ExegeticalStep,
+    ExegeticalStepKind,
     ExegeticalStepState,
     ExegeticalStepVersion,
     IExegeticalPaperRepository,
     ProjectSource,
 } from '@dosfilos/domain';
+import { EMPTY_VERIFICATION_SUMMARY } from '@dosfilos/domain';
 
 /**
  * Firestore implementation of `IExegeticalPaperRepository`.
@@ -272,36 +274,228 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         });
     }
 
-    // ── Steps — v1 stubs ──────────────────────────────────────────────────
+    // ── Steps ─────────────────────────────────────────────────────────────
     //
-    // Step generation lands when the orchestrator is wired. Stubbed as
-    // 'not implemented' to keep the gap explicit rather than silently
-    // returning empty results.
+    // Steps live inline on the paper (`paper.steps`). Mutations run inside
+    // a Firestore transaction so concurrent updates from the same user
+    // (e.g. accepting one step while a regen of another finishes) can't
+    // corrupt the array via read-modify-write races.
 
-    async seedStepsForPassage(): Promise<ExegeticalStep[]> {
-        throw notImplemented('seedStepsForPassage');
+    async seedStepsForPassage(ownerId: string, paperId: string): Promise<ExegeticalStep[]> {
+        const ref = this.docRef(paperId);
+        let result: ExegeticalStep[] = [];
+
+        await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists()) {
+                throw new Error(`Paper ${paperId} not found`);
+            }
+            const data = snap.data();
+            if (data.ownerId !== ownerId) {
+                throw new Error(`Paper ${paperId} not owned by ${ownerId}`);
+            }
+
+            const existing: ExegeticalStep[] = Array.isArray(data.steps) ? data.steps : [];
+            // Idempotent: if any step exists, return existing untouched.
+            if (existing.length > 0) {
+                result = existing;
+                return;
+            }
+
+            // Compute the verse list. v1 supports only single-chapter
+            // passages with explicit verses — multi-chapter and chapter-
+            // only ranges throw with a clear message so the UI can
+            // render a hint instead of silently doing nothing weird.
+            const passage = data.passage;
+            if (!passage) {
+                throw new Error('Paper has no passage');
+            }
+            if (passage.chapterStart !== passage.chapterEnd) {
+                throw new Error(
+                    'v1 only supports single-chapter passages. Edit the passage to a single-chapter range before generating.'
+                );
+            }
+            if (passage.verseStart === null || passage.verseEnd === null) {
+                throw new Error(
+                    'v1 requires explicit verses. Edit the passage to include verse start/end before generating.'
+                );
+            }
+
+            const newSteps: ExegeticalStep[] = [];
+            const now = new Date();
+
+            // One step per verse, then conclusion, introduction, assembly.
+            // Order matches the wizard flow: verses are written first,
+            // conclusion second, introduction third (sees the body), and
+            // assembly mechanically concatenates with the introduction
+            // surfaced FIRST in the assembled output (TMS convention).
+            for (let v = passage.verseStart; v <= passage.verseEnd; v++) {
+                newSteps.push(buildStep({
+                    paperId,
+                    kind: 'verse',
+                    order: newSteps.length + 1,
+                    now,
+                    verseRef: {
+                        bookId: passage.bookId,
+                        chapterStart: passage.chapterStart,
+                        chapterEnd: passage.chapterStart,
+                        verseStart: v,
+                        verseEnd: v,
+                    },
+                }));
+            }
+            newSteps.push(buildStep({ paperId, kind: 'conclusion', order: newSteps.length + 1, now }));
+            newSteps.push(buildStep({ paperId, kind: 'introduction', order: newSteps.length + 1, now }));
+            newSteps.push(buildStep({ paperId, kind: 'assembly', order: newSteps.length + 1, now }));
+
+            tx.update(ref, {
+                steps: newSteps,
+                phase: 'in-progress',
+                currentStepId: newSteps[0]!.id,
+                updatedAt: now,
+            });
+            result = newSteps;
+        });
+
+        return result;
     }
+
     async setStepState(
-        _ownerId: string,
-        _paperId: string,
-        _stepId: string,
-        _state: ExegeticalStepState
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        state: ExegeticalStepState
     ): Promise<ExegeticalStep> {
-        throw notImplemented('setStepState');
+        return this.mutateStep(ownerId, paperId, stepId, (step) => {
+            step.state = state;
+            step.updatedAt = new Date();
+            return step;
+        });
     }
+
     async appendStepVersion(
-        _ownerId: string,
-        _paperId: string,
-        _stepId: string,
-        _version: Omit<ExegeticalStepVersion, 'id' | 'createdAt'>
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        version: Omit<ExegeticalStepVersion, 'id' | 'createdAt'>
     ): Promise<ExegeticalStepVersion> {
-        throw notImplemented('appendStepVersion');
+        const fullVersion: ExegeticalStepVersion = {
+            id: crypto.randomUUID(),
+            createdAt: new Date(),
+            markdown: version.markdown,
+            origin: version.origin,
+            parentVersionId: version.parentVersionId,
+            modelId: version.modelId,
+            regenerationHint: version.regenerationHint,
+            tokensUsed: version.tokensUsed,
+            verifications: version.verifications,
+        };
+
+        await this.mutateStep(ownerId, paperId, stepId, (step) => {
+            step.versions = [...step.versions, fullVersion];
+            step.current = fullVersion;
+            step.state = 'awaiting-review';
+            step.updatedAt = new Date();
+            return step;
+        });
+
+        return fullVersion;
     }
-    async acceptStepVersion(): Promise<ExegeticalStep> {
-        throw notImplemented('acceptStepVersion');
+
+    async acceptStepVersion(
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        versionId: string
+    ): Promise<ExegeticalStep> {
+        return this.mutateStep(ownerId, paperId, stepId, (step) => {
+            const target = step.versions.find(v => v.id === versionId);
+            if (!target) {
+                throw new Error(`Version ${versionId} not found in step ${stepId}`);
+            }
+            step.accepted = target;
+            step.state = 'accepted';
+            step.updatedAt = new Date();
+            return step;
+        });
     }
-    async saveManualEdit(): Promise<ExegeticalStep> {
-        throw notImplemented('saveManualEdit');
+
+    async saveManualEdit(
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        markdown: string
+    ): Promise<ExegeticalStep> {
+        const editVersion: ExegeticalStepVersion = {
+            id: crypto.randomUUID(),
+            createdAt: new Date(),
+            markdown,
+            origin: 'edited',
+            parentVersionId: null, // filled inside mutateStep using step.accepted
+            modelId: null,
+            regenerationHint: null,
+            tokensUsed: null,
+            verifications: { ...EMPTY_VERIFICATION_SUMMARY },
+        };
+
+        return this.mutateStep(ownerId, paperId, stepId, (step) => {
+            // Edits are anchored to whatever was previously accepted (or
+            // current, as a fallback). Resets verifications: per the
+            // user's request, edits do NOT auto-re-run verification —
+            // they show as 'manualPending' instead until the user
+            // explicitly clicks "verify".
+            const parent = step.accepted ?? step.current;
+            const versioned: ExegeticalStepVersion = {
+                ...editVersion,
+                parentVersionId: parent?.id ?? null,
+            };
+            step.versions = [...step.versions, versioned];
+            step.accepted = versioned;
+            // State stays 'accepted' if it was already; if it was
+            // 'awaiting-review' or earlier and the user manually edits,
+            // we count that as an implicit accept of the manual content.
+            step.state = 'accepted';
+            step.updatedAt = new Date();
+            return step;
+        });
+    }
+
+    /**
+     * Generic step mutator: reads the paper, finds the step by id,
+     * applies the mutator, writes back. Wrapped in a transaction so the
+     * read-modify-write doesn't race with concurrent step changes.
+     */
+    private async mutateStep(
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        mutator: (step: ExegeticalStep) => ExegeticalStep
+    ): Promise<ExegeticalStep> {
+        const ref = this.docRef(paperId);
+        let updatedStep: ExegeticalStep | null = null;
+
+        await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists()) {
+                throw new Error(`Paper ${paperId} not found`);
+            }
+            const data = snap.data();
+            if (data.ownerId !== ownerId) {
+                throw new Error(`Paper ${paperId} not owned by ${ownerId}`);
+            }
+            const steps: ExegeticalStep[] = Array.isArray(data.steps) ? [...data.steps] : [];
+            const idx = steps.findIndex(s => s.id === stepId);
+            if (idx === -1) {
+                throw new Error(`Step ${stepId} not found in paper ${paperId}`);
+            }
+            const next = mutator({ ...steps[idx]! });
+            steps[idx] = next;
+            updatedStep = next;
+            tx.update(ref, { steps, updatedAt: new Date() });
+        });
+
+        if (!updatedStep) throw new Error('Step mutation produced no result');
+        return updatedStep;
     }
 
     // ── helpers ───────────────────────────────────────────────────────────
@@ -358,9 +552,29 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
     };
 }
 
-function notImplemented(method: string): Error {
-    return new Error(
-        `[FirestoreExegeticalPaperRepository.${method}] not implemented in v1 — ` +
-        `this method is wired in a later commit when the wizard exercises it.`
-    );
+/**
+ * Constructs a fresh `ExegeticalStep` in 'pending' state with empty
+ * version history. Used by `seedStepsForPassage` to build the initial
+ * step list when the user starts generation.
+ */
+function buildStep(input: {
+    paperId: string;
+    kind: ExegeticalStepKind;
+    order: number;
+    now: Date;
+    verseRef?: ExegeticalStep['verseRef'];
+}): ExegeticalStep {
+    return {
+        id: crypto.randomUUID(),
+        paperId: input.paperId,
+        kind: input.kind,
+        verseRef: input.verseRef ?? null,
+        order: input.order,
+        state: 'pending',
+        current: null,
+        accepted: null,
+        versions: [],
+        createdAt: input.now,
+        updatedAt: input.now,
+    };
 }

@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
+import { StepCard } from '@/components/exegesis/StepCard';
 import {
     formatPassageReference,
     type ExegeticalPaper,
@@ -42,7 +43,7 @@ export function ExegesisPaperPage() {
     const { t, i18n } = useTranslation('exegesis');
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
-    const { papers, isLoading, error, archivePaper, removeSource } = useExegesisPapers();
+    const { papers, isLoading, error, archivePaper, removeSource, seedSteps } = useExegesisPapers();
     const paper: ExegeticalPaper | null = papers.find(p => p.id === paperId) ?? null;
 
     if (isLoading) {
@@ -76,6 +77,23 @@ export function ExegesisPaperPage() {
         }
     };
 
+    const handleStartGeneration = async () => {
+        try {
+            await seedSteps.mutateAsync({ paperId: paper.id });
+            toast.success(t('detail.steps.toast.seeded'));
+        } catch (err: any) {
+            console.error('[exegesis] seedSteps failed:', err);
+            // Surface the repo's specific error (e.g. "v1 only supports
+            // single-chapter passages") so the user knows how to fix it.
+            const msg = err?.message?.includes('single-chapter') || err?.message?.includes('explicit verses')
+                ? t('detail.steps.toast.seedShapeError')
+                : t('detail.steps.toast.seedFailed');
+            toast.error(msg);
+        }
+    };
+
+    const passageShape = passageEligibleForGeneration(paper);
+
     const passageDisplay = formatPassageReference(paper.passage, activeLanguage);
     const titleDisplay = paper.title || passageDisplay;
 
@@ -106,7 +124,15 @@ export function ExegesisPaperPage() {
             {/* Body */}
             <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-                    <StepsPanel paper={paper} t={t} />
+                    <StepsPanel
+                        paper={paper}
+                        language={activeLanguage}
+                        passageEligible={passageShape.eligible}
+                        passageHint={passageShape.hint(t)}
+                        onStartGeneration={handleStartGeneration}
+                        starting={seedSteps.isPending}
+                        t={t}
+                    />
                     <aside className="space-y-4">
                         <StyleGuideCard paper={paper} t={t} />
                         <SourcesCard
@@ -172,7 +198,28 @@ function ArchiveButton({
 
 // ── Main panel — Steps ──────────────────────────────────────────────────
 
-function StepsPanel({ paper, t }: { paper: ExegeticalPaper; t: (key: string) => string }) {
+interface StepsPanelProps {
+    paper: ExegeticalPaper;
+    language: SupportedLanguage;
+    passageEligible: boolean;
+    passageHint: string | null;
+    onStartGeneration: () => void;
+    starting: boolean;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function StepsPanel({
+    paper,
+    language,
+    passageEligible,
+    passageHint,
+    onStartGeneration,
+    starting,
+    t,
+}: StepsPanelProps) {
+    const hasSteps = paper.steps.length > 0;
+    const sortedSteps = [...paper.steps].sort((a, b) => a.order - b.order);
+
     return (
         <section className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
             <header className="flex items-start justify-between gap-3 mb-4">
@@ -187,32 +234,46 @@ function StepsPanel({ paper, t }: { paper: ExegeticalPaper; t: (key: string) => 
                         {t('detail.stepsSubtitle')}
                     </p>
                 </div>
-                <Button disabled className="bg-emerald-500 text-slate-900 disabled:opacity-50" size="sm">
-                    <Wand2 className="h-3.5 w-3.5 mr-1.5" />
-                    {t('detail.generateCta')}
-                </Button>
+                {!hasSteps && (
+                    <Button
+                        size="sm"
+                        onClick={onStartGeneration}
+                        disabled={!passageEligible || starting}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 disabled:opacity-50"
+                    >
+                        {starting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
+                        {t('detail.steps.startCta')}
+                    </Button>
+                )}
             </header>
 
-            {/* v1.5 placeholder — empty until D (orchestrator) is wired. The
-                seedStepsForPassage repo method still throws "not implemented"
-                so the steps array is always empty in v1. */}
-            <div className="rounded-xl border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/40 px-6 py-10 text-center">
-                <div className="mx-auto w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 flex items-center justify-center mb-3">
-                    <Wand2 className="h-5 w-5" />
+            {!hasSteps ? (
+                <div className="rounded-xl border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/40 px-6 py-10 text-center">
+                    <div className="mx-auto w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 flex items-center justify-center mb-3">
+                        <Wand2 className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                        {t('detail.stepsEmpty.title')}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                        {countVerses(paper) !== null
+                            ? t('detail.stepsEmpty.body_other', { verseCount: countVerses(paper) })
+                            : t('detail.stepsEmpty.body')}
+                    </p>
+                    {!passageEligible && passageHint && (
+                        <p className="mt-3 text-[11px] text-amber-700 dark:text-amber-300 inline-flex items-start gap-1.5 max-w-md mx-auto text-left">
+                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                            <span>{passageHint}</span>
+                        </p>
+                    )}
                 </div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                    {t('detail.stepsEmpty.title')}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    {t('detail.stepsEmpty.body', {
-                        verseCount: countVerses(paper),
-                    })}
-                </p>
-                <span className="inline-flex items-center gap-1 mt-3 text-[11px] font-medium text-amber-700 dark:text-amber-300">
-                    <Lock className="h-3 w-3" />
-                    v1.5
-                </span>
-            </div>
+            ) : (
+                <div className="space-y-3">
+                    {sortedSteps.map(step => (
+                        <StepCard key={step.id} step={step} paperId={paper.id} language={language} />
+                    ))}
+                </div>
+            )}
         </section>
     );
 }
@@ -412,4 +473,24 @@ function countVerses(paper: ExegeticalPaper): number | null {
     if (verseStart === null || verseEnd === null) return null;
     if (chapterStart !== chapterEnd) return null; // multi-chapter, can't count without per-chapter data
     return verseEnd - verseStart + 1;
+}
+
+/**
+ * Whether the paper's passage shape qualifies for generation in v1
+ * (single chapter with explicit verses). Mirror of the seedSteps repo
+ * check — surfaced upfront so the user sees the gate BEFORE clicking
+ * "Iniciar generación" instead of as an error toast after.
+ */
+function passageEligibleForGeneration(paper: ExegeticalPaper): {
+    eligible: boolean;
+    hint: (t: (key: string) => string) => string | null;
+} {
+    const { chapterStart, chapterEnd, verseStart, verseEnd } = paper.passage;
+    if (chapterStart !== chapterEnd) {
+        return { eligible: false, hint: (t) => t('detail.steps.gate.multiChapter') };
+    }
+    if (verseStart === null || verseEnd === null) {
+        return { eligible: false, hint: (t) => t('detail.steps.gate.noVerses') };
+    }
+    return { eligible: true, hint: () => null };
 }

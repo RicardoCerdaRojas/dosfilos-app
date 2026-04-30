@@ -122,9 +122,54 @@
         "generateCta": "Generate first step",
         "stepsEmpty": {
             "title": "No steps generated yet",
-            "body_one": "When generation starts, we'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
-            "body_other": "When generation starts, we'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
-            "body": "When generation starts, we'll produce one step per verse of the passage, plus conclusion, introduction, and final assembly."
+            "body_one": "We'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
+            "body_other": "We'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
+            "body": "We'll produce one step per verse of the passage, plus conclusion, introduction, and final assembly."
+        },
+        "steps": {
+            "startCta": "Start generation",
+            "generating": "Generating...",
+            "failedHint": "Something failed while generating this step. Try again.",
+            "editHint": "Manually edited — citation verification does NOT auto-run.",
+            "hintPlaceholder": "e.g. more syntax, more theology, cite Cockerill more",
+            "kind": {
+                "verse": "Verse",
+                "conclusion": "Conclusion",
+                "introduction": "Introduction",
+                "assembly": "Final assembly"
+            },
+            "state": {
+                "pending": "Pending",
+                "generating": "Generating",
+                "awaiting-review": "Ready for review",
+                "accepted": "Accepted",
+                "failed": "Failed"
+            },
+            "action": {
+                "generate": "Generate",
+                "retry": "Retry",
+                "accept": "Accept",
+                "regenerate": "Regenerate",
+                "regenerateWithHint": "Hint & regenerate",
+                "applyHint": "Apply hint",
+                "editManual": "Edit manually",
+                "editAccepted": "Edit accepted content",
+                "saveEdit": "Save edit"
+            },
+            "gate": {
+                "multiChapter": "v1 only supports single-chapter passages. Edit the passage to a single chapter to start.",
+                "noVerses": "v1 requires explicit verses. Edit the passage to include start and end verses."
+            },
+            "toast": {
+                "seeded": "Steps created — start with the first one",
+                "seedFailed": "Couldn't create the steps",
+                "seedShapeError": "Passage doesn't qualify for v1 (must be a single chapter with explicit verses)",
+                "generateFailed": "Couldn't generate the step",
+                "accepted": "Step accepted",
+                "acceptFailed": "Couldn't accept the step",
+                "edited": "Edit saved",
+                "editFailed": "Couldn't save the edit"
+            }
         },
         "styleGuide": {
             "title": "Style guide",

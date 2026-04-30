@@ -16,6 +16,10 @@ import {
     AddProjectSourceUseCase,
     UpdateProjectSourceUseCase,
     RemoveProjectSourceUseCase,
+    SeedStepsForPassageUseCase,
+    GenerateStepUseCase,
+    AcceptStepUseCase,
+    SaveStepEditUseCase,
 } from '../use-cases/exegesis';
 
 /**
@@ -50,6 +54,12 @@ class ExegesisService {
     public updateSource: UpdateProjectSourceUseCase;
     public removeSource: RemoveProjectSourceUseCase;
 
+    // Steps
+    public seedSteps: SeedStepsForPassageUseCase;
+    public generateStep: GenerateStepUseCase;
+    public acceptStep: AcceptStepUseCase;
+    public saveStepEdit: SaveStepEditUseCase;
+
     constructor() {
         const paperRepository = new FirestoreExegeticalPaperRepository();
         const styleGuideRepository = new FirestoreUserStyleGuideRepository();
@@ -71,6 +81,12 @@ class ExegesisService {
         this.addSource = new AddProjectSourceUseCase(paperRepository);
         this.updateSource = new UpdateProjectSourceUseCase(paperRepository);
         this.removeSource = new RemoveProjectSourceUseCase(paperRepository);
+
+        // Steps (state machine + D.1 placeholder generation)
+        this.seedSteps = new SeedStepsForPassageUseCase(paperRepository);
+        this.generateStep = new GenerateStepUseCase(paperRepository);
+        this.acceptStep = new AcceptStepUseCase(paperRepository);
+        this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
     }
 }
 

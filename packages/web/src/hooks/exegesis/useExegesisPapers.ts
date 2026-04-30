@@ -82,6 +82,63 @@ export function useExegesisPapers() {
         },
     });
 
+    // ── Step mutations (D.1: state machine + placeholder generation) ──────
+
+    const seedSteps = useMutation({
+        mutationFn: async ({ paperId }: { paperId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.seedSteps.execute(user.uid, paperId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const generateStep = useMutation({
+        mutationFn: async ({ paperId, stepId, regenerationHint }: { paperId: string; stepId: string; regenerationHint?: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.generateStep.execute({
+                ownerId: user.uid,
+                paperId,
+                stepId,
+                regenerationHint,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const acceptStep = useMutation({
+        mutationFn: async ({ paperId, stepId, versionId }: { paperId: string; stepId: string; versionId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.acceptStep.execute({
+                ownerId: user.uid,
+                paperId,
+                stepId,
+                versionId,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const saveStepEdit = useMutation({
+        mutationFn: async ({ paperId, stepId, markdown }: { paperId: string; stepId: string; markdown: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.saveStepEdit.execute({
+                ownerId: user.uid,
+                paperId,
+                stepId,
+                markdown,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     return {
         papers: papersQuery.data ?? [],
         isLoading: papersQuery.isLoading,
@@ -91,5 +148,9 @@ export function useExegesisPapers() {
         addSource,
         updateSource,
         removeSource,
+        seedSteps,
+        generateStep,
+        acceptStep,
+        saveStepEdit,
     };
 }

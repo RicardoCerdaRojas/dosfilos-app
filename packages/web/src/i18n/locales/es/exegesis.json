@@ -122,9 +122,54 @@
         "generateCta": "Generar primer paso",
         "stepsEmpty": {
             "title": "Aún sin pasos generados",
-            "body_one": "Cuando arranquemos la generación, vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
-            "body_other": "Cuando arranquemos la generación, vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
-            "body": "Cuando arranquemos la generación, vamos a producir un paso por verso del pasaje, más conclusión, introducción y ensamble final."
+            "body_one": "Vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
+            "body_other": "Vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
+            "body": "Vamos a producir un paso por verso del pasaje, más conclusión, introducción y ensamble final."
+        },
+        "steps": {
+            "startCta": "Iniciar generación",
+            "generating": "Generando...",
+            "failedHint": "Algo falló al generar este paso. Probá de nuevo.",
+            "editHint": "Editado a mano — la verificación de citas no corre automáticamente.",
+            "hintPlaceholder": "Ej. más sintaxis, más teología, citá más a Cockerill",
+            "kind": {
+                "verse": "Verso",
+                "conclusion": "Conclusión",
+                "introduction": "Introducción",
+                "assembly": "Ensamble final"
+            },
+            "state": {
+                "pending": "Pendiente",
+                "generating": "Generando",
+                "awaiting-review": "Listo para revisar",
+                "accepted": "Aceptado",
+                "failed": "Falló"
+            },
+            "action": {
+                "generate": "Generar",
+                "retry": "Reintentar",
+                "accept": "Aceptar",
+                "regenerate": "Regenerar",
+                "regenerateWithHint": "Hint y regenerar",
+                "applyHint": "Aplicar hint",
+                "editManual": "Editar a mano",
+                "editAccepted": "Editar contenido aceptado",
+                "saveEdit": "Guardar edición"
+            },
+            "gate": {
+                "multiChapter": "v1 solo soporta pasajes de un capítulo. Editá el pasaje a un solo capítulo para iniciar.",
+                "noVerses": "v1 requiere versos explícitos. Editá el pasaje para incluir verso inicial y final."
+            },
+            "toast": {
+                "seeded": "Pasos creados — empezá por el primero",
+                "seedFailed": "No se pudieron crear los pasos",
+                "seedShapeError": "El pasaje no califica para v1 (debe ser un solo capítulo con versos explícitos)",
+                "generateFailed": "No se pudo generar el paso",
+                "accepted": "Paso aceptado",
+                "acceptFailed": "No se pudo aceptar el paso",
+                "edited": "Edición guardada",
+                "editFailed": "No se pudo guardar la edición"
+            }
         },
         "styleGuide": {
             "title": "Guía de estilo",
