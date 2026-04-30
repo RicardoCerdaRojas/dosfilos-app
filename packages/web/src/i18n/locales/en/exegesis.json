@@ -201,7 +201,6 @@
         "loading": "Loading configuration...",
         "subtitle": "Academic configuration: rubric, style guide, corpus, and structural plan.",
         "backToPaper": "Back to paper",
-        "untitledFallback": "Untitled paper",
         "goToPaper": "Go to paper",
         "notFound": {
             "title": "Paper not found",

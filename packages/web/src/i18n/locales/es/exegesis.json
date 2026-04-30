@@ -201,7 +201,6 @@
         "loading": "Cargando configuración...",
         "subtitle": "Configuración académica: rúbrica, guía de estilo, corpus y plan estructural.",
         "backToPaper": "Volver al trabajo",
-        "untitledFallback": "Trabajo sin título",
         "goToPaper": "Ir al trabajo",
         "notFound": {
             "title": "Trabajo no encontrado",

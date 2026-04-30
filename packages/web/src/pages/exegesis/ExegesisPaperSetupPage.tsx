@@ -8,6 +8,7 @@ import { RubricSubStep } from '@/components/exegesis/setup/RubricSubStep';
 import { StyleManifestSubStep } from '@/components/exegesis/setup/StyleManifestSubStep';
 import { CorpusSubStep } from '@/components/exegesis/setup/CorpusSubStep';
 import { StructuralPlanSubStep } from '@/components/exegesis/setup/StructuralPlanSubStep';
+import { formatPassageReference, type SupportedLanguage } from '@dosfilos/domain';
 
 /**
  * Rich academic-configuration page for an exegetical paper.
@@ -47,7 +48,7 @@ const SUB_STEPS: ReadonlyArray<{ key: SubStepKey; iconKey: string }> = [
 export function ExegesisPaperSetupPage() {
     const { paperId } = useParams<{ paperId: string }>();
     const navigate = useNavigate();
-    const { t } = useTranslation('exegesis');
+    const { t, i18n } = useTranslation('exegesis');
     const { paper, isLoading, error } = useExegesisPaper(paperId);
     const [activeKey, setActiveKey] = useState<SubStepKey>('rubric');
 
@@ -92,8 +93,17 @@ export function ExegesisPaperSetupPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                     <div className="flex-1 min-w-0">
+                        {/* Same fallback as the directory list and the
+                            paper detail page: explicit title wins,
+                            otherwise show the formatted passage. The
+                            old "Trabajo sin título" string is gone —
+                            it implied the paper had no identity even
+                            though the passage IS the identity. */}
                         <h1 className="text-lg font-semibold text-foreground font-serif truncate">
-                            {paper.title || t('paperSetup.untitledFallback')}
+                            {paper.title || formatPassageReference(
+                                paper.passage,
+                                (i18n.language?.split('-')[0] === 'en' ? 'en' : 'es') as SupportedLanguage,
+                            )}
                         </h1>
                         <p className="text-xs text-muted-foreground">
                             {t('paperSetup.subtitle')}
