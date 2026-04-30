@@ -419,11 +419,13 @@
                 },
                 "list": {
                     "title": "Fuentes adjuntas",
-                    "empty": "Aún no agregaste fuentes. Subí el primer extracto abajo.",
+                    "empty": "Aún no agregaste fuentes. Tocá \"Agregar fuente\" arriba o \"Subir\" en cualquier requisito faltante.",
+                    "addCta": "Agregar fuente",
                     "remove": "Quitar fuente"
                 },
                 "upload": {
-                    "title": "Agregar una fuente",
+                    "title": "Agregar fuente al corpus",
+                    "dialogSubtitle": "Subí un nuevo PDF/EPUB o reusá uno de tu biblioteca. El tipo académico decide si cumple un requisito de la rúbrica.",
                     "modeUpload": "Subir nuevo",
                     "modeLibrary": "Mi biblioteca",
                     "fileLabel": "Archivo (PDF o EPUB)",

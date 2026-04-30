@@ -22,6 +22,14 @@ import {
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { SourceTypePicker } from './SourceTypePicker';
@@ -52,23 +60,20 @@ interface CorpusSubStepProps {
 export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     const { t } = useTranslation('exegesis');
 
-    // Per-requirement upload coordination: when the student clicks
-    // "Subir" on a missing requirement in the gap card, this state
-    // pre-selects that type in the form below. The token
-    // (timestamp) is part of the trigger so clicking the same
-    // requirement twice still re-fires the sync effect — without
-    // it React would skip the effect because the type didn't
-    // change.
-    //
-    // We DELIBERATELY don't auto-scroll. Forcing the page to jump
-    // away from the gap card was disorienting (user reported
-    // losing their reading position). The pre-selection on its own
-    // is a sufficient "next-step" cue; the student scrolls when
-    // they're ready to fill the form.
-    const [pickedType, setPickedType] = useState<{ type: SourceType; token: number } | null>(null);
+    // Add-source dialog state. A single dialog handles both:
+    //   - "Agregar fuente" button at the top of the list (no
+    //     pre-selected type — student picks it inside the dialog).
+    //   - Per-requirement "Subir" buttons in the gap card
+    //     (type pre-selected matching the missing requirement).
+    // Replacing the always-visible inline form with a contextual
+    // dialog gives clicks immediate visible feedback and avoids
+    // the auto-scroll-to-bottom problem the inline form caused.
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogInitialType, setDialogInitialType] = useState<SourceType | null>(null);
 
-    const handlePickType = (type: SourceType) => {
-        setPickedType({ type, token: Date.now() });
+    const openDialog = (preselect: SourceType | null) => {
+        setDialogInitialType(preselect);
+        setDialogOpen(true);
     };
 
     return (
@@ -85,26 +90,41 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </div>
             </header>
 
-            <RubricGapCard paper={paper} onPickType={handlePickType} />
+            <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
 
-            <CorpusSourcesList paper={paper} />
+            <CorpusSourcesList paper={paper} onAdd={() => openDialog(null)} />
 
-            <CorpusUploadForm paper={paper} initialPickedType={pickedType} />
+            <AddSourceDialog
+                paper={paper}
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                initialType={dialogInitialType}
+            />
         </div>
     );
 }
 
 // ── Sources list ────────────────────────────────────────────────────────
 
-function CorpusSourcesList({ paper }: { paper: ExegeticalPaper }) {
+function CorpusSourcesList({ paper, onAdd }: { paper: ExegeticalPaper; onAdd: () => void }) {
     const { t } = useTranslation('exegesis');
     const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
 
     return (
         <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">
-                {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
-            </h3>
+            <header className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-foreground">
+                    {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
+                </h3>
+                <Button
+                    type="button"
+                    onClick={onAdd}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                >
+                    <Upload className="h-3 w-3 mr-1" />
+                    {t('paperSetup.subSteps.corpus.list.addCta')}
+                </Button>
+            </header>
             {sorted.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">
                     {t('paperSetup.subSteps.corpus.list.empty')}
@@ -192,12 +212,16 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
 
 // ── Upload form ────────────────────────────────────────────────────────
 
-function CorpusUploadForm({
+function AddSourceDialog({
     paper,
-    initialPickedType,
+    open,
+    onOpenChange,
+    initialType,
 }: {
     paper: ExegeticalPaper;
-    initialPickedType: { type: SourceType; token: number } | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    initialType: SourceType | null;
 }) {
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
@@ -218,16 +242,22 @@ function CorpusUploadForm({
     const [pickedResourceId, setPickedResourceId] = useState<string | null>(null);
     const [librarySearch, setLibrarySearch] = useState('');
 
-    // Sync the picker when the parent points us at a specific type
-    // (the gap card's "Subir" button). The token in the dependency
-    // ensures repeated clicks on the same row still re-trigger the
-    // sync — useful when the student clicks once, navigates away
-    // mid-fill, and clicks again.
+    // Reset / pre-select on every open. The dialog is one-shot per
+    // open: closing always discards the form so reopening starts
+    // fresh. When the parent passes a type via the gap card click,
+    // we honor it as the initial selection.
     useEffect(() => {
-        if (initialPickedType) {
-            setSourceType(initialPickedType.type);
+        if (open) {
+            setMode('upload');
+            setFile(null);
+            setDisplayName('');
+            setSourceType(initialType ?? 'commentary-critical');
+            setCitationKey('');
+            setPickedResourceId(null);
+            setLibrarySearch('');
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
-    }, [initialPickedType]);
+    }, [open, initialType]);
 
     // Lazy-load the user's library only when they switch to the
     // "library" mode — most students will use upload first time.
@@ -278,16 +308,6 @@ function CorpusUploadForm({
         setDisplayName(resource.title || resource.id);
     };
 
-    const resetForm = () => {
-        setFile(null);
-        setDisplayName('');
-        setCitationKey('');
-        setSourceType('commentary-critical');
-        setPickedResourceId(null);
-        setLibrarySearch('');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSubmit || !user?.uid) return;
@@ -324,8 +344,11 @@ function CorpusUploadForm({
                 displayLabel: displayName.trim(),
                 citationKey: citationKey.trim() || undefined,
             });
-            resetForm();
             toast.success(t('paperSetup.subSteps.corpus.toast.added'));
+            // Close the dialog on success. The open-effect resets
+            // the form on the next open, so we don't need to clear
+            // state here.
+            onOpenChange(false);
         } catch (err) {
             console.error('[exegesis] add source failed:', err);
             toast.error(t('paperSetup.subSteps.corpus.toast.addFailed'));
@@ -338,13 +361,23 @@ function CorpusUploadForm({
     const isCitable = CITABLE_SOURCE_TYPES.has(sourceType);
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="rounded-lg border border-border bg-muted/40 p-4 space-y-3"
-        >
-            <h3 className="text-sm font-semibold text-foreground">
-                {t('paperSetup.subSteps.corpus.upload.title')}
-            </h3>
+        <Dialog open={open} onOpenChange={(next) => {
+            // Block closing while the upload is in flight so the
+            // student can't accidentally cancel a half-finished
+            // upload.
+            if (uploading && !next) return;
+            onOpenChange(next);
+        }}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>
+                        {t('paperSetup.subSteps.corpus.upload.title')}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {t('paperSetup.subSteps.corpus.upload.dialogSubtitle')}
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-3">
 
             {/* Mode toggle: subir nuevo / elegir de mi biblioteca */}
             <div className="flex gap-2">
@@ -459,25 +492,36 @@ function CorpusUploadForm({
                 </p>
             )}
 
-            <div className="flex justify-end">
-                <Button
-                    type="submit"
-                    disabled={!canSubmit}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                    {uploading ? (
-                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                    ) : mode === 'upload' ? (
-                        <Upload className="h-4 w-4 mr-1.5" />
-                    ) : (
-                        <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                    )}
-                    {mode === 'upload'
-                        ? t('paperSetup.subSteps.corpus.upload.submit')
-                        : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
-                </Button>
-            </div>
-        </form>
+                    <DialogFooter className="pt-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => onOpenChange(false)}
+                            disabled={uploading}
+                            className="text-xs"
+                        >
+                            {t('setup.cancel')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={!canSubmit}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
+                            {uploading ? (
+                                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                            ) : mode === 'upload' ? (
+                                <Upload className="h-4 w-4 mr-1.5" />
+                            ) : (
+                                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                            )}
+                            {mode === 'upload'
+                                ? t('paperSetup.subSteps.corpus.upload.submit')
+                                : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
 

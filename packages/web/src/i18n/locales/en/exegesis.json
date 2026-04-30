@@ -419,11 +419,13 @@
                 },
                 "list": {
                     "title": "Attached sources",
-                    "empty": "No sources yet. Upload the first extract below.",
+                    "empty": "No sources yet. Tap \"Add source\" above or \"Upload\" on any missing requirement.",
+                    "addCta": "Add source",
                     "remove": "Remove source"
                 },
                 "upload": {
-                    "title": "Add a source",
+                    "title": "Add a source to the corpus",
+                    "dialogSubtitle": "Upload a new PDF/EPUB or reuse one from your library. The academic type decides whether it covers a rubric requirement.",
                     "modeUpload": "Upload new",
                     "modeLibrary": "My library",
                     "fileLabel": "File (PDF or EPUB)",
