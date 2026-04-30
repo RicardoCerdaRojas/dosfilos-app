@@ -5,15 +5,20 @@ import type {
     ExegeticalPaper,
     ExegeticalStep,
     ExegeticalStepVersion,
+    FormatterSourceMetadata,
     GenerateStepInput,
     IExegesisOrchestrator,
     IExegeticalPaperRepository,
     IResourceContentReader,
+    IStyleFormatter,
     IUserStyleGuideRepository,
+    PriorFootnoteAnchor,
+    StyleGuideManifest,
 } from '@dosfilos/domain';
 import {
     EMPTY_VERIFICATION_SUMMARY,
     formatPassageReference,
+    isCitableSourceType,
 } from '@dosfilos/domain';
 
 /**
@@ -36,12 +41,30 @@ import {
  * never appended, so the UI's "Retry" button will just trigger a fresh
  * call.
  */
+/**
+ * Function that, given the formatted markdown of a previously-
+ * accepted step and the citable-source metadata, extracts the
+ * footnote anchors so the next step can reason about cross-step
+ * ibid sequences. Lives in infrastructure (regex parsing) and is
+ * injected here so the use case stays free of regex details.
+ */
+export type FootnoteAnchorExtractor = (
+    markdown: string,
+    citableSources: ReadonlyArray<FormatterSourceMetadata>,
+) => PriorFootnoteAnchor[];
+
 export class GenerateStepUseCase {
     constructor(
         private paperRepository: IExegeticalPaperRepository,
         private styleGuideRepository: IUserStyleGuideRepository,
         private contentReader: IResourceContentReader,
         private orchestrator: IExegesisOrchestrator,
+        // Style formatter is OPTIONAL — generation still works without
+        // it (the inline parenthetical citations the LLM emits are
+        // already readable). Wiring the formatter is what makes the
+        // citation discipline DETERMINISTIC.
+        private styleFormatter?: IStyleFormatter,
+        private extractFootnoteAnchors?: FootnoteAnchorExtractor,
     ) { }
 
     async execute(input: GenerateStepInput): Promise<ExegeticalStepVersion> {
@@ -89,13 +112,28 @@ export class GenerateStepUseCase {
 
             const result = await this.orchestrator.generateStep(orchestratorInput);
 
+            // Run the deterministic style formatter on the LLM's
+            // output if both the formatter and a manifest are
+            // available. The formatter rewrites inline citations
+            // per the manifest's templates and applies ibid for
+            // consecutive same-source mentions. If anything is
+            // missing, we save the raw markdown and let downstream
+            // surfaces (verifier, export) handle it later.
+            const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
+            const formatted = await this.applyStyleFormatter({
+                paper,
+                step,
+                rawMarkdown: result.markdown,
+                manifest,
+            });
+
             const parentVersionId = step.current?.id ?? null;
             return await this.paperRepository.appendStepVersion(
                 input.ownerId,
                 input.paperId,
                 input.stepId,
                 {
-                    markdown: result.markdown,
+                    markdown: formatted,
                     origin: 'generated',
                     parentVersionId,
                     modelId: result.modelId,
@@ -141,6 +179,110 @@ export class GenerateStepUseCase {
             });
         }
         return contexts;
+    }
+
+    private async loadStyleManifest(
+        ownerId: string,
+        styleGuideId: string | null,
+    ): Promise<StyleGuideManifest | null> {
+        if (!styleGuideId) return null;
+        const guide = await this.styleGuideRepository.getGuide(ownerId, styleGuideId);
+        return guide?.manifest ?? null;
+    }
+
+    /**
+     * Builds the citable-source metadata list from `paper.sources`,
+     * filtering out roles whose citations should never be inlined
+     * (style template). The metadata is light-touch in v1 — it pulls
+     * citationKey + displayLabel from the ProjectSource and uses the
+     * displayLabel as the title fallback. v1.5 will fetch richer
+     * library_resource metadata (publisher, city, year, volume) so
+     * the templates have more to substitute.
+     */
+    private buildCitableSourceMetadata(paper: ExegeticalPaper): FormatterSourceMetadata[] {
+        return paper.sources
+            .filter(s => isCitableSourceType(s.sourceType))
+            .map(s => ({
+                corpusId: s.corpusId,
+                citationKey: s.citationKey ?? deriveCitationKey(s.displayLabel),
+                fullAuthor: s.citationKey ?? deriveCitationKey(s.displayLabel),
+                authorSurnameFirst: s.citationKey ?? deriveCitationKey(s.displayLabel),
+                fullTitle: s.displayLabel,
+                shortTitle: s.displayLabel,
+                publisher: null,
+                city: null,
+                year: null,
+                volume: null,
+            }));
+    }
+
+    /**
+     * Runs the style formatter on the LLM's raw output, threading in
+     * the cross-step ibid context (footnote anchors from already-
+     * accepted prior steps).
+     *
+     * No-op when the formatter, the manifest, or the citable-source
+     * list is missing. The raw markdown is saved as-is in those
+     * cases — generation should still work, just without the
+     * deterministic citation rewrite.
+     */
+    private async applyStyleFormatter(input: {
+        paper: ExegeticalPaper;
+        step: ExegeticalStep;
+        rawMarkdown: string;
+        manifest: StyleGuideManifest | null;
+    }): Promise<string> {
+        const { paper, step, rawMarkdown, manifest } = input;
+        if (!this.styleFormatter || !manifest) return rawMarkdown;
+
+        const citableSources = this.buildCitableSourceMetadata(paper);
+        if (citableSources.length === 0) return rawMarkdown;
+
+        const priorAnchors = this.collectPriorFootnoteAnchors(paper, step, citableSources);
+
+        const result = this.styleFormatter.format({
+            markdown: rawMarkdown,
+            manifest,
+            citableSources,
+            priorFootnoteAnchors: priorAnchors,
+        });
+
+        if (result.warnings.length > 0) {
+            console.warn(
+                '[GenerateStepUseCase] style formatter warnings:',
+                result.warnings,
+            );
+        }
+
+        return result.markdown;
+    }
+
+    /**
+     * Walks accepted prior steps in canonical order, runs the
+     * footnote-anchor extractor on each one's markdown, and returns
+     * a flat list. Used so the formatter can apply ibid sequences
+     * that span step boundaries (e.g., the conclusion's first cite
+     * of Lane is "subsequent" because verse 3 already cited him).
+     *
+     * If the extractor isn't injected (paranoia), returns empty;
+     * within-step ibid still works because the formatter tracks
+     * sequence state during a single pass.
+     */
+    private collectPriorFootnoteAnchors(
+        paper: ExegeticalPaper,
+        currentStep: ExegeticalStep,
+        citableSources: ReadonlyArray<FormatterSourceMetadata>,
+    ): PriorFootnoteAnchor[] {
+        if (!this.extractFootnoteAnchors) return [];
+        const ordered = [...paper.steps]
+            .filter(s => s.id !== currentStep.id && s.accepted !== null)
+            .sort((a, b) => a.order - b.order);
+        const anchors: PriorFootnoteAnchor[] = [];
+        for (const s of ordered) {
+            const md = s.accepted!.markdown;
+            anchors.push(...this.extractFootnoteAnchors(md, citableSources));
+        }
+        return anchors;
     }
 
     /**
@@ -223,4 +365,22 @@ function toPriorStep(s: ExegeticalStep): ExegesisPriorStep {
         verseRef: s.verseRef,
         markdown: s.accepted!.markdown,
     };
+}
+
+/**
+ * Derives a citation key from a display label when the user didn't
+ * pin one explicitly. Picks the first surname-shaped token (capital
+ * letter + lowercase) so "Lane WBC 47a, pp. 1-30" → "Lane".
+ *
+ * Conservative — falls back to the whole label when nothing matches
+ * so the formatter still has SOMETHING to attempt a lookup against.
+ */
+function deriveCitationKey(displayLabel: string): string {
+    const trimmed = displayLabel.trim();
+    if (!trimmed) return '';
+    // First word that starts with an uppercase letter and continues
+    // with lowercase letters (typical surname shape: "Lane", "Bruce").
+    const surnameMatch = trimmed.match(/\b[A-Z][a-z]{2,}\b/);
+    if (surnameMatch) return surnameMatch[0];
+    return trimmed.split(/\s+/)[0] ?? trimmed;
 }

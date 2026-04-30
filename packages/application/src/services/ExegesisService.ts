@@ -5,6 +5,8 @@ import {
     GeminiExegesisOrchestrator,
     GeminiPaperRubricExtractor,
     GeminiStyleGuideManifestExtractor,
+    DeterministicStyleFormatter,
+    extractFootnoteAnchorsFromFormattedMarkdown,
 } from '@dosfilos/infrastructure';
 import type { IResourceContentReader } from '@dosfilos/domain';
 
@@ -94,6 +96,7 @@ class ExegesisService {
         const orchestrator = new GeminiExegesisOrchestrator(apiKey || '', exegesisModelId);
         const rubricExtractor = new GeminiPaperRubricExtractor(apiKey || '', exegesisModelId);
         const manifestExtractor = new GeminiStyleGuideManifestExtractor(apiKey || '', exegesisModelId);
+        const styleFormatter = new DeterministicStyleFormatter();
 
         // Adapt the broader library repository to the narrow content-reader
         // port the use case depends on. Keeps the use case free of any
@@ -133,13 +136,16 @@ class ExegesisService {
         this.updateSource = new UpdateProjectSourceUseCase(paperRepository);
         this.removeSource = new RemoveProjectSourceUseCase(paperRepository);
 
-        // Steps (D.2: live Gemini generation with style guide + sources injected)
+        // Steps (D.2: live Gemini generation with style guide + sources injected;
+        // Phase 3c adds deterministic style formatter + cross-step ibid anchors)
         this.seedSteps = new SeedStepsForPassageUseCase(paperRepository);
         this.generateStep = new GenerateStepUseCase(
             paperRepository,
             styleGuideRepository,
             contentReader,
             orchestrator,
+            styleFormatter,
+            extractFootnoteAnchorsFromFormattedMarkdown,
         );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
