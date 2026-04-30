@@ -51,7 +51,6 @@ interface RubricSubStepProps {
 
 export function RubricSubStep({ paper }: RubricSubStepProps) {
     const { t } = useTranslation('exegesis');
-    const { updateRubric, resetRubric } = useExegesisPapers();
     const rubric = paper.rubric;
 
     if (!rubric) {
@@ -76,7 +75,7 @@ export function RubricSubStep({ paper }: RubricSubStepProps) {
         );
     }
 
-    return <RubricEditor paper={paper} rubric={rubric} updatePending={updateRubric.isPending} resetPending={resetRubric.isPending} />;
+    return <RubricEditor paper={paper} rubric={rubric} />;
 }
 
 // ── Editor ─────────────────────────────────────────────────────────────
@@ -84,13 +83,19 @@ export function RubricSubStep({ paper }: RubricSubStepProps) {
 interface RubricEditorProps {
     paper: ExegeticalPaper;
     rubric: PaperRubric;
-    updatePending: boolean;
-    resetPending: boolean;
 }
 
-function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEditorProps) {
+function RubricEditor({ paper, rubric }: RubricEditorProps) {
     const { t } = useTranslation('exegesis');
+    // The mutation lives in this component because the click handlers
+    // (handleSave / handleReset) trigger it from here. Reading the
+    // pending state from the SAME hook instance keeps the spinner in
+    // sync with the actual in-flight call — earlier the parent passed
+    // pending state from a separate useExegesisPapers() instance and
+    // the spinner never flipped.
     const { updateRubric, resetRubric } = useExegesisPapers();
+    const updatePending = updateRubric.isPending;
+    const resetPending = resetRubric.isPending;
 
     // Form state seeded from the persisted rubric. Re-syncs whenever
     // the persisted rubric reference changes (e.g. another tab saved
