@@ -29,6 +29,7 @@ import {
     SetDefaultUserRubricUseCase,
     ApplyRubricTemplateToPaperUseCase,
     SaveCurrentRubricAsTemplateUseCase,
+    CreateUserRubricFromTextUseCase,
     ListUserStyleGuidesUseCase,
     GetActiveStyleGuideUseCase,
     CreateUserStyleGuideUseCase,
@@ -77,6 +78,7 @@ class ExegesisService {
     public setDefaultUserRubric: SetDefaultUserRubricUseCase;
     public applyRubricTemplateToPaper: ApplyRubricTemplateToPaperUseCase;
     public saveCurrentRubricAsTemplate: SaveCurrentRubricAsTemplateUseCase;
+    public createUserRubricFromText: CreateUserRubricFromTextUseCase;
 
     // User style guides
     public listStyleGuides: ListUserStyleGuidesUseCase;
@@ -155,6 +157,10 @@ class ExegesisService {
         this.saveCurrentRubricAsTemplate = new SaveCurrentRubricAsTemplateUseCase(
             paperRepository,
             userRubricRepository,
+        );
+        this.createUserRubricFromText = new CreateUserRubricFromTextUseCase(
+            userRubricRepository,
+            rubricExtractor,
         );
 
         // User style guides

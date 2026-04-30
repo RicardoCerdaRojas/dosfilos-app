@@ -106,6 +106,24 @@ export function useUserRubrics() {
         },
     });
 
+    const createFromText = useMutation({
+        mutationFn: async (input: {
+            displayName: string;
+            rawText?: string;
+            language?: 'es' | 'en';
+            markAsDefault?: boolean;
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.createUserRubricFromText.execute({
+                ownerId: user.uid,
+                ...input,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'userRubrics', user?.uid] });
+        },
+    });
+
     return {
         rubrics: rubricsQuery.data ?? [],
         defaultRubric: (rubricsQuery.data ?? []).find(r => r.isDefault) ?? null,
@@ -117,5 +135,6 @@ export function useUserRubrics() {
         setDefault,
         applyTemplate,
         saveAsTemplate,
+        createFromText,
     };
 }

@@ -29,13 +29,31 @@
             "requirementsCount": "{{count}} requisitos",
             "empty": {
                 "title": "Aún no guardaste plantillas de rúbrica",
-                "body": "Cuando ajustes la rúbrica de un paper, podés guardarla como plantilla desde el setup → tab Rúbrica → \"Guardar como plantilla\". Después aparecerá acá para reusar."
+                "body": "Creá una nueva acá pegando la rúbrica de tu seminario, o desde el setup de un paper guardando la rúbrica configurada como plantilla."
+            },
+            "createCta": "Crear rúbrica",
+            "create": {
+                "title": "Crear nueva plantilla de rúbrica",
+                "nameLabel": "Nombre de la plantilla",
+                "namePlaceholder": "Ej: TMS NT800 Hebreos",
+                "modeLabel": "¿Cómo querés empezar?",
+                "modeBlank": "Default académico TMS",
+                "modePaste": "Pegar texto y extraer",
+                "textLabel": "Texto de la rúbrica",
+                "textPlaceholder": "Pegá la rúbrica del seminario o el brief de la asignación. Lo extraemos a un formato estructurado que después podés ajustar.",
+                "tooShort": "El texto es muy corto. Pegá al menos un párrafo con instrucciones.",
+                "blankHint": "Vamos a crear una plantilla con el default TMS que podés ajustar después.",
+                "pasteHint": "Vamos a usar Gemini para extraer la rúbrica desde tu texto.",
+                "submit": "Crear plantilla"
             },
             "toast": {
                 "defaultSet": "Plantilla marcada como default",
                 "defaultFailed": "No se pudo marcar como default",
                 "deleted": "Plantilla eliminada",
-                "deleteFailed": "No se pudo eliminar la plantilla"
+                "deleteFailed": "No se pudo eliminar la plantilla",
+                "created": "Plantilla creada",
+                "createFailed": "No se pudo crear la plantilla. Revisá el texto o intentá de nuevo.",
+                "overloaded": "Gemini está sobrecargado. Probá de nuevo en unos segundos."
             }
         },
         "styleGuides": {

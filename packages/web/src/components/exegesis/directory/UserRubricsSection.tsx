@@ -1,5 +1,7 @@
-import { FileCheck2, Star, Trash2, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { FileCheck2, Star, Trash2, Loader2, Plus, Sparkles, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import type { UserRubric } from '@dosfilos/domain';
@@ -20,6 +22,7 @@ import type { UserRubric } from '@dosfilos/domain';
 export function UserRubricsSection() {
     const { t } = useTranslation('exegesis');
     const { rubrics, isLoading, deleteRubric, setDefault } = useUserRubrics();
+    const [showCreateForm, setShowCreateForm] = useState(false);
 
     const handleSetDefault = async (rubricId: string) => {
         try {
@@ -67,9 +70,17 @@ export function UserRubricsSection() {
                     <h3 className="text-sm font-semibold text-foreground mb-1">
                         {t('directory.rubrics.empty.title')}
                     </h3>
-                    <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">
                         {t('directory.rubrics.empty.body')}
                     </p>
+                    <Button
+                        type="button"
+                        onClick={() => setShowCreateForm(true)}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                        <Plus className="h-3.5 w-3.5 mr-1.5" />
+                        {t('directory.rubrics.createCta')}
+                    </Button>
                 </div>
             ) : (
                 <ul className="space-y-2">
@@ -127,6 +138,180 @@ export function UserRubricsSection() {
                     ))}
                 </ul>
             )}
+
+            {rubrics.length > 0 && !showCreateForm && (
+                <div className="mt-3 flex justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowCreateForm(true)}
+                        className="text-xs"
+                    >
+                        <Plus className="h-3 w-3 mr-1" />
+                        {t('directory.rubrics.createCta')}
+                    </Button>
+                </div>
+            )}
+
+            {showCreateForm && (
+                <div className="mt-4">
+                    <CreateRubricForm onDone={() => setShowCreateForm(false)} />
+                </div>
+            )}
         </section>
+    );
+}
+
+// ── Inline Create-from-text form ───────────────────────────────────────
+
+function CreateRubricForm({ onDone }: { onDone: () => void }) {
+    const { t, i18n } = useTranslation('exegesis');
+    const { createFromText } = useUserRubrics();
+    const [name, setName] = useState('');
+    const [mode, setMode] = useState<'blank' | 'paste'>('blank');
+    const [rawText, setRawText] = useState('');
+    const language: 'es' | 'en' = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+
+    const trimmedText = rawText.trim();
+    const submitting = createFromText.isPending;
+    const canSubmit = name.trim().length >= 3
+        && (mode === 'blank' || trimmedText.length >= 30)
+        && !submitting;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!canSubmit) return;
+        try {
+            await createFromText.mutateAsync({
+                displayName: name.trim(),
+                rawText: mode === 'paste' ? trimmedText : undefined,
+                language,
+            });
+            toast.success(t('directory.rubrics.toast.created'));
+            setName('');
+            setRawText('');
+            setMode('blank');
+            onDone();
+        } catch (err: any) {
+            console.error('[exegesis] create rubric from text failed:', err);
+            const isOverload = err?.isExegesisOverload === true;
+            toast.error(isOverload
+                ? t('directory.rubrics.toast.overloaded')
+                : t('directory.rubrics.toast.createFailed'));
+        }
+    };
+
+    return (
+        <form
+            onSubmit={handleSubmit}
+            className="rounded-lg border border-border bg-muted/40 p-4 space-y-3"
+        >
+            <h3 className="text-sm font-semibold text-foreground">
+                {t('directory.rubrics.create.title')}
+            </h3>
+
+            <div>
+                <label className="block text-xs font-medium text-foreground mb-1">
+                    {t('directory.rubrics.create.nameLabel')}
+                </label>
+                <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={submitting}
+                    placeholder={t('directory.rubrics.create.namePlaceholder')}
+                    className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                />
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-foreground mb-1.5">
+                    {t('directory.rubrics.create.modeLabel')}
+                </label>
+                <div className="flex gap-2">
+                    <ModeOption
+                        active={mode === 'blank'}
+                        onClick={() => setMode('blank')}
+                        label={t('directory.rubrics.create.modeBlank')}
+                    />
+                    <ModeOption
+                        active={mode === 'paste'}
+                        onClick={() => setMode('paste')}
+                        label={t('directory.rubrics.create.modePaste')}
+                    />
+                </div>
+            </div>
+
+            {mode === 'paste' && (
+                <div>
+                    <label className="block text-xs font-medium text-foreground mb-1">
+                        {t('directory.rubrics.create.textLabel')}
+                    </label>
+                    <textarea
+                        value={rawText}
+                        onChange={(e) => setRawText(e.target.value)}
+                        rows={6}
+                        disabled={submitting}
+                        placeholder={t('directory.rubrics.create.textPlaceholder')}
+                        className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
+                    />
+                    {trimmedText.length > 0 && trimmedText.length < 30 && (
+                        <p className="text-[11px] text-warning-subtle-foreground mt-1 inline-flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {t('directory.rubrics.create.tooShort')}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+                <p className="text-[11px] text-muted-foreground italic">
+                    {mode === 'blank'
+                        ? t('directory.rubrics.create.blankHint')
+                        : t('directory.rubrics.create.pasteHint')}
+                </p>
+                <div className="flex gap-1.5">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={onDone}
+                        disabled={submitting}
+                        className="text-xs"
+                    >
+                        {t('setup.cancel')}
+                    </Button>
+                    <Button
+                        type="submit"
+                        disabled={!canSubmit}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                    >
+                        {submitting ? (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                            <Sparkles className="h-3 w-3 mr-1" />
+                        )}
+                        {t('directory.rubrics.create.submit')}
+                    </Button>
+                </div>
+            </div>
+        </form>
+    );
+}
+
+function ModeOption({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={[
+                'rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
+                active
+                    ? 'border-success bg-success-subtle text-success-subtle-foreground'
+                    : 'border-border bg-card text-muted-foreground hover:bg-accent',
+            ].join(' ')}
+            aria-pressed={active}
+        >
+            {label}
+        </button>
     );
 }

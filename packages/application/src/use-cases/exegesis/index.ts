@@ -17,6 +17,7 @@ export { DeleteUserRubricUseCase } from './DeleteUserRubricUseCase';
 export { SetDefaultUserRubricUseCase } from './SetDefaultUserRubricUseCase';
 export { ApplyRubricTemplateToPaperUseCase } from './ApplyRubricTemplateToPaperUseCase';
 export { SaveCurrentRubricAsTemplateUseCase } from './SaveCurrentRubricAsTemplateUseCase';
+export { CreateUserRubricFromTextUseCase } from './CreateUserRubricFromTextUseCase';
 
 // User style guides
 export { ListUserStyleGuidesUseCase } from './ListUserStyleGuidesUseCase';
