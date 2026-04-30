@@ -111,5 +111,42 @@
         "openPaper": "Open paper",
         "createdAt": "Created",
         "updatedAt": "Updated"
+    },
+    "detail": {
+        "back": "Back to list",
+        "loading": "Loading paper...",
+        "archive": "Archive",
+        "archiveConfirm": "Confirm",
+        "stepsTitle": "Paper steps",
+        "stepsSubtitle": "Verse by verse, conclusion, introduction, and assembly. You accept or regenerate each step before moving on.",
+        "generateCta": "Generate first step",
+        "stepsEmpty": {
+            "title": "No steps generated yet",
+            "body_one": "When generation starts, we'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
+            "body_other": "When generation starts, we'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
+            "body": "When generation starts, we'll produce one step per verse of the passage, plus conclusion, introduction, and final assembly."
+        },
+        "styleGuide": {
+            "title": "Style guide",
+            "none": "No guide attached. Required before generating.",
+            "changeCta": "Change guide"
+        },
+        "sources": {
+            "title": "Project corpus",
+            "none": "No sources yet. Add them so the orchestrator can interact with them.",
+            "addCta": "Add source",
+            "remove": "Remove source"
+        },
+        "notFound": {
+            "title": "Paper not found",
+            "body": "The paper you're looking for doesn't exist or was archived. Go back to the list.",
+            "backCta": "Back to list"
+        },
+        "toast": {
+            "archived": "Paper archived",
+            "archiveFailed": "Couldn't archive the paper",
+            "sourceRemoved": "Source removed",
+            "sourceRemoveFailed": "Couldn't remove the source"
+        }
     }
 }

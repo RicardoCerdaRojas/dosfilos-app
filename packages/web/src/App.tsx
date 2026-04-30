@@ -52,6 +52,7 @@ import { FacultyChatPage } from '@/pages/faculty/chat';
 import { ProjectDashboard } from '@/pages/faculty/ProjectDashboard';
 import { ExegesisPage } from '@/pages/exegesis/ExegesisPage';
 import { ExegesisSetupPage } from '@/pages/exegesis/ExegesisSetupPage';
+import { ExegesisPaperPage } from '@/pages/exegesis/ExegesisPaperPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { useEffect } from 'react';
 import { SessionTracker } from '@/components/analytics/SessionTracker';
@@ -224,6 +225,7 @@ function App() {
             <Route path="exegesis">
               <Route index element={<ExegesisPage />} />
               <Route path="new" element={<ExegesisSetupPage />} />
+              <Route path=":paperId" element={<ExegesisPaperPage />} />
             </Route>
 
             {/* Greek Tutor - Start page with sidebar for navigation */}

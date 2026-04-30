@@ -111,5 +111,42 @@
         "openPaper": "Abrir trabajo",
         "createdAt": "Creado",
         "updatedAt": "Actualizado"
+    },
+    "detail": {
+        "back": "Volver al listado",
+        "loading": "Cargando trabajo...",
+        "archive": "Archivar",
+        "archiveConfirm": "Confirmar",
+        "stepsTitle": "Pasos del trabajo",
+        "stepsSubtitle": "Verso por verso, conclusión, introducción y ensamble. Aceptás o regenerás cada paso antes de avanzar.",
+        "generateCta": "Generar primer paso",
+        "stepsEmpty": {
+            "title": "Aún sin pasos generados",
+            "body_one": "Cuando arranquemos la generación, vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
+            "body_other": "Cuando arranquemos la generación, vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
+            "body": "Cuando arranquemos la generación, vamos a producir un paso por verso del pasaje, más conclusión, introducción y ensamble final."
+        },
+        "styleGuide": {
+            "title": "Guía de estilo",
+            "none": "Sin guía adjunta. Necesaria antes de generar.",
+            "changeCta": "Cambiar guía"
+        },
+        "sources": {
+            "title": "Corpus del trabajo",
+            "none": "Sin fuentes todavía. Agregalas para que el orquestador pueda interactuar con ellas.",
+            "addCta": "Agregar fuente",
+            "remove": "Quitar fuente"
+        },
+        "notFound": {
+            "title": "Trabajo no encontrado",
+            "body": "El trabajo que buscás no existe o fue archivado. Volvé al listado.",
+            "backCta": "Volver al listado"
+        },
+        "toast": {
+            "archived": "Trabajo archivado",
+            "archiveFailed": "No se pudo archivar el trabajo",
+            "sourceRemoved": "Fuente quitada",
+            "sourceRemoveFailed": "No se pudo quitar la fuente"
+        }
     }
 }
