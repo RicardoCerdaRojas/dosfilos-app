@@ -8,6 +8,7 @@ import type {
     ExegeticalStepState,
     ExegeticalStepVersion,
 } from '../entities/ExegeticalStep';
+import type { PaperRubric } from '../entities/PaperRubric';
 import type { ProjectSource } from '../entities/ProjectSource';
 import type { StepSourcePlan } from '../entities/StepSourcePlan';
 
@@ -70,6 +71,15 @@ export interface IExegeticalPaperRepository {
      * not-owned papers.
      */
     setStepPlan(ownerId: string, paperId: string, plan: StepSourcePlan): Promise<ExegeticalPaper>;
+
+    /**
+     * Replaces the paper's `rubric` wholesale. Pass null to clear it
+     * (the UI never does this in v1; the create flow always seeds the
+     * default). Use cases that patch a subset of fields construct the
+     * merged rubric and call this — same dumb-repo pattern as
+     * `setStepPlan`.
+     */
+    setRubric(ownerId: string, paperId: string, rubric: PaperRubric | null): Promise<ExegeticalPaper>;
 
     /** Soft-delete (sets `archivedAt`). Reversible via `unarchivePaper`. */
     archivePaper(ownerId: string, paperId: string): Promise<ExegeticalPaper>;

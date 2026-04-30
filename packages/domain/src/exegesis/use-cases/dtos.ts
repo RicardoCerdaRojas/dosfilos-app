@@ -80,6 +80,11 @@ export interface UpdatePaperBriefInput {
 // fields stay untouched.
 
 import type { StepEmphasis } from '../entities/StepSourcePlan';
+import type {
+    PaperRubric,
+    SourceRequirement,
+    StructuralExpectation,
+} from '../entities/PaperRubric';
 
 export interface UpdateStepPlanInput {
     ownerId: string;
@@ -90,6 +95,38 @@ export interface UpdateStepPlanInput {
     verse?: StepEmphasis;
     /** Override the rubric default for the conclusion step kind. */
     conclusion?: StepEmphasis;
+}
+
+// ── UpdateRubric ────────────────────────────────────────────────────────
+//
+// Patches paper.rubric. Caller passes only the fields they're
+// changing; the use case merges with the persisted rubric. Marks
+// provenance as 'user-edited' so the UI surfaces "you've customized
+// this from the {original} default/extracted form" — important
+// pedagogically so the student knows what came from the seminary vs.
+// what they touched.
+
+export interface UpdateRubricInput {
+    ownerId: string;
+    paperId: string;
+    title?: string | null;
+    description?: string | null;
+    citationStandard?: string | null;
+    expectedLength?: PaperRubric['expectedLength'];
+    sourceRequirements?: ReadonlyArray<SourceRequirement>;
+    structuralExpectations?: ReadonlyArray<StructuralExpectation>;
+}
+
+// ── ResetRubric ────────────────────────────────────────────────────────
+//
+// Discards the user's edits and re-applies the system default
+// rubric. Loses any source requirements the student added or
+// removed — confirmation lives in the UI, not in the use case
+// (the use case is the action, not the warning).
+
+export interface ResetRubricInput {
+    ownerId: string;
+    paperId: string;
 }
 
 // ── AddProjectSource ────────────────────────────────────────────────────

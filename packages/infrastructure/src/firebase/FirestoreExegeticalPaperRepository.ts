@@ -21,6 +21,7 @@ import type {
     ExegeticalStepState,
     ExegeticalStepVersion,
     IExegeticalPaperRepository,
+    PaperRubric,
     ProjectSource,
     SourceType,
     StepSourcePlan,
@@ -164,6 +165,22 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         });
         const fresh = await this.getPaper(ownerId, paperId);
         if (!fresh) throw new Error(`Paper ${paperId} not found after setStepPlan`);
+        return fresh;
+    }
+
+    async setRubric(ownerId: string, paperId: string, rubric: PaperRubric | null): Promise<ExegeticalPaper> {
+        await this.requireOwned(ownerId, paperId);
+        const now = new Date();
+        // When clearing the rubric we explicitly write null (Firestore
+        // accepts null but rejects undefined). When saving, stamp
+        // updatedAt on the rubric so the UI surfaces a "last edited"
+        // hint without us having to track it elsewhere.
+        const payload = rubric === null
+            ? { rubric: null, updatedAt: now }
+            : { rubric: { ...rubric, updatedAt: now }, updatedAt: now };
+        await updateDoc(this.docRef(paperId), payload);
+        const fresh = await this.getPaper(ownerId, paperId);
+        if (!fresh) throw new Error(`Paper ${paperId} not found after setRubric`);
         return fresh;
     }
 

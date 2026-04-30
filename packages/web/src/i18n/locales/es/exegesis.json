@@ -127,12 +127,61 @@
                 "heading": "Rúbrica del trabajo",
                 "description": "Subí la rúbrica del seminario o usá el default académico TMS. Determina los mínimos del corpus y los énfasis estructurales.",
                 "loading": "Cargando rúbrica...",
-                "placeholderHint": "El editor estructurado de rúbrica llega en el próximo commit. Por ahora, el default TMS está aplicado y se respeta en gap detection.",
                 "provenance": {
                     "extracted-from-document": "Extraída de documento",
                     "extracted-from-text": "Extraída de texto",
                     "system-default": "Default del sistema",
                     "user-edited": "Editada por vos"
+                },
+                "uploadComingSoon": "Subir la rúbrica del seminario (PDF) llegará en una próxima versión. Por ahora, ajustá los campos manualmente o quedate con el default académico.",
+                "metadata": {
+                    "title": "Datos generales",
+                    "titleLabel": "Título de la rúbrica",
+                    "titlePlaceholder": "Ej: TMS NT800 — Trabajo exegético sobre Hebreos 1:1-4",
+                    "descriptionLabel": "Descripción del trabajo",
+                    "descriptionPlaceholder": "Ej: Análisis exegético del prólogo cristológico, con tratamiento técnico del griego y discusión de las implicancias teológicas para la cristología de Hebreos.",
+                    "citationStandardLabel": "Estándar de citación",
+                    "citationStandardPlaceholder": "Ej: TMS / Turabian, SBL Handbook, Chicago 17",
+                    "lengthLabel": "Extensión esperada",
+                    "lengthUnitPages": "Páginas",
+                    "lengthUnitWords": "Palabras",
+                    "lengthMinPlaceholder": "Mín.",
+                    "lengthMaxPlaceholder": "Máx.",
+                    "lengthClear": "Sin límite especificado"
+                },
+                "requirements": {
+                    "title": "Requisitos del corpus",
+                    "subtitle": "Mínimo y máximo de fuentes por tipo. La tab de Corpus usa esto para detectar gaps.",
+                    "addRequirement": "Agregar requisito",
+                    "removeRequirement": "Quitar requisito",
+                    "minLabel": "Mínimo",
+                    "maxLabel": "Máximo",
+                    "maxUnlimited": "(sin límite)",
+                    "justificationLabel": "Justificación académica",
+                    "justificationPlaceholder": "¿Por qué este tipo es necesario? Esto se muestra al alumno en gap detection.",
+                    "empty": "La rúbrica no tiene requisitos. Agregá al menos uno o resetéa al default.",
+                    "duplicateError": "Ya hay un requisito para este tipo. Editá el existente."
+                },
+                "structural": {
+                    "title": "Recomendaciones estructurales",
+                    "subtitle": "Tipos de fuente que deberían enfatizarse en cada paso. Esto siembra las sugerencias en el plan estructural.",
+                    "section": {
+                        "introduction": "Introducción",
+                        "verse": "Versos",
+                        "conclusion": "Conclusión"
+                    },
+                    "emphasizedTypesLabel": "Tipos enfatizados",
+                    "justificationLabel": "Justificación",
+                    "noExpectation": "Sin recomendación específica para este paso."
+                },
+                "actions": {
+                    "save": "Guardar rúbrica",
+                    "reset": "Resetear al default académico",
+                    "resetConfirm": "Esto descartará tus ediciones y reaplicará el default TMS. ¿Continuar?",
+                    "saved": "Rúbrica actualizada",
+                    "saveFailed": "No se pudo guardar la rúbrica",
+                    "resetDone": "Rúbrica reseteada al default",
+                    "resetFailed": "No se pudo resetear la rúbrica"
                 }
             },
             "manifest": {

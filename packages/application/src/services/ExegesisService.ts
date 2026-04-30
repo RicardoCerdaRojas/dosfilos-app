@@ -13,6 +13,8 @@ import {
     ArchiveExegeticalPaperUseCase,
     UpdatePaperBriefUseCase,
     UpdateStepPlanUseCase,
+    UpdateRubricUseCase,
+    ResetRubricUseCase,
     ListUserStyleGuidesUseCase,
     GetActiveStyleGuideUseCase,
     CreateUserStyleGuideUseCase,
@@ -48,6 +50,8 @@ class ExegesisService {
     public archivePaper: ArchiveExegeticalPaperUseCase;
     public updatePaperBrief: UpdatePaperBriefUseCase;
     public updateStepPlan: UpdateStepPlanUseCase;
+    public updateRubric: UpdateRubricUseCase;
+    public resetRubric: ResetRubricUseCase;
 
     // User style guides
     public listStyleGuides: ListUserStyleGuidesUseCase;
@@ -100,6 +104,8 @@ class ExegesisService {
         this.archivePaper = new ArchiveExegeticalPaperUseCase(paperRepository);
         this.updatePaperBrief = new UpdatePaperBriefUseCase(paperRepository);
         this.updateStepPlan = new UpdateStepPlanUseCase(paperRepository);
+        this.updateRubric = new UpdateRubricUseCase(paperRepository);
+        this.resetRubric = new ResetRubricUseCase(paperRepository);
 
         // User style guides
         this.listStyleGuides = new ListUserStyleGuidesUseCase(styleGuideRepository);

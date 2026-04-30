@@ -127,12 +127,61 @@
                 "heading": "Paper rubric",
                 "description": "Upload the seminary's rubric or use the academic TMS default. Sets corpus minimums and structural emphases.",
                 "loading": "Loading rubric...",
-                "placeholderHint": "The structured rubric editor lands in the next commit. The TMS default is applied for now and is honored in gap detection.",
                 "provenance": {
                     "extracted-from-document": "Extracted from document",
                     "extracted-from-text": "Extracted from text",
                     "system-default": "System default",
                     "user-edited": "Edited by you"
+                },
+                "uploadComingSoon": "Uploading the seminary's rubric (PDF) ships in a future version. For now, edit fields manually or stick with the academic default.",
+                "metadata": {
+                    "title": "General",
+                    "titleLabel": "Rubric title",
+                    "titlePlaceholder": "e.g. TMS NT800 — Exegetical paper on Hebrews 1:1-4",
+                    "descriptionLabel": "Description",
+                    "descriptionPlaceholder": "e.g. Exegetical analysis of the Christological prologue, with technical Greek treatment and discussion of the implications for Hebrews' Christology.",
+                    "citationStandardLabel": "Citation standard",
+                    "citationStandardPlaceholder": "e.g. TMS / Turabian, SBL Handbook, Chicago 17",
+                    "lengthLabel": "Expected length",
+                    "lengthUnitPages": "Pages",
+                    "lengthUnitWords": "Words",
+                    "lengthMinPlaceholder": "Min.",
+                    "lengthMaxPlaceholder": "Max.",
+                    "lengthClear": "No limit specified"
+                },
+                "requirements": {
+                    "title": "Corpus requirements",
+                    "subtitle": "Minimum and maximum sources per type. The Corpus tab uses this for gap detection.",
+                    "addRequirement": "Add requirement",
+                    "removeRequirement": "Remove requirement",
+                    "minLabel": "Minimum",
+                    "maxLabel": "Maximum",
+                    "maxUnlimited": "(no limit)",
+                    "justificationLabel": "Academic justification",
+                    "justificationPlaceholder": "Why is this type necessary? This is shown to the student in gap detection.",
+                    "empty": "The rubric has no requirements. Add at least one or reset to default.",
+                    "duplicateError": "There is already a requirement for this type. Edit the existing one."
+                },
+                "structural": {
+                    "title": "Structural recommendations",
+                    "subtitle": "Source types that should be emphasized in each step. Seeds the suggestions in the structural plan.",
+                    "section": {
+                        "introduction": "Introduction",
+                        "verse": "Verses",
+                        "conclusion": "Conclusion"
+                    },
+                    "emphasizedTypesLabel": "Emphasized types",
+                    "justificationLabel": "Justification",
+                    "noExpectation": "No specific recommendation for this step."
+                },
+                "actions": {
+                    "save": "Save rubric",
+                    "reset": "Reset to academic default",
+                    "resetConfirm": "This will discard your edits and reapply the TMS default. Continue?",
+                    "saved": "Rubric updated",
+                    "saveFailed": "Could not save the rubric",
+                    "resetDone": "Rubric reset to default",
+                    "resetFailed": "Could not reset the rubric"
                 }
             },
             "manifest": {

@@ -5,6 +5,7 @@ import type {
     AddProjectSourceInput,
     CreateExegeticalPaperInput,
     UpdateProjectSourceInput,
+    UpdateRubricInput,
     UpdateStepPlanInput,
 } from '@dosfilos/domain';
 
@@ -71,6 +72,26 @@ export function useExegesisPapers() {
         mutationFn: async (input: Omit<UpdateStepPlanInput, 'ownerId'>) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return exegesisService.updateStepPlan.execute({ ...input, ownerId: user.uid });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const updateRubric = useMutation({
+        mutationFn: async (input: Omit<UpdateRubricInput, 'ownerId'>) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.updateRubric.execute({ ...input, ownerId: user.uid });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const resetRubric = useMutation({
+        mutationFn: async ({ paperId }: { paperId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.resetRubric.execute({ ownerId: user.uid, paperId });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
@@ -172,6 +193,8 @@ export function useExegesisPapers() {
         archivePaper,
         updatePaperBrief,
         updateStepPlan,
+        updateRubric,
+        resetRubric,
         addSource,
         updateSource,
         removeSource,
