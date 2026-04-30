@@ -1,4 +1,5 @@
 import { NotebookPen, Plus, Sparkles, Construction } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 
@@ -17,6 +18,8 @@ import { useTranslation } from '@/i18n';
  */
 export function ExegesisPage() {
     const { t } = useTranslation('exegesis');
+    const navigate = useNavigate();
+    const goToSetup = () => navigate('/dashboard/exegesis/new');
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 font-sans overflow-y-auto">
@@ -47,8 +50,8 @@ export function ExegesisPage() {
 
                     <div className="flex flex-col items-center gap-3">
                         <Button
-                            disabled
-                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-medium px-5 py-2.5 rounded-xl shadow-sm disabled:opacity-50"
+                            onClick={goToSetup}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-medium px-5 py-2.5 rounded-xl shadow-sm"
                         >
                             <Plus className="h-4 w-4 mr-1.5" />
                             {t('directory.newPaperCta')}
@@ -85,9 +88,9 @@ export function ExegesisPage() {
                             {t('directory.empty.body')}
                         </p>
                         <Button
-                            disabled
+                            onClick={goToSetup}
                             variant="outline"
-                            className="border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300 disabled:opacity-50"
+                            className="border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300"
                         >
                             <Sparkles className="h-4 w-4 mr-1.5" />
                             {t('directory.empty.cta')}

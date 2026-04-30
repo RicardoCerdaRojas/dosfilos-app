@@ -16,5 +16,38 @@
             "title": "v1 under construction",
             "body": "This first version focuses on the assisted writing flow: project setup, step-by-step verse generation with interaction, and final assembly. Programmatic citation verification (the real differentiator vs NotebookLM) arrives in the next version."
         }
+    },
+    "setup": {
+        "title": "New exegetical paper",
+        "subtitle": "Configure the passage, the style guide, and the project-specific corpus.",
+        "backToList": "Back to list",
+        "cancel": "Cancel",
+        "create": "Create paper",
+        "passage": {
+            "stepTitle": "Passage",
+            "stepSubtitle": "Pick the biblical range to study. Validated against the canon (66 books) on the spot.",
+            "modeFreeText": "Free text",
+            "modePicker": "Picker",
+            "freeTextPlaceholder": "e.g. Hebrews 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
+            "pickBook": "Pick a book",
+            "testamentOt": "Old Testament",
+            "testamentNt": "New Testament",
+            "chapter": "Ch.",
+            "chapterEnd": "Ch. end",
+            "verse": "Verse",
+            "verseEnd": "Verse end",
+            "helperHint": "Supports abbreviations, accents, and both separators (Heb 1:1 / Heb 1.1).",
+            "parsedAs": "Recognized as"
+        },
+        "styleGuide": {
+            "stepTitle": "Style guide",
+            "stepSubtitle": "Once per user. If you have an active one, it's injected automatically; otherwise you can upload it.",
+            "placeholder": "Coming soon: list of your guides + upload a new one. For now the active guide is injected at run time."
+        },
+        "sources": {
+            "stepTitle": "Project corpus",
+            "stepSubtitle": "Extracts specific to this passage (commentaries, lexicons, critical apparatus). They don't mix with your library.",
+            "placeholder": "Coming soon: upload extracts + role tagging (primary commentary, lexicon, critical apparatus, etc.)."
+        }
     }
 }

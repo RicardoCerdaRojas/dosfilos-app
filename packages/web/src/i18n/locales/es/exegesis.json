@@ -16,5 +16,38 @@
             "title": "v1 en construcción",
             "body": "Esta primera versión enfoca el flujo de redacción asistida: configuración del proyecto, generación verso por verso con interacción y ensamble final. La verificación programática de citas (el diferenciador frente a NotebookLM) llega en la siguiente versión."
         }
+    },
+    "setup": {
+        "title": "Nuevo trabajo exegético",
+        "subtitle": "Configurá el pasaje, la guía de estilo y el corpus de fuentes específicas para este trabajo.",
+        "backToList": "Volver al listado",
+        "cancel": "Cancelar",
+        "create": "Crear trabajo",
+        "passage": {
+            "stepTitle": "Pasaje",
+            "stepSubtitle": "Indicá el rango bíblico a estudiar. Validamos contra el canon (66 libros) en el momento.",
+            "modeFreeText": "Texto libre",
+            "modePicker": "Selector",
+            "freeTextPlaceholder": "Ej. Hebreos 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
+            "pickBook": "Elegí un libro",
+            "testamentOt": "Antiguo Testamento",
+            "testamentNt": "Nuevo Testamento",
+            "chapter": "Cap.",
+            "chapterEnd": "Cap. fin",
+            "verse": "Verso",
+            "verseEnd": "Verso fin",
+            "helperHint": "Soporta abreviaciones, acentos y ambos separadores (Heb 1:1 / Heb 1.1).",
+            "parsedAs": "Reconocido como"
+        },
+        "styleGuide": {
+            "stepTitle": "Guía de estilo",
+            "stepSubtitle": "Una vez por usuario. Si tenés una activa, se inyecta automáticamente; si no, podrás subirla.",
+            "placeholder": "Próximamente: lista de tus guías + upload de una nueva. Por ahora se inyectará la activa al ejecutar."
+        },
+        "sources": {
+            "stepTitle": "Corpus del trabajo",
+            "stepSubtitle": "Extractos específicos para este pasaje (comentarios, léxicos, aparato crítico). No se mezclan con tu biblioteca.",
+            "placeholder": "Próximamente: subir extractos + tagging por rol (comentario primario, léxico, aparato crítico, etc.)."
+        }
     }
 }

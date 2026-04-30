@@ -51,6 +51,7 @@ import { BibleProvider } from '@/context/BibleContext';
 import { FacultyChatPage } from '@/pages/faculty/chat';
 import { ProjectDashboard } from '@/pages/faculty/ProjectDashboard';
 import { ExegesisPage } from '@/pages/exegesis/ExegesisPage';
+import { ExegesisSetupPage } from '@/pages/exegesis/ExegesisSetupPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { useEffect } from 'react';
 import { SessionTracker } from '@/components/analytics/SessionTracker';
@@ -220,7 +221,10 @@ function App() {
             {/* Exégesis Module — paper-writing wizard with step-by-step
                 generation, project-scoped corpus, user-level style guide.
                 v1: list of papers + setup. Detail routes added incrementally. */}
-            <Route path="exegesis" element={<ExegesisPage />} />
+            <Route path="exegesis">
+              <Route index element={<ExegesisPage />} />
+              <Route path="new" element={<ExegesisSetupPage />} />
+            </Route>
 
             {/* Greek Tutor - Start page with sidebar for navigation */}
             <Route path="greek-tutor" element={<GreekTutorPage />} />
