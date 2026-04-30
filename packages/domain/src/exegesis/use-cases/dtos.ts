@@ -68,6 +68,30 @@ export interface UpdatePaperBriefInput {
     assignmentBrief: string | null;
 }
 
+// ── UpdateStepPlan ──────────────────────────────────────────────────────
+//
+// Patch the per-kind defaults of `paper.stepPlan`. v1 only edits the
+// kind-level defaults (`verse` / `conclusion` / `introduction`) — the
+// per-step overrides keyed by stepId are reserved for v1.5 once the
+// UI surfaces "this specific verse needs different emphasis".
+//
+// Each field is optional: callers patch one kind at a time so the UI
+// can save incrementally without sending the whole plan. Unspecified
+// fields stay untouched.
+
+import type { StepEmphasis } from '../entities/StepSourcePlan';
+
+export interface UpdateStepPlanInput {
+    ownerId: string;
+    paperId: string;
+    /** Override the rubric default for the introduction step kind. */
+    introduction?: StepEmphasis;
+    /** Override the rubric default for verse-level steps. */
+    verse?: StepEmphasis;
+    /** Override the rubric default for the conclusion step kind. */
+    conclusion?: StepEmphasis;
+}
+
 // ── AddProjectSource ────────────────────────────────────────────────────
 
 export interface AddProjectSourceInput {

@@ -186,8 +186,35 @@
             "plan": {
                 "tab": "Structural plan",
                 "heading": "Structural plan",
-                "description": "For each step (intro, verse, conclusion) confirm or adjust which source types the agent should prioritize.",
-                "placeholderHint": "You have {{count}} plan entries configured. The per-step editor lands in a later commit."
+                "description": "For each step (intro, verse, conclusion) confirm or adjust which source types the agent should prioritize. Suggestions come from the rubric.",
+                "kinds": {
+                    "introduction": "Introduction",
+                    "verse": "Verses",
+                    "conclusion": "Conclusion"
+                },
+                "kindDescription": {
+                    "introduction": "Written last but appears first. Frames the thesis and positions the passage.",
+                    "verse": "Verse-by-verse analysis: translation, morphology, syntax, source interaction.",
+                    "conclusion": "Synthesizes accepted analyses without introducing new arguments."
+                },
+                "rubricSuggestion": "Rubric suggestion",
+                "rubricEmpty": "The rubric has no emphasis for this step. Pick the types that fit your paper.",
+                "noRubric": "No rubric attached yet. Configure the rubric first to see academic suggestions.",
+                "emphasizedTypesLabel": "Types to prioritize",
+                "emphasizedTypesHint": "The agent cites these types generously in this step.",
+                "addType": "Add type",
+                "deemphasizedToggle": "Show types to de-emphasize",
+                "deemphasizedTypesLabel": "Types to de-emphasize",
+                "deemphasizedTypesHint": "These appear only briefly, without leading the argument.",
+                "noteLabel": "Your note (optional)",
+                "notePlaceholder": "e.g. 'For verses I want strong lexical emphasis because translation decisions carry the argument.'",
+                "noteHint": "Your reasoning is preserved for later reference.",
+                "saveButton": "Save plan",
+                "resetButton": "Reset to rubric suggestion",
+                "saved": "Plan updated",
+                "saveFailed": "Could not save the plan",
+                "savedHint": "Plan last updated",
+                "neverSaved": "You have not saved a custom plan yet. The rubric applies as the active suggestion."
             }
         }
     },

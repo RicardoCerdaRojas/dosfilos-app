@@ -186,8 +186,35 @@
             "plan": {
                 "tab": "Plan estructural",
                 "heading": "Plan estructural",
-                "description": "Para cada paso (intro, verso, conclusión), confirmá o ajustá qué tipos de fuente debe priorizar el agente.",
-                "placeholderHint": "Tenés {{count}} entradas de plan configuradas. El editor por paso llega en un commit posterior."
+                "description": "Para cada paso (intro, verso, conclusión), confirmá o ajustá qué tipos de fuente debe priorizar el agente. Las sugerencias vienen de la rúbrica.",
+                "kinds": {
+                    "introduction": "Introducción",
+                    "verse": "Versos",
+                    "conclusion": "Conclusión"
+                },
+                "kindDescription": {
+                    "introduction": "Se redacta al final pero aparece primero. Establece la tesis y posiciona el pasaje.",
+                    "verse": "Análisis verso por verso: traducción, morfología, sintaxis, interacción con fuentes.",
+                    "conclusion": "Sintetiza los análisis aceptados sin introducir argumentos nuevos."
+                },
+                "rubricSuggestion": "Sugerencia de la rúbrica",
+                "rubricEmpty": "La rúbrica no especifica énfasis para este paso. Elegí los tipos que tengan sentido para tu trabajo.",
+                "noRubric": "Aún no hay rúbrica asociada. Configurá la rúbrica primero para ver las sugerencias académicas.",
+                "emphasizedTypesLabel": "Tipos a priorizar",
+                "emphasizedTypesHint": "El agente cita estos tipos generosamente en este paso.",
+                "addType": "Agregar tipo",
+                "deemphasizedToggle": "Mostrar tipos a desénfasis",
+                "deemphasizedTypesLabel": "Tipos a desénfasis",
+                "deemphasizedTypesHint": "Estos tipos aparecen solo brevemente, sin liderar la argumentación.",
+                "noteLabel": "Tu nota (opcional)",
+                "notePlaceholder": "Ej: 'Para los versos quiero énfasis lexical fuerte porque las decisiones de traducción cargan el argumento.'",
+                "noteHint": "Tu razonamiento queda registrado para futura referencia.",
+                "saveButton": "Guardar plan",
+                "resetButton": "Volver al sugerido por la rúbrica",
+                "saved": "Plan actualizado",
+                "saveFailed": "No se pudo guardar el plan",
+                "savedHint": "Última actualización del plan",
+                "neverSaved": "Aún no guardaste un plan personalizado. La rúbrica aplica como sugerencia activa."
             }
         }
     },

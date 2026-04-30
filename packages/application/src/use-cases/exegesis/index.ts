@@ -3,6 +3,7 @@ export { ListExegeticalPapersUseCase } from './ListExegeticalPapersUseCase';
 export { GetExegeticalPaperUseCase } from './GetExegeticalPaperUseCase';
 export { ArchiveExegeticalPaperUseCase } from './ArchiveExegeticalPaperUseCase';
 export { UpdatePaperBriefUseCase } from './UpdatePaperBriefUseCase';
+export { UpdateStepPlanUseCase } from './UpdateStepPlanUseCase';
 
 // User style guides
 export { ListUserStyleGuidesUseCase } from './ListUserStyleGuidesUseCase';

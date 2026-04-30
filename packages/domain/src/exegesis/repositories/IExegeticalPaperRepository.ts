@@ -9,6 +9,7 @@ import type {
     ExegeticalStepVersion,
 } from '../entities/ExegeticalStep';
 import type { ProjectSource } from '../entities/ProjectSource';
+import type { StepSourcePlan } from '../entities/StepSourcePlan';
 
 /**
  * Persistence contract for `ExegeticalPaper` and its child entities (steps
@@ -60,6 +61,15 @@ export interface IExegeticalPaperRepository {
 
     /** Transitions phase. Implementations validate legal transitions. */
     setPhase(ownerId: string, paperId: string, phase: ExegeticalPaperPhase): Promise<ExegeticalPaper>;
+
+    /**
+     * Replaces the paper's `stepPlan` wholesale. The use case constructs
+     * the merged plan (existing perStep entries + new defaults) before
+     * calling — keeping the repo dumb. Updates `updatedAt` on the paper
+     * and on the plan itself. Owner-scoped; rejects on missing or
+     * not-owned papers.
+     */
+    setStepPlan(ownerId: string, paperId: string, plan: StepSourcePlan): Promise<ExegeticalPaper>;
 
     /** Soft-delete (sets `archivedAt`). Reversible via `unarchivePaper`. */
     archivePaper(ownerId: string, paperId: string): Promise<ExegeticalPaper>;

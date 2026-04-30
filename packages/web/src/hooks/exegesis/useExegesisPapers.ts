@@ -5,6 +5,7 @@ import type {
     AddProjectSourceInput,
     CreateExegeticalPaperInput,
     UpdateProjectSourceInput,
+    UpdateStepPlanInput,
 } from '@dosfilos/domain';
 
 /**
@@ -60,6 +61,16 @@ export function useExegesisPapers() {
                 paperId,
                 assignmentBrief,
             });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const updateStepPlan = useMutation({
+        mutationFn: async (input: Omit<UpdateStepPlanInput, 'ownerId'>) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.updateStepPlan.execute({ ...input, ownerId: user.uid });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
@@ -160,6 +171,7 @@ export function useExegesisPapers() {
         createPaper,
         archivePaper,
         updatePaperBrief,
+        updateStepPlan,
         addSource,
         updateSource,
         removeSource,

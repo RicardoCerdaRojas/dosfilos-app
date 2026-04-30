@@ -23,6 +23,7 @@ import type {
     IExegeticalPaperRepository,
     ProjectSource,
     SourceType,
+    StepSourcePlan,
 } from '@dosfilos/domain';
 import {
     EMPTY_STEP_SOURCE_PLAN,
@@ -151,6 +152,18 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         await updateDoc(this.docRef(paperId), { phase, updatedAt: new Date() });
         const fresh = await this.getPaper(ownerId, paperId);
         if (!fresh) throw new Error(`Paper ${paperId} not found after setPhase`);
+        return fresh;
+    }
+
+    async setStepPlan(ownerId: string, paperId: string, plan: StepSourcePlan): Promise<ExegeticalPaper> {
+        await this.requireOwned(ownerId, paperId);
+        const now = new Date();
+        await updateDoc(this.docRef(paperId), {
+            stepPlan: { ...plan, updatedAt: now },
+            updatedAt: now,
+        });
+        const fresh = await this.getPaper(ownerId, paperId);
+        if (!fresh) throw new Error(`Paper ${paperId} not found after setStepPlan`);
         return fresh;
     }
 
