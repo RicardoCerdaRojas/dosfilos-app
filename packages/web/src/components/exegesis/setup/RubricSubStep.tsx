@@ -7,6 +7,7 @@ import {
     Loader2,
     Plus,
     RotateCcw,
+    Pencil,
     Save,
     Sparkles,
     Trash2,
@@ -96,6 +97,15 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
     const updatePending = updateRubric.isPending;
     const resetPending = resetRubric.isPending;
 
+    // View mode for the rubric body.
+    //   'summary'  → compact read-only digest (default landing).
+    //   'editing'  → the full form with inputs / requirement CRUD.
+    // Picking a template or extracting from text always lands the
+    // user back in 'summary' so they can SEE the result before
+    // committing to a manual tweak. The "Editar rúbrica" button
+    // flips to 'editing'; saving or cancelling flips back.
+    const [mode, setMode] = useState<'summary' | 'editing'>('summary');
+
     // Form state seeded from the persisted rubric. Re-syncs whenever
     // the persisted rubric reference changes (e.g. another tab saved
     // or reset). In-flight edits are lost on those events — that's
@@ -116,6 +126,9 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
         setLengthMin(rubric.expectedLength?.min?.toString() ?? '');
         setLengthMax(rubric.expectedLength?.max?.toString() ?? '');
         setRequirements([...rubric.sourceRequirements]);
+        // When the rubric reference changes (template applied / extracted /
+        // reset), drop edit mode so the user sees the new content first.
+        setMode('summary');
     }, [rubric]);
 
     const usedTypes = useMemo(() => new Set(requirements.map(r => r.sourceType)), [requirements]);
@@ -144,6 +157,11 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                 sourceRequirements: requirements,
             });
             toast.success(t('paperSetup.subSteps.rubric.actions.saved'));
+            // The useEffect on [rubric] will flip mode back to
+            // summary when the refetched rubric arrives, but we set
+            // it here too so the transition is immediate (no flicker
+            // of stale form values).
+            setMode('summary');
         } catch (err) {
             console.error('[exegesis] save rubric failed:', err);
             toast.error(t('paperSetup.subSteps.rubric.actions.saveFailed'));
@@ -210,6 +228,19 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
             <RubricTemplatesPanel paper={paper} />
 
             <RubricExtractFromTextPanel paper={paper} />
+
+            {mode === 'summary' && (
+                <RubricSummaryView
+                    paper={paper}
+                    rubric={rubric}
+                    onEdit={() => setMode('editing')}
+                    onReset={handleReset}
+                    resetPending={resetPending}
+                />
+            )}
+
+            {mode === 'editing' && (
+                <>
 
             {/* ── Metadata ── */}
             <section className="space-y-3">
@@ -364,12 +395,11 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                 <Button
                     type="button"
                     variant="ghost"
-                    onClick={handleReset}
-                    disabled={resetPending}
+                    onClick={() => setMode('summary')}
+                    disabled={updatePending}
                     className="text-xs"
                 >
-                    <RotateCcw className="h-3 w-3 mr-1" />
-                    {t('paperSetup.subSteps.rubric.actions.reset')}
+                    {t('setup.cancel')}
                 </Button>
                 <Button
                     type="button"
@@ -385,8 +415,193 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                     {t('paperSetup.subSteps.rubric.actions.save')}
                 </Button>
             </footer>
+
+                </>
+            )}
         </div>
     );
+}
+
+// ── Summary view (default) ─────────────────────────────────────────────
+//
+// Compact read-only digest of the paper's current rubric. Lands as
+// the default mode of the editor — most students just want to see
+// what's there, NOT immediately fill out a 13-field form. Edit kicks
+// in only when the student clicks "Editar rúbrica".
+//
+// Sections rendered:
+//   - Provenance + last-updated badge
+//   - Title + description (when present)
+//   - Citation standard + expected length
+//   - Requirements as compact list (type · count · justification)
+//   - Structural recommendations summary
+//   - Footer actions: Editar rúbrica + Resetear al default
+
+function RubricSummaryView({
+    paper,
+    rubric,
+    onEdit,
+    onReset,
+    resetPending,
+}: {
+    paper: ExegeticalPaper;
+    rubric: PaperRubric;
+    onEdit: () => void;
+    onReset: () => void;
+    resetPending: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
+    const visibleRequirements = rubric.sourceRequirements.filter(r => r.minimum > 0);
+    const optionalRequirements = rubric.sourceRequirements.filter(r => r.minimum === 0);
+
+    return (
+        <section className="rounded-lg border border-border bg-card p-5 space-y-4">
+            <header className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-foreground">
+                        {rubric.title || t('paperSetup.subSteps.rubric.summary.untitledRubric')}
+                    </h3>
+                    {rubric.description && (
+                        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                            {rubric.description}
+                        </p>
+                    )}
+                </div>
+                <Button
+                    type="button"
+                    onClick={onEdit}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs shrink-0"
+                >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    {t('paperSetup.subSteps.rubric.summary.editCta')}
+                </Button>
+            </header>
+
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <SummaryField
+                    label={t('paperSetup.subSteps.rubric.metadata.citationStandardLabel')}
+                    value={summarizeCitationStandard(rubric, paper)}
+                />
+                <SummaryField
+                    label={t('paperSetup.subSteps.rubric.metadata.lengthLabel')}
+                    value={summarizeLength(rubric, t)}
+                />
+            </dl>
+
+            <div className="space-y-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('paperSetup.subSteps.rubric.summary.requirementsTitle')}
+                </h4>
+                {visibleRequirements.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">
+                        {t('paperSetup.subSteps.rubric.requirements.empty')}
+                    </p>
+                ) : (
+                    <ul className="space-y-1.5">
+                        {visibleRequirements.map(r => (
+                            <SummaryRequirementRow key={r.sourceType} requirement={r} />
+                        ))}
+                    </ul>
+                )}
+                {optionalRequirements.length > 0 && (
+                    <p className="text-[11px] text-muted-foreground italic mt-2">
+                        {t('paperSetup.subSteps.rubric.summary.optionalCount', {
+                            count: optionalRequirements.length,
+                        })}
+                    </p>
+                )}
+            </div>
+
+            <div className="space-y-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('paperSetup.subSteps.rubric.summary.structuralTitle')}
+                </h4>
+                <ul className="space-y-1.5">
+                    {(['introduction', 'verse', 'conclusion'] as const).map(section => {
+                        const exp = rubric.structuralExpectations.find(e => e.section === section);
+                        return (
+                            <li key={section} className="text-xs text-foreground">
+                                <span className="font-medium">
+                                    {t(`paperSetup.subSteps.rubric.structural.section.${section}`)}:
+                                </span>{' '}
+                                <span className="text-muted-foreground">
+                                    {exp && exp.emphasizedTypes.length > 0
+                                        ? exp.emphasizedTypes.map(typ => t(`sourceTypes.${typ}.label`)).join(', ')
+                                        : t('paperSetup.subSteps.rubric.structural.noExpectation')}
+                                </span>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </div>
+
+            <footer className="flex items-center justify-end pt-3 border-t border-border">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onReset}
+                    disabled={resetPending}
+                    className="text-xs"
+                >
+                    {resetPending ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                    )}
+                    {t('paperSetup.subSteps.rubric.actions.reset')}
+                </Button>
+            </footer>
+        </section>
+    );
+}
+
+function SummaryField({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div>
+            <dt className="text-[11px] uppercase tracking-wide text-muted-foreground mb-0.5">{label}</dt>
+            <dd className="text-foreground">{value}</dd>
+        </div>
+    );
+}
+
+function SummaryRequirementRow({ requirement }: { requirement: SourceRequirement }) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <li className="text-xs">
+            <div className="flex items-baseline gap-2">
+                <span className="font-medium text-foreground">
+                    {t(`sourceTypes.${requirement.sourceType}.label`)}
+                </span>
+                <span className="text-muted-foreground text-[11px]">
+                    {requirement.maximum
+                        ? `${requirement.minimum}–${requirement.maximum}`
+                        : `≥ ${requirement.minimum}`}
+                </span>
+            </div>
+            {requirement.justification && (
+                <p className="text-[11px] text-muted-foreground italic leading-snug mt-0.5">
+                    {requirement.justification}
+                </p>
+            )}
+        </li>
+    );
+}
+
+function summarizeCitationStandard(rubric: PaperRubric, _paper: ExegeticalPaper): string {
+    if (rubric.citationStandard?.trim()) return rubric.citationStandard.trim();
+    return '—';
+}
+
+function summarizeLength(rubric: PaperRubric, t: (key: string) => string): string {
+    if (!rubric.expectedLength) return '—';
+    const { unit, min, max } = rubric.expectedLength;
+    const unitLabel = unit === 'words'
+        ? t('paperSetup.subSteps.rubric.metadata.lengthUnitWords')
+        : t('paperSetup.subSteps.rubric.metadata.lengthUnitPages');
+    if (min !== null && max !== null) return `${min}–${max} ${unitLabel.toLowerCase()}`;
+    if (min !== null) return `≥ ${min} ${unitLabel.toLowerCase()}`;
+    if (max !== null) return `≤ ${max} ${unitLabel.toLowerCase()}`;
+    return '—';
 }
 
 // ── Extract-from-text panel ────────────────────────────────────────────

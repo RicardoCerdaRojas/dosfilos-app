@@ -299,6 +299,15 @@
                     "resetDone": "Rubric reset to default",
                     "resetFailed": "Could not reset the rubric"
                 },
+                "summary": {
+                    "untitledRubric": "Untitled rubric",
+                    "editCta": "Edit rubric",
+                    "requirementsTitle": "Corpus requirements",
+                    "structuralTitle": "Structural recommendations",
+                    "optionalCount_one": "+ {{count}} optional recommended requirement",
+                    "optionalCount_other": "+ {{count}} optional recommended requirements",
+                    "optionalCount": "+ {{count}} optional recommended"
+                },
                 "templates": {
                     "title": "Rubric templates",
                     "subtitle": "Apply a saved template or save the current rubric for reuse on other papers.",

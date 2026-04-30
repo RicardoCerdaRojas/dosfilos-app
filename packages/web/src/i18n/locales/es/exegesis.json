@@ -299,6 +299,15 @@
                     "resetDone": "Rúbrica reseteada al default",
                     "resetFailed": "No se pudo resetear la rúbrica"
                 },
+                "summary": {
+                    "untitledRubric": "Rúbrica sin título",
+                    "editCta": "Editar rúbrica",
+                    "requirementsTitle": "Requisitos del corpus",
+                    "structuralTitle": "Recomendaciones estructurales",
+                    "optionalCount_one": "+ {{count}} requisito recomendado opcional",
+                    "optionalCount_other": "+ {{count}} requisitos recomendados opcionales",
+                    "optionalCount": "+ {{count}} recomendados opcionales"
+                },
                 "templates": {
                     "title": "Plantillas de rúbrica",
                     "subtitle": "Aplicá una plantilla guardada o guardá la rúbrica actual para reusarla en otros papers.",
