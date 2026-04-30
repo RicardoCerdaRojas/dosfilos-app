@@ -145,6 +145,7 @@
                     "confirmReplace": "Esto reemplazará la rúbrica actual con la versión extraída. Tus ediciones manuales se descartan. ¿Continuar?",
                     "success": "Rúbrica extraída — revisala más abajo",
                     "failed": "No se pudo extraer la rúbrica. Revisá el texto o ajustá manualmente.",
+                    "overloaded": "Gemini está sobrecargado en este momento. Probá de nuevo en unos segundos — los picos de demanda son temporales.",
                     "confidenceHigh": "Confianza alta",
                     "confidenceMedium": "Confianza media",
                     "confidenceLow": "Confianza baja",

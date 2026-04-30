@@ -429,7 +429,15 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
             toast.success(t('paperSetup.subSteps.rubric.extract.success'));
         } catch (err) {
             console.error('[exegesis] extract rubric failed:', err);
-            toast.error(t('paperSetup.subSteps.rubric.extract.failed'));
+            // The infrastructure layer tags Gemini 503/429 errors as
+            // OverloadedError (via the `isExegesisOverload` marker on
+            // the thrown instance). Surface the transient nature so the
+            // student doesn't think their text is the problem.
+            const isOverload = (err as { isExegesisOverload?: boolean })?.isExegesisOverload === true;
+            toast.error(isOverload
+                ? t('paperSetup.subSteps.rubric.extract.overloaded')
+                : t('paperSetup.subSteps.rubric.extract.failed'),
+            );
         }
     };
 

@@ -63,7 +63,10 @@ export class GeminiPaperRubricExtractor implements IPaperRubricExtractor {
             rawTextChars: input.rawText.length,
         });
 
-        const result = await model.generateContent(userMessage);
+        // Pro 2.5 hits intermittent 503s ("model experiencing high demand")
+        // during peak windows. Retry transparently with exponential
+        // backoff before surfacing the failure to the user.
+        const result = await withRetryOnTransient(() => model.generateContent(userMessage));
         const response = result.response;
         const rawJson = response.text();
 
@@ -85,6 +88,65 @@ export class GeminiPaperRubricExtractor implements IPaperRubricExtractor {
             modelId: this.modelName,
         };
     }
+}
+
+// ── Transient-error retry ───────────────────────────────────────────────
+//
+// Gemini Pro 2.5 returns 503 ("model experiencing high demand") and
+// occasionally 429 (rate limit) during peak windows. Both clear
+// quickly. A short retry with exponential backoff masks them entirely
+// for the user; only persistent failures bubble up.
+//
+// `OverloadedError` is the marker type the UI catches to show a
+// specific "Gemini is overloaded — try again in a moment" message
+// instead of the generic "extraction failed".
+
+export class OverloadedError extends Error {
+    readonly isExegesisOverload = true;
+    constructor(message: string) {
+        super(message);
+        this.name = 'OverloadedError';
+    }
+}
+
+async function withRetryOnTransient<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastError = err;
+            if (!isTransientError(err) || attempt === maxAttempts - 1) {
+                if (isTransientError(err)) {
+                    throw new OverloadedError(extractErrorMessage(err));
+                }
+                throw err;
+            }
+            // Backoff: 800ms, 2400ms (then we'd give up at attempt 3).
+            const delayMs = 800 * Math.pow(3, attempt);
+            console.warn(
+                `[GeminiPaperRubricExtractor] transient error (attempt ${attempt + 1}/${maxAttempts}), retrying in ${delayMs}ms`,
+                err,
+            );
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
+    throw lastError;
+}
+
+function isTransientError(err: unknown): boolean {
+    if (!err) return false;
+    const e = err as { status?: number; code?: number; message?: string };
+    if (e.status === 503 || e.status === 429 || e.code === 503 || e.code === 429) return true;
+    const msg = (e.message ?? '').toLowerCase();
+    return msg.includes('503') || msg.includes('429')
+        || msg.includes('high demand') || msg.includes('overload')
+        || msg.includes('rate limit') || msg.includes('try again later');
+}
+
+function extractErrorMessage(err: unknown): string {
+    const e = err as { message?: string };
+    return e?.message ?? 'Gemini service temporarily unavailable';
 }
 
 // ── Prompt builder ──────────────────────────────────────────────────────

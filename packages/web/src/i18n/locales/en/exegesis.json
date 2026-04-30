@@ -145,6 +145,7 @@
                     "confirmReplace": "This will replace the current rubric with the extracted version. Your manual edits will be discarded. Continue?",
                     "success": "Rubric extracted — review below",
                     "failed": "Could not extract the rubric. Check the text or edit manually.",
+                    "overloaded": "Gemini is currently overloaded. Try again in a few seconds — demand spikes are temporary.",
                     "confidenceHigh": "High confidence",
                     "confidenceMedium": "Medium confidence",
                     "confidenceLow": "Low confidence",
