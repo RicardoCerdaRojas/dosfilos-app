@@ -9,6 +9,15 @@ export { ResetRubricUseCase } from './ResetRubricUseCase';
 export { ExtractRubricFromTextUseCase } from './ExtractRubricFromTextUseCase';
 export { ExtractStyleGuideManifestUseCase } from './ExtractStyleGuideManifestUseCase';
 
+// User-level rubric templates
+export { ListUserRubricsUseCase } from './ListUserRubricsUseCase';
+export { CreateUserRubricUseCase } from './CreateUserRubricUseCase';
+export { UpdateUserRubricUseCase } from './UpdateUserRubricUseCase';
+export { DeleteUserRubricUseCase } from './DeleteUserRubricUseCase';
+export { SetDefaultUserRubricUseCase } from './SetDefaultUserRubricUseCase';
+export { ApplyRubricTemplateToPaperUseCase } from './ApplyRubricTemplateToPaperUseCase';
+export { SaveCurrentRubricAsTemplateUseCase } from './SaveCurrentRubricAsTemplateUseCase';
+
 // User style guides
 export { ListUserStyleGuidesUseCase } from './ListUserStyleGuidesUseCase';
 export { GetActiveStyleGuideUseCase } from './GetActiveStyleGuideUseCase';

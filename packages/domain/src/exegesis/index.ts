@@ -11,9 +11,11 @@ export * from './entities/ProjectSource';
 export * from './entities/SourceType';
 export * from './entities/StepSourcePlan';
 export * from './entities/StyleGuideManifest';
+export * from './entities/UserRubric';
 export * from './entities/UserStyleGuide';
 
 export * from './repositories/IExegeticalPaperRepository';
+export * from './repositories/IUserRubricRepository';
 export * from './repositories/IUserStyleGuideRepository';
 
 export * from './use-cases/dtos';

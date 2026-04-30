@@ -15,6 +15,61 @@
         "comingSoon": {
             "title": "v1 en construcción",
             "body": "Esta primera versión enfoca el flujo de redacción asistida: configuración del proyecto, generación verso por verso con interacción y ensamble final. La verificación programática de citas (el diferenciador frente a NotebookLM) llega en la siguiente versión."
+        },
+        "rubrics": {
+            "title": "Mis rúbricas",
+            "subtitle": "Plantillas reutilizables. La que marques como default se aplica automáticamente cuando creés un nuevo trabajo.",
+            "loading": "Cargando rúbricas...",
+            "defaultBadge": "Default",
+            "setDefault": "Marcar default",
+            "delete": "Eliminar",
+            "deleteConfirm": "¿Eliminar la plantilla \"{{name}}\"? Los papers ya creados desde ella conservan su copia interna; esta acción solo la quita de tu biblioteca.",
+            "requirementsCount_one": "{{count}} requisito",
+            "requirementsCount_other": "{{count}} requisitos",
+            "requirementsCount": "{{count}} requisitos",
+            "empty": {
+                "title": "Aún no guardaste plantillas de rúbrica",
+                "body": "Cuando ajustes la rúbrica de un paper, podés guardarla como plantilla desde el setup → tab Rúbrica → \"Guardar como plantilla\". Después aparecerá acá para reusar."
+            },
+            "toast": {
+                "defaultSet": "Plantilla marcada como default",
+                "defaultFailed": "No se pudo marcar como default",
+                "deleted": "Plantilla eliminada",
+                "deleteFailed": "No se pudo eliminar la plantilla"
+            }
+        },
+        "styleGuides": {
+            "title": "Mis guías de estilo",
+            "subtitle": "Documentos del seminario (TMS / Turabian / SBL). La activa se aplica a todos los papers que no piden algo distinto.",
+            "loading": "Cargando guías...",
+            "activeBadge": "Activa",
+            "manifestExtracted": "Reglas estructuradas extraídas",
+            "manifestPending": "Manifiesto pendiente — extrae desde el setup del paper",
+            "setActive": "Activar",
+            "delete": "Eliminar",
+            "deleteConfirm": "¿Eliminar la guía \"{{name}}\"? Los papers que la usen quedarán sin guía y no podrán generar hasta que les asignes otra.",
+            "uploadCta": "Subir guía",
+            "uploadAnother": "Subir otra guía",
+            "uploadTitle": "Subir guía de estilo",
+            "fileLabel": "Archivo (PDF o EPUB)",
+            "nameLabel": "Nombre",
+            "namePlaceholder": "Ej. TMS 2024-25",
+            "versionLabel": "Versión",
+            "versionPlaceholder": "Ej. 2024-25",
+            "uploadSubmit": "Subir",
+            "uploading": "Subiendo... {{progress}}%",
+            "empty": {
+                "title": "Aún no subiste una guía de estilo",
+                "body": "Subí la guía del seminario (PDF) acá. Después extraemos las reglas mecánicas (notas al pie, ibid, comillas) que el orquestador aplica a todos tus papers."
+            },
+            "toast": {
+                "uploaded": "Guía subida — extraé el manifiesto desde el setup del paper",
+                "uploadFailed": "No se pudo subir la guía",
+                "activated": "Guía activa actualizada",
+                "activateFailed": "No se pudo activar la guía",
+                "deleted": "Guía eliminada",
+                "deleteFailed": "No se pudo eliminar la guía"
+            }
         }
     },
     "sourceTypeGroups": {
@@ -101,6 +156,15 @@
             "title": "Idioma del paper",
             "subtitle": "El idioma en el que el agente va a redactar versos, conclusión e introducción. Lo podés cambiar luego, pero siempre afecta a TODO el paper.",
             "hint": "Independiente del idioma de la UI o de la rúbrica que pegues."
+        },
+        "rubric": {
+            "title": "Rúbrica",
+            "subtitle": "Aplicá una plantilla guardada o usá la rúbrica académica por defecto. Después podés ajustarla en el setup del trabajo.",
+            "useDefault": "Usar tu plantilla default ({{name}})",
+            "useDefaultNone": "Usar el default académico TMS (sin plantilla guardada)",
+            "savedTemplates": "Tus plantillas guardadas",
+            "noTemplate": "Sin plantilla — empezar con el default académico TMS",
+            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\")."
         },
         "brief": {
             "title": "Encuadre del trabajo",
@@ -218,6 +282,25 @@
                     "saveFailed": "No se pudo guardar la rúbrica",
                     "resetDone": "Rúbrica reseteada al default",
                     "resetFailed": "No se pudo resetear la rúbrica"
+                },
+                "templates": {
+                    "title": "Plantillas de rúbrica",
+                    "subtitle": "Aplicá una plantilla guardada o guardá la rúbrica actual para reusarla en otros papers.",
+                    "applyLabel": "Aplicar una plantilla guardada",
+                    "applyPlaceholder": "elegí una plantilla",
+                    "applyCta": "Aplicar",
+                    "applyConfirm": "Esto reemplazará la rúbrica actual con la plantilla elegida. Tus ediciones manuales se descartan. ¿Continuar?",
+                    "applied": "Plantilla aplicada",
+                    "applyFailed": "No se pudo aplicar la plantilla",
+                    "saveCta": "Guardar como plantilla",
+                    "saveHint": "Guardá la rúbrica actual para usarla en otros papers.",
+                    "emptyHint": "Aún no tenés plantillas guardadas. Cuando ajustes esta rúbrica, podés guardarla acá.",
+                    "namePromptLabel": "Nombre de la plantilla",
+                    "namePromptPlaceholder": "Ej: TMS NT800 Hebreos",
+                    "saveConfirm": "Guardar plantilla",
+                    "nameRequired": "Ingresá un nombre para la plantilla",
+                    "saved": "Plantilla guardada en tu biblioteca",
+                    "saveFailed": "No se pudo guardar la plantilla"
                 }
             },
             "manifest": {

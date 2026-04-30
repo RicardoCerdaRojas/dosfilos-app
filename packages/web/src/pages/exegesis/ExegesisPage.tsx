@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { UserRubricsSection } from '@/components/exegesis/directory/UserRubricsSection';
+import { UserStyleGuidesSection } from '@/components/exegesis/directory/UserStyleGuidesSection';
 import { formatPassageReference, type ExegeticalPaper, type SupportedLanguage } from '@dosfilos/domain';
 
 /**
@@ -114,6 +116,10 @@ export function ExegesisPage() {
                         </ul>
                     )}
                 </section>
+
+                <UserRubricsSection />
+
+                <UserStyleGuidesSection />
 
                 {/* Coming-soon banner — comunicación honesta sobre el alcance de v1 */}
                 {/* (rendered below the list/empty/loading branch) */}

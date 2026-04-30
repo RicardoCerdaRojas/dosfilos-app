@@ -1,5 +1,6 @@
 import {
     FirestoreExegeticalPaperRepository,
+    FirestoreUserRubricRepository,
     FirestoreUserStyleGuideRepository,
     FirebaseLibraryRepository,
     GeminiExegesisOrchestrator,
@@ -21,6 +22,13 @@ import {
     ResetRubricUseCase,
     ExtractRubricFromTextUseCase,
     ExtractStyleGuideManifestUseCase,
+    ListUserRubricsUseCase,
+    CreateUserRubricUseCase,
+    UpdateUserRubricUseCase,
+    DeleteUserRubricUseCase,
+    SetDefaultUserRubricUseCase,
+    ApplyRubricTemplateToPaperUseCase,
+    SaveCurrentRubricAsTemplateUseCase,
     ListUserStyleGuidesUseCase,
     GetActiveStyleGuideUseCase,
     CreateUserStyleGuideUseCase,
@@ -61,6 +69,15 @@ class ExegesisService {
     public extractRubricFromText: ExtractRubricFromTextUseCase;
     public extractStyleGuideManifest: ExtractStyleGuideManifestUseCase;
 
+    // User-level rubric templates
+    public listUserRubrics: ListUserRubricsUseCase;
+    public createUserRubric: CreateUserRubricUseCase;
+    public updateUserRubric: UpdateUserRubricUseCase;
+    public deleteUserRubric: DeleteUserRubricUseCase;
+    public setDefaultUserRubric: SetDefaultUserRubricUseCase;
+    public applyRubricTemplateToPaper: ApplyRubricTemplateToPaperUseCase;
+    public saveCurrentRubricAsTemplate: SaveCurrentRubricAsTemplateUseCase;
+
     // User style guides
     public listStyleGuides: ListUserStyleGuidesUseCase;
     public getActiveStyleGuide: GetActiveStyleGuideUseCase;
@@ -92,6 +109,7 @@ class ExegesisService {
 
         const paperRepository = new FirestoreExegeticalPaperRepository();
         const styleGuideRepository = new FirestoreUserStyleGuideRepository();
+        const userRubricRepository = new FirestoreUserRubricRepository();
         const libraryRepository = new FirebaseLibraryRepository();
         const orchestrator = new GeminiExegesisOrchestrator(apiKey || '', exegesisModelId);
         const rubricExtractor = new GeminiPaperRubricExtractor(apiKey || '', exegesisModelId);
@@ -109,7 +127,7 @@ class ExegesisService {
         };
 
         // Papers
-        this.createPaper = new CreateExegeticalPaperUseCase(paperRepository);
+        this.createPaper = new CreateExegeticalPaperUseCase(paperRepository, userRubricRepository);
         this.listPapers = new ListExegeticalPapersUseCase(paperRepository);
         this.getPaper = new GetExegeticalPaperUseCase(paperRepository);
         this.archivePaper = new ArchiveExegeticalPaperUseCase(paperRepository);
@@ -122,6 +140,21 @@ class ExegesisService {
             styleGuideRepository,
             contentReader,
             manifestExtractor,
+        );
+
+        // User-level rubric templates
+        this.listUserRubrics = new ListUserRubricsUseCase(userRubricRepository);
+        this.createUserRubric = new CreateUserRubricUseCase(userRubricRepository);
+        this.updateUserRubric = new UpdateUserRubricUseCase(userRubricRepository);
+        this.deleteUserRubric = new DeleteUserRubricUseCase(userRubricRepository);
+        this.setDefaultUserRubric = new SetDefaultUserRubricUseCase(userRubricRepository);
+        this.applyRubricTemplateToPaper = new ApplyRubricTemplateToPaperUseCase(
+            paperRepository,
+            userRubricRepository,
+        );
+        this.saveCurrentRubricAsTemplate = new SaveCurrentRubricAsTemplateUseCase(
+            paperRepository,
+            userRubricRepository,
         );
 
         // User style guides

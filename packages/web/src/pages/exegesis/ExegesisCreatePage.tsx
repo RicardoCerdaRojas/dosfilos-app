@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages } from 'lucide-react';
+import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages, FileCheck2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import type { PassageReference, SupportedLanguage } from '@dosfilos/domain';
 
 /**
@@ -27,10 +28,18 @@ export function ExegesisCreatePage() {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation('exegesis');
     const { createPaper } = useExegesisPapers();
+    const { rubrics, defaultRubric } = useUserRubrics();
 
     const [passage, setPassage] = useState<PassageReference | null>(null);
     const [passageError, setPassageError] = useState<string | null>(null);
     const [assignmentBrief, setAssignmentBrief] = useState('');
+    // Rubric template choice. Three states:
+    //   - undefined → "use default if any" (matches the use case's
+    //     fallback). Initial value when the user hasn't touched the
+    //     picker.
+    //   - templateId string → apply that template.
+    //   - null → "no template, use system default rubric".
+    const [rubricTemplateId, setRubricTemplateId] = useState<string | null | undefined>(undefined);
 
     // Default the paper language to whatever the UI is set to, but
     // make it explicit + editable. The student may be using a Spanish
@@ -52,6 +61,7 @@ export function ExegesisCreatePage() {
                 displayLanguage,
                 styleGuideId: null,
                 assignmentBrief: assignmentBrief.trim() || null,
+                rubricTemplateId,
             });
             toast.success(t('create.toast.created'));
             navigate(`/dashboard/exegesis/${paper.id}/setup`);
@@ -128,6 +138,45 @@ export function ExegesisCreatePage() {
 
                 <Step
                     number={3}
+                    icon={<FileCheck2 className="h-4 w-4" />}
+                    title={t('create.rubric.title')}
+                    subtitle={t('create.rubric.subtitle')}
+                >
+                    <div className="space-y-2">
+                        <select
+                            value={rubricTemplateId === undefined ? '__auto' : (rubricTemplateId ?? '__none')}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                if (v === '__auto') setRubricTemplateId(undefined);
+                                else if (v === '__none') setRubricTemplateId(null);
+                                else setRubricTemplateId(v);
+                            }}
+                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                        >
+                            <option value="__auto">
+                                {defaultRubric
+                                    ? t('create.rubric.useDefault', { name: defaultRubric.displayName })
+                                    : t('create.rubric.useDefaultNone')}
+                            </option>
+                            {rubrics.length > 0 && (
+                                <optgroup label={t('create.rubric.savedTemplates')}>
+                                    {rubrics.map(r => (
+                                        <option key={r.id} value={r.id}>
+                                            {r.displayName}{r.isDefault ? ' (★)' : ''}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
+                            <option value="__none">{t('create.rubric.noTemplate')}</option>
+                        </select>
+                        <p className="text-[11px] text-muted-foreground italic">
+                            {t('create.rubric.hint')}
+                        </p>
+                    </div>
+                </Step>
+
+                <Step
+                    number={4}
                     icon={<Lightbulb className="h-4 w-4" />}
                     title={t('create.brief.title')}
                     subtitle={t('create.brief.subtitle')}

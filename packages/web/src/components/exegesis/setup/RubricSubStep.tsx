@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 
 /**
@@ -205,6 +206,8 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
             </div>
 
             <RubricExtractFromTextPanel paper={paper} />
+
+            <RubricTemplatesPanel paper={paper} />
 
             {/* ── Metadata ── */}
             <section className="space-y-3">
@@ -556,6 +559,165 @@ function ExtractionResultCard({ result }: { result: ExtractionResultSummary }) {
 
 function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ── Templates panel ────────────────────────────────────────────────────
+//
+// Bridges the paper-embedded rubric to the user-level template
+// library. Two affordances:
+//   1. **Apply template** — pick a saved template and copy its
+//      content into `paper.rubric` (overwriting). Confirms when the
+//      current rubric was user-edited so manual tweaks aren't
+//      silently lost.
+//   2. **Save current as template** — snapshot `paper.rubric` into
+//      a new `UserRubric` for reuse on future papers.
+//
+// When the user has no templates yet, the panel collapses to a
+// single "Save current as template" CTA — applying nothing is a
+// no-op so we don't surface an empty picker.
+
+function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
+    const { t } = useTranslation('exegesis');
+    const { rubrics, applyTemplate, saveAsTemplate } = useUserRubrics();
+    const [pickerValue, setPickerValue] = useState('');
+    const [savingMode, setSavingMode] = useState(false);
+    const [templateName, setTemplateName] = useState('');
+
+    const handleApply = async () => {
+        if (!pickerValue) return;
+        if (paper.rubric?.provenance === 'user-edited') {
+            if (!window.confirm(t('paperSetup.subSteps.rubric.templates.applyConfirm'))) return;
+        }
+        try {
+            await applyTemplate.mutateAsync({ paperId: paper.id, rubricTemplateId: pickerValue });
+            toast.success(t('paperSetup.subSteps.rubric.templates.applied'));
+            setPickerValue('');
+        } catch (err) {
+            console.error('[exegesis] apply template failed:', err);
+            toast.error(t('paperSetup.subSteps.rubric.templates.applyFailed'));
+        }
+    };
+
+    const handleSave = async () => {
+        const name = templateName.trim();
+        if (!name) {
+            toast.error(t('paperSetup.subSteps.rubric.templates.nameRequired'));
+            return;
+        }
+        try {
+            await saveAsTemplate.mutateAsync({ paperId: paper.id, displayName: name });
+            toast.success(t('paperSetup.subSteps.rubric.templates.saved'));
+            setSavingMode(false);
+            setTemplateName('');
+        } catch (err) {
+            console.error('[exegesis] save as template failed:', err);
+            toast.error(t('paperSetup.subSteps.rubric.templates.saveFailed'));
+        }
+    };
+
+    return (
+        <section className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+            <header>
+                <h3 className="text-sm font-semibold text-foreground">
+                    {t('paperSetup.subSteps.rubric.templates.title')}
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {t('paperSetup.subSteps.rubric.templates.subtitle')}
+                </p>
+            </header>
+
+            {rubrics.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                    <div className="flex-1 min-w-0">
+                        <label className="block text-[11px] font-medium text-foreground mb-1">
+                            {t('paperSetup.subSteps.rubric.templates.applyLabel')}
+                        </label>
+                        <select
+                            value={pickerValue}
+                            onChange={(e) => setPickerValue(e.target.value)}
+                            disabled={applyTemplate.isPending}
+                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
+                        >
+                            <option value="">— {t('paperSetup.subSteps.rubric.templates.applyPlaceholder')} —</option>
+                            {rubrics.map(r => (
+                                <option key={r.id} value={r.id}>
+                                    {r.displayName}{r.isDefault ? ' (★)' : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <Button
+                        type="button"
+                        onClick={handleApply}
+                        disabled={!pickerValue || applyTemplate.isPending}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                    >
+                        {applyTemplate.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                        {t('paperSetup.subSteps.rubric.templates.applyCta')}
+                    </Button>
+                </div>
+            )}
+
+            {!savingMode ? (
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+                    <p className="text-[11px] text-muted-foreground">
+                        {rubrics.length === 0
+                            ? t('paperSetup.subSteps.rubric.templates.emptyHint')
+                            : t('paperSetup.subSteps.rubric.templates.saveHint')}
+                    </p>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setSavingMode(true)}
+                        className="text-xs"
+                    >
+                        <Save className="h-3 w-3 mr-1" />
+                        {t('paperSetup.subSteps.rubric.templates.saveCta')}
+                    </Button>
+                </div>
+            ) : (
+                <div className="flex flex-col sm:flex-row sm:items-end gap-2 pt-2 border-t border-border">
+                    <div className="flex-1 min-w-0">
+                        <label className="block text-[11px] font-medium text-foreground mb-1">
+                            {t('paperSetup.subSteps.rubric.templates.namePromptLabel')}
+                        </label>
+                        <input
+                            type="text"
+                            autoFocus
+                            value={templateName}
+                            onChange={(e) => setTemplateName(e.target.value)}
+                            placeholder={t('paperSetup.subSteps.rubric.templates.namePromptPlaceholder')}
+                            disabled={saveAsTemplate.isPending}
+                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
+                        />
+                    </div>
+                    <div className="flex gap-1.5">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setSavingMode(false);
+                                setTemplateName('');
+                            }}
+                            disabled={saveAsTemplate.isPending}
+                            className="text-xs"
+                        >
+                            {t('setup.cancel')}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saveAsTemplate.isPending}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                        >
+                            {saveAsTemplate.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                            {t('paperSetup.subSteps.rubric.templates.saveConfirm')}
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </section>
+    );
 }
 
 // ── Per-row sub-components ─────────────────────────────────────────────

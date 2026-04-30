@@ -49,6 +49,14 @@ export interface CreateExegeticalPaperInput {
      */
     styleGuideId: string | null;
     /**
+     * Optional `UserRubric` template to apply at create time. When
+     * provided, the use case copies the template's content into
+     * `paper.rubric` (snapshot). When omitted, the use case auto-
+     * applies the user's default template if any; otherwise falls
+     * back to the system default rubric.
+     */
+    rubricTemplateId?: string | null;
+    /**
      * Optional initial sources. May also be empty — the user can add them
      * later via `AddProjectSource` while the paper is in 'configuring'.
      */
