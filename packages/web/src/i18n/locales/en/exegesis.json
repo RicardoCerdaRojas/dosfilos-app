@@ -219,7 +219,6 @@
                     "system-default": "System default",
                     "user-edited": "Edited by you"
                 },
-                "uploadComingSoon": "Uploading the seminary's rubric (PDF) ships in a future version. For now, paste the text below or edit fields manually.",
                 "extract": {
                     "title": "Extract rubric from text",
                     "subtitle": "Paste the rubric or brief your professor gave you. We extract it into a structured form you can review and adjust.",
@@ -308,6 +307,7 @@
                     "applyCta": "Apply",
                     "applyConfirm": "This will replace the current rubric with the chosen template. Your manual edits will be discarded. Continue?",
                     "applied": "Template applied",
+                    "appliedBadge": "Applied",
                     "applyFailed": "Could not apply the template",
                     "saveCta": "Save as template",
                     "saveHint": "Save the current rubric to reuse it across papers.",

@@ -219,7 +219,6 @@
                     "system-default": "Default del sistema",
                     "user-edited": "Editada por vos"
                 },
-                "uploadComingSoon": "Subir la rúbrica del seminario (PDF) llegará en una próxima versión. Por ahora, pegá el texto abajo o ajustá los campos manualmente.",
                 "extract": {
                     "title": "Extraer rúbrica desde texto",
                     "subtitle": "Pegá la rúbrica o el brief que te dio tu profesor. La extraemos a un formato estructurado que después podés revisar y ajustar.",
@@ -308,6 +307,7 @@
                     "applyCta": "Aplicar",
                     "applyConfirm": "Esto reemplazará la rúbrica actual con la plantilla elegida. Tus ediciones manuales se descartan. ¿Continuar?",
                     "applied": "Plantilla aplicada",
+                    "appliedBadge": "Aplicada",
                     "applyFailed": "No se pudo aplicar la plantilla",
                     "saveCta": "Guardar como plantilla",
                     "saveHint": "Guardá la rúbrica actual para usarla en otros papers.",

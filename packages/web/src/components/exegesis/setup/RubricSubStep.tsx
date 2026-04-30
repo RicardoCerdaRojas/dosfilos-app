@@ -10,7 +10,6 @@ import {
     Save,
     Sparkles,
     Trash2,
-    Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -203,16 +202,14 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                 </div>
             </header>
 
-            <div className="rounded-md bg-info-subtle border border-info/30 px-3 py-2 flex items-start gap-2">
-                <Upload className="h-3.5 w-3.5 text-info mt-0.5 shrink-0" />
-                <p className="text-[11px] text-info-subtle-foreground leading-snug">
-                    {t('paperSetup.subSteps.rubric.uploadComingSoon')}
-                </p>
-            </div>
+            {/* Plantillas FIRST — primary path for repeat users. The
+                extract-from-text panel is the secondary path
+                (alumno sin plantillas todavía). The PDF-coming-soon
+                banner that lived here was redundant; both paths are
+                self-explanatory in their own headers. */}
+            <RubricTemplatesPanel paper={paper} />
 
             <RubricExtractFromTextPanel paper={paper} />
-
-            <RubricTemplatesPanel paper={paper} />
 
             {/* ── Metadata ── */}
             <section className="space-y-3">
@@ -585,6 +582,12 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
     const { t } = useTranslation('exegesis');
     const { rubrics, applyTemplate, saveAsTemplate } = useUserRubrics();
     const [pickerValue, setPickerValue] = useState('');
+    // Tracks the templateId most recently applied successfully in
+    // this session so we can show the "✓ Aplicada" badge + disable
+    // the Apply button when the picker matches. Clears whenever the
+    // user picks a different template (since applying that one
+    // would be a real action again).
+    const [lastAppliedId, setLastAppliedId] = useState<string | null>(null);
     const [savingMode, setSavingMode] = useState(false);
     const [templateName, setTemplateName] = useState('');
 
@@ -596,12 +599,18 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
         try {
             await applyTemplate.mutateAsync({ paperId: paper.id, rubricTemplateId: pickerValue });
             toast.success(t('paperSetup.subSteps.rubric.templates.applied'));
-            setPickerValue('');
+            // Keep the picker value — clearing felt to the user like
+            // the apply silently cancelled. Mark this id as just-
+            // applied so the Apply button shows ✓ Aplicada and
+            // disables until they pick something else.
+            setLastAppliedId(pickerValue);
         } catch (err) {
             console.error('[exegesis] apply template failed:', err);
             toast.error(t('paperSetup.subSteps.rubric.templates.applyFailed'));
         }
     };
+
+    const justApplied = pickerValue !== '' && pickerValue === lastAppliedId;
 
     const handleSave = async () => {
         const name = templateName.trim();
@@ -639,7 +648,15 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
                         </label>
                         <select
                             value={pickerValue}
-                            onChange={(e) => setPickerValue(e.target.value)}
+                            onChange={(e) => {
+                                setPickerValue(e.target.value);
+                                // Switching templates re-arms the
+                                // Apply button (the new selection
+                                // hasn't been applied yet).
+                                if (e.target.value !== lastAppliedId) {
+                                    setLastAppliedId(prev => prev === e.target.value ? prev : null);
+                                }
+                            }}
                             disabled={applyTemplate.isPending}
                             className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
                         >
@@ -654,11 +671,20 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
                     <Button
                         type="button"
                         onClick={handleApply}
-                        disabled={!pickerValue || applyTemplate.isPending}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                        disabled={!pickerValue || applyTemplate.isPending || justApplied}
+                        className={justApplied
+                            ? 'bg-success-subtle text-success-subtle-foreground border border-success/30 text-xs cursor-default'
+                            : 'bg-primary hover:bg-primary/90 text-primary-foreground text-xs'
+                        }
                     >
-                        {applyTemplate.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                        {t('paperSetup.subSteps.rubric.templates.applyCta')}
+                        {applyTemplate.isPending ? (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : justApplied ? (
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                        ) : null}
+                        {justApplied
+                            ? t('paperSetup.subSteps.rubric.templates.appliedBadge')
+                            : t('paperSetup.subSteps.rubric.templates.applyCta')}
                     </Button>
                 </div>
             )}
