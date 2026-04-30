@@ -3,6 +3,7 @@ import {
     FirestoreUserStyleGuideRepository,
     FirebaseLibraryRepository,
     GeminiExegesisOrchestrator,
+    GeminiPaperRubricExtractor,
 } from '@dosfilos/infrastructure';
 import type { IResourceContentReader } from '@dosfilos/domain';
 
@@ -15,6 +16,7 @@ import {
     UpdateStepPlanUseCase,
     UpdateRubricUseCase,
     ResetRubricUseCase,
+    ExtractRubricFromTextUseCase,
     ListUserStyleGuidesUseCase,
     GetActiveStyleGuideUseCase,
     CreateUserStyleGuideUseCase,
@@ -52,6 +54,7 @@ class ExegesisService {
     public updateStepPlan: UpdateStepPlanUseCase;
     public updateRubric: UpdateRubricUseCase;
     public resetRubric: ResetRubricUseCase;
+    public extractRubricFromText: ExtractRubricFromTextUseCase;
 
     // User style guides
     public listStyleGuides: ListUserStyleGuidesUseCase;
@@ -86,6 +89,7 @@ class ExegesisService {
         const styleGuideRepository = new FirestoreUserStyleGuideRepository();
         const libraryRepository = new FirebaseLibraryRepository();
         const orchestrator = new GeminiExegesisOrchestrator(apiKey || '', exegesisModelId);
+        const rubricExtractor = new GeminiPaperRubricExtractor(apiKey || '', exegesisModelId);
 
         // Adapt the broader library repository to the narrow content-reader
         // port the use case depends on. Keeps the use case free of any
@@ -106,6 +110,7 @@ class ExegesisService {
         this.updateStepPlan = new UpdateStepPlanUseCase(paperRepository);
         this.updateRubric = new UpdateRubricUseCase(paperRepository);
         this.resetRubric = new ResetRubricUseCase(paperRepository);
+        this.extractRubricFromText = new ExtractRubricFromTextUseCase(paperRepository, rubricExtractor);
 
         // User style guides
         this.listStyleGuides = new ListUserStyleGuidesUseCase(styleGuideRepository);

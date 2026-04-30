@@ -133,7 +133,28 @@
                     "system-default": "System default",
                     "user-edited": "Edited by you"
                 },
-                "uploadComingSoon": "Uploading the seminary's rubric (PDF) ships in a future version. For now, edit fields manually or stick with the academic default.",
+                "uploadComingSoon": "Uploading the seminary's rubric (PDF) ships in a future version. For now, paste the text below or edit fields manually.",
+                "extract": {
+                    "title": "Extract rubric from text",
+                    "subtitle": "Paste the rubric or brief your professor gave you. We extract it into a structured form you can review and adjust.",
+                    "textareaLabel": "Rubric or assignment text",
+                    "textareaPlaceholder": "Paste the seminary's rubric, the assignment brief, or the professor's instructions.\n\nE.g. 'The exegetical paper must include technical Greek analysis backed by at least two critical commentaries (WBC, NIGTC, etc.), a technical lexicon (BDAG), and a theological dictionary (TDNT/NIDNTTE)...'",
+                    "submit": "Extract and replace rubric",
+                    "extracting": "Extracting rubric...",
+                    "tooShort": "Text is too short. Paste at least a paragraph with instructions.",
+                    "confirmReplace": "This will replace the current rubric with the extracted version. Your manual edits will be discarded. Continue?",
+                    "success": "Rubric extracted — review below",
+                    "failed": "Could not extract the rubric. Check the text or edit manually.",
+                    "confidenceHigh": "High confidence",
+                    "confidenceMedium": "Medium confidence",
+                    "confidenceLow": "Low confidence",
+                    "confidenceHint": {
+                        "high": "The extraction is complete. Still review the key fields.",
+                        "medium": "The extraction needed some inference. Review requirements and justifications.",
+                        "low": "The extraction has gaps. We recommend filling in what's missing manually."
+                    },
+                    "reviewNotesTitle": "Extractor notes"
+                },
                 "metadata": {
                     "title": "General",
                     "titleLabel": "Rubric title",

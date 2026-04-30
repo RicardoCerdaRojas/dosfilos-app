@@ -133,7 +133,28 @@
                     "system-default": "Default del sistema",
                     "user-edited": "Editada por vos"
                 },
-                "uploadComingSoon": "Subir la rúbrica del seminario (PDF) llegará en una próxima versión. Por ahora, ajustá los campos manualmente o quedate con el default académico.",
+                "uploadComingSoon": "Subir la rúbrica del seminario (PDF) llegará en una próxima versión. Por ahora, pegá el texto abajo o ajustá los campos manualmente.",
+                "extract": {
+                    "title": "Extraer rúbrica desde texto",
+                    "subtitle": "Pegá la rúbrica o el brief que te dio tu profesor. La extraemos a un formato estructurado que después podés revisar y ajustar.",
+                    "textareaLabel": "Texto de la rúbrica o asignación",
+                    "textareaPlaceholder": "Pegá acá la rúbrica del seminario, el brief de la asignación o las instrucciones del profesor.\n\nEj: 'El trabajo exegético debe contener un análisis técnico del griego con apoyo de al menos dos comentarios críticos (WBC, NIGTC, etc.), un léxico técnico (BDAG), y un diccionario teológico (TDNT/NIDNTTE)...'",
+                    "submit": "Extraer y reemplazar rúbrica",
+                    "extracting": "Extrayendo rúbrica...",
+                    "tooShort": "El texto es muy corto. Pegá al menos un párrafo con instrucciones.",
+                    "confirmReplace": "Esto reemplazará la rúbrica actual con la versión extraída. Tus ediciones manuales se descartan. ¿Continuar?",
+                    "success": "Rúbrica extraída — revisala más abajo",
+                    "failed": "No se pudo extraer la rúbrica. Revisá el texto o ajustá manualmente.",
+                    "confidenceHigh": "Confianza alta",
+                    "confidenceMedium": "Confianza media",
+                    "confidenceLow": "Confianza baja",
+                    "confidenceHint": {
+                        "high": "La extracción quedó completa. Igual revisá los campos importantes.",
+                        "medium": "La extracción tuvo algunas inferencias. Revisá los requisitos y justificaciones.",
+                        "low": "La extracción quedó con gaps. Te recomendamos completar manualmente lo que falte."
+                    },
+                    "reviewNotesTitle": "Notas del extractor"
+                },
                 "metadata": {
                     "title": "Datos generales",
                     "titleLabel": "Título de la rúbrica",

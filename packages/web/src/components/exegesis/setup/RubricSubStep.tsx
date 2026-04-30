@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+    AlertTriangle,
+    CheckCircle2,
     FileCheck2,
     Info,
     Loader2,
     Plus,
     RotateCcw,
     Save,
+    Sparkles,
     Trash2,
     Upload,
 } from 'lucide-react';
@@ -200,6 +203,8 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                 </p>
             </div>
 
+            <RubricExtractFromTextPanel paper={paper} />
+
             {/* ── Metadata ── */}
             <section className="space-y-3">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -380,6 +385,149 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
             </footer>
         </div>
     );
+}
+
+// ── Extract-from-text panel ────────────────────────────────────────────
+
+interface RubricExtractFromTextPanelProps {
+    paper: ExegeticalPaper;
+}
+
+interface ExtractionResultSummary {
+    confidence: 'high' | 'medium' | 'low';
+    reviewNotes: ReadonlyArray<string>;
+}
+
+function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) {
+    const { t } = useTranslation('exegesis');
+    const { extractRubricFromText } = useExegesisPapers();
+    const [text, setText] = useState('');
+    const [lastResult, setLastResult] = useState<ExtractionResultSummary | null>(null);
+
+    const isExtracting = extractRubricFromText.isPending;
+    const trimmedLength = text.trim().length;
+    const canSubmit = trimmedLength >= 30 && !isExtracting;
+
+    const handleExtract = async () => {
+        if (!canSubmit) return;
+        // The rubric being replaced may already carry user edits; the
+        // confirm makes that explicit instead of silently nuking work.
+        if (paper.rubric && paper.rubric.provenance === 'user-edited') {
+            if (!window.confirm(t('paperSetup.subSteps.rubric.extract.confirmReplace'))) return;
+        }
+        try {
+            const result = await extractRubricFromText.mutateAsync({
+                paperId: paper.id,
+                rawText: text.trim(),
+            });
+            setLastResult({
+                confidence: result.confidence,
+                reviewNotes: result.reviewNotes,
+            });
+            // Keep the text in the textarea so the student can re-extract
+            // after editing the source — they often refine and retry.
+            toast.success(t('paperSetup.subSteps.rubric.extract.success'));
+        } catch (err) {
+            console.error('[exegesis] extract rubric failed:', err);
+            toast.error(t('paperSetup.subSteps.rubric.extract.failed'));
+        }
+    };
+
+    return (
+        <section className="rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-900/10 p-4 space-y-3">
+            <header className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <div>
+                    <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                        {t('paperSetup.subSteps.rubric.extract.title')}
+                    </h3>
+                    <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-0.5">
+                        {t('paperSetup.subSteps.rubric.extract.subtitle')}
+                    </p>
+                </div>
+            </header>
+
+            <div>
+                <label className="block text-xs font-medium text-emerald-900 dark:text-emerald-100 mb-1">
+                    {t('paperSetup.subSteps.rubric.extract.textareaLabel')}
+                </label>
+                <textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder={t('paperSetup.subSteps.rubric.extract.textareaPlaceholder')}
+                    rows={6}
+                    disabled={isExtracting}
+                    className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 resize-y disabled:opacity-50"
+                />
+                {trimmedLength > 0 && trimmedLength < 30 && (
+                    <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1 inline-flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {t('paperSetup.subSteps.rubric.extract.tooShort')}
+                    </p>
+                )}
+            </div>
+
+            <div className="flex items-center justify-end">
+                <Button
+                    type="button"
+                    onClick={handleExtract}
+                    disabled={!canSubmit}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs"
+                >
+                    {isExtracting ? (
+                        <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            {t('paperSetup.subSteps.rubric.extract.extracting')}
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {t('paperSetup.subSteps.rubric.extract.submit')}
+                        </>
+                    )}
+                </Button>
+            </div>
+
+            {lastResult && <ExtractionResultCard result={lastResult} />}
+        </section>
+    );
+}
+
+function ExtractionResultCard({ result }: { result: ExtractionResultSummary }) {
+    const { t } = useTranslation('exegesis');
+    const confidenceLabel = t(`paperSetup.subSteps.rubric.extract.confidence${capitalize(result.confidence)}` as any);
+    const confidenceHint = t(`paperSetup.subSteps.rubric.extract.confidenceHint.${result.confidence}` as any);
+    const tone = result.confidence === 'low'
+        ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-100'
+        : result.confidence === 'medium'
+            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/40 text-blue-900 dark:text-blue-100'
+            : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-900 dark:text-emerald-100';
+
+    return (
+        <div className={`rounded-md border ${tone} p-3 space-y-1.5`}>
+            <p className="text-xs font-semibold inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {confidenceLabel}
+            </p>
+            <p className="text-[11px] leading-snug">{confidenceHint}</p>
+            {result.reviewNotes.length > 0 && (
+                <details className="text-[11px]">
+                    <summary className="cursor-pointer font-medium">
+                        {t('paperSetup.subSteps.rubric.extract.reviewNotesTitle')} ({result.reviewNotes.length})
+                    </summary>
+                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                        {result.reviewNotes.map((n, i) => (
+                            <li key={i}>{n}</li>
+                        ))}
+                    </ul>
+                </details>
+            )}
+        </div>
+    );
+}
+
+function capitalize(s: string): string {
+    return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // ── Per-row sub-components ─────────────────────────────────────────────

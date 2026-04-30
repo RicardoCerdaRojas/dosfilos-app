@@ -129,6 +129,37 @@ export interface ResetRubricInput {
     paperId: string;
 }
 
+// ── ExtractRubricFromText ──────────────────────────────────────────────
+//
+// Hands the rubric extractor (`IPaperRubricExtractor`) raw text the
+// student pasted (typically the assignment description / rubric the
+// professor sent). The extractor returns a structured PaperRubric
+// which the use case persists on `paper.rubric`. PDF/EPUB upload
+// goes through a separate use case once Phase 3b wires that flow.
+
+export interface ExtractRubricFromTextInput {
+    ownerId: string;
+    paperId: string;
+    /** Raw text the student pasted. Trimmed by the use case. */
+    rawText: string;
+    /**
+     * Override for the extraction language. Defaults to the paper's
+     * `displayLanguage`. Allows the student to paste a Spanish
+     * rubric for an English paper (or vice versa) and get
+     * justifications in the paper's language.
+     */
+    language?: 'es' | 'en';
+}
+
+export interface ExtractRubricFromTextOutput {
+    /** The updated paper, ready for the UI to refresh. */
+    paper: import('../entities/ExegeticalPaper').ExegeticalPaper;
+    /** Extractor confidence — surfaced as a "review your rubric" nudge. */
+    confidence: 'high' | 'medium' | 'low';
+    /** Notes from the extractor about ambiguities. Localized to `language`. */
+    reviewNotes: ReadonlyArray<string>;
+}
+
 // ── AddProjectSource ────────────────────────────────────────────────────
 
 export interface AddProjectSourceInput {

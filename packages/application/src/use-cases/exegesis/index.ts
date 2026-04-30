@@ -6,6 +6,7 @@ export { UpdatePaperBriefUseCase } from './UpdatePaperBriefUseCase';
 export { UpdateStepPlanUseCase } from './UpdateStepPlanUseCase';
 export { UpdateRubricUseCase } from './UpdateRubricUseCase';
 export { ResetRubricUseCase } from './ResetRubricUseCase';
+export { ExtractRubricFromTextUseCase } from './ExtractRubricFromTextUseCase';
 
 // User style guides
 export { ListUserStyleGuidesUseCase } from './ListUserStyleGuidesUseCase';

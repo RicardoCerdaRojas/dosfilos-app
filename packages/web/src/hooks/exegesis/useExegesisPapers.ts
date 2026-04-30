@@ -4,6 +4,7 @@ import { useFirebase } from '@/context/firebase-context';
 import type {
     AddProjectSourceInput,
     CreateExegeticalPaperInput,
+    ExtractRubricFromTextInput,
     UpdateProjectSourceInput,
     UpdateRubricInput,
     UpdateStepPlanInput,
@@ -92,6 +93,16 @@ export function useExegesisPapers() {
         mutationFn: async ({ paperId }: { paperId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return exegesisService.resetRubric.execute({ ownerId: user.uid, paperId });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const extractRubricFromText = useMutation({
+        mutationFn: async (input: Omit<ExtractRubricFromTextInput, 'ownerId'>) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.extractRubricFromText.execute({ ...input, ownerId: user.uid });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
@@ -195,6 +206,7 @@ export function useExegesisPapers() {
         updateStepPlan,
         updateRubric,
         resetRubric,
+        extractRubricFromText,
         addSource,
         updateSource,
         removeSource,
