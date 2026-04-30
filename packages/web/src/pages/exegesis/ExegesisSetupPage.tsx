@@ -5,21 +5,24 @@ import { ArrowLeft, BookText, FileStack, FileCheck2, Lock, Loader2 } from 'lucid
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
+import { StyleGuideStep } from '@/components/exegesis/StyleGuideStep';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import type { PassageReference, SupportedLanguage } from '@dosfilos/domain';
 
 /**
  * Setup wizard for a new exegetical paper.
  *
- * v1 thin slice: only step 1 (passage) is functional. The other steps
- * (style guide, project corpus) render as locked placeholders so the user
- * sees the wizard's full shape and we can wire each in subsequent commits
- * without introducing dead UI later.
+ * Step 1 (passage) and step 2 (style guide) are functional. Step 3
+ * (project corpus) renders as a locked placeholder until that flow is
+ * built. On submit the paper is created in Firestore with the chosen
+ * passage and (optional) style guide; the user is redirected back to
+ * the list.
  *
- * On submit: creates the paper in Firestore via `useExegesisPapers().createPaper`
- * and navigates back to the list. The paper is born in 'configuring' phase
- * with `styleGuideId: null` and an empty source list — the (still-locked)
- * steps 2 and 3 will populate those once they're built out.
+ * styleGuideId remains nullable: the user CAN create a paper without
+ * picking a guide (e.g. they want to upload it later). The orchestrator
+ * will reject generation for any paper whose styleGuideId is null at
+ * the moment it tries to inject the guide into a prompt — that
+ * downstream gate is intentionally separate from the setup wizard.
  */
 export function ExegesisSetupPage() {
     const navigate = useNavigate();
@@ -28,6 +31,7 @@ export function ExegesisSetupPage() {
 
     const [passage, setPassage] = useState<PassageReference | null>(null);
     const [passageError, setPassageError] = useState<string | null>(null);
+    const [selectedStyleGuideId, setSelectedStyleGuideId] = useState<string | null>(null);
 
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
     const isCreating = createPaper.isPending;
@@ -39,7 +43,7 @@ export function ExegesisSetupPage() {
             await createPaper.mutateAsync({
                 passage,
                 displayLanguage: activeLanguage,
-                styleGuideId: null,
+                styleGuideId: selectedStyleGuideId,
             });
             toast.success(t('setup.toast.created'));
             navigate('/dashboard/exegesis');
@@ -91,17 +95,18 @@ export function ExegesisSetupPage() {
                     />
                 </Step>
 
-                {/* Step 2 — Style guide (locked placeholder) */}
+                {/* Step 2 — Style guide */}
                 <Step
                     number={2}
                     icon={<FileCheck2 className="h-4 w-4" />}
                     title={t('setup.styleGuide.stepTitle')}
                     subtitle={t('setup.styleGuide.stepSubtitle')}
-                    locked
+                    locked={false}
                 >
-                    <div className="rounded-lg border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/40 px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                        {t('setup.styleGuide.placeholder')}
-                    </div>
+                    <StyleGuideStep
+                        selectedGuideId={selectedStyleGuideId}
+                        onSelect={setSelectedStyleGuideId}
+                    />
                 </Step>
 
                 {/* Step 3 — Sources (locked placeholder) */}

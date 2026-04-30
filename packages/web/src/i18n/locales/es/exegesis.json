@@ -41,8 +41,25 @@
         },
         "styleGuide": {
             "stepTitle": "Guía de estilo",
-            "stepSubtitle": "Una vez por usuario. Si tenés una activa, se inyecta automáticamente; si no, podrás subirla.",
-            "placeholder": "Próximamente: lista de tus guías + upload de una nueva. Por ahora se inyectará la activa al ejecutar."
+            "stepSubtitle": "Una vez por usuario. Si tenés una activa, se selecciona automáticamente; si no, subila acá.",
+            "loading": "Cargando guías...",
+            "activeBadge": "Activa",
+            "setActive": "Marcar como activa",
+            "uploadAnother": "Subir otra guía",
+            "fileLabel": "Archivo (PDF o EPUB)",
+            "displayNameLabel": "Nombre",
+            "displayNamePlaceholder": "Ej. TMS 2024-25",
+            "versionLabel": "Versión",
+            "versionPlaceholder": "Ej. 2024-25",
+            "uploadCta": "Subir guía",
+            "uploading": "Subiendo... {{progress}}%",
+            "extractionHint": "El procesamiento del PDF (LlamaParse) sigue en background. La guía queda disponible en cuanto se cree el registro; si el procesamiento aún no terminó, te avisaremos al generar.",
+            "toast": {
+                "uploaded": "Guía subida correctamente",
+                "uploadFailed": "No se pudo subir la guía. Intentá de nuevo.",
+                "activated": "Guía activa actualizada",
+                "activateFailed": "No se pudo activar la guía"
+            }
         },
         "sources": {
             "stepTitle": "Corpus del trabajo",

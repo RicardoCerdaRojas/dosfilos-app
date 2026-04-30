@@ -41,8 +41,25 @@
         },
         "styleGuide": {
             "stepTitle": "Style guide",
-            "stepSubtitle": "Once per user. If you have an active one, it's injected automatically; otherwise you can upload it.",
-            "placeholder": "Coming soon: list of your guides + upload a new one. For now the active guide is injected at run time."
+            "stepSubtitle": "Once per user. If you have an active one it's auto-selected; otherwise upload it here.",
+            "loading": "Loading guides...",
+            "activeBadge": "Active",
+            "setActive": "Set as active",
+            "uploadAnother": "Upload another guide",
+            "fileLabel": "File (PDF or EPUB)",
+            "displayNameLabel": "Name",
+            "displayNamePlaceholder": "e.g. TMS 2024-25",
+            "versionLabel": "Version",
+            "versionPlaceholder": "e.g. 2024-25",
+            "uploadCta": "Upload guide",
+            "uploading": "Uploading... {{progress}}%",
+            "extractionHint": "PDF processing (LlamaParse) continues in the background. The guide is registered immediately; if extraction hasn't finished by the time you try to generate, we'll tell you.",
+            "toast": {
+                "uploaded": "Guide uploaded successfully",
+                "uploadFailed": "Couldn't upload the guide. Please try again.",
+                "activated": "Active guide updated",
+                "activateFailed": "Couldn't activate the guide"
+            }
         },
         "sources": {
             "stepTitle": "Project corpus",
