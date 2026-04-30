@@ -1,3 +1,5 @@
+import type { StyleGuideManifest } from './StyleGuideManifest';
+
 /**
  * A style guide owned by a single user, transversal across all their
  * exegetical papers. Typical content: TMS 2024-25 style sheet covering
@@ -10,9 +12,13 @@
  * same guide flows into every paper automatically.
  *
  * The actual text is processed via the existing LlamaParse pipeline and
- * stored as a corpus referenced by `corpusId`. The orchestrator injects
- * relevant chunks into every generation prompt as authoritative format
- * rules.
+ * stored as a corpus referenced by `corpusId`. After ingestion, the
+ * `IStyleGuideManifestExtractor` produces a structured `manifest` of
+ * the guide's mechanical rules (citation formats, ibid behavior,
+ * quotation thresholds) — that manifest is stored alongside the corpus
+ * pointer here and injected into prompts + the post-processing
+ * formatter, so deterministic format rules don't depend on the LLM
+ * re-reading the guide every time.
  */
 export interface UserStyleGuide {
     id: string;
@@ -27,6 +33,22 @@ export interface UserStyleGuide {
      * uniformly during retrieval.
      */
     corpusId: string;
+
+    /**
+     * Structured rules extracted from the guide. Used by:
+     *   - the orchestrator's prompt builder (rules block injected
+     *     verbatim alongside the raw guide text)
+     *   - the `IStyleFormatter` post-processor that mechanically
+     *     enforces footnote format, ibid, quote marks, etc.
+     *
+     * Nullable during a brief window after upload (extraction is
+     * async — typically completes within seconds of LlamaParse
+     * finishing). The setup UI shows a "manifest is processing"
+     * state during that window. Generation rejects a null manifest
+     * and tells the user to retry once extraction completes (or
+     * explicitly opt in to the system default while waiting).
+     */
+    manifest: StyleGuideManifest | null;
 
     /**
      * Optional version string ("2024-25", "17th edition"). Helps the user

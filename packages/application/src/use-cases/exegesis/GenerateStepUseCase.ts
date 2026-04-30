@@ -1,10 +1,15 @@
 import type {
+    ExegesisGenerationInput,
+    ExegesisPriorStep,
+    ExegesisSourceContext,
+    ExegeticalPaper,
     ExegeticalStep,
-    ExegeticalStepKind,
     ExegeticalStepVersion,
     GenerateStepInput,
+    IExegesisOrchestrator,
     IExegeticalPaperRepository,
-    PassageReference,
+    IResourceContentReader,
+    IUserStyleGuideRepository,
 } from '@dosfilos/domain';
 import {
     EMPTY_VERIFICATION_SUMMARY,
@@ -14,28 +19,30 @@ import {
 /**
  * Generates content for a single step.
  *
- * **D.1 placeholder mode**: this use case currently produces deterministic
- * mock markdown so the entire state-machine flow (pending → generating
- * → awaiting-review → accepted, regeneration with hints, manual edits)
- * can be validated end-to-end without burning Gemini tokens. The
- * placeholder format mirrors what the real prompt template will
- * produce (Greek text, translation, morphology, syntax, sources,
- * conclusion) so the UI can be styled now and the swap to live
- * generation in D.2 is a one-spot change.
+ * D.2: live generation via the injected `IExegesisOrchestrator` (currently
+ * the Gemini Pro 2.5 implementation in infrastructure). The use case
+ * orchestrates context resolution — fetching style guide text, source
+ * extracts, and prior accepted steps — then hands a fully-resolved
+ * `ExegesisGenerationInput` to the orchestrator. The orchestrator only
+ * does the LLM call.
  *
- * The use case orchestrates:
- *   1. Read the paper + step (validating ownership, step exists, kind).
- *   2. State transition: pending|awaiting-review → generating
- *      (records intent so the UI shows a spinner).
- *   3. Produce markdown (mock for D.1; Gemini Pro 2.5 + retrieval for D.2).
- *   4. Append the new version + transition to awaiting-review.
+ * 'assembly' kind is handled here without an LLM call: it concatenates
+ * accepted markdown from introduction → verses → conclusion. Saves
+ * tokens and keeps assembly deterministic.
  *
- * If step 3 throws, step 4 doesn't run — caller should reset state to
- * 'failed' via `setStepState`. v1 leaves that to the caller (web layer)
- * so failed states are visible in the UI.
+ * Failure path: if any step before the orchestrator throws, the step
+ * state stays 'generating' (the use case rolls back via setStepState
+ * to 'failed'). If the orchestrator throws, same — the version is
+ * never appended, so the UI's "Retry" button will just trigger a fresh
+ * call.
  */
 export class GenerateStepUseCase {
-    constructor(private paperRepository: IExegeticalPaperRepository) { }
+    constructor(
+        private paperRepository: IExegeticalPaperRepository,
+        private styleGuideRepository: IUserStyleGuideRepository,
+        private contentReader: IResourceContentReader,
+        private orchestrator: IExegesisOrchestrator,
+    ) { }
 
     async execute(input: GenerateStepInput): Promise<ExegeticalStepVersion> {
         if (!input.ownerId || !input.paperId || !input.stepId) {
@@ -43,104 +50,170 @@ export class GenerateStepUseCase {
         }
 
         const paper = await this.paperRepository.getPaper(input.ownerId, input.paperId);
-        if (!paper) {
-            throw new Error(`Paper ${input.paperId} not found`);
-        }
+        if (!paper) throw new Error(`Paper ${input.paperId} not found`);
         const step = paper.steps.find(s => s.id === input.stepId);
-        if (!step) {
-            throw new Error(`Step ${input.stepId} not found`);
+        if (!step) throw new Error(`Step ${input.stepId} not found`);
+
+        // ── Assembly: deterministic, no LLM call ───────────────────────
+        if (step.kind === 'assembly') {
+            return this.assembleAndSave(paper, step);
         }
 
-        // Mark generating so the UI flips to a spinner immediately. The
-        // version append below will flip back to awaiting-review.
+        // ── LLM-driven kinds (verse / conclusion / introduction) ───────
+
+        // Mark generating immediately so the UI shows a spinner.
         await this.paperRepository.setStepState(input.ownerId, input.paperId, input.stepId, 'generating');
 
-        // ── PLACEHOLDER GENERATION ────────────────────────────────────
-        // Replaced in D.2 with: retrieval (style guide chunks + project
-        // source chunks scoped by role) → Gemini Pro 2.5 streaming with
-        // the TMS prompt template → token accounting.
-        const markdown = buildPlaceholderMarkdown({
-            kind: step.kind,
-            verseRef: step.verseRef,
-            paperLanguage: paper.displayLanguage,
-            hint: input.regenerationHint,
-        });
+        try {
+            const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
+            const sources = await this.loadSourceContexts(paper);
+            const priorAcceptedSteps = collectPriorAccepted(paper, step);
 
-        const parentVersionId = step.current?.id ?? null;
-        const version = await this.paperRepository.appendStepVersion(
-            input.ownerId,
-            input.paperId,
-            input.stepId,
+            const orchestratorInput: ExegesisGenerationInput = {
+                kind: step.kind,
+                paperPassage: paper.passage,
+                verseRef: step.verseRef,
+                language: paper.displayLanguage,
+                styleGuideContent,
+                sources,
+                priorAcceptedSteps,
+                regenerationHint: input.regenerationHint ?? null,
+            };
+
+            const result = await this.orchestrator.generateStep(orchestratorInput);
+
+            const parentVersionId = step.current?.id ?? null;
+            return await this.paperRepository.appendStepVersion(
+                input.ownerId,
+                input.paperId,
+                input.stepId,
+                {
+                    markdown: result.markdown,
+                    origin: 'generated',
+                    parentVersionId,
+                    modelId: result.modelId,
+                    regenerationHint: input.regenerationHint ?? null,
+                    tokensUsed: result.tokensUsed,
+                    verifications: { ...EMPTY_VERIFICATION_SUMMARY },
+                }
+            );
+        } catch (err) {
+            // Roll the state back to 'failed' so the UI shows the retry
+            // affordance instead of a permanently-spinning card. We
+            // swallow secondary errors from the rollback to surface the
+            // ORIGINAL cause.
+            try {
+                await this.paperRepository.setStepState(input.ownerId, input.paperId, input.stepId, 'failed');
+            } catch (rollbackErr) {
+                console.error('[GenerateStepUseCase] failed to roll state back to failed:', rollbackErr);
+            }
+            throw err;
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    private async loadStyleGuideContent(ownerId: string, styleGuideId: string | null): Promise<string> {
+        if (!styleGuideId) return '';
+        const guide = await this.styleGuideRepository.getGuide(ownerId, styleGuideId);
+        if (!guide) return '';
+        return (await this.contentReader.getTextContent(guide.corpusId)) ?? '';
+    }
+
+    private async loadSourceContexts(paper: ExegeticalPaper): Promise<ExegesisSourceContext[]> {
+        const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
+        const contexts: ExegesisSourceContext[] = [];
+        for (const source of sorted) {
+            const text = await this.contentReader.getTextContent(source.corpusId);
+            contexts.push({
+                corpusId: source.corpusId,
+                sourceType: source.sourceType,
+                displayLabel: source.displayLabel,
+                citationKey: source.citationKey,
+                textContent: text ?? '',
+            });
+        }
+        return contexts;
+    }
+
+    /**
+     * Mechanically assembles introduction → verses → conclusion into one
+     * markdown document. No Gemini call. The result is saved as the
+     * `current` and `accepted` version of the assembly step in one go,
+     * since assembly is fully deterministic — there's nothing for the
+     * user to "regenerate".
+     */
+    private async assembleAndSave(
+        paper: ExegeticalPaper,
+        step: ExegeticalStep,
+    ): Promise<ExegeticalStepVersion> {
+        const accepted = paper.steps.filter(s => s.accepted !== null);
+        const intro = accepted.find(s => s.kind === 'introduction');
+        const verses = accepted.filter(s => s.kind === 'verse').sort((a, b) => a.order - b.order);
+        const conclusion = accepted.find(s => s.kind === 'conclusion');
+
+        const lang = paper.displayLanguage;
+        const passage = formatPassageReference(paper.passage, lang);
+        const sections: string[] = [
+            `# ${paper.title || passage}`,
+            '',
+        ];
+        if (intro?.accepted) {
+            sections.push('---', '', intro.accepted.markdown, '');
+        }
+        for (const v of verses) {
+            if (v.accepted) sections.push('---', '', v.accepted.markdown, '');
+        }
+        if (conclusion?.accepted) {
+            sections.push('---', '', conclusion.accepted.markdown, '');
+        }
+        const markdown = sections.join('\n');
+
+        return await this.paperRepository.appendStepVersion(
+            paper.ownerId,
+            paper.id,
+            step.id,
             {
                 markdown,
                 origin: 'generated',
-                parentVersionId,
-                modelId: 'placeholder-d1',
-                regenerationHint: input.regenerationHint ?? null,
-                tokensUsed: null,
+                parentVersionId: step.current?.id ?? null,
+                modelId: 'mechanical-assembly',
+                regenerationHint: null,
+                tokensUsed: 0,
                 verifications: { ...EMPTY_VERIFICATION_SUMMARY },
             }
         );
-
-        return version;
     }
 }
 
-// ── Placeholder content ─────────────────────────────────────────────────
-//
-// Mocks the SHAPE of what the real generator will produce per step kind,
-// so the UI is built against realistic-looking content. The real
-// generation in D.2 swaps the body of the relevant branch without
-// changing the use case structure.
-
-function buildPlaceholderMarkdown(input: {
-    kind: ExegeticalStepKind;
-    verseRef: PassageReference | null;
-    paperLanguage: 'es' | 'en';
-    hint: string | undefined;
-}): string {
-    const lang = input.paperLanguage;
-    const verseLabel = input.verseRef ? formatPassageReference(input.verseRef, lang) : '';
-    const hintLine = input.hint
-        ? (lang === 'en'
-            ? `> _Regeneration hint applied: ${input.hint}_\n\n`
-            : `> _Hint de regeneración aplicado: ${input.hint}_\n\n`)
-        : '';
-    const placeholderBanner = lang === 'en'
-        ? `> ⚠️ **Placeholder content** — this is a deterministic mock so the wizard flow can be validated. Live Gemini generation lands in the next commit (D.2).\n\n`
-        : `> ⚠️ **Contenido placeholder** — este es un mock determinístico para validar el flujo del wizard. La generación en vivo con Gemini llega en el próximo commit (D.2).\n\n`;
-
-    switch (input.kind) {
-        case 'verse':
-            return placeholderBanner + hintLine + (lang === 'en'
-                ? `## ${verseLabel}\n\n` +
-                `**Greek text:** Πολυμερῶς καὶ πολυτρόπως πάλαι ὁ θεὸς λαλήσας τοῖς πατράσιν ἐν τοῖς προφήταις\n\n` +
-                `**Translation:** _placeholder translation_\n\n` +
-                `**Morphology:** _placeholder morphology of key forms_\n\n` +
-                `**Syntax:** _placeholder syntactic analysis of clauses, participles, and modifiers_\n\n` +
-                `**Sources:** _placeholder interaction with the configured corpus_\n\n` +
-                `**Conclusion:** _placeholder conclusion explaining how this verse contributes to the passage's argument_`
-                : `## ${verseLabel}\n\n` +
-                `**Texto griego:** Πολυμερῶς καὶ πολυτρόπως πάλαι ὁ θεὸς λαλήσας τοῖς πατράσιν ἐν τοῖς προφήταις\n\n` +
-                `**Traducción:** _traducción placeholder_\n\n` +
-                `**Análisis morfológico:** _análisis placeholder de las formas relevantes_\n\n` +
-                `**Análisis sintáctico:** _análisis placeholder de cláusulas, participios y modificadores_\n\n` +
-                `**Interacción con fuentes:** _interacción placeholder con el corpus configurado_\n\n` +
-                `**Conclusión:** _conclusión placeholder sobre cómo este verso contribuye al argumento del pasaje_`);
-
-        case 'conclusion':
-            return placeholderBanner + hintLine + (lang === 'en'
-                ? `## Conclusion\n\nPlaceholder conclusion synthesizing the accepted verse-level analyses without introducing new arguments.`
-                : `## Conclusión\n\nConclusión placeholder que sintetiza los análisis verso a verso aceptados, sin introducir argumentos nuevos.`);
-
-        case 'introduction':
-            return placeholderBanner + hintLine + (lang === 'en'
-                ? `## Introduction\n\nPlaceholder introduction. Written last, placed first in the assembled paper. Carries the thesis the analysis actually demonstrated, plus a brief methodology statement.`
-                : `## Introducción\n\nIntroducción placeholder. Escrita al final, ubicada primero en el documento ensamblado. Lleva la tesis que el análisis efectivamente demostró, más una breve declaración metodológica.`);
-
-        case 'assembly':
-            return placeholderBanner + hintLine + (lang === 'en'
-                ? `## Assembled paper preview\n\nThis step concatenates introduction → verses (in canonical order) → conclusion → bibliography. The current implementation is mechanical (no TMS footnote formatter yet — that's v1.5).`
-                : `## Vista previa del trabajo ensamblado\n\nEste paso concatena introducción → versos (en orden canónico) → conclusión → bibliografía. La implementación actual es mecánica (sin formateador TMS de notas al pie — eso va en v1.5).`);
+/**
+ * Picks the prior-step context relevant to generating `step`.
+ *   - verse:        []  (verses don't reference each other)
+ *   - conclusion:   accepted verses, in canonical order
+ *   - introduction: accepted verses + accepted conclusion (introduction
+ *                   is written LAST and reflects what the body did)
+ *   - assembly:     unused (handled before this function is called)
+ */
+function collectPriorAccepted(paper: ExegeticalPaper, step: ExegeticalStep): ExegesisPriorStep[] {
+    if (step.kind === 'verse') return [];
+    const all = [...paper.steps].sort((a, b) => a.order - b.order);
+    const acceptedVerses = all.filter(s => s.kind === 'verse' && s.accepted);
+    if (step.kind === 'conclusion') {
+        return acceptedVerses.map(toPriorStep);
     }
+    if (step.kind === 'introduction') {
+        const acceptedConclusion = all.find(s => s.kind === 'conclusion' && s.accepted);
+        const list: ExegesisPriorStep[] = acceptedVerses.map(toPriorStep);
+        if (acceptedConclusion?.accepted) list.push(toPriorStep(acceptedConclusion));
+        return list;
+    }
+    return [];
+}
+
+function toPriorStep(s: ExegeticalStep): ExegesisPriorStep {
+    return {
+        kind: s.kind,
+        verseRef: s.verseRef,
+        markdown: s.accepted!.markdown,
+    };
 }

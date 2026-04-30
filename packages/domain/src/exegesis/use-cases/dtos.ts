@@ -15,7 +15,7 @@
  */
 
 import type { PassageReference } from '../../bible/canon/passage-reference';
-import type { ProjectSourceRole } from '../entities/ProjectSource';
+import type { SourceType } from '../entities/SourceType';
 
 // ── CreateExegeticalPaper ───────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ export interface AddProjectSourceInput {
      * processing first; this use case only attaches the result to the paper.
      */
     corpusId: string;
-    role: ProjectSourceRole;
+    sourceType: SourceType;
     displayLabel: string;
     citationKey?: string;
 }
@@ -65,7 +65,7 @@ export interface AddProjectSourceInput {
 
 export interface UpdateProjectSourceInput {
     sourceId: string;
-    role?: ProjectSourceRole;
+    sourceType?: SourceType;
     displayLabel?: string;
     citationKey?: string | null;
     order?: number;

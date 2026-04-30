@@ -1,6 +1,8 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { ProjectSource } from './ProjectSource';
 import type { ExegeticalStep } from './ExegeticalStep';
+import type { PaperRubric } from './PaperRubric';
+import type { StepSourcePlan } from './StepSourcePlan';
 
 /**
  * Top-level entity for a single exegetical paper.
@@ -60,6 +62,27 @@ export interface ExegeticalPaper {
      */
     sources: ProjectSource[];
 
+    /**
+     * Rubric the student is working against — either uploaded from the
+     * seminary's grading sheet or the system default. Drives gap detection
+     * (which source types are missing) and seeds the structural plan.
+     *
+     * Nullable during the very first moment after `createPaper` runs; the
+     * setup UI's first sub-step always populates it (uploading or applying
+     * the default) before letting the user proceed. Generation must reject
+     * a null rubric.
+     */
+    rubric: PaperRubric | null;
+
+    /**
+     * Per-step source-emphasis plan the student configured (or accepted
+     * from defaults). Drives prompt weights at generation time. May be
+     * the empty plan if the student hasn't visited the structural-plan
+     * sub-step yet — the orchestrator falls back to rubric defaults in
+     * that case.
+     */
+    stepPlan: StepSourcePlan;
+
     phase: ExegeticalPaperPhase;
 
     /**
@@ -99,8 +122,21 @@ export type ExegeticalPaperPhase =
  * Shape used by `CreatePaper` use cases — id and timestamps are assigned
  * by the repository; phase always starts as 'configuring' even if sources
  * are provided up front (wizard may collect them later).
+ *
+ * `rubric` and `stepPlan` are also omitted at draft time — the create
+ * use case applies the system default rubric and the empty plan, and the
+ * setup UI's later sub-steps overwrite them with the student's choices.
  */
 export type ExegeticalPaperDraft = Omit<
     ExegeticalPaper,
-    'id' | 'createdAt' | 'updatedAt' | 'phase' | 'steps' | 'currentStepId' | 'assembledMarkdown' | 'archivedAt'
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'phase'
+    | 'steps'
+    | 'currentStepId'
+    | 'assembledMarkdown'
+    | 'archivedAt'
+    | 'rubric'
+    | 'stepPlan'
 >;

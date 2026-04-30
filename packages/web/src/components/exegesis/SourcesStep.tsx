@@ -5,7 +5,7 @@ import { libraryService } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
-import { CITABLE_SOURCE_ROLES, type ProjectSourceRole } from '@dosfilos/domain';
+import { CITABLE_SOURCE_TYPES, type SourceType } from '@dosfilos/domain';
 
 /**
  * A pending source in the wizard's local state — uploaded to the library
@@ -23,7 +23,7 @@ export interface PendingSource {
     /** Generated client-side; just a UI key, NOT used as the eventual ProjectSource id. */
     localId: string;
     corpusId: string;
-    role: ProjectSourceRole;
+    sourceType: SourceType;
     displayLabel: string;
     citationKey: string;
     fileName: string;
@@ -111,12 +111,12 @@ export function SourcesStep({ sources, onChange }: SourcesStepProps) {
 interface SourceRowProps {
     source: PendingSource;
     onRemove: () => void;
-    onEdit: (patch: Partial<Pick<PendingSource, 'role' | 'displayLabel' | 'citationKey'>>) => void;
+    onEdit: (patch: Partial<Pick<PendingSource, 'sourceType' | 'displayLabel' | 'citationKey'>>) => void;
     t: (key: string) => string;
 }
 
 function SourceRow({ source, onRemove, onEdit, t }: SourceRowProps) {
-    const isCitable = CITABLE_SOURCE_ROLES.has(source.role);
+    const isCitable = CITABLE_SOURCE_TYPES.has(source.sourceType);
     return (
         <li className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-2">
             <div className="flex items-start gap-2.5">
@@ -139,12 +139,12 @@ function SourceRow({ source, onRemove, onEdit, t }: SourceRowProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
                 <select
-                    value={source.role}
-                    onChange={(e) => onEdit({ role: e.target.value as ProjectSourceRole })}
+                    value={source.sourceType}
+                    onChange={(e) => onEdit({ sourceType: e.target.value as SourceType })}
                     className="rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                 >
-                    {ROLE_OPTIONS.map(r => (
-                        <option key={r} value={r}>{t(`setup.sources.roles.${r}`)}</option>
+                    {LEGACY_TYPE_OPTIONS.map(r => (
+                        <option key={r} value={r}>{LEGACY_TYPE_LABELS[r]}</option>
                     ))}
                 </select>
                 <input
@@ -166,16 +166,35 @@ function SourceRow({ source, onRemove, onEdit, t }: SourceRowProps) {
     );
 }
 
-const ROLE_OPTIONS: ProjectSourceRole[] = [
-    'primary-commentary',
-    'secondary-commentary',
-    'lexicon',
+// Subset of `SourceType` shown in the legacy wizard's flat dropdown.
+// The Phase-2 redesign replaces this component with a grouped picker
+// that exposes all 13 catalog values + rubric-driven gap detection.
+const LEGACY_TYPE_OPTIONS: SourceType[] = [
+    'commentary-critical',
+    'commentary-expository',
+    'lexicon-technical',
     'critical-apparatus',
-    'historical-context',
-    'theological-context',
-    'model-paper',
-    'misc',
+    'historical-background',
+    'theological-monograph',
+    'style-template-paper',
+    'other',
 ];
+
+const LEGACY_TYPE_LABELS: Record<SourceType, string> = {
+    'biblical-text-edition': 'Edición del texto bíblico',
+    'critical-apparatus': 'Aparato crítico',
+    'lexicon-technical': 'Léxico técnico',
+    'theological-dictionary': 'Diccionario teológico',
+    'grammar-syntax': 'Gramática / sintaxis',
+    'commentary-critical': 'Comentario crítico-técnico',
+    'commentary-expository': 'Comentario expositivo',
+    'historical-background': 'Contexto histórico/cultural',
+    'theological-monograph': 'Monografía teológica',
+    'journal-article': 'Artículo de revista',
+    'primary-source-ancient': 'Fuente primaria antigua',
+    'style-template-paper': 'Plantilla de estilo (no se cita)',
+    'other': 'Otro',
+};
 
 interface UploadFormProps {
     onAdded: (s: PendingSource) => void;
@@ -188,7 +207,7 @@ function UploadForm({ onAdded, onCancel }: UploadFormProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [displayName, setDisplayName] = useState('');
-    const [role, setRole] = useState<ProjectSourceRole>('primary-commentary');
+    const [sourceType, setSourceType] = useState<SourceType>('commentary-critical');
     const [citationKey, setCitationKey] = useState('');
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState<number | null>(null);
@@ -225,7 +244,7 @@ function UploadForm({ onAdded, onCancel }: UploadFormProps) {
             onAdded({
                 localId: crypto.randomUUID(),
                 corpusId: resource.id,
-                role,
+                sourceType,
                 displayLabel: displayName.trim(),
                 citationKey: citationKey.trim(),
                 fileName: file.name,
@@ -236,7 +255,7 @@ function UploadForm({ onAdded, onCancel }: UploadFormProps) {
             setFile(null);
             setDisplayName('');
             setCitationKey('');
-            setRole('primary-commentary');
+            setSourceType('commentary-critical');
             if (fileInputRef.current) fileInputRef.current.value = '';
             toast.success(t('setup.sources.toast.uploaded'));
         } catch (err) {
@@ -288,19 +307,19 @@ function UploadForm({ onAdded, onCancel }: UploadFormProps) {
                         {t('setup.sources.roleLabel')}
                     </label>
                     <select
-                        value={role}
-                        onChange={(e) => setRole(e.target.value as ProjectSourceRole)}
+                        value={sourceType}
+                        onChange={(e) => setSourceType(e.target.value as SourceType)}
                         disabled={uploading}
                         className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                     >
-                        {ROLE_OPTIONS.map(r => (
-                            <option key={r} value={r}>{t(`setup.sources.roles.${r}`)}</option>
+                        {LEGACY_TYPE_OPTIONS.map(r => (
+                            <option key={r} value={r}>{LEGACY_TYPE_LABELS[r]}</option>
                         ))}
                     </select>
                 </div>
             </div>
 
-            {CITABLE_SOURCE_ROLES.has(role) && (
+            {CITABLE_SOURCE_TYPES.has(sourceType) && (
                 <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                         {t('setup.sources.citationKeyLabel')}

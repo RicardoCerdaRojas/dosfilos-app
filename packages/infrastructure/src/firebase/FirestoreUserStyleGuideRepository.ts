@@ -73,11 +73,16 @@ export class FirestoreUserStyleGuideRepository implements IUserStyleGuideReposit
     async createGuide(draft: UserStyleGuideDraft): Promise<UserStyleGuide> {
         const ref = doc(this.collectionRef());
         const now = new Date();
+        // Manifest starts null and is populated asynchronously by the
+        // upload flow once `IStyleGuideManifestExtractor` finishes
+        // parsing the corpus text. The setup UI shows a "extracting
+        // rules" placeholder while the manifest is null.
         const guide: UserStyleGuide = {
             id: ref.id,
             ownerId: draft.ownerId,
             displayName: draft.displayName,
             corpusId: draft.corpusId,
+            manifest: draft.manifest ?? null,
             version: draft.version,
             isActive: draft.isActive,
             uploadedAt: now,
@@ -195,6 +200,7 @@ function serialize(guide: UserStyleGuide): DocumentData {
         uploadedAt: guide.uploadedAt,
         updatedAt: guide.updatedAt,
         version: guide.version, // can be null; Firestore accepts null
+        manifest: guide.manifest, // null until the extractor finishes
     };
     return data;
 }
@@ -205,6 +211,12 @@ function deserialize(id: string, data: DocumentData): UserStyleGuide {
         ownerId: data.ownerId,
         displayName: data.displayName ?? '',
         corpusId: data.corpusId ?? '',
+        manifest: data.manifest
+            ? {
+                ...data.manifest,
+                extractedAt: data.manifest.extractedAt?.toDate?.() ?? data.manifest.extractedAt ?? new Date(),
+            }
+            : null,
         version: data.version ?? null,
         isActive: !!data.isActive,
         uploadedAt: data.uploadedAt?.toDate?.() ?? data.uploadedAt ?? new Date(),

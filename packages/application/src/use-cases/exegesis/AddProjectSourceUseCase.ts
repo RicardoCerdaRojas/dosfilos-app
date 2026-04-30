@@ -27,8 +27,8 @@ export class AddProjectSourceUseCase {
         if (!input.corpusId) {
             throw new Error('AddProjectSourceUseCase: corpusId required');
         }
-        if (!input.role) {
-            throw new Error('AddProjectSourceUseCase: role required');
+        if (!input.sourceType) {
+            throw new Error('AddProjectSourceUseCase: sourceType required');
         }
 
         // Auto-assign order from the paper's current source count. Reading
@@ -45,7 +45,7 @@ export class AddProjectSourceUseCase {
 
         return this.paperRepository.addSource(input.ownerId, input.paperId, {
             corpusId: input.corpusId,
-            role: input.role,
+            sourceType: input.sourceType,
             displayLabel: input.displayLabel,
             citationKey: input.citationKey ?? null,
             order,

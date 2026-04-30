@@ -40,6 +40,12 @@ export class CreateUserStyleGuideUseCase {
             ownerId: input.ownerId,
             displayName: input.displayName,
             corpusId: input.corpusId,
+            // Manifest extraction runs as a separate post-upload step
+            // (Phase 3 wires the extractor to fire once LlamaParse
+            // finishes). We persist the guide with `manifest: null` so
+            // the verification UI can immediately render the
+            // "extracting rules" placeholder.
+            manifest: null,
             version: input.version ?? null,
             isActive: shouldActivate,
         });

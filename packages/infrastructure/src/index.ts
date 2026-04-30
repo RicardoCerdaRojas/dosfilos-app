@@ -17,6 +17,7 @@ export * from './firebase/FirestoreAIChatRepository'; // 🎓 Multi-Agent Chat R
 export * from './firebase/FirestoreAIProjectRepository'; // 🎓 Multi-Agent Project Repository
 export * from './firebase/FirestoreExegeticalPaperRepository'; // ✍️ Exegesis Module — paper repo
 export * from './firebase/FirestoreUserStyleGuideRepository'; // ✍️ Exegesis Module — style guide repo
+export * from './exegesis'; // ✍️ Exegesis Module — Gemini orchestrator
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';
 export * from './gemini/GeminiPlanGenerator';

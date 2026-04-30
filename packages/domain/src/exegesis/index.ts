@@ -6,10 +6,20 @@
 
 export * from './entities/ExegeticalPaper';
 export * from './entities/ExegeticalStep';
+export * from './entities/PaperRubric';
 export * from './entities/ProjectSource';
+export * from './entities/SourceType';
+export * from './entities/StepSourcePlan';
+export * from './entities/StyleGuideManifest';
 export * from './entities/UserStyleGuide';
 
 export * from './repositories/IExegeticalPaperRepository';
 export * from './repositories/IUserStyleGuideRepository';
 
 export * from './use-cases/dtos';
+
+export * from './ports/IExegesisOrchestrator';
+export * from './ports/IPaperRubricExtractor';
+export * from './ports/IResourceContentReader';
+export * from './ports/IStyleFormatter';
+export * from './ports/IStyleGuideManifestExtractor';

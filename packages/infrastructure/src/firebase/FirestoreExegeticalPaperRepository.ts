@@ -22,8 +22,14 @@ import type {
     ExegeticalStepVersion,
     IExegeticalPaperRepository,
     ProjectSource,
+    SourceType,
 } from '@dosfilos/domain';
-import { EMPTY_VERIFICATION_SUMMARY } from '@dosfilos/domain';
+import {
+    EMPTY_STEP_SOURCE_PLAN,
+    EMPTY_VERIFICATION_SUMMARY,
+    buildDefaultRubric,
+    migrateLegacyRole,
+} from '@dosfilos/domain';
 
 /**
  * Firestore implementation of `IExegeticalPaperRepository`.
@@ -97,6 +103,10 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
     async createPaper(draft: ExegeticalPaperDraft): Promise<ExegeticalPaper> {
         const ref = doc(this.collectionRef());
         const now = new Date();
+        // Default rubric and empty plan are applied here — the setup UI's
+        // sub-steps overwrite them once the student uploads a real rubric
+        // and configures the per-step plan. Generating against the default
+        // is allowed but the UI nudges the student to confirm first.
         const paper: ExegeticalPaper = {
             id: ref.id,
             ownerId: draft.ownerId,
@@ -107,6 +117,8 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             title: draft.title,
             styleGuideId: draft.styleGuideId,
             sources: draft.sources,
+            rubric: buildDefaultRubric(),
+            stepPlan: { ...EMPTY_STEP_SOURCE_PLAN, updatedAt: now },
             phase: 'configuring',
             steps: [],
             currentStepId: null,
@@ -186,7 +198,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             paperId,
             createdAt: new Date(),
             corpusId: source.corpusId,
-            role: source.role,
+            sourceType: source.sourceType,
             displayLabel: source.displayLabel,
             citationKey: source.citationKey,
             order: source.order,
@@ -216,7 +228,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         ownerId: string,
         paperId: string,
         sourceId: string,
-        patch: Partial<Pick<ProjectSource, 'role' | 'displayLabel' | 'citationKey' | 'order'>>
+        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order'>>
     ): Promise<ProjectSource> {
         const ref = this.docRef(paperId);
         let updated: ProjectSource | null = null;
@@ -237,7 +249,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             }
             // Only apply defined keys — undefined would erase the existing value.
             const merged: ProjectSource = { ...sources[idx] };
-            if (patch.role !== undefined) merged.role = patch.role;
+            if (patch.sourceType !== undefined) merged.sourceType = patch.sourceType;
             if (patch.displayLabel !== undefined) merged.displayLabel = patch.displayLabel;
             if (patch.citationKey !== undefined) merged.citationKey = patch.citationKey;
             if (patch.order !== undefined) merged.order = patch.order;
@@ -523,6 +535,8 @@ function serialize(paper: ExegeticalPaper): DocumentData {
         displayLanguage: paper.displayLanguage,
         styleGuideId: paper.styleGuideId,
         sources: paper.sources,
+        rubric: paper.rubric,
+        stepPlan: paper.stepPlan,
         phase: paper.phase,
         steps: paper.steps,
         currentStepId: paper.currentStepId,
@@ -543,12 +557,84 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
         displayLanguage: data.displayLanguage ?? 'es',
         title: data.title,
         styleGuideId: data.styleGuideId ?? null,
-        sources: Array.isArray(data.sources) ? data.sources : [],
+        sources: Array.isArray(data.sources) ? data.sources.map(deserializeSource) : [],
+        rubric: data.rubric ? deserializeRubric(data.rubric) : null,
+        stepPlan: deserializeStepPlan(data.stepPlan),
         phase: data.phase ?? 'configuring',
         steps: Array.isArray(data.steps) ? data.steps : [],
         currentStepId: data.currentStepId ?? null,
         assembledMarkdown: data.assembledMarkdown ?? null,
         archivedAt: data.archivedAt?.toDate?.() ?? data.archivedAt ?? null,
+    };
+}
+
+/**
+ * Source-level deserializer that handles the legacy `role` field. Pre-
+ * redesign documents stored `role: ProjectSourceRole` (8 flat values);
+ * the redesign uses `sourceType: SourceType` (13 granular values). Any
+ * doc that still carries the old field is migrated transparently here.
+ *
+ * Once all in-flight test papers have been read at least once (and re-
+ * saved by any subsequent mutation), the legacy field will disappear
+ * and this shim becomes a no-op. Keep it indefinitely as a safety net.
+ */
+function deserializeSource(raw: any): ProjectSource {
+    const sourceType: SourceType = raw.sourceType
+        ? raw.sourceType
+        : migrateLegacyRole(raw.role ?? 'misc');
+    return {
+        id: raw.id,
+        paperId: raw.paperId,
+        corpusId: raw.corpusId,
+        sourceType,
+        displayLabel: raw.displayLabel ?? '',
+        citationKey: raw.citationKey ?? null,
+        order: typeof raw.order === 'number' ? raw.order : 0,
+        createdAt: raw.createdAt?.toDate?.() ?? raw.createdAt ?? new Date(),
+    };
+}
+
+/**
+ * Deserializes a `PaperRubric` blob from Firestore. The structure is
+ * preserved verbatim apart from the `Date` fields, which Firestore
+ * serializes as Timestamps. Pre-redesign documents have no `rubric`
+ * field; the caller skips this helper for those (passes `null` to the
+ * `paper.rubric` slot).
+ */
+function deserializeRubric(raw: any): ExegeticalPaper['rubric'] {
+    if (!raw) return null;
+    return {
+        provenance: raw.provenance ?? 'system-default',
+        title: raw.title ?? null,
+        description: raw.description ?? null,
+        expectedLength: raw.expectedLength ?? null,
+        citationStandard: raw.citationStandard ?? null,
+        sourceRequirements: Array.isArray(raw.sourceRequirements) ? raw.sourceRequirements : [],
+        structuralExpectations: Array.isArray(raw.structuralExpectations) ? raw.structuralExpectations : [],
+        sourceCorpusId: raw.sourceCorpusId ?? null,
+        sourcePastedText: raw.sourcePastedText ?? null,
+        createdAt: raw.createdAt?.toDate?.() ?? raw.createdAt ?? new Date(),
+        updatedAt: raw.updatedAt?.toDate?.() ?? raw.updatedAt ?? new Date(),
+    };
+}
+
+/**
+ * Deserializes a `StepSourcePlan`. Defaults to the empty plan when
+ * the document predates the redesign — generation against the empty
+ * plan is identical to "use rubric defaults for everything".
+ */
+function deserializeStepPlan(raw: any): ExegeticalPaper['stepPlan'] {
+    if (!raw) {
+        return { ...EMPTY_STEP_SOURCE_PLAN, updatedAt: new Date() };
+    }
+    return {
+        perStep: raw.perStep ?? {},
+        defaults: {
+            verse: raw.defaults?.verse ?? EMPTY_STEP_SOURCE_PLAN.defaults.verse,
+            conclusion: raw.defaults?.conclusion ?? EMPTY_STEP_SOURCE_PLAN.defaults.conclusion,
+            introduction: raw.defaults?.introduction ?? EMPTY_STEP_SOURCE_PLAN.defaults.introduction,
+        },
+        updatedAt: raw.updatedAt?.toDate?.() ?? raw.updatedAt ?? new Date(),
     };
 }
 

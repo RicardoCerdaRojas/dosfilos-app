@@ -5,10 +5,10 @@ import type {
 } from '@dosfilos/domain';
 
 /**
- * Patches a single source on a paper. Common updates: changing the role
- * (e.g. promoting a 'misc' to 'primary-commentary'), correcting the
- * displayLabel, or pinning an explicit `citationKey` to disambiguate
- * authors with the same surname.
+ * Patches a single source on a paper. Common updates: changing the
+ * `sourceType` (e.g. promoting an `other` to `commentary-critical`),
+ * correcting the displayLabel, or pinning an explicit `citationKey` to
+ * disambiguate authors with the same surname.
  *
  * Pass `citationKey: null` to clear an explicit override and let the
  * orchestrator derive the key from corpus metadata.
@@ -28,7 +28,7 @@ export class UpdateProjectSourceUseCase {
             input.paperId,
             input.sourceId,
             {
-                role: input.role,
+                sourceType: input.sourceType,
                 displayLabel: input.displayLabel,
                 citationKey: input.citationKey,
                 order: input.order,

@@ -1,7 +1,10 @@
 import {
     FirestoreExegeticalPaperRepository,
     FirestoreUserStyleGuideRepository,
+    FirebaseLibraryRepository,
+    GeminiExegesisOrchestrator,
 } from '@dosfilos/infrastructure';
+import type { IResourceContentReader } from '@dosfilos/domain';
 
 import {
     CreateExegeticalPaperUseCase,
@@ -61,8 +64,30 @@ class ExegesisService {
     public saveStepEdit: SaveStepEditUseCase;
 
     constructor() {
+        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+        // Reuse the vision model env var — both surfaces want Pro 2.5.
+        // A dedicated `VITE_GEMINI_EXEGESIS_MODEL_ID` can split them later
+        // if exegesis ends up needing a different tier.
+        const exegesisModelId = (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
+
+        if (!apiKey) {
+            console.warn('Gemini API key not configured. Exegesis generation will be disabled.');
+        }
+
         const paperRepository = new FirestoreExegeticalPaperRepository();
         const styleGuideRepository = new FirestoreUserStyleGuideRepository();
+        const libraryRepository = new FirebaseLibraryRepository();
+        const orchestrator = new GeminiExegesisOrchestrator(apiKey || '', exegesisModelId);
+
+        // Adapt the broader library repository to the narrow content-reader
+        // port the use case depends on. Keeps the use case free of any
+        // direct knowledge of how resources are stored or extracted.
+        const contentReader: IResourceContentReader = {
+            async getTextContent(resourceId: string) {
+                const resource = await libraryRepository.findById(resourceId);
+                return resource?.textContent ?? null;
+            },
+        };
 
         // Papers
         this.createPaper = new CreateExegeticalPaperUseCase(paperRepository);
@@ -82,9 +107,14 @@ class ExegesisService {
         this.updateSource = new UpdateProjectSourceUseCase(paperRepository);
         this.removeSource = new RemoveProjectSourceUseCase(paperRepository);
 
-        // Steps (state machine + D.1 placeholder generation)
+        // Steps (D.2: live Gemini generation with style guide + sources injected)
         this.seedSteps = new SeedStepsForPassageUseCase(paperRepository);
-        this.generateStep = new GenerateStepUseCase(paperRepository);
+        this.generateStep = new GenerateStepUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            orchestrator,
+        );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
     }

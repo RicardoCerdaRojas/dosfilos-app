@@ -1,3 +1,6 @@
+import type { SourceType } from './SourceType';
+import { isCitableSourceType } from './SourceType';
+
 /**
  * A single source attached to an exegetical paper — typically an extract
  * from a commentary, lexicon, or critical apparatus that the user uploads
@@ -10,7 +13,12 @@
  * The actual text content is processed via the existing LlamaParse
  * pipeline and stored as a corpus referenced by `corpusId`. We don't
  * duplicate the text here — this entity is purely the relationship
- * (source → paper) with role metadata for citation discipline.
+ * (source → paper) with academic metadata for citation discipline.
+ *
+ * Taxonomy note: as of the rubric-driven redesign the `sourceType` field
+ * uses the granular `SourceType` catalog (13 values with rigor tiers).
+ * The earlier `role` field with 8 flat values (`primary-commentary`, etc.)
+ * is migrated via `migrateLegacyRole` in `SourceType.ts`.
  */
 export interface ProjectSource {
     id: string;
@@ -19,21 +27,23 @@ export interface ProjectSource {
     /**
      * Reference to the corpus produced by the existing ingestion pipeline.
      * The corpus holds the parsed chunks with page anchoring; this entity
-     * tells the LLM-orchestration layer how to USE it (role, citation key)
+     * tells the LLM-orchestration layer how to USE it (type, citation key)
      * and the future `CitationVerifier` how to MATCH against it.
      */
     corpusId: string;
 
     /**
-     * What this source contributes to the paper. Drives prompt instructions
-     * (lexicons are referenced for terms; primary commentaries for verse-by-
-     * verse exegesis; the model paper for style mimicry, not citation;
-     * critical apparatus for textual variants).
+     * Granular academic type — drives rubric compliance (minimum counts
+     * per type), per-step plan defaults (which step kinds typically use
+     * this type), and the prompt's citation-discipline budget. See
+     * `SOURCE_TYPE_CATALOG` for the metadata behind each value.
      *
-     * The 'model-paper' role is special: it's used as a STYLE template, not
-     * a source — citations from it should NEVER appear in the output.
+     * The 'style-template-paper' type is special: it's used as a STYLE
+     * template, not a source — citations from it must NEVER appear in
+     * the output. The orchestrator enforces this via the catalog's
+     * `defaultCitationDiscipline: 'never-cite'`.
      */
-    role: ProjectSourceRole;
+    sourceType: SourceType;
 
     /**
      * Human label as the user typed it on upload — "Lane WBC 47a, pp. 1-30"
@@ -56,52 +66,13 @@ export interface ProjectSource {
 }
 
 /**
- * Source roles loosely follow what TMS-style papers expect to cite.
- *
- * 'primary-commentary'   — the main exegetical voice for the passage
- *                          (e.g. Lane on Hebrews). Cite generously.
- * 'secondary-commentary' — supporting commentaries; cite where they add
- *                          a distinct angle.
- * 'lexicon'              — BDAG, LSJ, Tuggy. Cite for word meanings;
- *                          subordinate to context.
- * 'critical-apparatus'   — NA28 apparatus, textual variants. Cite when
- *                          variants affect translation.
- * 'historical-context'   — deSilva on honor/shame, Sanders on Judaism.
- *                          Cite when historical-cultural context shapes
- *                          the reading.
- * 'theological-context'  — Bateman on warning passages, etc. Cite when
- *                          theological framing matters.
- * 'model-paper'          — a sample paper (e.g. the user's 1 Peter work)
- *                          used as a STYLE/STRUCTURE template only.
- *                          NEVER cited inline.
- * 'misc'                 — fallback for sources that don't fit cleanly.
- *                          Use sparingly.
+ * @deprecated Use `SourceType` from './SourceType'. Retained as a
+ * type alias only so transitional code compiles. Remove once the
+ * pre-redesign references in legacy snapshots have all been migrated.
  */
-export type ProjectSourceRole =
-    | 'primary-commentary'
-    | 'secondary-commentary'
-    | 'lexicon'
-    | 'critical-apparatus'
-    | 'historical-context'
-    | 'theological-context'
-    | 'model-paper'
-    | 'misc';
+export type ProjectSourceRole = SourceType;
 
-/**
- * Roles whose citations may appear in the assembled paper. The 'model-paper'
- * role is intentionally excluded — its content is for style emulation only,
- * and the prompt + verifier must enforce that.
- */
-export const CITABLE_SOURCE_ROLES: ReadonlySet<ProjectSourceRole> = new Set([
-    'primary-commentary',
-    'secondary-commentary',
-    'lexicon',
-    'critical-apparatus',
-    'historical-context',
-    'theological-context',
-    'misc',
-]);
-
-export function isCitable(role: ProjectSourceRole): boolean {
-    return CITABLE_SOURCE_ROLES.has(role);
+/** @deprecated Use `isCitableSourceType` from './SourceType'. */
+export function isCitable(type: SourceType): boolean {
+    return isCitableSourceType(type);
 }

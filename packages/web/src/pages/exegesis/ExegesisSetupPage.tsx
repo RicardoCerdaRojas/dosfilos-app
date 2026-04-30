@@ -66,7 +66,7 @@ export function ExegesisSetupPage() {
                         await addSource.mutateAsync({
                             paperId: paper.id,
                             corpusId: s.corpusId,
-                            role: s.role,
+                            sourceType: s.sourceType,
                             displayLabel: s.displayLabel,
                             citationKey: s.citationKey || undefined,
                         });
