@@ -11,6 +11,7 @@ import {
     ListExegeticalPapersUseCase,
     GetExegeticalPaperUseCase,
     ArchiveExegeticalPaperUseCase,
+    UpdatePaperBriefUseCase,
     ListUserStyleGuidesUseCase,
     GetActiveStyleGuideUseCase,
     CreateUserStyleGuideUseCase,
@@ -44,6 +45,7 @@ class ExegesisService {
     public listPapers: ListExegeticalPapersUseCase;
     public getPaper: GetExegeticalPaperUseCase;
     public archivePaper: ArchiveExegeticalPaperUseCase;
+    public updatePaperBrief: UpdatePaperBriefUseCase;
 
     // User style guides
     public listStyleGuides: ListUserStyleGuidesUseCase;
@@ -94,6 +96,7 @@ class ExegesisService {
         this.listPapers = new ListExegeticalPapersUseCase(paperRepository);
         this.getPaper = new GetExegeticalPaperUseCase(paperRepository);
         this.archivePaper = new ArchiveExegeticalPaperUseCase(paperRepository);
+        this.updatePaperBrief = new UpdatePaperBriefUseCase(paperRepository);
 
         // User style guides
         this.listStyleGuides = new ListUserStyleGuidesUseCase(styleGuideRepository);

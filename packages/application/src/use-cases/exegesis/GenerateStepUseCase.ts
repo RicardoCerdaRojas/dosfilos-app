@@ -74,6 +74,7 @@ export class GenerateStepUseCase {
                 paperPassage: paper.passage,
                 verseRef: step.verseRef,
                 language: paper.displayLanguage,
+                assignmentBrief: paper.assignmentBrief,
                 styleGuideContent,
                 sources,
                 priorAcceptedSteps,

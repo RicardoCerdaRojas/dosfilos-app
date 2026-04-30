@@ -17,6 +17,71 @@
             "body": "This first version focuses on the assisted writing flow: project setup, step-by-step verse generation with interaction, and final assembly. Programmatic citation verification (the real differentiator vs NotebookLM) arrives in the next version."
         }
     },
+    "create": {
+        "title": "New exegetical paper",
+        "subtitle": "Set the passage and frame the work for the agent. We'll define rubric, sources, and structural plan next.",
+        "backToList": "Back to list",
+        "submit": "Create and configure",
+        "cancel": "Cancel",
+        "brief": {
+            "title": "Paper framing",
+            "subtitle": "What did your professor assign? What angle do you want to take? This guides the agent across EVERY step.",
+            "placeholder": "Ex: My professor assigned an exegetical analysis of Hebrews 1:1-4 with a Christological focus. I want to argue that the final revelation in the Son establishes the thematic superiority of the epistle.",
+            "optional": "Optional but strongly recommended. You can edit it later.",
+            "characterCount": "{{count}} / {{max}} characters",
+            "tip": "The clearer the framing, the more cohesive the paper. Mention the passage, the emphasis (Christological, ecclesiological, etc.), and any explicit professor expectations."
+        },
+        "toast": {
+            "created": "Paper created — let's configure it",
+            "createFailed": "Could not create the paper. Please try again."
+        }
+    },
+    "paperSetup": {
+        "loading": "Loading configuration...",
+        "subtitle": "Academic configuration: rubric, style guide, corpus, and structural plan.",
+        "backToPaper": "Back to paper",
+        "untitledFallback": "Untitled paper",
+        "goToPaper": "Go to paper",
+        "notFound": {
+            "title": "Paper not found",
+            "body": "We couldn't load this paper. Go back to the list.",
+            "backCta": "Back to list"
+        },
+        "subSteps": {
+            "rubric": {
+                "tab": "Rubric",
+                "heading": "Paper rubric",
+                "description": "Upload the seminary's rubric or use the academic TMS default. Sets corpus minimums and structural emphases.",
+                "loading": "Loading rubric...",
+                "placeholderHint": "The structured rubric editor lands in the next commit. The TMS default is applied for now and is honored in gap detection.",
+                "provenance": {
+                    "extracted-from-document": "Extracted from document",
+                    "extracted-from-text": "Extracted from text",
+                    "system-default": "System default",
+                    "user-edited": "Edited by you"
+                }
+            },
+            "manifest": {
+                "tab": "Style guide",
+                "heading": "Style guide manifest",
+                "description": "Verify the mechanical rules extracted from your guide (footnotes, ibid, quotation marks). Correct anything before generating.",
+                "placeholderHint": "The manifest viewer + citation samples lands in a later commit.",
+                "noGuide": "No active guide attached. Upload one from your profile so the manifest can be extracted automatically."
+            },
+            "corpus": {
+                "tab": "Corpus",
+                "heading": "Paper corpus",
+                "description": "Upload extracts specific to this passage with their academic type. We flag what's missing per the rubric.",
+                "placeholderHint": "You have {{count}} sources attached. The granular corpus picker + gap detection lands in the next commit."
+            },
+            "plan": {
+                "tab": "Structural plan",
+                "heading": "Structural plan",
+                "description": "For each step (intro, verse, conclusion) confirm or adjust which source types the agent should prioritize.",
+                "placeholderHint": "You have {{count}} plan entries configured. The per-step editor lands in a later commit."
+            }
+        }
+    },
     "setup": {
         "title": "New exegetical paper",
         "subtitle": "Configure the passage, the style guide, and the project-specific corpus.",

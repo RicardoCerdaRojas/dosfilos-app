@@ -34,6 +34,13 @@ export interface CreateExegeticalPaperInput {
      */
     title?: string;
     /**
+     * Free-text assignment brief: the professor's prompt + the student's
+     * focus. Threaded through to every step's system prompt so the LLM
+     * keeps the paper's framing consistent. Optional at create time —
+     * the student can refine it from the setup page later.
+     */
+    assignmentBrief?: string | null;
+    /**
      * Reference to a `UserStyleGuide` already uploaded by the user. May be
      * null in v1 — the wizard's style-guide step is a v1.5 placeholder, so
      * papers are created without a guide and the orchestrator validates
@@ -46,6 +53,19 @@ export interface CreateExegeticalPaperInput {
      * later via `AddProjectSource` while the paper is in 'configuring'.
      */
     initialSources?: AddProjectSourceInput[];
+}
+
+// ── UpdatePaperBrief ────────────────────────────────────────────────────
+//
+// Tiny stand-alone DTO so the setup-page "edit framing" form can call
+// the use case without re-sending all the create fields. Returns the
+// updated paper for the UI to refresh.
+
+export interface UpdatePaperBriefInput {
+    ownerId: string;
+    paperId: string;
+    /** New brief value. Pass empty string or null to clear. */
+    assignmentBrief: string | null;
 }
 
 // ── AddProjectSource ────────────────────────────────────────────────────

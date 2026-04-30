@@ -17,6 +17,71 @@
             "body": "Esta primera versión enfoca el flujo de redacción asistida: configuración del proyecto, generación verso por verso con interacción y ensamble final. La verificación programática de citas (el diferenciador frente a NotebookLM) llega en la siguiente versión."
         }
     },
+    "create": {
+        "title": "Nuevo trabajo exegético",
+        "subtitle": "Configurá el pasaje y dale contexto al agente. Después definimos rúbrica, fuentes y plan estructural.",
+        "backToList": "Volver al listado",
+        "submit": "Crear y configurar",
+        "cancel": "Cancelar",
+        "brief": {
+            "title": "Encuadre del trabajo",
+            "subtitle": "¿Qué pidió tu profesor? ¿Qué ángulo querés tomar? Esto guía al agente en TODOS los pasos.",
+            "placeholder": "Ej: Mi profesor pidió un análisis exegético de Hebreos 1:1-4 con énfasis cristológico. Quiero argumentar que la revelación final en el Hijo establece la superioridad temática de la epístola.",
+            "optional": "Opcional pero muy recomendado. Lo podés editar luego.",
+            "characterCount": "{{count}} / {{max}} caracteres",
+            "tip": "Cuanto más claro sea el encuadre, mejor cohesión tendrá el paper. Mencioná el pasaje, el énfasis (cristológico, eclesiológico, etc.) y cualquier expectativa explícita del profesor."
+        },
+        "toast": {
+            "created": "Trabajo creado — vamos a configurarlo",
+            "createFailed": "No se pudo crear el trabajo. Intentá de nuevo."
+        }
+    },
+    "paperSetup": {
+        "loading": "Cargando configuración...",
+        "subtitle": "Configuración académica: rúbrica, guía de estilo, corpus y plan estructural.",
+        "backToPaper": "Volver al trabajo",
+        "untitledFallback": "Trabajo sin título",
+        "goToPaper": "Ir al trabajo",
+        "notFound": {
+            "title": "Trabajo no encontrado",
+            "body": "No pudimos cargar este trabajo. Volvé al listado.",
+            "backCta": "Volver al listado"
+        },
+        "subSteps": {
+            "rubric": {
+                "tab": "Rúbrica",
+                "heading": "Rúbrica del trabajo",
+                "description": "Subí la rúbrica del seminario o usá el default académico TMS. Determina los mínimos del corpus y los énfasis estructurales.",
+                "loading": "Cargando rúbrica...",
+                "placeholderHint": "El editor estructurado de rúbrica llega en el próximo commit. Por ahora, el default TMS está aplicado y se respeta en gap detection.",
+                "provenance": {
+                    "extracted-from-document": "Extraída de documento",
+                    "extracted-from-text": "Extraída de texto",
+                    "system-default": "Default del sistema",
+                    "user-edited": "Editada por vos"
+                }
+            },
+            "manifest": {
+                "tab": "Guía de estilo",
+                "heading": "Manifiesto de la guía de estilo",
+                "description": "Verificá las reglas mecánicas extraídas de tu guía (notas al pie, ibid, comillas). Si algo está mal, corregilo antes de generar.",
+                "placeholderHint": "El visor del manifiesto + samples de citas llega en un commit posterior.",
+                "noGuide": "No hay guía activa adjunta. Subí una desde tu perfil para que el manifiesto se extraiga automáticamente."
+            },
+            "corpus": {
+                "tab": "Corpus",
+                "heading": "Corpus del trabajo",
+                "description": "Subí los extractos específicos para este pasaje con tipo académico. Te avisamos qué falta según la rúbrica.",
+                "placeholderHint": "Tenés {{count}} fuentes adjuntas. El corpus picker granular + gap detection llega en el próximo commit."
+            },
+            "plan": {
+                "tab": "Plan estructural",
+                "heading": "Plan estructural",
+                "description": "Para cada paso (intro, verso, conclusión), confirmá o ajustá qué tipos de fuente debe priorizar el agente.",
+                "placeholderHint": "Tenés {{count}} entradas de plan configuradas. El editor por paso llega en un commit posterior."
+            }
+        }
+    },
     "setup": {
         "title": "Nuevo trabajo exegético",
         "subtitle": "Configurá el pasaje, la guía de estilo y el corpus de fuentes específicas para este trabajo.",

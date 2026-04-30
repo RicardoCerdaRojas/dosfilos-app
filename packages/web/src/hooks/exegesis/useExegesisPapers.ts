@@ -52,6 +52,20 @@ export function useExegesisPapers() {
         },
     });
 
+    const updatePaperBrief = useMutation({
+        mutationFn: async ({ paperId, assignmentBrief }: { paperId: string; assignmentBrief: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.updatePaperBrief.execute({
+                ownerId: user.uid,
+                paperId,
+                assignmentBrief,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     const addSource = useMutation({
         mutationFn: async (input: AddProjectSourceInput & { paperId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -145,6 +159,7 @@ export function useExegesisPapers() {
         error: papersQuery.error,
         createPaper,
         archivePaper,
+        updatePaperBrief,
         addSource,
         updateSource,
         removeSource,

@@ -51,8 +51,9 @@ import { BibleProvider } from '@/context/BibleContext';
 import { FacultyChatPage } from '@/pages/faculty/chat';
 import { ProjectDashboard } from '@/pages/faculty/ProjectDashboard';
 import { ExegesisPage } from '@/pages/exegesis/ExegesisPage';
-import { ExegesisSetupPage } from '@/pages/exegesis/ExegesisSetupPage';
+import { ExegesisCreatePage } from '@/pages/exegesis/ExegesisCreatePage';
 import { ExegesisPaperPage } from '@/pages/exegesis/ExegesisPaperPage';
+import { ExegesisPaperSetupPage } from '@/pages/exegesis/ExegesisPaperSetupPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { useEffect } from 'react';
 import { SessionTracker } from '@/components/analytics/SessionTracker';
@@ -224,8 +225,9 @@ function App() {
                 v1: list of papers + setup. Detail routes added incrementally. */}
             <Route path="exegesis">
               <Route index element={<ExegesisPage />} />
-              <Route path="new" element={<ExegesisSetupPage />} />
+              <Route path="new" element={<ExegesisCreatePage />} />
               <Route path=":paperId" element={<ExegesisPaperPage />} />
+              <Route path=":paperId/setup" element={<ExegesisPaperSetupPage />} />
             </Route>
 
             {/* Greek Tutor - Start page with sidebar for navigation */}

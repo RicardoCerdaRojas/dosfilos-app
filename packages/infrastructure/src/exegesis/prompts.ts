@@ -50,6 +50,7 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
     const lang = input.language;
     const passage = formatPassageReference(input.paperPassage, lang);
     const styleGuideBlock = formatStyleGuide(input.styleGuideContent, lang);
+    const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
 
     if (lang === 'en') {
         return [
@@ -57,6 +58,7 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
             ``,
             `## Your task`,
             `Produce an integrated translation and exegetical analysis on **${passage}**, working ${stepKindDescription(input.kind, lang)}.`,
+            briefBlock,
             ``,
             `## Hermeneutic stance`,
             `Historical-grammatical-literal. Prioritize: authorial sense, Greek grammar, clause syntax, argumentative flow of the book, immediate literary context, OT intertextuality, biblical theology that emerges from the passage. NO allegorizing. NO doctrinal conclusions not supported by the text.`,
@@ -82,6 +84,7 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
         ``,
         `## Tu tarea`,
         `Producir traducción y análisis exegético integrado sobre **${passage}**, trabajando ${stepKindDescription(input.kind, lang)}.`,
+        briefBlock,
         ``,
         `## Postura hermenéutica`,
         `Histórico-gramatical-literal. Priorizá: sentido autoral, gramática griega, sintaxis de cláusulas, flujo argumentativo del libro, contexto literario inmediato, intertextualidad con el AT, teología bíblica que emerge del pasaje. NO alegorices. NO fuerces conclusiones doctrinales que no estén sustentadas por el texto.`,
@@ -210,6 +213,36 @@ function formatStyleGuide(content: string, lang: 'es' | 'en'): string {
     }
     const truncated = truncate(content, STYLE_GUIDE_BUDGET_CHARS);
     return ['```', truncated, '```'].join('\n');
+}
+
+/**
+ * Renders the paper-level assignment brief into a labeled block for
+ * the system prompt. Returns an empty string when no brief is set so
+ * the prompt collapses cleanly with no orphan heading.
+ *
+ * The brief is the paper's narrative identity (what the professor
+ * assigned + the angle the student is taking). Putting it right
+ * after `## Your task` ensures every step generation reads it before
+ * the more granular instructions about citation discipline and tone.
+ */
+function formatAssignmentBrief(brief: string | null, lang: 'es' | 'en'): string {
+    if (!brief || !brief.trim()) return '';
+    if (lang === 'en') {
+        return [
+            ``,
+            `## Paper framing (assignment + student focus)`,
+            `Treat the following as authoritative paper-level guidance. Every step you generate must stay aligned with this framing — the introduction states the thesis it implies, the verses build the argument toward it, and the conclusion synthesizes back to it.`,
+            ``,
+            brief.trim(),
+        ].join('\n');
+    }
+    return [
+        ``,
+        `## Encuadre del trabajo (asignación + enfoque del alumno)`,
+        `Tratá lo siguiente como guía autoritativa a nivel del paper. Cada paso que generes debe mantenerse alineado con este encuadre — la introducción presenta la tesis que se desprende, los versos construyen el argumento hacia ella, y la conclusión sintetiza de vuelta hacia el encuadre.`,
+        ``,
+        brief.trim(),
+    ].join('\n');
 }
 
 function formatSources(sources: ExegesisSourceContext[], lang: 'es' | 'en'): string {

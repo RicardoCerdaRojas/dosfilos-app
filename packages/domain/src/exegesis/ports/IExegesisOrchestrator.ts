@@ -28,6 +28,15 @@ export interface ExegesisGenerationInput {
     /** Output language (drives prompt + defense-in-depth language directive). */
     language: 'es' | 'en';
     /**
+     * Free-text framing of the paper — typically the assignment brief
+     * the professor gave plus the angle the student wants to take.
+     * Injected verbatim near the top of the system prompt so the LLM
+     * keeps every step (intro, verses, conclusion) aligned with the
+     * same paper-level identity. Null when the student didn't supply
+     * one — the prompt falls back to neutral framing.
+     */
+    assignmentBrief: string | null;
+    /**
      * Style guide content (TMS or equivalent) verbatim. Injected into the
      * system prompt as authoritative formatting rules. Empty string is
      * tolerated — the use case decides whether to surface "no guide" as

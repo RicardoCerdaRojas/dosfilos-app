@@ -42,6 +42,29 @@ export interface ExegeticalPaper {
     title?: string;
 
     /**
+     * Free-text framing of the paper — typically a paragraph that
+     * combines what the seminary professor assigned ("escribir un
+     * análisis exegético del prólogo cristológico de Hebreos 1:1-4")
+     * and the angle the student wants to take ("argumentar que la
+     * revelación final en el Hijo establece la superioridad temática
+     * de la epístola"). Treated by the orchestrator as PAPER-LEVEL
+     * authoritative guidance — it appears verbatim in the system
+     * prompt of every step generation so the introduction, verses,
+     * and conclusion all stay aligned with the same framing.
+     *
+     * Different from rubric (mechanical grading criteria) and from
+     * style guide (mechanical formatting rules): this is the paper's
+     * narrative identity. v1 uses a single text blob; v1.5+ may
+     * split into "professor brief" vs "student thesis" if the
+     * pattern is worth differentiating.
+     *
+     * Nullable: a student may create a paper without a brief and the
+     * orchestrator will fall back to neutral framing. The setup UI
+     * encourages filling it but doesn't block.
+     */
+    assignmentBrief: string | null;
+
+    /**
      * Reference to the user-level style guide active for this paper. The
      * guide is uploaded once per user and reused across papers; we store
      * the id (not a snapshot) so seminary updates flow through automatically
