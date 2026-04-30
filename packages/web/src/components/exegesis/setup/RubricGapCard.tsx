@@ -34,7 +34,7 @@ export function RubricGapCard({ paper }: RubricGapCardProps) {
 
     if (!rubric) {
         return (
-            <div className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 p-3 text-xs text-slate-500 dark:text-slate-400">
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 {t('paperSetup.subSteps.corpus.gap.noRubric')}
             </div>
         );
@@ -52,13 +52,13 @@ export function RubricGapCard({ paper }: RubricGapCardProps) {
 
     if (report.meetsMinimums) {
         return (
-            <div className="rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-900/20 p-4 flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+            <div className="rounded-lg border border-success/30 bg-success-subtle p-4 flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                    <h3 className="text-sm font-semibold text-success-subtle-foreground">
                         {t('paperSetup.subSteps.corpus.gap.metTitle')}
                     </h3>
-                    <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-1">
+                    <p className="text-xs text-success-subtle-foreground mt-1">
                         {t('paperSetup.subSteps.corpus.gap.metBody', { count: totalSources })}
                     </p>
                 </div>
@@ -67,17 +67,17 @@ export function RubricGapCard({ paper }: RubricGapCardProps) {
     }
 
     return (
-        <div className="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 p-4 space-y-3">
+        <div className="rounded-lg border border-warning/30 bg-warning-subtle p-4 space-y-3">
             <header className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                    <h3 className="text-sm font-semibold text-warning-subtle-foreground">
                         {t('paperSetup.subSteps.corpus.gap.gapsTitle', {
                             satisfied: report.requirements.filter(r => r.satisfied).length,
                             total: visibleRequirements.length,
                         })}
                     </h3>
-                    <p className="text-xs text-amber-800 dark:text-amber-200 mt-1">
+                    <p className="text-xs text-warning-subtle-foreground mt-1">
                         {t('paperSetup.subSteps.corpus.gap.gapsBody', { missing: report.totalMissing })}
                     </p>
                 </div>
@@ -106,23 +106,23 @@ function RequirementRow({ check }: { check: RequirementCheck }) {
     return (
         <li className="flex items-start gap-2 text-xs">
             {check.satisfied ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-success mt-0.5 shrink-0" />
             ) : (
-                <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-amber-200 dark:bg-amber-800 text-[10px] font-semibold text-amber-900 dark:text-amber-100 mt-0 shrink-0">
+                <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-warning text-warning-foreground text-[10px] font-semibold mt-0 shrink-0">
                     {check.missing}
                 </span>
             )}
             <div className="flex-1 min-w-0">
                 <p className={check.satisfied
-                    ? 'text-emerald-900 dark:text-emerald-100 font-medium'
-                    : 'text-amber-900 dark:text-amber-100 font-medium'}
+                    ? 'text-success-subtle-foreground font-medium'
+                    : 'text-warning-subtle-foreground font-medium'}
                 >
                     {label} · {check.have}/{check.required}
                 </p>
-                <p className="text-amber-800 dark:text-amber-200 leading-snug mt-0.5">
+                <p className="text-warning-subtle-foreground leading-snug mt-0.5">
                     {check.justification}
                 </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mt-0.5">
+                <p className="text-[11px] text-muted-foreground italic mt-0.5">
                     {examples}
                 </p>
             </div>

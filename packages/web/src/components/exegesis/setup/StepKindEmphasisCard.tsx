@@ -114,33 +114,33 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
     const availableForDeemphasis = allSourceTypes.filter(t => !emphasized.includes(t) && !deemphasized.includes(t));
 
     return (
-        <section className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
+        <section className="rounded-lg border border-border bg-card p-4 space-y-4">
             <header className="flex items-start gap-3">
-                <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">{icon}</span>
+                <span className="text-success mt-0.5">{icon}</span>
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 inline-flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-foreground inline-flex items-center gap-2">
                         {t(`paperSetup.subSteps.plan.kinds.${kind}`)}
                         {isCustomized && (
-                            <span className="text-[10px] uppercase tracking-wide font-semibold rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-0.5">
+                            <span className="text-[10px] uppercase tracking-wide font-semibold rounded-full bg-success-subtle text-success-subtle-foreground px-2 py-0.5">
                                 {/* "personalizado" / "customized" via re-using the saved label is overkill; inline literal is simpler */}
                                 {t('paperSetup.subSteps.plan.savedHint')}
                             </span>
                         )}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                         {t(`paperSetup.subSteps.plan.kindDescription.${kind}`)}
                     </p>
                 </div>
             </header>
 
             {justification && (
-                <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/40 px-3 py-2 flex items-start gap-2">
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <div className="rounded-md bg-success-subtle border border-success/30 px-3 py-2 flex items-start gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-success mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
-                        <p className="text-[11px] uppercase tracking-wide font-semibold text-emerald-700 dark:text-emerald-300">
+                        <p className="text-[11px] uppercase tracking-wide font-semibold text-success-subtle-foreground">
                             {t('paperSetup.subSteps.plan.rubricSuggestion')}
                         </p>
-                        <p className="text-xs text-emerald-900 dark:text-emerald-100 leading-snug mt-0.5">
+                        <p className="text-xs text-success-subtle-foreground leading-snug mt-0.5">
                             {justification}
                         </p>
                     </div>
@@ -149,10 +149,10 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
 
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    <label className="text-xs font-medium text-foreground">
                         {t('paperSetup.subSteps.plan.emphasizedTypesLabel')}
                     </label>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="text-[11px] text-muted-foreground">
                         {t('paperSetup.subSteps.plan.emphasizedTypesHint')}
                     </p>
                 </div>
@@ -168,7 +168,7 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
             <button
                 type="button"
                 onClick={() => setShowDeemphasized(!showDeemphasized)}
-                className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 underline-offset-2 hover:underline"
+                className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
             >
                 {t('paperSetup.subSteps.plan.deemphasizedToggle')}
             </button>
@@ -176,10 +176,10 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
             {showDeemphasized && (
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <label className="text-xs font-medium text-foreground">
                             {t('paperSetup.subSteps.plan.deemphasizedTypesLabel')}
                         </label>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <p className="text-[11px] text-muted-foreground">
                             {t('paperSetup.subSteps.plan.deemphasizedTypesHint')}
                         </p>
                     </div>
@@ -194,7 +194,7 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
             )}
 
             <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-medium text-foreground">
                     {t('paperSetup.subSteps.plan.noteLabel')}
                 </label>
                 <textarea
@@ -202,14 +202,14 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
                     onChange={(e) => setNote(e.target.value)}
                     placeholder={t('paperSetup.subSteps.plan.notePlaceholder')}
                     rows={2}
-                    className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 resize-y"
+                    className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                 />
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                <p className="text-[10px] text-muted-foreground">
                     {t('paperSetup.subSteps.plan.noteHint')}
                 </p>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-zinc-800">
+            <div className="flex items-center justify-between pt-2 border-t border-border">
                 <Button
                     type="button"
                     variant="ghost"
@@ -223,7 +223,7 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
                     type="button"
                     onClick={handleSave}
                     disabled={updateStepPlan.isPending}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
                 >
                     <CheckCircle2 className="h-3 w-3 mr-1" />
                     {t('paperSetup.subSteps.plan.saveButton')}
@@ -259,8 +259,8 @@ function ChipMultiSelect({ selected, available, rubricSuggested, onAdd, onRemove
                             className={[
                                 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium',
                                 fromRubric
-                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200'
-                                    : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-200',
+                                    ? 'bg-success-subtle text-success-subtle-foreground'
+                                    : 'bg-muted text-muted-foreground',
                             ].join(' ')}
                         >
                             {fromRubric && <Sparkles className="h-2.5 w-2.5" />}
@@ -268,7 +268,7 @@ function ChipMultiSelect({ selected, available, rubricSuggested, onAdd, onRemove
                             <button
                                 type="button"
                                 onClick={() => onRemove(type)}
-                                className="hover:text-rose-500"
+                                className="hover:text-destructive"
                                 aria-label={`Remove ${type}`}
                             >
                                 <X className="h-3 w-3" />
@@ -277,7 +277,7 @@ function ChipMultiSelect({ selected, available, rubricSuggested, onAdd, onRemove
                     );
                 })}
                 {selected.length === 0 && (
-                    <li className="text-[11px] text-slate-400 italic">
+                    <li className="text-[11px] text-muted-foreground italic">
                         {t('paperSetup.subSteps.plan.rubricEmpty')}
                     </li>
                 )}
@@ -293,7 +293,7 @@ function ChipMultiSelect({ selected, available, rubricSuggested, onAdd, onRemove
                         }
                     }}
                     onBlur={() => setAdding(false)}
-                    className="rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
                     <option value="">— {t('paperSetup.subSteps.plan.addType')} —</option>
                     {SOURCE_TYPE_GROUPS.map(group => {
@@ -313,7 +313,7 @@ function ChipMultiSelect({ selected, available, rubricSuggested, onAdd, onRemove
                     type="button"
                     onClick={() => setAdding(true)}
                     disabled={available.length === 0}
-                    className="inline-flex items-center gap-1 text-[11px] text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 text-[11px] text-success hover:text-success-subtle-foreground disabled:opacity-50"
                 >
                     <Plus className="h-3 w-3" />
                     {t('paperSetup.subSteps.plan.addType')}

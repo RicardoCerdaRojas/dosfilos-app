@@ -59,7 +59,7 @@ export function SourceTypePicker({ value, onChange, disabled, className, id }: S
             onChange={(e) => onChange(e.target.value as SourceType)}
             disabled={disabled}
             className={[
-                'rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 disabled:opacity-50',
+                'rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50',
                 className ?? '',
             ].join(' ')}
         >

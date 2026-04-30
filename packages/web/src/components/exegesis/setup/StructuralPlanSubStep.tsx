@@ -26,17 +26,17 @@ export function StructuralPlanSubStep({ paper }: StructuralPlanSubStepProps) {
         return (
             <div className="space-y-4">
                 <header className="flex items-start gap-3">
-                    <ListTree className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                    <ListTree className="h-5 w-5 text-success mt-0.5 shrink-0" />
                     <div>
-                        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 className="text-lg font-semibold text-foreground">
                             {t('paperSetup.subSteps.plan.heading')}
                         </h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-sm text-muted-foreground mt-0.5">
                             {t('paperSetup.subSteps.plan.description')}
                         </p>
                     </div>
                 </header>
-                <p className="text-xs text-amber-700 dark:text-amber-300 italic">
+                <p className="text-xs text-warning-subtle-foreground italic">
                     {t('paperSetup.subSteps.plan.noRubric')}
                 </p>
             </div>
@@ -46,12 +46,12 @@ export function StructuralPlanSubStep({ paper }: StructuralPlanSubStepProps) {
     return (
         <div className="space-y-4">
             <header className="flex items-start gap-3">
-                <ListTree className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <ListTree className="h-5 w-5 text-success mt-0.5 shrink-0" />
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    <h2 className="text-lg font-semibold text-foreground">
                         {t('paperSetup.subSteps.plan.heading')}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                         {t('paperSetup.subSteps.plan.description')}
                     </p>
                 </div>

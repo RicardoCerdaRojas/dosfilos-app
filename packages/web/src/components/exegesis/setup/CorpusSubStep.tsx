@@ -43,12 +43,12 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     return (
         <div className="space-y-6">
             <header className="flex items-start gap-3">
-                <FileStack className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <FileStack className="h-5 w-5 text-success mt-0.5 shrink-0" />
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    <h2 className="text-lg font-semibold text-foreground">
                         {t('paperSetup.subSteps.corpus.heading')}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                         {t('paperSetup.subSteps.corpus.description')}
                     </p>
                 </div>
@@ -71,11 +71,11 @@ function CorpusSourcesList({ paper }: { paper: ExegeticalPaper }) {
 
     return (
         <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <h3 className="text-sm font-semibold text-foreground">
                 {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
             </h3>
             {sorted.length === 0 ? (
-                <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                <p className="text-xs text-muted-foreground italic">
                     {t('paperSetup.subSteps.corpus.list.empty')}
                 </p>
             ) : (
@@ -119,15 +119,15 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
     };
 
     return (
-        <li className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-2">
+        <li className="rounded-lg border border-border bg-card p-3 space-y-2">
             <div className="flex items-start gap-2.5">
-                <FileText className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                <FileText className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                         {source.displayLabel}
                     </p>
                     {source.citationKey && (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <p className="text-[11px] text-muted-foreground">
                             {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}: {source.citationKey}
                         </p>
                     )}
@@ -136,7 +136,7 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                     type="button"
                     onClick={handleRemove}
                     disabled={removeSource.isPending}
-                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                    className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent transition-colors disabled:opacity-50"
                     aria-label={t('paperSetup.subSteps.corpus.list.remove')}
                     title={t('paperSetup.subSteps.corpus.list.remove')}
                 >
@@ -150,7 +150,7 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                 className="w-full text-xs"
             />
             {!isCitable && (
-                <p className="text-[10px] text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
+                <p className="text-[10px] text-warning-subtle-foreground inline-flex items-center gap-1">
                     <BookOpenText className="h-3 w-3" />
                     {t('paperSetup.subSteps.corpus.upload.modelPaperHint')}
                 </p>
@@ -231,14 +231,14 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
     return (
         <form
             onSubmit={handleSubmit}
-            className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 p-4 space-y-3"
+            className="rounded-lg border border-border bg-muted/40 p-4 space-y-3"
         >
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <h3 className="text-sm font-semibold text-foreground">
                 {t('paperSetup.subSteps.corpus.upload.title')}
             </h3>
 
             <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                     {t('paperSetup.subSteps.corpus.upload.fileLabel')}
                 </label>
                 <input
@@ -247,10 +247,10 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
                     accept="application/pdf,.pdf,application/epub+zip,.epub"
                     onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
                     disabled={uploading}
-                    className="block w-full text-sm text-slate-700 dark:text-slate-200 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-300 hover:file:bg-emerald-200 dark:hover:file:bg-emerald-900/50"
+                    className="block w-full text-sm text-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-success-subtle file:text-success-subtle-foreground hover:file:bg-success/20"
                 />
                 {file && (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                         {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
                     </p>
                 )}
@@ -258,7 +258,7 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_220px] gap-2">
                 <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-foreground mb-1">
                         {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
                     </label>
                     <input
@@ -267,11 +267,11 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
                         onChange={(e) => setDisplayName(e.target.value)}
                         disabled={uploading}
                         placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
-                        className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                        className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-foreground mb-1">
                         {t('paperSetup.subSteps.corpus.upload.typeLabel')}
                     </label>
                     <SourceTypePicker
@@ -283,13 +283,13 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
                 </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-muted-foreground">
                 {t('paperSetup.subSteps.corpus.upload.typeDescription')}
             </p>
 
             {isCitable && (
                 <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-foreground mb-1">
                         {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}
                     </label>
                     <input
@@ -298,23 +298,23 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
                         onChange={(e) => setCitationKey(e.target.value)}
                         disabled={uploading}
                         placeholder={t('paperSetup.subSteps.corpus.upload.citationKeyPlaceholder')}
-                        className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                        className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                     />
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                         {t('paperSetup.subSteps.corpus.upload.citationKeyHint')}
                     </p>
                 </div>
             )}
 
             {!isCitable && (
-                <p className="text-[11px] text-amber-700 dark:text-amber-300 inline-flex items-start gap-1">
+                <p className="text-[11px] text-warning-subtle-foreground inline-flex items-start gap-1">
                     <BookOpenText className="h-3 w-3 mt-0.5 shrink-0" />
                     {t('paperSetup.subSteps.corpus.upload.modelPaperHint')}
                 </p>
             )}
 
             {uploading && progress !== null && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-muted-foreground">
                     {t('paperSetup.subSteps.corpus.upload.uploading', { progress })}
                 </p>
             )}
@@ -323,7 +323,7 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
                 <Button
                     type="submit"
                     disabled={!canSubmit}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                     {uploading ? (
                         <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />

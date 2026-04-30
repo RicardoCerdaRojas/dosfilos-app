@@ -56,17 +56,17 @@ export function RubricSubStep({ paper }: RubricSubStepProps) {
         return (
             <div className="space-y-3">
                 <header className="flex items-start gap-3">
-                    <FileCheck2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                    <FileCheck2 className="h-5 w-5 text-success mt-0.5 shrink-0" />
                     <div>
-                        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 className="text-lg font-semibold text-foreground">
                             {t('paperSetup.subSteps.rubric.heading')}
                         </h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-sm text-muted-foreground mt-0.5">
                             {t('paperSetup.subSteps.rubric.description')}
                         </p>
                     </div>
                 </header>
-                <p className="text-xs text-slate-500 dark:text-slate-400 inline-flex items-center gap-2">
+                <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     {t('paperSetup.subSteps.rubric.loading')}
                 </p>
@@ -182,23 +182,23 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
     return (
         <div className="space-y-6">
             <header className="flex items-start gap-3">
-                <FileCheck2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <FileCheck2 className="h-5 w-5 text-success mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 inline-flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-foreground inline-flex items-center gap-2">
                         {t('paperSetup.subSteps.rubric.heading')}
-                        <span className="text-[10px] uppercase tracking-wide font-semibold rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 px-2 py-0.5">
+                        <span className="text-[10px] uppercase tracking-wide font-semibold rounded-full bg-muted text-muted-foreground px-2 py-0.5">
                             {t(`paperSetup.subSteps.rubric.provenance.${rubric.provenance}`)}
                         </span>
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                         {t('paperSetup.subSteps.rubric.description')}
                     </p>
                 </div>
             </header>
 
-            <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/40 px-3 py-2 flex items-start gap-2">
-                <Upload className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                <p className="text-[11px] text-blue-800 dark:text-blue-200 leading-snug">
+            <div className="rounded-md bg-info-subtle border border-info/30 px-3 py-2 flex items-start gap-2">
+                <Upload className="h-3.5 w-3.5 text-info mt-0.5 shrink-0" />
+                <p className="text-[11px] text-info-subtle-foreground leading-snug">
                     {t('paperSetup.subSteps.rubric.uploadComingSoon')}
                 </p>
             </div>
@@ -207,12 +207,12 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
 
             {/* ── Metadata ── */}
             <section className="space-y-3">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <h3 className="text-sm font-semibold text-foreground">
                     {t('paperSetup.subSteps.rubric.metadata.title')}
                 </h3>
                 <div className="space-y-3">
                     <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-medium text-foreground mb-1">
                             {t('paperSetup.subSteps.rubric.metadata.titleLabel')}
                         </label>
                         <input
@@ -220,11 +220,11 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder={t('paperSetup.subSteps.rubric.metadata.titlePlaceholder')}
-                            className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-medium text-foreground mb-1">
                             {t('paperSetup.subSteps.rubric.metadata.descriptionLabel')}
                         </label>
                         <textarea
@@ -232,12 +232,12 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder={t('paperSetup.subSteps.rubric.metadata.descriptionPlaceholder')}
                             rows={3}
-                            className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 resize-y"
+                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label className="block text-xs font-medium text-foreground mb-1">
                                 {t('paperSetup.subSteps.rubric.metadata.citationStandardLabel')}
                             </label>
                             <input
@@ -245,11 +245,11 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                                 value={citationStandard}
                                 onChange={(e) => setCitationStandard(e.target.value)}
                                 placeholder={t('paperSetup.subSteps.rubric.metadata.citationStandardPlaceholder')}
-                                className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                                className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label className="block text-xs font-medium text-foreground mb-1">
                                 {t('paperSetup.subSteps.rubric.metadata.lengthLabel')}
                             </label>
                             <div className="flex items-center gap-1.5">
@@ -259,21 +259,21 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                                     value={lengthMin}
                                     onChange={(e) => setLengthMin(e.target.value)}
                                     placeholder={t('paperSetup.subSteps.rubric.metadata.lengthMinPlaceholder')}
-                                    className="w-20 rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                                    className="w-20 rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                                 />
-                                <span className="text-xs text-slate-400">—</span>
+                                <span className="text-xs text-muted-foreground">—</span>
                                 <input
                                     type="number"
                                     min={0}
                                     value={lengthMax}
                                     onChange={(e) => setLengthMax(e.target.value)}
                                     placeholder={t('paperSetup.subSteps.rubric.metadata.lengthMaxPlaceholder')}
-                                    className="w-20 rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                                    className="w-20 rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                                 />
                                 <select
                                     value={lengthUnit}
                                     onChange={(e) => setLengthUnit(e.target.value as 'pages' | 'words')}
-                                    className="rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                                    className="rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                                 >
                                     <option value="pages">{t('paperSetup.subSteps.rubric.metadata.lengthUnitPages')}</option>
                                     <option value="words">{t('paperSetup.subSteps.rubric.metadata.lengthUnitWords')}</option>
@@ -287,15 +287,15 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
             {/* ── Source requirements ── */}
             <section className="space-y-3">
                 <header>
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <h3 className="text-sm font-semibold text-foreground">
                         {t('paperSetup.subSteps.rubric.requirements.title')}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                         {t('paperSetup.subSteps.rubric.requirements.subtitle')}
                     </p>
                 </header>
                 {requirements.length === 0 ? (
-                    <p className="text-xs text-amber-700 dark:text-amber-300 italic">
+                    <p className="text-xs text-warning-subtle-foreground italic">
                         {t('paperSetup.subSteps.rubric.requirements.empty')}
                     </p>
                 ) : (
@@ -316,10 +316,10 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
             {/* ── Structural read-only ── */}
             <section className="space-y-3">
                 <header>
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <h3 className="text-sm font-semibold text-foreground">
                         {t('paperSetup.subSteps.rubric.structural.title')}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                         {t('paperSetup.subSteps.rubric.structural.subtitle')}
                     </p>
                 </header>
@@ -329,25 +329,25 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                         return (
                             <li
                                 key={section}
-                                className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 p-3 text-xs space-y-1.5"
+                                className="rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-1.5"
                             >
-                                <p className="font-medium text-slate-800 dark:text-slate-100">
+                                <p className="font-medium text-foreground">
                                     {t(`paperSetup.subSteps.rubric.structural.section.${section}`)}
                                 </p>
                                 {exp ? (
                                     <>
-                                        <p className="text-slate-600 dark:text-slate-300">
+                                        <p className="text-muted-foreground">
                                             <span className="font-medium">{t('paperSetup.subSteps.rubric.structural.emphasizedTypesLabel')}:</span>{' '}
                                             {exp.emphasizedTypes.length === 0
                                                 ? '—'
                                                 : exp.emphasizedTypes.map(typ => t(`sourceTypes.${typ}.label`)).join(', ')}
                                         </p>
-                                        <p className="text-slate-500 dark:text-slate-400 italic">
+                                        <p className="text-muted-foreground italic">
                                             {exp.justification}
                                         </p>
                                     </>
                                 ) : (
-                                    <p className="text-slate-400 italic">
+                                    <p className="text-muted-foreground italic">
                                         {t('paperSetup.subSteps.rubric.structural.noExpectation')}
                                     </p>
                                 )}
@@ -358,7 +358,7 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
             </section>
 
             {/* ── Actions ── */}
-            <footer className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-zinc-800">
+            <footer className="flex items-center justify-between pt-4 border-t border-border">
                 <Button
                     type="button"
                     variant="ghost"
@@ -373,7 +373,7 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                     type="button"
                     onClick={handleSave}
                     disabled={updatePending}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
                 >
                     {updatePending ? (
                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -448,21 +448,21 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
     };
 
     return (
-        <section className="rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-900/10 p-4 space-y-3">
+        <section className="rounded-lg border border-success/30 bg-success-subtle p-4 space-y-3">
             <header className="flex items-start gap-3">
-                <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <Sparkles className="h-5 w-5 text-success mt-0.5 shrink-0" />
                 <div>
-                    <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                    <h3 className="text-sm font-semibold text-success-subtle-foreground">
                         {t('paperSetup.subSteps.rubric.extract.title')}
                     </h3>
-                    <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-0.5">
+                    <p className="text-xs text-success-subtle-foreground mt-0.5">
                         {t('paperSetup.subSteps.rubric.extract.subtitle')}
                     </p>
                 </div>
             </header>
 
             <div>
-                <label className="block text-xs font-medium text-emerald-900 dark:text-emerald-100 mb-1">
+                <label className="block text-xs font-medium text-success-subtle-foreground mb-1">
                     {t('paperSetup.subSteps.rubric.extract.textareaLabel')}
                 </label>
                 <textarea
@@ -471,10 +471,10 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
                     placeholder={t('paperSetup.subSteps.rubric.extract.textareaPlaceholder')}
                     rows={6}
                     disabled={isExtracting}
-                    className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 resize-y disabled:opacity-50"
+                    className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y disabled:opacity-50"
                 />
                 {trimmedLength > 0 && trimmedLength < 30 && (
-                    <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1 inline-flex items-center gap-1">
+                    <p className="text-[11px] text-warning-subtle-foreground mt-1 inline-flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />
                         {t('paperSetup.subSteps.rubric.extract.tooShort')}
                     </p>
@@ -483,19 +483,19 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-2">
-                    <label className="text-[11px] font-medium text-emerald-900 dark:text-emerald-100">
+                    <label className="text-[11px] font-medium text-success-subtle-foreground">
                         {t('paperSetup.subSteps.rubric.extract.outputLanguageLabel')}
                     </label>
                     <select
                         value={outputLanguage}
                         onChange={(e) => setOutputLanguage(e.target.value as 'es' | 'en')}
                         disabled={isExtracting}
-                        className="rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 disabled:opacity-50"
+                        className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
                     >
                         <option value="es">Español</option>
                         <option value="en">English</option>
                     </select>
-                    <span className="text-[10px] text-emerald-700 dark:text-emerald-300 italic">
+                    <span className="text-[10px] text-success-subtle-foreground italic">
                         {t('paperSetup.subSteps.rubric.extract.outputLanguageHint')}
                     </span>
                 </div>
@@ -503,7 +503,7 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
                     type="button"
                     onClick={handleExtract}
                     disabled={!canSubmit}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
                 >
                     {isExtracting ? (
                         <>
@@ -529,10 +529,10 @@ function ExtractionResultCard({ result }: { result: ExtractionResultSummary }) {
     const confidenceLabel = t(`paperSetup.subSteps.rubric.extract.confidence${capitalize(result.confidence)}` as any);
     const confidenceHint = t(`paperSetup.subSteps.rubric.extract.confidenceHint.${result.confidence}` as any);
     const tone = result.confidence === 'low'
-        ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-100'
+        ? 'bg-warning-subtle border-warning/30 text-warning-subtle-foreground'
         : result.confidence === 'medium'
-            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/40 text-blue-900 dark:text-blue-100'
-            : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-900 dark:text-emerald-100';
+            ? 'bg-info-subtle border-info/30 text-info-subtle-foreground'
+            : 'bg-success-subtle border-success/30 text-success-subtle-foreground';
 
     return (
         <div className={`rounded-md border ${tone} p-3 space-y-1.5`}>
@@ -572,20 +572,20 @@ interface RequirementRowProps {
 function RequirementRow({ requirement, onChange, onRemove }: RequirementRowProps) {
     const { t } = useTranslation('exegesis');
     return (
-        <li className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-2">
+        <li className="rounded-lg border border-border bg-card p-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                    <p className="text-sm font-medium text-foreground">
                         {t(`sourceTypes.${requirement.sourceType}.label`)}
                     </p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                    <p className="text-[11px] text-muted-foreground italic">
                         {t(`sourceTypes.${requirement.sourceType}.examples`)}
                     </p>
                 </div>
                 <button
                     type="button"
                     onClick={onRemove}
-                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                    className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent transition-colors"
                     aria-label={t('paperSetup.subSteps.rubric.requirements.removeRequirement')}
                     title={t('paperSetup.subSteps.rubric.requirements.removeRequirement')}
                 >
@@ -594,7 +594,7 @@ function RequirementRow({ requirement, onChange, onRemove }: RequirementRowProps
             </div>
             <div className="grid grid-cols-2 gap-2">
                 <div>
-                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
                         {t('paperSetup.subSteps.rubric.requirements.minLabel')}
                     </label>
                     <input
@@ -602,11 +602,11 @@ function RequirementRow({ requirement, onChange, onRemove }: RequirementRowProps
                         min={0}
                         value={requirement.minimum}
                         onChange={(e) => onChange({ minimum: Math.max(0, Number(e.target.value || 0)) })}
-                        className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                        className="w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                     />
                 </div>
                 <div>
-                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
                         {t('paperSetup.subSteps.rubric.requirements.maxLabel')}
                     </label>
                     <input
@@ -618,12 +618,12 @@ function RequirementRow({ requirement, onChange, onRemove }: RequirementRowProps
                             onChange({ maximum: v === '' ? null : Math.max(0, Number(v)) });
                         }}
                         placeholder={t('paperSetup.subSteps.rubric.requirements.maxUnlimited')}
-                        className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                        className="w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                     />
                 </div>
             </div>
             <div>
-                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-0.5">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
                     {t('paperSetup.subSteps.rubric.requirements.justificationLabel')}
                 </label>
                 <textarea
@@ -631,7 +631,7 @@ function RequirementRow({ requirement, onChange, onRemove }: RequirementRowProps
                     onChange={(e) => onChange({ justification: e.target.value })}
                     placeholder={t('paperSetup.subSteps.rubric.requirements.justificationPlaceholder')}
                     rows={2}
-                    className="w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 resize-y"
+                    className="w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                 />
             </div>
         </li>
@@ -649,7 +649,7 @@ function AddRequirementButton({ availableTypes, onAdd }: AddRequirementButtonPro
 
     if (availableTypes.length === 0) {
         return (
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
+            <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 {/* All types already have a requirement; nothing to add */}
                 {t('paperSetup.subSteps.rubric.requirements.duplicateError')}
@@ -662,7 +662,7 @@ function AddRequirementButton({ availableTypes, onAdd }: AddRequirementButtonPro
             <button
                 type="button"
                 onClick={() => setPicking(true)}
-                className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300"
+                className="inline-flex items-center gap-1 text-xs text-success hover:text-success-subtle-foreground"
             >
                 <Plus className="h-3 w-3" />
                 {t('paperSetup.subSteps.rubric.requirements.addRequirement')}
@@ -681,7 +681,7 @@ function AddRequirementButton({ availableTypes, onAdd }: AddRequirementButtonPro
                 }
             }}
             onBlur={() => setPicking(false)}
-            className="rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
         >
             <option value="">— {t('paperSetup.subSteps.rubric.requirements.addRequirement')} —</option>
             {SOURCE_TYPE_GROUPS.map(group => {

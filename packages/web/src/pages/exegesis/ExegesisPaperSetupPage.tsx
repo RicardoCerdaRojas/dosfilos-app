@@ -57,7 +57,7 @@ export function ExegesisPaperSetupPage() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-full text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 {t('paperSetup.loading')}
             </div>
@@ -67,10 +67,10 @@ export function ExegesisPaperSetupPage() {
     if (error || !paper) {
         return (
             <div className="max-w-3xl mx-auto px-6 py-12 text-center">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                <h2 className="text-lg font-semibold text-foreground mb-1">
                     {t('paperSetup.notFound.title')}
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                     {t('paperSetup.notFound.body')}
                 </p>
                 <Button onClick={() => navigate('/dashboard/exegesis')}>
@@ -81,21 +81,21 @@ export function ExegesisPaperSetupPage() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 font-sans overflow-y-auto">
-            <header className="border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-4">
+        <div className="flex flex-col h-full bg-background font-sans overflow-y-auto">
+            <header className="border-b border-border bg-card px-6 py-4">
                 <div className="max-w-5xl mx-auto flex items-center gap-3">
                     <Link
                         to={`/dashboard/exegesis/${paperId}`}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         aria-label={t('paperSetup.backToPaper')}
                     >
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                     <div className="flex-1 min-w-0">
-                        <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100 font-serif truncate">
+                        <h1 className="text-lg font-semibold text-foreground font-serif truncate">
                             {paper.title || t('paperSetup.untitledFallback')}
                         </h1>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                             {t('paperSetup.subtitle')}
                         </p>
                     </div>
@@ -116,7 +116,7 @@ export function ExegesisPaperSetupPage() {
                     ))}
                 </nav>
 
-                <main className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-6">
+                <main className="rounded-2xl border border-border bg-card p-6 space-y-6">
                     {activeKey === 'rubric' && <RubricSubStep paper={paper} />}
                     {activeKey === 'manifest' && <StyleManifestSubStep paper={paper} />}
                     {activeKey === 'corpus' && <CorpusSubStep paper={paper} />}
@@ -126,7 +126,7 @@ export function ExegesisPaperSetupPage() {
                 <footer className="flex items-center justify-end pt-6">
                     <Button
                         onClick={() => navigate(`/dashboard/exegesis/${paperId}`)}
-                        className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         {t('paperSetup.goToPaper')}
                     </Button>
@@ -152,15 +152,15 @@ function SubStepTab({ index, label, iconKey, active, onClick }: SubStepTabProps)
             className={[
                 'flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors text-left',
                 active
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200'
-                    : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800',
+                    ? 'border-success bg-success-subtle text-success-subtle-foreground'
+                    : 'border-border bg-card text-muted-foreground hover:bg-accent',
             ].join(' ')}
         >
             <span className={[
                 'shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold',
                 active
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-slate-400',
+                    ? 'bg-success text-success-foreground'
+                    : 'bg-muted text-muted-foreground',
             ].join(' ')}>
                 {index}
             </span>
@@ -173,7 +173,7 @@ function SubStepTab({ index, label, iconKey, active, onClick }: SubStepTabProps)
 function SubStepIcon({ iconKey, active }: { iconKey: string; active: boolean }) {
     const className = [
         'h-3.5 w-3.5 ml-auto shrink-0',
-        active ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-400',
+        active ? 'text-success-subtle-foreground' : 'text-muted-foreground',
     ].join(' ');
     switch (iconKey) {
         case 'FileCheck2': return <FileCheck2 className={className} />;
