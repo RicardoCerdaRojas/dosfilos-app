@@ -4,6 +4,7 @@ import {
     type ExegesisPriorStep,
     type ExegesisSourceContext,
     type SourceType,
+    type StepEmphasis,
 } from '@dosfilos/domain';
 
 /**
@@ -109,8 +110,9 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
 
 function buildUserMessage(input: ExegesisGenerationInput): string {
     const lang = input.language;
-    const sources = formatSources(input.sources, lang);
+    const sources = formatSources(input.sources, lang, input.stepEmphasis);
     const priorBlock = formatPriorSteps(input.priorAcceptedSteps, lang);
+    const emphasisBlock = formatStepEmphasis(input.stepEmphasis, lang);
     const hint = input.regenerationHint
         ? (lang === 'en'
             ? `\n\n### Regeneration hint from the user\n${input.regenerationHint}\n`
@@ -145,13 +147,14 @@ function buildUserMessage(input: ExegesisGenerationInput): string {
                 ? `Generate the section for **${verse}**, in the integrated style described in the system prompt.`
                 : `Generá la sección para **${verse}**, en el estilo integrado descripto en el system prompt.`,
             '',
+            emphasisBlock,
             lang === 'en' ? '### Sources at your disposal' : '### Fuentes disponibles',
             sources,
             '',
             lang === 'en' ? '### Expected structure' : '### Estructura esperada',
             expected,
             hint,
-        ].join('\n');
+        ].filter(Boolean).join('\n');
     }
 
     if (input.kind === 'conclusion') {
@@ -164,13 +167,14 @@ function buildUserMessage(input: ExegesisGenerationInput): string {
                 ? `**Hard rules for the conclusion:**\n- Summarize the actual results of the verse-by-verse analyses below.\n- Do NOT introduce new arguments.\n- Show how the passage develops its main themes (identity, work, theological emphasis).\n- Respond to the working thesis the body's analyses have built.`
                 : `**Reglas duras para la conclusión:**\n- Resumí los resultados reales de los análisis verso a verso de abajo.\n- NO introduzcas argumentos nuevos.\n- Mostrá cómo el pasaje desarrolla sus temas principales (identidad, obra, énfasis teológico).\n- Respondé a la tesis de trabajo que los análisis del cuerpo construyeron.`,
             '',
+            emphasisBlock,
             lang === 'en' ? '### Accepted verse-level analyses' : '### Análisis verso a verso aceptados',
             priorBlock,
             '',
             lang === 'en' ? '### Sources at your disposal (use sparingly here)' : '### Fuentes disponibles (usalas con moderación acá)',
             sources,
             hint,
-        ].join('\n');
+        ].filter(Boolean).join('\n');
     }
 
     // introduction
@@ -183,13 +187,14 @@ function buildUserMessage(input: ExegesisGenerationInput): string {
             ? `**Hard rules for the introduction:**\n- Written LAST so it reflects what the paper actually demonstrated.\n- Present the passage and its importance within its book.\n- State a precise thesis derived from the body's analyses.\n- Briefly state methodology (morphological, syntactic, lexical, intertextual, theological).\n- Sketch the direction of the argument.\n- Do NOT promise topics that the body did not develop.`
             : `**Reglas duras para la introducción:**\n- Se redacta AL FINAL para reflejar lo que el trabajo efectivamente demostró.\n- Presentá el pasaje y su importancia dentro del libro.\n- Enunciá una tesis precisa derivada de los análisis del cuerpo.\n- Declará brevemente la metodología (morfológica, sintáctica, léxica, intertextual, teológica).\n- Esbozá la dirección del argumento.\n- NO prometas temas que el cuerpo no desarrolló.`,
         '',
+        emphasisBlock,
         lang === 'en' ? '### Accepted body (verses + conclusion)' : '### Cuerpo aceptado (versos + conclusión)',
         priorBlock,
         '',
         lang === 'en' ? '### Sources at your disposal (background context only)' : '### Fuentes disponibles (solo como contexto de fondo)',
         sources,
         hint,
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 }
 
 // ── Formatters ──────────────────────────────────────────────────────────
@@ -245,19 +250,25 @@ function formatAssignmentBrief(brief: string | null, lang: 'es' | 'en'): string 
     ].join('\n');
 }
 
-function formatSources(sources: ExegesisSourceContext[], lang: 'es' | 'en'): string {
+function formatSources(
+    sources: ExegesisSourceContext[],
+    lang: 'es' | 'en',
+    emphasis: StepEmphasis | null,
+): string {
     if (sources.length === 0) {
         return lang === 'en'
             ? `(No sources configured for this paper. Lean on your general knowledge and signal it with "according to theological tradition…" / "classical commentators hold…".)`
             : `(Sin fuentes configuradas para este trabajo. Apoyate en tu conocimiento general y señalalo con "según la tradición teológica…" / "los comentaristas clásicos sostienen…".)`;
     }
 
-    // Allocate budget per source proportionally — critical commentaries and
-    // technical lexicons get more room than supportive material. Style-only
-    // sources (`style-template-paper`) get a small slice since the model
-    // only needs to absorb the SHAPE.
+    // Allocate budget per source proportionally. The base weight comes
+    // from the type catalog (critical commentaries > expository > misc).
+    // The student's plan emphasis multiplies that base: emphasized
+    // types get ~2.5x the room, deemphasized types get ~0.4x. Style-
+    // only sources (`style-template-paper`) keep their small slice
+    // regardless — the model only needs to absorb their SHAPE.
     const totalBudget = SOURCE_BUDGET_CHARS_TOTAL;
-    const weights = sources.map(s => sourceTypeWeight(s.sourceType));
+    const weights = sources.map(s => effectiveSourceTypeWeight(s.sourceType, emphasis));
     const totalWeight = weights.reduce((sum, w) => sum + w, 0) || 1;
     const budgets = weights.map(w => Math.floor(totalBudget * (w / totalWeight)));
 
@@ -322,6 +333,66 @@ function sourceTypeWeight(type: SourceType): number {
         case 'other': return 1;
         case 'style-template-paper': return 1;
     }
+}
+
+/**
+ * Source-type weight that bakes in the student's per-step emphasis.
+ * Multiplies the catalog base weight by 2.5x when the type is in
+ * `emphasizedTypes`, by 0.4x when it's in `deemphasizedTypes`. The
+ * style-template-paper type is exempt — its budget stays small
+ * regardless because the model only consumes it for shape.
+ *
+ * Pure: same inputs, same output. Called once per source per
+ * generation; no caching needed.
+ */
+function effectiveSourceTypeWeight(type: SourceType, emphasis: StepEmphasis | null): number {
+    const base = sourceTypeWeight(type);
+    if (type === 'style-template-paper' || !emphasis) return base;
+    if (emphasis.emphasizedTypes.includes(type)) return base * 2.5;
+    if (emphasis.deemphasizedTypes.includes(type)) return base * 0.4;
+    return base;
+}
+
+/**
+ * Renders the student's per-step emphasis as a directive block in
+ * the user message. Sits BEFORE the source list so the model reads
+ * "for this step, prioritize X and Y" right before being handed the
+ * inline corpus. Returns an empty string when no emphasis is set OR
+ * when both lists are empty — keeps the prompt clean for papers
+ * generating against the rubric default with no overrides.
+ */
+function formatStepEmphasis(emphasis: StepEmphasis | null, lang: 'es' | 'en'): string {
+    if (!emphasis) return '';
+    const hasEmphasized = emphasis.emphasizedTypes.length > 0;
+    const hasDeemphasized = emphasis.deemphasizedTypes.length > 0;
+    if (!hasEmphasized && !hasDeemphasized) return '';
+
+    const labelOf = (type: SourceType) =>
+        lang === 'en' ? englishTypeLabel(type) : spanishTypeLabel(type);
+    const emphasizedList = emphasis.emphasizedTypes.map(labelOf).join(', ');
+    const deemphasizedList = emphasis.deemphasizedTypes.map(labelOf).join(', ');
+
+    if (lang === 'en') {
+        const lines = [
+            `### Per-step source priority (set by the student)`,
+            `For THIS step, follow the priority below when interacting with the configured corpus:`,
+        ];
+        if (hasEmphasized) lines.push(`- **Prioritize** these source types: ${emphasizedList}. Cite them generously where they bear on the analysis.`);
+        if (hasDeemphasized) lines.push(`- **De-emphasize** these source types: ${deemphasizedList}. They may appear briefly but should not lead the argument.`);
+        lines.push(`Source budgets in the listing below already reflect this priority — types you are asked to prioritize get more inline context.`);
+        lines.push(``);
+        return lines.join('\n');
+    }
+
+    const lines = [
+        `### Prioridad de fuentes para este paso (configurada por el alumno)`,
+        `Para ESTE paso, seguí la prioridad siguiente al interactuar con el corpus configurado:`,
+    ];
+    if (hasEmphasized) lines.push(`- **Priorizá** estos tipos de fuente: ${emphasizedList}. Citalos generosamente cuando aporten al análisis.`);
+    if (hasDeemphasized) lines.push(`- **Desénfasis** en estos tipos de fuente: ${deemphasizedList}. Pueden aparecer brevemente, pero no deben liderar el argumento.`);
+    lines.push(`Los presupuestos de fuente en la lista de abajo ya reflejan esta prioridad — los tipos que tenés que priorizar reciben más contexto inline.`);
+    lines.push(``);
+    return lines.join('\n');
 }
 
 function englishTypeLabel(type: SourceType): string {

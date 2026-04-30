@@ -69,12 +69,18 @@ export class GenerateStepUseCase {
             const sources = await this.loadSourceContexts(paper);
             const priorAcceptedSteps = collectPriorAccepted(paper, step);
 
+            // Resolve the per-kind emphasis the student configured (or
+            // accepted from the rubric default). Assembly steps don't
+            // reach this branch; the three LLM-driven kinds map 1:1.
+            const stepEmphasis = paper.stepPlan.defaults[step.kind as 'introduction' | 'verse' | 'conclusion'] ?? null;
+
             const orchestratorInput: ExegesisGenerationInput = {
                 kind: step.kind,
                 paperPassage: paper.passage,
                 verseRef: step.verseRef,
                 language: paper.displayLanguage,
                 assignmentBrief: paper.assignmentBrief,
+                stepEmphasis,
                 styleGuideContent,
                 sources,
                 priorAcceptedSteps,

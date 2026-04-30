@@ -1,6 +1,7 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { ExegeticalStepKind } from '../entities/ExegeticalStep';
 import type { SourceType } from '../entities/SourceType';
+import type { StepEmphasis } from '../entities/StepSourcePlan';
 
 /**
  * Port for the LLM-driven generation step.
@@ -36,6 +37,14 @@ export interface ExegesisGenerationInput {
      * one — the prompt falls back to neutral framing.
      */
     assignmentBrief: string | null;
+    /**
+     * Per-step emphasis the student saved (or accepted from the
+     * rubric default) — drives source-budget weights and a "priority
+     * directive" block in the user message. Null means "use the
+     * type catalog's static weights alone" (the orchestrator still
+     * works, it just doesn't bias toward the student's plan).
+     */
+    stepEmphasis: StepEmphasis | null;
     /**
      * Style guide content (TMS or equivalent) verbatim. Injected into the
      * system prompt as authoritative formatting rules. Empty string is
