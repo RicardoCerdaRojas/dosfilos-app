@@ -167,10 +167,17 @@
                     "title": "General",
                     "titleLabel": "Rubric title",
                     "titlePlaceholder": "e.g. TMS NT800 — Exegetical paper on Hebrews 1:1-4",
-                    "descriptionLabel": "Description",
-                    "descriptionPlaceholder": "e.g. Exegetical analysis of the Christological prologue, with technical Greek treatment and discussion of the implications for Hebrews' Christology.",
+                    "descriptionLabel": "Rubric description",
+                    "descriptionPlaceholder": "e.g. TMS NT800 rubric — evaluates technical exegesis with syntactic analysis, interaction with critical sources, and discussion of theological implications.",
+                    "descriptionHint": "This is the rubric document's own description (what the seminary evaluates). Different from the paper framing you wrote at creation (what your professor assigned + your angle).",
                     "citationStandardLabel": "Citation standard",
                     "citationStandardPlaceholder": "e.g. TMS / Turabian, SBL Handbook, Chicago 17",
+                    "fromGuide": "From your style guide",
+                    "matchGuide": "Match the guide ({{standard}})",
+                    "matchGuideNoGuide": "No active guide — orchestrator uses its TMS default",
+                    "pickPreset": "Pick a known standard…",
+                    "custom": "Custom (free text)",
+                    "mismatchWarning": "The rubric asks for \"{{rubric}}\" but your guide is configured as \"{{guide}}\". The orchestrator honors the rubric for this paper.",
                     "lengthLabel": "Expected length",
                     "lengthUnitPages": "Pages",
                     "lengthUnitWords": "Words",
@@ -401,6 +408,7 @@
     "detail": {
         "back": "Back to list",
         "loading": "Loading paper...",
+        "openSetup": "Configure",
         "archive": "Archive",
         "archiveConfirm": "Confirm",
         "stepsTitle": "Paper steps",
@@ -460,12 +468,12 @@
         "styleGuide": {
             "title": "Style guide",
             "none": "No guide attached. Required before generating.",
-            "changeCta": "Change guide"
+            "changeCta": "Edit in setup"
         },
         "sources": {
             "title": "Project corpus",
             "none": "No sources yet. Add them so the orchestrator can interact with them.",
-            "addCta": "Add source",
+            "addCta": "Edit in setup",
             "remove": "Remove source"
         },
         "notFound": {

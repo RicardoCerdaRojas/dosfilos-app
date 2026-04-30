@@ -167,10 +167,17 @@
                     "title": "Datos generales",
                     "titleLabel": "Título de la rúbrica",
                     "titlePlaceholder": "Ej: TMS NT800 — Trabajo exegético sobre Hebreos 1:1-4",
-                    "descriptionLabel": "Descripción del trabajo",
-                    "descriptionPlaceholder": "Ej: Análisis exegético del prólogo cristológico, con tratamiento técnico del griego y discusión de las implicancias teológicas para la cristología de Hebreos.",
+                    "descriptionLabel": "Descripción de la rúbrica",
+                    "descriptionPlaceholder": "Ej: Rúbrica TMS NT800 — evalúa exégesis técnica con análisis sintáctico, interacción con fuentes críticas y discusión de implicancias teológicas.",
+                    "descriptionHint": "Es la descripción de la rúbrica académica en sí (qué evalúa el seminario). Distinta del encuadre del paper que escribiste al crear el trabajo (lo que el profesor pidió + tu enfoque).",
                     "citationStandardLabel": "Estándar de citación",
                     "citationStandardPlaceholder": "Ej: TMS / Turabian, SBL Handbook, Chicago 17",
+                    "fromGuide": "De tu guía de estilo",
+                    "matchGuide": "Coincidir con la guía ({{standard}})",
+                    "matchGuideNoGuide": "Sin guía activa — el orquestador usará su default TMS",
+                    "pickPreset": "Elegir un estándar conocido…",
+                    "custom": "Custom (escribir libre)",
+                    "mismatchWarning": "La rúbrica pide \"{{rubric}}\" pero tu guía está configurada como \"{{guide}}\". El orquestador respeta lo que dice la rúbrica para este paper.",
                     "lengthLabel": "Extensión esperada",
                     "lengthUnitPages": "Páginas",
                     "lengthUnitWords": "Palabras",
@@ -401,6 +408,7 @@
     "detail": {
         "back": "Volver al listado",
         "loading": "Cargando trabajo...",
+        "openSetup": "Configurar",
         "archive": "Archivar",
         "archiveConfirm": "Confirmar",
         "stepsTitle": "Pasos del trabajo",
@@ -460,12 +468,12 @@
         "styleGuide": {
             "title": "Guía de estilo",
             "none": "Sin guía adjunta. Necesaria antes de generar.",
-            "changeCta": "Cambiar guía"
+            "changeCta": "Editar en configuración"
         },
         "sources": {
             "title": "Corpus del trabajo",
             "none": "Sin fuentes todavía. Agregalas para que el orquestador pueda interactuar con ellas.",
-            "addCta": "Agregar fuente",
+            "addCta": "Editar en configuración",
             "remove": "Quitar fuente"
         },
         "notFound": {

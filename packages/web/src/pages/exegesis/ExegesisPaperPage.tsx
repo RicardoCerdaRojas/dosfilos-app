@@ -10,7 +10,8 @@ import {
     FileCheck2,
     FileStack,
     Wand2,
-    Lock,
+    Settings2,
+    Pencil,
     X,
     BookOpenText,
 } from 'lucide-react';
@@ -116,6 +117,13 @@ export function ExegesisPaperPage() {
                             {passageDisplay} · {t(`list.phase.${paper.phase}`)}
                         </p>
                     </div>
+                    <Link
+                        to={`/dashboard/exegesis/${paper.id}/setup`}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 h-8 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                    >
+                        <Settings2 className="h-3.5 w-3.5" />
+                        {t('detail.openSetup')}
+                    </Link>
                     <ArchiveButton onClick={handleArchive} pending={archivePaper.isPending} t={t} />
                 </div>
             </div>
@@ -307,15 +315,13 @@ function StyleGuideCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string)
                     {t('detail.styleGuide.none')}
                 </p>
             )}
-            <button
-                type="button"
-                disabled
-                className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                title="v1.5"
+            <Link
+                to={`/dashboard/exegesis/${paper.id}/setup`}
+                className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
-                <Lock className="h-3 w-3" />
-                {t('detail.styleGuide.changeCta')} · v1.5
-            </button>
+                <Pencil className="h-3 w-3" />
+                {t('detail.styleGuide.changeCta')}
+            </Link>
         </section>
     );
 }
@@ -357,15 +363,13 @@ function SourcesCard({
                 </ul>
             )}
 
-            <button
-                type="button"
-                disabled
-                className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                title="v1.5"
+            <Link
+                to={`/dashboard/exegesis/${paper.id}/setup`}
+                className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
-                <Lock className="h-3 w-3" />
-                {t('detail.sources.addCta')} · v1.5
-            </button>
+                <Pencil className="h-3 w-3" />
+                {t('detail.sources.addCta')}
+            </Link>
         </section>
     );
 }

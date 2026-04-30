@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 
 /**
  * Rubric editor.
@@ -234,20 +235,16 @@ function RubricEditor({ paper, rubric, updatePending, resetPending }: RubricEdit
                             rows={3}
                             className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
                         />
+                        <p className="text-[11px] text-muted-foreground mt-1 italic">
+                            {t('paperSetup.subSteps.rubric.metadata.descriptionHint')}
+                        </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-foreground mb-1">
-                                {t('paperSetup.subSteps.rubric.metadata.citationStandardLabel')}
-                            </label>
-                            <input
-                                type="text"
-                                value={citationStandard}
-                                onChange={(e) => setCitationStandard(e.target.value)}
-                                placeholder={t('paperSetup.subSteps.rubric.metadata.citationStandardPlaceholder')}
-                                className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                            />
-                        </div>
+                        <CitationStandardField
+                            paper={paper}
+                            value={citationStandard}
+                            onChange={setCitationStandard}
+                        />
                         <div>
                             <label className="block text-xs font-medium text-foreground mb-1">
                                 {t('paperSetup.subSteps.rubric.metadata.lengthLabel')}
@@ -696,5 +693,127 @@ function AddRequirementButton({ availableTypes, onAdd }: AddRequirementButtonPro
                 );
             })}
         </select>
+    );
+}
+
+// ── CitationStandardField ──────────────────────────────────────────────
+//
+// The citation standard for the paper has TWO sources of truth:
+//   1. The active style guide's manifest (what the user actually
+//      uploaded) — `manifest.citationStyleLabel`. This is the
+//      DEFAULT for any paper that pins this guide.
+//   2. The rubric's `citationStandard` field — only set when the
+//      seminary's rubric explicitly requires a different standard
+//      than the user's guide (rare but real, e.g. one paper
+//      requires SBL while the rest of the user's seminary work is
+//      Turabian).
+//
+// The field renders the guide's value as a read-only badge, plus a
+// presets dropdown ("Match guide" / Turabian 9 / SBL Handbook /
+// Chicago 17 / MLA 9 / APA 7 / Other...) for the override case.
+// "Match guide" stores `null` so generation uses the guide's
+// standard — no value duplication.
+
+const CITATION_PRESETS = [
+    'TMS / Turabian',
+    'Turabian 9',
+    'SBL Handbook',
+    'Chicago 17',
+    'MLA 9',
+    'APA 7',
+] as const;
+
+function CitationStandardField({
+    paper,
+    value,
+    onChange,
+}: {
+    paper: ExegeticalPaper;
+    value: string;
+    onChange: (next: string) => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const { guides, activeGuide } = useUserStyleGuides();
+
+    // Resolve the same guide the manifest viewer would show.
+    const guide = paper.styleGuideId
+        ? guides.find(g => g.id === paper.styleGuideId) ?? null
+        : activeGuide;
+    const guideStandard = guide?.manifest?.citationStyleLabel ?? null;
+
+    const isMatchingGuide = value.trim() === '' || (guideStandard !== null && value.trim() === guideStandard.trim());
+    const showMismatch = !isMatchingGuide && guideStandard !== null;
+
+    // Mode: 'guide' = no override (value === ''), 'preset' = picked
+    // from the preset list, 'custom' = typing free text.
+    const inPresets = CITATION_PRESETS.includes(value as typeof CITATION_PRESETS[number]);
+    const initialMode: 'guide' | 'preset' | 'custom' = value === ''
+        ? 'guide'
+        : inPresets ? 'preset' : 'custom';
+    const [mode, setMode] = useState<'guide' | 'preset' | 'custom'>(initialMode);
+
+    return (
+        <div>
+            <label className="block text-xs font-medium text-foreground mb-1">
+                {t('paperSetup.subSteps.rubric.metadata.citationStandardLabel')}
+            </label>
+
+            {guideStandard && (
+                <div className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                        {t('paperSetup.subSteps.rubric.metadata.fromGuide')}:
+                    </span>
+                    <span>{guideStandard}</span>
+                </div>
+            )}
+
+            <select
+                value={mode}
+                onChange={(e) => {
+                    const next = e.target.value as 'guide' | 'preset' | 'custom';
+                    setMode(next);
+                    if (next === 'guide') onChange('');
+                    else if (next === 'preset') onChange(CITATION_PRESETS[0]);
+                    // 'custom' keeps existing value so the user can edit
+                }}
+                className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+            >
+                <option value="guide">
+                    {guideStandard
+                        ? t('paperSetup.subSteps.rubric.metadata.matchGuide', { standard: guideStandard })
+                        : t('paperSetup.subSteps.rubric.metadata.matchGuideNoGuide')}
+                </option>
+                <option value="preset">{t('paperSetup.subSteps.rubric.metadata.pickPreset')}</option>
+                <option value="custom">{t('paperSetup.subSteps.rubric.metadata.custom')}</option>
+            </select>
+
+            {mode === 'preset' && (
+                <select
+                    value={inPresets ? value : CITATION_PRESETS[0]}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="mt-2 w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                >
+                    {CITATION_PRESETS.map(preset => (
+                        <option key={preset} value={preset}>{preset}</option>
+                    ))}
+                </select>
+            )}
+
+            {mode === 'custom' && (
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={t('paperSetup.subSteps.rubric.metadata.citationStandardPlaceholder')}
+                    className="mt-2 w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                />
+            )}
+
+            {showMismatch && mode !== 'guide' && (
+                <p className="mt-2 text-[11px] text-warning-subtle-foreground bg-warning-subtle border border-warning/30 rounded px-2 py-1">
+                    ⚠ {t('paperSetup.subSteps.rubric.metadata.mismatchWarning', { rubric: value, guide: guideStandard })}
+                </p>
+            )}
+        </div>
     );
 }
