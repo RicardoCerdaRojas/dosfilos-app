@@ -1,0 +1,20 @@
+{
+    "directory": {
+        "badge": "Trabajo de investigación exegética asistida",
+        "heroTitle": "Exégesis",
+        "heroSubtitle": "Producí trabajos exegéticos rigurosos del NT y AT, con análisis morfológico, sintáctico y léxico, citación verificada y estilo TMS — paso a paso, no de un golpe.",
+        "newPaperCta": "Nuevo trabajo",
+        "newPaperHint": "Configurá el pasaje, subí los extractos del corpus específicos y la guía de estilo (una vez por cuenta).",
+        "papersTitle": "Tus trabajos",
+        "papersSubtitle": "Continuá un trabajo en curso o abrí uno nuevo.",
+        "empty": {
+            "title": "Aún no tenés trabajos en curso",
+            "body": "Comenzá creando tu primer trabajo exegético. Te vamos guiando paso a paso: pasaje, corpus, generación verso por verso, conclusión, introducción y ensamble final.",
+            "cta": "Crear el primer trabajo"
+        },
+        "comingSoon": {
+            "title": "v1 en construcción",
+            "body": "Esta primera versión enfoca el flujo de redacción asistida: configuración del proyecto, generación verso por verso con interacción y ensamble final. La verificación programática de citas (el diferenciador frente a NotebookLM) llega en la siguiente versión."
+        }
+    }
+}

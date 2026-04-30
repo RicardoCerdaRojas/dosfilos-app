@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {
   Home, FileText, Sparkles, Settings, LogOut,
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -113,6 +113,7 @@ export function AppSidebar() {
         { name: t('menu.projects'), href: '/dashboard/projects', icon: FolderKanban },
         { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
         { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
+        { name: t('menu.exegesis'), href: '/dashboard/exegesis', icon: NotebookPen },
         ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
       ],
     },

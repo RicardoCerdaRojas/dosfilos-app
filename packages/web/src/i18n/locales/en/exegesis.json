@@ -1,0 +1,20 @@
+{
+    "directory": {
+        "badge": "Assisted exegetical research papers",
+        "heroTitle": "Exegesis",
+        "heroSubtitle": "Produce rigorous NT and OT exegetical papers with morphological, syntactic, and lexical analysis, verified citations, and TMS-style formatting — step by step, not all at once.",
+        "newPaperCta": "New paper",
+        "newPaperHint": "Configure the passage, upload the project-specific corpus extracts, and pick the style guide (once per account).",
+        "papersTitle": "Your papers",
+        "papersSubtitle": "Continue an in-progress paper or start a new one.",
+        "empty": {
+            "title": "No papers yet",
+            "body": "Start by creating your first exegetical paper. We walk you through it step by step: passage, corpus, verse-by-verse generation, conclusion, introduction, and final assembly.",
+            "cta": "Create the first paper"
+        },
+        "comingSoon": {
+            "title": "v1 under construction",
+            "body": "This first version focuses on the assisted writing flow: project setup, step-by-step verse generation with interaction, and final assembly. Programmatic citation verification (the real differentiator vs NotebookLM) arrives in the next version."
+        }
+    }
+}
