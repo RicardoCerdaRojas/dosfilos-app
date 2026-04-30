@@ -405,7 +405,9 @@
                     "metBody": "{{count}} fuentes adjuntas — todos los mínimos están satisfechos. Podés avanzar al plan estructural.",
                     "gapsTitle": "{{satisfied}} de {{total}} requisitos satisfechos",
                     "gapsBody": "Te faltan {{missing}} fuentes para cumplir la rúbrica. Los detalles abajo indican qué tipos sumar.",
-                    "noRubric": "Aún no hay rúbrica asociada al trabajo. Configurá la rúbrica en el primer tab antes de cargar el corpus."
+                    "noRubric": "Aún no hay rúbrica asociada al trabajo. Configurá la rúbrica en el primer tab antes de cargar el corpus.",
+                    "uploadForType": "Subir un {{type}} para cubrir este requisito",
+                    "uploadForTypeShort": "Subir"
                 },
                 "list": {
                     "title": "Fuentes adjuntas",

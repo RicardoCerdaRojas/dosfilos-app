@@ -405,7 +405,9 @@
                     "metBody": "{{count}} sources attached — every minimum is satisfied. You can move on to the structural plan.",
                     "gapsTitle": "{{satisfied}} of {{total}} requirements met",
                     "gapsBody": "You are {{missing}} sources short of meeting the rubric. The details below indicate what types to add.",
-                    "noRubric": "No rubric is attached yet. Configure the rubric in the first tab before loading the corpus."
+                    "noRubric": "No rubric is attached yet. Configure the rubric in the first tab before loading the corpus.",
+                    "uploadForType": "Upload a {{type}} to cover this requirement",
+                    "uploadForTypeShort": "Upload"
                 },
                 "list": {
                     "title": "Attached sources",

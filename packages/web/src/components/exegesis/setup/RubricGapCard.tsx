@@ -1,8 +1,9 @@
-import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Upload } from 'lucide-react';
 import {
     computeRubricCompliance,
     type ExegeticalPaper,
     type RequirementCheck,
+    type SourceType,
 } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 
@@ -26,9 +27,15 @@ import { useTranslation } from '@/i18n';
  */
 interface RubricGapCardProps {
     paper: ExegeticalPaper;
+    /**
+     * Called when the student clicks "Subir" on a requirement row.
+     * The parent (`CorpusSubStep`) reacts by pre-selecting that
+     * type in the upload form below and scrolling it into view.
+     */
+    onPickType?: (type: SourceType) => void;
 }
 
-export function RubricGapCard({ paper }: RubricGapCardProps) {
+export function RubricGapCard({ paper, onPickType }: RubricGapCardProps) {
     const { t } = useTranslation('exegesis');
     const rubric = paper.rubric;
 
@@ -86,19 +93,25 @@ export function RubricGapCard({ paper }: RubricGapCardProps) {
                 {visibleRequirements
                     .filter(r => !r.satisfied)
                     .map(r => (
-                        <RequirementRow key={r.sourceType} check={r} />
+                        <RequirementRow key={r.sourceType} check={r} onPickType={onPickType} />
                     ))}
                 {visibleRequirements
                     .filter(r => r.satisfied)
                     .map(r => (
-                        <RequirementRow key={r.sourceType} check={r} />
+                        <RequirementRow key={r.sourceType} check={r} onPickType={onPickType} />
                     ))}
             </ul>
         </div>
     );
 }
 
-function RequirementRow({ check }: { check: RequirementCheck }) {
+function RequirementRow({
+    check,
+    onPickType,
+}: {
+    check: RequirementCheck;
+    onPickType?: (type: SourceType) => void;
+}) {
     const { t } = useTranslation('exegesis');
     const label = t(`sourceTypes.${check.sourceType}.label`);
     const examples = t(`sourceTypes.${check.sourceType}.examples`);
@@ -113,12 +126,25 @@ function RequirementRow({ check }: { check: RequirementCheck }) {
                 </span>
             )}
             <div className="flex-1 min-w-0">
-                <p className={check.satisfied
-                    ? 'text-success-subtle-foreground font-medium'
-                    : 'text-warning-subtle-foreground font-medium'}
-                >
-                    {label} · {check.have}/{check.required}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                    <p className={check.satisfied
+                        ? 'text-success-subtle-foreground font-medium'
+                        : 'text-warning-subtle-foreground font-medium'}
+                    >
+                        {label} · {check.have}/{check.required}
+                    </p>
+                    {!check.satisfied && onPickType && (
+                        <button
+                            type="button"
+                            onClick={() => onPickType(check.sourceType)}
+                            className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-warning-subtle-foreground hover:text-foreground rounded px-1.5 py-0.5 hover:bg-warning/20 transition-colors"
+                            title={t('paperSetup.subSteps.corpus.gap.uploadForType', { type: label })}
+                        >
+                            <Upload className="h-3 w-3" />
+                            {t('paperSetup.subSteps.corpus.gap.uploadForTypeShort')}
+                        </button>
+                    )}
+                </div>
                 <p className="text-warning-subtle-foreground leading-snug mt-0.5">
                     {check.justification}
                 </p>

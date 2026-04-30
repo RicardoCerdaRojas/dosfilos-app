@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileStack, FileText, Loader2, Upload, X, BookOpenText } from 'lucide-react';
 import { toast } from 'sonner';
 import { libraryService } from '@dosfilos/application';
@@ -40,6 +40,25 @@ interface CorpusSubStepProps {
 export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     const { t } = useTranslation('exegesis');
 
+    // Per-requirement upload coordination: when the student clicks
+    // "Subir" on a missing requirement in the gap card, this state
+    // pre-selects that type in the form below AND scrolls the form
+    // into view. The token (timestamp) is part of the trigger so
+    // clicking the same requirement twice still scrolls — without it
+    // React would skip the effect because the type didn't change.
+    const [pickedType, setPickedType] = useState<{ type: SourceType; token: number } | null>(null);
+    const uploadFormRef = useRef<HTMLDivElement | null>(null);
+
+    const handlePickType = (type: SourceType) => {
+        setPickedType({ type, token: Date.now() });
+        // Defer the scroll until after React has re-rendered the form
+        // with the new initial type so the focus lands on the right
+        // node visually.
+        requestAnimationFrame(() => {
+            uploadFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    };
+
     return (
         <div className="space-y-6">
             <header className="flex items-start gap-3">
@@ -54,11 +73,13 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </div>
             </header>
 
-            <RubricGapCard paper={paper} />
+            <RubricGapCard paper={paper} onPickType={handlePickType} />
 
             <CorpusSourcesList paper={paper} />
 
-            <CorpusUploadForm paper={paper} />
+            <div ref={uploadFormRef}>
+                <CorpusUploadForm paper={paper} initialPickedType={pickedType} />
+            </div>
         </div>
     );
 }
@@ -161,7 +182,13 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
 
 // ── Upload form ────────────────────────────────────────────────────────
 
-function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
+function CorpusUploadForm({
+    paper,
+    initialPickedType,
+}: {
+    paper: ExegeticalPaper;
+    initialPickedType: { type: SourceType; token: number } | null;
+}) {
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
     const { addSource } = useExegesisPapers();
@@ -170,6 +197,17 @@ function CorpusUploadForm({ paper }: { paper: ExegeticalPaper }) {
     const [file, setFile] = useState<File | null>(null);
     const [displayName, setDisplayName] = useState('');
     const [sourceType, setSourceType] = useState<SourceType>('commentary-critical');
+
+    // Sync the picker when the parent points us at a specific type
+    // (the gap card's "Subir" button). The token in the dependency
+    // ensures repeated clicks on the same row still re-trigger the
+    // sync — useful when the student clicks once, navigates away
+    // mid-fill, and clicks again.
+    useEffect(() => {
+        if (initialPickedType) {
+            setSourceType(initialPickedType.type);
+        }
+    }, [initialPickedType]);
     const [citationKey, setCitationKey] = useState('');
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState<number | null>(null);
