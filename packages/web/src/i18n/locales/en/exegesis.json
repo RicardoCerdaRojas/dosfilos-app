@@ -139,6 +139,8 @@
                     "subtitle": "Paste the rubric or brief your professor gave you. We extract it into a structured form you can review and adjust.",
                     "textareaLabel": "Rubric or assignment text",
                     "textareaPlaceholder": "Paste the seminary's rubric, the assignment brief, or the professor's instructions.\n\nE.g. 'The exegetical paper must include technical Greek analysis backed by at least two critical commentaries (WBC, NIGTC, etc.), a technical lexicon (BDAG), and a theological dictionary (TDNT/NIDNTTE)...'",
+                    "outputLanguageLabel": "Justifications in:",
+                    "outputLanguageHint": "(paper language, not input language)",
                     "submit": "Extract and replace rubric",
                     "extracting": "Extracting rubric...",
                     "tooShort": "Text is too short. Paste at least a paragraph with instructions.",

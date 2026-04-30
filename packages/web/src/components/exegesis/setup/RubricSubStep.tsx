@@ -402,6 +402,11 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
     const { t } = useTranslation('exegesis');
     const { extractRubricFromText } = useExegesisPapers();
     const [text, setText] = useState('');
+    // Output language defaults to the paper's display language so the
+    // extracted rubric's justifications match the language the student
+    // will read during setup. Override when the student is producing a
+    // paper in a different language than the rubric source.
+    const [outputLanguage, setOutputLanguage] = useState<'es' | 'en'>(paper.displayLanguage);
     const [lastResult, setLastResult] = useState<ExtractionResultSummary | null>(null);
 
     const isExtracting = extractRubricFromText.isPending;
@@ -419,6 +424,7 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
             const result = await extractRubricFromText.mutateAsync({
                 paperId: paper.id,
                 rawText: text.trim(),
+                language: outputLanguage,
             });
             setLastResult({
                 confidence: result.confidence,
@@ -475,7 +481,24 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
                 )}
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-medium text-emerald-900 dark:text-emerald-100">
+                        {t('paperSetup.subSteps.rubric.extract.outputLanguageLabel')}
+                    </label>
+                    <select
+                        value={outputLanguage}
+                        onChange={(e) => setOutputLanguage(e.target.value as 'es' | 'en')}
+                        disabled={isExtracting}
+                        className="rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 disabled:opacity-50"
+                    >
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                    </select>
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-300 italic">
+                        {t('paperSetup.subSteps.rubric.extract.outputLanguageHint')}
+                    </span>
+                </div>
                 <Button
                     type="button"
                     onClick={handleExtract}

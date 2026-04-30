@@ -139,6 +139,8 @@
                     "subtitle": "Pegá la rúbrica o el brief que te dio tu profesor. La extraemos a un formato estructurado que después podés revisar y ajustar.",
                     "textareaLabel": "Texto de la rúbrica o asignación",
                     "textareaPlaceholder": "Pegá acá la rúbrica del seminario, el brief de la asignación o las instrucciones del profesor.\n\nEj: 'El trabajo exegético debe contener un análisis técnico del griego con apoyo de al menos dos comentarios críticos (WBC, NIGTC, etc.), un léxico técnico (BDAG), y un diccionario teológico (TDNT/NIDNTTE)...'",
+                    "outputLanguageLabel": "Justificaciones en:",
+                    "outputLanguageHint": "(idioma del paper, no del input)",
                     "submit": "Extraer y reemplazar rúbrica",
                     "extracting": "Extrayendo rúbrica...",
                     "tooShort": "El texto es muy corto. Pegá al menos un párrafo con instrucciones.",
