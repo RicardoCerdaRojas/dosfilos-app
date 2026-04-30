@@ -97,6 +97,11 @@
         "backToList": "Volver al listado",
         "submit": "Crear y configurar",
         "cancel": "Cancelar",
+        "language": {
+            "title": "Idioma del paper",
+            "subtitle": "El idioma en el que el agente va a redactar versos, conclusión e introducción. Lo podés cambiar luego, pero siempre afecta a TODO el paper.",
+            "hint": "Independiente del idioma de la UI o de la rúbrica que pegues."
+        },
         "brief": {
             "title": "Encuadre del trabajo",
             "subtitle": "¿Qué pidió tu profesor? ¿Qué ángulo querés tomar? Esto guía al agente en TODOS los pasos.",

@@ -97,6 +97,11 @@
         "backToList": "Back to list",
         "submit": "Create and configure",
         "cancel": "Cancel",
+        "language": {
+            "title": "Paper language",
+            "subtitle": "The language the agent will use to write verses, conclusion, and introduction. Editable later — it always affects the WHOLE paper.",
+            "hint": "Independent of the UI language or the rubric you paste."
+        },
         "brief": {
             "title": "Paper framing",
             "subtitle": "What did your professor assign? What angle do you want to take? This guides the agent across EVERY step.",

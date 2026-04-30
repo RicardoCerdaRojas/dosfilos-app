@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb } from 'lucide-react';
+import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
@@ -32,7 +32,13 @@ export function ExegesisCreatePage() {
     const [passageError, setPassageError] = useState<string | null>(null);
     const [assignmentBrief, setAssignmentBrief] = useState('');
 
-    const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+    // Default the paper language to whatever the UI is set to, but
+    // make it explicit + editable. The student may be using a Spanish
+    // UI to write a paper in English (or vice versa). The choice is
+    // sticky on the paper; it drives the orchestrator's output
+    // language for every step.
+    const initialLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+    const [displayLanguage, setDisplayLanguage] = useState<SupportedLanguage>(initialLanguage);
     const isCreating = createPaper.isPending;
     const canCreate = !!passage && !isCreating;
     const briefCharCount = assignmentBrief.length;
@@ -43,7 +49,7 @@ export function ExegesisCreatePage() {
         try {
             const paper = await createPaper.mutateAsync({
                 passage,
-                displayLanguage: activeLanguage,
+                displayLanguage,
                 styleGuideId: null,
                 assignmentBrief: assignmentBrief.trim() || null,
             });
@@ -95,6 +101,33 @@ export function ExegesisCreatePage() {
 
                 <Step
                     number={2}
+                    icon={<Languages className="h-4 w-4" />}
+                    title={t('create.language.title')}
+                    subtitle={t('create.language.subtitle')}
+                >
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex gap-2">
+                            <LanguageOption
+                                value="es"
+                                label="Español"
+                                selected={displayLanguage === 'es'}
+                                onSelect={() => setDisplayLanguage('es')}
+                            />
+                            <LanguageOption
+                                value="en"
+                                label="English"
+                                selected={displayLanguage === 'en'}
+                                onSelect={() => setDisplayLanguage('en')}
+                            />
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                            {t('create.language.hint')}
+                        </p>
+                    </div>
+                </Step>
+
+                <Step
+                    number={3}
                     icon={<Lightbulb className="h-4 w-4" />}
                     title={t('create.brief.title')}
                     subtitle={t('create.brief.subtitle')}
@@ -173,5 +206,34 @@ function Step({ number, icon, title, subtitle, children }: StepProps) {
                 {children}
             </div>
         </section>
+    );
+}
+
+function LanguageOption({
+    value,
+    label,
+    selected,
+    onSelect,
+}: {
+    value: 'es' | 'en';
+    label: string;
+    selected: boolean;
+    onSelect: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            className={[
+                'rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
+                selected
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200'
+                    : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800',
+            ].join(' ')}
+            aria-pressed={selected}
+        >
+            <span className="text-[10px] uppercase tracking-wide opacity-70 mr-2">{value}</span>
+            {label}
+        </button>
     );
 }
