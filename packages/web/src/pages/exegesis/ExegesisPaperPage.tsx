@@ -23,7 +23,6 @@ import {
     formatPassageReference,
     type ExegeticalPaper,
     type ProjectSource,
-    type ProjectSourceRole,
     type SupportedLanguage,
 } from '@dosfilos/domain';
 
@@ -382,7 +381,7 @@ function SourceRow({
     disabled: boolean;
     t: (key: string) => string;
 }) {
-    const isModelPaper = source.role === 'model-paper';
+    const isStyleTemplate = source.sourceType === 'style-template-paper';
     return (
         <li className="group flex items-start gap-2 rounded-md border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 px-2.5 py-2">
             <BookOpenText className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
@@ -391,12 +390,12 @@ function SourceRow({
                     {source.displayLabel}
                 </p>
                 <p className={
-                    isModelPaper
+                    isStyleTemplate
                         ? 'text-[10px] text-amber-700 dark:text-amber-300 truncate'
                         : 'text-[10px] text-slate-500 dark:text-slate-400 truncate'
                 }>
-                    {t(`setup.sources.roles.${source.role as ProjectSourceRole}`)}
-                    {source.citationKey && !isModelPaper ? ` · ${source.citationKey}` : ''}
+                    {t(`sourceTypes.${source.sourceType}.label`)}
+                    {source.citationKey && !isStyleTemplate ? ` · ${source.citationKey}` : ''}
                 </p>
             </div>
             <button

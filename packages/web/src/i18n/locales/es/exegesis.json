@@ -360,11 +360,7 @@
         }
     },
     "setup": {
-        "title": "Nuevo trabajo exegético",
-        "subtitle": "Configurá el pasaje, la guía de estilo y el corpus de fuentes específicas para este trabajo.",
-        "backToList": "Volver al listado",
         "cancel": "Cancelar",
-        "create": "Crear trabajo",
         "passage": {
             "stepTitle": "Pasaje",
             "stepSubtitle": "Indicá el rango bíblico a estudiar. Validamos contra el canon (66 libros) en el momento.",
@@ -380,63 +376,6 @@
             "verseEnd": "Verso fin",
             "helperHint": "Soporta abreviaciones, acentos y ambos separadores (Heb 1:1 / Heb 1.1).",
             "parsedAs": "Reconocido como"
-        },
-        "styleGuide": {
-            "stepTitle": "Guía de estilo",
-            "stepSubtitle": "Una vez por usuario. Si tenés una activa, se selecciona automáticamente; si no, subila acá.",
-            "loading": "Cargando guías...",
-            "activeBadge": "Activa",
-            "setActive": "Marcar como activa",
-            "uploadAnother": "Subir otra guía",
-            "fileLabel": "Archivo (PDF o EPUB)",
-            "displayNameLabel": "Nombre",
-            "displayNamePlaceholder": "Ej. TMS 2024-25",
-            "versionLabel": "Versión",
-            "versionPlaceholder": "Ej. 2024-25",
-            "uploadCta": "Subir guía",
-            "uploading": "Subiendo... {{progress}}%",
-            "extractionHint": "El procesamiento del PDF (LlamaParse) sigue en background. La guía queda disponible en cuanto se cree el registro; si el procesamiento aún no terminó, te avisaremos al generar.",
-            "toast": {
-                "uploaded": "Guía subida correctamente",
-                "uploadFailed": "No se pudo subir la guía. Intentá de nuevo.",
-                "activated": "Guía activa actualizada",
-                "activateFailed": "No se pudo activar la guía"
-            }
-        },
-        "sources": {
-            "stepTitle": "Corpus del trabajo",
-            "stepSubtitle": "Extractos específicos para este pasaje. Cada uno con su rol — el orquestador respeta esos roles al citar.",
-            "addAnother": "Agregar otra fuente",
-            "remove": "Quitar",
-            "fileLabel": "Archivo (PDF o EPUB)",
-            "displayNameLabel": "Etiqueta",
-            "displayNamePlaceholder": "Ej. Lane WBC 47a, pp. 1-30",
-            "roleLabel": "Rol",
-            "citationKeyLabel": "Clave de cita",
-            "citationKeyPlaceholder": "Ej. Lane",
-            "uploadCta": "Subir y agregar",
-            "uploading": "Subiendo... {{progress}}%",
-            "scopeHint": "Las fuentes acá son específicas para este trabajo. Después podés promover una a tu biblioteca general (próximamente).",
-            "modelPaperHint": "Los trabajos modelo se usan solo como plantilla de estilo. NO se citan inline.",
-            "roles": {
-                "primary-commentary": "Comentario principal",
-                "secondary-commentary": "Comentario secundario",
-                "lexicon": "Léxico",
-                "critical-apparatus": "Aparato crítico",
-                "historical-context": "Contexto histórico/cultural",
-                "theological-context": "Contexto teológico",
-                "model-paper": "Trabajo modelo (solo estilo)",
-                "misc": "Otro"
-            },
-            "toast": {
-                "uploaded": "Fuente subida correctamente",
-                "uploadFailed": "No se pudo subir la fuente. Intentá de nuevo.",
-                "attachFailed": "El trabajo se creó pero algunas fuentes no quedaron adjuntas. Las podés agregar desde el detalle."
-            }
-        },
-        "toast": {
-            "created": "Trabajo creado",
-            "createFailed": "No se pudo crear el trabajo. Intentá de nuevo."
         }
     },
     "list": {
