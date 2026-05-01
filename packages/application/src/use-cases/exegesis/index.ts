@@ -42,3 +42,10 @@ export { SeedStepsForPassageUseCase } from './SeedStepsForPassageUseCase';
 export { GenerateStepUseCase } from './GenerateStepUseCase';
 export { AcceptStepUseCase } from './AcceptStepUseCase';
 export { SaveStepEditUseCase } from './SaveStepEditUseCase';
+
+// Bridge: paper → sermon (Phase 2 of the sermon-series pipeline)
+export {
+    GenerateSermonFromPaperUseCase,
+    type GenerateSermonFromPaperInput,
+    type GenerateSermonFromPaperOutput,
+} from './GenerateSermonFromPaperUseCase';
