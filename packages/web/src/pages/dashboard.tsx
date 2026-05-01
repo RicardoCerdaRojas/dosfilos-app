@@ -230,8 +230,12 @@ export function DashboardPage() {
 
                 {onboarding.shouldShowBanner && <ActivationBanner />}
 
-                {/* PRIMARY GRID — projects + weekly agenda */}
-                <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-5">
+                {/* PRIMARY GRID — projects + weekly agenda.
+                    `items-start` so the right column (often shorter
+                    when empty) doesn't stretch to match the projects
+                    column. Without it the empty agenda card overflows
+                    visually into the next row. */}
+                <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-5 items-start">
                     <ProjectsSection
                         projects={activeProjects}
                         sessionsByProject={sessionsByProject}
@@ -246,8 +250,9 @@ export function DashboardPage() {
                     />
                 </div>
 
-                {/* SECONDARY GRID — exegesis + recent material */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                {/* SECONDARY GRID — exegesis + recent material.
+                    Same items-start reasoning as the primary grid. */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
                     <ExegesisInProgressSection
                         papers={inProgressExegesis}
                         language={activeLanguage}
@@ -543,9 +548,16 @@ function WeeklyAgenda({
             />
 
             {sermons.length === 0 ? (
-                <div className="bg-muted/40 border border-border/60 rounded-xl px-5 py-7 text-center h-full flex flex-col items-center justify-center">
-                    <Calendar className="h-5 w-5 text-muted-foreground/70 mb-2" />
-                    <p className="text-[12.5px] text-muted-foreground max-w-[260px]">
+                // Don't stretch empty card with h-full — when the
+                // sibling column (projects) is tall, h-full on the
+                // empty card overflows visually into the next row.
+                // Better to let the card sit at natural height with
+                // blank space below than to push into the following
+                // section. Keep the centered visual feel via padding,
+                // not via flex justify-center.
+                <div className="bg-muted/40 border border-border/60 rounded-xl px-5 py-10 text-center">
+                    <Calendar className="h-5 w-5 text-muted-foreground/70 mx-auto mb-2" />
+                    <p className="text-[12.5px] text-muted-foreground max-w-[260px] mx-auto">
                         {t('agenda.empty')}
                     </p>
                 </div>
