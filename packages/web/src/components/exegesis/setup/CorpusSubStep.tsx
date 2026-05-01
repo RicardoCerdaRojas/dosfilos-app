@@ -2,11 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     BookOpenText,
     CheckCircle2,
+    ChevronDown,
+    ChevronRight,
     FileStack,
     FileText,
     Library,
     Loader2,
+    Quote,
     Search,
+    Sparkles,
     Upload,
     X,
 } from 'lucide-react';
@@ -35,6 +39,7 @@ import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { SourceTypePicker } from './SourceTypePicker';
 import { RubricGapCard } from './RubricGapCard';
+import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
 
 /**
  * Corpus sub-step — the main pedagogical surface of the rubric-driven
@@ -71,6 +76,13 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     // the auto-scroll-to-bottom problem the inline form caused.
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogInitialType, setDialogInitialType] = useState<SourceType | null>(null);
+    // v1.5: separate dialog for the library-extraction flow. Opens
+    // independently from the upload dialog so the two paths don't
+    // tangle their state — the upload dialog is "I'm bringing a new
+    // file or picking ONE library doc as full-document"; the
+    // extraction dialog is "I want curated excerpts from MULTIPLE
+    // library docs at once."
+    const [extractDialogOpen, setExtractDialogOpen] = useState(false);
 
     const openDialog = (preselect: SourceType | null) => {
         setDialogInitialType(preselect);
@@ -93,7 +105,11 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
 
             <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
 
-            <CorpusSourcesList paper={paper} onAdd={() => openDialog(null)} />
+            <CorpusSourcesList
+                paper={paper}
+                onAdd={() => openDialog(null)}
+                onExtract={() => setExtractDialogOpen(true)}
+            />
 
             <AddSourceDialog
                 paper={paper}
@@ -101,13 +117,27 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 onOpenChange={setDialogOpen}
                 initialType={dialogInitialType}
             />
+
+            <ExtractFromLibraryDialog
+                paper={paper}
+                open={extractDialogOpen}
+                onOpenChange={setExtractDialogOpen}
+            />
         </div>
     );
 }
 
 // ── Sources list ────────────────────────────────────────────────────────
 
-function CorpusSourcesList({ paper, onAdd }: { paper: ExegeticalPaper; onAdd: () => void }) {
+function CorpusSourcesList({
+    paper,
+    onAdd,
+    onExtract,
+}: {
+    paper: ExegeticalPaper;
+    onAdd: () => void;
+    onExtract: () => void;
+}) {
     const { t } = useTranslation('exegesis');
     const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
 
@@ -117,14 +147,30 @@ function CorpusSourcesList({ paper, onAdd }: { paper: ExegeticalPaper; onAdd: ()
                 <h3 className="text-sm font-semibold text-foreground">
                     {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
                 </h3>
-                <Button
-                    type="button"
-                    onClick={onAdd}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
-                >
-                    <Upload className="h-3 w-3 mr-1" />
-                    {t('paperSetup.subSteps.corpus.list.addCta')}
-                </Button>
+                <div className="flex items-center gap-1.5">
+                    {/* Extract from library: secondary visual weight
+                        (outline) because the primary path for new
+                        users is still the direct upload. Veterans
+                        with built-up libraries flip the priority
+                        in their head naturally. */}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onExtract}
+                        className="text-xs"
+                    >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        {t('paperSetup.subSteps.corpus.list.extractCta')}
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={onAdd}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                    >
+                        <Upload className="h-3 w-3 mr-1" />
+                        {t('paperSetup.subSteps.corpus.list.addCta')}
+                    </Button>
+                </div>
             </header>
             {sorted.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">
@@ -145,6 +191,12 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
     const { t } = useTranslation('exegesis');
     const { updateSource, removeSource } = useExegesisPapers();
     const isCitable = CITABLE_SOURCE_TYPES.has(source.sourceType);
+    const isExtracted = source.mode === 'extracted-excerpts';
+    // Excerpts panel is collapsed by default — sources can have up to
+    // 30 chunks each and unfolding them all by default would dwarf
+    // everything else on the page. The user expands when they want
+    // to review/edit.
+    const [excerptsExpanded, setExcerptsExpanded] = useState(false);
 
     const handleTypeChange = async (next: SourceType) => {
         try {
@@ -173,10 +225,18 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
     return (
         <li className="rounded-lg border border-border bg-card p-3 space-y-2">
             <div className="flex items-start gap-2.5">
-                <FileText className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                {isExtracted
+                    ? <Quote className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                    : <FileText className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                }
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-sm font-medium text-foreground truncate inline-flex items-center gap-1.5">
                         {source.displayLabel}
+                        {isExtracted && (
+                            <span className="text-[10px] font-medium rounded-full bg-success-subtle text-success-subtle-foreground border border-success/30 px-1.5 py-0 leading-tight">
+                                {t('paperSetup.subSteps.corpus.list.excerptsBadge', { count: source.excerpts.length })}
+                            </span>
+                        )}
                     </p>
                     {source.citationKey && (
                         <p className="text-[11px] text-muted-foreground">
@@ -207,7 +267,178 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                     {t('paperSetup.subSteps.corpus.upload.modelPaperHint')}
                 </p>
             )}
+
+            {/* v1.5: when this source is in extracted-excerpts mode,
+                expose a collapsible review panel with the curated
+                chunks. Defaults collapsed because each source can
+                carry up to 30 excerpts — opening them all by default
+                would dwarf everything else on the setup page. */}
+            {isExtracted && (
+                <div>
+                    <button
+                        type="button"
+                        onClick={() => setExcerptsExpanded(v => !v)}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        {excerptsExpanded
+                            ? <ChevronDown className="h-3 w-3" />
+                            : <ChevronRight className="h-3 w-3" />
+                        }
+                        {excerptsExpanded
+                            ? t('paperSetup.subSteps.corpus.excerpts.collapse')
+                            : t('paperSetup.subSteps.corpus.excerpts.expand')
+                        }
+                    </button>
+                    {excerptsExpanded && (
+                        <ExcerptsReviewPanel
+                            paperId={paperId}
+                            source={source}
+                        />
+                    )}
+                </div>
+            )}
         </li>
+    );
+}
+
+// ── Excerpts review panel (v1.5) ─────────────────────────────────────────
+
+/**
+ * Inline editor for the curated excerpts of an `'extracted-excerpts'`
+ * source. Shows each excerpt as a textarea with its source anchor,
+ * lets the user edit text or delete entirely, and commits all
+ * changes in one batch via `updateSource`.
+ *
+ * Local state holds the editing draft so unsaved keystrokes don't
+ * fire mutation calls per character. "Save changes" commits; "Discard"
+ * resets to the persisted state. The button row stays sticky-feeling
+ * (within the row's flow) — for v1.5 we don't trap the user; if they
+ * navigate away with unsaved changes, the local state is lost. The
+ * roadmap's "stale banner" feature lands later; this commit ships
+ * the editor only.
+ */
+function ExcerptsReviewPanel({
+    paperId,
+    source,
+}: {
+    paperId: string;
+    source: ProjectSource;
+}) {
+    const { t } = useTranslation('exegesis');
+    const { updateSource } = useExegesisPapers();
+    // Local working copy. Re-syncs whenever the persisted source
+    // identity changes (re-extraction lands new excerpts, another
+    // tab edits, etc.) — drops in-flight unsaved edits, acceptable
+    // tradeoff for the simple v1.5 editor.
+    const [drafts, setDrafts] = useState(() => source.excerpts.map(e => ({ ...e })));
+    useEffect(() => {
+        setDrafts(source.excerpts.map(e => ({ ...e })));
+    }, [source.excerpts]);
+
+    const dirty = useMemo(() => {
+        if (drafts.length !== source.excerpts.length) return true;
+        return drafts.some((draft, idx) => {
+            const original = source.excerpts[idx];
+            if (!original) return true;
+            return draft.text !== original.text;
+        });
+    }, [drafts, source.excerpts]);
+
+    const updateText = (idx: number, text: string) => {
+        setDrafts(prev => prev.map((d, i) => i === idx
+            ? { ...d, text, userEdited: true, editedAt: new Date() }
+            : d));
+    };
+
+    const removeAt = (idx: number) => {
+        setDrafts(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    const handleSave = async () => {
+        try {
+            await updateSource.mutateAsync({
+                paperId,
+                sourceId: source.id,
+                excerpts: drafts,
+            });
+            toast.success(t('paperSetup.subSteps.corpus.excerpts.toast.saved'));
+        } catch (err) {
+            console.error('[exegesis] save excerpts failed:', err);
+            toast.error(t('paperSetup.subSteps.corpus.excerpts.toast.saveFailed'));
+        }
+    };
+
+    const handleDiscard = () => {
+        setDrafts(source.excerpts.map(e => ({ ...e })));
+    };
+
+    if (drafts.length === 0) {
+        return (
+            <div className="mt-2 rounded-lg border border-warning/30 bg-warning-subtle/40 px-3 py-2 text-[11px] text-warning-subtle-foreground">
+                {t('paperSetup.subSteps.corpus.excerpts.emptyWarning')}
+            </div>
+        );
+    }
+
+    return (
+        <div className="mt-2 space-y-2">
+            <ul className="space-y-1.5">
+                {drafts.map((excerpt, idx) => (
+                    <li
+                        key={idx}
+                        className="rounded-md border border-border bg-muted/30 px-2.5 py-2 space-y-1"
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] font-medium text-muted-foreground inline-flex items-center gap-1.5">
+                                <span>{excerpt.sourceLocation || t('paperSetup.subSteps.corpus.excerpts.noAnchor', { index: idx + 1 })}</span>
+                                {excerpt.userEdited && (
+                                    <span className="text-[9px] uppercase tracking-wide font-semibold rounded bg-info-subtle text-info-subtle-foreground border border-info/30 px-1 py-0">
+                                        {t('paperSetup.subSteps.corpus.excerpts.editedBadge')}
+                                    </span>
+                                )}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => removeAt(idx)}
+                                className="p-0.5 rounded text-muted-foreground hover:text-destructive hover:bg-accent transition-colors"
+                                aria-label={t('paperSetup.subSteps.corpus.excerpts.delete')}
+                                title={t('paperSetup.subSteps.corpus.excerpts.delete')}
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </div>
+                        <textarea
+                            value={excerpt.text}
+                            onChange={(e) => updateText(idx, e.target.value)}
+                            rows={3}
+                            className="w-full rounded border border-border bg-card px-2 py-1 text-[11px] leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
+                        />
+                    </li>
+                ))}
+            </ul>
+            {dirty && (
+                <div className="flex items-center justify-end gap-2">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={handleDiscard}
+                        disabled={updateSource.isPending}
+                        className="text-[11px] h-7"
+                    >
+                        {t('paperSetup.subSteps.corpus.excerpts.discard')}
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={updateSource.isPending}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-[11px] h-7"
+                    >
+                        {updateSource.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                        {t('paperSetup.subSteps.corpus.excerpts.save')}
+                    </Button>
+                </div>
+            )}
+        </div>
     );
 }
 

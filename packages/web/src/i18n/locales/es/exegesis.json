@@ -426,7 +426,44 @@
                     "title": "Fuentes adjuntas",
                     "empty": "Aún no agregaste fuentes. Toca \"Agregar fuente\" arriba o \"Subir\" en cualquier requisito faltante.",
                     "addCta": "Agregar fuente",
+                    "extractCta": "Extraer de mi biblioteca",
+                    "excerptsBadge_one": "{{count}} excerpt",
+                    "excerptsBadge_other": "{{count}} excerpts",
                     "remove": "Quitar fuente"
+                },
+                "extract": {
+                    "dialogTitle": "Extraer fragmentos de tu biblioteca",
+                    "dialogSubtitle": "Selecciona uno o más recursos indexados de tu biblioteca y extraeremos los fragmentos más relevantes para el pasaje del trabajo. Los podrás revisar y editar después.",
+                    "footerEmpty": "Selecciona al menos un recurso para continuar.",
+                    "footerCount_one": "{{count}} recurso seleccionado",
+                    "footerCount_other": "{{count}} recursos seleccionados",
+                    "footerWithReplace_one": "{{count}} recurso seleccionado · {{replaces}} reemplazará excerpts existentes",
+                    "footerWithReplace_other": "{{count}} recursos seleccionados · {{replaces}} reemplazarán excerpts existentes",
+                    "submit": "Extraer fragmentos",
+                    "submitting": "Extrayendo...",
+                    "willReplace": "Reemplazará excerpts actuales",
+                    "notIndexedTitle": "Algunos recursos no están listos",
+                    "notIndexedBody_one": "{{count}} recurso seleccionado aún no está indexado. Quítalo de la selección o espera a que termine el procesamiento automático.",
+                    "notIndexedBody_other": "{{count}} recursos seleccionados aún no están indexados. Quítalos de la selección o espera a que termine el procesamiento automático.",
+                    "toast": {
+                        "success_one": "{{count}} fuente agregada con sus fragmentos curados",
+                        "success_other": "{{count}} fuentes agregadas con sus fragmentos curados",
+                        "failed": "No se pudo extraer los fragmentos. Intenta de nuevo."
+                    }
+                },
+                "excerpts": {
+                    "expand": "Ver fragmentos curados",
+                    "collapse": "Ocultar fragmentos",
+                    "delete": "Eliminar este fragmento",
+                    "save": "Guardar cambios",
+                    "discard": "Descartar",
+                    "editedBadge": "Editado",
+                    "noAnchor": "Fragmento {{index}}",
+                    "emptyWarning": "Esta fuente no tiene fragmentos seleccionados — no contribuirá a la generación.",
+                    "toast": {
+                        "saved": "Cambios guardados",
+                        "saveFailed": "No se pudieron guardar los cambios"
+                    }
                 },
                 "readiness": {
                     "indexed": "Listo",

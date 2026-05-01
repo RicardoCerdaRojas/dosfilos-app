@@ -426,7 +426,44 @@
                     "title": "Attached sources",
                     "empty": "No sources yet. Tap \"Add source\" above or \"Upload\" on any missing requirement.",
                     "addCta": "Add source",
+                    "extractCta": "Extract from my library",
+                    "excerptsBadge_one": "{{count}} excerpt",
+                    "excerptsBadge_other": "{{count}} excerpts",
                     "remove": "Remove source"
+                },
+                "extract": {
+                    "dialogTitle": "Extract excerpts from your library",
+                    "dialogSubtitle": "Pick one or more indexed resources from your library. We'll retrieve the most relevant excerpts for the paper's passage. You can review and edit them afterwards.",
+                    "footerEmpty": "Select at least one resource to continue.",
+                    "footerCount_one": "{{count}} resource selected",
+                    "footerCount_other": "{{count}} resources selected",
+                    "footerWithReplace_one": "{{count}} resource selected · {{replaces}} will replace existing excerpts",
+                    "footerWithReplace_other": "{{count}} resources selected · {{replaces}} will replace existing excerpts",
+                    "submit": "Extract excerpts",
+                    "submitting": "Extracting...",
+                    "willReplace": "Will replace current excerpts",
+                    "notIndexedTitle": "Some resources aren't ready",
+                    "notIndexedBody_one": "{{count}} selected resource isn't indexed yet. Remove it from the selection or wait for the auto-indexer to finish.",
+                    "notIndexedBody_other": "{{count}} selected resources aren't indexed yet. Remove them from the selection or wait for the auto-indexer to finish.",
+                    "toast": {
+                        "success_one": "{{count}} source added with curated excerpts",
+                        "success_other": "{{count}} sources added with curated excerpts",
+                        "failed": "Couldn't extract excerpts. Try again."
+                    }
+                },
+                "excerpts": {
+                    "expand": "Show curated excerpts",
+                    "collapse": "Hide excerpts",
+                    "delete": "Delete this excerpt",
+                    "save": "Save changes",
+                    "discard": "Discard",
+                    "editedBadge": "Edited",
+                    "noAnchor": "Excerpt {{index}}",
+                    "emptyWarning": "This source has no excerpts selected — it won't contribute to generation.",
+                    "toast": {
+                        "saved": "Changes saved",
+                        "saveFailed": "Couldn't save changes"
+                    }
                 },
                 "readiness": {
                     "indexed": "Ready",
