@@ -57,16 +57,9 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
     }
 
     private seriesToFirestore(series: SermonSeriesEntity): any {
-        let metadata: any = series.metadata || null;
-        if (metadata && metadata.plannedSermons) {
-            metadata = {
-                ...metadata,
-                plannedSermons: metadata.plannedSermons.map((ps: any) => ({
-                    ...ps,
-                    scheduledDate: ps.scheduledDate ? Timestamp.fromDate(new Date(ps.scheduledDate)) : null
-                }))
-            };
-        }
+        const metadata = series.metadata
+            ? this.metadataToFirestore(series.metadata)
+            : null;
 
         return {
             userId: series.userId,
@@ -85,17 +78,62 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
         };
     }
 
-    private firestoreToSeries(id: string, data: any): SermonSeriesEntity {
-        // Deserialize plannedSermons dates from Timestamps
-        let metadata = data.metadata || undefined;
-        if (metadata && metadata.plannedSermons) {
-            metadata = {
-                ...metadata,
-                plannedSermons: metadata.plannedSermons.map((ps: any) => ({
-                    ...ps,
-                    scheduledDate: ps.scheduledDate?.toDate ? ps.scheduledDate.toDate() : ps.scheduledDate
-                }))
+    // Firestore rejects `undefined` anywhere in the payload. The pericope
+    // assistant adds optional fields (`paperId`, `syntacticUnit`, `status`,
+    // `pericopeAssistantVersion/Status`) that are absent for legacy series,
+    // so we explicitly map every field and substitute `null` for missing
+    // values rather than spreading `...ps` and risking an undefined leak.
+    private metadataToFirestore(metadata: any): any {
+        const out: any = { ...metadata };
+
+        if (metadata.expository) {
+            out.expository = {
+                book: metadata.expository.book ?? null,
+                chapterRange: metadata.expository.chapterRange ?? null,
+                originalLanguageAnalysis: metadata.expository.originalLanguageAnalysis ?? null,
+                pericopeAssistantVersion: metadata.expository.pericopeAssistantVersion ?? null,
+                pericopeAssistantStatus: metadata.expository.pericopeAssistantStatus ?? null,
             };
+        }
+
+        if (metadata.plannedSermons) {
+            out.plannedSermons = metadata.plannedSermons.map((ps: any) => {
+                const unit = ps.syntacticUnit
+                    ? {
+                          book: ps.syntacticUnit.book,
+                          chapterStart: ps.syntacticUnit.chapterStart,
+                          verseStart: ps.syntacticUnit.verseStart,
+                          chapterEnd: ps.syntacticUnit.chapterEnd,
+                          verseEnd: ps.syntacticUnit.verseEnd,
+                          originalLanguage: ps.syntacticUnit.originalLanguage ?? null,
+                          justification: ps.syntacticUnit.justification ?? null,
+                      }
+                    : null;
+
+                return {
+                    id: ps.id,
+                    week: ps.week,
+                    title: ps.title,
+                    description: ps.description,
+                    passage: ps.passage,
+                    scheduledDate: ps.scheduledDate
+                        ? Timestamp.fromDate(new Date(ps.scheduledDate))
+                        : null,
+                    draftId: ps.draftId ?? null,
+                    paperId: ps.paperId ?? null,
+                    syntacticUnit: unit,
+                    status: ps.status ?? null,
+                };
+            });
+        }
+
+        return out;
+    }
+
+    private firestoreToSeries(id: string, data: any): SermonSeriesEntity {
+        let metadata = data.metadata || undefined;
+        if (metadata) {
+            metadata = this.metadataFromFirestore(metadata);
         }
 
         return SermonSeriesEntity.create({
@@ -112,5 +150,54 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
             metadata: metadata,
             resourceIds: data.resourceIds || [],
         });
+    }
+
+    // Inverse of `metadataToFirestore`: collapses `null` placeholders back to
+    // `undefined` so the domain types (which use `?:`) stay honest.
+    private metadataFromFirestore(metadata: any): any {
+        const out: any = { ...metadata };
+
+        if (metadata.expository) {
+            out.expository = {
+                book: metadata.expository.book ?? undefined,
+                chapterRange: metadata.expository.chapterRange ?? undefined,
+                originalLanguageAnalysis: metadata.expository.originalLanguageAnalysis ?? undefined,
+                pericopeAssistantVersion: metadata.expository.pericopeAssistantVersion ?? undefined,
+                pericopeAssistantStatus: metadata.expository.pericopeAssistantStatus ?? undefined,
+            };
+        }
+
+        if (metadata.plannedSermons) {
+            out.plannedSermons = metadata.plannedSermons.map((ps: any) => {
+                const unit = ps.syntacticUnit
+                    ? {
+                          book: ps.syntacticUnit.book,
+                          chapterStart: ps.syntacticUnit.chapterStart,
+                          verseStart: ps.syntacticUnit.verseStart,
+                          chapterEnd: ps.syntacticUnit.chapterEnd,
+                          verseEnd: ps.syntacticUnit.verseEnd,
+                          originalLanguage: ps.syntacticUnit.originalLanguage ?? undefined,
+                          justification: ps.syntacticUnit.justification ?? undefined,
+                      }
+                    : undefined;
+
+                return {
+                    id: ps.id,
+                    week: ps.week,
+                    title: ps.title,
+                    description: ps.description,
+                    passage: ps.passage,
+                    scheduledDate: ps.scheduledDate?.toDate
+                        ? ps.scheduledDate.toDate()
+                        : ps.scheduledDate ?? undefined,
+                    draftId: ps.draftId ?? undefined,
+                    paperId: ps.paperId ?? undefined,
+                    syntacticUnit: unit,
+                    status: ps.status ?? undefined,
+                };
+            });
+        }
+
+        return out;
     }
 }
