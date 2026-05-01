@@ -105,7 +105,7 @@ export class SermonEntity implements Sermon {
 
     static create(
         data: Pick<Sermon, 'userId' | 'title' | 'content'>
-            & Partial<Omit<Sermon, 'userId' | 'title' | 'content' | 'id' | 'createdAt' | 'updatedAt'>>
+            & Partial<Omit<Sermon, 'userId' | 'title' | 'content' | 'id'>>
             & { id?: string; preachingHistory?: PreachingLog[] }
     ): SermonEntity {
         const d = data as any;
@@ -118,8 +118,13 @@ export class SermonEntity implements Sermon {
             data.tags ?? [],
             data.category,
             data.status ?? 'working',
-            new Date(),
-            new Date(),
+            // Honor caller-provided timestamps (deserialization from
+            // Firestore needs to preserve the actual creation/update
+            // dates). Fall back to `now` only when caller doesn't
+            // supply them — that's the "fresh sermon being created
+            // for the first time" case.
+            data.createdAt ?? new Date(),
+            data.updatedAt ?? new Date(),
             d.publishedAt,
             d.shareToken,
             d.isShared ?? false,

@@ -195,6 +195,13 @@ export class FirebaseSermonRepository implements ISermonRepository {
             tags: data.tags ?? [],
             category: data.category,
             status: data.status,
+            // Preserve the persisted dates instead of stamping `now`
+            // on every read — the dashboard sorts by these and shows
+            // them inline. Fallback to `now` when the doc is missing
+            // them entirely (legacy docs from before the field was
+            // populated).
+            createdAt: d.createdAt?.toDate?.() ?? d.createdAt ?? new Date(),
+            updatedAt: d.updatedAt?.toDate?.() ?? d.updatedAt ?? new Date(),
             publishedAt: d.publishedAt?.toDate(),
             shareToken: d.shareToken,
             isShared: d.isShared,
