@@ -50,7 +50,10 @@ export const notifyApproachingQuota = onSchedule(
     {
         schedule: 'every day 09:00',
         timeZone: 'America/Argentina/Buenos_Aires',
-        secrets: ['RESEND_API_KEY'],
+        // RESEND_API_KEY is loaded via packages/functions/.env at deploy
+        // time (same pattern as sendNurtureEmails). Don't declare it as
+        // a Secret Manager secret unless it's actually provisioned
+        // there — the deploy validates secret existence and 404s.
     },
     async () => {
         console.log('[notifyApproachingQuota] Starting daily 80% quota scan...');
