@@ -168,12 +168,19 @@ export class ProcessingBalanceService {
         const db = getFirestore();
         const ref = doc(db, this.USERS, userId);
 
-        // Ensure the nested object exists (first-time users have no balance).
-        await setDoc(
-            ref,
-            { processingBalance: { ...ZERO_BALANCE } },
-            { merge: true },
-        );
+        // Only seed the zero-bucket structure when the balance doesn't
+        // exist yet. Unconditional `set merge: true` overwrites leaf
+        // values back to 0 between successive calls — successive
+        // addPack/setPlanQuota invocations on the same user would
+        // wipe what each other just wrote.
+        const snap = await getDoc(ref);
+        if (!snap.exists() || !snap.data()?.processingBalance) {
+            await setDoc(
+                ref,
+                { processingBalance: { ...ZERO_BALANCE } },
+                { merge: true },
+            );
+        }
 
         const packField = mode === 'standard'
             ? 'processingBalance.packStandardPages'
@@ -204,11 +211,18 @@ export class ProcessingBalanceService {
         const db = getFirestore();
         const ref = doc(db, this.USERS, userId);
 
-        await setDoc(
-            ref,
-            { processingBalance: { ...ZERO_BALANCE } },
-            { merge: true },
-        );
+        // Same conditional pre-ensure as `addPack` — see the comment
+        // there. Crucially: `set merge: true` with leaf objects
+        // OVERWRITES leaf values, so two consecutive setPlanQuota calls
+        // (one per mode) would erase each other's writes.
+        const snap = await getDoc(ref);
+        if (!snap.exists() || !snap.data()?.processingBalance) {
+            await setDoc(
+                ref,
+                { processingBalance: { ...ZERO_BALANCE } },
+                { merge: true },
+            );
+        }
 
         const planField = mode === 'standard'
             ? 'processingBalance.planStandardPages'

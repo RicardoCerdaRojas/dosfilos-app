@@ -131,15 +131,21 @@ export async function addPackAdmin(
     if (pages <= 0) return;
     const db = getFirestore();
     const ref = db.collection('users').doc(userId);
+    const snap = await ref.get();
     const balance = await readBalance(userId);
     const newPack = (mode === 'standard' ? balance.packStandardPages : balance.packPremiumPages) + pages;
     const planAvailable = mode === 'standard' ? balance.planStandardPages : balance.planPremiumPages;
 
-    // Ensure the nested object exists (first-time users have no balance).
-    await ref.set(
-        { processingBalance: { ...ZERO_BUCKETS } },
-        { merge: true },
-    );
+    // Only seed the zero-bucket structure when the balance doesn't exist
+    // yet. Unconditionally writing it with `set merge: true` would
+    // overwrite leaf values back to 0 between successive calls — the
+    // second call's pre-ensure would zero what the first one just wrote.
+    if (!snap.exists || !snap.data()?.processingBalance) {
+        await ref.set(
+            { processingBalance: { ...ZERO_BUCKETS } },
+            { merge: true },
+        );
+    }
 
     const packField = mode === 'standard'
         ? 'processingBalance.packStandardPages'
@@ -171,14 +177,23 @@ export async function setPlanQuotaAdmin(
 ): Promise<void> {
     const db = getFirestore();
     const ref = db.collection('users').doc(userId);
+    const snap = await ref.get();
     const balance = await readBalance(userId);
     const newPlan = Math.max(0, pages);
     const packAvailable = mode === 'standard' ? balance.packStandardPages : balance.packPremiumPages;
 
-    await ref.set(
-        { processingBalance: { ...ZERO_BUCKETS } },
-        { merge: true },
-    );
+    // Only seed the zero-bucket structure when the balance doesn't exist
+    // yet. Unconditional `set merge: true` overwrites leaf values back
+    // to 0 between successive calls (e.g. setPlanQuotaAdmin('standard',
+    // 5000) followed by setPlanQuotaAdmin('premium', 300) would lose
+    // the 5000 that the first call wrote because the second call's
+    // pre-ensure would zero it out before its update fires).
+    if (!snap.exists || !snap.data()?.processingBalance) {
+        await ref.set(
+            { processingBalance: { ...ZERO_BUCKETS } },
+            { merge: true },
+        );
+    }
 
     const planField = mode === 'standard'
         ? 'processingBalance.planStandardPages'

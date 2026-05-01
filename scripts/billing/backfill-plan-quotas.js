@@ -53,17 +53,24 @@ const dryRun = !process.argv.includes('--apply');
 async function setPlanQuota(userId, mode, pages) {
     const ref = db.collection('users').doc(userId);
     const snap = await ref.get();
-    const balance = snap.data()?.processingBalance ?? {};
+    const balance = snap.data()?.processingBalance;
     const newPlan = Math.max(0, pages);
-    const planStandard = mode === 'standard' ? newPlan : (balance.planStandardPages ?? 0);
-    const planPremium = mode === 'premium' ? newPlan : (balance.planPremiumPages ?? 0);
-    const packStandard = balance.packStandardPages ?? balance.standardPagesAvailable ?? 0;
-    const packPremium = balance.packPremiumPages ?? balance.premiumPagesAvailable ?? 0;
+    const planStandard = mode === 'standard' ? newPlan : (balance?.planStandardPages ?? 0);
+    const planPremium = mode === 'premium' ? newPlan : (balance?.planPremiumPages ?? 0);
+    const packStandard = balance?.packStandardPages ?? balance?.standardPagesAvailable ?? 0;
+    const packPremium = balance?.packPremiumPages ?? balance?.premiumPagesAvailable ?? 0;
 
-    await ref.set(
-        { processingBalance: { ...ZERO_BUCKETS } },
-        { merge: true },
-    );
+    // Only seed the zero-bucket structure when the balance doesn't exist
+    // yet. Doing this unconditionally with `set merge: true` overwrote
+    // the leaf values back to 0 between successive calls — the first
+    // setPlanQuota('standard', 5000) wrote 5000, then the second call's
+    // pre-ensure ZEROed it back before writing premium.
+    if (!balance) {
+        await ref.set(
+            { processingBalance: { ...ZERO_BUCKETS } },
+            { merge: true },
+        );
+    }
 
     const planField = mode === 'standard'
         ? 'processingBalance.planStandardPages'
