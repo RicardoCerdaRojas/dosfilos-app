@@ -32,20 +32,47 @@
 
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 const admin = require('firebase-admin');
 
-// Load STRIPE_SECRET_KEY from packages/functions/.env if not in env
-const envPath = path.resolve(__dirname, '../../packages/functions/.env');
-if (!process.env.STRIPE_SECRET_KEY && fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    const match = envContent.match(/^STRIPE_SECRET_KEY=(.+)$/m);
-    if (match) process.env.STRIPE_SECRET_KEY = match[1].trim().replace(/^["']|["']$/g, '');
+// Resolution order for STRIPE_SECRET_KEY:
+//   1. env var (caller passed `STRIPE_SECRET_KEY=sk_... node ...`)
+//   2. packages/functions/.env (in case it ever lands there)
+//   3. Google Secret Manager via gcloud (production reality — Stripe
+//      key lives there, declared as `secrets: ['STRIPE_SECRET_KEY']`
+//      in every Cloud Function that needs it).
+function resolveStripeKey() {
+    if (process.env.STRIPE_SECRET_KEY) return process.env.STRIPE_SECRET_KEY;
+
+    const envPath = path.resolve(__dirname, '../../packages/functions/.env');
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        const match = envContent.match(/^STRIPE_SECRET_KEY=(.+)$/m);
+        if (match) return match[1].trim().replace(/^["']|["']$/g, '');
+    }
+
+    try {
+        console.log('🔐 Fetching STRIPE_SECRET_KEY from Secret Manager via gcloud...');
+        const key = execSync(
+            'gcloud secrets versions access latest --secret=STRIPE_SECRET_KEY --project=dosfilosapp',
+            { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
+        ).trim();
+        if (key) return key;
+    } catch (err) {
+        console.error('   ↳ gcloud fetch failed:', err.stderr?.toString() || err.message);
+    }
+    return null;
 }
 
-if (!process.env.STRIPE_SECRET_KEY) {
-    console.error('❌ STRIPE_SECRET_KEY not set. Pass it inline or add to packages/functions/.env');
+const stripeKey = resolveStripeKey();
+if (!stripeKey) {
+    console.error('❌ STRIPE_SECRET_KEY not available. Tried env var, .env file, and gcloud Secret Manager.');
+    console.error('   Pass it inline:');
+    console.error('     STRIPE_SECRET_KEY=sk_live_... node scripts/billing/sync-stripe-product-descriptions.js');
+    console.error('   Or grant yourself Secret Manager Accessor on the dosfilosapp project.');
     process.exit(1);
 }
+process.env.STRIPE_SECRET_KEY = stripeKey;
 
 const Stripe = require('stripe');
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-10-28.acacia' });
