@@ -5,9 +5,11 @@
         "subtitle": "Here's what you have today in your study space."
     },
     "hero": {
-        "contextLine_zero": "No active projects right now.",
-        "contextLine_one": "{{projects}} active project · {{upcoming}} scheduled",
-        "contextLine_other": "{{projects}} active projects · {{upcoming}} scheduled",
+        "contextProjects_one": "{{count}} active project",
+        "contextProjects_other": "{{count}} active projects",
+        "contextUpcoming_one": "{{count}} scheduled",
+        "contextUpcoming_other": "{{count}} scheduled",
+        "contextEmpty": "No active projects right now.",
         "planChipTooltip": "Available balance this month — click to view your plan"
     },
     "agenda": {

@@ -318,10 +318,9 @@ function DashboardHero({
                     {t('header.greeting', { name })}
                 </h1>
                 <p className="text-[13px] text-muted-foreground mt-1">
-                    {t('hero.contextLine', {
-                        projects: activeProjectsCount,
-                        upcoming: upcomingCount,
-                    })}
+                    {activeProjectsCount === 0
+                        ? t('hero.contextEmpty')
+                        : `${t('hero.contextProjects', { count: activeProjectsCount })} · ${t('hero.contextUpcoming', { count: upcomingCount })}`}
                 </p>
             </div>
             <div className="flex items-center gap-3">

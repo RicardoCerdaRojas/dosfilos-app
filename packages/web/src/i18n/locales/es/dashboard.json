@@ -5,9 +5,11 @@
         "subtitle": "Esto es lo que tienes hoy en tu espacio de estudio."
     },
     "hero": {
-        "contextLine_zero": "Sin proyectos activos por ahora.",
-        "contextLine_one": "{{projects}} proyecto activo · {{upcoming}} agendados",
-        "contextLine_other": "{{projects}} proyectos activos · {{upcoming}} agendados",
+        "contextProjects_one": "{{count}} proyecto activo",
+        "contextProjects_other": "{{count}} proyectos activos",
+        "contextUpcoming_one": "{{count}} agendado",
+        "contextUpcoming_other": "{{count}} agendados",
+        "contextEmpty": "Sin proyectos activos por ahora.",
         "planChipTooltip": "Saldo disponible este mes — click para ver tu plan"
     },
     "agenda": {
