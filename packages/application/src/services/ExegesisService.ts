@@ -7,9 +7,14 @@ import {
     GeminiPaperRubricExtractor,
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
+    RetrieveChunksExcerptExtractor,
     extractFootnoteAnchorsFromFormattedMarkdown,
 } from '@dosfilos/infrastructure';
-import type { IResourceContentReader } from '@dosfilos/domain';
+import type {
+    IResourceContentReader,
+    IResourceIndexProbe,
+} from '@dosfilos/domain';
+import { LibraryService } from './LibraryService';
 
 import {
     CreateExegeticalPaperUseCase,
@@ -38,6 +43,7 @@ import {
     AddProjectSourceUseCase,
     UpdateProjectSourceUseCase,
     RemoveProjectSourceUseCase,
+    ExtractExcerptsForPaperUseCase,
     SeedStepsForPassageUseCase,
     GenerateStepUseCase,
     AcceptStepUseCase,
@@ -91,6 +97,7 @@ class ExegesisService {
     public addSource: AddProjectSourceUseCase;
     public updateSource: UpdateProjectSourceUseCase;
     public removeSource: RemoveProjectSourceUseCase;
+    public extractExcerpts: ExtractExcerptsForPaperUseCase;
 
     // Steps
     public seedSteps: SeedStepsForPassageUseCase;
@@ -174,6 +181,23 @@ class ExegesisService {
         this.addSource = new AddProjectSourceUseCase(paperRepository);
         this.updateSource = new UpdateProjectSourceUseCase(paperRepository);
         this.removeSource = new RemoveProjectSourceUseCase(paperRepository);
+
+        // v1.5: excerpt extraction. Adapt LibraryService's
+        // `getResourceIndexStatus` into the narrow `IResourceIndexProbe`
+        // port the extractor expects — keeps the extractor unaware of
+        // how readiness is computed, and avoids a backward dep from
+        // infrastructure → application. Single LibraryService instance
+        // here matches the lazy singleton pattern other consumers use.
+        const libraryService = new LibraryService();
+        const indexProbe: IResourceIndexProbe = {
+            async isReady(resourceId: string) {
+                const resource = await libraryRepository.findById(resourceId);
+                if (!resource) return false;
+                return libraryService.getResourceIndexStatus(resource) === 'indexed';
+            },
+        };
+        const excerptExtractor = new RetrieveChunksExcerptExtractor(indexProbe);
+        this.extractExcerpts = new ExtractExcerptsForPaperUseCase(paperRepository, excerptExtractor);
 
         // Steps (D.2: live Gemini generation with style guide + sources injected;
         // Phase 3c adds deterministic style formatter + cross-step ibid anchors)

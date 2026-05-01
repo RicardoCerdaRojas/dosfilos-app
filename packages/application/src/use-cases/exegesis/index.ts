@@ -30,6 +30,12 @@ export { DeleteUserStyleGuideUseCase } from './DeleteUserStyleGuideUseCase';
 export { AddProjectSourceUseCase } from './AddProjectSourceUseCase';
 export { UpdateProjectSourceUseCase } from './UpdateProjectSourceUseCase';
 export { RemoveProjectSourceUseCase } from './RemoveProjectSourceUseCase';
+export {
+    ExtractExcerptsForPaperUseCase,
+    type ExtractExcerptsForPaperInput,
+    type ExtractExcerptsForPaperOutput,
+    type ExtractExcerptsSelection,
+} from './ExtractExcerptsForPaperUseCase';
 
 // Steps (D.1: state machine + placeholder generation; Gemini lands in D.2)
 export { SeedStepsForPassageUseCase } from './SeedStepsForPassageUseCase';

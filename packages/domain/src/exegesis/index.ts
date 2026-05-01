@@ -20,6 +20,7 @@ export * from './repositories/IUserStyleGuideRepository';
 
 export * from './use-cases/dtos';
 
+export * from './ports/IExcerptExtractor';
 export * from './ports/IExegesisOrchestrator';
 export * from './ports/IPaperRubricExtractor';
 export * from './ports/IResourceContentReader';

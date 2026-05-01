@@ -6,3 +6,4 @@ export {
     extractFootnoteAnchorsFromFormattedMarkdown,
 } from './DeterministicStyleFormatter';
 export { OverloadedError } from './geminiRetry';
+export { RetrieveChunksExcerptExtractor } from './RetrieveChunksExcerptExtractor';
