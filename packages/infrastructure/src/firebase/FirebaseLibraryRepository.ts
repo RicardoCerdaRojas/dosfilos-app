@@ -161,6 +161,15 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         (resource as any).characterCount = data.characterCount || undefined;
         // 🎯 Core Library stores
         (resource as any).coreStores = data.coreStores || [];
+        // v1.5 exegesis readiness probe — extraction + indexing metadata
+        // written by the cloud functions (extraction pipeline + auto-index
+        // trigger). The web client reads these to decide whether a resource
+        // can serve as a source of curated excerpts.
+        (resource as any).extractionVersion = data.extractionVersion || undefined;
+        (resource as any).structuredContentUrl = data.structuredContentUrl || undefined;
+        (resource as any).extractedWithLlamaParse = data.extractedWithLlamaParse ?? undefined;
+        (resource as any).indexingStatus = data.indexingStatus || undefined;
+        (resource as any).indexerVersion = data.indexerVersion || undefined;
         return resource;
     }
 }

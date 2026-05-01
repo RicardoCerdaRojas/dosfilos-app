@@ -428,6 +428,14 @@
                     "addCta": "Add source",
                     "remove": "Remove source"
                 },
+                "readiness": {
+                    "indexed": "Ready",
+                    "extracting": "Processing text",
+                    "indexing": "Indexing",
+                    "needsExtraction": "Not processed",
+                    "needsIndexing": "Not indexed",
+                    "failed": "Failed"
+                },
                 "upload": {
                     "title": "Add a source to the corpus",
                     "dialogSubtitle": "Upload a new PDF/EPUB or reuse one from your library. The academic type decides whether it covers a rubric requirement.",

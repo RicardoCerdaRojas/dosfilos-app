@@ -7,10 +7,38 @@ export type TextExtractionStatus = 'pending' | 'processing' | 'ready' | 'failed'
 /**
  * Which extractor produced the text content.
  * - '3.0-llamaparse': Primary, best quality (structured pages, preserves Greek/Hebrew/tables)
- * - '2.0-gemini': Fallback, Gemini 2.0 Flash extraction
- * - 'fallback-pdfparse': Last resort, local pdf-parse library
+ * - '4.0-gemini-standard': Standard tier, Gemini 2.0 Flash with the same `<!-- page: N -->`
+ *   contract as LlamaParse — eligible for the auto-index trigger.
+ * - '2.0-gemini': Legacy Gemini extraction, predates the structured contract.
+ * - 'fallback-pdfparse': Last resort, local pdf-parse library.
  */
-export type ExtractionVersion = '3.0-llamaparse' | '2.0-gemini' | 'fallback-pdfparse';
+export type ExtractionVersion =
+    | '3.0-llamaparse'
+    | '4.0-gemini-standard'
+    | '2.0-gemini'
+    | 'fallback-pdfparse';
+
+/**
+ * Indexing job status (chunks + embeddings) written by the cloud
+ * functions in `packages/functions/src/library/indexStructuredDocument.ts`.
+ * Distinct from `textExtractionStatus` — a resource can be `ready`-extracted
+ * but still `processing`/`failed` for indexing.
+ */
+export type IndexingStatus = 'processing' | 'ready' | 'failed';
+
+/**
+ * Combined readiness state for the v1.5 exegesis "extract from library"
+ * flow. Computed by `LibraryService.getResourceIndexStatus()` from the
+ * raw fields on the resource. Used by the corpus picker to badge each
+ * library resource and gate the "extract excerpts" toggle.
+ */
+export type ResourceIndexStatus =
+    | 'indexed'           // Ready to be queried via retrieveChunks (chunks + embeddings present)
+    | 'extracting'        // Cloud Function is still parsing the file
+    | 'indexing'          // Extraction done; auto-index trigger in flight
+    | 'needs-extraction'  // No textExtractionStatus or 'pending' — never started
+    | 'needs-indexing'    // Extraction ready but with a version that the indexer ignores (legacy)
+    | 'failed';           // Either extraction or indexing reported failure
 
 export interface LibraryResource {
     id: string;
@@ -25,6 +53,20 @@ export interface LibraryResource {
     extractionVersion?: ExtractionVersion; // Which extractor produced textContent
     extractedWithLlamaParse?: boolean; // Convenience flag
     textExtractionStatus: TextExtractionStatus;
+    /**
+     * Indexing job status (chunks + embeddings) written by the
+     * `indexStructuredDocument` cloud function. Undefined for legacy
+     * resources that were never indexed. The auto-index trigger fires
+     * after extraction completes and updates this field.
+     */
+    indexingStatus?: IndexingStatus;
+    /**
+     * Indexer schema version (e.g. '2.0-structured'). Used by the
+     * auto-index trigger to detect already-indexed resources and skip
+     * re-work. Also used by the readiness probe to flag resources
+     * indexed under an older schema.
+     */
+    indexerVersion?: string;
     mimeType: string;
     sizeBytes: number;
     characterCount?: number; // Total character count of extracted text

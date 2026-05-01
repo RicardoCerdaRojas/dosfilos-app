@@ -18,6 +18,7 @@ import {
     type ExegeticalPaper,
     type LibraryResource,
     type ProjectSource,
+    type ResourceIndexStatus,
     type SourceType,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
@@ -607,37 +608,97 @@ function LibraryPicker({
                 </p>
             ) : (
                 <ul className="max-h-64 overflow-y-auto rounded-md border border-border bg-card divide-y divide-border">
-                    {resources.map(r => (
-                        <li key={r.id}>
-                            <button
-                                type="button"
-                                onClick={() => onPick(r)}
-                                className={[
-                                    'w-full text-left px-3 py-2 flex items-start gap-2 transition-colors',
-                                    pickedResourceId === r.id
-                                        ? 'bg-success-subtle'
-                                        : 'hover:bg-accent',
-                                ].join(' ')}
-                            >
-                                <FileText className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-foreground truncate">
-                                        {r.title}
-                                    </p>
-                                    {r.author && (
-                                        <p className="text-[11px] text-muted-foreground truncate">
-                                            {r.author}
+                    {resources.map(r => {
+                        const status = libraryService.getResourceIndexStatus(r);
+                        return (
+                            <li key={r.id}>
+                                <button
+                                    type="button"
+                                    onClick={() => onPick(r)}
+                                    className={[
+                                        'w-full text-left px-3 py-2 flex items-start gap-2 transition-colors',
+                                        pickedResourceId === r.id
+                                            ? 'bg-success-subtle'
+                                            : 'hover:bg-accent',
+                                    ].join(' ')}
+                                >
+                                    <FileText className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium text-foreground truncate">
+                                            {r.title}
                                         </p>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            {r.author && (
+                                                <p className="text-[11px] text-muted-foreground truncate">
+                                                    {r.author}
+                                                </p>
+                                            )}
+                                            <ResourceReadinessBadge status={status} />
+                                        </div>
+                                    </div>
+                                    {pickedResourceId === r.id && (
+                                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                                     )}
-                                </div>
-                                {pickedResourceId === r.id && (
-                                    <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                )}
-                            </button>
-                        </li>
-                    ))}
+                                </button>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
         </div>
+    );
+}
+
+/**
+ * Compact pill that surfaces whether a library resource is ready to be
+ * queried for excerpts (commit 3 of v1.5). Today the badge is purely
+ * informational — the user can still pick any resource for the
+ * `'full-document'` flow regardless of indexing state. Once the
+ * extraction step lands, the same `status` will gate the "extract
+ * excerpts" toggle: only `'indexed'` resources allow excerpt mode.
+ *
+ * Statuses follow the lifecycle:
+ *   needs-extraction → extracting → needs-indexing|indexing → indexed
+ *                                                          ↘ failed
+ */
+function ResourceReadinessBadge({ status }: { status: ResourceIndexStatus }) {
+    const { t } = useTranslation('exegesis');
+    const config: Record<ResourceIndexStatus, { label: string; cls: string }> = {
+        'indexed': {
+            label: t('paperSetup.subSteps.corpus.readiness.indexed'),
+            cls: 'bg-success-subtle text-success-subtle-foreground border-success/30',
+        },
+        'extracting': {
+            label: t('paperSetup.subSteps.corpus.readiness.extracting'),
+            cls: 'bg-info-subtle text-info-subtle-foreground border-info/30',
+        },
+        'indexing': {
+            label: t('paperSetup.subSteps.corpus.readiness.indexing'),
+            cls: 'bg-info-subtle text-info-subtle-foreground border-info/30',
+        },
+        'needs-extraction': {
+            label: t('paperSetup.subSteps.corpus.readiness.needsExtraction'),
+            cls: 'bg-muted text-muted-foreground border-border',
+        },
+        'needs-indexing': {
+            label: t('paperSetup.subSteps.corpus.readiness.needsIndexing'),
+            cls: 'bg-warning-subtle text-warning-subtle-foreground border-warning/30',
+        },
+        'failed': {
+            label: t('paperSetup.subSteps.corpus.readiness.failed'),
+            cls: 'bg-destructive/10 text-destructive border-destructive/30',
+        },
+    };
+    const { label, cls } = config[status];
+    return (
+        <span
+            className={[
+                'inline-flex items-center text-[10px] font-medium rounded-full border px-1.5 py-0 leading-tight whitespace-nowrap shrink-0',
+                cls,
+            ].join(' ')}
+            title={label}
+        >
+            {label}
+        </span>
     );
 }

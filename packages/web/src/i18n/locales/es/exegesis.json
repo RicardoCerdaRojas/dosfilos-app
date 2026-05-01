@@ -428,6 +428,14 @@
                     "addCta": "Agregar fuente",
                     "remove": "Quitar fuente"
                 },
+                "readiness": {
+                    "indexed": "Listo",
+                    "extracting": "Procesando texto",
+                    "indexing": "Indexando",
+                    "needsExtraction": "Sin procesar",
+                    "needsIndexing": "Sin indexar",
+                    "failed": "Falló"
+                },
                 "upload": {
                     "title": "Agregar fuente al corpus",
                     "dialogSubtitle": "Sube un nuevo PDF/EPUB o reusa uno de tu biblioteca. El tipo académico decide si cumple un requisito de la rúbrica.",
