@@ -279,9 +279,21 @@ function formatSources(
         const usageNote = s.sourceType === 'style-template-paper'
             ? (lang === 'en' ? ' · STYLE TEMPLATE ONLY — do NOT cite inline' : ' · SOLO PLANTILLA DE ESTILO — NO citar inline')
             : '';
+        // Curated-excerpts sources carry per-anchor labels emitted by
+        // the use case (one per chunk the student accepted in review).
+        // Surfacing them in the source header — and instructing the
+        // model to cite using those EXACT anchors — preserves the
+        // visibility promise of the v1.5 extraction flow: the user
+        // approved THESE pieces, the citations should reference THESE
+        // pieces, not the underlying full document.
+        const excerptNote = (s.excerptAnchors && s.excerptAnchors.length > 0)
+            ? (lang === 'en'
+                ? `\n_Curated excerpts only. Cite using the anchors that prefix each block (e.g. \`(${s.citationKey ?? 'Author'}, "${s.displayLabel}", ${s.excerptAnchors[0]})\`). Do NOT invent pages outside these anchors._`
+                : `\n_Solo excerpts curados. Citá usando los anchors que prefijan cada bloque (ej. \`(${s.citationKey ?? 'Autor'}, "${s.displayLabel}", ${s.excerptAnchors[0]})\`). NO inventes páginas fuera de esos anchors._`)
+            : '';
         return [
             `### ${s.displayLabel}`,
-            `_${typeLabel}${citationKey}${usageNote}_`,
+            `_${typeLabel}${citationKey}${usageNote}_${excerptNote}`,
             '```',
             truncated || (lang === 'en' ? '(extraction not yet available)' : '(extracción aún no disponible)'),
             '```',

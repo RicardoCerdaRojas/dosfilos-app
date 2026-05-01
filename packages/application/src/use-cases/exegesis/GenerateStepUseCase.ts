@@ -13,6 +13,7 @@ import type {
     IStyleFormatter,
     IUserStyleGuideRepository,
     PriorFootnoteAnchor,
+    ProjectSource,
     StyleGuideManifest,
 } from '@dosfilos/domain';
 import {
@@ -169,14 +170,29 @@ export class GenerateStepUseCase {
         const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
         const contexts: ExegesisSourceContext[] = [];
         for (const source of sorted) {
-            const text = await this.contentReader.getTextContent(source.corpusId);
-            contexts.push({
-                corpusId: source.corpusId,
-                sourceType: source.sourceType,
-                displayLabel: source.displayLabel,
-                citationKey: source.citationKey,
-                textContent: text ?? '',
-            });
+            if (source.mode === 'extracted-excerpts') {
+                // v1.5: source carries pre-curated chunks (the user
+                // reviewed them in the extraction step). Concatenate
+                // with anchor separators so the orchestrator's prompt
+                // can ask Gemini to cite using those anchors — the
+                // user explicitly accepted these, NOT the rest of the
+                // resource.
+                contexts.push(buildExcerptContext(source));
+            } else {
+                // 'full-document' (or legacy sources without `mode`):
+                // historical behavior — pull the entire textContent.
+                // Stays untouched so existing papers and the direct-
+                // upload flow (Caso 3 of v1.5) generate identically
+                // to v1.
+                const text = await this.contentReader.getTextContent(source.corpusId);
+                contexts.push({
+                    corpusId: source.corpusId,
+                    sourceType: source.sourceType,
+                    displayLabel: source.displayLabel,
+                    citationKey: source.citationKey,
+                    textContent: text ?? '',
+                });
+            }
         }
         return contexts;
     }
@@ -375,6 +391,41 @@ function toPriorStep(s: ExegeticalStep): ExegesisPriorStep {
  * Conservative — falls back to the whole label when nothing matches
  * so the formatter still has SOMETHING to attempt a lookup against.
  */
+/**
+ * Builds an `ExegesisSourceContext` for a `'extracted-excerpts'`
+ * source. Concatenates each excerpt under a `--- ${anchor} ---`
+ * separator so the orchestrator sees a single text block (matches
+ * the prompt template's expectation of one body per source) while
+ * preserving the per-excerpt anchors via `excerptAnchors`.
+ *
+ * Excerpts with empty `sourceLocation` fall back to a generic
+ * `excerpt N` label so the prompt always has SOMETHING to cite —
+ * better than emitting `--- ---` which the model could mistake for
+ * a separator artifact.
+ *
+ * Empty `excerpts` array (valid state — user removed them all)
+ * produces an empty body. The orchestrator handles empty contexts
+ * gracefully; it just means this source contributes nothing to
+ * generation, matching the warning the UI already shows.
+ */
+function buildExcerptContext(source: ProjectSource): ExegesisSourceContext {
+    const anchors: string[] = [];
+    const blocks: string[] = [];
+    source.excerpts.forEach((excerpt, idx) => {
+        const anchor = excerpt.sourceLocation.trim() || `excerpt ${idx + 1}`;
+        anchors.push(anchor);
+        blocks.push(`--- ${anchor} ---\n${excerpt.text.trim()}`);
+    });
+    return {
+        corpusId: source.corpusId,
+        sourceType: source.sourceType,
+        displayLabel: source.displayLabel,
+        citationKey: source.citationKey,
+        textContent: blocks.join('\n\n'),
+        excerptAnchors: anchors,
+    };
+}
+
 function deriveCitationKey(displayLabel: string): string {
     const trimmed = displayLabel.trim();
     if (!trimmed) return '';

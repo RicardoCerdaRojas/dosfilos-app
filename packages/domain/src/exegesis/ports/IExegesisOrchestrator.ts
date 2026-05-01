@@ -79,8 +79,26 @@ export interface ExegesisSourceContext {
     displayLabel: string;
     /** Author key for inline citations, e.g. "Lane". May be null. */
     citationKey: string | null;
-    /** Extracted text. Truncated upstream if it would blow the context window. */
+    /**
+     * Source body the orchestrator inlines into the prompt. For
+     * `'full-document'` sources this is the entire textContent. For
+     * `'extracted-excerpts'` sources, the use case pre-concatenates
+     * the curated chunks with `--- ${sourceLocation} ---` separators
+     * — same string slot, different upstream provenance. The
+     * orchestrator doesn't branch on the difference; it just
+     * inlines the text and trusts the caller's curation.
+     */
     textContent: string;
+    /**
+     * Set when the source is in `'extracted-excerpts'` mode. Lists
+     * the per-excerpt anchors (`"p. 47, § 3.2"`) so the prompt
+     * template can ask Gemini to cite using these stable labels —
+     * crucial for the v1.5 visibility promise (the user reviewed
+     * specific excerpts; the model cites those, not the full doc).
+     * Undefined for full-document sources, which cite by author +
+     * label as before.
+     */
+    excerptAnchors?: ReadonlyArray<string>;
 }
 
 export interface ExegesisPriorStep {
