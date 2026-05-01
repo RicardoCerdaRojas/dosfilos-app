@@ -4,6 +4,29 @@
         "greeting": "Hola, {{name}}.",
         "subtitle": "Esto es lo que tienes hoy en tu espacio de estudio."
     },
+    "hero": {
+        "contextLine_zero": "Sin proyectos activos por ahora.",
+        "contextLine_one": "{{projects}} proyecto activo · {{upcoming}} agendados",
+        "contextLine_other": "{{projects}} proyectos activos · {{upcoming}} agendados",
+        "planChipTooltip": "Saldo disponible este mes — click para ver tu plan"
+    },
+    "agenda": {
+        "eyebrow": "Agenda próxima",
+        "viewAll": "Ver planificador",
+        "empty": "No tienes sermones programados en los próximos 14 días."
+    },
+    "exegesis": {
+        "eyebrow": "Exégesis en curso",
+        "viewAll": "Ver todos",
+        "empty": "Aún no tienes trabajos exegéticos en curso.",
+        "emptyCta": "Iniciar un trabajo",
+        "phase": {
+            "configuring": "En configuración",
+            "in-progress": "En curso",
+            "assembled": "Ensamblado",
+            "archived": "Archivado"
+        }
+    },
     "activeProjects": {
         "eyebrow": "Proyectos activos",
         "title": "Tu trabajo en curso.",
@@ -74,8 +97,11 @@
         "status": {
             "published": "Publicado",
             "draft": "Borrador",
+            "working": "En proceso",
             "archived": "Archivado"
         },
+        "versions_one": "{{count}} versión",
+        "versions_other": "{{count}} versiones",
         "viewAll": "Ver todos los sermones"
     },
     "welcomeModal": {
