@@ -49,3 +49,9 @@ export {
     type GenerateSermonFromPaperInput,
     type GenerateSermonFromPaperOutput,
 } from './GenerateSermonFromPaperUseCase';
+
+// Pericope assistant (Phase 3 of the sermon-series pipeline)
+export {
+    DetectPericopesUseCase,
+    type DetectPericopesInput,
+} from './DetectPericopesUseCase';

@@ -96,5 +96,55 @@
             "updateSuccess": "Plan actualizado correctamente",
             "saveError": "Error al guardar el plan"
         }
+    },
+    "pericope": {
+        "back": "Volver al planificador",
+        "title": "Asistente de perícopas",
+        "subtitle": "Divide un libro en unidades sintácticas predicables y genera la serie expositiva.",
+        "defaultSeriesTitle": "Serie expositiva — {{book}}",
+        "defaultSeriesDescription": "Serie expositiva de {{book}} dividida en {{count}} perícopas sintácticas.",
+        "setup": {
+            "title": "Configura la división",
+            "subtitle": "Elige el libro y un número aproximado de perícopas. La sintaxis del idioma original guía las fronteras.",
+            "book": "Libro",
+            "testamentNT": "Nuevo Testamento",
+            "testamentOT": "Antiguo Testamento",
+            "targetCount": "Cantidad aproximada (opcional)",
+            "targetCountPlaceholder": "Ej. 12",
+            "translationNote": "v1: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.5 cargará el texto griego/hebreo directo.",
+            "detect": "Detectar perícopas",
+            "detectAgain": "Detectar de nuevo",
+            "detecting": "Analizando..."
+        },
+        "review": {
+            "title_one": "{{count}} perícopa propuesta",
+            "title_other": "{{count}} perícopas propuestas",
+            "subtitle": "Revisa, ajusta el título o quita las que no quieras incluir en la serie.",
+            "remove": "Quitar perícopa"
+        },
+        "create": {
+            "title": "Crea la serie",
+            "subtitle": "Cada perícopa se convierte en un sermón planificado con fecha calculada según la frecuencia.",
+            "seriesTitle": "Título de la serie",
+            "startDate": "Fecha de inicio",
+            "frequency": "Frecuencia",
+            "freq": {
+                "weekly": "Semanal",
+                "biweekly": "Quincenal",
+                "monthly": "Mensual",
+                "flexible": "Flexible (sin fechas)"
+            },
+            "cta_one": "Crear serie con {{count}} perícopa",
+            "cta_other": "Crear serie con {{count}} perícopas"
+        },
+        "toast": {
+            "detected_one": "{{count}} perícopa detectada. Revísala antes de crear la serie.",
+            "detected_other": "{{count}} perícopas detectadas. Revísalas antes de crear la serie.",
+            "detectFailed": "No se pudo detectar perícopas. Intenta de nuevo.",
+            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "titleRequired": "Ponle un título a la serie antes de crear.",
+            "seriesCreated": "Serie creada. Te llevamos al detalle.",
+            "createFailed": "No se pudo crear la serie."
+        }
     }
 }

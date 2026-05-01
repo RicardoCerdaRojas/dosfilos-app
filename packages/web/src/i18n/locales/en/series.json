@@ -96,5 +96,55 @@
             "updateSuccess": "Plan updated successfully",
             "saveError": "Error saving plan"
         }
+    },
+    "pericope": {
+        "back": "Back to planner",
+        "title": "Pericope assistant",
+        "subtitle": "Divide a book into preachable syntactic units and generate the expository series.",
+        "defaultSeriesTitle": "Expository series — {{book}}",
+        "defaultSeriesDescription": "Expository series on {{book}}, divided into {{count}} syntactic pericopes.",
+        "setup": {
+            "title": "Configure the division",
+            "subtitle": "Pick a book and an approximate pericope count. Original-language syntax drives the boundaries.",
+            "book": "Book",
+            "testamentNT": "New Testament",
+            "testamentOT": "Old Testament",
+            "targetCount": "Approximate count (optional)",
+            "targetCountPlaceholder": "e.g. 12",
+            "translationNote": "v1: the assistant analyzes the translation (RVR1960/ASV) as a surrogate for the original. v1.5 will load Greek/Hebrew text directly.",
+            "detect": "Detect pericopes",
+            "detectAgain": "Detect again",
+            "detecting": "Analyzing..."
+        },
+        "review": {
+            "title_one": "{{count}} proposed pericope",
+            "title_other": "{{count}} proposed pericopes",
+            "subtitle": "Review, adjust the title or remove the ones you don't want to include.",
+            "remove": "Remove pericope"
+        },
+        "create": {
+            "title": "Create the series",
+            "subtitle": "Each pericope becomes a planned sermon with a date computed from the frequency.",
+            "seriesTitle": "Series title",
+            "startDate": "Start date",
+            "frequency": "Frequency",
+            "freq": {
+                "weekly": "Weekly",
+                "biweekly": "Biweekly",
+                "monthly": "Monthly",
+                "flexible": "Flexible (no dates)"
+            },
+            "cta_one": "Create series with {{count}} pericope",
+            "cta_other": "Create series with {{count}} pericopes"
+        },
+        "toast": {
+            "detected_one": "{{count}} pericope detected. Review it before creating the series.",
+            "detected_other": "{{count}} pericopes detected. Review them before creating the series.",
+            "detectFailed": "Couldn't detect pericopes. Try again.",
+            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "titleRequired": "Give the series a title before creating.",
+            "seriesCreated": "Series created. Taking you to the detail view.",
+            "createFailed": "Couldn't create the series."
+        }
     }
 }

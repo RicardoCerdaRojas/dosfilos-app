@@ -1,18 +1,54 @@
-import { FirebaseSeriesRepository, GeminiPlanGenerator } from '@dosfilos/infrastructure';
+import {
+    FirebaseSeriesRepository,
+    GeminiPericopeDetector,
+    GeminiPlanGenerator,
+    RVR1960Repository,
+    ASVRepository,
+} from '@dosfilos/infrastructure';
 import {
     SermonSeriesEntity,
     type PlannedSermonStatus,
     type SyntacticUnit,
 } from '@dosfilos/domain';
+import { DetectPericopesUseCase } from '../use-cases/exegesis/DetectPericopesUseCase';
 import { LibraryService } from './LibraryService';
 
 export class SeriesService {
     private seriesRepository: FirebaseSeriesRepository;
     private libraryService: LibraryService;
+    public detectPericopes: DetectPericopesUseCase;
+    public detectPericopesEn: DetectPericopesUseCase;
 
     constructor() {
         this.seriesRepository = new FirebaseSeriesRepository();
         this.libraryService = new LibraryService();
+
+        // Pericope assistant — composition root. We wire one use case per
+        // bible source so the caller picks language at the call site
+        // (the wizard exposes both via a single `detect({ ..., displayLanguage })`
+        // entry point that routes to the right instance). v1.5 will fold
+        // both into a single use case once the bible repository abstracts
+        // language selection internally.
+        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+        const exegesisModelId =
+            (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
+        const detector = new GeminiPericopeDetector(apiKey || '', exegesisModelId);
+        this.detectPericopes = new DetectPericopesUseCase(new RVR1960Repository(), detector);
+        this.detectPericopesEn = new DetectPericopesUseCase(new ASVRepository(), detector);
+    }
+
+    /**
+     * Dispatches to the right `DetectPericopesUseCase` based on the
+     * caller's display language so the wizard reads the verses from the
+     * matching translation (RVR for ES, ASV for EN).
+     */
+    async runPericopeAssistant(input: {
+        bookId: import('@dosfilos/domain').BibleBookId;
+        displayLanguage: 'es' | 'en';
+        targetPericopeCount?: number;
+    }) {
+        const useCase = input.displayLanguage === 'en' ? this.detectPericopesEn : this.detectPericopes;
+        return useCase.execute(input);
     }
 
     private async retry<T>(operation: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
