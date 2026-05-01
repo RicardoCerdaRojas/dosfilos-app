@@ -22,14 +22,14 @@ describe('SermonEntity', () => {
         expect(sermon.status).toBe('draft');
     });
 
-    it('should have default status as draft', () => {
+    it('should have default status as working', () => {
         const sermon = SermonEntity.create({
             userId: 'user123',
             title: 'Test Sermon',
             content: 'Content',
         });
 
-        expect(sermon.status).toBe('draft');
+        expect(sermon.status).toBe('working');
     });
 
     it('should have createdAt and updatedAt dates', () => {
@@ -41,5 +41,23 @@ describe('SermonEntity', () => {
 
         expect(sermon.createdAt).toBeInstanceOf(Date);
         expect(sermon.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('preserves sourcePaperId across create / update / publishAsCopy', () => {
+        const sermon = SermonEntity.create({
+            userId: 'user123',
+            title: 'Test Sermon',
+            content: 'Content',
+            sourcePaperId: 'paper-abc',
+        });
+        expect(sermon.sourcePaperId).toBe('paper-abc');
+
+        const updated = sermon.update({ title: 'Renamed Sermon' });
+        expect(updated.sourcePaperId).toBe('paper-abc');
+
+        const copy = sermon.publishAsCopy();
+        expect(copy.sourcePaperId).toBe('paper-abc');
+        // The copy is a fresh sermon (new id), not a mutation.
+        expect(copy.id).not.toBe(sermon.id);
     });
 });

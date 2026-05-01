@@ -58,6 +58,14 @@ export interface Sermon {
      * Sermons without a `projectId` are still valid (free-form / pre-migration).
      */
     projectId?: string | undefined;
+
+    /**
+     * Optional link to the ExegeticalPaper this sermon was generated from.
+     * Set by the paper → sermon transformer (Phase 2 of the pipeline) so
+     * the sermon detail view can deep-link back to the source paper and
+     * faculty enrichment can pull paper context.
+     */
+    sourcePaperId?: string | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -82,7 +90,8 @@ export class SermonEntity implements Sermon {
         public preachingHistory: PreachingLog[] = [],
         public sourceSermonId?: string,
         public sourceFacultySessionId?: string,
-        public projectId?: string
+        public projectId?: string,
+        public sourcePaperId?: string
     ) {
         this.validate();
     }
@@ -135,7 +144,8 @@ export class SermonEntity implements Sermon {
             data.preachingHistory ?? [],
             data.sourceSermonId,
             data.sourceFacultySessionId,
-            data.projectId
+            data.projectId,
+            data.sourcePaperId
         );
     }
 
@@ -162,7 +172,8 @@ export class SermonEntity implements Sermon {
             data.preachingHistory ?? this.preachingHistory,
             d.sourceSermonId ?? this.sourceSermonId,
             d.sourceFacultySessionId ?? this.sourceFacultySessionId,
-            d.projectId ?? this.projectId
+            d.projectId ?? this.projectId,
+            d.sourcePaperId ?? this.sourcePaperId
         );
     }
 
@@ -188,7 +199,8 @@ export class SermonEntity implements Sermon {
             this.preachingHistory,
             this.sourceSermonId,
             this.sourceFacultySessionId,
-            this.projectId
+            this.projectId,
+            this.sourcePaperId
         );
     }
 
@@ -232,7 +244,8 @@ export class SermonEntity implements Sermon {
             [],
             this.id, // Link back to the source draft
             this.sourceFacultySessionId,
-            this.projectId
+            this.projectId,
+            this.sourcePaperId
         );
     }
 
@@ -258,7 +271,8 @@ export class SermonEntity implements Sermon {
             this.preachingHistory,
             this.sourceSermonId,
             this.sourceFacultySessionId,
-            this.projectId
+            this.projectId,
+            this.sourcePaperId
         );
     }
 
@@ -284,7 +298,8 @@ export class SermonEntity implements Sermon {
             this.preachingHistory,
             this.sourceSermonId,
             this.sourceFacultySessionId,
-            this.projectId
+            this.projectId,
+            this.sourcePaperId
         );
     }
 
@@ -310,7 +325,8 @@ export class SermonEntity implements Sermon {
             this.preachingHistory,
             this.sourceSermonId,
             this.sourceFacultySessionId,
-            this.projectId
+            this.projectId,
+            this.sourcePaperId
         );
     }
 
