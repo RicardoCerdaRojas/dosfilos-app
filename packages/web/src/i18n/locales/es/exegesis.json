@@ -466,6 +466,12 @@
                         "saveFailed": "No se pudieron guardar los cambios"
                     }
                 },
+                "balance": {
+                    "standard_one": "{{count}} pág. estándar",
+                    "standard_other": "{{count}} págs. estándar",
+                    "premium_one": "{{count}} pág. premium",
+                    "premium_other": "{{count}} págs. premium"
+                },
                 "readiness": {
                     "indexed": "Listo",
                     "extracting": "Procesando texto",

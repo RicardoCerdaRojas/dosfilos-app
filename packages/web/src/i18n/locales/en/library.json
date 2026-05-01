@@ -149,6 +149,9 @@
     "usage": {
         "queriesLabel": "Queries / month",
         "docsLabel": "Personal docs",
+        "standardPagesLabel": "Standard pages",
+        "premiumPagesLabel": "Premium pages",
+        "balanceSplit": "Plan: {{plan}} · Packs: {{pack}}",
         "upgradeButton": "Upgrade plan"
     },
     "balance": {

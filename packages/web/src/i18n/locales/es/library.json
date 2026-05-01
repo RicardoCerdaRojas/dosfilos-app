@@ -149,6 +149,9 @@
     "usage": {
         "queriesLabel": "Consultas / mes",
         "docsLabel": "Documentos propios",
+        "standardPagesLabel": "Páginas estándar",
+        "premiumPagesLabel": "Páginas premium",
+        "balanceSplit": "Plan: {{plan}} · Packs: {{pack}}",
         "upgradeButton": "Mejorar plan"
     },
     "balance": {

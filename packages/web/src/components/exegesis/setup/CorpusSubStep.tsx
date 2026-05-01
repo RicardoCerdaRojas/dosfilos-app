@@ -40,6 +40,7 @@ import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { SourceTypePicker } from './SourceTypePicker';
 import { RubricGapCard } from './RubricGapCard';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
+import { PageBalanceHint } from './PageBalanceHint';
 
 /**
  * Corpus sub-step — the main pedagogical surface of the rubric-driven
@@ -93,7 +94,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
         <div className="space-y-6">
             <header className="flex items-start gap-3">
                 <FileStack className="h-5 w-5 text-success mt-0.5 shrink-0" />
-                <div>
+                <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-semibold text-foreground">
                         {t('paperSetup.subSteps.corpus.heading')}
                     </h2>
@@ -101,6 +102,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                         {t('paperSetup.subSteps.corpus.description')}
                     </p>
                 </div>
+                <PageBalanceHint />
             </header>
 
             <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />

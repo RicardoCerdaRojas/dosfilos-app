@@ -466,6 +466,12 @@
                         "saveFailed": "Couldn't save changes"
                     }
                 },
+                "balance": {
+                    "standard_one": "{{count}} std page",
+                    "standard_other": "{{count}} std pages",
+                    "premium_one": "{{count}} prem page",
+                    "premium_other": "{{count}} prem pages"
+                },
                 "readiness": {
                     "indexed": "Ready",
                     "extracting": "Processing text",
