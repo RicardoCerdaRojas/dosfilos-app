@@ -4,6 +4,31 @@
         "greeting": "Hello, {{name}}.",
         "subtitle": "Here's what you have today in your study space."
     },
+    "hero": {
+        "contextProjects_one": "{{count}} active project",
+        "contextProjects_other": "{{count}} active projects",
+        "contextUpcoming_one": "{{count}} scheduled",
+        "contextUpcoming_other": "{{count}} scheduled",
+        "contextEmpty": "No active projects right now.",
+        "planChipTooltip": "Available balance this month — click to view your plan"
+    },
+    "agenda": {
+        "eyebrow": "Upcoming agenda",
+        "viewAll": "View planner",
+        "empty": "No sermons scheduled in the next 14 days."
+    },
+    "exegesis": {
+        "eyebrow": "Exegesis in progress",
+        "viewAll": "View all",
+        "empty": "No exegetical papers in progress yet.",
+        "emptyCta": "Start a paper",
+        "phase": {
+            "configuring": "Configuring",
+            "in-progress": "In progress",
+            "assembled": "Assembled",
+            "archived": "Archived"
+        }
+    },
     "activeProjects": {
         "eyebrow": "Active projects",
         "title": "Your work in progress.",
@@ -74,8 +99,11 @@
         "status": {
             "published": "Published",
             "draft": "Draft",
+            "working": "Working",
             "archived": "Archived"
         },
+        "versions_one": "{{count}} version",
+        "versions_other": "{{count}} versions",
         "viewAll": "View all sermons"
     },
     "welcomeModal": {
