@@ -67,6 +67,14 @@ export function ExtractFromLibraryDialog({
     // toggling preserves any per-resource overrides the user typed.
     const [selections, setSelections] = useState<Map<string, SelectionEntry>>(new Map());
     const [searchTerm, setSearchTerm] = useState('');
+    // Group filter chip — narrows the list to resources whose cached
+    // `exegeticalType` falls in a specific SOURCE_TYPE_GROUPS family
+    // (lexical / commentaries / background / etc.). Resources WITHOUT
+    // a cached type are hidden by an active group filter — that's
+    // the right behavior because the filter's purpose is "show me
+    // resources I've already classified as X". `'all'` shows
+    // everything regardless.
+    const [groupFilter, setGroupFilter] = useState<string>('all');
 
     // Fetch the user's library each time the dialog opens. The hook
     // re-runs on open via the `enabled` flag so a stale list from a
@@ -88,6 +96,7 @@ export function ExtractFromLibraryDialog({
             setSelections(new Map());
             setNotIndexedIds([]);
             setSearchTerm('');
+            setGroupFilter('all');
         }
     }, [open]);
 
@@ -106,11 +115,22 @@ export function ExtractFromLibraryDialog({
 
     // Filter + sort: indexed resources first (so they're easiest to
     // select), then by title. Search filters against title + author.
+    // Group filter narrows by cached exegeticalType family.
     const filtered = useMemo(() => {
         const q = searchTerm.trim().toLowerCase();
+        const groupTypes = groupFilter === 'all'
+            ? null
+            : new Set<string>(SOURCE_TYPE_GROUPS.find(g => g.groupKey === groupFilter)?.types ?? []);
         const matches = resources.filter(r => {
-            if (q.length === 0) return true;
-            return r.title.toLowerCase().includes(q) || r.author?.toLowerCase().includes(q);
+            if (q.length > 0) {
+                const titleMatch = r.title.toLowerCase().includes(q);
+                const authorMatch = r.author?.toLowerCase().includes(q);
+                if (!titleMatch && !authorMatch) return false;
+            }
+            if (groupTypes) {
+                if (!r.exegeticalType || !groupTypes.has(r.exegeticalType)) return false;
+            }
+            return true;
         });
         return matches.sort((a, b) => {
             const aReady = libraryService.getResourceIndexStatus(a) === 'indexed' ? 0 : 1;
@@ -118,7 +138,14 @@ export function ExtractFromLibraryDialog({
             if (aReady !== bReady) return aReady - bReady;
             return a.title.localeCompare(b.title);
         });
-    }, [resources, searchTerm]);
+    }, [resources, searchTerm, groupFilter]);
+
+    // Count cached vs uncached for the "All" chip caption — gives the
+    // user a sense of how much classification investment exists.
+    const cachedCount = useMemo(
+        () => resources.filter(r => !!r.exegeticalType).length,
+        [resources],
+    );
 
     const selectedCount = selections.size;
     const willReplaceCount = useMemo(() => {
@@ -133,7 +160,11 @@ export function ExtractFromLibraryDialog({
             next.delete(resource.id);
         } else {
             next.set(resource.id, {
-                sourceType: defaultSourceTypeFor(resource),
+                // Pre-fill priority: cached `exegeticalType` from a
+                // previous extraction wins over the coarse-type
+                // mapping. This is the v1.5 commit 6 payoff — the
+                // user classifies BDAG once and it sticks.
+                sourceType: resource.exegeticalType ?? defaultSourceTypeFor(resource),
                 displayLabel: resource.title,
                 citationKey: '',
             });
@@ -151,6 +182,15 @@ export function ExtractFromLibraryDialog({
         if (!current) return;
         next.set(resourceId, { ...current, ...patch });
         setSelections(next);
+        // Auto-cache `exegeticalType` whenever the user picks one.
+        // Fire-and-forget — failure doesn't block the extraction
+        // (the cache miss just means next time the user re-classifies
+        // manually). Only fires when the type ACTUALLY changes to
+        // avoid spurious writes on every render.
+        if (patch.sourceType !== undefined && patch.sourceType !== current.sourceType) {
+            void libraryService.updateResource(resourceId, { exegeticalType: patch.sourceType })
+                .catch(err => console.warn('[exegesis] failed to cache exegeticalType:', err));
+        }
     };
 
     const handleExtract = async () => {
@@ -206,6 +246,29 @@ export function ExtractFromLibraryDialog({
                             className="w-full rounded-md border border-border bg-card pl-8 pr-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                         />
                     </div>
+
+                    {/* Group filter chips — only render once enough
+                        resources are cached to make filtering useful.
+                        Threshold is intentionally low (3) so the
+                        feature appears as soon as the user has done
+                        any meaningful classification. */}
+                    {cachedCount >= 3 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <GroupChip
+                                active={groupFilter === 'all'}
+                                onClick={() => setGroupFilter('all')}
+                                label={t('paperSetup.subSteps.corpus.extract.filterAll', { count: resources.length })}
+                            />
+                            {SOURCE_TYPE_GROUPS.map(g => (
+                                <GroupChip
+                                    key={g.groupKey}
+                                    active={groupFilter === g.groupKey}
+                                    onClick={() => setGroupFilter(g.groupKey)}
+                                    label={t(`sourceTypeGroups.${g.groupKey}`)}
+                                />
+                            ))}
+                        </div>
+                    )}
 
                     {/* Not-indexed surface (shows after a failed extract) */}
                     {notIndexedIds.length > 0 && (
@@ -367,6 +430,14 @@ function ResourceRow({
                                 {resource.author}
                             </p>
                         )}
+                        {/* Cached classification hint — only when not
+                            currently selected, to avoid duplicating
+                            info already visible in the picker below. */}
+                        {!isSelected && resource.exegeticalType && (
+                            <span className="text-[10px] text-muted-foreground italic truncate">
+                                · {t(`sourceTypes.${resource.exegeticalType}.label`)}
+                            </span>
+                        )}
                         {!isSelectable && (
                             <span className="text-[10px] text-muted-foreground italic">
                                 · {t(`paperSetup.subSteps.corpus.readiness.${toReadinessKey(status)}`)}
@@ -428,6 +499,24 @@ function ResourceRow({
  * conservative — we'd rather force the user to confirm than silently
  * mis-classify (the v1.5 spec accepted this manual step explicitly).
  */
+function GroupChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={[
+                'rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors',
+                active
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-card text-muted-foreground hover:bg-accent',
+            ].join(' ')}
+            aria-pressed={active}
+        >
+            {label}
+        </button>
+    );
+}
+
 function defaultSourceTypeFor(resource: LibraryResource): SourceType {
     switch (resource.type) {
         case 'commentary': return 'commentary-critical';

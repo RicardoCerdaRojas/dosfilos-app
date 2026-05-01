@@ -3,6 +3,7 @@ import {
     ResourceType,
     type LibraryResource,
     type ResourceIndexStatus,
+    type SourceType as ExegesisSourceType,
 } from '@dosfilos/domain';
 import {
     FirebaseLibraryRepository,
@@ -309,6 +310,14 @@ export class LibraryService {
             metadata?: any;
             isCore?: boolean;
             coreContext?: 'exegesis' | 'homiletics' | 'generic';
+            /**
+             * v1.5 commit 6: cache the exegesis-grade classification
+             * the user picked the first time they extracted from this
+             * resource. Pass `null` to explicitly clear (rare —
+             * usually only when the user changes their mind in the
+             * extraction dialog).
+             */
+            exegeticalType?: ExegesisSourceType | null;
         }
     ): Promise<void> {
         console.log(`📝 Updating resource ${id}:`, updates);

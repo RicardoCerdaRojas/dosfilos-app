@@ -442,6 +442,7 @@
                     "submit": "Extraer fragmentos",
                     "submitting": "Extrayendo...",
                     "willReplace": "Reemplazará excerpts actuales",
+                    "filterAll": "Todos ({{count}})",
                     "notIndexedTitle": "Algunos recursos no están listos",
                     "notIndexedBody_one": "{{count}} recurso seleccionado aún no está indexado. Quítalo de la selección o espera a que termine el procesamiento automático.",
                     "notIndexedBody_other": "{{count}} recursos seleccionados aún no están indexados. Quítalos de la selección o espera a que termine el procesamiento automático.",

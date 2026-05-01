@@ -1,4 +1,5 @@
 import { WorkflowPhase } from './SermonWorkflow';
+import type { SourceType as ExegesisSourceType } from '../exegesis/entities/SourceType';
 
 export type ResourceType = 'theology' | 'grammar' | 'commentary' | 'article' | 'other';
 
@@ -67,6 +68,22 @@ export interface LibraryResource {
      * indexed under an older schema.
      */
     indexerVersion?: string;
+    /**
+     * Granular exegesis classification (commit 6 of v1.5). Cached on
+     * the resource the first time the user picks it for excerpt
+     * extraction so subsequent papers get a pre-filled type instead
+     * of the always-generic default. Distinct from `type` (the coarse
+     * theology/commentary/grammar trio used by Faculty + Sermon
+     * Generator) — exegesis cares about much finer distinctions
+     * (`commentary-critical` vs `commentary-expository`,
+     * `lexicon-technical` vs `theological-dictionary`, etc.). Storing
+     * it here means it follows the resource across all papers; the
+     * user only classifies once per recurso, not once per paper.
+     *
+     * Optional: legacy resources don't have it; the extraction
+     * dialog falls back to a coarse-type-derived default when absent.
+     */
+    exegeticalType?: ExegesisSourceType;
     mimeType: string;
     sizeBytes: number;
     characterCount?: number; // Total character count of extracted text
@@ -98,6 +115,14 @@ export class LibraryResourceEntity implements LibraryResource {
     public preferredForPhases?: WorkflowPhase[];
     public metadata?: Record<string, any>;
     public coreStores?: ('exegesis' | 'homiletics' | 'generic')[];
+    /**
+     * Set post-construct via `(entity as any).exegeticalType = …`
+     * by the repo deserializer (commit 6 of v1.5). Declared here so
+     * `Partial<LibraryResourceEntity>` patches accept it — the class
+     * doesn't take it through the constructor because all the v1.5
+     * cache fields are owned by deserialization, not creation.
+     */
+    public exegeticalType?: ExegesisSourceType;
 
     constructor(
         public id: string,
