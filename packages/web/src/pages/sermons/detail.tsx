@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Archive, Trash2, FileText,
+    Archive, ArrowLeft, Trash2, FileText,
     BookOpen, History, Plus,
     Share2, MoreVertical, Download, Globe, Eye, CheckCircle,
     Type, Minus, PenTool, PenLine,
