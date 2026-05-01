@@ -41,6 +41,18 @@ export class ApplyRubricTemplateToPaperUseCase {
         const now = new Date();
         const snapshot: PaperRubric = {
             ...template.rubric,
+            // Stamp the template's id so the UI can pre-select it in
+            // the templates picker the next time the student opens the
+            // setup page. Preserved across manual edits below; cleared
+            // by reset and extract.
+            sourceTemplateId: template.id,
+            // Override the template's inherited provenance — from the
+            // user's perspective, this rubric just came from applying
+            // a template, regardless of how the template itself was
+            // born (system-default-based, extracted, hand-edited, etc).
+            // Manual edits afterwards flip this to 'user-edited' via
+            // UpdateRubricUseCase.
+            provenance: 'from-template',
             createdAt: now,
             updatedAt: now,
         };

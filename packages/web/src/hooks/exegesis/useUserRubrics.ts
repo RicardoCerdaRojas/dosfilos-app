@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exegesisService } from '@dosfilos/application';
-import type { PaperRubric } from '@dosfilos/domain';
+import type { PaperRubric, UserRubric } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 
 /**
@@ -61,12 +61,35 @@ export function useUserRubrics() {
         },
     });
 
+    // Optimistic update — flip `isDefault` locally before the network
+    // round-trip lands. The repo's `setDefault` transaction enforces the
+    // single-default invariant on the backend, so mirroring that locally
+    // (set target true, all siblings false) gives an instant UI toggle.
+    // onError rolls back on failure; onSettled syncs with truth either
+    // way so we don't drift if the optimistic guess was wrong.
     const setDefault = useMutation({
         mutationFn: async (rubricId: string) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return exegesisService.setDefaultUserRubric.execute({ ownerId: user.uid, rubricId });
         },
-        onSuccess: () => {
+        onMutate: async (rubricId: string) => {
+            const queryKey = ['exegesis', 'userRubrics', user?.uid];
+            await queryClient.cancelQueries({ queryKey });
+            const previous = queryClient.getQueryData<UserRubric[]>(queryKey);
+            if (previous) {
+                queryClient.setQueryData<UserRubric[]>(
+                    queryKey,
+                    previous.map(r => ({ ...r, isDefault: r.id === rubricId })),
+                );
+            }
+            return { previous };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(['exegesis', 'userRubrics', user?.uid], context.previous);
+            }
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'userRubrics', user?.uid] });
         },
     });

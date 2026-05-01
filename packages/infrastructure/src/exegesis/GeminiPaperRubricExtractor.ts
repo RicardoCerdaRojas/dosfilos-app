@@ -142,7 +142,6 @@ function buildUserMessageEN(rawText: string, typeList: string): string {
         `Return a single JSON object with these fields (use null where the rubric is silent):`,
         ``,
         `{`,
-        `  "title": string | null,`,
         `  "description": string | null,`,
         `  "citationStandard": string | null,                              // e.g. "TMS / Turabian", "SBL Handbook"`,
         `  "expectedLength": { "unit": "pages" | "words", "min": number | null, "max": number | null } | null,`,
@@ -195,7 +194,6 @@ function buildUserMessageES(rawText: string, typeList: string): string {
         `Devolvé un único objeto JSON con estos campos (usá null donde la rúbrica calle):`,
         ``,
         `{`,
-        `  "title": string | null,`,
         `  "description": string | null,`,
         `  "citationStandard": string | null,                              // ej. "TMS / Turabian", "SBL Handbook"`,
         `  "expectedLength": { "unit": "pages" | "words", "min": number | null, "max": number | null } | null,`,
@@ -240,7 +238,6 @@ function buildUserMessageES(rawText: string, typeList: string): string {
 // ── JSON parsing + mapping ─────────────────────────────────────────────
 
 interface RawExtractionResult {
-    title: string | null;
     description: string | null;
     citationStandard: string | null;
     expectedLength: { unit: 'pages' | 'words'; min: number | null; max: number | null } | null;
@@ -274,7 +271,6 @@ function parseExtractorJson(rawJson: string): RawExtractionResult {
     }
 
     return {
-        title: typeof parsed.title === 'string' ? parsed.title : null,
         description: typeof parsed.description === 'string' ? parsed.description : null,
         citationStandard: typeof parsed.citationStandard === 'string' ? parsed.citationStandard : null,
         expectedLength: parsed.expectedLength && typeof parsed.expectedLength === 'object'
@@ -316,7 +312,6 @@ function mapToDomain(raw: RawExtractionResult, input: ExtractRubricInput): Omit<
 
     return {
         provenance: input.source === 'document' ? 'extracted-from-document' : 'extracted-from-text',
-        title: raw.title,
         description: raw.description,
         expectedLength: raw.expectedLength,
         citationStandard: raw.citationStandard,
@@ -324,12 +319,15 @@ function mapToDomain(raw: RawExtractionResult, input: ExtractRubricInput): Omit<
         structuralExpectations,
         sourceCorpusId: input.sourceCorpusId,
         sourcePastedText: input.source === 'text' ? input.rawText : null,
+        // Extraction creates a fresh origin; any prior template link
+        // is irrelevant. Caller (ExtractRubricFromTextUseCase) relies
+        // on this being null to clear the breadcrumb.
+        sourceTemplateId: null,
     };
 }
 
 function inferConfidence(raw: RawExtractionResult): 'high' | 'medium' | 'low' {
     let score = 0;
-    if (raw.title) score++;
     if (raw.description) score++;
     if (raw.citationStandard) score++;
     if (raw.expectedLength) score++;

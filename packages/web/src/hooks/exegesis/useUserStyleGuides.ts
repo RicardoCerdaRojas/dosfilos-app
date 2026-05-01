@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exegesisService, libraryService } from '@dosfilos/application';
+import type { UserStyleGuide } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 
 /**
@@ -74,12 +75,33 @@ export function useUserStyleGuides() {
         },
     });
 
+    // Optimistic update — same pattern as `setDefault` on rubrics. The
+    // single-active invariant is enforced by the repo transaction; we
+    // mirror it locally so the UI flips instantly. Rolls back on error,
+    // re-syncs on settle either way.
     const setActive = useMutation({
         mutationFn: async (guideId: string) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return exegesisService.setActiveStyleGuide.execute(user.uid, guideId);
         },
-        onSuccess: () => {
+        onMutate: async (guideId: string) => {
+            const queryKey = ['exegesis', 'styleGuides', user?.uid];
+            await queryClient.cancelQueries({ queryKey });
+            const previous = queryClient.getQueryData<UserStyleGuide[]>(queryKey);
+            if (previous) {
+                queryClient.setQueryData<UserStyleGuide[]>(
+                    queryKey,
+                    previous.map(g => ({ ...g, isActive: g.id === guideId })),
+                );
+            }
+            return { previous };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(['exegesis', 'styleGuides', user?.uid], context.previous);
+            }
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'styleGuides', user?.uid] });
         },
     });

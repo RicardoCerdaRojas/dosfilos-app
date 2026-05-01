@@ -14,10 +14,12 @@ import {
     Pencil,
     X,
     BookOpenText,
+    BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import { StepCard } from '@/components/exegesis/StepCard';
 import {
@@ -141,6 +143,7 @@ export function ExegesisPaperPage() {
                         t={t}
                     />
                     <aside className="space-y-4">
+                        <RubricCard paper={paper} t={t} />
                         <StyleGuideCard paper={paper} t={t} />
                         <SourcesCard
                             paper={paper}
@@ -285,30 +288,138 @@ function StepsPanel({
     );
 }
 
-// ── Sidebar — Style guide ───────────────────────────────────────────────
+// ── Sidebar — Rubric ────────────────────────────────────────────────────
 
-function StyleGuideCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string) => string }) {
-    const { guides } = useUserStyleGuides();
-    const attached = paper.styleGuideId ? guides.find(g => g.id === paper.styleGuideId) ?? null : null;
+/**
+ * Surfaces `paper.rubric` (embedded snapshot) so the detail view shows
+ * the same source of truth the setup wizard edits.
+ *
+ * Headline resolution priority:
+ *   1. If the rubric came from a saved template AND that template
+ *      still exists in the user's library → show the template's
+ *      `displayName`. That's the identity the user picked and
+ *      remembers.
+ *   2. Otherwise fall back to the provenance label ("Desde plantilla",
+ *      "Editada", "Default del sistema", "Extraída de…").
+ *
+ * The provenance label still appears as a smaller hint when the
+ * headline is the template name AND the rubric has been edited since
+ * apply (so the user sees "Trabajo Exegético TMS · editada") — this
+ * keeps the breadcrumb honest without losing the name.
+ */
+function RubricCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string, opts?: Record<string, unknown>) => string }) {
+    const rubric = paper.rubric;
+    const { rubrics: userRubrics } = useUserRubrics();
+    const sourceTemplate = rubric?.sourceTemplateId
+        ? userRubrics.find(r => r.id === rubric.sourceTemplateId) ?? null
+        : null;
+    const lengthLabel = rubric?.expectedLength ? formatExpectedLength(rubric.expectedLength, t) : null;
+
+    const headline = sourceTemplate
+        ? sourceTemplate.displayName
+        : rubric
+            ? t(`paperSetup.subSteps.rubric.provenance.${rubric.provenance}`)
+            : null;
+
+    // Show provenance as hint only when (a) the headline is the
+    // template name and (b) the rubric has been edited since apply
+    // (provenance flipped to 'user-edited'). Otherwise the headline
+    // already conveys the provenance.
+    const provenanceHint = sourceTemplate && rubric && rubric.provenance === 'user-edited'
+        ? t(`paperSetup.subSteps.rubric.provenance.${rubric.provenance}`)
+        : null;
 
     return (
         <section className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
             <header className="flex items-center gap-2 mb-3">
                 <FileCheck2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {t('detail.rubric.title')}
+                </h3>
+            </header>
+            {rubric ? (
+                <div className="rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                        {headline}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {provenanceHint ? `${provenanceHint} · ` : ''}
+                        {t('detail.rubric.requirementsCount', { count: rubric.sourceRequirements.length })}
+                        {lengthLabel ? ` · ${lengthLabel}` : ''}
+                    </p>
+                </div>
+            ) : (
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                    {t('detail.rubric.none')}
+                </p>
+            )}
+            <Link
+                to={`/dashboard/exegesis/${paper.id}/setup`}
+                className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
+            >
+                <Pencil className="h-3 w-3" />
+                {t('detail.rubric.changeCta')}
+            </Link>
+        </section>
+    );
+}
+
+/**
+ * Renders an `ExpectedLengthRange` as a compact label. Picks the right
+ * unit and handles the "min only" case (open upper bound) separately
+ * since `min–null` reads awkwardly.
+ */
+function formatExpectedLength(
+    range: NonNullable<ExegeticalPaper['rubric']>['expectedLength'],
+    t: (key: string, opts?: Record<string, unknown>) => string,
+): string | null {
+    if (!range) return null;
+    const { unit, min, max } = range;
+    if (min !== null && max !== null) {
+        return t(unit === 'pages' ? 'detail.rubric.lengthPages' : 'detail.rubric.lengthWords', { min, max });
+    }
+    if (min !== null) {
+        return t(unit === 'pages' ? 'detail.rubric.lengthMinPages' : 'detail.rubric.lengthMinWords', { min });
+    }
+    return null;
+}
+
+// ── Sidebar — Style guide ───────────────────────────────────────────────
+
+function StyleGuideCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string) => string }) {
+    const { guides, activeGuide } = useUserStyleGuides();
+    // Resolution order matches the orchestrator + setup view: a paper
+    // may pin a specific guide via `paper.styleGuideId`; if not, it
+    // inherits the user-level active guide. The detail card has to
+    // mirror this — otherwise the user sees "no guide" here while the
+    // setup shows one, contradicting itself.
+    const pinned = paper.styleGuideId
+        ? guides.find(g => g.id === paper.styleGuideId) ?? null
+        : null;
+    const effective = pinned ?? activeGuide;
+    // Distinguish "explicitly chosen for this paper" from "inherited
+    // because it's your active guide" — both work for generation but
+    // the user should know which they're looking at.
+    const isInherited = !pinned && effective !== null;
+
+    return (
+        <section className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+            <header className="flex items-center gap-2 mb-3">
+                <BookOpen className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {t('detail.styleGuide.title')}
                 </h3>
             </header>
-            {attached ? (
+            {effective ? (
                 <div className="rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
-                        {attached.displayName}
+                        {effective.displayName}
                     </p>
-                    {attached.version && (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                            v{attached.version}
-                        </p>
-                    )}
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {isInherited ? t('detail.styleGuide.inheritedHint') : null}
+                        {isInherited && effective.version ? ' · ' : ''}
+                        {effective.version ? `v${effective.version}` : ''}
+                    </p>
                 </div>
             ) : (
                 <p className="text-xs text-slate-500 dark:text-slate-400 italic">

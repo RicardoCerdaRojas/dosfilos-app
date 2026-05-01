@@ -76,11 +76,20 @@ export class CreateExegeticalPaperUseCase {
         // already seeded `paper.rubric` with the system default, so
         // this only OVERRIDES when a template is explicitly chosen
         // or the user has a default template.
-        const templateRubric = await this.resolveTemplateRubric(input);
-        if (templateRubric) {
+        const resolved = await this.resolveTemplateRubric(input);
+        if (resolved) {
             const now = new Date();
             return this.paperRepository.setRubric(input.ownerId, created.id, {
-                ...templateRubric,
+                ...resolved.rubric,
+                // Stamp the template id so the setup picker can
+                // pre-select it. Survives manual edits via the same
+                // preserve-on-update logic the regular apply flow uses.
+                sourceTemplateId: resolved.templateId,
+                // Same reasoning as ApplyRubricTemplateToPaperUseCase:
+                // overwrite the template's inherited provenance so the
+                // paper's badge says "from template" instead of
+                // whatever the template was originally classified as.
+                provenance: 'from-template',
                 createdAt: now,
                 updatedAt: now,
             });
@@ -91,7 +100,7 @@ export class CreateExegeticalPaperUseCase {
 
     private async resolveTemplateRubric(
         input: CreateExegeticalPaperInput,
-    ): Promise<PaperRubric | null> {
+    ): Promise<{ rubric: PaperRubric; templateId: string } | null> {
         if (!this.userRubricRepository) return null;
 
         // Explicit template wins.
@@ -100,7 +109,7 @@ export class CreateExegeticalPaperUseCase {
                 input.ownerId,
                 input.rubricTemplateId,
             );
-            return template?.rubric ?? null;
+            return template ? { rubric: template.rubric, templateId: template.id } : null;
         }
 
         // Otherwise, fall back to the user's default if any.
@@ -110,6 +119,6 @@ export class CreateExegeticalPaperUseCase {
         if (input.rubricTemplateId === null) return null;
 
         const defaultTemplate = await this.userRubricRepository.getDefaultRubric(input.ownerId);
-        return defaultTemplate?.rubric ?? null;
+        return defaultTemplate ? { rubric: defaultTemplate.rubric, templateId: defaultTemplate.id } : null;
     }
 }

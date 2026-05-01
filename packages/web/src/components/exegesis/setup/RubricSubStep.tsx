@@ -21,6 +21,23 @@ import {
     type SourceType,
 } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
@@ -106,11 +123,16 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
     // flips to 'editing'; saving or cancelling flips back.
     const [mode, setMode] = useState<'summary' | 'editing'>('summary');
 
+    // Extract-from-text dialog. Lives behind a button in the header
+    // because most of the time the user doesn't need it (they apply
+    // a saved template). When they DO need it, it warrants the focus
+    // a modal gives.
+    const [extractOpen, setExtractOpen] = useState(false);
+
     // Form state seeded from the persisted rubric. Re-syncs whenever
     // the persisted rubric reference changes (e.g. another tab saved
     // or reset). In-flight edits are lost on those events — that's
     // acceptable for v1 since concurrent multi-tab editing is rare.
-    const [title, setTitle] = useState<string>(rubric.title ?? '');
     const [description, setDescription] = useState<string>(rubric.description ?? '');
     const [citationStandard, setCitationStandard] = useState<string>(rubric.citationStandard ?? '');
     const [lengthUnit, setLengthUnit] = useState<'pages' | 'words'>(rubric.expectedLength?.unit ?? 'pages');
@@ -119,7 +141,6 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
     const [requirements, setRequirements] = useState<SourceRequirement[]>([...rubric.sourceRequirements]);
 
     useEffect(() => {
-        setTitle(rubric.title ?? '');
         setDescription(rubric.description ?? '');
         setCitationStandard(rubric.citationStandard ?? '');
         setLengthUnit(rubric.expectedLength?.unit ?? 'pages');
@@ -150,7 +171,6 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
         try {
             await updateRubric.mutateAsync({
                 paperId: paper.id,
-                title: title.trim() || null,
                 description: description.trim() || null,
                 citationStandard: citationStandard.trim() || null,
                 expectedLength,
@@ -168,8 +188,12 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
         }
     };
 
-    const handleReset = async () => {
-        if (!window.confirm(t('paperSetup.subSteps.rubric.actions.resetConfirm'))) return;
+    const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+
+    const handleReset = () => setConfirmResetOpen(true);
+
+    const doReset = async () => {
+        setConfirmResetOpen(false);
         try {
             await resetRubric.mutateAsync({ paperId: paper.id });
             toast.success(t('paperSetup.subSteps.rubric.actions.resetDone'));
@@ -218,16 +242,38 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                         {t('paperSetup.subSteps.rubric.description')}
                     </p>
                 </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setExtractOpen(true)}
+                    className="shrink-0 text-xs"
+                >
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    {t('paperSetup.subSteps.rubric.extract.openCta')}
+                </Button>
             </header>
 
             {/* Plantillas FIRST — primary path for repeat users. The
-                extract-from-text panel is the secondary path
-                (alumno sin plantillas todavía). The PDF-coming-soon
-                banner that lived here was redundant; both paths are
-                self-explanatory in their own headers. */}
+                extract-from-text path lives in a dialog opened from
+                the header (secondary action — most users apply a
+                saved template, not extract from scratch every time). */}
             <RubricTemplatesPanel paper={paper} />
 
-            <RubricExtractFromTextPanel paper={paper} />
+            <Dialog open={extractOpen} onOpenChange={setExtractOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="inline-flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-success" />
+                            {t('paperSetup.subSteps.rubric.extract.title')}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {t('paperSetup.subSteps.rubric.extract.subtitle')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <RubricExtractFromTextPanel paper={paper} onExtracted={() => setExtractOpen(false)} />
+                </DialogContent>
+            </Dialog>
 
             {mode === 'summary' && (
                 <RubricSummaryView
@@ -248,18 +294,6 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                     {t('paperSetup.subSteps.rubric.metadata.title')}
                 </h3>
                 <div className="space-y-3">
-                    <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">
-                            {t('paperSetup.subSteps.rubric.metadata.titleLabel')}
-                        </label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder={t('paperSetup.subSteps.rubric.metadata.titlePlaceholder')}
-                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                        />
-                    </div>
                     <div>
                         <label className="block text-xs font-medium text-foreground mb-1">
                             {t('paperSetup.subSteps.rubric.metadata.descriptionLabel')}
@@ -418,6 +452,16 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
 
                 </>
             )}
+
+            <ConfirmActionDialog
+                open={confirmResetOpen}
+                onOpenChange={setConfirmResetOpen}
+                title={t('paperSetup.subSteps.rubric.actions.resetConfirmTitle')}
+                body={t('paperSetup.subSteps.rubric.actions.resetConfirmBody')}
+                confirmLabel={t('paperSetup.subSteps.rubric.actions.resetConfirmCta')}
+                cancelLabel={t('setup.cancel')}
+                onConfirm={doReset}
+            />
         </div>
     );
 }
@@ -459,7 +503,7 @@ function RubricSummaryView({
             <header className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                     <h3 className="text-base font-semibold text-foreground">
-                        {rubric.title || t('paperSetup.subSteps.rubric.summary.untitledRubric')}
+                        {t('paperSetup.subSteps.rubric.heading')}
                     </h3>
                     {rubric.description && (
                         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
@@ -608,6 +652,13 @@ function summarizeLength(rubric: PaperRubric, t: (key: string) => string): strin
 
 interface RubricExtractFromTextPanelProps {
     paper: ExegeticalPaper;
+    /**
+     * Called after a successful, high-confidence extraction. Lets the
+     * caller close the surrounding dialog. Low-confidence or
+     * has-review-notes results stay open so the student can read them
+     * before dismissing.
+     */
+    onExtracted?: () => void;
 }
 
 interface ExtractionResultSummary {
@@ -615,7 +666,7 @@ interface ExtractionResultSummary {
     reviewNotes: ReadonlyArray<string>;
 }
 
-function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) {
+function RubricExtractFromTextPanel({ paper, onExtracted }: RubricExtractFromTextPanelProps) {
     const { t } = useTranslation('exegesis');
     const { extractRubricFromText } = useExegesisPapers();
     const [text, setText] = useState('');
@@ -629,14 +680,21 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
     const isExtracting = extractRubricFromText.isPending;
     const trimmedLength = text.trim().length;
     const canSubmit = trimmedLength >= 30 && !isExtracting;
+    const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
 
-    const handleExtract = async () => {
+    const handleExtract = () => {
         if (!canSubmit) return;
         // The rubric being replaced may already carry user edits; the
         // confirm makes that explicit instead of silently nuking work.
         if (paper.rubric && paper.rubric.provenance === 'user-edited') {
-            if (!window.confirm(t('paperSetup.subSteps.rubric.extract.confirmReplace'))) return;
+            setConfirmReplaceOpen(true);
+            return;
         }
+        void doExtract();
+    };
+
+    const doExtract = async () => {
+        setConfirmReplaceOpen(false);
         try {
             const result = await extractRubricFromText.mutateAsync({
                 paperId: paper.id,
@@ -650,6 +708,12 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
             // Keep the text in the textarea so the student can re-extract
             // after editing the source — they often refine and retry.
             toast.success(t('paperSetup.subSteps.rubric.extract.success'));
+            // Close the dialog only when the result is high confidence
+            // and there are no review notes — otherwise the user wants
+            // to read the result card before dismissing.
+            if (onExtracted && result.confidence === 'high' && result.reviewNotes.length === 0) {
+                onExtracted();
+            }
         } catch (err) {
             console.error('[exegesis] extract rubric failed:', err);
             // The infrastructure layer tags Gemini 503/429 errors as
@@ -665,21 +729,9 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
     };
 
     return (
-        <section className="rounded-lg border border-success/30 bg-success-subtle p-4 space-y-3">
-            <header className="flex items-start gap-3">
-                <Sparkles className="h-5 w-5 text-success mt-0.5 shrink-0" />
-                <div>
-                    <h3 className="text-sm font-semibold text-success-subtle-foreground">
-                        {t('paperSetup.subSteps.rubric.extract.title')}
-                    </h3>
-                    <p className="text-xs text-success-subtle-foreground mt-0.5">
-                        {t('paperSetup.subSteps.rubric.extract.subtitle')}
-                    </p>
-                </div>
-            </header>
-
+        <div className="space-y-3">
             <div>
-                <label className="block text-xs font-medium text-success-subtle-foreground mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                     {t('paperSetup.subSteps.rubric.extract.textareaLabel')}
                 </label>
                 <textarea
@@ -700,7 +752,7 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-2">
-                    <label className="text-[11px] font-medium text-success-subtle-foreground">
+                    <label className="text-[11px] font-medium text-foreground">
                         {t('paperSetup.subSteps.rubric.extract.outputLanguageLabel')}
                     </label>
                     <select
@@ -712,7 +764,7 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
                         <option value="es">Español</option>
                         <option value="en">English</option>
                     </select>
-                    <span className="text-[10px] text-success-subtle-foreground italic">
+                    <span className="text-[10px] text-muted-foreground italic">
                         {t('paperSetup.subSteps.rubric.extract.outputLanguageHint')}
                     </span>
                 </div>
@@ -737,7 +789,17 @@ function RubricExtractFromTextPanel({ paper }: RubricExtractFromTextPanelProps) 
             </div>
 
             {lastResult && <ExtractionResultCard result={lastResult} />}
-        </section>
+
+            <ConfirmActionDialog
+                open={confirmReplaceOpen}
+                onOpenChange={setConfirmReplaceOpen}
+                title={t('paperSetup.subSteps.rubric.extract.confirmReplaceTitle')}
+                body={t('paperSetup.subSteps.rubric.extract.confirmReplaceBody')}
+                confirmLabel={t('paperSetup.subSteps.rubric.extract.confirmReplaceCta')}
+                cancelLabel={t('setup.cancel')}
+                onConfirm={doExtract}
+            />
+        </div>
     );
 }
 
@@ -796,21 +858,46 @@ function capitalize(s: string): string {
 function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
     const { t } = useTranslation('exegesis');
     const { rubrics, applyTemplate, saveAsTemplate } = useUserRubrics();
-    const [pickerValue, setPickerValue] = useState('');
+    // Pre-select the dropdown to whatever template the paper's rubric
+    // came from (set by ApplyRubricTemplateToPaperUseCase /
+    // SaveCurrentRubricAsTemplateUseCase / CreateExegeticalPaperUseCase).
+    // Re-syncs whenever the rubric changes server-side so a fresh apply
+    // / extract / reset reflects accurately. The value falls back to ''
+    // when the rubric has no template origin (default, extracted,
+    // or the original template was deleted).
+    const currentTemplateId = paper.rubric?.sourceTemplateId ?? null;
+    const templateStillExists = currentTemplateId !== null && rubrics.some(r => r.id === currentTemplateId);
+    const initialPickerValue = templateStillExists ? currentTemplateId! : '';
+    const [pickerValue, setPickerValue] = useState(initialPickerValue);
+    useEffect(() => {
+        setPickerValue(initialPickerValue);
+    }, [initialPickerValue]);
     // Tracks the templateId most recently applied successfully in
     // this session so we can show the "✓ Aplicada" badge + disable
-    // the Apply button when the picker matches. Clears whenever the
-    // user picks a different template (since applying that one
-    // would be a real action again).
-    const [lastAppliedId, setLastAppliedId] = useState<string | null>(null);
+    // the Apply button when the picker matches. Seeded with the
+    // current templateId so the freshly-loaded "this is what's
+    // applied" state shows the badge from the start.
+    const [lastAppliedId, setLastAppliedId] = useState<string | null>(currentTemplateId);
+    useEffect(() => {
+        setLastAppliedId(currentTemplateId);
+    }, [currentTemplateId]);
     const [savingMode, setSavingMode] = useState(false);
     const [templateName, setTemplateName] = useState('');
+    const [confirmApplyOpen, setConfirmApplyOpen] = useState(false);
 
-    const handleApply = async () => {
+    const handleApply = () => {
         if (!pickerValue) return;
+        // The current rubric carries user edits — confirm before
+        // overwriting. Otherwise apply directly.
         if (paper.rubric?.provenance === 'user-edited') {
-            if (!window.confirm(t('paperSetup.subSteps.rubric.templates.applyConfirm'))) return;
+            setConfirmApplyOpen(true);
+            return;
         }
+        void doApply();
+    };
+
+    const doApply = async () => {
+        setConfirmApplyOpen(false);
         try {
             await applyTemplate.mutateAsync({ paperId: paper.id, rubricTemplateId: pickerValue });
             toast.success(t('paperSetup.subSteps.rubric.templates.applied'));
@@ -962,6 +1049,16 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
                     </div>
                 </div>
             )}
+
+            <ConfirmActionDialog
+                open={confirmApplyOpen}
+                onOpenChange={setConfirmApplyOpen}
+                title={t('paperSetup.subSteps.rubric.templates.applyConfirmTitle')}
+                body={t('paperSetup.subSteps.rubric.templates.applyConfirmBody')}
+                confirmLabel={t('paperSetup.subSteps.rubric.templates.applyConfirmCta')}
+                cancelLabel={t('setup.cancel')}
+                onConfirm={doApply}
+            />
         </section>
     );
 }
@@ -1223,5 +1320,59 @@ function CitationStandardField({
                 </p>
             )}
         </div>
+    );
+}
+
+// ── Reusable confirm dialog ────────────────────────────────────────────
+//
+// Replaces native window.confirm for destructive actions (apply
+// template, extract-from-text, reset rubric). Uses the AlertDialog
+// primitive so the dialog blocks interaction and respects keyboard
+// (Esc cancels, Enter confirms). Returning to native confirm would
+// undo the visual polish; keep this as the single in-app pattern.
+
+interface ConfirmActionDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    title: string;
+    body: string;
+    confirmLabel: string;
+    cancelLabel: string;
+    onConfirm: () => void;
+    /** When true, renders the confirm button with destructive styling. */
+    destructive?: boolean;
+}
+
+function ConfirmActionDialog({
+    open,
+    onOpenChange,
+    title,
+    body,
+    confirmLabel,
+    cancelLabel,
+    onConfirm,
+    destructive = true,
+}: ConfirmActionDialogProps) {
+    return (
+        <AlertDialog open={open} onOpenChange={onOpenChange}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{title}</AlertDialogTitle>
+                    <AlertDialogDescription>{body}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={onConfirm}
+                        className={destructive
+                            ? 'bg-destructive text-white hover:bg-destructive/90'
+                            : undefined
+                        }
+                    >
+                        {confirmLabel}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }

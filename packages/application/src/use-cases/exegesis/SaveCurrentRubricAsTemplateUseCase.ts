@@ -42,11 +42,24 @@ export class SaveCurrentRubricAsTemplateUseCase {
             throw new Error(`Paper ${input.paperId} has no rubric to save as template`);
         }
 
-        return this.rubricRepository.createRubric({
+        const created = await this.rubricRepository.createRubric({
             ownerId: input.ownerId,
             displayName: input.displayName.trim(),
             isDefault: !!input.markAsDefault,
             rubric: paper.rubric,
         });
+
+        // Stamp the new template's id on the paper's rubric so the
+        // template picker pre-selects it on the next render — without
+        // this, the user just saved "Trabajo Exegético TMS" but the
+        // dropdown still shows "— elegí una plantilla —", which reads
+        // as if nothing happened.
+        await this.paperRepository.setRubric(input.ownerId, input.paperId, {
+            ...paper.rubric,
+            sourceTemplateId: created.id,
+            updatedAt: new Date(),
+        });
+
+        return created;
     }
 }

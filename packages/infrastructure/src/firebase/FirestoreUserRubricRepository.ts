@@ -189,7 +189,6 @@ function deserialize(id: string, data: DocumentData): UserRubric {
         isDefault: !!data.isDefault,
         rubric: {
             provenance: inner.provenance ?? 'system-default',
-            title: inner.title ?? null,
             description: inner.description ?? null,
             expectedLength: inner.expectedLength ?? null,
             citationStandard: inner.citationStandard ?? null,
@@ -197,6 +196,7 @@ function deserialize(id: string, data: DocumentData): UserRubric {
             structuralExpectations: Array.isArray(inner.structuralExpectations) ? inner.structuralExpectations : [],
             sourceCorpusId: inner.sourceCorpusId ?? null,
             sourcePastedText: inner.sourcePastedText ?? null,
+            sourceTemplateId: inner.sourceTemplateId ?? null,
             createdAt: inner.createdAt?.toDate?.() ?? inner.createdAt ?? new Date(),
             updatedAt: inner.updatedAt?.toDate?.() ?? inner.updatedAt ?? new Date(),
         },

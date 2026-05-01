@@ -49,116 +49,103 @@ export function UserStyleGuidesSection() {
     };
 
     return (
-        <section>
-            <div className="flex items-center gap-2 mb-1">
-                <div className="w-1 h-5 rounded-full bg-primary" />
-                <h2 className="text-xl font-bold text-foreground font-serif">
-                    {t('directory.styleGuides.title')}
-                </h2>
-            </div>
-            <p className="text-sm text-muted-foreground pl-3 mb-6">
-                {t('directory.styleGuides.subtitle')}
-            </p>
+        <section className="rounded-2xl border border-border bg-card p-4">
+            <header className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                    <BookOpen className="h-4 w-4 text-success shrink-0" />
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground truncate">
+                        {t('directory.styleGuides.title')}
+                    </h2>
+                </div>
+                {!isLoading && guides.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => setShowUploadForm(s => !s)}
+                        className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
+                        title={showUploadForm ? t('setup.cancel') : t('directory.styleGuides.uploadAnother')}
+                    >
+                        <Upload className="h-3 w-3" />
+                    </button>
+                )}
+            </header>
 
             {isLoading ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-8 py-8 text-center text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2 text-success" />
+                <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-5 text-center text-xs text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1.5 text-success" />
                     {t('directory.styleGuides.loading')}
                 </div>
             ) : guides.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-8 py-10 text-center">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-success-subtle text-success flex items-center justify-center mb-3">
-                        <BookOpen className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-foreground mb-1">
+                <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-5 text-center">
+                    <h3 className="text-xs font-semibold text-foreground mb-1">
                         {t('directory.styleGuides.empty.title')}
                     </h3>
-                    <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">
+                    <p className="text-[11px] text-muted-foreground mx-auto mb-3 leading-snug">
                         {t('directory.styleGuides.empty.body')}
                     </p>
                     <Button
                         type="button"
                         onClick={() => setShowUploadForm(true)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        size="sm"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-7"
                     >
-                        <Upload className="h-3.5 w-3.5 mr-1.5" />
+                        <Upload className="h-3 w-3 mr-1" />
                         {t('directory.styleGuides.uploadCta')}
                     </Button>
                 </div>
             ) : (
-                <>
-                    <ul className="space-y-2">
-                        {guides.map(g => (
-                            <li
-                                key={g.id}
-                                className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3"
-                            >
-                                <div className="shrink-0 w-9 h-9 rounded-full bg-success-subtle text-success flex items-center justify-center">
-                                    <BookOpen className="h-4 w-4" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-sm font-semibold text-foreground truncate">
-                                            {g.displayName}
-                                        </h3>
-                                        {g.isActive && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded-full bg-success-subtle text-success-subtle-foreground px-2 py-0.5">
-                                                <CheckCircle2 className="h-2.5 w-2.5" />
-                                                {t('directory.styleGuides.activeBadge')}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                                        {g.version ? `v${g.version} · ` : ''}
-                                        {g.manifest
-                                            ? t('directory.styleGuides.manifestExtracted')
-                                            : t('directory.styleGuides.manifestPending')}
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    {!g.isActive && (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSetActive(g.id)}
-                                            disabled={setActive.isPending}
-                                            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-accent disabled:opacity-50"
-                                        >
-                                            <CheckCircle2 className="h-3 w-3" />
-                                            {t('directory.styleGuides.setActive')}
-                                        </button>
+                <ul className="space-y-1.5">
+                    {guides.map(g => (
+                        <li
+                            key={g.id}
+                            className="rounded-lg border border-border bg-background px-2.5 py-2 flex items-center gap-2"
+                        >
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <h3 className="text-xs font-semibold text-foreground truncate">
+                                        {g.displayName}
+                                    </h3>
+                                    {g.isActive && (
+                                        <CheckCircle2 className="h-3 w-3 text-success shrink-0" aria-label={t('directory.styleGuides.activeBadge')} />
                                     )}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground truncate">
+                                    {g.version ? `v${g.version} · ` : ''}
+                                    {g.manifest
+                                        ? t('directory.styleGuides.manifestExtracted')
+                                        : t('directory.styleGuides.manifestPending')}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-0.5 shrink-0">
+                                {!g.isActive && (
                                     <button
                                         type="button"
-                                        onClick={() => handleDelete(g)}
-                                        disabled={deleteGuide.isPending}
-                                        className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent disabled:opacity-50"
-                                        title={t('directory.styleGuides.delete')}
-                                        aria-label={t('directory.styleGuides.delete')}
+                                        onClick={() => handleSetActive(g.id)}
+                                        disabled={setActive.isPending}
+                                        className="p-1 rounded text-muted-foreground hover:text-success hover:bg-accent disabled:opacity-50"
+                                        title={t('directory.styleGuides.setActive')}
+                                        aria-label={t('directory.styleGuides.setActive')}
                                     >
-                                        <Trash2 className="h-3.5 w-3.5" />
+                                        <CheckCircle2 className="h-3 w-3" />
                                     </button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                    <div className="mt-3 flex justify-end">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setShowUploadForm(s => !s)}
-                            className="text-xs"
-                        >
-                            <Upload className="h-3 w-3 mr-1" />
-                            {showUploadForm
-                                ? t('setup.cancel')
-                                : t('directory.styleGuides.uploadAnother')}
-                        </Button>
-                    </div>
-                </>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDelete(g)}
+                                    disabled={deleteGuide.isPending}
+                                    className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent disabled:opacity-50"
+                                    title={t('directory.styleGuides.delete')}
+                                    aria-label={t('directory.styleGuides.delete')}
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
             )}
 
             {showUploadForm && (
-                <div className="mt-4">
+                <div className="mt-3">
                     <UploadGuideForm
                         onUploaded={() => setShowUploadForm(false)}
                         firstGuide={guides.length === 0}

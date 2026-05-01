@@ -217,9 +217,11 @@
                     "extracted-from-document": "Extracted from document",
                     "extracted-from-text": "Extracted from text",
                     "system-default": "System default",
-                    "user-edited": "Edited by you"
+                    "from-template": "From template",
+                    "user-edited": "Edited"
                 },
                 "extract": {
+                    "openCta": "Extract from text",
                     "title": "Extract rubric from text",
                     "subtitle": "Paste the rubric or brief your professor gave you. We extract it into a structured form you can review and adjust.",
                     "textareaLabel": "Rubric or assignment text",
@@ -229,7 +231,9 @@
                     "submit": "Extract and replace rubric",
                     "extracting": "Extracting rubric...",
                     "tooShort": "Text is too short. Paste at least a paragraph with instructions.",
-                    "confirmReplace": "This will replace the current rubric with the extracted version. Your manual edits will be discarded. Continue?",
+                    "confirmReplaceTitle": "Replace the current rubric",
+                    "confirmReplaceBody": "We'll replace the current rubric with the one extracted from the text. Your manual edits will be discarded.",
+                    "confirmReplaceCta": "Yes, replace",
                     "success": "Rubric extracted — review below",
                     "failed": "Could not extract the rubric. Check the text or edit manually.",
                     "overloaded": "Gemini is currently overloaded. Try again in a few seconds — demand spikes are temporary.",
@@ -245,8 +249,6 @@
                 },
                 "metadata": {
                     "title": "General",
-                    "titleLabel": "Rubric title",
-                    "titlePlaceholder": "e.g. TMS NT800 — Exegetical paper on Hebrews 1:1-4",
                     "descriptionLabel": "Rubric description",
                     "descriptionPlaceholder": "e.g. TMS NT800 rubric — evaluates technical exegesis with syntactic analysis, interaction with critical sources, and discussion of theological implications.",
                     "descriptionHint": "This is the rubric document's own description (what the seminary evaluates). Different from the paper framing you wrote at creation (what your professor assigned + your angle).",
@@ -293,14 +295,15 @@
                 "actions": {
                     "save": "Save rubric",
                     "reset": "Reset to academic default",
-                    "resetConfirm": "This will discard your edits and reapply the TMS default. Continue?",
+                    "resetConfirmTitle": "Reset to academic default",
+                    "resetConfirmBody": "We'll discard all your edits and apply the TMS default rubric. This action cannot be undone.",
+                    "resetConfirmCta": "Yes, reset",
                     "saved": "Rubric updated",
                     "saveFailed": "Could not save the rubric",
                     "resetDone": "Rubric reset to default",
                     "resetFailed": "Could not reset the rubric"
                 },
                 "summary": {
-                    "untitledRubric": "Untitled rubric",
                     "editCta": "Edit rubric",
                     "requirementsTitle": "Corpus requirements",
                     "structuralTitle": "Structural recommendations",
@@ -314,7 +317,9 @@
                     "applyLabel": "Apply a saved template",
                     "applyPlaceholder": "pick a template",
                     "applyCta": "Apply",
-                    "applyConfirm": "This will replace the current rubric with the chosen template. Your manual edits will be discarded. Continue?",
+                    "applyConfirmTitle": "Replace the current rubric",
+                    "applyConfirmBody": "We'll replace the current rubric with the chosen template. Your manual edits will be discarded.",
+                    "applyConfirmCta": "Yes, apply template",
                     "applied": "Template applied",
                     "appliedBadge": "Applied",
                     "applyFailed": "Could not apply the template",
@@ -524,7 +529,18 @@
         },
         "openPaper": "Open paper",
         "createdAt": "Created",
-        "updatedAt": "Updated"
+        "updatedAt": "Updated",
+        "filters": {
+            "searchPlaceholder": "Search by passage or title...",
+            "all": "All",
+            "showArchived": "Include archived",
+            "noMatches": "No papers match your search.",
+            "noMatchesHint": "Try adjusting the filters or clearing the search.",
+            "clear": "Clear filters",
+            "countAll_one": "{{count}} paper",
+            "countAll_other": "{{count}} papers",
+            "countFiltered": "{{visible}} of {{total}}"
+        }
     },
     "detail": {
         "back": "Back to list",
@@ -586,9 +602,21 @@
                 "editFailed": "Couldn't save the edit"
             }
         },
+        "rubric": {
+            "title": "Rubric",
+            "none": "No rubric configured. Required before generating.",
+            "changeCta": "Edit in setup",
+            "requirementsCount_one": "{{count}} requirement",
+            "requirementsCount_other": "{{count}} requirements",
+            "lengthPages": "{{min}}–{{max}} pp.",
+            "lengthWords": "{{min}}–{{max}} words",
+            "lengthMinPages": "≥{{min}} pp.",
+            "lengthMinWords": "≥{{min}} words"
+        },
         "styleGuide": {
             "title": "Style guide",
             "none": "No guide attached. Required before generating.",
+            "inheritedHint": "Inherited from your active guide",
             "changeCta": "Edit in setup"
         },
         "sources": {

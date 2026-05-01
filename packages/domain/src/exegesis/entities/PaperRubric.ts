@@ -34,13 +34,6 @@ export interface PaperRubric {
     provenance: RubricProvenance;
 
     /**
-     * Optional human-friendly title — "TMS NT800 Hebrews exegetical
-     * paper, Spring 2025". Defaults to a localized fallback when the
-     * extractor can't find one.
-     */
-    title: string | null;
-
-    /**
      * Free-text description of the assignment as parsed from the source
      * (or empty for system defaults). Useful context for the student to
      * confirm "yes, this is the rubric I expect".
@@ -99,6 +92,18 @@ export interface PaperRubric {
      */
     sourcePastedText: string | null;
 
+    /**
+     * Pointer to the `UserRubric` template this rubric was last applied
+     * from. Set by `applyRubricTemplateToPaper` and by
+     * `saveCurrentRubricAsTemplate`. Preserved across `updateRubric`
+     * (manual edits keep the breadcrumb so the UI can pre-select the
+     * "started from" template). Cleared by `extractRubricFromText` and
+     * `resetRubric` (those create a fresh origin).
+     *
+     * Null for rubrics that never came from a saved template.
+     */
+    sourceTemplateId: string | null;
+
     /** When the rubric was first attached to the paper. */
     createdAt: Date;
     /** Last time the user edited or re-extracted the rubric. */
@@ -109,7 +114,8 @@ export type RubricProvenance =
     | 'extracted-from-document'   // Uploaded PDF parsed by the extractor
     | 'extracted-from-text'       // Pasted text parsed by the extractor
     | 'system-default'            // Hard-coded TMS exegetical default
-    | 'user-edited';              // User hand-edited an extracted/default rubric
+    | 'from-template'             // Applied from the user's saved template library
+    | 'user-edited';              // User hand-edited the rubric (any origin)
 
 export interface ExpectedLengthRange {
     /** 'pages' or 'words'. Stored explicitly so the UI doesn't have to guess. */
@@ -180,7 +186,6 @@ export interface StructuralExpectation {
  */
 export const DEFAULT_TMS_EXEGETICAL_RUBRIC: PaperRubric = {
     provenance: 'system-default',
-    title: 'TMS-style exegetical paper (default rubric)',
     description:
         'Applied when no seminary-specific rubric is provided. Reflects the academic-rigor expectations of a Master\'s-level TMS / Turabian exegetical paper.',
     expectedLength: { unit: 'pages', min: 15, max: 25 },
@@ -276,6 +281,7 @@ export const DEFAULT_TMS_EXEGETICAL_RUBRIC: PaperRubric = {
     ],
     sourceCorpusId: null,
     sourcePastedText: null,
+    sourceTemplateId: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
 };

@@ -49,7 +49,6 @@ export class UpdateRubricUseCase {
 
         const next: PaperRubric = {
             ...existing,
-            title: input.title !== undefined ? input.title : existing.title,
             description: input.description !== undefined ? input.description : existing.description,
             citationStandard: input.citationStandard !== undefined ? input.citationStandard : existing.citationStandard,
             expectedLength: input.expectedLength !== undefined ? input.expectedLength : existing.expectedLength,

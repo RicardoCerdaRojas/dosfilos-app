@@ -638,7 +638,6 @@ function deserializeRubric(raw: any): ExegeticalPaper['rubric'] {
     if (!raw) return null;
     return {
         provenance: raw.provenance ?? 'system-default',
-        title: raw.title ?? null,
         description: raw.description ?? null,
         expectedLength: raw.expectedLength ?? null,
         citationStandard: raw.citationStandard ?? null,
@@ -646,6 +645,7 @@ function deserializeRubric(raw: any): ExegeticalPaper['rubric'] {
         structuralExpectations: Array.isArray(raw.structuralExpectations) ? raw.structuralExpectations : [],
         sourceCorpusId: raw.sourceCorpusId ?? null,
         sourcePastedText: raw.sourcePastedText ?? null,
+        sourceTemplateId: raw.sourceTemplateId ?? null,
         createdAt: raw.createdAt?.toDate?.() ?? raw.createdAt ?? new Date(),
         updatedAt: raw.updatedAt?.toDate?.() ?? raw.updatedAt ?? new Date(),
     };

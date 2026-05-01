@@ -117,7 +117,6 @@ export interface UpdateStepPlanInput {
 export interface UpdateRubricInput {
     ownerId: string;
     paperId: string;
-    title?: string | null;
     description?: string | null;
     citationStandard?: string | null;
     expectedLength?: PaperRubric['expectedLength'];
