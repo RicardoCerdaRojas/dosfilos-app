@@ -42,7 +42,28 @@ export interface PlanDefinition {
         // `queriesPerMonth`: chat messages sent to tutors per month. Gemini inference
         //     cost driver. Use -1 for unlimited (e.g. top tier).
         libraryDocsLimit?: number;         // Max docs in personal library (undefined = no quota enforced)
-        pagesProcessedPerMonth?: number;   // Pages/month via LlamaParse (undefined = no quota)
+        /**
+         * @deprecated Replaced by `standardPagesPerMonth` + `premiumPagesPerMonth`
+         * (the two-bucket model). The repository keeps this field in sync as
+         * the sum of standard + premium for any pre-refactor consumer that
+         * still reads it; new code should use the per-mode fields directly.
+         */
+        pagesProcessedPerMonth?: number;
+        /**
+         * Plan-included monthly quota for Gemini Flash (standard) extractions.
+         * Reset on each Stripe billing-cycle invoice (no rollover). The
+         * `setPlanQuota()` admin helper writes this value into the user's
+         * `processingBalance.planStandardPages` bucket. Undefined = no plan
+         * quota (the user falls back to packs only).
+         */
+        standardPagesPerMonth?: number;
+        /**
+         * Plan-included monthly quota for LlamaParse (premium) extractions.
+         * Same renewal semantics as `standardPagesPerMonth`. Premium pages
+         * are scarcer in every plan because they have higher unit cost and
+         * are the natural upsell for the credit-pack tier.
+         */
+        premiumPagesPerMonth?: number;
         queriesPerMonth?: number;          // Chat messages/month (undefined = no quota, -1 = unlimited)
 
         // Legacy/deprecated fields (keep for backwards compatibility)

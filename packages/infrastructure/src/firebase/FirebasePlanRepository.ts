@@ -98,6 +98,12 @@ export class FirebasePlanRepository implements IPlanRepository {
                 libraryStorageMB: data.limits?.libraryStorageMB ?? 0,
                 libraryDocsLimit: data.limits?.libraryDocsLimit,
                 pagesProcessedPerMonth: data.limits?.pagesProcessedPerMonth,
+                // v1: per-mode monthly quotas (separate from legacy
+                // `pagesProcessedPerMonth`). The migration sets both —
+                // the new fields drive the bucket model, the legacy
+                // field stays as the sum for any pre-refactor reader.
+                standardPagesPerMonth: data.limits?.standardPagesPerMonth,
+                premiumPagesPerMonth: data.limits?.premiumPagesPerMonth,
                 queriesPerMonth: data.limits?.queriesPerMonth,
 
                 // Legacy/deprecated fields
