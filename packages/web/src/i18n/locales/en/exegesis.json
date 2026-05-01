@@ -687,6 +687,27 @@
             "archiveFailed": "Couldn't archive the paper",
             "sourceRemoved": "Source removed",
             "sourceRemoveFailed": "Couldn't remove the source"
+        },
+        "generateSermon": {
+            "cta": "Generate sermon",
+            "ctaShort": "Sermon",
+            "popoverTitle": "Generate a sermon from this paper",
+            "popoverHint": "Pick the homiletical tone. The full paper is transformed into a preachable sermon (~25-35 min).",
+            "tone": {
+                "pastoral": "Pastoral",
+                "pastoralHint": "Warm and oriented toward shepherding",
+                "expositivo": "Expository",
+                "expositivoHint": "Classical structure with clear divisions",
+                "narrativo": "Narrative",
+                "narrativoHint": "Built around the arc of the biblical story"
+            },
+            "generating": "Generating sermon...",
+            "disabledHint": "Available once the paper is assembled",
+            "toast": {
+                "success": "Sermon generated. Taking you to the draft.",
+                "failed": "Couldn't generate the sermon. Try again.",
+                "overloaded": "Gemini is overloaded. Try again in a minute."
+            }
         }
     }
 }
