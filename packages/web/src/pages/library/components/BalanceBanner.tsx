@@ -51,11 +51,15 @@ export function BalanceBanner() {
                     <BalanceTile
                         mode="standard"
                         pages={balance?.standardPagesAvailable ?? 0}
+                        planPages={balance?.planStandardPages ?? 0}
+                        packPages={balance?.packStandardPages ?? 0}
                         loading={loading}
                     />
                     <BalanceTile
                         mode="premium"
                         pages={balance?.premiumPagesAvailable ?? 0}
+                        planPages={balance?.planPremiumPages ?? 0}
+                        packPages={balance?.packPremiumPages ?? 0}
                         loading={loading}
                     />
                     <Button onClick={() => setPacksOpen(true)} className="self-center">
@@ -71,10 +75,12 @@ export function BalanceBanner() {
 interface BalanceTileProps {
     mode: ProcessingMode;
     pages: number;
+    planPages: number;
+    packPages: number;
     loading: boolean;
 }
 
-function BalanceTile({ mode, pages, loading }: BalanceTileProps) {
+function BalanceTile({ mode, pages, planPages, packPages, loading }: BalanceTileProps) {
     const { t } = useTranslation('library');
     const Icon = mode === 'standard' ? Wand2 : Sparkles;
     const tone = mode === 'standard' ? 'text-info' : 'text-success';
@@ -88,7 +94,15 @@ function BalanceTile({ mode, pages, loading }: BalanceTileProps) {
             <div className="text-[20px] font-bold leading-tight tabular-nums text-foreground mt-0.5">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : pages.toLocaleString()}
             </div>
-            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+            {!loading && (
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight tabular-nums">
+                    {t('balance.split', {
+                        plan: planPages.toLocaleString(),
+                        pack: packPages.toLocaleString(),
+                    })}
+                </p>
+            )}
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5 leading-tight">
                 {t(`balance.${mode}Help`)}
             </p>
         </div>

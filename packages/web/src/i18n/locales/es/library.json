@@ -146,14 +146,6 @@
         "toastSuccessRemoved": "Removido de todos los stores Core",
         "toastError": "Error al actualizar stores"
     },
-    "usage": {
-        "queriesLabel": "Consultas / mes",
-        "docsLabel": "Documentos propios",
-        "standardPagesLabel": "Páginas estándar",
-        "premiumPagesLabel": "Páginas premium",
-        "balanceSplit": "Plan: {{plan}} · Packs: {{pack}}",
-        "upgradeButton": "Mejorar plan"
-    },
     "balance": {
         "title": "Páginas de procesamiento",
         "subtitle": "Saldo disponible para extraer documentos",
@@ -161,6 +153,7 @@
         "premium": "Premium",
         "standardHelp": "Gemini 2.0 Flash · libros narrativos",
         "premiumHelp": "LlamaParse · tablas, multi-columna, escaneados",
+        "split": "Plan: {{plan}} · Packs: {{pack}}",
         "buyButton": "Comprar páginas",
         "loading": "Cargando saldo…",
         "redirecting": "Redirigiendo a Stripe…",
