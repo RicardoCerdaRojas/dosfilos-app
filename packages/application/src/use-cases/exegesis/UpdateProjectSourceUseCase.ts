@@ -32,6 +32,7 @@ export class UpdateProjectSourceUseCase {
                 displayLabel: input.displayLabel,
                 citationKey: input.citationKey,
                 order: input.order,
+                excerpts: input.excerpts,
             }
         );
     }

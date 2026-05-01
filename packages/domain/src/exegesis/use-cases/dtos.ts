@@ -15,6 +15,10 @@
  */
 
 import type { PassageReference } from '../../bible/canon/passage-reference';
+import type {
+    ProjectSourceExcerpt,
+    ProjectSourceMode,
+} from '../entities/ProjectSource';
 import type { SourceType } from '../entities/SourceType';
 
 // ── CreateExegeticalPaper ───────────────────────────────────────────────
@@ -205,6 +209,25 @@ export interface AddProjectSourceInput {
     sourceType: SourceType;
     displayLabel: string;
     citationKey?: string;
+    /**
+     * Optional. Defaults to `'full-document'` to keep the direct-upload
+     * flow (Caso 3) working without changes. Pass `'extracted-excerpts'`
+     * with a populated `excerpts` array when creating a source via the
+     * v1.5 library-extraction flow.
+     */
+    mode?: ProjectSourceMode;
+    /**
+     * Optional. Required (and non-empty in practice, but allowed empty as
+     * a transient state) when `mode === 'extracted-excerpts'`. Ignored
+     * when `mode === 'full-document'`.
+     */
+    excerpts?: ReadonlyArray<ProjectSourceExcerpt>;
+    /**
+     * Optional. Backref to the originating `library_resources/{id}`. Set
+     * when the source comes from the library-extraction flow; null
+     * otherwise.
+     */
+    sourceLibraryResourceId?: string | null;
 }
 
 // ── UpdateProjectSource ─────────────────────────────────────────────────
@@ -215,6 +238,13 @@ export interface UpdateProjectSourceInput {
     displayLabel?: string;
     citationKey?: string | null;
     order?: number;
+    /**
+     * Replace the whole excerpts list — used by the review UI to commit
+     * edits/deletes/additions at once. Pass undefined to leave the list
+     * untouched. Only meaningful when the source is in
+     * `'extracted-excerpts'` mode; ignored otherwise.
+     */
+    excerpts?: ReadonlyArray<ProjectSourceExcerpt>;
 }
 
 // ── FinalizeConfiguration ───────────────────────────────────────────────

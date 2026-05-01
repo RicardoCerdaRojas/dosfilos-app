@@ -23,6 +23,7 @@ import type {
     IExegeticalPaperRepository,
     PaperRubric,
     ProjectSource,
+    ProjectSourceExcerpt,
     SourceType,
     StepSourcePlan,
 } from '@dosfilos/domain';
@@ -233,6 +234,12 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             displayLabel: source.displayLabel,
             citationKey: source.citationKey,
             order: source.order,
+            // v1.5 fields. Defaults match the historical 'full-document'
+            // behavior so existing callers (CorpusSubStep direct upload)
+            // keep working without changes.
+            mode: source.mode ?? 'full-document',
+            excerpts: source.excerpts ?? [],
+            sourceLibraryResourceId: source.sourceLibraryResourceId ?? null,
         };
 
         await runTransaction(db, async (tx) => {
@@ -245,7 +252,10 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
                 throw new Error(`Paper ${paperId} not owned by ${ownerId}`);
             }
             const sources: ProjectSource[] = Array.isArray(data.sources) ? data.sources : [];
-            sources.push(newSource);
+            // Serialize through the helper to flatten Date fields and
+            // strip any inadvertent undefineds — Firestore rejects
+            // undefined and the new excerpts can carry editedAt: Date.
+            sources.push(serializeSource(newSource) as unknown as ProjectSource);
             tx.update(ref, {
                 sources,
                 updatedAt: new Date(),
@@ -259,7 +269,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         ownerId: string,
         paperId: string,
         sourceId: string,
-        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order'>>
+        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts'>>
     ): Promise<ProjectSource> {
         const ref = this.docRef(paperId);
         let updated: ProjectSource | null = null;
@@ -273,18 +283,23 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             if (data.ownerId !== ownerId) {
                 throw new Error(`Paper ${paperId} not owned by ${ownerId}`);
             }
-            const sources: ProjectSource[] = Array.isArray(data.sources) ? [...data.sources] : [];
-            const idx = sources.findIndex(s => s.id === sourceId);
+            const sources: any[] = Array.isArray(data.sources) ? [...data.sources] : [];
+            const idx = sources.findIndex((s: any) => s.id === sourceId);
             if (idx === -1) {
                 throw new Error(`Source ${sourceId} not found in paper ${paperId}`);
             }
+            // Deserialize the existing entry first so the merged
+            // ProjectSource is well-typed (handles legacy docs without
+            // the v1.5 fields).
+            const existing = deserializeSource(sources[idx]);
             // Only apply defined keys — undefined would erase the existing value.
-            const merged: ProjectSource = { ...sources[idx] };
+            const merged: ProjectSource = { ...existing };
             if (patch.sourceType !== undefined) merged.sourceType = patch.sourceType;
             if (patch.displayLabel !== undefined) merged.displayLabel = patch.displayLabel;
             if (patch.citationKey !== undefined) merged.citationKey = patch.citationKey;
             if (patch.order !== undefined) merged.order = patch.order;
-            sources[idx] = merged;
+            if (patch.excerpts !== undefined) merged.excerpts = patch.excerpts;
+            sources[idx] = serializeSource(merged);
             updated = merged;
             tx.update(ref, {
                 sources,
@@ -566,7 +581,7 @@ function serialize(paper: ExegeticalPaper): DocumentData {
         displayLanguage: paper.displayLanguage,
         styleGuideId: paper.styleGuideId,
         assignmentBrief: paper.assignmentBrief,
-        sources: paper.sources,
+        sources: paper.sources.map(serializeSource),
         rubric: paper.rubric,
         stepPlan: paper.stepPlan,
         phase: paper.phase,
@@ -623,7 +638,63 @@ function deserializeSource(raw: any): ProjectSource {
         displayLabel: raw.displayLabel ?? '',
         citationKey: raw.citationKey ?? null,
         order: typeof raw.order === 'number' ? raw.order : 0,
+        // v1.5 fields with retro-compat defaults. Pre-v1.5 docs have
+        // none of these — they should keep behaving as 'full-document'
+        // sources with no excerpts and no library backref.
+        mode: raw.mode === 'extracted-excerpts' ? 'extracted-excerpts' : 'full-document',
+        excerpts: Array.isArray(raw.excerpts) ? raw.excerpts.map(deserializeExcerpt) : [],
+        sourceLibraryResourceId: raw.sourceLibraryResourceId ?? null,
         createdAt: raw.createdAt?.toDate?.() ?? raw.createdAt ?? new Date(),
+    };
+}
+
+/**
+ * One excerpt deserializer. Mirrors `deserializeSource` for the
+ * timestamp coercion. `editedAt` is intentionally null (not undefined)
+ * for never-edited excerpts so consumers can rely on `=== null` checks
+ * without worrying about the `undefined` case.
+ */
+function deserializeExcerpt(raw: any): ProjectSourceExcerpt {
+    return {
+        text: typeof raw?.text === 'string' ? raw.text : '',
+        sourceLocation: typeof raw?.sourceLocation === 'string' ? raw.sourceLocation : '',
+        relevanceScore: typeof raw?.relevanceScore === 'number' ? raw.relevanceScore : 0,
+        userEdited: raw?.userEdited === true,
+        editedAt: raw?.editedAt?.toDate?.() ?? raw?.editedAt ?? null,
+    };
+}
+
+/**
+ * Mirror of `deserializeSource` for writes. Firestore rejects `undefined`
+ * inside arrays, so this helper guarantees every field is a concrete
+ * value (never undefined). Date fields are passed through unchanged —
+ * the SDK converts them to Timestamps at write time. Used by `addSource`
+ * and `updateSource` (and the global `serialize` indirectly via the
+ * sources mapper) so the on-disk shape is always consistent.
+ */
+function serializeSource(source: ProjectSource): DocumentData {
+    return {
+        id: source.id,
+        paperId: source.paperId,
+        corpusId: source.corpusId,
+        sourceType: source.sourceType,
+        displayLabel: source.displayLabel,
+        citationKey: source.citationKey ?? null,
+        order: source.order,
+        mode: source.mode,
+        excerpts: source.excerpts.map(serializeExcerpt),
+        sourceLibraryResourceId: source.sourceLibraryResourceId ?? null,
+        createdAt: source.createdAt,
+    };
+}
+
+function serializeExcerpt(excerpt: ProjectSourceExcerpt): DocumentData {
+    return {
+        text: excerpt.text,
+        sourceLocation: excerpt.sourceLocation,
+        relevanceScore: excerpt.relevanceScore,
+        userEdited: excerpt.userEdited,
+        editedAt: excerpt.editedAt ?? null,
     };
 }
 

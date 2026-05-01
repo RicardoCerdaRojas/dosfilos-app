@@ -49,6 +49,13 @@ export class AddProjectSourceUseCase {
             displayLabel: input.displayLabel,
             citationKey: input.citationKey ?? null,
             order,
+            // v1.5 fields. Default to the historical 'full-document' mode
+            // so existing callers (CorpusSubStep direct upload) keep
+            // working unchanged. The library-extraction flow (commit 3+)
+            // will pass these explicitly.
+            mode: input.mode ?? 'full-document',
+            excerpts: input.excerpts ?? [],
+            sourceLibraryResourceId: input.sourceLibraryResourceId ?? null,
         });
     }
 }
