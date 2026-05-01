@@ -49,8 +49,8 @@ export function PlanCard({
       {/* Current Plan Badge */}
       {isCurrentPlan && (
         <div className="absolute -top-3 right-4">
-          <Badge className="bg-green-600 hover:bg-green-700">
-            Plan Actual
+          <Badge className="bg-success text-white hover:bg-success/90">
+            {t('currentPlan')}
           </Badge>
         </div>
       )}
@@ -117,7 +117,7 @@ export function PlanCard({
           disabled={loading || isCurrentPlan}
           onClick={() => onSelect(plan.id)}
         >
-          {isCurrentPlan ? t('currentPlan', { defaultValue: 'Plan Actual' }) : t('select', { defaultValue: 'Seleccionar' })}
+          {isCurrentPlan ? t('currentPlan') : t('select')}
         </Button>
       </CardContent>
     </Card>

@@ -12,6 +12,8 @@
     "loading": "Cargando...",
     "error": "Error",
     "success": "Éxito",
+    "currentPlan": "Plan Actual",
+    "select": "Seleccionar",
     "header": {
         "welcome": "Bienvenido",
         "user": "Usuario",
