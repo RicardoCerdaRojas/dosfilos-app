@@ -2,7 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { stripe, STRIPE_WEBHOOK_SECRET } from '../config/stripe';
 import { getFirestore, FieldValue, type Firestore } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
-import { addPackAdmin, type ProcessingMode } from '../library/processingBalance';
+import { addPackAdmin, setPlanQuotaAdmin, type ProcessingMode } from '../library/processingBalance';
 import { getPackById } from './creditPackCatalog';
 import { resend } from '../emails/resendClient';
 import { getPaymentFailedTemplate, getPaymentFailedSubject } from '../emails/templates/paymentFailed';
@@ -222,10 +222,15 @@ async function handleCheckoutCompleted(
 }
 
 /**
- * Credits a plan's `bonusInitial` standard/premium pages to a user's processing
- * balance. Idempotent: writes a marker doc at
- * `users/{uid}/bonus_grants/{subscriptionId}` so the same subscription never
- * triggers two grants (re-deliveries, manual webhook replays, etc.).
+ * Credits a plan's `bonusInitial` standard/premium pages to the user's
+ * PLAN bucket on subscription activation. Idempotent: writes a marker
+ * doc at `users/{uid}/bonus_grants/{subscriptionId}` so the same
+ * subscription never triggers two grants.
+ *
+ * Routes through `setPlanQuotaAdmin` (not `addPackAdmin`) so the
+ * pages land in the plan bucket — they'll be reset by the next
+ * billing-cycle invoice, matching the "monthly quota" semantics the
+ * user expects from a subscription.
  */
 async function creditBonusInitialIfPending(
     db: FirebaseFirestore.Firestore,
@@ -248,12 +253,11 @@ async function creditBonusInitialIfPending(
         return;
     }
 
-    if (standardPages > 0) {
-        await addPackAdmin(firebaseUID, 'standard', standardPages);
-    }
-    if (premiumPages > 0) {
-        await addPackAdmin(firebaseUID, 'premium', premiumPages);
-    }
+    // SET (not increment) the plan bucket — first cycle starts with the
+    // full monthly allotment. Pack pages (if any from prior history)
+    // are untouched.
+    await setPlanQuotaAdmin(firebaseUID, 'standard', standardPages);
+    await setPlanQuotaAdmin(firebaseUID, 'premium', premiumPages);
     await grantRef.set({
         subscriptionId,
         standardPages,
@@ -262,7 +266,7 @@ async function creditBonusInitialIfPending(
     });
 
     console.log(
-        `[BonusInitial] credited ${standardPages} standard + ${premiumPages} premium to ${firebaseUID} (subscription=${subscriptionId})`,
+        `[BonusInitial] credited ${standardPages} standard + ${premiumPages} premium to ${firebaseUID} plan bucket (subscription=${subscriptionId})`,
     );
 }
 
@@ -432,5 +436,103 @@ async function handlePaymentSucceeded(
         'subscription.updatedAt': FieldValue.serverTimestamp(),
     });
 
-    console.log(`Payment succeeded for user ${firebaseUID}`);
+    // Monthly plan-quota reset.
+    //
+    // Stripe fires `invoice.payment_succeeded` on every invoice — including
+    // the first one (subscription creation) and all subsequent renewals. We
+    // need to credit the monthly plan quota on each cycle, NOT only on the
+    // first one. Idempotency by `invoice.id`: each invoice triggers exactly
+    // one grant, even if Stripe re-delivers the event.
+    //
+    // The activation case (first invoice) is also handled by
+    // `creditBonusInitialIfPending` from `handleCheckoutCompleted`, which
+    // uses a separate `bonus_grants/{subscriptionId}` marker. Both paths
+    // call `setPlanQuotaAdmin` so the result is the same — the plan bucket
+    // ends up with the cycle's allotment. The two markers (`bonus_grants`
+    // by subscription, `monthly_grants` by invoice) coexist intentionally:
+    // they represent different events even when temporally adjacent.
+    await applyMonthlyQuotaIfPending(db, firebaseUID, invoice, subscription);
+
+    console.log(`Payment succeeded for user ${firebaseUID}, invoice ${invoice.id}`);
+}
+
+/**
+ * Resets the user's PLAN bucket to the plan's monthly quota for the given
+ * billing cycle. Idempotent via a marker doc at
+ * `users/{uid}/monthly_grants/{invoiceId}` — the same invoice never
+ * triggers two grants (Stripe re-delivery, manual replays, etc.).
+ *
+ * Pack pages are untouched; only `processingBalance.plan*` fields move.
+ * No rollover: any leftover plan pages from the prior cycle are
+ * overwritten by the new SET.
+ */
+async function applyMonthlyQuotaIfPending(
+    db: FirebaseFirestore.Firestore,
+    firebaseUID: string,
+    invoice: Stripe.Invoice,
+    subscription: Stripe.Subscription,
+) {
+    const invoiceId = invoice.id;
+    const grantRef = db
+        .collection('users').doc(firebaseUID)
+        .collection('monthly_grants').doc(invoiceId);
+
+    const existing = await grantRef.get();
+    if (existing.exists) {
+        console.log(`[MonthlyQuota] invoice=${invoiceId} already applied for ${firebaseUID}; skipping`);
+        return;
+    }
+
+    // Resolve plan id from the subscription's price (handles plan upgrades
+    // mid-cycle: the new price drives the new quota immediately).
+    const priceId = subscription.items.data[0]?.price?.id;
+    if (!priceId) {
+        console.warn(`[MonthlyQuota] subscription=${subscription.id} has no price id; skipping`);
+        return;
+    }
+    const planId = await findPlanIdByPriceId(db, priceId);
+    if (!planId) {
+        console.warn(`[MonthlyQuota] no plan matches priceId=${priceId}; skipping`);
+        return;
+    }
+
+    const planSnap = await db.collection('plans').doc(planId).get();
+    const limits = planSnap.data()?.limits ?? {};
+    const standardQuota = Math.max(0, Number(limits.standardPagesPerMonth) || 0);
+    const premiumQuota = Math.max(0, Number(limits.premiumPagesPerMonth) || 0);
+
+    if (standardQuota === 0 && premiumQuota === 0) {
+        // Free-tier subscription or unconfigured plan — nothing to credit.
+        // Still write the marker so we don't re-evaluate on every replay.
+        await grantRef.set({
+            invoiceId,
+            planId,
+            standardQuota: 0,
+            premiumQuota: 0,
+            note: 'no quota configured for this plan',
+            grantedAt: FieldValue.serverTimestamp(),
+        });
+        return;
+    }
+
+    await setPlanQuotaAdmin(firebaseUID, 'standard', standardQuota);
+    await setPlanQuotaAdmin(firebaseUID, 'premium', premiumQuota);
+    await grantRef.set({
+        invoiceId,
+        planId,
+        standardQuota,
+        premiumQuota,
+        billingReason: invoice.billing_reason ?? null,
+        periodStart: invoice.period_start
+            ? new Date(invoice.period_start * 1000)
+            : null,
+        periodEnd: invoice.period_end
+            ? new Date(invoice.period_end * 1000)
+            : null,
+        grantedAt: FieldValue.serverTimestamp(),
+    });
+
+    console.log(
+        `[MonthlyQuota] reset plan bucket for ${firebaseUID} to ${standardQuota} std + ${premiumQuota} prem (plan=${planId}, invoice=${invoiceId}, reason=${invoice.billing_reason})`,
+    );
 }
