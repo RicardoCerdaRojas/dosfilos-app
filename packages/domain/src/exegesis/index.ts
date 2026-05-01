@@ -24,6 +24,7 @@ export * from './ports/IExcerptExtractor';
 export * from './ports/IExegesisOrchestrator';
 export * from './ports/IPaperRubricExtractor';
 export * from './ports/IPaperToSermonTransformer';
+export * from './ports/IPericopeDetector';
 export * from './ports/IResourceContentReader';
 export * from './ports/IStyleFormatter';
 export * from './ports/IStyleGuideManifestExtractor';
