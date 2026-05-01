@@ -101,6 +101,19 @@
         "back": "Volver al planificador",
         "title": "Asistente de perícopas",
         "subtitle": "Divide un libro en unidades sintácticas predicables y genera la serie expositiva.",
+        "panel": {
+            "title": "Perícopas detectadas",
+            "subtitle": "Cada perícopa puede convertirse en un paper exegético detallado. El paper queda enlazado a la perícopa para mantener trazabilidad.",
+            "createPaper": "Crear paper",
+            "openPaper": "Abrir paper",
+            "paperBadge": "Paper iniciado",
+            "remove": "Quitar perícopa",
+            "toast": {
+                "paperCreated": "Paper exegético creado",
+                "paperFailed": "No se pudo crear el paper",
+                "bookUnresolved": "No se pudo resolver el libro de la perícopa"
+            }
+        },
         "defaultSeriesTitle": "Serie expositiva — {{book}}",
         "defaultSeriesDescription": "Serie expositiva de {{book}} dividida en {{count}} perícopas sintácticas.",
         "setup": {

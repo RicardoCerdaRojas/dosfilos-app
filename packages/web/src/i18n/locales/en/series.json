@@ -101,6 +101,19 @@
         "back": "Back to planner",
         "title": "Pericope assistant",
         "subtitle": "Divide a book into preachable syntactic units and generate the expository series.",
+        "panel": {
+            "title": "Detected pericopes",
+            "subtitle": "Each pericope can become a full exegetical paper. The paper stays linked to the pericope so traceability is preserved.",
+            "createPaper": "Create paper",
+            "openPaper": "Open paper",
+            "paperBadge": "Paper started",
+            "remove": "Remove pericope",
+            "toast": {
+                "paperCreated": "Exegetical paper created",
+                "paperFailed": "Couldn't create the paper",
+                "bookUnresolved": "Couldn't resolve the pericope's book"
+            }
+        },
         "defaultSeriesTitle": "Expository series — {{book}}",
         "defaultSeriesDescription": "Expository series on {{book}}, divided into {{count}} syntactic pericopes.",
         "setup": {
