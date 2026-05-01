@@ -8,7 +8,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Zap } from 'lucide-react';
+import { Check, Zap, Wand2, Sparkles } from 'lucide-react';
 import type { LocalizedPlan } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 import { getFeatureLabel } from '@/utils/featureLabels';
@@ -76,6 +76,14 @@ export function PlanCard({
       </CardHeader>
       
       <CardContent>
+        {/* Monthly processing quota — surfaces the new billing model
+            (plan-included pages + optional credit packs) where it
+            matters: at the buy decision. Only shown when the plan
+            actually includes processing (Free shows 0/0 and we hide
+            the block entirely to avoid telegraphing "this plan can't
+            do anything"). */}
+        <ProcessingQuotaBlock plan={plan} />
+
         {/* Feature list — uses our static featureLabels map (same source as
             public PlanCard) so labels stay consistent and don't depend on
             plan_translations being fully seeded. Modules are intentionally
@@ -107,5 +115,52 @@ export function PlanCard({
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Renders the monthly processing quota included in the plan. Reads
+ * `plan.limits.{standardPagesPerMonth, premiumPagesPerMonth}` populated
+ * by the plan-quotas migration. When the plan has zero processing
+ * (Free tier), the whole block is hidden — Free users have other
+ * affordances and we don't want a "0 pages/mes" line shouting
+ * uselessness in their face.
+ *
+ * Below the quota we show a soft note about credit packs as the
+ * escape valve so the user understands the model: included quota +
+ * optional prepaid extras. This is the storytelling that prevents
+ * "I paid Pro but ran out of pages and the app made me buy more"
+ * complaints — the upfront expectation is set right at purchase time.
+ */
+function ProcessingQuotaBlock({ plan }: { plan: LocalizedPlan }) {
+  const standard = Number(plan.limits?.standardPagesPerMonth ?? 0);
+  const premium = Number(plan.limits?.premiumPagesPerMonth ?? 0);
+  if (standard === 0 && premium === 0) return null;
+
+  return (
+    <div className="mb-5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/80 mb-2">
+        Incluye cada mes
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        <QuotaRow icon={Wand2} value={standard} label="estándar" />
+        <QuotaRow icon={Sparkles} value={premium} label="premium" />
+      </div>
+      <p className="text-[10.5px] text-muted-foreground mt-2 leading-snug">
+        ¿Necesitas más? Compra packs prepago desde $3.
+      </p>
+    </div>
+  );
+}
+
+function QuotaRow({ icon: Icon, value, label }: { icon: typeof Wand2; value: number; label: string }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <Icon className="h-3 w-3 text-primary self-center shrink-0" />
+      <span className="text-base font-bold tabular-nums text-foreground">
+        {value.toLocaleString()}
+      </span>
+      <span className="text-[11px] text-muted-foreground">págs. {label}</span>
+    </div>
   );
 }
