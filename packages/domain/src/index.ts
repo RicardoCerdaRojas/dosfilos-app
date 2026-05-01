@@ -65,6 +65,7 @@ export * from './greek-tutor/ports/IGreekTutorService'; // 🏛️ Greek Tutor P
 export * from './greek-tutor/ports/IWordCacheRepository'; // 🏛️ Greek Tutor Word Cache
 export * from './greek-tutor/ports/IQuizService'; // 🎯 Phase 3A: Quiz Service
 export * from './bible'; // 📖 Bible Domain (Multi-version support)
+export * from './exegesis'; // ✍️ Exegesis Module (paper-writing wizard)
 
 
 // Workflow

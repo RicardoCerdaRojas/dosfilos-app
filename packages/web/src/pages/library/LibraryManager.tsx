@@ -11,7 +11,6 @@ import { PhasePreferenceModal } from './PhasePreferenceModal';
 import { ConfigureCoreStoresModal } from './ConfigureCoreStoresModal';
 import { LibraryHeader } from './components/LibraryHeader';
 import { BalanceBanner } from './components/BalanceBanner';
-import { UsageBanner } from './components/UsageBanner';
 import { CreditPacksDialog } from './components/CreditPacksDialog';
 import { UpgradeRequiredModal } from '@/components/upgrade';
 import { processingBalanceService } from '@dosfilos/application';
@@ -167,8 +166,6 @@ export function LibraryManager() {
                     isUploadFormOpen={showUploadForm}
                     onToggleUploadForm={handleToggleUploadForm}
                 />
-
-                <UsageBanner />
 
                 <BalanceBanner />
 

@@ -44,6 +44,8 @@ import sermonDetailEn from '../locales/en/sermonDetail.json';
 import sermonDetailEs from '../locales/es/sermonDetail.json';
 import facultyEn from '../locales/en/faculty.json';
 import facultyEs from '../locales/es/faculty.json';
+import exegesisEn from '../locales/en/exegesis.json';
+import exegesisEs from '../locales/es/exegesis.json';
 import projectsEn from '../locales/en/projects.json';
 import projectsEs from '../locales/es/projects.json';
 import adminEn from '../locales/en/admin.json';
@@ -83,6 +85,7 @@ export const initI18n = () => {
                     hebrewTutor: hebrewTutorEn,
                     sermonDetail: sermonDetailEn,
                     faculty: facultyEn,
+                    exegesis: exegesisEn,
                     projects: projectsEn,
                     admin: adminEn,
                 },
@@ -103,6 +106,7 @@ export const initI18n = () => {
                     hebrewTutor: hebrewTutorEs,
                     sermonDetail: sermonDetailEs,
                     faculty: facultyEs,
+                    exegesis: exegesisEs,
                     projects: projectsEs,
                     admin: adminEs,
                 },

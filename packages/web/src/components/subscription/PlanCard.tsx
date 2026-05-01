@@ -4,6 +4,7 @@ import { Check } from 'lucide-react';
 import { PlanMetadata } from '@dosfilos/domain';
 import { getFeatureLabel } from '@/utils/featureLabels';
 import { cn } from '@/lib/utils';
+import { ProcessingQuotaBlock } from '@/components/plans/ProcessingQuotaBlock';
 
 interface PlanCardProps {
     plan: PlanMetadata;
@@ -12,6 +13,15 @@ interface PlanCardProps {
     onCtaClick: () => void;
     ctaVariant?: 'default' | 'outline' | 'secondary';
     showCurrentBadge?: boolean;
+    /**
+     * Optional monthly processing quota included in the plan. When
+     * provided, renders a "Incluye cada mes" block above the feature
+     * list with the standard + premium page counts. Pass undefined
+     * (or both zero) to hide the block — the Free plan does this
+     * naturally since its quota is 0/0.
+     */
+    standardPagesPerMonth?: number;
+    premiumPagesPerMonth?: number;
 }
 
 /**
@@ -37,6 +47,8 @@ export function PlanCard({
     onCtaClick,
     ctaVariant,
     showCurrentBadge = false,
+    standardPagesPerMonth,
+    premiumPagesPerMonth,
 }: PlanCardProps) {
     const isFree = plan.priceMonthly === 0;
 
@@ -96,6 +108,18 @@ export function PlanCard({
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col !px-5 pt-1">
+                {/* Monthly processing quota block. Hidden for Free
+                    (quota 0/0) so the empty state doesn't compete
+                    visually with the paid tiers. */}
+                {(standardPagesPerMonth || premiumPagesPerMonth) ? (
+                    <div className="mb-4">
+                        <ProcessingQuotaBlock
+                            standardPagesPerMonth={standardPagesPerMonth}
+                            premiumPagesPerMonth={premiumPagesPerMonth}
+                        />
+                    </div>
+                ) : null}
+
                 <ul className="space-y-2 flex-1 mb-4">
                     {plan.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-2">

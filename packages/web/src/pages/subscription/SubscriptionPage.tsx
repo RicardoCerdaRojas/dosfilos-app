@@ -14,6 +14,7 @@ import { useTranslation } from '@/i18n';
 import { usePlans } from '@/hooks/usePlans';
 import { PlanCard } from '@/components/plans';
 import { UsageDashboard } from '@/components/usage/UsageDashboard';
+import { ProcessingQuotaUsageCard } from '@/components/usage/ProcessingQuotaUsageCard';
 
 const userProfileRepository = new FirebaseUserProfileRepository();
 
@@ -120,8 +121,9 @@ export default function SubscriptionPage() {
       </div>
 
       {/* Usage this month — personal library quotas */}
-      <div className="mb-8">
+      <div className="mb-8 space-y-6">
         <UsageDashboard />
+        <ProcessingQuotaUsageCard planId={currentPlanId} />
       </div>
 
       {/* Current Plan Badge */}

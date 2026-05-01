@@ -15,6 +15,10 @@ export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository
 export * from './firebase/FirebaseUserActivityRepository'; // 📊 User Activity Repository
 export * from './firebase/FirestoreAIChatRepository'; // 🎓 Multi-Agent Chat Repository
 export * from './firebase/FirestoreAIProjectRepository'; // 🎓 Multi-Agent Project Repository
+export * from './firebase/FirestoreExegeticalPaperRepository'; // ✍️ Exegesis Module — paper repo
+export * from './firebase/FirestoreUserRubricRepository'; // ✍️ Exegesis Module — rubric template repo
+export * from './firebase/FirestoreUserStyleGuideRepository'; // ✍️ Exegesis Module — style guide repo
+export * from './exegesis'; // ✍️ Exegesis Module — Gemini orchestrator
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';
 export * from './gemini/GeminiPlanGenerator';

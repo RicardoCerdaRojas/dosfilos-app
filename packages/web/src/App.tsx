@@ -50,6 +50,10 @@ import { BiblePage } from '@/pages/bible/BiblePage';
 import { BibleProvider } from '@/context/BibleContext';
 import { FacultyChatPage } from '@/pages/faculty/chat';
 import { ProjectDashboard } from '@/pages/faculty/ProjectDashboard';
+import { ExegesisPage } from '@/pages/exegesis/ExegesisPage';
+import { ExegesisCreatePage } from '@/pages/exegesis/ExegesisCreatePage';
+import { ExegesisPaperPage } from '@/pages/exegesis/ExegesisPaperPage';
+import { ExegesisPaperSetupPage } from '@/pages/exegesis/ExegesisPaperSetupPage';
 import { ProjectsListPage } from '@/pages/projects/ProjectsListPage';
 import { useEffect } from 'react';
 import { SessionTracker } from '@/components/analytics/SessionTracker';
@@ -214,6 +218,16 @@ function App() {
             <Route path="faculty">
               <Route index element={<FacultyChatPage />} />
               <Route path=":sessionId" element={<FacultyChatPage />} />
+            </Route>
+
+            {/* Exégesis Module — paper-writing wizard with step-by-step
+                generation, project-scoped corpus, user-level style guide.
+                v1: list of papers + setup. Detail routes added incrementally. */}
+            <Route path="exegesis">
+              <Route index element={<ExegesisPage />} />
+              <Route path="new" element={<ExegesisCreatePage />} />
+              <Route path=":paperId" element={<ExegesisPaperPage />} />
+              <Route path=":paperId/setup" element={<ExegesisPaperSetupPage />} />
             </Route>
 
             {/* Greek Tutor - Start page with sidebar for navigation */}

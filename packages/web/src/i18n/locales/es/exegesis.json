@@ -1,0 +1,692 @@
+{
+    "directory": {
+        "badge": "Trabajo de investigación exegética asistida",
+        "heroTitle": "Exégesis",
+        "heroSubtitle": "Producí trabajos exegéticos rigurosos del NT y AT, con análisis morfológico, sintáctico y léxico, citación verificada y estilo TMS — paso a paso, no de un golpe.",
+        "newPaperCta": "Nuevo trabajo",
+        "newPaperHint": "Configura el pasaje, sube los extractos del corpus específicos y la guía de estilo (una vez por cuenta).",
+        "papersTitle": "Tus trabajos",
+        "papersSubtitle": "Continúa un trabajo en curso o abre uno nuevo.",
+        "empty": {
+            "title": "Aún no tienes trabajos en curso",
+            "body": "Comienza creando tu primer trabajo exegético. Te vamos guiando paso a paso: pasaje, corpus, generación verso por verso, conclusión, introducción y ensamble final.",
+            "cta": "Crear el primer trabajo"
+        },
+        "comingSoon": {
+            "title": "v1 en construcción",
+            "body": "Esta primera versión enfoca el flujo de redacción asistida: configuración del proyecto, generación verso por verso con interacción y ensamble final. La verificación programática de citas (el diferenciador frente a NotebookLM) llega en la siguiente versión."
+        },
+        "rubrics": {
+            "title": "Mis rúbricas",
+            "subtitle": "Plantillas reutilizables. La que marques como default se aplica automáticamente cuando creés un nuevo trabajo.",
+            "loading": "Cargando rúbricas...",
+            "defaultBadge": "Default",
+            "setDefault": "Marcar default",
+            "delete": "Eliminar",
+            "deleteConfirm": "¿Eliminar la plantilla \"{{name}}\"? Los papers ya creados desde ella conservan su copia interna; esta acción solo la quita de tu biblioteca.",
+            "requirementsCount_one": "{{count}} requisito",
+            "requirementsCount_other": "{{count}} requisitos",
+            "requirementsCount": "{{count}} requisitos",
+            "empty": {
+                "title": "Aún no guardaste plantillas de rúbrica",
+                "body": "Crea una nueva aquí pegando la rúbrica de tu seminario, o desde el setup de un paper guardando la rúbrica configurada como plantilla."
+            },
+            "createCta": "Crear rúbrica",
+            "create": {
+                "title": "Crear nueva plantilla de rúbrica",
+                "nameLabel": "Nombre de la plantilla",
+                "namePlaceholder": "Ej: TMS NT800 Hebreos",
+                "modeLabel": "¿Cómo quieres empezar?",
+                "modeBlank": "Default académico TMS",
+                "modePaste": "Pegar texto y extraer",
+                "textLabel": "Texto de la rúbrica",
+                "textPlaceholder": "Pega la rúbrica del seminario o el brief de la asignación. Lo extraemos a un formato estructurado que después puedes ajustar.",
+                "tooShort": "El texto es muy corto. Pega al menos un párrafo con instrucciones.",
+                "blankHint": "Vamos a crear una plantilla con el default TMS que puedes ajustar después.",
+                "pasteHint": "Vamos a usar Gemini para extraer la rúbrica desde tu texto.",
+                "submit": "Crear plantilla"
+            },
+            "toast": {
+                "defaultSet": "Plantilla marcada como default",
+                "defaultFailed": "No se pudo marcar como default",
+                "deleted": "Plantilla eliminada",
+                "deleteFailed": "No se pudo eliminar la plantilla",
+                "created": "Plantilla creada",
+                "createFailed": "No se pudo crear la plantilla. Revisa el texto o intenta de nuevo.",
+                "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos."
+            }
+        },
+        "styleGuides": {
+            "title": "Mis guías de estilo",
+            "subtitle": "Documentos del seminario (TMS / Turabian / SBL). La activa se aplica a todos los papers que no piden algo distinto.",
+            "loading": "Cargando guías...",
+            "activeBadge": "Activa",
+            "manifestExtracted": "Reglas estructuradas extraídas",
+            "manifestPending": "Manifiesto pendiente — extrae desde el setup del paper",
+            "setActive": "Activar",
+            "delete": "Eliminar",
+            "deleteConfirm": "¿Eliminar la guía \"{{name}}\"? Los papers que la usen quedarán sin guía y no podrán generar hasta que les asignes otra.",
+            "uploadCta": "Subir guía",
+            "uploadAnother": "Subir otra guía",
+            "uploadTitle": "Subir guía de estilo",
+            "fileLabel": "Archivo (PDF o EPUB)",
+            "nameLabel": "Nombre",
+            "namePlaceholder": "Ej. TMS 2024-25",
+            "versionLabel": "Versión",
+            "versionPlaceholder": "Ej. 2024-25",
+            "uploadSubmit": "Subir",
+            "uploading": "Subiendo... {{progress}}%",
+            "empty": {
+                "title": "Aún no subiste una guía de estilo",
+                "body": "Sube la guía del seminario (PDF) aquí. Después extraemos las reglas mecánicas (notas al pie, ibid, comillas) que el orquestador aplica a todos tus papers."
+            },
+            "toast": {
+                "uploaded": "Guía subida — extrae el manifiesto desde el setup del paper",
+                "uploadFailed": "No se pudo subir la guía",
+                "activated": "Guía activa actualizada",
+                "activateFailed": "No se pudo activar la guía",
+                "deleted": "Guía eliminada",
+                "deleteFailed": "No se pudo eliminar la guía"
+            }
+        }
+    },
+    "sourceTypeGroups": {
+        "primary-text": "Texto bíblico",
+        "lexical": "Lexical / lingüístico",
+        "commentaries": "Comentarios",
+        "background": "Contexto y monografías",
+        "methodological": "Apoyo metodológico"
+    },
+    "sourceTypes": {
+        "biblical-text-edition": {
+            "label": "Edición del texto bíblico",
+            "description": "El texto en lengua original que vas a exegetizar.",
+            "examples": "NA28, BHS, Rahlfs LXX, GNT5"
+        },
+        "critical-apparatus": {
+            "label": "Aparato crítico",
+            "description": "Variantes textuales del manuscrito utilizadas cuando el texto recibido es disputado.",
+            "examples": "Aparato de NA28, BHS, ECM"
+        },
+        "lexicon-technical": {
+            "label": "Léxico técnico",
+            "description": "Léxicos académicos con entradas completas, glosas y semántica.",
+            "examples": "BDAG, HALOT, LSJ"
+        },
+        "theological-dictionary": {
+            "label": "Diccionario teológico",
+            "description": "Diccionarios multivolumen que tratan campos semánticos y trayectorias teológicas.",
+            "examples": "TDNT, NIDNTTE, EDNT"
+        },
+        "grammar-syntax": {
+            "label": "Gramática / sintaxis",
+            "description": "Gramáticas técnicas para sustentar afirmaciones sintácticas.",
+            "examples": "BDF, Wallace, Robertson"
+        },
+        "commentary-critical": {
+            "label": "Comentario crítico-técnico",
+            "description": "Comentarios académicos exegéticos con tratamiento técnico del original.",
+            "examples": "WBC, NIGTC, Hermeneia, ICC, Anchor"
+        },
+        "commentary-expository": {
+            "label": "Comentario expositivo",
+            "description": "Comentarios académico-pastorales de nivel medio que conectan exégesis con teología.",
+            "examples": "NICOT/NICNT, BECNT, Pillar, Tyndale, NIVAC"
+        },
+        "historical-background": {
+            "label": "Contexto histórico/cultural",
+            "description": "Estudios sobre el trasfondo histórico y cultural del pasaje.",
+            "examples": "deSilva, Sanders, Keener IVP, ABD"
+        },
+        "theological-monograph": {
+            "label": "Monografía teológica",
+            "description": "Libros académicos enfocados en un tema teológico específico.",
+            "examples": "Bateman sobre advertencias, Beale sobre intertextualidad"
+        },
+        "journal-article": {
+            "label": "Artículo de revista",
+            "description": "Artículos peer-reviewed que reflejan el debate académico actual.",
+            "examples": "JBL, NTS, JETS, NovT"
+        },
+        "primary-source-ancient": {
+            "label": "Fuente primaria antigua",
+            "description": "Fuentes contemporáneas al texto bíblico.",
+            "examples": "Josefo, Filón, Padres apostólicos, Pseudoepígrafos"
+        },
+        "style-template-paper": {
+            "label": "Plantilla de estilo (no se cita)",
+            "description": "Trabajo modelo del que el agente imita la forma — nunca se cita inline.",
+            "examples": "Tu paper anterior, ejemplo del seminario"
+        },
+        "other": {
+            "label": "Otro",
+            "description": "Fuente que no encaja claramente en otra categoría. Úsalo con moderación.",
+            "examples": "Documentos de seminario, notas personales"
+        }
+    },
+    "create": {
+        "title": "Nuevo trabajo exegético",
+        "subtitle": "Configura el pasaje y dale contexto al agente. Después definimos rúbrica, fuentes y plan estructural.",
+        "backToList": "Volver al listado",
+        "submit": "Crear y configurar",
+        "cancel": "Cancelar",
+        "language": {
+            "title": "Idioma del paper",
+            "subtitle": "El idioma en el que el agente va a redactar versos, conclusión e introducción. Lo puedes cambiar luego, pero siempre afecta a TODO el paper.",
+            "hint": "Independiente del idioma de la UI o de la rúbrica que pegues."
+        },
+        "rubric": {
+            "title": "Rúbrica",
+            "subtitle": "Aplica una plantilla guardada o usa la rúbrica académica por defecto. Después puedes ajustarla en el setup del trabajo.",
+            "useDefault": "Usar tu plantilla default ({{name}})",
+            "useDefaultNone": "Usar el default académico TMS (sin plantilla guardada)",
+            "savedTemplates": "Tus plantillas guardadas",
+            "noTemplate": "Sin plantilla — empezar con el default académico TMS",
+            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\")."
+        },
+        "brief": {
+            "title": "Encuadre del trabajo",
+            "subtitle": "¿Qué pidió tu profesor? ¿Qué ángulo quieres tomar? Esto guía al agente en TODOS los pasos.",
+            "placeholder": "Ej: Mi profesor pidió un análisis exegético de Hebreos 1:1-4 con énfasis cristológico. Quiero argumentar que la revelación final en el Hijo establece la superioridad temática de la epístola.",
+            "optional": "Opcional pero muy recomendado. Lo puedes editar luego.",
+            "characterCount": "{{count}} / {{max}} caracteres",
+            "tip": "Cuanto más claro sea el encuadre, mejor cohesión tendrá el paper. Menciona el pasaje, el énfasis (cristológico, eclesiológico, etc.) y cualquier expectativa explícita del profesor."
+        },
+        "toast": {
+            "created": "Trabajo creado — vamos a configurarlo",
+            "createFailed": "No se pudo crear el trabajo. Intenta de nuevo."
+        }
+    },
+    "paperSetup": {
+        "loading": "Cargando configuración...",
+        "subtitle": "Configuración académica: rúbrica, guía de estilo, corpus y plan estructural.",
+        "backToPaper": "Volver al trabajo",
+        "goToPaper": "Ir al trabajo",
+        "notFound": {
+            "title": "Trabajo no encontrado",
+            "body": "No pudimos cargar este trabajo. Volvé al listado.",
+            "backCta": "Volver al listado"
+        },
+        "subSteps": {
+            "rubric": {
+                "tab": "Rúbrica",
+                "heading": "Rúbrica del trabajo",
+                "description": "Sube la rúbrica del seminario o usa el default académico TMS. Determina los mínimos del corpus y los énfasis estructurales.",
+                "loading": "Cargando rúbrica...",
+                "provenance": {
+                    "extracted-from-document": "Extraída de documento",
+                    "extracted-from-text": "Extraída de texto",
+                    "system-default": "Default del sistema",
+                    "from-template": "Desde plantilla",
+                    "user-edited": "Editada"
+                },
+                "extract": {
+                    "openCta": "Extraer desde texto",
+                    "title": "Extraer rúbrica desde texto",
+                    "subtitle": "Pega la rúbrica o el brief que te dio tu profesor. La extraemos a un formato estructurado que después puedes revisar y ajustar.",
+                    "textareaLabel": "Texto de la rúbrica o asignación",
+                    "textareaPlaceholder": "Pega aquí la rúbrica del seminario, el brief de la asignación o las instrucciones del profesor.\n\nEj: 'El trabajo exegético debe contener un análisis técnico del griego con apoyo de al menos dos comentarios críticos (WBC, NIGTC, etc.), un léxico técnico (BDAG), y un diccionario teológico (TDNT/NIDNTTE)...'",
+                    "outputLanguageLabel": "Justificaciones en:",
+                    "outputLanguageHint": "(idioma del paper, no del input)",
+                    "submit": "Extraer y reemplazar rúbrica",
+                    "extracting": "Extrayendo rúbrica...",
+                    "tooShort": "El texto es muy corto. Pega al menos un párrafo con instrucciones.",
+                    "confirmReplaceTitle": "Reemplazar la rúbrica actual",
+                    "confirmReplaceBody": "Vamos a reemplazar la rúbrica actual con la que extraigamos del texto. Tus ediciones manuales se descartan.",
+                    "confirmReplaceCta": "Sí, reemplazar",
+                    "success": "Rúbrica extraída — revísala más abajo",
+                    "failed": "No se pudo extraer la rúbrica. Revisa el texto o ajusta manualmente.",
+                    "overloaded": "Gemini está sobrecargado en este momento. Prueba de nuevo en unos segundos — los picos de demanda son temporales.",
+                    "confidenceHigh": "Confianza alta",
+                    "confidenceMedium": "Confianza media",
+                    "confidenceLow": "Confianza baja",
+                    "confidenceHint": {
+                        "high": "La extracción quedó completa. Igual revisa los campos importantes.",
+                        "medium": "La extracción tuvo algunas inferencias. Revisa los requisitos y justificaciones.",
+                        "low": "La extracción quedó con gaps. Te recomendamos completar manualmente lo que falte."
+                    },
+                    "reviewNotesTitle": "Notas del extractor"
+                },
+                "metadata": {
+                    "title": "Datos generales",
+                    "descriptionLabel": "Descripción de la rúbrica",
+                    "descriptionPlaceholder": "Ej: Rúbrica TMS NT800 — evalúa exégesis técnica con análisis sintáctico, interacción con fuentes críticas y discusión de implicancias teológicas.",
+                    "descriptionHint": "Es la descripción de la rúbrica académica en sí (qué evalúa el seminario). Distinta del encuadre del paper que escribiste al crear el trabajo (lo que el profesor pidió + tu enfoque).",
+                    "citationStandardLabel": "Estándar de citación",
+                    "citationStandardPlaceholder": "Ej: TMS / Turabian, SBL Handbook, Chicago 17",
+                    "fromGuide": "De tu guía de estilo",
+                    "matchGuide": "Coincidir con la guía ({{standard}})",
+                    "matchGuideNoGuide": "Sin guía activa — el orquestador usará su default TMS",
+                    "pickPreset": "Elegir un estándar conocido…",
+                    "custom": "Custom (escribir libre)",
+                    "mismatchWarning": "La rúbrica pide \"{{rubric}}\" pero tu guía está configurada como \"{{guide}}\". El orquestador respeta lo que dice la rúbrica para este paper.",
+                    "lengthLabel": "Extensión esperada",
+                    "lengthUnitPages": "Páginas",
+                    "lengthUnitWords": "Palabras",
+                    "lengthMinPlaceholder": "Mín.",
+                    "lengthMaxPlaceholder": "Máx.",
+                    "lengthClear": "Sin límite especificado"
+                },
+                "requirements": {
+                    "title": "Requisitos del corpus",
+                    "subtitle": "Mínimo y máximo de fuentes por tipo. La tab de Corpus usa esto para detectar gaps.",
+                    "addRequirement": "Agregar requisito",
+                    "removeRequirement": "Quitar requisito",
+                    "minLabel": "Mínimo",
+                    "maxLabel": "Máximo",
+                    "maxUnlimited": "(sin límite)",
+                    "justificationLabel": "Justificación académica",
+                    "justificationPlaceholder": "¿Por qué este tipo es necesario? Esto se muestra al alumno en gap detection.",
+                    "empty": "La rúbrica no tiene requisitos. Agrega al menos uno o resetéa al default.",
+                    "duplicateError": "Ya hay un requisito para este tipo. Edita el existente."
+                },
+                "structural": {
+                    "title": "Recomendaciones estructurales",
+                    "subtitle": "Tipos de fuente que deberían enfatizarse en cada paso. Esto siembra las sugerencias en el plan estructural.",
+                    "section": {
+                        "introduction": "Introducción",
+                        "verse": "Versos",
+                        "conclusion": "Conclusión"
+                    },
+                    "emphasizedTypesLabel": "Tipos enfatizados",
+                    "justificationLabel": "Justificación",
+                    "noExpectation": "Sin recomendación específica para este paso."
+                },
+                "actions": {
+                    "save": "Guardar rúbrica",
+                    "reset": "Resetear al default académico",
+                    "resetConfirmTitle": "Resetear al default académico",
+                    "resetConfirmBody": "Vamos a descartar todas tus ediciones y aplicar la rúbrica TMS por defecto. Esta acción no se puede deshacer.",
+                    "resetConfirmCta": "Sí, resetear",
+                    "saved": "Rúbrica actualizada",
+                    "saveFailed": "No se pudo guardar la rúbrica",
+                    "resetDone": "Rúbrica reseteada al default",
+                    "resetFailed": "No se pudo resetear la rúbrica"
+                },
+                "summary": {
+                    "editCta": "Editar rúbrica",
+                    "requirementsTitle": "Requisitos del corpus",
+                    "structuralTitle": "Recomendaciones estructurales",
+                    "optionalCount_one": "+ {{count}} requisito recomendado opcional",
+                    "optionalCount_other": "+ {{count}} requisitos recomendados opcionales",
+                    "optionalCount": "+ {{count}} recomendados opcionales"
+                },
+                "templates": {
+                    "title": "Plantillas de rúbrica",
+                    "subtitle": "Aplica una plantilla guardada o guarda la rúbrica actual para reusarla en otros papers.",
+                    "applyLabel": "Aplicar una plantilla guardada",
+                    "applyPlaceholder": "elige una plantilla",
+                    "applyCta": "Aplicar",
+                    "applyConfirmTitle": "Reemplazar la rúbrica actual",
+                    "applyConfirmBody": "Vamos a reemplazar la rúbrica actual con la plantilla elegida. Tus ediciones manuales se descartan.",
+                    "applyConfirmCta": "Sí, aplicar plantilla",
+                    "applied": "Plantilla aplicada",
+                    "appliedBadge": "Aplicada",
+                    "applyFailed": "No se pudo aplicar la plantilla",
+                    "saveCta": "Guardar como plantilla",
+                    "saveHint": "Guarda la rúbrica actual para usarla en otros papers.",
+                    "emptyHint": "Aún no tienes plantillas guardadas. Cuando ajustes esta rúbrica, puedes guardarla aquí.",
+                    "namePromptLabel": "Nombre de la plantilla",
+                    "namePromptPlaceholder": "Ej: TMS NT800 Hebreos",
+                    "saveConfirm": "Guardar plantilla",
+                    "nameRequired": "Ingresa un nombre para la plantilla",
+                    "saved": "Plantilla guardada en tu biblioteca",
+                    "saveFailed": "No se pudo guardar la plantilla"
+                }
+            },
+            "manifest": {
+                "tab": "Guía de estilo",
+                "heading": "Manifiesto de la guía de estilo",
+                "description": "Verifica las reglas mecánicas extraídas de tu guía (notas al pie, ibid, comillas). Si algo está mal, corrígelo antes de generar.",
+                "noGuide": "No hay guía activa adjunta. Sube una desde tu perfil para que el manifiesto se pueda extraer.",
+                "noManifest": {
+                    "title": "Manifiesto aún no extraído",
+                    "body": "Tu guía está cargada pero las reglas mecánicas no se extrajeron todavía. Esto las lleva a formato estructurado para que el orquestador las aplique de forma determinística.",
+                    "extractCta": "Extraer reglas ahora",
+                    "extracting": "Extrayendo...",
+                    "extracted": "Reglas extraídas",
+                    "failed": "No se pudo extraer el manifiesto",
+                    "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos.",
+                    "corpusNotReady": "El texto de la guía aún no terminó de procesarse. Esperá unos segundos y reintenta."
+                },
+                "card": {
+                    "citationStyleLabel": "Estilo de citación",
+                    "extractedAt": "Extraído",
+                    "model": "Modelo",
+                    "confidence": {
+                        "label": "Confianza",
+                        "high": "alta",
+                        "medium": "media",
+                        "low": "baja"
+                    },
+                    "reExtract": "Re-extraer",
+                    "reExtractConfirm": "Esto va a reemplazar el manifiesto actual con una nueva extracción. ¿Continuar?"
+                },
+                "footnotes": {
+                    "title": "Notas al pie",
+                    "firstMention": "Primera mención",
+                    "subsequentMention": "Mención posterior",
+                    "ibidEnabled": "Ibid permitido",
+                    "ibidDisabled": "Ibid NO permitido",
+                    "ibidPageOverride": "Permite \"Ibid., 47\" cuando cambia la página",
+                    "examplesTitle": "Ejemplos renderizados",
+                    "exampleEmpty": "El extractor no produjo ejemplos. Considera re-extraer."
+                },
+                "bibliography": {
+                    "title": "Bibliografía",
+                    "entryTemplate": "Plantilla de entrada",
+                    "sortByLabel": "Ordenar por",
+                    "sortBy": {
+                        "author-surname": "Apellido del autor",
+                        "order-of-appearance": "Orden de aparición"
+                    },
+                    "useDashTrue": "Usa guion 3-em para autores repetidos",
+                    "useDashFalse": "NO usa guion 3-em (apellido completo cada vez)"
+                },
+                "quotations": {
+                    "title": "Citas y comillas",
+                    "blockThreshold": "Umbral de bloque",
+                    "blockThresholdValue": "{{count}} palabras",
+                    "primaryQuoteMark": "Comilla primaria",
+                    "secondaryQuoteMark": "Comilla secundaria",
+                    "ellipsis": "Elipsis",
+                    "interpolationBrackets": "Brackets de interpolación"
+                },
+                "transliteration": {
+                    "title": "Transliteración",
+                    "scheme": "Esquema",
+                    "useDiacriticsTrue": "Conserva diacríticos / macrones",
+                    "useDiacriticsFalse": "Sin diacríticos",
+                    "bodyRequired": "Transliteración requerida en el cuerpo",
+                    "bodyOptional": "Transliteración opcional en el cuerpo",
+                    "none": "La guía no especifica transliteración"
+                },
+                "additionalRules": {
+                    "title": "Reglas adicionales",
+                    "empty": "Sin reglas libres adicionales."
+                },
+                "extractionNotes": {
+                    "title": "Notas del extractor"
+                }
+            },
+            "corpus": {
+                "tab": "Corpus",
+                "heading": "Corpus del trabajo",
+                "description": "Sube los extractos específicos para este pasaje con tipo académico. Te avisamos qué falta según la rúbrica.",
+                "gap": {
+                    "metTitle": "Tu corpus cumple la rúbrica",
+                    "metBody": "{{count}} fuentes adjuntas — todos los mínimos están satisfechos. Podés avanzar al plan estructural.",
+                    "gapsTitle": "{{satisfied}} de {{total}} requisitos satisfechos",
+                    "gapsBody": "Te faltan {{missing}} fuentes para cumplir la rúbrica. Los detalles abajo indican qué tipos sumar.",
+                    "noRubric": "Aún no hay rúbrica asociada al trabajo. Configura la rúbrica en el primer tab antes de cargar el corpus.",
+                    "uploadForType": "Subir un {{type}} para cubrir este requisito",
+                    "uploadForTypeShort": "Subir"
+                },
+                "list": {
+                    "title": "Fuentes adjuntas",
+                    "empty": "Aún no agregaste fuentes. Toca \"Agregar fuente\" arriba o \"Subir\" en cualquier requisito faltante.",
+                    "addCta": "Agregar fuente",
+                    "extractCta": "Extraer de mi biblioteca",
+                    "excerptsBadge_one": "{{count}} excerpt",
+                    "excerptsBadge_other": "{{count}} excerpts",
+                    "remove": "Quitar fuente"
+                },
+                "extract": {
+                    "dialogTitle": "Extraer fragmentos de tu biblioteca",
+                    "dialogSubtitle": "Selecciona uno o más recursos indexados de tu biblioteca y extraeremos los fragmentos más relevantes para el pasaje del trabajo. Los podrás revisar y editar después.",
+                    "footerEmpty": "Selecciona al menos un recurso para continuar.",
+                    "footerCount_one": "{{count}} recurso seleccionado",
+                    "footerCount_other": "{{count}} recursos seleccionados",
+                    "footerWithReplace_one": "{{count}} recurso seleccionado · {{replaces}} reemplazará excerpts existentes",
+                    "footerWithReplace_other": "{{count}} recursos seleccionados · {{replaces}} reemplazarán excerpts existentes",
+                    "submit": "Extraer fragmentos",
+                    "submitting": "Extrayendo...",
+                    "willReplace": "Reemplazará excerpts actuales",
+                    "filterAll": "Todos ({{count}})",
+                    "notIndexedTitle": "Algunos recursos no están listos",
+                    "notIndexedBody_one": "{{count}} recurso seleccionado aún no está indexado. Quítalo de la selección o espera a que termine el procesamiento automático.",
+                    "notIndexedBody_other": "{{count}} recursos seleccionados aún no están indexados. Quítalos de la selección o espera a que termine el procesamiento automático.",
+                    "toast": {
+                        "success_one": "{{count}} fuente agregada con sus fragmentos curados",
+                        "success_other": "{{count}} fuentes agregadas con sus fragmentos curados",
+                        "failed": "No se pudo extraer los fragmentos. Intenta de nuevo."
+                    }
+                },
+                "excerpts": {
+                    "expand": "Ver fragmentos curados",
+                    "collapse": "Ocultar fragmentos",
+                    "delete": "Eliminar este fragmento",
+                    "save": "Guardar cambios",
+                    "discard": "Descartar",
+                    "editedBadge": "Editado",
+                    "noAnchor": "Fragmento {{index}}",
+                    "emptyWarning": "Esta fuente no tiene fragmentos seleccionados — no contribuirá a la generación.",
+                    "toast": {
+                        "saved": "Cambios guardados",
+                        "saveFailed": "No se pudieron guardar los cambios"
+                    }
+                },
+                "balance": {
+                    "standard_one": "{{count}} pág. estándar",
+                    "standard_other": "{{count}} págs. estándar",
+                    "premium_one": "{{count}} pág. premium",
+                    "premium_other": "{{count}} págs. premium"
+                },
+                "readiness": {
+                    "indexed": "Listo",
+                    "extracting": "Procesando texto",
+                    "indexing": "Indexando",
+                    "needsExtraction": "Sin procesar",
+                    "needsIndexing": "Sin indexar",
+                    "failed": "Falló"
+                },
+                "upload": {
+                    "title": "Agregar fuente al corpus",
+                    "dialogSubtitle": "Sube un nuevo PDF/EPUB o reusa uno de tu biblioteca. El tipo académico decide si cumple un requisito de la rúbrica.",
+                    "modeUpload": "Subir nuevo",
+                    "modeLibrary": "Mi biblioteca",
+                    "fileLabel": "Archivo (PDF o EPUB)",
+                    "librarySearchPlaceholder": "Buscar por título o autor...",
+                    "libraryLoading": "Cargando tu biblioteca...",
+                    "libraryEmpty": "Aún no tienes documentos en tu biblioteca. Sube uno desde aquí o desde Biblioteca.",
+                    "libraryAllAttached": "Todos los documentos de tu biblioteca ya están adjuntos a este trabajo.",
+                    "librarySearchEmpty": "No encontramos coincidencias. Prueba con otro término.",
+                    "displayNameLabel": "Etiqueta para el corpus",
+                    "displayNamePlaceholder": "Ej. Lane WBC 47a, pp. 1-30",
+                    "typeLabel": "Tipo académico",
+                    "typeDescription": "Elegí el tipo que mejor describe la fuente. La rúbrica usa este tipo para decidir si cumple los mínimos.",
+                    "citationKeyLabel": "Clave de cita",
+                    "citationKeyPlaceholder": "Ej. Lane",
+                    "citationKeyHint": "Se usa en las notas al pie. Si lo dejás vacío, lo derivamos del corpus.",
+                    "submit": "Subir y agregar al corpus",
+                    "submitFromLibrary": "Agregar al corpus",
+                    "uploading": "Subiendo... {{progress}}%",
+                    "modelPaperHint": "Las plantillas de estilo se usan solo como modelo de forma. NUNCA se citan inline.",
+                    "fileRequired": "Sube un archivo",
+                    "labelTooShort": "La etiqueta es muy corta (mínimo 3 caracteres)"
+                },
+                "toast": {
+                    "added": "Fuente agregada al corpus",
+                    "addFailed": "No se pudo agregar la fuente. Intenta de nuevo.",
+                    "removed": "Fuente quitada",
+                    "removeFailed": "No se pudo quitar la fuente.",
+                    "typeUpdated": "Tipo actualizado",
+                    "typeUpdateFailed": "No se pudo actualizar el tipo"
+                }
+            },
+            "plan": {
+                "tab": "Plan estructural",
+                "heading": "Plan estructural",
+                "description": "Para cada paso (intro, verso, conclusión), confirma o ajusta qué tipos de fuente debe priorizar el agente. Las sugerencias vienen de la rúbrica.",
+                "kinds": {
+                    "introduction": "Introducción",
+                    "verse": "Versos",
+                    "conclusion": "Conclusión"
+                },
+                "kindDescription": {
+                    "introduction": "Se redacta al final pero aparece primero. Establece la tesis y posiciona el pasaje.",
+                    "verse": "Análisis verso por verso: traducción, morfología, sintaxis, interacción con fuentes.",
+                    "conclusion": "Sintetiza los análisis aceptados sin introducir argumentos nuevos."
+                },
+                "rubricSuggestion": "Sugerencia de la rúbrica",
+                "rubricEmpty": "La rúbrica no especifica énfasis para este paso. Elegí los tipos que tengan sentido para tu trabajo.",
+                "noRubric": "Aún no hay rúbrica asociada. Configura la rúbrica primero para ver las sugerencias académicas.",
+                "emphasizedTypesLabel": "Tipos a priorizar",
+                "emphasizedTypesHint": "El agente cita estos tipos generosamente en este paso.",
+                "addType": "Agregar tipo",
+                "deemphasizedToggle": "Mostrar tipos a desénfasis",
+                "deemphasizedTypesLabel": "Tipos a desénfasis",
+                "deemphasizedTypesHint": "Estos tipos aparecen solo brevemente, sin liderar la argumentación.",
+                "noteLabel": "Tu nota (opcional)",
+                "notePlaceholder": "Ej: 'Para los versos quiero énfasis lexical fuerte porque las decisiones de traducción cargan el argumento.'",
+                "noteHint": "Tu razonamiento queda registrado para futura referencia.",
+                "saveButton": "Guardar plan",
+                "resetButton": "Volver al sugerido por la rúbrica",
+                "saved": "Plan actualizado",
+                "saveFailed": "No se pudo guardar el plan",
+                "savedHint": "Última actualización del plan",
+                "neverSaved": "Aún no guardaste un plan personalizado. La rúbrica aplica como sugerencia activa."
+            }
+        }
+    },
+    "setup": {
+        "cancel": "Cancelar",
+        "passage": {
+            "stepTitle": "Pasaje",
+            "stepSubtitle": "Indica el rango bíblico a estudiar. Validamos contra el canon (66 libros) en el momento.",
+            "modeFreeText": "Texto libre",
+            "modePicker": "Selector",
+            "freeTextPlaceholder": "Ej. Hebreos 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
+            "pickBook": "Elegí un libro",
+            "testamentOt": "Antiguo Testamento",
+            "testamentNt": "Nuevo Testamento",
+            "chapter": "Cap.",
+            "chapterEnd": "Cap. fin",
+            "verse": "Verso",
+            "verseEnd": "Verso fin",
+            "helperHint": "Soporta abreviaciones, acentos y ambos separadores (Heb 1:1 / Heb 1.1).",
+            "parsedAs": "Reconocido como"
+        }
+    },
+    "list": {
+        "loading": "Cargando trabajos...",
+        "loadFailed": "No se pudieron cargar tus trabajos.",
+        "passageLabel": "Pasaje",
+        "phaseLabel": "Estado",
+        "phase": {
+            "configuring": "En configuración",
+            "in-progress": "En curso",
+            "assembled": "Ensamblado",
+            "archived": "Archivado"
+        },
+        "openPaper": "Abrir trabajo",
+        "createdAt": "Creado",
+        "updatedAt": "Actualizado",
+        "filters": {
+            "searchPlaceholder": "Buscar por pasaje o título...",
+            "all": "Todos",
+            "showArchived": "Incluir archivados",
+            "noMatches": "Ningún trabajo coincide con tu búsqueda.",
+            "noMatchesHint": "Prueba ajustando los filtros o limpiando el buscador.",
+            "clear": "Limpiar filtros",
+            "countAll_one": "{{count}} trabajo",
+            "countAll_other": "{{count}} trabajos",
+            "countFiltered": "{{visible}} de {{total}}"
+        }
+    },
+    "detail": {
+        "back": "Volver al listado",
+        "loading": "Cargando trabajo...",
+        "openSetup": "Configurar",
+        "archive": "Archivar",
+        "archiveConfirm": "Confirmar",
+        "stepsTitle": "Pasos del trabajo",
+        "stepsSubtitle": "Verso por verso, conclusión, introducción y ensamble. Aceptás o regenerás cada paso antes de avanzar.",
+        "generateCta": "Generar primer paso",
+        "stepsEmpty": {
+            "title": "Aún sin pasos generados",
+            "body_one": "Vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
+            "body_other": "Vamos a producir 1 paso por verso ({{verseCount}}) más conclusión, introducción y ensamble.",
+            "body": "Vamos a producir un paso por verso del pasaje, más conclusión, introducción y ensamble final."
+        },
+        "steps": {
+            "startCta": "Iniciar generación",
+            "generating": "Generando...",
+            "failedHint": "Algo falló al generar este paso. Prueba de nuevo.",
+            "editHint": "Editado a mano — la verificación de citas no corre automáticamente.",
+            "hintPlaceholder": "Ej. más sintaxis, más teología, cita más a Cockerill",
+            "kind": {
+                "verse": "Verso",
+                "conclusion": "Conclusión",
+                "introduction": "Introducción",
+                "assembly": "Ensamble final"
+            },
+            "state": {
+                "pending": "Pendiente",
+                "generating": "Generando",
+                "awaiting-review": "Listo para revisar",
+                "accepted": "Aceptado",
+                "failed": "Falló"
+            },
+            "action": {
+                "generate": "Generar",
+                "retry": "Reintentar",
+                "accept": "Aceptar",
+                "regenerate": "Regenerar",
+                "regenerateWithHint": "Hint y regenerar",
+                "applyHint": "Aplicar hint",
+                "editManual": "Editar a mano",
+                "editAccepted": "Editar contenido aceptado",
+                "saveEdit": "Guardar edición"
+            },
+            "gate": {
+                "multiChapter": "v1 solo soporta pasajes de un capítulo. Edita el pasaje a un solo capítulo para iniciar.",
+                "noVerses": "v1 requiere versos explícitos. Edita el pasaje para incluir verso inicial y final."
+            },
+            "toast": {
+                "seeded": "Pasos creados — empieza por el primero",
+                "seedFailed": "No se pudieron crear los pasos",
+                "seedShapeError": "El pasaje no califica para v1 (debe ser un solo capítulo con versos explícitos)",
+                "generateFailed": "No se pudo generar el paso",
+                "accepted": "Paso aceptado",
+                "acceptFailed": "No se pudo aceptar el paso",
+                "edited": "Edición guardada",
+                "editFailed": "No se pudo guardar la edición"
+            }
+        },
+        "rubric": {
+            "title": "Rúbrica",
+            "none": "Sin rúbrica configurada. Necesaria antes de generar.",
+            "changeCta": "Editar en configuración",
+            "requirementsCount_one": "{{count}} requisito",
+            "requirementsCount_other": "{{count}} requisitos",
+            "lengthPages": "{{min}}–{{max}} pp.",
+            "lengthWords": "{{min}}–{{max}} pal.",
+            "lengthMinPages": "≥{{min}} pp.",
+            "lengthMinWords": "≥{{min}} pal."
+        },
+        "styleGuide": {
+            "title": "Guía de estilo",
+            "none": "Sin guía adjunta. Necesaria antes de generar.",
+            "inheritedHint": "Heredada de tu guía activa",
+            "changeCta": "Editar en configuración"
+        },
+        "sources": {
+            "title": "Corpus del trabajo",
+            "none": "Sin fuentes todavía. Agrégalas para que el orquestador pueda interactuar con ellas.",
+            "addCta": "Editar en configuración",
+            "remove": "Quitar fuente"
+        },
+        "notFound": {
+            "title": "Trabajo no encontrado",
+            "body": "El trabajo que buscás no existe o fue archivado. Volvé al listado.",
+            "backCta": "Volver al listado"
+        },
+        "toast": {
+            "archived": "Trabajo archivado",
+            "archiveFailed": "No se pudo archivar el trabajo",
+            "sourceRemoved": "Fuente quitada",
+            "sourceRemoveFailed": "No se pudo quitar la fuente"
+        }
+    }
+}

@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {
   Home, FileText, Sparkles, Settings, LogOut,
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText
+  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -113,6 +113,7 @@ export function AppSidebar() {
         { name: t('menu.projects'), href: '/dashboard/projects', icon: FolderKanban },
         { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
         { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
+        { name: t('menu.exegesis'), href: '/dashboard/exegesis', icon: NotebookPen },
         ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
       ],
     },
@@ -120,6 +121,13 @@ export function AppSidebar() {
       label: t('groups.study'),
       items: [
         { name: t('menu.bible'), href: '/dashboard/bible', icon: Book },
+        // Faculty conversacional vive bajo "Tu estudio" porque el modo
+        // de uso es estudiar pasajes con tutores AI (chat con expertos),
+        // no curar el entorno como hace la biblioteca personal. Antes
+        // estaba en "Tu entorno" junto a la biblioteca por proximidad
+        // arquitectónica (ambos consumen el mismo store de chunks RAG),
+        // pero el usuario ve estudio, no plumbing.
+        { name: t('menu.faculty'), href: '/dashboard/faculty', icon: MessageSquareQuote },
         { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
         { name: t('menu.hebrewTutor'), href: '/dashboard/hebrew-tutor', icon: BookOpen },
       ],
@@ -131,7 +139,6 @@ export function AppSidebar() {
         // El material subido es responsabilidad del usuario (ver TOS); la plataforma
         // actúa como herramienta de procesamiento, no como distribuidor.
         { name: t('menu.library'), href: '/dashboard/library', icon: Library },
-        { name: t('menu.faculty'), href: '/dashboard/faculty', icon: MessageSquareQuote },
       ],
     },
     {

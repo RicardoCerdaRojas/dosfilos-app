@@ -83,6 +83,8 @@ export { disableUser } from './admin/disableUser';
 export { enableUser } from './admin/enableUser';
 export { resendWelcomeEmail } from './admin/resendWelcomeEmail';
 export { migratePlanQuotas } from './admin/migratePlanQuotas';
+export { backfillPlanQuotas } from './admin/backfillPlanQuotas';
+export { notifyApproachingQuota } from './billing/notifyApproachingQuota';
 export { migrateLegacySermons } from './admin/migrateLegacySermons';
 export { changePlanForUser } from './admin/changePlanForUser';
 export { bulkUserAction } from './admin/bulkUserAction';

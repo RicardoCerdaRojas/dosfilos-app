@@ -44,19 +44,45 @@ export interface UserAnalytics {
 /**
  * Processing balance for the credit-pack model (see PRICING_PROCESSING_ROADMAP).
  *
- * Two separate counters because the underlying extractors have different unit
- * economics:
- *   - `standardPagesAvailable`: pages that can be processed via Gemini Flash
- *     (cheap path, default for narrative books).
- *   - `premiumPagesAvailable`: pages that can be processed via LlamaParse
- *     (complex layouts, tables, scanned PDFs).
+ * Two extractors with different unit economics (Gemini Flash standard vs
+ * LlamaParse premium) × two origin buckets (plan-monthly vs prepaid pack):
  *
- * Pages added via the bonus inicial of a plan or via credit packs go into the
- * matching counter. Spent counters are kept for analytics / dashboard.
+ *   - `plan{Standard,Premium}Pages` — quota included in the user's monthly
+ *     subscription. RESET to the plan's `{standard,premium}PagesPerMonth`
+ *     on each billing-cycle invoice (no rollover; unused pages are lost
+ *     at month boundary). Initially seeded by `bonusInitial` at activation
+ *     so the user can start using on day 1.
+ *   - `pack{Standard,Premium}Pages` — pages purchased via credit packs.
+ *     Persistent (no automatic reset). Don't expire for 12 months from
+ *     purchase per the legal copy in the dialog.
+ *
+ * Consumption order is plan FIRST, then pack — the plan resets monthly so
+ * letting it expire wastes value, while pack pages persist. This is also
+ * the spirit of how SaaS plans typically advertise "X pages included":
+ * the included quota gets used before paid extras kick in.
+ *
+ * The legacy `*Available` fields (kept for backward-compat with admin UI,
+ * Library banner, etc.) are TOTAL = plan + pack. Writers MUST keep them
+ * in sync — `ProcessingBalanceService.recomputeAvailable()` is the
+ * canonical helper.
  */
 export interface ProcessingBalance {
+    /** Plan-included pages — reset monthly by Stripe invoice webhook. */
+    planStandardPages: number;
+    planPremiumPages: number;
+    /** Pack-purchased pages — persistent, 12-month expiration window. */
+    packStandardPages: number;
+    packPremiumPages: number;
+    /**
+     * Aggregate available = plan + pack. Kept as concrete fields (not
+     * computed) because Firestore doesn't support derived properties and
+     * existing consumers (admin UI, Library banner, gating in
+     * LibraryManager) read these directly. Writers update them alongside
+     * the underlying buckets.
+     */
     standardPagesAvailable: number;
     premiumPagesAvailable: number;
+    /** Lifetime spent counters for analytics / dashboard. */
     standardSpentTotal: number;
     premiumSpentTotal: number;
     /** Last time the balance changed, used in admin/usage dashboards. */

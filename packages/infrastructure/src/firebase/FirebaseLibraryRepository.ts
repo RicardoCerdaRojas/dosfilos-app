@@ -107,6 +107,13 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         if (updates.author !== undefined) firestoreUpdates.author = updates.author;
         if (updates.type !== undefined) firestoreUpdates.type = updates.type;
         if (updates.preferredForPhases !== undefined) firestoreUpdates.preferredForPhases = updates.preferredForPhases;
+        // v1.5 commit 6: exegetical classification cache. Allow
+        // setting (string) and unsetting (null/undefined → null in
+        // Firestore so the field is explicitly cleared rather than
+        // left stale).
+        if (updates.exegeticalType !== undefined) {
+            firestoreUpdates.exegeticalType = updates.exegeticalType ?? null;
+        }
         if (updates.updatedAt !== undefined) firestoreUpdates.updatedAt = Timestamp.fromDate(updates.updatedAt);
 
         // 🎯 Core Library stores
@@ -161,6 +168,16 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         (resource as any).characterCount = data.characterCount || undefined;
         // 🎯 Core Library stores
         (resource as any).coreStores = data.coreStores || [];
+        // v1.5 exegesis readiness probe — extraction + indexing metadata
+        // written by the cloud functions (extraction pipeline + auto-index
+        // trigger). The web client reads these to decide whether a resource
+        // can serve as a source of curated excerpts.
+        (resource as any).extractionVersion = data.extractionVersion || undefined;
+        (resource as any).structuredContentUrl = data.structuredContentUrl || undefined;
+        (resource as any).extractedWithLlamaParse = data.extractedWithLlamaParse ?? undefined;
+        (resource as any).indexingStatus = data.indexingStatus || undefined;
+        (resource as any).indexerVersion = data.indexerVersion || undefined;
+        (resource as any).exegeticalType = data.exegeticalType || undefined;
         return resource;
     }
 }

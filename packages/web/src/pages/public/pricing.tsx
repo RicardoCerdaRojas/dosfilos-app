@@ -98,6 +98,8 @@ export function PricingPage() {
                           sortOrder: plan.sortOrder,
                           isPublic: plan.isPublic,
                         }}
+                        standardPagesPerMonth={plan.limits?.standardPagesPerMonth}
+                        premiumPagesPerMonth={plan.limits?.premiumPagesPerMonth}
                         isPopular={isPopular}
                         ctaLabel="Empezar 30 días gratis"
                         onCtaClick={() => handlePlanSelect(plan.id)}

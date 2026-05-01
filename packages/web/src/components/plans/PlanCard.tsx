@@ -12,6 +12,7 @@ import { Check, Zap } from 'lucide-react';
 import type { LocalizedPlan } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 import { getFeatureLabel } from '@/utils/featureLabels';
+import { ProcessingQuotaBlock } from './ProcessingQuotaBlock';
 
 interface PlanCardProps {
   plan: LocalizedPlan;
@@ -48,8 +49,8 @@ export function PlanCard({
       {/* Current Plan Badge */}
       {isCurrentPlan && (
         <div className="absolute -top-3 right-4">
-          <Badge className="bg-green-600 hover:bg-green-700">
-            Plan Actual
+          <Badge className="bg-success text-white hover:bg-success/90">
+            {t('currentPlan')}
           </Badge>
         </div>
       )}
@@ -76,6 +77,19 @@ export function PlanCard({
       </CardHeader>
       
       <CardContent>
+        {/* Monthly processing quota — surfaces the new billing model
+            (plan-included pages + optional credit packs) where it
+            matters: at the buy decision. Only shown when the plan
+            actually includes processing (Free shows 0/0 and the
+            block hides itself). Same component used by the landing
+            PlanCard so both pricing surfaces stay in sync. */}
+        <div className="mb-5">
+            <ProcessingQuotaBlock
+                standardPagesPerMonth={plan.limits?.standardPagesPerMonth as number | undefined}
+                premiumPagesPerMonth={plan.limits?.premiumPagesPerMonth as number | undefined}
+            />
+        </div>
+
         {/* Feature list — uses our static featureLabels map (same source as
             public PlanCard) so labels stay consistent and don't depend on
             plan_translations being fully seeded. Modules are intentionally
@@ -103,9 +117,10 @@ export function PlanCard({
           disabled={loading || isCurrentPlan}
           onClick={() => onSelect(plan.id)}
         >
-          {isCurrentPlan ? t('currentPlan', { defaultValue: 'Plan Actual' }) : t('select', { defaultValue: 'Seleccionar' })}
+          {isCurrentPlan ? t('currentPlan') : t('select')}
         </Button>
       </CardContent>
     </Card>
   );
 }
+

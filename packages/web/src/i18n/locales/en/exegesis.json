@@ -1,0 +1,692 @@
+{
+    "directory": {
+        "badge": "Assisted exegetical research papers",
+        "heroTitle": "Exegesis",
+        "heroSubtitle": "Produce rigorous NT and OT exegetical papers with morphological, syntactic, and lexical analysis, verified citations, and TMS-style formatting — step by step, not all at once.",
+        "newPaperCta": "New paper",
+        "newPaperHint": "Configure the passage, upload the project-specific corpus extracts, and pick the style guide (once per account).",
+        "papersTitle": "Your papers",
+        "papersSubtitle": "Continue an in-progress paper or start a new one.",
+        "empty": {
+            "title": "No papers yet",
+            "body": "Start by creating your first exegetical paper. We walk you through it step by step: passage, corpus, verse-by-verse generation, conclusion, introduction, and final assembly.",
+            "cta": "Create the first paper"
+        },
+        "comingSoon": {
+            "title": "v1 under construction",
+            "body": "This first version focuses on the assisted writing flow: project setup, step-by-step verse generation with interaction, and final assembly. Programmatic citation verification (the real differentiator vs NotebookLM) arrives in the next version."
+        },
+        "rubrics": {
+            "title": "My rubrics",
+            "subtitle": "Reusable templates. The one you mark as default auto-applies when you create a new paper.",
+            "loading": "Loading rubrics...",
+            "defaultBadge": "Default",
+            "setDefault": "Set default",
+            "delete": "Delete",
+            "deleteConfirm": "Delete the template \"{{name}}\"? Papers already created from it keep their internal copy; this only removes it from your library.",
+            "requirementsCount_one": "{{count}} requirement",
+            "requirementsCount_other": "{{count}} requirements",
+            "requirementsCount": "{{count}} requirements",
+            "empty": {
+                "title": "No rubric templates saved yet",
+                "body": "Create one here by pasting your seminary's rubric, or from a paper's setup by saving its configured rubric as a template."
+            },
+            "createCta": "Create rubric",
+            "create": {
+                "title": "Create new rubric template",
+                "nameLabel": "Template name",
+                "namePlaceholder": "e.g. TMS NT800 Hebrews",
+                "modeLabel": "How do you want to start?",
+                "modeBlank": "Academic TMS default",
+                "modePaste": "Paste text and extract",
+                "textLabel": "Rubric text",
+                "textPlaceholder": "Paste the seminary's rubric or the assignment brief. We'll extract it into a structured form you can adjust afterwards.",
+                "tooShort": "Text is too short. Paste at least a paragraph with instructions.",
+                "blankHint": "We'll create a template seeded with the TMS default that you can adjust later.",
+                "pasteHint": "We'll use Gemini to extract the rubric from your text.",
+                "submit": "Create template"
+            },
+            "toast": {
+                "defaultSet": "Template set as default",
+                "defaultFailed": "Could not set as default",
+                "deleted": "Template deleted",
+                "deleteFailed": "Could not delete the template",
+                "created": "Template created",
+                "createFailed": "Could not create the template. Check the text or try again.",
+                "overloaded": "Gemini is overloaded. Try again in a few seconds."
+            }
+        },
+        "styleGuides": {
+            "title": "My style guides",
+            "subtitle": "Seminary documents (TMS / Turabian / SBL). The active one applies to all papers that don't ask for something different.",
+            "loading": "Loading guides...",
+            "activeBadge": "Active",
+            "manifestExtracted": "Structured rules extracted",
+            "manifestPending": "Manifest pending — extract from the paper setup",
+            "setActive": "Activate",
+            "delete": "Delete",
+            "deleteConfirm": "Delete the guide \"{{name}}\"? Papers using it will lose their guide and won't be able to generate until you assign a different one.",
+            "uploadCta": "Upload guide",
+            "uploadAnother": "Upload another guide",
+            "uploadTitle": "Upload style guide",
+            "fileLabel": "File (PDF or EPUB)",
+            "nameLabel": "Name",
+            "namePlaceholder": "e.g. TMS 2024-25",
+            "versionLabel": "Version",
+            "versionPlaceholder": "e.g. 2024-25",
+            "uploadSubmit": "Upload",
+            "uploading": "Uploading... {{progress}}%",
+            "empty": {
+                "title": "No style guide uploaded yet",
+                "body": "Upload the seminary's guide (PDF) here. We then extract the mechanical rules (footnotes, ibid, quotation marks) that the orchestrator applies to all your papers."
+            },
+            "toast": {
+                "uploaded": "Guide uploaded — extract the manifest from the paper setup",
+                "uploadFailed": "Could not upload the guide",
+                "activated": "Active guide updated",
+                "activateFailed": "Could not activate the guide",
+                "deleted": "Guide deleted",
+                "deleteFailed": "Could not delete the guide"
+            }
+        }
+    },
+    "sourceTypeGroups": {
+        "primary-text": "Biblical text",
+        "lexical": "Lexical / linguistic",
+        "commentaries": "Commentaries",
+        "background": "Context & monographs",
+        "methodological": "Methodological support"
+    },
+    "sourceTypes": {
+        "biblical-text-edition": {
+            "label": "Biblical text edition",
+            "description": "The original-language text edition you are exegeting.",
+            "examples": "NA28, BHS, Rahlfs LXX, GNT5"
+        },
+        "critical-apparatus": {
+            "label": "Critical apparatus",
+            "description": "Manuscript variants used when the received text is disputed.",
+            "examples": "NA28 apparatus, BHS, ECM"
+        },
+        "lexicon-technical": {
+            "label": "Technical lexicon",
+            "description": "Academic lexicons with full entries, glosses, and semantics.",
+            "examples": "BDAG, HALOT, LSJ"
+        },
+        "theological-dictionary": {
+            "label": "Theological dictionary",
+            "description": "Multi-volume dictionaries that treat semantic fields and theological trajectories.",
+            "examples": "TDNT, NIDNTTE, EDNT"
+        },
+        "grammar-syntax": {
+            "label": "Grammar / syntax",
+            "description": "Technical grammars to back up syntactic claims.",
+            "examples": "BDF, Wallace, Robertson"
+        },
+        "commentary-critical": {
+            "label": "Critical commentary",
+            "description": "Academic exegetical commentaries that engage the original-language text technically.",
+            "examples": "WBC, NIGTC, Hermeneia, ICC, Anchor"
+        },
+        "commentary-expository": {
+            "label": "Expository commentary",
+            "description": "Mid-level academic-pastoral commentaries that bridge exegesis to theology.",
+            "examples": "NICOT/NICNT, BECNT, Pillar, Tyndale, NIVAC"
+        },
+        "historical-background": {
+            "label": "Historical/cultural background",
+            "description": "Studies of the historical and cultural setting of the passage.",
+            "examples": "deSilva, Sanders, Keener IVP, ABD"
+        },
+        "theological-monograph": {
+            "label": "Theological monograph",
+            "description": "Academic books focused on a specific theological topic.",
+            "examples": "Bateman on warning passages, Beale on intertextuality"
+        },
+        "journal-article": {
+            "label": "Journal article",
+            "description": "Peer-reviewed articles reflecting current scholarly debate.",
+            "examples": "JBL, NTS, JETS, NovT"
+        },
+        "primary-source-ancient": {
+            "label": "Ancient primary source",
+            "description": "Sources contemporary with the biblical text.",
+            "examples": "Josephus, Philo, Apostolic Fathers, Pseudepigrapha"
+        },
+        "style-template-paper": {
+            "label": "Style template (never cited)",
+            "description": "Sample paper the agent imitates in form — never cited inline.",
+            "examples": "Your prior paper, seminary exemplar"
+        },
+        "other": {
+            "label": "Other",
+            "description": "A source that doesn't cleanly fit another category. Use sparingly.",
+            "examples": "Seminary handouts, personal notes"
+        }
+    },
+    "create": {
+        "title": "New exegetical paper",
+        "subtitle": "Set the passage and frame the work for the agent. We'll define rubric, sources, and structural plan next.",
+        "backToList": "Back to list",
+        "submit": "Create and configure",
+        "cancel": "Cancel",
+        "language": {
+            "title": "Paper language",
+            "subtitle": "The language the agent will use to write verses, conclusion, and introduction. Editable later — it always affects the WHOLE paper.",
+            "hint": "Independent of the UI language or the rubric you paste."
+        },
+        "rubric": {
+            "title": "Rubric",
+            "subtitle": "Apply a saved template or use the academic default. You can tweak it in the paper setup later.",
+            "useDefault": "Use your default template ({{name}})",
+            "useDefaultNone": "Use the academic TMS default (no saved templates)",
+            "savedTemplates": "Your saved templates",
+            "noTemplate": "No template — start with the academic TMS default",
+            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\")."
+        },
+        "brief": {
+            "title": "Paper framing",
+            "subtitle": "What did your professor assign? What angle do you want to take? This guides the agent across EVERY step.",
+            "placeholder": "Ex: My professor assigned an exegetical analysis of Hebrews 1:1-4 with a Christological focus. I want to argue that the final revelation in the Son establishes the thematic superiority of the epistle.",
+            "optional": "Optional but strongly recommended. You can edit it later.",
+            "characterCount": "{{count}} / {{max}} characters",
+            "tip": "The clearer the framing, the more cohesive the paper. Mention the passage, the emphasis (Christological, ecclesiological, etc.), and any explicit professor expectations."
+        },
+        "toast": {
+            "created": "Paper created — let's configure it",
+            "createFailed": "Could not create the paper. Please try again."
+        }
+    },
+    "paperSetup": {
+        "loading": "Loading configuration...",
+        "subtitle": "Academic configuration: rubric, style guide, corpus, and structural plan.",
+        "backToPaper": "Back to paper",
+        "goToPaper": "Go to paper",
+        "notFound": {
+            "title": "Paper not found",
+            "body": "We couldn't load this paper. Go back to the list.",
+            "backCta": "Back to list"
+        },
+        "subSteps": {
+            "rubric": {
+                "tab": "Rubric",
+                "heading": "Paper rubric",
+                "description": "Upload the seminary's rubric or use the academic TMS default. Sets corpus minimums and structural emphases.",
+                "loading": "Loading rubric...",
+                "provenance": {
+                    "extracted-from-document": "Extracted from document",
+                    "extracted-from-text": "Extracted from text",
+                    "system-default": "System default",
+                    "from-template": "From template",
+                    "user-edited": "Edited"
+                },
+                "extract": {
+                    "openCta": "Extract from text",
+                    "title": "Extract rubric from text",
+                    "subtitle": "Paste the rubric or brief your professor gave you. We extract it into a structured form you can review and adjust.",
+                    "textareaLabel": "Rubric or assignment text",
+                    "textareaPlaceholder": "Paste the seminary's rubric, the assignment brief, or the professor's instructions.\n\nE.g. 'The exegetical paper must include technical Greek analysis backed by at least two critical commentaries (WBC, NIGTC, etc.), a technical lexicon (BDAG), and a theological dictionary (TDNT/NIDNTTE)...'",
+                    "outputLanguageLabel": "Justifications in:",
+                    "outputLanguageHint": "(paper language, not input language)",
+                    "submit": "Extract and replace rubric",
+                    "extracting": "Extracting rubric...",
+                    "tooShort": "Text is too short. Paste at least a paragraph with instructions.",
+                    "confirmReplaceTitle": "Replace the current rubric",
+                    "confirmReplaceBody": "We'll replace the current rubric with the one extracted from the text. Your manual edits will be discarded.",
+                    "confirmReplaceCta": "Yes, replace",
+                    "success": "Rubric extracted — review below",
+                    "failed": "Could not extract the rubric. Check the text or edit manually.",
+                    "overloaded": "Gemini is currently overloaded. Try again in a few seconds — demand spikes are temporary.",
+                    "confidenceHigh": "High confidence",
+                    "confidenceMedium": "Medium confidence",
+                    "confidenceLow": "Low confidence",
+                    "confidenceHint": {
+                        "high": "The extraction is complete. Still review the key fields.",
+                        "medium": "The extraction needed some inference. Review requirements and justifications.",
+                        "low": "The extraction has gaps. We recommend filling in what's missing manually."
+                    },
+                    "reviewNotesTitle": "Extractor notes"
+                },
+                "metadata": {
+                    "title": "General",
+                    "descriptionLabel": "Rubric description",
+                    "descriptionPlaceholder": "e.g. TMS NT800 rubric — evaluates technical exegesis with syntactic analysis, interaction with critical sources, and discussion of theological implications.",
+                    "descriptionHint": "This is the rubric document's own description (what the seminary evaluates). Different from the paper framing you wrote at creation (what your professor assigned + your angle).",
+                    "citationStandardLabel": "Citation standard",
+                    "citationStandardPlaceholder": "e.g. TMS / Turabian, SBL Handbook, Chicago 17",
+                    "fromGuide": "From your style guide",
+                    "matchGuide": "Match the guide ({{standard}})",
+                    "matchGuideNoGuide": "No active guide — orchestrator uses its TMS default",
+                    "pickPreset": "Pick a known standard…",
+                    "custom": "Custom (free text)",
+                    "mismatchWarning": "The rubric asks for \"{{rubric}}\" but your guide is configured as \"{{guide}}\". The orchestrator honors the rubric for this paper.",
+                    "lengthLabel": "Expected length",
+                    "lengthUnitPages": "Pages",
+                    "lengthUnitWords": "Words",
+                    "lengthMinPlaceholder": "Min.",
+                    "lengthMaxPlaceholder": "Max.",
+                    "lengthClear": "No limit specified"
+                },
+                "requirements": {
+                    "title": "Corpus requirements",
+                    "subtitle": "Minimum and maximum sources per type. The Corpus tab uses this for gap detection.",
+                    "addRequirement": "Add requirement",
+                    "removeRequirement": "Remove requirement",
+                    "minLabel": "Minimum",
+                    "maxLabel": "Maximum",
+                    "maxUnlimited": "(no limit)",
+                    "justificationLabel": "Academic justification",
+                    "justificationPlaceholder": "Why is this type necessary? This is shown to the student in gap detection.",
+                    "empty": "The rubric has no requirements. Add at least one or reset to default.",
+                    "duplicateError": "There is already a requirement for this type. Edit the existing one."
+                },
+                "structural": {
+                    "title": "Structural recommendations",
+                    "subtitle": "Source types that should be emphasized in each step. Seeds the suggestions in the structural plan.",
+                    "section": {
+                        "introduction": "Introduction",
+                        "verse": "Verses",
+                        "conclusion": "Conclusion"
+                    },
+                    "emphasizedTypesLabel": "Emphasized types",
+                    "justificationLabel": "Justification",
+                    "noExpectation": "No specific recommendation for this step."
+                },
+                "actions": {
+                    "save": "Save rubric",
+                    "reset": "Reset to academic default",
+                    "resetConfirmTitle": "Reset to academic default",
+                    "resetConfirmBody": "We'll discard all your edits and apply the TMS default rubric. This action cannot be undone.",
+                    "resetConfirmCta": "Yes, reset",
+                    "saved": "Rubric updated",
+                    "saveFailed": "Could not save the rubric",
+                    "resetDone": "Rubric reset to default",
+                    "resetFailed": "Could not reset the rubric"
+                },
+                "summary": {
+                    "editCta": "Edit rubric",
+                    "requirementsTitle": "Corpus requirements",
+                    "structuralTitle": "Structural recommendations",
+                    "optionalCount_one": "+ {{count}} optional recommended requirement",
+                    "optionalCount_other": "+ {{count}} optional recommended requirements",
+                    "optionalCount": "+ {{count}} optional recommended"
+                },
+                "templates": {
+                    "title": "Rubric templates",
+                    "subtitle": "Apply a saved template or save the current rubric for reuse on other papers.",
+                    "applyLabel": "Apply a saved template",
+                    "applyPlaceholder": "pick a template",
+                    "applyCta": "Apply",
+                    "applyConfirmTitle": "Replace the current rubric",
+                    "applyConfirmBody": "We'll replace the current rubric with the chosen template. Your manual edits will be discarded.",
+                    "applyConfirmCta": "Yes, apply template",
+                    "applied": "Template applied",
+                    "appliedBadge": "Applied",
+                    "applyFailed": "Could not apply the template",
+                    "saveCta": "Save as template",
+                    "saveHint": "Save the current rubric to reuse it across papers.",
+                    "emptyHint": "No templates yet. Once you tweak this rubric, you can save it here.",
+                    "namePromptLabel": "Template name",
+                    "namePromptPlaceholder": "e.g. TMS NT800 Hebrews",
+                    "saveConfirm": "Save template",
+                    "nameRequired": "Enter a name for the template",
+                    "saved": "Template saved to your library",
+                    "saveFailed": "Could not save the template"
+                }
+            },
+            "manifest": {
+                "tab": "Style guide",
+                "heading": "Style guide manifest",
+                "description": "Verify the mechanical rules extracted from your guide (footnotes, ibid, quotation marks). Correct anything before generating.",
+                "noGuide": "No active guide attached. Upload one from your profile so the manifest can be extracted.",
+                "noManifest": {
+                    "title": "Manifest not extracted yet",
+                    "body": "Your guide is loaded but the mechanical rules haven't been extracted. This converts them to a structured format the orchestrator can enforce deterministically.",
+                    "extractCta": "Extract rules now",
+                    "extracting": "Extracting...",
+                    "extracted": "Rules extracted",
+                    "failed": "Could not extract the manifest",
+                    "overloaded": "Gemini is overloaded. Try again in a few seconds.",
+                    "corpusNotReady": "The guide's text hasn't finished processing yet. Wait a few seconds and retry."
+                },
+                "card": {
+                    "citationStyleLabel": "Citation style",
+                    "extractedAt": "Extracted",
+                    "model": "Model",
+                    "confidence": {
+                        "label": "Confidence",
+                        "high": "high",
+                        "medium": "medium",
+                        "low": "low"
+                    },
+                    "reExtract": "Re-extract",
+                    "reExtractConfirm": "This will replace the current manifest with a new extraction. Continue?"
+                },
+                "footnotes": {
+                    "title": "Footnotes",
+                    "firstMention": "First mention",
+                    "subsequentMention": "Subsequent mention",
+                    "ibidEnabled": "Ibid allowed",
+                    "ibidDisabled": "Ibid NOT allowed",
+                    "ibidPageOverride": "Allows \"Ibid., 47\" when the page differs",
+                    "examplesTitle": "Rendered examples",
+                    "exampleEmpty": "The extractor produced no examples. Consider re-extracting."
+                },
+                "bibliography": {
+                    "title": "Bibliography",
+                    "entryTemplate": "Entry template",
+                    "sortByLabel": "Sort by",
+                    "sortBy": {
+                        "author-surname": "Author surname",
+                        "order-of-appearance": "Order of appearance"
+                    },
+                    "useDashTrue": "Uses 3-em dash for repeated authors",
+                    "useDashFalse": "Does NOT use 3-em dash (full name each time)"
+                },
+                "quotations": {
+                    "title": "Quotations",
+                    "blockThreshold": "Block-quote threshold",
+                    "blockThresholdValue": "{{count}} words",
+                    "primaryQuoteMark": "Primary quote mark",
+                    "secondaryQuoteMark": "Secondary quote mark",
+                    "ellipsis": "Ellipsis",
+                    "interpolationBrackets": "Interpolation brackets"
+                },
+                "transliteration": {
+                    "title": "Transliteration",
+                    "scheme": "Scheme",
+                    "useDiacriticsTrue": "Preserves diacritics / macrons",
+                    "useDiacriticsFalse": "No diacritics",
+                    "bodyRequired": "Transliteration required in body",
+                    "bodyOptional": "Transliteration optional in body",
+                    "none": "The guide doesn't specify transliteration"
+                },
+                "additionalRules": {
+                    "title": "Additional rules",
+                    "empty": "No additional free-form rules."
+                },
+                "extractionNotes": {
+                    "title": "Extractor notes"
+                }
+            },
+            "corpus": {
+                "tab": "Corpus",
+                "heading": "Paper corpus",
+                "description": "Upload extracts specific to this passage with their academic type. We flag what's missing per the rubric.",
+                "gap": {
+                    "metTitle": "Your corpus meets the rubric",
+                    "metBody": "{{count}} sources attached — every minimum is satisfied. You can move on to the structural plan.",
+                    "gapsTitle": "{{satisfied}} of {{total}} requirements met",
+                    "gapsBody": "You are {{missing}} sources short of meeting the rubric. The details below indicate what types to add.",
+                    "noRubric": "No rubric is attached yet. Configure the rubric in the first tab before loading the corpus.",
+                    "uploadForType": "Upload a {{type}} to cover this requirement",
+                    "uploadForTypeShort": "Upload"
+                },
+                "list": {
+                    "title": "Attached sources",
+                    "empty": "No sources yet. Tap \"Add source\" above or \"Upload\" on any missing requirement.",
+                    "addCta": "Add source",
+                    "extractCta": "Extract from my library",
+                    "excerptsBadge_one": "{{count}} excerpt",
+                    "excerptsBadge_other": "{{count}} excerpts",
+                    "remove": "Remove source"
+                },
+                "extract": {
+                    "dialogTitle": "Extract excerpts from your library",
+                    "dialogSubtitle": "Pick one or more indexed resources from your library. We'll retrieve the most relevant excerpts for the paper's passage. You can review and edit them afterwards.",
+                    "footerEmpty": "Select at least one resource to continue.",
+                    "footerCount_one": "{{count}} resource selected",
+                    "footerCount_other": "{{count}} resources selected",
+                    "footerWithReplace_one": "{{count}} resource selected · {{replaces}} will replace existing excerpts",
+                    "footerWithReplace_other": "{{count}} resources selected · {{replaces}} will replace existing excerpts",
+                    "submit": "Extract excerpts",
+                    "submitting": "Extracting...",
+                    "willReplace": "Will replace current excerpts",
+                    "filterAll": "All ({{count}})",
+                    "notIndexedTitle": "Some resources aren't ready",
+                    "notIndexedBody_one": "{{count}} selected resource isn't indexed yet. Remove it from the selection or wait for the auto-indexer to finish.",
+                    "notIndexedBody_other": "{{count}} selected resources aren't indexed yet. Remove them from the selection or wait for the auto-indexer to finish.",
+                    "toast": {
+                        "success_one": "{{count}} source added with curated excerpts",
+                        "success_other": "{{count}} sources added with curated excerpts",
+                        "failed": "Couldn't extract excerpts. Try again."
+                    }
+                },
+                "excerpts": {
+                    "expand": "Show curated excerpts",
+                    "collapse": "Hide excerpts",
+                    "delete": "Delete this excerpt",
+                    "save": "Save changes",
+                    "discard": "Discard",
+                    "editedBadge": "Edited",
+                    "noAnchor": "Excerpt {{index}}",
+                    "emptyWarning": "This source has no excerpts selected — it won't contribute to generation.",
+                    "toast": {
+                        "saved": "Changes saved",
+                        "saveFailed": "Couldn't save changes"
+                    }
+                },
+                "balance": {
+                    "standard_one": "{{count}} std page",
+                    "standard_other": "{{count}} std pages",
+                    "premium_one": "{{count}} prem page",
+                    "premium_other": "{{count}} prem pages"
+                },
+                "readiness": {
+                    "indexed": "Ready",
+                    "extracting": "Processing text",
+                    "indexing": "Indexing",
+                    "needsExtraction": "Not processed",
+                    "needsIndexing": "Not indexed",
+                    "failed": "Failed"
+                },
+                "upload": {
+                    "title": "Add a source to the corpus",
+                    "dialogSubtitle": "Upload a new PDF/EPUB or reuse one from your library. The academic type decides whether it covers a rubric requirement.",
+                    "modeUpload": "Upload new",
+                    "modeLibrary": "My library",
+                    "fileLabel": "File (PDF or EPUB)",
+                    "librarySearchPlaceholder": "Search by title or author...",
+                    "libraryLoading": "Loading your library...",
+                    "libraryEmpty": "Your library is empty. Upload one from here or from Library.",
+                    "libraryAllAttached": "Every library document is already attached to this paper.",
+                    "librarySearchEmpty": "No matches. Try a different search term.",
+                    "displayNameLabel": "Corpus label",
+                    "displayNamePlaceholder": "e.g. Lane WBC 47a, pp. 1-30",
+                    "typeLabel": "Academic type",
+                    "typeDescription": "Pick the type that best describes the source. The rubric uses this type to decide whether it satisfies minimums.",
+                    "citationKeyLabel": "Citation key",
+                    "citationKeyPlaceholder": "e.g. Lane",
+                    "citationKeyHint": "Used in footnotes. Leave empty and we derive it from the corpus.",
+                    "submit": "Upload and add to corpus",
+                    "submitFromLibrary": "Add to corpus",
+                    "uploading": "Uploading... {{progress}}%",
+                    "modelPaperHint": "Style templates are used as form models only. They are NEVER cited inline.",
+                    "fileRequired": "Choose a file first",
+                    "labelTooShort": "Label is too short (3 characters minimum)"
+                },
+                "toast": {
+                    "added": "Source added to corpus",
+                    "addFailed": "Could not add the source. Please try again.",
+                    "removed": "Source removed",
+                    "removeFailed": "Could not remove the source.",
+                    "typeUpdated": "Type updated",
+                    "typeUpdateFailed": "Could not update the type"
+                }
+            },
+            "plan": {
+                "tab": "Structural plan",
+                "heading": "Structural plan",
+                "description": "For each step (intro, verse, conclusion) confirm or adjust which source types the agent should prioritize. Suggestions come from the rubric.",
+                "kinds": {
+                    "introduction": "Introduction",
+                    "verse": "Verses",
+                    "conclusion": "Conclusion"
+                },
+                "kindDescription": {
+                    "introduction": "Written last but appears first. Frames the thesis and positions the passage.",
+                    "verse": "Verse-by-verse analysis: translation, morphology, syntax, source interaction.",
+                    "conclusion": "Synthesizes accepted analyses without introducing new arguments."
+                },
+                "rubricSuggestion": "Rubric suggestion",
+                "rubricEmpty": "The rubric has no emphasis for this step. Pick the types that fit your paper.",
+                "noRubric": "No rubric attached yet. Configure the rubric first to see academic suggestions.",
+                "emphasizedTypesLabel": "Types to prioritize",
+                "emphasizedTypesHint": "The agent cites these types generously in this step.",
+                "addType": "Add type",
+                "deemphasizedToggle": "Show types to de-emphasize",
+                "deemphasizedTypesLabel": "Types to de-emphasize",
+                "deemphasizedTypesHint": "These appear only briefly, without leading the argument.",
+                "noteLabel": "Your note (optional)",
+                "notePlaceholder": "e.g. 'For verses I want strong lexical emphasis because translation decisions carry the argument.'",
+                "noteHint": "Your reasoning is preserved for later reference.",
+                "saveButton": "Save plan",
+                "resetButton": "Reset to rubric suggestion",
+                "saved": "Plan updated",
+                "saveFailed": "Could not save the plan",
+                "savedHint": "Plan last updated",
+                "neverSaved": "You have not saved a custom plan yet. The rubric applies as the active suggestion."
+            }
+        }
+    },
+    "setup": {
+        "cancel": "Cancel",
+        "passage": {
+            "stepTitle": "Passage",
+            "stepSubtitle": "Pick the biblical range to study. Validated against the canon (66 books) on the spot.",
+            "modeFreeText": "Free text",
+            "modePicker": "Picker",
+            "freeTextPlaceholder": "e.g. Hebrews 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
+            "pickBook": "Pick a book",
+            "testamentOt": "Old Testament",
+            "testamentNt": "New Testament",
+            "chapter": "Ch.",
+            "chapterEnd": "Ch. end",
+            "verse": "Verse",
+            "verseEnd": "Verse end",
+            "helperHint": "Supports abbreviations, accents, and both separators (Heb 1:1 / Heb 1.1).",
+            "parsedAs": "Recognized as"
+        }
+    },
+    "list": {
+        "loading": "Loading papers...",
+        "loadFailed": "Couldn't load your papers.",
+        "passageLabel": "Passage",
+        "phaseLabel": "Status",
+        "phase": {
+            "configuring": "Configuring",
+            "in-progress": "In progress",
+            "assembled": "Assembled",
+            "archived": "Archived"
+        },
+        "openPaper": "Open paper",
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "filters": {
+            "searchPlaceholder": "Search by passage or title...",
+            "all": "All",
+            "showArchived": "Include archived",
+            "noMatches": "No papers match your search.",
+            "noMatchesHint": "Try adjusting the filters or clearing the search.",
+            "clear": "Clear filters",
+            "countAll_one": "{{count}} paper",
+            "countAll_other": "{{count}} papers",
+            "countFiltered": "{{visible}} of {{total}}"
+        }
+    },
+    "detail": {
+        "back": "Back to list",
+        "loading": "Loading paper...",
+        "openSetup": "Configure",
+        "archive": "Archive",
+        "archiveConfirm": "Confirm",
+        "stepsTitle": "Paper steps",
+        "stepsSubtitle": "Verse by verse, conclusion, introduction, and assembly. You accept or regenerate each step before moving on.",
+        "generateCta": "Generate first step",
+        "stepsEmpty": {
+            "title": "No steps generated yet",
+            "body_one": "We'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
+            "body_other": "We'll produce 1 step per verse ({{verseCount}}) plus conclusion, introduction, and assembly.",
+            "body": "We'll produce one step per verse of the passage, plus conclusion, introduction, and final assembly."
+        },
+        "steps": {
+            "startCta": "Start generation",
+            "generating": "Generating...",
+            "failedHint": "Something failed while generating this step. Try again.",
+            "editHint": "Manually edited — citation verification does NOT auto-run.",
+            "hintPlaceholder": "e.g. more syntax, more theology, cite Cockerill more",
+            "kind": {
+                "verse": "Verse",
+                "conclusion": "Conclusion",
+                "introduction": "Introduction",
+                "assembly": "Final assembly"
+            },
+            "state": {
+                "pending": "Pending",
+                "generating": "Generating",
+                "awaiting-review": "Ready for review",
+                "accepted": "Accepted",
+                "failed": "Failed"
+            },
+            "action": {
+                "generate": "Generate",
+                "retry": "Retry",
+                "accept": "Accept",
+                "regenerate": "Regenerate",
+                "regenerateWithHint": "Hint & regenerate",
+                "applyHint": "Apply hint",
+                "editManual": "Edit manually",
+                "editAccepted": "Edit accepted content",
+                "saveEdit": "Save edit"
+            },
+            "gate": {
+                "multiChapter": "v1 only supports single-chapter passages. Edit the passage to a single chapter to start.",
+                "noVerses": "v1 requires explicit verses. Edit the passage to include start and end verses."
+            },
+            "toast": {
+                "seeded": "Steps created — start with the first one",
+                "seedFailed": "Couldn't create the steps",
+                "seedShapeError": "Passage doesn't qualify for v1 (must be a single chapter with explicit verses)",
+                "generateFailed": "Couldn't generate the step",
+                "accepted": "Step accepted",
+                "acceptFailed": "Couldn't accept the step",
+                "edited": "Edit saved",
+                "editFailed": "Couldn't save the edit"
+            }
+        },
+        "rubric": {
+            "title": "Rubric",
+            "none": "No rubric configured. Required before generating.",
+            "changeCta": "Edit in setup",
+            "requirementsCount_one": "{{count}} requirement",
+            "requirementsCount_other": "{{count}} requirements",
+            "lengthPages": "{{min}}–{{max}} pp.",
+            "lengthWords": "{{min}}–{{max}} words",
+            "lengthMinPages": "≥{{min}} pp.",
+            "lengthMinWords": "≥{{min}} words"
+        },
+        "styleGuide": {
+            "title": "Style guide",
+            "none": "No guide attached. Required before generating.",
+            "inheritedHint": "Inherited from your active guide",
+            "changeCta": "Edit in setup"
+        },
+        "sources": {
+            "title": "Project corpus",
+            "none": "No sources yet. Add them so the orchestrator can interact with them.",
+            "addCta": "Edit in setup",
+            "remove": "Remove source"
+        },
+        "notFound": {
+            "title": "Paper not found",
+            "body": "The paper you're looking for doesn't exist or was archived. Go back to the list.",
+            "backCta": "Back to list"
+        },
+        "toast": {
+            "archived": "Paper archived",
+            "archiveFailed": "Couldn't archive the paper",
+            "sourceRemoved": "Source removed",
+            "sourceRemoveFailed": "Couldn't remove the source"
+        }
+    }
+}

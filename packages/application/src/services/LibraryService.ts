@@ -1,4 +1,10 @@
-import { LibraryResourceEntity, ResourceType } from '@dosfilos/domain';
+import {
+    LibraryResourceEntity,
+    ResourceType,
+    type LibraryResource,
+    type ResourceIndexStatus,
+    type SourceType as ExegesisSourceType,
+} from '@dosfilos/domain';
 import {
     FirebaseLibraryRepository,
     FirebaseStorageService,
@@ -217,6 +223,49 @@ export class LibraryService {
         return this.libraryRepository.findCoreResources();
     }
 
+    /**
+     * Combined readiness probe used by the v1.5 exegesis "extract from
+     * library" UI. Mirrors the gating logic of the auto-index trigger
+     * (`packages/functions/src/library/autoIndexOnExtractionReady.ts`)
+     * so the badge the user sees matches what the trigger will (or
+     * will not) do for each resource.
+     *
+     * Resolution order — first matching condition wins:
+     *   1. extraction failed → 'failed'
+     *   2. extraction in flight (pending/processing) → 'extracting'
+     *   3. indexing failed → 'failed'
+     *   4. indexing in flight → 'indexing'
+     *   5. indexed at the current schema → 'indexed'
+     *   6. extraction ready but extractor version not eligible for
+     *      auto-index (e.g. legacy '2.0-gemini') → 'needs-indexing'
+     *   7. anything else (typically resources without
+     *      `textExtractionStatus` set yet) → 'needs-extraction'
+     *
+     * Note: the user CANNOT trigger reindexing themselves — the
+     * `processWithGemini`/`reprocessWithLlamaParse` callables are
+     * admin-only by design. Resources stuck on 'needs-indexing' /
+     * 'failed' can still be used in `'full-document'` mode (the
+     * orchestrator falls back to `textContent`); they just can't be
+     * source of curated excerpts. The corpus picker disables the
+     * "extract excerpts" toggle for those.
+     */
+    getResourceIndexStatus(resource: LibraryResource): ResourceIndexStatus {
+        const INDEXER_VERSION_CURRENT = '2.0-structured';
+        const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = ['3.0-llamaparse', '4.0-gemini-standard'];
+
+        if (resource.textExtractionStatus === 'failed') return 'failed';
+        if (resource.textExtractionStatus === 'pending'
+            || resource.textExtractionStatus === 'processing') return 'extracting';
+        if (resource.indexingStatus === 'failed') return 'failed';
+        if (resource.indexingStatus === 'processing') return 'indexing';
+        if (resource.indexingStatus === 'ready'
+            && resource.indexerVersion === INDEXER_VERSION_CURRENT) return 'indexed';
+        if (resource.textExtractionStatus === 'ready'
+            && resource.extractionVersion
+            && !AUTO_INDEX_EXTRACTORS.includes(resource.extractionVersion)) return 'needs-indexing';
+        return 'needs-extraction';
+    }
+
     subscribeToUserResources(
         userId: string,
         callback: (resources: LibraryResourceEntity[]) => void,
@@ -261,6 +310,14 @@ export class LibraryService {
             metadata?: any;
             isCore?: boolean;
             coreContext?: 'exegesis' | 'homiletics' | 'generic';
+            /**
+             * v1.5 commit 6: cache the exegesis-grade classification
+             * the user picked the first time they extracted from this
+             * resource. Pass `null` to explicitly clear (rare —
+             * usually only when the user changes their mind in the
+             * extraction dialog).
+             */
+            exegeticalType?: ExegesisSourceType | null;
         }
     ): Promise<void> {
         console.log(`📝 Updating resource ${id}:`, updates);

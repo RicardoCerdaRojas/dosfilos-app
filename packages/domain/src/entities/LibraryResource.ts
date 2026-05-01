@@ -1,4 +1,5 @@
 import { WorkflowPhase } from './SermonWorkflow';
+import type { SourceType as ExegesisSourceType } from '../exegesis/entities/SourceType';
 
 export type ResourceType = 'theology' | 'grammar' | 'commentary' | 'article' | 'other';
 
@@ -7,10 +8,38 @@ export type TextExtractionStatus = 'pending' | 'processing' | 'ready' | 'failed'
 /**
  * Which extractor produced the text content.
  * - '3.0-llamaparse': Primary, best quality (structured pages, preserves Greek/Hebrew/tables)
- * - '2.0-gemini': Fallback, Gemini 2.0 Flash extraction
- * - 'fallback-pdfparse': Last resort, local pdf-parse library
+ * - '4.0-gemini-standard': Standard tier, Gemini 2.0 Flash with the same `<!-- page: N -->`
+ *   contract as LlamaParse — eligible for the auto-index trigger.
+ * - '2.0-gemini': Legacy Gemini extraction, predates the structured contract.
+ * - 'fallback-pdfparse': Last resort, local pdf-parse library.
  */
-export type ExtractionVersion = '3.0-llamaparse' | '2.0-gemini' | 'fallback-pdfparse';
+export type ExtractionVersion =
+    | '3.0-llamaparse'
+    | '4.0-gemini-standard'
+    | '2.0-gemini'
+    | 'fallback-pdfparse';
+
+/**
+ * Indexing job status (chunks + embeddings) written by the cloud
+ * functions in `packages/functions/src/library/indexStructuredDocument.ts`.
+ * Distinct from `textExtractionStatus` — a resource can be `ready`-extracted
+ * but still `processing`/`failed` for indexing.
+ */
+export type IndexingStatus = 'processing' | 'ready' | 'failed';
+
+/**
+ * Combined readiness state for the v1.5 exegesis "extract from library"
+ * flow. Computed by `LibraryService.getResourceIndexStatus()` from the
+ * raw fields on the resource. Used by the corpus picker to badge each
+ * library resource and gate the "extract excerpts" toggle.
+ */
+export type ResourceIndexStatus =
+    | 'indexed'           // Ready to be queried via retrieveChunks (chunks + embeddings present)
+    | 'extracting'        // Cloud Function is still parsing the file
+    | 'indexing'          // Extraction done; auto-index trigger in flight
+    | 'needs-extraction'  // No textExtractionStatus or 'pending' — never started
+    | 'needs-indexing'    // Extraction ready but with a version that the indexer ignores (legacy)
+    | 'failed';           // Either extraction or indexing reported failure
 
 export interface LibraryResource {
     id: string;
@@ -25,6 +54,36 @@ export interface LibraryResource {
     extractionVersion?: ExtractionVersion; // Which extractor produced textContent
     extractedWithLlamaParse?: boolean; // Convenience flag
     textExtractionStatus: TextExtractionStatus;
+    /**
+     * Indexing job status (chunks + embeddings) written by the
+     * `indexStructuredDocument` cloud function. Undefined for legacy
+     * resources that were never indexed. The auto-index trigger fires
+     * after extraction completes and updates this field.
+     */
+    indexingStatus?: IndexingStatus;
+    /**
+     * Indexer schema version (e.g. '2.0-structured'). Used by the
+     * auto-index trigger to detect already-indexed resources and skip
+     * re-work. Also used by the readiness probe to flag resources
+     * indexed under an older schema.
+     */
+    indexerVersion?: string;
+    /**
+     * Granular exegesis classification (commit 6 of v1.5). Cached on
+     * the resource the first time the user picks it for excerpt
+     * extraction so subsequent papers get a pre-filled type instead
+     * of the always-generic default. Distinct from `type` (the coarse
+     * theology/commentary/grammar trio used by Faculty + Sermon
+     * Generator) — exegesis cares about much finer distinctions
+     * (`commentary-critical` vs `commentary-expository`,
+     * `lexicon-technical` vs `theological-dictionary`, etc.). Storing
+     * it here means it follows the resource across all papers; the
+     * user only classifies once per recurso, not once per paper.
+     *
+     * Optional: legacy resources don't have it; the extraction
+     * dialog falls back to a coarse-type-derived default when absent.
+     */
+    exegeticalType?: ExegesisSourceType;
     mimeType: string;
     sizeBytes: number;
     characterCount?: number; // Total character count of extracted text
@@ -56,6 +115,14 @@ export class LibraryResourceEntity implements LibraryResource {
     public preferredForPhases?: WorkflowPhase[];
     public metadata?: Record<string, any>;
     public coreStores?: ('exegesis' | 'homiletics' | 'generic')[];
+    /**
+     * Set post-construct via `(entity as any).exegeticalType = …`
+     * by the repo deserializer (commit 6 of v1.5). Declared here so
+     * `Partial<LibraryResourceEntity>` patches accept it — the class
+     * doesn't take it through the constructor because all the v1.5
+     * cache fields are owned by deserialization, not creation.
+     */
+    public exegeticalType?: ExegesisSourceType;
 
     constructor(
         public id: string,

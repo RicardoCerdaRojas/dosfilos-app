@@ -146,11 +146,6 @@
         "toastSuccessRemoved": "Removed from all Core stores",
         "toastError": "Error updating stores"
     },
-    "usage": {
-        "queriesLabel": "Queries / month",
-        "docsLabel": "Personal docs",
-        "upgradeButton": "Upgrade plan"
-    },
     "balance": {
         "title": "Processing pages",
         "subtitle": "Available balance for document extraction",
@@ -158,6 +153,7 @@
         "premium": "Premium",
         "standardHelp": "Gemini 2.0 Flash · narrative books",
         "premiumHelp": "LlamaParse · tables, multi-column, scanned",
+        "split": "Plan: {{plan}} · Packs: {{pack}}",
         "buyButton": "Buy pages",
         "loading": "Loading balance…",
         "redirecting": "Redirecting to Stripe…",
