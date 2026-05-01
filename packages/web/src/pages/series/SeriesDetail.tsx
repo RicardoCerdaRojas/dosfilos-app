@@ -8,6 +8,7 @@ import {
     Loader2,
     NotebookPen,
     ExternalLink,
+    MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -347,30 +348,45 @@ function PericopeSection({
                     </p>
                   )}
                 </div>
-                {hasPaper ? (
+                <div className="flex items-center gap-1.5">
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={() => navigate(`/dashboard/exegesis/${p.paperId}`)}
+                    variant="ghost"
+                    onClick={() =>
+                      navigate(
+                        `/dashboard/faculty/new?seriesId=${series.id}&pericopeId=${p.id}`,
+                      )
+                    }
+                    title={t('pericope.panel.askFaculty') as string}
+                    aria-label={t('pericope.panel.askFaculty') as string}
                   >
-                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                    {t('pericope.panel.openPaper')}
+                    <MessageCircle className="h-3.5 w-3.5" />
                   </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => handleCreatePaper(p)}
-                    disabled={isCreating}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 disabled:opacity-50"
-                  >
-                    {isCreating ? (
-                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                      <NotebookPen className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    {t('pericope.panel.createPaper')}
-                  </Button>
-                )}
+                  {hasPaper ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate(`/dashboard/exegesis/${p.paperId}`)}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                      {t('pericope.panel.openPaper')}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleCreatePaper(p)}
+                      disabled={isCreating}
+                      className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 disabled:opacity-50"
+                    >
+                      {isCreating ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <NotebookPen className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      {t('pericope.panel.createPaper')}
+                    </Button>
+                  )}
+                </div>
               </li>
             );
           })}

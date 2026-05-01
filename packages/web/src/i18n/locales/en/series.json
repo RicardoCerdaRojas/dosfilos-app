@@ -108,6 +108,7 @@
             "openPaper": "Open paper",
             "paperBadge": "Paper started",
             "remove": "Remove pericope",
+            "askFaculty": "Ask Faculty with this pericope loaded",
             "toast": {
                 "paperCreated": "Exegetical paper created",
                 "paperFailed": "Couldn't create the paper",

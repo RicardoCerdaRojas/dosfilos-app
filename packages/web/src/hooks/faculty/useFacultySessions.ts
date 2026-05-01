@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { useTranslation } from 'react-i18next';
-import type { SupportedLanguage } from '@dosfilos/domain';
+import type { AIChatSessionContext, SupportedLanguage } from '@dosfilos/domain';
 
 
 export function useFacultySessions() {
@@ -25,9 +25,22 @@ export function useFacultySessions() {
             agentId,
             initialMessage,
             projectId,
-        }: { agentId: string; initialMessage?: string; projectId?: string }) => {
+            context,
+        }: {
+            agentId: string;
+            initialMessage?: string;
+            projectId?: string;
+            context?: AIChatSessionContext;
+        }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return await facultyService.createSession.execute(user.uid, agentId, initialMessage, projectId, language);
+            return await facultyService.createSession.execute(
+                user.uid,
+                agentId,
+                initialMessage,
+                projectId,
+                language,
+                context,
+            );
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid] });

@@ -16,6 +16,7 @@ import {
     BookOpenText,
     BookOpen,
     Mic,
+    MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -153,6 +154,14 @@ export function ExegesisPaperPage() {
                     >
                         <Settings2 className="h-3.5 w-3.5" />
                         {t('detail.openSetup')}
+                    </Link>
+                    <Link
+                        to={`/dashboard/faculty/new?paperId=${paper.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 h-8 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                        title={t('detail.askFaculty.tooltip') as string}
+                    >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        {t('detail.askFaculty.cta')}
                     </Link>
                     <GenerateSermonButton
                         paper={paper}

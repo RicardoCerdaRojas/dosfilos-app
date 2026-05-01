@@ -688,6 +688,10 @@
             "sourceRemoved": "Fuente quitada",
             "sourceRemoveFailed": "No se pudo quitar la fuente"
         },
+        "askFaculty": {
+            "cta": "Preguntar a Faculty",
+            "tooltip": "Abre Faculty con el contexto de este paper cargado"
+        },
         "generateSermon": {
             "cta": "Generar sermón",
             "ctaShort": "Sermón",

@@ -688,6 +688,10 @@
             "sourceRemoved": "Source removed",
             "sourceRemoveFailed": "Couldn't remove the source"
         },
+        "askFaculty": {
+            "cta": "Ask Faculty",
+            "tooltip": "Opens Faculty with this paper's context loaded"
+        },
         "generateSermon": {
             "cta": "Generate sermon",
             "ctaShort": "Sermon",

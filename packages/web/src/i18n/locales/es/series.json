@@ -108,6 +108,7 @@
             "openPaper": "Abrir paper",
             "paperBadge": "Paper iniciado",
             "remove": "Quitar perícopa",
+            "askFaculty": "Preguntar a Faculty con esta perícopa cargada",
             "toast": {
                 "paperCreated": "Paper exegético creado",
                 "paperFailed": "No se pudo crear el paper",
