@@ -1,5 +1,6 @@
 export { GeminiExegesisOrchestrator } from './GeminiExegesisOrchestrator';
 export { GeminiPaperRubricExtractor } from './GeminiPaperRubricExtractor';
+export { GeminiPaperToSermonTransformer } from './GeminiPaperToSermonTransformer';
 export { GeminiStyleGuideManifestExtractor } from './GeminiStyleGuideManifestExtractor';
 export {
     DeterministicStyleFormatter,
