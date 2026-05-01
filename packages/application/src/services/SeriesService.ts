@@ -1,5 +1,9 @@
 import { FirebaseSeriesRepository, GeminiPlanGenerator } from '@dosfilos/infrastructure';
-import { SermonSeriesEntity } from '@dosfilos/domain';
+import {
+    SermonSeriesEntity,
+    type PlannedSermonStatus,
+    type SyntacticUnit,
+} from '@dosfilos/domain';
 import { LibraryService } from './LibraryService';
 
 export class SeriesService {
@@ -210,8 +214,23 @@ export class SeriesService {
         userId: string,
         plan: {
             series: Partial<SermonSeriesEntity>;
-            sermons: { title: string; description: string; passage?: string; week: number }[];
+            sermons: {
+                title: string;
+                description: string;
+                passage?: string;
+                week: number;
+                // Pericope-assistant-driven fields (Phase 3). All optional —
+                // legacy callers (manual SeriesForm, thematic planner) keep
+                // working unchanged.
+                paperId?: string;
+                syntacticUnit?: SyntacticUnit;
+                status?: PlannedSermonStatus;
+            }[];
             frequency?: 'weekly' | 'biweekly' | 'monthly' | 'flexible';
+            expositoryAssistant?: {
+                version?: string;
+                status?: 'pending' | 'running' | 'reviewed';
+            };
         }
     ): Promise<SermonSeriesEntity> {
         try {
@@ -241,10 +260,25 @@ export class SeriesService {
                     title: sermonData.title,
                     description: sermonData.description,
                     passage: sermonData.passage || '', // Ensure passage exists
-                    scheduledDate: scheduledDate
+                    scheduledDate: scheduledDate,
+                    paperId: sermonData.paperId,
+                    syntacticUnit: sermonData.syntacticUnit,
+                    status: sermonData.status,
                     // draftId is omitted until user starts developing
                 };
             });
+
+            // Merge pericope-assistant metadata into expository without
+            // clobbering pre-existing fields (book, chapterRange) the
+            // caller may have set.
+            const incomingMetadata = plan.series.metadata ?? {};
+            const expository = plan.expositoryAssistant
+                ? {
+                      ...incomingMetadata.expository,
+                      pericopeAssistantVersion: plan.expositoryAssistant.version,
+                      pericopeAssistantStatus: plan.expositoryAssistant.status,
+                  }
+                : incomingMetadata.expository;
 
             // 1. Create Series Entity with planned sermons in metadata
             const series = SermonSeriesEntity.create({
@@ -254,7 +288,8 @@ export class SeriesService {
                 startDate: startDate,
                 type: plan.series.type!,
                 metadata: {
-                    ...plan.series.metadata,
+                    ...incomingMetadata,
+                    expository,
                     plannedSermons: plannedSermons
                 },
                 resourceIds: plan.series.resourceIds || [],
