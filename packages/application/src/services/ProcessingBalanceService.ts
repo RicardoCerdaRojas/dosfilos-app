@@ -2,7 +2,6 @@ import {
     doc,
     getDoc,
     getFirestore,
-    increment,
     serverTimestamp,
     setDoc,
     updateDoc,
@@ -33,6 +32,10 @@ export class InsufficientBalanceError extends Error {
 }
 
 const ZERO_BALANCE: ProcessingBalance = {
+    planStandardPages: 0,
+    planPremiumPages: 0,
+    packStandardPages: 0,
+    packPremiumPages: 0,
     standardPagesAvailable: 0,
     premiumPagesAvailable: 0,
     standardSpentTotal: 0,
@@ -42,10 +45,14 @@ const ZERO_BALANCE: ProcessingBalance = {
 /**
  * Service that manages the per-user `processingBalance` document field.
  *
- * Storage convention (mirrors the rest of the app — flat user doc with nested
- * objects, no separate sub-collection): the balance lives at
- * `users/{uid}.processingBalance`. Writes use `increment()` so concurrent
- * extraction completions can decrement safely without races.
+ * Storage: flat user doc with nested object at `users/{uid}.processingBalance`.
+ *
+ * Consumption order is **plan first, pack second** — the plan bucket resets
+ * monthly via the Stripe invoice webhook, so letting it expire wastes value;
+ * the pack bucket persists for 12 months. Writes recompute the legacy
+ * `*PagesAvailable` aggregates to keep existing consumers (admin UI, Library
+ * banner, upload gate) working without forcing them to know about the new
+ * buckets.
  */
 export class ProcessingBalanceService {
     private readonly USERS = 'users';
@@ -54,13 +61,36 @@ export class ProcessingBalanceService {
         const db = getFirestore();
         const snap = await getDoc(doc(db, this.USERS, userId));
         if (!snap.exists()) return { ...ZERO_BALANCE };
-        const balance = snap.data()?.processingBalance as ProcessingBalance | undefined;
-        return balance ? { ...ZERO_BALANCE, ...balance } : { ...ZERO_BALANCE };
+        const balance = snap.data()?.processingBalance as Partial<ProcessingBalance> | undefined;
+        if (!balance) return { ...ZERO_BALANCE };
+        // Backfill missing buckets from legacy shape: pre-refactor docs only
+        // have `{standardPagesAvailable, premiumPagesAvailable}` set. Treat
+        // those as packs (the conservative choice — they survive plan
+        // renewals). The next renewal grant adds plan pages on top.
+        const planStandard = balance.planStandardPages ?? 0;
+        const planPremium = balance.planPremiumPages ?? 0;
+        const packStandard = balance.packStandardPages
+            ?? balance.standardPagesAvailable
+            ?? 0;
+        const packPremium = balance.packPremiumPages
+            ?? balance.premiumPagesAvailable
+            ?? 0;
+        return {
+            planStandardPages: planStandard,
+            planPremiumPages: planPremium,
+            packStandardPages: packStandard,
+            packPremiumPages: packPremium,
+            standardPagesAvailable: planStandard + packStandard,
+            premiumPagesAvailable: planPremium + packPremium,
+            standardSpentTotal: balance.standardSpentTotal ?? 0,
+            premiumSpentTotal: balance.premiumSpentTotal ?? 0,
+            updatedAt: balance.updatedAt,
+        };
     }
 
     /**
      * Returns true when the user can afford the given page count in the given
-     * mode without dipping below zero.
+     * mode (plan + pack combined) without dipping below zero.
      */
     async hasCapacity(userId: string, mode: ProcessingMode, pages: number): Promise<boolean> {
         const balance = await this.getBalance(userId);
@@ -72,22 +102,35 @@ export class ProcessingBalanceService {
 
     /**
      * Atomically debits `pages` from the user's balance for the given mode and
-     * increments the `*SpentTotal` counter. Throws `InsufficientBalanceError`
-     * if the user can't afford it (caller should NOT have started the
-     * extraction in that case).
+     * increments the `*SpentTotal` counter. Plan bucket drains first (it
+     * resets monthly so wasting it makes no sense), then the pack bucket.
+     * Throws `InsufficientBalanceError` if the combined buckets can't cover
+     * the request.
      */
     async consume(userId: string, mode: ProcessingMode, pages: number): Promise<void> {
         if (pages <= 0) return;
         const balance = await this.getBalance(userId);
-        const available = mode === 'standard'
-            ? balance.standardPagesAvailable
-            : balance.premiumPagesAvailable;
-        if (available < pages) {
-            throw new InsufficientBalanceError({ needed: pages, available, mode });
+        const planAvailable = mode === 'standard' ? balance.planStandardPages : balance.planPremiumPages;
+        const packAvailable = mode === 'standard' ? balance.packStandardPages : balance.packPremiumPages;
+        const total = planAvailable + packAvailable;
+        if (total < pages) {
+            throw new InsufficientBalanceError({ needed: pages, available: total, mode });
         }
+
+        const fromPlan = Math.min(planAvailable, pages);
+        const fromPack = pages - fromPlan;
+
+        const newPlan = planAvailable - fromPlan;
+        const newPack = packAvailable - fromPack;
 
         const db = getFirestore();
         const ref = doc(db, this.USERS, userId);
+        const planField = mode === 'standard'
+            ? 'processingBalance.planStandardPages'
+            : 'processingBalance.planPremiumPages';
+        const packField = mode === 'standard'
+            ? 'processingBalance.packStandardPages'
+            : 'processingBalance.packPremiumPages';
         const availableField = mode === 'standard'
             ? 'processingBalance.standardPagesAvailable'
             : 'processingBalance.premiumPagesAvailable';
@@ -95,43 +138,88 @@ export class ProcessingBalanceService {
             ? 'processingBalance.standardSpentTotal'
             : 'processingBalance.premiumSpentTotal';
 
+        // Use SET semantics (not increment) for the bucket fields because
+        // we computed exact new values above based on the consumption split
+        // — concurrent decrements would corrupt that split. The
+        // `*SpentTotal` counter still uses increment because it's
+        // monotonic and order-independent.
         await updateDoc(ref, {
-            [availableField]: increment(-pages),
-            [spentField]: increment(pages),
+            [planField]: newPlan,
+            [packField]: newPack,
+            [availableField]: newPlan + newPack,
+            [spentField]: (mode === 'standard'
+                ? balance.standardSpentTotal
+                : balance.premiumSpentTotal) + pages,
             'processingBalance.updatedAt': serverTimestamp(),
         });
     }
 
     /**
-     * Credits `pages` to the user's balance — used by the Stripe webhook when
-     * a credit pack is purchased and by the bonus-inicial logic when a plan is
-     * activated. Idempotent given a stable caller (the webhook is responsible
-     * for deduplicating per session id).
+     * Credits `pages` to the user's PACK bucket. Used by the Stripe webhook
+     * when a credit pack is purchased. Idempotent given a stable caller (the
+     * webhook deduplicates per Stripe session id before invoking).
      */
     async addPack(userId: string, mode: ProcessingMode, pages: number): Promise<void> {
         if (pages <= 0) return;
+        const balance = await this.getBalance(userId);
+        const newPack = (mode === 'standard' ? balance.packStandardPages : balance.packPremiumPages) + pages;
+        const newPlan = mode === 'standard' ? balance.planStandardPages : balance.planPremiumPages;
+
         const db = getFirestore();
         const ref = doc(db, this.USERS, userId);
-        const field = mode === 'standard'
-            ? 'processingBalance.standardPagesAvailable'
-            : 'processingBalance.premiumPagesAvailable';
 
-        // setDoc with merge so the document field exists for first-time users.
+        // Ensure the nested object exists (first-time users have no balance).
         await setDoc(
             ref,
-            {
-                processingBalance: {
-                    standardPagesAvailable: 0,
-                    premiumPagesAvailable: 0,
-                    standardSpentTotal: 0,
-                    premiumSpentTotal: 0,
-                },
-            },
+            { processingBalance: { ...ZERO_BALANCE } },
             { merge: true },
         );
 
+        const packField = mode === 'standard'
+            ? 'processingBalance.packStandardPages'
+            : 'processingBalance.packPremiumPages';
+        const availableField = mode === 'standard'
+            ? 'processingBalance.standardPagesAvailable'
+            : 'processingBalance.premiumPagesAvailable';
+
         await updateDoc(ref, {
-            [field]: increment(pages),
+            [packField]: newPack,
+            [availableField]: newPlan + newPack,
+            'processingBalance.updatedAt': serverTimestamp(),
+        });
+    }
+
+    /**
+     * SETs the user's PLAN bucket to the given page count for the given
+     * mode. Used by the monthly billing-cycle webhook to reset the plan
+     * quota at the start of each billing period (no rollover). Pack pages
+     * are untouched. Called by both `setPlanQuota` (server, admin SDK) and
+     * the bonus-inicial flow during subscription activation.
+     */
+    async setPlanQuota(userId: string, mode: ProcessingMode, pages: number): Promise<void> {
+        const balance = await this.getBalance(userId);
+        const newPlan = Math.max(0, pages);
+        const packAvailable = mode === 'standard' ? balance.packStandardPages : balance.packPremiumPages;
+
+        const db = getFirestore();
+        const ref = doc(db, this.USERS, userId);
+
+        await setDoc(
+            ref,
+            { processingBalance: { ...ZERO_BALANCE } },
+            { merge: true },
+        );
+
+        const planField = mode === 'standard'
+            ? 'processingBalance.planStandardPages'
+            : 'processingBalance.planPremiumPages';
+        const availableField = mode === 'standard'
+            ? 'processingBalance.standardPagesAvailable'
+            : 'processingBalance.premiumPagesAvailable';
+
+        await updateDoc(ref, {
+            [planField]: newPlan,
+            [availableField]: newPlan + packAvailable,
             'processingBalance.updatedAt': serverTimestamp(),
         });
     }
