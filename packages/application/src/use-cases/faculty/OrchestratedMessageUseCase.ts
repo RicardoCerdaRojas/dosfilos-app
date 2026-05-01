@@ -9,9 +9,18 @@ import {
     ResponseMode,
     ConcreteResponseMode,
     DEFAULT_LANGUAGE,
+    formatPassageReference,
     resolveLocalized,
 } from '@dosfilos/domain';
-import type { SupportedLanguage, InlineAttachment, MessageAttachmentMeta } from '@dosfilos/domain';
+import type {
+    SupportedLanguage,
+    InlineAttachment,
+    MessageAttachmentMeta,
+    IExegeticalPaperRepository,
+    ISeriesRepository,
+    SermonSeriesEntity,
+    PlannedSermon,
+} from '@dosfilos/domain';
 import { generateId } from '../../utils/generateId';
 import { CoreLibraryRAGService, RetrievedChunk, getRetrievalConfigForMode } from '../../services/CoreLibraryRAGService';
 
@@ -158,7 +167,15 @@ export class OrchestratedMessageUseCase {
         private agentRepository: IAIAgentRepository,
         private chatRepository: IAIChatRepository,
         private generatorService: IAIGeneratorService,
-        private projectRepository?: IAIProjectRepository
+        private projectRepository?: IAIProjectRepository,
+        // Optional refs for the Phase 4 enrichment block. Both are
+        // additive: when omitted, the orchestrator skips the
+        // hydration step and behaves as before. The composition root
+        // wires them in `FacultyService` so any chat session can
+        // surface paper / series / pericope context the user opened
+        // it from.
+        private paperRepository?: IExegeticalPaperRepository,
+        private seriesRepository?: ISeriesRepository,
     ) { }
 
     async execute(
@@ -238,6 +255,22 @@ export class OrchestratedMessageUseCase {
                 projectSourceIds = project.sourceIds;
                 console.log(`[Orchestrator] Project "${project.title}" scopes RAG to ${projectSourceIds.length} source(s)`);
             }
+        }
+
+        // ── Paper / series / pericope context enrichment ──────────────────────
+        // Sessions launched from an exegetical paper, a series detail,
+        // or a specific pericope carry refs in `session.context`. We
+        // hydrate them and prepend a compact block to the user message
+        // so the model knows the surface the question is anchored on.
+        //
+        // Why prepend (not inline the assembled paper): a paper can be
+        // 8-15k chars; the question may not need it. The compact block
+        // (passage + brief + phase + pericope justification) is enough
+        // to ground responses; deeper material rides RAG when the
+        // model actually queries the corpus.
+        const contextBlock = await this.buildSessionContextBlock(userId, session.context, language);
+        if (contextBlock) {
+            enrichedMessage = `${contextBlock}\n\n${enrichedMessage}`;
         }
 
         const history = [...session.messages, userMessage];
@@ -653,6 +686,116 @@ Responde solo con el título, sin comillas.`;
         }
         return Array.from(byKey.values());
     }
+
+    /**
+     * Builds the compact context block prepended to the user message
+     * when the session was launched from a paper / series / pericope.
+     * Returns null when there's no context (or all refs failed to
+     * hydrate) so the caller can skip prepending entirely.
+     *
+     * Refs hydrate in parallel; missing repositories or unresolvable
+     * ids are silently dropped so the chat keeps working with a
+     * weaker prompt instead of throwing.
+     */
+    private async buildSessionContextBlock(
+        userId: string,
+        context: { paperId?: string; seriesId?: string; pericopeId?: string } | undefined,
+        language: SupportedLanguage,
+    ): Promise<string | null> {
+        if (!context) return null;
+        if (!context.paperId && !context.seriesId) return null;
+
+        const isSpanish = language !== 'en';
+        const lines: string[] = [];
+
+        // Paper enrichment. The repo's `getPaper(ownerId, paperId)`
+        // gate ensures we don't leak across users — we pass the
+        // session's userId, which the chat repo already validated
+        // owns the session.
+        if (context.paperId && this.paperRepository) {
+            try {
+                const paper = await this.paperRepository
+                    .getPaper(userId, context.paperId)
+                    .catch(() => null);
+                if (paper) {
+                    const passage = formatPassageReference(paper.passage, isSpanish ? 'es' : 'en');
+                    if (isSpanish) {
+                        lines.push(`Paper exegético en curso: "${paper.title ?? passage}" (${passage}, fase: ${paper.phase}).`);
+                        if (paper.assignmentBrief) {
+                            lines.push(`Encuadre del paper: ${paper.assignmentBrief}`);
+                        }
+                    } else {
+                        lines.push(`Active exegetical paper: "${paper.title ?? passage}" (${passage}, phase: ${paper.phase}).`);
+                        if (paper.assignmentBrief) {
+                            lines.push(`Paper framing: ${paper.assignmentBrief}`);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('[Orchestrator] paper hydration failed:', err);
+            }
+        }
+
+        // Series + pericope enrichment.
+        if (context.seriesId && this.seriesRepository) {
+            try {
+                const series = await this.seriesRepository.findById(context.seriesId);
+                if (series) {
+                    const seriesLine = isSpanish
+                        ? `Serie expositiva en curso: "${series.title}".`
+                        : `Active expository series: "${series.title}".`;
+                    lines.push(seriesLine);
+                    if (context.pericopeId) {
+                        const pericope = findPericope(series, context.pericopeId);
+                        if (pericope?.syntacticUnit) {
+                            const u = pericope.syntacticUnit;
+                            const passageLabel = formatUnitPassage(u);
+                            if (isSpanish) {
+                                lines.push(`Perícopa anclada: "${pericope.title}" (${passageLabel}).`);
+                                if (u.justification) {
+                                    lines.push(`Justificación sintáctica: ${u.justification}`);
+                                }
+                            } else {
+                                lines.push(`Anchored pericope: "${pericope.title}" (${passageLabel}).`);
+                                if (u.justification) {
+                                    lines.push(`Syntactic justification: ${u.justification}`);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('[Orchestrator] series hydration failed:', err);
+            }
+        }
+
+        if (lines.length === 0) return null;
+        const header = isSpanish ? '[Contexto del usuario]' : '[User context]';
+        return `${header}\n${lines.join('\n')}`;
+    }
+}
+
+function findPericope(
+    series: SermonSeriesEntity,
+    pericopeId: string,
+): PlannedSermon | null {
+    const planned = series.metadata?.plannedSermons ?? [];
+    return planned.find((p) => p.id === pericopeId) ?? null;
+}
+
+function formatUnitPassage(unit: {
+    book: string;
+    chapterStart: number;
+    verseStart: number;
+    chapterEnd: number;
+    verseEnd: number;
+}): string {
+    const { book, chapterStart, verseStart, chapterEnd, verseEnd } = unit;
+    if (chapterStart === chapterEnd) {
+        if (verseStart === verseEnd) return `${book} ${chapterStart}:${verseStart}`;
+        return `${book} ${chapterStart}:${verseStart}-${verseEnd}`;
+    }
+    return `${book} ${chapterStart}:${verseStart}-${chapterEnd}:${verseEnd}`;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
