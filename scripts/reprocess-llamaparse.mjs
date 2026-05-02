@@ -53,11 +53,18 @@ const args = process.argv.slice(2);
 const positional = args.filter((a) => !a.startsWith('--'));
 const resourceId = positional[0];
 const force = args.includes('--force');
+const list = args.includes('--list');
 const asIndex = args.indexOf('--as');
 const adminEmail = asIndex >= 0 && args[asIndex + 1] ? args[asIndex + 1] : 'rdocerda@gmail.com';
+const ownerIndex = args.indexOf('--owner');
+const ownerEmailFilter = ownerIndex >= 0 && args[ownerIndex + 1] ? args[ownerIndex + 1] : null;
 
-if (!resourceId) {
-    console.error('Usage: node scripts/reprocess-llamaparse.mjs <resourceId> [--force] [--as <email>]');
+if (!resourceId && !list) {
+    console.error('Usage:');
+    console.error('  node scripts/reprocess-llamaparse.mjs <resourceId> [--force] [--as <email>]');
+    console.error('  node scripts/reprocess-llamaparse.mjs --list [--owner <email>]');
+    console.error('');
+    console.error('Use --list to see recent library_resources and find the right id.');
     process.exit(1);
 }
 
@@ -120,6 +127,48 @@ async function main() {
             projectId: firebaseConfig.projectId,
             serviceAccountId,
         });
+    }
+
+    // ── List mode — show recent library_resources and exit ─────────
+    if (list) {
+        let ownerUid = null;
+        if (ownerEmailFilter) {
+            try {
+                const ownerUser = await admin.auth().getUserByEmail(ownerEmailFilter);
+                ownerUid = ownerUser.uid;
+                console.log(`📋 Listing recent library_resources owned by ${ownerEmailFilter} (uid=${ownerUid})...`);
+            } catch (err) {
+                console.error(`❌ Owner ${ownerEmailFilter} not found:`, err.message ?? err);
+                process.exit(1);
+            }
+        } else {
+            console.log(`📋 Listing 25 most recently updated library_resources...`);
+        }
+
+        const db = admin.firestore();
+        let q = db.collection('library_resources').orderBy('updatedAt', 'desc').limit(25);
+        if (ownerUid) q = db.collection('library_resources').where('userId', '==', ownerUid).limit(25);
+        const snap = await q.get();
+
+        if (snap.empty) {
+            console.log('   (no resources found)');
+            process.exit(0);
+        }
+
+        for (const doc of snap.docs) {
+            const data = doc.data();
+            const ext = data.extractionVersion ?? '—';
+            const status = data.textExtractionStatus ?? '—';
+            const sizeMB = data.sizeBytes ? `${(data.sizeBytes / 1024 / 1024).toFixed(1)} MB` : '?';
+            const pages = data.pageCount ? `${data.pageCount}p` : '?p';
+            console.log(`\n  ${doc.id}`);
+            console.log(`    title:   ${data.title ?? '(untitled)'}`);
+            console.log(`    author:  ${data.author ?? '—'}`);
+            console.log(`    size:    ${sizeMB} · ${pages}`);
+            console.log(`    status:  ${status} · ${ext}`);
+        }
+        console.log('');
+        process.exit(0);
     }
 
     console.log(`🔍 Looking up admin user ${adminEmail}...`);
