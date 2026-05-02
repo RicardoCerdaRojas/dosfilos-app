@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Loader2, Upload, X } from 'lucide-react';
 import { seriesService } from '@dosfilos/application';
+import type { SermonSeriesEntity } from '@dosfilos/domain';
 import { FirebaseStorageService } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
+import { addDays, daysBetween, parseLocalDate } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +42,10 @@ export function SeriesForm() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!id);
   const [uploading, setUploading] = useState(false);
+  // Hold the original loaded series so onSubmit can compare the
+  // submitted startDate against the persisted one and shift the
+  // planned-sermon dates accordingly when the pastor changes it.
+  const [originalSeries, setOriginalSeries] = useState<SermonSeriesEntity | null>(null);
   
   // Storage Service
   const storageService = new FirebaseStorageService();
@@ -60,6 +66,14 @@ export function SeriesForm() {
   // Watch values for live preview
   const watchedValues = watch();
 
+  // Number of planned sermons whose scheduledDate would shift if the
+  // pastor changes the series startDate. Used to render the heads-up
+  // hint near the date input. Excludes sermons in development (any
+  // status past 'planned' or with a draftId).
+  const shiftablePlannedCount = (originalSeries?.metadata?.plannedSermons ?? []).filter(
+      (p) => !p.draftId && (!p.status || p.status === 'planned') && p.scheduledDate,
+  ).length;
+
   useEffect(() => {
     if (id) {
       loadSeries();
@@ -71,6 +85,7 @@ export function SeriesForm() {
       if (!id) return;
       const series = await seriesService.getSeries(id);
       if (series) {
+        setOriginalSeries(series);
         reset({
           title: series.title,
           description: series.description,
@@ -142,16 +157,45 @@ export function SeriesForm() {
         }
       }
       
-      const payload = {
+      const newStartDate = parseLocalDate(data.startDate);
+      const newEndDate = parseLocalDate(data.endDate);
+
+      const payload: Record<string, unknown> = {
         title: data.title,
         description: data.description,
         coverUrl: data.coverUrl,
-        startDate: data.startDate ? new Date(data.startDate) : undefined, // Optional Date
-        endDate: data.endDate ? new Date(data.endDate) : undefined,
+        startDate: newStartDate,
+        endDate: newEndDate,
       };
 
       if (id) {
-        // Edit Mode
+        // Edit mode. If the pastor changed the start date AND there
+        // are planned sermons that haven't started yet, shift them
+        // by the same delta to preserve their relative spacing.
+        // Sermons already in development (with a draftId, or whose
+        // status moved past `planned`) keep their explicit dates —
+        // those were intentional scheduling decisions and an auto-
+        // shift would surprise the pastor.
+        const oldStartDate = originalSeries?.startDate
+            ? new Date(originalSeries.startDate)
+            : undefined;
+        const shiftedMetadata = computeShiftedMetadata(
+            originalSeries,
+            oldStartDate,
+            newStartDate,
+        );
+        if (shiftedMetadata) {
+            payload.metadata = shiftedMetadata.metadata;
+            if (shiftedMetadata.shiftedCount > 0) {
+                toast.info(
+                    t('form.messages.shiftedSermons', {
+                        count: shiftedMetadata.shiftedCount,
+                        days: shiftedMetadata.deltaDays,
+                    }) as string,
+                );
+            }
+        }
+
         await seriesService.updateSeries(id, payload as any);
         toast.success(t('form.messages.updateSuccess'));
         navigate(`/dashboard/plans/${id}`);
@@ -277,8 +321,17 @@ export function SeriesForm() {
                     <Input
                       id="startDate"
                       type="date"
-                      {...register('startDate')} 
+                      {...register('startDate')}
                     />
+                    {/* Edit-mode notice: changing the start date will
+                        cascade-shift unstarted planned sermons by the
+                        same delta. Sermons already in development keep
+                        their scheduled dates. */}
+                    {id && shiftablePlannedCount > 0 && (
+                      <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-snug">
+                        {t('form.steps.planning.shiftHint', { count: shiftablePlannedCount })}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -486,4 +539,47 @@ export function SeriesForm() {
       />
     </div>
   );
+}
+
+/**
+ * Computes a new `metadata` object with shifted scheduledDates when
+ * the pastor changes the series start date in edit mode. Returns
+ * null when no shift is needed (no original series, no planned
+ * sermons, no date change, etc.).
+ *
+ * Shift policy: ONLY plannedSermons with `status` undefined or
+ * 'planned' AND no `draftId` are shifted. Sermons in development
+ * keep their explicit dates because the pastor may have manually
+ * scheduled them and a silent shift would be surprising.
+ */
+function computeShiftedMetadata(
+    originalSeries: SermonSeriesEntity | null,
+    oldStartDate: Date | undefined,
+    newStartDate: Date | undefined,
+): { metadata: any; shiftedCount: number; deltaDays: number } | null {
+    if (!originalSeries || !oldStartDate || !newStartDate) return null;
+
+    const deltaDays = daysBetween(oldStartDate, newStartDate);
+    if (deltaDays === 0) return null;
+
+    const planned = originalSeries.metadata?.plannedSermons ?? [];
+    if (planned.length === 0) return null;
+
+    let shiftedCount = 0;
+    const updatedPlanned = planned.map((p) => {
+        const isShiftable = !p.draftId && (!p.status || p.status === 'planned');
+        if (isShiftable && p.scheduledDate) {
+            shiftedCount++;
+            return { ...p, scheduledDate: addDays(new Date(p.scheduledDate), deltaDays) };
+        }
+        return p;
+    });
+
+    if (shiftedCount === 0) return null;
+
+    return {
+        metadata: { ...originalSeries.metadata, plannedSermons: updatedPlanned },
+        shiftedCount,
+        deltaDays,
+    };
 }

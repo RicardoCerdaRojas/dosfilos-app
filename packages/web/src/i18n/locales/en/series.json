@@ -51,6 +51,8 @@
                 },
                 "startDate": "Start Date",
                 "startDateOptional": "(Optional)",
+                "shiftHint_one": "If you change the date, {{count}} planned sermon will be shifted by the same number of days. Sermons already in development keep their dates.",
+                "shiftHint_other": "If you change the date, {{count}} planned sermons will be shifted by the same number of days. Sermons already in development keep their dates.",
                 "endDate": "End Date (Auto)",
                 "endDatePlaceholder": "Calculated automatically",
                 "sermonCount": "Number of Sermons",
@@ -94,7 +96,9 @@
             "loadError": "Error loading series",
             "saveSuccess": "Series created with {{count}} sermons ready",
             "updateSuccess": "Plan updated successfully",
-            "saveError": "Error saving plan"
+            "saveError": "Error saving plan",
+            "shiftedSermons_one": "{{count}} planned sermon shifted by {{days}} days.",
+            "shiftedSermons_other": "{{count}} planned sermons shifted by {{days}} days."
         }
     },
     "expository": {

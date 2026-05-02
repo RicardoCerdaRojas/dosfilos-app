@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
+import { parseLocalDate } from '@/lib/dateUtils';
 import { useExpositoryAssistant } from '@/hooks/series/useExpositoryAssistant';
 import {
     clearExpositoryDraft,
@@ -1086,25 +1087,6 @@ type PreachableSermonInput = {
     status?: PlannedSermon['status'];
     expositoryEnrichment?: PlannedSermonExpositoryEnrichment;
 };
-
-/**
- * Parses a date string from a `<input type="date">` (always in
- * `YYYY-MM-DD` format) into a Date at LOCAL midnight, never UTC
- * midnight. This matters because `new Date('2026-05-03')` parses as
- * UTC midnight, which in any negative-offset timezone (Chile UTC-3/-4,
- * all of the Americas) becomes the previous calendar day at 9-11pm
- * — so a pastor selecting Sunday May 3 in Santiago would persist
- * Saturday May 2 in any local-day display. Constructing via
- * `new Date(year, monthIndex, day)` produces local-midnight, which
- * is what date inputs semantically mean.
- */
-function parseLocalDate(yyyymmdd: string): Date | undefined {
-    if (!yyyymmdd) return undefined;
-    const parts = yyyymmdd.split('-').map(Number);
-    if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return undefined;
-    const [year, month, day] = parts as [number, number, number];
-    return new Date(year, month - 1, day, 0, 0, 0, 0);
-}
 
 function derivePassState(
     isPending: boolean,
