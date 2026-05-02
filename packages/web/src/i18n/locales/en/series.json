@@ -142,6 +142,44 @@
                 "level1": "Small text",
                 "level2": "Medium text",
                 "level3": "Large text"
+            },
+            "methodologyButton": "Methodology",
+            "methodologyButtonHint": "Learn the homiletical methodology behind this assistant"
+        },
+        "methodology": {
+            "dialogTitle": "Expository assistant methodology",
+            "step": "Step",
+            "close": "Close",
+            "prev": "Back",
+            "next": "Next",
+            "start": "Get started",
+            "goToStep": "Go to step",
+            "steps": {
+                "problem": {
+                    "title": "From text to sermon without betraying the author",
+                    "body": "Planning an expository series requires crossing a hard bridge: moving from biblical text syntax to a sermon the congregation can receive. The most common trap is jumping from text to homiletical outline without passing through the author's argumentative logic. This assistant walks you step by step through a rigorous homiletical methodology that keeps each level distinct."
+                },
+                "levels": {
+                    "title": "Three levels that are NOT the same",
+                    "body": "Exegetical division follows the author's syntax and literary markers. Argumentative division identifies the function of each block within the book. Preachable division decides what gets preached alone, what combines, and what splits. Confusing the three levels is the most common cause of sermons that sound biblical but don't say what the text says. This assistant keeps them separate in its pipeline."
+                },
+                "pipeline": {
+                    "title": "Five cascading phases",
+                    "body": "Panorama identifies genre, purpose, and pastoral problem. Macrostructure divides the book into its large blocks. Microstructure finds exegetical units within each macro, with genre-specific criteria (participial chains for Greek epistle, waw-consecutive for Hebrew narrative, parallelism for poetry, etc.). Preachable conversion decides how each unit becomes a sermon. Fidelity review audits the proposal before you create the series."
+                },
+                "output": {
+                    "title": "Two propositions per unit, not one",
+                    "body": "Each preachable unit carries an exegetical hypothesis (what the author does in the text) and a suggested homiletical line (how the listener receives the truth). Keeping them separate prevents the sermon from leaping to application without first explaining the text. We acknowledge they are initial hypotheses — the assistant reads panoramically, not exegetically. Final validation is your work with the detailed exegetical paper."
+                },
+                "original": {
+                    "title": "Original text when available",
+                    "body": "For the New Testament we download the Greek text from SBLGNT. For the Old Testament we download Hebrew from WLC (Westminster Leningrad Codex). The assistant cites syntactic markers directly from the original. If the download fails over network or the book isn't in the source, we fall back to translation (RVR1960/ASV) and notify you — analysis continues, with transparency that it's approximate."
+                },
+                "heritage": {
+                    "title": "A methodology with seminary lineage",
+                    "body": "The pipeline draws from the historical homiletical tradition of Haddon Robinson (Big Idea preaching), Bryan Chapell (Christ-Centered Preaching), and Sidney Greidanus (The Modern Preacher and the Ancient Text). It does not replace your exegetical work: it accelerates it. The structure, phase names, and genre-specific criteria all come directly from that tradition.",
+                    "creditsLink": "See full source attribution at /credits →"
+                }
             }
         },
         "results": {

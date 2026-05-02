@@ -14,7 +14,12 @@ import {
     Type,
     Check,
     EyeOff,
+    GraduationCap,
 } from 'lucide-react';
+import {
+    hasMethodologyBeenShown,
+    MethodologyPresentation,
+} from '@/components/expository/MethodologyPresentation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -113,6 +118,17 @@ export function ExpositoryAssistantPage() {
     // changes go through `togglePass` so they ride a View Transition
     // when supported, producing a card↔chip morph.
     const [collapsedPasses, setCollapsedPasses] = useState<Set<number>>(new Set());
+
+    // Methodology presentation: auto-opens on the first visit ever
+    // to teach the pastor what the 5-pass pipeline actually does and
+    // why. Subsequent visits open it only when the pastor clicks the
+    // "Metodología" button in the header.
+    const [methodologyOpen, setMethodologyOpen] = useState(false);
+    useEffect(() => {
+        if (!hasMethodologyBeenShown()) {
+            setMethodologyOpen(true);
+        }
+    }, []);
 
     // Pase 5 issue triage. Indices into fidelityReview.issues. The
     // two sets are mutually exclusive (toggling one removes the
@@ -500,7 +516,13 @@ export function ExpositoryAssistantPage() {
                     onStart={handleStart}
                     textZoom={textZoom}
                     onTextZoomChange={setTextZoom}
+                    onOpenMethodology={() => setMethodologyOpen(true)}
                     t={t}
+                />
+
+                <MethodologyPresentation
+                    open={methodologyOpen}
+                    onOpenChange={setMethodologyOpen}
                 />
 
                 {/* Collapsed-passes strip. Renders only when at least
@@ -752,6 +774,7 @@ function SetupCard({
     onStart,
     textZoom,
     onTextZoomChange,
+    onOpenMethodology,
     t,
 }: {
     bookId: BibleBookId;
@@ -764,6 +787,7 @@ function SetupCard({
     onStart: () => void;
     textZoom: 1 | 2 | 3;
     onTextZoomChange: (z: 1 | 2 | 3) => void;
+    onOpenMethodology: () => void;
     t: (key: string) => string;
 }) {
     return (
@@ -780,7 +804,18 @@ function SetupCard({
                         {t('expository.setup.subtitle')}
                     </p>
                 </div>
-                <TextZoomControl value={textZoom} onChange={onTextZoomChange} t={t} />
+                <div className="flex items-center gap-2 shrink-0">
+                    <button
+                        type="button"
+                        onClick={onOpenMethodology}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors"
+                        title={t('expository.setup.methodologyButtonHint') as string}
+                    >
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        {t('expository.setup.methodologyButton')}
+                    </button>
+                    <TextZoomControl value={textZoom} onChange={onTextZoomChange} t={t} />
+                </div>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
