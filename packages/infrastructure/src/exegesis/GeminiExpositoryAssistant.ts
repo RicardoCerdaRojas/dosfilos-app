@@ -1,4 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+    GoogleGenerativeAI,
+    HarmBlockThreshold,
+    HarmCategory,
+    type SafetySetting,
+} from '@google/generative-ai';
 import {
     type BookPanorama,
     type ExegeticalUnit,
@@ -109,6 +114,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const model = this.genAI.getGenerativeModel({
             model: this.modelName,
             systemInstruction,
+            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
             generationConfig: {
                 // Pro 2.5 rejects thinkingBudget: 0; default budget is fine.
                 maxOutputTokens: 4096,
@@ -131,7 +137,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             { contextLabel: 'GeminiExpositoryAssistant.runPanorama' },
         );
         const response = result.response;
-        const raw = response.text();
+        const raw = readResponseTextOrThrow(response, 'panorama');
 
         const parsed = parseJsonOrThrow(raw, 'panorama');
         const payload = normalizePanorama(parsed);
@@ -153,8 +159,14 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const model = this.genAI.getGenerativeModel({
             model: this.modelName,
             systemInstruction,
+            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
             generationConfig: {
-                maxOutputTokens: 4096,
+                // Bumped from 4096 → 8192 to match micro/fidelity. The
+                // 4096 ceiling was tight for books with many macro
+                // sections + verbose justification fields, occasionally
+                // truncating the JSON mid-stream and surfacing as a
+                // "non-JSON output" parse error.
+                maxOutputTokens: 8192,
                 temperature: 0.3,
                 topP: 0.9,
                 responseMimeType: 'application/json',
@@ -174,7 +186,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             { contextLabel: 'GeminiExpositoryAssistant.runMacroStructure' },
         );
         const response = result.response;
-        const raw = response.text();
+        const raw = readResponseTextOrThrow(response, 'macroStructure');
 
         const parsed = parseJsonOrThrow(raw, 'macroStructure');
         const payload = normalizeMacroSections(parsed);
@@ -196,6 +208,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const model = this.genAI.getGenerativeModel({
             model: this.modelName,
             systemInstruction,
+            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
             generationConfig: {
                 maxOutputTokens: 8192,
                 temperature: 0.3,
@@ -218,7 +231,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             { contextLabel: 'GeminiExpositoryAssistant.runMicroStructure' },
         );
         const response = result.response;
-        const raw = response.text();
+        const raw = readResponseTextOrThrow(response, 'microStructure');
 
         const parsed = parseJsonOrThrow(raw, 'microStructure');
         const validMacroIds = new Set(input.macroSections.map((m) => m.id));
@@ -241,6 +254,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const model = this.genAI.getGenerativeModel({
             model: this.modelName,
             systemInstruction,
+            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
             generationConfig: {
                 // Larger budget — propositions are 2-3 sentences each
                 // and we may emit 8-20 preachable units.
@@ -269,7 +283,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             { contextLabel: 'GeminiExpositoryAssistant.runPreachableConversion' },
         );
         const response = result.response;
-        const raw = response.text();
+        const raw = readResponseTextOrThrow(response, 'preachableConversion');
 
         const parsed = parseJsonOrThrow(raw, 'preachableConversion');
         const validMicroIds = new Set(input.exegeticalUnits.map((u) => u.id));
@@ -292,6 +306,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const model = this.genAI.getGenerativeModel({
             model: this.modelName,
             systemInstruction,
+            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
             generationConfig: {
                 maxOutputTokens: 8192,
                 // Lower temperature: this is critical audit work; we
@@ -315,7 +330,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             { contextLabel: 'GeminiExpositoryAssistant.runFidelityReview' },
         );
         const response = result.response;
-        const raw = response.text();
+        const raw = readResponseTextOrThrow(response, 'fidelityReview');
 
         const parsed = parseJsonOrThrow(raw, 'fidelityReview');
         const validUnitIds = new Set(input.preachableUnits.map((p) => p.id));
@@ -345,6 +360,68 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
 }
 
 // ── Module-scoped helpers (shared across passes) ────────────────────────
+
+/**
+ * Safety thresholds for the expository pipeline.
+ *
+ * Default Google thresholds block at LOW severity, which the OUTPUT
+ * filter trips on biblical content discussing sin, judgment, false
+ * teachers, or graphic Old-Testament narratives — even when the LLM
+ * is producing legitimate exegetical commentary. The result is empty
+ * `text()` and an undecipherable `parseJsonOrThrow` failure
+ * downstream.
+ *
+ * `BLOCK_MEDIUM_AND_ABOVE` matches the rest of the system
+ * (`GeminiAIService`, `GeminiSermonGenerator`) — still permissive
+ * enough for sermon/exegesis content while keeping a real safety
+ * floor.
+ */
+const EXPOSITORY_SAFETY_SETTINGS: ReadonlyArray<SafetySetting> = [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+];
+
+/**
+ * Reads the response text defensively.
+ *
+ * The bare `response.text()` call returns an empty string when the
+ * candidate finished for a non-STOP reason (SAFETY, RECITATION,
+ * MAX_TOKENS, OTHER). Without this wrapper the downstream
+ * `parseJsonOrThrow` would just see "" and throw an opaque
+ * "non-JSON output:" with nothing useful to debug — which is exactly
+ * the failure mode the user reported on 2 Peter (a book heavy with
+ * "false teachers / immorality / Sodom" content that trips
+ * default-threshold safety filters).
+ */
+function readResponseTextOrThrow(
+    response: { text: () => string; candidates?: ReadonlyArray<{ finishReason?: string; safetyRatings?: unknown }> },
+    passId: string,
+): string {
+    const candidate = response.candidates?.[0];
+    const finishReason = candidate?.finishReason;
+    const text = response.text() ?? '';
+    if (text.trim().length === 0) {
+        const detail = finishReason
+            ? `finishReason=${finishReason}`
+            : 'finishReason=unknown';
+        const safety = candidate?.safetyRatings ? ` safetyRatings=${JSON.stringify(candidate.safetyRatings)}` : '';
+        throw new Error(
+            `GeminiExpositoryAssistant.${passId} returned empty content (${detail}${safety}). ` +
+            `Likely safety-blocked or hit MAX_TOKENS — review prompt or relax safety thresholds.`,
+        );
+    }
+    if (finishReason && finishReason !== 'STOP') {
+        // Got partial content with a non-STOP reason — usually
+        // MAX_TOKENS truncating the JSON mid-stream. Surface clearly
+        // so the bump-tokens fix is obvious.
+        console.warn(
+            `[GeminiExpositoryAssistant] ${passId} non-STOP finishReason=${finishReason} (text length=${text.length})`,
+        );
+    }
+    return text;
+}
 
 function parseJsonOrThrow(raw: string, passId: string): any {
     try {

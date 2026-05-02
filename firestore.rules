@@ -470,5 +470,19 @@ service cloud.firestore {
         && request.resource.data.ownerId == request.auth.uid;
       allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
     }
+
+    // Expository assistant cache (v1.6) — shared across users to amortize
+    // Gemini cost on the 5-pass pipeline. DocId is deterministic
+    // (`${bookId}_${displayLanguage}_${pipelineVersion}`) so two users
+    // analyzing the same book in the same language reuse the same entry.
+    // Same access pattern as the existing shared caches
+    // (passage_cache, quiz_cache, syntax_analysis_cache): any
+    // authenticated user reads and writes; deletion intentionally blocked
+    // (cache is permanent — pipeline-version bumps invalidate by docId).
+    match /expositoryAssistantCache/{cacheId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
   }
 }
