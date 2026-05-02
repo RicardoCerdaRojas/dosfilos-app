@@ -300,7 +300,7 @@
             "preachableFailed": "No se pudieron generar las unidades predicables. Intenta de nuevo.",
             "fidelityFailed": "No se pudo completar la evaluación de fidelidad. Intenta de nuevo.",
             "pipelineDone": "Pipeline completo. Revisa las unidades predicables y los issues antes de crear la serie.",
-            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto.",
             "draftRestored": "Continuamos donde quedaste. (Borrador restaurado).",
             "titleRequired": "Ponle un título a la serie antes de crear.",
             "seriesCreated": "Serie creada. Te llevamos al detalle.",
@@ -404,7 +404,7 @@
             "detected_one": "{{count}} perícopa detectada. Revísala antes de crear la serie.",
             "detected_other": "{{count}} perícopas detectadas. Revísalas antes de crear la serie.",
             "detectFailed": "No se pudo detectar perícopas. Intenta de nuevo.",
-            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto.",
             "titleRequired": "Ponle un título a la serie antes de crear.",
             "seriesCreated": "Serie creada. Te llevamos al detalle.",
             "createFailed": "No se pudo crear la serie."

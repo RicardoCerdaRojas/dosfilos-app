@@ -300,7 +300,7 @@
             "preachableFailed": "Couldn't generate the preachable units. Try again.",
             "fidelityFailed": "Couldn't complete the fidelity review. Try again.",
             "pipelineDone": "Pipeline complete. Review the preachable units and issues before creating the series.",
-            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "overloaded": "Our analysis engine is overloaded. Try again in a minute.",
             "draftRestored": "Continuing where you left off. (Draft restored).",
             "titleRequired": "Give the series a title before creating.",
             "seriesCreated": "Series created. Taking you to the detail view.",
@@ -404,7 +404,7 @@
             "detected_one": "{{count}} pericope detected. Review it before creating the series.",
             "detected_other": "{{count}} pericopes detected. Review them before creating the series.",
             "detectFailed": "Couldn't detect pericopes. Try again.",
-            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "overloaded": "Our analysis engine is overloaded. Try again in a minute.",
             "titleRequired": "Give the series a title before creating.",
             "seriesCreated": "Series created. Taking you to the detail view.",
             "createFailed": "Couldn't create the series."

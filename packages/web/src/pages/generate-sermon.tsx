@@ -35,7 +35,7 @@ export function GenerateSermonPage() {
     }
 
     if (!aiService.isAvailable()) {
-      toast.error('Servicio de IA no disponible. Verifica tu API key de Gemini');
+      toast.error('El motor de análisis no está disponible en este momento. Intenta más tarde.');
       return;
     }
 

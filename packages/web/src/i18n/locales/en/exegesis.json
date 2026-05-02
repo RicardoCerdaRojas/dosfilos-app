@@ -43,7 +43,7 @@
                 "textPlaceholder": "Paste the seminary's rubric or the assignment brief. We'll extract it into a structured form you can adjust afterwards.",
                 "tooShort": "Text is too short. Paste at least a paragraph with instructions.",
                 "blankHint": "We'll create a template seeded with the TMS default that you can adjust later.",
-                "pasteHint": "We'll use Gemini to extract the rubric from your text.",
+                "pasteHint": "We'll use the analysis engine to extract the rubric from your text.",
                 "submit": "Create template"
             },
             "toast": {
@@ -53,7 +53,7 @@
                 "deleteFailed": "Could not delete the template",
                 "created": "Template created",
                 "createFailed": "Could not create the template. Check the text or try again.",
-                "overloaded": "Gemini is overloaded. Try again in a few seconds.",
+                "overloaded": "The analysis engine is overloaded. Try again in a few seconds.",
                 "updated": "Template updated",
                 "updateFailed": "Could not update the template"
             },
@@ -306,7 +306,7 @@
                     "confirmReplaceCta": "Yes, replace",
                     "success": "Rubric extracted — review below",
                     "failed": "Could not extract the rubric. Check the text or edit manually.",
-                    "overloaded": "Gemini is currently overloaded. Try again in a few seconds — demand spikes are temporary.",
+                    "overloaded": "The analysis engine is currently overloaded. Try again in a few seconds — demand spikes are temporary.",
                     "confidenceHigh": "High confidence",
                     "confidenceMedium": "Medium confidence",
                     "confidenceLow": "Low confidence",
@@ -416,7 +416,7 @@
                     "extracting": "Extracting...",
                     "extracted": "Rules extracted",
                     "failed": "Could not extract the manifest",
-                    "overloaded": "Gemini is overloaded. Try again in a few seconds.",
+                    "overloaded": "The analysis engine is overloaded. Try again in a few seconds.",
                     "corpusNotReady": "The guide's text hasn't finished processing yet. Wait a few seconds and retry."
                 },
                 "card": {
@@ -799,7 +799,7 @@
             "toast": {
                 "success": "Sermon generated. Taking you to the draft.",
                 "failed": "Couldn't generate the sermon. Try again.",
-                "overloaded": "Gemini is overloaded. Try again in a minute."
+                "overloaded": "Our analysis engine is overloaded. Try again in a minute."
             }
         }
     }

@@ -43,7 +43,7 @@
                 "textPlaceholder": "Pega la rúbrica del seminario o el brief de la asignación. Lo extraemos a un formato estructurado que después puedes ajustar.",
                 "tooShort": "El texto es muy corto. Pega al menos un párrafo con instrucciones.",
                 "blankHint": "Vamos a crear una plantilla con el default TMS que puedes ajustar después.",
-                "pasteHint": "Vamos a usar Gemini para extraer la rúbrica desde tu texto.",
+                "pasteHint": "Vamos a usar el motor de análisis para extraer la rúbrica desde tu texto.",
                 "submit": "Crear plantilla"
             },
             "toast": {
@@ -53,7 +53,7 @@
                 "deleteFailed": "No se pudo eliminar la plantilla",
                 "created": "Plantilla creada",
                 "createFailed": "No se pudo crear la plantilla. Revisa el texto o intenta de nuevo.",
-                "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos.",
+                "overloaded": "El motor de análisis está sobrecargado. Prueba de nuevo en unos segundos.",
                 "updated": "Plantilla actualizada",
                 "updateFailed": "No se pudo actualizar la plantilla"
             },
@@ -306,7 +306,7 @@
                     "confirmReplaceCta": "Sí, reemplazar",
                     "success": "Rúbrica extraída — revísala más abajo",
                     "failed": "No se pudo extraer la rúbrica. Revisa el texto o ajusta manualmente.",
-                    "overloaded": "Gemini está sobrecargado en este momento. Prueba de nuevo en unos segundos — los picos de demanda son temporales.",
+                    "overloaded": "El motor de análisis está sobrecargado en este momento. Prueba de nuevo en unos segundos — los picos de demanda son temporales.",
                     "confidenceHigh": "Confianza alta",
                     "confidenceMedium": "Confianza media",
                     "confidenceLow": "Confianza baja",
@@ -416,7 +416,7 @@
                     "extracting": "Extrayendo...",
                     "extracted": "Reglas extraídas",
                     "failed": "No se pudo extraer el manifiesto",
-                    "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos.",
+                    "overloaded": "El motor de análisis está sobrecargado. Prueba de nuevo en unos segundos.",
                     "corpusNotReady": "El texto de la guía aún no terminó de procesarse. Esperá unos segundos y reintenta."
                 },
                 "card": {
@@ -799,7 +799,7 @@
             "toast": {
                 "success": "Sermón generado. Te llevamos al borrador.",
                 "failed": "No se pudo generar el sermón. Intenta de nuevo.",
-                "overloaded": "Gemini está saturado. Intenta en un minuto."
+                "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto."
             }
         }
     }
