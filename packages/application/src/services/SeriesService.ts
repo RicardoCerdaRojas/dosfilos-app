@@ -1,5 +1,6 @@
 import {
     FirebaseSeriesRepository,
+    GeminiExpositoryAssistant,
     GeminiPericopeDetector,
     GeminiPlanGenerator,
     RVR1960Repository,
@@ -7,10 +8,16 @@ import {
 } from '@dosfilos/infrastructure';
 import {
     SermonSeriesEntity,
+    type IBibleVersionRepository,
     type PlannedSermonStatus,
     type SyntacticUnit,
 } from '@dosfilos/domain';
 import { DetectPericopesUseCase } from '../use-cases/exegesis/DetectPericopesUseCase';
+import {
+    loadBookVerses,
+    type LoadBookVersesResult,
+} from '../use-cases/exegesis/expository/loadBookVerses';
+import { RunExpositoryPassesUseCase } from '../use-cases/exegesis/expository/RunExpositoryPassesUseCase';
 import { LibraryService } from './LibraryService';
 
 export class SeriesService {
@@ -18,6 +25,10 @@ export class SeriesService {
     private libraryService: LibraryService;
     public detectPericopes: DetectPericopesUseCase;
     public detectPericopesEn: DetectPericopesUseCase;
+    /** v1.5 expository assistant pipeline orchestrator. */
+    public expositoryPasses: RunExpositoryPassesUseCase;
+    private bibleRepoEs: IBibleVersionRepository;
+    private bibleRepoEn: IBibleVersionRepository;
 
     constructor() {
         this.seriesRepository = new FirebaseSeriesRepository();
@@ -33,8 +44,33 @@ export class SeriesService {
         const exegesisModelId =
             (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
         const detector = new GeminiPericopeDetector(apiKey || '', exegesisModelId);
-        this.detectPericopes = new DetectPericopesUseCase(new RVR1960Repository(), detector);
-        this.detectPericopesEn = new DetectPericopesUseCase(new ASVRepository(), detector);
+        this.bibleRepoEs = new RVR1960Repository();
+        this.bibleRepoEn = new ASVRepository();
+        this.detectPericopes = new DetectPericopesUseCase(this.bibleRepoEs, detector);
+        this.detectPericopesEn = new DetectPericopesUseCase(this.bibleRepoEn, detector);
+
+        // v1.5 expository assistant — single GeminiExpositoryAssistant
+        // instance shared across all 5 passes. The wizard loads verses
+        // once via `loadBookVersesForExpository` and threads them into
+        // each pass call.
+        const expositoryAssistant = new GeminiExpositoryAssistant(apiKey || '', exegesisModelId);
+        this.expositoryPasses = new RunExpositoryPassesUseCase(expositoryAssistant);
+    }
+
+    /**
+     * Loads the verse-by-verse text for the v1.5 expository pipeline.
+     * Selects the bible repository by display language so callers
+     * don't need to know which translation backs each language.
+     */
+    loadBookVersesForExpository(input: {
+        bookId: import('@dosfilos/domain').BibleBookId;
+        displayLanguage: 'es' | 'en';
+    }): LoadBookVersesResult {
+        return loadBookVerses({
+            bookId: input.bookId,
+            displayLanguage: input.displayLanguage,
+            bibleRepository: input.displayLanguage === 'en' ? this.bibleRepoEn : this.bibleRepoEs,
+        });
     }
 
     /**

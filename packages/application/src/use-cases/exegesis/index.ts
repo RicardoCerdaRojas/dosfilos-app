@@ -55,3 +55,14 @@ export {
     DetectPericopesUseCase,
     type DetectPericopesInput,
 } from './DetectPericopesUseCase';
+
+// Expository assistant pipeline (v1.5)
+export { loadBookVerses, type LoadBookVersesInput, type LoadBookVersesResult } from './expository/loadBookVerses';
+export {
+    RunExpositoryPassesUseCase,
+    type PanoramaCallInput,
+    type MacroCallInput,
+    type MicroCallInput,
+    type PreachableCallInput,
+    type FidelityCallInput,
+} from './expository/RunExpositoryPassesUseCase';
