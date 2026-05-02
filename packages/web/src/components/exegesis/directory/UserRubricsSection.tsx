@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileCheck2, Pencil, Star, Trash2, Loader2, Plus, Sparkles, AlertTriangle } from 'lucide-react';
+import { FileCheck2, Gauge, Pencil, Star, Trash2, Loader2, Plus, Sparkles, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
-import type { UserRubric } from '@dosfilos/domain';
+import { assessRubricRigor, type RubricRigorLevel, type UserRubric } from '@dosfilos/domain';
 import { UserRubricEditDialog } from './UserRubricEditDialog';
 
 /**
@@ -100,7 +100,10 @@ export function UserRubricsSection() {
                 </div>
             ) : (
                 <ul className="space-y-1.5">
-                    {rubrics.map(r => (
+                    {rubrics.map(r => {
+                        const rigor = assessRubricRigor(r.rubric);
+                        const showLevel = rigor.totalMinimum > 0;
+                        return (
                         <li
                             key={r.id}
                             className="rounded-lg border border-border bg-background px-2.5 py-2 flex items-center gap-2"
@@ -114,8 +117,19 @@ export function UserRubricsSection() {
                                         <Star className="h-3 w-3 fill-current text-success shrink-0" aria-label={t('directory.rubrics.defaultBadge')} />
                                     )}
                                 </div>
-                                <p className="text-[10px] text-muted-foreground truncate">
-                                    {t('directory.rubrics.requirementsCount', { count: r.rubric.sourceRequirements.length })}
+                                <p className="text-[10px] text-muted-foreground truncate inline-flex items-center gap-1">
+                                    {showLevel && (
+                                        <>
+                                            <Gauge className={`h-2.5 w-2.5 shrink-0 ${LEVEL_ICON_TONE[rigor.level]}`} />
+                                            <span className={`font-semibold ${LEVEL_TEXT_TONE[rigor.level]}`}>
+                                                {t(`rubricRigor.level.${rigor.level}`)}
+                                            </span>
+                                            <span className="text-muted-foreground">·</span>
+                                        </>
+                                    )}
+                                    <span>
+                                        {t('directory.rubrics.requirementsCount', { count: r.rubric.sourceRequirements.length })}
+                                    </span>
                                 </p>
                             </div>
                             <div className="flex items-center gap-0.5 shrink-0">
@@ -152,7 +166,8 @@ export function UserRubricsSection() {
                                 </button>
                             </div>
                         </li>
-                    ))}
+                        );
+                    })}
                 </ul>
             )}
 
@@ -327,3 +342,20 @@ function ModeOption({ active, onClick, label }: { active: boolean; onClick: () =
         </button>
     );
 }
+
+// Tones for the inline level chip in each row. Mirrors the tone
+// scheme used inside `RubricRigorIndicator` so the level visual is
+// consistent across surfaces.
+const LEVEL_ICON_TONE: Record<RubricRigorLevel, string> = {
+    pastoral: 'text-muted-foreground',
+    seminary: 'text-info',
+    research: 'text-success',
+    publishable: 'text-success',
+};
+
+const LEVEL_TEXT_TONE: Record<RubricRigorLevel, string> = {
+    pastoral: 'text-muted-foreground',
+    seminary: 'text-info-subtle-foreground',
+    research: 'text-success-subtle-foreground',
+    publishable: 'text-success-subtle-foreground',
+};
