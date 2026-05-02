@@ -22,6 +22,7 @@ export * from './use-cases/dtos';
 
 export * from './ports/IExcerptExtractor';
 export * from './ports/IExegesisOrchestrator';
+export * from './ports/IExpositoryAssistant';
 export * from './ports/IPaperRubricExtractor';
 export * from './ports/IPaperToSermonTransformer';
 export * from './ports/IPericopeDetector';
