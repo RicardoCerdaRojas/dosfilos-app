@@ -35,6 +35,14 @@ import {
     buildPreachableUserMessage,
     PREACHABLE_RESPONSE_SCHEMA,
 } from './expository-prompts/preachableConversion';
+import {
+    buildFidelitySystemInstruction,
+    buildFidelityUserMessage,
+    FIDELITY_RESPONSE_SCHEMA,
+} from './expository-prompts/fidelityReview';
+
+const VALID_FIDELITY_SEVERITIES = ['info', 'warning', 'critical'] as const;
+type ValidFidelitySeverity = typeof VALID_FIDELITY_SEVERITIES[number];
 
 const VALID_SPECIAL_CASES = [
     'salutation',
@@ -275,10 +283,50 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         };
     }
 
-    // ── Pase 5: stub (filled in B.5) ────────────────────────────────────
+    // ── Pase 5: Evaluación de fidelidad ─────────────────────────────────
 
-    async runFidelityReview(_input: FidelityInput): Promise<PassResult<FidelityReview>> {
-        throw new Error('GeminiExpositoryAssistant.runFidelityReview not yet implemented (lands in B.5)');
+    async runFidelityReview(input: FidelityInput): Promise<PassResult<FidelityReview>> {
+        const systemInstruction = buildFidelitySystemInstruction(input.displayLanguage);
+        const userMessage = buildFidelityUserMessage(input);
+
+        const model = this.genAI.getGenerativeModel({
+            model: this.modelName,
+            systemInstruction,
+            generationConfig: {
+                maxOutputTokens: 8192,
+                // Lower temperature: this is critical audit work; we
+                // don't want creative invention of issues, we want
+                // strict fidelity-checking against the methodology.
+                temperature: 0.2,
+                topP: 0.85,
+                responseMimeType: 'application/json',
+                responseSchema: FIDELITY_RESPONSE_SCHEMA as any,
+            },
+        });
+
+        console.log('[GeminiExpositoryAssistant] runFidelityReview', {
+            book: input.book,
+            language: input.displayLanguage,
+            preachableCount: input.preachableUnits.length,
+        });
+
+        const result = await withGeminiRetry(
+            () => model.generateContent(userMessage),
+            { contextLabel: 'GeminiExpositoryAssistant.runFidelityReview' },
+        );
+        const response = result.response;
+        const raw = response.text();
+
+        const parsed = parseJsonOrThrow(raw, 'fidelityReview');
+        const validUnitIds = new Set(input.preachableUnits.map((p) => p.id));
+        const payload = normalizeFidelityReview(parsed, validUnitIds);
+
+        return {
+            payload,
+            modelId: this.modelName,
+            tokensUsed: extractTokens(response.usageMetadata),
+            passVersion: this.passVersion('fidelity', input),
+        };
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────
@@ -449,6 +497,57 @@ function normalizeExegeticalUnits(
         throw new Error('microStructure returned zero valid exegetical units');
     }
     return units.sort((a, b) => a.order - b.order);
+}
+
+function normalizeFidelityReview(
+    raw: any,
+    validUnitIds: ReadonlySet<string>,
+): FidelityReview {
+    if (!raw || typeof raw !== 'object') {
+        throw new Error('fidelityReview response is not an object');
+    }
+
+    const rawConfidence = typeof raw.overallConfidence === 'number'
+        ? raw.overallConfidence
+        : Number(raw.overallConfidence);
+    const overallConfidence = Number.isFinite(rawConfidence)
+        ? Math.min(1, Math.max(0, rawConfidence))
+        : 0.5; // neutral default if the model omitted
+
+    const rawIssues = Array.isArray(raw.issues) ? raw.issues : [];
+    const issues = rawIssues
+        .map((item: any) => {
+            if (!item || typeof item !== 'object') return null;
+            const description = typeof item.description === 'string' ? item.description.trim() : '';
+            if (!description) return null;
+
+            const severity = typeof item.severity === 'string'
+                && (VALID_FIDELITY_SEVERITIES as readonly string[]).includes(item.severity)
+                ? (item.severity as ValidFidelitySeverity)
+                : 'info';
+
+            const rawUnitId = typeof item.unitId === 'string' ? item.unitId.trim() : '';
+            // Drop unitId when it points to a non-existent unit;
+            // treat it as a global issue instead of crashing.
+            const unitId = rawUnitId && validUnitIds.has(rawUnitId) ? rawUnitId : null;
+
+            const recommendation = typeof item.recommendation === 'string' && item.recommendation.trim()
+                ? item.recommendation.trim()
+                : undefined;
+
+            return {
+                unitId,
+                severity,
+                description,
+                ...(recommendation ? { recommendation } : {}),
+            };
+        })
+        .filter((x: unknown): x is NonNullable<typeof x> => x !== null);
+
+    return {
+        overallConfidence,
+        issues,
+    };
 }
 
 function formatPreachablePassage(
