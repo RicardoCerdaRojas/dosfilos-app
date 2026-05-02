@@ -269,37 +269,61 @@ export async function indexResourceChunks(
     try {
         await resourceRef.update({ indexingStatus: 'processing', updatedAt: new Date() });
 
+        const embedStart = Date.now();
+        console.log(`[Index ${resourceId}] Embedding ${chunks.length} chunks...`);
         const embeddings = await embedChunksBatched(chunks.map(c => c.text), geminiKey);
         if (embeddings.length !== chunks.length) {
             throw new Error(`Embedding count mismatch: ${embeddings.length} vs ${chunks.length}`);
         }
+        console.log(`[Index ${resourceId}] Embedded ${embeddings.length} chunks in ${Math.round((Date.now() - embedStart) / 1000)}s`);
 
         await deleteExistingChunks(db, resourceId);
 
+        // Firestore allows up to 500 writes per WriteBatch. For
+        // dictionary-class resources (TDNT, BDAG) we hit 5000+ chunks
+        // — sequential `.set()` calls would take 500-700s on top of
+        // embedding time, blowing past the trigger's 540s timeout.
+        // Batched writes finish in ~10s for the same volume.
         const now = new Date();
-        for (let i = 0; i < chunks.length; i++) {
-            const c = chunks[i];
-            const id = `${resourceId}_chunk_${i}`;
-            await db.collection(CHUNK_COLLECTION).doc(id).set({
-                resourceId,
-                resourceTitle: title,
-                resourceAuthor: author,
-                userId,
-                chunkIndex: i,
-                text: c.text,
-                embedding: FieldValue.vector(embeddings[i]),
-                metadata: {
-                    page: c.page,
-                    section: c.section ?? null,
-                    sectionPath: c.sectionPath,
-                    chunkType: c.chunkType,
-                    startChar: c.charStart,
-                    endChar: c.charEnd,
-                },
-                stores,
-                indexerVersion: INDEXER_VERSION,
-                createdAt: now,
-            });
+        const BATCH_WRITE_LIMIT = 500;
+        const writeStart = Date.now();
+        let writtenChunks = 0;
+        for (let i = 0; i < chunks.length; i += BATCH_WRITE_LIMIT) {
+            const batch = db.batch();
+            const slice = chunks.slice(i, i + BATCH_WRITE_LIMIT);
+            for (let j = 0; j < slice.length; j++) {
+                const c = slice[j]!;
+                const chunkIndex = i + j;
+                const id = `${resourceId}_chunk_${chunkIndex}`;
+                batch.set(db.collection(CHUNK_COLLECTION).doc(id), {
+                    resourceId,
+                    resourceTitle: title,
+                    resourceAuthor: author,
+                    userId,
+                    chunkIndex,
+                    text: c.text,
+                    embedding: FieldValue.vector(embeddings[chunkIndex]),
+                    metadata: {
+                        page: c.page,
+                        section: c.section ?? null,
+                        sectionPath: c.sectionPath,
+                        chunkType: c.chunkType,
+                        startChar: c.charStart,
+                        endChar: c.charEnd,
+                    },
+                    stores,
+                    indexerVersion: INDEXER_VERSION,
+                    createdAt: now,
+                });
+            }
+            await batch.commit();
+            writtenChunks += slice.length;
+            // Heartbeat per batch — without this the indexer is
+            // completely silent for the duration of the writes,
+            // making "is it stuck?" indistinguishable from "still
+            // working" when the next thing happens to be a runtime
+            // timeout kill.
+            console.log(`[Index ${resourceId}] Wrote ${writtenChunks}/${chunks.length} chunks (${Math.round((Date.now() - writeStart) / 1000)}s elapsed)`);
         }
 
         await resourceRef.update({
