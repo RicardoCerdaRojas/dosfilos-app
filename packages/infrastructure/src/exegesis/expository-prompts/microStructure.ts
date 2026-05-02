@@ -1,5 +1,5 @@
 import type { LiteraryGenre, MicroInput } from '@dosfilos/domain';
-import { formatVerses } from './shared';
+import { buildSourcePreamble, formatVerses } from './shared';
 
 /**
  * Pase 3 — Microestructura.
@@ -274,6 +274,7 @@ function genreCriteria(genre: LiteraryGenre, isSpanish: boolean): string {
 export function buildMicroUserMessage(input: MicroInput): string {
     const isSpanish = input.displayLanguage === 'es';
     const macroBlock = formatMacrosForPrompt(input.macroSections, isSpanish);
+    const sourcePreamble = buildSourcePreamble(input.sourceLanguage, input.displayLanguage);
 
     if (isSpanish) {
         return [
@@ -281,7 +282,7 @@ export function buildMicroUserMessage(input: MicroInput): string {
             `Género detectado: ${input.panorama.genre}`,
             '',
             macroBlock,
-            '',
+            sourcePreamble,
             'Texto verso a verso (formato `cap:vers <TAB> texto`):',
             '',
             formatVerses(input.verses),
@@ -296,7 +297,7 @@ export function buildMicroUserMessage(input: MicroInput): string {
         `Detected genre: ${input.panorama.genre}`,
         '',
         macroBlock,
-        '',
+        sourcePreamble,
         'Verse-by-verse text (`ch:v <TAB> text` format):',
         '',
         formatVerses(input.verses),

@@ -269,10 +269,21 @@ export function ExpositoryAssistantPage() {
             );
         }
 
+        // Map the load result's source tag onto the assistant
+        // input's sourceLanguage. Lets the prompts emit the right
+        // preamble (original-greek / original-hebrew / translation
+        // surrogate) so the model knows what it's reading.
+        const sourceLanguage =
+            loaded.source === 'original-greek'
+                ? ('greek' as const)
+                : loaded.source === 'original-hebrew'
+                  ? ('hebrew' as const)
+                  : ('translation' as const);
         const baseInput = {
             book: loaded.book,
             displayLanguage: lang,
             verses: loaded.verses,
+            sourceLanguage,
         };
         const targetOpt = typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {};
 

@@ -1,5 +1,5 @@
 import type { PreachableInput } from '@dosfilos/domain';
-import { formatVerses } from './shared';
+import { buildSourcePreamble, formatVerses } from './shared';
 
 /**
  * Pase 4 — Conversión predicable.
@@ -168,6 +168,7 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
               ? `\n\nGuía suave: el predicador busca aproximadamente ${input.targetPreachableCount} sermones.`
               : `\n\nSoft guide: the preacher targets approximately ${input.targetPreachableCount} sermons.`)
         : '';
+    const sourcePreamble = buildSourcePreamble(input.sourceLanguage, input.displayLanguage);
 
     if (isSpanish) {
         return [
@@ -179,7 +180,7 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
             macroBlock,
             '',
             microBlock,
-            '',
+            sourcePreamble,
             'Texto verso a verso (formato `cap:vers <TAB> texto`):',
             '',
             formatVerses(input.verses),
@@ -198,7 +199,7 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
         macroBlock,
         '',
         microBlock,
-        '',
+        sourcePreamble,
         'Verse-by-verse text (`ch:v <TAB> text` format):',
         '',
         formatVerses(input.verses),

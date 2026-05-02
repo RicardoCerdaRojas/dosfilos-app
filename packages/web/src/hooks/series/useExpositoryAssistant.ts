@@ -33,33 +33,36 @@ export function useExpositoryAssistant() {
                 displayLanguage: input.displayLanguage,
                 verses: input.verses,
             };
-            if (input.targetPreachableCount !== undefined) {
-                payload.targetPreachableCount = input.targetPreachableCount;
-            }
+            if (input.targetPreachableCount !== undefined) payload.targetPreachableCount = input.targetPreachableCount;
+            if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
             return seriesService.expositoryPasses.runPanorama(payload);
         },
     });
 
     const runMacro = useMutation({
         mutationFn: async (input: MacroInput): Promise<PassResult<MacroSection[]>> => {
-            return seriesService.expositoryPasses.runMacroStructure({
+            const payload: Parameters<typeof seriesService.expositoryPasses.runMacroStructure>[0] = {
                 book: input.book,
                 displayLanguage: input.displayLanguage,
                 verses: input.verses,
                 panorama: input.panorama,
-            });
+            };
+            if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            return seriesService.expositoryPasses.runMacroStructure(payload);
         },
     });
 
     const runMicro = useMutation({
         mutationFn: async (input: MicroInput): Promise<PassResult<ExegeticalUnit[]>> => {
-            return seriesService.expositoryPasses.runMicroStructure({
+            const payload: Parameters<typeof seriesService.expositoryPasses.runMicroStructure>[0] = {
                 book: input.book,
                 displayLanguage: input.displayLanguage,
                 verses: input.verses,
                 panorama: input.panorama,
                 macroSections: input.macroSections,
-            });
+            };
+            if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            return seriesService.expositoryPasses.runMicroStructure(payload);
         },
     });
 
@@ -73,16 +76,15 @@ export function useExpositoryAssistant() {
                 macroSections: input.macroSections,
                 exegeticalUnits: input.exegeticalUnits,
             };
-            if (input.targetPreachableCount !== undefined) {
-                payload.targetPreachableCount = input.targetPreachableCount;
-            }
+            if (input.targetPreachableCount !== undefined) payload.targetPreachableCount = input.targetPreachableCount;
+            if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
             return seriesService.expositoryPasses.runPreachableConversion(payload);
         },
     });
 
     const runFidelity = useMutation({
         mutationFn: async (input: FidelityInput): Promise<PassResult<FidelityReview>> => {
-            return seriesService.expositoryPasses.runFidelityReview({
+            const payload: Parameters<typeof seriesService.expositoryPasses.runFidelityReview>[0] = {
                 book: input.book,
                 displayLanguage: input.displayLanguage,
                 verses: input.verses,
@@ -90,7 +92,9 @@ export function useExpositoryAssistant() {
                 macroSections: input.macroSections,
                 exegeticalUnits: input.exegeticalUnits,
                 preachableUnits: input.preachableUnits,
-            });
+            };
+            if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            return seriesService.expositoryPasses.runFidelityReview(payload);
         },
     });
 
@@ -108,6 +112,10 @@ interface BaseInput {
     book: string;
     displayLanguage: 'es' | 'en';
     verses: AssistantVerseInput[];
+    /** v1.6: original-language source tag for the verses, threaded
+     * through to the prompt builders so the model knows what it's
+     * reading (real Greek/Hebrew vs translation surrogate). */
+    sourceLanguage?: 'greek' | 'hebrew' | 'translation';
 }
 
 interface PanoramaInput extends BaseInput {

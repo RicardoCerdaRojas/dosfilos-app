@@ -35,9 +35,8 @@ export class RunExpositoryPassesUseCase {
             book: input.book,
             displayLanguage: input.displayLanguage,
             verses: input.verses,
-            ...(input.targetPreachableCount !== undefined
-                ? { targetPreachableCount: input.targetPreachableCount }
-                : {}),
+            ...(input.targetPreachableCount !== undefined ? { targetPreachableCount: input.targetPreachableCount } : {}),
+            ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
         });
     }
 
@@ -47,6 +46,7 @@ export class RunExpositoryPassesUseCase {
             displayLanguage: input.displayLanguage,
             verses: input.verses,
             panorama: input.panorama,
+            ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
         });
     }
 
@@ -57,6 +57,7 @@ export class RunExpositoryPassesUseCase {
             verses: input.verses,
             panorama: input.panorama,
             macroSections: input.macroSections,
+            ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
         });
     }
 
@@ -68,9 +69,8 @@ export class RunExpositoryPassesUseCase {
             panorama: input.panorama,
             macroSections: input.macroSections,
             exegeticalUnits: input.exegeticalUnits,
-            ...(input.targetPreachableCount !== undefined
-                ? { targetPreachableCount: input.targetPreachableCount }
-                : {}),
+            ...(input.targetPreachableCount !== undefined ? { targetPreachableCount: input.targetPreachableCount } : {}),
+            ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
         });
     }
 
@@ -83,6 +83,7 @@ export class RunExpositoryPassesUseCase {
             macroSections: input.macroSections,
             exegeticalUnits: input.exegeticalUnits,
             preachableUnits: input.preachableUnits,
+            ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
         });
     }
 }
@@ -93,6 +94,8 @@ interface BaseCallInput {
     book: string;
     displayLanguage: 'es' | 'en';
     verses: AssistantVerseInput[];
+    /** v1.6: original-language source tag forwarded into prompts. */
+    sourceLanguage?: 'greek' | 'hebrew' | 'translation';
 }
 
 export interface PanoramaCallInput extends BaseCallInput {

@@ -1,5 +1,5 @@
 import type { FidelityInput } from '@dosfilos/domain';
-import { formatVerses } from './shared';
+import { buildSourcePreamble, formatVerses } from './shared';
 
 /**
  * Pase 5 — Evaluación de fidelidad.
@@ -119,6 +119,7 @@ export function buildFidelityUserMessage(input: FidelityInput): string {
     const macroBlock = formatMacrosForPrompt(input.macroSections, isSpanish);
     const microBlock = formatMicrosForPrompt(input.exegeticalUnits, isSpanish);
     const preachableBlock = formatPreachablesForPrompt(input.preachableUnits, isSpanish);
+    const sourcePreamble = buildSourcePreamble(input.sourceLanguage, input.displayLanguage);
 
     if (isSpanish) {
         return [
@@ -132,7 +133,7 @@ export function buildFidelityUserMessage(input: FidelityInput): string {
             microBlock,
             '',
             preachableBlock,
-            '',
+            sourcePreamble,
             'Texto verso a verso (referencia):',
             '',
             formatVerses(input.verses),
@@ -153,7 +154,7 @@ export function buildFidelityUserMessage(input: FidelityInput): string {
         microBlock,
         '',
         preachableBlock,
-        '',
+        sourcePreamble,
         'Verse-by-verse text (reference):',
         '',
         formatVerses(input.verses),
