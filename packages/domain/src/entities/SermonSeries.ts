@@ -32,6 +32,45 @@ export interface PlannedSermon {
     paperId?: string;             // ExegeticalPaper.id derived from this pericope
     syntacticUnit?: SyntacticUnit; // Only present when produced by the pericope assistant
     status?: PlannedSermonStatus;
+    /**
+     * Expository-assistant enrichment (v1.5+). Captures the
+     * homiletical reasoning the wizard produced — the two-level
+     * proposition (exegetical + homiletical), the pastoral aim, the
+     * special-case treatment, the macro-section the unit belongs to,
+     * and the source ExegeticalUnit ids it combines/splits.
+     *
+     * Optional and additive: planned sermons created by the legacy
+     * pericope assistant (v1) or by hand keep `expositoryEnrichment`
+     * undefined and behave exactly as before.
+     */
+    expositoryEnrichment?: PlannedSermonExpositoryEnrichment;
+}
+
+/**
+ * Surfaces the v1.5 expository-assistant output on the planned sermon
+ * so the SeriesDetail page (and downstream paper / Faculty contexts)
+ * can show the propositions and pastoral aim without re-querying the
+ * assistant run.
+ *
+ * The fields mirror the `PreachableUnit` shape from
+ * `exegesis/expository/PreachableUnit.ts`. We embed the relevant
+ * subset here (instead of holding a `preachableUnitId` foreign key)
+ * because v1.5 does NOT persist the assistant run server-side — the
+ * planned sermon is the only durable record of what the assistant
+ * produced.
+ */
+export interface PlannedSermonExpositoryEnrichment {
+    exegeticalProposition: string;
+    homileticalProposition: string;
+    pastoralObjective: string;
+    /** Mirrors `PreachableUnit.caseTreatment`. */
+    caseTreatment?: string;
+    /** Mirrors `PreachableUnit.sourcedExegeticalUnitIds`. */
+    sourcedExegeticalUnitIds?: string[];
+    /** Stable id of the macro-section this preachable unit belongs to. */
+    macroSectionId?: string;
+    /** Notes from the Pase 5 reviewer that the pastor accepted into the persisted plan. */
+    fidelityNotes?: string;
 }
 
 export interface SeriesMetadata {
