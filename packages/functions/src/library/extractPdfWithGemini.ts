@@ -8,6 +8,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
 import { recordLlamaParseUsage, selectLlamaParseAccount } from './llamaParseAccountSelector';
+import { consumePagesAdmin, type ProcessingMode } from './processingBalance';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
@@ -475,6 +476,35 @@ export const extractPdfWithGemini = onObjectFinalized(
 
             await resourceRef.update(updateData);
             console.log(`✅ [Extract] Updated resource ${resourceId} (${extractionVersion}, status: ready)`);
+
+            // Debit the user's processing balance based on which engine
+            // ran. Was previously MISSING from this function — only the
+            // monthly metric counter (below) was being written, so user
+            // balance never decremented for auto-extractions. Result:
+            // users could upload unlimited PDFs without their plan +
+            // pack quotas ever shrinking, and the dashboard balance
+            // card displayed stale "available" totals.
+            //
+            // Mode mapping mirrors the BalanceBanner UI grouping:
+            //   3.0-llamaparse        → premium
+            //   4.0-gemini-standard   → standard
+            //   2.0-gemini (legacy)   → standard
+            //   fallback-pdfparse     → standard (cheapest tier; the
+            //                          fallback isn't free for us
+            //                          since the user still gets text)
+            //
+            // Non-fatal: if the debit fails we log and proceed —
+            // billing is the source of truth, this is a UX-quota
+            // synchronization concern.
+            try {
+                const debitMode: ProcessingMode = extractionVersion === '3.0-llamaparse'
+                    ? 'premium'
+                    : 'standard';
+                await consumePagesAdmin(userId, debitMode, pageCount);
+                console.log(`💳 [Extract] Debited ${pageCount} ${debitMode} pages from user ${userId.substring(0, 8)}...`);
+            } catch (debitErr) {
+                console.warn(`⚠️ [Extract] Balance debit failed (non-fatal):`, debitErr);
+            }
 
             // Increment the user's monthly pagesProcessed counter. Server-side so the
             // client can't understate usage. Best-effort — logs but doesn't fail the
