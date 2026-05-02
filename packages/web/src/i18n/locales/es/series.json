@@ -118,7 +118,38 @@
             "targetCountPlaceholder": "Ej. 12",
             "translationNote": "v1.5: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.6 cargará el texto griego/hebreo directo.",
             "start": "Iniciar análisis",
-            "startDisabledHint": "Disponible cuando los 5 pases estén cableados (D.2-D.4)"
+            "running": "Ejecutando pipeline..."
+        },
+        "results": {
+            "panorama": {
+                "genre": "Género",
+                "theme": "Tema central",
+                "purpose": "Propósito",
+                "problem": "Problema pastoral",
+                "movements": "Movimientos",
+                "keyTerms": "Palabras clave",
+                "redemptiveHistory": "Historia redentora"
+            },
+            "macro": {
+                "function": {
+                    "introduction": "Introducción",
+                    "thesis": "Tesis",
+                    "argument-development": "Desarrollo",
+                    "narrative-arc": "Arco narrativo",
+                    "climax": "Clímax",
+                    "application": "Aplicación",
+                    "closing": "Cierre",
+                    "transition": "Transición",
+                    "digression": "Digresión"
+                }
+            }
+        },
+        "toast": {
+            "loadFailed": "No se pudo cargar el texto del libro.",
+            "panoramaFailed": "No se pudo generar el panorama. Intenta de nuevo.",
+            "macroDone": "Macroestructura lista.",
+            "macroFailed": "No se pudo generar la macroestructura. Intenta de nuevo.",
+            "overloaded": "Gemini está saturado. Intenta en un minuto."
         },
         "passes": {
             "panorama": {

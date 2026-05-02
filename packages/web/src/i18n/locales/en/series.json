@@ -118,7 +118,38 @@
             "targetCountPlaceholder": "e.g. 12",
             "translationNote": "v1.5: the assistant analyzes the translation (RVR1960/ASV) as a surrogate for the original. v1.6 will load Greek/Hebrew text directly.",
             "start": "Start analysis",
-            "startDisabledHint": "Available once all 5 passes are wired (D.2-D.4)"
+            "running": "Running pipeline..."
+        },
+        "results": {
+            "panorama": {
+                "genre": "Genre",
+                "theme": "Central theme",
+                "purpose": "Purpose",
+                "problem": "Pastoral problem",
+                "movements": "Movements",
+                "keyTerms": "Key terms",
+                "redemptiveHistory": "Redemptive history"
+            },
+            "macro": {
+                "function": {
+                    "introduction": "Introduction",
+                    "thesis": "Thesis",
+                    "argument-development": "Development",
+                    "narrative-arc": "Narrative arc",
+                    "climax": "Climax",
+                    "application": "Application",
+                    "closing": "Closing",
+                    "transition": "Transition",
+                    "digression": "Digression"
+                }
+            }
+        },
+        "toast": {
+            "loadFailed": "Couldn't load the book text.",
+            "panoramaFailed": "Couldn't generate the panorama. Try again.",
+            "macroDone": "Macrostructure ready.",
+            "macroFailed": "Couldn't generate the macrostructure. Try again.",
+            "overloaded": "Gemini is overloaded. Try again in a minute."
         },
         "passes": {
             "panorama": {

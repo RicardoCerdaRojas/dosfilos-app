@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
     ArrowLeft,
     BookOpenText,
@@ -7,12 +8,20 @@ import {
     CircleDashed,
     Loader2,
     AlertTriangle,
+    Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
-import { getAllBooks, type BibleBookId } from '@dosfilos/domain';
+import { useExpositoryAssistant } from '@/hooks/series/useExpositoryAssistant';
+import {
+    getAllBooks,
+    type AssistantVerseInput,
+    type BibleBookId,
+    type BookPanorama,
+    type MacroSection,
+} from '@dosfilos/domain';
 
 /**
  * v1.5 expository assistant wizard.
@@ -20,17 +29,18 @@ import { getAllBooks, type BibleBookId } from '@dosfilos/domain';
  * Replaces PericopeAssistantPage at /dashboard/plans/pericope. Runs
  * the 5-pass pipeline (panorama → macro → micro → preachable →
  * fidelity) with staged UI feedback — each pass appears as a card
- * with state pending / running / done / error.
+ * with state pending / running / done / error and renders its
+ * result inline as soon as it lands.
  *
- * D.1 ships the SHELL: setup card + 5 placeholder cards rendering
- * pending state. D.2-D.4 wire the actual mutations and the create-
- * series action.
+ * D.2 wires Pases 1 (panorama) and 2 (macroestructura). On "Iniciar
+ * análisis" we load verses synchronously and then auto-chain
+ * panorama → macro; D.3 will continue the chain into micro →
+ * preachable → fidelity.
  *
- * Why a single page (not a multi-step wizard with separate routes):
- * the workflow is a single decision flow on a single book. A multi-
- * step wizard would force navigation between steps that don't make
- * sense in isolation; one page that fills in progressively matches
- * how the pastor reads the analysis.
+ * Workflow state lives in component state because v1.5 does not
+ * persist intermediate runs server-side — only the final
+ * SermonSeries does. D.4 will add localStorage draft persistence
+ * so a tab close mid-run is recoverable.
  */
 export function ExpositoryAssistantPage() {
     const { t, i18n } = useTranslation('series');
@@ -39,6 +49,86 @@ export function ExpositoryAssistantPage() {
     const allBooks = useMemo(() => getAllBooks(), []);
     const [bookId, setBookId] = useState<BibleBookId>('2PE');
     const [targetCount, setTargetCount] = useState<number | ''>('');
+
+    // Run state — accumulates as each pass completes.
+    const [verses, setVerses] = useState<AssistantVerseInput[] | null>(null);
+    const [bookDisplay, setBookDisplay] = useState<string | null>(null);
+    const [panorama, setPanorama] = useState<BookPanorama | null>(null);
+    const [macroSections, setMacroSections] = useState<MacroSection[] | null>(null);
+
+    const assistant = useExpositoryAssistant();
+
+    const handleStart = () => {
+        // Reset prior run state if the pastor restarts.
+        setPanorama(null);
+        setMacroSections(null);
+
+        let loaded;
+        try {
+            loaded = assistant.loadVerses({ bookId, displayLanguage: lang });
+        } catch (err: any) {
+            console.error('[expository] loadVerses failed:', err);
+            toast.error(err?.message ?? (t('expository.toast.loadFailed') as string));
+            return;
+        }
+        setVerses(loaded.verses);
+        setBookDisplay(loaded.book);
+
+        // Kick off Pase 1. The macro pass auto-chains in onSuccess below.
+        assistant.runPanorama.mutate(
+            {
+                book: loaded.book,
+                displayLanguage: lang,
+                verses: loaded.verses,
+                ...(typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {}),
+            },
+            {
+                onSuccess: (panoramaResult) => {
+                    setPanorama(panoramaResult.payload);
+                    // Auto-chain Pase 2.
+                    assistant.runMacro.mutate(
+                        {
+                            book: loaded.book,
+                            displayLanguage: lang,
+                            verses: loaded.verses,
+                            panorama: panoramaResult.payload,
+                        },
+                        {
+                            onSuccess: (macroResult) => {
+                                setMacroSections(macroResult.payload);
+                                toast.success(t('expository.toast.macroDone') as string);
+                            },
+                            onError: (err: any) => {
+                                console.error('[expository] runMacro failed:', err);
+                                toast.error(toastErrorMessage(err, t, 'expository.toast.macroFailed'));
+                            },
+                        },
+                    );
+                },
+                onError: (err: any) => {
+                    console.error('[expository] runPanorama failed:', err);
+                    toast.error(toastErrorMessage(err, t, 'expository.toast.panoramaFailed'));
+                },
+            },
+        );
+    };
+
+    const panoramaState: PassState = assistant.runPanorama.isPending
+        ? 'running'
+        : panorama
+          ? 'done'
+          : assistant.runPanorama.isError
+            ? 'error'
+            : 'pending';
+    const macroState: PassState = assistant.runMacro.isPending
+        ? 'running'
+        : macroSections
+          ? 'done'
+          : assistant.runMacro.isError
+            ? 'error'
+            : 'pending';
+
+    const isRunning = assistant.runPanorama.isPending || assistant.runMacro.isPending;
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 overflow-y-auto">
@@ -64,7 +154,6 @@ export function ExpositoryAssistantPage() {
             </div>
 
             <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-8 space-y-6">
-                {/* Setup */}
                 <SetupCard
                     bookId={bookId}
                     onBookIdChange={setBookId}
@@ -72,49 +161,52 @@ export function ExpositoryAssistantPage() {
                     onTargetCountChange={setTargetCount}
                     lang={lang}
                     allBooks={allBooks}
+                    isRunning={isRunning}
+                    onStart={handleStart}
                     t={t}
                 />
 
-                {/* Pipeline cards (D.2-D.3 wire the mutations; D.1 renders pending state) */}
                 <PassCard
                     index={1}
                     title={t('expository.passes.panorama.title') as string}
                     subtitle={t('expository.passes.panorama.subtitle') as string}
-                    state="pending"
+                    state={panoramaState}
                     t={t}
-                />
+                >
+                    {panorama && <PanoramaResult panorama={panorama} t={t} />}
+                </PassCard>
+
                 <PassCard
                     index={2}
                     title={t('expository.passes.macro.title') as string}
                     subtitle={t('expository.passes.macro.subtitle') as string}
-                    state="pending"
+                    state={macroState}
                     t={t}
-                />
-                <PassCard
-                    index={3}
-                    title={t('expository.passes.micro.title') as string}
-                    subtitle={t('expository.passes.micro.subtitle') as string}
-                    state="pending"
-                    t={t}
-                />
-                <PassCard
-                    index={4}
-                    title={t('expository.passes.preachable.title') as string}
-                    subtitle={t('expository.passes.preachable.subtitle') as string}
-                    state="pending"
-                    t={t}
-                />
-                <PassCard
-                    index={5}
-                    title={t('expository.passes.fidelity.title') as string}
-                    subtitle={t('expository.passes.fidelity.subtitle') as string}
-                    state="pending"
-                    t={t}
-                />
+                >
+                    {macroSections && bookDisplay && (
+                        <MacroResult sections={macroSections} bookDisplay={bookDisplay} t={t} />
+                    )}
+                </PassCard>
+
+                <PassCard index={3} title={t('expository.passes.micro.title') as string} subtitle={t('expository.passes.micro.subtitle') as string} state="pending" t={t} />
+                <PassCard index={4} title={t('expository.passes.preachable.title') as string} subtitle={t('expository.passes.preachable.subtitle') as string} state="pending" t={t} />
+                <PassCard index={5} title={t('expository.passes.fidelity.title') as string} subtitle={t('expository.passes.fidelity.subtitle') as string} state="pending" t={t} />
             </main>
         </div>
     );
 }
+
+function toastErrorMessage(
+    err: any,
+    t: (key: string) => string,
+    fallbackKey: string,
+): string {
+    if (err?.isExegesisOverload) return t('expository.toast.overloaded') as string;
+    if (err?.message) return err.message;
+    return t(fallbackKey) as string;
+}
+
+// ── Setup card ──────────────────────────────────────────────────────────
 
 function SetupCard({
     bookId,
@@ -123,6 +215,8 @@ function SetupCard({
     onTargetCountChange,
     lang,
     allBooks,
+    isRunning,
+    onStart,
     t,
 }: {
     bookId: BibleBookId;
@@ -131,6 +225,8 @@ function SetupCard({
     onTargetCountChange: (n: number | '') => void;
     lang: 'es' | 'en';
     allBooks: ReadonlyArray<{ id: BibleBookId; nameEs: string; nameEn: string; testament: 'OT' | 'NT' }>;
+    isRunning: boolean;
+    onStart: () => void;
     t: (key: string) => string;
 }) {
     return (
@@ -154,7 +250,8 @@ function SetupCard({
                         id="book"
                         value={bookId}
                         onChange={(e) => onBookIdChange(e.target.value as BibleBookId)}
-                        className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        disabled={isRunning}
+                        className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
                     >
                         <optgroup label={t('expository.setup.testamentNT') as string}>
                             {allBooks.filter((b) => b.testament === 'NT').map((b) => (
@@ -180,6 +277,7 @@ function SetupCard({
                         min={3}
                         max={60}
                         value={targetCount}
+                        disabled={isRunning}
                         onChange={(e) => {
                             const v = e.target.value;
                             onTargetCountChange(v === '' ? '' : Math.max(1, Number(v)));
@@ -195,16 +293,23 @@ function SetupCard({
                     {t('expository.setup.translationNote')}
                 </p>
                 <Button
-                    disabled
+                    onClick={onStart}
+                    disabled={isRunning}
                     className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 disabled:opacity-50"
-                    title={t('expository.setup.startDisabledHint') as string}
                 >
-                    {t('expository.setup.start')}
+                    {isRunning ? (
+                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
+                        <Sparkles className="h-4 w-4 mr-1.5" />
+                    )}
+                    {isRunning ? t('expository.setup.running') : t('expository.setup.start')}
                 </Button>
             </div>
         </section>
     );
 }
+
+// ── Pass card primitives ────────────────────────────────────────────────
 
 type PassState = 'pending' | 'running' | 'done' | 'error';
 
@@ -213,12 +318,14 @@ function PassCard({
     title,
     subtitle,
     state,
+    children,
     t,
 }: {
     index: number;
     title: string;
     subtitle: string;
     state: PassState;
+    children?: React.ReactNode;
     t: (key: string) => string;
 }) {
     return (
@@ -242,6 +349,7 @@ function PassCard({
                     {t(`expository.state.${state}`)}
                 </span>
             </header>
+            {children && <div className="mt-4">{children}</div>}
         </section>
     );
 }
@@ -272,5 +380,101 @@ function PassStateBadge({ state }: { state: PassState }) {
         <div className="shrink-0 w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 flex items-center justify-center">
             <CircleDashed className="h-4 w-4" />
         </div>
+    );
+}
+
+// ── Pass 1 result ───────────────────────────────────────────────────────
+
+function PanoramaResult({ panorama, t }: { panorama: BookPanorama; t: (key: string) => string }) {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <ResultRow label={t('expository.results.panorama.genre')} value={panorama.genre} mono />
+            <ResultRow label={t('expository.results.panorama.theme')} value={panorama.centralTheme} />
+            <ResultRow label={t('expository.results.panorama.purpose')} value={panorama.purpose} fullWidth />
+            <ResultRow label={t('expository.results.panorama.problem')} value={panorama.pastoralProblem} fullWidth />
+            <ResultRow
+                label={t('expository.results.panorama.movements')}
+                value={panorama.movements.join(' / ')}
+                fullWidth
+            />
+            {panorama.keyTerms.length > 0 && (
+                <ResultRow
+                    label={t('expository.results.panorama.keyTerms')}
+                    value={panorama.keyTerms.join(', ')}
+                    fullWidth
+                />
+            )}
+            {panorama.redemptiveHistoryNote && (
+                <ResultRow
+                    label={t('expository.results.panorama.redemptiveHistory')}
+                    value={panorama.redemptiveHistoryNote}
+                    fullWidth
+                />
+            )}
+        </div>
+    );
+}
+
+function ResultRow({
+    label,
+    value,
+    fullWidth,
+    mono,
+}: {
+    label: string;
+    value: string;
+    fullWidth?: boolean;
+    mono?: boolean;
+}) {
+    return (
+        <div className={fullWidth ? 'md:col-span-2' : ''}>
+            <p className="text-[11px] uppercase tracking-wide text-slate-400 font-medium mb-0.5">
+                {label}
+            </p>
+            <p className={`text-slate-700 dark:text-slate-200 ${mono ? 'font-mono text-xs' : ''}`}>
+                {value}
+            </p>
+        </div>
+    );
+}
+
+// ── Pass 2 result ───────────────────────────────────────────────────────
+
+function MacroResult({
+    sections,
+    bookDisplay,
+    t,
+}: {
+    sections: ReadonlyArray<MacroSection>;
+    bookDisplay: string;
+    t: (key: string) => string;
+}) {
+    return (
+        <ul className="space-y-2">
+            {sections.map((s) => {
+                const range = s.chapterStart === s.chapterEnd
+                    ? `${s.chapterStart}:${s.verseStart}-${s.verseEnd}`
+                    : `${s.chapterStart}:${s.verseStart}-${s.chapterEnd}:${s.verseEnd}`;
+                return (
+                    <li
+                        key={s.id}
+                        className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-3 py-2.5"
+                    >
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {s.title}
+                            </span>
+                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                {bookDisplay} {range}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-wide font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded">
+                                {t(`expository.results.macro.function.${s.functionInBook}`)}
+                            </span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{s.theme}</p>
+                    </li>
+                );
+            })}
+        </ul>
     );
 }
