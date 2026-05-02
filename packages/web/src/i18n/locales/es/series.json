@@ -170,8 +170,9 @@
                 "signals": "Marcadores"
             },
             "preachable": {
-                "preliminaryBanner": "Estas son hipótesis homiléticas iniciales basadas en una lectura panorámica del texto. Refínalas tras tu estudio exegético detallado (botón \"Crear paper desde unidad\" en el detalle de la serie).",
+                "preliminaryBanner": "Estas son hipótesis homiléticas iniciales basadas en una lectura panorámica del texto. Refínalas tras tu estudio exegético detallado (botón \"Crear paper desde unidad\" en el detalle de la serie). Los campos son editables: ajusta título, hipótesis, línea homilética y objetivo a tu criterio antes de crear la serie.",
                 "preliminaryChip": "Pendiente de validación exegética",
+                "editTitle": "Editar título de la unidad",
                 "exegeticalProp": "Hipótesis exegética inicial",
                 "homileticalProp": "Línea homilética sugerida",
                 "objective": "Objetivo pastoral",

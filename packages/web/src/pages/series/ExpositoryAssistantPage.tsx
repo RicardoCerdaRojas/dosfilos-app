@@ -504,7 +504,18 @@ export function ExpositoryAssistantPage() {
                         t={t}
                     >
                         {preachableUnits && bookDisplay && (
-                            <PreachableResult units={preachableUnits} bookDisplay={bookDisplay} t={t} />
+                            <PreachableResult
+                                units={preachableUnits}
+                                bookDisplay={bookDisplay}
+                                onUnitChange={(id, patch) => {
+                                    setPreachableUnits((prev) =>
+                                        prev
+                                            ? prev.map((u) => (u.id === id ? { ...u, ...patch } : u))
+                                            : prev,
+                                    );
+                                }}
+                                t={t}
+                            />
                         )}
                     </PassCard>
                 )}
@@ -1147,10 +1158,12 @@ function MicroResult({
 function PreachableResult({
     units,
     bookDisplay,
+    onUnitChange,
     t,
 }: {
     units: ReadonlyArray<PreachableUnit>;
     bookDisplay: string;
+    onUnitChange: (id: string, patch: Partial<PreachableUnit>) => void;
     t: (key: string) => string;
 }) {
     return (
@@ -1179,10 +1192,18 @@ function PreachableResult({
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                        {u.title}
-                                    </h4>
-                                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                    {/* Title is editable inline. Auto-saves
+                                        to component state on every keystroke;
+                                        the existing localStorage draft useEffect
+                                        debounces the persistence. */}
+                                    <input
+                                        type="text"
+                                        value={u.title}
+                                        onChange={(e) => onUnitChange(u.id, { title: e.target.value })}
+                                        className="text-sm font-semibold text-slate-800 dark:text-slate-100 bg-transparent border-0 px-1 -mx-1 rounded hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition-colors min-w-0 flex-1"
+                                        aria-label={t('expository.results.preachable.editTitle') as string}
+                                    />
+                                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0">
                                         {u.passage || `${bookDisplay} ${formatRange(u)}`}
                                     </span>
                                     {u.caseTreatment && (
@@ -1195,17 +1216,20 @@ function PreachableResult({
                                         {t('expository.results.preachable.preliminaryChip')}
                                     </span>
                                 </div>
-                                <PropositionRow
+                                <EditablePropositionRow
                                     label={t('expository.results.preachable.exegeticalProp') as string}
                                     value={u.exegeticalProposition}
+                                    onChange={(v) => onUnitChange(u.id, { exegeticalProposition: v })}
                                 />
-                                <PropositionRow
+                                <EditablePropositionRow
                                     label={t('expository.results.preachable.homileticalProp') as string}
                                     value={u.homileticalProposition}
+                                    onChange={(v) => onUnitChange(u.id, { homileticalProposition: v })}
                                 />
-                                <PropositionRow
+                                <EditablePropositionRow
                                     label={t('expository.results.preachable.objective') as string}
                                     value={u.pastoralObjective}
+                                    onChange={(v) => onUnitChange(u.id, { pastoralObjective: v })}
                                 />
                             </div>
                         </div>
@@ -1216,14 +1240,36 @@ function PreachableResult({
     );
 }
 
-function PropositionRow({ label, value }: { label: string; value: string }) {
+/**
+ * Inline-editable proposition row. Renders as plain text by default
+ * (no border, transparent bg) but reveals an editor border on hover/
+ * focus — Notion-style "looks like text, edits like text". The
+ * textarea uses `field-sizing: content` (Chromium 123+, Safari 18+)
+ * to auto-grow with the content; Firefox falls back to a fixed
+ * `rows={3}` minimum until that property ships there.
+ */
+function EditablePropositionRow({
+    label,
+    value,
+    onChange,
+}: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+}) {
     return (
-        <p className="text-xs text-slate-700 dark:text-slate-300 mb-1">
+        <div className="mb-1">
             <span className="text-[11px] uppercase tracking-wide text-slate-400 font-medium block">
                 {label}
             </span>
-            {value}
-        </p>
+            <textarea
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                rows={Math.max(2, Math.ceil(value.length / 90))}
+                className="text-xs text-slate-700 dark:text-slate-300 bg-transparent border border-transparent rounded px-1.5 py-1 -mx-1.5 w-full resize-none hover:border-slate-200 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-800 focus:border-emerald-400 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors"
+                style={{ fieldSizing: 'content' } as React.CSSProperties}
+            />
+        </div>
     );
 }
 

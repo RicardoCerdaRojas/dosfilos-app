@@ -170,8 +170,9 @@
                 "signals": "Signals"
             },
             "preachable": {
-                "preliminaryBanner": "These are initial homiletical hypotheses based on a panoramic reading of the text. Refine them after detailed exegetical study (\"Create paper from unit\" in the series detail).",
+                "preliminaryBanner": "These are initial homiletical hypotheses based on a panoramic reading of the text. Refine them after detailed exegetical study (\"Create paper from unit\" in the series detail). The fields are editable — adjust title, hypothesis, homiletical line and objective at your discretion before creating the series.",
                 "preliminaryChip": "Pending exegetical validation",
+                "editTitle": "Edit unit title",
                 "exegeticalProp": "Initial exegetical hypothesis",
                 "homileticalProp": "Suggested homiletical line",
                 "objective": "Pastoral objective",
