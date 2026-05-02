@@ -212,30 +212,68 @@ interface Step {
     hasCreditsLink?: boolean;
 }
 
+interface StepContent {
+    title: string;
+    intro?: string;
+    items?: Array<{ label: string; desc: string }>;
+    outro?: string;
+    creditsLink?: string;
+}
+
 function StepView({
     step,
     t,
 }: {
     step: Step;
-    t: (key: string) => string;
+    t: (key: string, options?: Record<string, unknown>) => unknown;
 }) {
+    const content = t(`expository.methodology.steps.${step.key}`, {
+        returnObjects: true,
+    }) as StepContent;
+
     return (
-        <div className="flex flex-col items-center text-center gap-5 min-h-[420px]">
+        <div className="flex flex-col items-center gap-5 min-h-[420px]">
             <div className="w-full max-w-md">{step.diagram}</div>
-            <div className="space-y-3 max-w-xl">
-                <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-slate-100">
-                    {t(`expository.methodology.steps.${step.key}.title`)}
+            <div className="space-y-3 max-w-xl w-full">
+                <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-slate-100 text-center">
+                    {content.title}
                 </h3>
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {t(`expository.methodology.steps.${step.key}.body`)}
-                </p>
-                {step.hasCreditsLink && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 pt-2">
+                {content.intro && (
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-center">
+                        {content.intro}
+                    </p>
+                )}
+                {content.items && content.items.length > 0 && (
+                    <div className="flex justify-center">
+                        <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 text-left max-w-md">
+                            {content.items.map((item) => (
+                                <li key={item.label} className="flex gap-2 leading-relaxed">
+                                    <span className="text-emerald-600 dark:text-emerald-400 mt-1 select-none text-xs">
+                                        ◆
+                                    </span>
+                                    <span>
+                                        <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                            {item.label}:
+                                        </span>{' '}
+                                        {item.desc}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                {content.outro && (
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-center">
+                        {content.outro}
+                    </p>
+                )}
+                {step.hasCreditsLink && content.creditsLink && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 pt-2 text-center">
                         <Link
                             to="/credits"
                             className="text-emerald-700 dark:text-emerald-300 hover:underline"
                         >
-                            {t('expository.methodology.steps.heritage.creditsLink')}
+                            {content.creditsLink}
                         </Link>
                     </p>
                 )}

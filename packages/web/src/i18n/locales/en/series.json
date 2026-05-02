@@ -157,27 +157,56 @@
             "steps": {
                 "problem": {
                     "title": "From text to sermon without betraying the author",
-                    "body": "Planning an expository series requires crossing a hard bridge: moving from biblical text syntax to a sermon the congregation can receive. The most common trap is jumping from text to homiletical outline without passing through the author's argumentative logic. This assistant walks you step by step through a rigorous homiletical methodology that keeps each level distinct."
+                    "intro": "Planning an expository series requires crossing a hard bridge: moving from biblical text syntax to a sermon the congregation can actually receive.",
+                    "outro": "The most common trap is jumping straight from text to homiletical outline without passing through the author's argumentative logic. This assistant walks you step by step through a methodology that keeps each level distinct."
                 },
                 "levels": {
                     "title": "Three levels that are NOT the same",
-                    "body": "Exegetical division follows the author's syntax and literary markers. Argumentative division identifies the function of each block within the book. Preachable division decides what gets preached alone, what combines, and what splits. Confusing the three levels is the most common cause of sermons that sound biblical but don't say what the text says. This assistant keeps them separate in its pipeline."
+                    "intro": "Confusing these levels is the most common cause of sermons that sound biblical but don't say what the text says. The pipeline keeps them separate:",
+                    "items": [
+                        { "label": "Exegetical", "desc": "follows the author's syntax and literary markers." },
+                        { "label": "Argumentative", "desc": "identifies the function of each block within the book." },
+                        { "label": "Preachable", "desc": "decides what gets preached alone, what combines, and what splits." }
+                    ]
                 },
                 "pipeline": {
                     "title": "Five cascading phases",
-                    "body": "Panorama identifies genre, purpose, and pastoral problem. Macrostructure divides the book into its large blocks. Microstructure finds exegetical units within each macro, with genre-specific criteria (participial chains for Greek epistle, waw-consecutive for Hebrew narrative, parallelism for poetry, etc.). Preachable conversion decides how each unit becomes a sermon. Fidelity review audits the proposal before you create the series."
+                    "intro": "Each phase attacks a different level of the problem, in order:",
+                    "items": [
+                        { "label": "Panorama", "desc": "identifies genre, purpose, and pastoral problem." },
+                        { "label": "Macrostructure", "desc": "divides the book into its large blocks." },
+                        { "label": "Microstructure", "desc": "finds exegetical units with genre-specific criteria (participial chains for Greek epistle, waw-consecutive for Hebrew narrative, parallelism for poetry)." },
+                        { "label": "Preachable conversion", "desc": "decides how each unit becomes a sermon." },
+                        { "label": "Fidelity review", "desc": "audits the proposal before you create the series." }
+                    ]
                 },
                 "output": {
                     "title": "Two propositions per unit, not one",
-                    "body": "Each preachable unit carries an exegetical hypothesis (what the author does in the text) and a suggested homiletical line (how the listener receives the truth). Keeping them separate prevents the sermon from leaping to application without first explaining the text. We acknowledge they are initial hypotheses — the assistant reads panoramically, not exegetically. Final validation is your work with the detailed exegetical paper."
+                    "intro": "Each preachable unit carries two complementary hypotheses:",
+                    "items": [
+                        { "label": "Exegetical hypothesis", "desc": "what the author does in the text." },
+                        { "label": "Homiletical line", "desc": "how the listener receives the truth." }
+                    ],
+                    "outro": "Keeping them separate prevents the sermon from leaping to application without first explaining the text. They are initial hypotheses — final validation is your work with the detailed exegetical paper."
                 },
                 "original": {
                     "title": "Original text when available",
-                    "body": "For the New Testament we download the Greek text from SBLGNT. For the Old Testament we download Hebrew from WLC (Westminster Leningrad Codex). The assistant cites syntactic markers directly from the original. If the download fails over network or the book isn't in the source, we fall back to translation (RVR1960/ASV) and notify you — analysis continues, with transparency that it's approximate."
+                    "intro": "The assistant cites syntactic markers directly from the original when available:",
+                    "items": [
+                        { "label": "SBLGNT", "desc": "Greek text for the New Testament." },
+                        { "label": "WLC", "desc": "Westminster Leningrad Codex for Old Testament Hebrew." }
+                    ],
+                    "outro": "If the download fails over network or the book isn't in the source, we fall back to translation (RVR1960/ASV) and notify you — analysis continues, with transparency that it's approximate."
                 },
                 "heritage": {
                     "title": "A methodology with seminary lineage",
-                    "body": "The pipeline draws from the historical homiletical tradition of Haddon Robinson (Big Idea preaching), Bryan Chapell (Christ-Centered Preaching), and Sidney Greidanus (The Modern Preacher and the Ancient Text). It does not replace your exegetical work: it accelerates it. The structure, phase names, and genre-specific criteria all come directly from that tradition.",
+                    "intro": "The pipeline draws from the historical homiletical tradition:",
+                    "items": [
+                        { "label": "Haddon Robinson", "desc": "Big Idea preaching." },
+                        { "label": "Bryan Chapell", "desc": "Christ-Centered Preaching." },
+                        { "label": "Sidney Greidanus", "desc": "The Modern Preacher and the Ancient Text." }
+                    ],
+                    "outro": "It does not replace your exegetical work: it accelerates it. The structure, phase names, and genre-specific criteria all come directly from this tradition.",
                     "creditsLink": "See full source attribution at /credits →"
                 }
             }

@@ -157,27 +157,56 @@
             "steps": {
                 "problem": {
                     "title": "Del texto al sermón sin traicionar al autor",
-                    "body": "Planificar una serie expositiva exige cruzar un puente difícil: pasar de la sintaxis del texto bíblico a un sermón que la congregación pueda recibir. La trampa más común es saltar del texto a un esquema homilético sin pasar por la lógica argumentativa del autor. Este asistente te lleva paso a paso por una metodología homilética rigurosa que distingue cada nivel."
+                    "intro": "Planificar una serie expositiva exige cruzar un puente difícil: pasar de la sintaxis del texto bíblico a un sermón que la congregación pueda recibir.",
+                    "outro": "La trampa más común es saltar directo del texto a un esquema homilético sin pasar por la lógica argumentativa del autor. Este asistente te lleva paso a paso por una metodología que distingue cada nivel."
                 },
                 "levels": {
                     "title": "Tres niveles que NO son lo mismo",
-                    "body": "La división exegética sigue la sintaxis y los marcadores literarios del autor. La división argumentativa identifica la función de cada bloque dentro del libro. La división predicable decide qué se predica solo, qué se combina y qué se divide. Confundir los tres niveles es la causa más común de sermones que suenan bíblicos pero no dicen lo que el texto dice. Este asistente los mantiene separados en su pipeline."
+                    "intro": "Confundir estos niveles es la causa más común de sermones que suenan bíblicos pero no dicen lo que el texto dice. El pipeline los mantiene separados:",
+                    "items": [
+                        { "label": "Exegética", "desc": "sigue la sintaxis y los marcadores literarios del autor." },
+                        { "label": "Argumentativa", "desc": "identifica la función de cada bloque dentro del libro." },
+                        { "label": "Predicable", "desc": "decide qué se predica solo, qué se combina y qué se divide." }
+                    ]
                 },
                 "pipeline": {
                     "title": "Cinco fases en cascada",
-                    "body": "Panorama identifica género, propósito y problema pastoral. Macroestructura divide el libro en sus grandes bloques. Microestructura encuentra las unidades exegéticas dentro de cada macro, con criterios específicos por género (cadenas participiales para epístola griega, waw-consecutivo para narrativa hebrea, paralelismo para poesía, etc.). Conversión predicable decide cómo cada unidad se vuelve sermón. Evaluación de fidelidad audita la propuesta antes de que crees la serie."
+                    "intro": "Cada fase ataca un nivel distinto del problema, en orden:",
+                    "items": [
+                        { "label": "Panorama", "desc": "identifica género, propósito y problema pastoral." },
+                        { "label": "Macroestructura", "desc": "divide el libro en sus grandes bloques." },
+                        { "label": "Microestructura", "desc": "encuentra las unidades exegéticas con criterios por género (cadenas participiales en epístola griega, waw-consecutivo en narrativa hebrea, paralelismo en poesía)." },
+                        { "label": "Conversión predicable", "desc": "decide cómo cada unidad se vuelve sermón." },
+                        { "label": "Evaluación de fidelidad", "desc": "audita la propuesta antes de que crees la serie." }
+                    ]
                 },
                 "output": {
                     "title": "Dos proposiciones por unidad, no una",
-                    "body": "Cada unidad predicable lleva una hipótesis exegética (qué hace el autor en el texto) y una línea homilética sugerida (cómo recibe el oyente la verdad). Mantenerlas separadas evita que el sermón salte a aplicación sin haber explicado el texto. Reconocemos que son hipótesis iniciales — el asistente lee panorámicamente, no exegéticamente. La validación final es tu trabajo con el paper exegético detallado."
+                    "intro": "Cada unidad predicable lleva dos hipótesis complementarias:",
+                    "items": [
+                        { "label": "Hipótesis exegética", "desc": "qué hace el autor en el texto." },
+                        { "label": "Línea homilética", "desc": "cómo recibe el oyente la verdad." }
+                    ],
+                    "outro": "Mantenerlas separadas evita que el sermón salte a aplicación sin explicar el texto. Son hipótesis iniciales — la validación final es tu trabajo con el paper exegético detallado."
                 },
                 "original": {
                     "title": "Sobre el texto original cuando se puede",
-                    "body": "Para el Nuevo Testamento descargamos el texto griego de SBLGNT. Para el Antiguo Testamento descargamos el hebreo de WLC (Westminster Leningrad Codex). El asistente cita marcadores sintácticos directamente del original. Si la descarga falla por red o el libro no está en la fuente, caemos a la traducción (RVR1960/ASV) y te avisamos — el análisis sigue, con la transparencia de que es aproximado."
+                    "intro": "El asistente cita marcadores sintácticos directamente del original cuando está disponible:",
+                    "items": [
+                        { "label": "SBLGNT", "desc": "texto griego para el Nuevo Testamento." },
+                        { "label": "WLC", "desc": "Westminster Leningrad Codex para el hebreo del Antiguo Testamento." }
+                    ],
+                    "outro": "Si la descarga falla por red o el libro no está en la fuente, caemos a la traducción (RVR1960/ASV) y te avisamos — el análisis sigue, con la transparencia de que es aproximado."
                 },
                 "heritage": {
                     "title": "Una metodología con linaje de seminario",
-                    "body": "El pipeline se inspira en la tradición homilética histórica de Haddon Robinson (Big Idea preaching), Bryan Chapell (Christ-Centered Preaching) y Sidney Greidanus (The Modern Preacher and the Ancient Text). No reemplaza tu trabajo exegético: lo acelera. La estructura, los nombres de las fases y los criterios por género provienen directamente de esa tradición.",
+                    "intro": "El pipeline se inspira en la tradición homilética histórica:",
+                    "items": [
+                        { "label": "Haddon Robinson", "desc": "Big Idea preaching." },
+                        { "label": "Bryan Chapell", "desc": "Christ-Centered Preaching." },
+                        { "label": "Sidney Greidanus", "desc": "The Modern Preacher and the Ancient Text." }
+                    ],
+                    "outro": "No reemplaza tu trabajo exegético: lo acelera. La estructura, los nombres de las fases y los criterios por género provienen directamente de esta tradición.",
                     "creditsLink": "Ver atribución completa de fuentes en /credits →"
                 }
             }
