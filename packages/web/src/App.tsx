@@ -31,6 +31,7 @@ import { Landing } from '@/pages/Landing';
 import { TermsOfServicePage } from '@/pages/legal/TermsOfService';
 import { PrivacyPolicyPage } from '@/pages/legal/PrivacyPolicy';
 import { DMCAPolicyPage } from '@/pages/legal/DMCAPolicy';
+import { CreditsPage } from '@/pages/legal/Credits';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
 import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { AnalyticsDashboard } from '@/pages/admin/AnalyticsDashboard';
@@ -101,6 +102,7 @@ function App() {
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/dmca" element={<DMCAPolicyPage />} />
+          <Route path="/credits" element={<CreditsPage />} />
           
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />

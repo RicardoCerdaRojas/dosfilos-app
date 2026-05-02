@@ -222,8 +222,8 @@
         "toast": {
             "loadFailed": "No se pudo cargar el texto del libro.",
             "sourceLoaded": {
-                "original-greek": "Texto cargado desde SBLGNT (griego original).",
-                "original-hebrew": "Texto cargado desde WLC (hebreo original)."
+                "original-greek": "Texto cargado desde SBLGNT (griego original). Ver créditos en /credits",
+                "original-hebrew": "Texto cargado desde WLC (hebreo original). Ver créditos en /credits"
             },
             "translationFallback": "No se pudo cargar el texto original. Usando la traducción como fallback ({{reason}}). El análisis sintáctico será aproximado.",
             "panoramaFailed": "No se pudo generar el panorama. Intenta de nuevo.",
