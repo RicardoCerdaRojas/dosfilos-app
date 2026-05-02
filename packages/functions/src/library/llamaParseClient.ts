@@ -128,11 +128,19 @@ export class LlamaParseClient {
 
     /**
      * Poll a job until it reaches SUCCESS or ERROR state.
+     *
+     * Heartbeat logging: every 60s of polling we emit a status line
+     * so the cloud function logs aren't completely silent during the
+     * potentially-long wait (NTG-class 1000+ page PDFs take 10-15
+     * min). Without this, debugging "why hasn't it finished?" requires
+     * guessing whether the function is alive, dead, or just polling.
      */
     async pollJob(jobId: string, options: LlamaParseOptions = {}): Promise<void> {
         const maxSeconds = options.maxPollSeconds ?? 600;  // 10 min default (bump from 5)
         const interval = options.pollIntervalMs ?? 3000;   // 3s between polls
+        const heartbeatEverySeconds = 60;                  // log status once per minute
         const startTime = Date.now();
+        let lastHeartbeatAt = startTime;
 
         while ((Date.now() - startTime) / 1000 < maxSeconds) {
             const res = await fetch(`${LLAMAPARSE_BASE_URL}/job/${jobId}`, {
@@ -145,12 +153,23 @@ export class LlamaParseClient {
             }
 
             const job = await res.json() as { status: string; error?: string };
-            if (job.status === 'SUCCESS') return;
+            if (job.status === 'SUCCESS') {
+                const elapsedS = Math.round((Date.now() - startTime) / 1000);
+                console.log(`[LlamaParse] Job ${jobId} SUCCESS in ${elapsedS}s`);
+                return;
+            }
             if (job.status === 'ERROR' || job.status === 'FAILED') {
                 throw new Error(`LlamaParse job ${jobId} failed: ${job.error ?? 'unknown'}`);
             }
 
-            // PENDING or PROCESSING → wait and retry
+            // PENDING or PROCESSING → wait and retry. Heartbeat every
+            // ~60s so the operator can see we're still alive without
+            // flooding logs with one line per 3s poll.
+            if ((Date.now() - lastHeartbeatAt) / 1000 >= heartbeatEverySeconds) {
+                const elapsedS = Math.round((Date.now() - startTime) / 1000);
+                console.log(`[LlamaParse] Job ${jobId} still ${job.status} (${elapsedS}s elapsed, max ${maxSeconds}s)`);
+                lastHeartbeatAt = Date.now();
+            }
             await sleep(interval);
         }
 
