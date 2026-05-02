@@ -102,6 +102,11 @@
         "title": "Asistente expositivo",
         "subtitle": "Pipeline de 5 pases (panorama → macro → micro → predicable → fidelidad) que distingue la división exegética de la división predicable.",
         "pass": "Pase",
+        "collapse": "Contraer sección",
+        "collapsedStrip": {
+            "label": "Contraídas",
+            "expand": "Expandir sección"
+        },
         "state": {
             "pending": "Pendiente",
             "running": "Ejecutando...",
@@ -128,7 +133,18 @@
                 "problem": "Problema pastoral",
                 "movements": "Movimientos",
                 "keyTerms": "Palabras clave",
-                "redemptiveHistory": "Historia redentora"
+                "redemptiveHistory": "Historia redentora",
+                "genreLabel": {
+                    "epistle": "Epístola",
+                    "narrative": "Narrativa",
+                    "poetry": "Poesía",
+                    "prophecy": "Profecía",
+                    "wisdom": "Sabiduría",
+                    "gospel": "Evangelio",
+                    "apocalypse": "Apocalíptica",
+                    "law": "Ley",
+                    "mixed": "Mixto"
+                }
             },
             "macro": {
                 "function": {

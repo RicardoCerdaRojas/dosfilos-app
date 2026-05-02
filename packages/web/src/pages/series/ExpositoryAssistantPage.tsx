@@ -10,6 +10,7 @@ import {
     AlertTriangle,
     Sparkles,
     BookPlus,
+    Minus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +82,32 @@ export function ExpositoryAssistantPage() {
     const [startDate, setStartDate] = useState('');
     const [frequency, setFrequency] = useState<'weekly' | 'biweekly' | 'monthly' | 'flexible'>('weekly');
     const [creatingSeries, setCreatingSeries] = useState(false);
+
+    // Collapsed pass cards — set of pass indices (1..5) currently
+    // shown as chips in the strip instead of full cards. State
+    // changes go through `togglePass` so they ride a View Transition
+    // when supported, producing a card↔chip morph.
+    const [collapsedPasses, setCollapsedPasses] = useState<Set<number>>(new Set());
+    const togglePass = (index: number) => {
+        const apply = () => {
+            setCollapsedPasses((prev) => {
+                const next = new Set(prev);
+                if (next.has(index)) next.delete(index);
+                else next.add(index);
+                return next;
+            });
+        };
+        // View Transitions API: feature-detected, falls back to
+        // instant state change in Firefox. The browser captures
+        // before/after snapshots of any element with view-transition-name
+        // set in CSS and morphs between them — that's how the card and
+        // its chip share the morph identity.
+        if (typeof document !== 'undefined' && 'startViewTransition' in document) {
+            (document as any).startViewTransition(apply);
+        } else {
+            apply();
+        }
+    };
 
     const assistant = useExpositoryAssistant();
 
@@ -375,68 +402,103 @@ export function ExpositoryAssistantPage() {
                     t={t}
                 />
 
-                <PassCard
-                    index={1}
-                    title={t('expository.passes.panorama.title') as string}
-                    subtitle={t('expository.passes.panorama.subtitle') as string}
-                    state={panoramaState}
-                    t={t}
-                >
-                    {panorama && <PanoramaResult panorama={panorama} t={t} />}
-                </PassCard>
+                {/* Collapsed-passes strip. Renders only when at least
+                    one pass is contracted to a chip. The chips share
+                    `view-transition-name` with their corresponding
+                    PassCard slot, so toggling collapse triggers a
+                    card↔chip morph (Mac-genie-like) where supported. */}
+                {collapsedPasses.size > 0 && (
+                    <CollapsedStrip
+                        collapsedPasses={collapsedPasses}
+                        passes={[
+                            { index: 1, key: 'panorama', state: panoramaState },
+                            { index: 2, key: 'macro', state: macroState },
+                            { index: 3, key: 'micro', state: microState },
+                            { index: 4, key: 'preachable', state: preachableState },
+                            { index: 5, key: 'fidelity', state: fidelityState },
+                        ]}
+                        onExpand={togglePass}
+                        t={t}
+                    />
+                )}
 
-                <PassCard
-                    index={2}
-                    title={t('expository.passes.macro.title') as string}
-                    subtitle={t('expository.passes.macro.subtitle') as string}
-                    state={macroState}
-                    t={t}
-                >
-                    {macroSections && bookDisplay && (
-                        <MacroResult sections={macroSections} bookDisplay={bookDisplay} t={t} />
-                    )}
-                </PassCard>
+                {!collapsedPasses.has(1) && (
+                    <PassCard
+                        index={1}
+                        title={t('expository.passes.panorama.title') as string}
+                        subtitle={t('expository.passes.panorama.subtitle') as string}
+                        state={panoramaState}
+                        onCollapse={() => togglePass(1)}
+                        t={t}
+                    >
+                        {panorama && <PanoramaResult panorama={panorama} t={t} />}
+                    </PassCard>
+                )}
 
-                <PassCard
-                    index={3}
-                    title={t('expository.passes.micro.title') as string}
-                    subtitle={t('expository.passes.micro.subtitle') as string}
-                    state={microState}
-                    t={t}
-                >
-                    {exegeticalUnits && macroSections && bookDisplay && (
-                        <MicroResult
-                            units={exegeticalUnits}
-                            macros={macroSections}
-                            bookDisplay={bookDisplay}
-                            t={t}
-                        />
-                    )}
-                </PassCard>
+                {!collapsedPasses.has(2) && (
+                    <PassCard
+                        index={2}
+                        title={t('expository.passes.macro.title') as string}
+                        subtitle={t('expository.passes.macro.subtitle') as string}
+                        state={macroState}
+                        onCollapse={() => togglePass(2)}
+                        t={t}
+                    >
+                        {macroSections && bookDisplay && (
+                            <MacroResult sections={macroSections} bookDisplay={bookDisplay} t={t} />
+                        )}
+                    </PassCard>
+                )}
 
-                <PassCard
-                    index={4}
-                    title={t('expository.passes.preachable.title') as string}
-                    subtitle={t('expository.passes.preachable.subtitle') as string}
-                    state={preachableState}
-                    t={t}
-                >
-                    {preachableUnits && bookDisplay && (
-                        <PreachableResult units={preachableUnits} bookDisplay={bookDisplay} t={t} />
-                    )}
-                </PassCard>
+                {!collapsedPasses.has(3) && (
+                    <PassCard
+                        index={3}
+                        title={t('expository.passes.micro.title') as string}
+                        subtitle={t('expository.passes.micro.subtitle') as string}
+                        state={microState}
+                        onCollapse={() => togglePass(3)}
+                        t={t}
+                    >
+                        {exegeticalUnits && macroSections && bookDisplay && (
+                            <MicroResult
+                                units={exegeticalUnits}
+                                macros={macroSections}
+                                bookDisplay={bookDisplay}
+                                t={t}
+                            />
+                        )}
+                    </PassCard>
+                )}
 
-                <PassCard
-                    index={5}
-                    title={t('expository.passes.fidelity.title') as string}
-                    subtitle={t('expository.passes.fidelity.subtitle') as string}
-                    state={fidelityState}
-                    t={t}
-                >
-                    {fidelityReview && (
-                        <FidelityResult review={fidelityReview} preachableUnits={preachableUnits ?? []} t={t} />
-                    )}
-                </PassCard>
+                {!collapsedPasses.has(4) && (
+                    <PassCard
+                        index={4}
+                        title={t('expository.passes.preachable.title') as string}
+                        subtitle={t('expository.passes.preachable.subtitle') as string}
+                        state={preachableState}
+                        onCollapse={() => togglePass(4)}
+                        t={t}
+                    >
+                        {preachableUnits && bookDisplay && (
+                            <PreachableResult units={preachableUnits} bookDisplay={bookDisplay} t={t} />
+                        )}
+                    </PassCard>
+                )}
+
+                {!collapsedPasses.has(5) && (
+                    <PassCard
+                        index={5}
+                        title={t('expository.passes.fidelity.title') as string}
+                        subtitle={t('expository.passes.fidelity.subtitle') as string}
+                        state={fidelityState}
+                        onCollapse={() => togglePass(5)}
+                        t={t}
+                    >
+                        {fidelityReview && (
+                            <FidelityResult review={fidelityReview} preachableUnits={preachableUnits ?? []} t={t} />
+                        )}
+                    </PassCard>
+                )}
 
                 {/* Create-series card — appears once preachable units are ready.
                     The pastor can create the series even before fidelity review
@@ -670,6 +732,7 @@ function PassCard({
     subtitle,
     state,
     children,
+    onCollapse,
     t,
 }: {
     index: number;
@@ -677,10 +740,19 @@ function PassCard({
     subtitle: string;
     state: PassState;
     children?: React.ReactNode;
+    onCollapse?: () => void;
     t: (key: string) => string;
 }) {
     return (
-        <section className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+        <section
+            // The shared `view-transition-name` is what the browser
+            // uses to identify "this card and the chip with the same
+            // name are the same logical entity, morph between them".
+            // Each pass needs a unique name so multiple morphs can run
+            // independently when the pastor toggles several at once.
+            style={{ viewTransitionName: `expository-pass-${index}` } as React.CSSProperties}
+            className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5"
+        >
             <header className="flex items-start gap-3">
                 <PassStateBadge state={state} />
                 <div className="flex-1 min-w-0">
@@ -696,13 +768,80 @@ function PassCard({
                         {subtitle}
                     </p>
                 </div>
-                <span className="text-[11px] text-slate-400 italic">
-                    {t(`expository.state.${state}`)}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[11px] text-slate-400 italic">
+                        {t(`expository.state.${state}`)}
+                    </span>
+                    {onCollapse && (
+                        <button
+                            type="button"
+                            onClick={onCollapse}
+                            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                            aria-label={t('expository.collapse') as string}
+                            title={t('expository.collapse') as string}
+                        >
+                            <Minus className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                </div>
             </header>
             {children && <div className="mt-4">{children}</div>}
         </section>
     );
+}
+
+// ── Collapsed strip ────────────────────────────────────────────────────
+
+function CollapsedStrip({
+    collapsedPasses,
+    passes,
+    onExpand,
+    t,
+}: {
+    collapsedPasses: Set<number>;
+    passes: ReadonlyArray<{ index: number; key: string; state: PassState }>;
+    onExpand: (index: number) => void;
+    t: (key: string) => string;
+}) {
+    const visible = passes.filter((p) => collapsedPasses.has(p.index));
+    return (
+        <section className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/40 px-3 py-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] uppercase tracking-wide text-slate-400 font-medium px-1">
+                    {t('expository.collapsedStrip.label')}
+                </span>
+                {visible.map((p) => (
+                    <button
+                        key={p.index}
+                        type="button"
+                        onClick={() => onExpand(p.index)}
+                        // Same view-transition-name as the corresponding
+                        // PassCard — that's what makes the browser morph
+                        // between the two on toggle.
+                        style={{ viewTransitionName: `expository-pass-${p.index}` } as React.CSSProperties}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors"
+                        aria-label={t('expository.collapsedStrip.expand') as string}
+                    >
+                        <ChipStateBadge state={p.state} />
+                        <span className="font-mono text-[10px] text-slate-400">
+                            {t('expository.pass')} {p.index}
+                        </span>
+                        <span className="font-medium">
+                            {t(`expository.passes.${p.key}.title`)}
+                        </span>
+                    </button>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function ChipStateBadge({ state }: { state: PassState }) {
+    const cls = 'h-3 w-3';
+    if (state === 'running') return <Loader2 className={`${cls} animate-spin text-emerald-600 dark:text-emerald-300`} />;
+    if (state === 'done') return <CheckCircle2 className={`${cls} text-emerald-600 dark:text-emerald-300`} />;
+    if (state === 'error') return <AlertTriangle className={`${cls} text-rose-600 dark:text-rose-300`} />;
+    return <CircleDashed className={`${cls} text-slate-400`} />;
 }
 
 function PassStateBadge({ state }: { state: PassState }) {
@@ -739,7 +878,10 @@ function PassStateBadge({ state }: { state: PassState }) {
 function PanoramaResult({ panorama, t }: { panorama: BookPanorama; t: (key: string) => string }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <ResultRow label={t('expository.results.panorama.genre')} value={panorama.genre} mono />
+            <ResultRow
+                label={t('expository.results.panorama.genre')}
+                value={t(`expository.results.panorama.genreLabel.${panorama.genre}`)}
+            />
             <ResultRow label={t('expository.results.panorama.theme')} value={panorama.centralTheme} />
             <ResultRow label={t('expository.results.panorama.purpose')} value={panorama.purpose} fullWidth />
             <ResultRow label={t('expository.results.panorama.problem')} value={panorama.pastoralProblem} fullWidth />

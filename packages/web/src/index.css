@@ -428,6 +428,23 @@
     background: hsl(var(--muted-foreground) / 0.55);
   }
 
+  /*
+   * View-transition tuning for the expository wizard's card↔chip
+   * morph. Browser default is 250ms ease; we lengthen slightly and
+   * use a curve that emphasizes the takeoff so the lift feels
+   * physical. The wildcard `*` targets every named view transition
+   * — for now the wizard is the only producer; refine when other
+   * features adopt View Transitions.
+   *
+   * Browsers without support (Firefox today) fall back to instant
+   * swap, which is acceptable degradation.
+   */
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 320ms;
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0.24, 1.05);
+  }
+
   /* Animated gradient for loading border */
   @keyframes gradient {
     0% {

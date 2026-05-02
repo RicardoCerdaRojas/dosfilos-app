@@ -102,6 +102,11 @@
         "title": "Expository assistant",
         "subtitle": "5-pass pipeline (panorama → macro → micro → preachable → fidelity) that distinguishes exegetical division from preachable division.",
         "pass": "Pass",
+        "collapse": "Collapse section",
+        "collapsedStrip": {
+            "label": "Collapsed",
+            "expand": "Expand section"
+        },
         "state": {
             "pending": "Pending",
             "running": "Running...",
@@ -128,7 +133,18 @@
                 "problem": "Pastoral problem",
                 "movements": "Movements",
                 "keyTerms": "Key terms",
-                "redemptiveHistory": "Redemptive history"
+                "redemptiveHistory": "Redemptive history",
+                "genreLabel": {
+                    "epistle": "Epistle",
+                    "narrative": "Narrative",
+                    "poetry": "Poetry",
+                    "prophecy": "Prophecy",
+                    "wisdom": "Wisdom",
+                    "gospel": "Gospel",
+                    "apocalypse": "Apocalypse",
+                    "law": "Law",
+                    "mixed": "Mixed"
+                }
             },
             "macro": {
                 "function": {
