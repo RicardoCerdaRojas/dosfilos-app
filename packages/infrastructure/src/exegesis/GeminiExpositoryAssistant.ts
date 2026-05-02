@@ -678,11 +678,15 @@ function normalizeMacroSections(raw: any): MacroSection[] {
     if (sections.length === 0) {
         throw new Error('macroStructure returned zero valid sections');
     }
-    if (sections.length > 9) {
-        // Soft cap — the prompt asks for 3-7; if the model wildly
-        // over-divided, trim to the first 9 to keep the wizard usable.
-        // We keep more than 7 to avoid silently dropping content.
-        return sections.slice(0, 9);
+    // Hard cap raised from 9 → 15 so length-aware targets in the
+    // prompt (Acts/Genesis/Isaiah hint ~12) and canonical structural
+    // markers (Genesis toledots = 11+1) are not silently truncated.
+    // 15 still bounds genuinely runaway responses without dropping
+    // legitimate structure for long books. Any book whose canonical
+    // macro-structure exceeds 15 (Psalms book-internal collections,
+    // hypothetically) belongs in the v1.6 two-tier hierarchy work.
+    if (sections.length > 15) {
+        return sections.slice(0, 15);
     }
 
     // Stable sort by `order` so the wizard renders in document order.
