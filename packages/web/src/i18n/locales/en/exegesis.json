@@ -652,6 +652,10 @@
         "openPaper": "Open paper",
         "createdAt": "Created",
         "updatedAt": "Updated",
+        "seriesLink": {
+            "label": "Series",
+            "tooltip": "This paper is linked to a sermon series. Click to open the series."
+        },
         "filters": {
             "searchPlaceholder": "Search by passage or title...",
             "all": "All",

@@ -652,6 +652,10 @@
         "openPaper": "Abrir trabajo",
         "createdAt": "Creado",
         "updatedAt": "Actualizado",
+        "seriesLink": {
+            "label": "Serie",
+            "tooltip": "Este trabajo está vinculado a una serie de predicación. Click para abrir la serie."
+        },
         "filters": {
             "searchPlaceholder": "Buscar por pasaje o título...",
             "all": "Todos",

@@ -135,7 +135,11 @@ export class AnalyzeVerseUseCase {
       if (!word.lemma) continue;
       const raw = word.lemma.trim().toLowerCase();
       verseLemmas.add(raw);
-      const base = raw.includes('/') ? raw.split('/').at(-1)!.trim() : raw;
+      // Use `arr[arr.length - 1]` instead of `.at(-1)` — the
+      // application tsconfig targets ES2020 lib which doesn't know
+      // about Array.prototype.at (ES2022). Functionally identical.
+      const parts = raw.split('/');
+      const base = raw.includes('/') ? parts[parts.length - 1]!.trim() : raw;
       verseLemmas.add(base);
     }
 
