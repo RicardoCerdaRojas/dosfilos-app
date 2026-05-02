@@ -15,6 +15,7 @@ import { CreditPacksDialog } from './components/CreditPacksDialog';
 import { UpgradeRequiredModal } from '@/components/upgrade';
 import { processingBalanceService } from '@dosfilos/application';
 import { LibraryAttentionCallout } from './components/LibraryAttentionCallout';
+import { LibraryStatusCallout } from './components/LibraryStatusCallout';
 import { LibraryProgress } from './components/LibraryProgress';
 import { LibraryUploadForm } from './components/LibraryUploadForm';
 import { LibraryFilters } from './components/LibraryFilters';
@@ -162,17 +163,29 @@ export function LibraryManager() {
                 <LibraryHeader
                     totalCount={data.resources.length}
                     readyCount={data.indexedCount}
-                    pendingCount={data.unindexedCount}
+                    pendingCount={data.actionablePendingCount}
                     isUploadFormOpen={showUploadForm}
                     onToggleUploadForm={handleToggleUploadForm}
                 />
 
                 <BalanceBanner />
 
+                {/* Status callouts — stacked, each fires only when its
+                    state has resources. Order: actionable (needs click)
+                    → extracting (just wait) → failed (needs re-upload).
+                    User sees only what's relevant to them. */}
                 <LibraryAttentionCallout
-                    pendingCount={data.unindexedCount}
+                    pendingCount={data.actionablePendingCount}
                     isProcessing={processing.bulkProcessing}
                     onProcessAll={() => processing.processAll(data.resources, data.indexStatus)}
+                />
+                <LibraryStatusCallout
+                    variant="extracting"
+                    count={data.extractingCount}
+                />
+                <LibraryStatusCallout
+                    variant="failed"
+                    count={data.failedCount}
                 />
 
                 <LibraryProgress progress={processing.bulkProcessing ? processing.bulkProgress : null} />

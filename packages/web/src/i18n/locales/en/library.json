@@ -17,6 +17,20 @@
         "description": "Processing prepares a resource for search — only ready resources can be cited as sources in projects and theological queries.",
         "actionButton": "Process pending"
     },
+    "statusCallout": {
+        "extracting": {
+            "label": "In progress",
+            "title_one": "{{count}} resource extracting text",
+            "title_other": "{{count}} resources extracting text",
+            "description": "This can take several minutes depending on the document's size and complexity. No action needed — indexing runs automatically once extraction finishes."
+        },
+        "failed": {
+            "label": "Extraction failed",
+            "title_one": "{{count}} resource with extraction error",
+            "title_other": "{{count}} resources with extraction error",
+            "description": "Something failed while processing the file. Check each affected resource below and either delete or re-upload it."
+        }
+    },
     "progress": {
         "processing": "Processing {{current}}/{{total}} — {{title}}"
     },

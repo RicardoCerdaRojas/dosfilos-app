@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { libraryService, categoryService } from '@dosfilos/application';
 import { LibraryCategory, LibraryResourceEntity } from '@dosfilos/domain';
 
@@ -6,6 +6,20 @@ import { LibraryCategory, LibraryResourceEntity } from '@dosfilos/domain';
  *  resource document itself (a resource may say `indexingStatus: 'ready'` but
  *  have no chunks if the indexer crashed mid-write).  */
 export type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
+
+/**
+ * Extraction versions whose successful completion fires the
+ * `autoIndexOnExtractionReady` cloud function. A resource extracted
+ * with one of these doesn't need the user to click "Procesar
+ * pendientes" — the indexer runs by itself.
+ *
+ * Keep in sync with `SUPPORTED_VERSIONS` in
+ * `packages/functions/src/library/autoIndexOnExtractionReady.ts`.
+ */
+const AUTO_INDEXED_VERSIONS = new Set<string>([
+    '3.0-llamaparse',
+    '4.0-gemini-standard',
+]);
 
 interface UseLibraryResourcesResult {
     /** All resources owned by the user, sorted by Firestore listener order. */
@@ -18,10 +32,34 @@ interface UseLibraryResourcesResult {
     indexStatus: Record<string, IndexStatus>;
     /** Imperative setter — used by mutation hooks to flip status optimistically. */
     setIndexStatus: React.Dispatch<React.SetStateAction<Record<string, IndexStatus>>>;
-    /** Resources whose index check returned `not-indexed`. */
-    unindexedCount: number;
+    /**
+     * Resources that need a manual "Procesar" click to be indexed:
+     *   - textExtractionStatus === 'ready' (text exists)
+     *   - indexStatus === 'not-indexed' (no chunks yet)
+     *   - extractionVersion is NOT one of `AUTO_INDEXED_VERSIONS` —
+     *     i.e. the auto-index trigger did NOT (and won't) fire.
+     *
+     * Drives the amber "X recursos por procesar" callout. Excludes
+     * resources still extracting (covered by `extractingCount`),
+     * resources with extraction errors (`failedCount`), and
+     * auto-indexable resources whose chunks haven't materialized yet
+     * (transitory; the trigger will run shortly).
+     */
+    actionablePendingCount: number;
     /** Resources whose index check returned `indexed`. */
     indexedCount: number;
+    /**
+     * Resources whose cloud function is still running text extraction
+     * (`textExtractionStatus` ∈ {'pending', 'processing'}). User
+     * doesn't need to act — they just wait.
+     */
+    extractingCount: number;
+    /**
+     * Resources whose extraction failed entirely
+     * (`textExtractionStatus === 'failed'`). User probably needs to
+     * re-upload or contact support.
+     */
+    failedCount: number;
 }
 
 /**
@@ -84,7 +122,32 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
     }, [userId, checkAllIndexStatus]);
 
     const indexedCount = Object.values(indexStatus).filter(s => s === 'indexed').length;
-    const unindexedCount = Object.values(indexStatus).filter(s => s === 'not-indexed').length;
+
+    // Derived counts split by what the user actually needs to do (or
+    // not do). Re-computed on every render but cheap — small N.
+    const { actionablePendingCount, extractingCount, failedCount } = useMemo(() => {
+        let actionable = 0;
+        let extracting = 0;
+        let failed = 0;
+        for (const r of resources) {
+            const status = indexStatus[r.id] ?? 'unknown';
+            if (r.textExtractionStatus === 'pending' || r.textExtractionStatus === 'processing') {
+                extracting++;
+                continue;
+            }
+            if (r.textExtractionStatus === 'failed') {
+                failed++;
+                continue;
+            }
+            if (r.textExtractionStatus === 'ready' && status === 'not-indexed') {
+                // Skip if extraction version triggers auto-indexing —
+                // the cloud function will (re)build chunks shortly.
+                if (r.extractionVersion && AUTO_INDEXED_VERSIONS.has(r.extractionVersion)) continue;
+                actionable++;
+            }
+        }
+        return { actionablePendingCount: actionable, extractingCount: extracting, failedCount: failed };
+    }, [resources, indexStatus]);
 
     return {
         resources,
@@ -93,6 +156,8 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
         indexStatus,
         setIndexStatus,
         indexedCount,
-        unindexedCount,
+        actionablePendingCount,
+        extractingCount,
+        failedCount,
     };
 }

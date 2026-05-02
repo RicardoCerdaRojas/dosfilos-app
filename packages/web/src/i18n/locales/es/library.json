@@ -17,6 +17,20 @@
         "description": "Procesar el recurso lo prepara para búsqueda — solo los recursos listos pueden usarse como fuente en proyectos y consultas teológicas.",
         "actionButton": "Procesar pendientes"
     },
+    "statusCallout": {
+        "extracting": {
+            "label": "En proceso",
+            "title_one": "{{count}} recurso extrayendo texto",
+            "title_other": "{{count}} recursos extrayendo texto",
+            "description": "Esto puede tomar varios minutos según el tamaño y complejidad del documento. No necesitas hacer nada — la indexación corre automáticamente cuando termina."
+        },
+        "failed": {
+            "label": "Falló la extracción",
+            "title_one": "{{count}} recurso con error de extracción",
+            "title_other": "{{count}} recursos con error de extracción",
+            "description": "Algo falló mientras procesábamos el archivo. Revisa cada recurso afectado más abajo y bórralo o vuelve a subirlo."
+        }
+    },
     "progress": {
         "processing": "Procesando {{current}}/{{total}} — {{title}}"
     },
