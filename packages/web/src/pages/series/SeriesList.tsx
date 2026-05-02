@@ -130,7 +130,19 @@ export function SeriesList() {
       {/* Series Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {series.map((item) => (
-          <Card key={item.id} className="py-0 group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
+          <Card
+            key={item.id}
+            role="link"
+            tabIndex={0}
+            onClick={() => navigate(`/dashboard/plans/${item.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(`/dashboard/plans/${item.id}`);
+              }
+            }}
+            className="py-0 group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
             {item.coverUrl && (
               <div className="h-48 w-full overflow-hidden">
                 <img
@@ -156,10 +168,7 @@ export function SeriesList() {
               </div>
 
               <div className="space-y-2">
-                <h3 
-                  className="text-xl font-bold font-serif leading-tight cursor-pointer group-hover:text-primary transition-colors"
-                  onClick={() => navigate(`/dashboard/plans/${item.id}`)}
-                >
+                <h3 className="text-xl font-bold font-serif leading-tight group-hover:text-primary transition-colors">
                   {item.title}
                 </h3>
                 <p className="text-sm text-muted-foreground line-clamp-2">
@@ -168,18 +177,21 @@ export function SeriesList() {
               </div>
             </div>
 
-            <div className="py-2 px-3 border-t bg-muted/20 flex items-center justify-end gap-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+            <div
+              className="py-2 px-3 border-t bg-muted/20 flex items-center justify-end gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-8 w-8 p-0 hover:text-primary"
                 onClick={() => navigate(`/dashboard/plans/${item.id}`)}
               >
                 <Eye className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-8 w-8 p-0 hover:text-primary"
                 onClick={() => navigate(`/dashboard/plans/${item.id}/edit`)}
               >

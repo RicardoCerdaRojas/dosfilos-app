@@ -310,7 +310,7 @@
             "title": "Crear la serie",
             "subtitle": "Cada unidad predicable se convierte en un sermón planificado. Las proposiciones, el objetivo pastoral y las notas de fidelidad quedan persistidas en cada sermón.",
             "defaultTitle": "Serie expositiva — {{book}}",
-            "defaultDescription": "Serie expositiva de {{book}} dividida en {{count}} unidades predicables (pipeline v1.5).",
+            "defaultDescription": "Serie expositiva de {{book}} dividida en {{count}} unidades predicables.",
             "seriesTitle": "Título de la serie",
             "startDate": "Fecha de inicio",
             "frequency": "Frecuencia",

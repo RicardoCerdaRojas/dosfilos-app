@@ -310,7 +310,7 @@
             "title": "Create the series",
             "subtitle": "Each preachable unit becomes a planned sermon. The propositions, pastoral objective, and fidelity notes are persisted on every sermon.",
             "defaultTitle": "Expository series — {{book}}",
-            "defaultDescription": "Expository series on {{book}}, divided into {{count}} preachable units (v1.5 pipeline).",
+            "defaultDescription": "Expository series on {{book}}, divided into {{count}} preachable units.",
             "seriesTitle": "Series title",
             "startDate": "Start date",
             "frequency": "Frequency",
