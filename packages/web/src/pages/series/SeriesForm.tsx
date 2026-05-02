@@ -190,7 +190,15 @@ export function SeriesForm() {
                 toast.info(
                     t('form.messages.shiftedSermons', {
                         count: shiftedMetadata.shiftedCount,
-                        days: shiftedMetadata.deltaDays,
+                        days: Math.abs(shiftedMetadata.deltaDays),
+                    }) as string,
+                );
+            } else if (shiftedMetadata.healedCount > 0) {
+                // Silent heal — toast only the first time so the
+                // pastor knows the legacy bug got auto-corrected.
+                toast.info(
+                    t('form.messages.healedSermons', {
+                        count: shiftedMetadata.healedCount,
                     }) as string,
                 );
             }
@@ -556,30 +564,47 @@ function computeShiftedMetadata(
     originalSeries: SermonSeriesEntity | null,
     oldStartDate: Date | undefined,
     newStartDate: Date | undefined,
-): { metadata: any; shiftedCount: number; deltaDays: number } | null {
-    if (!originalSeries || !oldStartDate || !newStartDate) return null;
-
-    const deltaDays = daysBetween(oldStartDate, newStartDate);
-    if (deltaDays === 0) return null;
+): { metadata: any; shiftedCount: number; healedCount: number; deltaDays: number } | null {
+    if (!originalSeries) return null;
 
     const planned = originalSeries.metadata?.plannedSermons ?? [];
     if (planned.length === 0) return null;
 
+    // Two effects happen on every save:
+    //   1. Shift: when start date moves by N days, planned sermons
+    //      that haven't started yet move by N days too.
+    //   2. Heal: every scheduledDate is normalized to local midnight
+    //      via addDays(date, 0). This idempotently repairs legacy
+    //      dates persisted with a non-midnight time component (the
+    //      old UTC-midnight bug + the previous addDays that
+    //      preserved time across shifts), which display on the wrong
+    //      calendar cell in some browser timezones.
+    const deltaDays =
+        oldStartDate && newStartDate ? daysBetween(oldStartDate, newStartDate) : 0;
+
     let shiftedCount = 0;
+    let healedCount = 0;
     const updatedPlanned = planned.map((p) => {
+        if (!p.scheduledDate) return p;
         const isShiftable = !p.draftId && (!p.status || p.status === 'planned');
-        if (isShiftable && p.scheduledDate) {
-            shiftedCount++;
-            return { ...p, scheduledDate: addDays(new Date(p.scheduledDate), deltaDays) };
-        }
-        return p;
+        const totalDelta = isShiftable ? deltaDays : 0;
+        const original = new Date(p.scheduledDate);
+        // addDays(_, 0) drops the time component → normalizes to
+        // local midnight. addDays(_, N) does both: shift + normalize.
+        const next = addDays(original, totalDelta);
+
+        if (totalDelta !== 0) shiftedCount++;
+        else if (next.getTime() !== original.getTime()) healedCount++;
+
+        return { ...p, scheduledDate: next };
     });
 
-    if (shiftedCount === 0) return null;
+    if (shiftedCount === 0 && healedCount === 0) return null;
 
     return {
         metadata: { ...originalSeries.metadata, plannedSermons: updatedPlanned },
         shiftedCount,
+        healedCount,
         deltaDays,
     };
 }

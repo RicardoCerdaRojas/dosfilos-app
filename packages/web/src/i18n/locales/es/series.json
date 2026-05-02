@@ -98,7 +98,9 @@
             "updateSuccess": "Plan actualizado correctamente",
             "saveError": "Error al guardar el plan",
             "shiftedSermons_one": "{{count}} sermón planificado se desplazó {{days}} días.",
-            "shiftedSermons_other": "{{count}} sermones planificados se desplazaron {{days}} días."
+            "shiftedSermons_other": "{{count}} sermones planificados se desplazaron {{days}} días.",
+            "healedSermons_one": "{{count}} sermón con fecha mal almacenada fue corregido.",
+            "healedSermons_other": "{{count}} sermones con fechas mal almacenadas fueron corregidos."
         }
     },
     "expository": {

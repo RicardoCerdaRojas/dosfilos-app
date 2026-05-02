@@ -98,7 +98,9 @@
             "updateSuccess": "Plan updated successfully",
             "saveError": "Error saving plan",
             "shiftedSermons_one": "{{count}} planned sermon shifted by {{days}} days.",
-            "shiftedSermons_other": "{{count}} planned sermons shifted by {{days}} days."
+            "shiftedSermons_other": "{{count}} planned sermons shifted by {{days}} days.",
+            "healedSermons_one": "{{count}} sermon with mis-stored date was repaired.",
+            "healedSermons_other": "{{count}} sermons with mis-stored dates were repaired."
         }
     },
     "expository": {
