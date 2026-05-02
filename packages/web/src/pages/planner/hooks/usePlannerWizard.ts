@@ -7,6 +7,7 @@ import { FirebaseConfigRepository } from '@dosfilos/infrastructure';
 import { LibraryResourceEntity, SermonSeriesEntity, Citation } from '@dosfilos/domain';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { parseLocalDate } from '@/lib/dateUtils';
 
 export type PlannerStep = 'strategy' | 'context' | 'objective' | 'structure' | 'generating';
 
@@ -109,8 +110,8 @@ export function usePlannerWizard() {
                 type: strategy,
                 topicOrBook,
                 subtopicsOrRange,
-                startDate: startDate ? new Date(startDate) : undefined,
-                endDate: endDate ? new Date(endDate) : undefined,
+                startDate: parseLocalDate(startDate),
+                endDate: parseLocalDate(endDate),
                 frequency,
                 contextResourceIds: selectedResources,
                 plannerNotes: plannerNotes || undefined,
@@ -135,7 +136,7 @@ export function usePlannerWizard() {
                 topicOrBook,
                 subtopicsOrRange,
                 numberOfSermons: numberOfSermons === '' ? undefined : numberOfSermons,
-                startDate: startDate ? new Date(startDate) : undefined,
+                startDate: parseLocalDate(startDate),
                 frequency,
                 contextResourceIds: selectedResources,
                 language: i18n.language // Pass language
