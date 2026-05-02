@@ -26,24 +26,33 @@ node scripts/reprocess-llamaparse.mjs <id-del-recurso>
 - Click en el recurso desde la biblioteca → la URL contiene el id
 - O Firestore Console → `library_resources` → el doc con el título que buscás
 
-## Auth
+## Auth (sin password)
 
-La callable es admin-only — verifica
-`request.auth.token.email === 'rdocerda@gmail.com'`. El script usa el
-Firebase Web SDK para hacer signin con email + password.
+Usa el mismo patrón de los otros scripts del repo: Application Default
+Credentials de gcloud. No necesitas password ni service account JSON.
 
-Por defecto asume `rdocerda@gmail.com`. Te va a pedir password
-interactivamente (input enmascarado, no se ve en pantalla ni queda en
-historial de bash).
-
-Si querés evitar el prompt:
+Pre-requisito (una sola vez):
 
 ```bash
-FIREBASE_ADMIN_PASSWORD=tu-password node scripts/reprocess-llamaparse.mjs <resourceId>
+gcloud auth application-default login
 ```
 
-(No hardcodear en alias/scripts persistentes — usar solo para la sesión
-si hace falta automatización.)
+(Probablemente ya lo tienes hecho si usas `firebase deploy` o
+`gcloud functions logs`.)
+
+Cómo funciona internamente:
+1. `firebase-admin` (con ADC) busca el usuario `rdocerda@gmail.com` y
+   minta un custom token.
+2. `firebase` (web SDK) hace `signInWithCustomToken` con ese token →
+   genera un ID token con el email correcto.
+3. La callable acepta porque `request.auth.token.email` ahora coincide
+   con el check de admin.
+
+Si querés invocar como otro usuario admin, pasale `--as`:
+
+```bash
+node scripts/reprocess-llamaparse.mjs <id> --as alguien@dosfilos.app --force
+```
 
 ## Qué pasa después de exitoso
 

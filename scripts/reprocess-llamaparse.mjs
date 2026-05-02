@@ -10,40 +10,38 @@
  *
  * Usage:
  *   node scripts/reprocess-llamaparse.mjs <resourceId> [--force]
+ *   node scripts/reprocess-llamaparse.mjs <resourceId> [--as <email>]
+ *
+ * Auth strategy (NO password required):
+ *   1. firebase-admin SDK uses Application Default Credentials (the
+ *      same `gcloud auth application-default login` you already have
+ *      for `firebase deploy`).
+ *   2. Looks up the admin user by email and mints a custom token.
+ *   3. Firebase Web SDK signs in with that custom token, which
+ *      satisfies the callable's `request.auth.token.email` check.
+ *
+ * Defaults to `rdocerda@gmail.com` (matches the callable's hardcoded
+ * admin check). Override with `--as <email>` if needed.
  *
  * Examples:
  *   node scripts/reprocess-llamaparse.mjs 406843cb-5dc2-4317-a672-45d5bf8fb1d1
  *   node scripts/reprocess-llamaparse.mjs <id> --force
- *
- * Auth:
- *   The callable verifies `request.auth.token.email === 'rdocerda@gmail.com'`,
- *   so we sign in with admin email/password via the Firebase Web SDK.
- *   Reads credentials from env vars when present, otherwise prompts
- *   interactively.
- *
- *     - FIREBASE_ADMIN_EMAIL    (defaults to 'rdocerda@gmail.com')
- *     - FIREBASE_ADMIN_PASSWORD (prompted if absent — input is masked)
- *
- *   Firebase config is read from `packages/web/.env.local` (the same
- *   VITE_FIREBASE_* values the app uses).
+ *   node scripts/reprocess-llamaparse.mjs <id> --as someone@dosfilos.app
  *
  * Notes:
- *   - The callable can take up to 15 minutes for very large PDFs. The
- *     script keeps the connection open until the function responds.
- *   - On success, the resource's textExtractionStatus flips to 'ready'
- *     with extractionVersion='3.0-llamaparse', which fires the
- *     `autoIndexOnExtractionReady` trigger automatically — no extra
- *     "Procesar" click needed.
+ *   - The callable can take up to 15 minutes for very large PDFs.
+ *   - On success, textExtractionStatus → 'ready', extractionVersion →
+ *     '3.0-llamaparse', and `autoIndexOnExtractionReady` fires
+ *     automatically.
  */
 
 import { config as loadEnv } from 'dotenv';
+import admin from 'firebase-admin';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, signInWithCustomToken, signOut } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import readline from 'node:readline';
-import { Writable } from 'node:stream';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,15 +50,18 @@ const repoRoot = path.resolve(__dirname, '..');
 // ── CLI args ────────────────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
-const resourceId = args.find((a) => !a.startsWith('--'));
+const positional = args.filter((a) => !a.startsWith('--'));
+const resourceId = positional[0];
 const force = args.includes('--force');
+const asIndex = args.indexOf('--as');
+const adminEmail = asIndex >= 0 && args[asIndex + 1] ? args[asIndex + 1] : 'rdocerda@gmail.com';
 
 if (!resourceId) {
-    console.error('Usage: node scripts/reprocess-llamaparse.mjs <resourceId> [--force]');
+    console.error('Usage: node scripts/reprocess-llamaparse.mjs <resourceId> [--force] [--as <email>]');
     process.exit(1);
 }
 
-// ── Firebase config ─────────────────────────────────────────────────────
+// ── Firebase web SDK config (read from packages/web/.env.local) ─────────
 
 loadEnv({ path: path.join(repoRoot, 'packages', 'web', '.env.local') });
 
@@ -80,34 +81,6 @@ if (!firebaseConfig.apiKey) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-function prompt(question) {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    return new Promise((resolve) => {
-        rl.question(question, (answer) => {
-            rl.close();
-            resolve(answer);
-        });
-    });
-}
-
-function promptHidden(question) {
-    return new Promise((resolve) => {
-        const muted = new Writable({
-            write(chunk, _enc, cb) {
-                // Echo only the prompt text; suppress everything else.
-                if (chunk.toString() === question) process.stdout.write(question);
-                cb();
-            },
-        });
-        const rl = readline.createInterface({ input: process.stdin, output: muted, terminal: true });
-        rl.question(question, (answer) => {
-            rl.close();
-            process.stdout.write('\n');
-            resolve(answer);
-        });
-    });
-}
-
 function formatDuration(ms) {
     const s = Math.round(ms / 1000);
     if (s < 60) return `${s}s`;
@@ -119,31 +92,50 @@ function formatDuration(ms) {
 // ── Main ────────────────────────────────────────────────────────────────
 
 async function main() {
-    const email = process.env.FIREBASE_ADMIN_EMAIL || 'rdocerda@gmail.com';
-    const password = process.env.FIREBASE_ADMIN_PASSWORD || await promptHidden(`Password for ${email}: `);
-
-    if (!password) {
-        console.error('❌ Password required.');
-        process.exit(1);
+    // Step 1 — admin SDK with ADC. Same auth as the rest of the
+    // scripts/ folder (no password, no service account JSON).
+    if (!admin.apps.length) {
+        admin.initializeApp({ projectId: firebaseConfig.projectId });
     }
 
+    console.log(`🔍 Looking up admin user ${adminEmail}...`);
+    let adminUser;
+    try {
+        adminUser = await admin.auth().getUserByEmail(adminEmail);
+    } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+            console.error(`❌ User ${adminEmail} not found in Firebase Auth.`);
+        } else {
+            console.error(`❌ Lookup failed:`, err.message || err);
+            console.error('   Hint: run `gcloud auth application-default login` if ADC is missing.');
+        }
+        process.exit(1);
+    }
+    console.log(`✓ Found user uid=${adminUser.uid}`);
+
+    // Step 2 — mint a custom token. The web SDK signs in with this
+    // and gets a real ID token whose `email` claim matches the
+    // callable's check. We pass the email in additional claims so
+    // it lands in the token, plus rely on the user's own email
+    // verification (Firebase auto-fills .email on the resulting
+    // ID token from the user record).
+    console.log(`🎫 Minting custom token...`);
+    const customToken = await admin.auth().createCustomToken(adminUser.uid);
+
+    // Step 3 — web SDK sign-in with the custom token, then call
+    // the callable. Web SDK is the only path that gives us the
+    // `request.auth` context the callable expects.
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    console.log(`🔐 Signing in as ${email}...`);
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-        console.error('❌ Sign-in failed:', err.code || err.message);
-        process.exit(1);
-    }
-    console.log('✓ Signed in');
+    console.log(`🔐 Signing in via custom token...`);
+    await signInWithCustomToken(auth, customToken);
+    console.log(`✓ Signed in as ${auth.currentUser?.email ?? adminUser.email}`);
 
     const functions = getFunctions(app, 'us-central1');
-    // Default callable timeout is 70s — way too short for the 900s
-    // worst-case of LlamaParse on a 1000+ page PDF. Bump to 16 min
-    // (a touch over the 900s function timeout so we don't hang up
-    // before it returns its final error).
+    // Default callable timeout is 70s — way too short for a 15-min
+    // LlamaParse run. Bump to 16 min so we don't hang up before the
+    // function returns.
     const reprocess = httpsCallable(functions, 'reprocessWithLlamaParse', {
         timeout: 16 * 60 * 1000,
     });
