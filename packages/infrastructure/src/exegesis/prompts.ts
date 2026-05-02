@@ -3,6 +3,7 @@ import {
     type ExegesisGenerationInput,
     type ExegesisPriorStep,
     type ExegesisSourceContext,
+    type MissingSourceTypeRequirement,
     type SourceType,
     type StepEmphasis,
 } from '@dosfilos/domain';
@@ -52,6 +53,7 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
     const passage = formatPassageReference(input.paperPassage, lang);
     const styleGuideBlock = formatStyleGuide(input.styleGuideContent, lang);
     const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
+    const corpusGapsBlock = formatCorpusGaps(input.missingSourceTypes, lang);
 
     if (lang === 'en') {
         return [
@@ -71,13 +73,14 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
             `- NEVER cite yourself as a source. You are a tutor, not a bibliography entry.`,
             `- 'Model paper' sources (when present) are STYLE templates only. NEVER produce inline citations from them.`,
             `- For ideas drawn from your own general knowledge (not from the configured corpus), use language like "according to theological tradition…" or "classical commentators hold…".`,
+            corpusGapsBlock,
             ``,
             `## Style guide (MUST follow strictly)`,
             styleGuideBlock,
             ``,
             `## Tone and register`,
             `A diligent seminary student doing rigorous exegesis. Sober academic prose. Avoid devotional language as a substitute for analysis.`,
-        ].join('\n');
+        ].filter(line => line !== '').join('\n').replace(/\n{3,}/g, '\n\n');
     }
 
     return [
@@ -97,13 +100,14 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
         `- NUNCA te cites a ti mismo como fuente. Sos un tutor, no una entrada bibliográfica.`,
         `- Las fuentes con rol 'trabajo modelo' (cuando estén presentes) son plantillas de ESTILO únicamente. NUNCA produzcas citas inline desde ellas.`,
         `- Para ideas que provengan de tu conocimiento general (no del corpus configurado), usá frases como "según la tradición teológica…" o "los comentaristas clásicos sostienen…".`,
+        corpusGapsBlock,
         ``,
         `## Guía de estilo (debe seguirse estrictamente)`,
         styleGuideBlock,
         ``,
         `## Tono y registro`,
         `Un estudiante de seminario diligente haciendo exégesis rigurosa. Prosa académica sobria. Evitá el lenguaje devocional como sustituto del análisis.`,
-    ].join('\n');
+    ].filter(line => line !== '').join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
 // ── User message ────────────────────────────────────────────────────────
@@ -461,3 +465,89 @@ function truncate(text: string, maxChars: number): string {
     if (text.length <= maxChars) return text;
     return text.slice(0, maxChars) + '\n\n[…content truncated to fit context window…]';
 }
+
+// ── Corpus-gap warnings ─────────────────────────────────────────────────
+//
+// When the user's corpus doesn't satisfy a rubric requirement, the
+// orchestrator injects a "Limitaciones del corpus" block listing the
+// missing types AND telling the LLM what kinds of claims to soften
+// (or avoid) for each one. Without this, the LLM happily generates
+// confident textual-criticism / lexical / syntactic claims even when
+// it has no source to back them — the highest-risk hallucination
+// vector for academic exegesis.
+//
+// Each gap has a per-type message. Generic gaps (no type-specific
+// guidance) get a fallback line.
+
+function formatCorpusGaps(
+    missing: ReadonlyArray<MissingSourceTypeRequirement>,
+    lang: 'es' | 'en',
+): string {
+    if (missing.length === 0) return '';
+    const warnings = lang === 'en' ? CORPUS_GAP_WARNINGS_EN : CORPUS_GAP_WARNINGS_ES;
+    const intro = lang === 'en'
+        ? `## Corpus limitations (READ CAREFULLY)\nYour configured corpus does NOT include the following source types the rubric requires. Soften or skip claims that would normally rest on these — never invent citations to sources you don't have.`
+        : `## Limitaciones del corpus (LEER CON ATENCIÓN)\nTu corpus configurado NO incluye los siguientes tipos de fuente que la rúbrica requiere. Atenuá o saltá las afirmaciones que normalmente se basarían en ellas — nunca inventes citas a fuentes que no tenés.`;
+    const items = missing.map((req) => {
+        const warning = warnings[req.sourceType] ?? warnings['__default__'];
+        const ratio = `${req.have}/${req.minimum}`;
+        return `- **${prettyTypeName(req.sourceType, lang)}** (${ratio}): ${warning}`;
+    });
+    return ['', intro, ...items].join('\n');
+}
+
+function prettyTypeName(t: SourceType, lang: 'es' | 'en'): string {
+    if (lang === 'en') {
+        const en: Record<SourceType, string> = {
+            'biblical-text-edition': 'Biblical text edition',
+            'critical-apparatus': 'Critical apparatus',
+            'lexicon-technical': 'Technical lexicon',
+            'theological-dictionary': 'Theological dictionary',
+            'grammar-syntax': 'Grammar / syntax',
+            'commentary-critical': 'Critical-technical commentary',
+            'commentary-expository': 'Expository commentary',
+            'historical-background': 'Historical / cultural background',
+            'theological-monograph': 'Theological monograph',
+            'journal-article': 'Journal article',
+            'primary-source-ancient': 'Ancient primary source',
+            'style-template-paper': 'Style-template paper',
+            'other': 'Other',
+        };
+        return en[t];
+    }
+    return spanishTypeLabel(t);
+}
+
+const CORPUS_GAP_WARNINGS_ES: Record<SourceType | '__default__', string> = {
+    '__default__': 'Atenuá afirmaciones que dependerían de este tipo de fuente; marcalas como tentativas o de conocimiento general.',
+    'biblical-text-edition': 'NO hagas afirmaciones específicas sobre el texto crítico (NA28/BHS/Rahlfs) — citá solo desde la traducción disponible y marcá explícitamente que es traducción.',
+    'critical-apparatus': 'NO hagas afirmaciones sobre variantes textuales, manuscritos específicos (𝔓⁷², ℵ, A, B, etc.), ni decisiones de crítica textual sin marcarlas como tentativas que requieren consulta del aparato crítico.',
+    'lexicon-technical': 'NO hagas afirmaciones específicas sobre matices semánticos de términos griegos/hebreos sin marcarlas como generales que requieren consulta de un léxico técnico (BDAG, HALOT, LSJ).',
+    'theological-dictionary': 'NO hagas afirmaciones sobre la trayectoria canónica de un término o el desarrollo de un campo semántico sin marcarlas como tentativas que requieren consulta de un diccionario teológico (TDNT, NIDNTTE, EDNT).',
+    'grammar-syntax': 'NO hagas afirmaciones técnicas sobre sintaxis (categorías de genitivo, aspecto verbal, construcciones específicas) sin marcarlas como necesitando verificación con una gramática de referencia (BDF, Wallace, Robertson).',
+    'commentary-critical': 'NO hagas afirmaciones técnicas detalladas (decisiones sintácticas finas, crítica textual del versículo, paralelos intertestamentarios precisos) sin marcarlas como necesitando verificación con un comentario crítico-técnico (WBC, NIGTC, Hermeneia, ICC).',
+    'commentary-expository': 'NO hagas afirmaciones sobre la lectura teológica establecida del pasaje o aplicaciones tradicionales sin marcarlas como tentativas que requieren un comentario expositivo (NICOT/NICNT, BECNT, Pillar).',
+    'historical-background': 'NO hagas afirmaciones sobre contexto greco-romano, costumbres del primer siglo, audiencia original o trasfondo del libro sin marcarlas como generales que requieren verificación con literatura de contexto (deSilva, Sanders, Keener IVP, ABD).',
+    'theological-monograph': 'NO desarrolles ideas teológicas profundas que requerirían una monografía especializada sin marcarlas como tentativas.',
+    'journal-article': 'NO cites desarrollos académicos recientes ni debates de campo sin marcarlos como tentativos.',
+    'primary-source-ancient': 'NO hagas afirmaciones específicas sobre Josefo, Filón, Padres apostólicos o pseudoepígrafa sin marcarlas como necesitando verificación directa con la fuente primaria.',
+    'style-template-paper': '',
+    'other': '',
+};
+
+const CORPUS_GAP_WARNINGS_EN: Record<SourceType | '__default__', string> = {
+    '__default__': 'Soften any claims that would rest on this source type; mark them as tentative or as general knowledge.',
+    'biblical-text-edition': 'Do NOT make specific claims about the critical text (NA28/BHS/Rahlfs) — cite only from the available translation and mark it explicitly as a translation.',
+    'critical-apparatus': 'Do NOT make claims about textual variants, specific manuscripts (𝔓⁷², ℵ, A, B, etc.), or textual-critical decisions without marking them as tentative and requiring critical-apparatus consultation.',
+    'lexicon-technical': 'Do NOT make specific claims about semantic nuances of Greek/Hebrew terms without marking them as general and requiring consultation of a technical lexicon (BDAG, HALOT, LSJ).',
+    'theological-dictionary': 'Do NOT make claims about a term\'s canonical trajectory or semantic-field development without marking them as tentative and requiring a theological dictionary (TDNT, NIDNTTE, EDNT).',
+    'grammar-syntax': 'Do NOT make technical syntactic claims (genitive categories, verbal aspect, specific constructions) without marking them as needing verification against a reference grammar (BDF, Wallace, Robertson).',
+    'commentary-critical': 'Do NOT make detailed technical claims (fine syntactic decisions, verse-level textual criticism, precise intertestamental parallels) without marking them as needing verification against a critical-technical commentary (WBC, NIGTC, Hermeneia, ICC).',
+    'commentary-expository': 'Do NOT make claims about the established theological reading or traditional applications without marking them as tentative and needing an expository commentary (NICOT/NICNT, BECNT, Pillar).',
+    'historical-background': 'Do NOT make claims about Greco-Roman context, first-century customs, original audience, or book background without marking them as general and needing verification against context literature (deSilva, Sanders, Keener IVP, ABD).',
+    'theological-monograph': 'Do NOT develop deep theological ideas that would require a specialized monograph without marking them as tentative.',
+    'journal-article': 'Do NOT cite recent academic developments or field debates without marking them as tentative.',
+    'primary-source-ancient': 'Do NOT make specific claims about Josephus, Philo, Apostolic Fathers, or pseudepigrapha without marking them as needing direct verification against the primary source.',
+    'style-template-paper': '',
+    'other': '',
+};
