@@ -94,8 +94,32 @@ function formatDuration(ms) {
 async function main() {
     // Step 1 — admin SDK with ADC. Same auth as the rest of the
     // scripts/ folder (no password, no service account JSON).
+    //
+    // `serviceAccountId` is necessary so `createCustomToken()` can
+    // sign the JWT via the IAM Credentials API (signJwt) instead of
+    // requiring a private key from a service-account JSON. This works
+    // when:
+    //   1. ADC is set (`gcloud auth application-default login`), AND
+    //   2. The principal (your gcloud user) has the role
+    //      `roles/iam.serviceAccountTokenCreator` on the SA being
+    //      impersonated. Project Owner / Editor includes this by
+    //      default — only restricted IAM setups need to grant it
+    //      explicitly.
+    //
+    // The default App Engine SA `<projectId>@appspot.gserviceaccount.com`
+    // is auto-created with every Firebase project and is the safest
+    // pick because it always exists. If your project removed it
+    // (rare), pass a different SA via `--sa <email>` below.
+    const saIndex = args.indexOf('--sa');
+    const serviceAccountId = saIndex >= 0 && args[saIndex + 1]
+        ? args[saIndex + 1]
+        : `${firebaseConfig.projectId}@appspot.gserviceaccount.com`;
+
     if (!admin.apps.length) {
-        admin.initializeApp({ projectId: firebaseConfig.projectId });
+        admin.initializeApp({
+            projectId: firebaseConfig.projectId,
+            serviceAccountId,
+        });
     }
 
     console.log(`🔍 Looking up admin user ${adminEmail}...`);
@@ -119,8 +143,26 @@ async function main() {
     // it lands in the token, plus rely on the user's own email
     // verification (Firebase auto-fills .email on the resulting
     // ID token from the user record).
-    console.log(`🎫 Minting custom token...`);
-    const customToken = await admin.auth().createCustomToken(adminUser.uid);
+    console.log(`🎫 Minting custom token (signing via ${serviceAccountId})...`);
+    let customToken;
+    try {
+        customToken = await admin.auth().createCustomToken(adminUser.uid);
+    } catch (err) {
+        if (err.code === 'auth/insufficient-permission' || /signBlob|signJwt|iam\.serviceAccount/.test(err.message ?? '')) {
+            console.error(`❌ Cannot sign custom token via ${serviceAccountId}.`);
+            console.error('   You need `roles/iam.serviceAccountTokenCreator` on that service account.');
+            console.error('   Grant it with:');
+            console.error(`     gcloud iam service-accounts add-iam-policy-binding \\`);
+            console.error(`       ${serviceAccountId} \\`);
+            console.error(`       --member='user:<your-email>' \\`);
+            console.error(`       --role='roles/iam.serviceAccountTokenCreator' \\`);
+            console.error(`       --project=${firebaseConfig.projectId}`);
+            console.error('   Or pass a different SA email via `--sa <email>`.');
+        } else {
+            console.error(`❌ Custom token mint failed:`, err.message || err);
+        }
+        process.exit(1);
+    }
 
     // Step 3 — web SDK sign-in with the custom token, then call
     // the callable. Web SDK is the only path that gives us the

@@ -29,30 +29,44 @@ node scripts/reprocess-llamaparse.mjs <id-del-recurso>
 ## Auth (sin password)
 
 Usa el mismo patrón de los otros scripts del repo: Application Default
-Credentials de gcloud. No necesitas password ni service account JSON.
+Credentials de gcloud + IAM Credentials API para firmar tokens. No
+necesitas password ni service account JSON.
 
-Pre-requisito (una sola vez):
+Pre-requisitos (una sola vez):
 
-```bash
-gcloud auth application-default login
-```
+1. **ADC configurado:**
+   ```bash
+   gcloud auth application-default login
+   ```
+   (Probablemente ya hecho si usas `firebase deploy` o `gcloud
+   functions logs`.)
 
-(Probablemente ya lo tienes hecho si usas `firebase deploy` o
-`gcloud functions logs`.)
+2. **Permiso para firmar tokens en nombre de la SA por defecto del
+   proyecto** (`dosfilosapp@appspot.gserviceaccount.com`). Si eres
+   project Owner / Editor, ya lo tienes automáticamente. Si no:
+   ```bash
+   gcloud iam service-accounts add-iam-policy-binding \
+     dosfilosapp@appspot.gserviceaccount.com \
+     --member='user:tu-email@gmail.com' \
+     --role='roles/iam.serviceAccountTokenCreator' \
+     --project=dosfilosapp
+   ```
 
 Cómo funciona internamente:
-1. `firebase-admin` (con ADC) busca el usuario `rdocerda@gmail.com` y
-   minta un custom token.
+1. `firebase-admin` (con ADC) busca el usuario admin (default
+   `rdocerda@gmail.com`) y pide a IAM Credentials API que firme un
+   custom token en nombre de la SA del proyecto.
 2. `firebase` (web SDK) hace `signInWithCustomToken` con ese token →
    genera un ID token con el email correcto.
 3. La callable acepta porque `request.auth.token.email` ahora coincide
    con el check de admin.
 
-Si querés invocar como otro usuario admin, pasale `--as`:
-
-```bash
-node scripts/reprocess-llamaparse.mjs <id> --as alguien@dosfilos.app --force
-```
+Flags opcionales:
+- `--as <email>` — invocar como otro admin (default
+  `rdocerda@gmail.com`)
+- `--sa <email>` — usar otra service account para firmar (default
+  `<projectId>@appspot.gserviceaccount.com`)
+- `--force` — re-extraer aunque ya esté como llamaparse
 
 ## Qué pasa después de exitoso
 
