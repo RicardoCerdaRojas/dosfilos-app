@@ -124,6 +124,8 @@
             "theology": "Systematic Theology",
             "grammar": "Grammar / Languages",
             "commentary": "Biblical Commentary",
+            "theologicalDictionary": "Theological Dictionary",
+            "bibleDictionary": "Bible Dictionary",
             "article": "Article / Paper",
             "other": "Other"
         },

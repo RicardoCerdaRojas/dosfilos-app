@@ -27,10 +27,13 @@ interface EditResourceModalProps {
 }
 
 // Resource types available in the editor — labels look up via i18n at render time.
-const RESOURCE_TYPE_KEYS: Array<{ value: ResourceType; i18nKey: 'theology' | 'grammar' | 'commentary' | 'article' | 'other' }> = [
+type CategoryI18nKey = 'theology' | 'grammar' | 'commentary' | 'theologicalDictionary' | 'bibleDictionary' | 'article' | 'other';
+const RESOURCE_TYPE_KEYS: Array<{ value: ResourceType; i18nKey: CategoryI18nKey }> = [
     { value: 'theology', i18nKey: 'theology' },
     { value: 'grammar', i18nKey: 'grammar' },
     { value: 'commentary', i18nKey: 'commentary' },
+    { value: 'theological-dictionary', i18nKey: 'theologicalDictionary' },
+    { value: 'bible-dictionary', i18nKey: 'bibleDictionary' },
     { value: 'article', i18nKey: 'article' },
     { value: 'other', i18nKey: 'other' },
 ];

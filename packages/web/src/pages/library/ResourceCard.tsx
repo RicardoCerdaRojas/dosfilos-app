@@ -41,10 +41,13 @@ interface ResourceCardProps {
     onConfigureCoreStores?: () => void; // Admin: assigns the resource to Core Library stores
 }
 
-// Icon mapping for category icons
+// Icon mapping for category icons. Keep keys identical to the icon
+// names referenced from `LibraryCategory.icon` in domain/DEFAULT_CATEGORIES.
 const iconMap: Record<string, typeof Book> = {
     Book,
+    BookOpen,
     Languages,
+    Library,
     MessageSquare,
     FileText,
     FileQuestion,
@@ -67,6 +70,8 @@ const colorMap: Record<string, string> = {
     blue: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30',
     purple: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
     green: 'text-green-600 bg-green-50 dark:bg-green-950/30',
+    teal: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
+    amber: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30',
     orange: 'text-orange-600 bg-orange-50 dark:bg-orange-950/30',
     red: 'text-red-600 bg-red-50 dark:bg-red-950/30',
     yellow: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30',

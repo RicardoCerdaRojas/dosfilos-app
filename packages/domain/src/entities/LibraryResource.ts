@@ -1,7 +1,14 @@
 import { WorkflowPhase } from './SermonWorkflow';
 import type { SourceType as ExegesisSourceType } from '../exegesis/entities/SourceType';
 
-export type ResourceType = 'theology' | 'grammar' | 'commentary' | 'article' | 'other';
+export type ResourceType =
+    | 'theology'
+    | 'grammar'
+    | 'commentary'
+    | 'theological-dictionary'
+    | 'bible-dictionary'
+    | 'article'
+    | 'other';
 
 export type TextExtractionStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
