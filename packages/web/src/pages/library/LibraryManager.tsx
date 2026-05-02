@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
@@ -56,6 +57,33 @@ export function LibraryManager() {
     //    1) `canUploadDocument` — Free tier (libraryDocsLimit=0) or plan cap → UpgradeRequiredModal.
     //    2) Processing balance — paid plan but standard+premium balance both at 0 → CreditPacksDialog.
     //    Stage 2 only runs after stage 1 passes; otherwise free users would see both modals.
+    //
+    // Both checks were originally sequential awaits inside the click
+    // handler, which made "Agregar recurso" feel ~1s sluggish (two
+    // Firestore round-trips serialized). Now we prefetch both via
+    // react-query on mount, cache them, and the click reads from
+    // cache (instant). They're invalidated after every successful
+    // upload (`onSuccess` below) so the next click re-validates
+    // against the freshly-debited balance.
+    const queryClient = useQueryClient();
+    const uploadGateKey = ['library', 'uploadGate', user?.uid] as const;
+    const { data: uploadGate } = useQuery({
+        queryKey: uploadGateKey,
+        queryFn: async () => {
+            if (!user?.uid) return null;
+            const [check, balance] = await Promise.all([
+                checkCanUploadDocument(),
+                processingBalanceService.getBalance(user.uid),
+            ]);
+            return {
+                canUpload: check.allowed,
+                hasBalance: (balance.standardPagesAvailable + balance.premiumPagesAvailable) > 0,
+            };
+        },
+        enabled: !!user?.uid,
+        staleTime: 60_000, // 1 min — gate state changes only on upload or plan change
+    });
+
     const [showUploadUpgradeModal, setShowUploadUpgradeModal] = useState(false);
     const [creditPacksOpen, setCreditPacksOpen] = useState(false);
     const handleToggleUploadForm = async () => {
@@ -63,18 +91,34 @@ export function LibraryManager() {
             setShowUploadForm(false);
             return;
         }
-        const check = await checkCanUploadDocument();
-        if (!check.allowed) {
+        // Cache hit (~99% of the time post-mount): instant resolution.
+        // Cache miss (very first interaction before query settled, or
+        // after invalidation): fall through to a fresh fetch — slower
+        // but keeps the gate authoritative.
+        let gate = uploadGate;
+        if (!gate) {
+            gate = await queryClient.fetchQuery({
+                queryKey: uploadGateKey,
+                queryFn: async () => {
+                    if (!user?.uid) return null;
+                    const [check, balance] = await Promise.all([
+                        checkCanUploadDocument(),
+                        processingBalanceService.getBalance(user.uid),
+                    ]);
+                    return {
+                        canUpload: check.allowed,
+                        hasBalance: (balance.standardPagesAvailable + balance.premiumPagesAvailable) > 0,
+                    };
+                },
+            });
+        }
+        if (!gate?.canUpload) {
             setShowUploadUpgradeModal(true);
             return;
         }
-        if (user) {
-            const balance = await processingBalanceService.getBalance(user.uid);
-            const totalAvailable = balance.standardPagesAvailable + balance.premiumPagesAvailable;
-            if (totalAvailable === 0) {
-                setCreditPacksOpen(true);
-                return;
-            }
+        if (!gate.hasBalance) {
+            setCreditPacksOpen(true);
+            return;
         }
         setShowUploadForm(true);
     };
@@ -105,7 +149,13 @@ export function LibraryManager() {
         userId,
         isAdmin,
         onConsentRequired: () => setConsentModalOpen(true),
-        onSuccess: () => setShowUploadForm(false),
+        onSuccess: () => {
+            setShowUploadForm(false);
+            // Balance changed — invalidate the cached gate so the
+            // next "Agregar recurso" click sees fresh state (the
+            // user might have crossed into 0-balance territory).
+            queryClient.invalidateQueries({ queryKey: uploadGateKey });
+        },
     });
 
     // ── Filtered view derived from search + category ────────────────────────
