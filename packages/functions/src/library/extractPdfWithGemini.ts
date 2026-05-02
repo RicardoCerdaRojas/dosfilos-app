@@ -122,7 +122,9 @@ async function extractWithGemini(
     console.log(`✅ [Gemini] File ready: ${geminiFile.displayName}`);
 
     // Extract text using Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    // Was 'gemini-2.0-flash' until Google deprecated it for new users
+    // (404 Not Found, May 2026). Bumped to the live successor.
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const extractionPrompt = `
 Eres un experto en extracción de texto de documentos académicos y teológicos.

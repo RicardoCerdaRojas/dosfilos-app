@@ -73,10 +73,25 @@ export async function selectLlamaParseAccount(
         });
 
     for (const account of eligible) {
-        const apiKey = process.env[account.apiKeySecretEnv];
+        const rawKey = process.env[account.apiKeySecretEnv];
+        // Defensive: trim whitespace AND reject keys with characters
+        // that HTTP headers can't carry (CR/LF/NUL). A common production
+        // failure mode is a secret stored with a trailing newline from a
+        // copy/paste in the dashboard — that triggers undici's
+        // `InvalidArgumentError: invalid Authorization header` when the
+        // key reaches `fetch()`. Skipping the malformed account here
+        // lets the next eligible account take over instead of nuking the
+        // whole upload.
+        const apiKey = rawKey?.trim();
         if (!apiKey) {
             console.warn(
                 `[LlamaParseSelector] Account ${account.id} skipped — secret env "${account.apiKeySecretEnv}" not in runtime env`,
+            );
+            continue;
+        }
+        if (/[\r\n\0]/.test(apiKey)) {
+            console.error(
+                `[LlamaParseSelector] Account ${account.id} skipped — secret env "${account.apiKeySecretEnv}" contains invalid header characters (CR/LF/NUL). Re-set the secret without trailing whitespace.`,
             );
             continue;
         }
