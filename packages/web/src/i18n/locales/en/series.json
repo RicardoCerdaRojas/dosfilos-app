@@ -97,6 +97,52 @@
             "saveError": "Error saving plan"
         }
     },
+    "expository": {
+        "back": "Back to planner",
+        "title": "Expository assistant",
+        "subtitle": "5-pass pipeline (panorama → macro → micro → preachable → fidelity) that distinguishes exegetical division from preachable division.",
+        "pass": "Pass",
+        "state": {
+            "pending": "Pending",
+            "running": "Running...",
+            "done": "Done",
+            "error": "Error"
+        },
+        "setup": {
+            "title": "Configure the analysis",
+            "subtitle": "Pick the book and optionally an approximate sermon count. The book's genre and syntax guide each pass.",
+            "book": "Book",
+            "testamentNT": "New Testament",
+            "testamentOT": "Old Testament",
+            "targetCount": "Approximate count (optional)",
+            "targetCountPlaceholder": "e.g. 12",
+            "translationNote": "v1.5: the assistant analyzes the translation (RVR1960/ASV) as a surrogate for the original. v1.6 will load Greek/Hebrew text directly.",
+            "start": "Start analysis",
+            "startDisabledHint": "Available once all 5 passes are wired (D.2-D.4)"
+        },
+        "passes": {
+            "panorama": {
+                "title": "Book panorama",
+                "subtitle": "Identifies genre, purpose, pastoral problem, central theme, movements, key terms."
+            },
+            "macro": {
+                "title": "Macrostructure",
+                "subtitle": "Divides the book into 3-7 macro-sections, each with function within the book's flow."
+            },
+            "micro": {
+                "title": "Microstructure",
+                "subtitle": "Identifies exegetical units within each macro-section, with genre-specific criteria."
+            },
+            "preachable": {
+                "title": "Preachable conversion",
+                "subtitle": "Decides which units stand alone, combine, or split. Produces exegetical + homiletical proposition + pastoral objective."
+            },
+            "fidelity": {
+                "title": "Fidelity review",
+                "subtitle": "Audits preachable units against the methodology's anti-patterns. Advisory output, never destructive."
+            }
+        }
+    },
     "pericope": {
         "back": "Back to planner",
         "title": "Pericope assistant",

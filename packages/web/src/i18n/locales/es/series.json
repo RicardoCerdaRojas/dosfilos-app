@@ -97,6 +97,52 @@
             "saveError": "Error al guardar el plan"
         }
     },
+    "expository": {
+        "back": "Volver al planificador",
+        "title": "Asistente expositivo",
+        "subtitle": "Pipeline de 5 pases (panorama → macro → micro → predicable → fidelidad) que distingue la división exegética de la división predicable.",
+        "pass": "Pase",
+        "state": {
+            "pending": "Pendiente",
+            "running": "Ejecutando...",
+            "done": "Completado",
+            "error": "Error"
+        },
+        "setup": {
+            "title": "Configura el análisis",
+            "subtitle": "Elige el libro y opcionalmente una cantidad aproximada de sermones. El género y la sintaxis del libro guían cada pase.",
+            "book": "Libro",
+            "testamentNT": "Nuevo Testamento",
+            "testamentOT": "Antiguo Testamento",
+            "targetCount": "Cantidad aproximada (opcional)",
+            "targetCountPlaceholder": "Ej. 12",
+            "translationNote": "v1.5: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.6 cargará el texto griego/hebreo directo.",
+            "start": "Iniciar análisis",
+            "startDisabledHint": "Disponible cuando los 5 pases estén cableados (D.2-D.4)"
+        },
+        "passes": {
+            "panorama": {
+                "title": "Panorama del libro",
+                "subtitle": "Identifica género, propósito, problema pastoral, tema central, movimientos y palabras clave."
+            },
+            "macro": {
+                "title": "Macroestructura",
+                "subtitle": "Divide el libro en 3-7 macro-secciones, cada una con función dentro del flujo del libro."
+            },
+            "micro": {
+                "title": "Microestructura",
+                "subtitle": "Identifica unidades exegéticas dentro de cada macro-sección, con criterios específicos por género."
+            },
+            "preachable": {
+                "title": "Conversión predicable",
+                "subtitle": "Decide qué unidades se predican solas, se combinan o se dividen. Produce proposiciones exegética + homilética + objetivo pastoral."
+            },
+            "fidelity": {
+                "title": "Evaluación de fidelidad",
+                "subtitle": "Audita las unidades predicables contra los anti-patterns metodológicos. Output advisory, no destructivo."
+            }
+        }
+    },
     "pericope": {
         "back": "Volver al planificador",
         "title": "Asistente de perícopas",

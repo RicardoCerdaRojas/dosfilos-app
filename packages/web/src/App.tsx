@@ -13,7 +13,7 @@ import { PreachModePage } from '@/pages/sermons/preach';
 import { SeriesList } from '@/pages/series/SeriesList';
 import { SeriesForm } from '@/pages/series/SeriesForm';
 import { SeriesDetail } from '@/pages/series/SeriesDetail';
-import { PericopeAssistantPage } from '@/pages/series/PericopeAssistantPage';
+import { ExpositoryAssistantPage } from '@/pages/series/ExpositoryAssistantPage';
 import { LibraryManager } from '@/pages/library/LibraryManager';
 import { PlannerWizard } from '@/pages/planner/PlannerWizard';
 import { SermonWizard } from './pages/sermons/generator/SermonWizard';
@@ -187,7 +187,7 @@ function App() {
             <Route path="plans">
               <Route index element={<SeriesList />} />
               <Route path="new" element={<SeriesForm />} />
-              <Route path="pericope" element={<PericopeAssistantPage />} />
+              <Route path="pericope" element={<ExpositoryAssistantPage />} />
               <Route path=":id" element={<SeriesDetail />} />
               <Route path=":id/edit" element={<SeriesForm />} />
             </Route>
