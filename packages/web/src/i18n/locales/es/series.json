@@ -101,7 +101,7 @@
         "back": "Volver al planificador",
         "title": "Asistente expositivo",
         "subtitle": "Pipeline de 5 pases (panorama → macro → micro → predicable → fidelidad) que distingue la división exegética de la división predicable.",
-        "pass": "Pase",
+        "pass": "Fase",
         "collapse": "Contraer sección",
         "collapsedStrip": {
             "label": "Contraídas",
@@ -123,7 +123,13 @@
             "targetCountPlaceholder": "Ej. 12",
             "translationNote": "v1.5: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.6 cargará el texto griego/hebreo directo.",
             "start": "Iniciar análisis",
-            "running": "Ejecutando pipeline..."
+            "running": "Ejecutando pipeline...",
+            "textZoomLabel": "Tamaño del texto",
+            "textZoom": {
+                "level1": "Texto pequeño",
+                "level2": "Texto mediano",
+                "level3": "Texto grande"
+            }
         },
         "results": {
             "panorama": {

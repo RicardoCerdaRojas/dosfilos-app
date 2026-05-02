@@ -11,6 +11,7 @@ import {
     Sparkles,
     BookPlus,
     Minus,
+    Type,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,6 +83,27 @@ export function ExpositoryAssistantPage() {
     const [startDate, setStartDate] = useState('');
     const [frequency, setFrequency] = useState<'weekly' | 'biweekly' | 'monthly' | 'flexible'>('weekly');
     const [creatingSeries, setCreatingSeries] = useState(false);
+
+    // Text zoom for the wizard body content. 1 = default, 2 = large,
+    // 3 = larger. Persisted in localStorage so a pastor who picked a
+    // larger size doesn't have to re-pick on every visit. Apply via a
+    // wrapper class that overrides Tailwind text-* utilities (see
+    // index.css `.expository-zoom-*` rules).
+    const [textZoom, setTextZoom] = useState<1 | 2 | 3>(() => {
+        if (typeof window === 'undefined') return 1;
+        const stored = window.localStorage.getItem('expositoryTextZoom');
+        const parsed = stored ? Number(stored) : 1;
+        return parsed === 2 || parsed === 3 ? (parsed as 2 | 3) : 1;
+    });
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        window.localStorage.setItem('expositoryTextZoom', String(textZoom));
+    }, [textZoom]);
+    const zoomClassName = textZoom === 3
+        ? 'expository-zoom-larger'
+        : textZoom === 2
+          ? 'expository-zoom-large'
+          : '';
 
     // Collapsed pass cards — set of pass indices (1..5) currently
     // shown as chips in the strip instead of full cards. State
@@ -389,7 +411,7 @@ export function ExpositoryAssistantPage() {
                 </div>
             </div>
 
-            <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-8 space-y-6">
+            <main className={`flex-1 max-w-5xl w-full mx-auto px-6 py-8 space-y-6 ${zoomClassName}`}>
                 <SetupCard
                     bookId={bookId}
                     onBookIdChange={setBookId}
@@ -399,6 +421,8 @@ export function ExpositoryAssistantPage() {
                     allBooks={allBooks}
                     isRunning={isRunning}
                     onStart={handleStart}
+                    textZoom={textZoom}
+                    onTextZoomChange={setTextZoom}
                     t={t}
                 />
 
@@ -630,6 +654,8 @@ function SetupCard({
     allBooks,
     isRunning,
     onStart,
+    textZoom,
+    onTextZoomChange,
     t,
 }: {
     bookId: BibleBookId;
@@ -640,20 +666,25 @@ function SetupCard({
     allBooks: ReadonlyArray<{ id: BibleBookId; nameEs: string; nameEn: string; testament: 'OT' | 'NT' }>;
     isRunning: boolean;
     onStart: () => void;
+    textZoom: 1 | 2 | 3;
+    onTextZoomChange: (z: 1 | 2 | 3) => void;
     t: (key: string) => string;
 }) {
     return (
         <section className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-            <header className="mb-4">
-                <div className="flex items-center gap-2 mb-1">
-                    <BookOpenText className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                        {t('expository.setup.title')}
-                    </h2>
+            <header className="mb-4 flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <BookOpenText className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                            {t('expository.setup.title')}
+                        </h2>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {t('expository.setup.subtitle')}
+                    </p>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {t('expository.setup.subtitle')}
-                </p>
+                <TextZoomControl value={textZoom} onChange={onTextZoomChange} t={t} />
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -719,6 +750,52 @@ function SetupCard({
                 </Button>
             </div>
         </section>
+    );
+}
+
+// ── Text zoom control ──────────────────────────────────────────────────
+
+function TextZoomControl({
+    value,
+    onChange,
+    t,
+}: {
+    value: 1 | 2 | 3;
+    onChange: (z: 1 | 2 | 3) => void;
+    t: (key: string) => string;
+}) {
+    const levels: Array<{ level: 1 | 2 | 3; label: string }> = [
+        { level: 1, label: 'A' },
+        { level: 2, label: 'A' },
+        { level: 3, label: 'A' },
+    ];
+    const sizeClass = ['text-xs', 'text-sm', 'text-base'];
+    return (
+        <div
+            className="inline-flex items-center gap-1 rounded-md border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 p-0.5"
+            role="group"
+            aria-label={t('expository.setup.textZoomLabel') as string}
+            title={t('expository.setup.textZoomLabel') as string}
+        >
+            <Type className="h-3.5 w-3.5 text-slate-400 ml-1.5" />
+            {levels.map(({ level, label }) => (
+                <button
+                    key={level}
+                    type="button"
+                    onClick={() => onChange(level)}
+                    aria-pressed={value === level}
+                    aria-label={t(`expository.setup.textZoom.level${level}`) as string}
+                    title={t(`expository.setup.textZoom.level${level}`) as string}
+                    className={`px-2 py-1 rounded ${sizeClass[level - 1]} font-semibold transition-colors ${
+                        value === level
+                            ? 'bg-emerald-500 text-slate-900'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                    }`}
+                >
+                    {label}
+                </button>
+            ))}
+        </div>
     );
 }
 

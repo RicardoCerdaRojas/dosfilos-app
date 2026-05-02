@@ -123,7 +123,13 @@
             "targetCountPlaceholder": "e.g. 12",
             "translationNote": "v1.5: the assistant analyzes the translation (RVR1960/ASV) as a surrogate for the original. v1.6 will load Greek/Hebrew text directly.",
             "start": "Start analysis",
-            "running": "Running pipeline..."
+            "running": "Running pipeline...",
+            "textZoomLabel": "Text size",
+            "textZoom": {
+                "level1": "Small text",
+                "level2": "Medium text",
+                "level3": "Large text"
+            }
         },
         "results": {
             "panorama": {
