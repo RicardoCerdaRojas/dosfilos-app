@@ -31,6 +31,25 @@ import {
     MICRO_RESPONSE_SCHEMA,
 } from './expository-prompts/microStructure';
 import {
+    buildPreachableSystemInstruction,
+    buildPreachableUserMessage,
+    PREACHABLE_RESPONSE_SCHEMA,
+} from './expository-prompts/preachableConversion';
+
+const VALID_SPECIAL_CASES = [
+    'salutation',
+    'doxology',
+    'long-prayer',
+    'virtue-list',
+    'narrative-scene',
+    'ot-citation',
+    'genealogy',
+    'law-code',
+    'parable',
+    'oracle',
+] as const;
+type ValidSpecialCase = typeof VALID_SPECIAL_CASES[number];
+import {
     djb2Hash,
     EXPOSITORY_PIPELINE_VERSION,
     fingerprintVerses,
@@ -205,11 +224,58 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         };
     }
 
-    // ── Pase 4-5: stubs (filled in B.4-B.5) ─────────────────────────────
+    // ── Pase 4: Conversión predicable ───────────────────────────────────
 
-    async runPreachableConversion(_input: PreachableInput): Promise<PassResult<PreachableUnit[]>> {
-        throw new Error('GeminiExpositoryAssistant.runPreachableConversion not yet implemented (lands in B.4)');
+    async runPreachableConversion(input: PreachableInput): Promise<PassResult<PreachableUnit[]>> {
+        const systemInstruction = buildPreachableSystemInstruction(input.displayLanguage);
+        const userMessage = buildPreachableUserMessage(input);
+
+        const model = this.genAI.getGenerativeModel({
+            model: this.modelName,
+            systemInstruction,
+            generationConfig: {
+                // Larger budget — propositions are 2-3 sentences each
+                // and we may emit 8-20 preachable units.
+                maxOutputTokens: 16384,
+                // Slightly higher temperature: this pass involves
+                // homiletical judgment (combine vs split, special-case
+                // treatment) where some creativity helps. Still capped
+                // to keep propositions disciplined.
+                temperature: 0.5,
+                topP: 0.92,
+                responseMimeType: 'application/json',
+                responseSchema: PREACHABLE_RESPONSE_SCHEMA as any,
+            },
+        });
+
+        console.log('[GeminiExpositoryAssistant] runPreachableConversion', {
+            book: input.book,
+            language: input.displayLanguage,
+            macroCount: input.macroSections.length,
+            microCount: input.exegeticalUnits.length,
+            targetCount: input.targetPreachableCount ?? null,
+        });
+
+        const result = await withGeminiRetry(
+            () => model.generateContent(userMessage),
+            { contextLabel: 'GeminiExpositoryAssistant.runPreachableConversion' },
+        );
+        const response = result.response;
+        const raw = response.text();
+
+        const parsed = parseJsonOrThrow(raw, 'preachableConversion');
+        const validMicroIds = new Set(input.exegeticalUnits.map((u) => u.id));
+        const payload = normalizePreachableUnits(parsed, validMicroIds);
+
+        return {
+            payload,
+            modelId: this.modelName,
+            tokensUsed: extractTokens(response.usageMetadata),
+            passVersion: this.passVersion('preachable', input),
+        };
     }
+
+    // ── Pase 5: stub (filled in B.5) ────────────────────────────────────
 
     async runFidelityReview(_input: FidelityInput): Promise<PassResult<FidelityReview>> {
         throw new Error('GeminiExpositoryAssistant.runFidelityReview not yet implemented (lands in B.5)');
@@ -381,6 +447,91 @@ function normalizeExegeticalUnits(
 
     if (units.length === 0) {
         throw new Error('microStructure returned zero valid exegetical units');
+    }
+    return units.sort((a, b) => a.order - b.order);
+}
+
+function formatPreachablePassage(
+    book: string,
+    cs: number, vs: number, ce: number, ve: number,
+): string {
+    if (cs === ce) {
+        if (vs === ve) return `${book} ${cs}:${vs}`;
+        return `${book} ${cs}:${vs}-${ve}`;
+    }
+    return `${book} ${cs}:${vs}-${ce}:${ve}`;
+}
+
+function normalizePreachableUnits(
+    raw: any,
+    validMicroIds: ReadonlySet<string>,
+): PreachableUnit[] {
+    const arr: unknown = raw?.preachableUnits;
+    if (!Array.isArray(arr)) {
+        throw new Error('preachableConversion response missing or invalid preachableUnits array');
+    }
+
+    const units: PreachableUnit[] = [];
+    arr.forEach((item, index) => {
+        if (!item || typeof item !== 'object') return;
+        const o = item as Record<string, unknown>;
+
+        const id = typeof o.id === 'string' && o.id.trim() ? o.id.trim() : `pu-${index + 1}`;
+        const title = typeof o.title === 'string' ? o.title.trim() : '';
+        const passage = typeof o.passage === 'string' ? o.passage.trim() : '';
+        const cs = intOrNull(o.chapterStart);
+        const vs = intOrNull(o.verseStart);
+        const ce = intOrNull(o.chapterEnd);
+        const ve = intOrNull(o.verseEnd);
+        const sourcedRaw = stringArrayOrEmpty(o.sourcedExegeticalUnitIds);
+        const sourcedExegeticalUnitIds = sourcedRaw.filter((mid) => validMicroIds.has(mid));
+        const exegeticalProposition = typeof o.exegeticalProposition === 'string'
+            ? o.exegeticalProposition.trim()
+            : '';
+        const homileticalProposition = typeof o.homileticalProposition === 'string'
+            ? o.homileticalProposition.trim()
+            : '';
+        const pastoralObjective = typeof o.pastoralObjective === 'string'
+            ? o.pastoralObjective.trim()
+            : '';
+        const caseTreatment = typeof o.caseTreatment === 'string'
+            && (VALID_SPECIAL_CASES as readonly string[]).includes(o.caseTreatment)
+            ? (o.caseTreatment as ValidSpecialCase)
+            : undefined;
+        const order = intOrNull(o.order) ?? index + 1;
+
+        if (!title) return;
+        if (cs === null || vs === null || ce === null || ve === null) return;
+        if (ce < cs || (ce === cs && ve < vs)) return;
+        if (!exegeticalProposition || !homileticalProposition || !pastoralObjective) return;
+        // A preachable unit MUST cite at least one valid exegetical
+        // unit — that's what keeps the conversion traceable to the
+        // exegesis. If the LLM emits ids that don't exist (bug or
+        // hallucination), drop the unit instead of persisting an
+        // orphan.
+        if (sourcedExegeticalUnitIds.length === 0) return;
+
+        const finalPassage = passage || formatPreachablePassage('', cs, vs, ce, ve).trim();
+
+        units.push({
+            id,
+            title,
+            passage: finalPassage,
+            chapterStart: cs,
+            verseStart: vs,
+            chapterEnd: ce,
+            verseEnd: ve,
+            sourcedExegeticalUnitIds,
+            exegeticalProposition,
+            homileticalProposition,
+            pastoralObjective,
+            ...(caseTreatment ? { caseTreatment } : {}),
+            order,
+        });
+    });
+
+    if (units.length === 0) {
+        throw new Error('preachableConversion returned zero valid preachable units');
     }
     return units.sort((a, b) => a.order - b.order);
 }
