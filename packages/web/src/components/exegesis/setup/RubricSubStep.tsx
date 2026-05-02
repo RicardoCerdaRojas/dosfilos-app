@@ -19,6 +19,7 @@ import {
     type SourceType,
 } from '@dosfilos/domain';
 import { RequirementRow, AddRequirementButton } from '@/components/exegesis/rubric/RequirementRow';
+import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { Button } from '@/components/ui/button';
 import {
     AlertDialog,
@@ -170,6 +171,12 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
         () => sortedRequirements.map(r => r.sourceType),
         [sortedRequirements],
     );
+    // Live form snapshot for the rigor indicator — updates as the
+    // user adds/removes requirements without waiting for save.
+    const liveRubric = useMemo(() => ({
+        ...rubric,
+        sourceRequirements: requirements,
+    }), [rubric, requirements]);
 
     const handleSave = async () => {
         const minN = lengthMin === '' ? null : Number(lengthMin);
@@ -373,6 +380,7 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                         {t('paperSetup.subSteps.rubric.requirements.subtitle')}
                     </p>
                 </header>
+                <RubricRigorIndicator rubric={liveRubric} />
                 {sortedRequirements.length === 0 ? (
                     <p className="text-xs text-warning-subtle-foreground italic">
                         {t('paperSetup.subSteps.rubric.requirements.empty')}
@@ -549,6 +557,8 @@ function RubricSummaryView({
                     value={summarizeLength(rubric, t)}
                 />
             </dl>
+
+            <RubricRigorIndicator rubric={rubric} />
 
             <div className="space-y-1.5">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

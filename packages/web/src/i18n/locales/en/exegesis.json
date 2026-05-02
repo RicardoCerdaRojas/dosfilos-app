@@ -137,6 +137,27 @@
         "recommended": "Recommended",
         "standard": "Optional"
     },
+    "rubricRigor": {
+        "title": "Rubric exegetical level",
+        "minimumSourcesLabel_one": "required minimum",
+        "minimumSourcesLabel_other": "required minimums",
+        "minimumSourcesLabel": "required minimums",
+        "breadth": "Covers {{covered}} of {{total}} academic areas",
+        "scoreLabel": "Academic score: {{score}}",
+        "scoreHint": "Sum of minimums × academic weight (rigorTier 0–3 per source type).",
+        "level": {
+            "pastoral": "Pastoral / homiletical",
+            "seminary": "Seminary (undergrad / MDiv)",
+            "research": "Rigorous research",
+            "publishable": "Publishable / peer-reviewed"
+        },
+        "levelDescription": {
+            "pastoral": "Sufficient for pastoral preaching with solid biblical grounding — not designed for academic work.",
+            "seminary": "Adequate for a seminary or undergraduate theological exegetical paper.",
+            "research": "Compatible with a master's thesis or rigorous research chapter.",
+            "publishable": "Peer-reviewed paper or academic monograph chapter quality."
+        }
+    },
     "sourceTypeRelationships": {
         "lexiconWithTheologicalDict": "Technical lexicons (BDAG/HALOT) and theological dictionaries (TDNT/NIDNTTE) complement, not substitute, each other: the lexicon gives raw morpho-semantic data on the term; the theological dictionary traces its use across the canon. If your corpus is constrained, prioritize the technical lexicon.",
         "lexiconWithGrammar": "The lexicon covers the lexical level (words); the grammar covers the sentence level (syntax). Together they cover the original verse by verse.",

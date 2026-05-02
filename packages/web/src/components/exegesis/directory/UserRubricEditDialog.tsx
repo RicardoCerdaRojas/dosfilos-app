@@ -22,6 +22,7 @@ import {
     AddRequirementButton,
     RequirementRow,
 } from '@/components/exegesis/rubric/RequirementRow';
+import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 
 /**
  * Modal editor for a `UserRubric` template (rename + content).
@@ -100,6 +101,15 @@ export function UserRubricEditDialog({ open, onOpenChange, rubric }: UserRubricE
         () => sortedRequirements.map(r => r.sourceType),
         [sortedRequirements],
     );
+    // Synthetic rubric reflecting the LIVE form state so the rigor
+    // indicator updates as the user edits (rather than reflecting
+    // the persisted version). Only the fields the indicator reads
+    // are populated; other fields are passed through from the
+    // original.
+    const liveRubric = useMemo(() => ({
+        ...rubric.rubric,
+        sourceRequirements: requirements,
+    }), [rubric.rubric, requirements]);
 
     // Patch handlers key on sourceType (unique per requirement) instead
     // of array index, so the sorted render-order doesn't have to match
@@ -261,6 +271,7 @@ export function UserRubricEditDialog({ open, onOpenChange, rubric }: UserRubricE
                                 {t('paperSetup.subSteps.rubric.requirements.subtitle')}
                             </p>
                         </header>
+                        <RubricRigorIndicator rubric={liveRubric} />
                         {sortedRequirements.length === 0 ? (
                             <p className="text-xs text-warning-subtle-foreground italic">
                                 {t('paperSetup.subSteps.rubric.requirements.empty')}

@@ -137,6 +137,27 @@
         "recommended": "Recomendado",
         "standard": "Opcional"
     },
+    "rubricRigor": {
+        "title": "Nivel exegético de la rúbrica",
+        "minimumSourcesLabel_one": "fuente mínima",
+        "minimumSourcesLabel_other": "fuentes mínimas",
+        "minimumSourcesLabel": "fuentes mínimas",
+        "breadth": "Cubre {{covered}} de {{total}} áreas académicas",
+        "scoreLabel": "Score académico: {{score}}",
+        "scoreHint": "Suma de mínimos × peso académico (rigorTier 0–3 por tipo de fuente).",
+        "level": {
+            "pastoral": "Pastoral / homilético",
+            "seminary": "Seminario (pregrado / MDiv)",
+            "research": "Investigación rigurosa",
+            "publishable": "Publicable / arbitrado"
+        },
+        "levelDescription": {
+            "pastoral": "Suficiente para predicación pastoral con base bíblica sólida — no diseñado para trabajo académico.",
+            "seminary": "Adecuado para un trabajo exegético de seminario o pregrado teológico.",
+            "research": "Compatible con tesis de maestría / capítulo de investigación rigurosa.",
+            "publishable": "Calidad de paper arbitrado o capítulo de monografía académica."
+        }
+    },
     "sourceTypeRelationships": {
         "lexiconWithTheologicalDict": "Léxico técnico (BDAG/HALOT) y diccionario teológico (TDNT/NIDNTTE) son complementarios, no sustitutos: el léxico da datos morfo-semánticos puros del término; el diccionario teológico traza su uso a lo largo del canon. Si tu corpus está limitado, prioriza el léxico técnico.",
         "lexiconWithGrammar": "El léxico cubre el nivel lexical (palabras); la gramática cubre el nivel oracional (sintaxis). Juntos cubren el original verso por verso.",

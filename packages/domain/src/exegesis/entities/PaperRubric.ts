@@ -1,4 +1,4 @@
-import type { SourceType } from './SourceType';
+import { SOURCE_TYPE_CATALOG, SOURCE_TYPE_GROUPS, type SourceType } from './SourceType';
 import type { ExegeticalStepKind } from './ExegeticalStep';
 
 /**
@@ -372,4 +372,77 @@ export function computeRubricCompliance(
     const meetsMinimums = requirements.every(r => r.satisfied);
     const totalMissing = requirements.reduce((sum, r) => sum + r.missing, 0);
     return { requirements, meetsMinimums, totalMissing };
+}
+
+/**
+ * Categorical academic level a rubric makes feasible. Computed from
+ * `assessRubricRigor`. The thresholds are calibrated against
+ * real-world expectations:
+ *
+ *   - **pastoral** — sermon prep / Bible-study notes; 1-2
+ *     commentaries + maybe a lexicon. Defensible biblical work,
+ *     not academic.
+ *   - **seminary** — typical undergraduate/MDiv exegetical paper:
+ *     2-3 critical commentaries + a lexicon + a theological
+ *     dictionary + some background.
+ *   - **research** — ThM / advanced seminary / dissertation
+ *     chapter: heavy on tier-3 sources across multiple groups.
+ *   - **publishable** — peer-reviewed journal / monograph: dense
+ *     coverage of every group with multiple tier-3 sources each.
+ */
+export type RubricRigorLevel = 'pastoral' | 'seminary' | 'research' | 'publishable';
+
+export interface RubricRigorAssessment {
+    /**
+     * Sum of `minimum` across requirements with `minimum > 0`.
+     * Reflects how many sources the rubric REQUIRES (regardless of
+     * what the user has actually added to their corpus).
+     */
+    totalMinimum: number;
+    /**
+     * Weighted academic score: sum(minimum × catalog.rigorTier).
+     * A `commentary-critical` minimum of 2 contributes 2×3 = 6;
+     * a `commentary-expository` minimum of 2 contributes 2×2 = 4.
+     * Drives the `level` bucketing.
+     */
+    rigorScore: number;
+    /**
+     * Number of distinct `SOURCE_TYPE_GROUPS` covered by required
+     * requirements (0–5). High score with low breadth (e.g. 6
+     * critical commentaries, nothing else) flags an unbalanced
+     * rubric — the UI can warn separately if needed.
+     */
+    groupBreadth: number;
+    /** Categorical level surfaced to the user. */
+    level: RubricRigorLevel;
+}
+
+const RIGOR_LEVEL_THRESHOLDS: ReadonlyArray<{ level: RubricRigorLevel; minScore: number }> = [
+    { level: 'publishable', minScore: 50 },
+    { level: 'research', minScore: 25 },
+    { level: 'seminary', minScore: 10 },
+    { level: 'pastoral', minScore: 0 },
+];
+
+export function assessRubricRigor(rubric: PaperRubric): RubricRigorAssessment {
+    let totalMinimum = 0;
+    let rigorScore = 0;
+    const groupsSeen = new Set<string>();
+    for (const req of rubric.sourceRequirements) {
+        if (req.minimum <= 0) continue;
+        totalMinimum += req.minimum;
+        const tier = SOURCE_TYPE_CATALOG[req.sourceType].rigorTier;
+        rigorScore += req.minimum * tier;
+        const group = SOURCE_TYPE_GROUPS.find(
+            g => (g.types as ReadonlyArray<string>).includes(req.sourceType),
+        );
+        if (group) groupsSeen.add(group.groupKey);
+    }
+    const level = (RIGOR_LEVEL_THRESHOLDS.find(t => rigorScore >= t.minScore) ?? RIGOR_LEVEL_THRESHOLDS[RIGOR_LEVEL_THRESHOLDS.length - 1]).level;
+    return {
+        totalMinimum,
+        rigorScore,
+        groupBreadth: groupsSeen.size,
+        level,
+    };
 }
