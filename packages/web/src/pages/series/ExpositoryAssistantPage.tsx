@@ -46,7 +46,7 @@ import {
 /**
  * v1.5 expository assistant wizard.
  *
- * Replaces PericopeAssistantPage at /dashboard/plans/pericope. Runs
+ * The expository wizard at /dashboard/plans/pericope. Runs
  * the 5-pass pipeline (panorama → macro → micro → preachable →
  * fidelity) with staged UI feedback — each pass appears as a card
  * with state pending / running / done / error and renders its
