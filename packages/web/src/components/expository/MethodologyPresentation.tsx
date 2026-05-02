@@ -234,41 +234,39 @@ function StepView({
     return (
         <div className="flex flex-col items-center gap-5 min-h-[420px]">
             <div className="w-full max-w-md">{step.diagram}</div>
-            <div className="space-y-3 max-w-xl w-full">
-                <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-slate-100 text-center">
+            <div className="space-y-3 max-w-xl w-full text-left">
+                <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-slate-100">
                     {content.title}
                 </h3>
                 {content.intro && (
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-center">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                         {content.intro}
                     </p>
                 )}
                 {content.items && content.items.length > 0 && (
-                    <div className="flex justify-center">
-                        <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 text-left max-w-md">
-                            {content.items.map((item) => (
-                                <li key={item.label} className="flex gap-2 leading-relaxed">
-                                    <span className="text-emerald-600 dark:text-emerald-400 mt-1 select-none text-xs">
-                                        ◆
-                                    </span>
-                                    <span>
-                                        <span className="font-semibold text-slate-900 dark:text-slate-100">
-                                            {item.label}:
-                                        </span>{' '}
-                                        {item.desc}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
+                        {content.items.map((item) => (
+                            <li key={item.label} className="flex gap-2 leading-relaxed">
+                                <span className="text-emerald-600 dark:text-emerald-400 mt-1 select-none text-xs">
+                                    ◆
+                                </span>
+                                <span>
+                                    <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                        {item.label}:
+                                    </span>{' '}
+                                    {item.desc}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
                 )}
                 {content.outro && (
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-center">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                         {content.outro}
                     </p>
                 )}
                 {step.hasCreditsLink && content.creditsLink && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 pt-2 text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 pt-2">
                         <Link
                             to="/credits"
                             className="text-emerald-700 dark:text-emerald-300 hover:underline"
