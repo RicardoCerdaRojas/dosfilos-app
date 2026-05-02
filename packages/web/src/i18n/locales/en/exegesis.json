@@ -760,7 +760,15 @@
         },
         "askFaculty": {
             "cta": "Ask Faculty",
-            "tooltip": "Opens Faculty with this paper's context loaded"
+            "tooltip": "Opens a side panel with Faculty loaded in this paper's context",
+            "drawerTitle": "Faculty",
+            "agentName": "Assistant",
+            "preparing": "Preparing the conversation...",
+            "copied": "Copied to clipboard",
+            "errors": {
+                "createFailed": "Could not open the Faculty conversation. Try again.",
+                "sendFailed": "Could not send your message. Try again."
+            }
         },
         "exportMarkdown": {
             "cta": "Export (.md)",

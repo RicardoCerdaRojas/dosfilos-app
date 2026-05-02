@@ -760,7 +760,15 @@
         },
         "askFaculty": {
             "cta": "Consultar a la Facultad",
-            "tooltip": "Abre la Facultad con el contexto de este trabajo cargado"
+            "tooltip": "Abre un panel lateral con la Facultad cargada en el contexto de este trabajo",
+            "drawerTitle": "Facultad",
+            "agentName": "Asistente",
+            "preparing": "Preparando la conversación...",
+            "copied": "Copiado al portapapeles",
+            "errors": {
+                "createFailed": "No se pudo abrir la conversación con la Facultad. Intenta de nuevo.",
+                "sendFailed": "No se pudo enviar tu mensaje. Intenta de nuevo."
+            }
         },
         "exportMarkdown": {
             "cta": "Exportar (.md)",

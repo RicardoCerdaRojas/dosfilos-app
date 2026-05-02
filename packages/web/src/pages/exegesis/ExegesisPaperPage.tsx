@@ -26,6 +26,7 @@ import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import { StepCard } from '@/components/exegesis/StepCard';
+import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
 import {
     exportPaperToMarkdown,
     formatPassageReference,
@@ -61,6 +62,8 @@ export function ExegesisPaperPage() {
         generateSermonFromPaper,
     } = useExegesisPapers();
     const paper: ExegeticalPaper | null = papers.find(p => p.id === paperId) ?? null;
+
+    const [facultyDrawerOpen, setFacultyDrawerOpen] = useState(false);
 
     if (isLoading) {
         return <CenteredMessage icon={<Loader2 className="h-5 w-5 animate-spin" />} text={t('detail.loading')} />;
@@ -177,14 +180,15 @@ export function ExegesisPaperPage() {
                         <Settings2 className="h-3.5 w-3.5" />
                         {t('detail.openSetup')}
                     </Link>
-                    <Link
-                        to={`/dashboard/faculty/new?paperId=${paper.id}`}
+                    <button
+                        type="button"
+                        onClick={() => setFacultyDrawerOpen(true)}
                         className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 h-8 text-xs font-medium text-foreground hover:bg-accent transition-colors"
                         title={t('detail.askFaculty.tooltip') as string}
                     >
                         <MessageCircle className="h-3.5 w-3.5" />
                         {t('detail.askFaculty.cta')}
-                    </Link>
+                    </button>
                     <button
                         type="button"
                         onClick={handleExportMarkdown}
@@ -228,6 +232,12 @@ export function ExegesisPaperPage() {
                     </aside>
                 </div>
             </main>
+
+            <PaperFacultyDrawer
+                open={facultyDrawerOpen}
+                onOpenChange={setFacultyDrawerOpen}
+                paper={paper}
+            />
         </div>
     );
 }
