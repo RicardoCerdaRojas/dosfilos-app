@@ -74,6 +74,54 @@ export function SeriesForm() {
       (p) => !p.draftId && (!p.status || p.status === 'planned') && p.scheduledDate,
   ).length;
 
+  /**
+   * Hard rebuild of all unstarted plannedSermon scheduledDates from
+   * the form's current startDate + frequency. Different from the
+   * cascade-shift on save (which preserves relative spacing): this
+   * IGNORES the existing scheduledDate values and recomputes them
+   * fresh, mirroring `createSeriesFromPlan`'s spacing logic. Useful
+   * when legacy bad dates persist regardless of how the pastor edits
+   * the start date — a full recompute is the only way out.
+   */
+  const handleRecalcDates = async () => {
+      if (!id || !originalSeries) return;
+      const startDate = parseLocalDate(watchedValues.startDate);
+      if (!startDate) {
+          toast.error(t('form.messages.recalcNoStartDate') as string);
+          return;
+      }
+
+      const planned = originalSeries.metadata?.plannedSermons ?? [];
+      let rebuiltCount = 0;
+      const updatedPlanned = planned.map((p) => {
+          const isShiftable = !p.draftId && (!p.status || p.status === 'planned');
+          if (!isShiftable) return p;
+          const newScheduled = computeScheduledForWeek(startDate, p.week, frequency);
+          rebuiltCount++;
+          return { ...p, scheduledDate: newScheduled };
+      });
+
+      if (rebuiltCount === 0) {
+          toast.info(t('form.messages.recalcNoShiftable') as string);
+          return;
+      }
+
+      try {
+          await seriesService.updateSeries(id, {
+              metadata: { ...originalSeries.metadata, plannedSermons: updatedPlanned },
+          } as any);
+          toast.success(
+              t('form.messages.recalcDone', { count: rebuiltCount }) as string,
+          );
+          // Refresh local copy so the next save sees the updated state.
+          const refreshed = await seriesService.getSeries(id);
+          if (refreshed) setOriginalSeries(refreshed);
+      } catch (err) {
+          console.error('[seriesForm] recalcDates failed:', err);
+          toast.error(t('form.messages.recalcError') as string);
+      }
+  };
+
   useEffect(() => {
     if (id) {
       loadSeries();
@@ -336,9 +384,25 @@ export function SeriesForm() {
                         same delta. Sermons already in development keep
                         their scheduled dates. */}
                     {id && shiftablePlannedCount > 0 && (
-                      <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-snug">
-                        {t('form.steps.planning.shiftHint', { count: shiftablePlannedCount })}
-                      </p>
+                      <>
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-snug">
+                          {t('form.steps.planning.shiftHint', { count: shiftablePlannedCount })}
+                        </p>
+                        {/* Hard-rebuild escape hatch: when legacy bad
+                            dates are stuck in the wrong calendar cell
+                            and cascade-shift can't recover them
+                            (delta=0 → no shift, heal preserves the
+                            visible day), this button recomputes every
+                            unstarted scheduledDate from startDate +
+                            frequency. Same math as createSeriesFromPlan. */}
+                        <button
+                          type="button"
+                          onClick={handleRecalcDates}
+                          className="text-[11px] text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 underline underline-offset-2"
+                        >
+                          {t('form.steps.planning.recalcButton', { count: shiftablePlannedCount })}
+                        </button>
+                      </>
                     )}
                   </div>
 
@@ -607,4 +671,30 @@ function computeShiftedMetadata(
         healedCount,
         deltaDays,
     };
+}
+
+/**
+ * Computes a scheduledDate for sermon at `week` (1-indexed) given a
+ * start date and frequency. Mirrors the per-week spacing logic in
+ * `SeriesService.createSeriesFromPlan` so a "recalcular" rebuild
+ * produces dates identical to a fresh series creation.
+ *
+ * Returns undefined for `flexible` (no calculated date — pastor
+ * schedules manually).
+ *
+ * Always returns local-midnight Dates, regardless of the time
+ * component on the input startDate.
+ */
+function computeScheduledForWeek(
+    startDate: Date,
+    week: number,
+    freq: 'weekly' | 'biweekly' | 'monthly' | 'flexible',
+): Date | undefined {
+    if (freq === 'flexible') return undefined;
+    const offset = Math.max(0, week - 1);
+    const base = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    if (freq === 'weekly') base.setDate(base.getDate() + offset * 7);
+    else if (freq === 'biweekly') base.setDate(base.getDate() + offset * 14);
+    else if (freq === 'monthly') base.setMonth(base.getMonth() + offset);
+    return base;
 }

@@ -53,6 +53,8 @@
                 "startDateOptional": "(Opcional)",
                 "shiftHint_one": "Si cambias la fecha, {{count}} sermón planificado se desplazará el mismo número de días. Los sermones ya iniciados mantienen su fecha.",
                 "shiftHint_other": "Si cambias la fecha, {{count}} sermones planificados se desplazarán el mismo número de días. Los sermones ya iniciados mantienen su fecha.",
+                "recalcButton_one": "↻ Recalcular {{count}} fecha desde inicio + frecuencia",
+                "recalcButton_other": "↻ Recalcular {{count}} fechas desde inicio + frecuencia",
                 "endDate": "Fecha de Fin (Auto)",
                 "endDatePlaceholder": "Calculada automáticamente",
                 "sermonCount": "Número de Sermones",
@@ -100,7 +102,12 @@
             "shiftedSermons_one": "{{count}} sermón planificado se desplazó {{days}} días.",
             "shiftedSermons_other": "{{count}} sermones planificados se desplazaron {{days}} días.",
             "healedSermons_one": "{{count}} sermón con fecha mal almacenada fue corregido.",
-            "healedSermons_other": "{{count}} sermones con fechas mal almacenadas fueron corregidos."
+            "healedSermons_other": "{{count}} sermones con fechas mal almacenadas fueron corregidos.",
+            "recalcDone_one": "Recalculada {{count}} fecha desde inicio + frecuencia.",
+            "recalcDone_other": "Recalculadas {{count}} fechas desde inicio + frecuencia.",
+            "recalcNoStartDate": "Necesitas una fecha de inicio para recalcular.",
+            "recalcNoShiftable": "No hay sermones planificados sin iniciar para recalcular.",
+            "recalcError": "No se pudo recalcular las fechas."
         }
     },
     "expository": {

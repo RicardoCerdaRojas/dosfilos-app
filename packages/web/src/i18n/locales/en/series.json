@@ -53,6 +53,8 @@
                 "startDateOptional": "(Optional)",
                 "shiftHint_one": "If you change the date, {{count}} planned sermon will be shifted by the same number of days. Sermons already in development keep their dates.",
                 "shiftHint_other": "If you change the date, {{count}} planned sermons will be shifted by the same number of days. Sermons already in development keep their dates.",
+                "recalcButton_one": "↻ Recalculate {{count}} date from start + frequency",
+                "recalcButton_other": "↻ Recalculate {{count}} dates from start + frequency",
                 "endDate": "End Date (Auto)",
                 "endDatePlaceholder": "Calculated automatically",
                 "sermonCount": "Number of Sermons",
@@ -100,7 +102,12 @@
             "shiftedSermons_one": "{{count}} planned sermon shifted by {{days}} days.",
             "shiftedSermons_other": "{{count}} planned sermons shifted by {{days}} days.",
             "healedSermons_one": "{{count}} sermon with mis-stored date was repaired.",
-            "healedSermons_other": "{{count}} sermons with mis-stored dates were repaired."
+            "healedSermons_other": "{{count}} sermons with mis-stored dates were repaired.",
+            "recalcDone_one": "Recalculated {{count}} date from start + frequency.",
+            "recalcDone_other": "Recalculated {{count}} dates from start + frequency.",
+            "recalcNoStartDate": "You need a start date to recalculate.",
+            "recalcNoShiftable": "No unstarted planned sermons to recalculate.",
+            "recalcError": "Couldn't recalculate the dates."
         }
     },
     "expository": {
