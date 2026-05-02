@@ -134,7 +134,7 @@
             "testamentOT": "Antiguo Testamento",
             "targetCount": "Cantidad aproximada (opcional)",
             "targetCountPlaceholder": "Ej. 12",
-            "translationNote": "v1.5: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.6 cargará el texto griego/hebreo directo.",
+            "translationNote": "v1.6: el análisis se hace sobre el texto original (SBLGNT para NT en griego, WLC para AT en hebreo). Si la descarga del original falla, el asistente cae a la traducción (RVR1960/ASV) y avisa.",
             "start": "Iniciar análisis",
             "running": "Ejecutando pipeline...",
             "textZoomLabel": "Tamaño del texto",
