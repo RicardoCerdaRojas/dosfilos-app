@@ -416,8 +416,12 @@ export function SeriesForm() {
             <div className="space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('form.preview.title')}</h3>
               
-              {/* Preview Card */}
-              <Card className="overflow-hidden shadow-lg border-muted group transition-all duration-500 hover:shadow-xl">
+              {/* Preview Card. `!pt-0` overrides the shadcn Card default
+                  `py-6` so the cover image hits the top edge cleanly
+                  (the bottom padding stays intact, plus the per-section
+                  spacing inside the body). overflow-hidden + rounded-xl
+                  on the Card itself clip the image corners. */}
+              <Card className="overflow-hidden shadow-lg border-muted group transition-all duration-500 hover:shadow-xl !pt-0">
                  <div className="h-48 w-full bg-muted relative overflow-hidden">
                     {watchedValues.coverUrl ? (
                       <img 
