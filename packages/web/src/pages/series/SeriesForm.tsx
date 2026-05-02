@@ -53,7 +53,7 @@ export function SeriesForm() {
     currentLimit: 1
   });
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<SeriesFormData>();
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<SeriesFormData>();
   const [sermonCount, setSermonCount] = useState<number>(4);
   const [frequency, setFrequency] = useState<'weekly' | 'biweekly' | 'monthly' | 'flexible'>('weekly');
 
@@ -101,8 +101,13 @@ export function SeriesForm() {
     try {
       const path = `users/${user.uid}/series-covers/${Date.now()}_${file.name}`;
       const result = await storageService.uploadFile(file, path);
-      // Update form value
-      reset({ ...watchedValues, coverUrl: result.url });
+      // Targeted update via setValue. The previous `reset({...watchedValues, coverUrl})`
+      // would replace the WHOLE form using a stale `watchedValues` snapshot, and the
+      // RHF ref-based input registered for coverUrl wouldn't always re-render its DOM
+      // value, leaving the preview blank even though the upload succeeded. setValue
+      // updates just the one field, triggers watch() reliably, and marks the form
+      // dirty so the "save changes" affordance reflects the edit.
+      setValue('coverUrl', result.url, { shouldDirty: true, shouldValidate: true });
       toast.success(t('form.steps.visuals.errors.uploadSuccess'));
     } catch (error) {
       console.error('Upload error:', error);
@@ -113,7 +118,7 @@ export function SeriesForm() {
   };
 
   const removeImage = () => {
-    reset({ ...watchedValues, coverUrl: '' });
+    setValue('coverUrl', '', { shouldDirty: true });
   };
 
   const onSubmit = async (data: SeriesFormData) => {
