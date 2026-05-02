@@ -21,10 +21,28 @@ import {
     PANORAMA_RESPONSE_SCHEMA,
 } from './expository-prompts/panorama';
 import {
+    buildMacroSystemInstruction,
+    buildMacroUserMessage,
+    MACRO_RESPONSE_SCHEMA,
+} from './expository-prompts/macroStructure';
+import {
     djb2Hash,
     EXPOSITORY_PIPELINE_VERSION,
     fingerprintVerses,
 } from './expository-prompts/shared';
+
+const VALID_MACRO_FUNCTIONS = [
+    'introduction',
+    'thesis',
+    'argument-development',
+    'narrative-arc',
+    'climax',
+    'application',
+    'closing',
+    'transition',
+    'digression',
+] as const;
+type ValidMacroFunction = typeof VALID_MACRO_FUNCTIONS[number];
 
 /**
  * Gemini implementation of `IExpositoryAssistant` — the v1.5 5-pass
@@ -94,11 +112,50 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         };
     }
 
-    // ── Pase 2-5: stubs (filled in B.2-B.5) ─────────────────────────────
+    // ── Pase 2: Macroestructura ─────────────────────────────────────────
 
-    async runMacroStructure(_input: MacroInput): Promise<PassResult<MacroSection[]>> {
-        throw new Error('GeminiExpositoryAssistant.runMacroStructure not yet implemented (lands in B.2)');
+    async runMacroStructure(input: MacroInput): Promise<PassResult<MacroSection[]>> {
+        const systemInstruction = buildMacroSystemInstruction(input.displayLanguage);
+        const userMessage = buildMacroUserMessage(input);
+
+        const model = this.genAI.getGenerativeModel({
+            model: this.modelName,
+            systemInstruction,
+            generationConfig: {
+                maxOutputTokens: 4096,
+                temperature: 0.3,
+                topP: 0.9,
+                responseMimeType: 'application/json',
+                responseSchema: MACRO_RESPONSE_SCHEMA as any,
+            },
+        });
+
+        console.log('[GeminiExpositoryAssistant] runMacroStructure', {
+            book: input.book,
+            language: input.displayLanguage,
+            verseCount: input.verses.length,
+            panoramaGenre: input.panorama.genre,
+        });
+
+        const result = await withGeminiRetry(
+            () => model.generateContent(userMessage),
+            { contextLabel: 'GeminiExpositoryAssistant.runMacroStructure' },
+        );
+        const response = result.response;
+        const raw = response.text();
+
+        const parsed = parseJsonOrThrow(raw, 'macroStructure');
+        const payload = normalizeMacroSections(parsed);
+
+        return {
+            payload,
+            modelId: this.modelName,
+            tokensUsed: extractTokens(response.usageMetadata),
+            passVersion: this.passVersion('macro', input),
+        };
     }
+
+    // ── Pase 3-5: stubs (filled in B.3-B.5) ─────────────────────────────
 
     async runMicroStructure(_input: MicroInput): Promise<PassResult<ExegeticalUnit[]>> {
         throw new Error('GeminiExpositoryAssistant.runMicroStructure not yet implemented (lands in B.3)');
@@ -205,4 +262,67 @@ function stringArrayOrEmpty(value: unknown): string[] {
     return value
         .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
         .map((v) => v.trim());
+}
+
+function intOrNull(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+    if (typeof value === 'string' && value.trim() !== '') {
+        const n = Number(value);
+        if (Number.isFinite(n)) return Math.trunc(n);
+    }
+    return null;
+}
+
+function normalizeMacroSections(raw: any): MacroSection[] {
+    const arr: unknown = raw?.macroSections;
+    if (!Array.isArray(arr)) {
+        throw new Error('macroStructure response missing or invalid macroSections array');
+    }
+
+    const sections: MacroSection[] = [];
+    arr.forEach((item, index) => {
+        if (!item || typeof item !== 'object') return;
+        const o = item as Record<string, unknown>;
+
+        const id = typeof o.id === 'string' && o.id.trim() ? o.id.trim() : `ms-${index + 1}`;
+        const title = typeof o.title === 'string' ? o.title.trim() : '';
+        const cs = intOrNull(o.chapterStart);
+        const vs = intOrNull(o.verseStart);
+        const ce = intOrNull(o.chapterEnd);
+        const ve = intOrNull(o.verseEnd);
+        const theme = typeof o.theme === 'string' ? o.theme.trim() : '';
+        const fn = typeof o.functionInBook === 'string' && (VALID_MACRO_FUNCTIONS as readonly string[]).includes(o.functionInBook)
+            ? (o.functionInBook as ValidMacroFunction)
+            : 'argument-development';
+        const order = intOrNull(o.order) ?? index + 1;
+
+        if (!title || !theme) return;
+        if (cs === null || vs === null || ce === null || ve === null) return;
+        if (ce < cs || (ce === cs && ve < vs)) return; // boundary sanity
+
+        sections.push({
+            id,
+            title,
+            chapterStart: cs,
+            verseStart: vs,
+            chapterEnd: ce,
+            verseEnd: ve,
+            theme,
+            functionInBook: fn,
+            order,
+        });
+    });
+
+    if (sections.length === 0) {
+        throw new Error('macroStructure returned zero valid sections');
+    }
+    if (sections.length > 9) {
+        // Soft cap — the prompt asks for 3-7; if the model wildly
+        // over-divided, trim to the first 9 to keep the wizard usable.
+        // We keep more than 7 to avoid silently dropping content.
+        return sections.slice(0, 9);
+    }
+
+    // Stable sort by `order` so the wizard renders in document order.
+    return sections.sort((a, b) => a.order - b.order);
 }
