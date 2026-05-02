@@ -91,6 +91,19 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
     // Index status check — runs after each resources update so newly added
     // resources get their status checked, and recently processed resources flip
     // from not-indexed → indexed.
+    //
+    // Strategy: prefer the resource doc's `indexingStatus` field (set by the
+    // `indexStructuredDocument` cloud function explicitly to `'ready'` AFTER
+    // committing all chunks — guaranteed to be consistent with the chunks
+    // collection by the time we see it via the real-time listener). Fall
+    // back to a chunks-collection probe ONLY when the field is absent,
+    // which only happens for legacy resources indexed before the cloud
+    // function started writing this field.
+    //
+    // This eliminates a race condition where the listener fired with the
+    // updated doc but the chunks collection query hadn't yet propagated
+    // the new writes (Firestore is eventually consistent for queries) —
+    // surfaced as a card stuck in "Por procesar" until the user refreshed.
     const checkAllIndexStatus = useCallback(async (list: LibraryResourceEntity[]) => {
         // Initialise to 'checking' for all resources synchronously so the UI
         // doesn't flicker between unknown → checking → final.
@@ -98,9 +111,18 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
         for (const r of list) initial[r.id] = 'checking';
         setIndexStatus(initial);
 
-        // Then check each in parallel-ish (sequential to avoid Firestore quota
-        // bursts on initial load with many resources).
         for (const r of list) {
+            // Fast path: use the doc field (no I/O, no race).
+            if (r.indexingStatus === 'ready') {
+                setIndexStatus(prev => ({ ...prev, [r.id]: 'indexed' }));
+                continue;
+            }
+            if (r.indexingStatus === 'processing' || r.indexingStatus === 'failed') {
+                setIndexStatus(prev => ({ ...prev, [r.id]: 'not-indexed' }));
+                continue;
+            }
+            // Legacy / pre-cloud-function resources: fall back to the
+            // chunks query.
             try {
                 const isIndexed = await libraryService.isResourceIndexed(r.id);
                 setIndexStatus(prev => ({ ...prev, [r.id]: isIndexed ? 'indexed' : 'not-indexed' }));
