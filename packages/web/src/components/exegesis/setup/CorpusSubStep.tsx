@@ -39,6 +39,7 @@ import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { SourceTypePicker } from './SourceTypePicker';
 import { RubricGapCard } from './RubricGapCard';
+import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
 import { PageBalanceHint } from './PageBalanceHint';
 
@@ -104,6 +105,8 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </div>
                 <PageBalanceHint />
             </header>
+
+            {paper.rubric && <RubricRigorIndicator rubric={paper.rubric} />}
 
             <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
 
