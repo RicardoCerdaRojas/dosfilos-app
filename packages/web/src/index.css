@@ -377,6 +377,57 @@
     @apply bg-muted-foreground/50;
   }
 
+  /*
+   * Sidebar scrollbar — thin, hover-reveal, gutter-stable.
+   *
+   * Visual: 6px thumb, transparent track. Thumb fades in on
+   * hover/focus and fades out otherwise so the sidebar reads as
+   * clean chrome when idle but the affordance is there as soon as
+   * the user reaches for it.
+   *
+   * Layout: `scrollbar-gutter: stable` reserves the gutter space
+   * even when the thumb is invisible, so the sidebar content does
+   * not jitter horizontally when the thumb appears/disappears.
+   * Firefox honors this; Webkit ignores it but our thin overlay
+   * renders inside the gutter we reserve via container padding,
+   * so the result matches across browsers.
+   */
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    scrollbar-gutter: stable;
+    transition: scrollbar-color 200ms ease;
+  }
+
+  .sidebar-scrollbar:hover,
+  .sidebar-scrollbar:focus-within {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 9999px;
+    transition: background 200ms ease;
+  }
+
+  .sidebar-scrollbar:hover::-webkit-scrollbar-thumb,
+  .sidebar-scrollbar:focus-within::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.35);
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.55);
+  }
+
   /* Animated gradient for loading border */
   @keyframes gradient {
     0% {
