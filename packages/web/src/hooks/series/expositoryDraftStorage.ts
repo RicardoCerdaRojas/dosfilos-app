@@ -43,6 +43,16 @@ export interface ExpositoryDraft {
     exegeticalUnits?: ExegeticalUnit[];
     preachableUnits?: PreachableUnit[];
     fidelityReview?: FidelityReview;
+    /**
+     * Pase 5 issue triage: indices the pastor explicitly marked as
+     * "addressed" (acted upon, e.g. via inline edit in Pase 4) or
+     * "ignored" (read but chose to keep the original division).
+     * Indices reference positions in `fidelityReview.issues[]`. The
+     * two sets are mutually exclusive — toggling one removes the
+     * other.
+     */
+    addressedIssueIndices?: number[];
+    ignoredIssueIndices?: number[];
 }
 
 export function saveExpositoryDraft(draft: Omit<ExpositoryDraft, 'schemaVersion' | 'savedAt'>): void {

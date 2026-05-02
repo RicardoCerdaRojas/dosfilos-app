@@ -194,6 +194,11 @@
                 "noIssues": "No issues. The proposal is solid.",
                 "global": "Whole series",
                 "recommendation": "Recommendation",
+                "triagedSummary": "{{triaged}} of {{total}} addressed or ignored",
+                "addressed": "Addressed",
+                "ignored": "Ignored",
+                "toggleAddressed": "Mark as addressed (I edited or will keep this in mind)",
+                "toggleIgnored": "Ignore (I read it but will keep the original division)",
                 "severity": {
                     "info": "Info",
                     "warning": "Warning",

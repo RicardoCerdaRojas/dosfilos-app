@@ -12,6 +12,8 @@ import {
     BookPlus,
     Minus,
     Type,
+    Check,
+    EyeOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,6 +112,42 @@ export function ExpositoryAssistantPage() {
     // changes go through `togglePass` so they ride a View Transition
     // when supported, producing a card↔chip morph.
     const [collapsedPasses, setCollapsedPasses] = useState<Set<number>>(new Set());
+
+    // Pase 5 issue triage. Indices into fidelityReview.issues. The
+    // two sets are mutually exclusive (toggling one removes the
+    // other) — an issue is either acted upon or actively dismissed,
+    // never both. Persists with the draft so triage decisions
+    // survive a tab close.
+    const [addressedIssues, setAddressedIssues] = useState<Set<number>>(new Set());
+    const [ignoredIssues, setIgnoredIssues] = useState<Set<number>>(new Set());
+    const toggleIssueAddressed = (idx: number) => {
+        setAddressedIssues((prev) => {
+            const next = new Set(prev);
+            if (next.has(idx)) next.delete(idx);
+            else next.add(idx);
+            return next;
+        });
+        setIgnoredIssues((prev) => {
+            if (!prev.has(idx)) return prev;
+            const next = new Set(prev);
+            next.delete(idx);
+            return next;
+        });
+    };
+    const toggleIssueIgnored = (idx: number) => {
+        setIgnoredIssues((prev) => {
+            const next = new Set(prev);
+            if (next.has(idx)) next.delete(idx);
+            else next.add(idx);
+            return next;
+        });
+        setAddressedIssues((prev) => {
+            if (!prev.has(idx)) return prev;
+            const next = new Set(prev);
+            next.delete(idx);
+            return next;
+        });
+    };
     const togglePass = (index: number) => {
         const apply = () => {
             setCollapsedPasses((prev) => {
@@ -152,6 +190,8 @@ export function ExpositoryAssistantPage() {
             if (draft.exegeticalUnits) setExegeticalUnits(draft.exegeticalUnits);
             if (draft.preachableUnits) setPreachableUnits(draft.preachableUnits);
             if (draft.fidelityReview) setFidelityReview(draft.fidelityReview);
+            if (draft.addressedIssueIndices) setAddressedIssues(new Set(draft.addressedIssueIndices));
+            if (draft.ignoredIssueIndices) setIgnoredIssues(new Set(draft.ignoredIssueIndices));
             toast.success(t('expository.toast.draftRestored') as string);
         }
         setHydrated(true);
@@ -172,8 +212,10 @@ export function ExpositoryAssistantPage() {
             ...(exegeticalUnits ? { exegeticalUnits } : {}),
             ...(preachableUnits ? { preachableUnits } : {}),
             ...(fidelityReview ? { fidelityReview } : {}),
+            ...(addressedIssues.size > 0 ? { addressedIssueIndices: Array.from(addressedIssues) } : {}),
+            ...(ignoredIssues.size > 0 ? { ignoredIssueIndices: Array.from(ignoredIssues) } : {}),
         });
-    }, [bookId, lang, bookDisplay, targetCount, verses, panorama, macroSections, exegeticalUnits, preachableUnits, fidelityReview]);
+    }, [bookId, lang, bookDisplay, targetCount, verses, panorama, macroSections, exegeticalUnits, preachableUnits, fidelityReview, addressedIssues, ignoredIssues]);
 
     // Pre-fill the series-creation form once preachable units are
     // available — saves the pastor a manual title entry in the
@@ -191,6 +233,11 @@ export function ExpositoryAssistantPage() {
         setExegeticalUnits(null);
         setPreachableUnits(null);
         setFidelityReview(null);
+        // Triage decisions are scoped to a specific review run —
+        // a fresh review will produce different issues, so old
+        // triage no longer applies.
+        setAddressedIssues(new Set());
+        setIgnoredIssues(new Set());
 
         let loaded;
         try {
@@ -530,7 +577,15 @@ export function ExpositoryAssistantPage() {
                         t={t}
                     >
                         {fidelityReview && (
-                            <FidelityResult review={fidelityReview} preachableUnits={preachableUnits ?? []} t={t} />
+                            <FidelityResult
+                                review={fidelityReview}
+                                preachableUnits={preachableUnits ?? []}
+                                addressedIssues={addressedIssues}
+                                ignoredIssues={ignoredIssues}
+                                onToggleAddressed={toggleIssueAddressed}
+                                onToggleIgnored={toggleIssueIgnored}
+                                t={t}
+                            />
                         )}
                     </PassCard>
                 )}
@@ -1278,10 +1333,18 @@ function EditablePropositionRow({
 function FidelityResult({
     review,
     preachableUnits,
+    addressedIssues,
+    ignoredIssues,
+    onToggleAddressed,
+    onToggleIgnored,
     t,
 }: {
     review: FidelityReview;
     preachableUnits: ReadonlyArray<PreachableUnit>;
+    addressedIssues: Set<number>;
+    ignoredIssues: Set<number>;
+    onToggleAddressed: (idx: number) => void;
+    onToggleIgnored: (idx: number) => void;
     t: (key: string) => string;
 }) {
     const confidencePct = Math.round(review.overallConfidence * 100);
@@ -1297,25 +1360,40 @@ function FidelityResult({
         return found ? found.title : id;
     };
 
+    const totalIssues = review.issues.length;
+    const triagedCount = addressedIssues.size + ignoredIssues.size;
+
     return (
         <div className="space-y-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
                 <span className={`text-[11px] uppercase tracking-wide font-semibold px-3 py-1 rounded ${confidenceTone}`}>
                     {t('expository.results.fidelity.confidence')}: {confidencePct}%
                 </span>
-                {review.issues.length === 0 && (
+                {totalIssues === 0 && (
                     <span className="text-xs text-emerald-700 dark:text-emerald-300">
                         {t('expository.results.fidelity.noIssues')}
                     </span>
                 )}
+                {totalIssues > 0 && (
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('expository.results.fidelity.triagedSummary', {
+                            triaged: triagedCount,
+                            total: totalIssues,
+                        })}
+                    </span>
+                )}
             </div>
-            {review.issues.length > 0 && (
+            {totalIssues > 0 && (
                 <ul className="space-y-2">
                     {review.issues.map((issue, idx) => (
                         <FidelityIssueRow
                             key={idx}
                             issue={issue}
                             unitLabel={unitTitle(issue.unitId)}
+                            isAddressed={addressedIssues.has(idx)}
+                            isIgnored={ignoredIssues.has(idx)}
+                            onToggleAddressed={() => onToggleAddressed(idx)}
+                            onToggleIgnored={() => onToggleIgnored(idx)}
                             t={t}
                         />
                     ))}
@@ -1328,34 +1406,89 @@ function FidelityResult({
 function FidelityIssueRow({
     issue,
     unitLabel,
+    isAddressed,
+    isIgnored,
+    onToggleAddressed,
+    onToggleIgnored,
     t,
 }: {
     issue: FidelityIssue;
     unitLabel: string;
+    isAddressed: boolean;
+    isIgnored: boolean;
+    onToggleAddressed: () => void;
+    onToggleIgnored: () => void;
     t: (key: string) => string;
 }) {
-    const tone = issue.severity === 'critical'
-        ? 'border-rose-300 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/20'
-        : issue.severity === 'warning'
-          ? 'border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/20'
-          : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40';
+    // Triaged rows mute their severity tone — once acted upon or
+    // ignored, they shouldn't visually scream as urgent anymore.
+    // Untriaged rows keep their full severity treatment.
+    const isTriaged = isAddressed || isIgnored;
+    const tone = isTriaged
+        ? 'border-slate-200 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/30'
+        : issue.severity === 'critical'
+          ? 'border-rose-300 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/20'
+          : issue.severity === 'warning'
+            ? 'border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/20'
+            : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40';
     const badgeTone = issue.severity === 'critical'
         ? 'text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/30'
         : issue.severity === 'warning'
           ? 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30'
           : 'text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-zinc-800';
+    const triageBadgeTone = isAddressed
+        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30'
+        : 'text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-zinc-800';
+    const triageBadgeLabel = isAddressed
+        ? t('expository.results.fidelity.addressed')
+        : t('expository.results.fidelity.ignored');
 
     return (
-        <li className={`rounded-lg border px-3 py-2 ${tone}`}>
+        <li className={`rounded-lg border px-3 py-2 transition-colors ${tone} ${isTriaged ? 'opacity-75' : ''}`}>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded ${badgeTone}`}>
                     {t(`expository.results.fidelity.severity.${issue.severity}`)}
                 </span>
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{unitLabel}</span>
+                {isTriaged && (
+                    <span className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded ${triageBadgeTone}`}>
+                        {triageBadgeLabel}
+                    </span>
+                )}
+                <div className="ml-auto flex items-center gap-1 shrink-0">
+                    <button
+                        type="button"
+                        onClick={onToggleAddressed}
+                        aria-pressed={isAddressed}
+                        title={t('expository.results.fidelity.toggleAddressed') as string}
+                        className={`p-1 rounded text-[11px] transition-colors ${
+                            isAddressed
+                                ? 'bg-emerald-500 text-white hover:bg-emerald-400'
+                                : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                        }`}
+                    >
+                        <Check className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onToggleIgnored}
+                        aria-pressed={isIgnored}
+                        title={t('expository.results.fidelity.toggleIgnored') as string}
+                        className={`p-1 rounded text-[11px] transition-colors ${
+                            isIgnored
+                                ? 'bg-slate-500 text-white hover:bg-slate-400'
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                        }`}
+                    >
+                        <EyeOff className="h-3.5 w-3.5" />
+                    </button>
+                </div>
             </div>
-            <p className="text-xs text-slate-700 dark:text-slate-300">{issue.description}</p>
+            <p className={`text-xs ${isTriaged ? 'text-slate-500 dark:text-slate-400 line-through decoration-slate-300/60' : 'text-slate-700 dark:text-slate-300'}`}>
+                {issue.description}
+            </p>
             {issue.recommendation && (
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                <p className={`mt-1 text-xs ${isTriaged ? 'text-slate-400 dark:text-slate-500' : 'text-slate-600 dark:text-slate-400'}`}>
                     <span className="font-medium">{t('expository.results.fidelity.recommendation')}:</span> {issue.recommendation}
                 </p>
             )}

@@ -194,6 +194,11 @@
                 "noIssues": "Sin issues. La propuesta es sólida.",
                 "global": "Toda la serie",
                 "recommendation": "Recomendación",
+                "triagedSummary": "{{triaged}} de {{total}} atendidos o ignorados",
+                "addressed": "Atendido",
+                "ignored": "Ignorado",
+                "toggleAddressed": "Marcar como atendido (lo edité o lo tendré en cuenta)",
+                "toggleIgnored": "Ignorar (lo leí pero mantendré la división original)",
                 "severity": {
                     "info": "Info",
                     "warning": "Advertencia",
