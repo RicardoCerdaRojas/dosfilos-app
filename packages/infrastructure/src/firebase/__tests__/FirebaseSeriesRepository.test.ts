@@ -45,6 +45,47 @@ describe('FirebaseSeriesRepository — metadata round-trip', () => {
         expect(back.plannedSermons[0].paperId).toBeUndefined();
         expect(back.plannedSermons[0].syntacticUnit).toBeUndefined();
         expect(back.plannedSermons[0].status).toBeUndefined();
+        expect(back.plannedSermons[0].expositoryEnrichment).toBeUndefined();
+    });
+
+    it('round-trips the v1.5 expositoryEnrichment field (propositions + pastoralObjective)', () => {
+        const original = {
+            plannedSermons: [
+                {
+                    id: 'p1',
+                    week: 1,
+                    title: 'Llamados firmes',
+                    description: 'Intro',
+                    passage: '2 Pedro 1:1-11',
+                    expositoryEnrichment: {
+                        exegeticalProposition: 'Pedro establece la base teológica de la elección.',
+                        homileticalProposition: 'Vive con confianza en Aquel que te llamó.',
+                        pastoralObjective: 'Anclar la identidad del oyente en la fidelidad de Dios.',
+                        caseTreatment: 'salutation',
+                        sourcedExegeticalUnitIds: ['eu-1', 'eu-2'],
+                        macroSectionId: 'ms-1',
+                    },
+                },
+            ],
+        };
+
+        const fs = toFs(original);
+        const enrichmentFs = fs.plannedSermons[0].expositoryEnrichment;
+        // No undefined leaks into Firestore.
+        for (const key of Object.keys(enrichmentFs)) {
+            expect(enrichmentFs[key]).not.toBeUndefined();
+        }
+
+        const back = fromFs(fs);
+        const enrichment = back.plannedSermons[0].expositoryEnrichment;
+        expect(enrichment.exegeticalProposition).toBe('Pedro establece la base teológica de la elección.');
+        expect(enrichment.homileticalProposition).toBe('Vive con confianza en Aquel que te llamó.');
+        expect(enrichment.pastoralObjective).toBe('Anclar la identidad del oyente en la fidelidad de Dios.');
+        expect(enrichment.caseTreatment).toBe('salutation');
+        expect(enrichment.sourcedExegeticalUnitIds).toEqual(['eu-1', 'eu-2']);
+        expect(enrichment.macroSectionId).toBe('ms-1');
+        // Optional field omitted on input → undefined on read.
+        expect(enrichment.fidelityNotes).toBeUndefined();
     });
 
     it('round-trips the new exegetical fields (paperId, syntacticUnit, status, assistant version)', () => {

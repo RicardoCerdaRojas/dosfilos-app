@@ -110,6 +110,19 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
                       }
                     : null;
 
+                const enrichment = ps.expositoryEnrichment
+                    ? {
+                          exegeticalProposition: ps.expositoryEnrichment.exegeticalProposition,
+                          homileticalProposition: ps.expositoryEnrichment.homileticalProposition,
+                          pastoralObjective: ps.expositoryEnrichment.pastoralObjective,
+                          caseTreatment: ps.expositoryEnrichment.caseTreatment ?? null,
+                          sourcedExegeticalUnitIds:
+                              ps.expositoryEnrichment.sourcedExegeticalUnitIds ?? [],
+                          macroSectionId: ps.expositoryEnrichment.macroSectionId ?? null,
+                          fidelityNotes: ps.expositoryEnrichment.fidelityNotes ?? null,
+                      }
+                    : null;
+
                 return {
                     id: ps.id,
                     week: ps.week,
@@ -123,6 +136,7 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
                     paperId: ps.paperId ?? null,
                     syntacticUnit: unit,
                     status: ps.status ?? null,
+                    expositoryEnrichment: enrichment,
                 };
             });
         }
@@ -181,6 +195,19 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
                       }
                     : undefined;
 
+                const enrichment = ps.expositoryEnrichment
+                    ? {
+                          exegeticalProposition: ps.expositoryEnrichment.exegeticalProposition,
+                          homileticalProposition: ps.expositoryEnrichment.homileticalProposition,
+                          pastoralObjective: ps.expositoryEnrichment.pastoralObjective,
+                          caseTreatment: ps.expositoryEnrichment.caseTreatment ?? undefined,
+                          sourcedExegeticalUnitIds:
+                              ps.expositoryEnrichment.sourcedExegeticalUnitIds ?? [],
+                          macroSectionId: ps.expositoryEnrichment.macroSectionId ?? undefined,
+                          fidelityNotes: ps.expositoryEnrichment.fidelityNotes ?? undefined,
+                      }
+                    : undefined;
+
                 return {
                     id: ps.id,
                     week: ps.week,
@@ -194,6 +221,7 @@ export class FirebaseSeriesRepository implements ISeriesRepository {
                     paperId: ps.paperId ?? undefined,
                     syntacticUnit: unit,
                     status: ps.status ?? undefined,
+                    expositoryEnrichment: enrichment,
                 };
             });
         }

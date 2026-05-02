@@ -185,7 +185,28 @@
             "preachableFailed": "No se pudieron generar las unidades predicables. Intenta de nuevo.",
             "fidelityFailed": "No se pudo completar la evaluación de fidelidad. Intenta de nuevo.",
             "pipelineDone": "Pipeline completo. Revisa las unidades predicables y los issues antes de crear la serie.",
-            "overloaded": "Gemini está saturado. Intenta en un minuto."
+            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "draftRestored": "Continuamos donde quedaste. (Borrador restaurado).",
+            "titleRequired": "Ponle un título a la serie antes de crear.",
+            "seriesCreated": "Serie creada. Te llevamos al detalle.",
+            "createFailed": "No se pudo crear la serie."
+        },
+        "create": {
+            "title": "Crear la serie",
+            "subtitle": "Cada unidad predicable se convierte en un sermón planificado. Las proposiciones, el objetivo pastoral y las notas de fidelidad quedan persistidas en cada sermón.",
+            "defaultTitle": "Serie expositiva — {{book}}",
+            "defaultDescription": "Serie expositiva de {{book}} dividida en {{count}} unidades predicables (pipeline v1.5).",
+            "seriesTitle": "Título de la serie",
+            "startDate": "Fecha de inicio",
+            "frequency": "Frecuencia",
+            "freq": {
+                "weekly": "Semanal",
+                "biweekly": "Quincenal",
+                "monthly": "Mensual",
+                "flexible": "Flexible (sin fechas)"
+            },
+            "cta_one": "Crear serie con {{count}} sermón",
+            "cta_other": "Crear serie con {{count}} sermones"
         },
         "passes": {
             "panorama": {

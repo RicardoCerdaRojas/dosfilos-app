@@ -185,7 +185,28 @@
             "preachableFailed": "Couldn't generate the preachable units. Try again.",
             "fidelityFailed": "Couldn't complete the fidelity review. Try again.",
             "pipelineDone": "Pipeline complete. Review the preachable units and issues before creating the series.",
-            "overloaded": "Gemini is overloaded. Try again in a minute."
+            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "draftRestored": "Continuing where you left off. (Draft restored).",
+            "titleRequired": "Give the series a title before creating.",
+            "seriesCreated": "Series created. Taking you to the detail view.",
+            "createFailed": "Couldn't create the series."
+        },
+        "create": {
+            "title": "Create the series",
+            "subtitle": "Each preachable unit becomes a planned sermon. The propositions, pastoral objective, and fidelity notes are persisted on every sermon.",
+            "defaultTitle": "Expository series — {{book}}",
+            "defaultDescription": "Expository series on {{book}}, divided into {{count}} preachable units (v1.5 pipeline).",
+            "seriesTitle": "Series title",
+            "startDate": "Start date",
+            "frequency": "Frequency",
+            "freq": {
+                "weekly": "Weekly",
+                "biweekly": "Biweekly",
+                "monthly": "Monthly",
+                "flexible": "Flexible (no dates)"
+            },
+            "cta_one": "Create series with {{count}} sermon",
+            "cta_other": "Create series with {{count}} sermons"
         },
         "passes": {
             "panorama": {

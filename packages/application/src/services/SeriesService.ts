@@ -9,6 +9,7 @@ import {
 import {
     SermonSeriesEntity,
     type IBibleVersionRepository,
+    type PlannedSermonExpositoryEnrichment,
     type PlannedSermonStatus,
     type SyntacticUnit,
 } from '@dosfilos/domain';
@@ -297,6 +298,14 @@ export class SeriesService {
                 paperId?: string;
                 syntacticUnit?: SyntacticUnit;
                 status?: PlannedSermonStatus;
+                /**
+                 * v1.5 expository pipeline output. Captured per
+                 * preachable unit and persisted on the planned sermon
+                 * so SeriesDetail / paper / Faculty contexts can
+                 * surface the propositions and pastoral aim without
+                 * re-querying the assistant.
+                 */
+                expositoryEnrichment?: PlannedSermonExpositoryEnrichment;
             }[];
             frequency?: 'weekly' | 'biweekly' | 'monthly' | 'flexible';
             expositoryAssistant?: {
@@ -336,6 +345,7 @@ export class SeriesService {
                     paperId: sermonData.paperId,
                     syntacticUnit: sermonData.syntacticUnit,
                     status: sermonData.status,
+                    expositoryEnrichment: sermonData.expositoryEnrichment,
                     // draftId is omitted until user starts developing
                 };
             });

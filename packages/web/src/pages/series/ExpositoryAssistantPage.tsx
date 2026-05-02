@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
     ArrowLeft,
@@ -9,12 +9,20 @@ import {
     Loader2,
     AlertTriangle,
     Sparkles,
+    BookPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
+import { useFirebase } from '@/context/firebase-context';
 import { useExpositoryAssistant } from '@/hooks/series/useExpositoryAssistant';
+import {
+    clearExpositoryDraft,
+    loadExpositoryDraft,
+    saveExpositoryDraft,
+} from '@/hooks/series/expositoryDraftStorage';
+import { seriesService } from '@dosfilos/application';
 import {
     getAllBooks,
     type AssistantVerseInput,
@@ -24,7 +32,10 @@ import {
     type FidelityIssue,
     type FidelityReview,
     type MacroSection,
+    type PlannedSermon,
+    type PlannedSermonExpositoryEnrichment,
     type PreachableUnit,
+    type SyntacticUnit,
 } from '@dosfilos/domain';
 
 /**
@@ -48,6 +59,8 @@ import {
  */
 export function ExpositoryAssistantPage() {
     const { t, i18n } = useTranslation('series');
+    const navigate = useNavigate();
+    const { user } = useFirebase();
     const lang: 'es' | 'en' = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
     const allBooks = useMemo(() => getAllBooks(), []);
@@ -63,7 +76,64 @@ export function ExpositoryAssistantPage() {
     const [preachableUnits, setPreachableUnits] = useState<PreachableUnit[] | null>(null);
     const [fidelityReview, setFidelityReview] = useState<FidelityReview | null>(null);
 
+    // Series-creation form state — populated once preachable units land.
+    const [seriesTitle, setSeriesTitle] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [frequency, setFrequency] = useState<'weekly' | 'biweekly' | 'monthly' | 'flexible'>('weekly');
+    const [creatingSeries, setCreatingSeries] = useState(false);
+
     const assistant = useExpositoryAssistant();
+
+    // Hydrate from localStorage on mount. Restoring a draft skips the
+    // setup form back to where the pastor was, so they can continue
+    // reviewing the analysis without re-running the pipeline.
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => {
+        if (hydrated) return;
+        const draft = loadExpositoryDraft();
+        if (draft) {
+            setBookId(draft.bookId);
+            if (draft.targetPreachableCount !== undefined) {
+                setTargetCount(draft.targetPreachableCount);
+            }
+            setVerses(draft.verses);
+            setBookDisplay(draft.bookDisplay);
+            if (draft.panorama) setPanorama(draft.panorama);
+            if (draft.macroSections) setMacroSections(draft.macroSections);
+            if (draft.exegeticalUnits) setExegeticalUnits(draft.exegeticalUnits);
+            if (draft.preachableUnits) setPreachableUnits(draft.preachableUnits);
+            if (draft.fidelityReview) setFidelityReview(draft.fidelityReview);
+            toast.success(t('expository.toast.draftRestored') as string);
+        }
+        setHydrated(true);
+    }, [hydrated, t]);
+
+    // Persist a draft whenever any pass output lands. Keeps the
+    // localStorage entry in sync without an explicit "save" button.
+    useEffect(() => {
+        if (!verses || !bookDisplay) return;
+        saveExpositoryDraft({
+            bookId,
+            displayLanguage: lang,
+            bookDisplay,
+            ...(typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {}),
+            verses,
+            ...(panorama ? { panorama } : {}),
+            ...(macroSections ? { macroSections } : {}),
+            ...(exegeticalUnits ? { exegeticalUnits } : {}),
+            ...(preachableUnits ? { preachableUnits } : {}),
+            ...(fidelityReview ? { fidelityReview } : {}),
+        });
+    }, [bookId, lang, bookDisplay, targetCount, verses, panorama, macroSections, exegeticalUnits, preachableUnits, fidelityReview]);
+
+    // Pre-fill the series-creation form once preachable units are
+    // available — saves the pastor a manual title entry in the
+    // common case.
+    useEffect(() => {
+        if (preachableUnits && bookDisplay && !seriesTitle) {
+            setSeriesTitle(t('expository.create.defaultTitle', { book: bookDisplay }) as string);
+        }
+    }, [preachableUnits, bookDisplay, seriesTitle, t]);
 
     const handleStart = () => {
         // Reset prior run state if the pastor restarts.
@@ -178,6 +248,84 @@ export function ExpositoryAssistantPage() {
         );
     };
 
+    const handleCreateSeries = async () => {
+        if (!user?.uid || !preachableUnits || preachableUnits.length === 0 || !bookDisplay) return;
+        if (!seriesTitle.trim()) {
+            toast.error(t('expository.toast.titleRequired') as string);
+            return;
+        }
+
+        // Build per-sermon syntactic unit + expository enrichment by
+        // looking up the first sourced exegetical unit (preserves the
+        // boundary the pastor saw in Pase 4) and packaging the two
+        // propositions, pastoral objective, special-case treatment,
+        // and macroSection link onto the planned sermon.
+        const sermons = preachableUnits.map((p, idx) => {
+            const sourced = p.sourcedExegeticalUnitIds
+                .map((id) => exegeticalUnits?.find((u) => u.id === id))
+                .filter((u): u is ExegeticalUnit => Boolean(u));
+            const firstSourced = sourced[0];
+            const syntactic: SyntacticUnit | undefined = firstSourced
+                ? firstSourced.syntacticUnit
+                : undefined;
+
+            const enrichment: PlannedSermonExpositoryEnrichment = {
+                exegeticalProposition: p.exegeticalProposition,
+                homileticalProposition: p.homileticalProposition,
+                pastoralObjective: p.pastoralObjective,
+                ...(p.caseTreatment ? { caseTreatment: p.caseTreatment } : {}),
+                sourcedExegeticalUnitIds: p.sourcedExegeticalUnitIds,
+                ...(firstSourced ? { macroSectionId: firstSourced.macroSectionId } : {}),
+                ...(p.fidelityNotes ? { fidelityNotes: p.fidelityNotes } : {}),
+            };
+
+            const sermon: PreachableSermonInput = {
+                title: p.title,
+                description: p.exegeticalProposition,
+                passage: p.passage,
+                week: idx + 1,
+                status: 'planned',
+                expositoryEnrichment: enrichment,
+            };
+            if (syntactic) sermon.syntacticUnit = syntactic;
+            return sermon;
+        });
+
+        setCreatingSeries(true);
+        try {
+            const series = await seriesService.createSeriesFromPlan(user.uid, {
+                series: {
+                    title: seriesTitle.trim(),
+                    description: t('expository.create.defaultDescription', {
+                        book: bookDisplay,
+                        count: preachableUnits.length,
+                    }) as string,
+                    type: 'expository',
+                    startDate: startDate ? new Date(startDate) : undefined,
+                    metadata: {
+                        expository: { book: bookDisplay },
+                    },
+                    resourceIds: [],
+                },
+                sermons,
+                frequency,
+                expositoryAssistant: {
+                    version: panorama ? `expository-v15:${panorama.genre}` : 'expository-v15',
+                    status: 'reviewed',
+                },
+            });
+
+            clearExpositoryDraft();
+            toast.success(t('expository.toast.seriesCreated') as string);
+            navigate(`/dashboard/plans/${series.id}`);
+        } catch (err: any) {
+            console.error('[expository] createSeries failed:', err);
+            toast.error(err?.message ?? (t('expository.toast.createFailed') as string));
+        } finally {
+            setCreatingSeries(false);
+        }
+    };
+
     const panoramaState = derivePassState(assistant.runPanorama.isPending, panorama, assistant.runPanorama.isError);
     const macroState = derivePassState(assistant.runMacro.isPending, macroSections, assistant.runMacro.isError);
     const microState = derivePassState(assistant.runMicro.isPending, exegeticalUnits, assistant.runMicro.isError);
@@ -289,8 +437,113 @@ export function ExpositoryAssistantPage() {
                         <FidelityResult review={fidelityReview} preachableUnits={preachableUnits ?? []} t={t} />
                     )}
                 </PassCard>
+
+                {/* Create-series card — appears once preachable units are ready.
+                    The pastor can create the series even before fidelity review
+                    completes (the review is advisory, not blocking). */}
+                {preachableUnits && preachableUnits.length > 0 && (
+                    <CreateSeriesCard
+                        seriesTitle={seriesTitle}
+                        onSeriesTitleChange={setSeriesTitle}
+                        startDate={startDate}
+                        onStartDateChange={setStartDate}
+                        frequency={frequency}
+                        onFrequencyChange={setFrequency}
+                        preachableUnits={preachableUnits}
+                        creating={creatingSeries}
+                        onCreate={handleCreateSeries}
+                        t={t}
+                    />
+                )}
             </main>
         </div>
+    );
+}
+
+// ── Create series card ─────────────────────────────────────────────────
+
+function CreateSeriesCard({
+    seriesTitle,
+    onSeriesTitleChange,
+    startDate,
+    onStartDateChange,
+    frequency,
+    onFrequencyChange,
+    preachableUnits,
+    creating,
+    onCreate,
+    t,
+}: {
+    seriesTitle: string;
+    onSeriesTitleChange: (v: string) => void;
+    startDate: string;
+    onStartDateChange: (v: string) => void;
+    frequency: 'weekly' | 'biweekly' | 'monthly' | 'flexible';
+    onFrequencyChange: (v: 'weekly' | 'biweekly' | 'monthly' | 'flexible') => void;
+    preachableUnits: ReadonlyArray<PreachableUnit>;
+    creating: boolean;
+    onCreate: () => void;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    return (
+        <section className="rounded-2xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/10 p-6">
+            <header className="flex items-center gap-2 mb-4">
+                <BookPlus className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+                <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                    {t('expository.create.title')}
+                </h2>
+            </header>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">
+                {t('expository.create.subtitle')}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                    <Label htmlFor="seriesTitle">{t('expository.create.seriesTitle')}</Label>
+                    <Input
+                        id="seriesTitle"
+                        value={seriesTitle}
+                        onChange={(e) => onSeriesTitleChange(e.target.value)}
+                        className="mt-1.5 bg-white dark:bg-zinc-900"
+                    />
+                </div>
+                <div>
+                    <Label htmlFor="startDate">{t('expository.create.startDate')}</Label>
+                    <Input
+                        id="startDate"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => onStartDateChange(e.target.value)}
+                        className="mt-1.5 bg-white dark:bg-zinc-900"
+                    />
+                </div>
+                <div>
+                    <Label htmlFor="frequency">{t('expository.create.frequency')}</Label>
+                    <select
+                        id="frequency"
+                        value={frequency}
+                        onChange={(e) => onFrequencyChange(e.target.value as typeof frequency)}
+                        className="mt-1.5 w-full h-10 rounded-md border border-input bg-white dark:bg-zinc-900 px-3 text-sm"
+                    >
+                        <option value="weekly">{t('expository.create.freq.weekly')}</option>
+                        <option value="biweekly">{t('expository.create.freq.biweekly')}</option>
+                        <option value="monthly">{t('expository.create.freq.monthly')}</option>
+                        <option value="flexible">{t('expository.create.freq.flexible')}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+                <Button
+                    onClick={onCreate}
+                    disabled={creating || preachableUnits.length === 0}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
+                >
+                    {creating && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+                    {t('expository.create.cta', { count: preachableUnits.length })}
+                </Button>
+            </div>
+        </section>
     );
 }
 
@@ -535,6 +788,19 @@ function ResultRow({
         </div>
     );
 }
+
+// Local mirror of the createSeriesFromPlan sermons[] item shape so the
+// page can construct it without importing the application layer's
+// internal types.
+type PreachableSermonInput = {
+    title: string;
+    description: string;
+    passage?: string;
+    week: number;
+    syntacticUnit?: SyntacticUnit;
+    status?: PlannedSermon['status'];
+    expositoryEnrichment?: PlannedSermonExpositoryEnrichment;
+};
 
 function derivePassState(
     isPending: boolean,
