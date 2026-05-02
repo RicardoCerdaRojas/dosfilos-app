@@ -762,6 +762,13 @@
             "cta": "Ask Faculty",
             "tooltip": "Opens Faculty with this paper's context loaded"
         },
+        "exportMarkdown": {
+            "cta": "Export (.md)",
+            "tooltip": "Download the paper as Markdown — includes whatever steps are accepted so far if assembly hasn't run yet",
+            "toast": {
+                "exported": "Paper exported as Markdown"
+            }
+        },
         "generateSermon": {
             "cta": "Generate sermon",
             "ctaShort": "Sermon",

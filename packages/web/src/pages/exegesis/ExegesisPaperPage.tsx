@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import {
     ArrowLeft,
     AlertCircle,
+    Download,
     Loader2,
     Archive,
     NotebookPen,
@@ -26,6 +27,7 @@ import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import { StepCard } from '@/components/exegesis/StepCard';
 import {
+    exportPaperToMarkdown,
     formatPassageReference,
     type ExegeticalPaper,
     type PaperToSermonTone,
@@ -123,6 +125,26 @@ export function ExegesisPaperPage() {
         }
     };
 
+    const handleExportMarkdown = () => {
+        const markdown = exportPaperToMarkdown(paper);
+        const safeTitle = (paper.title || formatPassageReference(paper.passage, activeLanguage))
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 60) || 'paper';
+        const filename = `${safeTitle}.md`;
+        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success(t('detail.exportMarkdown.toast.exported'));
+    };
+
     const passageShape = passageEligibleForGeneration(paper);
 
     const passageDisplay = formatPassageReference(paper.passage, activeLanguage);
@@ -163,6 +185,15 @@ export function ExegesisPaperPage() {
                         <MessageCircle className="h-3.5 w-3.5" />
                         {t('detail.askFaculty.cta')}
                     </Link>
+                    <button
+                        type="button"
+                        onClick={handleExportMarkdown}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 h-8 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                        title={t('detail.exportMarkdown.tooltip') as string}
+                    >
+                        <Download className="h-3.5 w-3.5" />
+                        {t('detail.exportMarkdown.cta')}
+                    </button>
                     <GenerateSermonButton
                         paper={paper}
                         onGenerate={handleGenerateSermon}

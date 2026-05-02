@@ -759,8 +759,15 @@
             "sourceRemoveFailed": "No se pudo quitar la fuente"
         },
         "askFaculty": {
-            "cta": "Preguntar a Faculty",
-            "tooltip": "Abre Faculty con el contexto de este paper cargado"
+            "cta": "Consultar a la Facultad",
+            "tooltip": "Abre la Facultad con el contexto de este trabajo cargado"
+        },
+        "exportMarkdown": {
+            "cta": "Exportar (.md)",
+            "tooltip": "Descarga el trabajo en Markdown — incluye lo aceptado hasta ahora si aún no está ensamblado",
+            "toast": {
+                "exported": "Trabajo exportado en Markdown"
+            }
         },
         "generateSermon": {
             "cta": "Generar sermón",

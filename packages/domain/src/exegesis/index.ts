@@ -6,6 +6,7 @@
 
 export * from './entities/ExegeticalPaper';
 export * from './entities/ExegeticalStep';
+export * from './entities/exportPaperToMarkdown';
 export * from './entities/PaperRubric';
 export * from './entities/ProjectSource';
 export * from './entities/SourceType';
