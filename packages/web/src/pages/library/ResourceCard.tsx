@@ -24,6 +24,13 @@ interface ResourceCardProps {
     categories: LibraryCategory[];
     indexStatus: IndexStatus;
     isIndexing: boolean;
+    /**
+     * True while a delete request is in flight for this card. Renders
+     * a dim overlay + spinner + "Eliminando…" so the user has clear
+     * feedback while the (potentially slow) Storage object delete +
+     * chunk cleanup + Firestore doc delete cascade runs.
+     */
+    isDeleting?: boolean;
     viewMode?: ViewMode;
     onEdit: () => void;
     onDelete: () => void;
@@ -89,6 +96,7 @@ export function ResourceCard({
     categories,
     indexStatus,
     isIndexing,
+    isDeleting = false,
     viewMode = 'grid',
     onEdit,
     onDelete,
@@ -322,10 +330,12 @@ export function ResourceCard({
         return (
             <article
                 className={cn(
-                    'group bg-card border border-border/60 rounded-xl px-4 py-3 transition-colors hover:border-foreground/30',
-                    isProcessing && 'border-info/70'
+                    'group relative bg-card border border-border/60 rounded-xl px-4 py-3 transition-colors hover:border-foreground/30',
+                    isProcessing && 'border-info/70',
+                    isDeleting && 'opacity-60'
                 )}
             >
+                {isDeleting && <DeletingOverlay t={t} />}
                 <div className="flex items-center gap-4">
                     <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center shrink-0', colorClasses)}>
                         <Icon className="h-5 w-5" />
@@ -364,10 +374,12 @@ export function ResourceCard({
     return (
         <article
             className={cn(
-                'group bg-card border border-border/60 rounded-xl p-4 flex flex-col gap-3 transition-colors hover:border-foreground/30',
-                isProcessing && 'border-info/70'
+                'group relative bg-card border border-border/60 rounded-xl p-4 flex flex-col gap-3 transition-colors hover:border-foreground/30',
+                isProcessing && 'border-info/70',
+                isDeleting && 'opacity-60'
             )}
         >
+            {isDeleting && <DeletingOverlay t={t} />}
             {/* Header: category icon + label */}
             <div className="flex items-start justify-between gap-2">
                 <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center shrink-0', colorClasses)}>
@@ -414,5 +426,23 @@ export function ResourceCard({
                 {overflowMenu}
             </div>
         </article>
+    );
+}
+
+/**
+ * Inline overlay used while a delete request is in flight. Sits on
+ * top of the card content (which is also dimmed by the parent's
+ * `opacity-60`), centering a spinner + "Eliminando…" label so the
+ * feedback is unmistakable. Pointer-events disabled so accidental
+ * clicks during the delete don't fire on the underlying buttons.
+ */
+function DeletingOverlay({ t }: { t: (key: string) => string }) {
+    return (
+        <div className="absolute inset-0 flex items-center justify-center bg-card/40 backdrop-blur-[1px] rounded-xl pointer-events-none z-10">
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-foreground bg-card border border-border rounded-full px-3 py-1.5 shadow-sm">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-destructive" />
+                {t('card.deleting')}
+            </div>
+        </div>
     );
 }

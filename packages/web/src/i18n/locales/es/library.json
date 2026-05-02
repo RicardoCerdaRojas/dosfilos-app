@@ -59,6 +59,7 @@
         "ctaFirstResource": "Agregar primer recurso"
     },
     "card": {
+        "deleting": "Eliminando…",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} pág.",
         "metaPagesActual_other": "{{count}} págs.",

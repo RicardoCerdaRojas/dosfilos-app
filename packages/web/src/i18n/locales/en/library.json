@@ -59,6 +59,7 @@
         "ctaFirstResource": "Add first resource"
     },
     "card": {
+        "deleting": "Deleting…",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} page",
         "metaPagesActual_other": "{{count}} pages",

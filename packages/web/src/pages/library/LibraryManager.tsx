@@ -140,6 +140,11 @@ export function LibraryManager() {
 
     const confirmDelete = async () => {
         if (!resourceToDelete) return;
+        // Keep the dialog open with a spinner while the delete is in
+        // flight so the user sees feedback. mutations.deleteResource
+        // toasts on completion (success or error). Close after the
+        // promise resolves regardless — the dim+spinner on the row
+        // covers the gap until the Firestore subscription removes it.
         await mutations.deleteResource(resourceToDelete.id);
         setDeleteDialogOpen(false);
         setResourceToDelete(null);
@@ -237,6 +242,7 @@ export function LibraryManager() {
                                 categories={data.categories}
                                 indexStatus={data.indexStatus[resource.id] || 'unknown'}
                                 isIndexing={processing.processingResourceId === resource.id}
+                                isDeleting={mutations.deletingResourceId === resource.id}
                                 viewMode={viewMode}
                                 onEdit={() => openEdit(resource)}
                                 onDelete={() => openDelete(resource)}
@@ -305,11 +311,25 @@ export function LibraryManager() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>{t('deleteDialog.cancel')}</AlertDialogCancel>
+                        <AlertDialogCancel disabled={mutations.deletingResourceId !== null}>
+                            {t('deleteDialog.cancel')}
+                        </AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={confirmDelete}
+                            onClick={async (e) => {
+                                // Block the AlertDialog primitive's
+                                // auto-close so the spinner stays
+                                // visible until the mutation resolves.
+                                // confirmDelete itself closes the
+                                // dialog after the promise.
+                                e.preventDefault();
+                                await confirmDelete();
+                            }}
+                            disabled={mutations.deletingResourceId !== null}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
+                            {mutations.deletingResourceId !== null && (
+                                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            )}
                             {t('deleteDialog.confirm')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
