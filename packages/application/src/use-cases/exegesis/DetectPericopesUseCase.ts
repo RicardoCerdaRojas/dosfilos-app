@@ -43,9 +43,16 @@ export class DetectPericopesUseCase {
             throw new Error(`Libro desconocido: ${input.bookId}`);
         }
 
+        // The bible repositories (RVR1960 / ASV) use their own display-name
+        // mapping (e.g. "2 Pedro" → "2pe"); they do NOT recognize the
+        // canonical SBL/Logos id we carry in BibleCanon ("2PE"). We pass
+        // the display name in the matching language so each repo resolves
+        // it through its own BOOK_MAPPING table.
+        const repoLookupName = input.displayLanguage === 'en' ? book.nameEn : book.nameEs;
+
         const verses: PericopeVerseInput[] = [];
         for (let chapter = 1; chapter <= book.chapterCount; chapter++) {
-            const lines = this.bibleRepository.getChapterContent(input.bookId, chapter);
+            const lines = this.bibleRepository.getChapterContent(repoLookupName, chapter);
             if (!lines) continue;
             lines.forEach((text, idx) => {
                 if (typeof text !== 'string' || text.trim().length === 0) return;
