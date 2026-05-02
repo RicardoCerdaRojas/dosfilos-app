@@ -12,7 +12,7 @@ import {
     Book, FileText, MessageSquare, Languages, FileQuestion,
     Trash2, Edit2, Loader2, CheckCircle2, AlertCircle, Eye,
     BookOpen, Mic2, Library, PenTool, Settings2, RefreshCw,
-    MoreHorizontal,
+    MoreHorizontal, Sparkles, Wand2, FileWarning,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -233,6 +233,50 @@ export function ResourceCard({
         </span>
     ) : null;
 
+    // Engine badge — surfaces which extractor produced the text
+    // (LlamaParse premium, Gemini standard, or pdf-parse fallback). Only
+    // shown once extraction is `ready`; pre-ready the user only needs to
+    // see "processing", and the extractor isn't decided yet anyway.
+    const enginePill = (() => {
+        if (resource.textExtractionStatus !== 'ready') return null;
+        switch (resource.extractionVersion) {
+            case '3.0-llamaparse':
+                return {
+                    tone: 'bg-success-subtle text-success-subtle-foreground border border-success/30',
+                    icon: Sparkles,
+                    text: t('engine.llamaparse'),
+                    title: t('engine.llamaparseHint'),
+                };
+            case '4.0-gemini-standard':
+            case '2.0-gemini':
+                return {
+                    tone: 'bg-info-subtle text-info-subtle-foreground border border-info/30',
+                    icon: Wand2,
+                    text: t('engine.gemini'),
+                    title: t('engine.geminiHint'),
+                };
+            case 'fallback-pdfparse':
+                return {
+                    tone: 'bg-warning-subtle text-warning-subtle-foreground border border-warning/30',
+                    icon: FileWarning,
+                    text: t('engine.pdfparse'),
+                    title: t('engine.pdfparseHint'),
+                };
+            default:
+                return null;
+        }
+    })();
+    const EngineIcon = enginePill?.icon;
+    const engineBadge = enginePill && EngineIcon ? (
+        <span
+            className={cn('inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium', enginePill.tone)}
+            title={enginePill.title}
+        >
+            <EngineIcon className="h-2.5 w-2.5" />
+            {enginePill.text}
+        </span>
+    ) : null;
+
     const coreStoreBadges = resource.coreStores && resource.coreStores.length > 0 ? (
         <>
             {(resource.coreStores as Array<keyof typeof STORE_META>).map(key => {
@@ -303,6 +347,7 @@ export function ResourceCard({
                     </div>
                     <div className="hidden md:flex items-center gap-1.5 flex-wrap justify-end max-w-[40%]">
                         {statusBadge}
+                        {engineBadge}
                         {coreStoreBadges}
                         {phaseBadges}
                     </div>
@@ -344,9 +389,10 @@ export function ResourceCard({
             </div>
 
             {/* Status + assignment badges (single row, wraps if needed) */}
-            {(statusBadge || coreStoreBadges || phaseBadges) && (
+            {(statusBadge || engineBadge || coreStoreBadges || phaseBadges) && (
                 <div className="flex items-center gap-1.5 flex-wrap">
                     {statusBadge}
+                    {engineBadge}
                     {coreStoreBadges}
                     {phaseBadges}
                 </div>

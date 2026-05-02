@@ -69,6 +69,14 @@
         "ready": "Ready",
         "notReady": "To process"
     },
+    "engine": {
+        "llamaparse": "Premium",
+        "llamaparseHint": "Processed in premium mode — tables, multi-column and specialized content preserved",
+        "gemini": "Standard",
+        "geminiHint": "Processed in standard mode — narrative text, essays and sermons",
+        "pdfparse": "Basic",
+        "pdfparseHint": "Processed with basic fallback extractor — reduced quality; consider reprocessing"
+    },
     "stores": {
         "exegesis": "Exegesis",
         "homiletics": "Homiletics",

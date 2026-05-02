@@ -69,6 +69,14 @@
         "ready": "Listo",
         "notReady": "Por procesar"
     },
+    "engine": {
+        "llamaparse": "Premium",
+        "llamaparseHint": "Procesado en modo premium — tablas, multi-columna y contenido especializado preservados",
+        "gemini": "Estándar",
+        "geminiHint": "Procesado en modo estándar — texto narrativo, ensayos y sermones",
+        "pdfparse": "Básico",
+        "pdfparseHint": "Procesado con extractor básico (fallback) — calidad reducida; considera reprocesar"
+    },
     "stores": {
         "exegesis": "Exégesis",
         "homiletics": "Homilética",

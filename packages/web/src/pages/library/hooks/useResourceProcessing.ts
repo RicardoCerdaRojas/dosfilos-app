@@ -106,6 +106,7 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
             let totalChunks = 0;
             let processedCount = 0;
             let errorCount = 0;
+            let notReadyCount = 0;
 
             for (const resource of pending) {
                 processedCount++;
@@ -120,13 +121,26 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
                     totalChunks += chunks;
                     setIndexStatus(prev => ({ ...prev, [resource.id]: 'indexed' }));
                 } catch (error) {
-                    console.error(`Error processing ${resource.title}:`, error);
-                    errorCount++;
+                    if (error instanceof Error && error.message === 'TEXT_NOT_READY') {
+                        // Not really an error — extraction is still running in
+                        // the background. Count separately so the summary toast
+                        // can tell the user "still processing, retry in a bit"
+                        // instead of a scary failure count.
+                        notReadyCount++;
+                    } else {
+                        console.error(`Error processing ${resource.title}:`, error);
+                        errorCount++;
+                    }
                 }
             }
 
             if (errorCount > 0) {
                 toast.warning(t('toast.processingComplete', { count: errorCount, chunks: totalChunks }));
+            } else if (notReadyCount > 0 && totalChunks === 0) {
+                // Everything that was attempted is still extracting. Surface
+                // the friendly "wait a bit" message instead of a generic
+                // success toast for zero work done.
+                toast.warning(t('toast.textNotReady'), { duration: 5000 });
             } else {
                 toast.success(t('toast.processingSuccess', { chunks: totalChunks }));
             }
