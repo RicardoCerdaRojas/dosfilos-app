@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Info, Plus, Trash2 } from 'lucide-react';
 import {
     SOURCE_TYPE_GROUPS,
+    getActiveRelationships,
+    getSourceTypeTier,
     type SourceRequirement,
     type SourceType,
+    type SourceTypeTier,
 } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 
@@ -15,22 +18,49 @@ import { useTranslation } from '@/i18n';
  *
  * Pure controlled component — owns no state; the parent passes the
  * current value, an onChange patch, and an onRemove handler.
+ *
+ * Pedagogical layer:
+ *   - A tier pill (Esencial / Recomendado / Opcional) sits next to
+ *     the type label, derived from `rigorTier` in the catalog. Helps
+ *     the student calibrate which requirements are non-negotiable
+ *     vs. nice-to-have.
+ *   - When `presentTypes` is provided, the row queries
+ *     `getActiveRelationships` to render an inline hint whenever a
+ *     complementary or substitute pair is configured (e.g. lexicon +
+ *     theological dictionary). Pure data-driven — no hardcoded list
+ *     in the UI; the relationships live in `SOURCE_TYPE_RELATIONSHIPS`.
  */
 export interface RequirementRowProps {
     requirement: SourceRequirement;
     onChange: (patch: Partial<SourceRequirement>) => void;
     onRemove: () => void;
+    /**
+     * The full set of source types currently in the rubric. Used to
+     * compute pedagogical relationship hints (lexicon vs theological
+     * dictionary, critical vs expository commentary, etc.). Pass the
+     * derived list — the row only needs the types, not the requirements.
+     * Optional: when omitted, no relationship hints render.
+     */
+    presentTypes?: ReadonlyArray<SourceType>;
 }
 
-export function RequirementRow({ requirement, onChange, onRemove }: RequirementRowProps) {
+export function RequirementRow({ requirement, onChange, onRemove, presentTypes }: RequirementRowProps) {
     const { t } = useTranslation('exegesis');
+    const tier = getSourceTypeTier(requirement.sourceType);
+    const relationships = presentTypes
+        ? getActiveRelationships(requirement.sourceType, presentTypes)
+        : [];
+
     return (
         <li className="rounded-lg border border-border bg-card p-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                        {t(`sourceTypes.${requirement.sourceType}.label`)}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium text-foreground">
+                            {t(`sourceTypes.${requirement.sourceType}.label`)}
+                        </p>
+                        <TierPill tier={tier} />
+                    </div>
                     <p className="text-[11px] text-muted-foreground italic">
                         {t(`sourceTypes.${requirement.sourceType}.examples`)}
                     </p>
@@ -45,6 +75,21 @@ export function RequirementRow({ requirement, onChange, onRemove }: RequirementR
                     <Trash2 className="h-3.5 w-3.5" />
                 </button>
             </div>
+
+            {relationships.length > 0 && (
+                <div className="space-y-1.5">
+                    {relationships.map(rel => (
+                        <p
+                            key={rel.withType}
+                            className="text-[11px] leading-snug text-info-subtle-foreground bg-info-subtle border border-info/20 rounded px-2 py-1.5 inline-flex items-start gap-1.5"
+                        >
+                            <Info className="h-3 w-3 mt-0.5 shrink-0" />
+                            <span>{t(`sourceTypeRelationships.${rel.noteI18nKey}`)}</span>
+                        </p>
+                    ))}
+                </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2">
                 <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
@@ -88,6 +133,20 @@ export function RequirementRow({ requirement, onChange, onRemove }: RequirementR
                 />
             </div>
         </li>
+    );
+}
+
+function TierPill({ tier }: { tier: SourceTypeTier }) {
+    const { t } = useTranslation('exegesis');
+    if (tier === 'structural') return null;
+    const tone =
+        tier === 'essential' ? 'bg-success-subtle text-success-subtle-foreground border-success/30'
+        : tier === 'recommended' ? 'bg-info-subtle text-info-subtle-foreground border-info/30'
+        : 'bg-muted text-muted-foreground border-border';
+    return (
+        <span className={`text-[9px] font-semibold uppercase tracking-wider rounded-full border px-1.5 py-0.5 ${tone}`}>
+            {t(`sourceTypeTier.${tier}`)}
+        </span>
     );
 }
 

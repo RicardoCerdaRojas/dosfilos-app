@@ -3,6 +3,7 @@ import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     SOURCE_TYPE_GROUPS,
+    getSourceTypeOrderIndex,
     type SourceRequirement,
     type SourceType,
     type UserRubric,
@@ -86,13 +87,29 @@ export function UserRubricEditDialog({ open, onOpenChange, rubric }: UserRubricE
         () => allSourceTypes.filter(typ => !usedTypes.has(typ)),
         [allSourceTypes, usedTypes],
     );
+    // Canonical academic-priority order: text → lexical → commentaries
+    // → background → methodological. Pure render-time sort; the
+    // persisted array stays in insertion order.
+    const sortedRequirements = useMemo(
+        () => [...requirements].sort(
+            (a, b) => getSourceTypeOrderIndex(a.sourceType) - getSourceTypeOrderIndex(b.sourceType),
+        ),
+        [requirements],
+    );
+    const presentTypes = useMemo(
+        () => sortedRequirements.map(r => r.sourceType),
+        [sortedRequirements],
+    );
 
-    const updateRequirement = (idx: number, patch: Partial<SourceRequirement>) => {
-        setRequirements(reqs => reqs.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+    // Patch handlers key on sourceType (unique per requirement) instead
+    // of array index, so the sorted render-order doesn't have to match
+    // the storage order.
+    const updateRequirement = (sourceType: SourceType, patch: Partial<SourceRequirement>) => {
+        setRequirements(reqs => reqs.map(r => (r.sourceType === sourceType ? { ...r, ...patch } : r)));
     };
 
-    const removeRequirement = (idx: number) => {
-        setRequirements(reqs => reqs.filter((_, i) => i !== idx));
+    const removeRequirement = (sourceType: SourceType) => {
+        setRequirements(reqs => reqs.filter(r => r.sourceType !== sourceType));
     };
 
     const addRequirement = (type: SourceType) => {
@@ -244,18 +261,19 @@ export function UserRubricEditDialog({ open, onOpenChange, rubric }: UserRubricE
                                 {t('paperSetup.subSteps.rubric.requirements.subtitle')}
                             </p>
                         </header>
-                        {requirements.length === 0 ? (
+                        {sortedRequirements.length === 0 ? (
                             <p className="text-xs text-warning-subtle-foreground italic">
                                 {t('paperSetup.subSteps.rubric.requirements.empty')}
                             </p>
                         ) : (
                             <ul className="space-y-2">
-                                {requirements.map((req, idx) => (
+                                {sortedRequirements.map((req) => (
                                     <RequirementRow
                                         key={req.sourceType}
                                         requirement={req}
-                                        onChange={(patch) => updateRequirement(idx, patch)}
-                                        onRemove={() => removeRequirement(idx)}
+                                        onChange={(patch) => updateRequirement(req.sourceType, patch)}
+                                        onRemove={() => removeRequirement(req.sourceType)}
+                                        presentTypes={presentTypes}
                                     />
                                 ))}
                             </ul>

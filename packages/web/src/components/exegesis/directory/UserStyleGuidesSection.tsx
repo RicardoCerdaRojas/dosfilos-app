@@ -2,6 +2,13 @@ import { useRef, useState } from 'react';
 import { BookOpen, CheckCircle2, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
@@ -62,9 +69,9 @@ export function UserStyleGuidesSection() {
                 {!isLoading && guides.length > 0 && (
                     <button
                         type="button"
-                        onClick={() => setShowUploadForm(s => !s)}
+                        onClick={() => setShowUploadForm(true)}
                         className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
-                        title={showUploadForm ? t('setup.cancel') : t('directory.styleGuides.uploadAnother')}
+                        title={t('directory.styleGuides.uploadAnother')}
                     >
                         <Upload className="h-3 w-3" />
                     </button>
@@ -155,15 +162,21 @@ export function UserStyleGuidesSection() {
                 </ul>
             )}
 
-            {showUploadForm && (
-                <div className="mt-3">
+            <Dialog open={showUploadForm} onOpenChange={setShowUploadForm}>
+                <DialogContent className="max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('directory.styleGuides.uploadTitle')}</DialogTitle>
+                        <DialogDescription>
+                            {t('directory.styleGuides.empty.body')}
+                        </DialogDescription>
+                    </DialogHeader>
                     <UploadGuideForm
                         onUploaded={() => setShowUploadForm(false)}
                         firstGuide={guides.length === 0}
                         uploadGuide={uploadGuide}
                     />
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
 
             {editingGuide && (
                 <UserStyleGuideEditDialog
@@ -231,13 +244,7 @@ function UploadGuideForm({ onUploaded, firstGuide, uploadGuide }: UploadGuideFor
     };
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="rounded-lg border border-border bg-muted/40 p-4 space-y-3"
-        >
-            <h3 className="text-sm font-semibold text-foreground">
-                {t('directory.styleGuides.uploadTitle')}
-            </h3>
+        <form onSubmit={handleSubmit} className="space-y-3">
             <div>
                 <label className="block text-xs font-medium text-foreground mb-1">
                     {t('directory.styleGuides.fileLabel')}

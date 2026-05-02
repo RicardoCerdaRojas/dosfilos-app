@@ -132,6 +132,20 @@
         "background": "Contexto y monografías",
         "methodological": "Apoyo metodológico"
     },
+    "sourceTypeTier": {
+        "essential": "Esencial",
+        "recommended": "Recomendado",
+        "standard": "Opcional"
+    },
+    "sourceTypeRelationships": {
+        "lexiconWithTheologicalDict": "Léxico técnico (BDAG/HALOT) y diccionario teológico (TDNT/NIDNTTE) son complementarios, no sustitutos: el léxico da datos morfo-semánticos puros del término; el diccionario teológico traza su uso a lo largo del canon. Si tu corpus está limitado, prioriza el léxico técnico.",
+        "lexiconWithGrammar": "El léxico cubre el nivel lexical (palabras); la gramática cubre el nivel oracional (sintaxis). Juntos cubren el original verso por verso.",
+        "theologicalDictWithLexicon": "El diccionario teológico trae trayectoria canónica del término; el léxico (BDAG/HALOT) trae datos puros del lemma. Si tu corpus está limitado, el léxico técnico es más fundamental para la exégesis.",
+        "criticalWithExpository": "Comentarios críticos (WBC/NIGTC) detallan sintaxis y crítica textual; los expositivos (NICOT/BECNT) enfatizan teología y aplicación. Cubren ángulos distintos del mismo texto — los serios suelen pedir ambos.",
+        "expositoryWithCritical": "Los expositivos te dan la lectura teológica acabada; los críticos te muestran las decisiones técnicas detrás. Ambos aportan al mismo verso desde planos diferentes.",
+        "backgroundWithPrimary": "Las síntesis (deSilva, Keener IVP) ahorran tiempo; las fuentes primarias (Josefo, Filón, Padres apostólicos) dan voz al testigo antiguo directamente. Una sin la otra deja agujeros.",
+        "primaryWithBackground": "Las fuentes primarias antiguas (Josefo, Filón, OTP) son los testigos directos del mundo del texto; las síntesis modernas (deSilva, Keener IVP) las contextualizan e interpretan. Ambas se necesitan."
+    },
     "sourceTypes": {
         "biblical-text-edition": {
             "label": "Edición del texto bíblico",

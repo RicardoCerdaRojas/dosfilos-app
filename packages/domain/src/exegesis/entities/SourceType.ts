@@ -295,6 +295,136 @@ export const SOURCE_TYPE_GROUPS = [
     },
 ] as const;
 
+/**
+ * Flat canonical order of source types — matches the order in
+ * `SOURCE_TYPE_GROUPS`. The UI uses this to sort
+ * `SourceRequirement[]` by exegetical priority (primary text →
+ * lexical → commentaries → background → methodological) instead of
+ * the arbitrary insertion order. Lower index = higher exegetical
+ * priority.
+ */
+export const SOURCE_TYPE_ORDER: ReadonlyArray<SourceType> = SOURCE_TYPE_GROUPS.flatMap(
+    g => g.types as ReadonlyArray<SourceType>,
+);
+
+const SOURCE_TYPE_ORDER_INDEX: Readonly<Record<SourceType, number>> = Object.freeze(
+    Object.fromEntries(SOURCE_TYPE_ORDER.map((typ, idx) => [typ, idx])) as Record<SourceType, number>,
+);
+
+export function getSourceTypeOrderIndex(type: SourceType): number {
+    return SOURCE_TYPE_ORDER_INDEX[type] ?? Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * UI-facing tier label. Derived from `rigorTier`:
+ *   3 → 'essential'   — peak academic weight (lexicons, critical
+ *                       commentaries, journal articles, etc.)
+ *   2 → 'recommended' — mid-level academic
+ *   1 → 'standard'    — popular / supportive
+ *   0 → 'structural'  — not cited as evidence (text editions,
+ *                       style templates) — UI usually hides the pill
+ */
+export type SourceTypeTier = 'essential' | 'recommended' | 'standard' | 'structural';
+
+export function getSourceTypeTier(type: SourceType): SourceTypeTier {
+    const tier = SOURCE_TYPE_CATALOG[type].rigorTier;
+    if (tier === 3) return 'essential';
+    if (tier === 2) return 'recommended';
+    if (tier === 1) return 'standard';
+    return 'structural';
+}
+
+/**
+ * Pedagogical relationships between source types. The UI surfaces
+ * these as inline notes in the rubric editor whenever BOTH sides of
+ * a relationship are present in the same rubric — helping the
+ * student understand how the two types interact (complement vs.
+ * substitute) rather than treating each requirement in isolation.
+ *
+ * Symmetry is the caller's responsibility: a relationship listed on
+ * `lexicon-technical → theological-dictionary` will only fire when
+ * looking up from `lexicon-technical`. Define both sides if you
+ * want bi-directional rendering.
+ */
+export interface SourceTypeRelationship {
+    /** The other source type in the pair. */
+    withType: SourceType;
+    /**
+     * Whether the two types reinforce each other (`'complements'`)
+     * or partially overlap so one can replace the other in a
+     * limited corpus (`'substitutes'`). Drives icon + tone in the
+     * UI hint.
+     */
+    relationship: 'complements' | 'substitutes';
+    /** i18n key under `exegesis.sourceTypeRelationships.{key}` for the explanation. */
+    noteI18nKey: string;
+}
+
+export const SOURCE_TYPE_RELATIONSHIPS: Readonly<Partial<Record<SourceType, ReadonlyArray<SourceTypeRelationship>>>> = {
+    'lexicon-technical': [
+        {
+            withType: 'theological-dictionary',
+            relationship: 'complements',
+            noteI18nKey: 'lexiconWithTheologicalDict',
+        },
+        {
+            withType: 'grammar-syntax',
+            relationship: 'complements',
+            noteI18nKey: 'lexiconWithGrammar',
+        },
+    ],
+    'theological-dictionary': [
+        {
+            withType: 'lexicon-technical',
+            relationship: 'complements',
+            noteI18nKey: 'theologicalDictWithLexicon',
+        },
+    ],
+    'commentary-critical': [
+        {
+            withType: 'commentary-expository',
+            relationship: 'complements',
+            noteI18nKey: 'criticalWithExpository',
+        },
+    ],
+    'commentary-expository': [
+        {
+            withType: 'commentary-critical',
+            relationship: 'complements',
+            noteI18nKey: 'expositoryWithCritical',
+        },
+    ],
+    'historical-background': [
+        {
+            withType: 'primary-source-ancient',
+            relationship: 'complements',
+            noteI18nKey: 'backgroundWithPrimary',
+        },
+    ],
+    'primary-source-ancient': [
+        {
+            withType: 'historical-background',
+            relationship: 'complements',
+            noteI18nKey: 'primaryWithBackground',
+        },
+    ],
+};
+
+/**
+ * Returns the relationships defined for `type` whose other side
+ * appears in `presentTypes`. Used by the rubric editor to render
+ * only relevant pedagogical hints (no point telling the student
+ * about a complementary pair when only one side is configured).
+ */
+export function getActiveRelationships(
+    type: SourceType,
+    presentTypes: ReadonlyArray<SourceType>,
+): ReadonlyArray<SourceTypeRelationship> {
+    const all = SOURCE_TYPE_RELATIONSHIPS[type] ?? [];
+    const present = new Set(presentTypes);
+    return all.filter(rel => present.has(rel.withType));
+}
+
 // ── Migration shim from the old ProjectSourceRole ───────────────────
 //
 // The pre-redesign schema used `ProjectSourceRole` with 8 flat values.

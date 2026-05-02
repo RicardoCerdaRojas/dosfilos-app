@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { FileCheck2, Pencil, Star, Trash2, Loader2, Plus, Sparkles, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import type { UserRubric } from '@dosfilos/domain';
@@ -56,7 +63,7 @@ export function UserRubricsSection() {
                         {t('directory.rubrics.title')}
                     </h2>
                 </div>
-                {!isLoading && rubrics.length > 0 && !showCreateForm && (
+                {!isLoading && rubrics.length > 0 && (
                     <button
                         type="button"
                         onClick={() => setShowCreateForm(true)}
@@ -149,11 +156,17 @@ export function UserRubricsSection() {
                 </ul>
             )}
 
-            {showCreateForm && (
-                <div className="mt-3">
+            <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+                <DialogContent className="max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('directory.rubrics.create.title')}</DialogTitle>
+                        <DialogDescription>
+                            {t('directory.rubrics.empty.body')}
+                        </DialogDescription>
+                    </DialogHeader>
                     <CreateRubricForm onDone={() => setShowCreateForm(false)} />
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
 
             {editingRubric && (
                 <UserRubricEditDialog
@@ -208,14 +221,7 @@ function CreateRubricForm({ onDone }: { onDone: () => void }) {
     };
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="rounded-lg border border-border bg-muted/40 p-4 space-y-3"
-        >
-            <h3 className="text-sm font-semibold text-foreground">
-                {t('directory.rubrics.create.title')}
-            </h3>
-
+        <form onSubmit={handleSubmit} className="space-y-3">
             <div>
                 <label className="block text-xs font-medium text-foreground mb-1">
                     {t('directory.rubrics.create.nameLabel')}

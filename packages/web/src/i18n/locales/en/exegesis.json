@@ -132,6 +132,20 @@
         "background": "Context & monographs",
         "methodological": "Methodological support"
     },
+    "sourceTypeTier": {
+        "essential": "Essential",
+        "recommended": "Recommended",
+        "standard": "Optional"
+    },
+    "sourceTypeRelationships": {
+        "lexiconWithTheologicalDict": "Technical lexicons (BDAG/HALOT) and theological dictionaries (TDNT/NIDNTTE) complement, not substitute, each other: the lexicon gives raw morpho-semantic data on the term; the theological dictionary traces its use across the canon. If your corpus is constrained, prioritize the technical lexicon.",
+        "lexiconWithGrammar": "The lexicon covers the lexical level (words); the grammar covers the sentence level (syntax). Together they cover the original verse by verse.",
+        "theologicalDictWithLexicon": "The theological dictionary brings canonical trajectory of the term; the lexicon (BDAG/HALOT) brings raw lemma data. If your corpus is constrained, the technical lexicon is more foundational for exegesis.",
+        "criticalWithExpository": "Critical commentaries (WBC/NIGTC) detail syntax and textual criticism; expository ones (NICOT/BECNT) emphasize theology and application. They cover distinct angles of the same text — serious work usually requires both.",
+        "expositoryWithCritical": "Expository commentaries give you the finished theological reading; critical commentaries show the technical decisions behind it. Both contribute to the same verse from different planes.",
+        "backgroundWithPrimary": "Modern syntheses (deSilva, Keener IVP) save time; primary sources (Josephus, Philo, Apostolic Fathers) give voice to the ancient witness directly. One without the other leaves gaps.",
+        "primaryWithBackground": "Ancient primary sources (Josephus, Philo, OTP) are the direct witnesses of the text's world; modern syntheses (deSilva, Keener IVP) contextualize and interpret them. Both are needed."
+    },
     "sourceTypes": {
         "biblical-text-edition": {
             "label": "Biblical text edition",
