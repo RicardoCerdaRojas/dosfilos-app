@@ -4,3 +4,4 @@ export * from './repositories/ASVRepository';
 export * from './BibleVersionFactory';
 // Original-language sources for the v1.6 expository assistant.
 export * from './original-language/SBLGNTBibleProvider';
+export * from './original-language/MorphhbOriginalLanguageProvider';

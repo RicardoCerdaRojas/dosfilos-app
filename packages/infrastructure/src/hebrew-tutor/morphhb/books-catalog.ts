@@ -388,4 +388,28 @@ export const HEBREW_BOOKS_CATALOG: HebrewBook[] = [
     chapterCount: 36,
     canonicalOrder: 37,
   },
+  // ── Profetas menores que faltaban en la catálogo original ──────────
+  // (v1.6: necesarios para que el asistente expositivo cubra el canon
+  // OT completo cuando consume morphhb. Insertados al final con
+  // canonicalOrder secuencial para no renumerar el resto.)
+  {
+    morphhbKey: 'Joel',
+    abbreviation: 'Jl',
+    nameSpanish: 'Joel',
+    nameEnglish: 'Joel',
+    nameHebrew: 'יוֹאֵל',
+    section: BibleSection.LATTER_PROPHETS,
+    chapterCount: 4,
+    canonicalOrder: 38,
+  },
+  {
+    morphhbKey: 'Obad',
+    abbreviation: 'Abd',
+    nameSpanish: 'Abdías',
+    nameEnglish: 'Obadiah',
+    nameHebrew: 'עֹבַדְיָה',
+    section: BibleSection.LATTER_PROPHETS,
+    chapterCount: 1,
+    canonicalOrder: 39,
+  },
 ];
