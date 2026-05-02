@@ -227,7 +227,7 @@ export function ExpositoryAssistantPage() {
         }
     }, [preachableUnits, bookDisplay, seriesTitle, t]);
 
-    const handleStart = () => {
+    const handleStart = async () => {
         // Reset prior run state if the pastor restarts.
         setPanorama(null);
         setMacroSections(null);
@@ -242,7 +242,7 @@ export function ExpositoryAssistantPage() {
 
         let loaded;
         try {
-            loaded = assistant.loadVerses({ bookId, displayLanguage: lang });
+            loaded = await assistant.loadVerses({ bookId, displayLanguage: lang });
         } catch (err: any) {
             console.error('[expository] loadVerses failed:', err);
             toast.error(err?.message ?? (t('expository.toast.loadFailed') as string));
@@ -250,6 +250,24 @@ export function ExpositoryAssistantPage() {
         }
         setVerses(loaded.verses);
         setBookDisplay(loaded.book);
+
+        // Surface the source (original-language vs translation
+        // fallback) so the pastor knows what the model is reading.
+        // The toast is informative on success, warning on fallback —
+        // the methodology's credibility depends on the pastor knowing
+        // whether they're seeing original Greek/Hebrew or surrogate
+        // translation analysis.
+        if (loaded.source === 'translation' && loaded.fallbackReason) {
+            toast.warning(
+                t('expository.toast.translationFallback', {
+                    reason: loaded.fallbackReason,
+                }) as string,
+            );
+        } else if (loaded.source !== 'translation') {
+            toast.success(
+                t(`expository.toast.sourceLoaded.${loaded.source}`) as string,
+            );
+        }
 
         const baseInput = {
             book: loaded.book,

@@ -221,6 +221,11 @@
         },
         "toast": {
             "loadFailed": "No se pudo cargar el texto del libro.",
+            "sourceLoaded": {
+                "original-greek": "Texto cargado desde SBLGNT (griego original).",
+                "original-hebrew": "Texto cargado desde WLC (hebreo original)."
+            },
+            "translationFallback": "No se pudo cargar el texto original. Usando la traducción como fallback ({{reason}}). El análisis sintáctico será aproximado.",
             "panoramaFailed": "No se pudo generar el panorama. Intenta de nuevo.",
             "macroDone": "Macroestructura lista.",
             "macroFailed": "No se pudo generar la macroestructura. Intenta de nuevo.",
