@@ -31,11 +31,19 @@ export function daysBetween(a: Date, b: Date): number {
 }
 
 /**
- * Returns a new Date shifted by `days` days from `date`. Preserves the
- * time component. Uses `setDate` which handles month/year rollover.
+ * Returns a new Date shifted by `days` days from `date`, NORMALIZED
+ * to local midnight (drops the time component).
+ *
+ * Why drop the time: legacy series-startDates persisted with the
+ * earlier UTC-midnight bug carry a time component when read back
+ * locally (e.g. "May 3 00:00 UTC" displays as "May 2 21:00 Chile").
+ * If we preserved that 21:00 time across an `addDays(date, 1)`
+ * shift, we'd get "May 3 21:00 Chile = May 4 01:00 UTC" which
+ * `toDateString()` then displays as Monday — not the Sunday the
+ * pastor expects. Building a fresh local-midnight Date sidesteps
+ * the timezone-offset compounding entirely; the result is the
+ * intended calendar day in any browser zone.
  */
 export function addDays(date: Date, days: number): Date {
-    const next = new Date(date);
-    next.setDate(next.getDate() + days);
-    return next;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days, 0, 0, 0, 0);
 }
