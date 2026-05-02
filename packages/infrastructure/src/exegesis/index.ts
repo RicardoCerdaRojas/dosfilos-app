@@ -10,3 +10,7 @@ export {
 } from './DeterministicStyleFormatter';
 export { OverloadedError } from './geminiRetry';
 export { RetrieveChunksExcerptExtractor } from './RetrieveChunksExcerptExtractor';
+// Pipeline-version constant for the v1.5+ expository assistant.
+// Exposed so the application layer can use it as part of the cache
+// document key without re-declaring the same string.
+export { EXPOSITORY_PIPELINE_VERSION } from './expository-prompts/shared';

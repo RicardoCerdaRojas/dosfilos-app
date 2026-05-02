@@ -1,8 +1,10 @@
 import {
     FirebaseSeriesRepository,
+    FirestoreExpositoryAssistantCacheRepository,
     GeminiExpositoryAssistant,
     GeminiPericopeDetector,
     GeminiPlanGenerator,
+    EXPOSITORY_PIPELINE_VERSION,
     RVR1960Repository,
     ASVRepository,
 } from '@dosfilos/infrastructure';
@@ -19,6 +21,7 @@ import {
     type LoadBookVersesResult,
 } from '../use-cases/exegesis/expository/loadBookVerses';
 import { RunExpositoryPassesUseCase } from '../use-cases/exegesis/expository/RunExpositoryPassesUseCase';
+import { CachedExpositoryAssistant } from './expository/CachedExpositoryAssistant';
 import { LibraryService } from './LibraryService';
 
 export class SeriesService {
@@ -54,8 +57,21 @@ export class SeriesService {
         // instance shared across all 5 passes. The wizard loads verses
         // once via `loadBookVersesForExpository` and threads them into
         // each pass call.
-        const expositoryAssistant = new GeminiExpositoryAssistant(apiKey || '', exegesisModelId);
-        this.expositoryPasses = new RunExpositoryPassesUseCase(expositoryAssistant);
+        //
+        // v1.6: wrap with CachedExpositoryAssistant so Pases 1-3
+        // (panorama / macro / micro) hit a Firestore cache keyed by
+        // (book, language, pipelineVersion). Two pastors studying the
+        // same book in the same language only pay the LLM cost once
+        // for the canonical structural analysis. Pases 4-5 pass
+        // through unchanged (per-pastor homiletical decisions).
+        const geminiExpositoryAssistant = new GeminiExpositoryAssistant(apiKey || '', exegesisModelId);
+        const expositoryCacheRepo = new FirestoreExpositoryAssistantCacheRepository();
+        const cachedExpositoryAssistant = new CachedExpositoryAssistant(
+            geminiExpositoryAssistant,
+            expositoryCacheRepo,
+            EXPOSITORY_PIPELINE_VERSION,
+        );
+        this.expositoryPasses = new RunExpositoryPassesUseCase(cachedExpositoryAssistant);
     }
 
     /**
