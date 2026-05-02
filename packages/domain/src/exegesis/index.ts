@@ -34,6 +34,7 @@ export * from './ports/IStyleGuideManifestExtractor';
 // dividing a biblical book into preachable units while preserving
 // the distinction between exegetical division and preachable division.
 export * from './expository/BookPanorama';
+export * from './expository/cache';
 export * from './expository/ExegeticalUnit';
 export * from './expository/ExpositoryAssistantRun';
 export * from './expository/FidelityReview';
