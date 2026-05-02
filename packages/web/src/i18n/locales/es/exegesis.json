@@ -53,7 +53,16 @@
                 "deleteFailed": "No se pudo eliminar la plantilla",
                 "created": "Plantilla creada",
                 "createFailed": "No se pudo crear la plantilla. Revisa el texto o intenta de nuevo.",
-                "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos."
+                "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos.",
+                "updated": "Plantilla actualizada",
+                "updateFailed": "No se pudo actualizar la plantilla"
+            },
+            "edit": {
+                "openCta": "Editar plantilla",
+                "title": "Editar plantilla de rúbrica",
+                "subtitle": "Renombra la plantilla y ajusta su contenido. Los papers ya creados desde esta plantilla mantienen su copia interna.",
+                "nameLabel": "Nombre de la plantilla",
+                "save": "Guardar cambios"
             }
         },
         "styleGuides": {
@@ -86,7 +95,33 @@
                 "activated": "Guía activa actualizada",
                 "activateFailed": "No se pudo activar la guía",
                 "deleted": "Guía eliminada",
-                "deleteFailed": "No se pudo eliminar la guía"
+                "deleteFailed": "No se pudo eliminar la guía",
+                "updated": "Guía actualizada",
+                "updateFailed": "No se pudo actualizar la guía"
+            },
+            "edit": {
+                "openCta": "Editar guía",
+                "title": "Editar guía de estilo",
+                "subtitle": "Renombra la guía y revisa el manifiesto extraído del PDF. La edición del manifiesto llega en v1.7.",
+                "nameLabel": "Nombre",
+                "versionLabel": "Versión",
+                "save": "Guardar cambios",
+                "manifestSection": "Manifiesto extraído",
+                "manifestReadOnlyNotice": "Vista de solo lectura. La edición del manifiesto llega en v1.7.",
+                "manifestEmpty": "Aún no se extrajo el manifiesto. Hazlo desde el setup de un paper que use esta guía.",
+                "manifest": {
+                    "citationLabel": "Estilo de citación",
+                    "footnotesFirst": "Plantilla de primera nota al pie",
+                    "footnotesSubsequent": "Plantilla de notas subsiguientes",
+                    "ibid": "Ibid",
+                    "ibidDisabled": "No permitido",
+                    "bibliographyEntry": "Plantilla de bibliografía",
+                    "blockQuote": "Umbral de cita en bloque",
+                    "blockQuoteValue": "{{count}} palabras",
+                    "quoteMarks": "Comillas (primarias / secundarias)",
+                    "transliteration": "Transliteración",
+                    "additional": "Reglas adicionales"
+                }
             }
         }
     },

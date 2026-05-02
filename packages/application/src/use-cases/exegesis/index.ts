@@ -24,6 +24,7 @@ export { ListUserStyleGuidesUseCase } from './ListUserStyleGuidesUseCase';
 export { GetActiveStyleGuideUseCase } from './GetActiveStyleGuideUseCase';
 export { CreateUserStyleGuideUseCase } from './CreateUserStyleGuideUseCase';
 export { SetActiveStyleGuideUseCase } from './SetActiveStyleGuideUseCase';
+export { UpdateUserStyleGuideUseCase } from './UpdateUserStyleGuideUseCase';
 export { DeleteUserStyleGuideUseCase } from './DeleteUserStyleGuideUseCase';
 
 // Project sources

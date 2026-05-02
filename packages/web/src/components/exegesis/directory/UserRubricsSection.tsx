@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { FileCheck2, Star, Trash2, Loader2, Plus, Sparkles, AlertTriangle } from 'lucide-react';
+import { FileCheck2, Pencil, Star, Trash2, Loader2, Plus, Sparkles, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import type { UserRubric } from '@dosfilos/domain';
+import { UserRubricEditDialog } from './UserRubricEditDialog';
 
 /**
  * Directory section listing the user's rubric templates.
@@ -23,6 +24,7 @@ export function UserRubricsSection() {
     const { t } = useTranslation('exegesis');
     const { rubrics, isLoading, deleteRubric, setDefault } = useUserRubrics();
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [editingRubric, setEditingRubric] = useState<UserRubric | null>(null);
 
     const handleSetDefault = async (rubricId: string) => {
         try {
@@ -110,6 +112,15 @@ export function UserRubricsSection() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-0.5 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingRubric(r)}
+                                    className="p-1 rounded text-muted-foreground hover:text-primary hover:bg-accent"
+                                    title={t('directory.rubrics.edit.openCta')}
+                                    aria-label={t('directory.rubrics.edit.openCta')}
+                                >
+                                    <Pencil className="h-3 w-3" />
+                                </button>
                                 {!r.isDefault && (
                                     <button
                                         type="button"
@@ -142,6 +153,16 @@ export function UserRubricsSection() {
                 <div className="mt-3">
                     <CreateRubricForm onDone={() => setShowCreateForm(false)} />
                 </div>
+            )}
+
+            {editingRubric && (
+                <UserRubricEditDialog
+                    open={!!editingRubric}
+                    onOpenChange={(next) => {
+                        if (!next) setEditingRubric(null);
+                    }}
+                    rubric={editingRubric}
+                />
             )}
         </section>
     );

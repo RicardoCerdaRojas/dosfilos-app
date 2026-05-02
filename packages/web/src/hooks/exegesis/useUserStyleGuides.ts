@@ -106,6 +106,23 @@ export function useUserStyleGuides() {
         },
     });
 
+    const updateGuide = useMutation({
+        mutationFn: async (input: {
+            guideId: string;
+            displayName?: string;
+            version?: string;
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.updateStyleGuide.execute({
+                ownerId: user.uid,
+                ...input,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'styleGuides', user?.uid] });
+        },
+    });
+
     const deleteGuide = useMutation({
         mutationFn: async (guideId: string) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -139,6 +156,7 @@ export function useUserStyleGuides() {
         error: guidesQuery.error,
         uploadGuide,
         setActive,
+        updateGuide,
         deleteGuide,
         extractManifest,
     };

@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
-import { BookOpen, CheckCircle2, Trash2, Loader2, Upload } from 'lucide-react';
+import { BookOpen, CheckCircle2, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import type { UserStyleGuide } from '@dosfilos/domain';
+import { UserStyleGuideEditDialog } from './UserStyleGuideEditDialog';
 
 /**
  * Directory section listing the user's style guides + inline upload
@@ -26,6 +27,7 @@ export function UserStyleGuidesSection() {
     const { t } = useTranslation('exegesis');
     const { guides, isLoading, uploadGuide, setActive, deleteGuide } = useUserStyleGuides();
     const [showUploadForm, setShowUploadForm] = useState(false);
+    const [editingGuide, setEditingGuide] = useState<UserStyleGuide | null>(null);
 
     const handleSetActive = async (guideId: string) => {
         try {
@@ -116,6 +118,15 @@ export function UserStyleGuidesSection() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-0.5 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingGuide(g)}
+                                    className="p-1 rounded text-muted-foreground hover:text-primary hover:bg-accent"
+                                    title={t('directory.styleGuides.edit.openCta')}
+                                    aria-label={t('directory.styleGuides.edit.openCta')}
+                                >
+                                    <Pencil className="h-3 w-3" />
+                                </button>
                                 {!g.isActive && (
                                     <button
                                         type="button"
@@ -152,6 +163,16 @@ export function UserStyleGuidesSection() {
                         uploadGuide={uploadGuide}
                     />
                 </div>
+            )}
+
+            {editingGuide && (
+                <UserStyleGuideEditDialog
+                    open={!!editingGuide}
+                    onOpenChange={(next) => {
+                        if (!next) setEditingGuide(null);
+                    }}
+                    guide={editingGuide}
+                />
             )}
         </section>
     );

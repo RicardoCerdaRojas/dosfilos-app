@@ -53,7 +53,16 @@
                 "deleteFailed": "Could not delete the template",
                 "created": "Template created",
                 "createFailed": "Could not create the template. Check the text or try again.",
-                "overloaded": "Gemini is overloaded. Try again in a few seconds."
+                "overloaded": "Gemini is overloaded. Try again in a few seconds.",
+                "updated": "Template updated",
+                "updateFailed": "Could not update the template"
+            },
+            "edit": {
+                "openCta": "Edit template",
+                "title": "Edit rubric template",
+                "subtitle": "Rename the template and adjust its content. Papers already created from this template keep their internal copy.",
+                "nameLabel": "Template name",
+                "save": "Save changes"
             }
         },
         "styleGuides": {
@@ -86,7 +95,33 @@
                 "activated": "Active guide updated",
                 "activateFailed": "Could not activate the guide",
                 "deleted": "Guide deleted",
-                "deleteFailed": "Could not delete the guide"
+                "deleteFailed": "Could not delete the guide",
+                "updated": "Guide updated",
+                "updateFailed": "Could not update the guide"
+            },
+            "edit": {
+                "openCta": "Edit guide",
+                "title": "Edit style guide",
+                "subtitle": "Rename the guide and inspect the manifest extracted from the PDF. Manifest editing ships in v1.7.",
+                "nameLabel": "Name",
+                "versionLabel": "Version",
+                "save": "Save changes",
+                "manifestSection": "Extracted manifest",
+                "manifestReadOnlyNotice": "Read-only view. Manifest editing ships in v1.7.",
+                "manifestEmpty": "No manifest extracted yet. Run extraction from a paper setup that uses this guide.",
+                "manifest": {
+                    "citationLabel": "Citation style",
+                    "footnotesFirst": "First-mention footnote template",
+                    "footnotesSubsequent": "Subsequent-mention template",
+                    "ibid": "Ibid",
+                    "ibidDisabled": "Not allowed",
+                    "bibliographyEntry": "Bibliography entry template",
+                    "blockQuote": "Block-quote threshold",
+                    "blockQuoteValue": "{{count}} words",
+                    "quoteMarks": "Quote marks (primary / secondary)",
+                    "transliteration": "Transliteration",
+                    "additional": "Additional rules"
+                }
             }
         }
     },
