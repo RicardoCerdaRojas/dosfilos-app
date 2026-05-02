@@ -1154,47 +1154,65 @@ function PreachableResult({
     t: (key: string) => string;
 }) {
     return (
-        <ol className="space-y-3">
-            {units.map((u, idx) => (
-                <li
-                    key={u.id}
-                    className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-4 py-3"
-                >
-                    <div className="flex items-start gap-3">
-                        <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs font-semibold">
-                            {idx + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                    {u.title}
-                                </h4>
-                                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                                    {u.passage || `${bookDisplay} ${formatRange(u)}`}
-                                </span>
-                                {u.caseTreatment && (
-                                    <span className="text-[10px] uppercase tracking-wide font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded">
-                                        {t(`expository.results.preachable.case.${u.caseTreatment}`)}
-                                    </span>
-                                )}
+        <div className="space-y-3">
+            {/* Preliminary-output disclaimer. The propositions below are
+                LLM-generated panoramic readings, not exegetically validated
+                conclusions. Surfaced prominently so a serious pastor or
+                seminary student treats them as starting hypotheses to
+                confirm via the paper workflow, not as authoritative
+                output. */}
+            <div className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/20 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-200">
+                <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <p>{t('expository.results.preachable.preliminaryBanner')}</p>
+                </div>
+            </div>
+            <ol className="space-y-3">
+                {units.map((u, idx) => (
+                    <li
+                        key={u.id}
+                        className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-4 py-3"
+                    >
+                        <div className="flex items-start gap-3">
+                            <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs font-semibold">
+                                {idx + 1}
                             </div>
-                            <PropositionRow
-                                label={t('expository.results.preachable.exegeticalProp') as string}
-                                value={u.exegeticalProposition}
-                            />
-                            <PropositionRow
-                                label={t('expository.results.preachable.homileticalProp') as string}
-                                value={u.homileticalProposition}
-                            />
-                            <PropositionRow
-                                label={t('expository.results.preachable.objective') as string}
-                                value={u.pastoralObjective}
-                            />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                        {u.title}
+                                    </h4>
+                                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                        {u.passage || `${bookDisplay} ${formatRange(u)}`}
+                                    </span>
+                                    {u.caseTreatment && (
+                                        <span className="text-[10px] uppercase tracking-wide font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded">
+                                            {t(`expository.results.preachable.case.${u.caseTreatment}`)}
+                                        </span>
+                                    )}
+                                    <span className="text-[10px] uppercase tracking-wide font-medium text-amber-700 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        {t('expository.results.preachable.preliminaryChip')}
+                                    </span>
+                                </div>
+                                <PropositionRow
+                                    label={t('expository.results.preachable.exegeticalProp') as string}
+                                    value={u.exegeticalProposition}
+                                />
+                                <PropositionRow
+                                    label={t('expository.results.preachable.homileticalProp') as string}
+                                    value={u.homileticalProposition}
+                                />
+                                <PropositionRow
+                                    label={t('expository.results.preachable.objective') as string}
+                                    value={u.pastoralObjective}
+                                />
+                            </div>
                         </div>
-                    </div>
-                </li>
-            ))}
-        </ol>
+                    </li>
+                ))}
+            </ol>
+        </div>
     );
 }
 

@@ -170,8 +170,10 @@
                 "signals": "Marcadores"
             },
             "preachable": {
-                "exegeticalProp": "Proposición exegética",
-                "homileticalProp": "Proposición homilética",
+                "preliminaryBanner": "Estas son hipótesis homiléticas iniciales basadas en una lectura panorámica del texto. Refínalas tras tu estudio exegético detallado (botón \"Crear paper desde unidad\" en el detalle de la serie).",
+                "preliminaryChip": "Pendiente de validación exegética",
+                "exegeticalProp": "Hipótesis exegética inicial",
+                "homileticalProp": "Línea homilética sugerida",
                 "objective": "Objetivo pastoral",
                 "case": {
                     "salutation": "Salutación",
