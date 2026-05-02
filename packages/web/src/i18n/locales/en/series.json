@@ -142,6 +142,38 @@
                     "transition": "Transition",
                     "digression": "Digression"
                 }
+            },
+            "micro": {
+                "function": "Function",
+                "signals": "Signals"
+            },
+            "preachable": {
+                "exegeticalProp": "Exegetical proposition",
+                "homileticalProp": "Homiletical proposition",
+                "objective": "Pastoral objective",
+                "case": {
+                    "salutation": "Salutation",
+                    "doxology": "Doxology",
+                    "long-prayer": "Long prayer",
+                    "virtue-list": "Virtue list",
+                    "narrative-scene": "Narrative scene",
+                    "ot-citation": "OT citation",
+                    "genealogy": "Genealogy",
+                    "law-code": "Law code",
+                    "parable": "Parable",
+                    "oracle": "Oracle"
+                }
+            },
+            "fidelity": {
+                "confidence": "Confidence",
+                "noIssues": "No issues. The proposal is solid.",
+                "global": "Whole series",
+                "recommendation": "Recommendation",
+                "severity": {
+                    "info": "Info",
+                    "warning": "Warning",
+                    "critical": "Critical"
+                }
             }
         },
         "toast": {
@@ -149,6 +181,10 @@
             "panoramaFailed": "Couldn't generate the panorama. Try again.",
             "macroDone": "Macrostructure ready.",
             "macroFailed": "Couldn't generate the macrostructure. Try again.",
+            "microFailed": "Couldn't generate the microstructure. Try again.",
+            "preachableFailed": "Couldn't generate the preachable units. Try again.",
+            "fidelityFailed": "Couldn't complete the fidelity review. Try again.",
+            "pipelineDone": "Pipeline complete. Review the preachable units and issues before creating the series.",
             "overloaded": "Gemini is overloaded. Try again in a minute."
         },
         "passes": {

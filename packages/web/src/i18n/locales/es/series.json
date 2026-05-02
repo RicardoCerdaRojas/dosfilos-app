@@ -142,6 +142,38 @@
                     "transition": "Transición",
                     "digression": "Digresión"
                 }
+            },
+            "micro": {
+                "function": "Función",
+                "signals": "Marcadores"
+            },
+            "preachable": {
+                "exegeticalProp": "Proposición exegética",
+                "homileticalProp": "Proposición homilética",
+                "objective": "Objetivo pastoral",
+                "case": {
+                    "salutation": "Salutación",
+                    "doxology": "Doxología",
+                    "long-prayer": "Oración larga",
+                    "virtue-list": "Lista de virtudes",
+                    "narrative-scene": "Escena narrativa",
+                    "ot-citation": "Cita del AT",
+                    "genealogy": "Genealogía",
+                    "law-code": "Código legal",
+                    "parable": "Parábola",
+                    "oracle": "Oráculo"
+                }
+            },
+            "fidelity": {
+                "confidence": "Confianza",
+                "noIssues": "Sin issues. La propuesta es sólida.",
+                "global": "Toda la serie",
+                "recommendation": "Recomendación",
+                "severity": {
+                    "info": "Info",
+                    "warning": "Advertencia",
+                    "critical": "Crítico"
+                }
             }
         },
         "toast": {
@@ -149,6 +181,10 @@
             "panoramaFailed": "No se pudo generar el panorama. Intenta de nuevo.",
             "macroDone": "Macroestructura lista.",
             "macroFailed": "No se pudo generar la macroestructura. Intenta de nuevo.",
+            "microFailed": "No se pudo generar la microestructura. Intenta de nuevo.",
+            "preachableFailed": "No se pudieron generar las unidades predicables. Intenta de nuevo.",
+            "fidelityFailed": "No se pudo completar la evaluación de fidelidad. Intenta de nuevo.",
+            "pipelineDone": "Pipeline completo. Revisa las unidades predicables y los issues antes de crear la serie.",
             "overloaded": "Gemini está saturado. Intenta en un minuto."
         },
         "passes": {

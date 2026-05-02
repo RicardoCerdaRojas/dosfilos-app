@@ -20,7 +20,11 @@ import {
     type AssistantVerseInput,
     type BibleBookId,
     type BookPanorama,
+    type ExegeticalUnit,
+    type FidelityIssue,
+    type FidelityReview,
     type MacroSection,
+    type PreachableUnit,
 } from '@dosfilos/domain';
 
 /**
@@ -55,6 +59,9 @@ export function ExpositoryAssistantPage() {
     const [bookDisplay, setBookDisplay] = useState<string | null>(null);
     const [panorama, setPanorama] = useState<BookPanorama | null>(null);
     const [macroSections, setMacroSections] = useState<MacroSection[] | null>(null);
+    const [exegeticalUnits, setExegeticalUnits] = useState<ExegeticalUnit[] | null>(null);
+    const [preachableUnits, setPreachableUnits] = useState<PreachableUnit[] | null>(null);
+    const [fidelityReview, setFidelityReview] = useState<FidelityReview | null>(null);
 
     const assistant = useExpositoryAssistant();
 
@@ -62,6 +69,9 @@ export function ExpositoryAssistantPage() {
         // Reset prior run state if the pastor restarts.
         setPanorama(null);
         setMacroSections(null);
+        setExegeticalUnits(null);
+        setPreachableUnits(null);
+        setFidelityReview(null);
 
         let loaded;
         try {
@@ -74,29 +84,84 @@ export function ExpositoryAssistantPage() {
         setVerses(loaded.verses);
         setBookDisplay(loaded.book);
 
-        // Kick off Pase 1. The macro pass auto-chains in onSuccess below.
+        const baseInput = {
+            book: loaded.book,
+            displayLanguage: lang,
+            verses: loaded.verses,
+        };
+        const targetOpt = typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {};
+
+        // Run the 5 passes in sequence via nested onSuccess. Each
+        // nesting level adds one pass; failures at any level surface
+        // a toast and stop the chain (the pastor sees the failed
+        // card and can restart).
         assistant.runPanorama.mutate(
-            {
-                book: loaded.book,
-                displayLanguage: lang,
-                verses: loaded.verses,
-                ...(typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {}),
-            },
+            { ...baseInput, ...targetOpt },
             {
                 onSuccess: (panoramaResult) => {
                     setPanorama(panoramaResult.payload);
-                    // Auto-chain Pase 2.
+
                     assistant.runMacro.mutate(
-                        {
-                            book: loaded.book,
-                            displayLanguage: lang,
-                            verses: loaded.verses,
-                            panorama: panoramaResult.payload,
-                        },
+                        { ...baseInput, panorama: panoramaResult.payload },
                         {
                             onSuccess: (macroResult) => {
                                 setMacroSections(macroResult.payload);
-                                toast.success(t('expository.toast.macroDone') as string);
+
+                                assistant.runMicro.mutate(
+                                    {
+                                        ...baseInput,
+                                        panorama: panoramaResult.payload,
+                                        macroSections: macroResult.payload,
+                                    },
+                                    {
+                                        onSuccess: (microResult) => {
+                                            setExegeticalUnits(microResult.payload);
+
+                                            assistant.runPreachable.mutate(
+                                                {
+                                                    ...baseInput,
+                                                    ...targetOpt,
+                                                    panorama: panoramaResult.payload,
+                                                    macroSections: macroResult.payload,
+                                                    exegeticalUnits: microResult.payload,
+                                                },
+                                                {
+                                                    onSuccess: (preachableResult) => {
+                                                        setPreachableUnits(preachableResult.payload);
+
+                                                        assistant.runFidelity.mutate(
+                                                            {
+                                                                ...baseInput,
+                                                                panorama: panoramaResult.payload,
+                                                                macroSections: macroResult.payload,
+                                                                exegeticalUnits: microResult.payload,
+                                                                preachableUnits: preachableResult.payload,
+                                                            },
+                                                            {
+                                                                onSuccess: (fidelityResult) => {
+                                                                    setFidelityReview(fidelityResult.payload);
+                                                                    toast.success(t('expository.toast.pipelineDone') as string);
+                                                                },
+                                                                onError: (err: any) => {
+                                                                    console.error('[expository] runFidelity failed:', err);
+                                                                    toast.error(toastErrorMessage(err, t, 'expository.toast.fidelityFailed'));
+                                                                },
+                                                            },
+                                                        );
+                                                    },
+                                                    onError: (err: any) => {
+                                                        console.error('[expository] runPreachable failed:', err);
+                                                        toast.error(toastErrorMessage(err, t, 'expository.toast.preachableFailed'));
+                                                    },
+                                                },
+                                            );
+                                        },
+                                        onError: (err: any) => {
+                                            console.error('[expository] runMicro failed:', err);
+                                            toast.error(toastErrorMessage(err, t, 'expository.toast.microFailed'));
+                                        },
+                                    },
+                                );
                             },
                             onError: (err: any) => {
                                 console.error('[expository] runMacro failed:', err);
@@ -113,22 +178,18 @@ export function ExpositoryAssistantPage() {
         );
     };
 
-    const panoramaState: PassState = assistant.runPanorama.isPending
-        ? 'running'
-        : panorama
-          ? 'done'
-          : assistant.runPanorama.isError
-            ? 'error'
-            : 'pending';
-    const macroState: PassState = assistant.runMacro.isPending
-        ? 'running'
-        : macroSections
-          ? 'done'
-          : assistant.runMacro.isError
-            ? 'error'
-            : 'pending';
+    const panoramaState = derivePassState(assistant.runPanorama.isPending, panorama, assistant.runPanorama.isError);
+    const macroState = derivePassState(assistant.runMacro.isPending, macroSections, assistant.runMacro.isError);
+    const microState = derivePassState(assistant.runMicro.isPending, exegeticalUnits, assistant.runMicro.isError);
+    const preachableState = derivePassState(assistant.runPreachable.isPending, preachableUnits, assistant.runPreachable.isError);
+    const fidelityState = derivePassState(assistant.runFidelity.isPending, fidelityReview, assistant.runFidelity.isError);
 
-    const isRunning = assistant.runPanorama.isPending || assistant.runMacro.isPending;
+    const isRunning =
+        assistant.runPanorama.isPending ||
+        assistant.runMacro.isPending ||
+        assistant.runMicro.isPending ||
+        assistant.runPreachable.isPending ||
+        assistant.runFidelity.isPending;
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 overflow-y-auto">
@@ -188,9 +249,46 @@ export function ExpositoryAssistantPage() {
                     )}
                 </PassCard>
 
-                <PassCard index={3} title={t('expository.passes.micro.title') as string} subtitle={t('expository.passes.micro.subtitle') as string} state="pending" t={t} />
-                <PassCard index={4} title={t('expository.passes.preachable.title') as string} subtitle={t('expository.passes.preachable.subtitle') as string} state="pending" t={t} />
-                <PassCard index={5} title={t('expository.passes.fidelity.title') as string} subtitle={t('expository.passes.fidelity.subtitle') as string} state="pending" t={t} />
+                <PassCard
+                    index={3}
+                    title={t('expository.passes.micro.title') as string}
+                    subtitle={t('expository.passes.micro.subtitle') as string}
+                    state={microState}
+                    t={t}
+                >
+                    {exegeticalUnits && macroSections && bookDisplay && (
+                        <MicroResult
+                            units={exegeticalUnits}
+                            macros={macroSections}
+                            bookDisplay={bookDisplay}
+                            t={t}
+                        />
+                    )}
+                </PassCard>
+
+                <PassCard
+                    index={4}
+                    title={t('expository.passes.preachable.title') as string}
+                    subtitle={t('expository.passes.preachable.subtitle') as string}
+                    state={preachableState}
+                    t={t}
+                >
+                    {preachableUnits && bookDisplay && (
+                        <PreachableResult units={preachableUnits} bookDisplay={bookDisplay} t={t} />
+                    )}
+                </PassCard>
+
+                <PassCard
+                    index={5}
+                    title={t('expository.passes.fidelity.title') as string}
+                    subtitle={t('expository.passes.fidelity.subtitle') as string}
+                    state={fidelityState}
+                    t={t}
+                >
+                    {fidelityReview && (
+                        <FidelityResult review={fidelityReview} preachableUnits={preachableUnits ?? []} t={t} />
+                    )}
+                </PassCard>
             </main>
         </div>
     );
@@ -438,6 +536,25 @@ function ResultRow({
     );
 }
 
+function derivePassState(
+    isPending: boolean,
+    payload: unknown,
+    isError: boolean,
+): PassState {
+    if (isPending) return 'running';
+    if (payload) return 'done';
+    if (isError) return 'error';
+    return 'pending';
+}
+
+function formatRange(s: { chapterStart: number; verseStart: number; chapterEnd: number; verseEnd: number }): string {
+    if (s.chapterStart === s.chapterEnd) {
+        if (s.verseStart === s.verseEnd) return `${s.chapterStart}:${s.verseStart}`;
+        return `${s.chapterStart}:${s.verseStart}-${s.verseEnd}`;
+    }
+    return `${s.chapterStart}:${s.verseStart}-${s.chapterEnd}:${s.verseEnd}`;
+}
+
 // ── Pass 2 result ───────────────────────────────────────────────────────
 
 function MacroResult({
@@ -451,30 +568,248 @@ function MacroResult({
 }) {
     return (
         <ul className="space-y-2">
-            {sections.map((s) => {
-                const range = s.chapterStart === s.chapterEnd
-                    ? `${s.chapterStart}:${s.verseStart}-${s.verseEnd}`
-                    : `${s.chapterStart}:${s.verseStart}-${s.chapterEnd}:${s.verseEnd}`;
+            {sections.map((s) => (
+                <li
+                    key={s.id}
+                    className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-3 py-2.5"
+                >
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {s.title}
+                        </span>
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            {bookDisplay} {formatRange(s)}
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wide font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded">
+                            {t(`expository.results.macro.function.${s.functionInBook}`)}
+                        </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{s.theme}</p>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+// ── Pass 3 result ───────────────────────────────────────────────────────
+
+function MicroResult({
+    units,
+    macros,
+    bookDisplay,
+    t,
+}: {
+    units: ReadonlyArray<ExegeticalUnit>;
+    macros: ReadonlyArray<MacroSection>;
+    bookDisplay: string;
+    t: (key: string) => string;
+}) {
+    // Group units by their macroSectionId to preserve the macro→micro
+    // hierarchy in the UI (matches how the pastor reads the analysis).
+    const unitsByMacro = new Map<string, ExegeticalUnit[]>();
+    units.forEach((u) => {
+        const arr = unitsByMacro.get(u.macroSectionId) ?? [];
+        arr.push(u);
+        unitsByMacro.set(u.macroSectionId, arr);
+    });
+    return (
+        <div className="space-y-4">
+            {macros.map((m) => {
+                const macroUnits = unitsByMacro.get(m.id) ?? [];
+                if (macroUnits.length === 0) return null;
                 return (
-                    <li
-                        key={s.id}
-                        className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-3 py-2.5"
-                    >
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                {s.title}
-                            </span>
-                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                                {bookDisplay} {range}
-                            </span>
-                            <span className="text-[10px] uppercase tracking-wide font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded">
-                                {t(`expository.results.macro.function.${s.functionInBook}`)}
-                            </span>
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">{s.theme}</p>
-                    </li>
+                    <div key={m.id}>
+                        <p className="text-[11px] uppercase tracking-wide text-slate-400 font-medium mb-1.5">
+                            {m.title} <span className="font-mono normal-case text-slate-500">· {bookDisplay} {formatRange(m)}</span>
+                        </p>
+                        <ul className="space-y-1.5">
+                            {macroUnits.map((u) => (
+                                <li
+                                    key={u.id}
+                                    className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-3 py-2"
+                                >
+                                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                        <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                                            {u.suggestedTitle}
+                                        </span>
+                                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                            {bookDisplay} {formatRange(u.syntacticUnit)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                                        <span className="font-medium">{t('expository.results.micro.function')}:</span> {u.functionInArgument}
+                                    </p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 italic mb-1">
+                                        {u.centralIdea}
+                                    </p>
+                                    {u.literarySignals.length > 0 && (
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                            <span className="font-medium">{t('expository.results.micro.signals')}:</span> {u.literarySignals.join('; ')}
+                                        </p>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 );
             })}
-        </ul>
+        </div>
+    );
+}
+
+// ── Pass 4 result ───────────────────────────────────────────────────────
+
+function PreachableResult({
+    units,
+    bookDisplay,
+    t,
+}: {
+    units: ReadonlyArray<PreachableUnit>;
+    bookDisplay: string;
+    t: (key: string) => string;
+}) {
+    return (
+        <ol className="space-y-3">
+            {units.map((u, idx) => (
+                <li
+                    key={u.id}
+                    className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-4 py-3"
+                >
+                    <div className="flex items-start gap-3">
+                        <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs font-semibold">
+                            {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                    {u.title}
+                                </h4>
+                                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                    {u.passage || `${bookDisplay} ${formatRange(u)}`}
+                                </span>
+                                {u.caseTreatment && (
+                                    <span className="text-[10px] uppercase tracking-wide font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded">
+                                        {t(`expository.results.preachable.case.${u.caseTreatment}`)}
+                                    </span>
+                                )}
+                            </div>
+                            <PropositionRow
+                                label={t('expository.results.preachable.exegeticalProp') as string}
+                                value={u.exegeticalProposition}
+                            />
+                            <PropositionRow
+                                label={t('expository.results.preachable.homileticalProp') as string}
+                                value={u.homileticalProposition}
+                            />
+                            <PropositionRow
+                                label={t('expository.results.preachable.objective') as string}
+                                value={u.pastoralObjective}
+                            />
+                        </div>
+                    </div>
+                </li>
+            ))}
+        </ol>
+    );
+}
+
+function PropositionRow({ label, value }: { label: string; value: string }) {
+    return (
+        <p className="text-xs text-slate-700 dark:text-slate-300 mb-1">
+            <span className="text-[11px] uppercase tracking-wide text-slate-400 font-medium block">
+                {label}
+            </span>
+            {value}
+        </p>
+    );
+}
+
+// ── Pass 5 result ───────────────────────────────────────────────────────
+
+function FidelityResult({
+    review,
+    preachableUnits,
+    t,
+}: {
+    review: FidelityReview;
+    preachableUnits: ReadonlyArray<PreachableUnit>;
+    t: (key: string) => string;
+}) {
+    const confidencePct = Math.round(review.overallConfidence * 100);
+    const confidenceTone = review.overallConfidence >= 0.85
+        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30'
+        : review.overallConfidence >= 0.7
+          ? 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30'
+          : 'text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/30';
+
+    const unitTitle = (id: string | null) => {
+        if (!id) return t('expository.results.fidelity.global') as string;
+        const found = preachableUnits.find((u) => u.id === id);
+        return found ? found.title : id;
+    };
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-3">
+                <span className={`text-[11px] uppercase tracking-wide font-semibold px-3 py-1 rounded ${confidenceTone}`}>
+                    {t('expository.results.fidelity.confidence')}: {confidencePct}%
+                </span>
+                {review.issues.length === 0 && (
+                    <span className="text-xs text-emerald-700 dark:text-emerald-300">
+                        {t('expository.results.fidelity.noIssues')}
+                    </span>
+                )}
+            </div>
+            {review.issues.length > 0 && (
+                <ul className="space-y-2">
+                    {review.issues.map((issue, idx) => (
+                        <FidelityIssueRow
+                            key={idx}
+                            issue={issue}
+                            unitLabel={unitTitle(issue.unitId)}
+                            t={t}
+                        />
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
+function FidelityIssueRow({
+    issue,
+    unitLabel,
+    t,
+}: {
+    issue: FidelityIssue;
+    unitLabel: string;
+    t: (key: string) => string;
+}) {
+    const tone = issue.severity === 'critical'
+        ? 'border-rose-300 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/20'
+        : issue.severity === 'warning'
+          ? 'border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/20'
+          : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40';
+    const badgeTone = issue.severity === 'critical'
+        ? 'text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/30'
+        : issue.severity === 'warning'
+          ? 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30'
+          : 'text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-zinc-800';
+
+    return (
+        <li className={`rounded-lg border px-3 py-2 ${tone}`}>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded ${badgeTone}`}>
+                    {t(`expository.results.fidelity.severity.${issue.severity}`)}
+                </span>
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{unitLabel}</span>
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-300">{issue.description}</p>
+            {issue.recommendation && (
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                    <span className="font-medium">{t('expository.results.fidelity.recommendation')}:</span> {issue.recommendation}
+                </p>
+            )}
+        </li>
     );
 }
