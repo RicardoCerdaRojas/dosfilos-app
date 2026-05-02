@@ -2,7 +2,9 @@ import {
     FirestoreAIAgentRepository,
     FirestoreAIChatRepository,
     FirestoreAIProjectRepository,
-    GeminiMultiAgentService
+    FirestoreExegeticalPaperRepository,
+    FirebaseSeriesRepository,
+    GeminiMultiAgentService,
 } from '@dosfilos/infrastructure';
 
 // Use Cases
@@ -72,13 +74,25 @@ class FacultyService {
         const agentRepository = new FirestoreAIAgentRepository();
         const chatRepository = new FirestoreAIChatRepository();
         const projectRepository = new FirestoreAIProjectRepository();
+        // Phase 4 enrichment refs — wired here so chat sessions
+        // launched from a paper / series / pericope can show the
+        // model the right anchor without the UI having to thread it.
+        const paperRepository = new FirestoreExegeticalPaperRepository();
+        const seriesRepository = new FirebaseSeriesRepository();
         const generatorService = new GeminiMultiAgentService(apiKey || '', modelId, visionModelId);
 
         this.createSession = new CreateChatSessionUseCase(agentRepository, chatRepository);
         this.getHistory = new GetChatHistoryUseCase(chatRepository);
         this.getSession = new GetSessionUseCase(chatRepository);
         this.sendMessage = new SendAgentMessageUseCase(agentRepository, chatRepository, generatorService);
-        this.orchestratedMessage = new OrchestratedMessageUseCase(agentRepository, chatRepository, generatorService, projectRepository);
+        this.orchestratedMessage = new OrchestratedMessageUseCase(
+            agentRepository,
+            chatRepository,
+            generatorService,
+            projectRepository,
+            paperRepository,
+            seriesRepository,
+        );
         this.extractContent = new ExtractTheologicalContentUseCase(chatRepository, generatorService, projectRepository);
         this.processMicroAction = new ProcessMicroActionUseCase(chatRepository, generatorService);
         this.getAgents = new GetFacultyAgentsUseCase(agentRepository);

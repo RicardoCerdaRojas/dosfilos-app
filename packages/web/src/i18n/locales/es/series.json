@@ -51,6 +51,10 @@
                 },
                 "startDate": "Fecha de Inicio",
                 "startDateOptional": "(Opcional)",
+                "shiftHint_one": "Si cambias la fecha, {{count}} sermón planificado se desplazará el mismo número de días. Los sermones ya iniciados mantienen su fecha.",
+                "shiftHint_other": "Si cambias la fecha, {{count}} sermones planificados se desplazarán el mismo número de días. Los sermones ya iniciados mantienen su fecha.",
+                "recalcButton_one": "↻ Recalcular {{count}} fecha desde inicio + frecuencia",
+                "recalcButton_other": "↻ Recalcular {{count}} fechas desde inicio + frecuencia",
                 "endDate": "Fecha de Fin (Auto)",
                 "endDatePlaceholder": "Calculada automáticamente",
                 "sermonCount": "Número de Sermones",
@@ -94,7 +98,244 @@
             "loadError": "Error al cargar la serie",
             "saveSuccess": "Serie creada con {{count}} sermones listos",
             "updateSuccess": "Plan actualizado correctamente",
-            "saveError": "Error al guardar el plan"
+            "saveError": "Error al guardar el plan",
+            "shiftedSermons_one": "{{count}} sermón planificado se desplazó {{days}} días.",
+            "shiftedSermons_other": "{{count}} sermones planificados se desplazaron {{days}} días.",
+            "healedSermons_one": "{{count}} sermón con fecha mal almacenada fue corregido.",
+            "healedSermons_other": "{{count}} sermones con fechas mal almacenadas fueron corregidos.",
+            "recalcDone_one": "Recalculada {{count}} fecha desde inicio + frecuencia.",
+            "recalcDone_other": "Recalculadas {{count}} fechas desde inicio + frecuencia.",
+            "recalcNoStartDate": "Necesitas una fecha de inicio para recalcular.",
+            "recalcNoShiftable": "No hay sermones planificados sin iniciar para recalcular.",
+            "recalcError": "No se pudo recalcular las fechas."
+        }
+    },
+    "expository": {
+        "back": "Volver al planificador",
+        "title": "Asistente expositivo",
+        "subtitle": "Pipeline de 5 pases (panorama → macro → micro → predicable → fidelidad) que distingue la división exegética de la división predicable.",
+        "pass": "Fase",
+        "collapse": "Contraer sección",
+        "collapsedStrip": {
+            "label": "Contraídas",
+            "expand": "Expandir sección"
+        },
+        "state": {
+            "pending": "Pendiente",
+            "running": "Ejecutando...",
+            "done": "Completado",
+            "error": "Error"
+        },
+        "setup": {
+            "title": "Configura el análisis",
+            "subtitle": "Elige el libro y opcionalmente una cantidad aproximada de sermones. El género y la sintaxis del libro guían cada pase.",
+            "book": "Libro",
+            "testamentNT": "Nuevo Testamento",
+            "testamentOT": "Antiguo Testamento",
+            "targetCount": "Cantidad aproximada (opcional)",
+            "targetCountPlaceholder": "Ej. 12",
+            "translationNote": "v1.5: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.6 cargará el texto griego/hebreo directo.",
+            "start": "Iniciar análisis",
+            "running": "Ejecutando pipeline...",
+            "textZoomLabel": "Tamaño del texto",
+            "textZoom": {
+                "level1": "Texto pequeño",
+                "level2": "Texto mediano",
+                "level3": "Texto grande"
+            }
+        },
+        "results": {
+            "panorama": {
+                "genre": "Género",
+                "theme": "Tema central",
+                "purpose": "Propósito",
+                "problem": "Problema pastoral",
+                "movements": "Movimientos",
+                "keyTerms": "Palabras clave",
+                "redemptiveHistory": "Historia redentora",
+                "genreLabel": {
+                    "epistle": "Epístola",
+                    "narrative": "Narrativa",
+                    "poetry": "Poesía",
+                    "prophecy": "Profecía",
+                    "wisdom": "Sabiduría",
+                    "gospel": "Evangelio",
+                    "apocalypse": "Apocalíptica",
+                    "law": "Ley",
+                    "mixed": "Mixto"
+                }
+            },
+            "macro": {
+                "function": {
+                    "introduction": "Introducción",
+                    "thesis": "Tesis",
+                    "argument-development": "Desarrollo",
+                    "narrative-arc": "Arco narrativo",
+                    "climax": "Clímax",
+                    "application": "Aplicación",
+                    "closing": "Cierre",
+                    "transition": "Transición",
+                    "digression": "Digresión"
+                }
+            },
+            "micro": {
+                "function": "Función",
+                "signals": "Marcadores"
+            },
+            "preachable": {
+                "preliminaryBanner": "Estas son hipótesis homiléticas iniciales basadas en una lectura panorámica del texto. Refínalas tras tu estudio exegético detallado (botón \"Crear paper desde unidad\" en el detalle de la serie). Los campos son editables: ajusta título, hipótesis, línea homilética y objetivo a tu criterio antes de crear la serie.",
+                "preliminaryChip": "Pendiente de validación exegética",
+                "editTitle": "Editar título de la unidad",
+                "exegeticalProp": "Hipótesis exegética inicial",
+                "homileticalProp": "Línea homilética sugerida",
+                "objective": "Objetivo pastoral",
+                "case": {
+                    "salutation": "Salutación",
+                    "doxology": "Doxología",
+                    "long-prayer": "Oración larga",
+                    "virtue-list": "Lista de virtudes",
+                    "narrative-scene": "Escena narrativa",
+                    "ot-citation": "Cita del AT",
+                    "genealogy": "Genealogía",
+                    "law-code": "Código legal",
+                    "parable": "Parábola",
+                    "oracle": "Oráculo"
+                }
+            },
+            "fidelity": {
+                "confidence": "Confianza",
+                "noIssues": "Sin issues. La propuesta es sólida.",
+                "global": "Toda la serie",
+                "recommendation": "Recomendación",
+                "triagedSummary": "{{triaged}} de {{total}} atendidos o ignorados",
+                "addressed": "Atendido",
+                "ignored": "Ignorado",
+                "toggleAddressed": "Marcar como atendido (lo edité o lo tendré en cuenta)",
+                "toggleIgnored": "Ignorar (lo leí pero mantendré la división original)",
+                "severity": {
+                    "info": "Info",
+                    "warning": "Advertencia",
+                    "critical": "Crítico"
+                }
+            }
+        },
+        "toast": {
+            "loadFailed": "No se pudo cargar el texto del libro.",
+            "panoramaFailed": "No se pudo generar el panorama. Intenta de nuevo.",
+            "macroDone": "Macroestructura lista.",
+            "macroFailed": "No se pudo generar la macroestructura. Intenta de nuevo.",
+            "microFailed": "No se pudo generar la microestructura. Intenta de nuevo.",
+            "preachableFailed": "No se pudieron generar las unidades predicables. Intenta de nuevo.",
+            "fidelityFailed": "No se pudo completar la evaluación de fidelidad. Intenta de nuevo.",
+            "pipelineDone": "Pipeline completo. Revisa las unidades predicables y los issues antes de crear la serie.",
+            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "draftRestored": "Continuamos donde quedaste. (Borrador restaurado).",
+            "titleRequired": "Ponle un título a la serie antes de crear.",
+            "seriesCreated": "Serie creada. Te llevamos al detalle.",
+            "createFailed": "No se pudo crear la serie."
+        },
+        "create": {
+            "title": "Crear la serie",
+            "subtitle": "Cada unidad predicable se convierte en un sermón planificado. Las proposiciones, el objetivo pastoral y las notas de fidelidad quedan persistidas en cada sermón.",
+            "defaultTitle": "Serie expositiva — {{book}}",
+            "defaultDescription": "Serie expositiva de {{book}} dividida en {{count}} unidades predicables (pipeline v1.5).",
+            "seriesTitle": "Título de la serie",
+            "startDate": "Fecha de inicio",
+            "frequency": "Frecuencia",
+            "freq": {
+                "weekly": "Semanal",
+                "biweekly": "Quincenal",
+                "monthly": "Mensual",
+                "flexible": "Flexible (sin fechas)"
+            },
+            "cta_one": "Crear serie con {{count}} sermón",
+            "cta_other": "Crear serie con {{count}} sermones"
+        },
+        "passes": {
+            "panorama": {
+                "title": "Panorama del libro",
+                "subtitle": "Identifica género, propósito, problema pastoral, tema central, movimientos y palabras clave."
+            },
+            "macro": {
+                "title": "Macroestructura",
+                "subtitle": "Divide el libro en 3-7 macro-secciones, cada una con función dentro del flujo del libro."
+            },
+            "micro": {
+                "title": "Microestructura",
+                "subtitle": "Identifica unidades exegéticas dentro de cada macro-sección, con criterios específicos por género."
+            },
+            "preachable": {
+                "title": "Conversión predicable",
+                "subtitle": "Decide qué unidades se predican solas, se combinan o se dividen. Produce proposiciones exegética + homilética + objetivo pastoral."
+            },
+            "fidelity": {
+                "title": "Evaluación de fidelidad",
+                "subtitle": "Audita las unidades predicables contra los anti-patterns metodológicos. Output advisory, no destructivo."
+            }
+        }
+    },
+    "pericope": {
+        "back": "Volver al planificador",
+        "title": "Asistente de perícopas",
+        "subtitle": "Divide un libro en unidades sintácticas predicables y genera la serie expositiva.",
+        "panel": {
+            "title": "Perícopas detectadas",
+            "subtitle": "Cada perícopa puede convertirse en un paper exegético detallado. El paper queda enlazado a la perícopa para mantener trazabilidad.",
+            "createPaper": "Crear paper",
+            "openPaper": "Abrir paper",
+            "paperBadge": "Paper iniciado",
+            "remove": "Quitar perícopa",
+            "askFaculty": "Preguntar a Faculty con esta perícopa cargada",
+            "toast": {
+                "paperCreated": "Paper exegético creado",
+                "paperFailed": "No se pudo crear el paper",
+                "bookUnresolved": "No se pudo resolver el libro de la perícopa"
+            }
+        },
+        "defaultSeriesTitle": "Serie expositiva — {{book}}",
+        "defaultSeriesDescription": "Serie expositiva de {{book}} dividida en {{count}} perícopas sintácticas.",
+        "setup": {
+            "title": "Configura la división",
+            "subtitle": "Elige el libro y un número aproximado de perícopas. La sintaxis del idioma original guía las fronteras.",
+            "book": "Libro",
+            "testamentNT": "Nuevo Testamento",
+            "testamentOT": "Antiguo Testamento",
+            "targetCount": "Cantidad aproximada (opcional)",
+            "targetCountPlaceholder": "Ej. 12",
+            "translationNote": "v1: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.5 cargará el texto griego/hebreo directo.",
+            "detect": "Detectar perícopas",
+            "detectAgain": "Detectar de nuevo",
+            "detecting": "Analizando..."
+        },
+        "review": {
+            "title_one": "{{count}} perícopa propuesta",
+            "title_other": "{{count}} perícopas propuestas",
+            "subtitle": "Revisa, ajusta el título o quita las que no quieras incluir en la serie.",
+            "remove": "Quitar perícopa"
+        },
+        "create": {
+            "title": "Crea la serie",
+            "subtitle": "Cada perícopa se convierte en un sermón planificado con fecha calculada según la frecuencia.",
+            "seriesTitle": "Título de la serie",
+            "startDate": "Fecha de inicio",
+            "frequency": "Frecuencia",
+            "freq": {
+                "weekly": "Semanal",
+                "biweekly": "Quincenal",
+                "monthly": "Mensual",
+                "flexible": "Flexible (sin fechas)"
+            },
+            "cta_one": "Crear serie con {{count}} perícopa",
+            "cta_other": "Crear serie con {{count}} perícopas"
+        },
+        "toast": {
+            "detected_one": "{{count}} perícopa detectada. Revísala antes de crear la serie.",
+            "detected_other": "{{count}} perícopas detectadas. Revísalas antes de crear la serie.",
+            "detectFailed": "No se pudo detectar perícopas. Intenta de nuevo.",
+            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "titleRequired": "Ponle un título a la serie antes de crear.",
+            "seriesCreated": "Serie creada. Te llevamos al detalle.",
+            "createFailed": "No se pudo crear la serie."
         }
     }
 }

@@ -3,8 +3,10 @@ import {
     FirestoreUserRubricRepository,
     FirestoreUserStyleGuideRepository,
     FirebaseLibraryRepository,
+    FirebaseSermonRepository,
     GeminiExegesisOrchestrator,
     GeminiPaperRubricExtractor,
+    GeminiPaperToSermonTransformer,
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
     RetrieveChunksExcerptExtractor,
@@ -48,6 +50,7 @@ import {
     GenerateStepUseCase,
     AcceptStepUseCase,
     SaveStepEditUseCase,
+    GenerateSermonFromPaperUseCase,
 } from '../use-cases/exegesis';
 
 /**
@@ -104,6 +107,9 @@ class ExegesisService {
     public generateStep: GenerateStepUseCase;
     public acceptStep: AcceptStepUseCase;
     public saveStepEdit: SaveStepEditUseCase;
+
+    // Bridge: paper → sermon
+    public generateSermonFromPaper: GenerateSermonFromPaperUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -212,6 +218,20 @@ class ExegesisService {
         );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
+
+        // Bridge: paper → sermon (Phase 2). Sermon repo is shared with the
+        // legacy sermon module; the use case persists a draft with
+        // sourcePaperId set so the sermon detail view can deep-link back.
+        const sermonRepository = new FirebaseSermonRepository();
+        const paperToSermonTransformer = new GeminiPaperToSermonTransformer(
+            apiKey || '',
+            exegesisModelId,
+        );
+        this.generateSermonFromPaper = new GenerateSermonFromPaperUseCase(
+            paperRepository,
+            sermonRepository,
+            paperToSermonTransformer,
+        );
     }
 }
 

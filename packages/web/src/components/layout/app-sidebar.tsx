@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {
   Home, FileText, Sparkles, Settings, LogOut,
-  BookOpen, BookMarked, Library, ChevronUp, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen
+  BookOpen, BookMarked, Library, ChevronUp, ChevronDown, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen, Zap
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -46,6 +46,18 @@ export function AppSidebar() {
   const { subscription } = useSubscription();
   const [newLeadsCount, setNewLeadsCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+  // Admin section starts collapsed by default — it's the lowest-frequency
+  // section and was the main culprit of the sidebar overflow. The
+  // preference persists per-browser via localStorage so the pastor
+  // doesn't re-collapse on every session.
+  const [adminOpen, setAdminOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('sidebar.adminOpen') === '1';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('sidebar.adminOpen', adminOpen ? '1' : '0');
+  }, [adminOpen]);
 
   // Get plan display info
   const getPlanBadge = () => {
@@ -246,7 +258,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       {/* Navigation */}
-      <SidebarContent>
+      <SidebarContent className="sidebar-scrollbar">
         {navigationGroups.map((group, groupIndex) => (
           <div key={groupIndex}>
             <SidebarGroup>
@@ -278,49 +290,69 @@ export function AppSidebar() {
           </div>
         ))}
 
-        {/* Admin Section - Only visible for admin users */}
+        {/* Admin Section - Only visible for admin users.
+            Collapsible: Admin items are the lowest-frequency section
+            and the main culprit of sidebar overflow. The header is
+            always visible (with chevron) so it remains discoverable;
+            items render only when open. The new-leads badge bubbles
+            up to the header when collapsed so urgent state stays
+            visible. */}
         {isAdmin && (
           <>
             <SidebarSeparator />
             <SidebarGroup>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  <div className="px-2 py-1 text-xs font-semibold text-amber-600 group-data-[collapsible=icon]:hidden">
-                    ⚡ Admin
-                  </div>
-                  <span className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                    v{packageJson.version}
+                <button
+                  type="button"
+                  onClick={() => setAdminOpen((v) => !v)}
+                  aria-expanded={adminOpen}
+                  className="group-data-[collapsible=icon]:hidden w-full flex items-center justify-between px-2 py-1 text-xs font-semibold text-amber-600 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5" />
+                    Admin
+                    <span className="font-normal text-muted-foreground/70">
+                      v{packageJson.version}
+                    </span>
                   </span>
-                  {adminNavigation.map((item) => {
-                    const isActive = isRouteActive(item.href);
-                    const isLeadsItem = item.href === '/admin/leads';
-                    return (
-                      <SidebarMenuItem key={item.name}>
-                        <SidebarMenuButton asChild isActive={isActive}>
-                          <Link to={item.href} className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2">
-                              <item.icon className="h-5 w-5" />
-                              <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
-                            </div>
-                            {isLeadsItem && newLeadsCount > 0 && (
-                              <span 
-                                className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full group-data-[collapsible=icon]:hidden"
-                                style={{ 
-                                  backgroundColor: '#ef4444', 
-                                  color: 'white',
-                                  minWidth: '20px',
-                                  textAlign: 'center'
-                                }}
-                              >
-                                {newLeadsCount > 99 ? '99+' : newLeadsCount}
-                              </span>
-                            )}
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
+                  <span className="inline-flex items-center gap-1.5">
+                    {!adminOpen && newLeadsCount > 0 && (
+                      <span className="px-1.5 py-0 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-tight min-w-[18px] text-center">
+                        {newLeadsCount > 99 ? '99+' : newLeadsCount}
+                      </span>
+                    )}
+                    {adminOpen
+                      ? <ChevronUp className="h-3.5 w-3.5" />
+                      : <ChevronDown className="h-3.5 w-3.5" />}
+                  </span>
+                </button>
+                {adminOpen && (
+                  <SidebarMenu>
+                    {adminNavigation.map((item) => {
+                      const isActive = isRouteActive(item.href);
+                      const isLeadsItem = item.href === '/admin/leads';
+                      return (
+                        <SidebarMenuItem key={item.name}>
+                          <SidebarMenuButton asChild isActive={isActive}>
+                            <Link to={item.href} className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-2">
+                                <item.icon className="h-5 w-5" />
+                                <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
+                              </div>
+                              {isLeadsItem && newLeadsCount > 0 && (
+                                <span
+                                  className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full group-data-[collapsible=icon]:hidden bg-rose-500 text-white min-w-[20px] text-center"
+                                >
+                                  {newLeadsCount > 99 ? '99+' : newLeadsCount}
+                                </span>
+                              )}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                )}
               </SidebarGroupContent>
             </SidebarGroup>
           </>

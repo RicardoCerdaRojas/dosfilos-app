@@ -15,8 +15,11 @@ import {
     X,
     BookOpenText,
     BookOpen,
+    Mic,
+    MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
@@ -25,6 +28,7 @@ import { StepCard } from '@/components/exegesis/StepCard';
 import {
     formatPassageReference,
     type ExegeticalPaper,
+    type PaperToSermonTone,
     type ProjectSource,
     type SupportedLanguage,
 } from '@dosfilos/domain';
@@ -45,7 +49,15 @@ export function ExegesisPaperPage() {
     const { t, i18n } = useTranslation('exegesis');
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
-    const { papers, isLoading, error, archivePaper, removeSource, seedSteps } = useExegesisPapers();
+    const {
+        papers,
+        isLoading,
+        error,
+        archivePaper,
+        removeSource,
+        seedSteps,
+        generateSermonFromPaper,
+    } = useExegesisPapers();
     const paper: ExegeticalPaper | null = papers.find(p => p.id === paperId) ?? null;
 
     if (isLoading) {
@@ -76,6 +88,23 @@ export function ExegesisPaperPage() {
         } catch (err) {
             console.error('[exegesis] removeSource failed:', err);
             toast.error(t('detail.toast.sourceRemoveFailed'));
+        }
+    };
+
+    const handleGenerateSermon = async (tone: PaperToSermonTone) => {
+        try {
+            const result = await generateSermonFromPaper.mutateAsync({
+                paperId: paper.id,
+                tone,
+            });
+            toast.success(t('detail.generateSermon.toast.success'));
+            navigate(`/dashboard/sermons/${result.sermonId}`);
+        } catch (err: any) {
+            console.error('[exegesis] generateSermonFromPaper failed:', err);
+            const msg = err?.isExegesisOverload
+                ? t('detail.generateSermon.toast.overloaded')
+                : t('detail.generateSermon.toast.failed');
+            toast.error(msg);
         }
     };
 
@@ -126,6 +155,20 @@ export function ExegesisPaperPage() {
                         <Settings2 className="h-3.5 w-3.5" />
                         {t('detail.openSetup')}
                     </Link>
+                    <Link
+                        to={`/dashboard/faculty/new?paperId=${paper.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 h-8 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                        title={t('detail.askFaculty.tooltip') as string}
+                    >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        {t('detail.askFaculty.cta')}
+                    </Link>
+                    <GenerateSermonButton
+                        paper={paper}
+                        onGenerate={handleGenerateSermon}
+                        pending={generateSermonFromPaper.isPending}
+                        t={t}
+                    />
                     <ArchiveButton onClick={handleArchive} pending={archivePaper.isPending} t={t} />
                 </div>
             </div>
@@ -159,6 +202,80 @@ export function ExegesisPaperPage() {
 }
 
 // ── Header pieces ───────────────────────────────────────────────────────
+
+const SERMON_TONES: PaperToSermonTone[] = ['pastoral', 'expositivo', 'narrativo'];
+
+function GenerateSermonButton({
+    paper,
+    onGenerate,
+    pending,
+    t,
+}: {
+    paper: ExegeticalPaper;
+    onGenerate: (tone: PaperToSermonTone) => void;
+    pending: boolean;
+    t: (key: string) => string;
+}) {
+    const [open, setOpen] = useState(false);
+    // Only available once the paper is fully assembled — anything earlier
+    // would transform a half-baked draft into a half-baked sermon.
+    const enabled = paper.phase === 'assembled' && paper.assembledMarkdown !== null;
+
+    const trigger = (
+        <Button
+            variant="outline"
+            size="sm"
+            disabled={!enabled || pending}
+            className="text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 disabled:opacity-50"
+            title={enabled ? undefined : t('detail.generateSermon.disabledHint')}
+        >
+            {pending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            ) : (
+                <Mic className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            {pending ? t('detail.generateSermon.generating') : t('detail.generateSermon.cta')}
+        </Button>
+    );
+
+    if (!enabled) return trigger;
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+            <PopoverContent align="end" className="w-72 p-0">
+                <div className="px-4 py-3 border-b border-border">
+                    <p className="text-sm font-semibold text-foreground">
+                        {t('detail.generateSermon.popoverTitle')}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {t('detail.generateSermon.popoverHint')}
+                    </p>
+                </div>
+                <div className="py-1">
+                    {SERMON_TONES.map((tone) => (
+                        <button
+                            key={tone}
+                            type="button"
+                            onClick={() => {
+                                setOpen(false);
+                                onGenerate(tone);
+                            }}
+                            className="w-full flex flex-col items-start gap-0.5 px-4 py-2.5 text-left hover:bg-accent transition-colors"
+                        >
+                            <span className="text-sm font-medium text-foreground">
+                                {t(`detail.generateSermon.tone.${tone}`)}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">
+                                {t(`detail.generateSermon.tone.${tone}Hint`)}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+}
 
 function ArchiveButton({
     onClick,

@@ -5,6 +5,7 @@ import type {
     AddProjectSourceInput,
     CreateExegeticalPaperInput,
     ExtractRubricFromTextInput,
+    PaperToSermonTone,
     UpdateProjectSourceInput,
     UpdateRubricInput,
     UpdateStepPlanInput,
@@ -196,6 +197,23 @@ export function useExegesisPapers() {
         },
     });
 
+    // Bridge: paper → sermon. On success we invalidate the sermons cache too
+    // so the dashboard's "Material reciente" picks up the new draft without
+    // a manual refresh.
+    const generateSermonFromPaper = useMutation({
+        mutationFn: async ({ paperId, tone }: { paperId: string; tone: PaperToSermonTone }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.generateSermonFromPaper.execute({
+                paperId,
+                tone,
+                actorUserId: user.uid,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sermons', user?.uid] });
+        },
+    });
+
     return {
         papers: papersQuery.data ?? [],
         isLoading: papersQuery.isLoading,
@@ -214,5 +232,6 @@ export function useExegesisPapers() {
         generateStep,
         acceptStep,
         saveStepEdit,
+        generateSermonFromPaper,
     };
 }

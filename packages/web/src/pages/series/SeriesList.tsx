@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, BookOpen, MoreVertical, Pencil, Trash2, Eye, Wand2 } from 'lucide-react';
+import { Plus, Calendar, BookOpen, MoreVertical, Pencil, Trash2, Eye, Wand2, Sparkles } from 'lucide-react';
 import { SermonSeriesEntity } from '@dosfilos/domain';
 import { seriesService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
@@ -108,6 +108,14 @@ export function SeriesList() {
           <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard/plans/pericope')}
+            className="hidden md:flex border-emerald-300 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            {t('expository.title')}
+          </Button>
           <Button variant="outline" onClick={() => navigate('/dashboard/planner')} className="hidden sm:flex">
             <Wand2 className="mr-2 h-4 w-4" />
             {t('header.aiPlannerButton')}

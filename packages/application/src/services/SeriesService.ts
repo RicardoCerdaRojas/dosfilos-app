@@ -1,14 +1,91 @@
-import { FirebaseSeriesRepository, GeminiPlanGenerator } from '@dosfilos/infrastructure';
-import { SermonSeriesEntity } from '@dosfilos/domain';
+import {
+    FirebaseSeriesRepository,
+    GeminiExpositoryAssistant,
+    GeminiPericopeDetector,
+    GeminiPlanGenerator,
+    RVR1960Repository,
+    ASVRepository,
+} from '@dosfilos/infrastructure';
+import {
+    SermonSeriesEntity,
+    type IBibleVersionRepository,
+    type PlannedSermonExpositoryEnrichment,
+    type PlannedSermonStatus,
+    type SyntacticUnit,
+} from '@dosfilos/domain';
+import { DetectPericopesUseCase } from '../use-cases/exegesis/DetectPericopesUseCase';
+import {
+    loadBookVerses,
+    type LoadBookVersesResult,
+} from '../use-cases/exegesis/expository/loadBookVerses';
+import { RunExpositoryPassesUseCase } from '../use-cases/exegesis/expository/RunExpositoryPassesUseCase';
 import { LibraryService } from './LibraryService';
 
 export class SeriesService {
     private seriesRepository: FirebaseSeriesRepository;
     private libraryService: LibraryService;
+    public detectPericopes: DetectPericopesUseCase;
+    public detectPericopesEn: DetectPericopesUseCase;
+    /** v1.5 expository assistant pipeline orchestrator. */
+    public expositoryPasses: RunExpositoryPassesUseCase;
+    private bibleRepoEs: IBibleVersionRepository;
+    private bibleRepoEn: IBibleVersionRepository;
 
     constructor() {
         this.seriesRepository = new FirebaseSeriesRepository();
         this.libraryService = new LibraryService();
+
+        // Pericope assistant — composition root. We wire one use case per
+        // bible source so the caller picks language at the call site
+        // (the wizard exposes both via a single `detect({ ..., displayLanguage })`
+        // entry point that routes to the right instance). v1.5 will fold
+        // both into a single use case once the bible repository abstracts
+        // language selection internally.
+        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+        const exegesisModelId =
+            (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
+        const detector = new GeminiPericopeDetector(apiKey || '', exegesisModelId);
+        this.bibleRepoEs = new RVR1960Repository();
+        this.bibleRepoEn = new ASVRepository();
+        this.detectPericopes = new DetectPericopesUseCase(this.bibleRepoEs, detector);
+        this.detectPericopesEn = new DetectPericopesUseCase(this.bibleRepoEn, detector);
+
+        // v1.5 expository assistant — single GeminiExpositoryAssistant
+        // instance shared across all 5 passes. The wizard loads verses
+        // once via `loadBookVersesForExpository` and threads them into
+        // each pass call.
+        const expositoryAssistant = new GeminiExpositoryAssistant(apiKey || '', exegesisModelId);
+        this.expositoryPasses = new RunExpositoryPassesUseCase(expositoryAssistant);
+    }
+
+    /**
+     * Loads the verse-by-verse text for the v1.5 expository pipeline.
+     * Selects the bible repository by display language so callers
+     * don't need to know which translation backs each language.
+     */
+    loadBookVersesForExpository(input: {
+        bookId: import('@dosfilos/domain').BibleBookId;
+        displayLanguage: 'es' | 'en';
+    }): LoadBookVersesResult {
+        return loadBookVerses({
+            bookId: input.bookId,
+            displayLanguage: input.displayLanguage,
+            bibleRepository: input.displayLanguage === 'en' ? this.bibleRepoEn : this.bibleRepoEs,
+        });
+    }
+
+    /**
+     * Dispatches to the right `DetectPericopesUseCase` based on the
+     * caller's display language so the wizard reads the verses from the
+     * matching translation (RVR for ES, ASV for EN).
+     */
+    async runPericopeAssistant(input: {
+        bookId: import('@dosfilos/domain').BibleBookId;
+        displayLanguage: 'es' | 'en';
+        targetPericopeCount?: number;
+    }) {
+        const useCase = input.displayLanguage === 'en' ? this.detectPericopesEn : this.detectPericopes;
+        return useCase.execute(input);
     }
 
     private async retry<T>(operation: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
@@ -210,8 +287,31 @@ export class SeriesService {
         userId: string,
         plan: {
             series: Partial<SermonSeriesEntity>;
-            sermons: { title: string; description: string; passage?: string; week: number }[];
+            sermons: {
+                title: string;
+                description: string;
+                passage?: string;
+                week: number;
+                // Pericope-assistant-driven fields (Phase 3). All optional —
+                // legacy callers (manual SeriesForm, thematic planner) keep
+                // working unchanged.
+                paperId?: string;
+                syntacticUnit?: SyntacticUnit;
+                status?: PlannedSermonStatus;
+                /**
+                 * v1.5 expository pipeline output. Captured per
+                 * preachable unit and persisted on the planned sermon
+                 * so SeriesDetail / paper / Faculty contexts can
+                 * surface the propositions and pastoral aim without
+                 * re-querying the assistant.
+                 */
+                expositoryEnrichment?: PlannedSermonExpositoryEnrichment;
+            }[];
             frequency?: 'weekly' | 'biweekly' | 'monthly' | 'flexible';
+            expositoryAssistant?: {
+                version?: string;
+                status?: 'pending' | 'running' | 'reviewed';
+            };
         }
     ): Promise<SermonSeriesEntity> {
         try {
@@ -241,10 +341,26 @@ export class SeriesService {
                     title: sermonData.title,
                     description: sermonData.description,
                     passage: sermonData.passage || '', // Ensure passage exists
-                    scheduledDate: scheduledDate
+                    scheduledDate: scheduledDate,
+                    paperId: sermonData.paperId,
+                    syntacticUnit: sermonData.syntacticUnit,
+                    status: sermonData.status,
+                    expositoryEnrichment: sermonData.expositoryEnrichment,
                     // draftId is omitted until user starts developing
                 };
             });
+
+            // Merge pericope-assistant metadata into expository without
+            // clobbering pre-existing fields (book, chapterRange) the
+            // caller may have set.
+            const incomingMetadata = plan.series.metadata ?? {};
+            const expository = plan.expositoryAssistant
+                ? {
+                      ...incomingMetadata.expository,
+                      pericopeAssistantVersion: plan.expositoryAssistant.version,
+                      pericopeAssistantStatus: plan.expositoryAssistant.status,
+                  }
+                : incomingMetadata.expository;
 
             // 1. Create Series Entity with planned sermons in metadata
             const series = SermonSeriesEntity.create({
@@ -254,7 +370,8 @@ export class SeriesService {
                 startDate: startDate,
                 type: plan.series.type!,
                 metadata: {
-                    ...plan.series.metadata,
+                    ...incomingMetadata,
+                    expository,
                     plannedSermons: plannedSermons
                 },
                 resourceIds: plan.series.resourceIds || [],

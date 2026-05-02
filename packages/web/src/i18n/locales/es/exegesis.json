@@ -687,6 +687,31 @@
             "archiveFailed": "No se pudo archivar el trabajo",
             "sourceRemoved": "Fuente quitada",
             "sourceRemoveFailed": "No se pudo quitar la fuente"
+        },
+        "askFaculty": {
+            "cta": "Preguntar a Faculty",
+            "tooltip": "Abre Faculty con el contexto de este paper cargado"
+        },
+        "generateSermon": {
+            "cta": "Generar sermón",
+            "ctaShort": "Sermón",
+            "popoverTitle": "Genera un sermón desde este paper",
+            "popoverHint": "Elige el tono homilético. El paper completo se transforma en un sermón listo para predicar (~25-35 min).",
+            "tone": {
+                "pastoral": "Pastoral",
+                "pastoralHint": "Cercano y orientado al cuidado de la grey",
+                "expositivo": "Expositivo",
+                "expositivoHint": "Estructura clásica con divisiones claras",
+                "narrativo": "Narrativo",
+                "narrativoHint": "Construido sobre el arco del relato bíblico"
+            },
+            "generating": "Generando sermón...",
+            "disabledHint": "Disponible cuando el paper esté ensamblado",
+            "toast": {
+                "success": "Sermón generado. Te llevamos al borrador.",
+                "failed": "No se pudo generar el sermón. Intenta de nuevo.",
+                "overloaded": "Gemini está saturado. Intenta en un minuto."
+            }
         }
     }
 }

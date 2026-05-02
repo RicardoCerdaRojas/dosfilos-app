@@ -135,6 +135,22 @@ export function FacultyChatPage() {
      */
     const projectIdForNew = searchParams.get('projectId') ?? undefined;
 
+    /**
+     * Phase 4 enrichment refs. When the user lands here from a paper /
+     * series / pericope CTA (e.g. `?paperId=abc&seriesId=xyz&pericopeId=123`),
+     * we propagate those ids into the new session so the orchestrator
+     * hydrates them on every turn and injects a compact context block
+     * into the user message. Hidden behind the new-session branch only —
+     * existing sessions already carry their context in Firestore.
+     */
+    const contextForNew = (() => {
+        const paperId = searchParams.get('paperId') ?? undefined;
+        const seriesId = searchParams.get('seriesId') ?? undefined;
+        const pericopeId = searchParams.get('pericopeId') ?? undefined;
+        if (!paperId && !seriesId && !pericopeId) return undefined;
+        return { paperId, seriesId, pericopeId };
+    })();
+
     // ── Local state ──────────────────────────────────────────────────────────
     const [input, setInput] = useState('');
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(
@@ -204,7 +220,11 @@ export function FacultyChatPage() {
                         return;
                     }
                     try {
-                        const newSession = await createSession.mutateAsync({ agentId: targetAgentId, projectId: projectIdForNew });
+                        const newSession = await createSession.mutateAsync({
+                            agentId: targetAgentId,
+                            projectId: projectIdForNew,
+                            context: contextForNew,
+                        });
                         navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(initialQuestion)}`, { replace: true });
                         return;
                     } catch (err) {
@@ -342,7 +362,11 @@ export function FacultyChatPage() {
                 return;
             }
             try {
-                const newSession = await createSession.mutateAsync({ agentId: targetAgentId, projectId: projectIdForNew });
+                const newSession = await createSession.mutateAsync({
+                    agentId: targetAgentId,
+                    projectId: projectIdForNew,
+                    context: contextForNew,
+                });
                 // The auto-send path via `?q=` can't carry an attachment, so
                 // when there's a file we send directly here instead, then
                 // navigate to the canonical session URL afterwards.

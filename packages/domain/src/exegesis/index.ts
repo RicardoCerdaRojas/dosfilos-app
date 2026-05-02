@@ -22,7 +22,20 @@ export * from './use-cases/dtos';
 
 export * from './ports/IExcerptExtractor';
 export * from './ports/IExegesisOrchestrator';
+export * from './ports/IExpositoryAssistant';
 export * from './ports/IPaperRubricExtractor';
+export * from './ports/IPaperToSermonTransformer';
+export * from './ports/IPericopeDetector';
 export * from './ports/IResourceContentReader';
 export * from './ports/IStyleFormatter';
 export * from './ports/IStyleGuideManifestExtractor';
+
+// Expository assistant pipeline (v1.5) — 5-pass methodology for
+// dividing a biblical book into preachable units while preserving
+// the distinction between exegetical division and preachable division.
+export * from './expository/BookPanorama';
+export * from './expository/ExegeticalUnit';
+export * from './expository/ExpositoryAssistantRun';
+export * from './expository/FidelityReview';
+export * from './expository/MacroSection';
+export * from './expository/PreachableUnit';

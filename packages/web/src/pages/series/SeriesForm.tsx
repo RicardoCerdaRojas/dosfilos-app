@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Loader2, Upload, X } from 'lucide-react';
 import { seriesService } from '@dosfilos/application';
+import type { SermonSeriesEntity } from '@dosfilos/domain';
 import { FirebaseStorageService } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
+import { addDays, daysBetween, parseLocalDate } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +42,10 @@ export function SeriesForm() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!id);
   const [uploading, setUploading] = useState(false);
+  // Hold the original loaded series so onSubmit can compare the
+  // submitted startDate against the persisted one and shift the
+  // planned-sermon dates accordingly when the pastor changes it.
+  const [originalSeries, setOriginalSeries] = useState<SermonSeriesEntity | null>(null);
   
   // Storage Service
   const storageService = new FirebaseStorageService();
@@ -53,12 +59,68 @@ export function SeriesForm() {
     currentLimit: 1
   });
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<SeriesFormData>();
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<SeriesFormData>();
   const [sermonCount, setSermonCount] = useState<number>(4);
   const [frequency, setFrequency] = useState<'weekly' | 'biweekly' | 'monthly' | 'flexible'>('weekly');
 
   // Watch values for live preview
   const watchedValues = watch();
+
+  // Number of planned sermons whose scheduledDate would shift if the
+  // pastor changes the series startDate. Used to render the heads-up
+  // hint near the date input. Excludes sermons in development (any
+  // status past 'planned' or with a draftId).
+  const shiftablePlannedCount = (originalSeries?.metadata?.plannedSermons ?? []).filter(
+      (p) => !p.draftId && (!p.status || p.status === 'planned') && p.scheduledDate,
+  ).length;
+
+  /**
+   * Hard rebuild of all unstarted plannedSermon scheduledDates from
+   * the form's current startDate + frequency. Different from the
+   * cascade-shift on save (which preserves relative spacing): this
+   * IGNORES the existing scheduledDate values and recomputes them
+   * fresh, mirroring `createSeriesFromPlan`'s spacing logic. Useful
+   * when legacy bad dates persist regardless of how the pastor edits
+   * the start date — a full recompute is the only way out.
+   */
+  const handleRecalcDates = async () => {
+      if (!id || !originalSeries) return;
+      const startDate = parseLocalDate(watchedValues.startDate);
+      if (!startDate) {
+          toast.error(t('form.messages.recalcNoStartDate') as string);
+          return;
+      }
+
+      const planned = originalSeries.metadata?.plannedSermons ?? [];
+      let rebuiltCount = 0;
+      const updatedPlanned = planned.map((p) => {
+          const isShiftable = !p.draftId && (!p.status || p.status === 'planned');
+          if (!isShiftable) return p;
+          const newScheduled = computeScheduledForWeek(startDate, p.week, frequency);
+          rebuiltCount++;
+          return { ...p, scheduledDate: newScheduled };
+      });
+
+      if (rebuiltCount === 0) {
+          toast.info(t('form.messages.recalcNoShiftable') as string);
+          return;
+      }
+
+      try {
+          await seriesService.updateSeries(id, {
+              metadata: { ...originalSeries.metadata, plannedSermons: updatedPlanned },
+          } as any);
+          toast.success(
+              t('form.messages.recalcDone', { count: rebuiltCount }) as string,
+          );
+          // Refresh local copy so the next save sees the updated state.
+          const refreshed = await seriesService.getSeries(id);
+          if (refreshed) setOriginalSeries(refreshed);
+      } catch (err) {
+          console.error('[seriesForm] recalcDates failed:', err);
+          toast.error(t('form.messages.recalcError') as string);
+      }
+  };
 
   useEffect(() => {
     if (id) {
@@ -71,6 +133,7 @@ export function SeriesForm() {
       if (!id) return;
       const series = await seriesService.getSeries(id);
       if (series) {
+        setOriginalSeries(series);
         reset({
           title: series.title,
           description: series.description,
@@ -101,8 +164,13 @@ export function SeriesForm() {
     try {
       const path = `users/${user.uid}/series-covers/${Date.now()}_${file.name}`;
       const result = await storageService.uploadFile(file, path);
-      // Update form value
-      reset({ ...watchedValues, coverUrl: result.url });
+      // Targeted update via setValue. The previous `reset({...watchedValues, coverUrl})`
+      // would replace the WHOLE form using a stale `watchedValues` snapshot, and the
+      // RHF ref-based input registered for coverUrl wouldn't always re-render its DOM
+      // value, leaving the preview blank even though the upload succeeded. setValue
+      // updates just the one field, triggers watch() reliably, and marks the form
+      // dirty so the "save changes" affordance reflects the edit.
+      setValue('coverUrl', result.url, { shouldDirty: true, shouldValidate: true });
       toast.success(t('form.steps.visuals.errors.uploadSuccess'));
     } catch (error) {
       console.error('Upload error:', error);
@@ -113,7 +181,7 @@ export function SeriesForm() {
   };
 
   const removeImage = () => {
-    reset({ ...watchedValues, coverUrl: '' });
+    setValue('coverUrl', '', { shouldDirty: true });
   };
 
   const onSubmit = async (data: SeriesFormData) => {
@@ -137,16 +205,53 @@ export function SeriesForm() {
         }
       }
       
-      const payload = {
+      const newStartDate = parseLocalDate(data.startDate);
+      const newEndDate = parseLocalDate(data.endDate);
+
+      const payload: Record<string, unknown> = {
         title: data.title,
         description: data.description,
         coverUrl: data.coverUrl,
-        startDate: data.startDate ? new Date(data.startDate) : undefined, // Optional Date
-        endDate: data.endDate ? new Date(data.endDate) : undefined,
+        startDate: newStartDate,
+        endDate: newEndDate,
       };
 
       if (id) {
-        // Edit Mode
+        // Edit mode. If the pastor changed the start date AND there
+        // are planned sermons that haven't started yet, shift them
+        // by the same delta to preserve their relative spacing.
+        // Sermons already in development (with a draftId, or whose
+        // status moved past `planned`) keep their explicit dates —
+        // those were intentional scheduling decisions and an auto-
+        // shift would surprise the pastor.
+        const oldStartDate = originalSeries?.startDate
+            ? new Date(originalSeries.startDate)
+            : undefined;
+        const shiftedMetadata = computeShiftedMetadata(
+            originalSeries,
+            oldStartDate,
+            newStartDate,
+        );
+        if (shiftedMetadata) {
+            payload.metadata = shiftedMetadata.metadata;
+            if (shiftedMetadata.shiftedCount > 0) {
+                toast.info(
+                    t('form.messages.shiftedSermons', {
+                        count: shiftedMetadata.shiftedCount,
+                        days: Math.abs(shiftedMetadata.deltaDays),
+                    }) as string,
+                );
+            } else if (shiftedMetadata.healedCount > 0) {
+                // Silent heal — toast only the first time so the
+                // pastor knows the legacy bug got auto-corrected.
+                toast.info(
+                    t('form.messages.healedSermons', {
+                        count: shiftedMetadata.healedCount,
+                    }) as string,
+                );
+            }
+        }
+
         await seriesService.updateSeries(id, payload as any);
         toast.success(t('form.messages.updateSuccess'));
         navigate(`/dashboard/plans/${id}`);
@@ -272,8 +377,33 @@ export function SeriesForm() {
                     <Input
                       id="startDate"
                       type="date"
-                      {...register('startDate')} 
+                      {...register('startDate')}
                     />
+                    {/* Edit-mode notice: changing the start date will
+                        cascade-shift unstarted planned sermons by the
+                        same delta. Sermons already in development keep
+                        their scheduled dates. */}
+                    {id && shiftablePlannedCount > 0 && (
+                      <>
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-snug">
+                          {t('form.steps.planning.shiftHint', { count: shiftablePlannedCount })}
+                        </p>
+                        {/* Hard-rebuild escape hatch: when legacy bad
+                            dates are stuck in the wrong calendar cell
+                            and cascade-shift can't recover them
+                            (delta=0 → no shift, heal preserves the
+                            visible day), this button recomputes every
+                            unstarted scheduledDate from startDate +
+                            frequency. Same math as createSeriesFromPlan. */}
+                        <button
+                          type="button"
+                          onClick={handleRecalcDates}
+                          className="text-[11px] text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 underline underline-offset-2"
+                        >
+                          {t('form.steps.planning.recalcButton', { count: shiftablePlannedCount })}
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -416,8 +546,12 @@ export function SeriesForm() {
             <div className="space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('form.preview.title')}</h3>
               
-              {/* Preview Card */}
-              <Card className="overflow-hidden shadow-lg border-muted group transition-all duration-500 hover:shadow-xl">
+              {/* Preview Card. `!pt-0` overrides the shadcn Card default
+                  `py-6` so the cover image hits the top edge cleanly
+                  (the bottom padding stays intact, plus the per-section
+                  spacing inside the body). overflow-hidden + rounded-xl
+                  on the Card itself clip the image corners. */}
+              <Card className="overflow-hidden shadow-lg border-muted group transition-all duration-500 hover:shadow-xl !pt-0">
                  <div className="h-48 w-full bg-muted relative overflow-hidden">
                     {watchedValues.coverUrl ? (
                       <img 
@@ -477,4 +611,90 @@ export function SeriesForm() {
       />
     </div>
   );
+}
+
+/**
+ * Computes a new `metadata` object with shifted scheduledDates when
+ * the pastor changes the series start date in edit mode. Returns
+ * null when no shift is needed (no original series, no planned
+ * sermons, no date change, etc.).
+ *
+ * Shift policy: ONLY plannedSermons with `status` undefined or
+ * 'planned' AND no `draftId` are shifted. Sermons in development
+ * keep their explicit dates because the pastor may have manually
+ * scheduled them and a silent shift would be surprising.
+ */
+function computeShiftedMetadata(
+    originalSeries: SermonSeriesEntity | null,
+    oldStartDate: Date | undefined,
+    newStartDate: Date | undefined,
+): { metadata: any; shiftedCount: number; healedCount: number; deltaDays: number } | null {
+    if (!originalSeries) return null;
+
+    const planned = originalSeries.metadata?.plannedSermons ?? [];
+    if (planned.length === 0) return null;
+
+    // Two effects happen on every save:
+    //   1. Shift: when start date moves by N days, planned sermons
+    //      that haven't started yet move by N days too.
+    //   2. Heal: every scheduledDate is normalized to local midnight
+    //      via addDays(date, 0). This idempotently repairs legacy
+    //      dates persisted with a non-midnight time component (the
+    //      old UTC-midnight bug + the previous addDays that
+    //      preserved time across shifts), which display on the wrong
+    //      calendar cell in some browser timezones.
+    const deltaDays =
+        oldStartDate && newStartDate ? daysBetween(oldStartDate, newStartDate) : 0;
+
+    let shiftedCount = 0;
+    let healedCount = 0;
+    const updatedPlanned = planned.map((p) => {
+        if (!p.scheduledDate) return p;
+        const isShiftable = !p.draftId && (!p.status || p.status === 'planned');
+        const totalDelta = isShiftable ? deltaDays : 0;
+        const original = new Date(p.scheduledDate);
+        // addDays(_, 0) drops the time component → normalizes to
+        // local midnight. addDays(_, N) does both: shift + normalize.
+        const next = addDays(original, totalDelta);
+
+        if (totalDelta !== 0) shiftedCount++;
+        else if (next.getTime() !== original.getTime()) healedCount++;
+
+        return { ...p, scheduledDate: next };
+    });
+
+    if (shiftedCount === 0 && healedCount === 0) return null;
+
+    return {
+        metadata: { ...originalSeries.metadata, plannedSermons: updatedPlanned },
+        shiftedCount,
+        healedCount,
+        deltaDays,
+    };
+}
+
+/**
+ * Computes a scheduledDate for sermon at `week` (1-indexed) given a
+ * start date and frequency. Mirrors the per-week spacing logic in
+ * `SeriesService.createSeriesFromPlan` so a "recalcular" rebuild
+ * produces dates identical to a fresh series creation.
+ *
+ * Returns undefined for `flexible` (no calculated date — pastor
+ * schedules manually).
+ *
+ * Always returns local-midnight Dates, regardless of the time
+ * component on the input startDate.
+ */
+function computeScheduledForWeek(
+    startDate: Date,
+    week: number,
+    freq: 'weekly' | 'biweekly' | 'monthly' | 'flexible',
+): Date | undefined {
+    if (freq === 'flexible') return undefined;
+    const offset = Math.max(0, week - 1);
+    const base = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    if (freq === 'weekly') base.setDate(base.getDate() + offset * 7);
+    else if (freq === 'biweekly') base.setDate(base.getDate() + offset * 14);
+    else if (freq === 'monthly') base.setMonth(base.getMonth() + offset);
+    return base;
 }

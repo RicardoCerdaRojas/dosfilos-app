@@ -42,3 +42,27 @@ export { SeedStepsForPassageUseCase } from './SeedStepsForPassageUseCase';
 export { GenerateStepUseCase } from './GenerateStepUseCase';
 export { AcceptStepUseCase } from './AcceptStepUseCase';
 export { SaveStepEditUseCase } from './SaveStepEditUseCase';
+
+// Bridge: paper → sermon (Phase 2 of the sermon-series pipeline)
+export {
+    GenerateSermonFromPaperUseCase,
+    type GenerateSermonFromPaperInput,
+    type GenerateSermonFromPaperOutput,
+} from './GenerateSermonFromPaperUseCase';
+
+// Pericope assistant (Phase 3 of the sermon-series pipeline)
+export {
+    DetectPericopesUseCase,
+    type DetectPericopesInput,
+} from './DetectPericopesUseCase';
+
+// Expository assistant pipeline (v1.5)
+export { loadBookVerses, type LoadBookVersesInput, type LoadBookVersesResult } from './expository/loadBookVerses';
+export {
+    RunExpositoryPassesUseCase,
+    type PanoramaCallInput,
+    type MacroCallInput,
+    type MicroCallInput,
+    type PreachableCallInput,
+    type FidelityCallInput,
+} from './expository/RunExpositoryPassesUseCase';

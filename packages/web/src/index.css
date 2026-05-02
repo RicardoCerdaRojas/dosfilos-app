@@ -377,6 +377,104 @@
     @apply bg-muted-foreground/50;
   }
 
+  /*
+   * Sidebar scrollbar — thin, hover-reveal, gutter-stable.
+   *
+   * Visual: 6px thumb, transparent track. Thumb fades in on
+   * hover/focus and fades out otherwise so the sidebar reads as
+   * clean chrome when idle but the affordance is there as soon as
+   * the user reaches for it.
+   *
+   * Layout: `scrollbar-gutter: stable` reserves the gutter space
+   * even when the thumb is invisible, so the sidebar content does
+   * not jitter horizontally when the thumb appears/disappears.
+   * Firefox honors this; Webkit ignores it but our thin overlay
+   * renders inside the gutter we reserve via container padding,
+   * so the result matches across browsers.
+   */
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    scrollbar-gutter: stable;
+    transition: scrollbar-color 200ms ease;
+  }
+
+  .sidebar-scrollbar:hover,
+  .sidebar-scrollbar:focus-within {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 9999px;
+    transition: background 200ms ease;
+  }
+
+  .sidebar-scrollbar:hover::-webkit-scrollbar-thumb,
+  .sidebar-scrollbar:focus-within::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.35);
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.55);
+  }
+
+  /*
+   * View-transition tuning for the expository wizard's card↔chip
+   * morph. Browser default is 250ms ease; we lengthen slightly and
+   * use a curve that emphasizes the takeoff so the lift feels
+   * physical. The wildcard `*` targets every named view transition
+   * — for now the wizard is the only producer; refine when other
+   * features adopt View Transitions.
+   *
+   * Browsers without support (Firefox today) fall back to instant
+   * swap, which is acceptable degradation.
+   */
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 320ms;
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0.24, 1.05);
+  }
+
+  /*
+   * Expository wizard text-zoom levels. Two non-default zoom levels
+   * scale up the body text classes used in the wizard so pastors who
+   * need larger text can read without browser-zooming the entire UI
+   * chrome (which shrinks the sidebar and breaks the layout).
+   *
+   * Implementation: override the Tailwind text size utilities only
+   * when the wrapper class is present. Tailwind text-* utilities are
+   * rem-based (referencing html root), so a parent font-size has no
+   * effect — explicit per-class overrides are the right tool.
+   *
+   * Levels:
+   *   default (no class) → 100%
+   *   .expository-zoom-large  → ~115%
+   *   .expository-zoom-larger → ~130%
+   */
+  .expository-zoom-large .text-\[10px\],
+  .expository-zoom-large .text-\[11px\] { font-size: 0.8125rem; }
+  .expository-zoom-large .text-xs       { font-size: 0.875rem; }
+  .expository-zoom-large .text-sm       { font-size: 1rem; }
+  .expository-zoom-large .text-base     { font-size: 1.125rem; }
+  .expository-zoom-large .text-lg       { font-size: 1.25rem; }
+
+  .expository-zoom-larger .text-\[10px\],
+  .expository-zoom-larger .text-\[11px\] { font-size: 0.9375rem; }
+  .expository-zoom-larger .text-xs       { font-size: 1rem; }
+  .expository-zoom-larger .text-sm       { font-size: 1.125rem; }
+  .expository-zoom-larger .text-base     { font-size: 1.25rem; }
+  .expository-zoom-larger .text-lg       { font-size: 1.375rem; }
+
   /* Animated gradient for loading border */
   @keyframes gradient {
     0% {

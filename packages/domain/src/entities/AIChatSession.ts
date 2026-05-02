@@ -57,5 +57,42 @@ export interface AIChatSession {
     createdAt: Date;
     updatedAt: Date;
     messages: AIChatMessage[];
+    /**
+     * Optional structured context the user opened the session FROM
+     * (e.g. clicked "Preguntar a Faculty" while reading an exegetical
+     * paper). Each ref is consumed by the orchestrator to enrich the
+     * system prompt with passage / phase / pericope justification —
+     * NOT to inline the full paper markdown (that would balloon the
+     * token bill on every turn for questions that may not need it;
+     * the assembled paper rides RAG when the model actually queries
+     * the corpus).
+     *
+     * Grouped under `context` instead of flat fields so future refs
+     * (chapter, sermon draft, library resource) extend the shape
+     * without polluting the entity surface.
+     */
+    context?: AIChatSessionContext;
+}
+
+/**
+ * Refs the session was launched from. All optional and additive — a
+ * session may have just `paperId`, or both `seriesId + pericopeId`,
+ * etc. The orchestrator hydrates each ref it sees and assembles a
+ * compact context block for the system prompt. Refs that no longer
+ * resolve (paper deleted, pericope removed) are silently skipped —
+ * the chat keeps working with a slightly weaker prompt.
+ */
+export interface AIChatSessionContext {
+    /** ExegeticalPaper.id — paper the user was reading when they opened chat. */
+    paperId?: string;
+    /** SermonSeries.id — series detail page the user opened chat from. */
+    seriesId?: string;
+    /**
+     * `PlannedSermon.id` within `seriesId` — when set, the orchestrator
+     * pulls the syntactic unit's passage + justification into the
+     * prompt so the chat is anchored on that specific pericope.
+     * Requires `seriesId` to be set; ignored otherwise.
+     */
+    pericopeId?: string;
 }
 

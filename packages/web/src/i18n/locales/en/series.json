@@ -51,6 +51,10 @@
                 },
                 "startDate": "Start Date",
                 "startDateOptional": "(Optional)",
+                "shiftHint_one": "If you change the date, {{count}} planned sermon will be shifted by the same number of days. Sermons already in development keep their dates.",
+                "shiftHint_other": "If you change the date, {{count}} planned sermons will be shifted by the same number of days. Sermons already in development keep their dates.",
+                "recalcButton_one": "↻ Recalculate {{count}} date from start + frequency",
+                "recalcButton_other": "↻ Recalculate {{count}} dates from start + frequency",
                 "endDate": "End Date (Auto)",
                 "endDatePlaceholder": "Calculated automatically",
                 "sermonCount": "Number of Sermons",
@@ -94,7 +98,244 @@
             "loadError": "Error loading series",
             "saveSuccess": "Series created with {{count}} sermons ready",
             "updateSuccess": "Plan updated successfully",
-            "saveError": "Error saving plan"
+            "saveError": "Error saving plan",
+            "shiftedSermons_one": "{{count}} planned sermon shifted by {{days}} days.",
+            "shiftedSermons_other": "{{count}} planned sermons shifted by {{days}} days.",
+            "healedSermons_one": "{{count}} sermon with mis-stored date was repaired.",
+            "healedSermons_other": "{{count}} sermons with mis-stored dates were repaired.",
+            "recalcDone_one": "Recalculated {{count}} date from start + frequency.",
+            "recalcDone_other": "Recalculated {{count}} dates from start + frequency.",
+            "recalcNoStartDate": "You need a start date to recalculate.",
+            "recalcNoShiftable": "No unstarted planned sermons to recalculate.",
+            "recalcError": "Couldn't recalculate the dates."
+        }
+    },
+    "expository": {
+        "back": "Back to planner",
+        "title": "Expository assistant",
+        "subtitle": "5-pass pipeline (panorama → macro → micro → preachable → fidelity) that distinguishes exegetical division from preachable division.",
+        "pass": "Pass",
+        "collapse": "Collapse section",
+        "collapsedStrip": {
+            "label": "Collapsed",
+            "expand": "Expand section"
+        },
+        "state": {
+            "pending": "Pending",
+            "running": "Running...",
+            "done": "Done",
+            "error": "Error"
+        },
+        "setup": {
+            "title": "Configure the analysis",
+            "subtitle": "Pick the book and optionally an approximate sermon count. The book's genre and syntax guide each pass.",
+            "book": "Book",
+            "testamentNT": "New Testament",
+            "testamentOT": "Old Testament",
+            "targetCount": "Approximate count (optional)",
+            "targetCountPlaceholder": "e.g. 12",
+            "translationNote": "v1.5: the assistant analyzes the translation (RVR1960/ASV) as a surrogate for the original. v1.6 will load Greek/Hebrew text directly.",
+            "start": "Start analysis",
+            "running": "Running pipeline...",
+            "textZoomLabel": "Text size",
+            "textZoom": {
+                "level1": "Small text",
+                "level2": "Medium text",
+                "level3": "Large text"
+            }
+        },
+        "results": {
+            "panorama": {
+                "genre": "Genre",
+                "theme": "Central theme",
+                "purpose": "Purpose",
+                "problem": "Pastoral problem",
+                "movements": "Movements",
+                "keyTerms": "Key terms",
+                "redemptiveHistory": "Redemptive history",
+                "genreLabel": {
+                    "epistle": "Epistle",
+                    "narrative": "Narrative",
+                    "poetry": "Poetry",
+                    "prophecy": "Prophecy",
+                    "wisdom": "Wisdom",
+                    "gospel": "Gospel",
+                    "apocalypse": "Apocalypse",
+                    "law": "Law",
+                    "mixed": "Mixed"
+                }
+            },
+            "macro": {
+                "function": {
+                    "introduction": "Introduction",
+                    "thesis": "Thesis",
+                    "argument-development": "Development",
+                    "narrative-arc": "Narrative arc",
+                    "climax": "Climax",
+                    "application": "Application",
+                    "closing": "Closing",
+                    "transition": "Transition",
+                    "digression": "Digression"
+                }
+            },
+            "micro": {
+                "function": "Function",
+                "signals": "Signals"
+            },
+            "preachable": {
+                "preliminaryBanner": "These are initial homiletical hypotheses based on a panoramic reading of the text. Refine them after detailed exegetical study (\"Create paper from unit\" in the series detail). The fields are editable — adjust title, hypothesis, homiletical line and objective at your discretion before creating the series.",
+                "preliminaryChip": "Pending exegetical validation",
+                "editTitle": "Edit unit title",
+                "exegeticalProp": "Initial exegetical hypothesis",
+                "homileticalProp": "Suggested homiletical line",
+                "objective": "Pastoral objective",
+                "case": {
+                    "salutation": "Salutation",
+                    "doxology": "Doxology",
+                    "long-prayer": "Long prayer",
+                    "virtue-list": "Virtue list",
+                    "narrative-scene": "Narrative scene",
+                    "ot-citation": "OT citation",
+                    "genealogy": "Genealogy",
+                    "law-code": "Law code",
+                    "parable": "Parable",
+                    "oracle": "Oracle"
+                }
+            },
+            "fidelity": {
+                "confidence": "Confidence",
+                "noIssues": "No issues. The proposal is solid.",
+                "global": "Whole series",
+                "recommendation": "Recommendation",
+                "triagedSummary": "{{triaged}} of {{total}} addressed or ignored",
+                "addressed": "Addressed",
+                "ignored": "Ignored",
+                "toggleAddressed": "Mark as addressed (I edited or will keep this in mind)",
+                "toggleIgnored": "Ignore (I read it but will keep the original division)",
+                "severity": {
+                    "info": "Info",
+                    "warning": "Warning",
+                    "critical": "Critical"
+                }
+            }
+        },
+        "toast": {
+            "loadFailed": "Couldn't load the book text.",
+            "panoramaFailed": "Couldn't generate the panorama. Try again.",
+            "macroDone": "Macrostructure ready.",
+            "macroFailed": "Couldn't generate the macrostructure. Try again.",
+            "microFailed": "Couldn't generate the microstructure. Try again.",
+            "preachableFailed": "Couldn't generate the preachable units. Try again.",
+            "fidelityFailed": "Couldn't complete the fidelity review. Try again.",
+            "pipelineDone": "Pipeline complete. Review the preachable units and issues before creating the series.",
+            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "draftRestored": "Continuing where you left off. (Draft restored).",
+            "titleRequired": "Give the series a title before creating.",
+            "seriesCreated": "Series created. Taking you to the detail view.",
+            "createFailed": "Couldn't create the series."
+        },
+        "create": {
+            "title": "Create the series",
+            "subtitle": "Each preachable unit becomes a planned sermon. The propositions, pastoral objective, and fidelity notes are persisted on every sermon.",
+            "defaultTitle": "Expository series — {{book}}",
+            "defaultDescription": "Expository series on {{book}}, divided into {{count}} preachable units (v1.5 pipeline).",
+            "seriesTitle": "Series title",
+            "startDate": "Start date",
+            "frequency": "Frequency",
+            "freq": {
+                "weekly": "Weekly",
+                "biweekly": "Biweekly",
+                "monthly": "Monthly",
+                "flexible": "Flexible (no dates)"
+            },
+            "cta_one": "Create series with {{count}} sermon",
+            "cta_other": "Create series with {{count}} sermons"
+        },
+        "passes": {
+            "panorama": {
+                "title": "Book panorama",
+                "subtitle": "Identifies genre, purpose, pastoral problem, central theme, movements, key terms."
+            },
+            "macro": {
+                "title": "Macrostructure",
+                "subtitle": "Divides the book into 3-7 macro-sections, each with function within the book's flow."
+            },
+            "micro": {
+                "title": "Microstructure",
+                "subtitle": "Identifies exegetical units within each macro-section, with genre-specific criteria."
+            },
+            "preachable": {
+                "title": "Preachable conversion",
+                "subtitle": "Decides which units stand alone, combine, or split. Produces exegetical + homiletical proposition + pastoral objective."
+            },
+            "fidelity": {
+                "title": "Fidelity review",
+                "subtitle": "Audits preachable units against the methodology's anti-patterns. Advisory output, never destructive."
+            }
+        }
+    },
+    "pericope": {
+        "back": "Back to planner",
+        "title": "Pericope assistant",
+        "subtitle": "Divide a book into preachable syntactic units and generate the expository series.",
+        "panel": {
+            "title": "Detected pericopes",
+            "subtitle": "Each pericope can become a full exegetical paper. The paper stays linked to the pericope so traceability is preserved.",
+            "createPaper": "Create paper",
+            "openPaper": "Open paper",
+            "paperBadge": "Paper started",
+            "remove": "Remove pericope",
+            "askFaculty": "Ask Faculty with this pericope loaded",
+            "toast": {
+                "paperCreated": "Exegetical paper created",
+                "paperFailed": "Couldn't create the paper",
+                "bookUnresolved": "Couldn't resolve the pericope's book"
+            }
+        },
+        "defaultSeriesTitle": "Expository series — {{book}}",
+        "defaultSeriesDescription": "Expository series on {{book}}, divided into {{count}} syntactic pericopes.",
+        "setup": {
+            "title": "Configure the division",
+            "subtitle": "Pick a book and an approximate pericope count. Original-language syntax drives the boundaries.",
+            "book": "Book",
+            "testamentNT": "New Testament",
+            "testamentOT": "Old Testament",
+            "targetCount": "Approximate count (optional)",
+            "targetCountPlaceholder": "e.g. 12",
+            "translationNote": "v1: the assistant analyzes the translation (RVR1960/ASV) as a surrogate for the original. v1.5 will load Greek/Hebrew text directly.",
+            "detect": "Detect pericopes",
+            "detectAgain": "Detect again",
+            "detecting": "Analyzing..."
+        },
+        "review": {
+            "title_one": "{{count}} proposed pericope",
+            "title_other": "{{count}} proposed pericopes",
+            "subtitle": "Review, adjust the title or remove the ones you don't want to include.",
+            "remove": "Remove pericope"
+        },
+        "create": {
+            "title": "Create the series",
+            "subtitle": "Each pericope becomes a planned sermon with a date computed from the frequency.",
+            "seriesTitle": "Series title",
+            "startDate": "Start date",
+            "frequency": "Frequency",
+            "freq": {
+                "weekly": "Weekly",
+                "biweekly": "Biweekly",
+                "monthly": "Monthly",
+                "flexible": "Flexible (no dates)"
+            },
+            "cta_one": "Create series with {{count}} pericope",
+            "cta_other": "Create series with {{count}} pericopes"
+        },
+        "toast": {
+            "detected_one": "{{count}} pericope detected. Review it before creating the series.",
+            "detected_other": "{{count}} pericopes detected. Review them before creating the series.",
+            "detectFailed": "Couldn't detect pericopes. Try again.",
+            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "titleRequired": "Give the series a title before creating.",
+            "seriesCreated": "Series created. Taking you to the detail view.",
+            "createFailed": "Couldn't create the series."
         }
     }
 }
