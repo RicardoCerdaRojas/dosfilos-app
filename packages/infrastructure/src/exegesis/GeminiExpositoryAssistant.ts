@@ -26,6 +26,11 @@ import {
     MACRO_RESPONSE_SCHEMA,
 } from './expository-prompts/macroStructure';
 import {
+    buildMicroSystemInstruction,
+    buildMicroUserMessage,
+    MICRO_RESPONSE_SCHEMA,
+} from './expository-prompts/microStructure';
+import {
     djb2Hash,
     EXPOSITORY_PIPELINE_VERSION,
     fingerprintVerses,
@@ -155,11 +160,52 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         };
     }
 
-    // ── Pase 3-5: stubs (filled in B.3-B.5) ─────────────────────────────
+    // ── Pase 3: Microestructura (genre-aware) ───────────────────────────
 
-    async runMicroStructure(_input: MicroInput): Promise<PassResult<ExegeticalUnit[]>> {
-        throw new Error('GeminiExpositoryAssistant.runMicroStructure not yet implemented (lands in B.3)');
+    async runMicroStructure(input: MicroInput): Promise<PassResult<ExegeticalUnit[]>> {
+        const systemInstruction = buildMicroSystemInstruction(input.panorama.genre, input.displayLanguage);
+        const userMessage = buildMicroUserMessage(input);
+
+        const model = this.genAI.getGenerativeModel({
+            model: this.modelName,
+            systemInstruction,
+            generationConfig: {
+                maxOutputTokens: 8192,
+                temperature: 0.3,
+                topP: 0.9,
+                responseMimeType: 'application/json',
+                responseSchema: MICRO_RESPONSE_SCHEMA as any,
+            },
+        });
+
+        console.log('[GeminiExpositoryAssistant] runMicroStructure', {
+            book: input.book,
+            language: input.displayLanguage,
+            genre: input.panorama.genre,
+            macroCount: input.macroSections.length,
+            verseCount: input.verses.length,
+        });
+
+        const result = await withGeminiRetry(
+            () => model.generateContent(userMessage),
+            { contextLabel: 'GeminiExpositoryAssistant.runMicroStructure' },
+        );
+        const response = result.response;
+        const raw = response.text();
+
+        const parsed = parseJsonOrThrow(raw, 'microStructure');
+        const validMacroIds = new Set(input.macroSections.map((m) => m.id));
+        const payload = normalizeExegeticalUnits(parsed, validMacroIds, input.book, input.panorama.genre);
+
+        return {
+            payload,
+            modelId: this.modelName,
+            tokensUsed: extractTokens(response.usageMetadata),
+            passVersion: this.passVersion('micro', input),
+        };
     }
+
+    // ── Pase 4-5: stubs (filled in B.4-B.5) ─────────────────────────────
 
     async runPreachableConversion(_input: PreachableInput): Promise<PassResult<PreachableUnit[]>> {
         throw new Error('GeminiExpositoryAssistant.runPreachableConversion not yet implemented (lands in B.4)');
@@ -271,6 +317,72 @@ function intOrNull(value: unknown): number | null {
         if (Number.isFinite(n)) return Math.trunc(n);
     }
     return null;
+}
+
+function normalizeExegeticalUnits(
+    raw: any,
+    validMacroIds: ReadonlySet<string>,
+    bookDisplay: string,
+    genre: LiteraryGenre,
+): ExegeticalUnit[] {
+    const arr: unknown = raw?.exegeticalUnits;
+    if (!Array.isArray(arr)) {
+        throw new Error('microStructure response missing or invalid exegeticalUnits array');
+    }
+
+    const originalLanguage: 'greek' | 'hebrew' | undefined =
+        genre === 'epistle' || genre === 'gospel' || genre === 'apocalypse'
+            ? 'greek'
+            : genre === 'narrative' || genre === 'poetry' || genre === 'prophecy' || genre === 'wisdom' || genre === 'law'
+              ? 'hebrew'
+              : undefined; // 'mixed' / unknown → don't claim a language
+
+    const units: ExegeticalUnit[] = [];
+    arr.forEach((item, index) => {
+        if (!item || typeof item !== 'object') return;
+        const o = item as Record<string, unknown>;
+
+        const id = typeof o.id === 'string' && o.id.trim() ? o.id.trim() : `eu-${index + 1}`;
+        const macroSectionId = typeof o.macroSectionId === 'string' ? o.macroSectionId.trim() : '';
+        const cs = intOrNull(o.chapterStart);
+        const vs = intOrNull(o.verseStart);
+        const ce = intOrNull(o.chapterEnd);
+        const ve = intOrNull(o.verseEnd);
+        const suggestedTitle = typeof o.suggestedTitle === 'string' ? o.suggestedTitle.trim() : '';
+        const functionInArgument = typeof o.functionInArgument === 'string' ? o.functionInArgument.trim() : '';
+        const centralIdea = typeof o.centralIdea === 'string' ? o.centralIdea.trim() : '';
+        const literarySignals = stringArrayOrEmpty(o.literarySignals);
+        const order = intOrNull(o.order) ?? index + 1;
+
+        if (!macroSectionId || !validMacroIds.has(macroSectionId)) return;
+        if (!suggestedTitle || !functionInArgument || !centralIdea) return;
+        if (cs === null || vs === null || ce === null || ve === null) return;
+        if (ce < cs || (ce === cs && ve < vs)) return;
+        if (literarySignals.length === 0) return; // require at least one concrete marker
+
+        units.push({
+            id,
+            macroSectionId,
+            syntacticUnit: {
+                book: bookDisplay,
+                chapterStart: cs,
+                verseStart: vs,
+                chapterEnd: ce,
+                verseEnd: ve,
+                ...(originalLanguage ? { originalLanguage } : {}),
+            },
+            suggestedTitle,
+            functionInArgument,
+            centralIdea,
+            literarySignals,
+            order,
+        });
+    });
+
+    if (units.length === 0) {
+        throw new Error('microStructure returned zero valid exegetical units');
+    }
+    return units.sort((a, b) => a.order - b.order);
 }
 
 function normalizeMacroSections(raw: any): MacroSection[] {
