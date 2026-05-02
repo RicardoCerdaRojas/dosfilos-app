@@ -668,8 +668,11 @@
         "back": "Volver al listado",
         "loading": "Cargando trabajo...",
         "openSetup": "Configurar",
+        "moreActions": "Más acciones",
         "archive": "Archivar",
-        "archiveConfirm": "Confirmar",
+        "archiveConfirm": "Archivar el trabajo",
+        "archiveConfirmTitle": "¿Archivar este trabajo?",
+        "archiveConfirmBody": "El trabajo desaparecerá del listado pero podrás recuperarlo desde papelera. Los pasos generados y aceptados se mantienen.",
         "stepsTitle": "Pasos del trabajo",
         "stepsSubtitle": "Verso por verso, conclusión, introducción y ensamble. Aceptás o regenerás cada paso antes de avanzar.",
         "generateCta": "Generar primer paso",
@@ -773,6 +776,7 @@
         "exportMarkdown": {
             "cta": "Exportar (.md)",
             "tooltip": "Descarga el trabajo en Markdown — incluye lo aceptado hasta ahora si aún no está ensamblado",
+            "disabledHint": "Disponible cuando hayas aceptado al menos un paso del trabajo",
             "toast": {
                 "exported": "Trabajo exportado en Markdown"
             }

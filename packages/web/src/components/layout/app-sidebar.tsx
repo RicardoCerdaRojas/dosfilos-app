@@ -226,23 +226,23 @@ export function AppSidebar() {
         <div className="flex items-center px-2 py-3 relative h-16">
           
           {/* Logo Expanded State */}
-          <div className="group-data-[collapsible=icon]:hidden flex items-center justify-center h-full w-full overflow-hidden">
-            <img 
-              src="/logo_dfp.svg" 
-              alt="DosFilos.Preach" 
-              className="h-10 w-auto object-contain transition-all scale-[1.65] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
+          <div className="group-data-[collapsible=icon]:hidden flex items-center justify-start h-full w-full overflow-hidden pl-4">
+            <img
+              src="/logo_dfp.png"
+              alt="DosFilos.Preach"
+              className="h-10 w-auto object-contain transition-all scale-125 mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
             />
           </div>
 
-          {/* Logo Collapsed State (Cropped to show only DFP) */}
+          {/* Logo Collapsed State — uses the dedicated icon-only file
+              instead of cropping the full logo. Cleaner: no transforms,
+              no overflow tricks. */}
           <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-full h-full">
-            <div className="w-8 h-8 overflow-hidden relative rounded-sm flex items-center justify-center">
-              <img 
-                src="/logo_dfp.svg" 
-                alt="DFP" 
-                className="absolute left-1/2 -translate-x-[75%] h-12 w-auto max-w-none transition-all scale-[1.65] mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
-              />
-            </div>
+            <img
+              src="/logo_dfp_icon.png"
+              alt="DFP"
+              className="h-8 w-8 object-contain mix-blend-multiply dark:mix-blend-screen dark:invert dark:grayscale dark:contrast-200"
+            />
           </div>
 
           {/* Badge - Floating on top right */}

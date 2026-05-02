@@ -668,8 +668,11 @@
         "back": "Back to list",
         "loading": "Loading paper...",
         "openSetup": "Configure",
+        "moreActions": "More actions",
         "archive": "Archive",
-        "archiveConfirm": "Confirm",
+        "archiveConfirm": "Archive paper",
+        "archiveConfirmTitle": "Archive this paper?",
+        "archiveConfirmBody": "The paper will disappear from the list but you can restore it from trash. Generated and accepted steps are preserved.",
         "stepsTitle": "Paper steps",
         "stepsSubtitle": "Verse by verse, conclusion, introduction, and assembly. You accept or regenerate each step before moving on.",
         "generateCta": "Generate first step",
@@ -773,6 +776,7 @@
         "exportMarkdown": {
             "cta": "Export (.md)",
             "tooltip": "Download the paper as Markdown — includes whatever steps are accepted so far if assembly hasn't run yet",
+            "disabledHint": "Available once you've accepted at least one paper step",
             "toast": {
                 "exported": "Paper exported as Markdown"
             }
