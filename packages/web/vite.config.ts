@@ -13,6 +13,17 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@google/generative-ai/server'],
+    // Workspace packages are excluded so Vite treats them as source
+    // (and applies its plugins, including the `?raw` text-import
+    // suffix used by the prompt builders in @dosfilos/infrastructure).
+    // esbuild — which Vite uses for pre-bundling — doesn't understand
+    // `?raw`, so a re-optimize crashes with
+    // `No loader is configured for ".md" files: …?raw`.
+    exclude: [
+      '@google/generative-ai/server',
+      '@dosfilos/domain',
+      '@dosfilos/application',
+      '@dosfilos/infrastructure',
+    ],
   },
 });
