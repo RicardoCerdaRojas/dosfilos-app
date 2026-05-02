@@ -1,69 +1,88 @@
-# Re-extraer un library_resource con LlamaParse (callable, 900s timeout)
+# Re-extraer un library_resource con LlamaParse
 
-Útil cuando un PDF grande (>1000 págs) cayó a `fallback-pdfparse` porque el
-storage trigger (540s timeout) no le alcanzó a LlamaParse, y querés forzar la
-re-extracción usando la callable que tiene 15 min.
+Útil cuando un PDF grande (>1000 págs, ej: NTG 28) cayó a
+`fallback-pdfparse` porque el storage trigger (540s timeout) no le
+alcanzó a LlamaParse, y querés forzar la re-extracción usando la
+callable `reprocessWithLlamaParse` que tiene 15 min.
 
-La callable es admin-only (`request.auth.token?.email !== 'rdocerda@gmail.com'`),
-así que el camino más rápido es invocarla desde la consola del navegador
-mientras estás logueado como admin.
+## Uso
 
----
+```bash
+node scripts/reprocess-llamaparse.mjs <resourceId> [--force]
+```
 
-## Paso 1 — Conseguir el resourceId
+Ejemplos:
 
-Lo encuentras en la URL al hacer click en el recurso desde la biblioteca, o
-en el Firestore console: `library_resources/{id}`.
+```bash
+# NTG 28 — re-extraer aunque ya esté como llamaparse
+node scripts/reprocess-llamaparse.mjs 406843cb-5dc2-4317-a672-45d5bf8fb1d1 --force
 
-Para NTG en este caso es: `406843cb-5dc2-4317-a672-45d5bf8fb1d1`
+# Otro recurso — sin force (idempotente; salta si ya está en LlamaParse)
+node scripts/reprocess-llamaparse.mjs <id-del-recurso>
+```
 
----
+## Cómo conseguir el resourceId
 
-## Paso 2 — Pegar este snippet en DevTools Console
+- Click en el recurso desde la biblioteca → la URL contiene el id
+- O Firestore Console → `library_resources` → el doc con el título que buscás
 
-Abrir la app en `localhost:5173/dashboard/library` (logueado), F12 → Console,
-pegar:
+## Auth
+
+La callable es admin-only — verifica
+`request.auth.token.email === 'rdocerda@gmail.com'`. El script usa el
+Firebase Web SDK para hacer signin con email + password.
+
+Por defecto asume `rdocerda@gmail.com`. Te va a pedir password
+interactivamente (input enmascarado, no se ve en pantalla ni queda en
+historial de bash).
+
+Si querés evitar el prompt:
+
+```bash
+FIREBASE_ADMIN_PASSWORD=tu-password node scripts/reprocess-llamaparse.mjs <resourceId>
+```
+
+(No hardcodear en alias/scripts persistentes — usar solo para la sesión
+si hace falta automatización.)
+
+## Qué pasa después de exitoso
+
+- `textExtractionStatus` → `'ready'`
+- `extractionVersion` → `'3.0-llamaparse'`
+- El trigger `autoIndexOnExtractionReady` dispara automáticamente y
+  genera chunks + embeddings
+- En la biblioteca, el badge cambia de "Básico" a "Premium" y el
+  recurso queda usable como fuente en proyectos exegéticos / Faculty
+
+No tienes que clicar "Procesar pendientes" — el auto-index hace el
+trabajo.
+
+## Si el script time-outea (>15 min)
+
+Significa que LlamaParse necesita más tiempo del que la callable
+puede esperar. Para PDFs así (>1500 págs típicamente), las opciones
+son:
+
+1. **Partir el PDF** en mitades y subir como dos resources separados
+2. **Aceptar pdf-parse** para ese libro específico (perdés estructura
+   pero el texto plano es citable)
+3. **Migrar a Cloud Run job** (60 min timeout) — refactor de
+   arquitectura, fuera de scope v1.6
+
+## Variantes del comando equivalente desde DevTools del navegador
+
+Si no tenés Node a mano, podés pegar este snippet en la consola del
+navegador (logueado como admin):
 
 ```js
 (async () => {
   const { getFunctions, httpsCallable } = await import('firebase/functions');
   const { getApp } = await import('firebase/app');
-
-  const RESOURCE_ID = '406843cb-5dc2-4317-a672-45d5bf8fb1d1'; // ← ajustar
-  const FORCE = true; // re-extraer aunque ya esté como llamaparse
-
-  const functions = getFunctions(getApp(), 'us-central1');
-  const reprocess = httpsCallable(functions, 'reprocessWithLlamaParse');
-
-  console.log(`Invoking reprocessWithLlamaParse for ${RESOURCE_ID}...`);
+  const fn = httpsCallable(getFunctions(getApp(), 'us-central1'),
+    'reprocessWithLlamaParse', { timeout: 16 * 60 * 1000 });
   console.time('reprocess');
-  try {
-    const result = await reprocess({ resourceId: RESOURCE_ID, force: FORCE });
-    console.timeEnd('reprocess');
-    console.log('✅ Result:', result.data);
-  } catch (err) {
-    console.timeEnd('reprocess');
-    console.error('❌ Failed:', err);
-  }
+  const result = await fn({ resourceId: '<ID>', force: true });
+  console.timeEnd('reprocess');
+  console.log(result.data);
 })();
 ```
-
-Esperá hasta 15 min. Vas a ver el log final con el conteo de páginas extraídas
-y el `extractionVersion: '3.0-llamaparse'`.
-
-Después, en la biblioteca el badge del recurso pasará de "Básico" a
-"Premium" (auto-index dispara automáticamente cuando la extracción flips a
-ready con extractionVersion auto-indexable).
-
----
-
-## Por qué no es un script Node
-
-La callable verifica `request.auth.token.email` para autorizar admin. Hacer la
-misma verificación desde un script Node requeriría:
-1. Email/password del usuario en variables de entorno
-2. SDK de Firebase web (no admin) para signin con email/password
-3. Tokens cacheados localmente
-
-Es más cómodo pegar en DevTools donde ya estás autenticado. Si necesitas
-automatizarlo, pedímelo y armamos el script con login no-interactivo.
