@@ -543,6 +543,15 @@ function AddSourceDialog({
         // Pre-fill label with the library resource's title; the
         // student can still tweak before submit.
         setDisplayName(resource.title || resource.id);
+        // Pre-fill citation key from the resource's author. The student
+        // can still tweak — this is a starting point, not authoritative.
+        // Empty author or empty derivation leaves the field blank so the
+        // generation step's `deriveCitationKey` fallback (which works
+        // off the displayLabel) takes over.
+        if (resource.author) {
+            const key = deriveCitationKeyFromAuthor(resource.author);
+            if (key) setCitationKey(key);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -937,4 +946,38 @@ function ResourceReadinessBadge({ status }: { status: ResourceIndexStatus }) {
             {label}
         </span>
     );
+}
+
+/**
+ * Extracts a citation key (typical surname) from a resource's author
+ * field. Used to pre-fill the corpus dialog when the student picks an
+ * existing library resource. Heuristic, not authoritative — the
+ * student can always tweak the result before submitting.
+ *
+ * Cases handled:
+ *   "Daniel B. Wallace"     → "Wallace"   (last token wins)
+ *   "John MacArthur"        → "MacArthur"
+ *   "Bauckham, Richard"     → "Bauckham"  (before-comma wins)
+ *   "Lane, William L."      → "Lane"
+ *   "Barrick & Busenitz"    → "Barrick"   (first author of multi)
+ *   "Watson and Callan"     → "Watson"
+ *   "deSilva"               → "deSilva"
+ *   ""                      → ""          (caller skips)
+ */
+function deriveCitationKeyFromAuthor(author: string): string {
+    const trimmed = author.trim();
+    if (!trimmed) return '';
+    // Multi-author work: take the first author (citations conventionally
+    // use first author or "first et al.").
+    const firstAuthor = trimmed.split(/\s+(?:&|and|y)\s+/i)[0]!.trim();
+    // "Surname, Given" form is common in academic citations — take
+    // what's before the comma.
+    if (firstAuthor.includes(',')) {
+        const beforeComma = firstAuthor.split(',')[0]!.trim();
+        if (beforeComma) return beforeComma;
+    }
+    // Otherwise the LAST token is conventionally the surname.
+    const tokens = firstAuthor.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return firstAuthor;
+    return tokens[tokens.length - 1]!;
 }
