@@ -562,7 +562,7 @@ function RubricCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string, opt
                 </p>
             )}
             <Link
-                to={`/dashboard/exegesis/${paper.id}/setup`}
+                to={`/dashboard/exegesis/${paper.id}/setup?tab=rubric`}
                 className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
                 <Pencil className="h-3 w-3" />
@@ -635,7 +635,7 @@ function StyleGuideCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string)
                 </p>
             )}
             <Link
-                to={`/dashboard/exegesis/${paper.id}/setup`}
+                to={`/dashboard/exegesis/${paper.id}/setup?tab=manifest`}
                 className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
                 <Pencil className="h-3 w-3" />
@@ -683,7 +683,7 @@ function SourcesCard({
             )}
 
             <Link
-                to={`/dashboard/exegesis/${paper.id}/setup`}
+                to={`/dashboard/exegesis/${paper.id}/setup?tab=corpus`}
                 className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
                 <Pencil className="h-3 w-3" />

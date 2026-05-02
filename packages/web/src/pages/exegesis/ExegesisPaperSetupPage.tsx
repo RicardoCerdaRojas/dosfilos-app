@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useCallback } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileCheck2, FileStack, ListTree, BookOpen, Loader2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
@@ -45,12 +45,31 @@ const SUB_STEPS: ReadonlyArray<{ key: SubStepKey; iconKey: string }> = [
     { key: 'plan', iconKey: 'ListTree' },
 ];
 
+const VALID_KEYS: ReadonlySet<SubStepKey> = new Set(SUB_STEPS.map(s => s.key));
+
+function parseTab(raw: string | null): SubStepKey {
+    return raw && VALID_KEYS.has(raw as SubStepKey) ? (raw as SubStepKey) : 'rubric';
+}
+
 export function ExegesisPaperSetupPage() {
     const { paperId } = useParams<{ paperId: string }>();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation('exegesis');
     const { paper, isLoading, error } = useExegesisPaper(paperId);
-    const [activeKey, setActiveKey] = useState<SubStepKey>('rubric');
+
+    // Tab state lives in the URL (`?tab=corpus`) so deep-links from
+    // the paper detail page's "Editar en configuración" buttons land
+    // on the right sub-step, and back/refresh preserve the tab.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeKey = parseTab(searchParams.get('tab'));
+    const setActiveKey = useCallback((next: SubStepKey) => {
+        setSearchParams(prev => {
+            const updated = new URLSearchParams(prev);
+            if (next === 'rubric') updated.delete('tab');
+            else updated.set('tab', next);
+            return updated;
+        }, { replace: true });
+    }, [setSearchParams]);
 
     if (!paperId) {
         return null;
@@ -84,7 +103,7 @@ export function ExegesisPaperSetupPage() {
     return (
         <div className="flex flex-col h-full bg-background font-sans overflow-y-auto">
             <header className="border-b border-border bg-card px-6 py-4">
-                <div className="max-w-5xl mx-auto flex items-center gap-3">
+                <div className="max-w-7xl mx-auto flex items-center gap-3">
                     <Link
                         to={`/dashboard/exegesis/${paperId}`}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -112,7 +131,7 @@ export function ExegesisPaperSetupPage() {
                 </div>
             </header>
 
-            <div className="max-w-5xl w-full mx-auto px-6 py-6">
+            <div className="max-w-7xl w-full mx-auto px-6 py-6">
                 <nav className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
                     {SUB_STEPS.map((s, idx) => (
                         <SubStepTab
