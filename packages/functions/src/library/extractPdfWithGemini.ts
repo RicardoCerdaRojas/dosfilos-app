@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
-import { recordLlamaParseUsage, selectLlamaParseAccount } from './llamaParseAccountSelector';
+import { recordLlamaParseUsage, selectAllLlamaParseAccounts, type SelectedLlamaParseAccount } from './llamaParseAccountSelector';
 import { consumePagesAdmin, type ProcessingMode } from './processingBalance';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
@@ -333,9 +333,14 @@ export const extractPdfWithGemini = onObjectFinalized(
             const fileSizeMB = stats.size / 1024 / 1024;
             console.log(`📥 [Extract] Downloaded file: ${fileSizeMB.toFixed(2)} MB`);
 
-            let extractedText: string;
-            let pageCount: number;
-            let extractionVersion: string;
+            // Definite-assignment: the cascade below always assigns these
+            // — either via a successful LlamaParse account, the Gemini
+            // fallback, or the pdf-parse last resort. TS can't narrow
+            // through the for-loop so we mark them definite to avoid
+            // forced sentinel values.
+            let extractedText!: string;
+            let pageCount!: number;
+            let extractionVersion!: string;
             let structuredMarkdown: string | null = null;
 
             // Honor the user's choice when they explicitly picked a tier
@@ -351,43 +356,65 @@ export const extractPdfWithGemini = onObjectFinalized(
             const requestedMode = resourceDoc.data()?.requestedExtractionMode as 'standard' | 'premium' | undefined;
             const userOptedOutOfPremium = requestedMode === 'standard';
 
-            // Pick a LlamaParse account from the multi-account pool (Hito 6).
-            // null when no account configured / has capacity → skip to Gemini.
-            let llamaSelected: Awaited<ReturnType<typeof selectLlamaParseAccount>> | null = null;
-            if (!userOptedOutOfPremium) {
+            // Resolve every eligible LlamaParse account upfront so the
+            // cascade can iterate them on per-account failure (rate limit,
+            // queue timeout, account-side error) before degrading to
+            // Gemini. Empty list when user opted into Standard, file
+            // exceeds LlamaParse's 100 MB cap, or no account is configured.
+            let llamaAccounts: SelectedLlamaParseAccount[] = [];
+            if (!userOptedOutOfPremium && stats.size <= MAX_LLAMAPARSE_FILE_SIZE) {
                 try {
-                    if (stats.size <= MAX_LLAMAPARSE_FILE_SIZE) {
-                        llamaSelected = await selectLlamaParseAccount();
-                    }
+                    llamaAccounts = await selectAllLlamaParseAccounts();
                 } catch (selectErr: any) {
-                    console.warn(`⚠️ [Extract] No LlamaParse account available: ${selectErr.message}`);
+                    console.warn(`⚠️ [Extract] LlamaParse account lookup failed: ${selectErr.message}`);
                 }
-            } else {
+            } else if (userOptedOutOfPremium) {
                 console.log(`📄 [Extract] User opted for STANDARD; skipping LlamaParse for resource ${resourceId}`);
             }
-            const canUseLlamaParse = llamaSelected !== null;
+            const canUseLlamaParse = llamaAccounts.length > 0;
+            // Track which account ultimately succeeded so we can record
+            // its usage after the cascade finishes. Also collected for
+            // structured-failure debugging.
+            let llamaSucceededOn: SelectedLlamaParseAccount | null = null;
+            const llamaErrors: Array<{ account: string; error: string }> = [];
 
             // Extraction priority:
-            //   1. LlamaParse (primary) — best structure/page preservation
-            //   2. Gemini 2.0 Flash (fallback) — reliable text extraction
-            //   3. pdf-parse (last resort) — local, free, basic
-            if (canUseLlamaParse && llamaSelected) {
-                const account = llamaSelected;
-                console.log(`🦙 [Extract] Using LlamaParse account ${account.accountId}`);
-                try {
-                    const result = await extractWithLlamaParse(tempFilePath, resourceId, account.apiKey);
-                    extractedText = result.text;
-                    pageCount = result.pageCount;
-                    structuredMarkdown = result.markdown;
-                    extractionVersion = '3.0-llamaparse';
-                    // Record account usage. Non-fatal if it fails — billing is the source of truth.
+            //   1. LlamaParse (primary) — best structure/page preservation.
+            //      Tries every eligible account before degrading.
+            //   2. Gemini 2.5 Flash (fallback) — reliable text extraction.
+            //   3. pdf-parse (last resort) — local, free, basic.
+            if (canUseLlamaParse) {
+                for (const account of llamaAccounts) {
+                    console.log(`🦙 [Extract] Trying LlamaParse account ${account.accountId} (${account.availableCredits} credits available)`);
                     try {
-                        await recordLlamaParseUsage(account.accountId, result.pageCount);
+                        const result = await extractWithLlamaParse(tempFilePath, resourceId, account.apiKey);
+                        extractedText = result.text;
+                        pageCount = result.pageCount;
+                        structuredMarkdown = result.markdown;
+                        extractionVersion = '3.0-llamaparse';
+                        llamaSucceededOn = account;
+                        break; // Success — stop trying other accounts.
+                    } catch (llamaError: any) {
+                        const msg = llamaError?.message ?? String(llamaError);
+                        console.warn(`⚠️ [Extract] LlamaParse account ${account.accountId} failed: ${msg}`);
+                        llamaErrors.push({ account: account.accountId, error: msg });
+                        // Loop continues — try next account.
+                    }
+                }
+
+                if (llamaSucceededOn) {
+                    // Non-fatal usage record; billing is the source of truth.
+                    try {
+                        await recordLlamaParseUsage(llamaSucceededOn.accountId, pageCount!);
                     } catch (usageErr: any) {
                         console.warn(`[Extract] Account usage update skipped: ${usageErr.message}`);
                     }
-                } catch (llamaError) {
-                    console.warn(`⚠️ [Extract] LlamaParse failed, falling back to Gemini:`, llamaError);
+                } else {
+                    // Every LlamaParse account failed. Degrade to Gemini
+                    // (or pdf-parse if Gemini can't handle the size).
+                    console.warn(
+                        `⚠️ [Extract] All ${llamaAccounts.length} LlamaParse account(s) failed; falling back to Gemini. Errors: ${JSON.stringify(llamaErrors)}`,
+                    );
                     if (stats.size <= MAX_GEMINI_FILE_SIZE && stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES) {
                         try {
                             const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());

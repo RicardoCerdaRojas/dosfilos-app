@@ -27,42 +27,60 @@ export interface SelectedLlamaParseAccount {
 
 /**
  * Picks the next LlamaParse account to use for an extraction.
- *
- * Strategy:
- *   1. Read every doc in `config/llamaparseAccounts`.
- *   2. Filter to `active === true` and `available > pages`.
- *   3. Sort by `priority` asc, breaking ties by lowest `creditsUsed` (so we
- *      drain a single account before rotating — easier to audit billing).
- *   4. Resolve the API key via `process.env[apiKeySecretEnv]`.
- *   5. Return the first whose secret is actually present in the runtime env.
- *
- * Falls back to legacy `LLAMAPARSE_API_KEY` env var (single-account world)
- * when the collection is empty — keeps existing deployments working without a
- * Firestore migration.
+ * Convenience wrapper over `selectAllLlamaParseAccounts` that returns
+ * the first (highest-priority) eligible account.
  */
 export async function selectLlamaParseAccount(
     pagesEstimate: number = 1,
 ): Promise<SelectedLlamaParseAccount> {
+    const all = await selectAllLlamaParseAccounts(pagesEstimate);
+    if (all.length === 0) {
+        throw new Error(
+            `No LlamaParse account with capacity for ${pagesEstimate} pages.`,
+        );
+    }
+    return all[0];
+}
+
+/**
+ * Returns ALL eligible LlamaParse accounts ordered by priority, so the
+ * caller can iterate and try the next one when an upload/poll fails on
+ * the first. This is what powers the "try every account before
+ * degrading to Gemini" loop in `extractPdfWithGemini`.
+ *
+ * Strategy:
+ *   1. Read every doc in the `llamaparseAccounts` collection.
+ *   2. Filter to `active === true` AND `available >= pagesEstimate`.
+ *   3. Sort by `priority` asc, breaking ties by lowest `creditsUsed` (so
+ *      we drain a single account before rotating — easier to audit
+ *      billing).
+ *   4. Resolve the API key via `process.env[apiKeySecretEnv]`. Skip
+ *      accounts whose secret is missing or has invalid characters.
+ *
+ * Falls back to a synthetic single-element list built from the legacy
+ * `LLAMAPARSE_API_KEY` env var when the collection is empty — keeps
+ * existing deployments working without a Firestore migration.
+ *
+ * Returns an empty array (NOT throws) when nothing is eligible — the
+ * caller decides whether absence is fatal or just "go to Gemini".
+ */
+export async function selectAllLlamaParseAccounts(
+    pagesEstimate: number = 1,
+): Promise<SelectedLlamaParseAccount[]> {
     const db = getFirestore();
-    // Stored as a top-level `llamaparseAccounts` collection (one doc per
-    // account). The roadmap originally proposed `config/llamaparseAccounts/{id}`
-    // but Firestore's `config/{name}` is a single-document path, not a
-    // collection; promoting to a top-level collection is the correct shape.
     const accounts = await loadAccounts(db);
 
     if (accounts.length === 0) {
-        const legacyKey = process.env.LLAMAPARSE_API_KEY;
-        if (legacyKey) {
-            return {
+        const legacyKey = process.env.LLAMAPARSE_API_KEY?.trim();
+        if (legacyKey && !/[\r\n\0]/.test(legacyKey)) {
+            return [{
                 accountId: 'legacy-default',
                 accountName: 'Legacy default (LLAMAPARSE_API_KEY)',
                 apiKey: legacyKey,
                 availableCredits: Number.MAX_SAFE_INTEGER,
-            };
+            }];
         }
-        throw new Error(
-            'No LlamaParse accounts configured. Either seed `llamaparseAccounts` or set LLAMAPARSE_API_KEY.',
-        );
+        return [];
     }
 
     const eligible = accounts
@@ -72,6 +90,7 @@ export async function selectLlamaParseAccount(
             return a.creditsUsed - b.creditsUsed;
         });
 
+    const resolved: SelectedLlamaParseAccount[] = [];
     for (const account of eligible) {
         const rawKey = process.env[account.apiKeySecretEnv];
         // Defensive: trim whitespace AND reject keys with characters
@@ -95,18 +114,14 @@ export async function selectLlamaParseAccount(
             );
             continue;
         }
-        return {
+        resolved.push({
             accountId: account.id,
             accountName: account.name,
             apiKey,
             availableCredits: account.creditsLimit - account.creditsUsed,
-        };
+        });
     }
-
-    throw new Error(
-        `No LlamaParse account with capacity for ${pagesEstimate} pages. Configured accounts: ${accounts.length}, eligible: ${eligible.length}.`,
-    );
-    // Unreachable fallback to satisfy older TS targets without `never`.
+    return resolved;
 }
 
 /**
