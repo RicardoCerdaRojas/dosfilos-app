@@ -90,15 +90,49 @@ function cleanPdfText(text: string): string {
 }
 
 /**
- * Extract text using pdf-parse (fallback for large files)
+ * Extract text using pdf-parse (last-resort fallback).
+ *
+ * Returns `text` with `[PAGE N]` markers AND `markdown` with the
+ * `<!-- page: N -->` contract that the indexer expects — so even
+ * pdf-parse output is fully auto-indexable. Page boundaries come from:
+ *   1. Form-feed characters (`\f`) inserted by pdf-parse between pages
+ *      when the source PDF has clean page structure.
+ *   2. Equal-segment fallback (text length / numpages) when form-feeds
+ *      are missing — citations from these chunks have approximate page
+ *      numbers, but a searchable resource with off-by-1 citations beats
+ *      "Por procesar" forever.
  */
-async function extractWithPdfParse(buffer: Buffer): Promise<{ text: string; pageCount: number }> {
+async function extractWithPdfParse(buffer: Buffer): Promise<{
+    text: string;
+    markdown: string;
+    pageCount: number;
+}> {
     const pdfData = await pdfParse(buffer);
-    const cleanedText = cleanPdfText(pdfData.text);
-    return {
-        text: cleanedText,
-        pageCount: pdfData.numpages
-    };
+    const numpages = Math.max(1, pdfData.numpages);
+    const rawText = pdfData.text ?? '';
+
+    // Split into per-page strings — prefer form-feed boundaries (pdf-parse
+    // inserts `\f` between pages on most PDFs). When the count doesn't
+    // match `numpages` we fall back to equal-segment splitting so the
+    // page numbers remain approximately right.
+    let pageTexts: string[] = rawText.split('\f');
+    if (pageTexts.length !== numpages) {
+        const segmentLen = Math.ceil(rawText.length / numpages);
+        pageTexts = [];
+        for (let i = 0; i < numpages; i++) {
+            pageTexts.push(rawText.substring(i * segmentLen, (i + 1) * segmentLen));
+        }
+    }
+
+    // Clean each page independently (preserves the per-page structure so
+    // line-end / multi-space normalization doesn't bleed across pages).
+    const cleanedPages = pageTexts.map(t => cleanPdfText(t));
+    const text = cleanedPages.map((p, i) => `[PAGE ${i + 1}]\n${p}`).join('\n\n');
+    const markdown = cleanedPages
+        .map((p, i) => `<!-- page: ${i + 1} -->\n${p}`)
+        .join('\n\n---\n\n');
+
+    return { text, markdown, pageCount: numpages };
 }
 
 /**
@@ -427,7 +461,8 @@ export const extractPdfWithGemini = onObjectFinalized(
                             const result = await extractWithPdfParse(buffer);
                             extractedText = result.text;
                             pageCount = result.pageCount;
-                            extractionVersion = 'fallback-pdfparse';
+                            structuredMarkdown = result.markdown;
+                            extractionVersion = '5.0-pdfparse-structured';
                         }
                     } else {
                         // Either >50MB (Gemini hard size limit) or >12MB
@@ -440,7 +475,8 @@ export const extractPdfWithGemini = onObjectFinalized(
                         const result = await extractWithPdfParse(buffer);
                         extractedText = result.text;
                         pageCount = result.pageCount;
-                        extractionVersion = 'fallback-pdfparse';
+                        structuredMarkdown = result.markdown;
+                        extractionVersion = '5.0-pdfparse-structured';
                     }
                 }
             } else if (
@@ -465,7 +501,8 @@ export const extractPdfWithGemini = onObjectFinalized(
                     const result = await extractWithPdfParse(buffer);
                     extractedText = result.text;
                     pageCount = result.pageCount;
-                    extractionVersion = 'fallback-pdfparse';
+                    structuredMarkdown = result.markdown;
+                    extractionVersion = '5.0-pdfparse-structured';
                 }
             } else {
                 console.log(`📄 [Extract] Using pdf-parse (file > 100MB or no LlamaParse)`);
@@ -473,7 +510,8 @@ export const extractPdfWithGemini = onObjectFinalized(
                 const result = await extractWithPdfParse(buffer);
                 extractedText = result.text;
                 pageCount = result.pageCount;
-                extractionVersion = 'fallback-pdfparse';
+                structuredMarkdown = result.markdown;
+                extractionVersion = '5.0-pdfparse-structured';
             }
 
             const usedGemini = extractionVersion === '2.0-gemini';
@@ -531,10 +569,10 @@ export const extractPdfWithGemini = onObjectFinalized(
                     : 'Premium no estuvo disponible';
                 if (extractionVersion === '2.0-gemini') {
                     extractionWarning = `${accountSummary}; usamos Estándar (Gemini).`;
-                } else if (extractionVersion === 'fallback-pdfparse') {
+                } else if (extractionVersion === '5.0-pdfparse-structured') {
                     extractionWarning = `${accountSummary} y Gemini tampoco pudo procesar; usamos Básico (pdf-parse). Reprocesa con Premium para mejor calidad.`;
                 }
-            } else if (requestedMode === 'standard' && extractionVersion === 'fallback-pdfparse') {
+            } else if (requestedMode === 'standard' && extractionVersion === '5.0-pdfparse-structured') {
                 extractionWarning = 'Gemini falló; usamos Básico (pdf-parse). Considera reprocesar.';
             }
             // Note: requestedMode === undefined (legacy uploads) gets no

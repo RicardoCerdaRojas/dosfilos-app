@@ -66,7 +66,7 @@ export const indexStructuredDocument = onCall<IndexRequest>(
         // Preconditions: indexer expects a `structured.md` produced by either
         // extraction path (premium = LlamaParse, standard = Gemini). Both emit
         // the same `<!-- page: N -->` markdown contract.
-        const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard'];
+        const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
         if (!SUPPORTED_VERSIONS.includes(data.extractionVersion)) {
             throw new HttpsError(
                 'failed-precondition',

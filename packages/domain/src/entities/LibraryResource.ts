@@ -16,14 +16,20 @@ export type TextExtractionStatus = 'pending' | 'processing' | 'ready' | 'failed'
 /**
  * Which extractor produced the text content.
  * - '3.0-llamaparse': Primary, best quality (structured pages, preserves Greek/Hebrew/tables)
- * - '4.0-gemini-standard': Standard tier, Gemini 2.0 Flash with the same `<!-- page: N -->`
+ * - '4.0-gemini-standard': Standard tier, Gemini Flash with the same `<!-- page: N -->`
  *   contract as LlamaParse — eligible for the auto-index trigger.
+ * - '5.0-pdfparse-structured': Last-resort pdf-parse output enriched with synthetic
+ *   page markers (form-feed boundaries or equal-segment splitting). Eligible for
+ *   the auto-index trigger so the user always ends up with searchable content
+ *   even when both premium engines fail.
  * - '2.0-gemini': Legacy Gemini extraction, predates the structured contract.
- * - 'fallback-pdfparse': Last resort, local pdf-parse library.
+ * - 'fallback-pdfparse': Legacy pdf-parse output without page markers; not
+ *   auto-indexable. Pre-v5 uploads only.
  */
 export type ExtractionVersion =
     | '3.0-llamaparse'
     | '4.0-gemini-standard'
+    | '5.0-pdfparse-structured'
     | '2.0-gemini'
     | 'fallback-pdfparse';
 

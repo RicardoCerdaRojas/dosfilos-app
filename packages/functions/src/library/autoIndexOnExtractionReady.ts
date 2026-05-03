@@ -38,9 +38,13 @@ export const autoIndexOnExtractionReady = onDocumentUpdated(
         // Trigger conditions — all must be true
         const wasNotReady = before.textExtractionStatus !== 'ready';
         const isNowReady = after.textExtractionStatus === 'ready';
-        // Either extraction path (LlamaParse premium or Gemini standard) emits
-        // the same `<!-- page: N -->` markdown contract that the indexer needs.
-        const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard'];
+        // All three extraction paths (LlamaParse premium, Gemini standard,
+        // pdf-parse last-resort fallback) emit the same `<!-- page: N -->`
+        // markdown contract that the indexer needs. The pdf-parse output
+        // synthesizes page markers from form-feed boundaries (or equal-
+        // segment splitting when those aren't available) so the user
+        // gets indexed content even when both premium engines fail.
+        const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
         const isStructuredExtraction = SUPPORTED_VERSIONS.includes(after.extractionVersion);
         const hasStructuredContent = !!after.structuredContentUrl;
         const INDEXER_VERSION_CURRENT = '2.0-structured';

@@ -269,7 +269,7 @@ export class LibraryService {
      */
     getResourceIndexStatus(resource: LibraryResource): ResourceIndexStatus {
         const INDEXER_VERSION_CURRENT = '2.0-structured';
-        const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = ['3.0-llamaparse', '4.0-gemini-standard'];
+        const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
 
         if (resource.textExtractionStatus === 'failed') return 'failed';
         if (resource.textExtractionStatus === 'pending'
