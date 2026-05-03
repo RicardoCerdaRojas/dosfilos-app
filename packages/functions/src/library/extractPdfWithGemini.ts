@@ -62,19 +62,6 @@ async function extractWithLlamaParse(
     return { text, markdown, pageCount: result.pages.length };
 }
 
-interface PageData {
-    pageNumber: number;
-    text: string;
-}
-
-interface ExtractionResult {
-    success: boolean;
-    totalPages: number;
-    pages: PageData[];
-    detectedTitle?: string | null;
-    detectedAuthor?: string | null;
-}
-
 /**
  * Clean up text extracted by pdf-parse
  * Fixes common issues like words stuck together
@@ -136,13 +123,34 @@ async function extractWithPdfParse(buffer: Buffer): Promise<{
 }
 
 /**
- * Extract text using Gemini (for files under 50MB)
+ * Extract text using Gemini Files API.
+ *
+ * Returns the same `{ text, markdown, pageCount }` contract as
+ * `extractWithLlamaParse` so the cascade can drop either result into
+ * `structuredContentUrl` and the auto-indexer picks it up. The
+ * resulting extractionVersion is `4.0-gemini-standard`, which IS in
+ * the indexer's SUPPORTED_VERSIONS — so a successful Gemini run
+ * auto-indexes immediately.
+ *
+ * Robustness improvements over the legacy implementation:
+ *   - `responseMimeType: 'application/json'` forces strict JSON output
+ *     (no markdown code-fence wrapping) so we don't hit the
+ *     "Failed to parse Gemini response as JSON" path that bit the
+ *     WBC upload (Gemini wrapped a 378-page response in ```json fences,
+ *     and the manual fence-stripping was fragile).
+ *   - `maxOutputTokens: 65536` (the model's documented max) so the
+ *     JSON doesn't truncate mid-page on long commentaries.
+ *   - Tighter prompt with `pages: [{ page, text, md }]` schema —
+ *     smaller per-element overhead, more pages fit per response.
+ *   - Clear truncation-detection: if Gemini returns 0 pages or
+ *     finishes mid-array, we throw so the cascade falls to pdf-parse
+ *     (which now produces auto-indexable output anyway).
  */
 async function extractWithGemini(
     tempFilePath: string,
     resourceId: string,
-    apiKey: string
-): Promise<{ text: string; pageCount: number; pages?: PageData[] }> {
+    apiKey: string,
+): Promise<{ text: string; markdown: string; pageCount: number }> {
     const genAI = new GoogleGenerativeAI(apiKey);
     const fileManager = new GoogleAIFileManager(apiKey);
 
@@ -152,57 +160,53 @@ async function extractWithGemini(
         displayName: `${resourceId}.pdf`,
     });
 
-    // Wait for file to be processed
+    // Wait for file to be processed (Gemini converts the PDF before
+    // the model can read it — non-trivial for big files).
     let geminiFile = await fileManager.getFile(uploadResult.file.name);
+    const fileReadyDeadline = Date.now() + 5 * 60 * 1000;
     while (geminiFile.state === FileState.PROCESSING) {
-        console.log(`⏳ [Gemini] File still processing...`);
+        if (Date.now() > fileReadyDeadline) {
+            throw new Error('Gemini file processing exceeded 5 minutes');
+        }
         await new Promise(resolve => setTimeout(resolve, 5000));
         geminiFile = await fileManager.getFile(uploadResult.file.name);
     }
-
     if (geminiFile.state === FileState.FAILED) {
         throw new Error('Gemini file processing failed');
     }
-
     console.log(`✅ [Gemini] File ready: ${geminiFile.displayName}`);
 
-    // Extract text using Gemini
     // Was 'gemini-2.0-flash' until Google deprecated it for new users
     // (404 Not Found, May 2026). Bumped to the live successor.
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: {
+            responseMimeType: 'application/json',
+            maxOutputTokens: 65536,
+        },
+    });
 
-    const extractionPrompt = `
-Eres un experto en extracción de texto de documentos académicos y teológicos.
+    const prompt = `Extrae el texto completo de este PDF página por página.
 
-TAREA: Extrae TODO el texto de este PDF de forma estructurada y limpia.
+Reglas:
+1. Una entrada por página física. Conserva los números de página reales del PDF.
+2. Preserva la estructura: encabezados con # / ## (markdown), párrafos separados, listas con -.
+3. Preserva con precisión caracteres griegos (α-ω) y hebreos (א-ת).
+4. No traduzcas términos teológicos ni citas bíblicas.
+5. Mantén tablas en formato markdown cuando aparezcan.
+6. NO incluyas el número de página en el contenido (lo capturamos en el campo aparte).
 
-REGLAS:
-1. Preserva la estructura de párrafos (líneas en blanco entre párrafos)
-2. Mantén títulos y subtítulos en líneas separadas
-3. NO incluyas números de página en el texto
-4. Limpia errores de OCR obvios
-5. Preserva citas bíblicas exactamente como aparecen
-6. Mantén términos teológicos correctamente escritos
-
-FORMATO DE SALIDA (JSON estricto):
+Devuelve JSON con esta estructura exacta:
 {
-  "success": true,
-  "totalPages": <número>,
   "pages": [
-    {
-      "pageNumber": 1,
-      "text": "Texto limpio de la página 1..."
-    }
-  ],
-  "detectedTitle": "Título del libro si se detecta o null",
-  "detectedAuthor": "Autor si se detecta o null"
+    { "page": 1, "text": "texto plano", "md": "texto en markdown" }
+  ]
 }
 
-IMPORTANTE: Responde SOLO con JSON válido, sin markdown ni explicaciones.
-`;
+Si una página está vacía, devuelve string vacío en text/md pero conserva la entrada para no romper la numeración.`;
 
     const result = await model.generateContent([
-        extractionPrompt,
+        prompt,
         {
             fileData: {
                 mimeType: geminiFile.mimeType!,
@@ -210,62 +214,40 @@ IMPORTANTE: Responde SOLO con JSON válido, sin markdown ni explicaciones.
             },
         },
     ]);
-
     const responseText = result.response.text();
 
-    // Parse JSON response
-    let extractedData: ExtractionResult;
+    let parsed: { pages?: Array<{ page: number; text?: string; md?: string }> };
     try {
-        // More robust cleanup of various response formats
-        let cleanJson = responseText.trim();
-
-        // Remove ```json or ``` at the start
-        if (cleanJson.startsWith('```json')) {
-            cleanJson = cleanJson.slice(7);
-        } else if (cleanJson.startsWith('```')) {
-            cleanJson = cleanJson.slice(3);
-        }
-
-        // Remove standalone 'json' prefix (without backticks)
-        if (cleanJson.startsWith('json')) {
-            cleanJson = cleanJson.slice(4);
-        }
-
-        // Remove ``` at the end
-        if (cleanJson.endsWith('```')) {
-            cleanJson = cleanJson.slice(0, -3);
-        }
-
-        cleanJson = cleanJson.trim();
-
-        // Try to find JSON object if response has extra text
-        if (!cleanJson.startsWith('{')) {
-            const jsonStart = cleanJson.indexOf('{');
-            const jsonEnd = cleanJson.lastIndexOf('}');
-            if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-                cleanJson = cleanJson.substring(jsonStart, jsonEnd + 1);
-            }
-        }
-
-        extractedData = JSON.parse(cleanJson) as ExtractionResult;
+        parsed = JSON.parse(responseText);
     } catch (parseError) {
-        console.error('❌ [Gemini] Failed to parse JSON response:', responseText.substring(0, 500));
+        // With responseMimeType=application/json this path is rare —
+        // when it fires, log a slice for debugging but throw to fall
+        // back. The pdf-parse fallback now produces auto-indexable
+        // output so the user still ends up with searchable content.
+        console.error('❌ [Gemini] JSON parse failed even with strict mime type:', responseText.substring(0, 500));
         throw new Error('Failed to parse Gemini response as JSON');
     }
 
-    // Cleanup Gemini file
-    await fileManager.deleteFile(geminiFile.name);
+    if (!parsed.pages || !Array.isArray(parsed.pages) || parsed.pages.length === 0) {
+        throw new Error('Gemini returned no pages');
+    }
 
-    // Combine pages with markers
-    const fullText = extractedData.pages
-        ?.map((p: PageData) => `[PAGE ${p.pageNumber}]\n${p.text}`)
-        .join('\n\n') || '';
+    // Best-effort cleanup of the Gemini file to avoid quota waste.
+    try { await fileManager.deleteFile(geminiFile.name); } catch { /* ignore */ }
 
-    return {
-        text: fullText,
-        pageCount: extractedData.totalPages,
-        pages: extractedData.pages
-    };
+    const pages = parsed.pages.map((p, idx) => ({
+        page: typeof p.page === 'number' ? p.page : idx + 1,
+        text: p.text ?? '',
+        md: p.md,
+    }));
+
+    // Use the existing LlamaParse formatters so the chunker downstream
+    // sees the identical `<!-- page: N -->` contract regardless of
+    // which engine produced the content.
+    const text = pagesToMarkedText(pages);
+    const markdown = pagesToMarkdown(pages);
+
+    return { text, markdown, pageCount: pages.length };
 }
 
 /**
@@ -454,7 +436,8 @@ export const extractPdfWithGemini = onObjectFinalized(
                             const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
                             extractedText = result.text;
                             pageCount = result.pageCount;
-                            extractionVersion = '2.0-gemini';
+                            structuredMarkdown = result.markdown;
+                            extractionVersion = '4.0-gemini-standard';
                         } catch (geminiError) {
                             console.warn(`⚠️ [Extract] Gemini also failed, using pdf-parse:`, geminiError);
                             const buffer = fs.readFileSync(tempFilePath);
@@ -494,7 +477,8 @@ export const extractPdfWithGemini = onObjectFinalized(
                     const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
                     extractedText = result.text;
                     pageCount = result.pageCount;
-                    extractionVersion = '2.0-gemini';
+                    structuredMarkdown = result.markdown;
+                    extractionVersion = '4.0-gemini-standard';
                 } catch (geminiError) {
                     console.warn(`⚠️ [Extract] Gemini failed, falling back to pdf-parse:`, geminiError);
                     const buffer = fs.readFileSync(tempFilePath);
@@ -514,7 +498,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                 extractionVersion = '5.0-pdfparse-structured';
             }
 
-            const usedGemini = extractionVersion === '2.0-gemini';
+            const usedGemini = extractionVersion === '4.0-gemini-standard' || extractionVersion === '2.0-gemini';
             const usedLlamaParse = extractionVersion === '3.0-llamaparse';
 
             console.log(`📝 [Extract] Extracted ${extractedText.length} characters from ${pageCount} pages`);
@@ -567,7 +551,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                 const accountSummary = llamaErrors.length > 0
                     ? `Premium falló en ${llamaErrors.length} cuenta(s)`
                     : 'Premium no estuvo disponible';
-                if (extractionVersion === '2.0-gemini') {
+                if (extractionVersion === '4.0-gemini-standard' || extractionVersion === '2.0-gemini') {
                     extractionWarning = `${accountSummary}; usamos Estándar (Gemini).`;
                 } else if (extractionVersion === '5.0-pdfparse-structured') {
                     extractionWarning = `${accountSummary} y Gemini tampoco pudo procesar; usamos Básico (pdf-parse) sin cobro. Reprocesa con Premium para mejor calidad.`;
