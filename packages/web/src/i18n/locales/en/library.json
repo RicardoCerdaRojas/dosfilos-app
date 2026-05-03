@@ -46,9 +46,9 @@
         "fileSizeWarning": "File >50MB: extraction quality may be reduced",
         "modeLabel": "Processing mode",
         "modeStandardTitle": "Standard",
-        "modeStandardDescription": "Narrative books, essays and sermons. Consumes standard pages.",
+        "modeStandardDescription": "Narrative books, essays and sermons (up to ~1000 pages). Consumes standard pages.",
         "modePremiumTitle": "Premium",
-        "modePremiumDescription": "Tables, multi-column and scanned (Greek/Hebrew text, critical apparatus). Consumes premium pages."
+        "modePremiumDescription": "Tables, multi-column and scanned (no page limit). Consumes premium pages."
     },
     "filters": {
         "searchPlaceholder": "Search title or author",
@@ -183,8 +183,8 @@
         "subtitle": "Available balance for document extraction",
         "standard": "Standard",
         "premium": "Premium",
-        "standardHelp": "Narrative books, essays and sermons",
-        "premiumHelp": "Tables, multi-column and scanned",
+        "standardHelp": "Narrative books, essays and sermons (up to ~1000 pages)",
+        "premiumHelp": "Tables, multi-column and scanned (no page limit)",
         "split": "Plan: {{plan}} · Packs: {{pack}}",
         "buyButton": "Buy pages",
         "loading": "Loading balance…",
