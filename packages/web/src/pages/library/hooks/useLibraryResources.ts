@@ -19,6 +19,7 @@ export type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
 const AUTO_INDEXED_VERSIONS = new Set<string>([
     '3.0-llamaparse',
     '4.0-gemini-standard',
+    '5.0-pdfparse-structured',
 ]);
 
 interface UseLibraryResourcesResult {
