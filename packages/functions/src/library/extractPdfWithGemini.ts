@@ -416,8 +416,17 @@ export const extractPdfWithGemini = onObjectFinalized(
                         extractionVersion = 'fallback-pdfparse';
                     }
                 }
-            } else if (stats.size <= MAX_GEMINI_FILE_SIZE && stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES) {
-                console.log(`🤖 [Extract] Using Gemini (no LlamaParse key or file size limit)`);
+            } else if (
+                stats.size <= MAX_GEMINI_FILE_SIZE &&
+                // The 12MB heuristic exists to avoid a guaranteed 400 from
+                // Gemini's 1000-page cap on text-heavy academic books. When
+                // the user explicitly opts into Standard, they're telling
+                // us "Gemini is fine" — we should at least try it. Worst
+                // case Gemini returns "exceeds the supported page limit"
+                // and the catch below falls to pdf-parse anyway.
+                (userOptedOutOfPremium || stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES)
+            ) {
+                console.log(`🤖 [Extract] Using Gemini (${userOptedOutOfPremium ? 'user opted standard' : 'no LlamaParse key or file size limit'})`);
                 try {
                     const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
                     extractedText = result.text;
