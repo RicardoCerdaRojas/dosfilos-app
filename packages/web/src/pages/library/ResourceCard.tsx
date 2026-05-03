@@ -31,11 +31,23 @@ interface ResourceCardProps {
      * chunk cleanup + Firestore doc delete cascade runs.
      */
     isDeleting?: boolean;
+    /**
+     * True while a "Reintentar Premium" request is in flight for this
+     * card. Spinner replaces the action icon so the user has feedback
+     * during the long-running LlamaParse extraction (1-15 min).
+     */
+    isRetryingPremium?: boolean;
     viewMode?: ViewMode;
     onEdit: () => void;
     onDelete: () => void;
     onIndex: () => void;
     onReindex?: () => void;
+    /**
+     * Triggered by the user when the cascade degraded from their
+     * requested Premium tier (engine badge shows the warning amber).
+     * Optional — when not provided the action is not rendered.
+     */
+    onRetryPremium?: () => void;
     onPreview: () => void;
     onSetPhases?: () => void;
     onConfigureCoreStores?: () => void; // Admin: assigns the resource to Core Library stores
@@ -104,11 +116,13 @@ export function ResourceCard({
     indexStatus,
     isIndexing,
     isDeleting = false,
+    isRetryingPremium = false,
     viewMode = 'grid',
     onEdit,
     onDelete,
     onIndex,
     onReindex,
+    onRetryPremium,
     onPreview,
     onSetPhases,
     onConfigureCoreStores,
@@ -148,11 +162,31 @@ export function ResourceCard({
 
     const StatusIcon = statusPill?.icon;
 
+    // Premium-degradation surface: when the cascade ended up below the
+    // user's requested tier, the cloud function writes
+    // `extractionWarning` to the resource. We hoist the read here so
+    // BOTH the inline action button and the engine-badge tooltip below
+    // can use the same value.
+    const extractionWarning = (resource as { extractionWarning?: string | null }).extractionWarning;
+    const canRetryPremium = !!extractionWarning && !!onRetryPremium && resource.textExtractionStatus === 'ready';
+
     // ── Inline action buttons (visible) — kept to a max of three per card so the
     //    visual weight of each card stays controlled. The overflow menu below
     //    holds the rest.
     const inlineActions = (
         <>
+            {canRetryPremium && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-warning-subtle-foreground hover:text-warning"
+                    onClick={onRetryPremium}
+                    disabled={isRetryingPremium}
+                    title={t('card.actions.retryPremium')}
+                >
+                    {isRetryingPremium ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                </Button>
+            )}
             <Button
                 variant="ghost"
                 size="sm"
@@ -289,24 +323,22 @@ export function ResourceCard({
                 return null;
         }
     })();
-    // When the cascade degraded from the user's requested tier the
-    // pipeline writes `extractionWarning` to the resource. Override the
-    // badge tone (warning amber) and tooltip so the user understands
-    // why their Premium upload ended up here. Tooltip wins over the
-    // generic engine hint because the warning is more actionable.
-    const warningOverride = (resource as { extractionWarning?: string | null }).extractionWarning;
+    // Engine badge picks up the hoisted `extractionWarning` (defined
+    // near the inline actions so the retry button can use it too).
+    // When set, tooltip wins over the generic engine hint because the
+    // warning is more actionable.
     const EngineIcon = enginePill?.icon;
     const engineBadge = enginePill && EngineIcon ? (
         <span
             className={cn(
                 'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-                warningOverride
+                extractionWarning
                     ? 'bg-warning-subtle text-warning-subtle-foreground border border-warning/40'
                     : enginePill.tone,
             )}
-            title={warningOverride || enginePill.title}
+            title={extractionWarning || enginePill.title}
         >
-            {warningOverride ? (
+            {extractionWarning ? (
                 <AlertCircle className="h-2.5 w-2.5" />
             ) : (
                 <EngineIcon className="h-2.5 w-2.5" />

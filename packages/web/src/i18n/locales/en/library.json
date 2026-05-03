@@ -75,6 +75,7 @@
             "edit": "Edit metadata",
             "process": "Process",
             "reprocess": "Reprocess",
+            "retryPremium": "Retry with Premium",
             "moreActions": "More actions",
             "configurePhases": "Configure phases",
             "assignToCore": "Assign to Core",
@@ -223,6 +224,11 @@
         "noUnindexed": "No documents to process",
         "processingComplete": "Processing completed with {{count}} errors. {{chunks}} fragments created.",
         "processingSuccess": "Library ready: {{chunks}} fragments created",
-        "processingError": "Error processing library"
+        "processingError": "Error processing library",
+        "retryPremiumLoading": "Retrying extraction with Premium…",
+        "retryPremiumSuccess": "Done: extracted with Premium",
+        "retryPremiumNoBalance": "You don't have enough Premium pages to retry",
+        "retryPremiumDenied": "You can only retry your own resources",
+        "retryPremiumError": "Error retrying with Premium"
     }
 }

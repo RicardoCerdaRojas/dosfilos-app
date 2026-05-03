@@ -75,6 +75,7 @@
             "edit": "Editar metadata",
             "process": "Procesar",
             "reprocess": "Reprocesar",
+            "retryPremium": "Reintentar con Premium",
             "moreActions": "Más acciones",
             "configurePhases": "Configurar fases",
             "assignToCore": "Asignar a Core",
@@ -223,6 +224,11 @@
         "noUnindexed": "No hay documentos por procesar",
         "processingComplete": "Procesamiento completado con {{count}} errores. {{chunks}} fragmentos creados.",
         "processingSuccess": "Biblioteca lista: {{chunks}} fragmentos creados",
-        "processingError": "Error al procesar la biblioteca"
+        "processingError": "Error al procesar la biblioteca",
+        "retryPremiumLoading": "Reintentando extracción con Premium…",
+        "retryPremiumSuccess": "Listo: extraído con Premium",
+        "retryPremiumNoBalance": "No tienes suficientes páginas Premium para reintentar",
+        "retryPremiumDenied": "Solo puedes reintentar tus propios recursos",
+        "retryPremiumError": "Error al reintentar con Premium"
     }
 }

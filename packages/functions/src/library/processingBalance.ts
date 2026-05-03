@@ -42,7 +42,7 @@ interface BalanceShape {
  * legacy shape (pre-refactor docs only had `*PagesAvailable` — treat as
  * pack so they survive the next plan renewal).
  */
-async function readBalance(userId: string): Promise<Required<Omit<BalanceShape, 'standardPagesAvailable' | 'premiumPagesAvailable'>> & {
+export async function readBalance(userId: string): Promise<Required<Omit<BalanceShape, 'standardPagesAvailable' | 'premiumPagesAvailable'>> & {
     standardPagesAvailable: number;
     premiumPagesAvailable: number;
 }> {

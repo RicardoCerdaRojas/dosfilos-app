@@ -23,6 +23,14 @@ interface UseResourceMutationsResult {
     deletingResourceId: string | null;
     /** Save resource metadata updates. Throws on error so caller can keep modal open. */
     saveResource: (id: string, updates: ResourceUpdates) => Promise<void>;
+    /**
+     * Re-runs LlamaParse extraction. Call when the card's extraction
+     * cascade degraded from the user's requested Premium tier so the
+     * user can retry without re-uploading.
+     */
+    retryWithPremium: (id: string) => Promise<void>;
+    /** Id of the resource currently being retried with Premium (spinner state). Null when none. */
+    retryingResourceId: string | null;
 }
 
 /**
@@ -47,6 +55,7 @@ interface UseResourceMutationsResult {
 export function useResourceMutations(): UseResourceMutationsResult {
     const { t } = useTranslation('library');
     const [deletingResourceId, setDeletingResourceId] = useState<string | null>(null);
+    const [retryingResourceId, setRetryingResourceId] = useState<string | null>(null);
 
     const deleteResource = useCallback(async (id: string) => {
         setDeletingResourceId(id);
@@ -72,5 +81,38 @@ export function useResourceMutations(): UseResourceMutationsResult {
         }
     }, [t]);
 
-    return { deleteResource, deletingResourceId, saveResource };
+    const retryWithPremium = useCallback(async (id: string) => {
+        setRetryingResourceId(id);
+        // Long-running call (1-15 min). Loading toast persists while we
+        // wait — sonner promise toast keeps the user informed without
+        // blocking the rest of the UI.
+        const promise = libraryService.retryWithPremium(id);
+        toast.promise(promise, {
+            loading: t('toast.retryPremiumLoading'),
+            success: t('toast.retryPremiumSuccess'),
+            // Surface the typed Cloud Function error code/message so
+            // "saldo insuficiente" / "no LlamaParse account" don't get
+            // hidden behind a generic toast.
+            error: (err: any) => {
+                const code = err?.code as string | undefined;
+                if (code === 'functions/resource-exhausted') {
+                    return err?.message ?? t('toast.retryPremiumNoBalance');
+                }
+                if (code === 'functions/permission-denied') {
+                    return t('toast.retryPremiumDenied');
+                }
+                return t('toast.retryPremiumError');
+            },
+        });
+        try {
+            await promise;
+        } catch {
+            // Already surfaced via toast.promise — swallow so the calling
+            // component doesn't need to wrap in its own try/catch.
+        } finally {
+            setRetryingResourceId(null);
+        }
+    }, [t]);
+
+    return { deleteResource, deletingResourceId, saveResource, retryWithPremium, retryingResourceId };
 }

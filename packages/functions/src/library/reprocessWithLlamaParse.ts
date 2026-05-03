@@ -5,8 +5,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
-import { consumePagesAdmin } from './processingBalance';
+import { consumePagesAdmin, readBalance } from './processingBalance';
 import { recordLlamaParseUsage, selectLlamaParseAccount } from './llamaParseAccountSelector';
+
+const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
 interface ReprocessRequest {
     resourceId: string;
@@ -15,10 +17,20 @@ interface ReprocessRequest {
 
 /**
  * Callable Cloud Function: re-extracts a single library_resource using LlamaParse.
- * - Admin-only
- * - Safe to call repeatedly (idempotent if force=false and already LlamaParse)
- * - Updates the resource with fresh textContent, structuredContentUrl, extractionVersion
- * - Marks needsReindex=true so RAG chunks can be regenerated
+ *
+ * Authorized callers:
+ *   - Admin (`ADMIN_EMAIL`) — for Core Library curation flows.
+ *   - The resource owner (`auth.uid === resource.userId`) — for the
+ *     user-facing "Reintentar Premium" action surfaced when the
+ *     extraction cascade degraded from the user's requested tier.
+ *
+ * Pre-conditions enforced before starting (so we fail fast instead of
+ * burning 5+ minutes on a doomed run):
+ *   - For non-admin callers: `processingBalance.premiumPagesAvailable`
+ *     must cover the resource's existing `pageCount` estimate.
+ *
+ * Safe to call repeatedly (idempotent when `force=false` and the
+ * resource is already on LlamaParse).
  */
 export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
     {
@@ -34,10 +46,58 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
         ],
     },
     async (request) => {
-        console.log(`[Reprocess] Called by ${request.auth?.token?.email ?? 'unauthenticated'}`);
+        const callerEmail = request.auth?.token?.email ?? 'unauthenticated';
+        const callerUid = request.auth?.uid;
+        console.log(`[Reprocess] Called by ${callerEmail} (uid=${callerUid?.substring(0, 8) ?? 'n/a'})`);
 
-        if (!request.auth || request.auth.token?.email !== 'rdocerda@gmail.com') {
-            throw new HttpsError('permission-denied', 'Only admin can reprocess documents');
+        if (!request.auth || !callerUid) {
+            throw new HttpsError('unauthenticated', 'Authentication required');
+        }
+
+        const { resourceId, force = false } = request.data;
+        if (!resourceId) throw new HttpsError('invalid-argument', 'resourceId is required');
+        console.log(`[Reprocess] Starting for resourceId=${resourceId}, force=${force}`);
+
+        const db = getFirestore();
+        const storage = getStorage();
+        const resourceRef = db.collection('library_resources').doc(resourceId);
+        const snap = await resourceRef.get();
+        if (!snap.exists) throw new HttpsError('not-found', `Resource ${resourceId} not found`);
+
+        const data = snap.data()!;
+
+        // Authorization: admin OR the resource owner.
+        const isAdmin = callerEmail === ADMIN_EMAIL;
+        const isOwner = data.userId === callerUid;
+        if (!isAdmin && !isOwner) {
+            throw new HttpsError('permission-denied', 'You can only reprocess your own resources');
+        }
+
+        if (!force && data.extractionVersion === '3.0-llamaparse') {
+            console.log(`[Reprocess] ${resourceId} already on LlamaParse. Skipping (use force=true to override).`);
+            return { success: true, skipped: true, reason: 'already-llamaparse' };
+        }
+
+        // Balance pre-check for non-admin callers. Admin reprocess is
+        // backed by the shared Core Library budget so it doesn't hit the
+        // user's quota. For users we estimate pages from the existing
+        // `pageCount` (set by the previous extractor) and refuse early
+        // if balance can't cover it. Estimate uses a 20% buffer because
+        // page counts can shift slightly between extractors.
+        if (!isAdmin) {
+            const estimate = Math.ceil((data.pageCount ?? 1) * 1.2);
+            const balance = await readBalance(callerUid);
+            if (balance.premiumPagesAvailable < estimate) {
+                throw new HttpsError(
+                    'resource-exhausted',
+                    `Saldo insuficiente: necesitas ~${estimate} páginas premium, tienes ${balance.premiumPagesAvailable}.`,
+                    {
+                        required: estimate,
+                        available: balance.premiumPagesAvailable,
+                    },
+                );
+            }
+            console.log(`[Reprocess] Balance check OK: ${balance.premiumPagesAvailable} premium available, ~${estimate} estimated`);
         }
 
         // Pick a LlamaParse account from the multi-account pool (Hito 6).
@@ -52,22 +112,6 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
         console.log(
             `[Reprocess] Using account ${selected.accountId} (${selected.accountName}); ${selected.availableCredits} credits available`,
         );
-
-        const { resourceId, force = false } = request.data;
-        if (!resourceId) throw new HttpsError('invalid-argument', 'resourceId is required');
-        console.log(`[Reprocess] Starting for resourceId=${resourceId}, force=${force}`);
-
-        const db = getFirestore();
-        const storage = getStorage();
-        const resourceRef = db.collection('library_resources').doc(resourceId);
-        const snap = await resourceRef.get();
-        if (!snap.exists) throw new HttpsError('not-found', `Resource ${resourceId} not found`);
-
-        const data = snap.data()!;
-        if (!force && data.extractionVersion === '3.0-llamaparse') {
-            console.log(`[Reprocess] ${resourceId} already on LlamaParse. Skipping (use force=true to override).`);
-            return { success: true, skipped: true, reason: 'already-llamaparse' };
-        }
 
         // Parse storageUrl — may be "gs://bucket/path" OR Firebase HTTPS download URL
         // HTTPS format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{url-encoded-path}?alt=media&token=...
@@ -135,6 +179,10 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
                 extractedWithLlamaParse: true,
                 extractedWithGemini: false,
                 extractionVersion: '3.0-llamaparse',
+                // Reprocess succeeded at Premium → clear any prior warning
+                // and error so the card stops showing the amber tooltip.
+                extractionWarning: null,
+                extractionError: null,
                 structuredContentUrl,
                 needsReindex: true,
                 wasTruncated,

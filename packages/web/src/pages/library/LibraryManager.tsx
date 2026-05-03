@@ -293,11 +293,13 @@ export function LibraryManager() {
                                 indexStatus={data.indexStatus[resource.id] || 'unknown'}
                                 isIndexing={processing.processingResourceId === resource.id}
                                 isDeleting={mutations.deletingResourceId === resource.id}
+                                isRetryingPremium={mutations.retryingResourceId === resource.id}
                                 viewMode={viewMode}
                                 onEdit={() => openEdit(resource)}
                                 onDelete={() => openDelete(resource)}
                                 onIndex={() => processing.processResource(resource)}
                                 onReindex={() => processing.reprocessResource(resource)}
+                                onRetryPremium={() => mutations.retryWithPremium(resource.id)}
                                 onPreview={() => window.open(resource.storageUrl, '_blank')}
                                 onSetPhases={() => openPhases(resource)}
                                 onConfigureCoreStores={isAdmin ? () => openCoreStores(resource) : undefined}

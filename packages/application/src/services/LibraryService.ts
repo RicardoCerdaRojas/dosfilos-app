@@ -13,6 +13,7 @@ import {
     FirestoreVectorRepository
 } from '@dosfilos/infrastructure';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { RAGService } from './RAGService';
 
 /**
@@ -289,6 +290,33 @@ export class LibraryService {
         onError?: (error: Error) => void
     ): () => void {
         return this.libraryRepository.subscribeToUserResources(userId, callback, onError);
+    }
+
+    /**
+     * Re-runs LlamaParse extraction on a resource the user owns. Used by
+     * the "Reintentar Premium" action in the card when the original
+     * extraction degraded from the user's requested tier (e.g. Premium →
+     * Standard because all LlamaParse accounts failed at upload time).
+     *
+     * The callable verifies ownership and pre-checks the user's premium
+     * page balance before starting, so callers don't need to do either —
+     * just await the promise and toast on the typed errors:
+     *   - 'resource-exhausted' → not enough premium pages
+     *   - 'permission-denied'  → not the owner (also catches admin gate)
+     *   - 'failed-precondition' → no LlamaParse account configured
+     *   - 'internal'           → LlamaParse cascade failed; message has details
+     *
+     * Returns the new pageCount so the caller can update local cache,
+     * but most consumers just rely on the Firestore listener to push
+     * the fresh state.
+     */
+    async retryWithPremium(resourceId: string): Promise<{ success: boolean; pageCount?: number; skipped?: boolean }> {
+        const fn = httpsCallable<
+            { resourceId: string; force: boolean },
+            { success: boolean; pageCount?: number; skipped?: boolean }
+        >(getFunctions(), 'reprocessWithLlamaParse', { timeout: 900_000 });
+        const result = await fn({ resourceId, force: true });
+        return result.data ?? { success: false };
     }
 
     async deleteResource(id: string): Promise<void> {
