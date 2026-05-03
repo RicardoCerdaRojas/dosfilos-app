@@ -75,50 +75,52 @@ export class LlamaParseClient {
 
     /**
      * Upload a PDF for parsing. Returns the job_id.
+     * Retries transient failures (429, 5xx, network) up to 2 times with
+     * exponential backoff. Safe to retry: no LlamaParse credits are
+     * billed until the upload succeeds (we get a job id back), so a
+     * retried upload simply re-attempts the same operation.
      */
     async uploadDocument(
         fileBuffer: Buffer,
         fileName: string,
         options: LlamaParseOptions = {}
     ): Promise<string> {
-        const form = new FormData();
-        const blob = new Blob([new Uint8Array(fileBuffer)], { type: 'application/pdf' });
-        form.append('file', blob, fileName);
+        const buildForm = () => {
+            const form = new FormData();
+            const blob = new Blob([new Uint8Array(fileBuffer)], { type: 'application/pdf' });
+            form.append('file', blob, fileName);
+            const mode = options.mode ?? 'fast';
+            if (mode === 'fast') form.append('fast_mode', 'true');
+            else if (mode === 'premium') form.append('premium_mode', 'true');
+            // 'balanced' = no flag (default LLM-based parsing)
+            if (options.language) form.append('language', options.language);
+            if (options.parsingInstruction) form.append('parsing_instruction', options.parsingInstruction);
+            return form;
+        };
 
-        // Use the widely-documented `fast_mode` flag — simplest & most reliable.
-        const mode = options.mode ?? 'fast';
-        if (mode === 'fast') {
-            form.append('fast_mode', 'true');
-        } else if (mode === 'premium') {
-            form.append('premium_mode', 'true');
-        }
-        // 'balanced' = no flag (default LLM-based parsing)
+        console.log(`[LlamaParse] Uploading "${fileName}" (${(fileBuffer.length / 1024 / 1024).toFixed(2)} MB) with mode=${options.mode ?? 'fast'}`);
 
-        if (options.language) {
-            form.append('language', options.language);
-        }
-        if (options.parsingInstruction) {
-            form.append('parsing_instruction', options.parsingInstruction);
-        }
-
-        console.log(`[LlamaParse] Uploading "${fileName}" (${(fileBuffer.length / 1024 / 1024).toFixed(2)} MB) with mode=${mode}`);
-
-        const res = await fetch(`${LLAMAPARSE_BASE_URL}/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
-                'Accept': 'application/json',
+        const json = await retryTransient(
+            async () => {
+                const res = await fetch(`${LLAMAPARSE_BASE_URL}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.apiKey}`,
+                        'Accept': 'application/json',
+                    },
+                    body: buildForm(),
+                });
+                if (!res.ok) {
+                    const body = await res.text();
+                    const err = new Error(`LlamaParse upload failed (${res.status}): ${body.substring(0, 500)}`);
+                    (err as any).status = res.status;
+                    throw err;
+                }
+                return await res.json() as { id: string; status?: string };
             },
-            body: form,
-        });
+            { label: '[LlamaParse:upload]' },
+        );
 
-        if (!res.ok) {
-            const body = await res.text();
-            console.error(`[LlamaParse] Upload failed. Status: ${res.status}. Body: ${body}`);
-            throw new Error(`LlamaParse upload failed (${res.status}): ${body.substring(0, 500)}`);
-        }
-
-        const json = await res.json() as { id: string; status?: string };
         if (!json.id) {
             console.error('[LlamaParse] Upload response has no id:', JSON.stringify(json));
             throw new Error('LlamaParse upload returned no job id');
@@ -178,27 +180,80 @@ export class LlamaParseClient {
 
     /**
      * Fetch the structured JSON result (pages with text + markdown).
+     * Retries transient failures (5xx, network) — the job already exists
+     * on LlamaParse's side, this is a pure GET, so retry is safe.
      */
     async getJsonResult(jobId: string): Promise<LlamaParseResult> {
-        const res = await fetch(`${LLAMAPARSE_BASE_URL}/job/${jobId}/result/json`, {
-            headers: { 'Authorization': `Bearer ${this.apiKey}` },
-        });
-
-        if (!res.ok) {
-            const body = await res.text();
-            throw new Error(`LlamaParse result fetch failed (${res.status}): ${body}`);
-        }
-
-        const json = await res.json() as {
-            pages?: LlamaParsePage[];
-            job_metadata?: LlamaParseJobMetadata;
-        };
+        const json = await retryTransient(
+            async () => {
+                const res = await fetch(`${LLAMAPARSE_BASE_URL}/job/${jobId}/result/json`, {
+                    headers: { 'Authorization': `Bearer ${this.apiKey}` },
+                });
+                if (!res.ok) {
+                    const body = await res.text();
+                    const err = new Error(`LlamaParse result fetch failed (${res.status}): ${body}`);
+                    (err as any).status = res.status;
+                    throw err;
+                }
+                return await res.json() as {
+                    pages?: LlamaParsePage[];
+                    job_metadata?: LlamaParseJobMetadata;
+                };
+            },
+            { label: `[LlamaParse:getJsonResult ${jobId}]` },
+        );
 
         return {
             pages: json.pages ?? [],
             jobMetadata: json.job_metadata ?? {},
         };
     }
+}
+
+/**
+ * Retry helper for transient HTTP failures (429 rate-limit, 5xx server
+ * errors, network errors). Returns immediately on success or on a
+ * non-retryable error (4xx other than 429/408). Bounded: at most
+ * `attempts` total invocations of `fn`, with exponential backoff
+ * between attempts.
+ *
+ * Why this matters: LlamaParse occasionally throws 5xx or 429 under
+ * burst load. Without a small retry, a single transient blip kills
+ * the whole Premium path and the user sees a "Básico" badge for what
+ * should have been a clean Premium extraction.
+ */
+async function retryTransient<T>(
+    fn: () => Promise<T>,
+    opts: { label: string; attempts?: number; baseDelayMs?: number } = { label: '[retry]' },
+): Promise<T> {
+    const attempts = opts.attempts ?? 3;
+    const baseDelayMs = opts.baseDelayMs ?? 2000;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            return await fn();
+        } catch (err: any) {
+            const status = err?.status as number | undefined;
+            const isRetryable =
+                status === 429 ||
+                status === 408 ||
+                (typeof status === 'number' && status >= 500 && status <= 599) ||
+                // Network / fetch errors typically lack a status — assume retryable
+                status === undefined;
+            const isLastAttempt = attempt === attempts;
+            if (!isRetryable || isLastAttempt) {
+                if (!isRetryable) {
+                    console.warn(`${opts.label} non-retryable error (status=${status}); failing immediately`);
+                }
+                throw err;
+            }
+            const delay = baseDelayMs * Math.pow(2, attempt - 1); // 2s, 4s, 8s...
+            console.warn(`${opts.label} transient failure on attempt ${attempt}/${attempts} (status=${status ?? 'network'}); retrying in ${delay}ms — ${err?.message ?? err}`);
+            await sleep(delay);
+        }
+    }
+    // Unreachable, but TS needs a return path.
+    throw new Error(`${opts.label} exhausted retries without throwing — bug in retryTransient`);
 }
 
 function sleep(ms: number): Promise<void> {
