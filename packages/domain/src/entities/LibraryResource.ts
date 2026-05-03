@@ -60,6 +60,20 @@ export interface LibraryResource {
     structuredContentUrl?: string | undefined; // URL to structured Markdown (LlamaParse output)
     extractionVersion?: ExtractionVersion; // Which extractor produced textContent
     extractedWithLlamaParse?: boolean; // Convenience flag
+    /**
+     * Mode the user explicitly requested at upload time:
+     *   - 'standard' → skip LlamaParse, use Gemini → pdf-parse fallback.
+     *     Debits standard pages from the user's balance.
+     *   - 'premium' → try LlamaParse first (best quality for tables /
+     *     multi-column / scanned). Debits premium when LlamaParse runs
+     *     successfully; falls back to Gemini and debits standard if
+     *     LlamaParse fails.
+     *
+     * Undefined for legacy resources uploaded before this field
+     * existed — the cloud function falls back to its previous
+     * "premium-first cascade" behavior in that case.
+     */
+    requestedExtractionMode?: 'standard' | 'premium';
     textExtractionStatus: TextExtractionStatus;
     /**
      * Indexing job status (chunks + embeddings) written by the
@@ -130,6 +144,13 @@ export class LibraryResourceEntity implements LibraryResource {
      * cache fields are owned by deserialization, not creation.
      */
     public exegeticalType?: ExegesisSourceType;
+    /**
+     * Set at upload time when the user explicitly chose a tier.
+     * Persisted to Firestore so the storage-trigger cloud function can
+     * read it and respect the user's choice instead of always running
+     * the default premium-first cascade.
+     */
+    public requestedExtractionMode?: 'standard' | 'premium';
 
     constructor(
         public id: string,

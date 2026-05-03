@@ -338,15 +338,32 @@ export const extractPdfWithGemini = onObjectFinalized(
             let extractionVersion: string;
             let structuredMarkdown: string | null = null;
 
+            // Honor the user's choice when they explicitly picked a tier
+            // at upload time. Field is optional — when absent, fall back
+            // to the legacy "premium-first cascade" so existing uploads
+            // and any non-form code paths keep behaving as before.
+            //
+            //   'standard' → skip LlamaParse entirely. Goes straight to
+            //                Gemini → pdf-parse. Debits standard pages.
+            //   'premium'  → cascade as today. Debits premium when
+            //                LlamaParse runs successfully; standard when
+            //                it falls back.
+            const requestedMode = resourceDoc.data()?.requestedExtractionMode as 'standard' | 'premium' | undefined;
+            const userOptedOutOfPremium = requestedMode === 'standard';
+
             // Pick a LlamaParse account from the multi-account pool (Hito 6).
             // null when no account configured / has capacity → skip to Gemini.
             let llamaSelected: Awaited<ReturnType<typeof selectLlamaParseAccount>> | null = null;
-            try {
-                if (stats.size <= MAX_LLAMAPARSE_FILE_SIZE) {
-                    llamaSelected = await selectLlamaParseAccount();
+            if (!userOptedOutOfPremium) {
+                try {
+                    if (stats.size <= MAX_LLAMAPARSE_FILE_SIZE) {
+                        llamaSelected = await selectLlamaParseAccount();
+                    }
+                } catch (selectErr: any) {
+                    console.warn(`⚠️ [Extract] No LlamaParse account available: ${selectErr.message}`);
                 }
-            } catch (selectErr: any) {
-                console.warn(`⚠️ [Extract] No LlamaParse account available: ${selectErr.message}`);
+            } else {
+                console.log(`📄 [Extract] User opted for STANDARD; skipping LlamaParse for resource ${resourceId}`);
             }
             const canUseLlamaParse = llamaSelected !== null;
 

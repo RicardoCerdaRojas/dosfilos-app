@@ -60,6 +60,10 @@ export function useResourceUpload({
         title: '',
         author: '',
         type: 'theology',
+        // Default to premium — best quality. The user opts down to
+        // standard for narrative/sermon/essay content where the
+        // extra structure preservation isn't needed.
+        extractionMode: 'premium',
     });
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -71,7 +75,7 @@ export function useResourceUpload({
     const reset = useCallback(() => {
         setFile(null);
         setFileSizeWarning(false);
-        setMetadataState({ title: '', author: '', type: 'theology' });
+        setMetadataState({ title: '', author: '', type: 'theology', extractionMode: 'premium' });
     }, []);
 
     const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,9 +105,19 @@ export function useResourceUpload({
         setUploading(true);
         setUploadProgress(0);
         try {
-            await libraryService.uploadResource(userId, file, metadata, (progress) => {
-                setUploadProgress(progress);
-            });
+            await libraryService.uploadResource(
+                userId,
+                file,
+                {
+                    title: metadata.title,
+                    author: metadata.author,
+                    type: metadata.type,
+                    requestedExtractionMode: metadata.extractionMode,
+                },
+                (progress) => {
+                    setUploadProgress(progress);
+                },
+            );
             toast.success(t('toast.uploadSuccess'));
             reset();
             onSuccess?.();

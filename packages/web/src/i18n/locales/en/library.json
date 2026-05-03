@@ -43,7 +43,12 @@
         "authorPlaceholder": "Author name",
         "categoryLabel": "Category",
         "uploadButton": "Upload",
-        "fileSizeWarning": "File >50MB: extraction quality may be reduced"
+        "fileSizeWarning": "File >50MB: extraction quality may be reduced",
+        "modeLabel": "Processing mode",
+        "modeStandardTitle": "Standard",
+        "modeStandardDescription": "Narrative books, essays and sermons. Consumes standard pages.",
+        "modePremiumTitle": "Premium",
+        "modePremiumDescription": "Tables, multi-column and scanned (Greek/Hebrew text, critical apparatus). Consumes premium pages."
     },
     "filters": {
         "searchPlaceholder": "Search title or author",
@@ -176,8 +181,8 @@
         "subtitle": "Available balance for document extraction",
         "standard": "Standard",
         "premium": "Premium",
-        "standardHelp": "Gemini 2.0 Flash · narrative books",
-        "premiumHelp": "LlamaParse · tables, multi-column, scanned",
+        "standardHelp": "Narrative books, essays and sermons",
+        "premiumHelp": "Tables, multi-column and scanned",
         "split": "Plan: {{plan}} · Packs: {{pack}}",
         "buyButton": "Buy pages",
         "loading": "Loading balance…",

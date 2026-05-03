@@ -69,7 +69,18 @@ export class LibraryService {
     async uploadResource(
         userId: string,
         file: File,
-        metadata: { title: string; author: string; type: ResourceType },
+        metadata: {
+            title: string;
+            author: string;
+            type: ResourceType;
+            /**
+             * Optional user-chosen extraction tier. Persisted on the
+             * resource doc so the storage-trigger cloud function can
+             * honor the choice instead of running its default
+             * premium-first cascade. Omit for the legacy auto behavior.
+             */
+            requestedExtractionMode?: 'standard' | 'premium';
+        },
         onProgress?: (percentage: number) => void
     ): Promise<LibraryResourceEntity> {
         // 1. Generate resource ID first
@@ -104,6 +115,12 @@ export class LibraryService {
             new Date(),
             new Date()
         );
+        // Set the requested extraction mode if the caller specified one.
+        // The cloud function reads this off the doc to skip / prefer
+        // LlamaParse accordingly.
+        if (metadata.requestedExtractionMode) {
+            resource.requestedExtractionMode = metadata.requestedExtractionMode;
+        }
 
         // 4. Save to Firestore
         await this.libraryRepository.create(resource);
