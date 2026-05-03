@@ -63,6 +63,34 @@ async function extractWithLlamaParse(
 }
 
 /**
+ * Truncate a UTF-8 string to at most `maxBytes` BYTES, never cutting
+ * in the middle of a multi-byte character. Iterates code points and
+ * accumulates byte length until the next character would exceed the
+ * cap, then stops.
+ *
+ * Why we can't just do `string.substring(0, maxBytes)`: substring
+ * counts characters, not bytes. For UTF-8:
+ *   - ASCII (a-z): 1 byte/char
+ *   - Latin extended (á, ñ): 2 bytes/char
+ *   - Greek/Hebrew (α, ת): 2 bytes/char
+ *   - CJK / emoji: 3-4 bytes/char
+ * A 900,000-char Greek text is ~1.8 MB — way over Firestore's 1 MiB
+ * doc limit. This helper guarantees the output fits in `maxBytes`.
+ */
+function truncateUtf8(text: string, maxBytes: number): string {
+    if (Buffer.byteLength(text, 'utf8') <= maxBytes) return text;
+    let bytes = 0;
+    let result = '';
+    for (const char of text) {  // for-of iterates code points, not UTF-16 units
+        const charBytes = Buffer.byteLength(char, 'utf8');
+        if (bytes + charBytes > maxBytes) break;
+        bytes += charBytes;
+        result += char;
+    }
+    return result;
+}
+
+/**
  * Clean up text extracted by pdf-parse
  * Fixes common issues like words stuck together
  */
@@ -549,18 +577,34 @@ export const extractPdfWithGemini = onObjectFinalized(
             const usedGemini = extractionVersion === '4.0-gemini-standard' || extractionVersion === '2.0-gemini';
             const usedLlamaParse = extractionVersion === '3.0-llamaparse';
 
-            console.log(`📝 [Extract] Extracted ${extractedText.length} characters from ${pageCount} pages`);
+            console.log(`📝 [Extract] Extracted ${extractedText.length} characters / ${Buffer.byteLength(extractedText, 'utf8')} bytes from ${pageCount} pages`);
 
-            // Firestore has a 1MB field limit - check size
+            // Firestore caps each document at 1,048,576 bytes (1 MiB).
+            // Truncate textContent BY BYTES (not characters) to stay
+            // safely under the cap. The previous code used
+            // `substring(0, MAX_BYTES)` which slices by char count —
+            // safe for ASCII but catastrophic for Greek/Hebrew (1 char
+            // ≈ 2 bytes UTF-8) where 900K chars becomes ~1.8 MB and
+            // Firestore rejects the whole write with INVALID_ARGUMENT.
+            // For NTG28 (1020p of dense Greek) this killed the entire
+            // extraction.
+            //
+            // Headroom: the cap is 1,048,576 bytes for the WHOLE doc.
+            // Title/author/metadata/etc add ~5-20 KB, so MAX 800K bytes
+            // for textContent leaves ~250 KB of safety margin. The
+            // full content is also persisted to `structuredContentUrl`
+            // in Cloud Storage (no size limit) — textContent in
+            // Firestore is just for legacy reads + quick previews.
+            const MAX_TEXT_BYTES = 800_000;
             const textBytes = Buffer.byteLength(extractedText, 'utf8');
             let finalText = extractedText;
             let wasTruncated = false;
 
-            const MAX_BYTES = 900000;
-            if (textBytes > MAX_BYTES) {
-                console.log(`⚠️ [Extract] Text too large (${textBytes} bytes), truncating...`);
-                finalText = extractedText.substring(0, MAX_BYTES);
+            if (textBytes > MAX_TEXT_BYTES) {
+                console.log(`⚠️ [Extract] Text too large (${textBytes} bytes), truncating to ${MAX_TEXT_BYTES} bytes...`);
+                finalText = truncateUtf8(extractedText, MAX_TEXT_BYTES);
                 wasTruncated = true;
+                console.log(`✂️  [Extract] Truncated to ${Buffer.byteLength(finalText, 'utf8')} bytes`);
             }
 
             // If structured Markdown is available (LlamaParse), store it in Storage
