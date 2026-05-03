@@ -36,13 +36,18 @@
  *   --mode <standard|premium>   Tier to request (default: standard)
  *   --as <email>                Run as this user (default: rdocerda@gmail.com)
  *   --timeout <seconds>         Wait timeout (default: 600)
- *   --keep                      Don't delete the resource after the test
+ *   --keep                      Keep the resource in the library after the test
  *   --sa <sa-email>             Service account to impersonate for ADC
+ *
+ * Pages are ALWAYS refunded after the test, regardless of --keep — the
+ * smoke test is validation, not consumption. Without --keep the test
+ * artifact is deleted; with --keep you also get the processed
+ * resource in your library at no page cost. Both flows refund.
  *
  * Examples:
  *   node scripts/smoke-test-extraction.mjs /tmp/sample.pdf
  *   node scripts/smoke-test-extraction.mjs ~/Downloads/wbc-jude.pdf --mode standard
- *   node scripts/smoke-test-extraction.mjs ~/test.pdf --mode premium --keep
+ *   node scripts/smoke-test-extraction.mjs ~/Downloads/ntg28.pdf --mode premium --keep
  *
  * Auth:
  *   Uses Application Default Credentials (`gcloud auth
@@ -341,41 +346,48 @@ async function main() {
     }
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    // 7. Cleanup unless --keep.
+    console.log('');
+
+    // 7a. Refund any pages debited by the cloud function — ALWAYS,
+    //     regardless of --keep. Smoke tests are validation, not real
+    //     consumption: if you ran this script, the debit was incurred
+    //     for verification purposes and shouldn't reduce your real
+    //     balance. Mirrors the cloud function's mode mapping:
+    //       3.0-llamaparse              → refund Premium
+    //       4.0-gemini-standard / 2.0   → refund Standard
+    //       5.0-pdfparse-structured     → no refund (was free)
+    //     Skip if extraction never produced a version (failed early
+    //     before any debit happened).
+    const finalData = result.data ?? {};
+    const debitedMode = (() => {
+        const v = finalData.extractionVersion;
+        if (v === '3.0-llamaparse') return 'premium';
+        if (v === '4.0-gemini-standard' || v === '2.0-gemini') return 'standard';
+        return null; // 5.0-pdfparse-structured + fallback-pdfparse + failed = free
+    })();
+    const debitedPages = finalData.pageCount ?? 0;
+    if (debitedMode && debitedPages > 0) {
+        const planField = `plan${debitedMode.charAt(0).toUpperCase()}${debitedMode.slice(1)}Pages`;
+        const availField = `${debitedMode}PagesAvailable`;
+        const spentField = `${debitedMode}SpentTotal`;
+        try {
+            await db.collection('users').doc(userId).update({
+                [`processingBalance.${planField}`]: admin.firestore.FieldValue.increment(debitedPages),
+                [`processingBalance.${availField}`]: admin.firestore.FieldValue.increment(debitedPages),
+                [`processingBalance.${spentField}`]: admin.firestore.FieldValue.increment(-debitedPages),
+                'processingBalance.updatedAt': admin.firestore.FieldValue.serverTimestamp(),
+            });
+            console.log(`💳 Refunded ${debitedPages} ${debitedMode} pages to plan bucket`);
+        } catch (refundErr) {
+            console.log(`⚠️  Refund failed: ${refundErr.message ?? refundErr}`);
+            console.log(`   Run manually: node scripts/refund-pages.mjs --user <email> --mode ${debitedMode} --pages ${debitedPages}`);
+        }
+    }
+
+    // 7b. Cleanup (delete artifacts) unless --keep.
     if (!keepResource) {
-        console.log('');
         console.log('🧹 Cleaning up...');
         try {
-            // 7a. Refund any pages debited by the cloud function. The
-            //     extractor debits based on extractionVersion; we mirror
-            //     that mapping here so the test doesn't cost the user
-            //     real pages just for validating the pipeline.
-            //
-            //     Skip refund if extraction never produced a version
-            //     (failed early — no debit happened).
-            const finalData = result.data ?? {};
-            const debitedMode = (() => {
-                const v = finalData.extractionVersion;
-                if (v === '3.0-llamaparse') return 'premium';
-                if (v === '4.0-gemini-standard' || v === '2.0-gemini') return 'standard';
-                // 5.0-pdfparse-structured + fallback-pdfparse → free, no refund
-                return null;
-            })();
-            const debitedPages = finalData.pageCount ?? 0;
-            if (debitedMode && debitedPages > 0) {
-                const planField = `plan${debitedMode.charAt(0).toUpperCase()}${debitedMode.slice(1)}Pages`;
-                const availField = `${debitedMode}PagesAvailable`;
-                const spentField = `${debitedMode}SpentTotal`;
-                await db.collection('users').doc(userId).update({
-                    [`processingBalance.${planField}`]: admin.firestore.FieldValue.increment(debitedPages),
-                    [`processingBalance.${availField}`]: admin.firestore.FieldValue.increment(debitedPages),
-                    [`processingBalance.${spentField}`]: admin.firestore.FieldValue.increment(-debitedPages),
-                    'processingBalance.updatedAt': admin.firestore.FieldValue.serverTimestamp(),
-                });
-                console.log(`   ✓ Refunded ${debitedPages} ${debitedMode} pages to plan bucket`);
-            }
-
-            // 7b. Delete chunks.
             const chunkSnap = await db
                 .collection('document_chunks')
                 .where('resourceId', '==', resourceId)
@@ -386,7 +398,6 @@ async function main() {
                 await batch.commit();
                 console.log(`   ✓ Deleted ${chunkSnap.size} chunks`);
             }
-            // 7c. Delete storage objects (PDF + structured.md if present).
             try {
                 await file.delete();
                 console.log(`   ✓ Deleted PDF from storage`);
@@ -403,7 +414,6 @@ async function main() {
             } catch {
                 // ignore
             }
-            // 7d. Delete the doc.
             await resourceRef.delete();
             console.log(`   ✓ Deleted Firestore doc`);
         } catch (cleanupErr) {
@@ -411,9 +421,10 @@ async function main() {
             console.log(`   Resource ${resourceId} may need manual cleanup.`);
         }
     } else {
-        console.log('');
-        console.log(`⏭️  --keep set; resource left in place: ${resourceId}`);
-        console.log(`   ⚠️  pages debited by the test were NOT refunded.`);
+        console.log(`⏭️  --keep set; resource left in your library: ${resourceId}`);
+        if (debitedMode && debitedPages > 0) {
+            console.log(`   (Pages were refunded — the test artifact is yours for free.)`);
+        }
     }
 
     process.exit(result.ok ? 0 : 1);
