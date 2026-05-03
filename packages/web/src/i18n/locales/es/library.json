@@ -135,6 +135,8 @@
             "exegeticalCommentary": "Comentario Exegético",
             "theologicalDictionary": "Diccionario Teológico",
             "bibleDictionary": "Diccionario Bíblico",
+            "historicalContext": "Contexto Histórico/Cultural",
+            "biblicalSurvey": "Panorama / Introducción Bíblica",
             "article": "Artículo / Paper",
             "other": "Otro"
         },

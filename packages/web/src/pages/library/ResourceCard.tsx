@@ -13,6 +13,7 @@ import {
     Trash2, Edit2, Loader2, CheckCircle2, AlertCircle, Eye,
     BookOpen, BookMarked, Mic2, Library, PenTool, Settings2, RefreshCw,
     MoreHorizontal, Sparkles, Wand2, FileWarning, ScrollText,
+    Landmark, Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -59,8 +60,10 @@ const iconMap: Record<string, typeof Book> = {
     Book,
     BookMarked,
     BookOpen,
+    Landmark,
     Languages,
     Library,
+    Map,
     MessageSquare,
     ScrollText,
     FileText,
@@ -87,8 +90,10 @@ const colorMap: Record<string, string> = {
     green: 'text-green-600 bg-green-50 dark:bg-green-950/30',
     emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
     teal: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
+    cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950/30',
     amber: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30',
     orange: 'text-orange-600 bg-orange-50 dark:bg-orange-950/30',
+    rose: 'text-rose-600 bg-rose-50 dark:bg-rose-950/30',
     red: 'text-red-600 bg-red-50 dark:bg-red-950/30',
     yellow: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30',
     pink: 'text-pink-600 bg-pink-50 dark:bg-pink-950/30',

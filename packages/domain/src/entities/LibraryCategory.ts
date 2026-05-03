@@ -22,6 +22,8 @@ export const DEFAULT_CATEGORIES: LibraryCategory[] = [
     { id: 'exegetical-commentary', label: 'Comentario Exegético', icon: 'ScrollText', color: 'emerald', isDefault: true },
     { id: 'theological-dictionary', label: 'Diccionario Teológico', icon: 'Library', color: 'amber', isDefault: true },
     { id: 'bible-dictionary', label: 'Diccionario Bíblico', icon: 'BookOpen', color: 'teal', isDefault: true },
+    { id: 'historical-context', label: 'Contexto Histórico/Cultural', icon: 'Landmark', color: 'rose', isDefault: true },
+    { id: 'biblical-survey', label: 'Panorama / Introducción Bíblica', icon: 'Map', color: 'cyan', isDefault: true },
     { id: 'article', label: 'Artículo / Paper', icon: 'FileText', color: 'orange', isDefault: true },
     { id: 'other', label: 'Otro', icon: 'FileQuestion', color: 'gray', isDefault: true },
 ];

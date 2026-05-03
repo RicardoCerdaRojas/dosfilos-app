@@ -27,7 +27,7 @@ interface EditResourceModalProps {
 }
 
 // Resource types available in the editor — labels look up via i18n at render time.
-type CategoryI18nKey = 'theology' | 'grammar' | 'criticalText' | 'commentary' | 'exegeticalCommentary' | 'theologicalDictionary' | 'bibleDictionary' | 'article' | 'other';
+type CategoryI18nKey = 'theology' | 'grammar' | 'criticalText' | 'commentary' | 'exegeticalCommentary' | 'theologicalDictionary' | 'bibleDictionary' | 'historicalContext' | 'biblicalSurvey' | 'article' | 'other';
 const RESOURCE_TYPE_KEYS: Array<{ value: ResourceType; i18nKey: CategoryI18nKey }> = [
     { value: 'theology', i18nKey: 'theology' },
     { value: 'grammar', i18nKey: 'grammar' },
@@ -36,6 +36,8 @@ const RESOURCE_TYPE_KEYS: Array<{ value: ResourceType; i18nKey: CategoryI18nKey 
     { value: 'exegetical-commentary', i18nKey: 'exegeticalCommentary' },
     { value: 'theological-dictionary', i18nKey: 'theologicalDictionary' },
     { value: 'bible-dictionary', i18nKey: 'bibleDictionary' },
+    { value: 'historical-context', i18nKey: 'historicalContext' },
+    { value: 'biblical-survey', i18nKey: 'biblicalSurvey' },
     { value: 'article', i18nKey: 'article' },
     { value: 'other', i18nKey: 'other' },
 ];

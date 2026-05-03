@@ -9,6 +9,8 @@ export type ResourceType =
     | 'exegetical-commentary'
     | 'theological-dictionary'
     | 'bible-dictionary'
+    | 'historical-context'
+    | 'biblical-survey'
     | 'article'
     | 'other';
 
