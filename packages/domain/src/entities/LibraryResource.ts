@@ -5,6 +5,7 @@ export type ResourceType =
     | 'theology'
     | 'grammar'
     | 'commentary'
+    | 'exegetical-commentary'
     | 'theological-dictionary'
     | 'bible-dictionary'
     | 'article'

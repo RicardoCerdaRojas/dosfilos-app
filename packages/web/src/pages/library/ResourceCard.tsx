@@ -12,7 +12,7 @@ import {
     Book, FileText, MessageSquare, Languages, FileQuestion,
     Trash2, Edit2, Loader2, CheckCircle2, AlertCircle, Eye,
     BookOpen, Mic2, Library, PenTool, Settings2, RefreshCw,
-    MoreHorizontal, Sparkles, Wand2, FileWarning,
+    MoreHorizontal, Sparkles, Wand2, FileWarning, ScrollText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +49,7 @@ const iconMap: Record<string, typeof Book> = {
     Languages,
     Library,
     MessageSquare,
+    ScrollText,
     FileText,
     FileQuestion,
 };
@@ -70,6 +71,7 @@ const colorMap: Record<string, string> = {
     blue: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30',
     purple: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
     green: 'text-green-600 bg-green-50 dark:bg-green-950/30',
+    emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
     teal: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
     amber: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30',
     orange: 'text-orange-600 bg-orange-50 dark:bg-orange-950/30',
