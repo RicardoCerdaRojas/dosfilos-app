@@ -87,6 +87,7 @@
         "processing": "Processing…",
         "failed": "Processing error",
         "verifying": "Verifying",
+        "indexing": "Indexing…",
         "ready": "Ready",
         "notReady": "To process"
     },

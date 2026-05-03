@@ -6,8 +6,20 @@ import { useTranslation } from '@/i18n';
 
 /** Index check status for a resource — derived from the vector store, not the
  *  resource document itself (a resource may say `indexingStatus: 'ready'` but
- *  have no chunks if the indexer crashed mid-write).  */
-export type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
+ *  have no chunks if the indexer crashed mid-write).
+ *
+ *  - `unknown`     — initial state before any check
+ *  - `checking`    — querying the chunks collection (legacy resources only)
+ *  - `indexed`     — chunks present, ready to query
+ *  - `indexing`    — auto-indexer is actively running (Firestore field
+ *                    `indexingStatus: 'processing'` OR auto-indexable
+ *                    extractor finished but trigger hasn't recorded a state
+ *                    yet — optimistic, since the trigger fires in <1s)
+ *  - `not-indexed` — extraction is done but indexer didn't / can't run
+ *                    (failed, or legacy extractor not in AUTO_INDEXED_VERSIONS)
+ *                    — needs manual "Procesar" action.
+ */
+export type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking' | 'indexing';
 
 /**
  * Extraction versions whose successful completion fires the
@@ -128,8 +140,29 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
                 setIndexStatus(prev => ({ ...prev, [r.id]: 'indexed' }));
                 continue;
             }
-            if (r.indexingStatus === 'processing' || r.indexingStatus === 'failed') {
+            // Indexer actively running — distinct from "needs action".
+            // The card shows a spinner + "Indexando…" so the user sees
+            // the work in flight instead of a static "Por procesar".
+            if (r.indexingStatus === 'processing') {
+                setIndexStatus(prev => ({ ...prev, [r.id]: 'indexing' }));
+                continue;
+            }
+            if (r.indexingStatus === 'failed') {
                 setIndexStatus(prev => ({ ...prev, [r.id]: 'not-indexed' }));
+                continue;
+            }
+            // No `indexingStatus` set yet. If the extractor's output IS
+            // auto-indexable AND extraction just finished, optimistically
+            // call it "indexing" — the auto-indexer trigger fires in <1s
+            // after the extraction write, so the brief gap shouldn't
+            // surface as "needs manual action".
+            if (
+                !r.indexingStatus
+                && r.textExtractionStatus === 'ready'
+                && r.extractionVersion
+                && AUTO_INDEXED_VERSIONS.has(r.extractionVersion)
+            ) {
+                setIndexStatus(prev => ({ ...prev, [r.id]: 'indexing' }));
                 continue;
             }
             // Legacy / pre-cloud-function resources: fall back to the

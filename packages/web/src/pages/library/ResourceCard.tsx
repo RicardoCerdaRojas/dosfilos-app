@@ -154,6 +154,7 @@ export function ResourceCard({
             case 'ready':
             default:
                 if (indexStatus === 'checking') return { tone: 'bg-muted text-muted-foreground', icon: Loader2, iconClass: 'animate-spin', text: t('status.verifying') };
+                if (indexStatus === 'indexing') return { tone: 'bg-info-subtle text-info-subtle-foreground', icon: Loader2, iconClass: 'animate-spin', text: t('status.indexing') };
                 if (indexStatus === 'indexed') return { tone: 'bg-success-subtle text-success-subtle-foreground', icon: CheckCircle2, iconClass: '', text: t('status.ready') };
                 if (indexStatus === 'not-indexed') return { tone: 'bg-warning-subtle text-warning-subtle-foreground', icon: AlertCircle, iconClass: '', text: t('status.notReady') };
                 return null;
