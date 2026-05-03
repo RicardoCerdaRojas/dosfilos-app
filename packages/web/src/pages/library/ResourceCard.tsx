@@ -313,6 +313,7 @@ export function ResourceCard({
                     title: t('engine.geminiHint'),
                 };
             case 'fallback-pdfparse':
+            case '5.0-pdfparse-structured':
                 return {
                     tone: 'bg-warning-subtle text-warning-subtle-foreground border border-warning/30',
                     icon: FileWarning,
@@ -411,10 +412,12 @@ export function ResourceCard({
                             {resource.author}
                             <span className="mx-1.5 text-border">·</span>
                             {fileSizeMB} MB
-                            <span className="mx-1.5 text-border">·</span>
-                            {pageCount
-                                ? t('card.metaPagesActual', { count: pageCount })
-                                : t('card.metaPagesEstimated', { count: Math.ceil(resource.sizeBytes / 2000) })}
+                            {pageCount ? (
+                                <>
+                                    <span className="mx-1.5 text-border">·</span>
+                                    {t('card.metaPagesActual', { count: pageCount })}
+                                </>
+                            ) : null}
                         </div>
                     </div>
                     <div className="hidden md:flex items-center gap-1.5 flex-wrap justify-end max-w-[40%]">
@@ -472,13 +475,20 @@ export function ResourceCard({
                 </div>
             )}
 
-            {/* Meta: size + page count, single line, mono for numeric anchor */}
+            {/* Meta: size + page count, single line, mono for numeric anchor.
+                Page count is only shown when actual (post-extraction) — the
+                pre-extraction estimate from file size was wildly off for
+                dense scholarly PDFs (~52KB/page vs the assumed ~2KB/page),
+                so showing it just confused the user (e.g. "10076 p. (est.)"
+                for a 378-page WBC volume). */}
             <div className="text-[12px] text-muted-foreground font-mono">
                 {fileSizeMB} MB
-                <span className="mx-1.5 text-border">·</span>
-                {pageCount
-                    ? t('card.metaPagesActual', { count: pageCount })
-                    : t('card.metaPagesEstimated', { count: Math.ceil(resource.sizeBytes / 2000) })}
+                {pageCount ? (
+                    <>
+                        <span className="mx-1.5 text-border">·</span>
+                        {t('card.metaPagesActual', { count: pageCount })}
+                    </>
+                ) : null}
             </div>
 
             {/* Action bar */}
