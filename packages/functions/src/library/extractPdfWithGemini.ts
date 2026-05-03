@@ -150,6 +150,7 @@ async function extractWithGemini(
     tempFilePath: string,
     resourceId: string,
     apiKey: string,
+    expectedPageCount?: number,
 ): Promise<{ text: string; markdown: string; pageCount: number }> {
     const genAI = new GoogleGenerativeAI(apiKey);
     const fileManager = new GoogleAIFileManager(apiKey);
@@ -214,6 +215,19 @@ Si una página está vacía, devuelve string vacío en text/md pero conserva la 
             },
         },
     ]);
+
+    // Truncation guard #1 — Gemini sets `finishReason = 'MAX_TOKENS'`
+    // when it stopped because the output budget ran out. The JSON
+    // returned in that case may be syntactically valid but
+    // semantically incomplete (e.g. a 378-page commentary returning
+    // only the first 40 pages). Treat this as a hard failure so the
+    // cascade falls to pdf-parse, which produces auto-indexable
+    // output covering the FULL document.
+    const finishReason = result.response.candidates?.[0]?.finishReason;
+    if (finishReason && finishReason !== 'STOP') {
+        throw new Error(`Gemini stopped early (finishReason=${finishReason}); response truncated`);
+    }
+
     const responseText = result.response.text();
 
     let parsed: { pages?: Array<{ page: number; text?: string; md?: string }> };
@@ -240,6 +254,23 @@ Si una página está vacía, devuelve string vacío en text/md pero conserva la 
         text: p.text ?? '',
         md: p.md,
     }));
+
+    // Truncation guard #2 — even when finishReason is STOP, Gemini
+    // sometimes silently returns fewer pages than the source PDF
+    // contains (especially for very long documents where the model
+    // hits an internal soft cap). When the caller passes an
+    // `expectedPageCount` from a cheap pdf-parse pre-read, we
+    // compare. A returned count below 80% of expected almost
+    // certainly means partial extraction → fall back to pdf-parse
+    // for the full document.
+    if (expectedPageCount && expectedPageCount > 0) {
+        const completeness = pages.length / expectedPageCount;
+        if (completeness < 0.8) {
+            throw new Error(
+                `Gemini returned ${pages.length} of ~${expectedPageCount} pages (${Math.round(completeness * 100)}%); likely truncated`,
+            );
+        }
+    }
 
     // Use the existing LlamaParse formatters so the chunker downstream
     // sees the identical `<!-- page: N -->` contract regardless of
@@ -349,6 +380,23 @@ export const extractPdfWithGemini = onObjectFinalized(
             const fileSizeMB = stats.size / 1024 / 1024;
             console.log(`📥 [Extract] Downloaded file: ${fileSizeMB.toFixed(2)} MB`);
 
+            // Pre-read the PDF page count cheaply with pdf-parse so the
+            // Gemini path can detect silent truncation (returning fewer
+            // pages than the source has). This 1-2s up-front read is
+            // worth it: without the ground truth, Gemini's "I returned
+            // 40 pages" looks like a complete extraction even when the
+            // source has 378 pages. Failing fast lets the cascade
+            // degrade to pdf-parse, which delivers ALL the content.
+            let expectedPageCount: number | undefined;
+            try {
+                const buf = fs.readFileSync(tempFilePath);
+                const meta = await pdfParse(buf);
+                expectedPageCount = meta.numpages;
+                console.log(`📐 [Extract] PDF has ${expectedPageCount} page(s) per pdf-parse`);
+            } catch (metaErr: any) {
+                console.warn(`⚠️ [Extract] pdf-parse pre-read failed (continuing without page count): ${metaErr?.message ?? metaErr}`);
+            }
+
             // Definite-assignment: the cascade below always assigns these
             // — either via a successful LlamaParse account, the Gemini
             // fallback, or the pdf-parse last resort. TS can't narrow
@@ -433,7 +481,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                     );
                     if (stats.size <= MAX_GEMINI_FILE_SIZE && stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES) {
                         try {
-                            const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
+                            const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
                             extractedText = result.text;
                             pageCount = result.pageCount;
                             structuredMarkdown = result.markdown;
@@ -474,7 +522,7 @@ export const extractPdfWithGemini = onObjectFinalized(
             ) {
                 console.log(`🤖 [Extract] Using Gemini (${userOptedOutOfPremium ? 'user opted standard' : 'no LlamaParse key or file size limit'})`);
                 try {
-                    const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
+                    const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
                     extractedText = result.text;
                     pageCount = result.pageCount;
                     structuredMarkdown = result.markdown;
