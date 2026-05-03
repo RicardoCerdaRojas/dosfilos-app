@@ -268,19 +268,40 @@ export class LibraryService {
      * "extract excerpts" toggle for those.
      */
     getResourceIndexStatus(resource: LibraryResource): ResourceIndexStatus {
-        const INDEXER_VERSION_CURRENT = '2.0-structured';
         const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
 
+        // Status decision mirrors `useLibraryResources.checkAllIndexStatus`
+        // exactly so the corpus picker and the library card never disagree
+        // about the same resource. A user who sees "Listo" on the library
+        // card was previously confused when the corpus picker showed
+        // "Sin indexar" for the same item — driven by an `indexerVersion`
+        // strict check that's no longer necessary now that we're on a
+        // single indexer schema.
+
+        // Hard failure of the extractor.
         if (resource.textExtractionStatus === 'failed') return 'failed';
+        // Extractor is still working.
         if (resource.textExtractionStatus === 'pending'
             || resource.textExtractionStatus === 'processing') return 'extracting';
+        // Indexer recorded a state.
         if (resource.indexingStatus === 'failed') return 'failed';
         if (resource.indexingStatus === 'processing') return 'indexing';
-        if (resource.indexingStatus === 'ready'
-            && resource.indexerVersion === INDEXER_VERSION_CURRENT) return 'indexed';
+        if (resource.indexingStatus === 'ready') return 'indexed';
+        // No indexer state yet but extraction succeeded with an
+        // auto-indexable version — the trigger fires in <1s, so report
+        // "indexing" optimistically rather than the misleading
+        // "needs-extraction" the user sees as "Sin procesar".
+        if (resource.textExtractionStatus === 'ready'
+            && resource.extractionVersion
+            && AUTO_INDEX_EXTRACTORS.includes(resource.extractionVersion)) {
+            return 'indexing';
+        }
+        // Extraction succeeded with a legacy version the auto-indexer
+        // doesn't pick up — needs a manual "Procesar" action.
         if (resource.textExtractionStatus === 'ready'
             && resource.extractionVersion
             && !AUTO_INDEX_EXTRACTORS.includes(resource.extractionVersion)) return 'needs-indexing';
+        // Default: never extracted.
         return 'needs-extraction';
     }
 
