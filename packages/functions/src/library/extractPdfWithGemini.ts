@@ -570,10 +570,10 @@ export const extractPdfWithGemini = onObjectFinalized(
                 if (extractionVersion === '2.0-gemini') {
                     extractionWarning = `${accountSummary}; usamos Estándar (Gemini).`;
                 } else if (extractionVersion === '5.0-pdfparse-structured') {
-                    extractionWarning = `${accountSummary} y Gemini tampoco pudo procesar; usamos Básico (pdf-parse). Reprocesa con Premium para mejor calidad.`;
+                    extractionWarning = `${accountSummary} y Gemini tampoco pudo procesar; usamos Básico (pdf-parse) sin cobro. Reprocesa con Premium para mejor calidad.`;
                 }
             } else if (requestedMode === 'standard' && extractionVersion === '5.0-pdfparse-structured') {
-                extractionWarning = 'Gemini falló; usamos Básico (pdf-parse). Considera reprocesar.';
+                extractionWarning = 'Gemini falló; usamos Básico (pdf-parse) sin cobro. Considera reprocesar.';
             }
             // Note: requestedMode === undefined (legacy uploads) gets no
             // warning — we don't know what they asked for.
@@ -599,32 +599,38 @@ export const extractPdfWithGemini = onObjectFinalized(
             console.log(`✅ [Extract] Updated resource ${resourceId} (${extractionVersion}, status: ready)`);
 
             // Debit the user's processing balance based on which engine
-            // ran. Was previously MISSING from this function — only the
-            // monthly metric counter (below) was being written, so user
-            // balance never decremented for auto-extractions. Result:
-            // users could upload unlimited PDFs without their plan +
-            // pack quotas ever shrinking, and the dashboard balance
-            // card displayed stale "available" totals.
+            // actually ran. The user only pays for the tier they got:
             //
-            // Mode mapping mirrors the BalanceBanner UI grouping:
-            //   3.0-llamaparse        → premium
-            //   4.0-gemini-standard   → standard
-            //   2.0-gemini (legacy)   → standard
-            //   fallback-pdfparse     → standard (cheapest tier; the
-            //                          fallback isn't free for us
-            //                          since the user still gets text)
+            //   3.0-llamaparse              → premium  (paid Premium, got Premium)
+            //   4.0-gemini-standard         → standard (paid Standard or Premium-degraded, got Standard)
+            //   2.0-gemini (legacy)         → standard
+            //   5.0-pdfparse-structured     → FREE     (last-resort fallback, no API cost
+            //   fallback-pdfparse (legacy)  → FREE     to us, lower-quality output the user
+            //                                          didn't ask for)
+            //
+            // Why pdf-parse is free: it runs locally with no third-party
+            // API cost, and it's only reached when both LlamaParse AND
+            // Gemini failed. Charging for our own degradation would
+            // erode trust in the pipeline — the user paid for Standard
+            // or Premium quality, getting Basic isn't what they bought.
             //
             // Non-fatal: if the debit fails we log and proceed —
             // billing is the source of truth, this is a UX-quota
             // synchronization concern.
-            try {
-                const debitMode: ProcessingMode = extractionVersion === '3.0-llamaparse'
-                    ? 'premium'
-                    : 'standard';
-                await consumePagesAdmin(userId, debitMode, pageCount);
-                console.log(`💳 [Extract] Debited ${pageCount} ${debitMode} pages from user ${userId.substring(0, 8)}...`);
-            } catch (debitErr) {
-                console.warn(`⚠️ [Extract] Balance debit failed (non-fatal):`, debitErr);
+            const isFreeFallback = extractionVersion === 'fallback-pdfparse'
+                || extractionVersion === '5.0-pdfparse-structured';
+            if (isFreeFallback) {
+                console.log(`💳 [Extract] Skipping debit for ${userId.substring(0, 8)}... — pdf-parse fallback is free`);
+            } else {
+                try {
+                    const debitMode: ProcessingMode = extractionVersion === '3.0-llamaparse'
+                        ? 'premium'
+                        : 'standard';
+                    await consumePagesAdmin(userId, debitMode, pageCount);
+                    console.log(`💳 [Extract] Debited ${pageCount} ${debitMode} pages from user ${userId.substring(0, 8)}...`);
+                } catch (debitErr) {
+                    console.warn(`⚠️ [Extract] Balance debit failed (non-fatal):`, debitErr);
+                }
             }
 
             // Increment the user's monthly pagesProcessed counter. Server-side so the
