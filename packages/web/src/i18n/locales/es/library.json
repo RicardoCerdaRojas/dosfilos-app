@@ -46,9 +46,9 @@
         "fileSizeWarning": "Archivo >50MB: calidad de extracción puede reducirse",
         "modeLabel": "Modo de procesamiento",
         "modeStandardTitle": "Estándar",
-        "modeStandardDescription": "Libros narrativos, ensayos y sermones (hasta ~1000 págs). Consume páginas estándar.",
+        "modeStandardDescription": "Libros narrativos, ensayos y sermones (hasta ~600 págs). Consume páginas estándar.",
         "modePremiumTitle": "Premium",
-        "modePremiumDescription": "Tablas, multi-columna y escaneados (sin límite de páginas). Consume páginas premium."
+        "modePremiumDescription": "Tablas, multi-columna y escaneados (hasta ~1000 págs). Consume páginas premium."
     },
     "filters": {
         "searchPlaceholder": "Buscar título o autor",
@@ -187,8 +187,8 @@
         "subtitle": "Saldo disponible para extraer documentos",
         "standard": "Estándar",
         "premium": "Premium",
-        "standardHelp": "Libros narrativos, ensayos y sermones (hasta ~1000 págs)",
-        "premiumHelp": "Tablas, multi-columna y escaneados (sin límite de páginas)",
+        "standardHelp": "Libros narrativos, ensayos y sermones (hasta ~600 págs)",
+        "premiumHelp": "Tablas, multi-columna y escaneados (hasta ~1000 págs)",
         "split": "Plan: {{plan}} · Packs: {{pack}}",
         "buyButton": "Comprar páginas",
         "loading": "Cargando saldo…",
