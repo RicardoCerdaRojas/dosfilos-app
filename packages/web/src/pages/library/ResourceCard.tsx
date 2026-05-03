@@ -275,15 +275,24 @@ export function ResourceCard({
     ) : null;
 
     // ── Status / metadata badges shared between layouts
-    // When the resource ended up in 'failed', surface the concrete
-    // error message via tooltip — written by the cloud function as
-    // `extractionError`. Without this the user has no signal beyond
-    // "Error al procesar" and has to delete + re-upload blindly.
+    // Surface the concrete failure reason via tooltip:
+    //   - extractionError when textExtractionStatus === 'failed'
+    //   - indexingError when extraction succeeded but indexer failed
+    //     (resource sits in "Por procesar" — without this the user has
+    //     no signal beyond the badge and has to guess what's wrong)
+    // Both are written by the cloud functions and persist on the
+    // resource doc so the UI can read them on demand.
     const failureMessage = (resource as { extractionError?: string }).extractionError;
+    const indexingErrorMessage = (resource as { indexingError?: string | null }).indexingError;
+    const statusTooltip = (() => {
+        if (resource.textExtractionStatus === 'failed' && failureMessage) return failureMessage;
+        if (indexStatus === 'not-indexed' && indexingErrorMessage) return `Indexación: ${indexingErrorMessage}`;
+        return undefined;
+    })();
     const statusBadge = statusPill && StatusIcon ? (
         <span
             className={cn('inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium', statusPill.tone)}
-            title={resource.textExtractionStatus === 'failed' && failureMessage ? failureMessage : undefined}
+            title={statusTooltip}
         >
             <StatusIcon className={cn('h-3 w-3', statusPill.iconClass)} />
             {statusPill.text}

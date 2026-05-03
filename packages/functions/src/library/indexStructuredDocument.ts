@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { chunkStructuredMarkdown } from './markdownChunker';
+import { isStructuredExtractionVersion } from './extractionVersions';
 
 interface IndexRequest {
     resourceId: string;
@@ -66,8 +67,7 @@ export const indexStructuredDocument = onCall<IndexRequest>(
         // Preconditions: indexer expects a `structured.md` produced by either
         // extraction path (premium = LlamaParse, standard = Gemini). Both emit
         // the same `<!-- page: N -->` markdown contract.
-        const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
-        if (!SUPPORTED_VERSIONS.includes(data.extractionVersion)) {
+        if (!isStructuredExtractionVersion(data.extractionVersion)) {
             throw new HttpsError(
                 'failed-precondition',
                 `Resource ${resourceId} must be processed first (current: ${data.extractionVersion ?? 'unknown'})`,
@@ -139,11 +139,31 @@ export const indexStructuredDocument = onCall<IndexRequest>(
                 updatedAt: new Date(),
             });
 
-            // 3. Generate embeddings in batches
+            // 3. Generate embeddings — fault-tolerant. Returns parallel
+            //    array; entries with `values: null` failed individually
+            //    and are dropped before writing.
             console.log(`[IndexStructured] ${title}: embedding ${chunks.length} chunks...`);
-            const embeddings = await embedChunksBatched(chunks.map(c => c.text), geminiKey);
-            if (embeddings.length !== chunks.length) {
-                throw new Error(`Embedding count mismatch: ${embeddings.length} vs ${chunks.length}`);
+            const embedResults = await embedChunksBatched(chunks.map(c => c.text), geminiKey);
+
+            // Pair surviving (chunk, vector) entries.
+            const survivors: Array<{ chunk: typeof chunks[number]; vector: number[] }> = [];
+            for (let i = 0; i < chunks.length; i++) {
+                const r = embedResults[i];
+                if (r?.values) survivors.push({ chunk: chunks[i], vector: r.values });
+            }
+            const failedCount = chunks.length - survivors.length;
+            if (failedCount > 0) {
+                console.warn(`[IndexStructured] ${title}: ${failedCount}/${chunks.length} chunks failed to embed; indexing the remaining ${survivors.length}`);
+            }
+            if (survivors.length === 0) {
+                throw new Error(`All ${chunks.length} chunks failed to embed`);
+            }
+            // Refuse to index a resource where >50% of chunks failed —
+            // that suggests a systemic issue (key revoked, model down)
+            // not a few bad chunks. Better to mark failed than ship a
+            // half-indexed resource the user thinks is searchable.
+            if (failedCount / chunks.length > 0.5) {
+                throw new Error(`${failedCount}/${chunks.length} chunks failed to embed (>50%); refusing partial index`);
             }
 
             // 4. Delete previous chunks for this resource (safe: keeps index fresh on reprocess)
@@ -154,8 +174,8 @@ export const indexStructuredDocument = onCall<IndexRequest>(
             // because vector index updates have a high accounting cost per operation.
             // Individual writes are slower but robust. For 500 chunks this takes ~30-60s.
             const now = new Date();
-            for (let i = 0; i < chunks.length; i++) {
-                const c = chunks[i];
+            for (let i = 0; i < survivors.length; i++) {
+                const { chunk: c, vector } = survivors[i];
                 const id = `${resourceId}_chunk_${i}`;
                 await db.collection(CHUNK_COLLECTION).doc(id).set({
                     resourceId,
@@ -164,7 +184,7 @@ export const indexStructuredDocument = onCall<IndexRequest>(
                     userId,
                     chunkIndex: i,
                     text: c.text,
-                    embedding: FieldValue.vector(embeddings[i]),
+                    embedding: FieldValue.vector(vector),
                     metadata: {
                         page: c.page,
                         section: c.section ?? null,
@@ -178,8 +198,8 @@ export const indexStructuredDocument = onCall<IndexRequest>(
                     createdAt: now,
                 });
                 // Progress log every 25 chunks
-                if ((i + 1) % 25 === 0 || i === chunks.length - 1) {
-                    console.log(`[IndexStructured] written ${i + 1}/${chunks.length} chunks`);
+                if ((i + 1) % 25 === 0 || i === survivors.length - 1) {
+                    console.log(`[IndexStructured] written ${i + 1}/${survivors.length} chunks`);
                 }
             }
 
@@ -187,19 +207,20 @@ export const indexStructuredDocument = onCall<IndexRequest>(
             await resourceRef.update({
                 indexingStatus: 'ready',
                 indexerVersion: INDEXER_VERSION,
-                indexedChunkCount: chunks.length,
+                indexedChunkCount: survivors.length,
                 indexedAt: now,
                 needsReindex: false,
+                indexingError: null, // clear any prior failure on success
                 updatedAt: now,
             });
 
-            console.log(`[IndexStructured] ✅ ${title}: ${chunks.length} chunks indexed`);
+            console.log(`[IndexStructured] ✅ ${title}: ${survivors.length} chunks indexed${failedCount > 0 ? ` (${failedCount} skipped)` : ''}`);
             return {
                 success: true,
-                chunkCount: chunks.length,
+                chunkCount: survivors.length,
                 pageRange: {
-                    min: Math.min(...chunks.map(c => c.page)),
-                    max: Math.max(...chunks.map(c => c.page)),
+                    min: Math.min(...survivors.map(s => s.chunk.page)),
+                    max: Math.max(...survivors.map(s => s.chunk.page)),
                 },
             };
         } catch (err: any) {
@@ -243,8 +264,7 @@ export async function indexResourceChunks(
     if (!snap.exists) throw new Error(`Resource ${resourceId} not found`);
     const data = snap.data()!;
 
-    const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
-    if (!SUPPORTED_VERSIONS.includes(data.extractionVersion)) {
+    if (!isStructuredExtractionVersion(data.extractionVersion)) {
         return { success: true, skipped: true, reason: 'not-extracted' };
     }
     if (!data.structuredContentUrl) {
@@ -285,11 +305,26 @@ export async function indexResourceChunks(
 
         const embedStart = Date.now();
         console.log(`[Index ${resourceId}] Embedding ${chunks.length} chunks...`);
-        const embeddings = await embedChunksBatched(chunks.map(c => c.text), geminiKey);
-        if (embeddings.length !== chunks.length) {
-            throw new Error(`Embedding count mismatch: ${embeddings.length} vs ${chunks.length}`);
+        const embedResults = await embedChunksBatched(chunks.map(c => c.text), geminiKey);
+
+        // Pair surviving (chunk, vector) entries — see the equivalent
+        // logic in the callable handler above for the rationale.
+        const survivors: Array<{ chunk: typeof chunks[number]; vector: number[] }> = [];
+        for (let i = 0; i < chunks.length; i++) {
+            const r = embedResults[i];
+            if (r?.values) survivors.push({ chunk: chunks[i], vector: r.values });
         }
-        console.log(`[Index ${resourceId}] Embedded ${embeddings.length} chunks in ${Math.round((Date.now() - embedStart) / 1000)}s`);
+        const failedCount = chunks.length - survivors.length;
+        if (failedCount > 0) {
+            console.warn(`[Index ${resourceId}] ${failedCount}/${chunks.length} chunks failed to embed; indexing the remaining ${survivors.length}`);
+        }
+        if (survivors.length === 0) {
+            throw new Error(`All ${chunks.length} chunks failed to embed`);
+        }
+        if (failedCount / chunks.length > 0.5) {
+            throw new Error(`${failedCount}/${chunks.length} chunks failed to embed (>50%); refusing partial index`);
+        }
+        console.log(`[Index ${resourceId}] Embedded ${survivors.length} chunks in ${Math.round((Date.now() - embedStart) / 1000)}s`);
 
         await deleteExistingChunks(db, resourceId);
 
@@ -302,11 +337,11 @@ export async function indexResourceChunks(
         const BATCH_WRITE_LIMIT = 500;
         const writeStart = Date.now();
         let writtenChunks = 0;
-        for (let i = 0; i < chunks.length; i += BATCH_WRITE_LIMIT) {
+        for (let i = 0; i < survivors.length; i += BATCH_WRITE_LIMIT) {
             const batch = db.batch();
-            const slice = chunks.slice(i, i + BATCH_WRITE_LIMIT);
+            const slice = survivors.slice(i, i + BATCH_WRITE_LIMIT);
             for (let j = 0; j < slice.length; j++) {
-                const c = slice[j]!;
+                const { chunk: c, vector } = slice[j]!;
                 const chunkIndex = i + j;
                 const id = `${resourceId}_chunk_${chunkIndex}`;
                 batch.set(db.collection(CHUNK_COLLECTION).doc(id), {
@@ -316,7 +351,7 @@ export async function indexResourceChunks(
                     userId,
                     chunkIndex,
                     text: c.text,
-                    embedding: FieldValue.vector(embeddings[chunkIndex]),
+                    embedding: FieldValue.vector(vector),
                     metadata: {
                         page: c.page,
                         section: c.section ?? null,
@@ -337,24 +372,25 @@ export async function indexResourceChunks(
             // making "is it stuck?" indistinguishable from "still
             // working" when the next thing happens to be a runtime
             // timeout kill.
-            console.log(`[Index ${resourceId}] Wrote ${writtenChunks}/${chunks.length} chunks (${Math.round((Date.now() - writeStart) / 1000)}s elapsed)`);
+            console.log(`[Index ${resourceId}] Wrote ${writtenChunks}/${survivors.length} chunks (${Math.round((Date.now() - writeStart) / 1000)}s elapsed)`);
         }
 
         await resourceRef.update({
             indexingStatus: 'ready',
             indexerVersion: INDEXER_VERSION,
-            indexedChunkCount: chunks.length,
+            indexedChunkCount: survivors.length,
             indexedAt: now,
             needsReindex: false,
+            indexingError: null, // clear any prior failure on success
             updatedAt: now,
         });
 
         return {
             success: true,
-            chunkCount: chunks.length,
+            chunkCount: survivors.length,
             pageRange: {
-                min: Math.min(...chunks.map(c => c.page)),
-                max: Math.max(...chunks.map(c => c.page)),
+                min: Math.min(...survivors.map(s => s.chunk.page)),
+                max: Math.max(...survivors.map(s => s.chunk.page)),
             },
         };
     } catch (err: any) {
@@ -370,18 +406,53 @@ export async function indexResourceChunks(
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+// Embedding API constants. Gemini caps individual chunk input at
+// ~2048 tokens (~8000 chars). We truncate at 7800 chars to leave a
+// safety margin for non-ASCII tokens (Greek/Hebrew average more
+// bytes per token).
+const MAX_EMBEDDING_INPUT_CHARS = 7800;
+
 /**
- * Gemini embedding API — batched with rate limiting + retry.
- * Free tier has aggressive rate limits; we pace requests and retry on 429s.
+ * Embedding result for ONE chunk. `values` is the dense vector when
+ * embedding succeeded; `error` carries a short diagnostic when it
+ * failed. The indexer uses this to skip-and-continue instead of
+ * killing the whole job for one bad chunk.
  */
-async function embedChunksBatched(texts: string[], apiKey: string): Promise<number[][]> {
-    const all: number[][] = [];
+interface ChunkEmbedding {
+    values: number[] | null;
+    error?: string;
+}
+
+/**
+ * Gemini embedding pipeline — fault tolerant by design.
+ *
+ * Strategy:
+ *   1. Try batch (`batchEmbedContents`, 20 chunks per call) for speed.
+ *   2. If batch fails with a NON-retryable error (e.g. one chunk has
+ *      an "empty Part" or exceeds the input size cap), drop to
+ *      per-chunk single-`embedContent` calls. Slow but bulletproof:
+ *      one bad chunk can't kill the rest.
+ *   3. Each chunk is independently retried on 429/5xx with backoff.
+ *   4. Chunks that genuinely can't be embedded come back with
+ *      `values: null` + `error: <reason>` so the caller can skip them
+ *      and continue, instead of aborting the whole indexing job.
+ *
+ * Returns a parallel array — same length as `texts`, same order.
+ * Caller filters out `values === null` entries before writing chunks.
+ */
+async function embedChunksBatched(texts: string[], apiKey: string): Promise<ChunkEmbedding[]> {
+    const all: ChunkEmbedding[] = [];
     const PAUSE_BETWEEN_BATCHES_MS = 1200;  // ~50 RPM conservative
-    for (let i = 0; i < texts.length; i += EMBEDDING_BATCH_SIZE) {
-        const batch = texts.slice(i, i + EMBEDDING_BATCH_SIZE);
-        const embeddings = await embedBatchWithRetry(batch, apiKey);
-        all.push(...embeddings);
-        if (i + EMBEDDING_BATCH_SIZE < texts.length) {
+
+    // Pre-truncate any oversized chunks. Embedding API rejects
+    // chunks > ~2048 tokens with INVALID_ARGUMENT, killing the batch.
+    const safeTexts = texts.map(t => t.length > MAX_EMBEDDING_INPUT_CHARS ? t.substring(0, MAX_EMBEDDING_INPUT_CHARS) : t);
+
+    for (let i = 0; i < safeTexts.length; i += EMBEDDING_BATCH_SIZE) {
+        const batch = safeTexts.slice(i, i + EMBEDDING_BATCH_SIZE);
+        const batchResult = await embedBatchWithFallback(batch, apiKey);
+        all.push(...batchResult);
+        if (i + EMBEDDING_BATCH_SIZE < safeTexts.length) {
             await new Promise(resolve => setTimeout(resolve, PAUSE_BETWEEN_BATCHES_MS));
         }
     }
@@ -389,7 +460,41 @@ async function embedChunksBatched(texts: string[], apiKey: string): Promise<numb
 }
 
 /**
+ * Try a batch embedding; on non-retryable failure fall back to
+ * per-chunk individual embedding so one bad input can't kill the
+ * other 19 valid chunks.
+ */
+async function embedBatchWithFallback(texts: string[], apiKey: string): Promise<ChunkEmbedding[]> {
+    try {
+        const vectors = await embedBatchWithRetry(texts, apiKey);
+        return vectors.map(v => ({ values: v }));
+    } catch (batchErr: any) {
+        const msg = batchErr?.message ?? String(batchErr);
+        console.warn(`[IndexStructured] Batch embedding failed; falling back to per-chunk. Reason: ${msg.substring(0, 200)}`);
+        // Per-chunk fallback: each chunk gets its own attempt with
+        // independent retry. Failures get recorded but don't abort.
+        const out: ChunkEmbedding[] = [];
+        for (let i = 0; i < texts.length; i++) {
+            try {
+                const vectors = await embedBatchWithRetry([texts[i]], apiKey);
+                out.push({ values: vectors[0] });
+            } catch (chunkErr: any) {
+                const chunkMsg = chunkErr?.message ?? String(chunkErr);
+                console.warn(`[IndexStructured] Chunk ${i} failed individually: ${chunkMsg.substring(0, 200)}`);
+                out.push({ values: null, error: chunkMsg.substring(0, 200) });
+            }
+            // Tighter pacing in single-chunk mode to avoid 429.
+            if (i < texts.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+        return out;
+    }
+}
+
+/**
  * Embed a batch with exponential backoff retry on rate-limit (429) errors.
+ * Throws on non-retryable errors so the per-chunk fallback can take over.
  */
 async function embedBatchWithRetry(texts: string[], apiKey: string, maxRetries = 5): Promise<number[][]> {
     let lastErr: Error | null = null;

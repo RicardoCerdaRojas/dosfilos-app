@@ -188,6 +188,7 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         (resource as any).requestedExtractionMode = data.requestedExtractionMode || undefined;
         (resource as any).extractionWarning = data.extractionWarning ?? undefined;
         (resource as any).extractionError = data.extractionError || undefined;
+        (resource as any).indexingError = data.indexingError ?? undefined;
         return resource;
     }
 }

@@ -84,6 +84,15 @@ export interface LibraryResource {
      */
     extractionError?: string;
     /**
+     * Error message written when the indexer (chunks + embeddings)
+     * failed AFTER extraction completed. Set when `indexingStatus`
+     * is `'failed'`. The card surfaces this in a tooltip on the
+     * "Por procesar" pill so the user knows what blocked indexing
+     * (e.g. "All N chunks failed to embed") and can retry.
+     * Cleared automatically on a successful re-index.
+     */
+    indexingError?: string | null;
+    /**
      * Mode the user explicitly requested at upload time:
      *   - 'standard' → skip LlamaParse, use Gemini → pdf-parse fallback.
      *     Debits standard pages from the user's balance.
