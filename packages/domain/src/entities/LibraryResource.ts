@@ -4,6 +4,7 @@ import type { SourceType as ExegesisSourceType } from '../exegesis/entities/Sour
 export type ResourceType =
     | 'theology'
     | 'grammar'
+    | 'critical-text'
     | 'commentary'
     | 'exegetical-commentary'
     | 'theological-dictionary'

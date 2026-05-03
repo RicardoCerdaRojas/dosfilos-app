@@ -17,6 +17,7 @@ export interface LibraryCategory {
 export const DEFAULT_CATEGORIES: LibraryCategory[] = [
     { id: 'theology', label: 'Teología Sistemática', icon: 'Book', color: 'blue', isDefault: true },
     { id: 'grammar', label: 'Gramática / Idiomas', icon: 'Languages', color: 'purple', isDefault: true },
+    { id: 'critical-text', label: 'Texto Crítico', icon: 'BookMarked', color: 'indigo', isDefault: true },
     { id: 'commentary', label: 'Comentario Bíblico', icon: 'MessageSquare', color: 'green', isDefault: true },
     { id: 'exegetical-commentary', label: 'Comentario Exegético', icon: 'ScrollText', color: 'emerald', isDefault: true },
     { id: 'theological-dictionary', label: 'Diccionario Teológico', icon: 'Library', color: 'amber', isDefault: true },
