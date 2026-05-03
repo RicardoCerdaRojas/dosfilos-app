@@ -119,6 +119,16 @@ export const indexStructuredDocument = onCall<IndexRequest>(
             console.log(`[IndexStructured] ${title}: fallback produced ${chunks.length} chunks`);
         }
 
+        // Drop chunks whose text is empty or whitespace-only. Gemini's
+        // batchEmbedContents API rejects the WHOLE batch with
+        // "EmbedContentRequest.content contains an empty Part." when
+        // even one item is empty, killing the entire indexing job.
+        // pdf-parse's synthetic page splitting can produce empty pages
+        // (purely whitespace pages, or trailing equal-segment splits
+        // that land on empty space) — we filter them here rather than
+        // upstream so the chunker stays simple.
+        chunks = chunks.filter(c => c.text && c.text.trim().length > 0);
+
         if (chunks.length === 0) {
             return { success: true, chunkCount: 0, skipped: true, reason: 'empty-document' };
         }
@@ -233,7 +243,7 @@ export async function indexResourceChunks(
     if (!snap.exists) throw new Error(`Resource ${resourceId} not found`);
     const data = snap.data()!;
 
-    const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard'];
+    const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
     if (!SUPPORTED_VERSIONS.includes(data.extractionVersion)) {
         return { success: true, skipped: true, reason: 'not-extracted' };
     }
@@ -262,6 +272,10 @@ export async function indexResourceChunks(
         markdown = (data.textContent as string).replace(/\[PAGE\s+(\d+)\]/gi, '<!-- page: $1 -->');
         chunks = chunkStructuredMarkdown(markdown, { maxChars: 2000, minChars: 200, overlapChars: 150 });
     }
+    // Drop empty / whitespace-only chunks — Gemini's batchEmbedContents
+    // rejects the WHOLE batch when even one Part is empty (see comment
+    // at the same filter in the callable handler above).
+    chunks = chunks.filter(c => c.text && c.text.trim().length > 0);
     if (chunks.length === 0) {
         return { success: true, skipped: true, reason: 'empty-document', chunkCount: 0 };
     }
