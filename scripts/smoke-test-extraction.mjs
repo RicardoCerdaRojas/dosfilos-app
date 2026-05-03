@@ -346,7 +346,36 @@ async function main() {
         console.log('');
         console.log('🧹 Cleaning up...');
         try {
-            // Delete chunks.
+            // 7a. Refund any pages debited by the cloud function. The
+            //     extractor debits based on extractionVersion; we mirror
+            //     that mapping here so the test doesn't cost the user
+            //     real pages just for validating the pipeline.
+            //
+            //     Skip refund if extraction never produced a version
+            //     (failed early — no debit happened).
+            const finalData = result.data ?? {};
+            const debitedMode = (() => {
+                const v = finalData.extractionVersion;
+                if (v === '3.0-llamaparse') return 'premium';
+                if (v === '4.0-gemini-standard' || v === '2.0-gemini') return 'standard';
+                // 5.0-pdfparse-structured + fallback-pdfparse → free, no refund
+                return null;
+            })();
+            const debitedPages = finalData.pageCount ?? 0;
+            if (debitedMode && debitedPages > 0) {
+                const planField = `plan${debitedMode.charAt(0).toUpperCase()}${debitedMode.slice(1)}Pages`;
+                const availField = `${debitedMode}PagesAvailable`;
+                const spentField = `${debitedMode}SpentTotal`;
+                await db.collection('users').doc(userId).update({
+                    [`processingBalance.${planField}`]: admin.firestore.FieldValue.increment(debitedPages),
+                    [`processingBalance.${availField}`]: admin.firestore.FieldValue.increment(debitedPages),
+                    [`processingBalance.${spentField}`]: admin.firestore.FieldValue.increment(-debitedPages),
+                    'processingBalance.updatedAt': admin.firestore.FieldValue.serverTimestamp(),
+                });
+                console.log(`   ✓ Refunded ${debitedPages} ${debitedMode} pages to plan bucket`);
+            }
+
+            // 7b. Delete chunks.
             const chunkSnap = await db
                 .collection('document_chunks')
                 .where('resourceId', '==', resourceId)
@@ -357,7 +386,7 @@ async function main() {
                 await batch.commit();
                 console.log(`   ✓ Deleted ${chunkSnap.size} chunks`);
             }
-            // Delete storage objects (PDF + structured.md if present).
+            // 7c. Delete storage objects (PDF + structured.md if present).
             try {
                 await file.delete();
                 console.log(`   ✓ Deleted PDF from storage`);
@@ -374,7 +403,7 @@ async function main() {
             } catch {
                 // ignore
             }
-            // Delete the doc.
+            // 7d. Delete the doc.
             await resourceRef.delete();
             console.log(`   ✓ Deleted Firestore doc`);
         } catch (cleanupErr) {
@@ -384,6 +413,7 @@ async function main() {
     } else {
         console.log('');
         console.log(`⏭️  --keep set; resource left in place: ${resourceId}`);
+        console.log(`   ⚠️  pages debited by the test were NOT refunded.`);
     }
 
     process.exit(result.ok ? 0 : 1);
