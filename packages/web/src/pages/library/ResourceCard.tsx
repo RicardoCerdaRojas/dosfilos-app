@@ -241,8 +241,16 @@ export function ResourceCard({
     ) : null;
 
     // ── Status / metadata badges shared between layouts
+    // When the resource ended up in 'failed', surface the concrete
+    // error message via tooltip — written by the cloud function as
+    // `extractionError`. Without this the user has no signal beyond
+    // "Error al procesar" and has to delete + re-upload blindly.
+    const failureMessage = (resource as { extractionError?: string }).extractionError;
     const statusBadge = statusPill && StatusIcon ? (
-        <span className={cn('inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium', statusPill.tone)}>
+        <span
+            className={cn('inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium', statusPill.tone)}
+            title={resource.textExtractionStatus === 'failed' && failureMessage ? failureMessage : undefined}
+        >
             <StatusIcon className={cn('h-3 w-3', statusPill.iconClass)} />
             {statusPill.text}
         </span>
@@ -281,13 +289,28 @@ export function ResourceCard({
                 return null;
         }
     })();
+    // When the cascade degraded from the user's requested tier the
+    // pipeline writes `extractionWarning` to the resource. Override the
+    // badge tone (warning amber) and tooltip so the user understands
+    // why their Premium upload ended up here. Tooltip wins over the
+    // generic engine hint because the warning is more actionable.
+    const warningOverride = (resource as { extractionWarning?: string | null }).extractionWarning;
     const EngineIcon = enginePill?.icon;
     const engineBadge = enginePill && EngineIcon ? (
         <span
-            className={cn('inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium', enginePill.tone)}
-            title={enginePill.title}
+            className={cn(
+                'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                warningOverride
+                    ? 'bg-warning-subtle text-warning-subtle-foreground border border-warning/40'
+                    : enginePill.tone,
+            )}
+            title={warningOverride || enginePill.title}
         >
-            <EngineIcon className="h-2.5 w-2.5" />
+            {warningOverride ? (
+                <AlertCircle className="h-2.5 w-2.5" />
+            ) : (
+                <EngineIcon className="h-2.5 w-2.5" />
+            )}
             {enginePill.text}
         </span>
     ) : null;

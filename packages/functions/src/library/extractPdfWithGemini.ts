@@ -511,6 +511,35 @@ export const extractPdfWithGemini = onObjectFinalized(
                 }
             }
 
+            // Compute a user-facing warning when the actual extraction
+            // tier is below what the user explicitly requested. This is
+            // what the UI surfaces in the engine-badge tooltip so the
+            // user understands why their Premium upload ended up on
+            // Standard or Basic — and can decide whether to reprocess.
+            //
+            // Examples written to Firestore:
+            //   - "Premium falló en 2 cuenta(s); usamos Estándar (Gemini)."
+            //   - "Premium falló y archivo >12MB; usamos Básico (pdf-parse)."
+            //   - "Estándar falló; usamos Básico (pdf-parse)."
+            //
+            // Always cleared (set to null) on success-at-requested-tier
+            // so a successful reprocess removes any stale warning.
+            let extractionWarning: string | null = null;
+            if (requestedMode === 'premium' && extractionVersion !== '3.0-llamaparse') {
+                const accountSummary = llamaErrors.length > 0
+                    ? `Premium falló en ${llamaErrors.length} cuenta(s)`
+                    : 'Premium no estuvo disponible';
+                if (extractionVersion === '2.0-gemini') {
+                    extractionWarning = `${accountSummary}; usamos Estándar (Gemini).`;
+                } else if (extractionVersion === 'fallback-pdfparse') {
+                    extractionWarning = `${accountSummary} y Gemini tampoco pudo procesar; usamos Básico (pdf-parse). Reprocesa con Premium para mejor calidad.`;
+                }
+            } else if (requestedMode === 'standard' && extractionVersion === 'fallback-pdfparse') {
+                extractionWarning = 'Gemini falló; usamos Básico (pdf-parse). Considera reprocesar.';
+            }
+            // Note: requestedMode === undefined (legacy uploads) gets no
+            // warning — we don't know what they asked for.
+
             // Update Firestore document with extracted text and ready status
             const updateData: Record<string, any> = {
                 textContent: finalText,
@@ -521,6 +550,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                 extractedWithGemini: usedGemini,
                 extractedWithLlamaParse: usedLlamaParse,
                 extractionVersion,
+                extractionWarning, // null clears any prior warning on a clean reprocess
                 needsReindex: true,
                 wasTruncated,
                 updatedAt: new Date()

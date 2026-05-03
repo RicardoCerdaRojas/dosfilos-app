@@ -62,6 +62,22 @@ export interface LibraryResource {
     extractionVersion?: ExtractionVersion; // Which extractor produced textContent
     extractedWithLlamaParse?: boolean; // Convenience flag
     /**
+     * User-facing message written by the extraction pipeline when the
+     * actual tier ended up below what the user requested (e.g. requested
+     * Premium → got Standard because all LlamaParse accounts failed).
+     * The card surfaces this in a tooltip on the engine badge so the
+     * user can decide whether to reprocess. `null` / undefined means
+     * extraction succeeded at the requested tier — no warning needed.
+     */
+    extractionWarning?: string | null;
+    /**
+     * Error message written when the cascade exhausted every extractor
+     * and the resource ended up in `textExtractionStatus: 'failed'`.
+     * Used by the failed-state callout to give the user a concrete
+     * reason instead of a generic "something failed".
+     */
+    extractionError?: string;
+    /**
      * Mode the user explicitly requested at upload time:
      *   - 'standard' → skip LlamaParse, use Gemini → pdf-parse fallback.
      *     Debits standard pages from the user's balance.
