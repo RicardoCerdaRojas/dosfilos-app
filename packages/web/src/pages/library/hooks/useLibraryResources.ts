@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { libraryService, categoryService } from '@dosfilos/application';
 import { LibraryCategory, LibraryResourceEntity } from '@dosfilos/domain';
+import { toast } from 'sonner';
+import { useTranslation } from '@/i18n';
 
 /** Index check status for a resource — derived from the vector store, not the
  *  resource document itself (a resource may say `indexingStatus: 'ready'` but
@@ -78,10 +80,18 @@ interface UseLibraryResourcesResult {
  * `indexStatus` via the exposed setter when relevant.
  */
 export function useLibraryResources(userId: string | null | undefined): UseLibraryResourcesResult {
+    const { t } = useTranslation('library');
     const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
     const [categories, setCategories] = useState<LibraryCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [indexStatus, setIndexStatus] = useState<Record<string, IndexStatus>>({});
+
+    // Tracks the indexing-state we've already toasted about, so transitions
+    // from `processing → ready` only fire ONE notification (not one per
+    // listener emission). Seeded on first emission so existing-on-load
+    // resources don't toast — only NEW transitions during the session do.
+    const lastIndexingState = useRef<Map<string, string>>(new Map());
+    const initialEmissionDone = useRef(false);
 
     // Categories — one-shot fetch keyed on userId
     useEffect(() => {
@@ -137,12 +147,46 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
     useEffect(() => {
         if (!userId) return;
         const unsubscribe = libraryService.subscribeToUserResources(userId, (updated) => {
+            // Detect transitions to surface "X listo" / "X falló" toasts.
+            // Skip the initial emission (everything would toast at once on
+            // mount). For subsequent emissions, fire one toast per
+            // transition into a terminal indexing state.
+            if (initialEmissionDone.current) {
+                for (const r of updated) {
+                    const prev = lastIndexingState.current.get(r.id);
+                    const curr = r.indexingStatus ?? 'unknown';
+                    if (prev && prev !== curr) {
+                        if (curr === 'ready') {
+                            const chunks = (r as { indexedChunkCount?: number }).indexedChunkCount;
+                            toast.success(
+                                t('toast.processSuccess', {
+                                    title: r.title,
+                                    chunks: chunks ?? '?',
+                                }),
+                            );
+                        } else if (curr === 'failed') {
+                            toast.error(
+                                t('toast.processError') + (r.title ? ` — ${r.title}` : ''),
+                            );
+                        }
+                    }
+                    lastIndexingState.current.set(r.id, curr);
+                }
+            } else {
+                // Seed the map with the initial state so we only fire on
+                // future changes.
+                for (const r of updated) {
+                    lastIndexingState.current.set(r.id, r.indexingStatus ?? 'unknown');
+                }
+                initialEmissionDone.current = true;
+            }
+
             setResources(updated);
             setLoading(false);
             checkAllIndexStatus(updated);
         });
         return () => unsubscribe();
-    }, [userId, checkAllIndexStatus]);
+    }, [userId, checkAllIndexStatus, t]);
 
     const indexedCount = Object.values(indexStatus).filter(s => s === 'indexed').length;
 
