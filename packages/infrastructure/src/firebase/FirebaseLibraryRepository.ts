@@ -114,6 +114,14 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         if (updates.exegeticalType !== undefined) {
             firestoreUpdates.exegeticalType = updates.exegeticalType ?? null;
         }
+        // v1.7 smart-match metadata. Both fields are user-editable from
+        // the metadata dialog; persist whatever the caller passed.
+        if (updates.coversBibleBooks !== undefined) {
+            firestoreUpdates.coversBibleBooks = [...updates.coversBibleBooks];
+        }
+        if (updates.scope !== undefined) {
+            firestoreUpdates.scope = updates.scope;
+        }
         if (updates.updatedAt !== undefined) firestoreUpdates.updatedAt = Timestamp.fromDate(updates.updatedAt);
 
         // 🎯 Core Library stores
@@ -148,6 +156,16 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         // still works for resources uploaded before this field existed.
         if (resource.requestedExtractionMode) {
             doc.requestedExtractionMode = resource.requestedExtractionMode;
+        }
+        // v1.7 smart-match metadata. Persist when set so the upload
+        // form's autocompleted suggestion travels to Firestore; legacy
+        // resources (where neither was set) read back as `[]` + 'book'
+        // via the deserializer defaults.
+        if (resource.coversBibleBooks !== undefined) {
+            doc.coversBibleBooks = [...resource.coversBibleBooks];
+        }
+        if (resource.scope !== undefined) {
+            doc.scope = resource.scope;
         }
         return doc;
     }
@@ -190,6 +208,14 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         (resource as any).extractionError = data.extractionError || undefined;
         (resource as any).indexingError = data.indexingError ?? undefined;
         (resource as any).processingStartedAt = data.processingStartedAt?.toDate?.() ?? undefined;
+        // v1.7 smart-match metadata. Legacy docs (uploaded before v1.7)
+        // have neither field set in Firestore — default coversBibleBooks
+        // to [] and scope to 'book' so the smart-match dialog treats
+        // them as "unclassified, please nudge user to fill in".
+        (resource as any).coversBibleBooks = Array.isArray(data.coversBibleBooks)
+            ? [...data.coversBibleBooks]
+            : [];
+        (resource as any).scope = data.scope ?? 'book';
         return resource;
     }
 }

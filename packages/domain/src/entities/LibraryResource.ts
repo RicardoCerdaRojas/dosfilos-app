@@ -1,5 +1,25 @@
 import { WorkflowPhase } from './SermonWorkflow';
 import type { SourceType as ExegesisSourceType } from '../exegesis/entities/SourceType';
+import type { BibleBookId } from '../bible/canon/BibleCanon';
+
+/**
+ * Granularity of what a library resource covers (v1.7 paper-corpus
+ * library match). Determines how the smart-match dialog interprets
+ * `coversBibleBooks`:
+ *
+ *   - 'whole-bible' — lexicons, theological dictionaries, grammars
+ *     covering the whole canon (BDAG, TDNT, BDF, Wallace). `coversBibleBooks`
+ *     is expected to be empty.
+ *   - 'whole-testament' — NT-only or OT-only references (NIDNTTE, HALOT,
+ *     NA28). `coversBibleBooks` is expected to be empty.
+ *   - 'book' — commentaries, monographs on a single book or a small
+ *     cluster (Cockerill on Hebrews, Bauckham on 2 Peter & Jude).
+ *     `coversBibleBooks` should list the covered books.
+ *   - 'pericope' — narrow studies on a passage or section
+ *     (a journal article on Romans 1:18-32). `coversBibleBooks` lists
+ *     the host book(s).
+ */
+export type LibraryResourceScope = 'whole-bible' | 'whole-testament' | 'book' | 'pericope';
 
 export type ResourceType =
     | 'theology'
@@ -169,6 +189,31 @@ export interface LibraryResource {
     // Phase preference: documents preferred for specific workflow phases
     preferredForPhases?: WorkflowPhase[];
 
+    /**
+     * Bible books this resource covers, by canonical id (e.g. ['2PE', 'JUD']
+     * for Bauckham WBC; ['HEB'] for Cockerill NICNT). Used by the v1.7
+     * paper-corpus smart-match to filter the resource list to those
+     * covering the paper's passage's book.
+     *
+     * Empty array semantics depend on `scope`:
+     *   - scope === 'whole-bible' or 'whole-testament' → empty is correct
+     *     (the resource covers the whole scope, not specific books)
+     *   - scope === 'book' or 'pericope' → empty means UNCLASSIFIED
+     *     (UI should nudge the user to fill it in)
+     *
+     * Optional for legacy resources uploaded before v1.7 — repos return
+     * `[]` in that case, callers treat absent + 'book' scope as
+     * "unclassified" the same way.
+     */
+    coversBibleBooks?: ReadonlyArray<BibleBookId>;
+
+    /**
+     * Granularity of coverage. See `LibraryResourceScope` for semantics.
+     * Optional for legacy resources — repos default to `'book'` (the
+     * most common case for a pastor's library) when absent.
+     */
+    scope?: LibraryResourceScope;
+
     // Extensible metadata (e.g. for Gemini File URIs)
     metadata?: Record<string, any>;
 
@@ -195,6 +240,13 @@ export class LibraryResourceEntity implements LibraryResource {
      * the default premium-first cascade.
      */
     public requestedExtractionMode?: 'standard' | 'premium';
+    /**
+     * v1.7 smart-match metadata. Set either at upload (autocompleted by
+     * `inferBibleBooksFromTitle`) or in the metadata editor. Owned by
+     * deserialization — not a constructor param.
+     */
+    public coversBibleBooks?: ReadonlyArray<BibleBookId>;
+    public scope?: LibraryResourceScope;
 
     constructor(
         public id: string,
