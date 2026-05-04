@@ -7,10 +7,16 @@
  * never wrote `assembledMarkdown` or transitioned `phase` to
  * `'assembled'`, so the "Generar sermón" gate stayed disabled forever.
  *
- * What it does:
- *   - Scan papers (optionally scoped to one owner)
- *   - Find ones where the assembly step is accepted but the paper's
- *     phase is anything other than 'assembled'
+ * Storage shape (FirestoreExegeticalPaperRepository):
+ *   - Top-level `exegeticalPapers` collection
+ *   - Each paper carries `steps: ExegeticalStep[]` INLINE (not a
+ *     subcollection), where every step has `accepted: StepVersion | null`
+ *     and `accepted.markdown` is the canonical content.
+ *
+ * What this script does:
+ *   - Scan top-level `exegeticalPapers` (optionally filter by ownerId)
+ *   - Find papers where the inline `steps` array contains an assembly
+ *     step that's already accepted, but paper.phase != 'assembled'
  *   - Patch `assembledMarkdown` (from the accepted assembly version)
  *     and set `phase: 'assembled'`
  *
@@ -70,14 +76,12 @@ console.log(`Promote assembled papers — ${apply ? 'APPLY (writes Firestore)' :
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log('');
 
-// Papers live under users/{ownerId}/exegetical_papers/{paperId}.
-// Steps live under .../exegetical_papers/{paperId}/steps/{stepId}.
-let papersQuery = db.collectionGroup('exegetical_papers');
-if (ownerUid) {
-    papersQuery = db.collection('users').doc(ownerUid).collection('exegetical_papers');
-}
-
-const papersSnap = await papersQuery.get();
+// Top-level collection (NOT nested under users/{uid}).
+const papersCol = db.collection('exegeticalPapers');
+const query = ownerUid
+    ? papersCol.where('ownerId', '==', ownerUid)
+    : papersCol;
+const papersSnap = await query.get();
 
 let scanned = 0;
 let alreadyAssembled = 0;
@@ -90,7 +94,6 @@ for (const paperDoc of papersSnap.docs) {
     scanned++;
     const data = paperDoc.data();
     const paperId = paperDoc.id;
-    const ownerId = paperDoc.ref.parent.parent?.id;
     const title = (data.title ?? '(untitled)').substring(0, 50);
 
     if (data.phase === 'assembled') {
@@ -101,46 +104,28 @@ for (const paperDoc of papersSnap.docs) {
         continue;
     }
 
-    // Look at the steps subcollection to find the assembly step.
-    let stepsSnap;
-    try {
-        stepsSnap = await paperDoc.ref.collection('steps').get();
-    } catch (err) {
-        console.log(`  ⚠️  ${paperId} (${title}) — failed to read steps: ${err.message ?? err}`);
-        errors++;
-        continue;
-    }
-
-    const assemblyStep = stepsSnap.docs.find(d => d.data().kind === 'assembly');
+    const steps = Array.isArray(data.steps) ? data.steps : [];
+    const assemblyStep = steps.find(s => s?.kind === 'assembly');
     if (!assemblyStep) {
         stuckButNoAssembly++;
+        console.log(`  ·  ${paperId} (${title}) — phase=${data.phase}, no assembly step yet`);
         continue;
     }
 
-    const stepData = assemblyStep.data();
-    const acceptedVersionId = stepData.acceptedVersionId ?? null;
-    if (!acceptedVersionId || stepData.state !== 'accepted') {
+    const acceptedMarkdown = assemblyStep.accepted?.markdown;
+    if (!acceptedMarkdown || assemblyStep.state !== 'accepted') {
         stuckAssemblyNotAccepted++;
+        console.log(`  ·  ${paperId} (${title}) — phase=${data.phase}, assembly state=${assemblyStep.state ?? '—'}`);
         continue;
     }
 
-    // Find the accepted version's markdown. Versions are stored in the
-    // `versions` array on the step doc.
-    const versions = (stepData.versions || []);
-    const accepted = versions.find(v => v.id === acceptedVersionId);
-    if (!accepted?.markdown) {
-        console.log(`  ⚠️  ${paperId} (${title}) — accepted version ${acceptedVersionId} missing markdown`);
-        errors++;
-        continue;
-    }
-
-    console.log(`  ${apply ? '✓' : '↻'} ${paperId} (${title}) — phase=${data.phase} → assembled, ${accepted.markdown.length} chars`);
+    console.log(`  ${apply ? '✓' : '↻'} ${paperId} (${title}) — phase=${data.phase} → assembled, ${acceptedMarkdown.length} chars`);
 
     if (apply) {
         try {
             await paperDoc.ref.update({
                 phase: 'assembled',
-                assembledMarkdown: accepted.markdown,
+                assembledMarkdown: acceptedMarkdown,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
             promoted++;
