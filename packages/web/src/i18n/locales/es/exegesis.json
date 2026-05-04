@@ -689,6 +689,7 @@
         "steps": {
             "startCta": "Iniciar generación",
             "generating": "Generando...",
+            "regenerating": "Regenerando…",
             "failedHint": "Algo falló al generar este paso. Prueba de nuevo.",
             "editHint": "Editado a mano — la verificación de citas no corre automáticamente.",
             "hintPlaceholder": "Ej. más sintaxis, más teología, cita más a Cockerill",
@@ -710,6 +711,7 @@
                 "retry": "Reintentar",
                 "accept": "Aceptar",
                 "regenerate": "Regenerar",
+                "regenerating": "Regenerando…",
                 "regenerateWithHint": "Hint y regenerar",
                 "applyHint": "Aplicar hint",
                 "editManual": "Editar a mano",

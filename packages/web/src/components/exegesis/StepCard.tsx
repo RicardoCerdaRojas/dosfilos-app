@@ -189,7 +189,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         disabled={generateStep.isPending}
                         className="border-rose-300 text-rose-700 dark:border-rose-700 dark:text-rose-300"
                     >
-                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                        {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
                         {t('detail.steps.action.retry')}
                     </Button>
                 )}
@@ -217,10 +217,26 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 )}
 
                 {(isReview || showAccepted) && !editing && previewMarkdown && (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {previewMarkdown}
-                        </ReactMarkdown>
+                    <div className="relative">
+                        {/* Optimistic spinner overlay — fires the moment
+                            the user clicks Regenerar/Aplicar hint, before
+                            Firestore propagates the 'generating' state.
+                            Closes the visual gap where the buttons go
+                            disabled but nothing tells the user "something
+                            is happening". */}
+                        {generateStep.isPending && (
+                            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-white/70 dark:bg-zinc-900/70 backdrop-blur-sm">
+                                <div className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-zinc-800 px-3 py-2 rounded-md border border-slate-200 dark:border-zinc-700 shadow-sm">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    {t('detail.steps.regenerating')}
+                                </div>
+                            </div>
+                        )}
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {previewMarkdown}
+                            </ReactMarkdown>
+                        </div>
                     </div>
                 )}
 
@@ -269,16 +285,16 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                             size="sm"
                             variant="outline"
                             onClick={() => handleGenerate()}
-                            disabled={generateStep.isPending}
+                            disabled={generateStep.isPending || acceptStep.isPending}
                         >
-                            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                            {t('detail.steps.action.regenerate')}
+                            {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                            {generateStep.isPending ? t('detail.steps.action.regenerating') : t('detail.steps.action.regenerate')}
                         </Button>
                         <Button
                             size="sm"
                             variant="outline"
                             onClick={() => setHintMode(v => !v)}
-                            disabled={generateStep.isPending}
+                            disabled={generateStep.isPending || acceptStep.isPending}
                         >
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.regenerateWithHint')}
@@ -287,7 +303,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                             size="sm"
                             variant="ghost"
                             onClick={startEdit}
-                            disabled={generateStep.isPending}
+                            disabled={generateStep.isPending || acceptStep.isPending}
                         >
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.editManual')}
@@ -313,7 +329,8 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 disabled={!hintDraft.trim() || generateStep.isPending}
                                 className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
                             >
-                                {t('detail.steps.action.applyHint')}
+                                {generateStep.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                                {generateStep.isPending ? t('detail.steps.action.regenerating') : t('detail.steps.action.applyHint')}
                             </Button>
                             <button
                                 type="button"
