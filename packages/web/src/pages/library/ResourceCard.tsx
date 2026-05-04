@@ -383,6 +383,29 @@ export function ResourceCard({
     // When set, tooltip wins over the generic engine hint because the
     // warning is more actionable.
     const EngineIcon = enginePill?.icon;
+    // v1.7 metadata-incomplete pill. Surfaces when the smart-match
+    // schema is unset for a granularity that needs it ('book' /
+    // 'pericope' with no books listed). Whole-bible / whole-testament
+    // are correct with empty arrays so they never trip this. Hidden
+    // when the resource is still extracting — no point nagging while
+    // the user is waiting on the cascade.
+    const scope = (resource as { scope?: 'whole-bible' | 'whole-testament' | 'book' | 'pericope' }).scope ?? 'book';
+    const coversBibleBooks = (resource as { coversBibleBooks?: ReadonlyArray<string> }).coversBibleBooks ?? [];
+    const metadataIncomplete =
+        resource.textExtractionStatus === 'ready'
+        && (scope === 'book' || scope === 'pericope')
+        && coversBibleBooks.length === 0;
+    const metadataBadge = metadataIncomplete ? (
+        <button
+            type="button"
+            onClick={onEdit}
+            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-warning-subtle text-warning-subtle-foreground border border-warning/40 hover:bg-warning/10 transition-colors"
+            title={t('card.metadataIncompleteHint')}
+        >
+            <AlertCircle className="h-2.5 w-2.5" aria-hidden />
+            {t('card.metadataIncomplete')}
+        </button>
+    ) : null;
     const engineBadge = enginePill && EngineIcon ? (
         <span
             className={cn(
@@ -477,6 +500,7 @@ export function ResourceCard({
                     <div className="hidden md:flex items-center gap-1.5 flex-wrap justify-end max-w-[40%]">
                         {statusBadge}
                         {engineBadge}
+                        {metadataBadge}
                         {coreStoreBadges}
                         {phaseBadges}
                     </div>
@@ -520,10 +544,11 @@ export function ResourceCard({
             </div>
 
             {/* Status + assignment badges (single row, wraps if needed) */}
-            {(statusBadge || engineBadge || coreStoreBadges || phaseBadges) && (
+            {(statusBadge || engineBadge || metadataBadge || coreStoreBadges || phaseBadges) && (
                 <div className="flex items-center gap-1.5 flex-wrap">
                     {statusBadge}
                     {engineBadge}
+                    {metadataBadge}
                     {coreStoreBadges}
                     {phaseBadges}
                 </div>

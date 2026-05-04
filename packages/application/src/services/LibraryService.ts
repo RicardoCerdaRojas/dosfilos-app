@@ -432,6 +432,14 @@ export class LibraryService {
              * extraction dialog).
              */
             exegeticalType?: ExegesisSourceType | null;
+            /**
+             * v1.7 smart-match metadata. Pass through to the repo,
+             * which writes the array + scope to Firestore. The
+             * paper-corpus dialog reads these to filter the user's
+             * library to resources covering the paper's passage.
+             */
+            coversBibleBooks?: ReadonlyArray<import('@dosfilos/domain').BibleBookId>;
+            scope?: import('@dosfilos/domain').LibraryResourceScope;
         }
     ): Promise<void> {
         console.log(`📝 Updating resource ${id}:`, updates);

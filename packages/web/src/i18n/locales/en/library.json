@@ -72,6 +72,8 @@
     },
     "card": {
         "deleting": "Deleting…",
+        "metadataIncomplete": "Metadata missing",
+        "metadataIncompleteHint": "Bible-book coverage is missing. Edit so this resource appears in the smart paper search.",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} page",
         "metaPagesActual_other": "{{count}} pages",
@@ -130,6 +132,33 @@
         "exegesis": "Exegesis",
         "homiletics": "Homiletics",
         "drafting": "Drafting"
+    },
+    "metadataEditor": {
+        "scopeLabel": "Coverage",
+        "scope": {
+            "pericope": "Pericope",
+            "book": "Book",
+            "whole-testament": "Testament",
+            "whole-bible": "Whole Bible"
+        },
+        "scopeHint": {
+            "pericope": "Narrow study of a passage (article, short monograph).",
+            "book": "Commentary or monograph on one or more books.",
+            "whole-testament": "Lexicon, grammar or reference for the full OT or NT.",
+            "whole-bible": "Dictionary, systematic theology or cross-canon reference."
+        },
+        "booksLabel": "Bible books covered",
+        "booksHint": "Pick the books this resource covers. Allows it to surface in the smart paper search.",
+        "booksNotApplicable": "Not applicable for this coverage — the resource is treated as available for any passage.",
+        "selectedBooksLabel": "Selected books",
+        "removeBookAria": "Remove {{book}}",
+        "bookPickerPlaceholder": "Add books…",
+        "bookPickerSelected_one": "{{count}} book selected",
+        "bookPickerSelected_other": "{{count}} books selected",
+        "bookSearchPlaceholder": "Search book…",
+        "bookSearchEmpty": "No results",
+        "testamentOT": "Old Testament",
+        "testamentNT": "New Testament"
     },
     "deleteDialog": {
         "title": "Delete resource?",
