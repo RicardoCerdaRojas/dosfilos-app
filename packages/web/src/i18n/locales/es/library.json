@@ -43,7 +43,7 @@
         "authorPlaceholder": "Nombre del autor",
         "categoryLabel": "Categoría",
         "uploadButton": "Subir",
-        "fileSizeWarning": "Archivo >50MB: calidad de extracción puede reducirse",
+        "fileSizeWarning": "Archivo >50MB: la extracción demora más (cap: 250MB)",
         "modeLabel": "Modo de procesamiento",
         "modeStandardTitle": "Estándar",
         "modeStandardDescription": "Libros narrativos, ensayos y sermones (hasta ~600 págs). Consume páginas estándar.",
@@ -261,6 +261,7 @@
     "toast": {
         "uploadSuccess": "Recurso agregado a la biblioteca",
         "uploadError": "Error al subir el recurso",
+        "fileTooLarge": "Archivo demasiado grande. Máximo permitido: {{maxMB}}MB.",
         "deleteSuccess": "Recurso eliminado",
         "deleteError": "Error al eliminar el recurso",
         "cancelSuccess": "Procesamiento cancelado",

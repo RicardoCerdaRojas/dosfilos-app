@@ -142,6 +142,48 @@ describe('inferBibleBooksFromTitle', () => {
                 inferredScope: 'whole-bible',
             });
         });
+
+        it('BHQ (full name) → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('Biblia Hebraica Quinta — Anthony Gelston')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('BHQ (acronym) → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('The Twelve Minor Prophets — BHQ')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('NA29 → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('NA29')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('SBLGNT → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('SBLGNT')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('Septuaginta (Rahlfs) → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('Rahlfs Septuaginta')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('NIDOTTE → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('NIDOTTE — VanGemeren')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
     });
 
     describe('non-matches return empty', () => {

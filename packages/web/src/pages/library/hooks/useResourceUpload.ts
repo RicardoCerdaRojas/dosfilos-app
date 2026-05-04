@@ -6,8 +6,20 @@ import { useTranslation } from '@/i18n';
 import { hasAcceptedUploadConsent } from '@/components/library/UploadConsentModal';
 import { UploadFormMetadata } from '../components/LibraryUploadForm';
 
-/** Upload soft cap. Larger PDFs still upload but extraction quality degrades. */
+/**
+ * Upload soft cap. Files above this still upload (up to the storage
+ * rules' hard cap of 250MB) but the extraction pipeline takes longer
+ * and quality may degrade — the warning surfaces that trade-off
+ * before the user commits to a slow extraction.
+ */
 const MAX_OPTIMAL_SIZE_MB = 50;
+/**
+ * Upload hard cap. Mirrors `storage.rules` — keep these two in sync
+ * (the rules cap is the authoritative gate; this constant just lets
+ * us reject large files in the client before kicking off an upload
+ * that's destined to 403).
+ */
+const MAX_UPLOAD_SIZE_MB = 250;
 
 interface UseResourceUploadOptions {
     /** ID of the user owning the upload. Hook is no-op while null/undefined. */
@@ -97,6 +109,13 @@ export function useResourceUpload({
         }
 
         const sizeMB = selected.size / (1024 * 1024);
+        // Hard cap — reject before we waste an upload that would 403
+        // at the storage rules gate. Toast tells the user the limit
+        // explicitly so they know the system isn't broken.
+        if (sizeMB > MAX_UPLOAD_SIZE_MB) {
+            toast.error(t('toast.fileTooLarge', { maxMB: MAX_UPLOAD_SIZE_MB }));
+            return;
+        }
         setFileSizeWarning(sizeMB > MAX_OPTIMAL_SIZE_MB);
         setFile(selected);
         // Autofill title from filename — strip extension
