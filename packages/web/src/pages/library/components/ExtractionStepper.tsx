@@ -47,13 +47,19 @@ interface PhaseDescriptor {
  */
 export function ExtractionStepper({ resource, indexStatus }: ExtractionStepperProps) {
     const { t } = useTranslation('library');
+    // Rules of Hooks: every hook MUST be called unconditionally on every
+    // render. Previously `useElapsedLabel` (which calls useState/useEffect
+    // internally) sat AFTER the early `return null` for indexed resources,
+    // so when a card transitioned indexing → indexed in place, the hook
+    // count dropped and React threw error #310. Hook calls now happen
+    // first; the early return is below, after all hooks have run.
+    const elapsedLabel = useElapsedLabel(resource, indexStatus, t);
 
     // Don't render once the user no longer cares about progression —
     // the green "Listo" pill above already conveys completion.
     if (indexStatus === 'indexed') return null;
 
     const phases = computePhases(resource, indexStatus);
-    const elapsedLabel = useElapsedLabel(resource, indexStatus, t);
 
     return (
         <div className="space-y-0.5">
