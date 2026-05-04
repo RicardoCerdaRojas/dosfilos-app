@@ -49,6 +49,10 @@
         "modeStandardDescription": "Narrative books, essays and sermons (up to ~600 pages). Consumes standard pages.",
         "modePremiumTitle": "Premium",
         "modePremiumDescription": "Tables, multi-column and scanned (up to ~1000 pages). Consumes premium pages.",
+        "tierUnavailableHint": "Not available for files over {{capMB}}MB",
+        "tierCalloutPremiumOnly": "This file ({{sizeMB}}MB) exceeds the Premium limit ({{premiumCapMB}}MB). Premium is disabled; Standard will be used.",
+        "tierCalloutStandardOnly": "This file ({{sizeMB}}MB) exceeds the Standard limit ({{standardCapMB}}MB). Standard is disabled; Premium still handles it.",
+        "tierCalloutBoth": "This file ({{sizeMB}}MB) exceeds the Premium ({{premiumCapMB}}MB) and Standard ({{standardCapMB}}MB) limits. It will be processed with Basic (free, reduced quality).",
         "smartMatchLabel": "Detected from title",
         "smartMatchScope": {
             "whole-bible": "scope: whole Bible",
