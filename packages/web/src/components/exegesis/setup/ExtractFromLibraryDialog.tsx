@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Sparkles, AlertTriangle, Search } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { libraryService } from '@dosfilos/application';
@@ -8,6 +8,7 @@ import {
     SOURCE_TYPE_GROUPS,
     type ExegeticalPaper,
     type LibraryResource,
+    type RankedResource,
     type SourceType,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
@@ -22,6 +23,10 @@ import {
 } from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useExtractExcerpts } from '@/hooks/exegesis/useExtractExcerpts';
+import { useRankedLibrary } from '@/hooks/exegesis/useRankedLibrary';
+
+/** How many top-ranked resources get auto-checked when the dialog opens. */
+const AUTO_SELECT_TOP_N = 5;
 
 /**
  * Multi-select wizard for the v1.5 "extract from library" flow.
@@ -67,6 +72,16 @@ export function ExtractFromLibraryDialog({
     // toggling preserves any per-resource overrides the user typed.
     const [selections, setSelections] = useState<Map<string, SelectionEntry>>(new Map());
     const [searchTerm, setSearchTerm] = useState('');
+    // v1.7 smart-match: collapse the long tail behind a toggle. The
+    // top-ranked resources are always visible; the rest hide until
+    // the user expands. Defaults to collapsed because the whole
+    // point is to NOT confront the user with 80 books.
+    const [showAllResources, setShowAllResources] = useState(false);
+    // Track whether we've already applied the auto pre-selection from
+    // the ranking — we only want to do this ONCE per dialog open, not
+    // every time the ranking re-renders. User edits afterwards must
+    // not get clobbered.
+    const [autoSelectionApplied, setAutoSelectionApplied] = useState(false);
     // Group filter chip — narrows the list to resources whose cached
     // `exegeticalType` falls in a specific SOURCE_TYPE_GROUPS family
     // (lexical / commentaries / background / etc.). Resources WITHOUT
@@ -88,6 +103,10 @@ export function ExtractFromLibraryDialog({
         enabled: !!user?.uid && open,
     });
 
+    // v1.7 smart-match: rank the user's library against the paper.
+    // Fires on dialog open in parallel with the resource list fetch.
+    const ranking = useRankedLibrary({ paperId: open ? paper.id : null, enabled: open });
+
     // Reset state on close so the next open starts fresh. Avoids
     // showing the previous error or selection when the user reopens
     // for a different paper.
@@ -97,6 +116,8 @@ export function ExtractFromLibraryDialog({
             setNotIndexedIds([]);
             setSearchTerm('');
             setGroupFilter('all');
+            setShowAllResources(false);
+            setAutoSelectionApplied(false);
         }
     }, [open]);
 
@@ -112,6 +133,16 @@ export function ExtractFromLibraryDialog({
         }
         return set;
     }, [paper.sources]);
+
+    // Quick lookup of the per-resource ranking. Built once per ranking
+    // change; `null` for unranked resources (those never matched any
+    // chunk for this paper's passage). Drives the badge + the
+    // top-section partition below.
+    const rankByResource = useMemo(() => {
+        const map = new Map<string, RankedResource>();
+        for (const r of ranking.ranked) map.set(r.resourceId, r);
+        return map;
+    }, [ranking.ranked]);
 
     // Filter + sort: indexed resources first (so they're easiest to
     // select), then by title. Search filters against title + author.
@@ -139,6 +170,65 @@ export function ExtractFromLibraryDialog({
             return a.title.localeCompare(b.title);
         });
     }, [resources, searchTerm, groupFilter]);
+
+    // Partition the filtered list into the "top matches" section
+    // (rendered at the top, always visible) and the "rest" (collapsed
+    // behind a toggle when `showAllResources === false`). Top matches
+    // are the resources present in `rankByResource`, ordered by score.
+    // Search/group filters apply to BOTH sections — when the user is
+    // searching, the top section shrinks naturally to matches.
+    const { topMatches, restMatches } = useMemo(() => {
+        const top: LibraryResource[] = [];
+        const rest: LibraryResource[] = [];
+        for (const r of filtered) {
+            if (rankByResource.has(r.id)) top.push(r);
+            else rest.push(r);
+        }
+        // Re-sort top by score desc (filtered already brought ready-first).
+        top.sort((a, b) => {
+            const aRank = rankByResource.get(a.id)?.score ?? 0;
+            const bRank = rankByResource.get(b.id)?.score ?? 0;
+            return bRank - aRank;
+        });
+        return { topMatches: top, restMatches: rest };
+    }, [filtered, rankByResource]);
+
+    // One-shot auto pre-selection of the top-N ranked resources after
+    // the ranking lands. We only do this when the ranking is non-empty
+    // AND the user hasn't already toggled anything — explicit toggles
+    // before the ranking arrives win over auto-fill.
+    useEffect(() => {
+        if (autoSelectionApplied) return;
+        if (ranking.isLoading) return;
+        if (ranking.ranked.length === 0) return;
+        if (resources.length === 0) return; // wait for the library list too
+        if (selections.size > 0) {
+            // User clicked something while the ranking was pending —
+            // honor that and skip auto-fill.
+            setAutoSelectionApplied(true);
+            return;
+        }
+        const next = new Map<string, SelectionEntry>();
+        const idToResource = new Map(resources.map(r => [r.id, r]));
+        let applied = 0;
+        for (const ranked of ranking.ranked) {
+            if (applied >= AUTO_SELECT_TOP_N) break;
+            const resource = idToResource.get(ranked.resourceId);
+            if (!resource) continue;
+            // Only auto-pick indexed resources — picking a non-indexed
+            // one would just produce a ResourcesNotIndexedError when
+            // the user clicks Extract.
+            if (libraryService.getResourceIndexStatus(resource) !== 'indexed') continue;
+            next.set(resource.id, {
+                sourceType: resource.exegeticalType ?? defaultSourceTypeFor(resource),
+                displayLabel: resource.title,
+                citationKey: '',
+            });
+            applied++;
+        }
+        if (next.size > 0) setSelections(next);
+        setAutoSelectionApplied(true);
+    }, [ranking.isLoading, ranking.ranked, resources, selections.size, autoSelectionApplied]);
 
     // Count cached vs uncached for the "All" chip caption — gives the
     // user a sense of how much classification investment exists.
@@ -283,7 +373,9 @@ export function ExtractFromLibraryDialog({
                         </div>
                     )}
 
-                    {/* Resource list */}
+                    {/* Resource list — v1.7 smart-match split: top
+                        section shows ranked matches (always visible),
+                        rest sits behind a collapsible toggle. */}
                     {isLoading ? (
                         <div className="text-xs text-muted-foreground inline-flex items-center gap-2 py-4">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -296,28 +388,95 @@ export function ExtractFromLibraryDialog({
                                 : t('paperSetup.subSteps.corpus.upload.librarySearchEmpty')}
                         </p>
                     ) : (
-                        <ul className="space-y-1.5">
-                            {filtered.map(r => {
-                                const status = libraryService.getResourceIndexStatus(r);
-                                const isSelectable = status === 'indexed';
-                                const isSelected = selections.has(r.id);
-                                const willReplace = isSelected && alreadyExcerptedIds.has(r.id);
-                                return (
-                                    <li key={r.id}>
-                                        <ResourceRow
-                                            resource={r}
-                                            status={status}
-                                            isSelectable={isSelectable}
-                                            isSelected={isSelected}
-                                            willReplace={willReplace}
-                                            entry={selections.get(r.id) ?? null}
-                                            onToggle={() => toggleResource(r)}
-                                            onUpdate={(patch) => updateSelection(r.id, patch)}
-                                        />
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                        <>
+                            {/* Top section: ranked matches. Skeleton shown
+                                while the ranking is in flight (~1-1.5s). */}
+                            {ranking.isLoading && topMatches.length === 0 ? (
+                                <RankingSkeleton />
+                            ) : topMatches.length > 0 ? (
+                                <section className="rounded-lg border border-success/30 bg-success-subtle/15 px-2 py-2 space-y-1.5">
+                                    <h3 className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-success uppercase tracking-wide">
+                                        <Sparkles className="h-3 w-3" />
+                                        {t('paperSetup.subSteps.corpus.extract.smartMatchTitle')}
+                                    </h3>
+                                    <ul className="space-y-1.5">
+                                        {topMatches.map(r => {
+                                            const status = libraryService.getResourceIndexStatus(r);
+                                            const isSelectable = status === 'indexed';
+                                            const isSelected = selections.has(r.id);
+                                            const willReplace = isSelected && alreadyExcerptedIds.has(r.id);
+                                            return (
+                                                <li key={r.id}>
+                                                    <ResourceRow
+                                                        resource={r}
+                                                        status={status}
+                                                        isSelectable={isSelectable}
+                                                        isSelected={isSelected}
+                                                        willReplace={willReplace}
+                                                        entry={selections.get(r.id) ?? null}
+                                                        onToggle={() => toggleResource(r)}
+                                                        onUpdate={(patch) => updateSelection(r.id, patch)}
+                                                        rankInfo={rankByResource.get(r.id) ?? null}
+                                                    />
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </section>
+                            ) : null}
+
+                            {/* Toggle to reveal the long tail. Hidden
+                                when there's nothing to hide (rest empty)
+                                or when there's no top section to compare
+                                against (then the rest IS the list). */}
+                            {restMatches.length > 0 && topMatches.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAllResources(v => !v)}
+                                    className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors py-1"
+                                >
+                                    {showAllResources ? (
+                                        <ChevronDown className="h-3 w-3" />
+                                    ) : (
+                                        <ChevronRight className="h-3 w-3" />
+                                    )}
+                                    {showAllResources
+                                        ? t('paperSetup.subSteps.corpus.extract.hideOthers')
+                                        : t('paperSetup.subSteps.corpus.extract.showAllOthers', { count: restMatches.length })
+                                    }
+                                </button>
+                            )}
+
+                            {/* Rest section: shown unconditionally when
+                                there's no top section (no ranking match
+                                or ranking still empty), otherwise gated
+                                by `showAllResources`. */}
+                            {(topMatches.length === 0 || showAllResources) && restMatches.length > 0 && (
+                                <ul className="space-y-1.5">
+                                    {restMatches.map(r => {
+                                        const status = libraryService.getResourceIndexStatus(r);
+                                        const isSelectable = status === 'indexed';
+                                        const isSelected = selections.has(r.id);
+                                        const willReplace = isSelected && alreadyExcerptedIds.has(r.id);
+                                        return (
+                                            <li key={r.id}>
+                                                <ResourceRow
+                                                    resource={r}
+                                                    status={status}
+                                                    isSelectable={isSelectable}
+                                                    isSelected={isSelected}
+                                                    willReplace={willReplace}
+                                                    entry={selections.get(r.id) ?? null}
+                                                    onToggle={() => toggleResource(r)}
+                                                    onUpdate={(patch) => updateSelection(r.id, patch)}
+                                                    rankInfo={null}
+                                                />
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+                        </>
                     )}
                 </div>
 
@@ -385,6 +544,7 @@ function ResourceRow({
     entry,
     onToggle,
     onUpdate,
+    rankInfo,
 }: {
     resource: LibraryResource;
     status: ReturnType<typeof libraryService.getResourceIndexStatus>;
@@ -394,6 +554,12 @@ function ResourceRow({
     entry: SelectionEntry | null;
     onToggle: () => void;
     onUpdate: (patch: Partial<SelectionEntry>) => void;
+    /**
+     * v1.7 smart-match rank for this row, when present. Drives the
+     * "✨ N chunks relevantes" badge. Null for resources that didn't
+     * surface in the ranking (rendered in the collapsed "rest" tail).
+     */
+    rankInfo: RankedResource | null;
 }) {
     const { t } = useTranslation('exegesis');
 
@@ -429,6 +595,15 @@ function ResourceRow({
                             <p className="text-[11px] text-muted-foreground truncate">
                                 {resource.author}
                             </p>
+                        )}
+                        {rankInfo && rankInfo.matchedChunkCount > 0 && (
+                            <span
+                                className="inline-flex items-center gap-0.5 text-[10px] text-success font-medium"
+                                title={t('paperSetup.subSteps.corpus.extract.chunksRelevantHint')}
+                            >
+                                <Sparkles className="h-2.5 w-2.5" aria-hidden />
+                                {t('paperSetup.subSteps.corpus.extract.chunksRelevant', { count: rankInfo.matchedChunkCount })}
+                            </span>
                         )}
                         {/* Cached classification hint — only when not
                             currently selected, to avoid duplicating
@@ -490,6 +665,36 @@ function ResourceRow({
                 </div>
             )}
         </div>
+    );
+}
+
+/**
+ * Skeleton row shown while the v1.7 smart-match ranking is in flight.
+ * Matches the visual weight of the actual top section so the layout
+ * doesn't shift when ranking lands. Three shimmer rows is enough to
+ * communicate "we're thinking" without dominating the dialog.
+ */
+function RankingSkeleton() {
+    const { t } = useTranslation('exegesis');
+    return (
+        <section
+            className="rounded-lg border border-success/20 bg-success-subtle/10 px-2 py-2 space-y-1.5"
+            aria-busy="true"
+            aria-live="polite"
+        >
+            <h3 className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-success/70 uppercase tracking-wide">
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                {t('paperSetup.subSteps.corpus.extract.smartMatchLoading')}
+            </h3>
+            <div className="space-y-1.5">
+                {[0, 1, 2].map(i => (
+                    <div
+                        key={i}
+                        className="h-9 rounded-md bg-foreground/5 animate-pulse"
+                    />
+                ))}
+            </div>
+        </section>
     );
 }
 
