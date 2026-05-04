@@ -1,11 +1,17 @@
 import { useTranslation } from '@/i18n';
-import { LibraryCategory, ResourceType } from '@dosfilos/domain';
+import {
+    LibraryCategory,
+    ResourceType,
+    type BibleBookId,
+    type LibraryResourceScope,
+    getBookById,
+} from '@dosfilos/domain';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, Loader2, Plus, Sparkles, Upload, Wand2 } from 'lucide-react';
+import { AlertTriangle, BookOpen, Loader2, Plus, Sparkles, Upload, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type ExtractionMode = 'standard' | 'premium';
@@ -15,6 +21,16 @@ export interface UploadFormMetadata {
     author: string;
     type: ResourceType;
     extractionMode: ExtractionMode;
+}
+
+/**
+ * v1.7 smart-match autocomplete result. Mirrors the return shape of
+ * `inferBibleBooksFromTitle` so the form can render the live preview
+ * without re-importing the domain helper.
+ */
+export interface SmartMatchInferenceResult {
+    books: ReadonlyArray<BibleBookId>;
+    inferredScope: LibraryResourceScope | null;
 }
 
 interface LibraryUploadFormProps {
@@ -30,6 +46,13 @@ interface LibraryUploadFormProps {
     uploading: boolean;
     /** Upload progress percentage (0-100) or null if not started yet. */
     uploadProgress: number | null;
+    /**
+     * Live smart-match inference from the title. Drives the inline
+     * preview ("✨ 2 libros detectados — 1 Pedro, 2 Pedro · libro").
+     * Not editable from this form in v1.7 — the metadata editor on
+     * the resource detail (A.3) is the canonical spot for adjustment.
+     */
+    smartMatchInference: SmartMatchInferenceResult;
     /** File input change handler — caller validates type + sets file/warning. */
     onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     /** Metadata patch — caller spreads over current state. */
@@ -52,11 +75,12 @@ export function LibraryUploadForm({
     metadata,
     uploading,
     uploadProgress,
+    smartMatchInference,
     onFileChange,
     onMetadataChange,
     onSubmit,
 }: LibraryUploadFormProps) {
-    const { t } = useTranslation('library');
+    const { t, i18n } = useTranslation('library');
 
     return (
         <div className="bg-card border border-border/60 rounded-xl p-5 space-y-4">
@@ -120,6 +144,11 @@ export function LibraryUploadForm({
                         onChange={e => onMetadataChange({ title: e.target.value })}
                         placeholder={t('upload.titlePlaceholder')}
                         required
+                    />
+                    <SmartMatchPreview
+                        inference={smartMatchInference}
+                        language={i18n.language}
+                        t={t}
                     />
                 </div>
                 <div className="space-y-1.5 lg:col-span-1">
@@ -211,5 +240,54 @@ function ModeTile({ active, onClick, icon, title, description, tone }: ModeTileP
                 {description}
             </p>
         </button>
+    );
+}
+
+interface SmartMatchPreviewProps {
+    inference: SmartMatchInferenceResult;
+    language: string;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+/**
+ * Inline preview of the v1.7 smart-match autocomplete. Renders only when
+ * the title produced a confident inference — silent when the inferer
+ * returned `null` scope (the user just hasn't typed enough title yet,
+ * or it's a non-Bible work, in which case we don't promise anything).
+ *
+ * Read-only on purpose: the upload form stays lean. Adjustments live
+ * on the metadata editor in the resource detail (A.3).
+ */
+function SmartMatchPreview({ inference, language, t }: SmartMatchPreviewProps) {
+    if (inference.inferredScope === null) return null;
+
+    const isSpanish = language?.toLowerCase().startsWith('es');
+    const bookLabels = inference.books
+        .map(id => {
+            const book = getBookById(id);
+            if (!book) return id;
+            return isSpanish ? book.nameEs : book.nameEn;
+        })
+        .join(', ');
+
+    return (
+        <div className="flex items-start gap-1.5 text-[10.5px] text-muted-foreground">
+            <Sparkles className="h-3 w-3 mt-0.5 text-info shrink-0" aria-hidden />
+            <span className="leading-snug">
+                <span className="text-foreground/80 font-medium">
+                    {t('upload.smartMatchLabel')}:
+                </span>{' '}
+                {inference.books.length > 0 ? (
+                    <>
+                        <span className="inline-flex items-center gap-1">
+                            <BookOpen className="h-2.5 w-2.5" aria-hidden />
+                            {bookLabels}
+                        </span>
+                        {' · '}
+                    </>
+                ) : null}
+                <span>{t(`upload.smartMatchScope.${inference.inferredScope}`)}</span>
+            </span>
+        </div>
     );
 }
