@@ -35,7 +35,8 @@
  * Options:
  *   --mode <standard|premium>   Tier to request (default: standard)
  *   --as <email>                Run as this user (default: rdocerda@gmail.com)
- *   --timeout <seconds>         Wait timeout (default: 600)
+ *   --timeout <seconds>         Wait timeout (default: 900 — 15 min;
+ *                               big academic books in Premium take 10-12 min)
  *   --keep                      Keep the resource in the library after the test
  *   --sa <sa-email>             Service account to impersonate for ADC
  *
@@ -78,7 +79,7 @@ const adminEmail = asIdx >= 0 && args[asIdx + 1] ? args[asIdx + 1] : 'rdocerda@g
 const timeoutIdx = args.indexOf('--timeout');
 const timeoutSeconds = timeoutIdx >= 0 && args[timeoutIdx + 1]
     ? parseInt(args[timeoutIdx + 1], 10)
-    : 600;
+    : 900; // 15 min — big academic books in Premium can take 10-12 min
 const keepResource = args.includes('--keep');
 const saIdx = args.indexOf('--sa');
 
