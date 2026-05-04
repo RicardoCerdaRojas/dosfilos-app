@@ -414,10 +414,16 @@ export const extractPdfWithGemini = onObjectFinalized(
                 return;
             }
 
-            // Update status to processing
+            // Update status to processing.
+            // `processingStartedAt` is the wall-clock anchor the UI uses
+            // to render "Procesando hace 4m 23s" without depending on
+            // when the user opened the page. Server-stamped via
+            // serverTimestamp() so client clock skew can't make the
+            // elapsed time go negative or jitter.
             await resourceRef.update({
                 textExtractionStatus: 'processing',
-                updatedAt: new Date()
+                processingStartedAt: FieldValue.serverTimestamp(),
+                updatedAt: new Date(),
             });
             console.log(`🔄 [Extract] Set status to 'processing' for resource ${resourceId}`);
 
