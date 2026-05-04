@@ -67,3 +67,13 @@ jobs:
         run: firebase deploy --only firestore:rules,firestore:indexes --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      # Auto-deploy Storage rules whenever `storage.rules` changes. Was
+      # missing from this workflow originally — local edits to the file
+      # never reached production until someone ran a manual deploy. Caught
+      # in May 2026 when the library upload cap bump (100MB → 250MB) sat
+      # in the repo with no path to prod.
+      - name: Deploy Storage rules
+        run: firebase deploy --only storage --project ${{ secrets.FIREBASE_PROJECT_ID }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
