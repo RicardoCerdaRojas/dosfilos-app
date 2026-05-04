@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
-import type { LibraryResourceEntity } from '@dosfilos/domain';
+import {
+    estimateExtractionDurationMs,
+    formatEstimateShort,
+    type LibraryResourceEntity,
+} from '@dosfilos/domain';
 import type { IndexStatus } from '../hooks/useLibraryResources';
 
 interface ExtractionStepperProps {
@@ -128,7 +132,22 @@ function useElapsedLabel(
     const elapsedMs = Date.now() - startedAt.getTime();
     if (elapsedMs < 0) return null; // server-time clock skew safety
 
-    return t('stepper.elapsed', { duration: formatDuration(elapsedMs) });
+    // ETA: heuristic estimate from file size + requested mode. Pure
+    // function in the domain layer — see `extractionEstimate.ts` for
+    // the calibration sources. We render it ALONGSIDE elapsed (not
+    // "remaining") because remaining gets weird when our estimate is
+    // off — better to show the user the actual elapsed AND the
+    // expected total so they can judge.
+    const requestedMode = (resource as { requestedExtractionMode?: 'standard' | 'premium' }).requestedExtractionMode;
+    const estimateMs = estimateExtractionDurationMs({
+        sizeBytes: resource.sizeBytes,
+        mode: requestedMode,
+    });
+    const showEstimate = estimateMs > 0;
+
+    const elapsedText = t('stepper.elapsed', { duration: formatDuration(elapsedMs) });
+    if (!showEstimate) return elapsedText;
+    return `${elapsedText} · ${t('stepper.estimated', { duration: formatEstimateShort(estimateMs) })}`;
 }
 
 function formatDuration(ms: number): string {
