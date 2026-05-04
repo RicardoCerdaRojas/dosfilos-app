@@ -94,6 +94,7 @@
     "stepper": {
         "ariaLabel": "Processing progress",
         "elapsed": "Processing for {{duration}}",
+        "estimated": "{{duration}} estimated",
         "phase": {
             "uploading": "Uploading",
             "extracting": "Extracting",
