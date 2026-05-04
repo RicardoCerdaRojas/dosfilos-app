@@ -43,7 +43,7 @@
                 "textPlaceholder": "Pega la rúbrica del seminario o el brief de la asignación. Lo extraemos a un formato estructurado que después puedes ajustar.",
                 "tooShort": "El texto es muy corto. Pega al menos un párrafo con instrucciones.",
                 "blankHint": "Vamos a crear una plantilla con el default TMS que puedes ajustar después.",
-                "pasteHint": "Vamos a usar Gemini para extraer la rúbrica desde tu texto.",
+                "pasteHint": "Vamos a usar el motor de análisis para extraer la rúbrica desde tu texto.",
                 "submit": "Crear plantilla"
             },
             "toast": {
@@ -53,7 +53,16 @@
                 "deleteFailed": "No se pudo eliminar la plantilla",
                 "created": "Plantilla creada",
                 "createFailed": "No se pudo crear la plantilla. Revisa el texto o intenta de nuevo.",
-                "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos."
+                "overloaded": "El motor de análisis está sobrecargado. Prueba de nuevo en unos segundos.",
+                "updated": "Plantilla actualizada",
+                "updateFailed": "No se pudo actualizar la plantilla"
+            },
+            "edit": {
+                "openCta": "Editar plantilla",
+                "title": "Editar plantilla de rúbrica",
+                "subtitle": "Renombra la plantilla y ajusta su contenido. Los papers ya creados desde esta plantilla mantienen su copia interna.",
+                "nameLabel": "Nombre de la plantilla",
+                "save": "Guardar cambios"
             }
         },
         "styleGuides": {
@@ -86,7 +95,33 @@
                 "activated": "Guía activa actualizada",
                 "activateFailed": "No se pudo activar la guía",
                 "deleted": "Guía eliminada",
-                "deleteFailed": "No se pudo eliminar la guía"
+                "deleteFailed": "No se pudo eliminar la guía",
+                "updated": "Guía actualizada",
+                "updateFailed": "No se pudo actualizar la guía"
+            },
+            "edit": {
+                "openCta": "Editar guía",
+                "title": "Editar guía de estilo",
+                "subtitle": "Renombra la guía y revisa el manifiesto extraído del PDF. La edición del manifiesto llega en v1.7.",
+                "nameLabel": "Nombre",
+                "versionLabel": "Versión",
+                "save": "Guardar cambios",
+                "manifestSection": "Manifiesto extraído",
+                "manifestReadOnlyNotice": "Vista de solo lectura. La edición del manifiesto llega en v1.7.",
+                "manifestEmpty": "Aún no se extrajo el manifiesto. Hazlo desde el setup de un paper que use esta guía.",
+                "manifest": {
+                    "citationLabel": "Estilo de citación",
+                    "footnotesFirst": "Plantilla de primera nota al pie",
+                    "footnotesSubsequent": "Plantilla de notas subsiguientes",
+                    "ibid": "Ibid",
+                    "ibidDisabled": "No permitido",
+                    "bibliographyEntry": "Plantilla de bibliografía",
+                    "blockQuote": "Umbral de cita en bloque",
+                    "blockQuoteValue": "{{count}} palabras",
+                    "quoteMarks": "Comillas (primarias / secundarias)",
+                    "transliteration": "Transliteración",
+                    "additional": "Reglas adicionales"
+                }
             }
         }
     },
@@ -96,6 +131,41 @@
         "commentaries": "Comentarios",
         "background": "Contexto y monografías",
         "methodological": "Apoyo metodológico"
+    },
+    "sourceTypeTier": {
+        "essential": "Esencial",
+        "recommended": "Recomendado",
+        "standard": "Opcional"
+    },
+    "rubricRigor": {
+        "title": "Nivel exegético de la rúbrica",
+        "minimumSourcesLabel_one": "fuente mínima",
+        "minimumSourcesLabel_other": "fuentes mínimas",
+        "minimumSourcesLabel": "fuentes mínimas",
+        "breadth": "Cubre {{covered}} de {{total}} áreas académicas",
+        "scoreLabel": "Score académico: {{score}}",
+        "scoreHint": "Suma de mínimos × peso académico (rigorTier 0–3 por tipo de fuente).",
+        "level": {
+            "pastoral": "Pastoral / homilético",
+            "seminary": "Seminario (pregrado / MDiv)",
+            "research": "Investigación rigurosa",
+            "publishable": "Publicable / arbitrado"
+        },
+        "levelDescription": {
+            "pastoral": "Suficiente para predicación pastoral con base bíblica sólida — no diseñado para trabajo académico.",
+            "seminary": "Adecuado para un trabajo exegético de seminario o pregrado teológico.",
+            "research": "Compatible con tesis de maestría / capítulo de investigación rigurosa.",
+            "publishable": "Calidad de paper arbitrado o capítulo de monografía académica."
+        }
+    },
+    "sourceTypeRelationships": {
+        "lexiconWithTheologicalDict": "Léxico técnico (BDAG/HALOT) y diccionario teológico (TDNT/NIDNTTE) son complementarios, no sustitutos: el léxico da datos morfo-semánticos puros del término; el diccionario teológico traza su uso a lo largo del canon. Si tu corpus está limitado, prioriza el léxico técnico.",
+        "lexiconWithGrammar": "El léxico cubre el nivel lexical (palabras); la gramática cubre el nivel oracional (sintaxis). Juntos cubren el original verso por verso.",
+        "theologicalDictWithLexicon": "El diccionario teológico trae trayectoria canónica del término; el léxico (BDAG/HALOT) trae datos puros del lemma. Si tu corpus está limitado, el léxico técnico es más fundamental para la exégesis.",
+        "criticalWithExpository": "Comentarios críticos (WBC/NIGTC) detallan sintaxis y crítica textual; los expositivos (NICOT/BECNT) enfatizan teología y aplicación. Cubren ángulos distintos del mismo texto — los serios suelen pedir ambos.",
+        "expositoryWithCritical": "Los expositivos te dan la lectura teológica acabada; los críticos te muestran las decisiones técnicas detrás. Ambos aportan al mismo verso desde planos diferentes.",
+        "backgroundWithPrimary": "Las síntesis (deSilva, Keener IVP) ahorran tiempo; las fuentes primarias (Josefo, Filón, Padres apostólicos) dan voz al testigo antiguo directamente. Una sin la otra deja agujeros.",
+        "primaryWithBackground": "Las fuentes primarias antiguas (Josefo, Filón, OTP) son los testigos directos del mundo del texto; las síntesis modernas (deSilva, Keener IVP) las contextualizan e interpretan. Ambas se necesitan."
     },
     "sourceTypes": {
         "biblical-text-edition": {
@@ -236,7 +306,7 @@
                     "confirmReplaceCta": "Sí, reemplazar",
                     "success": "Rúbrica extraída — revísala más abajo",
                     "failed": "No se pudo extraer la rúbrica. Revisa el texto o ajusta manualmente.",
-                    "overloaded": "Gemini está sobrecargado en este momento. Prueba de nuevo en unos segundos — los picos de demanda son temporales.",
+                    "overloaded": "El motor de análisis está sobrecargado en este momento. Prueba de nuevo en unos segundos — los picos de demanda son temporales.",
                     "confidenceHigh": "Confianza alta",
                     "confidenceMedium": "Confianza media",
                     "confidenceLow": "Confianza baja",
@@ -346,7 +416,7 @@
                     "extracting": "Extrayendo...",
                     "extracted": "Reglas extraídas",
                     "failed": "No se pudo extraer el manifiesto",
-                    "overloaded": "Gemini está sobrecargado. Prueba de nuevo en unos segundos.",
+                    "overloaded": "El motor de análisis está sobrecargado. Prueba de nuevo en unos segundos.",
                     "corpusNotReady": "El texto de la guía aún no terminó de procesarse. Esperá unos segundos y reintenta."
                 },
                 "card": {
@@ -582,6 +652,10 @@
         "openPaper": "Abrir trabajo",
         "createdAt": "Creado",
         "updatedAt": "Actualizado",
+        "seriesLink": {
+            "label": "Serie",
+            "tooltip": "Este trabajo está vinculado a una serie de predicación. Click para abrir la serie."
+        },
         "filters": {
             "searchPlaceholder": "Buscar por pasaje o título...",
             "all": "Todos",
@@ -598,8 +672,11 @@
         "back": "Volver al listado",
         "loading": "Cargando trabajo...",
         "openSetup": "Configurar",
+        "moreActions": "Más acciones",
         "archive": "Archivar",
-        "archiveConfirm": "Confirmar",
+        "archiveConfirm": "Archivar el trabajo",
+        "archiveConfirmTitle": "¿Archivar este trabajo?",
+        "archiveConfirmBody": "El trabajo desaparecerá del listado pero podrás recuperarlo desde papelera. Los pasos generados y aceptados se mantienen.",
         "stepsTitle": "Pasos del trabajo",
         "stepsSubtitle": "Verso por verso, conclusión, introducción y ensamble. Aceptás o regenerás cada paso antes de avanzar.",
         "generateCta": "Generar primer paso",
@@ -612,6 +689,7 @@
         "steps": {
             "startCta": "Iniciar generación",
             "generating": "Generando...",
+            "regenerating": "Regenerando…",
             "failedHint": "Algo falló al generar este paso. Prueba de nuevo.",
             "editHint": "Editado a mano — la verificación de citas no corre automáticamente.",
             "hintPlaceholder": "Ej. más sintaxis, más teología, cita más a Cockerill",
@@ -633,11 +711,14 @@
                 "retry": "Reintentar",
                 "accept": "Aceptar",
                 "regenerate": "Regenerar",
+                "regenerating": "Regenerando…",
                 "regenerateWithHint": "Hint y regenerar",
                 "applyHint": "Aplicar hint",
                 "editManual": "Editar a mano",
                 "editAccepted": "Editar contenido aceptado",
-                "saveEdit": "Guardar edición"
+                "saveEdit": "Guardar edición",
+                "expand": "Expandir",
+                "collapse": "Colapsar"
             },
             "gate": {
                 "multiChapter": "v1 solo soporta pasajes de un capítulo. Edita el pasaje a un solo capítulo para iniciar.",
@@ -689,8 +770,24 @@
             "sourceRemoveFailed": "No se pudo quitar la fuente"
         },
         "askFaculty": {
-            "cta": "Preguntar a Faculty",
-            "tooltip": "Abre Faculty con el contexto de este paper cargado"
+            "cta": "Consultar a la Facultad",
+            "tooltip": "Abre un panel lateral con la Facultad cargada en el contexto de este trabajo",
+            "drawerTitle": "Facultad",
+            "agentName": "Asistente",
+            "preparing": "Preparando la conversación...",
+            "copied": "Copiado al portapapeles",
+            "errors": {
+                "createFailed": "No se pudo abrir la conversación con la Facultad. Intenta de nuevo.",
+                "sendFailed": "No se pudo enviar tu mensaje. Intenta de nuevo."
+            }
+        },
+        "exportMarkdown": {
+            "cta": "Exportar (.md)",
+            "tooltip": "Descarga el trabajo en Markdown — incluye lo aceptado hasta ahora si aún no está ensamblado",
+            "disabledHint": "Disponible cuando hayas aceptado al menos un paso del trabajo",
+            "toast": {
+                "exported": "Trabajo exportado en Markdown"
+            }
         },
         "generateSermon": {
             "cta": "Generar sermón",
@@ -710,7 +807,7 @@
             "toast": {
                 "success": "Sermón generado. Te llevamos al borrador.",
                 "failed": "No se pudo generar el sermón. Intenta de nuevo.",
-                "overloaded": "Gemini está saturado. Intenta en un minuto."
+                "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto."
             }
         }
     }

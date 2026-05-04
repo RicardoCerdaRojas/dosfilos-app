@@ -13,6 +13,7 @@ import {
     FirestoreVectorRepository
 } from '@dosfilos/infrastructure';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { RAGService } from './RAGService';
 
 /**
@@ -69,7 +70,18 @@ export class LibraryService {
     async uploadResource(
         userId: string,
         file: File,
-        metadata: { title: string; author: string; type: ResourceType },
+        metadata: {
+            title: string;
+            author: string;
+            type: ResourceType;
+            /**
+             * Optional user-chosen extraction tier. Persisted on the
+             * resource doc so the storage-trigger cloud function can
+             * honor the choice instead of running its default
+             * premium-first cascade. Omit for the legacy auto behavior.
+             */
+            requestedExtractionMode?: 'standard' | 'premium';
+        },
         onProgress?: (percentage: number) => void
     ): Promise<LibraryResourceEntity> {
         // 1. Generate resource ID first
@@ -104,6 +116,12 @@ export class LibraryService {
             new Date(),
             new Date()
         );
+        // Set the requested extraction mode if the caller specified one.
+        // The cloud function reads this off the doc to skip / prefer
+        // LlamaParse accordingly.
+        if (metadata.requestedExtractionMode) {
+            resource.requestedExtractionMode = metadata.requestedExtractionMode;
+        }
 
         // 4. Save to Firestore
         await this.libraryRepository.create(resource);
@@ -250,19 +268,40 @@ export class LibraryService {
      * "extract excerpts" toggle for those.
      */
     getResourceIndexStatus(resource: LibraryResource): ResourceIndexStatus {
-        const INDEXER_VERSION_CURRENT = '2.0-structured';
-        const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = ['3.0-llamaparse', '4.0-gemini-standard'];
+        const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
 
+        // Status decision mirrors `useLibraryResources.checkAllIndexStatus`
+        // exactly so the corpus picker and the library card never disagree
+        // about the same resource. A user who sees "Listo" on the library
+        // card was previously confused when the corpus picker showed
+        // "Sin indexar" for the same item — driven by an `indexerVersion`
+        // strict check that's no longer necessary now that we're on a
+        // single indexer schema.
+
+        // Hard failure of the extractor.
         if (resource.textExtractionStatus === 'failed') return 'failed';
+        // Extractor is still working.
         if (resource.textExtractionStatus === 'pending'
             || resource.textExtractionStatus === 'processing') return 'extracting';
+        // Indexer recorded a state.
         if (resource.indexingStatus === 'failed') return 'failed';
         if (resource.indexingStatus === 'processing') return 'indexing';
-        if (resource.indexingStatus === 'ready'
-            && resource.indexerVersion === INDEXER_VERSION_CURRENT) return 'indexed';
+        if (resource.indexingStatus === 'ready') return 'indexed';
+        // No indexer state yet but extraction succeeded with an
+        // auto-indexable version — the trigger fires in <1s, so report
+        // "indexing" optimistically rather than the misleading
+        // "needs-extraction" the user sees as "Sin procesar".
+        if (resource.textExtractionStatus === 'ready'
+            && resource.extractionVersion
+            && AUTO_INDEX_EXTRACTORS.includes(resource.extractionVersion)) {
+            return 'indexing';
+        }
+        // Extraction succeeded with a legacy version the auto-indexer
+        // doesn't pick up — needs a manual "Procesar" action.
         if (resource.textExtractionStatus === 'ready'
             && resource.extractionVersion
             && !AUTO_INDEX_EXTRACTORS.includes(resource.extractionVersion)) return 'needs-indexing';
+        // Default: never extracted.
         return 'needs-extraction';
     }
 
@@ -272,6 +311,33 @@ export class LibraryService {
         onError?: (error: Error) => void
     ): () => void {
         return this.libraryRepository.subscribeToUserResources(userId, callback, onError);
+    }
+
+    /**
+     * Re-runs LlamaParse extraction on a resource the user owns. Used by
+     * the "Reintentar Premium" action in the card when the original
+     * extraction degraded from the user's requested tier (e.g. Premium →
+     * Standard because all LlamaParse accounts failed at upload time).
+     *
+     * The callable verifies ownership and pre-checks the user's premium
+     * page balance before starting, so callers don't need to do either —
+     * just await the promise and toast on the typed errors:
+     *   - 'resource-exhausted' → not enough premium pages
+     *   - 'permission-denied'  → not the owner (also catches admin gate)
+     *   - 'failed-precondition' → no LlamaParse account configured
+     *   - 'internal'           → LlamaParse cascade failed; message has details
+     *
+     * Returns the new pageCount so the caller can update local cache,
+     * but most consumers just rely on the Firestore listener to push
+     * the fresh state.
+     */
+    async retryWithPremium(resourceId: string): Promise<{ success: boolean; pageCount?: number; skipped?: boolean }> {
+        const fn = httpsCallable<
+            { resourceId: string; force: boolean },
+            { success: boolean; pageCount?: number; skipped?: boolean }
+        >(getFunctions(), 'reprocessWithLlamaParse', { timeout: 900_000 });
+        const result = await fn({ resourceId, force: true });
+        return result.data ?? { success: false };
     }
 
     async deleteResource(id: string): Promise<void> {

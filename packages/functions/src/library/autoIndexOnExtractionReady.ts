@@ -1,5 +1,6 @@
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { indexResourceChunks } from './indexStructuredDocument';
+import { isStructuredExtractionVersion } from './extractionVersions';
 
 /**
  * Firestore trigger: when a library_resource's extraction completes with LlamaParse,
@@ -38,10 +39,15 @@ export const autoIndexOnExtractionReady = onDocumentUpdated(
         // Trigger conditions — all must be true
         const wasNotReady = before.textExtractionStatus !== 'ready';
         const isNowReady = after.textExtractionStatus === 'ready';
-        // Either extraction path (LlamaParse premium or Gemini standard) emits
-        // the same `<!-- page: N -->` markdown contract that the indexer needs.
-        const SUPPORTED_VERSIONS = ['3.0-llamaparse', '4.0-gemini-standard'];
-        const isStructuredExtraction = SUPPORTED_VERSIONS.includes(after.extractionVersion);
+        // All three extraction paths (LlamaParse premium, Gemini standard,
+        // pdf-parse last-resort fallback) emit the same `<!-- page: N -->`
+        // markdown contract that the indexer needs. The pdf-parse output
+        // synthesizes page markers from form-feed boundaries (or equal-
+        // segment splitting when those aren't available) so the user
+        // gets indexed content even when both premium engines fail.
+        // Membership is centralised in `extractionVersions.ts` — see
+        // that file when adding a new extractor.
+        const isStructuredExtraction = isStructuredExtractionVersion(after.extractionVersion);
         const hasStructuredContent = !!after.structuredContentUrl;
         const INDEXER_VERSION_CURRENT = '2.0-structured';
         const needsIndex = after.indexerVersion !== INDEXER_VERSION_CURRENT;

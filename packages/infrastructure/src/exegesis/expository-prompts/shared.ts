@@ -42,3 +42,46 @@ export function fingerprintVerses(verses: ReadonlyArray<AssistantVerseInput>): s
     const totalChars = verses.reduce((acc, v) => acc + v.text.length, 0);
     return `${first.chapter}:${first.verse}-${last.chapter}:${last.verse}|n=${verses.length}|chars=${totalChars}`;
 }
+
+/**
+ * Produces the per-pass "source-aware preamble" that frames the
+ * model's expectations about the verse text it's about to read.
+ *
+ * - 'greek' / 'hebrew': model can cite syntactic markers directly
+ *   from the text (cadenas participiales, μέν/δέ, waw-consecutivo,
+ *   etc.).
+ * - 'translation': model must approximate the original markers from
+ *   the translation surrogate — same task, with the explicit caveat
+ *   that the input is one step removed.
+ * - undefined: returns an empty string so legacy callers that don't
+ *   set sourceLanguage emit no preamble (back-compat with v1.5).
+ *
+ * Returned with leading newlines so it slots cleanly between the
+ * book header and the verse-text body in the user message.
+ */
+export function buildSourcePreamble(
+    sourceLanguage: 'greek' | 'hebrew' | 'translation' | undefined,
+    displayLanguage: 'es' | 'en',
+): string {
+    if (!sourceLanguage) return '';
+    const isSpanish = displayLanguage === 'es';
+    if (isSpanish) {
+        switch (sourceLanguage) {
+            case 'greek':
+                return '\nFuente del texto: griego original (SBLGNT). Cita marcadores sintácticos directamente desde el texto provisto (cadenas participiales, μέν/δέ, asíndeton, conectores como γάρ/οὖν/διό, inclusio).\n';
+            case 'hebrew':
+                return '\nFuente del texto: hebreo original (WLC). Cita marcadores sintácticos directamente desde el texto provisto (waw-consecutivo, וַיְהִי, paralelismo, fórmulas tipo כֹּה אָמַר יְהוָה).\n';
+            case 'translation':
+                return '\nFuente del texto: traducción al español como surrogate (RVR1960) — el original griego/hebreo no estuvo disponible. Aproxima los marcadores sintácticos del original que se reflejen en la traducción y reconócelo en tus justificaciones cuando la inferencia sea débil.\n';
+        }
+    }
+    switch (sourceLanguage) {
+        case 'greek':
+            return '\nText source: original Greek (SBLGNT). Cite syntactic markers directly from the provided text (participial chains, μέν/δέ, asyndeton, connectors like γάρ/οὖν/διό, inclusio).\n';
+        case 'hebrew':
+            return '\nText source: original Hebrew (WLC). Cite syntactic markers directly from the provided text (waw-consecutive, וַיְהִי, parallelism, formulas like כֹּה אָמַר יְהוָה).\n';
+        case 'translation':
+            return '\nText source: English translation as surrogate (ASV) — the original Greek/Hebrew was not available. Approximate the original syntactic markers that carry over into the translation and acknowledge in your justifications when the inference is weak.\n';
+    }
+    return '';
+}

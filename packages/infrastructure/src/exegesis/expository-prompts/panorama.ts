@@ -1,5 +1,5 @@
 import type { PanoramaInput } from '@dosfilos/domain';
-import { formatVerses } from './shared';
+import { buildSourcePreamble, formatVerses } from './shared';
 
 /**
  * Pase 1 — Panorama del libro.
@@ -70,12 +70,13 @@ export function buildPanoramaUserMessage(input: PanoramaInput): string {
               ? `\n\nNota: el predicador planea alrededor de ${input.targetPreachableCount} sermones para esta serie (suave — informativo, no constriñe el panorama).`
               : `\n\nNote: the preacher targets approximately ${input.targetPreachableCount} sermons for this series (soft — informative, not a constraint on the panorama).`)
         : '';
+    const sourcePreamble = buildSourcePreamble(input.sourceLanguage, input.displayLanguage);
 
     if (isSpanish) {
         return [
             `Libro: ${input.book}`,
             `Versículos provistos: ${input.verses.length}.${targetBlock}`,
-            '',
+            sourcePreamble,
             'Texto verso a verso (formato `cap:vers <TAB> texto`):',
             '',
             formatVerses(input.verses),
@@ -88,7 +89,7 @@ export function buildPanoramaUserMessage(input: PanoramaInput): string {
     return [
         `Book: ${input.book}`,
         `Verses provided: ${input.verses.length}.${targetBlock}`,
-        '',
+        sourcePreamble,
         'Verse-by-verse text (`ch:v <TAB> text` format):',
         '',
         formatVerses(input.verses),

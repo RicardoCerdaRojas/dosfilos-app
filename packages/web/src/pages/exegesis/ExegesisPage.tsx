@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
-import { NotebookPen, Plus, Sparkles, Loader2, AlertCircle, Search, X, Archive } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { NotebookPen, Plus, Sparkles, Loader2, AlertCircle, Search, X, Archive, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { seriesService } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
+import { useFirebase } from '@/context/firebase-context';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { UserRubricsSection } from '@/components/exegesis/directory/UserRubricsSection';
 import { UserStyleGuidesSection } from '@/components/exegesis/directory/UserStyleGuidesSection';
@@ -33,7 +36,37 @@ export function ExegesisPage() {
     const navigate = useNavigate();
     const goToSetup = () => navigate('/dashboard/exegesis/new');
     const { papers, isLoading, error } = useExegesisPapers();
+    const { user } = useFirebase();
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+
+    // Fetch the user's series so we can show "belongs to series X" on
+    // each paper card. A planned sermon inside a series can carry a
+    // `paperId` pointing at an ExegeticalPaper — when present, the
+    // paper is part of an expository series and the user benefits
+    // from seeing that link without having to remember the
+    // relationship themselves. Index lookup is built once per series
+    // refetch.
+    const { data: seriesList = [] } = useQuery({
+        queryKey: ['series', 'forExegesisPapers', user?.uid],
+        queryFn: async () => {
+            if (!user?.uid) return [];
+            return seriesService.getUserSeries(user.uid);
+        },
+        enabled: !!user?.uid,
+    });
+
+    const paperToSeries = useMemo(() => {
+        const idx = new Map<string, { id: string; title: string }>();
+        for (const series of seriesList) {
+            const planned = series.metadata?.plannedSermons ?? [];
+            for (const sermon of planned) {
+                if (sermon.paperId) {
+                    idx.set(sermon.paperId, { id: series.id, title: series.title });
+                }
+            }
+        }
+        return idx;
+    }, [seriesList]);
 
     // Client-side filter state. The data set is per-user (rarely more
     // than a few dozen papers), so filtering in memory is fine — no need
@@ -191,7 +224,13 @@ export function ExegesisPage() {
                         ) : (
                             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {filteredPapers.map(p => (
-                                    <PaperCard key={p.id} paper={p} language={activeLanguage} t={t} />
+                                    <PaperCard
+                                        key={p.id}
+                                        paper={p}
+                                        language={activeLanguage}
+                                        t={t}
+                                        seriesLink={paperToSeries.get(p.id) ?? null}
+                                    />
                                 ))}
                             </ul>
                         )}
@@ -334,6 +373,13 @@ interface PaperCardProps {
     paper: ExegeticalPaper;
     language: SupportedLanguage;
     t: (key: string) => string;
+    /**
+     * When the paper is referenced from a sermon series'
+     * `plannedSermons[].paperId`, surface that link on the card so
+     * the user understands the paper's larger preaching context. Null
+     * when the paper is standalone.
+     */
+    seriesLink: { id: string; title: string } | null;
 }
 
 // Phase → semantic-token color map. Driving badge color from phase is
@@ -346,11 +392,18 @@ const PHASE_BADGE: Record<ExegeticalPaperPhase, string> = {
     'archived': 'bg-muted text-muted-foreground border-border',
 };
 
-function PaperCard({ paper, language, t }: PaperCardProps) {
+function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
     const navigate = useNavigate();
     const open = () => navigate(`/dashboard/exegesis/${paper.id}`);
     const passageDisplay = paper.title || formatPassageReference(paper.passage, language);
     const isArchived = paper.phase === 'archived' || paper.archivedAt !== null;
+
+    const handleSeriesClick = (e: React.MouseEvent) => {
+        // Stop the parent button's onClick (which navigates to the
+        // paper detail) so the user lands on the series instead.
+        e.stopPropagation();
+        if (seriesLink) navigate(`/dashboard/plans/${seriesLink.id}`);
+    };
 
     return (
         <li>
@@ -375,6 +428,25 @@ function PaperCard({ paper, language, t }: PaperCardProps) {
                         </p>
                     </div>
                 </div>
+                {seriesLink && (
+                    <div
+                        onClick={handleSeriesClick}
+                        role="link"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleSeriesClick(e as unknown as React.MouseEvent);
+                            }
+                        }}
+                        className="inline-flex items-center gap-1.5 text-[11px] text-info-subtle-foreground bg-info-subtle border border-info/30 rounded-md px-2 py-1 hover:bg-info-subtle/80 transition-colors max-w-full"
+                        title={t('list.seriesLink.tooltip')}
+                    >
+                        <BookOpen className="h-3 w-3 shrink-0" />
+                        <span className="font-medium shrink-0">{t('list.seriesLink.label')}:</span>
+                        <span className="truncate">{seriesLink.title}</span>
+                    </div>
+                )}
                 <div className="flex items-center justify-between">
                     <span className={[
                         'inline-flex items-center text-[10px] font-semibold rounded-full border px-2 py-0.5',

@@ -10,9 +10,9 @@ import { CreditPacksDialog } from './CreditPacksDialog';
 /**
  * Compact balance summary shown at the top of the Library page.
  * Two stat tiles (standard / premium) plus a CTA to open the credit-packs
- * dialog. Subscribes once on mount; refresh happens lazily after a purchase
- * via the dialog's `onPurchaseInitiated` (Stripe redirect leaves the page
- * anyway, the success-redirect remounts and refetches).
+ * dialog. Subscribes to the live `users/{uid}.processingBalance` field
+ * so the count updates the moment the cloud function debits — without
+ * the user needing to refresh after an extraction completes.
  */
 export function BalanceBanner() {
     const { user } = useFirebase();
@@ -26,13 +26,15 @@ export function BalanceBanner() {
             setLoading(false);
             return;
         }
-        let cancelled = false;
-        processingBalanceService
-            .getBalance(user.uid)
-            .then(b => { if (!cancelled) setBalance(b); })
-            .catch(err => console.error('[BalanceBanner]', err))
-            .finally(() => { if (!cancelled) setLoading(false); });
-        return () => { cancelled = true; };
+        const unsubscribe = processingBalanceService.subscribeToBalance(
+            user.uid,
+            (b) => {
+                setBalance(b);
+                setLoading(false);
+            },
+            () => setLoading(false),
+        );
+        return () => unsubscribe();
     }, [user]);
 
     if (!user) return null;

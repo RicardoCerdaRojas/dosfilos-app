@@ -123,7 +123,7 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
     }
 
     private resourceToFirestore(resource: LibraryResourceEntity): any {
-        return {
+        const doc: any = {
             userId: resource.userId,
             title: resource.title,
             author: resource.author,
@@ -143,6 +143,13 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
             createdAt: Timestamp.fromDate(resource.createdAt),
             updatedAt: Timestamp.fromDate(resource.updatedAt)
         };
+        // User-chosen tier — only persist when explicitly set so the
+        // cloud function's "field absent → default cascade" branch
+        // still works for resources uploaded before this field existed.
+        if (resource.requestedExtractionMode) {
+            doc.requestedExtractionMode = resource.requestedExtractionMode;
+        }
+        return doc;
     }
 
     private firestoreToResource(id: string, data: any): LibraryResourceEntity {
@@ -178,6 +185,10 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         (resource as any).indexingStatus = data.indexingStatus || undefined;
         (resource as any).indexerVersion = data.indexerVersion || undefined;
         (resource as any).exegeticalType = data.exegeticalType || undefined;
+        (resource as any).requestedExtractionMode = data.requestedExtractionMode || undefined;
+        (resource as any).extractionWarning = data.extractionWarning ?? undefined;
+        (resource as any).extractionError = data.extractionError || undefined;
+        (resource as any).indexingError = data.indexingError ?? undefined;
         return resource;
     }
 }

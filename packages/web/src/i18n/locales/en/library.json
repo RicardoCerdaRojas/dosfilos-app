@@ -17,6 +17,20 @@
         "description": "Processing prepares a resource for search — only ready resources can be cited as sources in projects and theological queries.",
         "actionButton": "Process pending"
     },
+    "statusCallout": {
+        "extracting": {
+            "label": "In progress",
+            "title_one": "{{count}} resource extracting text",
+            "title_other": "{{count}} resources extracting text",
+            "description": "This can take several minutes depending on the document's size and complexity. No action needed — indexing runs automatically once extraction finishes."
+        },
+        "failed": {
+            "label": "Extraction failed",
+            "title_one": "{{count}} resource with extraction error",
+            "title_other": "{{count}} resources with extraction error",
+            "description": "Something failed while processing the file. Check each affected resource below and either delete or re-upload it."
+        }
+    },
     "progress": {
         "processing": "Processing {{current}}/{{total}} — {{title}}"
     },
@@ -29,7 +43,12 @@
         "authorPlaceholder": "Author name",
         "categoryLabel": "Category",
         "uploadButton": "Upload",
-        "fileSizeWarning": "File >50MB: extraction quality may be reduced"
+        "fileSizeWarning": "File >50MB: extraction quality may be reduced",
+        "modeLabel": "Processing mode",
+        "modeStandardTitle": "Standard",
+        "modeStandardDescription": "Narrative books, essays and sermons (up to ~600 pages). Consumes standard pages.",
+        "modePremiumTitle": "Premium",
+        "modePremiumDescription": "Tables, multi-column and scanned (up to ~1000 pages). Consumes premium pages."
     },
     "filters": {
         "searchPlaceholder": "Search title or author",
@@ -45,6 +64,7 @@
         "ctaFirstResource": "Add first resource"
     },
     "card": {
+        "deleting": "Deleting…",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} page",
         "metaPagesActual_other": "{{count}} pages",
@@ -55,6 +75,7 @@
             "edit": "Edit metadata",
             "process": "Process",
             "reprocess": "Reprocess",
+            "retryPremium": "Retry with Premium",
             "moreActions": "More actions",
             "configurePhases": "Configure phases",
             "assignToCore": "Assign to Core",
@@ -66,8 +87,17 @@
         "processing": "Processing…",
         "failed": "Processing error",
         "verifying": "Verifying",
+        "indexing": "Indexing…",
         "ready": "Ready",
         "notReady": "To process"
+    },
+    "engine": {
+        "llamaparse": "Premium",
+        "llamaparseHint": "Processed in premium mode — tables, multi-column and specialized content preserved",
+        "gemini": "Standard",
+        "geminiHint": "Processed in standard mode — narrative text, essays and sermons",
+        "pdfparse": "Basic",
+        "pdfparseHint": "Processed with basic fallback extractor — reduced quality; consider reprocessing"
     },
     "stores": {
         "exegesis": "Exegesis",
@@ -100,7 +130,13 @@
         "categoryOptions": {
             "theology": "Systematic Theology",
             "grammar": "Grammar / Languages",
+            "criticalText": "Critical Text",
             "commentary": "Biblical Commentary",
+            "exegeticalCommentary": "Exegetical Commentary",
+            "theologicalDictionary": "Theological Dictionary",
+            "bibleDictionary": "Bible Dictionary",
+            "historicalContext": "Historical/Cultural Background",
+            "biblicalSurvey": "Biblical Survey / Introduction",
             "article": "Article / Paper",
             "other": "Other"
         },
@@ -151,8 +187,8 @@
         "subtitle": "Available balance for document extraction",
         "standard": "Standard",
         "premium": "Premium",
-        "standardHelp": "Gemini 2.0 Flash · narrative books",
-        "premiumHelp": "LlamaParse · tables, multi-column, scanned",
+        "standardHelp": "Narrative books, essays and sermons (up to ~600 pages)",
+        "premiumHelp": "Tables, multi-column and scanned (up to ~1000 pages)",
         "split": "Plan: {{plan}} · Packs: {{pack}}",
         "buyButton": "Buy pages",
         "loading": "Loading balance…",
@@ -192,6 +228,11 @@
         "noUnindexed": "No documents to process",
         "processingComplete": "Processing completed with {{count}} errors. {{chunks}} fragments created.",
         "processingSuccess": "Library ready: {{chunks}} fragments created",
-        "processingError": "Error processing library"
+        "processingError": "Error processing library",
+        "retryPremiumLoading": "Retrying extraction with Premium…",
+        "retryPremiumSuccess": "Done: extracted with Premium",
+        "retryPremiumNoBalance": "You don't have enough Premium pages to retry",
+        "retryPremiumDenied": "You can only retry your own resources",
+        "retryPremiumError": "Error retrying with Premium"
     }
 }

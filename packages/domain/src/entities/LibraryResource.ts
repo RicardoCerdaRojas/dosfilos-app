@@ -1,21 +1,38 @@
 import { WorkflowPhase } from './SermonWorkflow';
 import type { SourceType as ExegesisSourceType } from '../exegesis/entities/SourceType';
 
-export type ResourceType = 'theology' | 'grammar' | 'commentary' | 'article' | 'other';
+export type ResourceType =
+    | 'theology'
+    | 'grammar'
+    | 'critical-text'
+    | 'commentary'
+    | 'exegetical-commentary'
+    | 'theological-dictionary'
+    | 'bible-dictionary'
+    | 'historical-context'
+    | 'biblical-survey'
+    | 'article'
+    | 'other';
 
 export type TextExtractionStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
 /**
  * Which extractor produced the text content.
  * - '3.0-llamaparse': Primary, best quality (structured pages, preserves Greek/Hebrew/tables)
- * - '4.0-gemini-standard': Standard tier, Gemini 2.0 Flash with the same `<!-- page: N -->`
+ * - '4.0-gemini-standard': Standard tier, Gemini Flash with the same `<!-- page: N -->`
  *   contract as LlamaParse — eligible for the auto-index trigger.
+ * - '5.0-pdfparse-structured': Last-resort pdf-parse output enriched with synthetic
+ *   page markers (form-feed boundaries or equal-segment splitting). Eligible for
+ *   the auto-index trigger so the user always ends up with searchable content
+ *   even when both premium engines fail.
  * - '2.0-gemini': Legacy Gemini extraction, predates the structured contract.
- * - 'fallback-pdfparse': Last resort, local pdf-parse library.
+ * - 'fallback-pdfparse': Legacy pdf-parse output without page markers; not
+ *   auto-indexable. Pre-v5 uploads only.
  */
 export type ExtractionVersion =
     | '3.0-llamaparse'
     | '4.0-gemini-standard'
+    | '5.0-pdfparse-structured'
     | '2.0-gemini'
     | 'fallback-pdfparse';
 
@@ -53,6 +70,45 @@ export interface LibraryResource {
     structuredContentUrl?: string | undefined; // URL to structured Markdown (LlamaParse output)
     extractionVersion?: ExtractionVersion; // Which extractor produced textContent
     extractedWithLlamaParse?: boolean; // Convenience flag
+    /**
+     * User-facing message written by the extraction pipeline when the
+     * actual tier ended up below what the user requested (e.g. requested
+     * Premium → got Standard because all LlamaParse accounts failed).
+     * The card surfaces this in a tooltip on the engine badge so the
+     * user can decide whether to reprocess. `null` / undefined means
+     * extraction succeeded at the requested tier — no warning needed.
+     */
+    extractionWarning?: string | null;
+    /**
+     * Error message written when the cascade exhausted every extractor
+     * and the resource ended up in `textExtractionStatus: 'failed'`.
+     * Used by the failed-state callout to give the user a concrete
+     * reason instead of a generic "something failed".
+     */
+    extractionError?: string;
+    /**
+     * Error message written when the indexer (chunks + embeddings)
+     * failed AFTER extraction completed. Set when `indexingStatus`
+     * is `'failed'`. The card surfaces this in a tooltip on the
+     * "Por procesar" pill so the user knows what blocked indexing
+     * (e.g. "All N chunks failed to embed") and can retry.
+     * Cleared automatically on a successful re-index.
+     */
+    indexingError?: string | null;
+    /**
+     * Mode the user explicitly requested at upload time:
+     *   - 'standard' → skip LlamaParse, use Gemini → pdf-parse fallback.
+     *     Debits standard pages from the user's balance.
+     *   - 'premium' → try LlamaParse first (best quality for tables /
+     *     multi-column / scanned). Debits premium when LlamaParse runs
+     *     successfully; falls back to Gemini and debits standard if
+     *     LlamaParse fails.
+     *
+     * Undefined for legacy resources uploaded before this field
+     * existed — the cloud function falls back to its previous
+     * "premium-first cascade" behavior in that case.
+     */
+    requestedExtractionMode?: 'standard' | 'premium';
     textExtractionStatus: TextExtractionStatus;
     /**
      * Indexing job status (chunks + embeddings) written by the
@@ -123,6 +179,13 @@ export class LibraryResourceEntity implements LibraryResource {
      * cache fields are owned by deserialization, not creation.
      */
     public exegeticalType?: ExegesisSourceType;
+    /**
+     * Set at upload time when the user explicitly chose a tier.
+     * Persisted to Firestore so the storage-trigger cloud function can
+     * read it and respect the user's choice instead of always running
+     * the default premium-first cascade.
+     */
+    public requestedExtractionMode?: 'standard' | 'premium';
 
     constructor(
         public id: string,

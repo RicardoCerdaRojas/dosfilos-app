@@ -1,14 +1,21 @@
 import {
     FirebaseSeriesRepository,
+    FirestoreExpositoryAssistantCacheRepository,
     GeminiExpositoryAssistant,
     GeminiPericopeDetector,
     GeminiPlanGenerator,
+    EXPOSITORY_PIPELINE_VERSION,
+    MorphhbOriginalLanguageProvider,
     RVR1960Repository,
     ASVRepository,
+    SBLGNTBibleProvider,
 } from '@dosfilos/infrastructure';
 import {
     SermonSeriesEntity,
+    getBookById,
+    type BibleBookId,
     type IBibleVersionRepository,
+    type IOriginalLanguageBibleProvider,
     type PlannedSermonExpositoryEnrichment,
     type PlannedSermonStatus,
     type SyntacticUnit,
@@ -19,6 +26,7 @@ import {
     type LoadBookVersesResult,
 } from '../use-cases/exegesis/expository/loadBookVerses';
 import { RunExpositoryPassesUseCase } from '../use-cases/exegesis/expository/RunExpositoryPassesUseCase';
+import { CachedExpositoryAssistant } from './expository/CachedExpositoryAssistant';
 import { LibraryService } from './LibraryService';
 
 export class SeriesService {
@@ -30,6 +38,8 @@ export class SeriesService {
     public expositoryPasses: RunExpositoryPassesUseCase;
     private bibleRepoEs: IBibleVersionRepository;
     private bibleRepoEn: IBibleVersionRepository;
+    private greekProvider: IOriginalLanguageBibleProvider;
+    private hebrewProvider: IOriginalLanguageBibleProvider;
 
     constructor() {
         this.seriesRepository = new FirebaseSeriesRepository();
@@ -50,12 +60,32 @@ export class SeriesService {
         this.detectPericopes = new DetectPericopesUseCase(this.bibleRepoEs, detector);
         this.detectPericopesEn = new DetectPericopesUseCase(this.bibleRepoEn, detector);
 
+        // v1.6 original-language sources for the expository assistant.
+        // Single-instance per provider — internal in-memory cache lives
+        // at the instance, so sharing maximizes hit rate within a
+        // session.
+        this.greekProvider = new SBLGNTBibleProvider();
+        this.hebrewProvider = new MorphhbOriginalLanguageProvider();
+
         // v1.5 expository assistant — single GeminiExpositoryAssistant
         // instance shared across all 5 passes. The wizard loads verses
         // once via `loadBookVersesForExpository` and threads them into
         // each pass call.
-        const expositoryAssistant = new GeminiExpositoryAssistant(apiKey || '', exegesisModelId);
-        this.expositoryPasses = new RunExpositoryPassesUseCase(expositoryAssistant);
+        //
+        // v1.6: wrap with CachedExpositoryAssistant so Pases 1-3
+        // (panorama / macro / micro) hit a Firestore cache keyed by
+        // (book, language, pipelineVersion). Two pastors studying the
+        // same book in the same language only pay the LLM cost once
+        // for the canonical structural analysis. Pases 4-5 pass
+        // through unchanged (per-pastor homiletical decisions).
+        const geminiExpositoryAssistant = new GeminiExpositoryAssistant(apiKey || '', exegesisModelId);
+        const expositoryCacheRepo = new FirestoreExpositoryAssistantCacheRepository();
+        const cachedExpositoryAssistant = new CachedExpositoryAssistant(
+            geminiExpositoryAssistant,
+            expositoryCacheRepo,
+            EXPOSITORY_PIPELINE_VERSION,
+        );
+        this.expositoryPasses = new RunExpositoryPassesUseCase(cachedExpositoryAssistant);
     }
 
     /**
@@ -63,14 +93,27 @@ export class SeriesService {
      * Selects the bible repository by display language so callers
      * don't need to know which translation backs each language.
      */
-    loadBookVersesForExpository(input: {
-        bookId: import('@dosfilos/domain').BibleBookId;
+    async loadBookVersesForExpository(input: {
+        bookId: BibleBookId;
         displayLanguage: 'es' | 'en';
-    }): LoadBookVersesResult {
+    }): Promise<LoadBookVersesResult> {
+        // Dispatch original-language source by testament. NT goes
+        // to SBLGNT (Greek), OT goes to morphhb/WLC (Hebrew). Books
+        // that don't fit either ('mixed' edge cases) get translation
+        // only via the loadBookVerses fallback path.
+        const book = getBookById(input.bookId);
+        const originalProvider =
+            book?.testament === 'NT'
+                ? this.greekProvider
+                : book?.testament === 'OT'
+                  ? this.hebrewProvider
+                  : undefined;
+
         return loadBookVerses({
             bookId: input.bookId,
             displayLanguage: input.displayLanguage,
             bibleRepository: input.displayLanguage === 'en' ? this.bibleRepoEn : this.bibleRepoEs,
+            ...(originalProvider ? { originalLanguageProvider: originalProvider } : {}),
         });
     }
 

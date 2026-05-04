@@ -27,24 +27,41 @@ export class OverloadedError extends Error {
 }
 
 interface WithRetryOptions {
-    /** Defaults to 3 attempts (0ms, 800ms, 2400ms backoff). */
+    /**
+     * Defaults to 5 attempts. With the default backoff
+     * (800ms × 3^attempt capped at maxDelayMs) the wait sequence is
+     * 800ms → 2.4s → 7.2s → 10s → 10s ≈ 30s total worst-case waiting
+     * across 5 attempts (plus the request times themselves).
+     *
+     * Bumped from 3 → 5 in v1.6 because Gemini 2.5 Pro went through
+     * sustained overload windows where 3 attempts ran out before the
+     * dip ended; 5 attempts spans those windows in practice without
+     * making the user wait absurdly long.
+     */
     maxAttempts?: number;
+    /**
+     * Hard cap on the per-retry delay (defaults to 10000ms = 10s).
+     * Without this cap, attempt 5 would wait 64s, which feels frozen
+     * to the user. Pure exponential makes sense for the first few
+     * retries; flat 10s after that is a saner ceiling.
+     */
+    maxDelayMs?: number;
     /** Caller name for log lines. */
     contextLabel?: string;
 }
 
 /**
  * Runs `fn` up to `maxAttempts` times, retrying on 503/429/rate-limit
- * errors with exponential backoff (0ms, 800ms, 2400ms, 7200ms, ...).
- * Non-transient errors throw immediately. After the last attempt,
- * a transient error is rethrown as `OverloadedError` carrying the
- * original message.
+ * errors with exponential backoff capped at `maxDelayMs`. Non-transient
+ * errors throw immediately. After the last attempt, a transient error
+ * is rethrown as `OverloadedError` carrying the original message.
  */
 export async function withGeminiRetry<T>(
     fn: () => Promise<T>,
     options: WithRetryOptions = {},
 ): Promise<T> {
-    const maxAttempts = options.maxAttempts ?? 3;
+    const maxAttempts = options.maxAttempts ?? 5;
+    const maxDelayMs = options.maxDelayMs ?? 10000;
     const label = options.contextLabel ?? 'GeminiRetry';
     let lastError: unknown;
 
@@ -59,7 +76,7 @@ export async function withGeminiRetry<T>(
                 }
                 throw err;
             }
-            const delayMs = 800 * Math.pow(3, attempt);
+            const delayMs = Math.min(800 * Math.pow(3, attempt), maxDelayMs);
             console.warn(
                 `[${label}] transient error (attempt ${attempt + 1}/${maxAttempts}), retrying in ${delayMs}ms`,
                 err,

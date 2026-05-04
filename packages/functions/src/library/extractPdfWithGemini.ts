@@ -7,13 +7,24 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
-import { recordLlamaParseUsage, selectLlamaParseAccount } from './llamaParseAccountSelector';
+import { recordLlamaParseUsage, selectAllLlamaParseAccounts, type SelectedLlamaParseAccount } from './llamaParseAccountSelector';
+import { consumePagesAdmin, type ProcessingMode } from './processingBalance';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
 
 // Gemini file size limit is 50MB
 const MAX_GEMINI_FILE_SIZE = 50 * 1024 * 1024;
+// Gemini also caps the document at 1000 pages per generateContent
+// call. We can't know the exact page count before calling the API,
+// but PDFs over ~12MB very reliably exceed that cap (avg 10-15KB per
+// page for text-heavy academic books). Skipping Gemini at this
+// threshold avoids a guaranteed-400 round-trip and removes the
+// "[400 Bad Request] exceeds the supported page limit of 1000" noise
+// from the logs. Threshold is conservative — small enough to catch
+// the NTG-class case (1020 págs / 10.5MB), large enough not to
+// over-skip.
+const LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES = 12 * 1024 * 1024;
 // LlamaParse supports up to 100MB (and we've verified free-tier covers typical theology books)
 const MAX_LLAMAPARSE_FILE_SIZE = 100 * 1024 * 1024;
 
@@ -28,13 +39,16 @@ const getApiKey = (): string => {
 
 /**
  * LlamaParse extraction — primary path.
- * Returns structured pages with reliable page numbers.
+ * Returns structured pages with reliable page numbers, plus the
+ * actual credits consumed (NOT page count) so the per-account
+ * counter mirrors what LlamaParse actually billed. Cached jobs and
+ * some operations cost 0 credits even when pages are returned.
  */
 async function extractWithLlamaParse(
     tempFilePath: string,
     resourceId: string,
     apiKey: string
-): Promise<{ text: string; markdown: string; pageCount: number }> {
+): Promise<{ text: string; markdown: string; pageCount: number; creditsUsed: number }> {
     const buffer = fs.readFileSync(tempFilePath);
     const client = new LlamaParseClient(apiKey);
 
@@ -44,24 +58,50 @@ async function extractWithLlamaParse(
         parsingInstruction: 'Preserva con precisión los caracteres griegos (α-ω) y hebreos (א-ת). Mantén la estructura de capítulos, secciones, tablas y notas al pie. No traduzcas términos teológicos ni citas bíblicas.',
     });
 
-    console.log(`[LlamaParse] Parsed ${result.pages.length} pages. Credits used: ${result.jobMetadata.job_credits_usage ?? '?'}`);
+    // Trust LlamaParse's own credit count when reported; fall back to
+    // page count only when the metadata field is missing (defensive
+    // against API changes). Using the API-reported value prevents the
+    // counter drift that surfaced in production: our counter incremented
+    // by `pages.length` even when LlamaParse charged 0 (cached jobs),
+    // making accounts look exhausted while the dashboard had capacity.
+    const reportedCredits = result.jobMetadata.job_credits_usage;
+    const creditsUsed = typeof reportedCredits === 'number'
+        ? reportedCredits
+        : result.pages.length;
+
+    console.log(`[LlamaParse] Parsed ${result.pages.length} pages. Credits used: ${reportedCredits ?? '? (fallback to pageCount)'}`);
 
     const text = pagesToMarkedText(result.pages);
     const markdown = pagesToMarkdown(result.pages);
-    return { text, markdown, pageCount: result.pages.length };
+    return { text, markdown, pageCount: result.pages.length, creditsUsed };
 }
 
-interface PageData {
-    pageNumber: number;
-    text: string;
-}
-
-interface ExtractionResult {
-    success: boolean;
-    totalPages: number;
-    pages: PageData[];
-    detectedTitle?: string | null;
-    detectedAuthor?: string | null;
+/**
+ * Truncate a UTF-8 string to at most `maxBytes` BYTES, never cutting
+ * in the middle of a multi-byte character. Iterates code points and
+ * accumulates byte length until the next character would exceed the
+ * cap, then stops.
+ *
+ * Why we can't just do `string.substring(0, maxBytes)`: substring
+ * counts characters, not bytes. For UTF-8:
+ *   - ASCII (a-z): 1 byte/char
+ *   - Latin extended (á, ñ): 2 bytes/char
+ *   - Greek/Hebrew (α, ת): 2 bytes/char
+ *   - CJK / emoji: 3-4 bytes/char
+ * A 900,000-char Greek text is ~1.8 MB — way over Firestore's 1 MiB
+ * doc limit. This helper guarantees the output fits in `maxBytes`.
+ */
+function truncateUtf8(text: string, maxBytes: number): string {
+    if (Buffer.byteLength(text, 'utf8') <= maxBytes) return text;
+    let bytes = 0;
+    let result = '';
+    for (const char of text) {  // for-of iterates code points, not UTF-16 units
+        const charBytes = Buffer.byteLength(char, 'utf8');
+        if (bytes + charBytes > maxBytes) break;
+        bytes += charBytes;
+        result += char;
+    }
+    return result;
 }
 
 /**
@@ -79,25 +119,81 @@ function cleanPdfText(text: string): string {
 }
 
 /**
- * Extract text using pdf-parse (fallback for large files)
+ * Extract text using pdf-parse (last-resort fallback).
+ *
+ * Returns `text` with `[PAGE N]` markers AND `markdown` with the
+ * `<!-- page: N -->` contract that the indexer expects — so even
+ * pdf-parse output is fully auto-indexable. Page boundaries come from:
+ *   1. Form-feed characters (`\f`) inserted by pdf-parse between pages
+ *      when the source PDF has clean page structure.
+ *   2. Equal-segment fallback (text length / numpages) when form-feeds
+ *      are missing — citations from these chunks have approximate page
+ *      numbers, but a searchable resource with off-by-1 citations beats
+ *      "Por procesar" forever.
  */
-async function extractWithPdfParse(buffer: Buffer): Promise<{ text: string; pageCount: number }> {
+async function extractWithPdfParse(buffer: Buffer): Promise<{
+    text: string;
+    markdown: string;
+    pageCount: number;
+}> {
     const pdfData = await pdfParse(buffer);
-    const cleanedText = cleanPdfText(pdfData.text);
-    return {
-        text: cleanedText,
-        pageCount: pdfData.numpages
-    };
+    const numpages = Math.max(1, pdfData.numpages);
+    const rawText = pdfData.text ?? '';
+
+    // Split into per-page strings — prefer form-feed boundaries (pdf-parse
+    // inserts `\f` between pages on most PDFs). When the count doesn't
+    // match `numpages` we fall back to equal-segment splitting so the
+    // page numbers remain approximately right.
+    let pageTexts: string[] = rawText.split('\f');
+    if (pageTexts.length !== numpages) {
+        const segmentLen = Math.ceil(rawText.length / numpages);
+        pageTexts = [];
+        for (let i = 0; i < numpages; i++) {
+            pageTexts.push(rawText.substring(i * segmentLen, (i + 1) * segmentLen));
+        }
+    }
+
+    // Clean each page independently (preserves the per-page structure so
+    // line-end / multi-space normalization doesn't bleed across pages).
+    const cleanedPages = pageTexts.map(t => cleanPdfText(t));
+    const text = cleanedPages.map((p, i) => `[PAGE ${i + 1}]\n${p}`).join('\n\n');
+    const markdown = cleanedPages
+        .map((p, i) => `<!-- page: ${i + 1} -->\n${p}`)
+        .join('\n\n---\n\n');
+
+    return { text, markdown, pageCount: numpages };
 }
 
 /**
- * Extract text using Gemini (for files under 50MB)
+ * Extract text using Gemini Files API.
+ *
+ * Returns the same `{ text, markdown, pageCount }` contract as
+ * `extractWithLlamaParse` so the cascade can drop either result into
+ * `structuredContentUrl` and the auto-indexer picks it up. The
+ * resulting extractionVersion is `4.0-gemini-standard`, which IS in
+ * the indexer's SUPPORTED_VERSIONS — so a successful Gemini run
+ * auto-indexes immediately.
+ *
+ * Robustness improvements over the legacy implementation:
+ *   - `responseMimeType: 'application/json'` forces strict JSON output
+ *     (no markdown code-fence wrapping) so we don't hit the
+ *     "Failed to parse Gemini response as JSON" path that bit the
+ *     WBC upload (Gemini wrapped a 378-page response in ```json fences,
+ *     and the manual fence-stripping was fragile).
+ *   - `maxOutputTokens: 65536` (the model's documented max) so the
+ *     JSON doesn't truncate mid-page on long commentaries.
+ *   - Tighter prompt with `pages: [{ page, text, md }]` schema —
+ *     smaller per-element overhead, more pages fit per response.
+ *   - Clear truncation-detection: if Gemini returns 0 pages or
+ *     finishes mid-array, we throw so the cascade falls to pdf-parse
+ *     (which now produces auto-indexable output anyway).
  */
 async function extractWithGemini(
     tempFilePath: string,
     resourceId: string,
-    apiKey: string
-): Promise<{ text: string; pageCount: number; pages?: PageData[] }> {
+    apiKey: string,
+    expectedPageCount?: number,
+): Promise<{ text: string; markdown: string; pageCount: number }> {
     const genAI = new GoogleGenerativeAI(apiKey);
     const fileManager = new GoogleAIFileManager(apiKey);
 
@@ -107,55 +203,53 @@ async function extractWithGemini(
         displayName: `${resourceId}.pdf`,
     });
 
-    // Wait for file to be processed
+    // Wait for file to be processed (Gemini converts the PDF before
+    // the model can read it — non-trivial for big files).
     let geminiFile = await fileManager.getFile(uploadResult.file.name);
+    const fileReadyDeadline = Date.now() + 5 * 60 * 1000;
     while (geminiFile.state === FileState.PROCESSING) {
-        console.log(`⏳ [Gemini] File still processing...`);
+        if (Date.now() > fileReadyDeadline) {
+            throw new Error('Gemini file processing exceeded 5 minutes');
+        }
         await new Promise(resolve => setTimeout(resolve, 5000));
         geminiFile = await fileManager.getFile(uploadResult.file.name);
     }
-
     if (geminiFile.state === FileState.FAILED) {
         throw new Error('Gemini file processing failed');
     }
-
     console.log(`✅ [Gemini] File ready: ${geminiFile.displayName}`);
 
-    // Extract text using Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    // Was 'gemini-2.0-flash' until Google deprecated it for new users
+    // (404 Not Found, May 2026). Bumped to the live successor.
+    const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: {
+            responseMimeType: 'application/json',
+            maxOutputTokens: 65536,
+        },
+    });
 
-    const extractionPrompt = `
-Eres un experto en extracción de texto de documentos académicos y teológicos.
+    const prompt = `Extrae el texto completo de este PDF página por página.
 
-TAREA: Extrae TODO el texto de este PDF de forma estructurada y limpia.
+Reglas:
+1. Una entrada por página física. Conserva los números de página reales del PDF.
+2. Preserva la estructura: encabezados con # / ## (markdown), párrafos separados, listas con -.
+3. Preserva con precisión caracteres griegos (α-ω) y hebreos (א-ת).
+4. No traduzcas términos teológicos ni citas bíblicas.
+5. Mantén tablas en formato markdown cuando aparezcan.
+6. NO incluyas el número de página en el contenido (lo capturamos en el campo aparte).
 
-REGLAS:
-1. Preserva la estructura de párrafos (líneas en blanco entre párrafos)
-2. Mantén títulos y subtítulos en líneas separadas
-3. NO incluyas números de página en el texto
-4. Limpia errores de OCR obvios
-5. Preserva citas bíblicas exactamente como aparecen
-6. Mantén términos teológicos correctamente escritos
-
-FORMATO DE SALIDA (JSON estricto):
+Devuelve JSON con esta estructura exacta:
 {
-  "success": true,
-  "totalPages": <número>,
   "pages": [
-    {
-      "pageNumber": 1,
-      "text": "Texto limpio de la página 1..."
-    }
-  ],
-  "detectedTitle": "Título del libro si se detecta o null",
-  "detectedAuthor": "Autor si se detecta o null"
+    { "page": 1, "text": "texto plano", "md": "texto en markdown" }
+  ]
 }
 
-IMPORTANTE: Responde SOLO con JSON válido, sin markdown ni explicaciones.
-`;
+Si una página está vacía, devuelve string vacío en text/md pero conserva la entrada para no romper la numeración.`;
 
     const result = await model.generateContent([
-        extractionPrompt,
+        prompt,
         {
             fileData: {
                 mimeType: geminiFile.mimeType!,
@@ -164,61 +258,69 @@ IMPORTANTE: Responde SOLO con JSON válido, sin markdown ni explicaciones.
         },
     ]);
 
+    // Truncation guard #1 — Gemini sets `finishReason = 'MAX_TOKENS'`
+    // when it stopped because the output budget ran out. The JSON
+    // returned in that case may be syntactically valid but
+    // semantically incomplete (e.g. a 378-page commentary returning
+    // only the first 40 pages). Treat this as a hard failure so the
+    // cascade falls to pdf-parse, which produces auto-indexable
+    // output covering the FULL document.
+    const finishReason = result.response.candidates?.[0]?.finishReason;
+    if (finishReason && finishReason !== 'STOP') {
+        throw new Error(`Gemini stopped early (finishReason=${finishReason}); response truncated`);
+    }
+
     const responseText = result.response.text();
 
-    // Parse JSON response
-    let extractedData: ExtractionResult;
+    let parsed: { pages?: Array<{ page: number; text?: string; md?: string }> };
     try {
-        // More robust cleanup of various response formats
-        let cleanJson = responseText.trim();
-
-        // Remove ```json or ``` at the start
-        if (cleanJson.startsWith('```json')) {
-            cleanJson = cleanJson.slice(7);
-        } else if (cleanJson.startsWith('```')) {
-            cleanJson = cleanJson.slice(3);
-        }
-
-        // Remove standalone 'json' prefix (without backticks)
-        if (cleanJson.startsWith('json')) {
-            cleanJson = cleanJson.slice(4);
-        }
-
-        // Remove ``` at the end
-        if (cleanJson.endsWith('```')) {
-            cleanJson = cleanJson.slice(0, -3);
-        }
-
-        cleanJson = cleanJson.trim();
-
-        // Try to find JSON object if response has extra text
-        if (!cleanJson.startsWith('{')) {
-            const jsonStart = cleanJson.indexOf('{');
-            const jsonEnd = cleanJson.lastIndexOf('}');
-            if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-                cleanJson = cleanJson.substring(jsonStart, jsonEnd + 1);
-            }
-        }
-
-        extractedData = JSON.parse(cleanJson) as ExtractionResult;
+        parsed = JSON.parse(responseText);
     } catch (parseError) {
-        console.error('❌ [Gemini] Failed to parse JSON response:', responseText.substring(0, 500));
+        // With responseMimeType=application/json this path is rare —
+        // when it fires, log a slice for debugging but throw to fall
+        // back. The pdf-parse fallback now produces auto-indexable
+        // output so the user still ends up with searchable content.
+        console.error('❌ [Gemini] JSON parse failed even with strict mime type:', responseText.substring(0, 500));
         throw new Error('Failed to parse Gemini response as JSON');
     }
 
-    // Cleanup Gemini file
-    await fileManager.deleteFile(geminiFile.name);
+    if (!parsed.pages || !Array.isArray(parsed.pages) || parsed.pages.length === 0) {
+        throw new Error('Gemini returned no pages');
+    }
 
-    // Combine pages with markers
-    const fullText = extractedData.pages
-        ?.map((p: PageData) => `[PAGE ${p.pageNumber}]\n${p.text}`)
-        .join('\n\n') || '';
+    // Best-effort cleanup of the Gemini file to avoid quota waste.
+    try { await fileManager.deleteFile(geminiFile.name); } catch { /* ignore */ }
 
-    return {
-        text: fullText,
-        pageCount: extractedData.totalPages,
-        pages: extractedData.pages
-    };
+    const pages = parsed.pages.map((p, idx) => ({
+        page: typeof p.page === 'number' ? p.page : idx + 1,
+        text: p.text ?? '',
+        md: p.md,
+    }));
+
+    // Truncation guard #2 — even when finishReason is STOP, Gemini
+    // sometimes silently returns fewer pages than the source PDF
+    // contains (especially for very long documents where the model
+    // hits an internal soft cap). When the caller passes an
+    // `expectedPageCount` from a cheap pdf-parse pre-read, we
+    // compare. A returned count below 80% of expected almost
+    // certainly means partial extraction → fall back to pdf-parse
+    // for the full document.
+    if (expectedPageCount && expectedPageCount > 0) {
+        const completeness = pages.length / expectedPageCount;
+        if (completeness < 0.8) {
+            throw new Error(
+                `Gemini returned ${pages.length} of ~${expectedPageCount} pages (${Math.round(completeness * 100)}%); likely truncated`,
+            );
+        }
+    }
+
+    // Use the existing LlamaParse formatters so the chunker downstream
+    // sees the identical `<!-- page: N -->` contract regardless of
+    // which engine produced the content.
+    const text = pagesToMarkedText(pages);
+    const markdown = pagesToMarkdown(pages);
+
+    return { text, markdown, pageCount: pages.length };
 }
 
 /**
@@ -233,9 +335,17 @@ export const extractPdfWithGemini = onObjectFinalized(
         bucket: 'dosfilosapp.firebasestorage.app',
         region: 'us-central1',
         memory: '2GiB',
-        // Storage triggers are capped at 540s. For very large PDFs that need more time,
-        // use the reprocessWithLlamaParse callable (up to 3600s).
-        timeoutSeconds: 540,
+        // Cloud Functions Gen 2 with Eventarc triggers (storage object
+        // finalize) caps at 60 minutes per the platform docs. Production
+        // observation: a 50 MB / 790-page academic book in LlamaParse fast
+        // mode took 11m 28s end-to-end (Carson/Moo NT Intro, 2026-05-04).
+        // We bump from the original 540s default to 1500s (25 min) so:
+        //   - Books up to ~1500 pages comfortably fit
+        //   - Multi-account retry has time to fail one account and try the next
+        //   - Indexer-side time isn't squeezed
+        // For documents bigger than this the user should use the
+        // reprocessWithLlamaParse callable (up to 60 min).
+        timeoutSeconds: 1500,
         secrets: [
             'GEMINI_API_KEY',
             // Two free-tier LlamaParse accounts at launch:
@@ -320,80 +430,175 @@ export const extractPdfWithGemini = onObjectFinalized(
             const fileSizeMB = stats.size / 1024 / 1024;
             console.log(`📥 [Extract] Downloaded file: ${fileSizeMB.toFixed(2)} MB`);
 
-            let extractedText: string;
-            let pageCount: number;
-            let extractionVersion: string;
+            // Pre-read the PDF page count cheaply with pdf-parse so the
+            // Gemini path can detect silent truncation (returning fewer
+            // pages than the source has). This 1-2s up-front read is
+            // worth it: without the ground truth, Gemini's "I returned
+            // 40 pages" looks like a complete extraction even when the
+            // source has 378 pages. Failing fast lets the cascade
+            // degrade to pdf-parse, which delivers ALL the content.
+            let expectedPageCount: number | undefined;
+            try {
+                const buf = fs.readFileSync(tempFilePath);
+                const meta = await pdfParse(buf);
+                expectedPageCount = meta.numpages;
+                console.log(`📐 [Extract] PDF has ${expectedPageCount} page(s) per pdf-parse`);
+            } catch (metaErr: any) {
+                console.warn(`⚠️ [Extract] pdf-parse pre-read failed (continuing without page count): ${metaErr?.message ?? metaErr}`);
+            }
+
+            // Definite-assignment: the cascade below always assigns these
+            // — either via a successful LlamaParse account, the Gemini
+            // fallback, or the pdf-parse last resort. TS can't narrow
+            // through the for-loop so we mark them definite to avoid
+            // forced sentinel values.
+            let extractedText!: string;
+            let pageCount!: number;
+            let extractionVersion!: string;
             let structuredMarkdown: string | null = null;
 
-            // Pick a LlamaParse account from the multi-account pool (Hito 6).
-            // null when no account configured / has capacity → skip to Gemini.
-            let llamaSelected: Awaited<ReturnType<typeof selectLlamaParseAccount>> | null = null;
-            try {
-                if (stats.size <= MAX_LLAMAPARSE_FILE_SIZE) {
-                    llamaSelected = await selectLlamaParseAccount();
+            // Honor the user's choice when they explicitly picked a tier
+            // at upload time. Field is optional — when absent, fall back
+            // to the legacy "premium-first cascade" so existing uploads
+            // and any non-form code paths keep behaving as before.
+            //
+            //   'standard' → skip LlamaParse entirely. Goes straight to
+            //                Gemini → pdf-parse. Debits standard pages.
+            //   'premium'  → cascade as today. Debits premium when
+            //                LlamaParse runs successfully; standard when
+            //                it falls back.
+            const requestedMode = resourceDoc.data()?.requestedExtractionMode as 'standard' | 'premium' | undefined;
+            const userOptedOutOfPremium = requestedMode === 'standard';
+
+            // Resolve every eligible LlamaParse account upfront so the
+            // cascade can iterate them on per-account failure (rate limit,
+            // queue timeout, account-side error) before degrading to
+            // Gemini. Empty list when user opted into Standard, file
+            // exceeds LlamaParse's 100 MB cap, or no account is configured.
+            let llamaAccounts: SelectedLlamaParseAccount[] = [];
+            if (!userOptedOutOfPremium && stats.size <= MAX_LLAMAPARSE_FILE_SIZE) {
+                try {
+                    llamaAccounts = await selectAllLlamaParseAccounts();
+                } catch (selectErr: any) {
+                    console.warn(`⚠️ [Extract] LlamaParse account lookup failed: ${selectErr.message}`);
                 }
-            } catch (selectErr: any) {
-                console.warn(`⚠️ [Extract] No LlamaParse account available: ${selectErr.message}`);
+            } else if (userOptedOutOfPremium) {
+                console.log(`📄 [Extract] User opted for STANDARD; skipping LlamaParse for resource ${resourceId}`);
             }
-            const canUseLlamaParse = llamaSelected !== null;
+            const canUseLlamaParse = llamaAccounts.length > 0;
+            // Track which account ultimately succeeded so we can record
+            // its usage after the cascade finishes. Also collected for
+            // structured-failure debugging.
+            let llamaSucceededOn: SelectedLlamaParseAccount | null = null;
+            // Actual credits LlamaParse charged for the successful job
+            // (NOT page count — see comment in extractWithLlamaParse).
+            let llamaCreditsUsed = 0;
+            const llamaErrors: Array<{ account: string; error: string }> = [];
 
             // Extraction priority:
-            //   1. LlamaParse (primary) — best structure/page preservation
-            //   2. Gemini 2.0 Flash (fallback) — reliable text extraction
-            //   3. pdf-parse (last resort) — local, free, basic
-            if (canUseLlamaParse && llamaSelected) {
-                const account = llamaSelected;
-                console.log(`🦙 [Extract] Using LlamaParse account ${account.accountId}`);
-                try {
-                    const result = await extractWithLlamaParse(tempFilePath, resourceId, account.apiKey);
-                    extractedText = result.text;
-                    pageCount = result.pageCount;
-                    structuredMarkdown = result.markdown;
-                    extractionVersion = '3.0-llamaparse';
-                    // Record account usage. Non-fatal if it fails — billing is the source of truth.
+            //   1. LlamaParse (primary) — best structure/page preservation.
+            //      Tries every eligible account before degrading.
+            //   2. Gemini 2.5 Flash (fallback) — reliable text extraction.
+            //   3. pdf-parse (last resort) — local, free, basic.
+            if (canUseLlamaParse) {
+                for (const account of llamaAccounts) {
+                    console.log(`🦙 [Extract] Trying LlamaParse account ${account.accountId} (${account.availableCredits} credits available)`);
                     try {
-                        await recordLlamaParseUsage(account.accountId, result.pageCount);
+                        const result = await extractWithLlamaParse(tempFilePath, resourceId, account.apiKey);
+                        extractedText = result.text;
+                        pageCount = result.pageCount;
+                        structuredMarkdown = result.markdown;
+                        extractionVersion = '3.0-llamaparse';
+                        llamaSucceededOn = account;
+                        llamaCreditsUsed = result.creditsUsed;
+                        break; // Success — stop trying other accounts.
+                    } catch (llamaError: any) {
+                        const msg = llamaError?.message ?? String(llamaError);
+                        console.warn(`⚠️ [Extract] LlamaParse account ${account.accountId} failed: ${msg}`);
+                        llamaErrors.push({ account: account.accountId, error: msg });
+                        // Loop continues — try next account.
+                    }
+                }
+
+                if (llamaSucceededOn) {
+                    // Record actual credits consumed (from LlamaParse's
+                    // jobMetadata) — not page count. Cached jobs report
+                    // 0 credits even when pages > 0; using page count
+                    // there inflates our counter and eventually makes
+                    // accounts look exhausted while the dashboard shows
+                    // capacity remaining (the bug that broke Carson/Moo
+                    // routing on 2026-05-03).
+                    try {
+                        if (llamaCreditsUsed > 0) {
+                            await recordLlamaParseUsage(llamaSucceededOn.accountId, llamaCreditsUsed);
+                        } else {
+                            console.log(`💰 [Extract] LlamaParse charged 0 credits (cached/free); skipping counter update`);
+                        }
                     } catch (usageErr: any) {
                         console.warn(`[Extract] Account usage update skipped: ${usageErr.message}`);
                     }
-                } catch (llamaError) {
-                    console.warn(`⚠️ [Extract] LlamaParse failed, falling back to Gemini:`, llamaError);
-                    if (stats.size <= MAX_GEMINI_FILE_SIZE) {
+                } else {
+                    // Every LlamaParse account failed. Degrade to Gemini
+                    // (or pdf-parse if Gemini can't handle the size).
+                    console.warn(
+                        `⚠️ [Extract] All ${llamaAccounts.length} LlamaParse account(s) failed; falling back to Gemini. Errors: ${JSON.stringify(llamaErrors)}`,
+                    );
+                    if (stats.size <= MAX_GEMINI_FILE_SIZE && stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES) {
                         try {
-                            const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
+                            const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
                             extractedText = result.text;
                             pageCount = result.pageCount;
-                            extractionVersion = '2.0-gemini';
+                            structuredMarkdown = result.markdown;
+                            extractionVersion = '4.0-gemini-standard';
                         } catch (geminiError) {
                             console.warn(`⚠️ [Extract] Gemini also failed, using pdf-parse:`, geminiError);
                             const buffer = fs.readFileSync(tempFilePath);
                             const result = await extractWithPdfParse(buffer);
                             extractedText = result.text;
                             pageCount = result.pageCount;
-                            extractionVersion = 'fallback-pdfparse';
+                            structuredMarkdown = result.markdown;
+                            extractionVersion = '5.0-pdfparse-structured';
                         }
                     } else {
+                        // Either >50MB (Gemini hard size limit) or >12MB
+                        // (heuristic for Gemini's 1000-page cap). Skip
+                        // Gemini directly to avoid a guaranteed 400.
+                        console.log(
+                            `📄 [Extract] Skipping Gemini fallback (${(stats.size / 1024 / 1024).toFixed(1)} MB likely > 1000 pages); going straight to pdf-parse`,
+                        );
                         const buffer = fs.readFileSync(tempFilePath);
                         const result = await extractWithPdfParse(buffer);
                         extractedText = result.text;
                         pageCount = result.pageCount;
-                        extractionVersion = 'fallback-pdfparse';
+                        structuredMarkdown = result.markdown;
+                        extractionVersion = '5.0-pdfparse-structured';
                     }
                 }
-            } else if (stats.size <= MAX_GEMINI_FILE_SIZE) {
-                console.log(`🤖 [Extract] Using Gemini (no LlamaParse key or file size limit)`);
+            } else if (
+                stats.size <= MAX_GEMINI_FILE_SIZE &&
+                // The 12MB heuristic exists to avoid a guaranteed 400 from
+                // Gemini's 1000-page cap on text-heavy academic books. When
+                // the user explicitly opts into Standard, they're telling
+                // us "Gemini is fine" — we should at least try it. Worst
+                // case Gemini returns "exceeds the supported page limit"
+                // and the catch below falls to pdf-parse anyway.
+                (userOptedOutOfPremium || stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES)
+            ) {
+                console.log(`🤖 [Extract] Using Gemini (${userOptedOutOfPremium ? 'user opted standard' : 'no LlamaParse key or file size limit'})`);
                 try {
-                    const result = await extractWithGemini(tempFilePath, resourceId, getApiKey());
+                    const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
                     extractedText = result.text;
                     pageCount = result.pageCount;
-                    extractionVersion = '2.0-gemini';
+                    structuredMarkdown = result.markdown;
+                    extractionVersion = '4.0-gemini-standard';
                 } catch (geminiError) {
                     console.warn(`⚠️ [Extract] Gemini failed, falling back to pdf-parse:`, geminiError);
                     const buffer = fs.readFileSync(tempFilePath);
                     const result = await extractWithPdfParse(buffer);
                     extractedText = result.text;
                     pageCount = result.pageCount;
-                    extractionVersion = 'fallback-pdfparse';
+                    structuredMarkdown = result.markdown;
+                    extractionVersion = '5.0-pdfparse-structured';
                 }
             } else {
                 console.log(`📄 [Extract] Using pdf-parse (file > 100MB or no LlamaParse)`);
@@ -401,24 +606,41 @@ export const extractPdfWithGemini = onObjectFinalized(
                 const result = await extractWithPdfParse(buffer);
                 extractedText = result.text;
                 pageCount = result.pageCount;
-                extractionVersion = 'fallback-pdfparse';
+                structuredMarkdown = result.markdown;
+                extractionVersion = '5.0-pdfparse-structured';
             }
 
-            const usedGemini = extractionVersion === '2.0-gemini';
+            const usedGemini = extractionVersion === '4.0-gemini-standard' || extractionVersion === '2.0-gemini';
             const usedLlamaParse = extractionVersion === '3.0-llamaparse';
 
-            console.log(`📝 [Extract] Extracted ${extractedText.length} characters from ${pageCount} pages`);
+            console.log(`📝 [Extract] Extracted ${extractedText.length} characters / ${Buffer.byteLength(extractedText, 'utf8')} bytes from ${pageCount} pages`);
 
-            // Firestore has a 1MB field limit - check size
+            // Firestore caps each document at 1,048,576 bytes (1 MiB).
+            // Truncate textContent BY BYTES (not characters) to stay
+            // safely under the cap. The previous code used
+            // `substring(0, MAX_BYTES)` which slices by char count —
+            // safe for ASCII but catastrophic for Greek/Hebrew (1 char
+            // ≈ 2 bytes UTF-8) where 900K chars becomes ~1.8 MB and
+            // Firestore rejects the whole write with INVALID_ARGUMENT.
+            // For NTG28 (1020p of dense Greek) this killed the entire
+            // extraction.
+            //
+            // Headroom: the cap is 1,048,576 bytes for the WHOLE doc.
+            // Title/author/metadata/etc add ~5-20 KB, so MAX 800K bytes
+            // for textContent leaves ~250 KB of safety margin. The
+            // full content is also persisted to `structuredContentUrl`
+            // in Cloud Storage (no size limit) — textContent in
+            // Firestore is just for legacy reads + quick previews.
+            const MAX_TEXT_BYTES = 800_000;
             const textBytes = Buffer.byteLength(extractedText, 'utf8');
             let finalText = extractedText;
             let wasTruncated = false;
 
-            const MAX_BYTES = 900000;
-            if (textBytes > MAX_BYTES) {
-                console.log(`⚠️ [Extract] Text too large (${textBytes} bytes), truncating...`);
-                finalText = extractedText.substring(0, MAX_BYTES);
+            if (textBytes > MAX_TEXT_BYTES) {
+                console.log(`⚠️ [Extract] Text too large (${textBytes} bytes), truncating to ${MAX_TEXT_BYTES} bytes...`);
+                finalText = truncateUtf8(extractedText, MAX_TEXT_BYTES);
                 wasTruncated = true;
+                console.log(`✂️  [Extract] Truncated to ${Buffer.byteLength(finalText, 'utf8')} bytes`);
             }
 
             // If structured Markdown is available (LlamaParse), store it in Storage
@@ -439,6 +661,35 @@ export const extractPdfWithGemini = onObjectFinalized(
                 }
             }
 
+            // Compute a user-facing warning when the actual extraction
+            // tier is below what the user explicitly requested. This is
+            // what the UI surfaces in the engine-badge tooltip so the
+            // user understands why their Premium upload ended up on
+            // Standard or Basic — and can decide whether to reprocess.
+            //
+            // Examples written to Firestore:
+            //   - "Premium falló en 2 cuenta(s); usamos Estándar (Gemini)."
+            //   - "Premium falló y archivo >12MB; usamos Básico (pdf-parse)."
+            //   - "Estándar falló; usamos Básico (pdf-parse)."
+            //
+            // Always cleared (set to null) on success-at-requested-tier
+            // so a successful reprocess removes any stale warning.
+            let extractionWarning: string | null = null;
+            if (requestedMode === 'premium' && extractionVersion !== '3.0-llamaparse') {
+                const accountSummary = llamaErrors.length > 0
+                    ? `Premium falló en ${llamaErrors.length} cuenta(s)`
+                    : 'Premium no estuvo disponible';
+                if (extractionVersion === '4.0-gemini-standard' || extractionVersion === '2.0-gemini') {
+                    extractionWarning = `${accountSummary}; usamos Estándar (Gemini).`;
+                } else if (extractionVersion === '5.0-pdfparse-structured') {
+                    extractionWarning = `${accountSummary} y Gemini tampoco pudo procesar; usamos Básico (pdf-parse) sin cobro. Reprocesa con Premium para mejor calidad.`;
+                }
+            } else if (requestedMode === 'standard' && extractionVersion === '5.0-pdfparse-structured') {
+                extractionWarning = 'Gemini falló; usamos Básico (pdf-parse) sin cobro. Considera reprocesar.';
+            }
+            // Note: requestedMode === undefined (legacy uploads) gets no
+            // warning — we don't know what they asked for.
+
             // Update Firestore document with extracted text and ready status
             const updateData: Record<string, any> = {
                 textContent: finalText,
@@ -449,6 +700,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                 extractedWithGemini: usedGemini,
                 extractedWithLlamaParse: usedLlamaParse,
                 extractionVersion,
+                extractionWarning, // null clears any prior warning on a clean reprocess
                 needsReindex: true,
                 wasTruncated,
                 updatedAt: new Date()
@@ -457,6 +709,41 @@ export const extractPdfWithGemini = onObjectFinalized(
 
             await resourceRef.update(updateData);
             console.log(`✅ [Extract] Updated resource ${resourceId} (${extractionVersion}, status: ready)`);
+
+            // Debit the user's processing balance based on which engine
+            // actually ran. The user only pays for the tier they got:
+            //
+            //   3.0-llamaparse              → premium  (paid Premium, got Premium)
+            //   4.0-gemini-standard         → standard (paid Standard or Premium-degraded, got Standard)
+            //   2.0-gemini (legacy)         → standard
+            //   5.0-pdfparse-structured     → FREE     (last-resort fallback, no API cost
+            //   fallback-pdfparse (legacy)  → FREE     to us, lower-quality output the user
+            //                                          didn't ask for)
+            //
+            // Why pdf-parse is free: it runs locally with no third-party
+            // API cost, and it's only reached when both LlamaParse AND
+            // Gemini failed. Charging for our own degradation would
+            // erode trust in the pipeline — the user paid for Standard
+            // or Premium quality, getting Basic isn't what they bought.
+            //
+            // Non-fatal: if the debit fails we log and proceed —
+            // billing is the source of truth, this is a UX-quota
+            // synchronization concern.
+            const isFreeFallback = extractionVersion === 'fallback-pdfparse'
+                || extractionVersion === '5.0-pdfparse-structured';
+            if (isFreeFallback) {
+                console.log(`💳 [Extract] Skipping debit for ${userId.substring(0, 8)}... — pdf-parse fallback is free`);
+            } else {
+                try {
+                    const debitMode: ProcessingMode = extractionVersion === '3.0-llamaparse'
+                        ? 'premium'
+                        : 'standard';
+                    await consumePagesAdmin(userId, debitMode, pageCount);
+                    console.log(`💳 [Extract] Debited ${pageCount} ${debitMode} pages from user ${userId.substring(0, 8)}...`);
+                } catch (debitErr) {
+                    console.warn(`⚠️ [Extract] Balance debit failed (non-fatal):`, debitErr);
+                }
+            }
 
             // Increment the user's monthly pagesProcessed counter. Server-side so the
             // client can't understate usage. Best-effort — logs but doesn't fail the

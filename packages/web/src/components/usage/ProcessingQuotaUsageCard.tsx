@@ -53,13 +53,13 @@ export function ProcessingQuotaUsageCard({ planId }: { planId: string | null | u
                 <UsageRow
                     label="Páginas estándar"
                     icon={Wand2}
-                    helpText="Gemini 2.0 Flash · libros narrativos, ensayos, sermones"
+                    helpText="Libros narrativos, ensayos y sermones"
                     stats={stats.standard}
                 />
                 <UsageRow
                     label="Páginas premium"
                     icon={Sparkles}
-                    helpText="LlamaParse · tablas, multi-columna, escaneados"
+                    helpText="Tablas, multi-columna y escaneados"
                     stats={stats.premium}
                 />
                 <Button asChild variant="outline" size="sm" className="w-full">

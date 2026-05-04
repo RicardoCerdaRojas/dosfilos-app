@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
@@ -15,6 +16,7 @@ import { CreditPacksDialog } from './components/CreditPacksDialog';
 import { UpgradeRequiredModal } from '@/components/upgrade';
 import { processingBalanceService } from '@dosfilos/application';
 import { LibraryAttentionCallout } from './components/LibraryAttentionCallout';
+import { LibraryStatusCallout } from './components/LibraryStatusCallout';
 import { LibraryProgress } from './components/LibraryProgress';
 import { LibraryUploadForm } from './components/LibraryUploadForm';
 import { LibraryFilters } from './components/LibraryFilters';
@@ -55,6 +57,33 @@ export function LibraryManager() {
     //    1) `canUploadDocument` — Free tier (libraryDocsLimit=0) or plan cap → UpgradeRequiredModal.
     //    2) Processing balance — paid plan but standard+premium balance both at 0 → CreditPacksDialog.
     //    Stage 2 only runs after stage 1 passes; otherwise free users would see both modals.
+    //
+    // Both checks were originally sequential awaits inside the click
+    // handler, which made "Agregar recurso" feel ~1s sluggish (two
+    // Firestore round-trips serialized). Now we prefetch both via
+    // react-query on mount, cache them, and the click reads from
+    // cache (instant). They're invalidated after every successful
+    // upload (`onSuccess` below) so the next click re-validates
+    // against the freshly-debited balance.
+    const queryClient = useQueryClient();
+    const uploadGateKey = ['library', 'uploadGate', user?.uid] as const;
+    const { data: uploadGate } = useQuery({
+        queryKey: uploadGateKey,
+        queryFn: async () => {
+            if (!user?.uid) return null;
+            const [check, balance] = await Promise.all([
+                checkCanUploadDocument(),
+                processingBalanceService.getBalance(user.uid),
+            ]);
+            return {
+                canUpload: check.allowed,
+                hasBalance: (balance.standardPagesAvailable + balance.premiumPagesAvailable) > 0,
+            };
+        },
+        enabled: !!user?.uid,
+        staleTime: 60_000, // 1 min — gate state changes only on upload or plan change
+    });
+
     const [showUploadUpgradeModal, setShowUploadUpgradeModal] = useState(false);
     const [creditPacksOpen, setCreditPacksOpen] = useState(false);
     const handleToggleUploadForm = async () => {
@@ -62,18 +91,34 @@ export function LibraryManager() {
             setShowUploadForm(false);
             return;
         }
-        const check = await checkCanUploadDocument();
-        if (!check.allowed) {
+        // Cache hit (~99% of the time post-mount): instant resolution.
+        // Cache miss (very first interaction before query settled, or
+        // after invalidation): fall through to a fresh fetch — slower
+        // but keeps the gate authoritative.
+        let gate = uploadGate;
+        if (!gate) {
+            gate = await queryClient.fetchQuery({
+                queryKey: uploadGateKey,
+                queryFn: async () => {
+                    if (!user?.uid) return null;
+                    const [check, balance] = await Promise.all([
+                        checkCanUploadDocument(),
+                        processingBalanceService.getBalance(user.uid),
+                    ]);
+                    return {
+                        canUpload: check.allowed,
+                        hasBalance: (balance.standardPagesAvailable + balance.premiumPagesAvailable) > 0,
+                    };
+                },
+            });
+        }
+        if (!gate?.canUpload) {
             setShowUploadUpgradeModal(true);
             return;
         }
-        if (user) {
-            const balance = await processingBalanceService.getBalance(user.uid);
-            const totalAvailable = balance.standardPagesAvailable + balance.premiumPagesAvailable;
-            if (totalAvailable === 0) {
-                setCreditPacksOpen(true);
-                return;
-            }
+        if (!gate.hasBalance) {
+            setCreditPacksOpen(true);
+            return;
         }
         setShowUploadForm(true);
     };
@@ -104,7 +149,13 @@ export function LibraryManager() {
         userId,
         isAdmin,
         onConsentRequired: () => setConsentModalOpen(true),
-        onSuccess: () => setShowUploadForm(false),
+        onSuccess: () => {
+            setShowUploadForm(false);
+            // Balance changed — invalidate the cached gate so the
+            // next "Agregar recurso" click sees fresh state (the
+            // user might have crossed into 0-balance territory).
+            queryClient.invalidateQueries({ queryKey: uploadGateKey });
+        },
     });
 
     // ── Filtered view derived from search + category ────────────────────────
@@ -139,6 +190,11 @@ export function LibraryManager() {
 
     const confirmDelete = async () => {
         if (!resourceToDelete) return;
+        // Keep the dialog open with a spinner while the delete is in
+        // flight so the user sees feedback. mutations.deleteResource
+        // toasts on completion (success or error). Close after the
+        // promise resolves regardless — the dim+spinner on the row
+        // covers the gap until the Firestore subscription removes it.
         await mutations.deleteResource(resourceToDelete.id);
         setDeleteDialogOpen(false);
         setResourceToDelete(null);
@@ -162,17 +218,29 @@ export function LibraryManager() {
                 <LibraryHeader
                     totalCount={data.resources.length}
                     readyCount={data.indexedCount}
-                    pendingCount={data.unindexedCount}
+                    pendingCount={data.actionablePendingCount}
                     isUploadFormOpen={showUploadForm}
                     onToggleUploadForm={handleToggleUploadForm}
                 />
 
                 <BalanceBanner />
 
+                {/* Status callouts — stacked, each fires only when its
+                    state has resources. Order: actionable (needs click)
+                    → extracting (just wait) → failed (needs re-upload).
+                    User sees only what's relevant to them. */}
                 <LibraryAttentionCallout
-                    pendingCount={data.unindexedCount}
+                    pendingCount={data.actionablePendingCount}
                     isProcessing={processing.bulkProcessing}
                     onProcessAll={() => processing.processAll(data.resources, data.indexStatus)}
+                />
+                <LibraryStatusCallout
+                    variant="extracting"
+                    count={data.extractingCount}
+                />
+                <LibraryStatusCallout
+                    variant="failed"
+                    count={data.failedCount}
                 />
 
                 <LibraryProgress progress={processing.bulkProcessing ? processing.bulkProgress : null} />
@@ -224,11 +292,14 @@ export function LibraryManager() {
                                 categories={data.categories}
                                 indexStatus={data.indexStatus[resource.id] || 'unknown'}
                                 isIndexing={processing.processingResourceId === resource.id}
+                                isDeleting={mutations.deletingResourceId === resource.id}
+                                isRetryingPremium={mutations.retryingResourceId === resource.id}
                                 viewMode={viewMode}
                                 onEdit={() => openEdit(resource)}
                                 onDelete={() => openDelete(resource)}
                                 onIndex={() => processing.processResource(resource)}
                                 onReindex={() => processing.reprocessResource(resource)}
+                                onRetryPremium={() => mutations.retryWithPremium(resource.id)}
                                 onPreview={() => window.open(resource.storageUrl, '_blank')}
                                 onSetPhases={() => openPhases(resource)}
                                 onConfigureCoreStores={isAdmin ? () => openCoreStores(resource) : undefined}
@@ -292,11 +363,25 @@ export function LibraryManager() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>{t('deleteDialog.cancel')}</AlertDialogCancel>
+                        <AlertDialogCancel disabled={mutations.deletingResourceId !== null}>
+                            {t('deleteDialog.cancel')}
+                        </AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={confirmDelete}
+                            onClick={async (e) => {
+                                // Block the AlertDialog primitive's
+                                // auto-close so the spinner stays
+                                // visible until the mutation resolves.
+                                // confirmDelete itself closes the
+                                // dialog after the promise.
+                                e.preventDefault();
+                                await confirmDelete();
+                            }}
+                            disabled={mutations.deletingResourceId !== null}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
+                            {mutations.deletingResourceId !== null && (
+                                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            )}
                             {t('deleteDialog.confirm')}
                         </AlertDialogAction>
                     </AlertDialogFooter>

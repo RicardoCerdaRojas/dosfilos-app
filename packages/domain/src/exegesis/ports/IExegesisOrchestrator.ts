@@ -69,6 +69,34 @@ export interface ExegesisGenerationInput {
     priorAcceptedSteps: ExegesisPriorStep[];
     /** Optional regeneration hint provided by the user. */
     regenerationHint: string | null;
+    /**
+     * Rubric requirements the user's corpus does NOT meet. Computed
+     * by the use case via `computeRubricCompliance` and passed
+     * through so the orchestrator can warn the LLM not to make
+     * confident claims that would require a missing source type.
+     *
+     * Example: when `critical-apparatus` is missing, the orchestrator
+     * injects a "do not make confident claims about textual variants
+     * without marking them tentative" instruction. Same generalizes
+     * to every type — lexical claims need a lexicon, syntactic
+     * claims need a grammar, etc.
+     *
+     * Empty array when the corpus fully satisfies the rubric (or
+     * when the paper has no rubric set).
+     */
+    missingSourceTypes: ReadonlyArray<MissingSourceTypeRequirement>;
+}
+
+/**
+ * One unsatisfied rubric requirement. The orchestrator uses
+ * `sourceType` to look up its prompt-time warning copy; `minimum`
+ * and `have` give context (e.g. "0 de 2 críticos faltantes" lands
+ * differently than "0 de 1").
+ */
+export interface MissingSourceTypeRequirement {
+    sourceType: SourceType;
+    minimum: number;
+    have: number;
 }
 
 export interface ExegesisSourceContext {

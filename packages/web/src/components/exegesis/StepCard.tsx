@@ -12,6 +12,8 @@ import {
     Bookmark,
     BookText,
     Layers,
+    ChevronDown,
+    ChevronRight,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -57,6 +59,12 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     const [editDraft, setEditDraft] = useState('');
     const [hintDraft, setHintDraft] = useState('');
     const [hintMode, setHintMode] = useState(false);
+    // Accepted steps collapse by default to keep the page short for
+    // multi-verse papers — the user already approved them, so the
+    // detailed content is rarely re-read in the same session. Click
+    // the header to expand. Editing automatically expands.
+    const [collapsed, setCollapsed] = useState(true);
+    const isExpanded = !collapsed || editing;
 
     const displayLabel = stepDisplayLabel(step, language, t);
     const previewMarkdown = step.accepted?.markdown ?? step.current?.markdown ?? '';
@@ -122,8 +130,36 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 isAccepted ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-slate-200 dark:border-zinc-800'
             )}
         >
-            {/* Header */}
-            <header className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 dark:border-zinc-800">
+            {/* Header — clickable when accepted to toggle collapse.
+                For other states the click target is inert (no value in
+                hiding an in-progress step). */}
+            <header
+                className={cn(
+                    'flex items-center gap-3 px-5 py-3 border-b border-slate-100 dark:border-zinc-800',
+                    isAccepted && 'cursor-pointer select-none',
+                    isAccepted && !isExpanded && 'border-b-0',
+                )}
+                onClick={isAccepted ? () => setCollapsed(c => !c) : undefined}
+                role={isAccepted ? 'button' : undefined}
+                tabIndex={isAccepted ? 0 : undefined}
+                onKeyDown={isAccepted ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setCollapsed(c => !c);
+                    }
+                } : undefined}
+                aria-expanded={isAccepted ? isExpanded : undefined}
+            >
+                {isAccepted && (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setCollapsed(c => !c); }}
+                        className="shrink-0 p-0.5 -ml-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        aria-label={isExpanded ? t('detail.steps.action.collapse') : t('detail.steps.action.expand')}
+                    >
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
+                )}
                 <StepIcon kind={step.kind} state={step.state} />
                 <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
@@ -153,12 +189,17 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         disabled={generateStep.isPending}
                         className="border-rose-300 text-rose-700 dark:border-rose-700 dark:text-rose-300"
                     >
-                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                        {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
                         {t('detail.steps.action.retry')}
                     </Button>
                 )}
             </header>
 
+            {/* Body + footer — hidden when accepted step is collapsed.
+                Other states always render (you don't want to hide an
+                awaiting-review step). */}
+            {(!isAccepted || isExpanded) && (
+            <>
             {/* Body — state-aware */}
             <div className="px-5 py-4">
                 {isGenerating && (
@@ -176,10 +217,26 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 )}
 
                 {(isReview || showAccepted) && !editing && previewMarkdown && (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {previewMarkdown}
-                        </ReactMarkdown>
+                    <div className="relative">
+                        {/* Optimistic spinner overlay — fires the moment
+                            the user clicks Regenerar/Aplicar hint, before
+                            Firestore propagates the 'generating' state.
+                            Closes the visual gap where the buttons go
+                            disabled but nothing tells the user "something
+                            is happening". */}
+                        {generateStep.isPending && (
+                            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-white/70 dark:bg-zinc-900/70 backdrop-blur-sm">
+                                <div className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-zinc-800 px-3 py-2 rounded-md border border-slate-200 dark:border-zinc-700 shadow-sm">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    {t('detail.steps.regenerating')}
+                                </div>
+                            </div>
+                        )}
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {previewMarkdown}
+                            </ReactMarkdown>
+                        </div>
                     </div>
                 )}
 
@@ -228,16 +285,16 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                             size="sm"
                             variant="outline"
                             onClick={() => handleGenerate()}
-                            disabled={generateStep.isPending}
+                            disabled={generateStep.isPending || acceptStep.isPending}
                         >
-                            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                            {t('detail.steps.action.regenerate')}
+                            {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                            {generateStep.isPending ? t('detail.steps.action.regenerating') : t('detail.steps.action.regenerate')}
                         </Button>
                         <Button
                             size="sm"
                             variant="outline"
                             onClick={() => setHintMode(v => !v)}
-                            disabled={generateStep.isPending}
+                            disabled={generateStep.isPending || acceptStep.isPending}
                         >
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.regenerateWithHint')}
@@ -246,7 +303,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                             size="sm"
                             variant="ghost"
                             onClick={startEdit}
-                            disabled={generateStep.isPending}
+                            disabled={generateStep.isPending || acceptStep.isPending}
                         >
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.editManual')}
@@ -272,7 +329,8 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 disabled={!hintDraft.trim() || generateStep.isPending}
                                 className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
                             >
-                                {t('detail.steps.action.applyHint')}
+                                {generateStep.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                                {generateStep.isPending ? t('detail.steps.action.regenerating') : t('detail.steps.action.applyHint')}
                             </Button>
                             <button
                                 type="button"
@@ -298,6 +356,8 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         {t('detail.steps.action.editAccepted')}
                     </button>
                 </footer>
+            )}
+            </>
             )}
         </article>
     );

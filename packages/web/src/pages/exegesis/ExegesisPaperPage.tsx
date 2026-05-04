@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import {
     ArrowLeft,
     AlertCircle,
+    Download,
     Loader2,
     Archive,
+    MoreVertical,
     NotebookPen,
     FileCheck2,
     FileStack,
@@ -20,12 +22,30 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import { StepCard } from '@/components/exegesis/StepCard';
+import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
 import {
+    exportPaperToMarkdown,
     formatPassageReference,
     type ExegeticalPaper,
     type PaperToSermonTone,
@@ -59,6 +79,9 @@ export function ExegesisPaperPage() {
         generateSermonFromPaper,
     } = useExegesisPapers();
     const paper: ExegeticalPaper | null = papers.find(p => p.id === paperId) ?? null;
+
+    const [facultyDrawerOpen, setFacultyDrawerOpen] = useState(false);
+    const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
 
     if (isLoading) {
         return <CenteredMessage icon={<Loader2 className="h-5 w-5 animate-spin" />} text={t('detail.loading')} />;
@@ -123,6 +146,26 @@ export function ExegesisPaperPage() {
         }
     };
 
+    const handleExportMarkdown = () => {
+        const markdown = exportPaperToMarkdown(paper);
+        const safeTitle = (paper.title || formatPassageReference(paper.passage, activeLanguage))
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 60) || 'paper';
+        const filename = `${safeTitle}.md`;
+        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success(t('detail.exportMarkdown.toast.exported'));
+    };
+
     const passageShape = passageEligibleForGeneration(paper);
 
     const passageDisplay = formatPassageReference(paper.passage, activeLanguage);
@@ -132,7 +175,7 @@ export function ExegesisPaperPage() {
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 font-sans overflow-y-auto">
             {/* Header */}
             <div className="border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-4">
-                <div className="max-w-5xl mx-auto flex items-center gap-3">
+                <div className="max-w-7xl mx-auto flex items-center gap-3">
                     <Link
                         to="/dashboard/exegesis"
                         className="inline-flex items-center justify-center h-8 w-8 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -148,33 +191,121 @@ export function ExegesisPaperPage() {
                             {passageDisplay} · {t(`list.phase.${paper.phase}`)}
                         </p>
                     </div>
-                    <Link
-                        to={`/dashboard/exegesis/${paper.id}/setup`}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 h-8 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-                    >
-                        <Settings2 className="h-3.5 w-3.5" />
-                        {t('detail.openSetup')}
-                    </Link>
-                    <Link
-                        to={`/dashboard/faculty/new?paperId=${paper.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 h-8 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-                        title={t('detail.askFaculty.tooltip') as string}
-                    >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        {t('detail.askFaculty.cta')}
-                    </Link>
+
+                    {/* Secondary actions — icon-only with tooltips. Visually
+                        grouped tight so they read as a strip rather than
+                        peer-priority with the primary CTA below. */}
+                    <div className="flex items-center gap-1">
+                        <Link
+                            to={`/dashboard/exegesis/${paper.id}/setup`}
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border text-foreground hover:bg-accent transition-colors"
+                            title={t('detail.openSetup') as string}
+                            aria-label={t('detail.openSetup') as string}
+                        >
+                            <Settings2 className="h-3.5 w-3.5" />
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => setFacultyDrawerOpen(true)}
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border text-foreground hover:bg-accent transition-colors"
+                            title={t('detail.askFaculty.cta') as string}
+                            aria-label={t('detail.askFaculty.cta') as string}
+                        >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                        </button>
+                        {(() => {
+                            const hasContent = paper.assembledMarkdown !== null
+                                || paper.steps.some(s => s.accepted !== null);
+                            return (
+                                <button
+                                    type="button"
+                                    onClick={handleExportMarkdown}
+                                    disabled={!hasContent}
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border text-foreground hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                    title={hasContent
+                                        ? t('detail.exportMarkdown.cta') as string
+                                        : t('detail.exportMarkdown.disabledHint') as string}
+                                    aria-label={t('detail.exportMarkdown.cta') as string}
+                                >
+                                    <Download className="h-3.5 w-3.5" />
+                                </button>
+                            );
+                        })()}
+                    </div>
+
+                    {/* Primary action — keeps text label since this is the
+                        headline action that drives the whole module. */}
                     <GenerateSermonButton
                         paper={paper}
                         onGenerate={handleGenerateSermon}
                         pending={generateSermonFromPaper.isPending}
                         t={t}
                     />
-                    <ArchiveButton onClick={handleArchive} pending={archivePaper.isPending} t={t} />
+
+                    {/* Overflow menu — low-frequency / destructive actions
+                        live here so they don't add noise to the header. */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border text-foreground hover:bg-accent transition-colors"
+                                aria-label={t('detail.moreActions') as string}
+                                title={t('detail.moreActions') as string}
+                            >
+                                <MoreVertical className="h-3.5 w-3.5" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setArchiveConfirmOpen(true)}
+                            >
+                                <Archive className="h-4 w-4 mr-2" />
+                                {t('detail.archive')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <AlertDialog open={archiveConfirmOpen} onOpenChange={setArchiveConfirmOpen}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>{t('detail.archiveConfirmTitle')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('detail.archiveConfirmBody')}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel disabled={archivePaper.isPending}>
+                                    {t('setup.cancel')}
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={async (e) => {
+                                        // Prevent the AlertDialog primitive
+                                        // from auto-closing — we want the
+                                        // spinner visible until the mutation
+                                        // resolves. handleArchive navigates on
+                                        // success (the dialog unmounts with
+                                        // the page); on error we close here.
+                                        e.preventDefault();
+                                        await handleArchive();
+                                        setArchiveConfirmOpen(false);
+                                    }}
+                                    disabled={archivePaper.isPending}
+                                    className="bg-destructive text-white hover:bg-destructive/90"
+                                >
+                                    {archivePaper.isPending && (
+                                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                                    )}
+                                    {t('detail.archiveConfirm')}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
 
             {/* Body */}
-            <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-8">
+            <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
                     <StepsPanel
                         paper={paper}
@@ -197,6 +328,12 @@ export function ExegesisPaperPage() {
                     </aside>
                 </div>
             </main>
+
+            <PaperFacultyDrawer
+                open={facultyDrawerOpen}
+                onOpenChange={setFacultyDrawerOpen}
+                paper={paper}
+            />
         </div>
     );
 }
@@ -274,52 +411,6 @@ function GenerateSermonButton({
                 </div>
             </PopoverContent>
         </Popover>
-    );
-}
-
-function ArchiveButton({
-    onClick,
-    pending,
-    t,
-}: {
-    onClick: () => void;
-    pending: boolean;
-    t: (key: string) => string;
-}) {
-    const [confirming, setConfirming] = useState(false);
-    if (!confirming) {
-        return (
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setConfirming(true)}
-                className="text-slate-600 dark:text-slate-300 border-slate-300 dark:border-zinc-700"
-            >
-                <Archive className="h-3.5 w-3.5 mr-1.5" />
-                {t('detail.archive')}
-            </Button>
-        );
-    }
-    return (
-        <div className="inline-flex items-center gap-1.5">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setConfirming(false)}
-                disabled={pending}
-            >
-                {t('setup.cancel')}
-            </Button>
-            <Button
-                size="sm"
-                onClick={onClick}
-                disabled={pending}
-                className="bg-rose-500 hover:bg-rose-400 text-white"
-            >
-                {pending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-                {t('detail.archiveConfirm')}
-            </Button>
-        </div>
     );
 }
 
@@ -471,7 +562,7 @@ function RubricCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string, opt
                 </p>
             )}
             <Link
-                to={`/dashboard/exegesis/${paper.id}/setup`}
+                to={`/dashboard/exegesis/${paper.id}/setup?tab=rubric`}
                 className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
                 <Pencil className="h-3 w-3" />
@@ -544,7 +635,7 @@ function StyleGuideCard({ paper, t }: { paper: ExegeticalPaper; t: (key: string)
                 </p>
             )}
             <Link
-                to={`/dashboard/exegesis/${paper.id}/setup`}
+                to={`/dashboard/exegesis/${paper.id}/setup?tab=manifest`}
                 className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
                 <Pencil className="h-3 w-3" />
@@ -592,7 +683,7 @@ function SourcesCard({
             )}
 
             <Link
-                to={`/dashboard/exegesis/${paper.id}/setup`}
+                to={`/dashboard/exegesis/${paper.id}/setup?tab=corpus`}
                 className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-success hover:text-success-subtle-foreground"
             >
                 <Pencil className="h-3 w-3" />

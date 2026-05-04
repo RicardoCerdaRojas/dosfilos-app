@@ -134,7 +134,7 @@
             "testamentOT": "Old Testament",
             "targetCount": "Approximate count (optional)",
             "targetCountPlaceholder": "e.g. 12",
-            "translationNote": "v1.5: the assistant analyzes the translation (RVR1960/ASV) as a surrogate for the original. v1.6 will load Greek/Hebrew text directly.",
+            "translationNote": "v1.6: analysis runs on the original text (SBLGNT for NT in Greek, WLC for OT in Hebrew). If the original download fails, the assistant falls back to the translation (RVR1960/ASV) and notifies.",
             "start": "Start analysis",
             "running": "Running pipeline...",
             "textZoomLabel": "Text size",
@@ -142,6 +142,73 @@
                 "level1": "Small text",
                 "level2": "Medium text",
                 "level3": "Large text"
+            },
+            "methodologyButton": "Methodology",
+            "methodologyButtonHint": "Learn the homiletical methodology behind this assistant"
+        },
+        "methodology": {
+            "dialogTitle": "Expository assistant methodology",
+            "step": "Step",
+            "close": "Close",
+            "prev": "Back",
+            "next": "Next",
+            "start": "Get started",
+            "goToStep": "Go to step",
+            "steps": {
+                "problem": {
+                    "title": "From text to sermon without betraying the author",
+                    "intro": "Planning an expository series requires crossing a hard bridge: moving from biblical text syntax to a sermon the congregation can actually receive.",
+                    "outro": "The most common trap is jumping straight from text to homiletical outline without passing through the author's argumentative logic. This assistant walks you step by step through a methodology that keeps each level distinct."
+                },
+                "levels": {
+                    "title": "Three levels that are NOT the same",
+                    "intro": "Confusing these levels is the most common cause of sermons that sound biblical but don't say what the text says. The pipeline keeps them separate:",
+                    "items": [
+                        { "label": "Exegetical", "desc": "follows the author's syntax and literary markers." },
+                        { "label": "Argumentative", "desc": "identifies the function of each block within the book." },
+                        { "label": "Preachable", "desc": "decides what gets preached alone, what combines, and what splits." }
+                    ]
+                },
+                "pipeline": {
+                    "title": "Five cascading phases",
+                    "intro": "Each phase attacks a different level of the problem, in order:",
+                    "items": [
+                        { "label": "Panorama", "desc": "identifies genre, purpose, and pastoral problem." },
+                        { "label": "Macrostructure", "desc": "divides the book into its large blocks." },
+                        { "label": "Microstructure", "desc": "finds exegetical units with genre-specific criteria (participial chains for Greek epistle, waw-consecutive for Hebrew narrative, parallelism for poetry)." },
+                        { "label": "Preachable conversion", "desc": "decides how each unit becomes a sermon." },
+                        { "label": "Fidelity review", "desc": "audits the proposal before you create the series." }
+                    ]
+                },
+                "output": {
+                    "title": "Two propositions per unit, not one",
+                    "intro": "Each preachable unit carries two complementary hypotheses:",
+                    "items": [
+                        { "label": "Exegetical hypothesis", "desc": "what the author does in the text." },
+                        { "label": "Homiletical line", "desc": "how the listener receives the truth." }
+                    ],
+                    "outro": "Keeping them separate prevents the sermon from leaping to application without first explaining the text. They are initial hypotheses — final validation is your work with the detailed exegetical paper."
+                },
+                "original": {
+                    "title": "Original text when available",
+                    "intro": "The assistant cites syntactic markers directly from the original when available:",
+                    "items": [
+                        { "label": "SBLGNT", "desc": "Greek text for the New Testament." },
+                        { "label": "WLC", "desc": "Westminster Leningrad Codex for Old Testament Hebrew." }
+                    ],
+                    "outro": "If the download fails over network or the book isn't in the source, we fall back to translation (RVR1960/ASV) and notify you — analysis continues, with transparency that it's approximate."
+                },
+                "heritage": {
+                    "title": "A methodology with seminary lineage",
+                    "intro": "The pipeline draws from the historical homiletical tradition:",
+                    "items": [
+                        { "label": "Haddon Robinson", "desc": "Big Idea preaching." },
+                        { "label": "Bryan Chapell", "desc": "Christ-Centered Preaching." },
+                        { "label": "Sidney Greidanus", "desc": "The Modern Preacher and the Ancient Text." }
+                    ],
+                    "outro": "It does not replace your exegetical work: it accelerates it. The structure, phase names, and genre-specific criteria all come directly from this tradition.",
+                    "creditsLink": "See full source attribution at /credits →"
+                }
             }
         },
         "results": {
@@ -221,6 +288,11 @@
         },
         "toast": {
             "loadFailed": "Couldn't load the book text.",
+            "sourceLoaded": {
+                "original-greek": "Text loaded from SBLGNT (original Greek). See credits at /credits",
+                "original-hebrew": "Text loaded from WLC (original Hebrew). See credits at /credits"
+            },
+            "translationFallback": "Couldn't load the original-language text. Using the translation as fallback ({{reason}}). Syntactic analysis will be approximate.",
             "panoramaFailed": "Couldn't generate the panorama. Try again.",
             "macroDone": "Macrostructure ready.",
             "macroFailed": "Couldn't generate the macrostructure. Try again.",
@@ -228,7 +300,7 @@
             "preachableFailed": "Couldn't generate the preachable units. Try again.",
             "fidelityFailed": "Couldn't complete the fidelity review. Try again.",
             "pipelineDone": "Pipeline complete. Review the preachable units and issues before creating the series.",
-            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "overloaded": "Our analysis engine is overloaded. Try again in a minute.",
             "draftRestored": "Continuing where you left off. (Draft restored).",
             "titleRequired": "Give the series a title before creating.",
             "seriesCreated": "Series created. Taking you to the detail view.",
@@ -238,7 +310,7 @@
             "title": "Create the series",
             "subtitle": "Each preachable unit becomes a planned sermon. The propositions, pastoral objective, and fidelity notes are persisted on every sermon.",
             "defaultTitle": "Expository series — {{book}}",
-            "defaultDescription": "Expository series on {{book}}, divided into {{count}} preachable units (v1.5 pipeline).",
+            "defaultDescription": "Expository series on {{book}}, divided into {{count}} preachable units.",
             "seriesTitle": "Series title",
             "startDate": "Start date",
             "frequency": "Frequency",
@@ -332,7 +404,7 @@
             "detected_one": "{{count}} pericope detected. Review it before creating the series.",
             "detected_other": "{{count}} pericopes detected. Review them before creating the series.",
             "detectFailed": "Couldn't detect pericopes. Try again.",
-            "overloaded": "Gemini is overloaded. Try again in a minute.",
+            "overloaded": "Our analysis engine is overloaded. Try again in a minute.",
             "titleRequired": "Give the series a title before creating.",
             "seriesCreated": "Series created. Taking you to the detail view.",
             "createFailed": "Couldn't create the series."

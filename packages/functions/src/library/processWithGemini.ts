@@ -207,7 +207,9 @@ async function extractPagesWithGemini(
     }
 
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        // Was 'gemini-2.0-flash' until Google deprecated it for new
+        // users (404 Not Found, May 2026). Bumped to the live successor.
+        model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: 'application/json' },
     });
 

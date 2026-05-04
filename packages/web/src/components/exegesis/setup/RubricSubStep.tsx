@@ -3,23 +3,23 @@ import {
     AlertTriangle,
     CheckCircle2,
     FileCheck2,
-    Info,
     Loader2,
-    Plus,
     RotateCcw,
     Pencil,
     Save,
     Sparkles,
-    Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     SOURCE_TYPE_GROUPS,
+    getSourceTypeOrderIndex,
     type ExegeticalPaper,
     type PaperRubric,
     type SourceRequirement,
     type SourceType,
 } from '@dosfilos/domain';
+import { RequirementRow, AddRequirementButton } from '@/components/exegesis/rubric/RequirementRow';
+import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { Button } from '@/components/ui/button';
 import {
     AlertDialog,
@@ -161,6 +161,22 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
         () => allSourceTypes.filter(typ => !usedTypes.has(typ)),
         [allSourceTypes, usedTypes],
     );
+    const sortedRequirements = useMemo(
+        () => [...requirements].sort(
+            (a, b) => getSourceTypeOrderIndex(a.sourceType) - getSourceTypeOrderIndex(b.sourceType),
+        ),
+        [requirements],
+    );
+    const presentTypes = useMemo(
+        () => sortedRequirements.map(r => r.sourceType),
+        [sortedRequirements],
+    );
+    // Live form snapshot for the rigor indicator — updates as the
+    // user adds/removes requirements without waiting for save.
+    const liveRubric = useMemo(() => ({
+        ...rubric,
+        sourceRequirements: requirements,
+    }), [rubric, requirements]);
 
     const handleSave = async () => {
         const minN = lengthMin === '' ? null : Number(lengthMin);
@@ -203,12 +219,15 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
         }
     };
 
-    const updateRequirement = (idx: number, patch: Partial<SourceRequirement>) => {
-        setRequirements(reqs => reqs.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+    // Patch handlers key on sourceType (unique) instead of array
+    // index, so the sorted render-order doesn't have to match the
+    // storage order.
+    const updateRequirement = (sourceType: SourceType, patch: Partial<SourceRequirement>) => {
+        setRequirements(reqs => reqs.map(r => (r.sourceType === sourceType ? { ...r, ...patch } : r)));
     };
 
-    const removeRequirement = (idx: number) => {
-        setRequirements(reqs => reqs.filter((_, i) => i !== idx));
+    const removeRequirement = (sourceType: SourceType) => {
+        setRequirements(reqs => reqs.filter(r => r.sourceType !== sourceType));
     };
 
     const addRequirement = (type: SourceType) => {
@@ -361,18 +380,20 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                         {t('paperSetup.subSteps.rubric.requirements.subtitle')}
                     </p>
                 </header>
-                {requirements.length === 0 ? (
+                <RubricRigorIndicator rubric={liveRubric} />
+                {sortedRequirements.length === 0 ? (
                     <p className="text-xs text-warning-subtle-foreground italic">
                         {t('paperSetup.subSteps.rubric.requirements.empty')}
                     </p>
                 ) : (
                     <ul className="space-y-2">
-                        {requirements.map((req, idx) => (
+                        {sortedRequirements.map((req) => (
                             <RequirementRow
                                 key={req.sourceType}
                                 requirement={req}
-                                onChange={(patch) => updateRequirement(idx, patch)}
-                                onRemove={() => removeRequirement(idx)}
+                                onChange={(patch) => updateRequirement(req.sourceType, patch)}
+                                onRemove={() => removeRequirement(req.sourceType)}
+                                presentTypes={presentTypes}
                             />
                         ))}
                     </ul>
@@ -495,8 +516,13 @@ function RubricSummaryView({
     resetPending: boolean;
 }) {
     const { t } = useTranslation('exegesis');
-    const visibleRequirements = rubric.sourceRequirements.filter(r => r.minimum > 0);
-    const optionalRequirements = rubric.sourceRequirements.filter(r => r.minimum === 0);
+    // Render in canonical academic-priority order regardless of how
+    // they were inserted into the rubric.
+    const sortedRequirements = [...rubric.sourceRequirements].sort(
+        (a, b) => getSourceTypeOrderIndex(a.sourceType) - getSourceTypeOrderIndex(b.sourceType),
+    );
+    const visibleRequirements = sortedRequirements.filter(r => r.minimum > 0);
+    const optionalRequirements = sortedRequirements.filter(r => r.minimum === 0);
 
     return (
         <section className="rounded-lg border border-border bg-card p-5 space-y-4">
@@ -531,6 +557,8 @@ function RubricSummaryView({
                     value={summarizeLength(rubric, t)}
                 />
             </dl>
+
+            <RubricRigorIndicator rubric={rubric} />
 
             <div className="space-y-1.5">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1060,144 +1088,6 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
                 onConfirm={doApply}
             />
         </section>
-    );
-}
-
-// ── Per-row sub-components ─────────────────────────────────────────────
-
-interface RequirementRowProps {
-    requirement: SourceRequirement;
-    onChange: (patch: Partial<SourceRequirement>) => void;
-    onRemove: () => void;
-}
-
-function RequirementRow({ requirement, onChange, onRemove }: RequirementRowProps) {
-    const { t } = useTranslation('exegesis');
-    return (
-        <li className="rounded-lg border border-border bg-card p-3 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                        {t(`sourceTypes.${requirement.sourceType}.label`)}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground italic">
-                        {t(`sourceTypes.${requirement.sourceType}.examples`)}
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    onClick={onRemove}
-                    className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent transition-colors"
-                    aria-label={t('paperSetup.subSteps.rubric.requirements.removeRequirement')}
-                    title={t('paperSetup.subSteps.rubric.requirements.removeRequirement')}
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-                <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
-                        {t('paperSetup.subSteps.rubric.requirements.minLabel')}
-                    </label>
-                    <input
-                        type="number"
-                        min={0}
-                        value={requirement.minimum}
-                        onChange={(e) => onChange({ minimum: Math.max(0, Number(e.target.value || 0)) })}
-                        className="w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                    />
-                </div>
-                <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
-                        {t('paperSetup.subSteps.rubric.requirements.maxLabel')}
-                    </label>
-                    <input
-                        type="number"
-                        min={0}
-                        value={requirement.maximum ?? ''}
-                        onChange={(e) => {
-                            const v = e.target.value;
-                            onChange({ maximum: v === '' ? null : Math.max(0, Number(v)) });
-                        }}
-                        placeholder={t('paperSetup.subSteps.rubric.requirements.maxUnlimited')}
-                        className="w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                    />
-                </div>
-            </div>
-            <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
-                    {t('paperSetup.subSteps.rubric.requirements.justificationLabel')}
-                </label>
-                <textarea
-                    value={requirement.justification}
-                    onChange={(e) => onChange({ justification: e.target.value })}
-                    placeholder={t('paperSetup.subSteps.rubric.requirements.justificationPlaceholder')}
-                    rows={2}
-                    className="w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"
-                />
-            </div>
-        </li>
-    );
-}
-
-interface AddRequirementButtonProps {
-    availableTypes: ReadonlyArray<SourceType>;
-    onAdd: (type: SourceType) => void;
-}
-
-function AddRequirementButton({ availableTypes, onAdd }: AddRequirementButtonProps) {
-    const { t } = useTranslation('exegesis');
-    const [picking, setPicking] = useState(false);
-
-    if (availableTypes.length === 0) {
-        return (
-            <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                {/* All types already have a requirement; nothing to add */}
-                {t('paperSetup.subSteps.rubric.requirements.duplicateError')}
-            </p>
-        );
-    }
-
-    if (!picking) {
-        return (
-            <button
-                type="button"
-                onClick={() => setPicking(true)}
-                className="inline-flex items-center gap-1 text-xs text-success hover:text-success-subtle-foreground"
-            >
-                <Plus className="h-3 w-3" />
-                {t('paperSetup.subSteps.rubric.requirements.addRequirement')}
-            </button>
-        );
-    }
-
-    return (
-        <select
-            autoFocus
-            onChange={(e) => {
-                const v = e.target.value as SourceType;
-                if (v) {
-                    onAdd(v);
-                    setPicking(false);
-                }
-            }}
-            onBlur={() => setPicking(false)}
-            className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-        >
-            <option value="">— {t('paperSetup.subSteps.rubric.requirements.addRequirement')} —</option>
-            {SOURCE_TYPE_GROUPS.map(group => {
-                const groupAvailable = group.types.filter(typ => availableTypes.includes(typ as SourceType)) as ReadonlyArray<SourceType>;
-                if (groupAvailable.length === 0) return null;
-                return (
-                    <optgroup key={group.groupKey} label={t(`sourceTypeGroups.${group.groupKey}`)}>
-                        {groupAvailable.map(typ => (
-                            <option key={typ} value={typ}>{t(`sourceTypes.${typ}.label`)}</option>
-                        ))}
-                    </optgroup>
-                );
-            })}
-        </select>
     );
 }
 

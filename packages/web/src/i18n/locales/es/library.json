@@ -17,6 +17,20 @@
         "description": "Procesar el recurso lo prepara para búsqueda — solo los recursos listos pueden usarse como fuente en proyectos y consultas teológicas.",
         "actionButton": "Procesar pendientes"
     },
+    "statusCallout": {
+        "extracting": {
+            "label": "En proceso",
+            "title_one": "{{count}} recurso extrayendo texto",
+            "title_other": "{{count}} recursos extrayendo texto",
+            "description": "Esto puede tomar varios minutos según el tamaño y complejidad del documento. No necesitas hacer nada — la indexación corre automáticamente cuando termina."
+        },
+        "failed": {
+            "label": "Falló la extracción",
+            "title_one": "{{count}} recurso con error de extracción",
+            "title_other": "{{count}} recursos con error de extracción",
+            "description": "Algo falló mientras procesábamos el archivo. Revisa cada recurso afectado más abajo y bórralo o vuelve a subirlo."
+        }
+    },
     "progress": {
         "processing": "Procesando {{current}}/{{total}} — {{title}}"
     },
@@ -29,7 +43,12 @@
         "authorPlaceholder": "Nombre del autor",
         "categoryLabel": "Categoría",
         "uploadButton": "Subir",
-        "fileSizeWarning": "Archivo >50MB: calidad de extracción puede reducirse"
+        "fileSizeWarning": "Archivo >50MB: calidad de extracción puede reducirse",
+        "modeLabel": "Modo de procesamiento",
+        "modeStandardTitle": "Estándar",
+        "modeStandardDescription": "Libros narrativos, ensayos y sermones (hasta ~600 págs). Consume páginas estándar.",
+        "modePremiumTitle": "Premium",
+        "modePremiumDescription": "Tablas, multi-columna y escaneados (hasta ~1000 págs). Consume páginas premium."
     },
     "filters": {
         "searchPlaceholder": "Buscar título o autor",
@@ -45,6 +64,7 @@
         "ctaFirstResource": "Agregar primer recurso"
     },
     "card": {
+        "deleting": "Eliminando…",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} pág.",
         "metaPagesActual_other": "{{count}} págs.",
@@ -55,6 +75,7 @@
             "edit": "Editar metadata",
             "process": "Procesar",
             "reprocess": "Reprocesar",
+            "retryPremium": "Reintentar con Premium",
             "moreActions": "Más acciones",
             "configurePhases": "Configurar fases",
             "assignToCore": "Asignar a Core",
@@ -66,8 +87,17 @@
         "processing": "Procesando…",
         "failed": "Error al procesar",
         "verifying": "Verificando",
+        "indexing": "Indexando…",
         "ready": "Listo",
         "notReady": "Por procesar"
+    },
+    "engine": {
+        "llamaparse": "Premium",
+        "llamaparseHint": "Procesado en modo premium — tablas, multi-columna y contenido especializado preservados",
+        "gemini": "Estándar",
+        "geminiHint": "Procesado en modo estándar — texto narrativo, ensayos y sermones",
+        "pdfparse": "Básico",
+        "pdfparseHint": "Procesado con extractor básico (fallback) — calidad reducida; considera reprocesar"
     },
     "stores": {
         "exegesis": "Exégesis",
@@ -100,7 +130,13 @@
         "categoryOptions": {
             "theology": "Teología Sistemática",
             "grammar": "Gramática / Idiomas",
+            "criticalText": "Texto Crítico",
             "commentary": "Comentario Bíblico",
+            "exegeticalCommentary": "Comentario Exegético",
+            "theologicalDictionary": "Diccionario Teológico",
+            "bibleDictionary": "Diccionario Bíblico",
+            "historicalContext": "Contexto Histórico/Cultural",
+            "biblicalSurvey": "Panorama / Introducción Bíblica",
             "article": "Artículo / Paper",
             "other": "Otro"
         },
@@ -151,8 +187,8 @@
         "subtitle": "Saldo disponible para extraer documentos",
         "standard": "Estándar",
         "premium": "Premium",
-        "standardHelp": "Gemini 2.0 Flash · libros narrativos",
-        "premiumHelp": "LlamaParse · tablas, multi-columna, escaneados",
+        "standardHelp": "Libros narrativos, ensayos y sermones (hasta ~600 págs)",
+        "premiumHelp": "Tablas, multi-columna y escaneados (hasta ~1000 págs)",
         "split": "Plan: {{plan}} · Packs: {{pack}}",
         "buyButton": "Comprar páginas",
         "loading": "Cargando saldo…",
@@ -192,6 +228,11 @@
         "noUnindexed": "No hay documentos por procesar",
         "processingComplete": "Procesamiento completado con {{count}} errores. {{chunks}} fragmentos creados.",
         "processingSuccess": "Biblioteca lista: {{chunks}} fragmentos creados",
-        "processingError": "Error al procesar la biblioteca"
+        "processingError": "Error al procesar la biblioteca",
+        "retryPremiumLoading": "Reintentando extracción con Premium…",
+        "retryPremiumSuccess": "Listo: extraído con Premium",
+        "retryPremiumNoBalance": "No tienes suficientes páginas Premium para reintentar",
+        "retryPremiumDenied": "Solo puedes reintentar tus propios recursos",
+        "retryPremiumError": "Error al reintentar con Premium"
     }
 }

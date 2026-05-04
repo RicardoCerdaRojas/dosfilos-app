@@ -1,5 +1,5 @@
 import type { BookPanorama, MacroInput } from '@dosfilos/domain';
-import { formatVerses } from './shared';
+import { buildSourcePreamble, formatVerses } from './shared';
 
 /**
  * Pase 2 — Macroestructura.
@@ -159,6 +159,7 @@ export function buildMacroUserMessage(input: MacroInput): string {
     const countHint = isSpanish
         ? `Cantidad sugerida (guía suave, escalada al tamaño del libro de ${input.verses.length} versos): aproximadamente ${recommended} macro-secciones. Diverge si los marcadores estructurales canónicos del género lo demandan.`
         : `Suggested count (soft guide, scaled to the ${input.verses.length}-verse book): approximately ${recommended} macro-sections. Diverge if the genre's canonical structural markers demand it.`;
+    const sourcePreamble = buildSourcePreamble(input.sourceLanguage, input.displayLanguage);
 
     if (isSpanish) {
         return [
@@ -167,7 +168,7 @@ export function buildMacroUserMessage(input: MacroInput): string {
             panoramaBlock,
             '',
             countHint,
-            '',
+            sourcePreamble,
             'Texto verso a verso (formato `cap:vers <TAB> texto`):',
             '',
             formatVerses(input.verses),
@@ -183,7 +184,7 @@ export function buildMacroUserMessage(input: MacroInput): string {
         panoramaBlock,
         '',
         countHint,
-        '',
+        sourcePreamble,
         'Verse-by-verse text (`ch:v <TAB> text` format):',
         '',
         formatVerses(input.verses),

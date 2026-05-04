@@ -14,7 +14,12 @@ import {
     Type,
     Check,
     EyeOff,
+    GraduationCap,
 } from 'lucide-react';
+import {
+    hasMethodologyBeenShown,
+    MethodologyPresentation,
+} from '@/components/expository/MethodologyPresentation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,7 +51,7 @@ import {
 /**
  * v1.5 expository assistant wizard.
  *
- * Replaces PericopeAssistantPage at /dashboard/plans/pericope. Runs
+ * The expository wizard at /dashboard/plans/pericope. Runs
  * the 5-pass pipeline (panorama → macro → micro → preachable →
  * fidelity) with staged UI feedback — each pass appears as a card
  * with state pending / running / done / error and renders its
@@ -113,6 +118,17 @@ export function ExpositoryAssistantPage() {
     // changes go through `togglePass` so they ride a View Transition
     // when supported, producing a card↔chip morph.
     const [collapsedPasses, setCollapsedPasses] = useState<Set<number>>(new Set());
+
+    // Methodology presentation: auto-opens on the first visit ever
+    // to teach the pastor what the 5-pass pipeline actually does and
+    // why. Subsequent visits open it only when the pastor clicks the
+    // "Metodología" button in the header.
+    const [methodologyOpen, setMethodologyOpen] = useState(false);
+    useEffect(() => {
+        if (!hasMethodologyBeenShown()) {
+            setMethodologyOpen(true);
+        }
+    }, []);
 
     // Pase 5 issue triage. Indices into fidelityReview.issues. The
     // two sets are mutually exclusive (toggling one removes the
@@ -227,7 +243,7 @@ export function ExpositoryAssistantPage() {
         }
     }, [preachableUnits, bookDisplay, seriesTitle, t]);
 
-    const handleStart = () => {
+    const handleStart = async () => {
         // Reset prior run state if the pastor restarts.
         setPanorama(null);
         setMacroSections(null);
@@ -242,7 +258,7 @@ export function ExpositoryAssistantPage() {
 
         let loaded;
         try {
-            loaded = assistant.loadVerses({ bookId, displayLanguage: lang });
+            loaded = await assistant.loadVerses({ bookId, displayLanguage: lang });
         } catch (err: any) {
             console.error('[expository] loadVerses failed:', err);
             toast.error(err?.message ?? (t('expository.toast.loadFailed') as string));
@@ -251,10 +267,39 @@ export function ExpositoryAssistantPage() {
         setVerses(loaded.verses);
         setBookDisplay(loaded.book);
 
+        // Surface the source (original-language vs translation
+        // fallback) so the pastor knows what the model is reading.
+        // The toast is informative on success, warning on fallback —
+        // the methodology's credibility depends on the pastor knowing
+        // whether they're seeing original Greek/Hebrew or surrogate
+        // translation analysis.
+        if (loaded.source === 'translation' && loaded.fallbackReason) {
+            toast.warning(
+                t('expository.toast.translationFallback', {
+                    reason: loaded.fallbackReason,
+                }) as string,
+            );
+        } else if (loaded.source !== 'translation') {
+            toast.success(
+                t(`expository.toast.sourceLoaded.${loaded.source}`) as string,
+            );
+        }
+
+        // Map the load result's source tag onto the assistant
+        // input's sourceLanguage. Lets the prompts emit the right
+        // preamble (original-greek / original-hebrew / translation
+        // surrogate) so the model knows what it's reading.
+        const sourceLanguage =
+            loaded.source === 'original-greek'
+                ? ('greek' as const)
+                : loaded.source === 'original-hebrew'
+                  ? ('hebrew' as const)
+                  : ('translation' as const);
         const baseInput = {
             book: loaded.book,
             displayLanguage: lang,
             verses: loaded.verses,
+            sourceLanguage,
         };
         const targetOpt = typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {};
 
@@ -471,7 +516,13 @@ export function ExpositoryAssistantPage() {
                     onStart={handleStart}
                     textZoom={textZoom}
                     onTextZoomChange={setTextZoom}
+                    onOpenMethodology={() => setMethodologyOpen(true)}
                     t={t}
+                />
+
+                <MethodologyPresentation
+                    open={methodologyOpen}
+                    onOpenChange={setMethodologyOpen}
                 />
 
                 {/* Collapsed-passes strip. Renders only when at least
@@ -723,6 +774,7 @@ function SetupCard({
     onStart,
     textZoom,
     onTextZoomChange,
+    onOpenMethodology,
     t,
 }: {
     bookId: BibleBookId;
@@ -735,6 +787,7 @@ function SetupCard({
     onStart: () => void;
     textZoom: 1 | 2 | 3;
     onTextZoomChange: (z: 1 | 2 | 3) => void;
+    onOpenMethodology: () => void;
     t: (key: string) => string;
 }) {
     return (
@@ -751,7 +804,18 @@ function SetupCard({
                         {t('expository.setup.subtitle')}
                     </p>
                 </div>
-                <TextZoomControl value={textZoom} onChange={onTextZoomChange} t={t} />
+                <div className="flex items-center gap-2 shrink-0">
+                    <button
+                        type="button"
+                        onClick={onOpenMethodology}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors"
+                        title={t('expository.setup.methodologyButtonHint') as string}
+                    >
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        {t('expository.setup.methodologyButton')}
+                    </button>
+                    <TextZoomControl value={textZoom} onChange={onTextZoomChange} t={t} />
+                </div>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

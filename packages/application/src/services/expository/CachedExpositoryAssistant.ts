@@ -1,0 +1,152 @@
+import {
+    findBooksByAlias,
+    normalizeAlias,
+    type BibleBookId,
+    type BookPanorama,
+    type ExegeticalUnit,
+    type FidelityInput,
+    type FidelityReview,
+    type IExpositoryAssistant,
+    type IExpositoryAssistantCacheRepository,
+    type MacroInput,
+    type MacroSection,
+    type MicroInput,
+    type PanoramaInput,
+    type PassResult,
+    type PreachableInput,
+    type PreachableUnit,
+} from '@dosfilos/domain';
+
+/**
+ * Decorator that wraps an `IExpositoryAssistant` (typically the
+ * Gemini implementation) with a transparent server-side cache for
+ * the structural passes (Pases 1-3). Pases 4-5 pass through
+ * unchanged — they involve homiletical interpretation that
+ * shouldn't be shared across pastors.
+ *
+ * Cache lookup happens BEFORE the wrapped call. On miss, the
+ * wrapped call runs and the result is upserted into the cache
+ * fire-and-forget (the user gets the response immediately; the
+ * cache write happens in the background, failures don't block).
+ *
+ * Trust model: when the cache returns a value, it is treated as
+ * authoritative for that (book, language, pipelineVersion) tuple.
+ * The decorator does NOT cross-validate (e.g. ensure the cached
+ * macros were derived from the input panorama) — the cache
+ * document is internally consistent because each entry was
+ * written by a single pipeline run.
+ *
+ * Key resolution: the assistant input carries `book` as a display
+ * name ("Filemón" / "Philemon"). The cache key needs the SBL
+ * canonical id ("PHM"). Resolution via `findBooksByAlias` from
+ * the bible canon helpers; on resolution failure (book name not
+ * recognized) the decorator silently passes through to the wrapped
+ * assistant — no caching, no error.
+ */
+export class CachedExpositoryAssistant implements IExpositoryAssistant {
+    constructor(
+        private readonly wrapped: IExpositoryAssistant,
+        private readonly cacheRepo: IExpositoryAssistantCacheRepository,
+        private readonly pipelineVersion: string,
+    ) {}
+
+    async runPanorama(input: PanoramaInput): Promise<PassResult<BookPanorama>> {
+        const bookId = this.resolveBookId(input.book);
+        if (!bookId) return this.wrapped.runPanorama(input);
+
+        const cached = await this.cacheRepo.get(bookId, input.displayLanguage, this.pipelineVersion);
+        if (cached?.panorama) {
+            console.log('[CachedExpositoryAssistant] panorama cache HIT', { bookId, lang: input.displayLanguage });
+            // Fire-and-forget: don't await, don't fail the response on bookkeeping errors.
+            void this.cacheRepo.recordHit(bookId, input.displayLanguage, this.pipelineVersion, 'panorama');
+            return {
+                payload: cached.panorama,
+                modelId: cached.panoramaModelId ?? 'cached',
+                tokensUsed: 0,
+                passVersion: cached.panoramaPassVersion ?? `cached@${this.pipelineVersion}:panorama`,
+            };
+        }
+
+        const result = await this.wrapped.runPanorama(input);
+        void this.cacheRepo.upsertPanorama(
+            bookId,
+            input.displayLanguage,
+            this.pipelineVersion,
+            result.payload,
+            result.modelId,
+            result.passVersion,
+        );
+        return result;
+    }
+
+    async runMacroStructure(input: MacroInput): Promise<PassResult<MacroSection[]>> {
+        const bookId = this.resolveBookId(input.book);
+        if (!bookId) return this.wrapped.runMacroStructure(input);
+
+        const cached = await this.cacheRepo.get(bookId, input.displayLanguage, this.pipelineVersion);
+        if (cached?.macroSections) {
+            console.log('[CachedExpositoryAssistant] macro cache HIT', { bookId, lang: input.displayLanguage });
+            void this.cacheRepo.recordHit(bookId, input.displayLanguage, this.pipelineVersion, 'macro');
+            return {
+                payload: cached.macroSections,
+                modelId: cached.panoramaModelId ?? 'cached',
+                tokensUsed: 0,
+                passVersion: cached.macroPassVersion ?? `cached@${this.pipelineVersion}:macro`,
+            };
+        }
+
+        const result = await this.wrapped.runMacroStructure(input);
+        void this.cacheRepo.upsertMacro(
+            bookId,
+            input.displayLanguage,
+            this.pipelineVersion,
+            result.payload,
+            result.passVersion,
+        );
+        return result;
+    }
+
+    async runMicroStructure(input: MicroInput): Promise<PassResult<ExegeticalUnit[]>> {
+        const bookId = this.resolveBookId(input.book);
+        if (!bookId) return this.wrapped.runMicroStructure(input);
+
+        const cached = await this.cacheRepo.get(bookId, input.displayLanguage, this.pipelineVersion);
+        if (cached?.exegeticalUnits) {
+            console.log('[CachedExpositoryAssistant] micro cache HIT', { bookId, lang: input.displayLanguage });
+            void this.cacheRepo.recordHit(bookId, input.displayLanguage, this.pipelineVersion, 'micro');
+            return {
+                payload: cached.exegeticalUnits,
+                modelId: cached.panoramaModelId ?? 'cached',
+                tokensUsed: 0,
+                passVersion: cached.microPassVersion ?? `cached@${this.pipelineVersion}:micro`,
+            };
+        }
+
+        const result = await this.wrapped.runMicroStructure(input);
+        void this.cacheRepo.upsertMicro(
+            bookId,
+            input.displayLanguage,
+            this.pipelineVersion,
+            result.payload,
+            result.passVersion,
+        );
+        return result;
+    }
+
+    // Pases 4 (preachable conversion) y 5 (fidelity review) NEVER
+    // hit the cache — they're per-pastor homiletical decisions.
+    // Pure pass-through to the wrapped assistant.
+
+    async runPreachableConversion(input: PreachableInput): Promise<PassResult<PreachableUnit[]>> {
+        return this.wrapped.runPreachableConversion(input);
+    }
+
+    async runFidelityReview(input: FidelityInput): Promise<PassResult<FidelityReview>> {
+        return this.wrapped.runFidelityReview(input);
+    }
+
+    private resolveBookId(bookDisplay: string): BibleBookId | null {
+        const matches = findBooksByAlias(normalizeAlias(bookDisplay));
+        return matches.length > 0 ? matches[0]!.id : null;
+    }
+}

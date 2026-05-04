@@ -1,6 +1,7 @@
 import { CheckCircle2, AlertTriangle, Upload } from 'lucide-react';
 import {
     computeRubricCompliance,
+    getSourceTypeOrderIndex,
     type ExegeticalPaper,
     type RequirementCheck,
     type SourceType,
@@ -54,7 +55,15 @@ export function RubricGapCard({ paper, onPickType }: RubricGapCardProps) {
     // entries are recommendations, shown later in a separate
     // collapsible if the user wants to engage them. Keeps the gap
     // signal sharp.
-    const visibleRequirements = report.requirements.filter(r => r.required > 0);
+    //
+    // Sort by canonical SOURCE_TYPE_GROUPS position so the gap card
+    // matches the academic-priority order used everywhere else (rubric
+    // editor + summary view): primary text → lexical → commentaries
+    // → background. The original report.requirements order mirrors
+    // the rubric's insertion order, which feels arbitrary here.
+    const visibleRequirements = report.requirements
+        .filter(r => r.required > 0)
+        .sort((a, b) => getSourceTypeOrderIndex(a.sourceType) - getSourceTypeOrderIndex(b.sourceType));
     const totalSources = paper.sources.length;
 
     if (report.meetsMinimums) {

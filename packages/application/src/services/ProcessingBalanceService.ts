@@ -2,6 +2,7 @@ import {
     doc,
     getDoc,
     getFirestore,
+    onSnapshot,
     serverTimestamp,
     setDoc,
     updateDoc,
@@ -61,12 +62,51 @@ export class ProcessingBalanceService {
         const db = getFirestore();
         const snap = await getDoc(doc(db, this.USERS, userId));
         if (!snap.exists()) return { ...ZERO_BALANCE };
-        const balance = snap.data()?.processingBalance as Partial<ProcessingBalance> | undefined;
+        return this.normalizeBalance(snap.data()?.processingBalance);
+    }
+
+    /**
+     * Live subscription to the user's balance. Fires immediately with
+     * the current state and again every time `users/{uid}.processingBalance`
+     * changes — used by the BalanceBanner so the page count debits as
+     * soon as the cloud function writes them, no manual refresh needed.
+     *
+     * Returns the unsubscribe function — caller should call it on
+     * unmount to avoid leaking listeners.
+     */
+    subscribeToBalance(
+        userId: string,
+        callback: (balance: ProcessingBalance) => void,
+        onError?: (err: Error) => void,
+    ): () => void {
+        const db = getFirestore();
+        return onSnapshot(
+            doc(db, this.USERS, userId),
+            (snap) => {
+                if (!snap.exists()) {
+                    callback({ ...ZERO_BALANCE });
+                    return;
+                }
+                callback(this.normalizeBalance(snap.data()?.processingBalance));
+            },
+            (err) => {
+                console.error('[ProcessingBalanceService] subscribe error:', err);
+                onError?.(err);
+            },
+        );
+    }
+
+    /**
+     * Builds the canonical balance shape from the raw Firestore field,
+     * back-filling missing buckets from the legacy
+     * `{standardPagesAvailable, premiumPagesAvailable}` representation.
+     * Pre-refactor docs only had those — we treat them as pack pages
+     * (the conservative choice, since packs persist across plan
+     * renewals).
+     */
+    private normalizeBalance(raw: unknown): ProcessingBalance {
+        const balance = (raw ?? undefined) as Partial<ProcessingBalance> | undefined;
         if (!balance) return { ...ZERO_BALANCE };
-        // Backfill missing buckets from legacy shape: pre-refactor docs only
-        // have `{standardPagesAvailable, premiumPagesAvailable}` set. Treat
-        // those as packs (the conservative choice — they survive plan
-        // renewals). The next renewal grant adds plan pages on top.
         const planStandard = balance.planStandardPages ?? 0;
         const planPremium = balance.planPremiumPages ?? 0;
         const packStandard = balance.packStandardPages

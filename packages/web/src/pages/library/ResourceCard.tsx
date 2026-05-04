@@ -11,8 +11,9 @@ import {
 import {
     Book, FileText, MessageSquare, Languages, FileQuestion,
     Trash2, Edit2, Loader2, CheckCircle2, AlertCircle, Eye,
-    BookOpen, Mic2, Library, PenTool, Settings2, RefreshCw,
-    MoreHorizontal,
+    BookOpen, BookMarked, Mic2, Library, PenTool, Settings2, RefreshCw,
+    MoreHorizontal, Sparkles, Wand2, FileWarning, ScrollText,
+    Landmark, Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,21 +25,47 @@ interface ResourceCardProps {
     categories: LibraryCategory[];
     indexStatus: IndexStatus;
     isIndexing: boolean;
+    /**
+     * True while a delete request is in flight for this card. Renders
+     * a dim overlay + spinner + "Eliminando…" so the user has clear
+     * feedback while the (potentially slow) Storage object delete +
+     * chunk cleanup + Firestore doc delete cascade runs.
+     */
+    isDeleting?: boolean;
+    /**
+     * True while a "Reintentar Premium" request is in flight for this
+     * card. Spinner replaces the action icon so the user has feedback
+     * during the long-running LlamaParse extraction (1-15 min).
+     */
+    isRetryingPremium?: boolean;
     viewMode?: ViewMode;
     onEdit: () => void;
     onDelete: () => void;
     onIndex: () => void;
     onReindex?: () => void;
+    /**
+     * Triggered by the user when the cascade degraded from their
+     * requested Premium tier (engine badge shows the warning amber).
+     * Optional — when not provided the action is not rendered.
+     */
+    onRetryPremium?: () => void;
     onPreview: () => void;
     onSetPhases?: () => void;
     onConfigureCoreStores?: () => void; // Admin: assigns the resource to Core Library stores
 }
 
-// Icon mapping for category icons
+// Icon mapping for category icons. Keep keys identical to the icon
+// names referenced from `LibraryCategory.icon` in domain/DEFAULT_CATEGORIES.
 const iconMap: Record<string, typeof Book> = {
     Book,
+    BookMarked,
+    BookOpen,
+    Landmark,
     Languages,
+    Library,
+    Map,
     MessageSquare,
+    ScrollText,
     FileText,
     FileQuestion,
 };
@@ -59,8 +86,14 @@ const iconMap: Record<string, typeof Book> = {
 const colorMap: Record<string, string> = {
     blue: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30',
     purple: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
+    indigo: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30',
     green: 'text-green-600 bg-green-50 dark:bg-green-950/30',
+    emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
+    teal: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
+    cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950/30',
+    amber: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30',
     orange: 'text-orange-600 bg-orange-50 dark:bg-orange-950/30',
+    rose: 'text-rose-600 bg-rose-50 dark:bg-rose-950/30',
     red: 'text-red-600 bg-red-50 dark:bg-red-950/30',
     yellow: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30',
     pink: 'text-pink-600 bg-pink-50 dark:bg-pink-950/30',
@@ -89,11 +122,14 @@ export function ResourceCard({
     categories,
     indexStatus,
     isIndexing,
+    isDeleting = false,
+    isRetryingPremium = false,
     viewMode = 'grid',
     onEdit,
     onDelete,
     onIndex,
     onReindex,
+    onRetryPremium,
     onPreview,
     onSetPhases,
     onConfigureCoreStores,
@@ -125,6 +161,7 @@ export function ResourceCard({
             case 'ready':
             default:
                 if (indexStatus === 'checking') return { tone: 'bg-muted text-muted-foreground', icon: Loader2, iconClass: 'animate-spin', text: t('status.verifying') };
+                if (indexStatus === 'indexing') return { tone: 'bg-info-subtle text-info-subtle-foreground', icon: Loader2, iconClass: 'animate-spin', text: t('status.indexing') };
                 if (indexStatus === 'indexed') return { tone: 'bg-success-subtle text-success-subtle-foreground', icon: CheckCircle2, iconClass: '', text: t('status.ready') };
                 if (indexStatus === 'not-indexed') return { tone: 'bg-warning-subtle text-warning-subtle-foreground', icon: AlertCircle, iconClass: '', text: t('status.notReady') };
                 return null;
@@ -133,11 +170,31 @@ export function ResourceCard({
 
     const StatusIcon = statusPill?.icon;
 
+    // Premium-degradation surface: when the cascade ended up below the
+    // user's requested tier, the cloud function writes
+    // `extractionWarning` to the resource. We hoist the read here so
+    // BOTH the inline action button and the engine-badge tooltip below
+    // can use the same value.
+    const extractionWarning = (resource as { extractionWarning?: string | null }).extractionWarning;
+    const canRetryPremium = !!extractionWarning && !!onRetryPremium && resource.textExtractionStatus === 'ready';
+
     // ── Inline action buttons (visible) — kept to a max of three per card so the
     //    visual weight of each card stays controlled. The overflow menu below
     //    holds the rest.
     const inlineActions = (
         <>
+            {canRetryPremium && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-warning-subtle-foreground hover:text-warning"
+                    onClick={onRetryPremium}
+                    disabled={isRetryingPremium}
+                    title={t('card.actions.retryPremium')}
+                >
+                    {isRetryingPremium ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                </Button>
+            )}
             <Button
                 variant="ghost"
                 size="sm"
@@ -226,10 +283,85 @@ export function ResourceCard({
     ) : null;
 
     // ── Status / metadata badges shared between layouts
+    // Surface the concrete failure reason via tooltip:
+    //   - extractionError when textExtractionStatus === 'failed'
+    //   - indexingError when extraction succeeded but indexer failed
+    //     (resource sits in "Por procesar" — without this the user has
+    //     no signal beyond the badge and has to guess what's wrong)
+    // Both are written by the cloud functions and persist on the
+    // resource doc so the UI can read them on demand.
+    const failureMessage = (resource as { extractionError?: string }).extractionError;
+    const indexingErrorMessage = (resource as { indexingError?: string | null }).indexingError;
+    const statusTooltip = (() => {
+        if (resource.textExtractionStatus === 'failed' && failureMessage) return failureMessage;
+        if (indexStatus === 'not-indexed' && indexingErrorMessage) return `Indexación: ${indexingErrorMessage}`;
+        return undefined;
+    })();
     const statusBadge = statusPill && StatusIcon ? (
-        <span className={cn('inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium', statusPill.tone)}>
+        <span
+            className={cn('inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium', statusPill.tone)}
+            title={statusTooltip}
+        >
             <StatusIcon className={cn('h-3 w-3', statusPill.iconClass)} />
             {statusPill.text}
+        </span>
+    ) : null;
+
+    // Engine badge — surfaces which extractor produced the text
+    // (LlamaParse premium, Gemini standard, or pdf-parse fallback). Only
+    // shown once extraction is `ready`; pre-ready the user only needs to
+    // see "processing", and the extractor isn't decided yet anyway.
+    const enginePill = (() => {
+        if (resource.textExtractionStatus !== 'ready') return null;
+        switch (resource.extractionVersion) {
+            case '3.0-llamaparse':
+                return {
+                    tone: 'bg-success-subtle text-success-subtle-foreground border border-success/30',
+                    icon: Sparkles,
+                    text: t('engine.llamaparse'),
+                    title: t('engine.llamaparseHint'),
+                };
+            case '4.0-gemini-standard':
+            case '2.0-gemini':
+                return {
+                    tone: 'bg-info-subtle text-info-subtle-foreground border border-info/30',
+                    icon: Wand2,
+                    text: t('engine.gemini'),
+                    title: t('engine.geminiHint'),
+                };
+            case 'fallback-pdfparse':
+            case '5.0-pdfparse-structured':
+                return {
+                    tone: 'bg-warning-subtle text-warning-subtle-foreground border border-warning/30',
+                    icon: FileWarning,
+                    text: t('engine.pdfparse'),
+                    title: t('engine.pdfparseHint'),
+                };
+            default:
+                return null;
+        }
+    })();
+    // Engine badge picks up the hoisted `extractionWarning` (defined
+    // near the inline actions so the retry button can use it too).
+    // When set, tooltip wins over the generic engine hint because the
+    // warning is more actionable.
+    const EngineIcon = enginePill?.icon;
+    const engineBadge = enginePill && EngineIcon ? (
+        <span
+            className={cn(
+                'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                extractionWarning
+                    ? 'bg-warning-subtle text-warning-subtle-foreground border border-warning/40'
+                    : enginePill.tone,
+            )}
+            title={extractionWarning || enginePill.title}
+        >
+            {extractionWarning ? (
+                <AlertCircle className="h-2.5 w-2.5" />
+            ) : (
+                <EngineIcon className="h-2.5 w-2.5" />
+            )}
+            {enginePill.text}
         </span>
     ) : null;
 
@@ -278,10 +410,12 @@ export function ResourceCard({
         return (
             <article
                 className={cn(
-                    'group bg-card border border-border/60 rounded-xl px-4 py-3 transition-colors hover:border-foreground/30',
-                    isProcessing && 'border-info/70'
+                    'group relative bg-card border border-border/60 rounded-xl px-4 py-3 transition-colors hover:border-foreground/30',
+                    isProcessing && 'border-info/70',
+                    isDeleting && 'opacity-60'
                 )}
             >
+                {isDeleting && <DeletingOverlay t={t} />}
                 <div className="flex items-center gap-4">
                     <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center shrink-0', colorClasses)}>
                         <Icon className="h-5 w-5" />
@@ -295,14 +429,17 @@ export function ResourceCard({
                             {resource.author}
                             <span className="mx-1.5 text-border">·</span>
                             {fileSizeMB} MB
-                            <span className="mx-1.5 text-border">·</span>
-                            {pageCount
-                                ? t('card.metaPagesActual', { count: pageCount })
-                                : t('card.metaPagesEstimated', { count: Math.ceil(resource.sizeBytes / 2000) })}
+                            {pageCount ? (
+                                <>
+                                    <span className="mx-1.5 text-border">·</span>
+                                    {t('card.metaPagesActual', { count: pageCount })}
+                                </>
+                            ) : null}
                         </div>
                     </div>
                     <div className="hidden md:flex items-center gap-1.5 flex-wrap justify-end max-w-[40%]">
                         {statusBadge}
+                        {engineBadge}
                         {coreStoreBadges}
                         {phaseBadges}
                     </div>
@@ -319,10 +456,12 @@ export function ResourceCard({
     return (
         <article
             className={cn(
-                'group bg-card border border-border/60 rounded-xl p-4 flex flex-col gap-3 transition-colors hover:border-foreground/30',
-                isProcessing && 'border-info/70'
+                'group relative bg-card border border-border/60 rounded-xl p-4 flex flex-col gap-3 transition-colors hover:border-foreground/30',
+                isProcessing && 'border-info/70',
+                isDeleting && 'opacity-60'
             )}
         >
+            {isDeleting && <DeletingOverlay t={t} />}
             {/* Header: category icon + label */}
             <div className="flex items-start justify-between gap-2">
                 <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center shrink-0', colorClasses)}>
@@ -344,21 +483,29 @@ export function ResourceCard({
             </div>
 
             {/* Status + assignment badges (single row, wraps if needed) */}
-            {(statusBadge || coreStoreBadges || phaseBadges) && (
+            {(statusBadge || engineBadge || coreStoreBadges || phaseBadges) && (
                 <div className="flex items-center gap-1.5 flex-wrap">
                     {statusBadge}
+                    {engineBadge}
                     {coreStoreBadges}
                     {phaseBadges}
                 </div>
             )}
 
-            {/* Meta: size + page count, single line, mono for numeric anchor */}
+            {/* Meta: size + page count, single line, mono for numeric anchor.
+                Page count is only shown when actual (post-extraction) — the
+                pre-extraction estimate from file size was wildly off for
+                dense scholarly PDFs (~52KB/page vs the assumed ~2KB/page),
+                so showing it just confused the user (e.g. "10076 p. (est.)"
+                for a 378-page WBC volume). */}
             <div className="text-[12px] text-muted-foreground font-mono">
                 {fileSizeMB} MB
-                <span className="mx-1.5 text-border">·</span>
-                {pageCount
-                    ? t('card.metaPagesActual', { count: pageCount })
-                    : t('card.metaPagesEstimated', { count: Math.ceil(resource.sizeBytes / 2000) })}
+                {pageCount ? (
+                    <>
+                        <span className="mx-1.5 text-border">·</span>
+                        {t('card.metaPagesActual', { count: pageCount })}
+                    </>
+                ) : null}
             </div>
 
             {/* Action bar */}
@@ -368,5 +515,23 @@ export function ResourceCard({
                 {overflowMenu}
             </div>
         </article>
+    );
+}
+
+/**
+ * Inline overlay used while a delete request is in flight. Sits on
+ * top of the card content (which is also dimmed by the parent's
+ * `opacity-60`), centering a spinner + "Eliminando…" label so the
+ * feedback is unmistakable. Pointer-events disabled so accidental
+ * clicks during the delete don't fire on the underlying buttons.
+ */
+function DeletingOverlay({ t }: { t: (key: string) => string }) {
+    return (
+        <div className="absolute inset-0 flex items-center justify-center bg-card/40 backdrop-blur-[1px] rounded-xl pointer-events-none z-10">
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-foreground bg-card border border-border rounded-full px-3 py-1.5 shadow-sm">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-destructive" />
+                {t('card.deleting')}
+            </div>
+        </div>
     );
 }

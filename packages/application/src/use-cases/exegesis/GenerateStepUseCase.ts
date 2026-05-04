@@ -18,6 +18,7 @@ import type {
 } from '@dosfilos/domain';
 import {
     EMPTY_VERIFICATION_SUMMARY,
+    computeRubricCompliance,
     formatPassageReference,
     isCitableSourceType,
 } from '@dosfilos/domain';
@@ -98,6 +99,21 @@ export class GenerateStepUseCase {
             // reach this branch; the three LLM-driven kinds map 1:1.
             const stepEmphasis = paper.stepPlan.defaults[step.kind as 'introduction' | 'verse' | 'conclusion'] ?? null;
 
+            // Compute rubric gaps so the orchestrator can warn the
+            // LLM about which kinds of claims would require sources
+            // the user hasn't uploaded. Empty array when the rubric
+            // is satisfied OR when there's no rubric set yet.
+            const missingSourceTypes = paper.rubric
+                ? computeRubricCompliance(
+                    paper.sources.map(s => s.sourceType),
+                    paper.rubric,
+                ).requirements.filter(r => !r.satisfied && r.required > 0).map(r => ({
+                    sourceType: r.sourceType,
+                    minimum: r.required,
+                    have: r.have,
+                }))
+                : [];
+
             const orchestratorInput: ExegesisGenerationInput = {
                 kind: step.kind,
                 paperPassage: paper.passage,
@@ -109,6 +125,7 @@ export class GenerateStepUseCase {
                 sources,
                 priorAcceptedSteps,
                 regenerationHint: input.regenerationHint ?? null,
+                missingSourceTypes,
             };
 
             const result = await this.orchestrator.generateStep(orchestratorInput);

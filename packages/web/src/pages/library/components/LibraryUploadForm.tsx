@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, Loader2, Plus, Upload } from 'lucide-react';
+import { AlertTriangle, Loader2, Plus, Sparkles, Upload, Wand2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export type ExtractionMode = 'standard' | 'premium';
 
 export interface UploadFormMetadata {
     title: string;
     author: string;
     type: ResourceType;
+    extractionMode: ExtractionMode;
 }
 
 interface LibraryUploadFormProps {
@@ -55,11 +59,39 @@ export function LibraryUploadForm({
     const { t } = useTranslation('library');
 
     return (
-        <div className="bg-card border border-border/60 rounded-xl p-5">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-primary font-medium mb-3 inline-flex items-center gap-1.5">
+        <div className="bg-card border border-border/60 rounded-xl p-5 space-y-4">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-primary font-medium inline-flex items-center gap-1.5">
                 <Plus className="h-3 w-3" />
                 {t('upload.sectionLabel')}
             </div>
+
+            {/* Extraction-mode toggle. Two radio-style tiles so the user
+                explicitly picks which engine tier (and which balance
+                bucket) to consume. Default `premium` since it's the
+                best quality; user downgrades when they know the doc
+                doesn't need it (narrative books, sermons, etc.). */}
+            <fieldset className="space-y-1.5">
+                <Label className="text-[12.5px]">{t('upload.modeLabel')}</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <ModeTile
+                        active={metadata.extractionMode === 'standard'}
+                        onClick={() => onMetadataChange({ extractionMode: 'standard' })}
+                        icon={<Wand2 className="h-3.5 w-3.5" />}
+                        title={t('upload.modeStandardTitle')}
+                        description={t('upload.modeStandardDescription')}
+                        tone="info"
+                    />
+                    <ModeTile
+                        active={metadata.extractionMode === 'premium'}
+                        onClick={() => onMetadataChange({ extractionMode: 'premium' })}
+                        icon={<Sparkles className="h-3.5 w-3.5" />}
+                        title={t('upload.modePremiumTitle')}
+                        description={t('upload.modePremiumDescription')}
+                        tone="success"
+                    />
+                </div>
+            </fieldset>
+
             <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <div className="space-y-1.5 lg:col-span-1">
                     <Label htmlFor="file" className="text-[12.5px]">{t('upload.fileLabel')}</Label>
@@ -133,5 +165,51 @@ export function LibraryUploadForm({
                 </div>
             </form>
         </div>
+    );
+}
+
+interface ModeTileProps {
+    active: boolean;
+    onClick: () => void;
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    tone: 'info' | 'success';
+}
+
+/**
+ * Radio-style tile for the standard/premium extraction-mode toggle.
+ * Click selects; `aria-pressed` exposes state to assistive tech.
+ * Tone (`info` / `success`) drives the active border color so each
+ * mode is visually distinct at a glance.
+ */
+function ModeTile({ active, onClick, icon, title, description, tone }: ModeTileProps) {
+    const activeBorder = tone === 'info'
+        ? 'border-info bg-info-subtle'
+        : 'border-success bg-success-subtle';
+    const activeIcon = tone === 'info' ? 'text-info' : 'text-success';
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={active}
+            className={cn(
+                'text-left rounded-lg border px-3 py-2.5 transition-colors',
+                active
+                    ? activeBorder
+                    : 'border-border bg-card hover:border-foreground/30',
+            )}
+        >
+            <div className={cn(
+                'inline-flex items-center gap-1.5 text-[12px] font-semibold',
+                active ? activeIcon : 'text-foreground',
+            )}>
+                {icon}
+                {title}
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                {description}
+            </p>
+        </button>
     );
 }

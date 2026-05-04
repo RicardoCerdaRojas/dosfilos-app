@@ -134,7 +134,7 @@
             "testamentOT": "Antiguo Testamento",
             "targetCount": "Cantidad aproximada (opcional)",
             "targetCountPlaceholder": "Ej. 12",
-            "translationNote": "v1.5: el asistente analiza la traducción (RVR1960/ASV) como surrogate del original. v1.6 cargará el texto griego/hebreo directo.",
+            "translationNote": "v1.6: el análisis se hace sobre el texto original (SBLGNT para NT en griego, WLC para AT en hebreo). Si la descarga del original falla, el asistente cae a la traducción (RVR1960/ASV) y avisa.",
             "start": "Iniciar análisis",
             "running": "Ejecutando pipeline...",
             "textZoomLabel": "Tamaño del texto",
@@ -142,6 +142,73 @@
                 "level1": "Texto pequeño",
                 "level2": "Texto mediano",
                 "level3": "Texto grande"
+            },
+            "methodologyButton": "Metodología",
+            "methodologyButtonHint": "Conoce la metodología homilética detrás de este asistente"
+        },
+        "methodology": {
+            "dialogTitle": "Metodología del asistente expositivo",
+            "step": "Paso",
+            "close": "Cerrar",
+            "prev": "Atrás",
+            "next": "Siguiente",
+            "start": "Comenzar",
+            "goToStep": "Ir al paso",
+            "steps": {
+                "problem": {
+                    "title": "Del texto al sermón sin traicionar al autor",
+                    "intro": "Planificar una serie expositiva exige cruzar un puente difícil: pasar de la sintaxis del texto bíblico a un sermón que la congregación pueda recibir.",
+                    "outro": "La trampa más común es saltar directo del texto a un esquema homilético sin pasar por la lógica argumentativa del autor. Este asistente te lleva paso a paso por una metodología que distingue cada nivel."
+                },
+                "levels": {
+                    "title": "Tres niveles que NO son lo mismo",
+                    "intro": "Confundir estos niveles es la causa más común de sermones que suenan bíblicos pero no dicen lo que el texto dice. El pipeline los mantiene separados:",
+                    "items": [
+                        { "label": "Exegética", "desc": "sigue la sintaxis y los marcadores literarios del autor." },
+                        { "label": "Argumentativa", "desc": "identifica la función de cada bloque dentro del libro." },
+                        { "label": "Predicable", "desc": "decide qué se predica solo, qué se combina y qué se divide." }
+                    ]
+                },
+                "pipeline": {
+                    "title": "Cinco fases en cascada",
+                    "intro": "Cada fase ataca un nivel distinto del problema, en orden:",
+                    "items": [
+                        { "label": "Panorama", "desc": "identifica género, propósito y problema pastoral." },
+                        { "label": "Macroestructura", "desc": "divide el libro en sus grandes bloques." },
+                        { "label": "Microestructura", "desc": "encuentra las unidades exegéticas con criterios por género (cadenas participiales en epístola griega, waw-consecutivo en narrativa hebrea, paralelismo en poesía)." },
+                        { "label": "Conversión predicable", "desc": "decide cómo cada unidad se vuelve sermón." },
+                        { "label": "Evaluación de fidelidad", "desc": "audita la propuesta antes de que crees la serie." }
+                    ]
+                },
+                "output": {
+                    "title": "Dos proposiciones por unidad, no una",
+                    "intro": "Cada unidad predicable lleva dos hipótesis complementarias:",
+                    "items": [
+                        { "label": "Hipótesis exegética", "desc": "qué hace el autor en el texto." },
+                        { "label": "Línea homilética", "desc": "cómo recibe el oyente la verdad." }
+                    ],
+                    "outro": "Mantenerlas separadas evita que el sermón salte a aplicación sin explicar el texto. Son hipótesis iniciales — la validación final es tu trabajo con el paper exegético detallado."
+                },
+                "original": {
+                    "title": "Sobre el texto original cuando se puede",
+                    "intro": "El asistente cita marcadores sintácticos directamente del original cuando está disponible:",
+                    "items": [
+                        { "label": "SBLGNT", "desc": "texto griego para el Nuevo Testamento." },
+                        { "label": "WLC", "desc": "Westminster Leningrad Codex para el hebreo del Antiguo Testamento." }
+                    ],
+                    "outro": "Si la descarga falla por red o el libro no está en la fuente, caemos a la traducción (RVR1960/ASV) y te avisamos — el análisis sigue, con la transparencia de que es aproximado."
+                },
+                "heritage": {
+                    "title": "Una metodología con linaje de seminario",
+                    "intro": "El pipeline se inspira en la tradición homilética histórica:",
+                    "items": [
+                        { "label": "Haddon Robinson", "desc": "Big Idea preaching." },
+                        { "label": "Bryan Chapell", "desc": "Christ-Centered Preaching." },
+                        { "label": "Sidney Greidanus", "desc": "The Modern Preacher and the Ancient Text." }
+                    ],
+                    "outro": "No reemplaza tu trabajo exegético: lo acelera. La estructura, los nombres de las fases y los criterios por género provienen directamente de esta tradición.",
+                    "creditsLink": "Ver atribución completa de fuentes en /credits →"
+                }
             }
         },
         "results": {
@@ -221,6 +288,11 @@
         },
         "toast": {
             "loadFailed": "No se pudo cargar el texto del libro.",
+            "sourceLoaded": {
+                "original-greek": "Texto cargado desde SBLGNT (griego original). Ver créditos en /credits",
+                "original-hebrew": "Texto cargado desde WLC (hebreo original). Ver créditos en /credits"
+            },
+            "translationFallback": "No se pudo cargar el texto original. Usando la traducción como fallback ({{reason}}). El análisis sintáctico será aproximado.",
             "panoramaFailed": "No se pudo generar el panorama. Intenta de nuevo.",
             "macroDone": "Macroestructura lista.",
             "macroFailed": "No se pudo generar la macroestructura. Intenta de nuevo.",
@@ -228,7 +300,7 @@
             "preachableFailed": "No se pudieron generar las unidades predicables. Intenta de nuevo.",
             "fidelityFailed": "No se pudo completar la evaluación de fidelidad. Intenta de nuevo.",
             "pipelineDone": "Pipeline completo. Revisa las unidades predicables y los issues antes de crear la serie.",
-            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto.",
             "draftRestored": "Continuamos donde quedaste. (Borrador restaurado).",
             "titleRequired": "Ponle un título a la serie antes de crear.",
             "seriesCreated": "Serie creada. Te llevamos al detalle.",
@@ -238,7 +310,7 @@
             "title": "Crear la serie",
             "subtitle": "Cada unidad predicable se convierte en un sermón planificado. Las proposiciones, el objetivo pastoral y las notas de fidelidad quedan persistidas en cada sermón.",
             "defaultTitle": "Serie expositiva — {{book}}",
-            "defaultDescription": "Serie expositiva de {{book}} dividida en {{count}} unidades predicables (pipeline v1.5).",
+            "defaultDescription": "Serie expositiva de {{book}} dividida en {{count}} unidades predicables.",
             "seriesTitle": "Título de la serie",
             "startDate": "Fecha de inicio",
             "frequency": "Frecuencia",
@@ -285,7 +357,7 @@
             "openPaper": "Abrir paper",
             "paperBadge": "Paper iniciado",
             "remove": "Quitar perícopa",
-            "askFaculty": "Preguntar a Faculty con esta perícopa cargada",
+            "askFaculty": "Consultar a la Facultad con esta perícopa cargada",
             "toast": {
                 "paperCreated": "Paper exegético creado",
                 "paperFailed": "No se pudo crear el paper",
@@ -332,7 +404,7 @@
             "detected_one": "{{count}} perícopa detectada. Revísala antes de crear la serie.",
             "detected_other": "{{count}} perícopas detectadas. Revísalas antes de crear la serie.",
             "detectFailed": "No se pudo detectar perícopas. Intenta de nuevo.",
-            "overloaded": "Gemini está saturado. Intenta en un minuto.",
+            "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto.",
             "titleRequired": "Ponle un título a la serie antes de crear.",
             "seriesCreated": "Serie creada. Te llevamos al detalle.",
             "createFailed": "No se pudo crear la serie."

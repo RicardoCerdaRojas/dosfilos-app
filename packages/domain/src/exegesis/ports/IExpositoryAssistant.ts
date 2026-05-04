@@ -87,6 +87,16 @@ export interface AssistantBookContext {
      * implementation testable and infrastructure-portable.
      */
     verses: AssistantVerseInput[];
+    /**
+     * v1.6: where the verses came from. The prompts use this to
+     * frame the model's expectations honestly — original Greek/Hebrew
+     * supports direct syntactic citation, translation surrogate
+     * requires the model to approximate the original markers from
+     * the translation. Optional and back-compatible: omitting it
+     * preserves legacy v1.5 behaviour where the prompt is silent
+     * about the source.
+     */
+    sourceLanguage?: 'greek' | 'hebrew' | 'translation';
 }
 
 export interface AssistantVerseInput {
