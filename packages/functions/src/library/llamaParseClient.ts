@@ -138,7 +138,7 @@ export class LlamaParseClient {
      * guessing whether the function is alive, dead, or just polling.
      */
     async pollJob(jobId: string, options: LlamaParseOptions = {}): Promise<void> {
-        const maxSeconds = options.maxPollSeconds ?? 1200;  // 20 min default — big academic books take 10-12 min
+        const maxSeconds = options.maxPollSeconds ?? 600;  // 10 min default — fits in storage trigger 540s budget; reprocess callable overrides to 840s
         const interval = options.pollIntervalMs ?? 3000;   // 3s between polls
         const heartbeatEverySeconds = 60;                  // log status once per minute
         const startTime = Date.now();

@@ -335,17 +335,18 @@ export const extractPdfWithGemini = onObjectFinalized(
         bucket: 'dosfilosapp.firebasestorage.app',
         region: 'us-central1',
         memory: '2GiB',
-        // Cloud Functions Gen 2 with Eventarc triggers (storage object
-        // finalize) caps at 60 minutes per the platform docs. Production
-        // observation: a 50 MB / 790-page academic book in LlamaParse fast
-        // mode took 11m 28s end-to-end (Carson/Moo NT Intro, 2026-05-04).
-        // We bump from the original 540s default to 1500s (25 min) so:
-        //   - Books up to ~1500 pages comfortably fit
-        //   - Multi-account retry has time to fail one account and try the next
-        //   - Indexer-side time isn't squeezed
-        // For documents bigger than this the user should use the
-        // reprocessWithLlamaParse callable (up to 60 min).
-        timeoutSeconds: 1500,
+        // Storage triggers (`onObjectFinalized`) are capped at 540s by
+        // the Firebase platform — the deploy CLI rejects anything
+        // higher with "timeouts exceed the maximum allowed for their
+        // trigger type". Carson/Moo-class books (50 MB / 790 págs) sit
+        // right at this edge; if the cascade hits the cap mid-write the
+        // resource can end up zombie.
+        //
+        // For docs that genuinely need >540s, use the manual
+        // `reprocessWithLlamaParse` callable (HTTP trigger, 900s budget)
+        // — surfaced via the "Reintentar Premium" button when an
+        // upload degrades.
+        timeoutSeconds: 540,
         secrets: [
             'GEMINI_API_KEY',
             // Two free-tier LlamaParse accounts at launch:
