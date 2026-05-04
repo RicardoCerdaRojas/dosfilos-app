@@ -91,6 +91,15 @@
         "ready": "Listo",
         "notReady": "Por procesar"
     },
+    "stepper": {
+        "ariaLabel": "Progreso de procesamiento",
+        "phase": {
+            "uploading": "Subiendo",
+            "extracting": "Extrayendo",
+            "indexing": "Indexando",
+            "ready": "Listo"
+        }
+    },
     "engine": {
         "llamaparse": "Premium",
         "llamaparseHint": "Procesado en modo premium — tablas, multi-columna y contenido especializado preservados",
