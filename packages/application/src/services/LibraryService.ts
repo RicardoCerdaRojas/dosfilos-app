@@ -340,6 +340,31 @@ export class LibraryService {
         return result.data ?? { success: false };
     }
 
+    /**
+     * Cancels an in-progress extraction by deleting the resource +
+     * its chunks + storage objects. Used by the "Cancelar" button on
+     * the card during the pending/processing/indexing window — gives
+     * the user a way out before the cascade finishes (and burns LLM
+     * credits) on the wrong file.
+     *
+     * The server-side callable enforces ownership; client just fires
+     * the request and lets the Firestore listener pull the deletion.
+     * No refund needed (debit only happens AFTER extraction completes).
+     *
+     * Throws on:
+     *   - 'failed-precondition' → resource is already 'ready' (use
+     *     Delete instead)
+     *   - 'permission-denied'  → not the owner
+     *   - 'unauthenticated'    → not signed in
+     */
+    async cancelExtraction(resourceId: string): Promise<void> {
+        const fn = httpsCallable<
+            { resourceId: string },
+            { success: boolean; alreadyGone?: boolean }
+        >(getFunctions(), 'cancelExtraction', { timeout: 60_000 });
+        await fn({ resourceId });
+    }
+
     async deleteResource(id: string): Promise<void> {
         console.log(`🗑️ Starting delete for resource: ${id}`);
 

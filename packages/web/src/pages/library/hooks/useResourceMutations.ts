@@ -31,6 +31,14 @@ interface UseResourceMutationsResult {
     retryWithPremium: (id: string) => Promise<void>;
     /** Id of the resource currently being retried with Premium (spinner state). Null when none. */
     retryingResourceId: string | null;
+    /**
+     * Cancels an in-progress extraction by deleting the resource +
+     * its chunks + storage objects. Used by the "Cancelar" inline
+     * action on the card during pending/processing/indexing.
+     */
+    cancelExtraction: (id: string) => Promise<void>;
+    /** Id of the resource currently being cancelled (spinner state). Null when none. */
+    cancellingResourceId: string | null;
 }
 
 /**
@@ -56,6 +64,7 @@ export function useResourceMutations(): UseResourceMutationsResult {
     const { t } = useTranslation('library');
     const [deletingResourceId, setDeletingResourceId] = useState<string | null>(null);
     const [retryingResourceId, setRetryingResourceId] = useState<string | null>(null);
+    const [cancellingResourceId, setCancellingResourceId] = useState<string | null>(null);
 
     const deleteResource = useCallback(async (id: string) => {
         setDeletingResourceId(id);
@@ -114,5 +123,35 @@ export function useResourceMutations(): UseResourceMutationsResult {
         }
     }, [t]);
 
-    return { deleteResource, deletingResourceId, saveResource, retryWithPremium, retryingResourceId };
+    const cancelExtraction = useCallback(async (id: string) => {
+        setCancellingResourceId(id);
+        try {
+            await libraryService.cancelExtraction(id);
+            toast.success(t('toast.cancelSuccess'));
+        } catch (error: any) {
+            console.error('Cancel error:', error);
+            const code = error?.code as string | undefined;
+            // Most useful failure mode to surface specifically: trying
+            // to cancel a resource that already finished extracting.
+            // The cloud function rejects with failed-precondition and
+            // the user should use the regular Delete action.
+            if (code === 'functions/failed-precondition') {
+                toast.error(t('toast.cancelTooLate'));
+            } else {
+                toast.error(t('toast.cancelError'));
+            }
+        } finally {
+            setCancellingResourceId(null);
+        }
+    }, [t]);
+
+    return {
+        deleteResource,
+        deletingResourceId,
+        saveResource,
+        retryWithPremium,
+        retryingResourceId,
+        cancelExtraction,
+        cancellingResourceId,
+    };
 }
