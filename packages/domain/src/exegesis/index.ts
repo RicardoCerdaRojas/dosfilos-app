@@ -32,6 +32,11 @@ export * from './ports/IResourceRanker';
 export * from './ports/IStyleFormatter';
 export * from './ports/IStyleGuideManifestExtractor';
 
+// v1.7 corpus source recommendations — curated bibliography indexed
+// by (BibleBookId × SourceType). Surfaced under each rubric gap so
+// the user knows what to acquire/read for the paper they're building.
+export * from './recommendations';
+
 // Expository assistant pipeline (v1.5) — 5-pass methodology for
 // dividing a biblical book into preachable units while preserving
 // the distinction between exegetical division and preachable division.

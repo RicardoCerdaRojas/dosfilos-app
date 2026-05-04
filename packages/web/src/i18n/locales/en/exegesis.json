@@ -492,6 +492,27 @@
                     "uploadForType": "Upload a {{type}} to cover this requirement",
                     "uploadForTypeShort": "Upload"
                 },
+                "recommendations": {
+                    "toggleShow_one": "Show {{count}} curated suggestion",
+                    "toggleShow_other": "Show {{count}} curated suggestions",
+                    "toggleHide": "Hide suggestions",
+                    "empty": "No suggestions for this book yet — give us feedback to prioritize.",
+                    "ownedYes": "✓ I have it",
+                    "ownedNo": "I have it",
+                    "searchLibrary": "Search my library",
+                    "searchLibraryHint": "Open the library with the title pre-loaded in the search filter",
+                    "tier": {
+                        "essential": "Essential",
+                        "recommended": "Recommended",
+                        "standard": "Standard"
+                    },
+                    "languageHint": {
+                        "es": "Available in Spanish",
+                        "en": "Available in English",
+                        "de": "Available in German",
+                        "fr": "Available in French"
+                    }
+                },
                 "list": {
                     "title": "Attached sources",
                     "empty": "No sources yet. Tap \"Add source\" above or \"Upload\" on any missing requirement.",

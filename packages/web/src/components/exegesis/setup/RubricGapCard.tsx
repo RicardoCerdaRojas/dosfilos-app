@@ -7,6 +7,7 @@ import {
     type SourceType,
 } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
+import { RecommendationsSection } from '../recommendations/RecommendationsSection';
 
 /**
  * Visual gap analysis between the paper's corpus and its rubric.
@@ -102,12 +103,12 @@ export function RubricGapCard({ paper, onPickType }: RubricGapCardProps) {
                 {visibleRequirements
                     .filter(r => !r.satisfied)
                     .map(r => (
-                        <RequirementRow key={r.sourceType} check={r} onPickType={onPickType} />
+                        <RequirementRow key={r.sourceType} check={r} paper={paper} onPickType={onPickType} />
                     ))}
                 {visibleRequirements
                     .filter(r => r.satisfied)
                     .map(r => (
-                        <RequirementRow key={r.sourceType} check={r} onPickType={onPickType} />
+                        <RequirementRow key={r.sourceType} check={r} paper={paper} onPickType={onPickType} />
                     ))}
             </ul>
         </div>
@@ -116,9 +117,11 @@ export function RubricGapCard({ paper, onPickType }: RubricGapCardProps) {
 
 function RequirementRow({
     check,
+    paper,
     onPickType,
 }: {
     check: RequirementCheck;
+    paper: ExegeticalPaper;
     onPickType?: (type: SourceType) => void;
 }) {
     const { t } = useTranslation('exegesis');
@@ -160,6 +163,17 @@ function RequirementRow({
                 <p className="text-[11px] text-muted-foreground italic mt-0.5">
                     {examples}
                 </p>
+                {/* v1.7 corpus recommendations — curated bibliography
+                    surfaced under each requirement gap. Renders an empty
+                    state when no curation exists for (book × sourceType),
+                    which is also the signal that drives the catalog
+                    expansion priority. */}
+                <RecommendationsSection
+                    bookId={paper.passage.bookId}
+                    sourceType={check.sourceType}
+                    paperLanguage={paper.displayLanguage}
+                    paperId={paper.id}
+                />
             </div>
         </li>
     );
