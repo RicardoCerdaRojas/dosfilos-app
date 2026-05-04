@@ -492,6 +492,27 @@
                     "uploadForType": "Subir un {{type}} para cubrir este requisito",
                     "uploadForTypeShort": "Subir"
                 },
+                "recommendations": {
+                    "toggleShow_one": "Ver {{count}} sugerencia curada",
+                    "toggleShow_other": "Ver {{count}} sugerencias curadas",
+                    "toggleHide": "Ocultar sugerencias",
+                    "empty": "Sin sugerencias para este libro todavía — danos feedback para priorizar.",
+                    "ownedYes": "✓ Ya la tengo",
+                    "ownedNo": "Ya la tengo",
+                    "searchLibrary": "Buscar en mi biblioteca",
+                    "searchLibraryHint": "Abre la biblioteca con el título precargado en el filtro de búsqueda",
+                    "tier": {
+                        "essential": "Esencial",
+                        "recommended": "Recomendada",
+                        "standard": "Estándar"
+                    },
+                    "languageHint": {
+                        "es": "Disponible en español",
+                        "en": "Disponible en inglés",
+                        "de": "Disponible en alemán",
+                        "fr": "Disponible en francés"
+                    }
+                },
                 "list": {
                     "title": "Fuentes adjuntas",
                     "empty": "Aún no agregaste fuentes. Toca \"Agregar fuente\" arriba o \"Subir\" en cualquier requisito faltante.",

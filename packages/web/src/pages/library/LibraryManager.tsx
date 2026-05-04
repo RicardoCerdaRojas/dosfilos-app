@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
@@ -131,7 +132,14 @@ export function LibraryManager() {
 
     // ── UI state — filters, view mode, modal open/close, modal targets ──────
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
-    const [searchQuery, setSearchQuery] = useState('');
+    // Seed the search filter from `?search=...` so the v1.7 corpus
+    // recommendations can deep-link into the library with a pre-filled
+    // query (\"Buscar en mi biblioteca\" on a recommendation card).
+    // The URL is read once on mount; subsequent typing in the search
+    // box only updates local state — we don't push back to the URL to
+    // avoid a noisy history.
+    const [searchParams] = useSearchParams();
+    const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') ?? '');
     const [categoryFilter, setCategoryFilter] = useState<ResourceType | 'all'>('all');
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [consentModalOpen, setConsentModalOpen] = useState(false);
