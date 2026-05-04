@@ -13,7 +13,7 @@ import {
     Trash2, Edit2, Loader2, CheckCircle2, AlertCircle, Eye,
     BookOpen, BookMarked, Mic2, Library, PenTool, Settings2, RefreshCw,
     MoreHorizontal, Sparkles, Wand2, FileWarning, ScrollText,
-    Landmark, Map,
+    Landmark, Map, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ExtractionStepper } from './components/ExtractionStepper';
@@ -39,6 +39,11 @@ interface ResourceCardProps {
      * during the long-running LlamaParse extraction (1-15 min).
      */
     isRetryingPremium?: boolean;
+    /**
+     * True while a Cancel request is in flight for this card. Disables
+     * the Cancel button + spins the icon so the user can't double-click.
+     */
+    isCancelling?: boolean;
     viewMode?: ViewMode;
     onEdit: () => void;
     onDelete: () => void;
@@ -50,6 +55,13 @@ interface ResourceCardProps {
      * Optional — when not provided the action is not rendered.
      */
     onRetryPremium?: () => void;
+    /**
+     * Triggered when the user wants to cancel an in-progress
+     * extraction (uploaded the wrong file, doesn't want to wait).
+     * Only visible while the resource is in pending/processing/indexing.
+     * Optional — when not provided the action is not rendered.
+     */
+    onCancelExtraction?: () => void;
     onPreview: () => void;
     onSetPhases?: () => void;
     onConfigureCoreStores?: () => void; // Admin: assigns the resource to Core Library stores
@@ -125,12 +137,14 @@ export function ResourceCard({
     isIndexing,
     isDeleting = false,
     isRetryingPremium = false,
+    isCancelling = false,
     viewMode = 'grid',
     onEdit,
     onDelete,
     onIndex,
     onReindex,
     onRetryPremium,
+    onCancelExtraction,
     onPreview,
     onSetPhases,
     onConfigureCoreStores,
@@ -179,6 +193,16 @@ export function ResourceCard({
     const extractionWarning = (resource as { extractionWarning?: string | null }).extractionWarning;
     const canRetryPremium = !!extractionWarning && !!onRetryPremium && resource.textExtractionStatus === 'ready';
 
+    // Cancel is available WHILE the resource is in an active processing
+    // state — gives the user an out before the cascade finishes (and
+    // burns LLM credits) on the wrong file. Hidden once 'ready' or
+    // 'failed' since the regular Delete action covers those.
+    const inProgress =
+        resource.textExtractionStatus === 'pending'
+        || resource.textExtractionStatus === 'processing'
+        || (resource.textExtractionStatus === 'ready' && (indexStatus === 'indexing' || indexStatus === 'checking'));
+    const canCancel = inProgress && !!onCancelExtraction;
+
     // ── Inline action buttons (visible) — kept to a max of three per card so the
     //    visual weight of each card stays controlled. The overflow menu below
     //    holds the rest.
@@ -194,6 +218,18 @@ export function ResourceCard({
                     title={t('card.actions.retryPremium')}
                 >
                     {isRetryingPremium ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                </Button>
+            )}
+            {canCancel && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={onCancelExtraction}
+                    disabled={isCancelling}
+                    title={t('card.actions.cancelExtraction')}
+                >
+                    {isCancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
                 </Button>
             )}
             <Button
