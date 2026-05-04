@@ -12,6 +12,8 @@ import {
     Bookmark,
     BookText,
     Layers,
+    ChevronDown,
+    ChevronRight,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -57,6 +59,12 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     const [editDraft, setEditDraft] = useState('');
     const [hintDraft, setHintDraft] = useState('');
     const [hintMode, setHintMode] = useState(false);
+    // Accepted steps collapse by default to keep the page short for
+    // multi-verse papers — the user already approved them, so the
+    // detailed content is rarely re-read in the same session. Click
+    // the header to expand. Editing automatically expands.
+    const [collapsed, setCollapsed] = useState(true);
+    const isExpanded = !collapsed || editing;
 
     const displayLabel = stepDisplayLabel(step, language, t);
     const previewMarkdown = step.accepted?.markdown ?? step.current?.markdown ?? '';
@@ -122,8 +130,36 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 isAccepted ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-slate-200 dark:border-zinc-800'
             )}
         >
-            {/* Header */}
-            <header className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 dark:border-zinc-800">
+            {/* Header — clickable when accepted to toggle collapse.
+                For other states the click target is inert (no value in
+                hiding an in-progress step). */}
+            <header
+                className={cn(
+                    'flex items-center gap-3 px-5 py-3 border-b border-slate-100 dark:border-zinc-800',
+                    isAccepted && 'cursor-pointer select-none',
+                    isAccepted && !isExpanded && 'border-b-0',
+                )}
+                onClick={isAccepted ? () => setCollapsed(c => !c) : undefined}
+                role={isAccepted ? 'button' : undefined}
+                tabIndex={isAccepted ? 0 : undefined}
+                onKeyDown={isAccepted ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setCollapsed(c => !c);
+                    }
+                } : undefined}
+                aria-expanded={isAccepted ? isExpanded : undefined}
+            >
+                {isAccepted && (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setCollapsed(c => !c); }}
+                        className="shrink-0 p-0.5 -ml-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        aria-label={isExpanded ? t('detail.steps.action.collapse') : t('detail.steps.action.expand')}
+                    >
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
+                )}
                 <StepIcon kind={step.kind} state={step.state} />
                 <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
@@ -159,6 +195,11 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 )}
             </header>
 
+            {/* Body + footer — hidden when accepted step is collapsed.
+                Other states always render (you don't want to hide an
+                awaiting-review step). */}
+            {(!isAccepted || isExpanded) && (
+            <>
             {/* Body — state-aware */}
             <div className="px-5 py-4">
                 {isGenerating && (
@@ -298,6 +339,8 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         {t('detail.steps.action.editAccepted')}
                     </button>
                 </footer>
+            )}
+            </>
             )}
         </article>
     );

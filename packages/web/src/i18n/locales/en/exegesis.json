@@ -714,7 +714,9 @@
                 "applyHint": "Apply hint",
                 "editManual": "Edit manually",
                 "editAccepted": "Edit accepted content",
-                "saveEdit": "Save edit"
+                "saveEdit": "Save edit",
+                "expand": "Expand",
+                "collapse": "Collapse"
             },
             "gate": {
                 "multiChapter": "v1 only supports single-chapter passages. Edit the passage to a single chapter to start.",

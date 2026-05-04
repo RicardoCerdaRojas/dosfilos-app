@@ -714,7 +714,9 @@
                 "applyHint": "Aplicar hint",
                 "editManual": "Editar a mano",
                 "editAccepted": "Editar contenido aceptado",
-                "saveEdit": "Guardar edición"
+                "saveEdit": "Guardar edición",
+                "expand": "Expandir",
+                "collapse": "Colapsar"
             },
             "gate": {
                 "multiChapter": "v1 solo soporta pasajes de un capítulo. Edita el pasaje a un solo capítulo para iniciar.",
