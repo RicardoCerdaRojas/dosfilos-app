@@ -10,7 +10,7 @@
         "test:watch": "vitest"
     },
     "dependencies": {
-        "@dosfilos/domain": "file:../domain",
+        "@dosfilos/domain": "*",
         "@google/generative-ai": "^0.21.0",
         "firebase": "^10.14.1",
         "jspdf": "^3.0.4",

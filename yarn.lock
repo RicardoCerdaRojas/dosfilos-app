@@ -1353,18 +1353,6 @@
     react-devtools-inline "4.4.0"
     react-is "^17.0.2"
 
-"@dosfilos/domain@file:packages/domain":
-  version "0.1.0"
-
-"@dosfilos/infrastructure@file:packages/infrastructure":
-  version "0.1.0"
-  dependencies:
-    "@dosfilos/domain" "file:../../Library/Caches/Yarn/v6/npm-@dosfilos-infrastructure-0.1.0-a3de7fff-227b-470a-afdb-77229b83189c-1777730157838/node_modules/@dosfilos/domain"
-    "@google/generative-ai" "^0.21.0"
-    firebase "^10.14.1"
-    jspdf "^3.0.4"
-    morphhb "^1.0.0"
-
 "@egjs/hammerjs@^2.0.17":
   version "2.0.17"
   resolved "https://registry.yarnpkg.com/@egjs/hammerjs/-/hammerjs-2.0.17.tgz#5dc02af75a6a06e4c2db0202cae38c9263895124"
