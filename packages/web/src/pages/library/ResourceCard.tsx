@@ -16,6 +16,7 @@ import {
     Landmark, Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExtractionStepper } from './components/ExtractionStepper';
 
 type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
 type ViewMode = 'grid' | 'list';
@@ -491,6 +492,13 @@ export function ResourceCard({
                     {phaseBadges}
                 </div>
             )}
+
+            {/* Phase stepper — visual journey shown WHILE in progress.
+                Auto-hides once indexed (the green "Listo" pill above
+                already conveys completion; the stepper would just
+                duplicate the signal). Replaces the static "Por procesar"
+                ambiguity with a clear "you're at step N of 4" picture. */}
+            <ExtractionStepper resource={resource} indexStatus={indexStatus} />
 
             {/* Meta: size + page count, single line, mono for numeric anchor.
                 Page count is only shown when actual (post-extraction) — the

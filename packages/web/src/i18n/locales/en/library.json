@@ -91,6 +91,15 @@
         "ready": "Ready",
         "notReady": "To process"
     },
+    "stepper": {
+        "ariaLabel": "Processing progress",
+        "phase": {
+            "uploading": "Uploading",
+            "extracting": "Extracting",
+            "indexing": "Indexing",
+            "ready": "Ready"
+        }
+    },
     "engine": {
         "llamaparse": "Premium",
         "llamaparseHint": "Processed in premium mode — tables, multi-column and specialized content preserved",
