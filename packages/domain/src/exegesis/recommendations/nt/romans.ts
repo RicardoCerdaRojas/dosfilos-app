@@ -102,17 +102,11 @@ export const ROMANS_RECOMMENDATIONS: BookRecommendations = {
             },
         ],
         'theological-monograph': [
-            {
-                author: 'Sanders, E. P.',
-                title: 'Paul and Palestinian Judaism: A Comparison of Patterns of Religion',
-                series: null,
-                publisher: 'Fortress',
-                year: 1977,
-                isbn: '9780800618995',
-                tier: 'essential',
-                languages: ['en'],
-                rationale: 'Disparó el debate de la \"Nueva Perspectiva sobre Pablo\". Imprescindible para Romanos 1-4 y 9-11.',
-            },
+            // NOTA: las obras "paulinas-amplias" (Sanders PPJ, Wright PFG,
+            // Westerholm) se movieron al catálogo de grupo `pauline-epistles`
+            // — desde ahí aplican a CUALQUIER carta paulina sin necesidad
+            // de duplicarlas en cada libro. Lo que sigue acá son obras
+            // específicas de Romanos.
             {
                 author: 'Käsemann, Ernst',
                 title: 'Commentary on Romans',
@@ -122,29 +116,7 @@ export const ROMANS_RECOMMENDATIONS: BookRecommendations = {
                 isbn: '9780802835178',
                 tier: 'recommended',
                 languages: ['en', 'de'],
-                rationale: 'Lectura luterana radical de la justicia de Dios. Diálogo crítico con Bultmann.',
-            },
-            {
-                author: 'Wright, N. T.',
-                title: 'Paul and the Faithfulness of God',
-                series: 'Christian Origins and the Question of God 4',
-                publisher: 'Fortress',
-                year: 2013,
-                isbn: '9780800626839',
-                tier: 'recommended',
-                languages: ['en'],
-                rationale: '2 vols. Síntesis monumental de la teología paulina narrativa-pactual.',
-            },
-            {
-                author: 'Westerholm, Stephen',
-                title: 'Perspectives Old and New on Paul: The "Lutheran" Paul and His Critics',
-                series: null,
-                publisher: 'Eerdmans',
-                year: 2004,
-                isbn: '9780802848093',
-                tier: 'recommended',
-                languages: ['en'],
-                rationale: 'Mapa equilibrado del debate sobre Pablo, justificación y judaísmo del Segundo Templo.',
+                rationale: 'Lectura luterana radical de la justicia de Dios en Romanos. Diálogo crítico con Bultmann.',
             },
         ],
         'historical-background': [

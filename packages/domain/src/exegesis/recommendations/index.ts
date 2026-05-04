@@ -4,9 +4,12 @@ import { INVARIANT_RECOMMENDATIONS } from './invariant';
 import { HEBREWS_RECOMMENDATIONS } from './nt/hebrews';
 import { ROMANS_RECOMMENDATIONS } from './nt/romans';
 import { GENESIS_RECOMMENDATIONS } from './ot/genesis';
+import { GROUP_CATALOG } from './groups/catalog';
+import { BOOK_TO_GROUPS } from './groups/types';
 import type { BookRecommendations, SourceRecommendation } from './types';
 
 export type { BookRecommendations, SourceRecommendation } from './types';
+export type { BibleBookGroup } from './groups/types';
 
 /**
  * Master catalog indexed by `BibleBookId`. v1.7 launch covers three
@@ -34,17 +37,27 @@ const RECOMMENDATIONS_BY_BOOK: Partial<Record<BibleBookId, BookRecommendations>>
  * Returns recommendations for `(bookId × sourceType)`, sorted with the
  * most relevant entries first.
  *
- * Sort priority:
- *   1. Book-specific entries before invariant entries (Cockerill on
- *      Hebreos beats BDAG when the type allows both).
- *   2. Within each group, language match for the user's language wins
- *      (ES papers see ES editions first when they exist).
- *   3. Within each language tier, academic tier (essential >
- *      recommended > standard).
+ * Three merge layers (most-specific → most-general):
+ *   1. **Book-specific** — hero-book curation (Cockerill for Hebreos).
+ *   2. **Group-level** — works that span a corpus (Sanders PPJ for any
+ *      Pauline epistle; Murphy on wisdom; Smith WBC on the Twelve).
+ *      A book may belong to multiple groups (Daniel = major-prophets +
+ *      apocalyptic) — entries from all matching groups are merged.
+ *   3. **Invariant** — book-agnostic references (BDAG, Wallace, ABD).
  *
- * Returns an empty array when neither the book nor the invariant catalog
- * has anything for the source type — caller surfaces a "no curation yet,
- * give us feedback" empty state and emits a telemetry event.
+ * Within each layer, entries are sorted by language fit (the user's
+ * language wins) then academic tier (essential > recommended > standard).
+ * Stable sort preserves the curator-chosen order when entries tie.
+ *
+ * Cross-layer dedup: if the same recommendation (matched by author +
+ * title hash) appears in multiple layers, the higher-priority layer
+ * wins and lower-priority duplicates are dropped. This lets a Pauline
+ * group entry coexist with a Romans-specific entry without the user
+ * seeing the same book twice.
+ *
+ * Returns an empty array when no layer has anything — caller surfaces
+ * a "no curation yet, give us feedback" empty state and emits a
+ * telemetry event so we know what to curate next.
  */
 export function getSourceRecommendations(
     bookId: BibleBookId,
@@ -52,12 +65,14 @@ export function getSourceRecommendations(
     language: 'es' | 'en' = 'es',
 ): ReadonlyArray<SourceRecommendation> {
     const bookSpecific = RECOMMENDATIONS_BY_BOOK[bookId]?.bySourceType[sourceType] ?? [];
+    const groups = BOOK_TO_GROUPS[bookId] ?? [];
+    const groupEntries = groups.flatMap(g => GROUP_CATALOG[g]?.bySourceType[sourceType] ?? []);
     const invariant = INVARIANT_RECOMMENDATIONS[sourceType] ?? [];
-    if (bookSpecific.length === 0 && invariant.length === 0) return [];
 
-    // Sort within each segment, then concatenate. Stable sort preserves
-    // the original curator-chosen order when two entries tie on
-    // language + tier.
+    if (bookSpecific.length === 0 && groupEntries.length === 0 && invariant.length === 0) {
+        return [];
+    }
+
     const tierOrder: Record<SourceRecommendation['tier'], number> = {
         essential: 0,
         recommended: 1,
@@ -69,22 +84,61 @@ export function getSourceRecommendations(
         if (aLang !== bLang) return aLang - bLang;
         return tierOrder[a.tier] - tierOrder[b.tier];
     };
-    return [
+
+    // Concatenate book → group → invariant, then de-dupe in place
+    // preserving the first occurrence (which is always from the
+    // higher-priority layer because of order).
+    const merged: SourceRecommendation[] = [
         ...[...bookSpecific].sort(sorter),
+        ...dedupeWithin(groupEntries).sort(sorter),
         ...[...invariant].sort(sorter),
     ];
+    return dedupeAcrossLayers(merged);
 }
 
 /**
- * True when the catalog has at least one curated entry (book-specific
- * OR invariant) for the given combination. Cheap helper for the UI to
- * decide whether to render the toggle at all vs. show "no curation".
+ * True when the catalog has at least one curated entry (book-specific,
+ * group-level, OR invariant) for the given combination. Cheap helper
+ * for the UI to decide whether to render the toggle at all vs. show
+ * "no curation".
  */
 export function hasSourceRecommendations(bookId: BibleBookId, sourceType: SourceType): boolean {
     const bookSpecific = RECOMMENDATIONS_BY_BOOK[bookId]?.bySourceType[sourceType];
     if (bookSpecific && bookSpecific.length > 0) return true;
+    const groups = BOOK_TO_GROUPS[bookId] ?? [];
+    for (const g of groups) {
+        const entries = GROUP_CATALOG[g]?.bySourceType[sourceType];
+        if (entries && entries.length > 0) return true;
+    }
     const invariant = INVARIANT_RECOMMENDATIONS[sourceType];
     return !!invariant && invariant.length > 0;
+}
+
+/**
+ * Within a single layer (e.g. multi-group accumulation), drop entries
+ * that hash to the same id as one we already kept. Used to handle the
+ * case where two groups a book belongs to both list the same work
+ * (rare but possible — would otherwise show the recommendation twice).
+ */
+function dedupeWithin(entries: ReadonlyArray<SourceRecommendation>): SourceRecommendation[] {
+    const seen = new Set<string>();
+    const out: SourceRecommendation[] = [];
+    for (const e of entries) {
+        const id = getRecommendationId(e);
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push(e);
+    }
+    return out;
+}
+
+/**
+ * Drop entries from lower-priority layers that already appeared in a
+ * higher-priority one. Operates on the already-concatenated array; the
+ * first occurrence (highest layer) wins.
+ */
+function dedupeAcrossLayers(entries: ReadonlyArray<SourceRecommendation>): SourceRecommendation[] {
+    return dedupeWithin(entries);
 }
 
 /**

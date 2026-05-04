@@ -103,15 +103,16 @@ describe('getSourceRecommendations', () => {
     });
 
     describe('empty cases', () => {
-        it('returns [] for a non-hero book + commentary-critical (no invariant fallback)', () => {
-            // Jonah isn't a hero book; commentary-critical has no
-            // invariant fallback (commentaries are inherently book-specific).
-            const recs = getSourceRecommendations('JON', 'commentary-critical', 'es');
+        it('returns [] for a book with no curation at any layer', () => {
+            // Acts (ACT) has no book file AND no group mapping — and
+            // commentary-critical has no invariant fallback. So all
+            // three layers come back empty.
+            const recs = getSourceRecommendations('ACT', 'commentary-critical', 'es');
             expect(recs).toEqual([]);
         });
 
-        it('returns [] for non-hero book + commentary-expository', () => {
-            const recs = getSourceRecommendations('JON', 'commentary-expository', 'es');
+        it('returns [] for ACT + commentary-expository (no group, no hero)', () => {
+            const recs = getSourceRecommendations('ACT', 'commentary-expository', 'es');
             expect(recs).toEqual([]);
         });
     });
@@ -146,6 +147,96 @@ describe('getSourceRecommendations', () => {
             expect(recs.some(r => r.author.includes('von Rad'))).toBe(false);
         });
     });
+
+    describe('group-level recommendations (book → group → invariant)', () => {
+        it('GEN inherits pentateuch group entries (Sailhamer, Wenham Story-as-Torah)', () => {
+            // GEN belongs to 'pentateuch' group → group catalog has
+            // Sailhamer + Wenham + Alexander as theological-monograph.
+            const recs = getSourceRecommendations('GEN', 'theological-monograph', 'es');
+            // Walton "Lost World" is GEN-specific (book) → first.
+            // Sailhamer "Pentateuch as Narrative" is pentateuch (group).
+            // Both should appear, book-specific first.
+            expect(recs.some(r => r.title.includes('Lost World'))).toBe(true);
+            expect(recs.some(r => r.title.includes('Pentateuch as Narrative'))).toBe(true);
+            const lostWorldIdx = recs.findIndex(r => r.title.includes('Lost World'));
+            const sailhamerIdx = recs.findIndex(r => r.title.includes('Pentateuch as Narrative'));
+            expect(lostWorldIdx).toBeLessThan(sailhamerIdx);
+        });
+
+        it('1CO (no book hero) gets pauline-epistles group entries', () => {
+            // 1 Corinthians has no book file. Belongs to pauline-epistles
+            // group → should see Sanders PPJ, Wright PFG, Schnelle, etc.
+            const recs = getSourceRecommendations('1CO', 'theological-monograph', 'es');
+            expect(recs.some(r => r.title.includes('Paul and Palestinian Judaism'))).toBe(true);
+            expect(recs.some(r => r.title.includes('Faithfulness of God'))).toBe(true);
+        });
+
+        it('ROM inherits pauline-epistles entries beneath its book-specific Käsemann', () => {
+            // ROM has Käsemann at book level + Sanders/Wright at group level.
+            const recs = getSourceRecommendations('ROM', 'theological-monograph', 'es');
+            const kasemannIdx = recs.findIndex(r => r.author.includes('Käsemann'));
+            const sandersIdx = recs.findIndex(r => r.author.includes('Sanders'));
+            expect(kasemannIdx).toBeGreaterThanOrEqual(0);
+            expect(sandersIdx).toBeGreaterThanOrEqual(0);
+            // Book-specific (Käsemann) before group-level (Sanders).
+            expect(kasemannIdx).toBeLessThan(sandersIdx);
+        });
+
+        it('JON (Jonás) gets minor-prophets commentary recommendations', () => {
+            // Jonah belongs to 'minor-prophets' group → Smith Stuart
+            // McComiskey appear via group catalog even without a JON file.
+            const recs = getSourceRecommendations('JON', 'commentary-critical', 'es');
+            expect(recs.some(r => r.author.includes('Stuart'))).toBe(true);
+            expect(recs.some(r => r.author.includes('McComiskey'))).toBe(true);
+        });
+
+        it('PSA (Salmos) gets wisdom group recommendations', () => {
+            const recs = getSourceRecommendations('PSA', 'theological-monograph', 'es');
+            expect(recs.some(r => r.author.includes('Murphy'))).toBe(true);
+            expect(recs.some(r => r.author.includes('Crenshaw'))).toBe(true);
+        });
+
+        it('DAN belongs to BOTH major-prophets AND apocalyptic groups', () => {
+            // Daniel is multi-group. theological-monograph from BOTH should appear.
+            const recs = getSourceRecommendations('DAN', 'theological-monograph', 'es');
+            // From major-prophets group: Heschel, Brueggemann.
+            expect(recs.some(r => r.author.includes('Heschel'))).toBe(true);
+            // From apocalyptic group: Collins, Rowland.
+            expect(recs.some(r => r.author.includes('Collins'))).toBe(true);
+        });
+
+        it('REV (Apocalipsis) belongs to apocalyptic + johannine groups', () => {
+            const recs = getSourceRecommendations('REV', 'theological-monograph', 'es');
+            // From apocalyptic: Collins.
+            expect(recs.some(r => r.author.includes('Collins'))).toBe(true);
+            // From johannine-literature: Brown or Bauckham.
+            expect(recs.some(r => r.author.includes('Brown') || r.author.includes('Bauckham'))).toBe(true);
+        });
+
+        it('1JN gets BOTH general-epistles AND johannine-literature group entries', () => {
+            const recs = getSourceRecommendations('1JN', 'commentary-critical', 'es');
+            // From general-epistles: Yarbrough BECNT 1-3 John.
+            expect(recs.some(r => r.author.includes('Yarbrough'))).toBe(true);
+        });
+
+        it('1TI gets BOTH pauline-epistles AND pastoral-epistles group entries', () => {
+            // Pastoral group has Mounce/Marshall/Knight (commentary-critical).
+            const recs = getSourceRecommendations('1TI', 'commentary-critical', 'es');
+            expect(recs.some(r => r.author.includes('Mounce'))).toBe(true);
+            expect(recs.some(r => r.author.includes('Marshall'))).toBe(true);
+        });
+    });
+
+    describe('cross-layer dedup', () => {
+        it('does not show the same recommendation twice when it appears in multiple layers', () => {
+            // No current curation has actual duplicates across layers
+            // (we deliberately moved Sanders out of ROM into the group)
+            // — sanity-check that lengths match dedup invariant.
+            const recs = getSourceRecommendations('ROM', 'theological-monograph', 'es');
+            const ids = recs.map(r => `${r.author.toLowerCase().replace(/[^a-z0-9]/g, '')}__${r.title.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+            expect(new Set(ids).size).toBe(ids.length);
+        });
+    });
 });
 
 describe('hasSourceRecommendations', () => {
@@ -157,8 +248,16 @@ describe('hasSourceRecommendations', () => {
         expect(hasSourceRecommendations('JON', 'lexicon-technical')).toBe(true);
     });
 
-    it('false when neither book nor invariant has anything', () => {
-        expect(hasSourceRecommendations('JON', 'commentary-critical')).toBe(false);
+    it('false when no layer has anything', () => {
+        // Acts has no book file, no group, and commentary-critical
+        // has no invariant fallback.
+        expect(hasSourceRecommendations('ACT', 'commentary-critical')).toBe(false);
+    });
+
+    it('true when only the group layer has entries (no book hero)', () => {
+        // Jonah has no book file but inherits commentary-critical
+        // entries from the minor-prophets group catalog.
+        expect(hasSourceRecommendations('JON', 'commentary-critical')).toBe(true);
     });
 });
 
