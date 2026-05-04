@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getStorage } from 'firebase-admin/storage';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -99,6 +99,7 @@ export const processWithGemini = onCall<ProcessRequest>(
         try {
             await resourceRef.update({
                 textExtractionStatus: 'processing',
+                processingStartedAt: FieldValue.serverTimestamp(),
                 updatedAt: new Date(),
             });
 

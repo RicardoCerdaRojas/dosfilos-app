@@ -71,6 +71,15 @@ export interface LibraryResource {
     extractionVersion?: ExtractionVersion; // Which extractor produced textContent
     extractedWithLlamaParse?: boolean; // Convenience flag
     /**
+     * Server-stamped timestamp set when the cascade transitions
+     * `textExtractionStatus` to `'processing'`. The UI uses this to
+     * render "Procesando hace 4m 23s" without depending on when the
+     * page mounted, and without trusting client clock skew.
+     * Undefined for legacy resources that finished extraction before
+     * this field was introduced.
+     */
+    processingStartedAt?: Date;
+    /**
      * User-facing message written by the extraction pipeline when the
      * actual tier ended up below what the user requested (e.g. requested
      * Premium → got Standard because all LlamaParse accounts failed).

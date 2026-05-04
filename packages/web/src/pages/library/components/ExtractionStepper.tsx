@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
@@ -48,39 +49,94 @@ export function ExtractionStepper({ resource, indexStatus }: ExtractionStepperPr
     if (indexStatus === 'indexed') return null;
 
     const phases = computePhases(resource, indexStatus);
+    const elapsedLabel = useElapsedLabel(resource, indexStatus, t);
 
     return (
-        <div
-            className="flex items-center gap-1 text-[10px] text-muted-foreground"
-            role="list"
-            aria-label={t('stepper.ariaLabel')}
-        >
-            {phases.map((phase, idx) => (
-                <div key={phase.id} className="flex items-center gap-1" role="listitem">
-                    <PhaseDot state={phase.state} />
-                    <span
-                        className={cn(
-                            'tracking-wide',
-                            phase.state === 'active' && 'text-foreground font-medium',
-                            phase.state === 'done' && 'text-foreground/70',
-                            phase.state === 'failed' && 'text-destructive font-medium',
-                        )}
-                    >
-                        {t(`stepper.phase.${phase.id}`)}
-                    </span>
-                    {idx < phases.length - 1 && (
+        <div className="space-y-0.5">
+            <div
+                className="flex items-center gap-1 text-[10px] text-muted-foreground"
+                role="list"
+                aria-label={t('stepper.ariaLabel')}
+            >
+                {phases.map((phase, idx) => (
+                    <div key={phase.id} className="flex items-center gap-1" role="listitem">
+                        <PhaseDot state={phase.state} />
                         <span
-                            aria-hidden
                             className={cn(
-                                'mx-0.5 h-px w-3',
-                                phase.state === 'done' ? 'bg-foreground/40' : 'bg-border',
+                                'tracking-wide',
+                                phase.state === 'active' && 'text-foreground font-medium',
+                                phase.state === 'done' && 'text-foreground/70',
+                                phase.state === 'failed' && 'text-destructive font-medium',
                             )}
-                        />
-                    )}
-                </div>
-            ))}
+                        >
+                            {t(`stepper.phase.${phase.id}`)}
+                        </span>
+                        {idx < phases.length - 1 && (
+                            <span
+                                aria-hidden
+                                className={cn(
+                                    'mx-0.5 h-px w-3',
+                                    phase.state === 'done' ? 'bg-foreground/40' : 'bg-border',
+                                )}
+                            />
+                        )}
+                    </div>
+                ))}
+            </div>
+            {elapsedLabel && (
+                <p className="text-[10px] text-muted-foreground/80 tabular-nums">
+                    {elapsedLabel}
+                </p>
+            )}
         </div>
     );
+}
+
+/**
+ * Live "Procesando hace Xm Ys" label, anchored on the server-stamped
+ * `processingStartedAt` field (so client clock skew can't make the
+ * elapsed go negative). Refreshes every 5s while the resource is
+ * actively processing or indexing; returns `null` for terminal states
+ * (failed, indexed, no field set) so the caller can hide the line.
+ */
+function useElapsedLabel(
+    resource: LibraryResourceEntity,
+    indexStatus: IndexStatus,
+    t: (key: string, opts?: Record<string, unknown>) => string,
+): string | null {
+    // Re-render every 5s to advance the elapsed text. Cheaper than 1s,
+    // imperceptible at this granularity.
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        const interval = setInterval(() => setTick(n => n + 1), 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const startedAt = (resource as { processingStartedAt?: Date }).processingStartedAt;
+    if (!startedAt) return null;
+
+    // Don't render a stale "elapsed" once the work finished — the
+    // stepper itself disappears at indexed; this just covers the
+    // failed states + the brief gap before the doc reflects ready.
+    const isActive =
+        resource.textExtractionStatus === 'pending'
+        || resource.textExtractionStatus === 'processing'
+        || indexStatus === 'indexing'
+        || indexStatus === 'checking';
+    if (!isActive) return null;
+
+    const elapsedMs = Date.now() - startedAt.getTime();
+    if (elapsedMs < 0) return null; // server-time clock skew safety
+
+    return t('stepper.elapsed', { duration: formatDuration(elapsedMs) });
+}
+
+function formatDuration(ms: number): string {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes === 0) return `${seconds}s`;
+    return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
 }
 
 function PhaseDot({ state }: { state: PhaseState }) {
