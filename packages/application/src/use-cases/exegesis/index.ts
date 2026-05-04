@@ -37,6 +37,11 @@ export {
     type ExtractExcerptsForPaperOutput,
     type ExtractExcerptsSelection,
 } from './ExtractExcerptsForPaperUseCase';
+export {
+    RankLibraryResourcesForPaperUseCase,
+    type RankLibraryResourcesForPaperInput,
+    type RankLibraryResourcesForPaperOutput,
+} from './RankLibraryResourcesForPaperUseCase';
 
 // Steps (D.1: state machine + placeholder generation; Gemini lands in D.2)
 export { SeedStepsForPassageUseCase } from './SeedStepsForPassageUseCase';
