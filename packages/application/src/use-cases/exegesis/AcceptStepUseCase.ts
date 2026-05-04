@@ -13,6 +13,20 @@ import type {
  * tolerantly accept a specific version even if a regeneration happened
  * between the click and the request — the explicit id avoids accepting
  * the wrong content.
+ *
+ * Special case for assembly steps:
+ *   When the user accepts the `'assembly'` step, the paper is in its
+ *   final form. We additionally:
+ *     1. Persist `paper.assembledMarkdown` from the accepted version's
+ *        markdown (the gate for "Generar sermón" reads this field, not
+ *        the step doc).
+ *     2. Transition `paper.phase` to `'assembled'` so the UI knows the
+ *        paper is done and downstream actions (sermon generation,
+ *        export) can fire.
+ *   Without this transition the paper stays stuck in `'in-progress'`
+ *   forever, the assembled markdown lives only inside the step doc,
+ *   and the "Generar sermón" button stays disabled even though every
+ *   step is accepted.
  */
 export class AcceptStepUseCase {
     constructor(private paperRepository: IExegeticalPaperRepository) { }
@@ -21,11 +35,24 @@ export class AcceptStepUseCase {
         if (!input.ownerId || !input.paperId || !input.stepId || !input.versionId) {
             throw new Error('AcceptStepUseCase: ownerId, paperId, stepId and versionId required');
         }
-        return this.paperRepository.acceptStepVersion(
+        const acceptedStep = await this.paperRepository.acceptStepVersion(
             input.ownerId,
             input.paperId,
             input.stepId,
             input.versionId
         );
+
+        // Promote the paper when the assembly step lands. Both writes
+        // are independent — we update assembledMarkdown first (so the
+        // "Generar sermón" gate flips ready before phase even changes),
+        // then transition phase as the explicit "done" signal.
+        if (acceptedStep.kind === 'assembly' && acceptedStep.accepted) {
+            await this.paperRepository.updatePaper(input.ownerId, input.paperId, {
+                assembledMarkdown: acceptedStep.accepted.markdown,
+            });
+            await this.paperRepository.setPhase(input.ownerId, input.paperId, 'assembled');
+        }
+
+        return acceptedStep;
     }
 }
