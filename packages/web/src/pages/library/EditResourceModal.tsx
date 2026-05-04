@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { LibraryResourceEntity, ResourceType } from '@dosfilos/domain';
+import {
+    LibraryResourceEntity,
+    ResourceType,
+    type BibleBookId,
+    type LibraryResourceScope,
+} from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +19,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
+import { ResourceMetadataEditor } from './components/ResourceMetadataEditor';
 
 interface EditResourceModalProps {
     resource: LibraryResourceEntity | null;
@@ -23,6 +29,8 @@ interface EditResourceModalProps {
         title: string;
         author: string;
         type: ResourceType;
+        coversBibleBooks: ReadonlyArray<BibleBookId>;
+        scope: LibraryResourceScope;
     }) => Promise<void>;
 }
 
@@ -47,6 +55,8 @@ export function EditResourceModal({ resource, open, onOpenChange, onSave }: Edit
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [type, setType] = useState<ResourceType>('theology');
+    const [coversBibleBooks, setCoversBibleBooks] = useState<ReadonlyArray<BibleBookId>>([]);
+    const [scope, setScope] = useState<LibraryResourceScope>('book');
     const [saving, setSaving] = useState(false);
 
     // Reset form when resource changes
@@ -55,6 +65,10 @@ export function EditResourceModal({ resource, open, onOpenChange, onSave }: Edit
             setTitle(resource.title);
             setAuthor(resource.author);
             setType(resource.type);
+            // v1.7 metadata. Repo deserializer defaults legacy docs to
+            // [] + 'book' so these reads are always defined.
+            setCoversBibleBooks(resource.coversBibleBooks ?? []);
+            setScope(resource.scope ?? 'book');
         }
     }, [resource]);
 
@@ -62,7 +76,13 @@ export function EditResourceModal({ resource, open, onOpenChange, onSave }: Edit
         if (!resource) return;
         setSaving(true);
         try {
-            await onSave(resource.id, { title, author, type });
+            await onSave(resource.id, {
+                title,
+                author,
+                type,
+                coversBibleBooks,
+                scope,
+            });
             onOpenChange(false);
         } catch (error) {
             console.error('Error saving resource:', error);
@@ -73,7 +93,7 @@ export function EditResourceModal({ resource, open, onOpenChange, onSave }: Edit
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{t('editModal.title')}</DialogTitle>
                     <DialogDescription>
@@ -114,6 +134,12 @@ export function EditResourceModal({ resource, open, onOpenChange, onSave }: Edit
                             </SelectContent>
                         </Select>
                     </div>
+                    <ResourceMetadataEditor
+                        coversBibleBooks={coversBibleBooks}
+                        scope={scope}
+                        onCoversBibleBooksChange={setCoversBibleBooks}
+                        onScopeChange={setScope}
+                    />
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

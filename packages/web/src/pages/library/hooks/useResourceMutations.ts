@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { libraryService } from '@dosfilos/application';
-import { ResourceType } from '@dosfilos/domain';
+import { ResourceType, type BibleBookId, type LibraryResourceScope } from '@dosfilos/domain';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 
@@ -10,6 +10,14 @@ export interface ResourceUpdates {
     type: ResourceType;
     isCore?: boolean;
     coreContext?: 'exegesis' | 'homiletics' | 'generic';
+    /**
+     * v1.7 smart-match metadata. Optional in the type so existing
+     * callers (which only edit title/author/type) still compile;
+     * the EditResourceModal always sends both since it owns the
+     * full state.
+     */
+    coversBibleBooks?: ReadonlyArray<BibleBookId>;
+    scope?: LibraryResourceScope;
 }
 
 interface UseResourceMutationsResult {

@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { libraryService } from '@dosfilos/application';
-import { ResourceType } from '@dosfilos/domain';
+import { ResourceType, inferBibleBooksFromTitle } from '@dosfilos/domain';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 import { hasAcceptedUploadConsent } from '@/components/library/UploadConsentModal';
@@ -26,6 +26,12 @@ interface UseResourceUploadResult {
     metadata: UploadFormMetadata;
     uploading: boolean;
     uploadProgress: number | null;
+    /**
+     * Live smart-match inference from the current `metadata.title`.
+     * Memoized — recomputed on each title edit. Drives the inline
+     * preview shown in the upload form. Persisted on submit.
+     */
+    smartMatchInference: ReturnType<typeof inferBibleBooksFromTitle>;
     /** File input change handler. Validates type + sets warning + autofills title. */
     handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     /** Patch the metadata partial. */
@@ -100,6 +106,13 @@ export function useResourceUpload({
         }));
     }, [t]);
 
+    // v1.7 smart-match inference from title. Pure function so memoizing
+    // by title is sufficient — no debounce needed at this latency.
+    const smartMatchInference = useMemo(
+        () => inferBibleBooksFromTitle(metadata.title),
+        [metadata.title],
+    );
+
     const performUploadAfterConsent = useCallback(async () => {
         if (!userId || !file) return;
         setUploading(true);
@@ -113,6 +126,15 @@ export function useResourceUpload({
                     author: metadata.author,
                     type: metadata.type,
                     requestedExtractionMode: metadata.extractionMode,
+                    // Persist smart-match metadata only when the inferer
+                    // produced a confident result. When scope is null,
+                    // omit both fields and let the legacy default
+                    // ([] + 'book') trigger the "metadata incompleta"
+                    // nudge in the editor (A.3).
+                    ...(smartMatchInference.inferredScope !== null && {
+                        coversBibleBooks: smartMatchInference.books,
+                        scope: smartMatchInference.inferredScope,
+                    }),
                 },
                 (progress) => {
                     setUploadProgress(progress);
@@ -128,7 +150,7 @@ export function useResourceUpload({
             setUploading(false);
             setUploadProgress(null);
         }
-    }, [userId, file, metadata, t, reset, onSuccess]);
+    }, [userId, file, metadata, smartMatchInference, t, reset, onSuccess]);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -149,6 +171,7 @@ export function useResourceUpload({
         metadata,
         uploading,
         uploadProgress,
+        smartMatchInference,
         handleFileChange,
         setMetadata,
         handleSubmit,

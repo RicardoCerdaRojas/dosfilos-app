@@ -1,0 +1,213 @@
+import { describe, it, expect } from 'vitest';
+import { inferBibleBooksFromTitle } from '../inferBibleBooksFromTitle';
+
+describe('inferBibleBooksFromTitle', () => {
+    describe('single-book commentaries', () => {
+        it('plain English book name → book scope, single id', () => {
+            expect(inferBibleBooksFromTitle('Romans')).toEqual({
+                books: ['ROM'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('plain Spanish book name → book scope, single id', () => {
+            expect(inferBibleBooksFromTitle('Romanos')).toEqual({
+                books: ['ROM'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('book name with chapter range suffix is ignored', () => {
+            expect(inferBibleBooksFromTitle('Hebrews 1-8 (WBC 47A)')).toEqual({
+                books: ['HEB'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('multi-word book name resolves correctly', () => {
+            expect(inferBibleBooksFromTitle('Song of Solomon — Tremper Longman')).toEqual({
+                books: ['SNG'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('handles Spanish accents in title', () => {
+            expect(inferBibleBooksFromTitle('Comentario sobre Génesis')).toEqual({
+                books: ['GEN'],
+                inferredScope: 'book',
+            });
+        });
+    });
+
+    describe('numbered books', () => {
+        it('"1 Peter" → 1PE', () => {
+            expect(inferBibleBooksFromTitle('1 Peter')).toEqual({
+                books: ['1PE'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('"2 Peter and Jude" → 2PE + JUD (Jude not Judges)', () => {
+            const result = inferBibleBooksFromTitle('2 Peter and Jude (Bauckham, WBC)');
+            expect(result.inferredScope).toBe('book');
+            expect(result.books).toEqual(['2PE', 'JUD']);
+        });
+
+        it('Roman numeral prefix "II Corinthians"', () => {
+            expect(inferBibleBooksFromTitle('II Corinthians')).toEqual({
+                books: ['2CO'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('Spanish numeric word "Primera Pedro"', () => {
+            // Aliases for 1PE include "1 pedro" — primera + pedro should
+            // resolve via the numeric-prefix path.
+            const result = inferBibleBooksFromTitle('Primera Pedro');
+            expect(result.books).toEqual(['1PE']);
+            expect(result.inferredScope).toBe('book');
+        });
+    });
+
+    describe('multi-book phrases', () => {
+        it('"The Letters of John" → 1JN, 2JN, 3JN', () => {
+            expect(inferBibleBooksFromTitle('The Letters of John (Yarbrough)')).toEqual({
+                books: ['1JN', '2JN', '3JN'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('"Cartas de Juan" → 1JN, 2JN, 3JN', () => {
+            expect(inferBibleBooksFromTitle('Cartas de Juan')).toEqual({
+                books: ['1JN', '2JN', '3JN'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('"Pastoral Epistles" → 1TI, 2TI, TIT', () => {
+            expect(inferBibleBooksFromTitle('Pastoral Epistles (Mounce, WBC)')).toEqual({
+                books: ['1TI', '2TI', 'TIT'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('"Minor Prophets" → all twelve', () => {
+            const result = inferBibleBooksFromTitle('Minor Prophets — Achtemeier');
+            expect(result.books).toHaveLength(12);
+            expect(result.books[0]).toBe('HOS');
+            expect(result.books[result.books.length - 1]).toBe('MAL');
+            expect(result.inferredScope).toBe('book');
+        });
+
+        it('"Pentateuch" → GEN..DEU', () => {
+            expect(inferBibleBooksFromTitle('A Theology of the Pentateuch')).toEqual({
+                books: ['GEN', 'EXO', 'LEV', 'NUM', 'DEU'],
+                inferredScope: 'book',
+            });
+        });
+    });
+
+    describe('reference works', () => {
+        it('BDAG → whole-testament, no specific books', () => {
+            expect(inferBibleBooksFromTitle('BDAG')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('Wallace Greek Grammar → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('Wallace Greek Grammar Beyond the Basics')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('HALOT → whole-testament', () => {
+            expect(inferBibleBooksFromTitle('HALOT')).toEqual({
+                books: [],
+                inferredScope: 'whole-testament',
+            });
+        });
+
+        it('Anchor Bible Dictionary → whole-bible', () => {
+            expect(inferBibleBooksFromTitle('Anchor Bible Dictionary, vol. 3')).toEqual({
+                books: [],
+                inferredScope: 'whole-bible',
+            });
+        });
+
+        it('Systematic Theology → whole-bible', () => {
+            expect(inferBibleBooksFromTitle('Grudem Systematic Theology')).toEqual({
+                books: [],
+                inferredScope: 'whole-bible',
+            });
+        });
+    });
+
+    describe('non-matches return empty', () => {
+        it('unrelated title returns empty + null scope', () => {
+            expect(inferBibleBooksFromTitle('Calvino - Sermones varios')).toEqual({
+                books: [],
+                inferredScope: null,
+            });
+        });
+
+        it('empty string returns empty + null scope', () => {
+            expect(inferBibleBooksFromTitle('')).toEqual({
+                books: [],
+                inferredScope: null,
+            });
+        });
+
+        it('whitespace-only returns empty + null scope', () => {
+            expect(inferBibleBooksFromTitle('   ')).toEqual({
+                books: [],
+                inferredScope: null,
+            });
+        });
+    });
+
+    describe('ambiguity handling — false-positive avoidance', () => {
+        it('bare "Jude" resolves to JUD (alias unique enough)', () => {
+            // 'jude' is a unique alias for JUD — no collision with JDG
+            // (which uses 'jueces', 'judges', 'jue', 'jdg', 'jdc', 'jud').
+            // Note: bare 'jud' WOULD collide; bare 'jude' does not.
+            expect(inferBibleBooksFromTitle('Jude')).toEqual({
+                books: ['JUD'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('bare 1-letter abbreviation does not match without prefix context', () => {
+            // 'jn' is shared by JON + JHN — without disambiguating
+            // prefix or chapter context, skip rather than guess.
+            const result = inferBibleBooksFromTitle('jn');
+            expect(result.books).toEqual([]);
+        });
+
+        it('numbered-book whole alias "1 Peter" resolves directly', () => {
+            // Distinct from the prefix-then-name path; '1 peter' is a
+            // pre-baked alias on 1PE.
+            expect(inferBibleBooksFromTitle('1 Peter Commentary')).toEqual({
+                books: ['1PE'],
+                inferredScope: 'book',
+            });
+        });
+    });
+
+    describe('order preservation + dedup', () => {
+        it('returns books in first-seen order', () => {
+            expect(inferBibleBooksFromTitle('Hebrews and Romans')).toEqual({
+                books: ['HEB', 'ROM'],
+                inferredScope: 'book',
+            });
+        });
+
+        it('de-duplicates repeated mentions', () => {
+            expect(inferBibleBooksFromTitle('Romans, Romans, Romans')).toEqual({
+                books: ['ROM'],
+                inferredScope: 'book',
+            });
+        });
+    });
+});

@@ -48,7 +48,14 @@
         "modeStandardTitle": "Estándar",
         "modeStandardDescription": "Libros narrativos, ensayos y sermones (hasta ~600 págs). Consume páginas estándar.",
         "modePremiumTitle": "Premium",
-        "modePremiumDescription": "Tablas, multi-columna y escaneados (hasta ~1000 págs). Consume páginas premium."
+        "modePremiumDescription": "Tablas, multi-columna y escaneados (hasta ~1000 págs). Consume páginas premium.",
+        "smartMatchLabel": "Detectado del título",
+        "smartMatchScope": {
+            "whole-bible": "cobertura: toda la Biblia",
+            "whole-testament": "cobertura: testamento completo",
+            "book": "cobertura: libro",
+            "pericope": "cobertura: perícopa"
+        }
     },
     "filters": {
         "searchPlaceholder": "Buscar título o autor",
@@ -65,6 +72,8 @@
     },
     "card": {
         "deleting": "Eliminando…",
+        "metadataIncomplete": "Faltan datos",
+        "metadataIncompleteHint": "Falta indicar qué libros bíblicos cubre. Editar para que aparezca en la búsqueda inteligente de papers.",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} pág.",
         "metaPagesActual_other": "{{count}} págs.",
@@ -123,6 +132,33 @@
         "exegesis": "Exégesis",
         "homiletics": "Homilética",
         "drafting": "Redacción"
+    },
+    "metadataEditor": {
+        "scopeLabel": "Cobertura",
+        "scope": {
+            "pericope": "Perícopa",
+            "book": "Libro",
+            "whole-testament": "Testamento",
+            "whole-bible": "Toda la Biblia"
+        },
+        "scopeHint": {
+            "pericope": "Estudio puntual de un pasaje (artículo, monografía corta).",
+            "book": "Comentario o monografía sobre uno o varios libros.",
+            "whole-testament": "Léxico, gramática o referencia para AT o NT completo.",
+            "whole-bible": "Diccionario, teología sistemática o referencia transversal."
+        },
+        "booksLabel": "Libros bíblicos cubiertos",
+        "booksHint": "Selecciona los libros que este recurso cubre. Permite que aparezca en la búsqueda inteligente de papers.",
+        "booksNotApplicable": "No aplica para esta cobertura — el recurso se considera disponible para cualquier pasaje.",
+        "selectedBooksLabel": "Libros seleccionados",
+        "removeBookAria": "Quitar {{book}}",
+        "bookPickerPlaceholder": "Agregar libros…",
+        "bookPickerSelected_one": "{{count}} libro seleccionado",
+        "bookPickerSelected_other": "{{count}} libros seleccionados",
+        "bookSearchPlaceholder": "Buscar libro…",
+        "bookSearchEmpty": "Sin resultados",
+        "testamentOT": "Antiguo Testamento",
+        "testamentNT": "Nuevo Testamento"
     },
     "deleteDialog": {
         "title": "¿Eliminar recurso?",

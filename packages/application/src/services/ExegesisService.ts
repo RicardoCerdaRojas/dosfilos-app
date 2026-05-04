@@ -10,6 +10,7 @@ import {
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
     RetrieveChunksExcerptExtractor,
+    RetrieveChunksResourceRanker,
     extractFootnoteAnchorsFromFormattedMarkdown,
 } from '@dosfilos/infrastructure';
 import type {
@@ -47,6 +48,7 @@ import {
     UpdateProjectSourceUseCase,
     RemoveProjectSourceUseCase,
     ExtractExcerptsForPaperUseCase,
+    RankLibraryResourcesForPaperUseCase,
     SeedStepsForPassageUseCase,
     GenerateStepUseCase,
     AcceptStepUseCase,
@@ -103,6 +105,7 @@ class ExegesisService {
     public updateSource: UpdateProjectSourceUseCase;
     public removeSource: RemoveProjectSourceUseCase;
     public extractExcerpts: ExtractExcerptsForPaperUseCase;
+    public rankLibraryForPaper: RankLibraryResourcesForPaperUseCase;
 
     // Steps
     public seedSteps: SeedStepsForPassageUseCase;
@@ -207,6 +210,15 @@ class ExegesisService {
         };
         const excerptExtractor = new RetrieveChunksExcerptExtractor(indexProbe);
         this.extractExcerpts = new ExtractExcerptsForPaperUseCase(paperRepository, excerptExtractor);
+
+        // v1.7 smart-match: ranks the user's library against a paper
+        // before they pick what to extract from. Same retrieveChunks
+        // pipeline as the extractor, just scoped to userId only.
+        const resourceRanker = new RetrieveChunksResourceRanker();
+        this.rankLibraryForPaper = new RankLibraryResourcesForPaperUseCase(
+            paperRepository,
+            resourceRanker,
+        );
 
         // Steps (D.2: live Gemini generation with style guide + sources injected;
         // Phase 3c adds deterministic style formatter + cross-step ibid anchors)

@@ -81,6 +81,20 @@ export class LibraryService {
              * premium-first cascade. Omit for the legacy auto behavior.
              */
             requestedExtractionMode?: 'standard' | 'premium';
+            /**
+             * v1.7 smart-match metadata. Typically autocompleted by
+             * `inferBibleBooksFromTitle` from the title before the
+             * upload form submits. Persisted so the paper-corpus
+             * smart-match dialog can pre-filter the user's library
+             * to resources covering the paper's passage.
+             *
+             * Omit when the inferer returned null/empty so legacy
+             * defaults (`[]` + `'book'`) kick in via the repo
+             * deserializer — the metadata editor will then nudge
+             * the user to fill them in.
+             */
+            coversBibleBooks?: ReadonlyArray<import('@dosfilos/domain').BibleBookId>;
+            scope?: import('@dosfilos/domain').LibraryResourceScope;
         },
         onProgress?: (percentage: number) => void
     ): Promise<LibraryResourceEntity> {
@@ -121,6 +135,15 @@ export class LibraryService {
         // LlamaParse accordingly.
         if (metadata.requestedExtractionMode) {
             resource.requestedExtractionMode = metadata.requestedExtractionMode;
+        }
+        // Carry inferred smart-match metadata onto the entity so the
+        // serializer writes it to Firestore. Skipping when caller
+        // omits keeps legacy fallback behavior in the repo.
+        if (metadata.coversBibleBooks) {
+            resource.coversBibleBooks = metadata.coversBibleBooks;
+        }
+        if (metadata.scope) {
+            resource.scope = metadata.scope;
         }
 
         // 4. Save to Firestore
@@ -409,6 +432,14 @@ export class LibraryService {
              * extraction dialog).
              */
             exegeticalType?: ExegesisSourceType | null;
+            /**
+             * v1.7 smart-match metadata. Pass through to the repo,
+             * which writes the array + scope to Firestore. The
+             * paper-corpus dialog reads these to filter the user's
+             * library to resources covering the paper's passage.
+             */
+            coversBibleBooks?: ReadonlyArray<import('@dosfilos/domain').BibleBookId>;
+            scope?: import('@dosfilos/domain').LibraryResourceScope;
         }
     ): Promise<void> {
         console.log(`📝 Updating resource ${id}:`, updates);
