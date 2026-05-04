@@ -7,9 +7,8 @@ import { hasAcceptedUploadConsent } from '@/components/library/UploadConsentModa
 import { UploadFormMetadata } from '../components/LibraryUploadForm';
 
 /**
- * Upload soft cap. Files above this still upload (up to the storage
- * rules' hard cap of 250MB) but the extraction pipeline takes longer
- * and quality may degrade — the warning surfaces that trade-off
+ * Upload soft cap (legacy). Files above this still upload but the
+ * extraction pipeline takes longer; the soft warning surfaces that
  * before the user commits to a slow extraction.
  */
 const MAX_OPTIMAL_SIZE_MB = 50;
@@ -20,6 +19,22 @@ const MAX_OPTIMAL_SIZE_MB = 50;
  * that's destined to 403).
  */
 const MAX_UPLOAD_SIZE_MB = 250;
+/**
+ * Per-tier hard limits enforced by the extraction backends.
+ *
+ * - **Premium / LlamaParse**: 100MB per file (LlamaParse API cap on
+ *   the tier we're on). Files above this skip LlamaParse completely.
+ * - **Standard / Gemini inline**: 50MB per file (Gemini inline file
+ *   cap; the File API supports more but we don't use it). Files above
+ *   this skip Gemini.
+ *
+ * When a file exceeds a tier's cap, the backend silently degrades to
+ * the next tier in the cascade — so without these client-side gates
+ * the user picks "Premium" and gets pdf-parse output back. The form
+ * uses these values to disable the affected tile and explain why.
+ */
+const MAX_PREMIUM_TIER_SIZE_MB = 100;
+const MAX_STANDARD_TIER_SIZE_MB = 50;
 
 interface UseResourceUploadOptions {
     /** ID of the user owning the upload. Hook is no-op while null/undefined. */
@@ -30,6 +45,28 @@ interface UseResourceUploadOptions {
     onConsentRequired: () => void;
     /** Called after a successful upload — caller typically closes the form. */
     onSuccess?: () => void;
+}
+
+/**
+ * Per-tier availability for the currently selected file. Drives the
+ * disabled state + warnings on the Premium / Standard tiles in the
+ * upload form. When a tier is unavailable, the form prevents the
+ * user from selecting it and explains why — the alternative was the
+ * silent backend degradation that landed the BHQ upload on Básico
+ * even though the user picked Premium (May 2026 incident).
+ */
+export interface UploadTierAvailability {
+    /** True when LlamaParse can handle the file (size ≤ 100MB). */
+    premium: boolean;
+    /** True when Gemini inline can handle the file (size ≤ 50MB). */
+    standard: boolean;
+    /** Convenience: true when neither premium nor standard is available. */
+    bothUnavailable: boolean;
+    /** Effective hard caps in MB — surfaced for UI copy. */
+    premiumCapMB: number;
+    standardCapMB: number;
+    /** Selected file's size in MB (0 when no file picked). */
+    fileSizeMB: number;
 }
 
 interface UseResourceUploadResult {
@@ -44,6 +81,11 @@ interface UseResourceUploadResult {
      * preview shown in the upload form. Persisted on submit.
      */
     smartMatchInference: ReturnType<typeof inferBibleBooksFromTitle>;
+    /**
+     * Per-tier availability for the currently selected file. Always
+     * defined — when no file is picked, both tiers report as available.
+     */
+    tierAvailability: UploadTierAvailability;
     /** File input change handler. Validates type + sets warning + autofills title. */
     handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     /** Patch the metadata partial. */
@@ -118,12 +160,43 @@ export function useResourceUpload({
         }
         setFileSizeWarning(sizeMB > MAX_OPTIMAL_SIZE_MB);
         setFile(selected);
-        // Autofill title from filename — strip extension
-        setMetadataState(prev => ({
-            ...prev,
-            title: selected.name.replace(/\.[^/.]+$/, '') || '',
-        }));
+        // Autofill title from filename — strip extension. Also
+        // auto-switch the extraction tier when the current selection
+        // is no longer available for this size, so the user doesn't
+        // submit a request the backend will silently downgrade.
+        const premiumOk = sizeMB <= MAX_PREMIUM_TIER_SIZE_MB;
+        const standardOk = sizeMB <= MAX_STANDARD_TIER_SIZE_MB;
+        setMetadataState(prev => {
+            const nextMode = !premiumOk && prev.extractionMode === 'premium'
+                ? 'standard'
+                : prev.extractionMode;
+            // When standard is also unavailable, we leave the mode at
+            // whatever it was — both tiles will be disabled in the UI
+            // and a callout explains the file will go to Básico
+            // regardless of selection. No auto-switch back to premium.
+            return {
+                ...prev,
+                title: selected.name.replace(/\.[^/.]+$/, '') || '',
+                extractionMode: nextMode,
+            };
+        });
     }, [t]);
+
+    // Per-tier availability for the current file. Memoized off
+    // `file?.size` so we don't recompute on every title edit.
+    const tierAvailability = useMemo<UploadTierAvailability>(() => {
+        const sizeMB = file ? file.size / (1024 * 1024) : 0;
+        const premium = sizeMB <= MAX_PREMIUM_TIER_SIZE_MB;
+        const standard = sizeMB <= MAX_STANDARD_TIER_SIZE_MB;
+        return {
+            premium,
+            standard,
+            bothUnavailable: !premium && !standard,
+            premiumCapMB: MAX_PREMIUM_TIER_SIZE_MB,
+            standardCapMB: MAX_STANDARD_TIER_SIZE_MB,
+            fileSizeMB: sizeMB,
+        };
+    }, [file]);
 
     // v1.7 smart-match inference from title. Pure function so memoizing
     // by title is sufficient — no debounce needed at this latency.
@@ -191,6 +264,7 @@ export function useResourceUpload({
         uploading,
         uploadProgress,
         smartMatchInference,
+        tierAvailability,
         handleFileChange,
         setMetadata,
         handleSubmit,

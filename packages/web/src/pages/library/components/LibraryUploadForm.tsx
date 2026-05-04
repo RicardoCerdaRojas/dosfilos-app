@@ -33,6 +33,19 @@ export interface SmartMatchInferenceResult {
     inferredScope: LibraryResourceScope | null;
 }
 
+/**
+ * Subset of `UploadTierAvailability` consumed by this form. Mirrored
+ * locally so the form can be rendered in stories/tests without the hook.
+ */
+export interface TierAvailabilityProp {
+    premium: boolean;
+    standard: boolean;
+    bothUnavailable: boolean;
+    premiumCapMB: number;
+    standardCapMB: number;
+    fileSizeMB: number;
+}
+
 interface LibraryUploadFormProps {
     /** Categories available in the dropdown — sourced from `categoryService`. */
     categories: LibraryCategory[];
@@ -53,6 +66,13 @@ interface LibraryUploadFormProps {
      * the resource detail (A.3) is the canonical spot for adjustment.
      */
     smartMatchInference: SmartMatchInferenceResult;
+    /**
+     * Per-tier availability for the currently picked file. Drives the
+     * disabled state on the Premium / Standard tiles and the
+     * "se procesará con Básico" callout. Without this, users could
+     * pick Premium for a 200MB file and silently get pdf-parse output.
+     */
+    tierAvailability: TierAvailabilityProp;
     /** File input change handler — caller validates type + sets file/warning. */
     onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     /** Metadata patch — caller spreads over current state. */
@@ -76,11 +96,13 @@ export function LibraryUploadForm({
     uploading,
     uploadProgress,
     smartMatchInference,
+    tierAvailability,
     onFileChange,
     onMetadataChange,
     onSubmit,
 }: LibraryUploadFormProps) {
     const { t, i18n } = useTranslation('library');
+    const showTierCallout = file !== null && (!tierAvailability.premium || !tierAvailability.standard);
 
     return (
         <div className="bg-card border border-border/60 rounded-xl p-5 space-y-4">
@@ -99,6 +121,8 @@ export function LibraryUploadForm({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <ModeTile
                         active={metadata.extractionMode === 'standard'}
+                        disabled={!tierAvailability.standard}
+                        disabledHint={t('upload.tierUnavailableHint', { capMB: tierAvailability.standardCapMB })}
                         onClick={() => onMetadataChange({ extractionMode: 'standard' })}
                         icon={<Wand2 className="h-3.5 w-3.5" />}
                         title={t('upload.modeStandardTitle')}
@@ -107,6 +131,8 @@ export function LibraryUploadForm({
                     />
                     <ModeTile
                         active={metadata.extractionMode === 'premium'}
+                        disabled={!tierAvailability.premium}
+                        disabledHint={t('upload.tierUnavailableHint', { capMB: tierAvailability.premiumCapMB })}
                         onClick={() => onMetadataChange({ extractionMode: 'premium' })}
                         icon={<Sparkles className="h-3.5 w-3.5" />}
                         title={t('upload.modePremiumTitle')}
@@ -114,6 +140,9 @@ export function LibraryUploadForm({
                         tone="success"
                     />
                 </div>
+                {showTierCallout && (
+                    <TierCallout availability={tierAvailability} />
+                )}
             </fieldset>
 
             <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -199,6 +228,10 @@ export function LibraryUploadForm({
 
 interface ModeTileProps {
     active: boolean;
+    /** When true, click is suppressed and the tile renders dimmed. */
+    disabled?: boolean;
+    /** Tooltip shown when disabled. Explains why the tier isn't available. */
+    disabledHint?: string;
     onClick: () => void;
     icon: React.ReactNode;
     title: string;
@@ -211,8 +244,13 @@ interface ModeTileProps {
  * Click selects; `aria-pressed` exposes state to assistive tech.
  * Tone (`info` / `success`) drives the active border color so each
  * mode is visually distinct at a glance.
+ *
+ * `disabled` mutes the tile when the file exceeds the tier's hard
+ * cap (LlamaParse 100MB / Gemini 50MB). The disabled tile keeps its
+ * label so the user understands what they CAN'T pick — hiding it
+ * would just look broken.
  */
-function ModeTile({ active, onClick, icon, title, description, tone }: ModeTileProps) {
+function ModeTile({ active, disabled = false, disabledHint, onClick, icon, title, description, tone }: ModeTileProps) {
     const activeBorder = tone === 'info'
         ? 'border-info bg-info-subtle'
         : 'border-success bg-success-subtle';
@@ -220,18 +258,22 @@ function ModeTile({ active, onClick, icon, title, description, tone }: ModeTileP
     return (
         <button
             type="button"
-            onClick={onClick}
+            onClick={disabled ? undefined : onClick}
+            disabled={disabled}
             aria-pressed={active}
+            title={disabled ? disabledHint : undefined}
             className={cn(
                 'text-left rounded-lg border px-3 py-2.5 transition-colors',
-                active
-                    ? activeBorder
-                    : 'border-border bg-card hover:border-foreground/30',
+                disabled
+                    ? 'border-border bg-muted/30 opacity-50 cursor-not-allowed'
+                    : active
+                        ? activeBorder
+                        : 'border-border bg-card hover:border-foreground/30',
             )}
         >
             <div className={cn(
                 'inline-flex items-center gap-1.5 text-[12px] font-semibold',
-                active ? activeIcon : 'text-foreground',
+                disabled ? 'text-muted-foreground' : active ? activeIcon : 'text-foreground',
             )}>
                 {icon}
                 {title}
@@ -240,6 +282,61 @@ function ModeTile({ active, onClick, icon, title, description, tone }: ModeTileP
                 {description}
             </p>
         </button>
+    );
+}
+
+/**
+ * Surfaces WHY a tier got disabled (or both did). Renders below the
+ * mode tiles so the user understands "Premium is greyed out because
+ * the file is 114MB (cap is 100MB)" instead of guessing.
+ *
+ * Three visual variants:
+ *   - both unavailable → callout amber, "se procesará con Básico"
+ *   - only premium unavailable → callout amber, suggest Standard
+ *   - only standard unavailable → callout neutral, "Premium sí cubre"
+ */
+function TierCallout({ availability }: { availability: TierAvailabilityProp }) {
+    const { t } = useTranslation('library');
+    const sizeLabel = availability.fileSizeMB.toFixed(1);
+
+    if (availability.bothUnavailable) {
+        return (
+            <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning-subtle px-3 py-2 text-[11.5px] text-warning-subtle-foreground">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
+                <span className="leading-snug">
+                    {t('upload.tierCalloutBoth', {
+                        sizeMB: sizeLabel,
+                        premiumCapMB: availability.premiumCapMB,
+                        standardCapMB: availability.standardCapMB,
+                    })}
+                </span>
+            </div>
+        );
+    }
+    if (!availability.premium) {
+        return (
+            <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning-subtle px-3 py-2 text-[11.5px] text-warning-subtle-foreground">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
+                <span className="leading-snug">
+                    {t('upload.tierCalloutPremiumOnly', {
+                        sizeMB: sizeLabel,
+                        premiumCapMB: availability.premiumCapMB,
+                    })}
+                </span>
+            </div>
+        );
+    }
+    // Only standard unavailable — premium still works, less urgent.
+    return (
+        <div className="flex items-start gap-2 rounded-md border border-info/30 bg-info-subtle px-3 py-2 text-[11.5px] text-info-subtle-foreground">
+            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
+            <span className="leading-snug">
+                {t('upload.tierCalloutStandardOnly', {
+                    sizeMB: sizeLabel,
+                    standardCapMB: availability.standardCapMB,
+                })}
+            </span>
+        </div>
     );
 }
 

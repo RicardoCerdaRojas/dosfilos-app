@@ -49,6 +49,10 @@
         "modeStandardDescription": "Libros narrativos, ensayos y sermones (hasta ~600 págs). Consume páginas estándar.",
         "modePremiumTitle": "Premium",
         "modePremiumDescription": "Tablas, multi-columna y escaneados (hasta ~1000 págs). Consume páginas premium.",
+        "tierUnavailableHint": "No disponible para archivos sobre {{capMB}}MB",
+        "tierCalloutPremiumOnly": "Este archivo ({{sizeMB}}MB) excede el límite de Premium ({{premiumCapMB}}MB). Premium quedó deshabilitado; se procesará con Standard.",
+        "tierCalloutStandardOnly": "Este archivo ({{sizeMB}}MB) excede el límite de Standard ({{standardCapMB}}MB). Standard quedó deshabilitado; Premium sí lo cubre.",
+        "tierCalloutBoth": "Este archivo ({{sizeMB}}MB) excede los límites de Premium ({{premiumCapMB}}MB) y Standard ({{standardCapMB}}MB). Se procesará con Básico (gratis, calidad reducida).",
         "smartMatchLabel": "Detectado del título",
         "smartMatchScope": {
             "whole-bible": "cobertura: toda la Biblia",
