@@ -3,16 +3,22 @@ import type { SourceType } from '../entities/SourceType';
 import { INVARIANT_RECOMMENDATIONS } from './invariant';
 import { HEBREWS_RECOMMENDATIONS } from './nt/hebrews';
 import { ROMANS_RECOMMENDATIONS } from './nt/romans';
+import { GENESIS_RECOMMENDATIONS } from './ot/genesis';
 import type { BookRecommendations, SourceRecommendation } from './types';
 
 export type { BookRecommendations, SourceRecommendation } from './types';
 
 /**
- * Master catalog indexed by `BibleBookId`. v1.7 launch covers two
- * hero books (Hebreos + Romanos) with full per-source-type curation.
+ * Master catalog indexed by `BibleBookId`. v1.7 launch covers three
+ * hero books with full per-source-type curation:
+ *   - Hebreos (NT epistolary/homily, frequent expository series)
+ *   - Romanos (NT, most commented-on epistle in the canon)
+ *   - Génesis (OT, most preached OT book — covers both testaments at launch)
+ *
  * The remaining ~50 prioritized books from the spec are added
  * incrementally — telemetry from `recommendation_gap_no_suggestions`
- * tells us which to curate next.
+ * tells us which to curate next (Salmos and Isaías are the natural
+ * follow-ups for OT coverage).
  *
  * Books NOT in this map fall through to invariant-only recommendations
  * (lexicons, grammars, dictionaries) — still useful, just not as rich
@@ -21,6 +27,7 @@ export type { BookRecommendations, SourceRecommendation } from './types';
 const RECOMMENDATIONS_BY_BOOK: Partial<Record<BibleBookId, BookRecommendations>> = {
     HEB: HEBREWS_RECOMMENDATIONS,
     ROM: ROMANS_RECOMMENDATIONS,
+    GEN: GENESIS_RECOMMENDATIONS,
 };
 
 /**

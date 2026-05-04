@@ -103,16 +103,47 @@ describe('getSourceRecommendations', () => {
     });
 
     describe('empty cases', () => {
-        it('returns [] for a book + sourceType combo with no curation anywhere', () => {
-            // Genesis isn't a hero book yet; commentary-critical has no
+        it('returns [] for a non-hero book + commentary-critical (no invariant fallback)', () => {
+            // Jonah isn't a hero book; commentary-critical has no
             // invariant fallback (commentaries are inherently book-specific).
-            const recs = getSourceRecommendations('GEN', 'commentary-critical', 'es');
+            const recs = getSourceRecommendations('JON', 'commentary-critical', 'es');
             expect(recs).toEqual([]);
         });
 
         it('returns [] for non-hero book + commentary-expository', () => {
             const recs = getSourceRecommendations('JON', 'commentary-expository', 'es');
             expect(recs).toEqual([]);
+        });
+    });
+
+    describe('OT hero book (Génesis)', () => {
+        it('returns hero-book entries for GEN + commentary-critical (Wenham WBC top-tier)', () => {
+            const recs = getSourceRecommendations('GEN', 'commentary-critical', 'es');
+            expect(recs.length).toBeGreaterThan(0);
+            expect(recs.some(r => r.author.includes('Wenham'))).toBe(true);
+            // Westermann + von Rad also expected as essential entries.
+            expect(recs.some(r => r.author.includes('Westermann'))).toBe(true);
+        });
+
+        it('returns hero-book + invariant for GEN + historical-background', () => {
+            const recs = getSourceRecommendations('GEN', 'historical-background', 'es');
+            // Walton ANE Thought is GEN-specific; should rank before
+            // invariant Keener/Walton-IVP.
+            const waltonAneIdx = recs.findIndex(r => r.title.includes('Ancient Near Eastern Thought'));
+            const ivpIdx = recs.findIndex(r => r.title.includes('IVP Bible Background'));
+            expect(waltonAneIdx).toBeGreaterThanOrEqual(0);
+            expect(ivpIdx).toBeGreaterThanOrEqual(0);
+            expect(waltonAneIdx).toBeLessThan(ivpIdx);
+        });
+
+        it('GEN + commentary-expository ranks ES editions first (Mathews has ES)', () => {
+            const recs = getSourceRecommendations('GEN', 'commentary-expository', 'es');
+            const mathews = recs.find(r => r.author.includes('Mathews'));
+            const hamilton = recs.find(r => r.author.includes('Hamilton'));
+            expect(mathews?.languages).toContain('es');
+            expect(hamilton?.languages).not.toContain('es');
+            // von Rad is in commentary-critical, not expository — sanity check.
+            expect(recs.some(r => r.author.includes('von Rad'))).toBe(false);
         });
     });
 });
