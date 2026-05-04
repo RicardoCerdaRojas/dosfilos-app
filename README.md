@@ -17,33 +17,37 @@ Este proyecto sigue los principios de **Clean Architecture** y **SOLID**, organi
 ### Prerrequisitos
 
 - Node.js >= 20.0.0
-- npm >= 10.0.0
+- Yarn 1.x (`npm install -g yarn` si no lo tenés)
 - Firebase CLI (`npm install -g firebase-tools`)
 
 ### Instalación
 
 ```bash
-# Instalar dependencias
-npm install
+# Instalar dependencias (usa yarn por los workspaces)
+yarn install
 
 # Configurar Firebase (primera vez)
 firebase login
 firebase init
 
 # Iniciar desarrollo
-npm run dev
+yarn dev
 ```
+
+> **Nota:** el repo usa **yarn 1.x workspaces**. NO ejecutes `npm install` —
+> regenera un `package-lock.json` que diverge del `yarn.lock` y hace fallar CI.
+> Si por error lo hiciste, borralo (`.gitignore` lo bloquea de todas formas).
 
 ### Scripts Disponibles
 
 ```bash
-npm run dev          # Inicia el servidor de desarrollo
-npm run build        # Construye para producción
-npm run preview      # Preview de la build de producción
-npm run lint         # Ejecuta linting en todos los paquetes
-npm run type-check   # Verifica tipos TypeScript
-npm run test         # Ejecuta tests
-npm run test:watch   # Ejecuta tests en modo watch
+yarn dev             # Inicia el servidor de desarrollo
+yarn build           # Construye para producción
+yarn preview         # Preview de la build de producción
+yarn lint            # Ejecuta linting en todos los paquetes
+yarn type-check      # Verifica tipos TypeScript
+yarn test            # Ejecuta tests
+yarn test:watch      # Ejecuta tests en modo watch
 ```
 
 ## 📁 Estructura del Proyecto
