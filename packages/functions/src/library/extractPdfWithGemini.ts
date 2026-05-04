@@ -3,6 +3,7 @@ import { getStorage } from 'firebase-admin/storage';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
+import { PDFDocument } from 'pdf-lib';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -13,20 +14,31 @@ import { consumePagesAdmin, type ProcessingMode } from './processingBalance';
 const pdfParse = require('pdf-parse');
 
 
-// Gemini file size limit is 50MB
+// Gemini file size limit is 50MB (per-call upload to the Files API).
+// Files larger than this skip Gemini and fall to pdf-parse.
 const MAX_GEMINI_FILE_SIZE = 50 * 1024 * 1024;
-// Gemini also caps the document at 1000 pages per generateContent
-// call. We can't know the exact page count before calling the API,
-// but PDFs over ~12MB very reliably exceed that cap (avg 10-15KB per
-// page for text-heavy academic books). Skipping Gemini at this
-// threshold avoids a guaranteed-400 round-trip and removes the
-// "[400 Bad Request] exceeds the supported page limit of 1000" noise
-// from the logs. Threshold is conservative — small enough to catch
-// the NTG-class case (1020 págs / 10.5MB), large enough not to
-// over-skip.
-const LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES = 12 * 1024 * 1024;
 // LlamaParse supports up to 100MB (and we've verified free-tier covers typical theology books)
 const MAX_LLAMAPARSE_FILE_SIZE = 100 * 1024 * 1024;
+
+// ── Batched Gemini extraction tuning ────────────────────────────────────
+//
+// Single-pass Gemini caps at ~65K output tokens, which translates to
+// ~50-150 pages depending on density (dense commentaries get squeezed,
+// narrative books fit more). Above this threshold we split the PDF
+// into smaller per-call chunks via pdf-lib, run extraction on each,
+// then concatenate the per-page results. The overall output is identical
+// in shape to a single-pass result so the downstream chunker doesn't
+// need to know.
+//
+// `BATCH_THRESHOLD_PAGES` is conservative — well below the safe single-
+// pass ceiling so we don't get unlucky with dense books. `CHUNK_SIZE`
+// keeps each call well under the token cap. `OVERLAP_PAGES` covers
+// the case where Gemini truncates the last page or two of a chunk
+// (rare but observed); the next chunk re-processes those pages and
+// the dedup keeps the second (fresher) version.
+const BATCH_THRESHOLD_PAGES = 80;
+const CHUNK_SIZE_PAGES = 60;
+const OVERLAP_PAGES = 3;
 
 // Get API key from environment
 const getApiKey = (): string => {
@@ -188,12 +200,38 @@ async function extractWithPdfParse(buffer: Buffer): Promise<{
  *     finishes mid-array, we throw so the cascade falls to pdf-parse
  *     (which now produces auto-indexable output anyway).
  */
-async function extractWithGemini(
+/**
+ * Single PDF page as Gemini returned it. Same shape as `LlamaParsePage`
+ * so the formatters downstream work without branching by engine.
+ */
+interface GeminiPage {
+    page: number;
+    text: string;
+    md?: string;
+}
+
+/**
+ * Single-pass Gemini extraction. Sends the WHOLE PDF in one
+ * `generateContent` call. Bound by Gemini's 65K-token output cap which
+ * translates to ~50-150 pages depending on density. The router calls
+ * this directly for short PDFs and once per chunk for long ones.
+ *
+ * Truncation safeguards:
+ *   1. `finishReason !== 'STOP'` → hard fail (cascade falls back).
+ *   2. Returned page count < 80% of `expectedPageCount` → likely silent
+ *      truncation, also hard fail. Caller can disable by passing
+ *      undefined when the expected count is unknown (chunked calls).
+ *
+ * Returns structured pages so the batched wrapper can remap page
+ * numbers before formatting. The single-pass router calls
+ * `pagesToMarkedText` / `pagesToMarkdown` after this returns.
+ */
+async function extractGeminiPagesSinglePass(
     tempFilePath: string,
     resourceId: string,
     apiKey: string,
     expectedPageCount?: number,
-): Promise<{ text: string; markdown: string; pageCount: number }> {
+): Promise<{ pages: GeminiPage[] }> {
     const genAI = new GoogleGenerativeAI(apiKey);
     const fileManager = new GoogleAIFileManager(apiKey);
 
@@ -305,6 +343,10 @@ Si una página está vacía, devuelve string vacío en text/md pero conserva la 
     // compare. A returned count below 80% of expected almost
     // certainly means partial extraction → fall back to pdf-parse
     // for the full document.
+    //
+    // For chunked calls the wrapper passes undefined here (each chunk
+    // doesn't independently know its expected size — the wrapper's
+    // own completeness check handles that at the end).
     if (expectedPageCount && expectedPageCount > 0) {
         const completeness = pages.length / expectedPageCount;
         if (completeness < 0.8) {
@@ -314,13 +356,168 @@ Si una página está vacía, devuelve string vacío en text/md pero conserva la 
         }
     }
 
-    // Use the existing LlamaParse formatters so the chunker downstream
-    // sees the identical `<!-- page: N -->` contract regardless of
-    // which engine produced the content.
-    const text = pagesToMarkedText(pages);
-    const markdown = pagesToMarkdown(pages);
+    return { pages };
+}
 
-    return { text, markdown, pageCount: pages.length };
+/**
+ * Batched Gemini extraction. For PDFs above `BATCH_THRESHOLD_PAGES`,
+ * splits the source into per-call chunks of `CHUNK_SIZE_PAGES` (with
+ * `OVERLAP_PAGES` overlap between consecutive chunks), runs single-pass
+ * extraction on each, remaps the per-chunk page numbers to absolute
+ * positions in the original PDF, and merges the results.
+ *
+ * Why split with `pdf-lib` (real PDF surgery) instead of asking Gemini
+ * "process pages X-Y": the prompt-based approach is documented as
+ * unreliable — Gemini still loads the whole doc and may respond about
+ * pages it shouldn't. Splitting guarantees per-call work matches per-call
+ * input.
+ *
+ * Failure modes:
+ *   - One chunk fails → throw with chunk context. The cascade then falls
+ *     back to pdf-parse for the WHOLE document. We don't try to mix tiers
+ *     in a single doc — partial Standard + partial Básico would confuse
+ *     the citation pipeline downstream.
+ *
+ * Time budget: ~25s per chunk (upload + processing wait + JSON parse).
+ * A 600-page book in 60-page chunks = 10 chunks ≈ 250s, comfortably
+ * within the 540s storage-trigger cap.
+ */
+async function extractWithGeminiBatched(
+    tempFilePath: string,
+    resourceId: string,
+    apiKey: string,
+    totalPageCount: number,
+): Promise<{ text: string; markdown: string; pageCount: number }> {
+    const sourceBytes = fs.readFileSync(tempFilePath);
+    const sourceDoc = await PDFDocument.load(sourceBytes);
+    const actualPages = sourceDoc.getPageCount();
+
+    // Compute per-chunk page ranges (1-indexed, inclusive on both ends).
+    // Overlap protects against last-page truncation on a chunk; dedup
+    // below keeps the second chunk's version of overlap pages because
+    // those pages sit at the START of their window (where Gemini is most
+    // reliable) rather than the END (where it's most likely to truncate).
+    const chunks: Array<{ start: number; end: number }> = [];
+    let cursor = 1;
+    while (cursor <= actualPages) {
+        const start = cursor;
+        const end = Math.min(cursor + CHUNK_SIZE_PAGES - 1, actualPages);
+        chunks.push({ start, end });
+        if (end >= actualPages) break;
+        cursor = end - OVERLAP_PAGES + 1;
+    }
+
+    console.log(
+        `🪓 [Gemini Batched] Splitting ${actualPages} pages into ${chunks.length} chunks (size=${CHUNK_SIZE_PAGES}, overlap=${OVERLAP_PAGES})`,
+    );
+
+    const allPages: GeminiPage[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+        const { start, end } = chunks[i]!;
+        const chunkLabel = `${i + 1}/${chunks.length}`;
+        console.log(`📦 [Gemini Batched] Chunk ${chunkLabel}: pages ${start}-${end}`);
+
+        // Surgical PDF subset for this chunk. pdf-lib uses 0-indexed
+        // page references internally; convert from our 1-indexed range.
+        const chunkDoc = await PDFDocument.create();
+        const indices = Array.from({ length: end - start + 1 }, (_, idx) => start - 1 + idx);
+        const copied = await chunkDoc.copyPages(sourceDoc, indices);
+        copied.forEach(p => chunkDoc.addPage(p));
+        const chunkBytes = await chunkDoc.save();
+
+        // Write to a unique temp file so concurrent extractions don't
+        // race on the same path. Cleaned up after the call regardless
+        // of outcome — Gemini Files API copies the bytes server-side.
+        const chunkTempPath = path.join(
+            os.tmpdir(),
+            `${resourceId}-chunk-${i + 1}-${Date.now()}.pdf`,
+        );
+        fs.writeFileSync(chunkTempPath, chunkBytes);
+
+        try {
+            const { pages: chunkPages } = await extractGeminiPagesSinglePass(
+                chunkTempPath,
+                `${resourceId}-chunk-${i + 1}`,
+                apiKey,
+                // No expectedPageCount per chunk — the per-chunk
+                // completeness check would false-positive when Gemini
+                // legitimately returns N pages because that's the chunk
+                // size. Whole-doc completeness is checked below instead.
+                undefined,
+            );
+
+            // Remap each chunk page's local number (1..chunkSize, as
+            // Gemini saw the chunk PDF) to its absolute position in the
+            // ORIGINAL document. Without this remap, every chunk would
+            // claim pages 1..N and the dedup would collapse them all.
+            for (const p of chunkPages) {
+                allPages.push({
+                    page: start + (p.page - 1),
+                    text: p.text,
+                    md: p.md,
+                });
+            }
+            console.log(`✅ [Gemini Batched] Chunk ${chunkLabel} returned ${chunkPages.length} pages`);
+        } finally {
+            try { fs.unlinkSync(chunkTempPath); } catch { /* ignore */ }
+        }
+    }
+
+    // Dedup overlap pages: when chunks overlap, the same page appears
+    // twice. Keep the LATER occurrence — for any overlap page, the
+    // second chunk's copy was processed at the BEGINNING of that
+    // chunk's window (Gemini is most reliable there), while the first
+    // chunk's copy was at the END (most likely to be truncated).
+    const byPage = new Map<number, GeminiPage>();
+    for (const p of allPages) byPage.set(p.page, p);
+    const merged = Array.from(byPage.values()).sort((a, b) => a.page - b.page);
+
+    // Whole-doc completeness check. Same 80% floor used by single-pass.
+    const completeness = merged.length / actualPages;
+    if (completeness < 0.8) {
+        throw new Error(
+            `Gemini batched extraction returned ${merged.length} of ${actualPages} pages (${Math.round(completeness * 100)}%); likely partial`,
+        );
+    }
+
+    console.log(
+        `🧩 [Gemini Batched] Merged ${merged.length} pages from ${chunks.length} chunks (totalPageCount hint=${totalPageCount})`,
+    );
+
+    return {
+        text: pagesToMarkedText(merged),
+        markdown: pagesToMarkdown(merged),
+        pageCount: merged.length,
+    };
+}
+
+/**
+ * Public entry point for Gemini extraction. Routes between single-pass
+ * and batched based on `expectedPageCount`. The cascade in the storage
+ * trigger calls this directly — it doesn't need to know which strategy
+ * was used; the output shape is identical either way.
+ */
+async function extractWithGemini(
+    tempFilePath: string,
+    resourceId: string,
+    apiKey: string,
+    expectedPageCount?: number,
+): Promise<{ text: string; markdown: string; pageCount: number }> {
+    const useBatched = !!expectedPageCount && expectedPageCount > BATCH_THRESHOLD_PAGES;
+    if (useBatched) {
+        console.log(
+            `🤖 [Gemini] expected ${expectedPageCount} pages > ${BATCH_THRESHOLD_PAGES} — using batched extraction`,
+        );
+        return extractWithGeminiBatched(tempFilePath, resourceId, apiKey, expectedPageCount!);
+    }
+
+    const { pages } = await extractGeminiPagesSinglePass(tempFilePath, resourceId, apiKey, expectedPageCount);
+    return {
+        text: pagesToMarkedText(pages),
+        markdown: pagesToMarkdown(pages),
+        pageCount: pages.length,
+    };
 }
 
 /**
@@ -550,7 +747,11 @@ export const extractPdfWithGemini = onObjectFinalized(
                     console.warn(
                         `⚠️ [Extract] All ${llamaAccounts.length} LlamaParse account(s) failed; falling back to Gemini. Errors: ${JSON.stringify(llamaErrors)}`,
                     );
-                    if (stats.size <= MAX_GEMINI_FILE_SIZE && stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES) {
+                    if (stats.size <= MAX_GEMINI_FILE_SIZE) {
+                        // Batched extraction (router inside extractWithGemini)
+                        // handles long page counts by splitting into chunks,
+                        // so we no longer need the 12MB heuristic that used
+                        // to bail out for text-heavy commentaries.
                         try {
                             const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
                             extractedText = result.text;
@@ -567,11 +768,11 @@ export const extractPdfWithGemini = onObjectFinalized(
                             extractionVersion = '5.0-pdfparse-structured';
                         }
                     } else {
-                        // Either >50MB (Gemini hard size limit) or >12MB
-                        // (heuristic for Gemini's 1000-page cap). Skip
-                        // Gemini directly to avoid a guaranteed 400.
+                        // >50MB exceeds Gemini Files API per-file cap.
+                        // Could be revisited later by chunking the source
+                        // PDF before upload — but that's a follow-up.
                         console.log(
-                            `📄 [Extract] Skipping Gemini fallback (${(stats.size / 1024 / 1024).toFixed(1)} MB likely > 1000 pages); going straight to pdf-parse`,
+                            `📄 [Extract] Skipping Gemini fallback (${(stats.size / 1024 / 1024).toFixed(1)} MB > 50MB Gemini cap); going straight to pdf-parse`,
                         );
                         const buffer = fs.readFileSync(tempFilePath);
                         const result = await extractWithPdfParse(buffer);
@@ -581,17 +782,11 @@ export const extractPdfWithGemini = onObjectFinalized(
                         extractionVersion = '5.0-pdfparse-structured';
                     }
                 }
-            } else if (
-                stats.size <= MAX_GEMINI_FILE_SIZE &&
-                // The 12MB heuristic exists to avoid a guaranteed 400 from
-                // Gemini's 1000-page cap on text-heavy academic books. When
-                // the user explicitly opts into Standard, they're telling
-                // us "Gemini is fine" — we should at least try it. Worst
-                // case Gemini returns "exceeds the supported page limit"
-                // and the catch below falls to pdf-parse anyway.
-                (userOptedOutOfPremium || stats.size <= LIKELY_OVER_GEMINI_PAGE_LIMIT_BYTES)
-            ) {
-                console.log(`🤖 [Extract] Using Gemini (${userOptedOutOfPremium ? 'user opted standard' : 'no LlamaParse key or file size limit'})`);
+            } else if (stats.size <= MAX_GEMINI_FILE_SIZE) {
+                // No LlamaParse path AND file fits Gemini's 50MB cap.
+                // Batched extraction now handles long page counts by
+                // splitting, so the old 12MB heuristic is gone.
+                console.log(`🤖 [Extract] Using Gemini (${userOptedOutOfPremium ? 'user opted standard' : 'no LlamaParse key'})`);
                 try {
                     const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
                     extractedText = result.text;
