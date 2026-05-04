@@ -39,13 +39,16 @@ const getApiKey = (): string => {
 
 /**
  * LlamaParse extraction — primary path.
- * Returns structured pages with reliable page numbers.
+ * Returns structured pages with reliable page numbers, plus the
+ * actual credits consumed (NOT page count) so the per-account
+ * counter mirrors what LlamaParse actually billed. Cached jobs and
+ * some operations cost 0 credits even when pages are returned.
  */
 async function extractWithLlamaParse(
     tempFilePath: string,
     resourceId: string,
     apiKey: string
-): Promise<{ text: string; markdown: string; pageCount: number }> {
+): Promise<{ text: string; markdown: string; pageCount: number; creditsUsed: number }> {
     const buffer = fs.readFileSync(tempFilePath);
     const client = new LlamaParseClient(apiKey);
 
@@ -55,11 +58,22 @@ async function extractWithLlamaParse(
         parsingInstruction: 'Preserva con precisión los caracteres griegos (α-ω) y hebreos (א-ת). Mantén la estructura de capítulos, secciones, tablas y notas al pie. No traduzcas términos teológicos ni citas bíblicas.',
     });
 
-    console.log(`[LlamaParse] Parsed ${result.pages.length} pages. Credits used: ${result.jobMetadata.job_credits_usage ?? '?'}`);
+    // Trust LlamaParse's own credit count when reported; fall back to
+    // page count only when the metadata field is missing (defensive
+    // against API changes). Using the API-reported value prevents the
+    // counter drift that surfaced in production: our counter incremented
+    // by `pages.length` even when LlamaParse charged 0 (cached jobs),
+    // making accounts look exhausted while the dashboard had capacity.
+    const reportedCredits = result.jobMetadata.job_credits_usage;
+    const creditsUsed = typeof reportedCredits === 'number'
+        ? reportedCredits
+        : result.pages.length;
+
+    console.log(`[LlamaParse] Parsed ${result.pages.length} pages. Credits used: ${reportedCredits ?? '? (fallback to pageCount)'}`);
 
     const text = pagesToMarkedText(result.pages);
     const markdown = pagesToMarkdown(result.pages);
-    return { text, markdown, pageCount: result.pages.length };
+    return { text, markdown, pageCount: result.pages.length, creditsUsed };
 }
 
 /**
@@ -468,6 +482,9 @@ export const extractPdfWithGemini = onObjectFinalized(
             // its usage after the cascade finishes. Also collected for
             // structured-failure debugging.
             let llamaSucceededOn: SelectedLlamaParseAccount | null = null;
+            // Actual credits LlamaParse charged for the successful job
+            // (NOT page count — see comment in extractWithLlamaParse).
+            let llamaCreditsUsed = 0;
             const llamaErrors: Array<{ account: string; error: string }> = [];
 
             // Extraction priority:
@@ -485,6 +502,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                         structuredMarkdown = result.markdown;
                         extractionVersion = '3.0-llamaparse';
                         llamaSucceededOn = account;
+                        llamaCreditsUsed = result.creditsUsed;
                         break; // Success — stop trying other accounts.
                     } catch (llamaError: any) {
                         const msg = llamaError?.message ?? String(llamaError);
@@ -495,9 +513,19 @@ export const extractPdfWithGemini = onObjectFinalized(
                 }
 
                 if (llamaSucceededOn) {
-                    // Non-fatal usage record; billing is the source of truth.
+                    // Record actual credits consumed (from LlamaParse's
+                    // jobMetadata) — not page count. Cached jobs report
+                    // 0 credits even when pages > 0; using page count
+                    // there inflates our counter and eventually makes
+                    // accounts look exhausted while the dashboard shows
+                    // capacity remaining (the bug that broke Carson/Moo
+                    // routing on 2026-05-03).
                     try {
-                        await recordLlamaParseUsage(llamaSucceededOn.accountId, pageCount!);
+                        if (llamaCreditsUsed > 0) {
+                            await recordLlamaParseUsage(llamaSucceededOn.accountId, llamaCreditsUsed);
+                        } else {
+                            console.log(`💰 [Extract] LlamaParse charged 0 credits (cached/free); skipping counter update`);
+                        }
                     } catch (usageErr: any) {
                         console.warn(`[Extract] Account usage update skipped: ${usageErr.message}`);
                     }

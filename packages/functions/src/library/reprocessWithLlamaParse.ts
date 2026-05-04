@@ -200,10 +200,21 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
             }
 
             // Track usage on the selected LlamaParse account so the rotation
-            // logic knows when to switch. Non-fatal — billing is the source of
-            // truth, this counter is for our own dashboards.
+            // logic knows when to switch. Use ACTUAL credits from
+            // jobMetadata (LlamaParse returns 0 for cached jobs); using
+            // pageCount inflates the counter and eventually makes accounts
+            // look exhausted while the dashboard has capacity. Same root
+            // cause as the cascade-side bug fixed in extractPdfWithGemini.ts.
             try {
-                await recordLlamaParseUsage(selected.accountId, result.pages.length);
+                const reportedCredits = result.jobMetadata.job_credits_usage;
+                const creditsToRecord = typeof reportedCredits === 'number'
+                    ? reportedCredits
+                    : result.pages.length;
+                if (creditsToRecord > 0) {
+                    await recordLlamaParseUsage(selected.accountId, creditsToRecord);
+                } else {
+                    console.log(`[Reprocess] LlamaParse charged 0 credits (cached/free); skipping counter update`);
+                }
             } catch (accountErr: any) {
                 console.warn(
                     `[Reprocess] Account usage update skipped for ${selected.accountId}: ${accountErr.message}`,
