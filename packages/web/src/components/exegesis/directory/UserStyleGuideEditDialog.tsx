@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, AlertTriangle } from 'lucide-react';
+import { Loader2, Save, AlertTriangle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     hasManifestValidationErrors,
@@ -129,7 +129,7 @@ export function UserStyleGuideEditDialog({ open, onOpenChange, guide }: UserStyl
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{t('directory.styleGuides.edit.title')}</DialogTitle>
                     <DialogDescription>
@@ -160,7 +160,7 @@ export function UserStyleGuideEditDialog({ open, onOpenChange, guide }: UserStyl
                     </TabsContent>
 
                     {!draft ? (
-                        <ManifestEmpty t={t} />
+                        <ManifestEmpty guide={guide} />
                     ) : (
                         <>
                             <TabsContent value="footnotes" className="mt-4">
@@ -292,12 +292,47 @@ function DatosTab({
     );
 }
 
-function ManifestEmpty({ t }: { t: (key: string) => string }) {
+function ManifestEmpty({ guide }: { guide: UserStyleGuide }) {
+    const { t, i18n } = useTranslation('exegesis');
+    const { extractManifest } = useUserStyleGuides();
+
+    const handleExtract = async () => {
+        const language = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+        try {
+            await extractManifest.mutateAsync({ guideId: guide.id, language });
+            toast.success(t('directory.styleGuides.toast.manifestExtracted'));
+        } catch (err: any) {
+            console.error('[exegesis] extract manifest failed:', err);
+            const isOverload = err?.isExegesisOverload === true;
+            const corpusEmpty = typeof err?.message === 'string' && err.message.includes('no extracted text');
+            toast.error(
+                isOverload
+                    ? t('directory.styleGuides.toast.manifestExtractOverloaded')
+                    : corpusEmpty
+                        ? t('directory.styleGuides.toast.manifestExtractCorpusNotReady')
+                        : t('directory.styleGuides.toast.manifestExtractFailed'),
+            );
+        }
+    };
+
     return (
-        <div className="rounded-lg border border-border bg-muted/30 p-4 text-center mt-4">
-            <p className="text-sm text-muted-foreground italic">
+        <div className="rounded-lg border border-border bg-muted/30 p-6 text-center mt-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
                 {t('directory.styleGuides.edit.manifestEmpty')}
             </p>
+            <Button
+                type="button"
+                onClick={handleExtract}
+                disabled={extractManifest.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs gap-1.5"
+            >
+                {extractManifest.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Sparkles className="h-3.5 w-3.5" />}
+                {extractManifest.isPending
+                    ? t('directory.styleGuides.edit.extractingNow')
+                    : t('directory.styleGuides.edit.extractNowCta')}
+            </Button>
         </div>
     );
 }

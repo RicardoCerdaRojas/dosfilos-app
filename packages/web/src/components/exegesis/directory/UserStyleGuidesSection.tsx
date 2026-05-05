@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, CheckCircle2, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
+import { BookOpen, CheckCircle2, Pencil, Sparkles, Trash2, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,10 +32,11 @@ import { UserStyleGuideEditDialog } from './UserStyleGuideEditDialog';
  * upload → userStyleGuides doc create.
  */
 export function UserStyleGuidesSection() {
-    const { t } = useTranslation('exegesis');
-    const { guides, isLoading, uploadGuide, setActive, deleteGuide } = useUserStyleGuides();
+    const { t, i18n } = useTranslation('exegesis');
+    const { guides, isLoading, uploadGuide, setActive, deleteGuide, extractManifest } = useUserStyleGuides();
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [editingGuide, setEditingGuide] = useState<UserStyleGuide | null>(null);
+    const [extractingId, setExtractingId] = useState<string | null>(null);
 
     const handleSetActive = async (guideId: string) => {
         try {
@@ -55,6 +56,28 @@ export function UserStyleGuidesSection() {
         } catch (err) {
             console.error('[exegesis] delete guide failed:', err);
             toast.error(t('directory.styleGuides.toast.deleteFailed'));
+        }
+    };
+
+    const handleExtract = async (guide: UserStyleGuide) => {
+        setExtractingId(guide.id);
+        const language = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+        try {
+            await extractManifest.mutateAsync({ guideId: guide.id, language });
+            toast.success(t('directory.styleGuides.toast.manifestExtracted'));
+        } catch (err: any) {
+            console.error('[exegesis] extract manifest failed:', err);
+            const isOverload = err?.isExegesisOverload === true;
+            const corpusEmpty = typeof err?.message === 'string' && err.message.includes('no extracted text');
+            toast.error(
+                isOverload
+                    ? t('directory.styleGuides.toast.manifestExtractOverloaded')
+                    : corpusEmpty
+                        ? t('directory.styleGuides.toast.manifestExtractCorpusNotReady')
+                        : t('directory.styleGuides.toast.manifestExtractFailed'),
+            );
+        } finally {
+            setExtractingId(null);
         }
     };
 
@@ -126,6 +149,20 @@ export function UserStyleGuidesSection() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-0.5 shrink-0">
+                                {!g.manifest && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleExtract(g)}
+                                        disabled={extractingId === g.id || extractManifest.isPending}
+                                        className="p-1 rounded text-warning-subtle-foreground hover:text-success hover:bg-accent disabled:opacity-50 inline-flex items-center gap-1"
+                                        title={t('directory.styleGuides.extractManifestCta')}
+                                        aria-label={t('directory.styleGuides.extractManifestCta')}
+                                    >
+                                        {extractingId === g.id
+                                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                                            : <Sparkles className="h-3 w-3" />}
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => setEditingGuide(g)}
@@ -164,7 +201,7 @@ export function UserStyleGuidesSection() {
             )}
 
             <Dialog open={showUploadForm} onOpenChange={setShowUploadForm}>
-                <DialogContent className="max-w-xl">
+                <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
                         <DialogTitle>{t('directory.styleGuides.uploadTitle')}</DialogTitle>
                         <DialogDescription>
