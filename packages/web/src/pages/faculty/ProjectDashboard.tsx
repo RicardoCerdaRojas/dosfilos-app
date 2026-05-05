@@ -286,7 +286,6 @@ export function ProjectDashboard() {
                 <ProjectSourcePickerModal
                     open={sourcePickerOpen}
                     onOpenChange={setSourcePickerOpen}
-                    userId={user.uid}
                     currentSourceIds={project.sourceIds ?? []}
                     onSave={handleSaveSources}
                     saving={updateSources.isPending}

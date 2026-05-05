@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles, AlertTriangle, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
 import { libraryService } from '@dosfilos/application';
 import {
     ResourcesNotIndexedError,
@@ -11,7 +10,7 @@ import {
     type RankedResource,
     type SourceType,
 } from '@dosfilos/domain';
-import { useFirebase } from '@/context/firebase-context';
+import { useLibrary } from '@/hooks/library';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -59,7 +58,6 @@ export function ExtractFromLibraryDialog({
     onOpenChange: (open: boolean) => void;
 }) {
     const { t } = useTranslation('exegesis');
-    const { user } = useFirebase();
     const extractExcerpts = useExtractExcerpts();
 
     // Suspended-error state: when the use case throws
@@ -91,17 +89,12 @@ export function ExtractFromLibraryDialog({
     // everything regardless.
     const [groupFilter, setGroupFilter] = useState<string>('all');
 
-    // Fetch the user's library each time the dialog opens. The hook
-    // re-runs on open via the `enabled` flag so a stale list from a
-    // previous open doesn't show up.
-    const { data: resources = [], isLoading } = useQuery({
-        queryKey: ['library', 'userResources', user?.uid, 'forExtraction'],
-        queryFn: async () => {
-            if (!user?.uid) return [];
-            return libraryService.getUserResources(user.uid);
-        },
-        enabled: !!user?.uid && open,
-    });
+    // Reads from the globally synced library cache — `useLibrarySync`
+    // (mounted once at the dashboard shell) keeps it fresh in real
+    // time, so opening this dialog never pays a cold Firestore round
+    // trip and uploads the user does in another tab show up here
+    // automatically.
+    const { resources, isLoading } = useLibrary();
 
     // v1.7 smart-match: rank the user's library against the paper.
     // Fires on dialog open in parallel with the resource list fetch.

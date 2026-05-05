@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { BookOpen, Check, Loader2, Search } from 'lucide-react';
-import { libraryService } from '@dosfilos/application';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { useLibrary } from '@/hooks/library';
 
 interface PickerResource {
     id: string;
@@ -17,7 +17,6 @@ interface PickerResource {
 interface ProjectSourcePickerModalProps {
     open: boolean;
     onOpenChange: (o: boolean) => void;
-    userId: string;
     /** Currently attached source IDs — pre-checks them in the picker. */
     currentSourceIds: string[];
     /** Triggered with the new selection when the user clicks Save. */
@@ -26,22 +25,15 @@ interface ProjectSourcePickerModalProps {
     saving: boolean;
 }
 
-/**
- * Modal that lets the user pick which resources from their library are
- * attached as sources to this project. Loads the user's library via the
- * `LibraryService` (no direct Firestore calls).
- */
 export function ProjectSourcePickerModal({
     open,
     onOpenChange,
-    userId,
     currentSourceIds,
     onSave,
     saving,
 }: ProjectSourcePickerModalProps) {
     const { t } = useTranslation('projects');
-    const [docs, setDocs] = useState<PickerResource[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { resources, isLoading: loading } = useLibrary();
     const [search, setSearch] = useState('');
     const [selected, setSelected] = useState<Set<string>>(new Set(currentSourceIds));
 
@@ -51,28 +43,15 @@ export function ProjectSourcePickerModal({
         setSelected(new Set(currentSourceIds));
     }, [currentSourceIds]);
 
-    // Load the user's library on open. Re-fetches every open so newly uploaded
-    // resources show up without a refresh.
-    useEffect(() => {
-        if (!open) return;
-        let cancelled = false;
-        setLoading(true);
-        (async () => {
-            try {
-                const resources = await libraryService.getUserResources(userId);
-                if (cancelled) return;
-                setDocs(resources.map(r => ({
-                    id: r.id,
-                    title: r.title,
-                    author: r.author,
-                    indexingStatus: r.indexingStatus,
-                })));
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [open, userId]);
+    const docs: PickerResource[] = useMemo(
+        () => resources.map(r => ({
+            id: r.id,
+            title: r.title,
+            author: r.author,
+            indexingStatus: r.indexingStatus,
+        })),
+        [resources],
+    );
 
     const filtered = useMemo(() => {
         if (!search.trim()) return docs;

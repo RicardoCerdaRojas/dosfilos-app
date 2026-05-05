@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { useFirebase } from '@/context/firebase-context';
@@ -7,6 +7,7 @@ import { FirebaseConfigRepository } from '@dosfilos/infrastructure';
 import { LibraryResourceEntity, SermonSeriesEntity, Citation } from '@dosfilos/domain';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { useLibrary } from '@/hooks/library';
 import { parseLocalDate } from '@/lib/dateUtils';
 
 export type PlannerStep = 'strategy' | 'context' | 'objective' | 'structure' | 'generating';
@@ -54,52 +55,63 @@ export function usePlannerWizard() {
     const [isChatOpen, setIsChatOpen] = useState(true);
     const [selectedBibleRef, setSelectedBibleRef] = useState<string | null>(null);
 
-    // Initial Load
+    // User library comes from the shared cache populated by
+    // `useLibrarySync`. We don't react to real-time updates here —
+    // doing so would re-run the saved-config logic and clobber any
+    // selections the user has made mid-session. The init effect runs
+    // once per user using the first non-loading snapshot.
+    const { resources: userRes, isLoading: userResLoading } = useLibrary();
+    const initRanRef = useRef(false);
+
+    // Initial Load — fires once after `userRes` has hydrated.
     useEffect(() => {
-        if (user) {
-            const loadResources = async () => {
-                try {
-                    const [userRes, coreRes, userConfig] = await Promise.all([
-                        libraryService.getUserResources(user.uid),
-                        libraryService.getCoreResources(),
-                        new ConfigService(new FirebaseConfigRepository()).getUserConfig(user.uid)
-                    ]);
+        if (!user) return;
+        if (userResLoading) return;
+        if (initRanRef.current) return;
+        initRanRef.current = true;
 
-                    // Merge resources (Core first)
-                    const allResources = [...coreRes, ...userRes.filter(ur => !coreRes.some(cr => cr.id === ur.id))];
-                    setResources(allResources);
+        const loadResources = async () => {
+            try {
+                const [coreRes, userConfig] = await Promise.all([
+                    libraryService.getCoreResources(),
+                    new ConfigService(new FirebaseConfigRepository()).getUserConfig(user.uid)
+                ]);
 
-                    // Check index status
-                    const statuses: Record<string, boolean> = {};
-                    for (const resource of allResources) {
-                        try {
-                            const isIndexed = await libraryService.isResourceIndexed(resource.id);
-                            statuses[resource.id] = isIndexed;
-                        } catch {
-                            statuses[resource.id] = false;
-                        }
+                // Merge resources (Core first)
+                const allResources = [...coreRes, ...userRes.filter(ur => !coreRes.some(cr => cr.id === ur.id))];
+                setResources(allResources);
+
+                // Check index status
+                const statuses: Record<string, boolean> = {};
+                for (const resource of allResources) {
+                    try {
+                        const isIndexed = await libraryService.isResourceIndexed(resource.id);
+                        statuses[resource.id] = isIndexed;
+                    } catch {
+                        statuses[resource.id] = false;
                     }
-                    setIndexStatus(statuses);
-
-                    // Load saved config
-                    const savedLibraryDocIds = (userConfig as any)?.seriesPlanner?.libraryDocIds || [];
-                    const coreIds = coreRes.map(r => r.id);
-
-                    if (savedLibraryDocIds.length > 0) {
-                        const validUserIds = savedLibraryDocIds.filter((id: string) =>
-                            userRes.some(r => r.id === id)
-                        );
-                        setSelectedResources([...coreIds, ...validUserIds]);
-                    } else {
-                        setSelectedResources(allResources.map(r => r.id));
-                    }
-                } catch (error) {
-                    console.error('Error loading resources:', error);
                 }
-            };
-            loadResources();
-        }
-    }, [user]);
+                setIndexStatus(statuses);
+
+                // Load saved config
+                const savedLibraryDocIds = (userConfig as any)?.seriesPlanner?.libraryDocIds || [];
+                const coreIds = coreRes.map(r => r.id);
+
+                if (savedLibraryDocIds.length > 0) {
+                    const validUserIds = savedLibraryDocIds.filter((id: string) =>
+                        userRes.some(r => r.id === id)
+                    );
+                    setSelectedResources([...coreIds, ...validUserIds]);
+                } else {
+                    setSelectedResources(allResources.map(r => r.id));
+                }
+            } catch (error) {
+                console.error('Error loading resources:', error);
+                initRanRef.current = false; // allow retry on next effect tick
+            }
+        };
+        loadResources();
+    }, [user, userRes, userResLoading]);
 
     // Actions
     const handleGenerateObjective = async () => {
