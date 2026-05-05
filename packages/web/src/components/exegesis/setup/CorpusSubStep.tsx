@@ -5,6 +5,7 @@ import {
     CheckCircle2,
     ChevronDown,
     ChevronRight,
+    ExternalLink,
     FileStack,
     FileText,
     Library,
@@ -202,6 +203,7 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
     const { t } = useTranslation('exegesis');
     const { updateSource, removeSource } = useExegesisPapers();
     const extractExcerpts = useExtractExcerpts();
+    const library = useLibrary();
     const isCitable = CITABLE_SOURCE_TYPES.has(source.sourceType);
     const isExtracted = source.mode === 'extracted-excerpts';
     const isStale = isExcerptSetStale(source, {
@@ -209,6 +211,14 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
         assignmentBrief: paper.assignmentBrief,
     });
     const canReExtract = isExtracted && !!source.sourceLibraryResourceId;
+    // The library_resource backref lets us link to the original PDF
+    // for "verify the citation against the source" workflows. Only
+    // populated when the source came from the library-extraction flow
+    // (Caso 1/2). Direct uploads (Caso 3) never have it.
+    const libraryResource = source.sourceLibraryResourceId
+        ? library.resources.find(r => r.id === source.sourceLibraryResourceId)
+        : null;
+    const originalUrl = libraryResource?.storageUrl ?? null;
     // Excerpts panel is collapsed by default — sources can have up to
     // 30 chunks each and unfolding them all by default would dwarf
     // everything else on the page. The user expands when they want
@@ -280,6 +290,18 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                         </p>
                     )}
                 </div>
+                {originalUrl && (
+                    <a
+                        href={originalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 rounded text-muted-foreground hover:text-primary hover:bg-accent transition-colors inline-flex items-center"
+                        aria-label={t('paperSetup.subSteps.corpus.list.viewOriginal')}
+                        title={t('paperSetup.subSteps.corpus.list.viewOriginal')}
+                    >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                )}
                 <button
                     type="button"
                     onClick={handleRemove}

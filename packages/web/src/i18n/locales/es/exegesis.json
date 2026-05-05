@@ -613,7 +613,8 @@
                     "extractCta": "Extraer de mi biblioteca",
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
-                    "remove": "Quitar fuente"
+                    "remove": "Quitar fuente",
+                    "viewOriginal": "Abrir el PDF original en una pestaña nueva"
                 },
                 "extract": {
                     "dialogTitle": "Extraer fragmentos de tu biblioteca",

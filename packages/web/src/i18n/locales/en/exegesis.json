@@ -613,7 +613,8 @@
                     "extractCta": "Extract from my library",
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
-                    "remove": "Remove source"
+                    "remove": "Remove source",
+                    "viewOriginal": "Open the original PDF in a new tab"
                 },
                 "extract": {
                     "dialogTitle": "Extract excerpts from your library",
