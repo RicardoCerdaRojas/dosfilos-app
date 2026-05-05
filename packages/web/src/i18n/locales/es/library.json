@@ -262,6 +262,30 @@
         "buy": "Comprar",
         "close": "Cerrar"
     },
+    "metadataBackfill": {
+        "title_one": "{{count}} recurso sin libros bíblicos asignados",
+        "title_other": "{{count}} recursos sin libros bíblicos asignados",
+        "body": "Podemos inferirlos del título (BHQ → todo el AT, \"2 Peter & Jude\" → 2 Pe + Judas, etc.) y completarlos automáticamente. Solo escribimos cuando el match es claro; los demás los puedes editar manualmente.",
+        "cta_one": "Detectar ({{count}})",
+        "cta_other": "Detectar ({{count}})",
+        "running": "Detectando…",
+        "dismiss": "Descartar",
+        "summary": {
+            "updated_one": "✨ {{count}} recurso actualizado",
+            "updated_other": "✨ {{count}} recursos actualizados",
+            "noUpdates": "Ninguno se pudo detectar automáticamente",
+            "manual_one": "{{count}} sin match confiable — editar manualmente desde el recurso.",
+            "manual_other": "{{count}} sin match confiable — editar manualmente desde cada recurso.",
+            "manualWithFailures": "{{manual}} sin match confiable. {{failed}} con error de guardado — vuelve a intentar."
+        },
+        "toast": {
+            "success_one": "{{count}} recurso actualizado con libros detectados",
+            "success_other": "{{count}} recursos actualizados con libros detectados",
+            "partial": "{{updated}} actualizados, {{failed}} con error de guardado",
+            "allSkipped": "Ningún título tenía suficiente señal para inferir libros automáticamente",
+            "error": "Error al ejecutar la detección. Intenta de nuevo."
+        }
+    },
     "toast": {
         "uploadSuccess": "Recurso agregado a la biblioteca",
         "uploadError": "Error al subir el recurso",

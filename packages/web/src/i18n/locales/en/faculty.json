@@ -9,7 +9,7 @@
         "responseDetailed": "Detailed Response",
         "briefDescription": "Brief and concise",
         "detailedDescription": "Detailed and exhaustive",
-        "responseLength": "AI response length",
+        "responseLength": "Response length",
         "sessions": "Sessions",
         "extract": "Extract",
         "projectsAndSessions": "Projects and Sessions",
@@ -132,7 +132,7 @@
     },
     "editor": {
         "title": "Co-authoring Editor",
-        "processing": "Processing with AI...",
+        "processing": "Processing...",
         "actions": {
             "rewrite": "Rewrite",
             "expand": "Expand",

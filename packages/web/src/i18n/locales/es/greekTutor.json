@@ -302,7 +302,7 @@
             "syntaxErrorMessage": "Lo sentimos, no pudimos completar el análisis sintáctico de este pasaje en este momento.",
             "whatCanYouDo": "¿Qué puedes hacer?",
             "tryAgain": "Intenta de nuevo",
-            "tryAgainDescription": "El análisis usa IA y a veces puede fallar temporalmente. Haz click nuevamente en \"Estructura Sintáctica\" para reintentar.",
+            "tryAgainDescription": "El análisis a veces puede fallar temporalmente. Haz click nuevamente en \"Estructura Sintáctica\" para reintentar.",
             "tryShort": "Prueba con un pasaje más corto",
             "tryShortDescription": "Los pasajes más largos son más complejos de analizar. Intenta seleccionar un solo versículo.",
             "comeLater": "Regresa más tarde",
