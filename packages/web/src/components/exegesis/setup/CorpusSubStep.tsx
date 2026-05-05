@@ -98,6 +98,14 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
         setDialogOpen(true);
     };
 
+    // When the paper has zero sources, the user's first decision is
+    // "how do I bring sources in?" — so the SourcesList (which renders
+    // the extraction hero in that state) becomes the top action and
+    // the rubric gap card drops below as a preview of what's coming.
+    // Once the user has at least one source, the gap card moves back
+    // up because it's now the guidance for what to add next.
+    const isStartingEmpty = paper.sources.length === 0;
+
     return (
         <div className="space-y-6">
             <header className="flex items-start gap-3">
@@ -115,13 +123,25 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
 
             {paper.rubric && <RubricRigorIndicator rubric={paper.rubric} />}
 
-            <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
-
-            <CorpusSourcesList
-                paper={paper}
-                onAdd={() => openDialog(null)}
-                onExtract={() => setExtractDialogOpen(true)}
-            />
+            {isStartingEmpty ? (
+                <>
+                    <CorpusSourcesList
+                        paper={paper}
+                        onAdd={() => openDialog(null)}
+                        onExtract={() => setExtractDialogOpen(true)}
+                    />
+                    <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
+                </>
+            ) : (
+                <>
+                    <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
+                    <CorpusSourcesList
+                        paper={paper}
+                        onAdd={() => openDialog(null)}
+                        onExtract={() => setExtractDialogOpen(true)}
+                    />
+                </>
+            )}
 
             <AddSourceDialog
                 paper={paper}
