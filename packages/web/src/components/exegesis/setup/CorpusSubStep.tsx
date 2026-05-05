@@ -609,7 +609,7 @@ function AddSourceDialog({
             if (uploading && !next) return;
             onOpenChange(next);
         }}>
-            <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
+            <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
                 <DialogHeader className="px-6 py-4 border-b border-border">
                     <DialogTitle className="text-base">
                         {t('paperSetup.subSteps.corpus.upload.title')}
