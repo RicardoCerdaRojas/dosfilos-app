@@ -42,6 +42,15 @@ export interface ExtractExcerptsForPaperInput {
      * Default 30 (the v1.5 spec ceiling).
      */
     maxExcerptsPerResource?: number;
+    /**
+     * When true (default) and a re-extraction overlaps an existing
+     * source for the same library resource, excerpts the user touched
+     * (`userEdited === true`) are preserved at the top and the fresh
+     * fragments are appended after them. When false, the source's
+     * excerpt list is replaced wholesale — used by callers that want
+     * to discard manual edits explicitly.
+     */
+    preserveUserEdited?: boolean;
 }
 
 export interface ExtractExcerptsForPaperOutput {
@@ -141,11 +150,25 @@ export class ExtractExcerptsForPaperUseCase {
         const fingerprint = computeExtractionFingerprint(passageRef, paper.assignmentBrief);
         const extractedAt = new Date();
 
+        const preserveUserEdited = input.preserveUserEdited ?? true;
+
         for (const selection of input.selections) {
-            const excerpts = extraction.excerptsByResource[selection.libraryResourceId] ?? [];
+            const fresh = extraction.excerptsByResource[selection.libraryResourceId] ?? [];
             const existing = existingByLibraryResource.get(selection.libraryResourceId);
 
             if (existing) {
+                // Merge or replace based on the caller's intent. With
+                // `preserveUserEdited` (default), we keep every excerpt
+                // the user has edited at the top and append fresh ones
+                // after. Same-text duplicates between user-edited and
+                // fresh would be cosmetically annoying; we drop fresh
+                // entries that exactly match an existing user-edited
+                // text so the user never sees their edit alongside the
+                // pre-edit version.
+                const excerpts = preserveUserEdited
+                    ? mergePreservingUserEdited(existing.excerpts, fresh)
+                    : fresh;
+
                 // REPLACE in place — preserves order and id, swaps
                 // sourceType/label/excerpts. citationKey only updated
                 // when the caller supplied one (allows the UI to keep
@@ -177,7 +200,7 @@ export class ExtractExcerptsForPaperUseCase {
                         citationKey: selection.citationKey ?? null,
                         order: paper.sources.length + Object.keys(sourceIdsByLibraryResource).length,
                         mode: 'extracted-excerpts',
-                        excerpts,
+                        excerpts: fresh,
                         sourceLibraryResourceId: selection.libraryResourceId,
                         extractedAt,
                         extractionFingerprint: fingerprint,
@@ -205,6 +228,28 @@ function clampExcerptsPerResource(value?: number): number {
     if (value === undefined) return DEFAULT_EXCERPTS_PER_RESOURCE;
     if (!Number.isFinite(value)) return DEFAULT_EXCERPTS_PER_RESOURCE;
     return Math.max(MIN_EXCERPTS_PER_RESOURCE, Math.min(MAX_EXCERPTS_PER_RESOURCE, Math.floor(value)));
+}
+
+/**
+ * Returns `[...userEditedExisting, ...freshExceptDuplicates]`. Fresh
+ * entries whose text exactly matches a user-edited entry are dropped
+ * — the user already curated that fragment and we don't want a
+ * duplicate row appearing alongside their edit.
+ *
+ * Order matters for the UI: user-edited entries lead so the user sees
+ * their work first; fresh entries follow with the highest-ranked at
+ * the top of the fresh group (the extractor already returns them in
+ * relevance-desc order).
+ */
+function mergePreservingUserEdited(
+    existing: ReadonlyArray<ProjectSourceExcerpt>,
+    fresh: ReadonlyArray<ProjectSourceExcerpt>,
+): ReadonlyArray<ProjectSourceExcerpt> {
+    const userEdited = existing.filter(e => e.userEdited);
+    if (userEdited.length === 0) return fresh;
+    const editedTexts = new Set(userEdited.map(e => e.text));
+    const dedupedFresh = fresh.filter(f => !editedTexts.has(f.text));
+    return [...userEdited, ...dedupedFresh];
 }
 
 // Re-export for callers that want to construct excerpt entries by
