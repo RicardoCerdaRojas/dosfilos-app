@@ -599,6 +599,8 @@ function AddSourceDialog({
 
     const isCitable = CITABLE_SOURCE_TYPES.has(sourceType);
 
+    const availableInLibrary = library.resources.length - attachedCorpusIds.size;
+
     return (
         <Dialog open={open} onOpenChange={(next) => {
             // Block closing while the upload is in flight so the
@@ -607,186 +609,231 @@ function AddSourceDialog({
             if (uploading && !next) return;
             onOpenChange(next);
         }}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>
+            <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
+                <DialogHeader className="px-6 py-4 border-b border-border">
+                    <DialogTitle className="text-base">
                         {t('paperSetup.subSteps.corpus.upload.title')}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-[12px] leading-snug">
                         {t('paperSetup.subSteps.corpus.upload.dialogSubtitle')}
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-3">
 
-            {/* Mode toggle: subir nuevo / elegir de mi biblioteca */}
-            <div className="flex gap-2">
-                <ModeOption
-                    active={mode === 'upload'}
-                    onClick={() => setMode('upload')}
-                    icon={<Upload className="h-3.5 w-3.5" />}
-                    label={t('paperSetup.subSteps.corpus.upload.modeUpload')}
-                />
-                <ModeOption
-                    active={mode === 'library'}
-                    onClick={() => setMode('library')}
-                    icon={<Library className="h-3.5 w-3.5" />}
-                    label={t('paperSetup.subSteps.corpus.upload.modeLibrary')}
-                />
-            </div>
+                <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-[220px_1fr] min-h-0 overflow-hidden">
+                        {/* Sidebar: mode tabs */}
+                        <aside className="border-b md:border-b-0 md:border-r border-border bg-muted/20 p-3 space-y-2">
+                            <SidebarTab
+                                active={mode === 'upload'}
+                                onClick={() => setMode('upload')}
+                                icon={<Upload className="h-4 w-4" />}
+                                label={t('paperSetup.subSteps.corpus.upload.modeUpload')}
+                                helper="PDF o EPUB"
+                            />
+                            <SidebarTab
+                                active={mode === 'library'}
+                                onClick={() => setMode('library')}
+                                icon={<Library className="h-4 w-4" />}
+                                label={t('paperSetup.subSteps.corpus.upload.modeLibrary')}
+                                helper={availableInLibrary > 0
+                                    ? `${availableInLibrary} disponibles`
+                                    : library.isLoading ? 'Cargando…' : 'Sin recursos'}
+                            />
+                        </aside>
 
-            {mode === 'upload' && (
-                <div>
-                    <label className="block text-xs font-medium text-foreground mb-1">
-                        {t('paperSetup.subSteps.corpus.upload.fileLabel')}
-                    </label>
-                    <FileDropzone
-                        accept=".pdf,.epub"
-                        value={file}
-                        onChange={handleFile}
-                        disabled={uploading}
-                        hint="PDF o EPUB"
-                        emptyLabel={t('common:fileDropzone.empty')}
-                        clearLabel={t('common:fileDropzone.clear')}
-                    />
-                </div>
-            )}
-
-            {mode === 'library' && (
-                <LibraryPicker
-                    isLoading={library.isLoading}
-                    resources={filteredResources}
-                    pickedResourceId={pickedResourceId}
-                    onPick={handlePickResource}
-                    searchTerm={librarySearch}
-                    onSearchChange={setLibrarySearch}
-                    totalAttached={attachedCorpusIds.size}
-                    totalAvailable={library.resources.length}
-                />
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_220px] gap-2">
-                <div>
-                    <label className="block text-xs font-medium text-foreground mb-1">
-                        {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
-                    </label>
-                    <input
-                        type="text"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        disabled={uploading}
-                        placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
-                        className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs font-medium text-foreground mb-1">
-                        {t('paperSetup.subSteps.corpus.upload.typeLabel')}
-                    </label>
-                    <SourceTypePicker
-                        value={sourceType}
-                        onChange={setSourceType}
-                        disabled={uploading}
-                        className="w-full"
-                    />
-                </div>
-            </div>
-
-            <p className="text-[11px] text-muted-foreground">
-                {t('paperSetup.subSteps.corpus.upload.typeDescription')}
-            </p>
-
-            {isCitable && (
-                <div>
-                    <label className="block text-xs font-medium text-foreground mb-1">
-                        {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}
-                    </label>
-                    <input
-                        type="text"
-                        value={citationKey}
-                        onChange={(e) => setCitationKey(e.target.value)}
-                        disabled={uploading}
-                        placeholder={t('paperSetup.subSteps.corpus.upload.citationKeyPlaceholder')}
-                        className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                    />
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                        {t('paperSetup.subSteps.corpus.upload.citationKeyHint')}
-                    </p>
-                </div>
-            )}
-
-            {!isCitable && (
-                <p className="text-[11px] text-warning-subtle-foreground inline-flex items-start gap-1">
-                    <BookOpenText className="h-3 w-3 mt-0.5 shrink-0" />
-                    {t('paperSetup.subSteps.corpus.upload.modelPaperHint')}
-                </p>
-            )}
-
-            {uploading && progress !== null && mode === 'upload' && (
-                <p className="text-xs text-muted-foreground">
-                    {t('paperSetup.subSteps.corpus.upload.uploading', { progress })}
-                </p>
-            )}
-
-                    <DialogFooter className="pt-2">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => onOpenChange(false)}
-                            disabled={uploading}
-                            className="text-xs"
-                        >
-                            {t('setup.cancel')}
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={!canSubmit}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                        >
-                            {uploading ? (
-                                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                            ) : mode === 'upload' ? (
-                                <Upload className="h-4 w-4 mr-1.5" />
+                        {/* Main pane */}
+                        <div className="overflow-y-auto px-6 py-5 space-y-5">
+                            {mode === 'upload' ? (
+                                <FileDropzone
+                                    accept=".pdf,.epub"
+                                    value={file}
+                                    onChange={handleFile}
+                                    disabled={uploading}
+                                    hint="PDF o EPUB · hasta 250 MB"
+                                    emptyLabel={t('common:fileDropzone.empty')}
+                                    clearLabel={t('common:fileDropzone.clear')}
+                                />
                             ) : (
-                                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                                <LibraryPicker
+                                    isLoading={library.isLoading}
+                                    resources={filteredResources}
+                                    pickedResourceId={pickedResourceId}
+                                    onPick={handlePickResource}
+                                    searchTerm={librarySearch}
+                                    onSearchChange={setLibrarySearch}
+                                    totalAttached={attachedCorpusIds.size}
+                                    totalAvailable={library.resources.length}
+                                />
                             )}
-                            {mode === 'upload'
-                                ? t('paperSetup.subSteps.corpus.upload.submit')
-                                : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
-                        </Button>
-                    </DialogFooter>
+
+                            <FieldGroup>
+                                <FieldLabel htmlFor="addsource-label">
+                                    {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
+                                </FieldLabel>
+                                <input
+                                    id="addsource-label"
+                                    type="text"
+                                    value={displayName}
+                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    disabled={uploading}
+                                    placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
+                                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                                />
+                            </FieldGroup>
+
+                            <FieldGroup>
+                                <FieldLabel htmlFor="addsource-type">
+                                    {t('paperSetup.subSteps.corpus.upload.typeLabel')}
+                                </FieldLabel>
+                                <SourceTypePicker
+                                    id="addsource-type"
+                                    value={sourceType}
+                                    onChange={setSourceType}
+                                    disabled={uploading}
+                                    className="w-full !py-2 !text-sm"
+                                />
+                                <FieldHint>
+                                    {t('paperSetup.subSteps.corpus.upload.typeDescription')}
+                                </FieldHint>
+                                {!isCitable && (
+                                    <p className="text-[11px] text-warning-subtle-foreground inline-flex items-start gap-1.5 mt-0.5">
+                                        <BookOpenText className="h-3 w-3 mt-0.5 shrink-0" />
+                                        {t('paperSetup.subSteps.corpus.upload.modelPaperHint')}
+                                    </p>
+                                )}
+                            </FieldGroup>
+
+                            {isCitable && (
+                                <FieldGroup>
+                                    <FieldLabel htmlFor="addsource-cite">
+                                        {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}
+                                        <span className="text-muted-foreground font-normal ml-1">· opcional</span>
+                                    </FieldLabel>
+                                    <input
+                                        id="addsource-cite"
+                                        type="text"
+                                        value={citationKey}
+                                        onChange={(e) => setCitationKey(e.target.value)}
+                                        disabled={uploading}
+                                        placeholder={t('paperSetup.subSteps.corpus.upload.citationKeyPlaceholder')}
+                                        className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                                    />
+                                    <FieldHint>
+                                        {t('paperSetup.subSteps.corpus.upload.citationKeyHint')}
+                                    </FieldHint>
+                                </FieldGroup>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Sticky-feeling footer: separated by top border */}
+                    <div className="border-t border-border px-6 py-3 flex items-center gap-3 bg-muted/20">
+                        {uploading && progress !== null && mode === 'upload' && (
+                            <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                {t('paperSetup.subSteps.corpus.upload.uploading', { progress })}
+                            </p>
+                        )}
+                        <div className="flex items-center gap-2 ml-auto">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => onOpenChange(false)}
+                                disabled={uploading}
+                                className="text-sm"
+                            >
+                                {t('setup.cancel')}
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={!canSubmit}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm gap-1.5"
+                            >
+                                {uploading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : mode === 'upload' ? (
+                                    <Upload className="h-4 w-4" />
+                                ) : (
+                                    <CheckCircle2 className="h-4 w-4" />
+                                )}
+                                {mode === 'upload'
+                                    ? t('paperSetup.subSteps.corpus.upload.submit')
+                                    : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
+                            </Button>
+                        </div>
+                    </div>
                 </form>
             </DialogContent>
         </Dialog>
     );
 }
 
-// ── Mode toggle pill ────────────────────────────────────────────────────
+// ── Field primitives ───────────────────────────────────────────────────
 
-function ModeOption({
+function FieldGroup({ children }: { children: React.ReactNode }) {
+    return <div className="space-y-1.5">{children}</div>;
+}
+
+function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: React.ReactNode }) {
+    return (
+        <label
+            htmlFor={htmlFor}
+            className="block text-[12.5px] font-medium text-foreground"
+        >
+            {children}
+        </label>
+    );
+}
+
+function FieldHint({ children }: { children: React.ReactNode }) {
+    return (
+        <p className="text-[11px] text-muted-foreground leading-snug">
+            {children}
+        </p>
+    );
+}
+
+// ── Sidebar mode tab (vertical card) ───────────────────────────────────
+
+function SidebarTab({
     active,
     onClick,
     icon,
     label,
+    helper,
 }: {
     active: boolean;
     onClick: () => void;
     icon: React.ReactNode;
     label: string;
+    helper: string;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className={[
-                'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
-                active
-                    ? 'border-success bg-success-subtle text-success-subtle-foreground'
-                    : 'border-border bg-card text-muted-foreground hover:bg-accent',
-            ].join(' ')}
             aria-pressed={active}
+            className={[
+                'w-full text-left rounded-lg border px-3 py-2.5 transition-colors flex items-start gap-2.5',
+                active
+                    ? 'border-primary bg-primary/5 text-foreground shadow-sm'
+                    : 'border-transparent bg-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground',
+            ].join(' ')}
         >
-            {icon}
-            {label}
+            <span className={[
+                'mt-0.5 shrink-0',
+                active ? 'text-primary' : 'text-muted-foreground',
+            ].join(' ')}>
+                {icon}
+            </span>
+            <span className="flex-1 min-w-0">
+                <span className="block text-[13px] font-semibold leading-tight">
+                    {label}
+                </span>
+                <span className="block text-[11px] text-muted-foreground mt-0.5 leading-tight">
+                    {helper}
+                </span>
+            </span>
         </button>
     );
 }
@@ -815,53 +862,61 @@ function LibraryPicker({
     const { t } = useTranslation('exegesis');
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
             <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <input
                     type="search"
                     value={searchTerm}
                     onChange={(e) => onSearchChange(e.target.value)}
                     placeholder={t('paperSetup.subSteps.corpus.upload.librarySearchPlaceholder')}
-                    className="w-full rounded-md border border-border bg-card pl-8 pr-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    className="w-full rounded-md border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 />
             </div>
 
             {isLoading ? (
-                <p className="text-xs text-muted-foreground inline-flex items-center gap-2 py-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    {t('paperSetup.subSteps.corpus.upload.libraryLoading')}
-                </p>
+                <div className="rounded-lg border border-border bg-muted/20 px-4 py-8 text-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mx-auto" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                        {t('paperSetup.subSteps.corpus.upload.libraryLoading')}
+                    </p>
+                </div>
             ) : resources.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic py-2">
-                    {totalAvailable === 0
-                        ? t('paperSetup.subSteps.corpus.upload.libraryEmpty')
-                        : totalAttached >= totalAvailable
-                            ? t('paperSetup.subSteps.corpus.upload.libraryAllAttached')
-                            : t('paperSetup.subSteps.corpus.upload.librarySearchEmpty')}
-                </p>
+                <div className="rounded-lg border border-dashed border-border bg-muted/10 px-4 py-8 text-center">
+                    <p className="text-xs text-muted-foreground">
+                        {totalAvailable === 0
+                            ? t('paperSetup.subSteps.corpus.upload.libraryEmpty')
+                            : totalAttached >= totalAvailable
+                                ? t('paperSetup.subSteps.corpus.upload.libraryAllAttached')
+                                : t('paperSetup.subSteps.corpus.upload.librarySearchEmpty')}
+                    </p>
+                </div>
             ) : (
-                <ul className="max-h-64 overflow-y-auto rounded-md border border-border bg-card divide-y divide-border">
+                <ul className="max-h-[320px] overflow-y-auto rounded-lg border border-border bg-card divide-y divide-border">
                     {resources.map(r => {
                         const status = libraryService.getResourceIndexStatus(r);
+                        const picked = pickedResourceId === r.id;
                         return (
                             <li key={r.id}>
                                 <button
                                     type="button"
                                     onClick={() => onPick(r)}
                                     className={[
-                                        'w-full text-left px-3 py-2 flex items-start gap-2 transition-colors',
-                                        pickedResourceId === r.id
-                                            ? 'bg-success-subtle'
-                                            : 'hover:bg-accent',
+                                        'w-full text-left px-3.5 py-2.5 flex items-start gap-3 transition-colors',
+                                        picked
+                                            ? 'bg-success-subtle/60'
+                                            : 'hover:bg-accent/40',
                                     ].join(' ')}
                                 >
-                                    <FileText className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                                    <FileText className={[
+                                        'h-4 w-4 mt-0.5 shrink-0',
+                                        picked ? 'text-success' : 'text-muted-foreground',
+                                    ].join(' ')} />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-foreground truncate">
+                                        <p className="text-[13px] font-medium text-foreground truncate">
                                             {r.title}
                                         </p>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                        <div className="flex items-center gap-2 mt-1">
                                             {r.author && (
                                                 <p className="text-[11px] text-muted-foreground truncate">
                                                     {r.author}
@@ -870,8 +925,8 @@ function LibraryPicker({
                                             <ResourceReadinessBadge status={status} />
                                         </div>
                                     </div>
-                                    {pickedResourceId === r.id && (
-                                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                    {picked && (
+                                        <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
                                     )}
                                 </button>
                             </li>
