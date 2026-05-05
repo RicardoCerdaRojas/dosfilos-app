@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/i18n';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { assessRubricRigor, type RubricRigorLevel, type UserRubric } from '@dosfilos/domain';
@@ -32,6 +33,7 @@ export function UserRubricsSection() {
     const { rubrics, isLoading, deleteRubric, setDefault } = useUserRubrics();
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingRubric, setEditingRubric] = useState<UserRubric | null>(null);
+    const [deletingRubric, setDeletingRubric] = useState<UserRubric | null>(null);
 
     const handleSetDefault = async (rubricId: string) => {
         try {
@@ -43,10 +45,12 @@ export function UserRubricsSection() {
         }
     };
 
-    const handleDelete = async (rubric: UserRubric) => {
-        if (!window.confirm(t('directory.rubrics.deleteConfirm', { name: rubric.displayName }))) return;
+    const handleDeleteConfirmed = async () => {
+        if (!deletingRubric) return;
+        const rubricId = deletingRubric.id;
+        setDeletingRubric(null);
         try {
-            await deleteRubric.mutateAsync(rubric.id);
+            await deleteRubric.mutateAsync(rubricId);
             toast.success(t('directory.rubrics.toast.deleted'));
         } catch (err) {
             console.error('[exegesis] delete rubric failed:', err);
@@ -156,7 +160,7 @@ export function UserRubricsSection() {
                                 )}
                                 <button
                                     type="button"
-                                    onClick={() => handleDelete(r)}
+                                    onClick={() => setDeletingRubric(r)}
                                     disabled={deleteRubric.isPending}
                                     className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent disabled:opacity-50"
                                     title={t('directory.rubrics.delete')}
@@ -192,6 +196,16 @@ export function UserRubricsSection() {
                     rubric={editingRubric}
                 />
             )}
+
+            <ConfirmDialog
+                open={!!deletingRubric}
+                onOpenChange={(next) => { if (!next) setDeletingRubric(null); }}
+                title={t('directory.rubrics.deleteDialog.title', { name: deletingRubric?.displayName ?? '' })}
+                body={t('directory.rubrics.deleteDialog.body')}
+                confirmLabel={t('directory.rubrics.deleteDialog.confirm')}
+                cancelLabel={t('directory.rubrics.deleteDialog.cancel')}
+                onConfirm={handleDeleteConfirmed}
+            />
         </section>
     );
 }

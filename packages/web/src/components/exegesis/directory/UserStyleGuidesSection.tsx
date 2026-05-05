@@ -10,6 +10,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { FileDropzone } from '@/components/ui/file-dropzone';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
@@ -37,6 +38,7 @@ export function UserStyleGuidesSection() {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [editingGuide, setEditingGuide] = useState<UserStyleGuide | null>(null);
     const [extractingId, setExtractingId] = useState<string | null>(null);
+    const [deletingGuide, setDeletingGuide] = useState<UserStyleGuide | null>(null);
 
     const handleSetActive = async (guideId: string) => {
         try {
@@ -48,10 +50,12 @@ export function UserStyleGuidesSection() {
         }
     };
 
-    const handleDelete = async (guide: UserStyleGuide) => {
-        if (!window.confirm(t('directory.styleGuides.deleteConfirm', { name: guide.displayName }))) return;
+    const handleDeleteConfirmed = async () => {
+        if (!deletingGuide) return;
+        const guideId = deletingGuide.id;
+        setDeletingGuide(null);
         try {
-            await deleteGuide.mutateAsync(guide.id);
+            await deleteGuide.mutateAsync(guideId);
             toast.success(t('directory.styleGuides.toast.deleted'));
         } catch (err) {
             console.error('[exegesis] delete guide failed:', err);
@@ -186,7 +190,7 @@ export function UserStyleGuidesSection() {
                                 )}
                                 <button
                                     type="button"
-                                    onClick={() => handleDelete(g)}
+                                    onClick={() => setDeletingGuide(g)}
                                     disabled={deleteGuide.isPending}
                                     className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent disabled:opacity-50"
                                     title={t('directory.styleGuides.delete')}
@@ -225,6 +229,16 @@ export function UserStyleGuidesSection() {
                     guide={editingGuide}
                 />
             )}
+
+            <ConfirmDialog
+                open={!!deletingGuide}
+                onOpenChange={(next) => { if (!next) setDeletingGuide(null); }}
+                title={t('directory.styleGuides.deleteDialog.title', { name: deletingGuide?.displayName ?? '' })}
+                body={t('directory.styleGuides.deleteDialog.body')}
+                confirmLabel={t('directory.styleGuides.deleteDialog.confirm')}
+                cancelLabel={t('directory.styleGuides.deleteDialog.cancel')}
+                onConfirm={handleDeleteConfirmed}
+            />
         </section>
     );
 }

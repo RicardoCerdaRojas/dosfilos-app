@@ -24,6 +24,12 @@
             "setDefault": "Marcar default",
             "delete": "Eliminar",
             "deleteConfirm": "¿Eliminar la plantilla \"{{name}}\"? Los papers ya creados desde ella conservan su copia interna; esta acción solo la quita de tu biblioteca.",
+            "deleteDialog": {
+                "title": "¿Eliminar plantilla \"{{name}}\"?",
+                "body": "Los papers ya creados desde esta plantilla conservan su copia interna y no se ven afectados — esto solo la quita de tu biblioteca para uso futuro.",
+                "confirm": "Eliminar plantilla",
+                "cancel": "Cancelar"
+            },
             "requirementsCount_one": "{{count}} requisito",
             "requirementsCount_other": "{{count}} requisitos",
             "requirementsCount": "{{count}} requisitos",
@@ -77,6 +83,12 @@
             "setActive": "Activar",
             "delete": "Eliminar",
             "deleteConfirm": "¿Eliminar la guía \"{{name}}\"? Los papers que la usen quedarán sin guía y no podrán generar hasta que les asignes otra.",
+            "deleteDialog": {
+                "title": "¿Eliminar \"{{name}}\"?",
+                "body": "Los papers que usan esta guía quedarán sin guía y no podrán generar hasta que les asignes otra. Esta acción no se puede deshacer.",
+                "confirm": "Eliminar guía",
+                "cancel": "Cancelar"
+            },
             "uploadCta": "Subir guía",
             "uploadAnother": "Subir otra guía",
             "uploadTitle": "Subir guía de estilo",
@@ -501,7 +513,13 @@
                         "low": "baja"
                     },
                     "reExtract": "Re-extraer",
-                    "reExtractConfirm": "Esto va a reemplazar el manifiesto actual con una nueva extracción. ¿Continuar?"
+                    "reExtractConfirm": "Esto va a reemplazar el manifiesto actual con una nueva extracción. ¿Continuar?",
+                    "reExtractDialog": {
+                        "title": "¿Re-extraer el manifiesto?",
+                        "body": "Vamos a reemplazar el manifiesto actual con una nueva extracción del PDF original. Tarda ~10-30 segundos. Las reglas que hayas editado a mano se sobrescriben.",
+                        "confirm": "Re-extraer",
+                        "cancel": "Cancelar"
+                    }
                 },
                 "footnotes": {
                     "title": "Notas al pie",

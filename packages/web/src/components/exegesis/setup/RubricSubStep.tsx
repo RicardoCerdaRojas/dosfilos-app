@@ -21,16 +21,7 @@ import {
 import { RequirementRow, AddRequirementButton } from '@/components/exegesis/rubric/RequirementRow';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { Button } from '@/components/ui/button';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
     Dialog,
     DialogContent,
@@ -474,7 +465,7 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                 </>
             )}
 
-            <ConfirmActionDialog
+            <ConfirmDialog
                 open={confirmResetOpen}
                 onOpenChange={setConfirmResetOpen}
                 title={t('paperSetup.subSteps.rubric.actions.resetConfirmTitle')}
@@ -818,7 +809,7 @@ function RubricExtractFromTextPanel({ paper, onExtracted }: RubricExtractFromTex
 
             {lastResult && <ExtractionResultCard result={lastResult} />}
 
-            <ConfirmActionDialog
+            <ConfirmDialog
                 open={confirmReplaceOpen}
                 onOpenChange={setConfirmReplaceOpen}
                 title={t('paperSetup.subSteps.rubric.extract.confirmReplaceTitle')}
@@ -1078,7 +1069,7 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
                 </div>
             )}
 
-            <ConfirmActionDialog
+            <ConfirmDialog
                 open={confirmApplyOpen}
                 onOpenChange={setConfirmApplyOpen}
                 title={t('paperSetup.subSteps.rubric.templates.applyConfirmTitle')}
@@ -1213,56 +1204,3 @@ function CitationStandardField({
     );
 }
 
-// ── Reusable confirm dialog ────────────────────────────────────────────
-//
-// Replaces native window.confirm for destructive actions (apply
-// template, extract-from-text, reset rubric). Uses the AlertDialog
-// primitive so the dialog blocks interaction and respects keyboard
-// (Esc cancels, Enter confirms). Returning to native confirm would
-// undo the visual polish; keep this as the single in-app pattern.
-
-interface ConfirmActionDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    title: string;
-    body: string;
-    confirmLabel: string;
-    cancelLabel: string;
-    onConfirm: () => void;
-    /** When true, renders the confirm button with destructive styling. */
-    destructive?: boolean;
-}
-
-function ConfirmActionDialog({
-    open,
-    onOpenChange,
-    title,
-    body,
-    confirmLabel,
-    cancelLabel,
-    onConfirm,
-    destructive = true,
-}: ConfirmActionDialogProps) {
-    return (
-        <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>{title}</AlertDialogTitle>
-                    <AlertDialogDescription>{body}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={onConfirm}
-                        className={destructive
-                            ? 'bg-destructive text-white hover:bg-destructive/90'
-                            : undefined
-                        }
-                    >
-                        {confirmLabel}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    );
-}

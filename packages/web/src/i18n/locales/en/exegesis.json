@@ -24,6 +24,12 @@
             "setDefault": "Set default",
             "delete": "Delete",
             "deleteConfirm": "Delete the template \"{{name}}\"? Papers already created from it keep their internal copy; this only removes it from your library.",
+            "deleteDialog": {
+                "title": "Delete template \"{{name}}\"?",
+                "body": "Papers already created from this template keep their internal copy and won't be affected — this just removes it from your library for future use.",
+                "confirm": "Delete template",
+                "cancel": "Cancel"
+            },
             "requirementsCount_one": "{{count}} requirement",
             "requirementsCount_other": "{{count}} requirements",
             "requirementsCount": "{{count}} requirements",
@@ -77,6 +83,12 @@
             "setActive": "Activate",
             "delete": "Delete",
             "deleteConfirm": "Delete the guide \"{{name}}\"? Papers using it will lose their guide and won't be able to generate until you assign a different one.",
+            "deleteDialog": {
+                "title": "Delete \"{{name}}\"?",
+                "body": "Papers using this guide will be left without one and won't be able to generate until you assign a different one. This action cannot be undone.",
+                "confirm": "Delete guide",
+                "cancel": "Cancel"
+            },
             "uploadCta": "Upload guide",
             "uploadAnother": "Upload another guide",
             "uploadTitle": "Upload style guide",
@@ -501,7 +513,13 @@
                         "low": "low"
                     },
                     "reExtract": "Re-extract",
-                    "reExtractConfirm": "This will replace the current manifest with a new extraction. Continue?"
+                    "reExtractConfirm": "This will replace the current manifest with a new extraction. Continue?",
+                    "reExtractDialog": {
+                        "title": "Re-extract the manifest?",
+                        "body": "We'll replace the current manifest with a fresh extraction from the original PDF. Takes ~10-30 seconds. Any rules you edited by hand will be overwritten.",
+                        "confirm": "Re-extract",
+                        "cancel": "Cancel"
+                    }
                 },
                 "footnotes": {
                     "title": "Footnotes",
