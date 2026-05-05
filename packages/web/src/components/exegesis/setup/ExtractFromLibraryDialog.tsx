@@ -306,7 +306,7 @@ export function ExtractFromLibraryDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+            <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="inline-flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-success" />

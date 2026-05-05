@@ -66,7 +66,7 @@ export function ChangePlanDialog({ user, isOpen, onClose, onSuccess }: ChangePla
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <CreditCard className="h-5 w-5" />

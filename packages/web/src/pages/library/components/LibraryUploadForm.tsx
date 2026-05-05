@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileDropzone } from '@/components/ui/file-dropzone';
 import { AlertTriangle, BookOpen, Loader2, Plus, Sparkles, Upload, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -73,8 +74,8 @@ interface LibraryUploadFormProps {
      * pick Premium for a 200MB file and silently get pdf-parse output.
      */
     tierAvailability: TierAvailabilityProp;
-    /** File input change handler — caller validates type + sets file/warning. */
-    onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    /** File picker handler — caller validates type + sets file/warning. Pass `null` to clear. */
+    onFileChange: (file: File | null) => void;
     /** Metadata patch — caller spreads over current state. */
     onMetadataChange: (updates: Partial<UploadFormMetadata>) => void;
     /** Submit handler. Caller checks consent gate, runs upload, hides form on success. */
@@ -148,13 +149,16 @@ export function LibraryUploadForm({
             <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <div className="space-y-1.5 lg:col-span-1">
                     <Label htmlFor="file" className="text-[12.5px]">{t('upload.fileLabel')}</Label>
-                    <Input
+                    <FileDropzone
                         id="file"
-                        type="file"
                         accept=".pdf,.epub"
+                        value={file}
                         onChange={onFileChange}
-                        required
-                        className="text-[12.5px]"
+                        disabled={uploading}
+                        size="compact"
+                        hint="PDF o EPUB"
+                        emptyLabel={t('common:fileDropzone.empty')}
+                        clearLabel={t('common:fileDropzone.clear')}
                     />
                     {fileSizeWarning && (
                         <Alert variant="destructive" className="bg-warning-subtle border-warning/40 py-2">

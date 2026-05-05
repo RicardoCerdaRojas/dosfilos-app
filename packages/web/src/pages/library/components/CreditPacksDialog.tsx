@@ -41,7 +41,7 @@ export function CreditPacksDialog({ open, onOpenChange }: CreditPacksDialogProps
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="sm:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>{t('creditPacks.title')}</DialogTitle>
                     <DialogDescription>{t('creditPacks.subtitle')}</DialogDescription>

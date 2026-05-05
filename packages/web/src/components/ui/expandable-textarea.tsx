@@ -58,7 +58,7 @@ const ExpandableTextarea = React.forwardRef<HTMLTextAreaElement, ExpandableTexta
               <Maximize2 className="h-3.5 w-3.5" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+          <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>{label || "Editor de Texto"}</DialogTitle>
             </DialogHeader>

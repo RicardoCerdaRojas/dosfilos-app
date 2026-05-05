@@ -24,6 +24,12 @@
             "setDefault": "Marcar default",
             "delete": "Eliminar",
             "deleteConfirm": "¿Eliminar la plantilla \"{{name}}\"? Los papers ya creados desde ella conservan su copia interna; esta acción solo la quita de tu biblioteca.",
+            "deleteDialog": {
+                "title": "¿Eliminar plantilla \"{{name}}\"?",
+                "body": "Los papers ya creados desde esta plantilla conservan su copia interna y no se ven afectados — esto solo la quita de tu biblioteca para uso futuro.",
+                "confirm": "Eliminar plantilla",
+                "cancel": "Cancelar"
+            },
             "requirementsCount_one": "{{count}} requisito",
             "requirementsCount_other": "{{count}} requisitos",
             "requirementsCount": "{{count}} requisitos",
@@ -71,10 +77,18 @@
             "loading": "Cargando guías...",
             "activeBadge": "Activa",
             "manifestExtracted": "Reglas estructuradas extraídas",
-            "manifestPending": "Manifiesto pendiente — extrae desde el setup del paper",
+            "manifestPending": "Manifiesto pendiente — extrae las reglas",
+            "extractManifestCta": "Extraer manifiesto",
+            "extractingManifest": "Extrayendo…",
             "setActive": "Activar",
             "delete": "Eliminar",
             "deleteConfirm": "¿Eliminar la guía \"{{name}}\"? Los papers que la usen quedarán sin guía y no podrán generar hasta que les asignes otra.",
+            "deleteDialog": {
+                "title": "¿Eliminar \"{{name}}\"?",
+                "body": "Los papers que usan esta guía quedarán sin guía y no podrán generar hasta que les asignes otra. Esta acción no se puede deshacer.",
+                "confirm": "Eliminar guía",
+                "cancel": "Cancelar"
+            },
             "uploadCta": "Subir guía",
             "uploadAnother": "Subir otra guía",
             "uploadTitle": "Subir guía de estilo",
@@ -90,14 +104,18 @@
                 "body": "Sube la guía del seminario (PDF) aquí. Después extraemos las reglas mecánicas (notas al pie, ibid, comillas) que el orquestador aplica a todos tus papers."
             },
             "toast": {
-                "uploaded": "Guía subida — extrae el manifiesto desde el setup del paper",
+                "uploaded": "Guía subida — ahora puedes extraer el manifiesto",
                 "uploadFailed": "No se pudo subir la guía",
                 "activated": "Guía activa actualizada",
                 "activateFailed": "No se pudo activar la guía",
                 "deleted": "Guía eliminada",
                 "deleteFailed": "No se pudo eliminar la guía",
                 "updated": "Guía actualizada",
-                "updateFailed": "No se pudo actualizar la guía"
+                "updateFailed": "No se pudo actualizar la guía",
+                "manifestExtracted": "Manifiesto extraído — ya puedes usar la guía",
+                "manifestExtractFailed": "No se pudo extraer el manifiesto",
+                "manifestExtractCorpusNotReady": "El texto de la guía aún no está procesado — espera unos segundos y vuelve a intentar",
+                "manifestExtractOverloaded": "El motor de análisis está saturado — vuelve a intentar en unos segundos"
             },
             "edit": {
                 "openCta": "Editar guía",
@@ -105,7 +123,9 @@
                 "nameLabel": "Nombre",
                 "versionLabel": "Versión",
                 "save": "Guardar cambios",
-                "manifestEmpty": "Aún no se extrajo el manifiesto. Hazlo desde el setup de un paper que use esta guía."
+                "manifestEmpty": "Aún no se extrajo el manifiesto. Usa el botón de abajo para extraerlo ahora.",
+                "extractNowCta": "Extraer manifiesto ahora",
+                "extractingNow": "Extrayendo manifiesto…"
             },
             "editor": {
                 "subtitle": "Edita el nombre, la versión y las reglas extraídas del PDF (footnotes, ibid, comillas, transliteración).",
@@ -493,7 +513,13 @@
                         "low": "baja"
                     },
                     "reExtract": "Re-extraer",
-                    "reExtractConfirm": "Esto va a reemplazar el manifiesto actual con una nueva extracción. ¿Continuar?"
+                    "reExtractConfirm": "Esto va a reemplazar el manifiesto actual con una nueva extracción. ¿Continuar?",
+                    "reExtractDialog": {
+                        "title": "¿Re-extraer el manifiesto?",
+                        "body": "Vamos a reemplazar el manifiesto actual con una nueva extracción del PDF original. Tarda ~10-30 segundos. Las reglas que hayas editado a mano se sobrescriben.",
+                        "confirm": "Re-extraer",
+                        "cancel": "Cancelar"
+                    }
                 },
                 "footnotes": {
                     "title": "Notas al pie",

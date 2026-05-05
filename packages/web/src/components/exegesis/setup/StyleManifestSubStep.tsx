@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
     BookOpen,
     CheckCircle2,
@@ -15,6 +15,7 @@ import type {
     UserStyleGuide,
 } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/i18n';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 
@@ -163,9 +164,10 @@ function ManifestViewer({ guide, paper }: { guide: UserStyleGuide; paper: Exeget
     const { t } = useTranslation('exegesis');
     const { extractManifest } = useUserStyleGuides();
     const manifest = guide.manifest!;
+    const [confirmReExtract, setConfirmReExtract] = useState(false);
 
-    const handleReExtract = async () => {
-        if (!window.confirm(t('paperSetup.subSteps.manifest.card.reExtractConfirm'))) return;
+    const handleReExtractConfirmed = async () => {
+        setConfirmReExtract(false);
         try {
             await extractManifest.mutateAsync({
                 guideId: guide.id,
@@ -188,7 +190,7 @@ function ManifestViewer({ guide, paper }: { guide: UserStyleGuide; paper: Exeget
             <ManifestHeaderCard
                 guide={guide}
                 manifest={manifest}
-                onReExtract={handleReExtract}
+                onReExtract={() => setConfirmReExtract(true)}
                 reExtracting={extractManifest.isPending}
             />
             <FootnotesSection manifest={manifest} />
@@ -197,6 +199,17 @@ function ManifestViewer({ guide, paper }: { guide: UserStyleGuide; paper: Exeget
             <TransliterationSection manifest={manifest} />
             <AdditionalRulesSection manifest={manifest} />
             {manifest.extractionNotes.length > 0 && <ExtractionNotesSection manifest={manifest} />}
+
+            <ConfirmDialog
+                open={confirmReExtract}
+                onOpenChange={setConfirmReExtract}
+                title={t('paperSetup.subSteps.manifest.card.reExtractDialog.title')}
+                body={t('paperSetup.subSteps.manifest.card.reExtractDialog.body')}
+                confirmLabel={t('paperSetup.subSteps.manifest.card.reExtractDialog.confirm')}
+                cancelLabel={t('paperSetup.subSteps.manifest.card.reExtractDialog.cancel')}
+                onConfirm={handleReExtractConfirmed}
+                destructive={false}
+            />
         </div>
     );
 }

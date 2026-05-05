@@ -68,7 +68,7 @@ export function GrantCreditsDialog({ user, isOpen, onClose, onSuccess }: GrantCr
 
     return (
         <Dialog open={isOpen} onOpenChange={(o) => { if (!o) { reset(); onClose(); } }}>
-            <DialogContent className="max-w-xl">
+            <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Plus className="h-5 w-5" />

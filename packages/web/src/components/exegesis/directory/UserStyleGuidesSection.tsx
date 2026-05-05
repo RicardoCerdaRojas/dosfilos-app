@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { BookOpen, CheckCircle2, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
+import { useState } from 'react';
+import { BookOpen, CheckCircle2, Pencil, Sparkles, Trash2, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,6 +9,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { FileDropzone } from '@/components/ui/file-dropzone';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
@@ -31,10 +33,12 @@ import { UserStyleGuideEditDialog } from './UserStyleGuideEditDialog';
  * upload → userStyleGuides doc create.
  */
 export function UserStyleGuidesSection() {
-    const { t } = useTranslation('exegesis');
-    const { guides, isLoading, uploadGuide, setActive, deleteGuide } = useUserStyleGuides();
+    const { t, i18n } = useTranslation('exegesis');
+    const { guides, isLoading, uploadGuide, setActive, deleteGuide, extractManifest } = useUserStyleGuides();
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [editingGuide, setEditingGuide] = useState<UserStyleGuide | null>(null);
+    const [extractingId, setExtractingId] = useState<string | null>(null);
+    const [deletingGuide, setDeletingGuide] = useState<UserStyleGuide | null>(null);
 
     const handleSetActive = async (guideId: string) => {
         try {
@@ -46,14 +50,38 @@ export function UserStyleGuidesSection() {
         }
     };
 
-    const handleDelete = async (guide: UserStyleGuide) => {
-        if (!window.confirm(t('directory.styleGuides.deleteConfirm', { name: guide.displayName }))) return;
+    const handleDeleteConfirmed = async () => {
+        if (!deletingGuide) return;
+        const guideId = deletingGuide.id;
+        setDeletingGuide(null);
         try {
-            await deleteGuide.mutateAsync(guide.id);
+            await deleteGuide.mutateAsync(guideId);
             toast.success(t('directory.styleGuides.toast.deleted'));
         } catch (err) {
             console.error('[exegesis] delete guide failed:', err);
             toast.error(t('directory.styleGuides.toast.deleteFailed'));
+        }
+    };
+
+    const handleExtract = async (guide: UserStyleGuide) => {
+        setExtractingId(guide.id);
+        const language = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+        try {
+            await extractManifest.mutateAsync({ guideId: guide.id, language });
+            toast.success(t('directory.styleGuides.toast.manifestExtracted'));
+        } catch (err: any) {
+            console.error('[exegesis] extract manifest failed:', err);
+            const isOverload = err?.isExegesisOverload === true;
+            const corpusEmpty = typeof err?.message === 'string' && err.message.includes('no extracted text');
+            toast.error(
+                isOverload
+                    ? t('directory.styleGuides.toast.manifestExtractOverloaded')
+                    : corpusEmpty
+                        ? t('directory.styleGuides.toast.manifestExtractCorpusNotReady')
+                        : t('directory.styleGuides.toast.manifestExtractFailed'),
+            );
+        } finally {
+            setExtractingId(null);
         }
     };
 
@@ -125,6 +153,20 @@ export function UserStyleGuidesSection() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-0.5 shrink-0">
+                                {!g.manifest && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleExtract(g)}
+                                        disabled={extractingId === g.id || extractManifest.isPending}
+                                        className="p-1 rounded text-warning-subtle-foreground hover:text-success hover:bg-accent disabled:opacity-50 inline-flex items-center gap-1"
+                                        title={t('directory.styleGuides.extractManifestCta')}
+                                        aria-label={t('directory.styleGuides.extractManifestCta')}
+                                    >
+                                        {extractingId === g.id
+                                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                                            : <Sparkles className="h-3 w-3" />}
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => setEditingGuide(g)}
@@ -148,7 +190,7 @@ export function UserStyleGuidesSection() {
                                 )}
                                 <button
                                     type="button"
-                                    onClick={() => handleDelete(g)}
+                                    onClick={() => setDeletingGuide(g)}
                                     disabled={deleteGuide.isPending}
                                     className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent disabled:opacity-50"
                                     title={t('directory.styleGuides.delete')}
@@ -163,7 +205,7 @@ export function UserStyleGuidesSection() {
             )}
 
             <Dialog open={showUploadForm} onOpenChange={setShowUploadForm}>
-                <DialogContent className="max-w-xl">
+                <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
                         <DialogTitle>{t('directory.styleGuides.uploadTitle')}</DialogTitle>
                         <DialogDescription>
@@ -187,6 +229,16 @@ export function UserStyleGuidesSection() {
                     guide={editingGuide}
                 />
             )}
+
+            <ConfirmDialog
+                open={!!deletingGuide}
+                onOpenChange={(next) => { if (!next) setDeletingGuide(null); }}
+                title={t('directory.styleGuides.deleteDialog.title', { name: deletingGuide?.displayName ?? '' })}
+                body={t('directory.styleGuides.deleteDialog.body')}
+                confirmLabel={t('directory.styleGuides.deleteDialog.confirm')}
+                cancelLabel={t('directory.styleGuides.deleteDialog.cancel')}
+                onConfirm={handleDeleteConfirmed}
+            />
         </section>
     );
 }
@@ -202,7 +254,6 @@ interface UploadGuideFormProps {
 function UploadGuideForm({ onUploaded, firstGuide, uploadGuide }: UploadGuideFormProps) {
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [displayName, setDisplayName] = useState('');
     const [version, setVersion] = useState('');
@@ -233,7 +284,6 @@ function UploadGuideForm({ onUploaded, firstGuide, uploadGuide }: UploadGuideFor
             setFile(null);
             setDisplayName('');
             setVersion('');
-            if (fileInputRef.current) fileInputRef.current.value = '';
             onUploaded();
         } catch (err) {
             console.error('[exegesis] upload guide failed:', err);
@@ -249,19 +299,15 @@ function UploadGuideForm({ onUploaded, firstGuide, uploadGuide }: UploadGuideFor
                 <label className="block text-xs font-medium text-foreground mb-1">
                     {t('directory.styleGuides.fileLabel')}
                 </label>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf,.pdf,application/epub+zip,.epub"
-                    onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                <FileDropzone
+                    accept=".pdf,.epub"
+                    value={file}
+                    onChange={handleFile}
                     disabled={uploading}
-                    className="block w-full text-sm text-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-success-subtle file:text-success-subtle-foreground hover:file:bg-success/20"
+                    hint="PDF o EPUB"
+                    emptyLabel={t('common:fileDropzone.empty')}
+                    clearLabel={t('common:fileDropzone.clear')}
                 />
-                {file && (
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                        {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
-                    </p>
-                )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
                 <div>

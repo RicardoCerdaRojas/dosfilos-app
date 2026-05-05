@@ -79,7 +79,7 @@ export function AddSermonDialog({ series, onSermonAdded }: AddSermonDialogProps)
           Agregar Sermón
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Agregar Sermón al Plan</DialogTitle>
           <DialogDescription>

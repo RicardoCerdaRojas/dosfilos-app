@@ -19,7 +19,7 @@ export const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, tit
     const { t } = useTranslation('greekTutor');
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold">{title}</DialogTitle>
                     <DialogDescription className="text-base">

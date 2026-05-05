@@ -166,7 +166,7 @@ export default function HintCatalogPage() {
       </div>
 
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingHint?.id ? 'Editar Pista' : 'Nueva Pista'}</DialogTitle>
             <DialogDescription>

@@ -33,7 +33,7 @@ export const WordPreviewModal: React.FC<WordPreviewModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{t('wordPreview.title')}</DialogTitle>
                     <DialogDescription>

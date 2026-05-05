@@ -51,7 +51,7 @@ export function ProjectLinkSessionDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg bg-card p-0 overflow-hidden border-border/60">
+            <DialogContent className="sm:max-w-lg bg-card p-0 overflow-hidden border-border/60">
                 <DialogHeader className="px-6 pt-6 pb-2">
                     <div className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium mb-2">
                         {t(`linkSession.${domain}.title`)}

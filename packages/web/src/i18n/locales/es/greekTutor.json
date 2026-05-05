@@ -353,6 +353,8 @@
             "practiceWhat": "Practica lo aprendido",
             "deleteUnit": "Eliminar unidad",
             "deleteConfirm": "¿Eliminar \"{{word}}\" de las unidades?",
+            "deleteConfirmBody": "La palabra y su análisis se quitan de tu lista de estudio. Esta acción no se puede deshacer.",
+            "deleteCancel": "Cancelar",
             "autoMorphologyTip": "Al seleccionar una palabra se mostrará su análisis morfológico automáticamente"
         }
     },

@@ -23,5 +23,9 @@
         "logoutSuccess": "Sesión cerrada"
     },
     "modulesIncluded": "Módulos Incluidos",
-    "limits": "Límites"
+    "limits": "Límites",
+    "fileDropzone": {
+        "empty": "Arrastra un archivo o haz click para seleccionar",
+        "clear": "Quitar archivo"
+    }
 }

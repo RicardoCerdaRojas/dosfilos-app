@@ -69,7 +69,7 @@ export function ExtendTrialDialog({ user, isOpen, onClose, onSuccess }: ExtendTr
 
     return (
         <Dialog open={isOpen} onOpenChange={(o) => { if (!o) { reset(); onClose(); } }}>
-            <DialogContent className="max-w-xl">
+            <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Calendar className="h-5 w-5" />

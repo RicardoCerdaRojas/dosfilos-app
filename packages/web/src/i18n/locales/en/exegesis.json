@@ -24,6 +24,12 @@
             "setDefault": "Set default",
             "delete": "Delete",
             "deleteConfirm": "Delete the template \"{{name}}\"? Papers already created from it keep their internal copy; this only removes it from your library.",
+            "deleteDialog": {
+                "title": "Delete template \"{{name}}\"?",
+                "body": "Papers already created from this template keep their internal copy and won't be affected — this just removes it from your library for future use.",
+                "confirm": "Delete template",
+                "cancel": "Cancel"
+            },
             "requirementsCount_one": "{{count}} requirement",
             "requirementsCount_other": "{{count}} requirements",
             "requirementsCount": "{{count}} requirements",
@@ -71,10 +77,18 @@
             "loading": "Loading guides...",
             "activeBadge": "Active",
             "manifestExtracted": "Structured rules extracted",
-            "manifestPending": "Manifest pending — extract from the paper setup",
+            "manifestPending": "Manifest pending — extract the rules",
+            "extractManifestCta": "Extract manifest",
+            "extractingManifest": "Extracting…",
             "setActive": "Activate",
             "delete": "Delete",
             "deleteConfirm": "Delete the guide \"{{name}}\"? Papers using it will lose their guide and won't be able to generate until you assign a different one.",
+            "deleteDialog": {
+                "title": "Delete \"{{name}}\"?",
+                "body": "Papers using this guide will be left without one and won't be able to generate until you assign a different one. This action cannot be undone.",
+                "confirm": "Delete guide",
+                "cancel": "Cancel"
+            },
             "uploadCta": "Upload guide",
             "uploadAnother": "Upload another guide",
             "uploadTitle": "Upload style guide",
@@ -90,14 +104,18 @@
                 "body": "Upload the seminary's guide (PDF) here. We then extract the mechanical rules (footnotes, ibid, quotation marks) that the orchestrator applies to all your papers."
             },
             "toast": {
-                "uploaded": "Guide uploaded — extract the manifest from the paper setup",
+                "uploaded": "Guide uploaded — you can now extract the manifest",
                 "uploadFailed": "Could not upload the guide",
                 "activated": "Active guide updated",
                 "activateFailed": "Could not activate the guide",
                 "deleted": "Guide deleted",
                 "deleteFailed": "Could not delete the guide",
                 "updated": "Guide updated",
-                "updateFailed": "Could not update the guide"
+                "updateFailed": "Could not update the guide",
+                "manifestExtracted": "Manifest extracted — the guide is ready to use",
+                "manifestExtractFailed": "Could not extract the manifest",
+                "manifestExtractCorpusNotReady": "The guide text isn't processed yet — wait a few seconds and try again",
+                "manifestExtractOverloaded": "The analysis engine is busy — try again in a few seconds"
             },
             "edit": {
                 "openCta": "Edit guide",
@@ -105,7 +123,9 @@
                 "nameLabel": "Name",
                 "versionLabel": "Version",
                 "save": "Save changes",
-                "manifestEmpty": "No manifest extracted yet. Run extraction from a paper setup that uses this guide."
+                "manifestEmpty": "No manifest extracted yet. Use the button below to extract it now.",
+                "extractNowCta": "Extract manifest now",
+                "extractingNow": "Extracting manifest…"
             },
             "editor": {
                 "subtitle": "Edit the name, version, and rules extracted from the PDF (footnotes, ibid, quotation marks, transliteration).",
@@ -493,7 +513,13 @@
                         "low": "low"
                     },
                     "reExtract": "Re-extract",
-                    "reExtractConfirm": "This will replace the current manifest with a new extraction. Continue?"
+                    "reExtractConfirm": "This will replace the current manifest with a new extraction. Continue?",
+                    "reExtractDialog": {
+                        "title": "Re-extract the manifest?",
+                        "body": "We'll replace the current manifest with a fresh extraction from the original PDF. Takes ~10-30 seconds. Any rules you edited by hand will be overwritten.",
+                        "confirm": "Re-extract",
+                        "cancel": "Cancel"
+                    }
                 },
                 "footnotes": {
                     "title": "Footnotes",

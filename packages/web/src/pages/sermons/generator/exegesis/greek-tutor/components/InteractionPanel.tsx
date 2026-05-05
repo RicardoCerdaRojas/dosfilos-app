@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export type ActionType = 'morphology' | 'recognition' | 'context' | 'significance' | 'quiz' | 'passage' | 'syntax';
 
@@ -50,6 +51,7 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
     const [showUnits, setShowUnits] = useState(true);
     const [showContext, setShowContext] = useState(true);
     const [showReinforcement, setShowReinforcement] = useState(true);
+    const [pendingDeleteUnit, setPendingDeleteUnit] = useState<{ id: string; word: string } | null>(null);
 
     // Derive currentUnit from units array based on currentIndex
     const currentUnit = units[currentIndex];
@@ -162,12 +164,10 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        if (window.confirm(t('ui.sidebar.deleteConfirm', { word: unit.greekForm.text }))) {
-                                                            onDeleteUnit(unit.id);
-                                                        }
+                                                        setPendingDeleteUnit({ id: unit.id, word: unit.greekForm.text });
                                                     }}
                                                     className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-md transition-colors group"
-                                                    title="Eliminar unidad"
+                                                    title={t('ui.sidebar.deleteUnit')}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground group-hover:text-red-500" />
                                                 </button>
@@ -208,6 +208,21 @@ export const InteractionPanel: React.FC<InteractionPanelProps> = ({
                     </section>
                 </div>
             </ScrollArea>
+
+            <ConfirmDialog
+                open={!!pendingDeleteUnit}
+                onOpenChange={(next) => { if (!next) setPendingDeleteUnit(null); }}
+                title={t('ui.sidebar.deleteConfirm', { word: pendingDeleteUnit?.word ?? '' })}
+                body={t('ui.sidebar.deleteConfirmBody')}
+                confirmLabel={t('ui.sidebar.deleteUnit')}
+                cancelLabel={t('ui.sidebar.deleteCancel')}
+                onConfirm={() => {
+                    if (pendingDeleteUnit && onDeleteUnit) {
+                        onDeleteUnit(pendingDeleteUnit.id);
+                    }
+                    setPendingDeleteUnit(null);
+                }}
+            />
         </div>
     );
 };

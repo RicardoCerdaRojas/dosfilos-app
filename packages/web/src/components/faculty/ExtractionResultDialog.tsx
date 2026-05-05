@@ -23,7 +23,7 @@ export function ExtractionResultDialog({ content, onClose }: ExtractionResultDia
 
     return (
         <Dialog open={!!content} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+            <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
                 <DialogHeader className="flex flex-row items-center justify-between pr-8 shrink-0">
                     <DialogTitle className="text-lg font-bold">{content?.title}</DialogTitle>
                     <Button

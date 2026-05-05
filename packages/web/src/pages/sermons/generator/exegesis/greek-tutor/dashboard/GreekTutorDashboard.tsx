@@ -14,6 +14,8 @@ import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/us
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { calculateSessionProgress, getSessionLastActivity } from './utils/sessionUtils';
 import { useTranslation } from '@/i18n';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 
 interface GreekTutorDashboardProps {
@@ -35,6 +37,7 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 }) => {
     const navigate = useNavigate();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<{ id: string; passage: string } | null>(null);
     const { t } = useTranslation('greekTutor');
     
     // Filter and sort states
@@ -136,24 +139,26 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
     }, [sessions]);
 
     /**
-     * Handle session deletion with confirmation
+     * Open the confirmation dialog for a given session.
+     * Actual deletion fires from `handleDeleteConfirmed`.
      */
-    const handleDelete = async (sessionId: string) => {
+    const handleDelete = (sessionId: string) => {
         if (!userId) return;
-        
-        const confirmed = window.confirm(
-            t('dashboard.deleteConfirm')
-        );
-        
-        if (!confirmed) return;
+        const session = sessions.find(s => s.id === sessionId);
+        setPendingDelete({ id: sessionId, passage: session?.passage ?? '' });
+    };
 
+    const handleDeleteConfirmed = async () => {
+        if (!pendingDelete || !userId) return;
+        const sessionId = pendingDelete.id;
+        setPendingDelete(null);
         setDeletingId(sessionId);
         try {
             await deleteSessionUseCase.execute(sessionId, userId);
-            await refetch(); // Refresh list
+            await refetch();
         } catch (error) {
             console.error('[GreekTutorDashboard] Error deleting session:', error);
-            alert(t('dashboard.deleteError'));
+            toast.error(t('dashboard.deleteError'));
         } finally {
             setDeletingId(null);
         }
@@ -312,6 +317,18 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                     </div>
                 </>
             )}
+
+            <ConfirmDialog
+                open={!!pendingDelete}
+                onOpenChange={(next) => { if (!next) setPendingDelete(null); }}
+                title={t('dashboard.menu.deleteTitle')}
+                body={pendingDelete?.passage
+                    ? t('dashboard.menu.deleteDescription', { passage: pendingDelete.passage })
+                    : t('dashboard.deleteConfirm')}
+                confirmLabel={t('dashboard.menu.delete')}
+                cancelLabel={t('dashboard.menu.cancel')}
+                onConfirm={handleDeleteConfirmed}
+            />
         </div>
     );
 };

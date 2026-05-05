@@ -57,7 +57,7 @@ export function CelebrationModal({ isOpen, onClose }: CelebrationModalProps) {
             )}
 
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-2xl text-center justify-center">
                             <Sparkles className="h-6 w-6 text-yellow-500" />
