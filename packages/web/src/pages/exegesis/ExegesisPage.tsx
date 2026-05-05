@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { NotebookPen, Plus, Sparkles, Loader2, AlertCircle, Search, X, Archive, BookOpen } from 'lucide-react';
+import { NotebookPen, Plus, Sparkles, Loader2, AlertCircle, Search, X, Archive, BookOpen, FileText, ListChecks, Languages } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { seriesService } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
@@ -395,8 +395,34 @@ const PHASE_BADGE: Record<ExegeticalPaperPhase, string> = {
 function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
     const navigate = useNavigate();
     const open = () => navigate(`/dashboard/exegesis/${paper.id}`);
-    const passageDisplay = paper.title || formatPassageReference(paper.passage, language);
     const isArchived = paper.phase === 'archived' || paper.archivedAt !== null;
+
+    // Compose the headline. When the paper carries a custom `title`
+    // (typically from the sermon planner where the user named the
+    // sermon) we use it as the headline AND show the passage as a
+    // secondary chip below — that way two papers on the same passage
+    // with different sermon titles are distinguishable AND a paper
+    // with a passage-only identity still reads naturally.
+    const formattedPassage = formatPassageReference(paper.passage, language);
+    const hasCustomTitle = !!paper.title && paper.title.trim().length > 0
+        && paper.title.trim() !== formattedPassage;
+    const headline = hasCustomTitle ? paper.title!.trim() : formattedPassage;
+
+    // Brief slice — the first ~110 chars of the user's assignmentBrief.
+    // The strongest single discriminator when two papers share a passage
+    // (e.g. \"apertura cristológica\" vs \"énfasis en superioridad sobre los profetas\").
+    const briefSlice = paper.assignmentBrief
+        ? truncateAtWordBoundary(paper.assignmentBrief.trim(), 110)
+        : null;
+
+    // Step progress — accepted vs total. Tells the user at a glance
+    // whether this paper is sitting at setup (no steps), mid-write
+    // (X/Y), or fully accepted (Y/Y). Matches what the detail page shows.
+    const totalSteps = paper.steps.length;
+    const acceptedSteps = paper.steps.filter(s => s.accepted !== null).length;
+    const showStepProgress = totalSteps > 0;
+
+    const sourceCount = paper.sources.length;
 
     const handleSeriesClick = (e: React.MouseEvent) => {
         // Stop the parent button's onClick (which navigates to the
@@ -411,7 +437,7 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
                 type="button"
                 onClick={open}
                 className={[
-                    'w-full h-full text-left rounded-xl border bg-card hover:border-primary/50 hover:shadow-sm transition-all px-4 py-3 flex flex-col gap-2',
+                    'w-full h-full text-left rounded-xl border bg-card hover:border-primary/50 hover:shadow-sm transition-all px-4 py-3 flex flex-col gap-2.5',
                     isArchived ? 'border-border opacity-70' : 'border-border',
                 ].join(' ')}
             >
@@ -421,13 +447,35 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate">
-                            {passageDisplay}
+                            {headline}
                         </h3>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {t('list.updatedAt')} {paper.updatedAt.toLocaleDateString()}
-                        </p>
+                        {/* Passage chip — ALWAYS visible. When the headline
+                            already IS the passage we render a less-loud
+                            language badge instead of repeating ourselves. */}
+                        {hasCustomTitle ? (
+                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1 font-medium text-foreground/80">
+                                    <BookOpen className="h-3 w-3" aria-hidden />
+                                    {formattedPassage}
+                                </span>
+                                <span className="text-border">·</span>
+                                <span className="uppercase tracking-wide">{paper.displayLanguage}</span>
+                            </div>
+                        ) : (
+                            <div className="text-[11px] text-muted-foreground mt-0.5 inline-flex items-center gap-1.5">
+                                <Languages className="h-3 w-3" aria-hidden />
+                                <span className="uppercase tracking-wide">{paper.displayLanguage}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {briefSlice && (
+                    <p className="text-[11.5px] text-muted-foreground italic leading-snug line-clamp-2">
+                        “{briefSlice}”
+                    </p>
+                )}
+
                 {seriesLink && (
                     <div
                         onClick={handleSeriesClick}
@@ -439,7 +487,7 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
                                 handleSeriesClick(e as unknown as React.MouseEvent);
                             }
                         }}
-                        className="inline-flex items-center gap-1.5 text-[11px] text-info-subtle-foreground bg-info-subtle border border-info/30 rounded-md px-2 py-1 hover:bg-info-subtle/80 transition-colors max-w-full"
+                        className="inline-flex items-center gap-1.5 text-[11px] text-info-subtle-foreground bg-info-subtle border border-info/30 rounded-md px-2 py-1 hover:bg-info-subtle/80 transition-colors max-w-full self-start"
                         title={t('list.seriesLink.tooltip')}
                     >
                         <BookOpen className="h-3 w-3 shrink-0" />
@@ -447,9 +495,27 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
                         <span className="truncate">{seriesLink.title}</span>
                     </div>
                 )}
-                <div className="flex items-center justify-between">
+
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
+                    <div className="flex items-center gap-2.5 text-[10.5px] text-muted-foreground min-w-0">
+                        {sourceCount > 0 && (
+                            <span className="inline-flex items-center gap-1 shrink-0" title={t('list.meta.sourcesTooltip', { count: sourceCount })}>
+                                <FileText className="h-3 w-3" aria-hidden />
+                                {t('list.meta.sources', { count: sourceCount })}
+                            </span>
+                        )}
+                        {showStepProgress && (
+                            <span className="inline-flex items-center gap-1 shrink-0" title={t('list.meta.stepsTooltip', { accepted: acceptedSteps, total: totalSteps })}>
+                                <ListChecks className="h-3 w-3" aria-hidden />
+                                {acceptedSteps}/{totalSteps}
+                            </span>
+                        )}
+                        <span className="truncate" title={paper.updatedAt.toLocaleString()}>
+                            {paper.updatedAt.toLocaleDateString()}
+                        </span>
+                    </div>
                     <span className={[
-                        'inline-flex items-center text-[10px] font-semibold rounded-full border px-2 py-0.5',
+                        'inline-flex items-center text-[10px] font-semibold rounded-full border px-2 py-0.5 shrink-0',
                         PHASE_BADGE[paper.phase],
                     ].join(' ')}>
                         {t(`list.phase.${paper.phase}`)}
@@ -458,6 +524,19 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
             </button>
         </li>
     );
+}
+
+/**
+ * Truncate `text` at the last whole-word boundary at or before `max`.
+ * Falls back to a hard cut + ellipsis when no boundary is found.
+ * Used by `PaperCard` to slice the assignmentBrief without mid-word cuts.
+ */
+function truncateAtWordBoundary(text: string, max: number): string {
+    if (text.length <= max) return text;
+    const slice = text.slice(0, max);
+    const lastSpace = slice.lastIndexOf(' ');
+    const cut = lastSpace > max * 0.6 ? lastSpace : max;
+    return text.slice(0, cut) + '…';
 }
 
 /**

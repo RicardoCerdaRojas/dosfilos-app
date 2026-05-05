@@ -783,6 +783,13 @@
             "label": "Series",
             "tooltip": "This paper is linked to a sermon series. Click to open the series."
         },
+        "meta": {
+            "sources_one": "{{count}} source",
+            "sources_other": "{{count}} sources",
+            "sourcesTooltip_one": "{{count}} source in the corpus",
+            "sourcesTooltip_other": "{{count}} sources in the corpus",
+            "stepsTooltip": "{{accepted}} of {{total}} steps accepted"
+        },
         "filters": {
             "searchPlaceholder": "Search by passage or title...",
             "all": "All",
