@@ -102,25 +102,88 @@
             "edit": {
                 "openCta": "Editar guía",
                 "title": "Editar guía de estilo",
-                "subtitle": "Renombra la guía y revisa el manifiesto extraído del PDF. La edición del manifiesto llega en v1.7.",
                 "nameLabel": "Nombre",
                 "versionLabel": "Versión",
                 "save": "Guardar cambios",
-                "manifestSection": "Manifiesto extraído",
-                "manifestReadOnlyNotice": "Vista de solo lectura. La edición del manifiesto llega en v1.7.",
-                "manifestEmpty": "Aún no se extrajo el manifiesto. Hazlo desde el setup de un paper que use esta guía.",
-                "manifest": {
-                    "citationLabel": "Estilo de citación",
-                    "footnotesFirst": "Plantilla de primera nota al pie",
-                    "footnotesSubsequent": "Plantilla de notas subsiguientes",
-                    "ibid": "Ibid",
-                    "ibidDisabled": "No permitido",
-                    "bibliographyEntry": "Plantilla de bibliografía",
-                    "blockQuote": "Umbral de cita en bloque",
-                    "blockQuoteValue": "{{count}} palabras",
-                    "quoteMarks": "Comillas (primarias / secundarias)",
+                "manifestEmpty": "Aún no se extrajo el manifiesto. Hazlo desde el setup de un paper que use esta guía."
+            },
+            "editor": {
+                "subtitle": "Edita el nombre, la versión y las reglas extraídas del PDF (footnotes, ibid, comillas, transliteración).",
+                "hasErrors": "El manifiesto tiene errores. Corrígelos antes de guardar.",
+                "tabs": {
+                    "datos": "Datos",
+                    "footnotes": "Notas al pie",
+                    "bibliography": "Bibliografía",
+                    "quotations": "Citas",
                     "transliteration": "Transliteración",
                     "additional": "Reglas adicionales"
+                },
+                "validation": {
+                    "empty-template": "El template no puede estar vacío.",
+                    "unknown-placeholder": "Placeholder desconocido: {{placeholder}}. El post-procesador no sabrá cómo sustituirlo.",
+                    "non-positive-threshold": "El umbral debe ser mayor a cero.",
+                    "empty-quote-mark": "Las comillas no pueden estar vacías.",
+                    "duplicate-additional-rule": "Esta regla está duplicada.",
+                    "empty-additional-rule": "Esta regla está vacía.",
+                    "transliteration-empty-scheme": "Indica un nombre para el esquema de transliteración."
+                },
+                "footnotes": {
+                    "intro": "Templates que el post-procesador usa para reformatear las citas que emite el LLM. Los placeholders se sustituyen con datos de cada fuente al renderizar.",
+                    "placeholderHintTitle": "Placeholders disponibles",
+                    "firstLabel": "Primera mención",
+                    "firstHint": "Format de la primera vez que se cita una fuente en el paper.",
+                    "subsequentLabel": "Mención subsiguiente",
+                    "subsequentHint": "Format abreviado para las menciones posteriores de la misma fuente.",
+                    "ibidLegend": "Reglas de ibid",
+                    "ibidEnabledLabel": "Permitir ibid",
+                    "ibidEnabledHint": "Algunas guías modernas prohíben ibid; otras lo prefieren para citas consecutivas a la misma fuente.",
+                    "ibidLabelLabel": "Etiqueta de ibid",
+                    "allowPageOverrideLabel": "Permitir ibid + número de página",
+                    "allowPageOverrideHint": "Cuando la página difiere (ej. \"Ibid., 47\"). Casi siempre se permite."
+                },
+                "bibliography": {
+                    "intro": "Format de cada entrada en la bibliografía final del paper.",
+                    "entryLabel": "Template de entrada",
+                    "entryHint": "Mismos placeholders que en footnotes pero típicamente con apellido primero, puntos en lugar de comas, sin números de página.",
+                    "sortByLabel": "Orden",
+                    "sortByHint": "Cómo ordenar la bibliografía final.",
+                    "sortByAuthorSurname": "Por apellido del autor",
+                    "sortByOrderOfAppearance": "Por orden de aparición",
+                    "dashLabel": "Usar guion largo para autores repetidos",
+                    "dashHint": "Convención Turabian/SBL: cuando varias obras del mismo autor aparecen seguidas, sustituir el nombre por \"———\". Algunas guías de seminario no lo usan."
+                },
+                "quotations": {
+                    "intro": "Convenciones para citas: marcas, umbrales de cita en bloque, ellipsis y brackets de interpolación.",
+                    "thresholdLabel": "Umbral cita en bloque (palabras)",
+                    "thresholdHint": "Citas más largas que esto se renderean como bloque indentado, sin comillas. Bajo este umbral van inline con marcas.",
+                    "primaryLabel": "Comillas primarias",
+                    "primaryHint": "Las externas. Carácter Unicode literal.",
+                    "secondaryLabel": "Comillas secundarias",
+                    "secondaryHint": "Para citas anidadas dentro de una cita.",
+                    "ellipsisLabel": "Ellipsis",
+                    "ellipsisHint": "Cómo se representa una omisión dentro de una cita.",
+                    "bracketsLabel": "Brackets de interpolación",
+                    "bracketsHint": "Para insertar texto editorial dentro de una cita.",
+                    "previewTitle": "Vista previa",
+                    "previewSample": "Texto de cita con "
+                },
+                "transliteration": {
+                    "intro": "Reglas para transliterar griego/hebreo cuando el contexto lo requiera.",
+                    "enabledLabel": "Tiene reglas de transliteración",
+                    "enabledHint": "Algunas guías de seminario no especifican esquema y prefieren script original. Activa solo si tu guía lo define.",
+                    "schemeLabel": "Esquema",
+                    "schemeHint": "Convención de transliteración (SBL, Library of Congress, etc.).",
+                    "diacriticsLabel": "Preservar diacríticos",
+                    "diacriticsHint": "Conservar macrones, ḥ con punto, etc. Algunos seminarios prefieren formas latinizadas sin diacríticos.",
+                    "bodyRequiredLabel": "Requerir transliteración en el cuerpo",
+                    "bodyRequiredHint": "Cuando el lector general lo necesita. Si está apagado, transliteración solo aparece en notas al pie."
+                },
+                "additionalRules": {
+                    "intro": "Reglas que no encajan en las secciones estructuradas. Una oración por entrada. El orquestador las inyecta al prompt como reglas adicionales.",
+                    "empty": "No hay reglas adicionales por ahora.",
+                    "placeholder": "Ej. \"Usar comas seriadas en listas de tres elementos.\"",
+                    "add": "Agregar regla",
+                    "remove": "Quitar regla"
                 }
             }
         }

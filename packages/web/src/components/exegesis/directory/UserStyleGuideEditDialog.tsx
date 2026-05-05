@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react';
-import { Loader2, Lock, Save } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, Save, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import type { UserStyleGuide } from '@dosfilos/domain';
+import {
+    hasManifestValidationErrors,
+    validateStyleGuideManifest,
+    type StyleGuideManifest,
+    type StyleManifestValidationIssue,
+    type UserStyleGuide,
+} from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,24 +16,36 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/i18n';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
+import { FootnotesTab } from '../style-guide-editor/FootnotesTab';
+import { BibliographyTab } from '../style-guide-editor/BibliographyTab';
+import { QuotationsTab } from '../style-guide-editor/QuotationsTab';
+import { TransliterationTab } from '../style-guide-editor/TransliterationTab';
+import { AdditionalRulesTab } from '../style-guide-editor/AdditionalRulesTab';
 
 /**
- * Modal editor for a `UserStyleGuide`.
+ * v1.7 — Modal editor for a `UserStyleGuide`.
  *
- * v1.6 scope (intentional): rename `displayName` + `version`, plus a
- * read-only inspection of the extracted manifest so the user can SEE
- * what got picked up from their PDF. Editing the manifest itself is
- * scheduled for v1.7 — see memory note
- * `feature_exegesis_v17_rich_style_guide.md` for the roadmap.
+ * Six tabs:
+ *   - **Datos** — displayName + version (existing)
+ *   - **Footnotes** — first/subsequent templates + ibid rules
+ *   - **Bibliography** — entry template + sort + dash for repeats
+ *   - **Quotations** — block threshold + quote marks + ellipsis + brackets
+ *   - **Transliteration** — toggle + scheme + diacritics + body required
+ *   - **Reglas adicionales** — free-form rules list
  *
- * Why the asymmetry vs `UserRubricEditDialog`: the rubric body is a
- * small, hand-authored object and editing it is the primary use case.
- * The style manifest is a much larger, deeply nested LLM extraction
- * (footnote templates, ibid rules, transliteration, etc.) — building
- * a real editor for it is its own sprint, and shipping a half-baked
- * one would be worse than the current "delete + re-upload" workaround.
+ * Persistence is split:
+ *   - displayName + version → `updateGuide` mutation (existing)
+ *   - manifest → `updateManifest` mutation (new in v1.7)
+ *
+ * Both fire on Save when their respective state has changed. Save is
+ * disabled when the manifest has validation errors (severity 'error').
+ * Warnings are surfaced inline but don't block save.
+ *
+ * Cancel discards all in-flight edits without confirmation — it's a
+ * dialog, the user can re-open and try again.
  */
 export interface UserStyleGuideEditDialogProps {
     open: boolean;
@@ -35,31 +53,72 @@ export interface UserStyleGuideEditDialogProps {
     guide: UserStyleGuide;
 }
 
+type TabKey = 'datos' | 'footnotes' | 'bibliography' | 'quotations' | 'transliteration' | 'additional';
+
+const TABS: ReadonlyArray<TabKey> = [
+    'datos',
+    'footnotes',
+    'bibliography',
+    'quotations',
+    'transliteration',
+    'additional',
+];
+
 export function UserStyleGuideEditDialog({ open, onOpenChange, guide }: UserStyleGuideEditDialogProps) {
     const { t } = useTranslation('exegesis');
-    const { updateGuide } = useUserStyleGuides();
-    const saving = updateGuide.isPending;
+    const { updateGuide, updateManifest } = useUserStyleGuides();
+    const saving = updateGuide.isPending || updateManifest.isPending;
 
+    // Display fields (existing v1.6 functionality).
     const [displayName, setDisplayName] = useState(guide.displayName);
     const [version, setVersion] = useState(guide.version ?? '');
+
+    // Manifest draft. Null while the guide doesn't have a manifest
+    // yet (LlamaParse extraction in flight or never triggered) — the
+    // manifest tabs render an empty-state in that case.
+    const [draft, setDraft] = useState<StyleGuideManifest | null>(guide.manifest);
+
+    const [activeTab, setActiveTab] = useState<TabKey>('datos');
 
     useEffect(() => {
         if (!open) return;
         setDisplayName(guide.displayName);
         setVersion(guide.version ?? '');
+        setDraft(guide.manifest);
+        setActiveTab('datos');
     }, [open, guide]);
 
+    const issues = useMemo<ReadonlyArray<StyleManifestValidationIssue>>(
+        () => (draft ? validateStyleGuideManifest(draft) : []),
+        [draft],
+    );
+    const hasErrors = hasManifestValidationErrors(issues);
+    const errorTabs = useMemo(() => collectErrorTabs(issues), [issues]);
+
     const trimmedName = displayName.trim();
-    const canSubmit = trimmedName.length >= 3 && !saving;
+    const dataDirty = trimmedName !== guide.displayName || version.trim() !== (guide.version ?? '');
+    const manifestDirty = draft !== null && draft !== guide.manifest;
+    const canSubmit = trimmedName.length >= 3 && !saving && !hasErrors && (dataDirty || manifestDirty);
 
     const handleSave = async () => {
         if (!canSubmit) return;
         try {
-            await updateGuide.mutateAsync({
-                guideId: guide.id,
-                displayName: trimmedName,
-                version: version.trim() || undefined,
-            });
+            const tasks: Promise<unknown>[] = [];
+            if (dataDirty) {
+                tasks.push(
+                    updateGuide.mutateAsync({
+                        guideId: guide.id,
+                        displayName: trimmedName,
+                        version: version.trim() || undefined,
+                    }),
+                );
+            }
+            if (manifestDirty && draft) {
+                tasks.push(
+                    updateManifest.mutateAsync({ guideId: guide.id, manifest: draft }),
+                );
+            }
+            await Promise.all(tasks);
             toast.success(t('directory.styleGuides.toast.updated'));
             onOpenChange(false);
         } catch (err) {
@@ -68,122 +127,96 @@ export function UserStyleGuideEditDialog({ open, onOpenChange, guide }: UserStyl
         }
     };
 
-    const manifest = guide.manifest;
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{t('directory.styleGuides.edit.title')}</DialogTitle>
                     <DialogDescription>
-                        {t('directory.styleGuides.edit.subtitle')}
+                        {t('directory.styleGuides.editor.subtitle')}
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-5">
-                    {/* ── Editable name + version ── */}
-                    <section className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-foreground mb-1">
-                                {t('directory.styleGuides.edit.nameLabel')}
-                            </label>
-                            <input
-                                type="text"
-                                value={displayName}
-                                onChange={(e) => setDisplayName(e.target.value)}
-                                disabled={saving}
-                                className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-foreground mb-1">
-                                {t('directory.styleGuides.edit.versionLabel')}
-                            </label>
-                            <input
-                                type="text"
-                                value={version}
-                                onChange={(e) => setVersion(e.target.value)}
-                                placeholder={t('directory.styleGuides.versionPlaceholder')}
-                                disabled={saving}
-                                className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
-                            />
-                        </div>
-                    </section>
-
-                    {/* ── Read-only manifest inspection ── */}
-                    <section className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
-                        <header className="flex items-start justify-between gap-3">
-                            <div>
-                                <h3 className="text-sm font-semibold text-foreground inline-flex items-center gap-1.5">
-                                    <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                                    {t('directory.styleGuides.edit.manifestSection')}
-                                </h3>
-                                <p className="text-[11px] text-muted-foreground mt-0.5 italic">
-                                    {t('directory.styleGuides.edit.manifestReadOnlyNotice')}
-                                </p>
-                            </div>
-                        </header>
-
-                        {!manifest ? (
-                            <p className="text-xs text-muted-foreground italic">
-                                {t('directory.styleGuides.edit.manifestEmpty')}
-                            </p>
-                        ) : (
-                            <dl className="space-y-3 text-xs">
-                                <ManifestField
-                                    label={t('directory.styleGuides.edit.manifest.citationLabel')}
-                                    value={manifest.citationStyleLabel || '—'}
-                                />
-                                <ManifestField
-                                    label={t('directory.styleGuides.edit.manifest.footnotesFirst')}
-                                    value={<code className="text-[11px] break-all">{manifest.footnotes.firstMentionTemplate}</code>}
-                                />
-                                <ManifestField
-                                    label={t('directory.styleGuides.edit.manifest.footnotesSubsequent')}
-                                    value={<code className="text-[11px] break-all">{manifest.footnotes.subsequentMentionTemplate}</code>}
-                                />
-                                <ManifestField
-                                    label={t('directory.styleGuides.edit.manifest.ibid')}
-                                    value={manifest.footnotes.ibid.enabled
-                                        ? `"${manifest.footnotes.ibid.label}"${manifest.footnotes.ibid.allowPageOverride ? ' (+ páginas)' : ''}`
-                                        : t('directory.styleGuides.edit.manifest.ibidDisabled')}
-                                />
-                                <ManifestField
-                                    label={t('directory.styleGuides.edit.manifest.bibliographyEntry')}
-                                    value={<code className="text-[11px] break-all">{manifest.bibliography.entryTemplate}</code>}
-                                />
-                                <ManifestField
-                                    label={t('directory.styleGuides.edit.manifest.blockQuote')}
-                                    value={t('directory.styleGuides.edit.manifest.blockQuoteValue', { count: manifest.quotations.blockQuoteThresholdWords })}
-                                />
-                                <ManifestField
-                                    label={t('directory.styleGuides.edit.manifest.quoteMarks')}
-                                    value={`${manifest.quotations.primaryQuoteMark}…${manifest.quotations.primaryQuoteMark} / ${manifest.quotations.secondaryQuoteMark}…${manifest.quotations.secondaryQuoteMark}`}
-                                />
-                                {manifest.transliteration && (
-                                    <ManifestField
-                                        label={t('directory.styleGuides.edit.manifest.transliteration')}
-                                        value={`${manifest.transliteration.scheme}${manifest.transliteration.useDiacritics ? ' (diacríticos)' : ''}`}
-                                    />
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="mt-2">
+                    <TabsList className="grid grid-cols-6 w-full text-[11px]">
+                        {TABS.map(key => (
+                            <TabsTrigger key={key} value={key} className="text-[11px] gap-1">
+                                {errorTabs.has(key) && (
+                                    <AlertTriangle className="h-2.5 w-2.5 text-destructive" aria-hidden />
                                 )}
-                                {manifest.additionalRules.length > 0 && (
-                                    <div>
-                                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
-                                            {t('directory.styleGuides.edit.manifest.additional')}
-                                        </dt>
-                                        <ul className="list-disc pl-5 space-y-0.5 text-foreground">
-                                            {manifest.additionalRules.map((rule, i) => (
-                                                <li key={i}>{rule}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </dl>
-                        )}
-                    </section>
-                </div>
+                                {t(`directory.styleGuides.editor.tabs.${key}`)}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
 
-                <footer className="flex items-center justify-between pt-4 border-t border-border">
+                    <TabsContent value="datos" className="mt-4">
+                        <DatosTab
+                            displayName={displayName}
+                            version={version}
+                            onDisplayName={setDisplayName}
+                            onVersion={setVersion}
+                            disabled={saving}
+                        />
+                    </TabsContent>
+
+                    {!draft ? (
+                        <ManifestEmpty t={t} />
+                    ) : (
+                        <>
+                            <TabsContent value="footnotes" className="mt-4">
+                                <FootnotesTab
+                                    value={draft.footnotes}
+                                    onChange={(footnotes) => setDraft({ ...draft, footnotes })}
+                                    issues={issues}
+                                    disabled={saving}
+                                />
+                            </TabsContent>
+                            <TabsContent value="bibliography" className="mt-4">
+                                <BibliographyTab
+                                    value={draft.bibliography}
+                                    onChange={(bibliography) => setDraft({ ...draft, bibliography })}
+                                    issues={issues}
+                                    disabled={saving}
+                                />
+                            </TabsContent>
+                            <TabsContent value="quotations" className="mt-4">
+                                <QuotationsTab
+                                    value={draft.quotations}
+                                    onChange={(quotations) => setDraft({ ...draft, quotations })}
+                                    issues={issues}
+                                    disabled={saving}
+                                />
+                            </TabsContent>
+                            <TabsContent value="transliteration" className="mt-4">
+                                <TransliterationTab
+                                    value={draft.transliteration}
+                                    onChange={(transliteration) => setDraft({ ...draft, transliteration })}
+                                    issues={issues}
+                                    disabled={saving}
+                                />
+                            </TabsContent>
+                            <TabsContent value="additional" className="mt-4">
+                                <AdditionalRulesTab
+                                    value={draft.additionalRules}
+                                    onChange={(additionalRules) => setDraft({ ...draft, additionalRules })}
+                                    issues={issues}
+                                    disabled={saving}
+                                />
+                            </TabsContent>
+                        </>
+                    )}
+                </Tabs>
+
+                {hasErrors && (
+                    <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 mt-4">
+                        <p className="text-[11px] text-destructive font-medium inline-flex items-center gap-1.5">
+                            <AlertTriangle className="h-3 w-3" aria-hidden />
+                            {t('directory.styleGuides.editor.hasErrors')}
+                        </p>
+                    </div>
+                )}
+
+                <footer className="flex items-center justify-between pt-4 mt-4 border-t border-border">
                     <Button
                         type="button"
                         variant="ghost"
@@ -200,9 +233,9 @@ export function UserStyleGuideEditDialog({ open, onOpenChange, guide }: UserStyl
                         className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
                     >
                         {saving ? (
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" aria-hidden />
                         ) : (
-                            <Save className="h-3 w-3 mr-1" />
+                            <Save className="h-3 w-3 mr-1" aria-hidden />
                         )}
                         {t('directory.styleGuides.edit.save')}
                     </Button>
@@ -212,11 +245,80 @@ export function UserStyleGuideEditDialog({ open, onOpenChange, guide }: UserStyl
     );
 }
 
-function ManifestField({ label, value }: { label: string; value: React.ReactNode }) {
+// ── Sub-components ──────────────────────────────────────────────────────
+
+function DatosTab({
+    displayName,
+    version,
+    onDisplayName,
+    onVersion,
+    disabled,
+}: {
+    displayName: string;
+    version: string;
+    onDisplayName: (v: string) => void;
+    onVersion: (v: string) => void;
+    disabled: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
     return (
-        <div>
-            <dt className="text-[11px] uppercase tracking-wide text-muted-foreground mb-0.5">{label}</dt>
-            <dd className="text-foreground">{value}</dd>
+        <section className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3">
+            <div>
+                <label className="block text-xs font-medium text-foreground mb-1">
+                    {t('directory.styleGuides.edit.nameLabel')}
+                </label>
+                <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => onDisplayName(e.target.value)}
+                    disabled={disabled}
+                    className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-foreground mb-1">
+                    {t('directory.styleGuides.edit.versionLabel')}
+                </label>
+                <input
+                    type="text"
+                    value={version}
+                    onChange={(e) => onVersion(e.target.value)}
+                    placeholder={t('directory.styleGuides.versionPlaceholder')}
+                    disabled={disabled}
+                    className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
+                />
+            </div>
+        </section>
+    );
+}
+
+function ManifestEmpty({ t }: { t: (key: string) => string }) {
+    return (
+        <div className="rounded-lg border border-border bg-muted/30 p-4 text-center mt-4">
+            <p className="text-sm text-muted-foreground italic">
+                {t('directory.styleGuides.edit.manifestEmpty')}
+            </p>
         </div>
     );
+}
+
+/**
+ * Maps validation paths to the tab they belong to so the tab trigger
+ * can show an alert glyph next to its label. Cheap heuristic — uses
+ * the first segment of the path.
+ */
+function collectErrorTabs(issues: ReadonlyArray<StyleManifestValidationIssue>): Set<TabKey> {
+    const out = new Set<TabKey>();
+    for (const issue of issues) {
+        if (issue.severity !== 'error') continue;
+        const segment = issue.path.split('.')[0];
+        switch (segment) {
+            case 'footnotes': out.add('footnotes'); break;
+            case 'bibliography': out.add('bibliography'); break;
+            case 'quotations': out.add('quotations'); break;
+            case 'transliteration': out.add('transliteration'); break;
+            case 'additionalRules': out.add('additional'); break;
+        }
+    }
+    return out;
 }

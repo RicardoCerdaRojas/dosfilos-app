@@ -44,6 +44,7 @@ import {
     CreateUserStyleGuideUseCase,
     SetActiveStyleGuideUseCase,
     UpdateUserStyleGuideUseCase,
+    UpdateUserStyleGuideManifestUseCase,
     DeleteUserStyleGuideUseCase,
     AddProjectSourceUseCase,
     UpdateProjectSourceUseCase,
@@ -101,6 +102,7 @@ class ExegesisService {
     public createStyleGuide: CreateUserStyleGuideUseCase;
     public setActiveStyleGuide: SetActiveStyleGuideUseCase;
     public updateStyleGuide: UpdateUserStyleGuideUseCase;
+    public updateStyleGuideManifest: UpdateUserStyleGuideManifestUseCase;
     public deleteStyleGuide: DeleteUserStyleGuideUseCase;
 
     // Project sources
@@ -192,6 +194,7 @@ class ExegesisService {
         this.createStyleGuide = new CreateUserStyleGuideUseCase(styleGuideRepository);
         this.setActiveStyleGuide = new SetActiveStyleGuideUseCase(styleGuideRepository);
         this.updateStyleGuide = new UpdateUserStyleGuideUseCase(styleGuideRepository);
+        this.updateStyleGuideManifest = new UpdateUserStyleGuideManifestUseCase(styleGuideRepository);
         this.deleteStyleGuide = new DeleteUserStyleGuideUseCase(styleGuideRepository);
 
         // Project sources (operate on the paper repo since sources live inline)

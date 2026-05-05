@@ -252,3 +252,189 @@ export function buildDefaultStyleManifest(): StyleGuideManifest {
         extractedAt: new Date(),
     };
 }
+
+// ── v1.7 — Editor validation ────────────────────────────────────────────
+
+/**
+ * One validation problem on a manifest patch. Validation is permissive
+ * (warns instead of blocks) for fields the post-processor can tolerate
+ * (e.g. an empty `additionalRules` entry); strict for fields that
+ * would silently break generation (e.g. zero block-quote threshold,
+ * empty quote marks, unknown placeholders in templates).
+ */
+export interface StyleManifestValidationIssue {
+    /** Dot-path of the field, e.g. `"footnotes.firstMentionTemplate"`. */
+    path: string;
+    /** `'error'` blocks save; `'warning'` is informational. */
+    severity: 'error' | 'warning';
+    /**
+     * Stable code so the UI can localize the message via i18n. The
+     * helper does NOT return localized text — i18n lives in the web
+     * layer.
+     */
+    code: ManifestValidationCode;
+    /**
+     * Optional context for messages that interpolate values
+     * (e.g. unknown placeholder name).
+     */
+    context?: Record<string, string | number>;
+}
+
+export type ManifestValidationCode =
+    | 'empty-template'
+    | 'unknown-placeholder'
+    | 'non-positive-threshold'
+    | 'empty-quote-mark'
+    | 'duplicate-additional-rule'
+    | 'empty-additional-rule'
+    | 'transliteration-empty-scheme';
+
+/**
+ * Placeholders recognized by `IStyleFormatter`. The editor warns the
+ * user when a template references a placeholder we don't know how to
+ * substitute — typo prevention, mostly.
+ */
+export const KNOWN_TEMPLATE_PLACEHOLDERS: ReadonlySet<string> = new Set([
+    'author',
+    'authorShort',
+    'authorSurnameFirst',
+    'title',
+    'titleShort',
+    'publisher',
+    'city',
+    'year',
+    'pages',
+    'volume',
+]);
+
+/**
+ * Validates a manifest the user is about to save. Returns an array of
+ * issues — empty array means OK to persist. The use case treats
+ * `severity: 'error'` as fatal; the editor surfaces warnings inline
+ * but lets the user save through them.
+ *
+ * Pure function. No mutation, no side effects.
+ */
+export function validateStyleGuideManifest(manifest: StyleGuideManifest): ReadonlyArray<StyleManifestValidationIssue> {
+    const issues: StyleManifestValidationIssue[] = [];
+
+    // ── Footnotes ──────────────────────────────────────────────────────
+    if (!manifest.footnotes.firstMentionTemplate.trim()) {
+        issues.push({ path: 'footnotes.firstMentionTemplate', severity: 'error', code: 'empty-template' });
+    } else {
+        for (const placeholder of extractPlaceholders(manifest.footnotes.firstMentionTemplate)) {
+            if (!KNOWN_TEMPLATE_PLACEHOLDERS.has(placeholder)) {
+                issues.push({
+                    path: 'footnotes.firstMentionTemplate',
+                    severity: 'warning',
+                    code: 'unknown-placeholder',
+                    context: { placeholder },
+                });
+            }
+        }
+    }
+    if (!manifest.footnotes.subsequentMentionTemplate.trim()) {
+        issues.push({ path: 'footnotes.subsequentMentionTemplate', severity: 'error', code: 'empty-template' });
+    } else {
+        for (const placeholder of extractPlaceholders(manifest.footnotes.subsequentMentionTemplate)) {
+            if (!KNOWN_TEMPLATE_PLACEHOLDERS.has(placeholder)) {
+                issues.push({
+                    path: 'footnotes.subsequentMentionTemplate',
+                    severity: 'warning',
+                    code: 'unknown-placeholder',
+                    context: { placeholder },
+                });
+            }
+        }
+    }
+
+    // ── Bibliography ───────────────────────────────────────────────────
+    if (!manifest.bibliography.entryTemplate.trim()) {
+        issues.push({ path: 'bibliography.entryTemplate', severity: 'error', code: 'empty-template' });
+    } else {
+        for (const placeholder of extractPlaceholders(manifest.bibliography.entryTemplate)) {
+            if (!KNOWN_TEMPLATE_PLACEHOLDERS.has(placeholder)) {
+                issues.push({
+                    path: 'bibliography.entryTemplate',
+                    severity: 'warning',
+                    code: 'unknown-placeholder',
+                    context: { placeholder },
+                });
+            }
+        }
+    }
+
+    // ── Quotations ─────────────────────────────────────────────────────
+    if (manifest.quotations.blockQuoteThresholdWords <= 0) {
+        issues.push({
+            path: 'quotations.blockQuoteThresholdWords',
+            severity: 'error',
+            code: 'non-positive-threshold',
+        });
+    }
+    if (!manifest.quotations.primaryQuoteMark.trim()) {
+        issues.push({ path: 'quotations.primaryQuoteMark', severity: 'error', code: 'empty-quote-mark' });
+    }
+    if (!manifest.quotations.secondaryQuoteMark.trim()) {
+        issues.push({ path: 'quotations.secondaryQuoteMark', severity: 'error', code: 'empty-quote-mark' });
+    }
+
+    // ── Transliteration ────────────────────────────────────────────────
+    if (manifest.transliteration && !manifest.transliteration.scheme.trim()) {
+        issues.push({
+            path: 'transliteration.scheme',
+            severity: 'error',
+            code: 'transliteration-empty-scheme',
+        });
+    }
+
+    // ── Additional rules ───────────────────────────────────────────────
+    const seenRules = new Set<string>();
+    manifest.additionalRules.forEach((rule, idx) => {
+        const trimmed = rule.trim();
+        if (trimmed.length === 0) {
+            issues.push({
+                path: `additionalRules.${idx}`,
+                severity: 'warning',
+                code: 'empty-additional-rule',
+            });
+            return;
+        }
+        const normalized = trimmed.toLowerCase();
+        if (seenRules.has(normalized)) {
+            issues.push({
+                path: `additionalRules.${idx}`,
+                severity: 'warning',
+                code: 'duplicate-additional-rule',
+            });
+        } else {
+            seenRules.add(normalized);
+        }
+    });
+
+    return issues;
+}
+
+/**
+ * True when `validateStyleGuideManifest` returned at least one
+ * `severity: 'error'` issue. Convenience for the use case's gate.
+ */
+export function hasManifestValidationErrors(
+    issues: ReadonlyArray<StyleManifestValidationIssue>,
+): boolean {
+    return issues.some(i => i.severity === 'error');
+}
+
+/**
+ * Pulls `{placeholder}` substrings out of a template string. Used
+ * internally by `validateStyleGuideManifest` and exposed so the
+ * editor can render highlighted placeholder badges.
+ */
+export function extractPlaceholders(template: string): ReadonlyArray<string> {
+    const matches = template.matchAll(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g);
+    const out: string[] = [];
+    for (const m of matches) {
+        if (m[1]) out.push(m[1]);
+    }
+    return out;
+}
