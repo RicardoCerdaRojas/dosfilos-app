@@ -262,6 +262,30 @@
         "buy": "Buy",
         "close": "Close"
     },
+    "metadataBackfill": {
+        "title_one": "{{count}} resource without Bible book metadata",
+        "title_other": "{{count}} resources without Bible book metadata",
+        "body": "The AI can infer the books from the title (BHQ → whole OT, \"2 Peter & Jude\" → 2 Peter + Jude, etc.) and fill them in automatically. Only writes when the match is clear; the rest you can edit manually.",
+        "cta_one": "Detect ({{count}})",
+        "cta_other": "Detect ({{count}})",
+        "running": "Detecting…",
+        "dismiss": "Dismiss",
+        "summary": {
+            "updated_one": "✨ {{count}} resource updated",
+            "updated_other": "✨ {{count}} resources updated",
+            "noUpdates": "None could be detected automatically",
+            "manual_one": "{{count}} without a confident match — edit manually from the resource.",
+            "manual_other": "{{count}} without a confident match — edit manually from each resource.",
+            "manualWithFailures": "{{manual}} without a confident match. {{failed}} save errors — try again."
+        },
+        "toast": {
+            "success_one": "{{count}} resource updated with detected books",
+            "success_other": "{{count}} resources updated with detected books",
+            "partial": "{{updated}} updated, {{failed}} save errors",
+            "allSkipped": "No title had enough signal to infer books automatically",
+            "error": "Error running detection. Try again."
+        }
+    },
     "toast": {
         "uploadSuccess": "Resource added to library",
         "uploadError": "Error uploading resource",

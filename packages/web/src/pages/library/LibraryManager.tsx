@@ -21,6 +21,7 @@ import { LibraryStatusCallout } from './components/LibraryStatusCallout';
 import { LibraryProgress } from './components/LibraryProgress';
 import { LibraryUploadForm } from './components/LibraryUploadForm';
 import { LibraryFilters } from './components/LibraryFilters';
+import { MetadataBackfillBanner } from './components/MetadataBackfillBanner';
 import { LibraryEmptyState } from './components/LibraryEmptyState';
 import { useLibraryResources } from './hooks/useLibraryResources';
 import { useResourceProcessing } from './hooks/useResourceProcessing';
@@ -278,6 +279,11 @@ export function LibraryManager() {
                     onCategoryChange={setCategoryFilter}
                     onViewModeChange={setViewMode}
                 />
+
+                {/* v1.7.1 — bulk backfill of smart-match metadata for
+                    legacy resources missing `coversBibleBooks`/`scope`.
+                    Self-hides when nothing's incomplete. */}
+                <MetadataBackfillBanner resources={data.resources} />
 
                 {data.loading ? (
                     <div className="flex justify-center p-12">
