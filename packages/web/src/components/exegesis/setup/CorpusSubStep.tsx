@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     BookOpenText,
     CheckCircle2,
@@ -42,6 +42,7 @@ import { RubricGapCard } from './RubricGapCard';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
 import { PageBalanceHint } from './PageBalanceHint';
+import { FileDropzone } from '@/components/ui/file-dropzone';
 
 /**
  * Corpus sub-step — the main pedagogical surface of the rubric-driven
@@ -463,7 +464,6 @@ function AddSourceDialog({
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
     const { addSource } = useExegesisPapers();
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Two ways to add a source: upload a fresh file OR pick one
     // already in the user's library (e.g. they uploaded BDAG for a
@@ -492,7 +492,6 @@ function AddSourceDialog({
             setCitationKey('');
             setPickedResourceId(null);
             setLibrarySearch('');
-            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     }, [open, initialType]);
 
@@ -640,19 +639,15 @@ function AddSourceDialog({
                     <label className="block text-xs font-medium text-foreground mb-1">
                         {t('paperSetup.subSteps.corpus.upload.fileLabel')}
                     </label>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="application/pdf,.pdf,application/epub+zip,.epub"
-                        onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                    <FileDropzone
+                        accept=".pdf,.epub"
+                        value={file}
+                        onChange={handleFile}
                         disabled={uploading}
-                        className="block w-full text-sm text-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-success-subtle file:text-success-subtle-foreground hover:file:bg-success/20"
+                        hint="PDF o EPUB"
+                        emptyLabel={t('common:fileDropzone.empty')}
+                        clearLabel={t('common:fileDropzone.clear')}
                     />
-                    {file && (
-                        <p className="text-[11px] text-muted-foreground mt-1">
-                            {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
-                        </p>
-                    )}
                 </div>
             )}
 

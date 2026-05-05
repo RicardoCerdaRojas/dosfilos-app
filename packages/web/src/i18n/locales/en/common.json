@@ -23,5 +23,9 @@
         "logoutSuccess": "Logged out successfully"
     },
     "modulesIncluded": "Modules Included",
-    "limits": "Limits"
+    "limits": "Limits",
+    "fileDropzone": {
+        "empty": "Drag a file or click to select",
+        "clear": "Remove file"
+    }
 }

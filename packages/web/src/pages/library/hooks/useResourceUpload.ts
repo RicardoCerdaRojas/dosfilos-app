@@ -86,8 +86,8 @@ interface UseResourceUploadResult {
      * defined — when no file is picked, both tiers report as available.
      */
     tierAvailability: UploadTierAvailability;
-    /** File input change handler. Validates type + sets warning + autofills title. */
-    handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    /** File picker change handler. Validates type + sets warning + autofills title. Pass `null` to clear. */
+    handleFileChange: (file: File | null) => void;
     /** Patch the metadata partial. */
     setMetadata: (updates: Partial<UploadFormMetadata>) => void;
     /** Form submit handler. Checks consent, uploads, resets state on success. */
@@ -138,9 +138,12 @@ export function useResourceUpload({
         setMetadataState({ title: '', author: '', type: 'theology', extractionMode: 'premium' });
     }, []);
 
-    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const selected = e.target.files?.[0];
-        if (!selected) return;
+    const handleFileChange = useCallback((selected: File | null) => {
+        if (!selected) {
+            setFile(null);
+            setFileSizeWarning(false);
+            return;
+        }
 
         // Validate by MIME or extension fallback (browsers don't always set
         // application/epub+zip MIME for EPUBs).

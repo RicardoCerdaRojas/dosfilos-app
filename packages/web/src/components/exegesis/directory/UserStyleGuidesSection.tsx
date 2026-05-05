@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { BookOpen, CheckCircle2, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { FileDropzone } from '@/components/ui/file-dropzone';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
@@ -202,7 +203,6 @@ interface UploadGuideFormProps {
 function UploadGuideForm({ onUploaded, firstGuide, uploadGuide }: UploadGuideFormProps) {
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [displayName, setDisplayName] = useState('');
     const [version, setVersion] = useState('');
@@ -233,7 +233,6 @@ function UploadGuideForm({ onUploaded, firstGuide, uploadGuide }: UploadGuideFor
             setFile(null);
             setDisplayName('');
             setVersion('');
-            if (fileInputRef.current) fileInputRef.current.value = '';
             onUploaded();
         } catch (err) {
             console.error('[exegesis] upload guide failed:', err);
@@ -249,19 +248,15 @@ function UploadGuideForm({ onUploaded, firstGuide, uploadGuide }: UploadGuideFor
                 <label className="block text-xs font-medium text-foreground mb-1">
                     {t('directory.styleGuides.fileLabel')}
                 </label>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf,.pdf,application/epub+zip,.epub"
-                    onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                <FileDropzone
+                    accept=".pdf,.epub"
+                    value={file}
+                    onChange={handleFile}
                     disabled={uploading}
-                    className="block w-full text-sm text-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-success-subtle file:text-success-subtle-foreground hover:file:bg-success/20"
+                    hint="PDF o EPUB"
+                    emptyLabel={t('common:fileDropzone.empty')}
+                    clearLabel={t('common:fileDropzone.clear')}
                 />
-                {file && (
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                        {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
-                    </p>
-                )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
                 <div>
