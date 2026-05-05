@@ -783,6 +783,13 @@
             "label": "Serie",
             "tooltip": "Este trabajo está vinculado a una serie de predicación. Click para abrir la serie."
         },
+        "meta": {
+            "sources_one": "{{count}} fuente",
+            "sources_other": "{{count}} fuentes",
+            "sourcesTooltip_one": "{{count}} fuente en el corpus",
+            "sourcesTooltip_other": "{{count}} fuentes en el corpus",
+            "stepsTooltip": "{{accepted}} de {{total}} pasos aceptados"
+        },
         "filters": {
             "searchPlaceholder": "Buscar por pasaje o título...",
             "all": "Todos",
