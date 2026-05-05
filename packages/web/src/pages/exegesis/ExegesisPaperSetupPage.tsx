@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, FileCheck2, FileStack, ListTree, BookOpen, Loader2, Lock } from 'lucide-react';
+import { ArrowLeft, FileCheck2, FileStack, ListTree, BookOpen, Loader2, Lock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPaper } from '@/hooks/exegesis/useExegesisPaper';
@@ -8,6 +8,7 @@ import { RubricSubStep } from '@/components/exegesis/setup/RubricSubStep';
 import { StyleManifestSubStep } from '@/components/exegesis/setup/StyleManifestSubStep';
 import { CorpusSubStep } from '@/components/exegesis/setup/CorpusSubStep';
 import { StructuralPlanSubStep } from '@/components/exegesis/setup/StructuralPlanSubStep';
+import { CorpusUsagePlanSubStep } from '@/components/exegesis/corpus-plan/CorpusUsagePlanSubStep';
 import { formatPassageReference, type SupportedLanguage } from '@dosfilos/domain';
 
 /**
@@ -36,12 +37,13 @@ import { formatPassageReference, type SupportedLanguage } from '@dosfilos/domain
  * "Generate" CTA at the bottom of step 4 redirects to the paper
  * detail page where the wizard runs.
  */
-type SubStepKey = 'rubric' | 'manifest' | 'corpus' | 'plan';
+type SubStepKey = 'rubric' | 'manifest' | 'corpus' | 'corpus-plan' | 'plan';
 
 const SUB_STEPS: ReadonlyArray<{ key: SubStepKey; iconKey: string }> = [
     { key: 'rubric', iconKey: 'FileCheck2' },
     { key: 'manifest', iconKey: 'BookOpen' },
     { key: 'corpus', iconKey: 'FileStack' },
+    { key: 'corpus-plan', iconKey: 'Sparkles' },
     { key: 'plan', iconKey: 'ListTree' },
 ];
 
@@ -149,6 +151,7 @@ export function ExegesisPaperSetupPage() {
                     {activeKey === 'rubric' && <RubricSubStep paper={paper} />}
                     {activeKey === 'manifest' && <StyleManifestSubStep paper={paper} />}
                     {activeKey === 'corpus' && <CorpusSubStep paper={paper} />}
+                    {activeKey === 'corpus-plan' && <CorpusUsagePlanSubStep paper={paper} />}
                     {activeKey === 'plan' && <StructuralPlanSubStep paper={paper} />}
                 </main>
 
@@ -209,6 +212,7 @@ function SubStepIcon({ iconKey, active }: { iconKey: string; active: boolean }) 
         case 'BookOpen': return <BookOpen className={className} />;
         case 'FileStack': return <FileStack className={className} />;
         case 'ListTree': return <ListTree className={className} />;
+        case 'Sparkles': return <Sparkles className={className} />;
         default: return <Lock className={className} />;
     }
 }

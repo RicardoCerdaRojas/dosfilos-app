@@ -91,7 +91,7 @@ export class GenerateStepUseCase {
 
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-            const sources = await this.loadSourceContexts(paper);
+            const sources = await this.loadSourceContexts(paper, step.id);
             const priorAcceptedSteps = collectPriorAccepted(paper, step);
 
             // Resolve the per-kind emphasis the student configured (or
@@ -183,10 +183,26 @@ export class GenerateStepUseCase {
         return (await this.contentReader.getTextContent(guide.corpusId)) ?? '';
     }
 
-    private async loadSourceContexts(paper: ExegeticalPaper): Promise<ExegesisSourceContext[]> {
+    private async loadSourceContexts(
+        paper: ExegeticalPaper,
+        stepId: string,
+    ): Promise<ExegesisSourceContext[]> {
+        // v1.7 corpus-usage planning: read the per-step pinned
+        // sources from `paper.stepPlan.perStep[stepId].pinnedSources`.
+        // The contexts get a `priority` flag so the orchestrator can
+        // prioritize primaries in the prompt without dropping
+        // secondaries (flexible mode). When the planner has never
+        // run, `pinnedIds` is empty and ALL sources fall through as
+        // secondary — same effective behavior as pre-v1.7.
+        const pinnedIds = new Set(
+            paper.stepPlan.perStep[stepId]?.pinnedSources ?? [],
+        );
+
         const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
         const contexts: ExegesisSourceContext[] = [];
         for (const source of sorted) {
+            const priority: 'primary' | 'secondary' =
+                pinnedIds.has(source.id) ? 'primary' : 'secondary';
             if (source.mode === 'extracted-excerpts') {
                 // v1.5: source carries pre-curated chunks (the user
                 // reviewed them in the extraction step). Concatenate
@@ -194,7 +210,7 @@ export class GenerateStepUseCase {
                 // can ask Gemini to cite using those anchors — the
                 // user explicitly accepted these, NOT the rest of the
                 // resource.
-                contexts.push(buildExcerptContext(source));
+                contexts.push({ ...buildExcerptContext(source), priority });
             } else {
                 // 'full-document' (or legacy sources without `mode`):
                 // historical behavior — pull the entire textContent.
@@ -208,9 +224,20 @@ export class GenerateStepUseCase {
                     displayLabel: source.displayLabel,
                     citationKey: source.citationKey,
                     textContent: text ?? '',
+                    priority,
                 });
             }
         }
+
+        // Sort primary sources first — the orchestrator's prompt
+        // builder uses array order to compose the "primary sources
+        // for this step" section. Stable sort preserves the
+        // user-chosen `source.order` within each priority bucket.
+        contexts.sort((a, b) => {
+            const aPrimary = a.priority === 'primary' ? 0 : 1;
+            const bPrimary = b.priority === 'primary' ? 0 : 1;
+            return aPrimary - bPrimary;
+        });
         return contexts;
     }
 

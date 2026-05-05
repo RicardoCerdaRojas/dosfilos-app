@@ -38,6 +38,15 @@ export {
     type ExtractExcerptsSelection,
 } from './ExtractExcerptsForPaperUseCase';
 export {
+    ProposeStepCorpusAllocationsUseCase,
+    type ProposeStepCorpusAllocationsInput,
+    type ProposeStepCorpusAllocationsOutput,
+} from './ProposeStepCorpusAllocationsUseCase';
+export {
+    UpdateStepCorpusAllocationUseCase,
+    type UpdateStepCorpusAllocationInput,
+} from './UpdateStepCorpusAllocationUseCase';
+export {
     RankLibraryResourcesForPaperUseCase,
     type RankLibraryResourcesForPaperInput,
     type RankLibraryResourcesForPaperOutput,

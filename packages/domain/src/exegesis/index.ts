@@ -11,6 +11,7 @@ export * from './entities/PaperRubric';
 export * from './entities/ProjectSource';
 export * from './entities/SourceType';
 export * from './entities/StepSourcePlan';
+export * from './entities/corpusUsagePlan';
 export * from './entities/StyleGuideManifest';
 export * from './entities/UserRubric';
 export * from './entities/UserStyleGuide';
@@ -29,6 +30,7 @@ export * from './ports/IPaperToSermonTransformer';
 export * from './ports/IPericopeDetector';
 export * from './ports/IResourceContentReader';
 export * from './ports/IResourceRanker';
+export * from './ports/IStepCorpusPlanner';
 export * from './ports/IStyleFormatter';
 export * from './ports/IStyleGuideManifestExtractor';
 

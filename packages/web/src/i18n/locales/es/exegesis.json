@@ -613,6 +613,40 @@
                     "typeUpdateFailed": "No se pudo actualizar el tipo"
                 }
             },
+            "corpusPlan": {
+                "tab": "Plan de uso",
+                "heading": "Plan de uso del corpus",
+                "description": "Asigna fuentes específicas a cada verso o sección. La IA propone una distribución basada en el pasaje y el corpus; tú revisas y ajustas. Las fuentes asignadas tienen prioridad en la generación, pero el modelo puede usar las demás cuando sea pertinente.",
+                "emptyCorpus": "Aún no hay fuentes en el corpus. Agrega fuentes en la pestaña anterior antes de planificar el uso.",
+                "noSteps": "Aún no hay pasos generables. Configura el pasaje y vuelve aquí.",
+                "emptyProposalTitle": "Propón una primera asignación",
+                "emptyProposalBody": "La IA analiza tu pasaje + brief + corpus y propone qué fuentes priorizar para cada paso. Te toma menos de un minuto y la puedes editar después.",
+                "proposeCta": "Proponer plan con IA",
+                "proposingCta": "Proponiendo plan…",
+                "regenerate": "Regenerar plan",
+                "lastProposed": "Último plan propuesto: {{when}}",
+                "staleTitle": "El corpus cambió desde el último plan",
+                "staleBody": "Agregaste o quitaste fuentes después de aceptar el plan. La IA puede usar las nuevas en modo flexible, pero para garantizar cobertura conviene regenerar.",
+                "staleRegenerate": "Regenerar",
+                "colStep": "Paso",
+                "colPinned": "Fuentes priorizadas",
+                "kind": {
+                    "introduction": "Introducción",
+                    "verse": "Verso",
+                    "conclusion": "Conclusión",
+                    "assembly": "Ensamble"
+                },
+                "picker": {
+                    "add": "+ Agregar",
+                    "edit": "Editar ({{count}})",
+                    "search": "Buscar fuente…",
+                    "noMatches": "Sin coincidencias",
+                    "removeAria": "Quitar {{label}}"
+                },
+                "toastPropose": "Plan propuesto: {{count}} pasos con asignaciones",
+                "toastProposeError": "No se pudo proponer el plan. Intenta de nuevo.",
+                "toastUpdateError": "No se pudo guardar el cambio. Intenta de nuevo."
+            },
             "plan": {
                 "tab": "Plan estructural",
                 "heading": "Plan estructural",
@@ -695,6 +729,16 @@
             "countAll_one": "{{count}} trabajo",
             "countAll_other": "{{count}} trabajos",
             "countFiltered": "{{visible}} de {{total}}"
+        }
+    },
+    "coverageReport": {
+        "heading": "Cobertura del corpus",
+        "summary": "{{cited}} de {{total}} fuentes citadas",
+        "status": {
+            "planned-and-cited": "Planificada y citada en {{citedCount}} paso(s).",
+            "planned-not-cited": "Planificada en {{plannedCount}} paso(s) pero no citada — considera regenerar.",
+            "cited-not-planned": "Citada en {{citedCount}} paso(s) sin estar en el plan (adaptación del modelo).",
+            "never-cited": "Nunca citada — considera removerla del corpus si no aporta."
         }
     },
     "detail": {

@@ -43,6 +43,7 @@ import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import { StepCard } from '@/components/exegesis/StepCard';
+import { CorpusCoverageReport } from '@/components/exegesis/corpus-plan/CorpusCoverageReport';
 import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
 import {
     exportPaperToMarkdown,
@@ -490,6 +491,11 @@ function StepsPanel({
                     {sortedSteps.map(step => (
                         <StepCard key={step.id} step={step} paperId={paper.id} language={language} />
                     ))}
+                    {/* v1.7 corpus-usage planning — coverage report
+                        once the user starts accepting steps. Self-hides
+                        when there's nothing to report (no sources or
+                        no accepted steps yet). */}
+                    <CorpusCoverageReport paper={paper} />
                 </div>
             )}
         </section>

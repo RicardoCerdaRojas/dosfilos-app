@@ -42,6 +42,25 @@ export interface StepSourcePlan {
     defaults: StepKindDefaults;
     /** Last time the student edited the plan. */
     updatedAt: Date;
+    /**
+     * v1.7 — When the LLM-driven corpus planner last proposed
+     * allocations into `perStep[*].pinnedSources`. Null when the user
+     * has only edited the plan manually (or the planner has never run
+     * for this paper). Set by `ProposeStepCorpusAllocationsUseCase`.
+     */
+    proposedAt?: Date | null;
+    /**
+     * v1.7 — Snapshot of the paper's `ProjectSource.id` set at the
+     * moment the planner proposed `pinnedSources`. Used for
+     * stale-detection: if the current corpus has source IDs that
+     * weren't in the snapshot (or vice-versa), the plan is "stale" —
+     * the UI surfaces a non-blocking banner suggesting regeneration.
+     *
+     * Empty array (NOT undefined) means "snapshot recorded with zero
+     * sources" — distinct from "no snapshot ever taken". Helper
+     * `isStepPlanStale` honors that distinction.
+     */
+    proposalCorpusSourceIds?: ReadonlyArray<string>;
 }
 
 /**
