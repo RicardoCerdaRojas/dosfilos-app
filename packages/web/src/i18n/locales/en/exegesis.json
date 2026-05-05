@@ -102,25 +102,88 @@
             "edit": {
                 "openCta": "Edit guide",
                 "title": "Edit style guide",
-                "subtitle": "Rename the guide and inspect the manifest extracted from the PDF. Manifest editing ships in v1.7.",
                 "nameLabel": "Name",
                 "versionLabel": "Version",
                 "save": "Save changes",
-                "manifestSection": "Extracted manifest",
-                "manifestReadOnlyNotice": "Read-only view. Manifest editing ships in v1.7.",
-                "manifestEmpty": "No manifest extracted yet. Run extraction from a paper setup that uses this guide.",
-                "manifest": {
-                    "citationLabel": "Citation style",
-                    "footnotesFirst": "First-mention footnote template",
-                    "footnotesSubsequent": "Subsequent-mention template",
-                    "ibid": "Ibid",
-                    "ibidDisabled": "Not allowed",
-                    "bibliographyEntry": "Bibliography entry template",
-                    "blockQuote": "Block-quote threshold",
-                    "blockQuoteValue": "{{count}} words",
-                    "quoteMarks": "Quote marks (primary / secondary)",
+                "manifestEmpty": "No manifest extracted yet. Run extraction from a paper setup that uses this guide."
+            },
+            "editor": {
+                "subtitle": "Edit the name, version, and rules extracted from the PDF (footnotes, ibid, quotation marks, transliteration).",
+                "hasErrors": "The manifest has errors. Fix them before saving.",
+                "tabs": {
+                    "datos": "Details",
+                    "footnotes": "Footnotes",
+                    "bibliography": "Bibliography",
+                    "quotations": "Quotations",
                     "transliteration": "Transliteration",
                     "additional": "Additional rules"
+                },
+                "validation": {
+                    "empty-template": "Template can't be empty.",
+                    "unknown-placeholder": "Unknown placeholder: {{placeholder}}. The post-processor won't know how to substitute it.",
+                    "non-positive-threshold": "Threshold must be greater than zero.",
+                    "empty-quote-mark": "Quote marks can't be empty.",
+                    "duplicate-additional-rule": "This rule is duplicated.",
+                    "empty-additional-rule": "This rule is empty.",
+                    "transliteration-empty-scheme": "Provide a name for the transliteration scheme."
+                },
+                "footnotes": {
+                    "intro": "Templates the post-processor uses to reformat citations the LLM emits. Placeholders get substituted with each source's data at render time.",
+                    "placeholderHintTitle": "Available placeholders",
+                    "firstLabel": "First mention",
+                    "firstHint": "Format used the first time a source is cited in the paper.",
+                    "subsequentLabel": "Subsequent mention",
+                    "subsequentHint": "Abbreviated format for later mentions of the same source.",
+                    "ibidLegend": "Ibid rules",
+                    "ibidEnabledLabel": "Allow ibid",
+                    "ibidEnabledHint": "Some modern guides forbid ibid; others prefer it for consecutive cites of the same source.",
+                    "ibidLabelLabel": "Ibid label",
+                    "allowPageOverrideLabel": "Allow ibid + page number",
+                    "allowPageOverrideHint": "When the page differs (e.g. \"Ibid., 47\"). Almost always allowed."
+                },
+                "bibliography": {
+                    "intro": "Format of each entry in the paper's final bibliography.",
+                    "entryLabel": "Entry template",
+                    "entryHint": "Same placeholders as footnotes but typically with surname-first, periods instead of commas, no page numbers.",
+                    "sortByLabel": "Order",
+                    "sortByHint": "How to sort the final bibliography.",
+                    "sortByAuthorSurname": "By author's surname",
+                    "sortByOrderOfAppearance": "By order of appearance",
+                    "dashLabel": "Use long dash for repeated authors",
+                    "dashHint": "Turabian/SBL convention: when several works by the same author appear in a row, replace the name with \"———\". Some seminary guides skip this."
+                },
+                "quotations": {
+                    "intro": "Quotation conventions: marks, block-quote thresholds, ellipsis, and interpolation brackets.",
+                    "thresholdLabel": "Block-quote threshold (words)",
+                    "thresholdHint": "Quotes longer than this render as indented blocks without quote marks. Below the threshold they go inline with marks.",
+                    "primaryLabel": "Primary quote marks",
+                    "primaryHint": "The outer ones. Literal Unicode character.",
+                    "secondaryLabel": "Secondary quote marks",
+                    "secondaryHint": "For nested quotes inside a quote.",
+                    "ellipsisLabel": "Ellipsis",
+                    "ellipsisHint": "How to represent an omission inside a quote.",
+                    "bracketsLabel": "Interpolation brackets",
+                    "bracketsHint": "For inserting editorial text inside a quote.",
+                    "previewTitle": "Preview",
+                    "previewSample": "Quote text with "
+                },
+                "transliteration": {
+                    "intro": "Rules for transliterating Greek/Hebrew when the context requires it.",
+                    "enabledLabel": "Has transliteration rules",
+                    "enabledHint": "Some seminary guides don't specify a scheme and prefer original script. Enable only if your guide defines one.",
+                    "schemeLabel": "Scheme",
+                    "schemeHint": "Transliteration convention (SBL, Library of Congress, etc.).",
+                    "diacriticsLabel": "Preserve diacritics",
+                    "diacriticsHint": "Keep macrons, ḥ with a dot, etc. Some seminaries prefer plain Latin forms without diacritics.",
+                    "bodyRequiredLabel": "Require transliteration in the body",
+                    "bodyRequiredHint": "When general readers need it. If off, transliteration appears in footnotes only."
+                },
+                "additionalRules": {
+                    "intro": "Rules that don't fit the structured sections. One sentence per entry. The orchestrator injects them into the prompt as additional rules.",
+                    "empty": "No additional rules yet.",
+                    "placeholder": "E.g. \"Use serial commas in lists of three items.\"",
+                    "add": "Add rule",
+                    "remove": "Remove rule"
                 }
             }
         }

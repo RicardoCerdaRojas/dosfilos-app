@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exegesisService, libraryService } from '@dosfilos/application';
-import type { UserStyleGuide } from '@dosfilos/domain';
+import type { StyleGuideManifest, UserStyleGuide } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 
 /**
@@ -149,6 +149,25 @@ export function useUserStyleGuides() {
         },
     });
 
+    /**
+     * v1.7 — Manual save of a manifest the user edited in the rich
+     * editor. Throws `StyleGuideValidationError` (from the use case)
+     * when invariants fail; the dialog catches and surfaces inline.
+     */
+    const updateManifest = useMutation({
+        mutationFn: async (input: { guideId: string; manifest: StyleGuideManifest }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.updateStyleGuideManifest.execute({
+                ownerId: user.uid,
+                guideId: input.guideId,
+                manifest: input.manifest,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'styleGuides', user?.uid] });
+        },
+    });
+
     return {
         guides: guidesQuery.data ?? [],
         activeGuide: (guidesQuery.data ?? []).find(g => g.isActive) ?? null,
@@ -159,5 +178,6 @@ export function useUserStyleGuides() {
         updateGuide,
         deleteGuide,
         extractManifest,
+        updateManifest,
     };
 }

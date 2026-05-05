@@ -25,6 +25,11 @@ export { GetActiveStyleGuideUseCase } from './GetActiveStyleGuideUseCase';
 export { CreateUserStyleGuideUseCase } from './CreateUserStyleGuideUseCase';
 export { SetActiveStyleGuideUseCase } from './SetActiveStyleGuideUseCase';
 export { UpdateUserStyleGuideUseCase } from './UpdateUserStyleGuideUseCase';
+export {
+    UpdateUserStyleGuideManifestUseCase,
+    StyleGuideValidationError,
+    type UpdateUserStyleGuideManifestInput,
+} from './UpdateUserStyleGuideManifestUseCase';
 export { DeleteUserStyleGuideUseCase } from './DeleteUserStyleGuideUseCase';
 
 // Project sources
