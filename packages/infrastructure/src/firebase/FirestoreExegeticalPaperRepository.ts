@@ -240,6 +240,8 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             mode: source.mode ?? 'full-document',
             excerpts: source.excerpts ?? [],
             sourceLibraryResourceId: source.sourceLibraryResourceId ?? null,
+            extractedAt: source.extractedAt ?? null,
+            extractionFingerprint: source.extractionFingerprint ?? null,
         };
 
         await runTransaction(db, async (tx) => {
@@ -269,7 +271,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         ownerId: string,
         paperId: string,
         sourceId: string,
-        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts'>>
+        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'extractedAt' | 'extractionFingerprint'>>
     ): Promise<ProjectSource> {
         const ref = this.docRef(paperId);
         let updated: ProjectSource | null = null;
@@ -299,6 +301,8 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             if (patch.citationKey !== undefined) merged.citationKey = patch.citationKey;
             if (patch.order !== undefined) merged.order = patch.order;
             if (patch.excerpts !== undefined) merged.excerpts = patch.excerpts;
+            if (patch.extractedAt !== undefined) merged.extractedAt = patch.extractedAt;
+            if (patch.extractionFingerprint !== undefined) merged.extractionFingerprint = patch.extractionFingerprint;
             sources[idx] = serializeSource(merged);
             updated = merged;
             tx.update(ref, {
@@ -644,6 +648,11 @@ function deserializeSource(raw: any): ProjectSource {
         mode: raw.mode === 'extracted-excerpts' ? 'extracted-excerpts' : 'full-document',
         excerpts: Array.isArray(raw.excerpts) ? raw.excerpts.map(deserializeExcerpt) : [],
         sourceLibraryResourceId: raw.sourceLibraryResourceId ?? null,
+        // v1.5.1 stale-detection fields. Null on pre-v1.5.1 sources;
+        // the UI treats null fingerprint as "not stale" so legacy
+        // excerpts don't suddenly bug-banner the user.
+        extractedAt: raw.extractedAt?.toDate?.() ?? raw.extractedAt ?? null,
+        extractionFingerprint: typeof raw.extractionFingerprint === 'string' ? raw.extractionFingerprint : null,
         createdAt: raw.createdAt?.toDate?.() ?? raw.createdAt ?? new Date(),
     };
 }
@@ -684,6 +693,8 @@ function serializeSource(source: ProjectSource): DocumentData {
         mode: source.mode,
         excerpts: source.excerpts.map(serializeExcerpt),
         sourceLibraryResourceId: source.sourceLibraryResourceId ?? null,
+        extractedAt: source.extractedAt ?? null,
+        extractionFingerprint: source.extractionFingerprint ?? null,
         createdAt: source.createdAt,
     };
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+    AlertTriangle,
     BookOpenText,
     CheckCircle2,
     ChevronDown,
@@ -9,6 +10,7 @@ import {
     Library,
     Loader2,
     Quote,
+    RefreshCcw,
     Search,
     Sparkles,
     Upload,
@@ -18,6 +20,8 @@ import { toast } from 'sonner';
 import { libraryService } from '@dosfilos/application';
 import {
     CITABLE_SOURCE_TYPES,
+    formatPassageReference,
+    isExcerptSetStale,
     type ExegeticalPaper,
     type LibraryResource,
     type ProjectSource,
@@ -26,6 +30,7 @@ import {
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { useLibrary } from '@/hooks/library';
+import { useExtractExcerpts } from '@/hooks/exegesis/useExtractExcerpts';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -185,7 +190,7 @@ function CorpusSourcesList({
             ) : (
                 <ul className="space-y-2">
                     {sorted.map(source => (
-                        <SourceRow key={source.id} paperId={paper.id} source={source} />
+                        <SourceRow key={source.id} paper={paper} source={source} />
                     ))}
                 </ul>
             )}
@@ -193,11 +198,17 @@ function CorpusSourcesList({
     );
 }
 
-function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource }) {
+function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectSource }) {
     const { t } = useTranslation('exegesis');
     const { updateSource, removeSource } = useExegesisPapers();
+    const extractExcerpts = useExtractExcerpts();
     const isCitable = CITABLE_SOURCE_TYPES.has(source.sourceType);
     const isExtracted = source.mode === 'extracted-excerpts';
+    const isStale = isExcerptSetStale(source, {
+        passageRef: formatPassageReference(paper.passage, paper.displayLanguage),
+        assignmentBrief: paper.assignmentBrief,
+    });
+    const canReExtract = isExtracted && !!source.sourceLibraryResourceId;
     // Excerpts panel is collapsed by default — sources can have up to
     // 30 chunks each and unfolding them all by default would dwarf
     // everything else on the page. The user expands when they want
@@ -207,7 +218,7 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
     const handleTypeChange = async (next: SourceType) => {
         try {
             await updateSource.mutateAsync({
-                paperId,
+                paperId: paper.id,
                 sourceId: source.id,
                 sourceType: next,
             });
@@ -220,11 +231,30 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
 
     const handleRemove = async () => {
         try {
-            await removeSource.mutateAsync({ paperId, sourceId: source.id });
+            await removeSource.mutateAsync({ paperId: paper.id, sourceId: source.id });
             toast.success(t('paperSetup.subSteps.corpus.toast.removed'));
         } catch (err) {
             console.error('[exegesis] remove source failed:', err);
             toast.error(t('paperSetup.subSteps.corpus.toast.removeFailed'));
+        }
+    };
+
+    const handleReExtract = async () => {
+        if (!source.sourceLibraryResourceId) return;
+        try {
+            await extractExcerpts.mutateAsync({
+                paperId: paper.id,
+                selections: [{
+                    libraryResourceId: source.sourceLibraryResourceId,
+                    sourceType: source.sourceType,
+                    displayLabel: source.displayLabel,
+                    citationKey: source.citationKey ?? undefined,
+                }],
+            });
+            toast.success(t('paperSetup.subSteps.corpus.staleBanner.toastSuccess'));
+        } catch (err) {
+            console.error('[exegesis] re-extract source failed:', err);
+            toast.error(t('paperSetup.subSteps.corpus.staleBanner.toastError'));
         }
     };
 
@@ -261,6 +291,14 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                     <X className="h-3.5 w-3.5" />
                 </button>
             </div>
+
+            {isStale && canReExtract && (
+                <StaleBanner
+                    onReExtract={handleReExtract}
+                    isReExtracting={extractExcerpts.isPending}
+                />
+            )}
+
             <SourceTypePicker
                 value={source.sourceType}
                 onChange={handleTypeChange}
@@ -297,13 +335,48 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                     </button>
                     {excerptsExpanded && (
                         <ExcerptsReviewPanel
-                            paperId={paperId}
+                            paperId={paper.id}
                             source={source}
                         />
                     )}
                 </div>
             )}
         </li>
+    );
+}
+
+function StaleBanner({
+    onReExtract,
+    isReExtracting,
+}: {
+    onReExtract: () => void;
+    isReExtracting: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-md border border-warning/40 bg-warning-subtle/60 px-2.5 py-2 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-warning-subtle-foreground mt-0.5 shrink-0" aria-hidden />
+            <div className="flex-1 min-w-0">
+                <p className="text-[11.5px] font-semibold text-warning-subtle-foreground leading-tight">
+                    {t('paperSetup.subSteps.corpus.staleBanner.title')}
+                </p>
+                <p className="text-[11px] text-warning-subtle-foreground/80 leading-snug mt-0.5">
+                    {t('paperSetup.subSteps.corpus.staleBanner.body')}
+                </p>
+            </div>
+            <Button
+                type="button"
+                size="sm"
+                onClick={onReExtract}
+                disabled={isReExtracting}
+                className="text-[11px] h-7 gap-1 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+            >
+                {isReExtracting
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <RefreshCcw className="h-3 w-3" />}
+                {t('paperSetup.subSteps.corpus.staleBanner.cta')}
+            </Button>
+        </div>
     );
 }
 

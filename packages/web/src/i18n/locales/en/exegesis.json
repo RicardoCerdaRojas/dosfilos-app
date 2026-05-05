@@ -658,6 +658,13 @@
                         "saveFailed": "Couldn't save changes"
                     }
                 },
+                "staleBanner": {
+                    "title": "Excerpts out of date",
+                    "body": "You edited the passage or brief after extracting. Re-extract so the excerpts reflect the changes.",
+                    "cta": "Re-extract",
+                    "toastSuccess": "Excerpts re-extracted against the current brief",
+                    "toastError": "Couldn't re-extract excerpts. Try again."
+                },
                 "balance": {
                     "standard_one": "{{count}} std page",
                     "standard_other": "{{count}} std pages",

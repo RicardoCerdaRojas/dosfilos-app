@@ -1,10 +1,12 @@
-import type {
-    ExegeticalPaper,
-    IExcerptExtractor,
-    IExegeticalPaperRepository,
-    ProjectSource,
-    ProjectSourceExcerpt,
-    SourceType,
+import {
+    computeExtractionFingerprint,
+    formatPassageReference,
+    type ExegeticalPaper,
+    type IExcerptExtractor,
+    type IExegeticalPaperRepository,
+    type ProjectSource,
+    type ProjectSourceExcerpt,
+    type SourceType,
 } from '@dosfilos/domain';
 
 /**
@@ -131,6 +133,14 @@ export class ExtractExcerptsForPaperUseCase {
             }
         }
 
+        // Stale tracking: every source extracted in this run carries
+        // the same fingerprint of (passage + brief). The UI uses it to
+        // detect when the user later edits the brief or passage and
+        // surfaces a "re-extract" banner per source.
+        const passageRef = formatPassageReference(paper.passage, paper.displayLanguage);
+        const fingerprint = computeExtractionFingerprint(passageRef, paper.assignmentBrief);
+        const extractedAt = new Date();
+
         for (const selection of input.selections) {
             const excerpts = extraction.excerptsByResource[selection.libraryResourceId] ?? [];
             const existing = existingByLibraryResource.get(selection.libraryResourceId);
@@ -149,6 +159,8 @@ export class ExtractExcerptsForPaperUseCase {
                         displayLabel: selection.displayLabel,
                         ...(selection.citationKey !== undefined ? { citationKey: selection.citationKey } : {}),
                         excerpts,
+                        extractedAt,
+                        extractionFingerprint: fingerprint,
                     },
                 );
                 sourceIdsByLibraryResource[selection.libraryResourceId] = existing.id;
@@ -167,6 +179,8 @@ export class ExtractExcerptsForPaperUseCase {
                         mode: 'extracted-excerpts',
                         excerpts,
                         sourceLibraryResourceId: selection.libraryResourceId,
+                        extractedAt,
+                        extractionFingerprint: fingerprint,
                     },
                 );
                 sourceIdsByLibraryResource[selection.libraryResourceId] = created.id;

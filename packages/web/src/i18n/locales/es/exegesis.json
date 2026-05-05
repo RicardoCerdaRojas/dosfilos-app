@@ -658,6 +658,13 @@
                         "saveFailed": "No se pudieron guardar los cambios"
                     }
                 },
+                "staleBanner": {
+                    "title": "Fragmentos desactualizados",
+                    "body": "Editaste el pasaje o el brief después de extraer. Vuelve a extraer para que los fragmentos reflejen los cambios.",
+                    "cta": "Re-extraer",
+                    "toastSuccess": "Fragmentos re-extraídos con el brief actual",
+                    "toastError": "No se pudieron re-extraer los fragmentos. Intenta de nuevo."
+                },
                 "balance": {
                     "standard_one": "{{count}} pág. estándar",
                     "standard_other": "{{count}} págs. estándar",
