@@ -28,9 +28,17 @@ describe('getSourceRecommendations', () => {
             expect(recs.some(r => r.series === 'BDAG')).toBe(true);
         });
 
-        it('returns Wallace grammar for grammar-syntax (invariant) on any book', () => {
-            const recs = getSourceRecommendations('JON', 'grammar-syntax', 'es');
+        it('returns Wallace grammar for grammar-syntax (invariant) on a NT book', () => {
+            // v1.7.1: invariants are now testament-aware. Wallace (NT) only
+            // surfaces for NT papers; OT papers see Waltke-O'Connor + Joüon.
+            const recs = getSourceRecommendations('JHN', 'grammar-syntax', 'es');
             expect(recs.some(r => r.author.includes('Wallace'))).toBe(true);
+        });
+
+        it('returns Hebrew grammars for grammar-syntax on an OT book', () => {
+            const recs = getSourceRecommendations('JON', 'grammar-syntax', 'es');
+            expect(recs.some(r => r.author.includes('Waltke'))).toBe(true);
+            expect(recs.some(r => r.author.includes('Joüon'))).toBe(true);
         });
     });
 
@@ -224,6 +232,83 @@ describe('getSourceRecommendations', () => {
             const recs = getSourceRecommendations('1TI', 'commentary-critical', 'es');
             expect(recs.some(r => r.author.includes('Mounce'))).toBe(true);
             expect(recs.some(r => r.author.includes('Marshall'))).toBe(true);
+        });
+    });
+
+    describe('testament-aware invariant filtering (v1.7.1)', () => {
+        it('NT paper does NOT see OT lexicons (HALOT, BDB)', () => {
+            const recs = getSourceRecommendations('2PE', 'lexicon-technical', 'es');
+            expect(recs.some(r => r.series === 'BDAG')).toBe(true);
+            expect(recs.some(r => r.series === 'LSJ')).toBe(true);
+            expect(recs.some(r => r.series === 'HALOT')).toBe(false);
+            expect(recs.some(r => r.series === 'BDB')).toBe(false);
+        });
+
+        it('OT paper does NOT see NT lexicons (BDAG, LSJ)', () => {
+            const recs = getSourceRecommendations('PSA', 'lexicon-technical', 'es');
+            expect(recs.some(r => r.series === 'HALOT')).toBe(true);
+            expect(recs.some(r => r.series === 'BDB')).toBe(true);
+            expect(recs.some(r => r.series === 'BDAG')).toBe(false);
+            expect(recs.some(r => r.series === 'LSJ')).toBe(false);
+        });
+
+        it('NT paper does NOT see OT theological dictionary (NIDOTTE)', () => {
+            const recs = getSourceRecommendations('1CO', 'theological-dictionary', 'es');
+            expect(recs.some(r => r.series === 'TDNT')).toBe(true);
+            expect(recs.some(r => r.series === 'NIDNTTE')).toBe(true);
+            expect(recs.some(r => r.series === 'NIDOTTE')).toBe(false);
+        });
+
+        it('OT paper does NOT see NT theological dictionaries (TDNT, EDNT)', () => {
+            const recs = getSourceRecommendations('ISA', 'theological-dictionary', 'es');
+            expect(recs.some(r => r.series === 'NIDOTTE')).toBe(true);
+            expect(recs.some(r => r.series === 'TDNT')).toBe(false);
+            expect(recs.some(r => r.series === 'EDNT')).toBe(false);
+        });
+
+        it('NT paper does NOT see Hebrew grammars', () => {
+            const recs = getSourceRecommendations('JHN', 'grammar-syntax', 'es');
+            expect(recs.some(r => r.author.includes('Wallace'))).toBe(true);
+            expect(recs.some(r => r.author.includes('Waltke'))).toBe(false);
+            expect(recs.some(r => r.author.includes('Joüon'))).toBe(false);
+        });
+
+        it('whole-bible entries surface for both testaments (Anchor Bible Dictionary)', () => {
+            const ntRecs = getSourceRecommendations('2PE', 'historical-background', 'es');
+            const otRecs = getSourceRecommendations('GEN', 'historical-background', 'es');
+            expect(ntRecs.some(r => r.series === 'ABD')).toBe(true);
+            expect(otRecs.some(r => r.series === 'ABD')).toBe(true);
+        });
+
+        it('NT paper sees NA28 critical apparatus, NOT BHS/BHQ', () => {
+            const recs = getSourceRecommendations('2PE', 'critical-apparatus', 'es');
+            expect(recs.some(r => r.series === 'NA28')).toBe(true);
+            expect(recs.some(r => r.author.includes('Metzger'))).toBe(true);
+            expect(recs.some(r => r.series === 'BHS')).toBe(false);
+            expect(recs.some(r => r.series === 'BHQ')).toBe(false);
+        });
+
+        it('OT paper sees BHQ/BHS critical apparatus, NOT NA28', () => {
+            const recs = getSourceRecommendations('ISA', 'critical-apparatus', 'es');
+            expect(recs.some(r => r.series === 'BHQ')).toBe(true);
+            expect(recs.some(r => r.series === 'BHS')).toBe(true);
+            expect(recs.some(r => r.series === 'NA28')).toBe(false);
+        });
+
+        it('NT paper sees Apostolic Fathers (NT-only) but OT does not', () => {
+            const ntRecs = getSourceRecommendations('1JN', 'primary-source-ancient', 'es');
+            const otRecs = getSourceRecommendations('GEN', 'primary-source-ancient', 'es');
+            expect(ntRecs.some(r => r.title.includes('Apostolic Fathers'))).toBe(true);
+            expect(otRecs.some(r => r.title.includes('Apostolic Fathers'))).toBe(false);
+        });
+
+        it('whole-bible primaries (Josephus, Philo) surface for both testaments', () => {
+            const ntRecs = getSourceRecommendations('LUK', 'primary-source-ancient', 'es');
+            const otRecs = getSourceRecommendations('GEN', 'primary-source-ancient', 'es');
+            expect(ntRecs.some(r => r.author.includes('Josephus'))).toBe(true);
+            expect(otRecs.some(r => r.author.includes('Josephus'))).toBe(true);
+            expect(ntRecs.some(r => r.author.includes('Philo'))).toBe(true);
+            expect(otRecs.some(r => r.author.includes('Philo'))).toBe(true);
         });
     });
 

@@ -10,6 +10,13 @@ import type { SourceRecommendation } from './types';
  * book-specific list, so a Hebrews paper sees Cockerill first
  * (book-specific) then BDAG (invariant).
  *
+ * **Testament filtering (v1.7.1):** every invariant entry carries a
+ * `testament` flag (`'NT' | 'OT' | 'whole-bible'`). The helper drops
+ * cross-testament entries before display so a 2 Peter paper doesn't
+ * see HALOT/BDB/Waltke-O'Connor and a Genesis paper doesn't see
+ * BDAG/Wallace/TDNT. Without this filter the catalog gave half the
+ * users half the catalog as noise.
+ *
  * Curation philosophy:
  *   - Cover the works most pastors-with-seminary-training would
  *     actually own or aspire to own.
@@ -30,6 +37,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780226039336',
             tier: 'essential',
             languages: ['en'],
+            testament: 'NT',
             rationale: 'Estándar absoluto para el griego del NT. Tercera edición (BDAG).',
         },
         {
@@ -41,6 +49,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9789004124455',
             tier: 'essential',
             languages: ['en', 'de'],
+            testament: 'OT',
             rationale: 'Léxico técnico de referencia para hebreo bíblico y arameo.',
         },
         {
@@ -52,6 +61,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780198642268',
             tier: 'recommended',
             languages: ['en'],
+            testament: 'NT',
             rationale: 'Para griego clásico — útil cuando el NT usa palabras con trasfondo helenístico.',
         },
         {
@@ -63,6 +73,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9781565632066',
             tier: 'standard',
             languages: ['en'],
+            testament: 'OT',
             rationale: 'Clásico, en dominio público en versiones digitales. Más accesible que HALOT.',
         },
     ],
@@ -78,6 +89,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780802822437',
             tier: 'essential',
             languages: ['en', 'de'],
+            testament: 'NT',
             rationale: '10 vols. Análisis lexicográfico-teológico exhaustivo de cada palabra clave del NT.',
         },
         {
@@ -89,6 +101,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780310276197',
             tier: 'essential',
             languages: ['en'],
+            testament: 'NT',
             rationale: 'Sucesor moderno del NIDNTT de Brown. Más manejable que TDNT.',
         },
         {
@@ -100,6 +113,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780310483700',
             tier: 'essential',
             languages: ['en'],
+            testament: 'OT',
             rationale: '5 vols. La contraparte AT del NIDNTTE.',
         },
         {
@@ -111,6 +125,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780802824158',
             tier: 'recommended',
             languages: ['en', 'de'],
+            testament: 'NT',
             rationale: 'Más conciso que TDNT, organizado por palabra griega.',
         },
     ],
@@ -126,6 +141,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780310218951',
             tier: 'essential',
             languages: ['en', 'es'],
+            testament: 'NT',
             rationale: 'Sintaxis exegética estándar para predicadores y estudiantes. Ed. en español por Vida.',
         },
         {
@@ -137,6 +153,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780226271101',
             tier: 'essential',
             languages: ['en', 'de'],
+            testament: 'NT',
             rationale: 'Gramática técnica clásica del griego del NT.',
         },
         {
@@ -148,6 +165,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: null,
             tier: 'recommended',
             languages: ['en'],
+            testament: 'NT',
             rationale: 'La gramática griega más extensa en inglés. Dominio público en formato digital.',
         },
         {
@@ -159,6 +177,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780931464317',
             tier: 'essential',
             languages: ['en'],
+            testament: 'OT',
             rationale: 'Sintaxis hebrea bíblica estándar para nivel exegético.',
         },
         {
@@ -170,6 +189,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9788876536298',
             tier: 'essential',
             languages: ['en'],
+            testament: 'OT',
             rationale: 'Gramática hebrea bíblica de referencia técnica. Edición revisada por Muraoka.',
         },
     ],
@@ -185,6 +205,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780830824786',
             tier: 'essential',
             languages: ['en', 'es'],
+            testament: 'NT',
             rationale: 'Trasfondo verso por verso del NT. Ed. española por Mundo Hispano (\"Comentario del Contexto Cultural\").',
         },
         {
@@ -196,6 +217,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780830814190',
             tier: 'essential',
             languages: ['en'],
+            testament: 'OT',
             rationale: 'Contraparte AT del Keener. Verso por verso, contexto antiguo cercano-oriental.',
         },
         {
@@ -207,6 +229,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780830852178',
             tier: 'recommended',
             languages: ['en'],
+            testament: 'NT',
             rationale: 'Introducción estándar al NT con énfasis en contexto greco-romano y judío.',
         },
         {
@@ -218,7 +241,8 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780334024699',
             tier: 'recommended',
             languages: ['en'],
-            rationale: 'Trabajo de referencia sobre judaísmo del Segundo Templo.',
+            testament: 'whole-bible',
+            rationale: 'Trabajo de referencia sobre judaísmo del Segundo Templo. Útil para AT tardío y NT temprano.',
         },
         {
             author: 'Freedman, David Noel (ed.)',
@@ -229,6 +253,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780385193511',
             tier: 'essential',
             languages: ['en'],
+            testament: 'whole-bible',
             rationale: '6 vols. Diccionario académico de referencia, transversal a AT/NT.',
         },
     ],
@@ -244,7 +269,8 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780913573860',
             tier: 'essential',
             languages: ['en', 'es'],
-            rationale: 'Antigüedades + Guerra de los Judíos. Esencial para Hechos y trasfondo del NT.',
+            testament: 'whole-bible',
+            rationale: 'Antigüedades + Guerra de los Judíos. Esencial para Hechos, NT y trasfondo del AT post-exílico.',
         },
         {
             author: 'Philo of Alexandria',
@@ -255,7 +281,8 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780943575933',
             tier: 'recommended',
             languages: ['en'],
-            rationale: 'Filón judío-helenístico. Crítico para Hebreos, Juan, Pablo (lógos, alegoría).',
+            testament: 'whole-bible',
+            rationale: 'Filón judío-helenístico. Crítico para Hebreos, Juan, Pablo (lógos, alegoría) + alegorías sobre Pentateuco.',
         },
         {
             author: 'Holmes, Michael W. (ed./trans.)',
@@ -266,6 +293,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780801031083',
             tier: 'recommended',
             languages: ['en'],
+            testament: 'NT',
             rationale: 'Padres apostólicos (Didaché, Clemente, Ignacio, Bernabé). Diálogo más cercano al NT.',
         },
         {
@@ -277,11 +305,12 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9780385188135',
             tier: 'recommended',
             languages: ['en'],
-            rationale: '2 vols. Pseudoepígrafa intertestamentaria — clave para apocalíptica, Judas, Hebreos.',
+            testament: 'whole-bible',
+            rationale: '2 vols. Pseudoepígrafa intertestamentaria — clave para apocalíptica AT (Daniel, Joel) + Judas y Hebreos en el NT.',
         },
     ],
 
-    // ── Critical-text editions (invariant: same edition for any book) ──
+    // ── Critical-text editions ──────────────────────────────────────────
     'biblical-text-edition': [
         {
             author: 'Aland, Barbara; Aland, Kurt; Karavidopoulos, Johannes; Martini, Carlo M.; Metzger, Bruce M. (eds.)',
@@ -292,6 +321,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9783438051592',
             tier: 'essential',
             languages: ['en', 'de'],
+            testament: 'NT',
             rationale: 'Texto crítico estándar del NT griego. Edición Nestle-Aland 28.',
         },
         {
@@ -303,6 +333,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9783438052728',
             tier: 'essential',
             languages: ['en', 'de'],
+            testament: 'OT',
             rationale: 'Edición crítica del AT hebreo en curso (sucesor de BHS). Cuando un fascículo cubre el libro.',
         },
         {
@@ -314,6 +345,7 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9783438052193',
             tier: 'recommended',
             languages: ['en', 'de'],
+            testament: 'OT',
             rationale: 'Texto crítico AT estándar mientras BHQ se completa. Aparato más compacto.',
         },
         {
@@ -325,7 +357,75 @@ export const INVARIANT_RECOMMENDATIONS: Partial<Record<SourceType, ReadonlyArray
             isbn: '9783438051196',
             tier: 'essential',
             languages: ['en', 'de'],
-            rationale: 'Edición Rahlfs-Hanhart de la Septuaginta. Esencial para teología bíblica del AT al NT.',
+            testament: 'whole-bible',
+            rationale: 'Edición Rahlfs-Hanhart de la Septuaginta. Esencial para AT en griego y para citas LXX en el NT.',
+        },
+    ],
+
+    // ── Critical apparatus (v1.7.1: surfacing the same critical
+    //    editions also under this source-type because the rubric's
+    //    \"Aparato crítico\" requirement maps here, not to text-edition;
+    //    the user reasonably expects NA28 / BHQ to satisfy both) ────
+    'critical-apparatus': [
+        {
+            author: 'Aland, Barbara; Aland, Kurt; Karavidopoulos, Johannes; Martini, Carlo M.; Metzger, Bruce M. (eds.)',
+            title: 'Novum Testamentum Graece (aparato crítico)',
+            series: 'NA28',
+            publisher: 'Deutsche Bibelgesellschaft',
+            year: 2012,
+            isbn: '9783438051592',
+            tier: 'essential',
+            languages: ['en', 'de'],
+            testament: 'NT',
+            rationale: 'Aparato crítico del NA28. Estándar académico para variantes textuales del NT griego.',
+        },
+        {
+            author: 'Aland, Barbara; Aland, Kurt; Karavidopoulos, Johannes; Martini, Carlo M.; Metzger, Bruce M. (eds.)',
+            title: 'Editio Critica Maior',
+            series: 'ECM',
+            publisher: 'Deutsche Bibelgesellschaft',
+            year: 2017,
+            isbn: null,
+            tier: 'essential',
+            languages: ['en', 'de'],
+            testament: 'NT',
+            rationale: 'Aparato crítico exhaustivo (en curso por libro). Más detallado que NA28 cuando el fascículo cubre el libro.',
+        },
+        {
+            author: 'Metzger, Bruce M.',
+            title: 'A Textual Commentary on the Greek New Testament',
+            series: null,
+            publisher: 'Deutsche Bibelgesellschaft',
+            year: 1994,
+            isbn: '9783438060105',
+            tier: 'essential',
+            languages: ['en'],
+            testament: 'NT',
+            rationale: 'Comentario verso a verso sobre las decisiones del comité editorial del NA/UBS. Indispensable para discutir variantes.',
+        },
+        {
+            author: 'Schenker, Adrian (ed.)',
+            title: 'Biblia Hebraica Quinta (aparato crítico)',
+            series: 'BHQ',
+            publisher: 'Deutsche Bibelgesellschaft',
+            year: 2004,
+            isbn: '9783438052728',
+            tier: 'essential',
+            languages: ['en', 'de'],
+            testament: 'OT',
+            rationale: 'Aparato crítico del BHQ. Sucesor del BHS con análisis textual moderno cuando el libro está cubierto.',
+        },
+        {
+            author: 'Elliger, Karl; Rudolph, Wilhelm (eds.)',
+            title: 'Biblia Hebraica Stuttgartensia (aparato crítico)',
+            series: 'BHS',
+            publisher: 'Deutsche Bibelgesellschaft',
+            year: 1997,
+            isbn: '9783438052193',
+            tier: 'recommended',
+            languages: ['en', 'de'],
+            testament: 'OT',
+            rationale: 'Aparato crítico del BHS — aparato más compacto que BHQ pero cubre todo el AT hebreo.',
         },
     ],
 };
