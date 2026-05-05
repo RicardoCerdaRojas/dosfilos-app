@@ -81,8 +81,8 @@
                 "topic": "Esperanza"
             }
         ],
-        "comingSoonTitle": "Próximamente: Sugerencias con IA",
-        "comingSoonDesc": "Basado en el título y descripción de tu sermón, la IA podrá sugerirte pasajes relevantes."
+        "comingSoonTitle": "Próximamente: Sugerencias automáticas",
+        "comingSoonDesc": "Basado en el título y descripción de tu sermón, podremos sugerirte pasajes relevantes."
     },
     "actions": {
         "startNew": "Comenzar Nuevo Sermón",
@@ -121,8 +121,8 @@
             "generateError": "Error al generar exégesis",
             "refineError": "Error al refinar la sección",
             "updateError": "Error al actualizar la sección",
-            "parseError": "Error al parsear la respuesta de la IA",
-            "invalidArray": "La IA no devolvió un array válido"
+            "parseError": "Error al parsear la respuesta del modelo",
+            "invalidArray": "El modelo no devolvió un array válido"
         },
         "success": {
             "generated": "Estudio exegético generado",

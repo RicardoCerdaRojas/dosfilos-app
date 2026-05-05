@@ -265,7 +265,7 @@
     "metadataBackfill": {
         "title_one": "{{count}} resource without Bible book metadata",
         "title_other": "{{count}} resources without Bible book metadata",
-        "body": "The AI can infer the books from the title (BHQ → whole OT, \"2 Peter & Jude\" → 2 Peter + Jude, etc.) and fill them in automatically. Only writes when the match is clear; the rest you can edit manually.",
+        "body": "We can infer the books from the title (BHQ → whole OT, \"2 Peter & Jude\" → 2 Peter + Jude, etc.) and fill them in automatically. We only write when the match is clear; the rest you can edit manually.",
         "cta_one": "Detect ({{count}})",
         "cta_other": "Detect ({{count}})",
         "running": "Detecting…",

@@ -81,8 +81,8 @@
                 "topic": "Hope"
             }
         ],
-        "comingSoonTitle": "Coming Soon: AI Suggestions",
-        "comingSoonDesc": "Based on your sermon title and description, AI will be able to suggest relevant passages."
+        "comingSoonTitle": "Coming Soon: Automatic Suggestions",
+        "comingSoonDesc": "Based on your sermon title and description, we'll be able to suggest relevant passages."
     },
     "actions": {
         "startNew": "Start New Sermon",
@@ -121,8 +121,8 @@
             "generateError": "Error generating exegesis",
             "refineError": "Error refining section",
             "updateError": "Error updating section",
-            "parseError": "Error parsing AI response",
-            "invalidArray": "AI did not return a valid array"
+            "parseError": "Error parsing model response",
+            "invalidArray": "Model did not return a valid array"
         },
         "success": {
             "generated": "Exegetical study generated",

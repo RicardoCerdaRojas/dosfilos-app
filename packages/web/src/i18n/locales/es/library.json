@@ -265,7 +265,7 @@
     "metadataBackfill": {
         "title_one": "{{count}} recurso sin libros bíblicos asignados",
         "title_other": "{{count}} recursos sin libros bíblicos asignados",
-        "body": "La IA puede inferirlos del título (BHQ → todo el AT, \"2 Peter & Jude\" → 2 Pe + Judas, etc.) y completarlos automáticamente. Solo escribe cuando el match es claro; los demás los puedes editar manualmente.",
+        "body": "Podemos inferirlos del título (BHQ → todo el AT, \"2 Peter & Jude\" → 2 Pe + Judas, etc.) y completarlos automáticamente. Solo escribimos cuando el match es claro; los demás los puedes editar manualmente.",
         "cta_one": "Detectar ({{count}})",
         "cta_other": "Detectar ({{count}})",
         "running": "Detectando…",

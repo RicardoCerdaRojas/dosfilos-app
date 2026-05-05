@@ -9,7 +9,7 @@
         "responseDetailed": "Respuesta Detallada",
         "briefDescription": "Breve y concisa",
         "detailedDescription": "Detallada y exhaustiva",
-        "responseLength": "Longitud de la respuesta de la IA",
+        "responseLength": "Longitud de la respuesta",
         "sessions": "Sesiones",
         "extract": "Extraer",
         "projectsAndSessions": "Proyectos y Sesiones",
@@ -132,7 +132,7 @@
     },
     "editor": {
         "title": "Editor de Co-autoría",
-        "processing": "Procesando con IA...",
+        "processing": "Procesando...",
         "actions": {
             "rewrite": "Mejorar",
             "expand": "Desarrollar",

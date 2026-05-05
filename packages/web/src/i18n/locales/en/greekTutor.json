@@ -417,7 +417,7 @@
             "syntaxErrorMessage": "Sorry, we couldn't complete the syntactic analysis of this passage at this time.",
             "whatCanYouDo": "What can you do?",
             "tryAgain": "Try again",
-            "tryAgainDescription": "The analysis uses AI and can sometimes fail temporarily. Click \\\"Syntactic Structure\\\" again to retry.",
+            "tryAgainDescription": "The analysis can sometimes fail temporarily. Click \\\"Syntactic Structure\\\" again to retry.",
             "tryShort": "Try a shorter passage",
             "tryShortDescription": "Longer passages are more complex to analyze. Try selecting a single verse.",
             "comeLater": "Come back later",
