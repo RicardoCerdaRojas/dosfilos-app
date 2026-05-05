@@ -172,7 +172,7 @@ export function UserRubricsSection() {
             )}
 
             <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-                <DialogContent className="max-w-xl">
+                <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
                         <DialogTitle>{t('directory.rubrics.create.title')}</DialogTitle>
                         <DialogDescription>

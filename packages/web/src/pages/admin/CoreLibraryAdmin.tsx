@@ -1917,7 +1917,7 @@ export default function CoreLibraryAdmin() {
 
             {/* Add Docs Dialog */}
             <Dialog open={isAddDocsOpen} onOpenChange={setIsAddDocsOpen}>
-                <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+                <DialogContent className="sm:max-w-4xl max-h-[85vh] flex flex-col">
                     <DialogHeader>
                         <DialogTitle>Añadir Documentos al Store</DialogTitle>
                         <DialogDescription>

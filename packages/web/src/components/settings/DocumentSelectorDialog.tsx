@@ -55,7 +55,7 @@ export function DocumentSelectorDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden sm:rounded-xl">
+            <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden sm:rounded-xl">
                 {/* Header - Fixed */}
                 <DialogHeader className="px-6 py-4 border-b bg-background z-10 flex-none">
                     <DialogTitle>Documentos para {phaseName}</DialogTitle>

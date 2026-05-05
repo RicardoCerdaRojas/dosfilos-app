@@ -64,7 +64,7 @@ export function WelcomeModal({ open, onOpenChange, onSkip }: WelcomeModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="bg-primary/10 p-4 rounded-full">

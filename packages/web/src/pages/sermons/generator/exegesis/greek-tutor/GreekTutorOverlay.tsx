@@ -12,7 +12,7 @@ interface GreekTutorOverlayProps {
 export const GreekTutorOverlay: React.FC<GreekTutorOverlayProps> = ({ isOpen, onClose, passage }) => {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
+            <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
                 <DialogHeader className="p-6 border-b bg-muted/10">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary/10 rounded-lg">

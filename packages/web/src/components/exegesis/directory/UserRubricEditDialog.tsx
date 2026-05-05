@@ -168,7 +168,7 @@ export function UserRubricEditDialog({ open, onOpenChange, rubric }: UserRubricE
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{t('directory.rubrics.edit.title')}</DialogTitle>
                     <DialogDescription>

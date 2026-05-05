@@ -28,7 +28,7 @@ export const LinkToProjectDialog: React.FC<LinkToProjectDialogProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-            <DialogContent className="max-w-lg p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
                 <DialogHeader className="px-6 pt-6 pb-2">
                     <div className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium mb-2">
                         {t('linkProject.eyebrow')}

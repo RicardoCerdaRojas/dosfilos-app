@@ -280,7 +280,7 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
             <RubricTemplatesPanel paper={paper} />
 
             <Dialog open={extractOpen} onOpenChange={setExtractOpen}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle className="inline-flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-success" />

@@ -53,7 +53,7 @@ export function UploadConsentModal({ open, onAccept, onCancel }: UploadConsentMo
 
     return (
         <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
-            <DialogContent className="max-w-xl">
+            <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                     <div className="flex items-center gap-2 mb-1">
                         <Shield className="h-5 w-5 text-indigo-600" />

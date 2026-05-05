@@ -42,7 +42,7 @@ export function OnboardingWelcomeModal({ isOpen, onClose }: OnboardingWelcomeMod
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-white p-0 overflow-hidden border-slate-200">
+            <DialogContent className="sm:max-w-2xl bg-white p-0 overflow-hidden border-slate-200">
                 <div className="px-8 pt-10 pb-2">
                     <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-3">
                         {t('welcomeModal.eyebrow')}

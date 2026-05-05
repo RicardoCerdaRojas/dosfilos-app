@@ -104,7 +104,7 @@ export function SermonDetailModal({
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
