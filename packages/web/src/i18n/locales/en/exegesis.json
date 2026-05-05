@@ -616,6 +616,19 @@
                     "remove": "Remove source",
                     "viewOriginal": "Open the original PDF in a new tab"
                 },
+                "hero": {
+                    "eyebrow": "Your corpus, curated",
+                    "title": "Use your library of {{count}} resources",
+                    "body": "Instead of feeding whole PDFs to the model, we extract only the fragments relevant to your passage. You review and edit them before generating — that visibility is what sets us apart from NotebookLM and similar tools.",
+                    "bullet1Title": "Fragments, not books",
+                    "bullet1Body": "Up to 30 chunks per source, ranked by similarity to the passage + brief.",
+                    "bullet2Title": "You review",
+                    "bullet2Body": "Edit, delete or accept each fragment before it enters the prompt.",
+                    "bullet3Title": "Verifiable",
+                    "bullet3Body": "Every fragment keeps its anchor (\"p. 47\") and a link to the original PDF.",
+                    "primaryCta": "Extract from my library",
+                    "secondaryCta": "or upload a new file"
+                },
                 "extract": {
                     "dialogTitle": "Extract excerpts from your library",
                     "dialogSubtitle": "Pick one or more indexed resources from your library. We'll retrieve the most relevant excerpts for the paper's passage. You can review and edit them afterwards.",

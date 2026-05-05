@@ -151,7 +151,12 @@ function CorpusSourcesList({
     onExtract: () => void;
 }) {
     const { t } = useTranslation('exegesis');
+    const library = useLibrary();
     const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
+    // When the user has a stocked library AND no sources on this paper,
+    // the curated-extraction path is the differentiator we want them to
+    // try first. Hide the secondary buttons and show a hero card instead.
+    const showExtractHero = sorted.length === 0 && library.resources.length > 0;
 
     return (
         <section className="space-y-2">
@@ -159,35 +164,38 @@ function CorpusSourcesList({
                 <h3 className="text-sm font-semibold text-foreground">
                     {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
                 </h3>
-                <div className="flex items-center gap-1.5">
-                    {/* Extract from library: secondary visual weight
-                        (outline) because the primary path for new
-                        users is still the direct upload. Veterans
-                        with built-up libraries flip the priority
-                        in their head naturally. */}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onExtract}
-                        className="text-xs"
-                    >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        {t('paperSetup.subSteps.corpus.list.extractCta')}
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={onAdd}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
-                    >
-                        <Upload className="h-3 w-3 mr-1" />
-                        {t('paperSetup.subSteps.corpus.list.addCta')}
-                    </Button>
-                </div>
+                {!showExtractHero && (
+                    <div className="flex items-center gap-1.5">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onExtract}
+                            className="text-xs"
+                        >
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {t('paperSetup.subSteps.corpus.list.extractCta')}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={onAdd}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                        >
+                            <Upload className="h-3 w-3 mr-1" />
+                            {t('paperSetup.subSteps.corpus.list.addCta')}
+                        </Button>
+                    </div>
+                )}
             </header>
             {sorted.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">
-                    {t('paperSetup.subSteps.corpus.list.empty')}
-                </p>
+                showExtractHero ? (
+                    <ExtractHeroCard
+                        libraryCount={library.resources.length}
+                        onExtract={onExtract}
+                        onAdd={onAdd}
+                    />
+                ) : (
+                    <EmptySourcesState onAdd={onAdd} />
+                )
             ) : (
                 <ul className="space-y-2">
                     {sorted.map(source => (
@@ -196,6 +204,132 @@ function CorpusSourcesList({
                 </ul>
             )}
         </section>
+    );
+}
+
+/**
+ * Empty state for users who don't have any library yet — falls back
+ * to highlighting the upload path. Lighter visual weight than the
+ * extract hero because new users haven't paid the cost of building
+ * a library and we don't want to gatekeep them.
+ */
+function EmptySourcesState({ onAdd }: { onAdd: () => void }) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-5 text-center space-y-3">
+            <p className="text-xs text-muted-foreground italic">
+                {t('paperSetup.subSteps.corpus.list.empty')}
+            </p>
+            <Button
+                type="button"
+                onClick={onAdd}
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+            >
+                <Upload className="h-3 w-3 mr-1" />
+                {t('paperSetup.subSteps.corpus.list.addCta')}
+            </Button>
+        </div>
+    );
+}
+
+/**
+ * Hero card for users who already have a library stocked. Sells the
+ * curated-extraction path as the primary route and contrasts it
+ * against the dump-the-whole-PDF approach so the differentiator vs
+ * generic AI tools (NotebookLM et al.) lands at the entry point —
+ * not buried behind a small "Extract" button.
+ *
+ * Falls back to "Subir archivo nuevo" as a secondary link so the
+ * upload path stays one click away.
+ */
+function ExtractHeroCard({
+    libraryCount,
+    onExtract,
+    onAdd,
+}: {
+    libraryCount: number;
+    onExtract: () => void;
+    onAdd: () => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-xl border border-success/30 bg-success-subtle/40 p-5 space-y-4">
+            <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-success/15 p-2 shrink-0">
+                    <Sparkles className="h-5 w-5 text-success" aria-hidden />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-success font-semibold">
+                        {t('paperSetup.subSteps.corpus.hero.eyebrow')}
+                    </p>
+                    <h4 className="text-base font-semibold text-foreground mt-0.5">
+                        {t('paperSetup.subSteps.corpus.hero.title', { count: libraryCount })}
+                    </h4>
+                    <p className="text-[12.5px] text-foreground/80 leading-relaxed mt-1.5">
+                        {t('paperSetup.subSteps.corpus.hero.body')}
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11.5px]">
+                <ComparisonChip
+                    icon={<Quote className="h-3.5 w-3.5" />}
+                    label={t('paperSetup.subSteps.corpus.hero.bullet1Title')}
+                    body={t('paperSetup.subSteps.corpus.hero.bullet1Body')}
+                />
+                <ComparisonChip
+                    icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                    label={t('paperSetup.subSteps.corpus.hero.bullet2Title')}
+                    body={t('paperSetup.subSteps.corpus.hero.bullet2Body')}
+                />
+                <ComparisonChip
+                    icon={<ExternalLink className="h-3.5 w-3.5" />}
+                    label={t('paperSetup.subSteps.corpus.hero.bullet3Title')}
+                    body={t('paperSetup.subSteps.corpus.hero.bullet3Body')}
+                />
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+                <Button
+                    type="button"
+                    onClick={onExtract}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
+                >
+                    <Sparkles className="h-4 w-4" />
+                    {t('paperSetup.subSteps.corpus.hero.primaryCta')}
+                </Button>
+                <button
+                    type="button"
+                    onClick={onAdd}
+                    className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                >
+                    {t('paperSetup.subSteps.corpus.hero.secondaryCta')}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function ComparisonChip({
+    icon,
+    label,
+    body,
+}: {
+    icon: React.ReactNode;
+    label: string;
+    body: string;
+}) {
+    return (
+        <div className="rounded-md border border-success/20 bg-card/80 px-2.5 py-2">
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-success">
+                {icon}
+                {label}
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                {body}
+            </p>
+        </div>
     );
 }
 

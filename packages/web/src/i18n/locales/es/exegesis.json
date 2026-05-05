@@ -616,6 +616,19 @@
                     "remove": "Quitar fuente",
                     "viewOriginal": "Abrir el PDF original en una pestaña nueva"
                 },
+                "hero": {
+                    "eyebrow": "Tu corpus, curado",
+                    "title": "Aprovecha tu biblioteca de {{count}} recursos",
+                    "body": "En lugar de inyectar PDFs completos al modelo, extraemos solo los fragmentos relevantes para tu pasaje. Tú los revisas y editas antes de generar — esa visibilidad es lo que nos distingue de NotebookLM y similares.",
+                    "bullet1Title": "Fragmentos, no libros",
+                    "bullet1Body": "Hasta 30 chunks por fuente, rankeados por similitud al pasaje + brief.",
+                    "bullet2Title": "Tú revisas",
+                    "bullet2Body": "Editar, borrar o aceptar cada fragmento antes que entre al prompt.",
+                    "bullet3Title": "Verificable",
+                    "bullet3Body": "Cada fragmento conserva su anchor (\"p. 47\") y un link al PDF original.",
+                    "primaryCta": "Extraer de mi biblioteca",
+                    "secondaryCta": "o subir un archivo nuevo"
+                },
                 "extract": {
                     "dialogTitle": "Extraer fragmentos de tu biblioteca",
                     "dialogSubtitle": "Selecciona uno o más recursos indexados de tu biblioteca y extraeremos los fragmentos más relevantes para el pasaje del trabajo. Los podrás revisar y editar después.",
