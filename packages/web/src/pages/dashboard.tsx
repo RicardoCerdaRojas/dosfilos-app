@@ -27,9 +27,8 @@ import { useHebrewSessions } from '@/hooks/useHebrewSessions';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { usePageBalance } from '@/hooks/usePageBalance';
-import { libraryService } from '@dosfilos/application';
+import { useLibrary } from '@/hooks/library';
 import {
-    LibraryResourceEntity,
     ProjectColor,
     formatPassageReference,
     type ExegeticalPaper,
@@ -86,16 +85,8 @@ export function DashboardPage() {
     const { sessions: greekSessions } = useGreekSessions();
     const { sessions: hebrewSessions } = useHebrewSessions();
     const { papers: exegeticalPapers } = useExegesisPapers();
-    const [resources, setResources] = useState<LibraryResourceEntity[]>([]);
+    const { resources } = useLibrary();
     const [showCreateProject, setShowCreateProject] = useState(false);
-
-    useEffect(() => {
-        if (!user?.uid) return;
-        libraryService
-            .getUserResources(user.uid)
-            .then((rs) => setResources(rs))
-            .catch((err) => console.error('Error loading library:', err));
-    }, [user?.uid]);
 
     const onboarding = useOnboardingState();
     const [showWelcome, setShowWelcome] = useState(false);

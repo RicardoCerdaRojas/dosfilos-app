@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WorkflowPhase, ContentType, CoachingStyle, LibraryResourceEntity, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import { WorkflowPhase, ContentType, CoachingStyle, DEFAULT_LANGUAGE } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
-import { sermonGeneratorService, generatorChatService, libraryService } from '@dosfilos/application';
+import { sermonGeneratorService, generatorChatService } from '@dosfilos/application';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { useLibrary } from '@/hooks/library';
 
 function resolveActiveLanguage(raw: string | undefined): SupportedLanguage {
     if (!raw) return DEFAULT_LANGUAGE;
@@ -52,7 +53,7 @@ export function useSermonStepChat({
     const [messages, setMessages] = useState<any[]>([]);
     const [isAiProcessing, setIsAiProcessing] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
-    const [libraryResources, setLibraryResources] = useState<LibraryResourceEntity[]>([]);
+    const { resources: libraryResources } = useLibrary();
     const [lastContextRefresh, setLastContextRefresh] = useState<Date | null>(null);
 
     // Use external cacheName if provided, otherwise manage internally
@@ -75,20 +76,6 @@ export function useSermonStepChat({
             }
         }
     }, [configId, contentType]);
-
-    // Load library resources
-    useEffect(() => {
-        const loadLibrary = async () => {
-            if (!userId) return;
-            try {
-                const resources = await libraryService.getUserResources(userId);
-                setLibraryResources(resources);
-            } catch (error) {
-                console.warn('Could not load library resources:', error);
-            }
-        };
-        loadLibrary();
-    }, [userId]);
 
     // Set coaching style
     useEffect(() => {
