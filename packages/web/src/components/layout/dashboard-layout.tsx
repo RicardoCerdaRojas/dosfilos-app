@@ -11,6 +11,7 @@ import { useFirebase } from '@/context/firebase-context';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@dosfilos/infrastructure';
 import { useSmartTriggers } from '@/hooks/useSmartTriggers';
+import { useLibrarySync } from '@/hooks/library';
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -21,6 +22,9 @@ export function DashboardLayout() {
 
   // Initialize Smart Triggers
   useSmartTriggers();
+
+  // Single Firestore listener for the user's library — every consumer reads from the cache this hook keeps fresh.
+  useLibrarySync();
 
   // Load user's current plan
   useEffect(() => {

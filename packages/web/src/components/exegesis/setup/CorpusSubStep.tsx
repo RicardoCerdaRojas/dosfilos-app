@@ -15,7 +15,6 @@ import {
     X,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
 import { libraryService } from '@dosfilos/application';
 import {
     CITABLE_SOURCE_TYPES,
@@ -26,6 +25,7 @@ import {
     type SourceType,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
+import { useLibrary } from '@/hooks/library';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -496,16 +496,10 @@ function AddSourceDialog({
         }
     }, [open, initialType]);
 
-    // Lazy-load the user's library only when they switch to the
-    // "library" mode — most students will use upload first time.
-    const libraryQuery = useQuery({
-        queryKey: ['library', 'resources', user?.uid],
-        queryFn: async () => {
-            if (!user?.uid) return [];
-            return libraryService.getUserResources(user.uid);
-        },
-        enabled: !!user?.uid && mode === 'library',
-    });
+    // Reads from the globally synced library cache (`useLibrarySync`
+    // mounted at the dashboard shell). First open is instant for any
+    // user who's already loaded the dashboard — no per-modal fetch.
+    const library = useLibrary();
 
     const attachedCorpusIds = useMemo(
         () => new Set(paper.sources.map(s => s.corpusId)),
@@ -513,7 +507,7 @@ function AddSourceDialog({
     );
 
     const filteredResources = useMemo(() => {
-        const all = libraryQuery.data ?? [];
+        const all = library.resources;
         const searchLower = librarySearch.trim().toLowerCase();
         return all
             // Don't list resources already attached to THIS paper —
@@ -524,7 +518,7 @@ function AddSourceDialog({
             .filter(r => searchLower === ''
                 || r.title.toLowerCase().includes(searchLower)
                 || r.author.toLowerCase().includes(searchLower));
-    }, [libraryQuery.data, attachedCorpusIds, librarySearch]);
+    }, [library.resources, attachedCorpusIds, librarySearch]);
 
     const labelOk = displayName.trim().length >= 3;
     const canSubmit = mode === 'upload'
@@ -664,14 +658,14 @@ function AddSourceDialog({
 
             {mode === 'library' && (
                 <LibraryPicker
-                    isLoading={libraryQuery.isLoading}
+                    isLoading={library.isLoading}
                     resources={filteredResources}
                     pickedResourceId={pickedResourceId}
                     onPick={handlePickResource}
                     searchTerm={librarySearch}
                     onSearchChange={setLibrarySearch}
                     totalAttached={attachedCorpusIds.size}
-                    totalAvailable={(libraryQuery.data ?? []).length}
+                    totalAvailable={library.resources.length}
                 />
             )}
 
