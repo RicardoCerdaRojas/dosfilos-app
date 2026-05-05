@@ -10,6 +10,11 @@ import type { BookRecommendations, SourceRecommendation } from './types';
 
 export type { BookRecommendations, SourceRecommendation } from './types';
 export type { BibleBookGroup } from './groups/types';
+export {
+    matchRecommendationToResource,
+    findLibraryResourceForRecommendation,
+    type LibraryResourceLike,
+} from './libraryMatch';
 
 /**
  * Master catalog indexed by `BibleBookId`. v1.7 launch covers three

@@ -564,6 +564,10 @@
                     "ownedNo": "Ya la tengo",
                     "searchLibrary": "Buscar en mi biblioteca",
                     "searchLibraryHint": "Abre la biblioteca con el título precargado en el filtro de búsqueda",
+                    "inLibrary": "✓ En tu biblioteca",
+                    "inLibraryHint": "Coincide con: {{title}}",
+                    "openInLibrary": "Abrir",
+                    "openInLibraryHint": "Abre el recurso en tu biblioteca",
                     "tier": {
                         "essential": "Esencial",
                         "recommended": "Recomendada",
