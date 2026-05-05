@@ -76,8 +76,9 @@ export function PinnedSourcesPicker({
                             <Badge
                                 key={id}
                                 variant="secondary"
-                                className="gap-1 pr-1 text-[10.5px] max-w-[200px]"
+                                className="gap-1 pr-1 text-[10.5px] max-w-[280px]"
                                 role="listitem"
+                                title={label}
                             >
                                 <span className="truncate">{label}</span>
                                 <button
@@ -111,13 +112,17 @@ export function PinnedSourcesPicker({
                         <ChevronsUpDown className="h-3 w-3 opacity-50" aria-hidden />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[320px] p-0" align="start">
+                <PopoverContent
+                    className="w-[460px] max-w-[calc(100vw-2rem)] p-0 shadow-xl border-2 border-border z-50"
+                    align="start"
+                    sideOffset={6}
+                >
                     <Command>
                         <CommandInput
                             placeholder={t('paperSetup.subSteps.corpus-plan.picker.search')}
                             className="text-[12px]"
                         />
-                        <CommandList className="max-h-64">
+                        <CommandList className="max-h-72">
                             <CommandEmpty>{t('paperSetup.subSteps.corpus-plan.picker.noMatches')}</CommandEmpty>
                             <CommandGroup>
                                 {sources.map(source => (
@@ -125,19 +130,21 @@ export function PinnedSourcesPicker({
                                         key={source.id}
                                         value={`${source.id} ${source.displayLabel} ${source.citationKey ?? ''}`}
                                         onSelect={() => toggle(source.id)}
-                                        className="text-[12px] gap-2"
+                                        className="text-[12px] gap-2 items-start py-2"
                                     >
                                         <Check
                                             className={cn(
-                                                'h-3.5 w-3.5',
+                                                'h-3.5 w-3.5 mt-0.5 shrink-0',
                                                 selectedSet.has(source.id) ? 'opacity-100' : 'opacity-0',
                                             )}
                                             aria-hidden
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <div className="truncate">{source.displayLabel}</div>
+                                            <div className="text-foreground leading-snug break-words">
+                                                {source.displayLabel}
+                                            </div>
                                             {source.citationKey && (
-                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                <div className="text-[10px] text-muted-foreground leading-snug mt-0.5">
                                                     {source.citationKey} · {source.sourceType}
                                                 </div>
                                             )}
