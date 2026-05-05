@@ -4,6 +4,8 @@ import { Trash2, Loader2 } from 'lucide-react';
 import { StudySession } from '@dosfilos/domain';
 import { calculateSessionProgress } from '../utils/sessionUtils';
 import { useTranslation } from '@/i18n';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
 
 interface CleanupButtonProps {
     sessions: StudySession[];
@@ -16,6 +18,7 @@ interface CleanupButtonProps {
  */
 export const CleanupButton: React.FC<CleanupButtonProps> = ({ sessions, onCleanup }) => {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
     const { t } = useTranslation('greekTutor');
 
     // Find empty sessions (0% progress and older than 24 hours)
@@ -25,23 +28,16 @@ export const CleanupButton: React.FC<CleanupButtonProps> = ({ sessions, onCleanu
         return progress === 0 && isOld;
     });
 
-    const handleCleanup = async () => {
+    const handleCleanupConfirmed = async () => {
+        setConfirmOpen(false);
         if (emptySessionsOlderThan24h.length === 0) return;
-
-        const confirmed = window.confirm(
-            t('dashboard.cleanup.confirmTitle', { count: emptySessionsOlderThan24h.length }) + '\n\n' +
-            t('dashboard.cleanup.confirmDescription')
-        );
-
-        if (!confirmed) return;
-
         setIsDeleting(true);
         try {
             const sessionIds = emptySessionsOlderThan24h.map(s => s.id);
             await onCleanup(sessionIds);
         } catch (error) {
             console.error('[CleanupButton] Error cleaning up sessions:', error);
-            alert(t('dashboard.cleanup.error'));
+            toast.error(t('dashboard.cleanup.error'));
         } finally {
             setIsDeleting(false);
         }
@@ -53,24 +49,35 @@ export const CleanupButton: React.FC<CleanupButtonProps> = ({ sessions, onCleanu
     }
 
     return (
-        <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCleanup}
-            disabled={isDeleting}
-            className="gap-2"
-        >
-            {isDeleting ? (
-                <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t('dashboard.cleanup.cleaning')}
-                </>
-            ) : (
-                <>
-                    <Trash2 className="h-4 w-4" />
-                    {t('dashboard.cleanup.button', { count: emptySessionsOlderThan24h.length })}
-                </>
-            )}
-        </Button>
+        <>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmOpen(true)}
+                disabled={isDeleting}
+                className="gap-2"
+            >
+                {isDeleting ? (
+                    <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t('dashboard.cleanup.cleaning')}
+                    </>
+                ) : (
+                    <>
+                        <Trash2 className="h-4 w-4" />
+                        {t('dashboard.cleanup.button', { count: emptySessionsOlderThan24h.length })}
+                    </>
+                )}
+            </Button>
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title={t('dashboard.cleanup.confirmTitle', { count: emptySessionsOlderThan24h.length })}
+                body={t('dashboard.cleanup.confirmDescription')}
+                confirmLabel={t('dashboard.cleanup.button', { count: emptySessionsOlderThan24h.length })}
+                cancelLabel={t('dashboard.menu.cancel')}
+                onConfirm={handleCleanupConfirmed}
+            />
+        </>
     );
 };

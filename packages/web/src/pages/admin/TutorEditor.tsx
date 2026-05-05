@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import { ArrowLeft, Save, Trash2, Library } from 'lucide-react';
 import { useTutor, useCreateTutor, useUpdateTutor, useDeleteTutor, useCoreLibraryStores } from '@/hooks/admin/useTutors';
 import type { LocalizedString } from '@dosfilos/domain';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 /**
  * Bilingual tutor editor. Each authored field is stored as `{ es, en }` in
@@ -143,8 +144,11 @@ export default function TutorEditor() {
         }
     };
 
-    const handleDelete = async () => {
-        if (!isEditing || !window.confirm('¿Está seguro de eliminar este tutor?')) return;
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+    const handleDeleteConfirmed = async () => {
+        setConfirmDeleteOpen(false);
+        if (!isEditing) return;
         try {
             await deleteTutor(id);
             toast.success('Tutor eliminado');
@@ -174,7 +178,7 @@ export default function TutorEditor() {
                 </div>
                 <div className="flex items-center gap-2">
                     {isEditing && (
-                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                        <Button variant="destructive" onClick={() => setConfirmDeleteOpen(true)} disabled={isDeleting}>
                             <Trash2 className="h-4 w-4 mr-2" />
                             Eliminar
                         </Button>
@@ -322,6 +326,16 @@ export default function TutorEditor() {
                 </Card>
 
             </form>
+
+            <ConfirmDialog
+                open={confirmDeleteOpen}
+                onOpenChange={setConfirmDeleteOpen}
+                title="¿Eliminar este tutor?"
+                body="El tutor se elimina del catálogo y deja de estar disponible para los usuarios. Esta acción no se puede deshacer."
+                confirmLabel="Eliminar tutor"
+                cancelLabel="Cancelar"
+                onConfirm={handleDeleteConfirmed}
+            />
         </div>
     );
 }
