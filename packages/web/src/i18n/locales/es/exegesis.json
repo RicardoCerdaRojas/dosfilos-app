@@ -682,6 +682,7 @@
                 "description": "Asigna fuentes específicas a cada verso o sección. La IA propone una distribución basada en el pasaje y el corpus; tú revisas y ajustas. Las fuentes asignadas tienen prioridad en la generación, pero el modelo puede usar las demás cuando sea pertinente.",
                 "emptyCorpus": "Aún no hay fuentes en el corpus. Agrega fuentes en la pestaña anterior antes de planificar el uso.",
                 "noSteps": "Aún no hay pasos generables. Configura el pasaje y vuelve aquí.",
+                "seedingSteps": "Preparando lista de pasos a partir del pasaje…",
                 "emptyProposalTitle": "Propón una primera asignación",
                 "emptyProposalBody": "La IA analiza tu pasaje + brief + corpus y propone qué fuentes priorizar para cada paso. Te toma menos de un minuto y la puedes editar después.",
                 "proposeCta": "Proponer plan con IA",

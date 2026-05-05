@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Sparkles, AlertTriangle, Loader2, RefreshCw, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
@@ -14,6 +14,7 @@ import {
     useProposeStepCorpusAllocations,
     useUpdateStepCorpusAllocation,
 } from '@/hooks/exegesis/useStepCorpusAllocations';
+import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { PinnedSourcesPicker } from './PinnedSourcesPicker';
 
 interface CorpusUsagePlanSubStepProps {
@@ -46,6 +47,7 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
     const { t } = useTranslation('exegesis');
     const propose = useProposeStepCorpusAllocations();
     const updateAllocation = useUpdateStepCorpusAllocation();
+    const { seedSteps } = useExegesisPapers();
 
     // Filter to LLM-driven steps (assembly is mechanical and doesn't
     // consume the corpus). Sort by `order` so the table follows the
@@ -59,6 +61,33 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
     const hasProposal = paper.stepPlan.proposedAt != null;
     const hasCorpus = paper.sources.length > 0;
     const hasSteps = plannableSteps.length > 0;
+
+    // Auto-seed steps when entering this tab and the paper still has
+    // none. The setup wizard runs BEFORE the user clicks "Comenzar
+    // generación" on the paper detail (which is what historically
+    // seeded steps), so without this the planner would always show
+    // "Aún no hay pasos generables" — confusing because the user IS
+    // configuring the corpus and expects to be able to plan.
+    //
+    // SeedStepsForPassage is idempotent: if steps already exist it
+    // returns without changes. Calling it here is safe even if the
+    // user later seeds again from the detail page. We don't toast on
+    // success to keep the UX silent — the table just appears.
+    const seedAttemptedRef = useRef(false);
+    useEffect(() => {
+        if (paper.steps.length > 0) return; // already seeded
+        if (!hasCorpus) return; // wait for corpus first
+        if (seedAttemptedRef.current) return; // one shot per mount
+        if (seedSteps.isPending) return;
+        seedAttemptedRef.current = true;
+        seedSteps.mutate({ paperId: paper.id }, {
+            onError: (err) => {
+                console.error('[CorpusUsagePlan] auto-seed failed:', err);
+                // Reset so the user can retry by leaving and coming back.
+                seedAttemptedRef.current = false;
+            },
+        });
+    }, [paper.id, paper.steps.length, hasCorpus, seedSteps]);
 
     const handlePropose = async () => {
         try {
@@ -102,7 +131,11 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
             </header>
 
             {!hasCorpus && <EmptyCorpusState />}
-            {hasCorpus && !hasSteps && <NoStepsState />}
+            {hasCorpus && !hasSteps && (
+                seedSteps.isPending
+                    ? <SeedingState />
+                    : <NoStepsState />
+            )}
 
             {hasCorpus && hasSteps && (
                 <>
@@ -235,6 +268,16 @@ function NoStepsState() {
     return (
         <div className="rounded-lg border border-border bg-muted/30 px-4 py-5 text-center text-sm text-muted-foreground">
             {t('paperSetup.subSteps.corpus-plan.noSteps')}
+        </div>
+    );
+}
+
+function SeedingState() {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-lg border border-border bg-muted/30 px-4 py-5 text-center text-sm text-muted-foreground inline-flex items-center justify-center gap-2 w-full">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            {t('paperSetup.subSteps.corpus-plan.seedingSteps')}
         </div>
     );
 }
