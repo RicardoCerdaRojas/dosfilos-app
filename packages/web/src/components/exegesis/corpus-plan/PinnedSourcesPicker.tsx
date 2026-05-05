@@ -85,7 +85,7 @@ export function PinnedSourcesPicker({
                                     onClick={() => remove(id)}
                                     disabled={disabled}
                                     className="rounded-sm hover:bg-foreground/10 focus:outline-none focus:ring-1 focus:ring-ring p-0.5 shrink-0"
-                                    aria-label={t('paperSetup.subSteps.corpusPlan.picker.removeAria', { label })}
+                                    aria-label={t('paperSetup.subSteps.corpus-plan.picker.removeAria', { label })}
                                 >
                                     <X className="h-2.5 w-2.5" aria-hidden />
                                 </button>
@@ -106,19 +106,19 @@ export function PinnedSourcesPicker({
                         className="h-7 text-[11px] font-normal gap-1"
                     >
                         {selected.length === 0
-                            ? t('paperSetup.subSteps.corpusPlan.picker.add')
-                            : t('paperSetup.subSteps.corpusPlan.picker.edit', { count: selected.length })}
+                            ? t('paperSetup.subSteps.corpus-plan.picker.add')
+                            : t('paperSetup.subSteps.corpus-plan.picker.edit', { count: selected.length })}
                         <ChevronsUpDown className="h-3 w-3 opacity-50" aria-hidden />
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[320px] p-0" align="start">
                     <Command>
                         <CommandInput
-                            placeholder={t('paperSetup.subSteps.corpusPlan.picker.search')}
+                            placeholder={t('paperSetup.subSteps.corpus-plan.picker.search')}
                             className="text-[12px]"
                         />
                         <CommandList className="max-h-64">
-                            <CommandEmpty>{t('paperSetup.subSteps.corpusPlan.picker.noMatches')}</CommandEmpty>
+                            <CommandEmpty>{t('paperSetup.subSteps.corpus-plan.picker.noMatches')}</CommandEmpty>
                             <CommandGroup>
                                 {sources.map(source => (
                                     <CommandItem

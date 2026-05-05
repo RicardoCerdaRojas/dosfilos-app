@@ -676,7 +676,7 @@
                     "typeUpdateFailed": "No se pudo actualizar el tipo"
                 }
             },
-            "corpusPlan": {
+            "corpus-plan": {
                 "tab": "Plan de uso",
                 "heading": "Plan de uso del corpus",
                 "description": "Asigna fuentes específicas a cada verso o sección. La IA propone una distribución basada en el pasaje y el corpus; tú revisas y ajustas. Las fuentes asignadas tienen prioridad en la generación, pero el modelo puede usar las demás cuando sea pertinente.",

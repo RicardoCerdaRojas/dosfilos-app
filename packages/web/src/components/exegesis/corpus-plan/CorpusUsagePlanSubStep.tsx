@@ -64,13 +64,13 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
         try {
             const result = await propose.mutateAsync({ paperId: paper.id });
             toast.success(
-                t('paperSetup.subSteps.corpusPlan.toastPropose', {
+                t('paperSetup.subSteps.corpus-plan.toastPropose', {
                     count: result.nonEmptyAllocationCount,
                 }),
             );
         } catch (err) {
             console.error('[CorpusUsagePlan] propose failed:', err);
-            toast.error(t('paperSetup.subSteps.corpusPlan.toastProposeError'));
+            toast.error(t('paperSetup.subSteps.corpus-plan.toastProposeError'));
         }
     };
 
@@ -83,7 +83,7 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
             });
         } catch (err) {
             console.error('[CorpusUsagePlan] update failed:', err);
-            toast.error(t('paperSetup.subSteps.corpusPlan.toastUpdateError'));
+            toast.error(t('paperSetup.subSteps.corpus-plan.toastUpdateError'));
         }
     };
 
@@ -93,10 +93,10 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
                 <Sparkles className="h-5 w-5 text-success mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-semibold text-foreground">
-                        {t('paperSetup.subSteps.corpusPlan.heading')}
+                        {t('paperSetup.subSteps.corpus-plan.heading')}
                     </h2>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                        {t('paperSetup.subSteps.corpusPlan.description')}
+                        {t('paperSetup.subSteps.corpus-plan.description')}
                     </p>
                 </div>
             </header>
@@ -124,7 +124,7 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
                                 <p className="text-xs text-muted-foreground">
-                                    {t('paperSetup.subSteps.corpusPlan.lastProposed', {
+                                    {t('paperSetup.subSteps.corpus-plan.lastProposed', {
                                         when: formatLastProposed(paper.stepPlan.proposedAt!),
                                     })}
                                 </p>
@@ -139,7 +139,7 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
                                     {propose.isPending
                                         ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
                                         : <RefreshCw className="h-3 w-3" aria-hidden />}
-                                    {t('paperSetup.subSteps.corpusPlan.regenerate')}
+                                    {t('paperSetup.subSteps.corpus-plan.regenerate')}
                                 </Button>
                             </div>
 
@@ -148,10 +148,10 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
                                     <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
                                         <tr>
                                             <th className="text-left px-3 py-2 w-[140px]">
-                                                {t('paperSetup.subSteps.corpusPlan.colStep')}
+                                                {t('paperSetup.subSteps.corpus-plan.colStep')}
                                             </th>
                                             <th className="text-left px-3 py-2">
-                                                {t('paperSetup.subSteps.corpusPlan.colPinned')}
+                                                {t('paperSetup.subSteps.corpus-plan.colPinned')}
                                             </th>
                                         </tr>
                                     </thead>
@@ -200,7 +200,7 @@ function PlanRow({
             <td className="px-3 py-2.5 text-[12.5px] font-medium text-foreground">
                 {label}
                 <span className="block text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                    {t(`paperSetup.subSteps.corpusPlan.kind.${step.kind}`)}
+                    {t(`paperSetup.subSteps.corpus-plan.kind.${step.kind}`)}
                 </span>
             </td>
             <td className="px-3 py-2.5 space-y-1.5">
@@ -225,7 +225,7 @@ function EmptyCorpusState() {
     const { t } = useTranslation('exegesis');
     return (
         <div className="rounded-lg border border-border bg-muted/30 px-4 py-5 text-center text-sm text-muted-foreground">
-            {t('paperSetup.subSteps.corpusPlan.emptyCorpus')}
+            {t('paperSetup.subSteps.corpus-plan.emptyCorpus')}
         </div>
     );
 }
@@ -234,7 +234,7 @@ function NoStepsState() {
     const { t } = useTranslation('exegesis');
     return (
         <div className="rounded-lg border border-border bg-muted/30 px-4 py-5 text-center text-sm text-muted-foreground">
-            {t('paperSetup.subSteps.corpusPlan.noSteps')}
+            {t('paperSetup.subSteps.corpus-plan.noSteps')}
         </div>
     );
 }
@@ -253,10 +253,10 @@ function EmptyProposalState({
                 <Lightbulb className="h-4 w-4 text-info mt-0.5 shrink-0" aria-hidden />
                 <div className="flex-1 min-w-0 space-y-1">
                     <h3 className="text-sm font-semibold text-foreground">
-                        {t('paperSetup.subSteps.corpusPlan.emptyProposalTitle')}
+                        {t('paperSetup.subSteps.corpus-plan.emptyProposalTitle')}
                     </h3>
                     <p className="text-xs text-muted-foreground leading-snug">
-                        {t('paperSetup.subSteps.corpusPlan.emptyProposalBody')}
+                        {t('paperSetup.subSteps.corpus-plan.emptyProposalBody')}
                     </p>
                 </div>
             </div>
@@ -270,8 +270,8 @@ function EmptyProposalState({
                     ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                     : <Sparkles className="h-4 w-4" aria-hidden />}
                 {isLoading
-                    ? t('paperSetup.subSteps.corpusPlan.proposingCta')
-                    : t('paperSetup.subSteps.corpusPlan.proposeCta')}
+                    ? t('paperSetup.subSteps.corpus-plan.proposingCta')
+                    : t('paperSetup.subSteps.corpus-plan.proposeCta')}
             </Button>
         </div>
     );
@@ -291,10 +291,10 @@ function StaleBanner({
                 <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" aria-hidden />
                 <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-semibold text-warning-subtle-foreground">
-                        {t('paperSetup.subSteps.corpusPlan.staleTitle')}
+                        {t('paperSetup.subSteps.corpus-plan.staleTitle')}
                     </p>
                     <p className="text-[11px] text-warning-subtle-foreground leading-snug mt-0.5">
-                        {t('paperSetup.subSteps.corpusPlan.staleBody')}
+                        {t('paperSetup.subSteps.corpus-plan.staleBody')}
                     </p>
                 </div>
                 <Button
@@ -308,7 +308,7 @@ function StaleBanner({
                     {isLoading
                         ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
                         : <RefreshCw className="h-3 w-3" aria-hidden />}
-                    {t('paperSetup.subSteps.corpusPlan.staleRegenerate')}
+                    {t('paperSetup.subSteps.corpus-plan.staleRegenerate')}
                 </Button>
             </div>
         </div>
@@ -325,8 +325,8 @@ function stepLabel(
     if (step.kind === 'verse' && step.verseRef) {
         return formatPassageReference(step.verseRef, language);
     }
-    if (step.kind === 'introduction') return t('paperSetup.subSteps.corpusPlan.kind.introduction');
-    if (step.kind === 'conclusion') return t('paperSetup.subSteps.corpusPlan.kind.conclusion');
+    if (step.kind === 'introduction') return t('paperSetup.subSteps.corpus-plan.kind.introduction');
+    if (step.kind === 'conclusion') return t('paperSetup.subSteps.corpus-plan.kind.conclusion');
     return step.kind as ExegeticalStepKind;
 }
 

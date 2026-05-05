@@ -134,7 +134,7 @@ export function ExegesisPaperSetupPage() {
             </header>
 
             <div className="max-w-7xl w-full mx-auto px-6 py-6">
-                <nav className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+                <nav className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
                     {SUB_STEPS.map((s, idx) => (
                         <SubStepTab
                             key={s.key}

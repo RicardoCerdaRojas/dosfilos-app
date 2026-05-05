@@ -676,7 +676,7 @@
                     "typeUpdateFailed": "Could not update the type"
                 }
             },
-            "corpusPlan": {
+            "corpus-plan": {
                 "tab": "Usage plan",
                 "heading": "Corpus usage plan",
                 "description": "Assign specific sources to each verse or section. The AI proposes a distribution based on the passage and your corpus; you review and adjust. Pinned sources get priority during generation, but the model can still reach for the others when relevant.",
