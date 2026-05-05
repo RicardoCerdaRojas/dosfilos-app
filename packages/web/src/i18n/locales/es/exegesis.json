@@ -616,6 +616,10 @@
                     "remove": "Quitar fuente",
                     "viewOriginal": "Abrir el PDF original en una pestaña nueva"
                 },
+                "summary": {
+                    "title": "{{excerptCount}} fragmentos curados de {{sourceCount}} fuentes",
+                    "body": "Cada cita en el paper apuntará a uno de estos fragmentos — todos verificables contra el PDF original."
+                },
                 "hero": {
                     "eyebrow": "Tu corpus, curado",
                     "title": "Aprovecha tu biblioteca de {{count}} recursos",

@@ -157,6 +157,13 @@ function CorpusSourcesList({
     // the curated-extraction path is the differentiator we want them to
     // try first. Hide the secondary buttons and show a hero card instead.
     const showExtractHero = sorted.length === 0 && library.resources.length > 0;
+    // Curated-corpus summary: drives the value-reminder banner shown
+    // above the source list once the user has extracted excerpts. The
+    // banner reinforces the differentiator at the moment of decision
+    // (just before "Plan de uso" / generation) so the user feels what
+    // they actually built.
+    const excerptedSources = sorted.filter(s => s.mode === 'extracted-excerpts');
+    const totalExcerpts = excerptedSources.reduce((sum, s) => sum + s.excerpts.length, 0);
 
     return (
         <section className="space-y-2">
@@ -197,13 +204,56 @@ function CorpusSourcesList({
                     <EmptySourcesState onAdd={onAdd} />
                 )
             ) : (
-                <ul className="space-y-2">
-                    {sorted.map(source => (
-                        <SourceRow key={source.id} paper={paper} source={source} />
-                    ))}
-                </ul>
+                <>
+                    {totalExcerpts > 0 && (
+                        <CuratedSummaryBanner
+                            excerptCount={totalExcerpts}
+                            sourceCount={excerptedSources.length}
+                        />
+                    )}
+                    <ul className="space-y-2">
+                        {sorted.map(source => (
+                            <SourceRow key={source.id} paper={paper} source={source} />
+                        ))}
+                    </ul>
+                </>
             )}
         </section>
+    );
+}
+
+/**
+ * Slim summary banner shown above the source list once the user has
+ * extracted excerpts. Surfaces the value of the curated approach at
+ * the moment they're about to move on to "Plan de uso" / generation:
+ * the corpus they built is N fragments from M sources, every fragment
+ * traceable back to its original page. Reinforces the differentiator
+ * vs runtime RAG (NotebookLM) where the user never sees what the
+ * model is actually consuming.
+ */
+function CuratedSummaryBanner({
+    excerptCount,
+    sourceCount,
+}: {
+    excerptCount: number;
+    sourceCount: number;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-lg border border-success/30 bg-success-subtle/40 px-4 py-2.5 flex items-start gap-3 mb-2">
+            <Sparkles className="h-4 w-4 text-success mt-0.5 shrink-0" aria-hidden />
+            <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] font-semibold text-foreground">
+                    {t('paperSetup.subSteps.corpus.summary.title', {
+                        excerptCount,
+                        sourceCount,
+                    })}
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                    {t('paperSetup.subSteps.corpus.summary.body')}
+                </p>
+            </div>
+        </div>
     );
 }
 

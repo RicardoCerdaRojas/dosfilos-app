@@ -616,6 +616,10 @@
                     "remove": "Remove source",
                     "viewOriginal": "Open the original PDF in a new tab"
                 },
+                "summary": {
+                    "title": "{{excerptCount}} curated fragments from {{sourceCount}} sources",
+                    "body": "Every citation in the paper will point to one of these fragments — all verifiable against the original PDF."
+                },
                 "hero": {
                     "eyebrow": "Your corpus, curated",
                     "title": "Use your library of {{count}} resources",
