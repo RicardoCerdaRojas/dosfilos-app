@@ -11,6 +11,7 @@ import {
     DeterministicStyleFormatter,
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
+    GeminiStepCorpusPlanner,
     extractFootnoteAnchorsFromFormattedMarkdown,
 } from '@dosfilos/infrastructure';
 import type {
@@ -49,6 +50,8 @@ import {
     RemoveProjectSourceUseCase,
     ExtractExcerptsForPaperUseCase,
     RankLibraryResourcesForPaperUseCase,
+    ProposeStepCorpusAllocationsUseCase,
+    UpdateStepCorpusAllocationUseCase,
     SeedStepsForPassageUseCase,
     GenerateStepUseCase,
     AcceptStepUseCase,
@@ -106,6 +109,8 @@ class ExegesisService {
     public removeSource: RemoveProjectSourceUseCase;
     public extractExcerpts: ExtractExcerptsForPaperUseCase;
     public rankLibraryForPaper: RankLibraryResourcesForPaperUseCase;
+    public proposeStepCorpusAllocations: ProposeStepCorpusAllocationsUseCase;
+    public updateStepCorpusAllocation: UpdateStepCorpusAllocationUseCase;
 
     // Steps
     public seedSteps: SeedStepsForPassageUseCase;
@@ -219,6 +224,17 @@ class ExegesisService {
             paperRepository,
             resourceRanker,
         );
+
+        // v1.7 corpus-usage planning: LLM proposes which sources go
+        // to which generation step, populating
+        // `paper.stepPlan.perStep[*].pinnedSources`. The orchestrator
+        // then prioritizes those at generation time (flexible mode).
+        const stepCorpusPlanner = new GeminiStepCorpusPlanner(apiKey || '', exegesisModelId);
+        this.proposeStepCorpusAllocations = new ProposeStepCorpusAllocationsUseCase(
+            paperRepository,
+            stepCorpusPlanner,
+        );
+        this.updateStepCorpusAllocation = new UpdateStepCorpusAllocationUseCase(paperRepository);
 
         // Steps (D.2: live Gemini generation with style guide + sources injected;
         // Phase 3c adds deterministic style formatter + cross-step ibid anchors)

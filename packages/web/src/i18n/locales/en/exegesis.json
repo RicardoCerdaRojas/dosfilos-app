@@ -613,6 +613,40 @@
                     "typeUpdateFailed": "Could not update the type"
                 }
             },
+            "corpusPlan": {
+                "tab": "Usage plan",
+                "heading": "Corpus usage plan",
+                "description": "Assign specific sources to each verse or section. The AI proposes a distribution based on the passage and your corpus; you review and adjust. Pinned sources get priority during generation, but the model can still reach for the others when relevant.",
+                "emptyCorpus": "No sources in the corpus yet. Add sources in the previous tab before planning usage.",
+                "noSteps": "No generation steps yet. Configure the passage and come back here.",
+                "emptyProposalTitle": "Propose an initial allocation",
+                "emptyProposalBody": "The AI analyzes your passage + brief + corpus and proposes which sources to prioritize per step. Takes under a minute and you can edit it afterwards.",
+                "proposeCta": "Propose plan with AI",
+                "proposingCta": "Proposing plan…",
+                "regenerate": "Regenerate plan",
+                "lastProposed": "Last proposed: {{when}}",
+                "staleTitle": "Corpus changed since last plan",
+                "staleBody": "You added or removed sources after accepting the plan. The AI may use new ones in flexible mode, but to guarantee coverage consider regenerating.",
+                "staleRegenerate": "Regenerate",
+                "colStep": "Step",
+                "colPinned": "Pinned sources",
+                "kind": {
+                    "introduction": "Introduction",
+                    "verse": "Verse",
+                    "conclusion": "Conclusion",
+                    "assembly": "Assembly"
+                },
+                "picker": {
+                    "add": "+ Add",
+                    "edit": "Edit ({{count}})",
+                    "search": "Search source…",
+                    "noMatches": "No matches",
+                    "removeAria": "Remove {{label}}"
+                },
+                "toastPropose": "Plan proposed: {{count}} steps with allocations",
+                "toastProposeError": "Couldn't propose the plan. Try again.",
+                "toastUpdateError": "Couldn't save the change. Try again."
+            },
             "plan": {
                 "tab": "Structural plan",
                 "heading": "Structural plan",
@@ -695,6 +729,16 @@
             "countAll_one": "{{count}} paper",
             "countAll_other": "{{count}} papers",
             "countFiltered": "{{visible}} of {{total}}"
+        }
+    },
+    "coverageReport": {
+        "heading": "Corpus coverage",
+        "summary": "{{cited}} of {{total}} sources cited",
+        "status": {
+            "planned-and-cited": "Planned and cited in {{citedCount}} step(s).",
+            "planned-not-cited": "Planned in {{plannedCount}} step(s) but not cited — consider regenerating.",
+            "cited-not-planned": "Cited in {{citedCount}} step(s) without being planned (model adaptation).",
+            "never-cited": "Never cited — consider removing from the corpus if it adds nothing."
         }
     },
     "detail": {

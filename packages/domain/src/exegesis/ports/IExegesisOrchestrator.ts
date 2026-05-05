@@ -127,6 +127,20 @@ export interface ExegesisSourceContext {
      * label as before.
      */
     excerptAnchors?: ReadonlyArray<string>;
+    /**
+     * v1.7 corpus-usage planning — `'primary'` when this source is
+     * pinned to the current step via `paper.stepPlan.perStep[stepId].pinnedSources`.
+     * `'secondary'` when not pinned (still passed to the LLM but
+     * ranked below primaries in the prompt). The orchestrator should
+     * sort sources primary-first and instruct the model to prefer
+     * primaries unless something in the secondaries is clearly more
+     * relevant ("flexible" mode per the v1.7 spec).
+     *
+     * Undefined for callers / paths that haven't adopted the
+     * planning-aware load yet — same effective behavior as
+     * `'secondary'` (no priority signal in the prompt).
+     */
+    priority?: 'primary' | 'secondary';
 }
 
 export interface ExegesisPriorStep {
