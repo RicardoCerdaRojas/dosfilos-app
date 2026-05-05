@@ -1,4 +1,4 @@
-import { Check, BookOpen, Search } from 'lucide-react';
+import { Check, BookOpen, Search, ExternalLink } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -8,6 +8,7 @@ import {
 } from '@dosfilos/domain';
 import { cn } from '@/lib/utils';
 import { useOwnedRecommendations } from '@/hooks/exegesis/useOwnedRecommendations';
+import { useLibraryRecommendationMatch } from '@/hooks/exegesis/useLibraryRecommendationMatch';
 import { useTrackActivity } from '@/hooks/useTrackActivity';
 
 interface RecommendationCardProps {
@@ -35,11 +36,19 @@ export function RecommendationCard({ recommendation, sourceType, paperId }: Reco
     const { t, i18n } = useTranslation('exegesis');
     const navigate = useNavigate();
     const { isOwned, toggle } = useOwnedRecommendations();
+    const { findMatch } = useLibraryRecommendationMatch();
     const { trackActivity } = useTrackActivity();
 
     const recommendationId = getRecommendationId(recommendation);
     const owned = isOwned(recommendationId);
     const isSpanish = i18n.language?.toLowerCase().startsWith('es');
+
+    // v1.7.1 — auto-detected match against the user's library. When
+    // present, the card shows a green "En tu biblioteca" badge instead
+    // of the personal "Ya la tengo" toggle, and the search action
+    // becomes a direct deep-link to the matched resource.
+    const libraryMatch = findMatch(recommendation);
+    const inLibrary = libraryMatch !== null;
 
     const handleToggleOwned = () => {
         toggle(recommendationId);
@@ -73,13 +82,31 @@ export function RecommendationCard({ recommendation, sourceType, paperId }: Reco
         navigate(`/dashboard/library?search=${encodeURIComponent(titleQuery)}`);
     };
 
+    const handleOpenMatch = () => {
+        if (!libraryMatch) return;
+        // Different telemetry action than the search-fallback so the
+        // analytics dashboard can distinguish "user found their copy
+        // because we auto-matched it" from "user searched manually".
+        void trackActivity('feature_used', {
+            feature: 'corpus_recommendations',
+            action: 'recommendation_library_match_opened',
+            recommendationId,
+            sourceType,
+            paperId,
+            libraryResourceId: libraryMatch.id,
+        });
+        navigate(`/dashboard/library?search=${encodeURIComponent(libraryMatch.title)}`);
+    };
+
     return (
         <article
             className={cn(
                 'rounded-md border px-3 py-2.5 space-y-1.5 transition-colors',
-                owned
-                    ? 'border-success/40 bg-success-subtle/30'
-                    : 'border-border bg-card hover:bg-accent/40',
+                inLibrary
+                    ? 'border-success/50 bg-success-subtle/40 ring-1 ring-success/20'
+                    : owned
+                        ? 'border-success/40 bg-success-subtle/30'
+                        : 'border-border bg-card hover:bg-accent/40',
             )}
         >
             <header className="flex items-start gap-2">
@@ -112,31 +139,57 @@ export function RecommendationCard({ recommendation, sourceType, paperId }: Reco
                     paperLanguage={isSpanish ? 'es' : 'en'}
                     t={t}
                 />
-                <div className="flex items-center gap-1">
-                    <button
-                        type="button"
-                        onClick={handleToggleOwned}
-                        className={cn(
-                            'inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.5 rounded font-medium transition-colors',
-                            owned
-                                ? 'text-success bg-success-subtle'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-accent',
-                        )}
-                        aria-pressed={owned}
-                    >
-                        <Check className={cn('h-2.5 w-2.5', !owned && 'opacity-0')} aria-hidden />
-                        {t(owned ? 'paperSetup.subSteps.corpus.recommendations.ownedYes' : 'paperSetup.subSteps.corpus.recommendations.ownedNo')}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSearchLibrary}
-                        className="inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.5 rounded font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        title={t('paperSetup.subSteps.corpus.recommendations.searchLibraryHint')}
-                    >
-                        <Search className="h-2.5 w-2.5" aria-hidden />
-                        {t('paperSetup.subSteps.corpus.recommendations.searchLibrary')}
-                    </button>
-                </div>
+                {inLibrary && libraryMatch ? (
+                    /* Auto-matched against the user's library: replace
+                       the personal "Ya la tengo" toggle with a green
+                       confirmation badge + a direct deep-link instead
+                       of a generic search. Cleaner signal — \"the
+                       system already knows you have this\". */
+                    <div className="flex items-center gap-1">
+                        <span
+                            className="inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.5 rounded font-medium text-success bg-success-subtle border border-success/30"
+                            title={t('paperSetup.subSteps.corpus.recommendations.inLibraryHint', { title: libraryMatch.title })}
+                        >
+                            <Check className="h-2.5 w-2.5" aria-hidden />
+                            {t('paperSetup.subSteps.corpus.recommendations.inLibrary')}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={handleOpenMatch}
+                            className="inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.5 rounded font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                            title={t('paperSetup.subSteps.corpus.recommendations.openInLibraryHint')}
+                        >
+                            <ExternalLink className="h-2.5 w-2.5" aria-hidden />
+                            {t('paperSetup.subSteps.corpus.recommendations.openInLibrary')}
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={handleToggleOwned}
+                            className={cn(
+                                'inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.5 rounded font-medium transition-colors',
+                                owned
+                                    ? 'text-success bg-success-subtle'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+                            )}
+                            aria-pressed={owned}
+                        >
+                            <Check className={cn('h-2.5 w-2.5', !owned && 'opacity-0')} aria-hidden />
+                            {t(owned ? 'paperSetup.subSteps.corpus.recommendations.ownedYes' : 'paperSetup.subSteps.corpus.recommendations.ownedNo')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSearchLibrary}
+                            className="inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.5 rounded font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                            title={t('paperSetup.subSteps.corpus.recommendations.searchLibraryHint')}
+                        >
+                            <Search className="h-2.5 w-2.5" aria-hidden />
+                            {t('paperSetup.subSteps.corpus.recommendations.searchLibrary')}
+                        </button>
+                    </div>
+                )}
             </div>
         </article>
     );

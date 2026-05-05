@@ -564,6 +564,10 @@
                     "ownedNo": "I have it",
                     "searchLibrary": "Search my library",
                     "searchLibraryHint": "Open the library with the title pre-loaded in the search filter",
+                    "inLibrary": "✓ In your library",
+                    "inLibraryHint": "Matches: {{title}}",
+                    "openInLibrary": "Open",
+                    "openInLibraryHint": "Open the resource in your library",
                     "tier": {
                         "essential": "Essential",
                         "recommended": "Recommended",

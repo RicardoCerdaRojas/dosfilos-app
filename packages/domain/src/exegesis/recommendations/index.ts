@@ -1,4 +1,4 @@
-import type { BibleBookId } from '../../bible/canon/BibleCanon';
+import { getBookById, type BibleBookId } from '../../bible/canon/BibleCanon';
 import type { SourceType } from '../entities/SourceType';
 import { INVARIANT_RECOMMENDATIONS } from './invariant';
 import { HEBREWS_RECOMMENDATIONS } from './nt/hebrews';
@@ -10,6 +10,11 @@ import type { BookRecommendations, SourceRecommendation } from './types';
 
 export type { BookRecommendations, SourceRecommendation } from './types';
 export type { BibleBookGroup } from './groups/types';
+export {
+    matchRecommendationToResource,
+    findLibraryResourceForRecommendation,
+    type LibraryResourceLike,
+} from './libraryMatch';
 
 /**
  * Master catalog indexed by `BibleBookId`. v1.7 launch covers three
@@ -67,7 +72,21 @@ export function getSourceRecommendations(
     const bookSpecific = RECOMMENDATIONS_BY_BOOK[bookId]?.bySourceType[sourceType] ?? [];
     const groups = BOOK_TO_GROUPS[bookId] ?? [];
     const groupEntries = groups.flatMap(g => GROUP_CATALOG[g]?.bySourceType[sourceType] ?? []);
-    const invariant = INVARIANT_RECOMMENDATIONS[sourceType] ?? [];
+    const invariantRaw = INVARIANT_RECOMMENDATIONS[sourceType] ?? [];
+
+    // v1.7.1: filter invariants by the paper's testament so OT lexicons
+    // don't surface for NT papers and vice-versa. Entries without a
+    // `testament` flag (or `'whole-bible'`) pass through. Book-specific
+    // and group entries are NOT filtered here — they're already inherently
+    // testament-bound by the lookup key.
+    const paperTestament = getBookById(bookId)?.testament ?? null;
+    const invariant = paperTestament === null
+        ? invariantRaw
+        : invariantRaw.filter(rec => {
+            if (!rec.testament) return true; // legacy / unmarked
+            if (rec.testament === 'whole-bible') return true;
+            return rec.testament === paperTestament;
+        });
 
     if (bookSpecific.length === 0 && groupEntries.length === 0 && invariant.length === 0) {
         return [];
@@ -110,8 +129,18 @@ export function hasSourceRecommendations(bookId: BibleBookId, sourceType: Source
         const entries = GROUP_CATALOG[g]?.bySourceType[sourceType];
         if (entries && entries.length > 0) return true;
     }
+    // Apply the same testament filter as `getSourceRecommendations`
+    // — without it the gap toggle shows up promising suggestions and
+    // then renders nothing once filtered.
     const invariant = INVARIANT_RECOMMENDATIONS[sourceType];
-    return !!invariant && invariant.length > 0;
+    if (!invariant || invariant.length === 0) return false;
+    const paperTestament = getBookById(bookId)?.testament ?? null;
+    if (paperTestament === null) return invariant.length > 0;
+    return invariant.some(rec => {
+        if (!rec.testament) return true;
+        if (rec.testament === 'whole-bible') return true;
+        return rec.testament === paperTestament;
+    });
 }
 
 /**

@@ -47,6 +47,24 @@ export interface SourceRecommendation {
      * Surfaced inline below the title in the recommendation card.
      */
     rationale?: string;
+    /**
+     * Testament scope. Used by `getSourceRecommendations` to filter
+     * invariant entries against the paper's passage so OT lexicons
+     * don't surface for NT papers and vice-versa.
+     *
+     *   - `'NT'`          → only New Testament papers
+     *   - `'OT'`          → only Old Testament papers
+     *   - `'whole-bible'` → both testaments (e.g. Anchor Bible Dictionary,
+     *                       Sanders' Judaism, Josephus, Rahlfs LXX)
+     *   - `undefined`     → no filter (legacy entries; treated as
+     *                       whole-bible for back-compat)
+     *
+     * For BOOK-SPECIFIC entries this field is redundant (the bookId
+     * already determines the testament) so it can stay undefined.
+     * For INVARIANT entries the field is essential to keep the catalog
+     * relevant per testament.
+     */
+    testament?: 'NT' | 'OT' | 'whole-bible';
 }
 
 /**
