@@ -76,8 +76,9 @@ export function PinnedSourcesPicker({
                             <Badge
                                 key={id}
                                 variant="secondary"
-                                className="gap-1 pr-1 text-[10.5px] max-w-[200px]"
+                                className="gap-1 pr-1 text-[10.5px] max-w-[280px]"
                                 role="listitem"
+                                title={label}
                             >
                                 <span className="truncate">{label}</span>
                                 <button
@@ -85,7 +86,7 @@ export function PinnedSourcesPicker({
                                     onClick={() => remove(id)}
                                     disabled={disabled}
                                     className="rounded-sm hover:bg-foreground/10 focus:outline-none focus:ring-1 focus:ring-ring p-0.5 shrink-0"
-                                    aria-label={t('paperSetup.subSteps.corpusPlan.picker.removeAria', { label })}
+                                    aria-label={t('paperSetup.subSteps.corpus-plan.picker.removeAria', { label })}
                                 >
                                     <X className="h-2.5 w-2.5" aria-hidden />
                                 </button>
@@ -106,38 +107,44 @@ export function PinnedSourcesPicker({
                         className="h-7 text-[11px] font-normal gap-1"
                     >
                         {selected.length === 0
-                            ? t('paperSetup.subSteps.corpusPlan.picker.add')
-                            : t('paperSetup.subSteps.corpusPlan.picker.edit', { count: selected.length })}
+                            ? t('paperSetup.subSteps.corpus-plan.picker.add')
+                            : t('paperSetup.subSteps.corpus-plan.picker.edit', { count: selected.length })}
                         <ChevronsUpDown className="h-3 w-3 opacity-50" aria-hidden />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[320px] p-0" align="start">
+                <PopoverContent
+                    className="w-[460px] max-w-[calc(100vw-2rem)] p-0 shadow-xl border-2 border-border z-50"
+                    align="start"
+                    sideOffset={6}
+                >
                     <Command>
                         <CommandInput
-                            placeholder={t('paperSetup.subSteps.corpusPlan.picker.search')}
+                            placeholder={t('paperSetup.subSteps.corpus-plan.picker.search')}
                             className="text-[12px]"
                         />
-                        <CommandList className="max-h-64">
-                            <CommandEmpty>{t('paperSetup.subSteps.corpusPlan.picker.noMatches')}</CommandEmpty>
+                        <CommandList className="max-h-72">
+                            <CommandEmpty>{t('paperSetup.subSteps.corpus-plan.picker.noMatches')}</CommandEmpty>
                             <CommandGroup>
                                 {sources.map(source => (
                                     <CommandItem
                                         key={source.id}
                                         value={`${source.id} ${source.displayLabel} ${source.citationKey ?? ''}`}
                                         onSelect={() => toggle(source.id)}
-                                        className="text-[12px] gap-2"
+                                        className="text-[12px] gap-2 items-start py-2"
                                     >
                                         <Check
                                             className={cn(
-                                                'h-3.5 w-3.5',
+                                                'h-3.5 w-3.5 mt-0.5 shrink-0',
                                                 selectedSet.has(source.id) ? 'opacity-100' : 'opacity-0',
                                             )}
                                             aria-hidden
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <div className="truncate">{source.displayLabel}</div>
+                                            <div className="text-foreground leading-snug break-words">
+                                                {source.displayLabel}
+                                            </div>
                                             {source.citationKey && (
-                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                <div className="text-[10px] text-muted-foreground leading-snug mt-0.5">
                                                     {source.citationKey} · {source.sourceType}
                                                 </div>
                                             )}

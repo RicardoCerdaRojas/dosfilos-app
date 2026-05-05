@@ -739,6 +739,14 @@ function deserializeStepPlan(raw: any): ExegeticalPaper['stepPlan'] {
             introduction: raw.defaults?.introduction ?? EMPTY_STEP_SOURCE_PLAN.defaults.introduction,
         },
         updatedAt: raw.updatedAt?.toDate?.() ?? raw.updatedAt ?? new Date(),
+        // v1.7 corpus-usage planning. Without these the proposer's
+        // save round-trips lose `proposedAt` → `hasProposal` stays
+        // false → the planning table never renders after the user
+        // clicks "Propose" (the bug surfaced in May 2026 testing).
+        proposedAt: raw.proposedAt?.toDate?.() ?? raw.proposedAt ?? null,
+        proposalCorpusSourceIds: Array.isArray(raw.proposalCorpusSourceIds)
+            ? raw.proposalCorpusSourceIds.filter((id: unknown): id is string => typeof id === 'string')
+            : undefined,
     };
 }
 
