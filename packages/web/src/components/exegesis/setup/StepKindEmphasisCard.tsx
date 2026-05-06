@@ -3,7 +3,9 @@ import { CheckCircle2, RotateCcw, Sparkles, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     SOURCE_TYPE_GROUPS,
+    suggestRoleForType,
     type ExegeticalPaper,
+    type SourceRole,
     type SourceType,
     type StepEmphasis,
 } from '@dosfilos/domain';
@@ -69,22 +71,65 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
             && setEq(persistedEmphasis.deemphasizedTypes, rubricSuggestion.deemphasizedTypes));
     }, [persistedEmphasis, rubricSuggestion]);
 
-    // Form state. Initial value = persisted (custom or rubric-default).
-    const [emphasized, setEmphasized] = useState<SourceType[]>([...persistedEmphasis.emphasizedTypes]);
-    const [deemphasized, setDeemphasized] = useState<SourceType[]>([...persistedEmphasis.deemphasizedTypes]);
+    // Initial value: prefer persisted (when the user has explicitly
+    // saved something for this kind), otherwise fall back to the
+    // rubric's structural suggestion. Without this fallback the
+    // persisted-but-empty default arrays from a fresh paper produced
+    // a misleading "elige los tipos" empty state — even though the
+    // rubric (including the strategy-only preset, which inherits the
+    // default TMS structural expectations) actually has a populated
+    // suggestion ready to apply.
+    const initialEmphasized = persistedEmphasis.emphasizedTypes.length > 0
+        ? persistedEmphasis.emphasizedTypes
+        : rubricSuggestion.emphasizedTypes;
+    const initialDeemphasized = persistedEmphasis.deemphasizedTypes.length > 0
+        ? persistedEmphasis.deemphasizedTypes
+        : rubricSuggestion.deemphasizedTypes;
+
+    const [emphasized, setEmphasized] = useState<SourceType[]>([...initialEmphasized]);
+    const [deemphasized, setDeemphasized] = useState<SourceType[]>([...initialDeemphasized]);
     const [note, setNote] = useState('');
-    const [showDeemphasized, setShowDeemphasized] = useState(persistedEmphasis.deemphasizedTypes.length > 0);
+    const [showDeemphasized, setShowDeemphasized] = useState(initialDeemphasized.length > 0);
 
     // Re-sync when the persisted plan changes externally (e.g. another
-    // tab saved). Avoids losing in-progress edits by only resetting
-    // when the persisted snapshot identity changes — Object.is below
-    // catches the React Query refetch case.
+    // tab saved). Same fallback rule applies — keep the rubric
+    // suggestion visible if the persisted is still empty.
     useEffect(() => {
-        setEmphasized([...persistedEmphasis.emphasizedTypes]);
-        setDeemphasized([...persistedEmphasis.deemphasizedTypes]);
-    }, [persistedEmphasis]);
+        const nextEmphasized = persistedEmphasis.emphasizedTypes.length > 0
+            ? persistedEmphasis.emphasizedTypes
+            : rubricSuggestion.emphasizedTypes;
+        const nextDeemphasized = persistedEmphasis.deemphasizedTypes.length > 0
+            ? persistedEmphasis.deemphasizedTypes
+            : rubricSuggestion.deemphasizedTypes;
+        setEmphasized([...nextEmphasized]);
+        setDeemphasized([...nextDeemphasized]);
+    }, [persistedEmphasis, rubricSuggestion]);
 
-    const justification = paper.rubric?.structuralExpectations.find(e => e.section === kind)?.justification;
+    const expectation = paper.rubric?.structuralExpectations.find(e => e.section === kind);
+    // Resolution order, most-specific to most-general:
+    //   1. Data carries an explicit i18n key → use it. (Newly-applied
+    //      system-default / strategy-only rubrics always do.)
+    //   2. Data has no key but the rubric provenance is
+    //      `system-default` → fall back to a kind-based lookup. This
+    //      handles papers persisted BEFORE the `justificationKey`
+    //      field existed: their stored `justification` is the
+    //      English literal, but provenance tells us we're looking at
+    //      a system-default structural expectation, so the canonical
+    //      translated text is the right thing to render. Without this
+    //      branch the user would see English on every pre-migration
+    //      paper, even with the new keys defined.
+    //   3. Anything else (extracted, user-edited, from-template) →
+    //      render the literal text as authored. Extracted rubrics
+    //      come back from the LLM in the user's chosen language;
+    //      from-template / user-edited reflect the author's wording.
+    const justification = (() => {
+        if (!expectation) return undefined;
+        if (expectation.justificationKey) return t(expectation.justificationKey);
+        if (paper.rubric?.provenance === 'system-default') {
+            return t(`paperSetup.subSteps.plan.rubricJustification.${kind}`);
+        }
+        return expectation.justification;
+    })();
 
     const handleSave = async () => {
         const nextEmphasis: StepEmphasis = {
@@ -145,6 +190,17 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
                         </p>
                     </div>
                 </div>
+            )}
+
+            {/* Dialectical-strategy hint. Translates the SourceType
+                emphasis into role buckets (anchor / contrast /
+                technical) so the user — who's been thinking in roles
+                across corpus + plan-de-uso — sees the structural plan
+                as the same conversation, not a context switch. Read-
+                only summary; the SourceType chips below are the
+                actual edit surface. */}
+            {(paper.exegeticalStrategy ?? 'free') === 'dialectical' && emphasized.length > 0 && (
+                <DialecticalRoleSummary types={emphasized} />
             )}
 
             <div className="space-y-2">
@@ -230,6 +286,57 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
                 </Button>
             </div>
         </section>
+    );
+}
+
+// ── DialecticalRoleSummary ──────────────────────────────────────────────
+//
+// Counts the emphasized SourceTypes by their suggested dialectical
+// role and renders three small badges (anchor / contrast / technical
+// + "sin rol" if any). Bridges the role-based vocabulary used in the
+// corpus + plan-de-uso steps with the SourceType-based vocabulary of
+// the structural plan. The user sees "Énfasis dialéctico: Ancla 1 ·
+// Contraste 2" instead of having to mentally translate each type.
+
+const ROLE_BADGE_CLASSES: Record<SourceRole, string> = {
+    anchor: 'bg-success text-success-foreground',
+    contrast: 'bg-info text-info-foreground',
+    technical: 'bg-warning text-warning-foreground',
+};
+
+function DialecticalRoleSummary({ types }: { types: ReadonlyArray<SourceType> }) {
+    const { t } = useTranslation('exegesis');
+    const counts = useMemo(() => {
+        const out: Record<SourceRole | 'unrolled', number> = {
+            anchor: 0, contrast: 0, technical: 0, unrolled: 0,
+        };
+        for (const ty of types) {
+            const role = suggestRoleForType(ty);
+            out[role ?? 'unrolled'] += 1;
+        }
+        return out;
+    }, [types]);
+
+    const roles: ReadonlyArray<SourceRole> = ['anchor', 'contrast', 'technical'];
+    return (
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2 flex flex-wrap items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                {t('paperSetup.subSteps.plan.dialectical.summaryLabel')}
+            </span>
+            {roles.map(role => (
+                <span
+                    key={role}
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide ${counts[role] > 0 ? ROLE_BADGE_CLASSES[role] : 'bg-muted text-muted-foreground border-border'}`}
+                >
+                    {t(`paperSetup.subSteps.plan.dialectical.role.${role}`)} · {counts[role]}
+                </span>
+            ))}
+            {counts.unrolled > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted text-muted-foreground px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide">
+                    {t('paperSetup.subSteps.plan.dialectical.role.unrolled')} · {counts.unrolled}
+                </span>
+            )}
+        </div>
     );
 }
 

@@ -12,6 +12,7 @@ import {
 import { toast } from 'sonner';
 import {
     SOURCE_TYPE_GROUPS,
+    STRATEGY_ONLY_RUBRIC_PRESET_ID,
     getSourceTypeOrderIndex,
     type ExegeticalPaper,
     type PaperRubric,
@@ -20,6 +21,7 @@ import {
 } from '@dosfilos/domain';
 import { RequirementRow, AddRequirementButton } from '@/components/exegesis/rubric/RequirementRow';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
+import { RubricTemplatePicker } from '@/components/exegesis/setup/RubricTemplatePicker';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -422,7 +424,15 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                                                 : exp.emphasizedTypes.map(typ => t(`sourceTypes.${typ}.label`)).join(', ')}
                                         </p>
                                         <p className="text-muted-foreground italic">
-                                            {exp.justification}
+                                            {(() => {
+                                                if (exp.justificationKey) return t(exp.justificationKey);
+                                                // Same migration-friendly fallback as StepKindEmphasisCard:
+                                                // pre-key system-default rubrics persisted English literals.
+                                                if (rubric.provenance === 'system-default') {
+                                                    return t(`paperSetup.subSteps.plan.rubricJustification.${section}`);
+                                                }
+                                                return exp.justification;
+                                            })()}
                                         </p>
                                     </>
                                 ) : (
@@ -876,39 +886,61 @@ function capitalize(s: string): string {
 
 function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
     const { t } = useTranslation('exegesis');
-    const { rubrics, applyTemplate, saveAsTemplate } = useUserRubrics();
-    // Pre-select the dropdown to whatever template the paper's rubric
-    // came from (set by ApplyRubricTemplateToPaperUseCase /
-    // SaveCurrentRubricAsTemplateUseCase / CreateExegeticalPaperUseCase).
-    // Re-syncs whenever the rubric changes server-side so a fresh apply
-    // / extract / reset reflects accurately. The value falls back to ''
-    // when the rubric has no template origin (default, extracted,
-    // or the original template was deleted).
-    const currentTemplateId = paper.rubric?.sourceTemplateId ?? null;
+    const { rubrics, defaultRubric, applyTemplate, applyStrategyOnly, saveAsTemplate } = useUserRubrics();
+    const { resetRubric } = useExegesisPapers();
+
+    const rubric = paper.rubric;
+    // Derive what the picker should pre-select to mirror the paper's
+    // current rubric. We use this to disable the Apply button when
+    // the user picks the option that's already in effect (avoids
+    // pointless writes + flicker).
+    //
+    // Detection rules (in priority order):
+    //   1. Rubric stamped with `sourceTemplateId` AND that template
+    //      still exists in the user's library → the template id.
+    //   2. Empty `sourceRequirements` + `provenance === 'system-default'`
+    //      → strategy-only preset (matches `buildStrategyOnlyRubric`).
+    //   3. Non-empty requirements + `provenance === 'system-default'`
+    //      → system TMS default (sentinel `null`).
+    //   4. Anything else (user-edited, extracted, deleted-template
+    //      remnant) → `undefined` ("no clean match"). The picker
+    //      shows a "elige qué aplicar" placeholder and any choice
+    //      enables Apply.
+    const currentTemplateId = rubric?.sourceTemplateId ?? null;
     const templateStillExists = currentTemplateId !== null && rubrics.some(r => r.id === currentTemplateId);
-    const initialPickerValue = templateStillExists ? currentTemplateId! : '';
-    const [pickerValue, setPickerValue] = useState(initialPickerValue);
+    const currentSelection: string | null | undefined = (() => {
+        if (!rubric) return undefined;
+        if (templateStillExists) return currentTemplateId!;
+        if (rubric.sourceRequirements.length === 0 && rubric.provenance === 'system-default') {
+            return STRATEGY_ONLY_RUBRIC_PRESET_ID;
+        }
+        if (rubric.provenance === 'system-default') return null;
+        return undefined;
+    })();
+
+    const [pickerValue, setPickerValue] = useState<string | null | undefined>(currentSelection);
     useEffect(() => {
-        setPickerValue(initialPickerValue);
-    }, [initialPickerValue]);
-    // Tracks the templateId most recently applied successfully in
-    // this session so we can show the "✓ Aplicada" badge + disable
-    // the Apply button when the picker matches. Seeded with the
-    // current templateId so the freshly-loaded "this is what's
-    // applied" state shows the badge from the start.
-    const [lastAppliedId, setLastAppliedId] = useState<string | null>(currentTemplateId);
-    useEffect(() => {
-        setLastAppliedId(currentTemplateId);
-    }, [currentTemplateId]);
+        setPickerValue(currentSelection);
+    }, [currentSelection]);
+
     const [savingMode, setSavingMode] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [confirmApplyOpen, setConfirmApplyOpen] = useState(false);
 
+    const applyPending = applyTemplate.isPending || applyStrategyOnly.isPending || resetRubric.isPending;
+    const isStrategy = pickerValue === STRATEGY_ONLY_RUBRIC_PRESET_ID;
+    const isSystem = pickerValue === null;
+    const isTemplate = typeof pickerValue === 'string' && !isStrategy;
+    const hasSelection = isStrategy || isSystem || isTemplate;
+    // "Already in effect" → disable Apply so we don't let the user
+    // re-apply what's already there.
+    const alreadyInEffect = hasSelection && pickerValue === currentSelection;
+
     const handleApply = () => {
-        if (!pickerValue) return;
+        if (!hasSelection || alreadyInEffect) return;
         // The current rubric carries user edits — confirm before
         // overwriting. Otherwise apply directly.
-        if (paper.rubric?.provenance === 'user-edited') {
+        if (rubric?.provenance === 'user-edited') {
             setConfirmApplyOpen(true);
             return;
         }
@@ -918,20 +950,24 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
     const doApply = async () => {
         setConfirmApplyOpen(false);
         try {
-            await applyTemplate.mutateAsync({ paperId: paper.id, rubricTemplateId: pickerValue });
+            if (isStrategy) {
+                await applyStrategyOnly.mutateAsync({ paperId: paper.id });
+            } else if (isSystem) {
+                await resetRubric.mutateAsync({ paperId: paper.id });
+            } else if (isTemplate) {
+                await applyTemplate.mutateAsync({
+                    paperId: paper.id,
+                    rubricTemplateId: pickerValue as string,
+                });
+            } else {
+                return;
+            }
             toast.success(t('paperSetup.subSteps.rubric.templates.applied'));
-            // Keep the picker value — clearing felt to the user like
-            // the apply silently cancelled. Mark this id as just-
-            // applied so the Apply button shows ✓ Aplicada and
-            // disables until they pick something else.
-            setLastAppliedId(pickerValue);
         } catch (err) {
-            console.error('[exegesis] apply template failed:', err);
+            console.error('[exegesis] apply rubric failed:', err);
             toast.error(t('paperSetup.subSteps.rubric.templates.applyFailed'));
         }
     };
-
-    const justApplied = pickerValue !== '' && pickerValue === lastAppliedId;
 
     const handleSave = async () => {
         const name = templateName.trim();
@@ -961,54 +997,39 @@ function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
                 </p>
             </header>
 
-            {rubrics.length > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-end gap-2">
-                    <div className="flex-1 min-w-0">
-                        <label className="block text-[11px] font-medium text-foreground mb-1">
-                            {t('paperSetup.subSteps.rubric.templates.applyLabel')}
-                        </label>
-                        <select
-                            value={pickerValue}
-                            onChange={(e) => {
-                                setPickerValue(e.target.value);
-                                // Switching templates re-arms the
-                                // Apply button (the new selection
-                                // hasn't been applied yet).
-                                if (e.target.value !== lastAppliedId) {
-                                    setLastAppliedId(prev => prev === e.target.value ? prev : null);
-                                }
-                            }}
-                            disabled={applyTemplate.isPending}
-                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
-                        >
-                            <option value="">— {t('paperSetup.subSteps.rubric.templates.applyPlaceholder')} —</option>
-                            {rubrics.map(r => (
-                                <option key={r.id} value={r.id}>
-                                    {r.displayName}{r.isDefault ? ' (★)' : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <Button
-                        type="button"
-                        onClick={handleApply}
-                        disabled={!pickerValue || applyTemplate.isPending || justApplied}
-                        className={justApplied
-                            ? 'bg-success-subtle text-success-subtle-foreground border border-success/30 text-xs cursor-default'
-                            : 'bg-primary hover:bg-primary/90 text-primary-foreground text-xs'
-                        }
-                    >
-                        {applyTemplate.isPending ? (
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        ) : justApplied ? (
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                        ) : null}
-                        {justApplied
-                            ? t('paperSetup.subSteps.rubric.templates.appliedBadge')
-                            : t('paperSetup.subSteps.rubric.templates.applyCta')}
-                    </Button>
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                <div className="flex-1 min-w-0">
+                    <label className="block text-[11px] font-medium text-foreground mb-1">
+                        {t('paperSetup.subSteps.rubric.templates.applyLabel')}
+                    </label>
+                    <RubricTemplatePicker
+                        value={pickerValue}
+                        onChange={setPickerValue}
+                        rubrics={rubrics}
+                        defaultRubric={defaultRubric}
+                        mode="apply"
+                        disabled={applyPending}
+                    />
                 </div>
-            )}
+                <Button
+                    type="button"
+                    onClick={handleApply}
+                    disabled={!hasSelection || alreadyInEffect || applyPending}
+                    className={alreadyInEffect
+                        ? 'bg-success-subtle text-success-subtle-foreground border border-success/30 text-xs cursor-default'
+                        : 'bg-primary hover:bg-primary/90 text-primary-foreground text-xs'
+                    }
+                >
+                    {applyPending ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : alreadyInEffect ? (
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                    ) : null}
+                    {alreadyInEffect
+                        ? t('paperSetup.subSteps.rubric.templates.appliedBadge')
+                        : t('paperSetup.subSteps.rubric.templates.applyCta')}
+                </Button>
+            </div>
 
             {!savingMode ? (
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">

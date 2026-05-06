@@ -1,5 +1,6 @@
 import {
     buildStrategyOnlyRubric,
+    STRATEGY_ONLY_RUBRIC_PRESET_ID,
     type CreateExegeticalPaperInput,
     type ExegeticalPaper,
     type IExegeticalPaperRepository,
@@ -8,11 +9,11 @@ import {
 } from '@dosfilos/domain';
 
 /**
- * Sentinel passed via `rubricTemplateId` from the create UI to
- * request the strategy-only system preset. Distinct from a real
- * template id so the use case can branch without a separate flag.
+ * Re-export so older callers (web hooks) that imported the sentinel
+ * from the application barrel keep working. The domain is the source
+ * of truth — see `PaperRubric.ts`.
  */
-export const STRATEGY_ONLY_RUBRIC_PRESET_ID = '__strategy-only';
+export { STRATEGY_ONLY_RUBRIC_PRESET_ID };
 
 /**
  * Creates a new exegetical paper in 'configuring' phase.

@@ -36,10 +36,15 @@ interface PinnedSourcesPickerProps {
     disabled?: boolean;
 }
 
+// Role pill palette. Uses the paired `*-subtle` / `*-subtle-foreground`
+// design tokens so the text stays legible against the small filled
+// pill — the previous `bg-{color}/15 text-{color}` combo was too low
+// contrast (especially on the secondary parent badge's gray
+// background, where the colored text washed out almost to invisible).
 const ROLE_BADGE_CLASSES: Record<SourceRole, string> = {
-    anchor: 'bg-success/15 text-success border-success/30',
-    contrast: 'bg-info/15 text-info border-info/30',
-    technical: 'bg-warning/15 text-warning-subtle-foreground border-warning/30',
+    anchor: 'bg-success text-success-foreground border-success',
+    contrast: 'bg-info text-info-foreground border-info',
+    technical: 'bg-warning text-warning-foreground border-warning',
 };
 
 /**

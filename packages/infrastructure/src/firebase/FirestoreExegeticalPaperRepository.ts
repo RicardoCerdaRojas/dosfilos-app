@@ -458,6 +458,16 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             tokensUsed: version.tokensUsed,
             verifications: version.verifications,
         };
+        // Only attach `canonicalAnalysis` when the caller produced one
+        // (the new analysis pipeline). Firestore rejects `undefined`,
+        // so legacy `GenerateStepUseCase` callers continue to omit the
+        // field cleanly. The structured payload includes its own
+        // Date fields (createdAt/updatedAt) which Firestore converts
+        // to Timestamp on write — auto-conversion is fine here because
+        // the downstream `*.toDate?.()` pattern handles either shape.
+        if (version.canonicalAnalysis) {
+            fullVersion.canonicalAnalysis = version.canonicalAnalysis;
+        }
 
         await this.mutateStep(ownerId, paperId, stepId, (step) => {
             step.versions = [...step.versions, fullVersion];

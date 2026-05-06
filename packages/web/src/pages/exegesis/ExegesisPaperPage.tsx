@@ -45,6 +45,7 @@ import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import { StepCard } from '@/components/exegesis/StepCard';
 import { CorpusCoverageReport } from '@/components/exegesis/corpus-plan/CorpusCoverageReport';
 import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
+import { AcademicCompositionDialog } from '@/components/exegesis/canonical/AcademicCompositionDialog';
 import {
     exportPaperToMarkdown,
     formatPassageReference,
@@ -83,6 +84,7 @@ export function ExegesisPaperPage() {
 
     const [facultyDrawerOpen, setFacultyDrawerOpen] = useState(false);
     const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+    const [composeDialogOpen, setComposeDialogOpen] = useState(false);
 
     if (isLoading) {
         return <CenteredMessage icon={<Loader2 className="h-5 w-5 animate-spin" />} text={t('detail.loading')} />;
@@ -257,6 +259,10 @@ export function ExegesisPaperPage() {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setComposeDialogOpen(true)}>
+                                <NotebookPen className="h-4 w-4 mr-2" />
+                                {t('canonical.compose.menuItem', { defaultValue: 'Componer paper académico' })}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={() => setArchiveConfirmOpen(true)}
@@ -266,6 +272,14 @@ export function ExegesisPaperPage() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                    <AcademicCompositionDialog
+                        open={composeDialogOpen}
+                        onOpenChange={setComposeDialogOpen}
+                        paperId={paper.id}
+                        suggestedFilename={buildPaperFilename(paper, activeLanguage)}
+                    />
+
 
                     <AlertDialog open={archiveConfirmOpen} onOpenChange={setArchiveConfirmOpen}>
                         <AlertDialogContent>
@@ -801,6 +815,22 @@ function countVerses(paper: ExegeticalPaper): number | null {
     if (verseStart === null || verseEnd === null) return null;
     if (chapterStart !== chapterEnd) return null; // multi-chapter, can't count without per-chapter data
     return verseEnd - verseStart + 1;
+}
+
+/**
+ * Builds a filesystem-safe filename stem for academic-paper download.
+ * Strips diacritics, lowercases, swaps non-alphanumeric for hyphens.
+ * "Hebreos 1:1-4" → "hebreos-1-1-4".
+ */
+function buildPaperFilename(paper: ExegeticalPaper, language: SupportedLanguage): string {
+    const base = paper.title?.trim() || formatPassageReference(paper.passage, language);
+    const normalized = base
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    return normalized || 'paper';
 }
 
 /**

@@ -14,6 +14,7 @@ import {
     Layers,
     ChevronDown,
     ChevronRight,
+    NotebookPen,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -22,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { CanonicalAnalysisStudyView } from '@/components/exegesis/canonical/CanonicalAnalysisStudyView';
 import {
     formatPassageReference,
     type ExegeticalStep,
@@ -53,7 +55,14 @@ interface StepCardProps {
  */
 export function StepCard({ step, paperId, language }: StepCardProps) {
     const { t } = useTranslation('exegesis');
-    const { generateStep, acceptStep, saveStepEdit } = useExegesisPapers();
+    const {
+        generateStep,
+        acceptStep,
+        saveStepEdit,
+        analyzeVerseCanonically,
+        composeConclusionFromAnalyses,
+        composeIntroductionFromAnalyses,
+    } = useExegesisPapers();
 
     const [editing, setEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
@@ -65,6 +74,13 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     // the header to expand. Editing automatically expands.
     const [collapsed, setCollapsed] = useState(true);
     const isExpanded = !collapsed || editing;
+    // View mode toggle for verse steps that have a CanonicalVerseAnalysis
+    // attached (Phase 2 architecture). Defaults to 'prose' so legacy
+    // markdown output stays visible by default; users opt in to the
+    // structured study view via the toggle.
+    const [viewMode, setViewMode] = useState<'prose' | 'study'>('prose');
+    const canonicalAnalysis = step.accepted?.canonicalAnalysis ?? step.current?.canonicalAnalysis ?? null;
+    const supportsStudyView = step.kind === 'verse' && !!canonicalAnalysis;
 
     const displayLabel = stepDisplayLabel(step, language, t);
     const previewMarkdown = step.accepted?.markdown ?? step.current?.markdown ?? '';
@@ -100,6 +116,64 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             toast.error(t('detail.steps.toast.generateFailed'));
         }
     };
+
+    // Phase 2 path: structured analysis instead of free markdown.
+    // Only meaningful for verse-kind steps. Other kinds keep the
+    // legacy `generateStep` path until composers for them ship.
+    const handleAnalyzeCanonically = async (regenerationHint?: string) => {
+        if (step.kind !== 'verse') return;
+        try {
+            await analyzeVerseCanonically.mutateAsync({
+                paperId,
+                stepId: step.id,
+                regenerationHint: regenerationHint ?? null,
+            });
+            setHintMode(false);
+            setHintDraft('');
+            // Auto-switch to study view on success so the user sees
+            // the structured payload that just came back.
+            setViewMode('study');
+        } catch (err) {
+            console.error('[exegesis] canonical analysis failed:', err);
+            toast.error(t('canonical.toast.analyzeFailed', { defaultValue: 'No se pudo generar el análisis canónico.' }));
+        }
+    };
+    const isVerse = step.kind === 'verse';
+    const isConclusion = step.kind === 'conclusion';
+    const isIntroduction = step.kind === 'introduction';
+
+    // Phase 5: section composers. Conclusion runs over accepted verse
+    // analyses; introduction runs over verse analyses + accepted
+    // conclusion. Use cases enforce ordering — UI just exposes the
+    // CTA when the kind matches.
+    const handleComposeConclusion = async () => {
+        try {
+            await composeConclusionFromAnalyses.mutateAsync({ paperId });
+        } catch (err) {
+            console.error('[exegesis] compose conclusion failed:', err);
+            toast.error(t('canonical.toast.composeSectionFailed', {
+                defaultValue: 'No se pudo componer esta sección. {{message}}',
+                message: (err as Error).message ?? '',
+            }));
+        }
+    };
+    const handleComposeIntroduction = async () => {
+        try {
+            await composeIntroductionFromAnalyses.mutateAsync({ paperId });
+        } catch (err) {
+            console.error('[exegesis] compose introduction failed:', err);
+            toast.error(t('canonical.toast.composeSectionFailed', {
+                defaultValue: 'No se pudo componer esta sección. {{message}}',
+                message: (err as Error).message ?? '',
+            }));
+        }
+    };
+
+    const anyPipelinePending =
+        generateStep.isPending
+        || analyzeVerseCanonically.isPending
+        || composeConclusionFromAnalyses.isPending
+        || composeIntroductionFromAnalyses.isPending;
 
     const handleAccept = async () => {
         if (!step.current) return;
@@ -171,27 +245,78 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                     </p>
                 </div>
                 {isPending && (
-                    <Button
-                        size="sm"
-                        onClick={() => handleGenerate()}
-                        disabled={generateStep.isPending}
-                        className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
-                    >
-                        {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
-                        {t('detail.steps.action.generate')}
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                        {isVerse && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleAnalyzeCanonically()}
+                                disabled={anyPipelinePending}
+                                title={t('canonical.actions.analyzeTooltip', { defaultValue: 'Genera el análisis estructurado (study mode + paper composer)' })}
+                            >
+                                {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                {t('canonical.actions.analyze', { defaultValue: 'Análisis canónico' })}
+                            </Button>
+                        )}
+                        {isConclusion && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleComposeConclusion}
+                                disabled={anyPipelinePending}
+                                title={t('canonical.actions.composeConclusionTooltip', { defaultValue: 'Compone la conclusión a partir de los análisis canónicos aceptados' })}
+                            >
+                                {composeConclusionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                {t('canonical.actions.composeFromAnalyses', { defaultValue: 'Componer desde análisis' })}
+                            </Button>
+                        )}
+                        {isIntroduction && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleComposeIntroduction}
+                                disabled={anyPipelinePending}
+                                title={t('canonical.actions.composeIntroductionTooltip', { defaultValue: 'Compone la introducción al final, usando los análisis aceptados + la conclusión aceptada' })}
+                            >
+                                {composeIntroductionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                {t('canonical.actions.composeFromAnalyses', { defaultValue: 'Componer desde análisis' })}
+                            </Button>
+                        )}
+                        <Button
+                            size="sm"
+                            onClick={() => handleGenerate()}
+                            disabled={anyPipelinePending}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                        >
+                            {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
+                            {t('detail.steps.action.generate')}
+                        </Button>
+                    </div>
                 )}
                 {isFailed && (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleGenerate()}
-                        disabled={generateStep.isPending}
-                        className="border-rose-300 text-rose-700 dark:border-rose-700 dark:text-rose-300"
-                    >
-                        {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
-                        {t('detail.steps.action.retry')}
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                        {isVerse && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleAnalyzeCanonically()}
+                                disabled={anyPipelinePending}
+                            >
+                                {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                {t('canonical.actions.analyzeRetry', { defaultValue: 'Reintentar análisis' })}
+                            </Button>
+                        )}
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleGenerate()}
+                            disabled={anyPipelinePending}
+                            className="border-rose-300 text-rose-700 dark:border-rose-700 dark:text-rose-300"
+                        >
+                            {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                            {t('detail.steps.action.retry')}
+                        </Button>
+                    </div>
                 )}
             </header>
 
@@ -216,15 +341,15 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                     </div>
                 )}
 
-                {(isReview || showAccepted) && !editing && previewMarkdown && (
-                    <div className="relative">
+                {(isReview || showAccepted) && !editing && (previewMarkdown || canonicalAnalysis) && (
+                    <div className="relative space-y-3">
                         {/* Optimistic spinner overlay — fires the moment
                             the user clicks Regenerar/Aplicar hint, before
                             Firestore propagates the 'generating' state.
                             Closes the visual gap where the buttons go
                             disabled but nothing tells the user "something
                             is happening". */}
-                        {generateStep.isPending && (
+                        {anyPipelinePending && (
                             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-white/70 dark:bg-zinc-900/70 backdrop-blur-sm">
                                 <div className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-zinc-800 px-3 py-2 rounded-md border border-slate-200 dark:border-zinc-700 shadow-sm">
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -232,11 +357,52 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 </div>
                             </div>
                         )}
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {previewMarkdown}
-                            </ReactMarkdown>
-                        </div>
+                        {/* View mode toggle — only when both modes have
+                            content. Lets the user inspect the structured
+                            analysis OR read the legacy markdown rendering. */}
+                        {supportsStudyView && previewMarkdown && (
+                            <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-[11px]">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('prose')}
+                                    className={cn(
+                                        'px-2.5 py-1 rounded transition-colors',
+                                        viewMode === 'prose'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:text-foreground',
+                                    )}
+                                >
+                                    {t('canonical.view.prose', { defaultValue: 'Vista de prosa' })}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('study')}
+                                    className={cn(
+                                        'px-2.5 py-1 rounded transition-colors',
+                                        viewMode === 'study'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:text-foreground',
+                                    )}
+                                >
+                                    {t('canonical.view.study', { defaultValue: 'Vista de estudio' })}
+                                </button>
+                            </div>
+                        )}
+                        {supportsStudyView && viewMode === 'study' ? (
+                            <CanonicalAnalysisStudyView analysis={canonicalAnalysis!} />
+                        ) : previewMarkdown ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {previewMarkdown}
+                                </ReactMarkdown>
+                            </div>
+                        ) : (
+                            // Canonical analysis exists but no markdown yet —
+                            // composer hasn't run on this version. Default
+                            // straight to study view so the user sees the
+                            // structured payload that came back.
+                            canonicalAnalysis && <CanonicalAnalysisStudyView analysis={canonicalAnalysis} />
+                        )}
                     </div>
                 )}
 

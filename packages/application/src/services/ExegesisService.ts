@@ -4,6 +4,10 @@ import {
     FirestoreUserStyleGuideRepository,
     FirebaseLibraryRepository,
     FirebaseSermonRepository,
+    GeminiAcademicComposer,
+    GeminiCanonicalVerseAnalyzer,
+    GeminiConclusionComposer,
+    GeminiIntroductionComposer,
     GeminiExegesisOrchestrator,
     GeminiPaperRubricExtractor,
     GeminiPaperToSermonTransformer,
@@ -37,6 +41,7 @@ import {
     DeleteUserRubricUseCase,
     SetDefaultUserRubricUseCase,
     ApplyRubricTemplateToPaperUseCase,
+    ApplyStrategyOnlyRubricToPaperUseCase,
     SaveCurrentRubricAsTemplateUseCase,
     CreateUserRubricFromTextUseCase,
     ListUserStyleGuidesUseCase,
@@ -54,6 +59,10 @@ import {
     ProposeStepCorpusAllocationsUseCase,
     UpdateStepCorpusAllocationUseCase,
     SeedStepsForPassageUseCase,
+    AnalyzeVerseCanonicallyUseCase,
+    ComposeAcademicPaperUseCase,
+    ComposeConclusionFromAnalysesUseCase,
+    ComposeIntroductionFromAnalysesUseCase,
     GenerateStepUseCase,
     AcceptStepUseCase,
     SaveStepEditUseCase,
@@ -93,6 +102,7 @@ class ExegesisService {
     public deleteUserRubric: DeleteUserRubricUseCase;
     public setDefaultUserRubric: SetDefaultUserRubricUseCase;
     public applyRubricTemplateToPaper: ApplyRubricTemplateToPaperUseCase;
+    public applyStrategyOnlyRubricToPaper: ApplyStrategyOnlyRubricToPaperUseCase;
     public saveCurrentRubricAsTemplate: SaveCurrentRubricAsTemplateUseCase;
     public createUserRubricFromText: CreateUserRubricFromTextUseCase;
 
@@ -119,6 +129,26 @@ class ExegesisService {
     public generateStep: GenerateStepUseCase;
     public acceptStep: AcceptStepUseCase;
     public saveStepEdit: SaveStepEditUseCase;
+
+    // Canonical analysis pipeline (target architecture — see docs/exegesis/METODOLOGIA.md).
+    // Coexists with `generateStep` during the migration; produces a
+    // structured `CanonicalVerseAnalysis` artifact that downstream
+    // composers (academic / sermon / devotional) consume.
+    public analyzeVerseCanonically: AnalyzeVerseCanonicallyUseCase;
+
+    // Academic-paper composer over the canonical analyses. Enforces
+    // the configured style guide at two layers (prompt + deterministic
+    // post-formatter). See `ComposeAcademicPaperUseCase` and
+    // `IAcademicComposer` for the contract.
+    public composeAcademicPaper: ComposeAcademicPaperUseCase;
+
+    // Granular section composers — written in academic order:
+    // conclusion FROM the body's verse analyses, then introduction
+    // FROM verse analyses + the accepted conclusion. Both persist
+    // their output as new versions of their respective steps so the
+    // user reviews + accepts the same way as legacy generation.
+    public composeConclusionFromAnalyses: ComposeConclusionFromAnalysesUseCase;
+    public composeIntroductionFromAnalyses: ComposeIntroductionFromAnalysesUseCase;
 
     // Bridge: paper → sermon
     public generateSermonFromPaper: GenerateSermonFromPaperUseCase;
@@ -178,6 +208,9 @@ class ExegesisService {
         this.applyRubricTemplateToPaper = new ApplyRubricTemplateToPaperUseCase(
             paperRepository,
             userRubricRepository,
+        );
+        this.applyStrategyOnlyRubricToPaper = new ApplyStrategyOnlyRubricToPaperUseCase(
+            paperRepository,
         );
         this.saveCurrentRubricAsTemplate = new SaveCurrentRubricAsTemplateUseCase(
             paperRepository,
@@ -252,6 +285,52 @@ class ExegesisService {
         );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
+
+        // Canonical analysis pipeline. Wired in parallel to `generateStep`
+        // so the legacy markdown path keeps working while the structured
+        // pipeline is exercised on opt-in surfaces.
+        const canonicalAnalyzer = new GeminiCanonicalVerseAnalyzer(apiKey || '', exegesisModelId);
+        this.analyzeVerseCanonically = new AnalyzeVerseCanonicallyUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            canonicalAnalyzer,
+        );
+
+        // Academic-paper composer. Reuses the existing
+        // `DeterministicStyleFormatter` for the post-process layer so
+        // citations get rewritten per the manifest's templates after
+        // the LLM composes prose. Style guide enforcement is mandatory
+        // when configured; falls back to TMS / Turabian otherwise.
+        const academicComposer = new GeminiAcademicComposer(apiKey || '', exegesisModelId);
+        this.composeAcademicPaper = new ComposeAcademicPaperUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            academicComposer,
+            styleFormatter,
+        );
+
+        // Section-level composers. Same style-guide enforcement as
+        // `composeAcademicPaper`. Introduction is written LAST per
+        // academic methodology — the use case enforces this by
+        // requiring an accepted conclusion before composing.
+        const conclusionComposer = new GeminiConclusionComposer(apiKey || '', exegesisModelId);
+        this.composeConclusionFromAnalyses = new ComposeConclusionFromAnalysesUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            conclusionComposer,
+            styleFormatter,
+        );
+        const introductionComposer = new GeminiIntroductionComposer(apiKey || '', exegesisModelId);
+        this.composeIntroductionFromAnalyses = new ComposeIntroductionFromAnalysesUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            introductionComposer,
+            styleFormatter,
+        );
 
         // Bridge: paper → sermon (Phase 2). Sermon repo is shared with the
         // legacy sermon module; the use case persists a draft with

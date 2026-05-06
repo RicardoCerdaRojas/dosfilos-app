@@ -110,6 +110,23 @@ export function useUserRubrics() {
         },
     });
 
+    // Counterpart to `applyTemplate` for the strategy-only system
+    // preset. Needed for papers that bypass the create wizard (e.g.
+    // the Series planner deep-links straight into a paper) and so
+    // never had a chance to pick the preset at create time.
+    const applyStrategyOnly = useMutation({
+        mutationFn: async (input: { paperId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.applyStrategyOnlyRubricToPaper.execute({
+                ownerId: user.uid,
+                paperId: input.paperId,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     const saveAsTemplate = useMutation({
         mutationFn: async (input: {
             paperId: string;
@@ -157,6 +174,7 @@ export function useUserRubrics() {
         deleteRubric,
         setDefault,
         applyTemplate,
+        applyStrategyOnly,
         saveAsTemplate,
         createFromText,
     };

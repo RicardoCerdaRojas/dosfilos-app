@@ -492,16 +492,16 @@
                 },
                 "templates": {
                     "title": "Plantillas de rúbrica",
-                    "subtitle": "Aplica una plantilla guardada o guarda la rúbrica actual para reusarla en otros papers.",
-                    "applyLabel": "Aplicar una plantilla guardada",
+                    "subtitle": "Cambia la rúbrica del trabajo: aplica el preset \"Solo estrategia\", el default académico TMS, o una de tus plantillas guardadas.",
+                    "applyLabel": "Aplicar a este trabajo",
                     "applyPlaceholder": "elige una plantilla",
                     "applyCta": "Aplicar",
                     "applyConfirmTitle": "Reemplazar la rúbrica actual",
-                    "applyConfirmBody": "Vamos a reemplazar la rúbrica actual con la plantilla elegida. Tus ediciones manuales se descartan.",
-                    "applyConfirmCta": "Sí, aplicar plantilla",
-                    "applied": "Plantilla aplicada",
+                    "applyConfirmBody": "Vamos a reemplazar la rúbrica actual con la opción elegida. Tus ediciones manuales se descartan.",
+                    "applyConfirmCta": "Sí, reemplazar",
+                    "applied": "Rúbrica aplicada",
                     "appliedBadge": "Aplicada",
-                    "applyFailed": "No se pudo aplicar la plantilla",
+                    "applyFailed": "No se pudo aplicar la rúbrica",
                     "saveCta": "Guardar como plantilla",
                     "saveHint": "Guarda la rúbrica actual para usarla en otros papers.",
                     "emptyHint": "Aún no tienes plantillas guardadas. Cuando ajustes esta rúbrica, puedes guardarla aquí.",
@@ -640,7 +640,10 @@
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
                     "remove": "Quitar fuente",
-                    "viewOriginal": "Abrir el PDF original en una pestaña nueva"
+                    "viewOriginal": "Abrir el PDF original en una pestaña nueva",
+                    "groupEmpty": "Aún sin fuentes en este rol.",
+                    "groupUnrolled_one": "Sin rol asignado ({{count}})",
+                    "groupUnrolled_other": "Sin rol asignado ({{count}})"
                 },
                 "summary": {
                     "title": "{{excerptCount}} fragmentos curados de {{sourceCount}} fuentes",
@@ -649,8 +652,15 @@
                 "roleCoverage": {
                     "eyebrow": "Tu corpus por rol dialéctico",
                     "balancedTitle": "Corpus balanceado: cumple estrategia y rúbrica",
-                    "partialTitle": "Tu corpus aún no cubre lo que pide la estrategia o la rúbrica",
-                    "partialBody": "Cada celda muestra cuántas fuentes tienes vs el target. Si tu rúbrica especifica un mínimo para el rol, ese gana; si no, mostramos el target sugerido por la estrategia para un paper riguroso.",
+                    "missingTitle": "Incumplimiento: te faltan roles enteros",
+                    "missingBody": "La estrategia dialéctica necesita los tres roles para funcionar. Suma al menos una fuente en cada uno antes de pasar al plan estructural.",
+                    "partialTitle": "Cumplimiento parcial: ya tienes los tres roles, falta profundizar",
+                    "partialBody": "Tienes al menos una fuente en cada rol — buen punto de partida. Para llegar al target: te falta sumar {{gaps}}.",
+                    "partialDeficitItem_one": "{{gap}} {{role}}",
+                    "partialDeficitItem_other": "{{gap}} {{role}}",
+                    "partialDeficitJoiner": ", ",
+                    "deficitBadge_one": "Falta {{gap}}",
+                    "deficitBadge_other": "Faltan {{gap}}",
                     "targetSource": {
                         "rubric": "rúbrica",
                         "strategy": "estrategia"
@@ -664,6 +674,11 @@
                         "anchor": "Comentarios expositivos — la lectura base",
                         "contrast": "Otra voz: comentarios críticos, monografías, diccionarios teológicos",
                         "technical": "Léxicos, gramáticas, aparatos críticos"
+                    },
+                    "addCta": {
+                        "anchor": "Agregar ancla",
+                        "contrast": "Agregar contraste",
+                        "technical": "Agregar técnica"
                     }
                 },
                 "libraryFilter": {
@@ -901,6 +916,11 @@
                 },
                 "rubricSuggestion": "Sugerencia de la rúbrica",
                 "rubricEmpty": "La rúbrica no especifica énfasis para este paso. Elegí los tipos que tengan sentido para tu trabajo.",
+                "rubricJustification": {
+                    "introduction": "La introducción presenta la tesis y posiciona el pasaje. Tu voz lidera: el contexto histórico-cultural y el posicionamiento teológico la sostienen como apoyo, y el análisis técnico (léxico, gramática, aparato crítico) se reserva para el cuerpo.",
+                    "verse": "El trabajo verso por verso es donde el método dialéctico se ejerce plenamente. Las tres voces dialogan: el ancla (lectura base), los contrastes (otra voz crítica/teológica) y el aparato técnico (léxico, gramática, crítico) que defiende cada decisión.",
+                    "conclusion": "La conclusión sintetiza los hallazgos en una lectura teológica coherente. Es tu voz integrando lo trabajado: comentarios y monografías aportan el andamiaje integrador, no se introducen voces nuevas ni se abren debates críticos."
+                },
                 "noRubric": "Aún no hay rúbrica asociada. Configura la rúbrica primero para ver las sugerencias académicas.",
                 "emphasizedTypesLabel": "Tipos a priorizar",
                 "emphasizedTypesHint": "El agente cita estos tipos generosamente en este paso.",
@@ -916,7 +936,16 @@
                 "saved": "Plan actualizado",
                 "saveFailed": "No se pudo guardar el plan",
                 "savedHint": "Última actualización del plan",
-                "neverSaved": "Aún no guardaste un plan personalizado. La rúbrica aplica como sugerencia activa."
+                "neverSaved": "Aún no guardaste un plan personalizado. La rúbrica aplica como sugerencia activa.",
+                "dialectical": {
+                    "summaryLabel": "Énfasis dialéctico",
+                    "role": {
+                        "anchor": "Ancla",
+                        "contrast": "Contraste",
+                        "technical": "Técnica",
+                        "unrolled": "Sin rol"
+                    }
+                }
             }
         }
     },
@@ -984,6 +1013,78 @@
             "planned-not-cited": "Planificada en {{plannedCount}} paso(s) pero no citada — considera regenerar.",
             "cited-not-planned": "Citada en {{citedCount}} paso(s) sin estar en el plan (adaptación del modelo).",
             "never-cited": "Nunca citada — considera removerla del corpus si no aporta."
+        }
+    },
+    "canonical": {
+        "actions": {
+            "analyze": "Análisis canónico",
+            "analyzeTooltip": "Genera el análisis estructurado (study mode + composer académico)",
+            "analyzeRetry": "Reintentar análisis"
+        },
+        "toast": {
+            "analyzeFailed": "No se pudo generar el análisis canónico."
+        },
+        "view": {
+            "prose": "Vista de prosa",
+            "study": "Vista de estudio"
+        },
+        "study": {
+            "headerLabel": "Texto y traducción",
+            "initialTranslation": "Traducción inicial",
+            "finalTranslation": "Traducción final",
+            "argumentativeRole": "Rol argumentativo",
+            "argumentativeRoleHint": "Qué hace este verso en el flujo de la pericopa.",
+            "syntax": "Análisis sintáctico",
+            "syntaxHint": "Verbo principal, construcciones clave y partículas discursivas.",
+            "lexis": "Análisis léxico",
+            "lexisHint": "Rango semántico general vs. carga específica en el verso.",
+            "textualCriticism": "Crítica textual",
+            "textualCriticismHint": "Revisión obligatoria del aparato. Vacío con nota cuando no hay variantes.",
+            "historicalContext": "Trasfondo histórico-cultural",
+            "oldTestamentLinks": "Intertextualidad con el AT",
+            "commentators": "Diálogo con comentaristas",
+            "commentatorsHint": "Estrategia dialéctica: ancla + contraste + (técnica).",
+            "cruxes": "Decisiones de traducción",
+            "cruxesHint": "Cada decisión contestada con opciones, posiciones, y compromiso.",
+            "verseThesis": "Tesis del verso",
+            "verseThesisHint": "Qué establece este verso a partir del análisis.",
+            "theologicalHooks": "Loci teológicos",
+            "theologicalHooksHint": "Para composers no-académicos (sermón, devocional).",
+            "confidence": "Flags de confianza",
+            "confidenceHint": "Calibración del lenguaje hedge en la prosa final.",
+            "footnotes": "Notas al pie potenciales",
+            "footnotesHint": "El composer académico las renderiza como notas al pie reales.",
+            "empty": {
+                "greek": "Texto griego pendiente.",
+                "syntax": "Sin análisis sintáctico para este verso.",
+                "lexis": "Sin análisis léxicos para este verso.",
+                "commentators": "Sin engagement con comentaristas para este verso.",
+                "cruxes": "Sin decisiones contestadas en este verso."
+            }
+        },
+        "compose": {
+            "menuItem": "Componer paper académico",
+            "title": "Componer paper académico",
+            "subtitle": "Generamos prosa académica TMS desde los análisis canónicos aceptados de cada verso. La guía de estilo configurada se aplica obligatoriamente.",
+            "idleBody": "Los análisis canónicos de cada verso se transforman en un paper académico continuo: introducción + análisis verso por verso + conclusión + bibliografía. Las citas se aplican según la guía de estilo configurada.",
+            "cta": "Componer paper",
+            "cost": "Cada composición consume una llamada de Gemini Pro 2.5 con contexto extenso. La salida no se persiste automáticamente — copiá o descargá el markdown.",
+            "composingTitle": "Componiendo paper académico…",
+            "composingBody": "Esto puede tardar entre 30 y 120 segundos según la cantidad de versos y la densidad del análisis.",
+            "errorTitle": "No se pudo componer el paper",
+            "errorGeneric": "Error inesperado durante la composición.",
+            "retry": "Reintentar",
+            "viewRendered": "Renderizado",
+            "viewRaw": "Markdown",
+            "copy": "Copiar",
+            "copyFailed": "No se pudo copiar al portapapeles.",
+            "copied": "Markdown copiado al portapapeles.",
+            "download": "Descargar .md",
+            "recompose": "Recomponer",
+            "tokensUsed": "{{tokens}} tokens · modelo {{model}}",
+            "formatterApplied": "Guía de estilo aplicada (capa 1: prompt, capa 2: formatter determinístico).",
+            "formatterSkipped": "Sin manifest de guía de estilo extraído. Solo aplicada la capa 1 (prompt). Extrae el manifest desde la pestaña \"Guía de estilo\" para activar la capa 2.",
+            "formatterError": "Hubo un error aplicando el formatter determinístico. La composición LLM (capa 1) sigue válida."
         }
     },
     "detail": {

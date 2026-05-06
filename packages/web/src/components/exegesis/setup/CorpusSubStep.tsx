@@ -30,6 +30,7 @@ import {
     computeRoleCoverage,
     computeRoleExpectations,
     findMissingRoles,
+    suggestRoleForType,
     formatPassageReference,
     getBookById,
     isExcerptSetStale,
@@ -160,9 +161,25 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
             ) : (
                 <>
                     {(paper.exegeticalStrategy ?? 'free') === 'dialectical' && (
-                        <RoleCoverageCard paper={paper} />
+                        <RoleCoverageCard paper={paper} onPickRole={openDialogForRole} />
                     )}
-                    <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
+                    {/* Suppress the rubric-gap card for dialectical
+                        papers whose rubric has no per-type minimums
+                        (strategy-only preset). The RoleCoverageCard
+                        is the canonical compliance signal in that
+                        scenario; rendering RubricGapCard's "cumple la
+                        rúbrica" message on top would falsely declare
+                        success while the strategy still expects three
+                        roles covered. For free-mode papers OR
+                        rubrics that DO carry requirements, both cards
+                        coexist (rubric answers "which types matter",
+                        strategy answers "which roles are balanced"). */}
+                    {!(
+                        (paper.exegeticalStrategy ?? 'free') === 'dialectical'
+                        && (paper.rubric?.sourceRequirements?.length ?? 0) === 0
+                    ) && (
+                        <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
+                    )}
                     <CorpusSourcesList
                         paper={paper}
                         onAdd={() => openDialog(null)}
@@ -269,11 +286,15 @@ function CorpusSourcesList({
                             sourceCount={excerptedSources.length}
                         />
                     )}
-                    <ul className="space-y-2">
-                        {sorted.map(source => (
-                            <SourceRow key={source.id} paper={paper} source={source} />
-                        ))}
-                    </ul>
+                    {strategy === 'dialectical' ? (
+                        <GroupedByRoleList paper={paper} sources={sorted} onPickRole={onPickRole} />
+                    ) : (
+                        <ul className="space-y-2">
+                            {sorted.map(source => (
+                                <SourceRow key={source.id} paper={paper} source={source} />
+                            ))}
+                        </ul>
+                    )}
                 </>
             )}
         </section>
@@ -289,6 +310,115 @@ function CorpusSourcesList({
  * vs runtime RAG (NotebookLM) where the user never sees what the
  * model is actually consuming.
  */
+
+/**
+ * Source list grouped into anchor / contrast / technical / sin rol
+ * sections, used in dialectical mode so the student can see at a
+ * glance how each upload maps to the strategy. Sources whose
+ * `sourceType` doesn't suggest a role (style templates, "other")
+ * fall into the "sin rol" bucket so nothing disappears.
+ *
+ * Empty buckets render as a one-line "vacío" hint with an inline
+ * "Agregar X" button so the user can fill the gap from the same
+ * surface they're scanning. Mirrors the per-chip CTA on the role
+ * coverage card — same call to `openDialogForRole` upstream.
+ */
+function GroupedByRoleList({
+    paper,
+    sources,
+    onPickRole,
+}: {
+    paper: ExegeticalPaper;
+    sources: ReadonlyArray<ProjectSource>;
+    onPickRole: (role: SourceRole) => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const groups = useMemo(() => {
+        const buckets: Record<SourceRole | 'unrolled', ProjectSource[]> = {
+            anchor: [], contrast: [], technical: [], unrolled: [],
+        };
+        for (const s of sources) {
+            const role = suggestRoleForType(s.sourceType);
+            buckets[role ?? 'unrolled'].push(s);
+        }
+        return buckets;
+    }, [sources]);
+
+    const orderedRoles: ReadonlyArray<SourceRole> = ['anchor', 'contrast', 'technical'];
+
+    return (
+        <div className="space-y-4">
+            {orderedRoles.map(role => (
+                <RoleGroupSection
+                    key={role}
+                    role={role}
+                    paper={paper}
+                    sources={groups[role]}
+                    onAdd={() => onPickRole(role)}
+                />
+            ))}
+            {groups.unrolled.length > 0 && (
+                <section className="space-y-1.5">
+                    <h4 className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+                        {t('paperSetup.subSteps.corpus.list.groupUnrolled', { count: groups.unrolled.length })}
+                    </h4>
+                    <ul className="space-y-2">
+                        {groups.unrolled.map(s => (
+                            <SourceRow key={s.id} paper={paper} source={s} />
+                        ))}
+                    </ul>
+                </section>
+            )}
+        </div>
+    );
+}
+
+function RoleGroupSection({
+    role,
+    paper,
+    sources,
+    onAdd,
+}: {
+    role: SourceRole;
+    paper: ExegeticalPaper;
+    sources: ReadonlyArray<ProjectSource>;
+    onAdd: () => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const empty = sources.length === 0;
+    return (
+        <section className="space-y-1.5">
+            <header className="flex items-center justify-between gap-2">
+                <h4 className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+                    {t(`paperSetup.subSteps.corpus.roleCoverage.role.${role}`)}
+                    <span className="ml-1.5 text-muted-foreground/70 normal-case tracking-normal font-normal">
+                        ({sources.length})
+                    </span>
+                </h4>
+                <button
+                    type="button"
+                    onClick={onAdd}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground rounded px-1.5 py-0.5 hover:bg-muted transition-colors"
+                >
+                    <Upload className="h-3 w-3" aria-hidden />
+                    {t(`paperSetup.subSteps.corpus.roleCoverage.addCta.${role}`)}
+                </button>
+            </header>
+            {empty ? (
+                <p className="text-[11.5px] italic text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+                    {t('paperSetup.subSteps.corpus.list.groupEmpty')}
+                </p>
+            ) : (
+                <ul className="space-y-2">
+                    {sources.map(s => (
+                        <SourceRow key={s.id} paper={paper} source={s} />
+                    ))}
+                </ul>
+            )}
+        </section>
+    );
+}
+
 function CuratedSummaryBanner({
     excerptCount,
     sourceCount,
@@ -364,7 +494,13 @@ function StrategyModeBadge({ strategy }: { strategy: 'free' | 'dialectical' }) {
  * SourceType pre-selected, so the student can fill the gap without
  * navigating menus.
  */
-function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
+function RoleCoverageCard({
+    paper,
+    onPickRole,
+}: {
+    paper: ExegeticalPaper;
+    onPickRole: (role: SourceRole) => void;
+}) {
     const { t } = useTranslation('exegesis');
     const coverage = useMemo(() => computeRoleCoverage(paper.sources), [paper.sources]);
     const rubricExpectations = useMemo(() => computeRoleExpectations(paper.rubric), [paper.rubric]);
@@ -374,36 +510,77 @@ function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
     // entry-point work in that state.
     if (coverage.total === 0) return null;
 
-    // Effective targets blend rubric (when present) with strategy
-    // suggestions (when rubric is silent). All chips green = paper
-    // satisfies whichever criterion is active per role.
-    const allGood =
+    // Three-tier compliance state, per the dialectical strategy's
+    // own logic (NOT the rubric's per-type minimums):
+    //   - 'missing'  → at least one role has zero sources. Treat as
+    //                  non-compliance — the strategy literally requires
+    //                  three roles to function (an "ancla + contraste
+    //                  + técnica" triangle); zero of any role breaks
+    //                  the method, regardless of how many sources the
+    //                  other roles carry.
+    //   - 'partial'  → every role has ≥1 source but at least one is
+    //                  below its target. Real progress, but the user
+    //                  can still go deeper. Soft warning tone.
+    //   - 'balanced' → every role meets its effective target.
+    //
+    // This replaces the previous binary (allGood vs not) which couldn't
+    // distinguish "5 anchors / 0 contrast / 0 technical" from "3/3/2"
+    // — the user pointed out both states currently rendered identically
+    // even though only one of them is a structural problem.
+    const missingRoles = (['anchor', 'contrast', 'technical'] as const).filter(r => coverage[r] === 0);
+    const allBalanced =
         coverage.anchor >= effectiveTargets.anchor &&
         coverage.contrast >= effectiveTargets.contrast &&
         coverage.technical >= effectiveTargets.technical;
+    const state: 'missing' | 'partial' | 'balanced' =
+        missingRoles.length > 0 ? 'missing' : (allBalanced ? 'balanced' : 'partial');
+
+    const containerTone =
+        state === 'balanced' ? 'border-success/30 bg-success-subtle/40'
+            : state === 'missing' ? 'border-warning/60 bg-warning-subtle/60'
+                : 'border-warning/40 bg-warning-subtle/40';
+    const iconTone =
+        state === 'balanced' ? 'text-success'
+            : 'text-warning-subtle-foreground';
+    const Icon = state === 'balanced' ? Sparkles : AlertTriangle;
+    const titleKey =
+        state === 'balanced' ? 'paperSetup.subSteps.corpus.roleCoverage.balancedTitle'
+            : state === 'missing' ? 'paperSetup.subSteps.corpus.roleCoverage.missingTitle'
+                : 'paperSetup.subSteps.corpus.roleCoverage.partialTitle';
+
+    // Per-role deficit list for the body. Names which roles are
+    // below target and by how much, so the user doesn't have to
+    // scan three chips to figure out where the gap is. Empty for
+    // the balanced state.
+    const deficits = (['anchor', 'contrast', 'technical'] as const)
+        .map(r => ({ role: r, gap: Math.max(0, effectiveTargets[r] - coverage[r]) }))
+        .filter(d => d.gap > 0);
+    const bodyText = (() => {
+        if (state === 'balanced') return null;
+        if (state === 'missing') return t('paperSetup.subSteps.corpus.roleCoverage.missingBody');
+        // Partial: enumerate the specific roles below target. The
+        // generic "suma fuentes en los roles que aún están bajo el
+        // target" copy was easy to misread when the actual gap was
+        // a single source on one role — the user mistook the chip
+        // for "close enough" instead of seeing it as a real miss.
+        const parts = deficits.map(d => t('paperSetup.subSteps.corpus.roleCoverage.partialDeficitItem', {
+            role: t(`paperSetup.subSteps.corpus.roleCoverage.role.${d.role}`).toLowerCase(),
+            gap: d.gap,
+        }));
+        const list = parts.join(t('paperSetup.subSteps.corpus.roleCoverage.partialDeficitJoiner'));
+        return t('paperSetup.subSteps.corpus.roleCoverage.partialBody', { gaps: list });
+    })();
 
     return (
-        <section
-            className={[
-                'rounded-xl border p-4 space-y-3',
-                allGood
-                    ? 'border-success/30 bg-success-subtle/40'
-                    : 'border-warning/40 bg-warning-subtle/40',
-            ].join(' ')}
-        >
+        <section className={`rounded-xl border p-4 space-y-3 ${containerTone}`}>
             <header className="flex items-start gap-2.5">
-                <Sparkles className={[
-                    'h-4 w-4 mt-0.5 shrink-0',
-                    allGood ? 'text-success' : 'text-warning-subtle-foreground',
-                ].join(' ')} aria-hidden />
+                <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${iconTone}`} aria-hidden />
                 <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground">
                         {t('paperSetup.subSteps.corpus.roleCoverage.eyebrow')}
                     </p>
                     <h3 className="text-sm font-semibold text-foreground mt-0.5">
-                        {allGood
-                            ? t('paperSetup.subSteps.corpus.roleCoverage.balancedTitle')
-                            : t('paperSetup.subSteps.corpus.roleCoverage.partialTitle')}
+                        {t(titleKey)}
                     </h3>
                 </div>
             </header>
@@ -414,24 +591,27 @@ function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
                     count={coverage.anchor}
                     target={effectiveTargets.anchor}
                     fromRubric={rubricExpectations.anchor > 0}
+                    onAdd={() => onPickRole('anchor')}
                 />
                 <RoleCountChip
                     role="contrast"
                     count={coverage.contrast}
                     target={effectiveTargets.contrast}
                     fromRubric={rubricExpectations.contrast > 0}
+                    onAdd={() => onPickRole('contrast')}
                 />
                 <RoleCountChip
                     role="technical"
                     count={coverage.technical}
                     target={effectiveTargets.technical}
                     fromRubric={rubricExpectations.technical > 0}
+                    onAdd={() => onPickRole('technical')}
                 />
             </div>
 
-            {!allGood && (
+            {bodyText && (
                 <p className="text-[11.5px] text-muted-foreground leading-snug">
-                    {t('paperSetup.subSteps.corpus.roleCoverage.partialBody')}
+                    {bodyText}
                 </p>
             )}
         </section>
@@ -443,6 +623,7 @@ function RoleCountChip({
     count,
     target,
     fromRubric,
+    onAdd,
 }: {
     role: SourceRole;
     count: number;
@@ -450,37 +631,86 @@ function RoleCountChip({
     target: number;
     /** True when the target came from the rubric (vs strategy fallback). */
     fromRubric: boolean;
+    /**
+     * Opens the add-source dialog with this role's library filter +
+     * typical SourceType pre-selected. The chip becomes the entry
+     * point per role once the user has at least one source — before
+     * this, the only role-aware entry point was the empty-state
+     * `RolePickerButton` in the hero, which disappeared after the
+     * first source was added (so dialectical-mode users couldn't
+     * easily route a new source to "contrast" or "technical" without
+     * navigating the full dialog).
+     */
+    onAdd: () => void;
 }) {
     const { t } = useTranslation('exegesis');
     const ok = count >= target;
+    const gap = Math.max(0, target - count);
     return (
         <div
             className={[
-                'rounded-lg border px-3 py-2',
+                'rounded-lg border px-3 py-2 flex flex-col',
                 ok ? 'border-success/30 bg-card' : 'border-warning/40 bg-card',
             ].join(' ')}
         >
             <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                 {t(`paperSetup.subSteps.corpus.roleCoverage.role.${role}`)}
             </p>
-            <p className={[
-                'text-lg font-semibold tabular-nums leading-tight',
-                ok ? 'text-success' : 'text-warning-subtle-foreground',
-            ].join(' ')}>
-                {count}
-                <span className="text-[11px] text-muted-foreground font-normal ml-1">
-                    / {target}
-                </span>
-            </p>
-            <p className="text-[10.5px] text-muted-foreground leading-tight mt-0.5">
+            <div className="flex items-center justify-between gap-2">
+                <p className={[
+                    'text-lg font-semibold tabular-nums leading-tight',
+                    ok ? 'text-success' : 'text-warning-subtle-foreground',
+                ].join(' ')}>
+                    {count}
+                    <span className="text-[11px] text-muted-foreground font-normal ml-1">
+                        / {target}
+                    </span>
+                </p>
+                {/* Explicit deficit badge so the gap doesn't hide
+                    behind subtle color shifts. The user reported
+                    that "3/4" reads as "good enough" without this
+                    cue — the warning border alone wasn't loud
+                    enough when the deficit was a single source. */}
+                {!ok && (
+                    <span className="inline-flex items-center rounded-full border border-warning/50 bg-warning-subtle px-1.5 py-0 text-[10px] font-semibold uppercase tracking-wide text-warning-subtle-foreground whitespace-nowrap">
+                        {t('paperSetup.subSteps.corpus.roleCoverage.deficitBadge', { gap })}
+                    </span>
+                )}
+            </div>
+            {/* Single-line hint. The previous "(estrategia)" /
+                "(rúbrica)" suffix wrapped on every chip and added
+                noise — the source of the target is already conveyed
+                by the section copy ("Si tu rúbrica especifica un
+                mínimo, ese gana; si no, mostramos la estrategia").
+                Hidden behind `title` so power users can still inspect
+                it on hover. */}
+            <p
+                className="text-[10.5px] text-muted-foreground leading-tight mt-0.5"
+                title={t(fromRubric
+                    ? 'paperSetup.subSteps.corpus.roleCoverage.targetSource.rubric'
+                    : 'paperSetup.subSteps.corpus.roleCoverage.targetSource.strategy') as string}
+            >
                 {t(`paperSetup.subSteps.corpus.roleCoverage.hint.${role}`)}
-                {' '}
-                <span className="text-[10px] italic">
-                    ({t(fromRubric
-                        ? 'paperSetup.subSteps.corpus.roleCoverage.targetSource.rubric'
-                        : 'paperSetup.subSteps.corpus.roleCoverage.targetSource.strategy')})
-                </span>
             </p>
+            {/* Per-chip CTA. Always visible (not just on misses) so
+                the user can add MORE for an already-satisfied role
+                without hunting for a generic button. Tone shifts:
+                primary tint on misses (the action you should take
+                next), muted on satisfied roles (still available, but
+                doesn't compete for attention). */}
+            <button
+                type="button"
+                onClick={onAdd}
+                className={[
+                    'mt-2 inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+                    ok
+                        ? 'border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        : 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15',
+                ].join(' ')}
+            >
+                <Upload className="h-3 w-3" aria-hidden />
+                {t(`paperSetup.subSteps.corpus.roleCoverage.addCta.${role}`)}
+            </button>
         </div>
     );
 }

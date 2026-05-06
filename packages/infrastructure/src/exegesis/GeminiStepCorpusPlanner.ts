@@ -107,13 +107,23 @@ ESTRATEGIA DIALÉCTICA (este es el corazón de la tarea):
 
 REGLAS DE COBERTURA:
 - CADA paso debe tener al menos un ANCLA. Si dudas qué usar, el comentario expositivo más general es válido siempre.
-- CADA fuente del corpus debe aparecer al menos UNA VEZ en algún paso (ancla, contraste o técnica), salvo que sea genuinamente irrelevante para el pasaje completo. Si no tiene casa obvia, llévala a Conclusión.
-- Total objetivo por paso: 2-3 fuentes (ancla + contraste, +técnica si aplica). 4 es máximo absoluto. Más es ruido.
+- La cobertura del corpus aplica **solo a los pasos de tipo VERSO**: cada fuente del corpus debe aparecer al menos UNA VEZ en algún verso (ancla, contraste o técnica), salvo que sea genuinamente irrelevante para todo el pasaje.
+- **Introducción y Conclusión NO son receptáculos para fuentes sobrantes.** Si una fuente no encuentra casa en ningún verso, déjala sin pinear — el orquestrador puede usarla en modo flexible y el alumno puede pinearla manualmente. Mejor una fuente sin asignar que saturar intro/conclusión.
+
+ASIMETRÍA POR TIPO DE PASO (importantísimo — el método dialéctico no se aplica con la misma intensidad en cada paso):
+
+- **Versos** (\`verse\`) — el corazón dialéctico. Aquí se ejerce el método con plenitud: 2-3 fuentes (ANCLA + CONTRASTE, +TÉCNICA si el verso pide una decisión léxico-sintáctica concreta). 4 es máximo absoluto.
+
+- **Introducción** (\`introduction\`) — la voz del autor lidera. **POR DEFECTO: 1 SOLA FUENTE** — una ANCLA contextual (trasfondo histórico, diccionario teológico, o monografía relevante que enmarque el pasaje completo). Solo agrega un CONTRASTE si existe una voz crítica que reformule el marco interpretativo del pasaje entero (no para "agregar contraste por agregarlo"). **NUNCA TÉCNICA**. **MÁXIMO ABSOLUTO 2 fuentes**, y solo con justificación quirúrgica para el contraste.
+
+- **Conclusión** (\`conclusion\`) — síntesis del autor. **POR DEFECTO: 1 SOLA FUENTE** — típicamente UNA monografía teológica o comentario expositivo como ANCLA integradora. Solo agrega CONTRASTE si una alternativa interpretativa específica DEBE quedar resuelta en el cierre del paper. **NUNCA TÉCNICA ni voces críticas nuevas**. **MÁXIMO ABSOLUTO 2 fuentes**, y solo con justificación quirúrgica.
+
+Repaso mental antes de proponer intro/conclusión: "¿este contraste resuelve algo específico del marco/cierre del paper, o lo estoy metiendo solo porque sobró una fuente?". Si es lo segundo, asígnala 1 sola y déjala.
 
 CRITERIOS POR TIPO (orientación, no obligación):
 - Comentarios críticos (WBC, NIGTC, Hermeneia, ICC, Anchor): excelente como contraste a un ancla expositiva, o como ancla en versos densos.
 - Comentarios expositivos (NICNT, BECNT, Pillar, Tyndale): el ancla por defecto en la mayoría de versos.
-- Léxicos / gramáticas / aparato crítico: rol técnico exclusivamente.
+- Léxicos / gramáticas / aparato crítico: rol técnico exclusivamente, **solo en versos**.
 - Trasfondo histórico, diccionarios teológicos: típicamente ancla o contraste de introducción y versos con tema doctrinal.
 - Monografías teológicas: ancla o contraste en conclusión y versos clave.
 
@@ -132,13 +142,23 @@ DIALECTICAL STRATEGY (this is the heart of the task):
 
 COVERAGE RULES:
 - EVERY step must have at least an ANCHOR. If unsure, the most general expository commentary is always valid.
-- EVERY source in the corpus must appear at least ONCE somewhere (as anchor, contrast, or technical), unless genuinely irrelevant to the entire passage. If no obvious home, send it to Conclusion.
-- Per-step target: 2-3 sources (anchor + contrast, + technical if applicable). 4 is the absolute ceiling. More is noise.
+- Corpus coverage applies **only to VERSE steps**: every corpus source should appear at least ONCE in some verse (as anchor, contrast, or technical), unless genuinely irrelevant to the whole passage.
+- **Introduction and Conclusion are NOT dumping grounds for leftover sources.** If a source finds no home in any verse, leave it unpinned — the orchestrator can still surface it in flexible mode and the student can pin it manually. Better an unpinned source than over-sourced intro/conclusion.
+
+ASYMMETRY BY STEP TYPE (critical — the dialectical method does NOT apply with equal intensity at every step):
+
+- **Verses** (\`verse\`) — the dialectical heart. Here the method is fully exercised: 2-3 sources (ANCHOR + CONTRAST, + TECHNICAL when the verse calls for a concrete lexical/syntactic decision). 4 is the absolute ceiling.
+
+- **Introduction** (\`introduction\`) — the author's voice leads. **DEFAULT: 1 SINGLE SOURCE** — a contextual ANCHOR (historical background, theological dictionary, or relevant monograph that frames the passage as a whole). Only add a CONTRAST if a critical voice reframes the passage's interpretive frame (NOT to "add contrast for the sake of it"). **NEVER TECHNICAL**. **HARD CAP 2 sources**, and only with surgical justification for the contrast.
+
+- **Conclusion** (\`conclusion\`) — the author's synthesis. **DEFAULT: 1 SINGLE SOURCE** — typically ONE theological monograph or expository commentary as integrative ANCHOR. Only add CONTRAST if a specific interpretive alternative MUST be resolved in the paper's closing. **NEVER TECHNICAL nor new critical voices**. **HARD CAP 2 sources**, and only with surgical justification.
+
+Mental check before proposing intro/conclusion: "does this contrast resolve something specific about the paper's framing/closing, or am I just placing a leftover source?". If the latter, assign 1 source and leave the rest.
 
 TYPE CRITERIA (guidance, not obligation):
 - Critical commentaries (WBC, NIGTC, Hermeneia, ICC, Anchor): excellent as contrast to an expository anchor, or as anchor on dense verses.
 - Expository commentaries (NICNT, BECNT, Pillar, Tyndale): the default anchor on most verses.
-- Lexicons / grammars / critical apparatus: technical role exclusively.
+- Lexicons / grammars / critical apparatus: technical role exclusively, **verses only**.
 - Historical background, theological dictionaries: usually anchor or contrast in introduction and theme-heavy verses.
 - Theological monographs: anchor or contrast in conclusion and key verses.
 

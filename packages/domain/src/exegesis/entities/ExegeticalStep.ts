@@ -1,4 +1,5 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
+import type { CanonicalVerseAnalysis } from './CanonicalVerseAnalysis';
 
 /**
  * One unit of work in the exegesis wizard.
@@ -133,6 +134,26 @@ export interface ExegeticalStepVersion {
 
     /** Tokens consumed by the LLM for this generation. Null for edits. */
     tokensUsed: number | null;
+
+    /**
+     * Canonical structured analysis of the verse, populated when the
+     * version was produced by `AnalyzeVerseUseCase` (the new
+     * analysis-stage pipeline). Null for:
+     *   - non-verse versions (introduction, conclusion, assembly)
+     *   - legacy verse versions produced by the markdown-only
+     *     `GenerateStepUseCase` before the architectural pivot
+     *   - manual `edited` versions (the user edited the rendered
+     *     markdown without touching the structured analysis)
+     *
+     * When present, downstream composers (academic, sermon, devotional)
+     * read from this field to produce format-specific markdown — the
+     * `markdown` field becomes a snapshot of one such composition.
+     *
+     * Persisted as a serialized object on Firestore. Forward-compatible
+     * with legacy versions: omitting the field preserves prior
+     * behavior.
+     */
+    canonicalAnalysis?: CanonicalVerseAnalysis | null;
 }
 
 /**

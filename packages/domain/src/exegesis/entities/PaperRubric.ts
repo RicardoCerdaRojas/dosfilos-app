@@ -167,8 +167,21 @@ export interface StructuralExpectation {
      * still allowed but de-emphasized.
      */
     emphasizedTypes: ReadonlyArray<SourceType>;
-    /** Pedagogical rationale shown in the plan UI. */
+    /**
+     * Pedagogical rationale shown in the plan UI. Kept as a plain
+     * string for back-compat with rubrics extracted from a user
+     * upload (where the LLM produces a free-form justification we
+     * can't translate). System-default rubrics ALSO populate
+     * `justificationKey` so the UI can render a localized version.
+     */
     justification: string;
+    /**
+     * Optional i18n key. When present, the UI prefers
+     * `t(justificationKey)` over the literal `justification` so
+     * system-default rubrics render in the user's display language.
+     * Absent for user-extracted rubrics (no key to look up).
+     */
+    justificationKey?: string;
 }
 
 /**
@@ -258,6 +271,7 @@ export const DEFAULT_TMS_EXEGETICAL_RUBRIC: PaperRubric = {
             emphasizedTypes: ['historical-background', 'theological-monograph', 'commentary-expository'],
             justification:
                 'The introduction frames the passage and presents the thesis — historical context and theological positioning carry it; technical lexical/syntactic analysis belongs in the body.',
+            justificationKey: 'paperSetup.subSteps.plan.rubricJustification.introduction',
         },
         {
             section: 'verse',
@@ -271,12 +285,14 @@ export const DEFAULT_TMS_EXEGETICAL_RUBRIC: PaperRubric = {
             ],
             justification:
                 'Verse-by-verse work is where text-critical, lexical, and syntactic decisions live. Critical commentaries lead the discussion; expository commentaries play a supporting role.',
+            justificationKey: 'paperSetup.subSteps.plan.rubricJustification.verse',
         },
         {
             section: 'conclusion',
             emphasizedTypes: ['commentary-critical', 'commentary-expository', 'theological-monograph'],
             justification:
                 'The conclusion synthesizes the verse-level findings into a coherent theological reading — commentaries and monographs provide the integrative voice; lexicons step back.',
+            justificationKey: 'paperSetup.subSteps.plan.rubricJustification.conclusion',
         },
     ],
     sourceCorpusId: null,
@@ -316,6 +332,18 @@ export function buildDefaultRubric(): PaperRubric {
  * preset doesn't lose all guidance: it transfers it from rubric to
  * strategy.
  */
+/**
+ * Sentinel id used by the create + apply flows to request the
+ * strategy-only preset instead of a real `UserRubric` template id.
+ * Distinct from any real Firestore id because it begins with `__`,
+ * which the create/apply use cases never persist.
+ *
+ * Lives in the domain so both `CreateExegeticalPaperUseCase` and
+ * `ApplyStrategyOnlyRubricToPaperUseCase` can share the constant
+ * without one importing the other.
+ */
+export const STRATEGY_ONLY_RUBRIC_PRESET_ID = '__strategy-only';
+
 export function buildStrategyOnlyRubric(): PaperRubric {
     const now = new Date();
     return {
