@@ -305,6 +305,39 @@ export function buildDefaultRubric(): PaperRubric {
 }
 
 /**
+ * Builds a "strategy-only" rubric: zero per-type minimums, kept
+ * structural expectations from the default. Use when the student
+ * wants to lean on the dialectical strategy as their sole guidance
+ * without the seminary-rigor type counts.
+ *
+ * The role-coverage card falls back to the strategy's typical
+ * counts (4 anchors, 4 contrasts, 3 technicals) when the rubric has
+ * no per-role minimum — see `computeEffectiveRoleTargets`. So this
+ * preset doesn't lose all guidance: it transfers it from rubric to
+ * strategy.
+ */
+export function buildStrategyOnlyRubric(): PaperRubric {
+    const now = new Date();
+    return {
+        provenance: 'system-default',
+        description:
+            'Sin minimums por tipo. La estrategia dialéctica (anclas + contrastes + técnicas) actúa como guía única; el alumno arma el corpus por rol según el método.',
+        expectedLength: { unit: 'pages', min: 10, max: 25 },
+        citationStandard: null,
+        sourceRequirements: [],
+        // Keep the structural expectations from the default — they're
+        // useful guidance for the planner regardless of whether the
+        // rubric specifies per-type minimums.
+        structuralExpectations: DEFAULT_TMS_EXEGETICAL_RUBRIC.structuralExpectations,
+        sourceCorpusId: null,
+        sourcePastedText: null,
+        sourceTemplateId: null,
+        createdAt: now,
+        updatedAt: now,
+    };
+}
+
+/**
  * Compliance result of checking a corpus (a list of `ProjectSource`
  * sourceTypes) against a rubric. The setup UI renders this as the gap
  * widget and gates the "Continue to plan" button.

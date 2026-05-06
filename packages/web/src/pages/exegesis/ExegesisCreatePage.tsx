@@ -201,6 +201,7 @@ export function ExegesisCreatePage() {
                                 </optgroup>
                             )}
                             <option value="__none">{t('create.rubric.noTemplate')}</option>
+                            <option value="__strategy-only">{t('create.rubric.strategyOnly')}</option>
                         </select>
                         <p className="text-[11px] text-muted-foreground italic">
                             {t('create.rubric.hint')}

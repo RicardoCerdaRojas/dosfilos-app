@@ -1,10 +1,18 @@
-import type {
-    CreateExegeticalPaperInput,
-    ExegeticalPaper,
-    IExegeticalPaperRepository,
-    IUserRubricRepository,
-    PaperRubric,
+import {
+    buildStrategyOnlyRubric,
+    type CreateExegeticalPaperInput,
+    type ExegeticalPaper,
+    type IExegeticalPaperRepository,
+    type IUserRubricRepository,
+    type PaperRubric,
 } from '@dosfilos/domain';
+
+/**
+ * Sentinel passed via `rubricTemplateId` from the create UI to
+ * request the strategy-only system preset. Distinct from a real
+ * template id so the use case can branch without a separate flag.
+ */
+export const STRATEGY_ONLY_RUBRIC_PRESET_ID = '__strategy-only';
 
 /**
  * Creates a new exegetical paper in 'configuring' phase.
@@ -73,6 +81,18 @@ export class CreateExegeticalPaperUseCase {
             sources: [],
         });
 
+        // Strategy-only preset short-circuits template resolution.
+        // The repo seeded `buildDefaultRubric()` (TMS rigorous); we
+        // overwrite with `buildStrategyOnlyRubric()` so the role-
+        // coverage card falls back to the strategy's typical counts.
+        if (input.rubricTemplateId === STRATEGY_ONLY_RUBRIC_PRESET_ID) {
+            return this.paperRepository.setRubric(
+                input.ownerId,
+                created.id,
+                buildStrategyOnlyRubric(),
+            );
+        }
+
         // Resolve and apply rubric template if needed. The repo
         // already seeded `paper.rubric` with the system default, so
         // this only OVERRIDES when a template is explicitly chosen
@@ -103,6 +123,10 @@ export class CreateExegeticalPaperUseCase {
         input: CreateExegeticalPaperInput,
     ): Promise<{ rubric: PaperRubric; templateId: string } | null> {
         if (!this.userRubricRepository) return null;
+
+        // Strategy-only is handled by the caller before this method
+        // — it's not a real template.
+        if (input.rubricTemplateId === STRATEGY_ONLY_RUBRIC_PRESET_ID) return null;
 
         // Explicit template wins.
         if (input.rubricTemplateId) {

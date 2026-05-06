@@ -349,7 +349,8 @@
             "useDefaultNone": "Use the academic TMS default (no saved templates)",
             "savedTemplates": "Your saved templates",
             "noTemplate": "No template — start with the academic TMS default",
-            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\")."
+            "strategyOnly": "Strategy only — no per-type minimums",
+            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\"). \"Strategy only\" leaves all guidance to the dialectical method — useful when your professor only asks for quantity or doesn't specify types."
         },
         "brief": {
             "title": "Paper framing",

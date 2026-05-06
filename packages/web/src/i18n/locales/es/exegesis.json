@@ -349,7 +349,8 @@
             "useDefaultNone": "Usar el default académico TMS (sin plantilla guardada)",
             "savedTemplates": "Tus plantillas guardadas",
             "noTemplate": "Sin plantilla — empezar con el default académico TMS",
-            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\")."
+            "strategyOnly": "Solo estrategia dialéctica — sin minimums por tipo",
+            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\"). \"Solo estrategia\" deja la guía 100% en manos del método dialéctico — útil si tu profe solo pide cantidad o no especifica tipos."
         },
         "brief": {
             "title": "Encuadre del trabajo",
