@@ -44,7 +44,11 @@ export class GeminiStepCorpusPlanner implements IStepCorpusPlanner {
             systemInstruction,
             generationConfig: {
                 responseMimeType: 'application/json',
-                temperature: 0.2,
+                // Bumped from 0.2 → 0.4 so the model commits to assignments
+                // instead of hedging when a verse is between two plausible
+                // sources. Still well below the "creative" range, so output
+                // stays comparable across regenerations.
+                temperature: 0.4,
                 topP: 0.9,
                 maxOutputTokens: 8192,
             },
@@ -86,30 +90,38 @@ function buildPlannerPrompt(input: ProposeStepCorpusInput): {
 
 Tu tarea: dada la lista de fuentes que el estudiante ya tiene en su corpus y la lista de pasos del paper (introducción, versículos individuales, conclusión), proponer qué fuentes "pinear" (priorizar) para cada paso.
 
-Criterios académicos:
+REGLAS DE COBERTURA (críticas):
+1. CADA paso DEBE tener al menos 1 fuente asignada. Sin excepciones. Un comentario expositivo siempre cubre cada versículo del libro — si dudas, asígnalo como mínima cobertura.
+2. CADA fuente del corpus DEBE aparecer al menos UNA VEZ en alguna asignación, salvo que sea genuinamente irrelevante para el pasaje completo (caso raro — el estudiante ya curó su corpus para este paper). Si una fuente queda sin un lugar obvio, asígnala al paso de Conclusión o al versículo más temáticamente cercano.
+
+Criterios académicos para repartir:
 - Comentarios críticos (WBC, NIGTC, Hermeneia) van bien en versículos densos donde la exégesis técnica importa.
-- Comentarios expositivos (NICNT, BECNT, Pillar) son útiles transversalmente y para conclusión.
+- Comentarios expositivos (NICNT, BECNT, Pillar) son útiles transversalmente — úsalos para garantizar la cobertura mínima de cada versículo.
 - Léxicos y gramáticas se pinean a versículos donde una decisión léxico-sintáctica concreta carga el argumento.
 - Trasfondo histórico es útil en introducción y versículos donde se referencia contexto.
 - Monografías teológicas suelen ir en conclusión (síntesis) o en versículos clave.
 - Fuentes primarias antiguas (Filón, Josefo) se pinean cuando el versículo dialoga con esa tradición.
 
-NO pineess más de 3-4 fuentes por paso (saturas el contexto). Si una fuente no tiene un lugar natural, déjala sin pinear (la generación todavía la verá como secundaria).
+LÍMITE: no pineess más de 4 fuentes por paso (saturas el contexto). Prefiere 2-3.
 
 Justifica cada asignación con UNA oración breve en español, concreta y académica (no "es útil", sino "establece la conexión sintáctica con Hebreos 7:25").`
         : `You are an expert biblical exegesis professor advising a seminary student on how to distribute their bibliography across an exegetical paper.
 
 Task: given the list of sources the student already has in their corpus and the list of paper steps (introduction, individual verses, conclusion), propose which sources to "pin" (prioritize) for each step.
 
-Academic criteria:
+COVERAGE RULES (critical):
+1. EVERY step MUST have at least 1 source assigned. No exceptions. An expository commentary always covers every verse of the book — if unsure, assign it as minimal coverage.
+2. EVERY source in the corpus MUST appear at least ONCE somewhere, unless it's genuinely irrelevant to the entire passage (rare — the student already curated their corpus for this paper). If a source has no obvious home, assign it to the Conclusion step or the verse it's most thematically related to.
+
+Academic criteria for distribution:
 - Critical commentaries (WBC, NIGTC, Hermeneia) belong on dense verses where technical exegesis matters.
-- Expository commentaries (NICNT, BECNT, Pillar) are useful across the board and in conclusion.
+- Expository commentaries (NICNT, BECNT, Pillar) are useful across the board — use them to guarantee minimum coverage on every verse.
 - Lexicons and grammars get pinned to verses where a concrete lexical-syntactic decision carries the argument.
 - Historical background fits introduction and verses that reference context.
 - Theological monographs usually go in conclusion (synthesis) or key verses.
 - Primary ancient sources (Philo, Josephus) get pinned when the verse engages that tradition.
 
-Do NOT pin more than 3-4 sources per step (context bloat). If a source has no natural home, leave it unpinned (generation still sees it as secondary).
+LIMIT: do NOT pin more than 4 sources per step (context bloat). Prefer 2-3.
 
 Justify each allocation in ONE short sentence — concrete and academic (not "useful here," but "establishes the syntactic link to Hebrews 7:25").`;
 
@@ -148,12 +160,14 @@ Justify each allocation in ONE short sentence — concrete and academic (not "us
         ? `Restricciones:
 - Usa SOLO los ids exactos listados arriba (no inventes nuevos).
 - Usa SOLO ids de pasos listados arriba.
-- Si un paso no tiene asignaciones útiles, omítelo del objeto.
+- TODOS los pasos deben aparecer en "allocations" con al menos 1 fuente. No omitas pasos.
+- TODAS las fuentes deben aparecer al menos una vez en algún paso, salvo que sean claramente irrelevantes para el pasaje completo.
 - Máximo 4 fuentes por paso.`
         : `Constraints:
 - Use ONLY the exact ids listed above (don't invent new ones).
 - Use ONLY step ids listed above.
-- If a step has no useful allocations, omit it from the object.
+- ALL steps must appear in "allocations" with at least 1 source. Do not omit steps.
+- ALL sources must appear at least once in some step, unless clearly irrelevant to the whole passage.
 - Max 4 sources per step.`;
 
     const userMessage = [

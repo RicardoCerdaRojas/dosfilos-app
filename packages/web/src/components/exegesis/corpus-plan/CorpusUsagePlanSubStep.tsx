@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Sparkles, AlertTriangle, Loader2, RefreshCw, Lightbulb } from 'lucide-react';
+import { Sparkles, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 import {
@@ -176,6 +176,8 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
                                 </Button>
                             </div>
 
+                            <CoveragePanel paper={paper} plannableSteps={plannableSteps} />
+
                             <div className="rounded-lg border border-border bg-card overflow-hidden">
                                 <table className="w-full text-sm">
                                     <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -210,6 +212,93 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────
+
+/**
+ * Aggregates pinned-source usage across every step in the plan and
+ * surfaces two numbers: how many sources got at least one assignment,
+ * and how many were left out. Unused sources show as removable chips
+ * the user can click to act on (today: highlights they need manual
+ * placement; future: opens a quick-pin popover).
+ *
+ * Two visual states:
+ *   - All sources used → green "todo asignado" pill, no chips.
+ *   - Some unused      → amber callout listing them so the user can
+ *                        decide whether to manually pin or accept.
+ */
+function CoveragePanel({
+    paper,
+    plannableSteps,
+}: {
+    paper: ExegeticalPaper;
+    plannableSteps: ReadonlyArray<ExegeticalStep>;
+}) {
+    const { t } = useTranslation('exegesis');
+
+    const { totalSources, usedCount, unusedSources } = useMemo(() => {
+        const usage = new Set<string>();
+        for (const step of plannableSteps) {
+            const entry = paper.stepPlan.perStep[step.id];
+            if (!entry?.pinnedSources) continue;
+            for (const id of entry.pinnedSources) usage.add(id);
+        }
+        const unused = paper.sources.filter(s => !usage.has(s.id));
+        return {
+            totalSources: paper.sources.length,
+            usedCount: paper.sources.length - unused.length,
+            unusedSources: unused,
+        };
+    }, [paper.stepPlan.perStep, paper.sources, plannableSteps]);
+
+    if (totalSources === 0) return null;
+
+    const allCovered = unusedSources.length === 0;
+
+    return (
+        <div
+            className={[
+                'rounded-lg border px-3 py-2.5 flex items-start gap-2.5',
+                allCovered
+                    ? 'border-success/30 bg-success-subtle/40'
+                    : 'border-warning/30 bg-warning-subtle/40',
+            ].join(' ')}
+        >
+            {allCovered
+                ? <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" aria-hidden />
+                : <AlertTriangle className="h-4 w-4 text-warning-subtle-foreground mt-0.5 shrink-0" aria-hidden />}
+            <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] font-semibold text-foreground">
+                    {allCovered
+                        ? t('paperSetup.subSteps.corpus-plan.coverage.allCovered', { count: totalSources })
+                        : t('paperSetup.subSteps.corpus-plan.coverage.partial', {
+                            used: usedCount,
+                            total: totalSources,
+                            unused: unusedSources.length,
+                        })}
+                </p>
+                {!allCovered && (
+                    <>
+                        <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                            {t('paperSetup.subSteps.corpus-plan.coverage.partialBody')}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                            {unusedSources.map(s => (
+                                <span
+                                    key={s.id}
+                                    className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-card px-2 py-0.5 text-[11px] text-foreground"
+                                    title={s.displayLabel}
+                                >
+                                    {s.displayLabel.length > 40
+                                        ? `${s.displayLabel.slice(0, 38)}…`
+                                        : s.displayLabel}
+                                </span>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
 
 function PlanRow({
     step,

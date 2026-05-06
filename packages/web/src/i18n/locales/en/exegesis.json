@@ -771,6 +771,12 @@
                 "staleRegenerate": "Regenerate",
                 "colStep": "Step",
                 "colPinned": "Pinned sources",
+                "coverage": {
+                    "allCovered_one": "✓ The source is assigned to at least one step",
+                    "allCovered_other": "✓ All {{count}} sources are assigned to at least one step",
+                    "partial": "{{used}} of {{total}} sources assigned · {{unused}} unused",
+                    "partialBody": "These sources were left out of the automatic plan. Pin them by hand if you want them used in some step, or leave them — generation will still see them as secondary."
+                },
                 "kind": {
                     "introduction": "Introduction",
                     "verse": "Verse",

@@ -771,6 +771,12 @@
                 "staleRegenerate": "Regenerar",
                 "colStep": "Paso",
                 "colPinned": "Fuentes priorizadas",
+                "coverage": {
+                    "allCovered_one": "✓ La fuente está asignada a algún paso",
+                    "allCovered_other": "✓ Las {{count}} fuentes están asignadas a algún paso",
+                    "partial": "{{used}} de {{total}} fuentes asignadas · {{unused}} sin uso",
+                    "partialBody": "Estas fuentes quedaron fuera del plan automático. Asígnalas a mano si las quieres usar en algún paso, o déjalas — la generación las verá igual como secundarias."
+                },
                 "kind": {
                     "introduction": "Introducción",
                     "verse": "Verso",
