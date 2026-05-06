@@ -122,7 +122,10 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                         {t('paperSetup.subSteps.corpus.description')}
                     </p>
                 </div>
-                <PageBalanceHint />
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <StrategyModeBadge strategy={paper.exegeticalStrategy ?? 'free'} />
+                    <PageBalanceHint />
+                </div>
             </header>
 
             {paper.rubric && <RubricRigorIndicator rubric={paper.rubric} />}
@@ -138,7 +141,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </>
             ) : (
                 <>
-                    {paper.exegeticalStrategy === 'dialectical' && (
+                    {(paper.exegeticalStrategy ?? 'free') === 'dialectical' && (
                         <RoleCoverageCard paper={paper} />
                     )}
                     <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
@@ -179,6 +182,7 @@ function CorpusSourcesList({
 }) {
     const { t } = useTranslation('exegesis');
     const library = useLibrary();
+    const strategy = paper.exegeticalStrategy ?? 'free';
     const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
     // When the user has a stocked library AND no sources on this paper,
     // the curated-extraction path is the differentiator we want them to
@@ -224,6 +228,7 @@ function CorpusSourcesList({
                 showExtractHero ? (
                     <ExtractHeroCard
                         libraryCount={library.resources.length}
+                        strategy={strategy}
                         onExtract={onExtract}
                         onAdd={onAdd}
                     />
@@ -290,6 +295,37 @@ function CuratedSummaryBanner({
  * extract hero because new users haven't paid the cost of building
  * a library and we don't want to gatekeep them.
  */
+/**
+ * Compact pill that tells the user which methodology mode the paper
+ * is in. Renders next to the page-balance hint at the top of the
+ * corpus tab so the framing is visible from the entry point.
+ *
+ * Read-only for now — switching modes from here is a follow-up that
+ * needs a backend mutation (`updatePaperStrategy`). The pill exists
+ * primarily to make the chosen mode legible: students see "Modo:
+ * Estrategia exegética" and understand WHY they're seeing the
+ * role-coverage card; or "Modo: Libre" and understand WHY they're
+ * not.
+ */
+function StrategyModeBadge({ strategy }: { strategy: 'free' | 'dialectical' }) {
+    const { t } = useTranslation('exegesis');
+    const dialectical = strategy === 'dialectical';
+    return (
+        <span
+            className={[
+                'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide whitespace-nowrap',
+                dialectical
+                    ? 'border-success/40 bg-success-subtle text-success-subtle-foreground'
+                    : 'border-border bg-muted text-muted-foreground',
+            ].join(' ')}
+            title={t(`paperSetup.subSteps.corpus.strategyBadge.tooltip.${strategy}`)}
+        >
+            <Sparkles className="h-2.5 w-2.5" aria-hidden />
+            {t(`paperSetup.subSteps.corpus.strategyBadge.${strategy}`)}
+        </span>
+    );
+}
+
 /**
  * Dialectical-strategy coverage card. Counts the corpus by suggested
  * role (anchor/contrast/technical) and surfaces "te falta X" nudges
@@ -414,14 +450,29 @@ function EmptySourcesState({ onAdd }: { onAdd: () => void }) {
  */
 function ExtractHeroCard({
     libraryCount,
+    strategy,
     onExtract,
     onAdd,
 }: {
     libraryCount: number;
+    strategy: 'free' | 'dialectical';
     onExtract: () => void;
     onAdd: () => void;
 }) {
     const { t } = useTranslation('exegesis');
+    // Per-mode copy: dialectical mode reframes the entry-point as
+    // "start with the ANCHOR" so the strategy is explicit from the
+    // first decision the student makes. Free mode keeps the generic
+    // curated-vs-runtime-RAG pitch.
+    const eyebrowKey = strategy === 'dialectical'
+        ? 'paperSetup.subSteps.corpus.hero.dialecticalEyebrow'
+        : 'paperSetup.subSteps.corpus.hero.eyebrow';
+    const titleKey = strategy === 'dialectical'
+        ? 'paperSetup.subSteps.corpus.hero.dialecticalTitle'
+        : 'paperSetup.subSteps.corpus.hero.title';
+    const bodyKey = strategy === 'dialectical'
+        ? 'paperSetup.subSteps.corpus.hero.dialecticalBody'
+        : 'paperSetup.subSteps.corpus.hero.body';
     return (
         <div className="rounded-xl border border-success/30 bg-success-subtle/40 p-5 space-y-4">
             <div className="flex items-start gap-3">
@@ -430,13 +481,13 @@ function ExtractHeroCard({
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-success font-semibold">
-                        {t('paperSetup.subSteps.corpus.hero.eyebrow')}
+                        {t(eyebrowKey)}
                     </p>
                     <h4 className="text-base font-semibold text-foreground mt-0.5">
-                        {t('paperSetup.subSteps.corpus.hero.title', { count: libraryCount })}
+                        {t(titleKey, { count: libraryCount })}
                     </h4>
                     <p className="text-[12.5px] text-foreground/80 leading-relaxed mt-1.5">
-                        {t('paperSetup.subSteps.corpus.hero.body')}
+                        {t(bodyKey)}
                     </p>
                 </div>
             </div>
