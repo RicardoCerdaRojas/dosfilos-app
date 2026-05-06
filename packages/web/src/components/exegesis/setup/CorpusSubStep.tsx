@@ -129,19 +129,14 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
 
     return (
         <div className="space-y-6">
-            <header className="flex items-start gap-3">
-                <FileStack className="h-5 w-5 text-success mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-semibold text-foreground">
-                        {t('paperSetup.subSteps.corpus.heading')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {t('paperSetup.subSteps.corpus.description')}
-                    </p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <StrategyModeBadge strategy={paper.exegeticalStrategy ?? 'free'} />
+            <header className="flex items-center gap-3">
+                <FileStack className="h-5 w-5 text-success shrink-0" />
+                <h2 className="text-lg font-semibold text-foreground flex-1 min-w-0">
+                    {t('paperSetup.subSteps.corpus.heading')}
+                </h2>
+                <div className="flex items-center gap-2 shrink-0">
                     <PageBalanceHint />
+                    <StrategyModeBadge strategy={paper.exegeticalStrategy ?? 'free'} />
                 </div>
             </header>
 
@@ -220,11 +215,14 @@ function CorpusSourcesList({
 
     return (
         <section className="space-y-2">
-            <header className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-foreground">
-                    {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
-                </h3>
-                {!showExtractHero && (
+            {/* Header only when there are sources to label. The empty
+                state's hero card is doing the entry-point work and
+                the "(0)" header was just noise on first paint. */}
+            {sorted.length > 0 && (
+                <header className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">
+                        {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
+                    </h3>
                     <div className="flex items-center gap-1.5">
                         <Button
                             type="button"
@@ -244,8 +242,8 @@ function CorpusSourcesList({
                             {t('paperSetup.subSteps.corpus.list.addCta')}
                         </Button>
                     </div>
-                )}
-            </header>
+                </header>
+            )}
             {sorted.length === 0 ? (
                 showExtractHero ? (
                     <ExtractHeroCard

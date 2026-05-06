@@ -67,6 +67,13 @@ export function RubricGapCard({ paper, onPickType }: RubricGapCardProps) {
         .sort((a, b) => getSourceTypeOrderIndex(a.sourceType) - getSourceTypeOrderIndex(b.sourceType));
     const totalSources = paper.sources.length;
 
+    // Suppress the "rubric satisfied" success card when there are no
+    // sources yet — with a permissive or strategy-only rubric the
+    // condition is technically true (no minimums to fail) but the
+    // user hasn't done any work and the message reads as misleading.
+    // The hero / role-coverage card handles the empty-state messaging.
+    if (report.meetsMinimums && totalSources === 0) return null;
+
     if (report.meetsMinimums) {
         return (
             <div className="rounded-lg border border-success/30 bg-success-subtle p-4 flex items-start gap-3">
