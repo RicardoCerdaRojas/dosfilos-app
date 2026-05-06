@@ -264,7 +264,7 @@ export function ExegesisPaperPage() {
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setComposeDialogOpen(true)}>
                                 <NotebookPen className="h-4 w-4 mr-2" />
-                                {t('canonical.compose.menuItem', { defaultValue: 'Componer paper académico' })}
+                                {t('canonical.compose.menuItem')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setMinistryDialogOpen(true)}>
                                 <Sparkles className="h-4 w-4 mr-2" />
@@ -285,6 +285,7 @@ export function ExegesisPaperPage() {
                         onOpenChange={setComposeDialogOpen}
                         paperId={paper.id}
                         suggestedFilename={buildPaperFilename(paper, activeLanguage)}
+                        savedAssembledMarkdown={paper.assembledMarkdown ?? ''}
                     />
 
                     <MinistryCompositionDialog

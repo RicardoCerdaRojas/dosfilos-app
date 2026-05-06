@@ -63,19 +63,19 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             <header className="rounded-lg border border-border bg-muted/40 p-4 space-y-2">
                 <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
                     <BookText className="h-3.5 w-3.5" aria-hidden />
-                    {t('canonical.study.headerLabel', { defaultValue: 'Texto y traducción' })}
+                    {t('canonical.study.headerLabel')}
                     <span className="text-foreground/70 normal-case tracking-normal font-normal">· {refLabel}</span>
                 </div>
                 <p className="font-serif text-base leading-relaxed text-foreground">
-                    {analysis.greekText || <em className="text-muted-foreground">{t('canonical.study.empty.greek', { defaultValue: 'Texto griego pendiente.' })}</em>}
+                    {analysis.greekText || <em className="text-muted-foreground">{t('canonical.study.empty.greek')}</em>}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     <TranslationCell
-                        label={t('canonical.study.initialTranslation', { defaultValue: 'Traducción inicial' })}
+                        label={t('canonical.study.initialTranslation')}
                         value={analysis.initialTranslation}
                     />
                     <TranslationCell
-                        label={t('canonical.study.finalTranslation', { defaultValue: 'Traducción final' })}
+                        label={t('canonical.study.finalTranslation')}
                         value={analysis.finalTranslation}
                         emphasized
                     />
@@ -85,8 +85,8 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Argumentative role */}
             <Section
                 icon={<Sparkles className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.argumentativeRole', { defaultValue: 'Rol argumentativo' })}
-                hint={t('canonical.study.argumentativeRoleHint', { defaultValue: 'Qué hace este verso en el flujo de la pericopa.' })}
+                title={t('canonical.study.argumentativeRole')}
+                hint={t('canonical.study.argumentativeRoleHint')}
             >
                 <ProseField value={analysis.argumentativeRole} />
             </Section>
@@ -94,8 +94,8 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Syntactic analysis */}
             <Section
                 icon={<ListTree className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.syntax', { defaultValue: 'Análisis sintáctico' })}
-                hint={t('canonical.study.syntaxHint', { defaultValue: 'Verbo principal, construcciones clave y partículas discursivas.' })}
+                title={t('canonical.study.syntax')}
+                hint={t('canonical.study.syntaxHint')}
                 defaultOpen
             >
                 <SyntaxBlock analysis={analysis} />
@@ -104,12 +104,12 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Lexical analyses */}
             <Section
                 icon={<Highlighter className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.lexis', { defaultValue: 'Análisis léxico' })}
-                hint={t('canonical.study.lexisHint', { defaultValue: 'Rango semántico general vs. carga específica en el verso.' })}
+                title={t('canonical.study.lexis')}
+                hint={t('canonical.study.lexisHint')}
                 count={analysis.lexicalAnalyses.length}
             >
                 {analysis.lexicalAnalyses.length === 0 ? (
-                    <EmptyHint text={t('canonical.study.empty.lexis', { defaultValue: 'Sin análisis léxicos para este verso.' })} />
+                    <EmptyHint text={t('canonical.study.empty.lexis')} />
                 ) : (
                     <ul className="space-y-3">
                         {analysis.lexicalAnalyses.map((la, idx) => (
@@ -121,7 +121,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                 </div>
                                 <div>
                                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
-                                        {t('canonical.study.lexis.range', { defaultValue: 'Rango semántico general' })}
+                                        {t('canonical.study.lexis.range')}
                                     </p>
                                     {la.generalSemanticRange.glosses.length > 0 ? (
                                         <p className="text-xs text-foreground/85 leading-relaxed">
@@ -136,7 +136,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                 </div>
                                 <div>
                                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
-                                        {t('canonical.study.lexis.loading', { defaultValue: 'Carga específica en este verso' })}
+                                        {t('canonical.study.lexis.loading')}
                                     </p>
                                     <p className="text-xs text-foreground/85 leading-relaxed">{la.verseSpecificLoading}</p>
                                     {la.loadingSources.length > 0 && (
@@ -152,8 +152,8 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Textual criticism */}
             <Section
                 icon={<ScrollText className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.textualCriticism', { defaultValue: 'Crítica textual' })}
-                hint={t('canonical.study.textualCriticismHint', { defaultValue: 'Revisión obligatoria del aparato. Vacío con nota cuando no hay variantes.' })}
+                title={t('canonical.study.textualCriticism')}
+                hint={t('canonical.study.textualCriticismHint')}
                 count={analysis.textualCriticism.variants.length}
             >
                 <p className="text-xs italic text-foreground/85 leading-relaxed mb-2">
@@ -187,7 +187,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {analysis.historicalContext.length > 0 && (
                 <Section
                     icon={<Library className="h-4 w-4" aria-hidden />}
-                    title={t('canonical.study.historicalContext', { defaultValue: 'Trasfondo histórico-cultural' })}
+                    title={t('canonical.study.historicalContext')}
                     count={analysis.historicalContext.length}
                 >
                     <ul className="space-y-2">
@@ -206,7 +206,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {analysis.oldTestamentLinks.length > 0 && (
                 <Section
                     icon={<BookOpen className="h-4 w-4" aria-hidden />}
-                    title={t('canonical.study.oldTestamentLinks', { defaultValue: 'Intertextualidad con el AT' })}
+                    title={t('canonical.study.oldTestamentLinks')}
                     count={analysis.oldTestamentLinks.length}
                 >
                     <ul className="space-y-2">
@@ -232,13 +232,13 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Commentator engagement */}
             <Section
                 icon={<Quote className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.commentators', { defaultValue: 'Diálogo con comentaristas' })}
-                hint={t('canonical.study.commentatorsHint', { defaultValue: 'Estrategia dialéctica: ancla + contraste + (técnica).' })}
+                title={t('canonical.study.commentators')}
+                hint={t('canonical.study.commentatorsHint')}
                 count={analysis.commentatorEngagement.length}
                 defaultOpen
             >
                 {analysis.commentatorEngagement.length === 0 ? (
-                    <EmptyHint text={t('canonical.study.empty.commentators', { defaultValue: 'Sin engagement con comentaristas para este verso.' })} />
+                    <EmptyHint text={t('canonical.study.empty.commentators')} />
                 ) : (
                     <ul className="space-y-2">
                         {analysis.commentatorEngagement.map((c, idx) => (
@@ -263,13 +263,13 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Translation cruxes */}
             <Section
                 icon={<NotebookText className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.cruxes', { defaultValue: 'Decisiones de traducción' })}
-                hint={t('canonical.study.cruxesHint', { defaultValue: 'Cada decisión contestada con opciones, posiciones, y compromiso.' })}
+                title={t('canonical.study.cruxes')}
+                hint={t('canonical.study.cruxesHint')}
                 count={analysis.translationCruxes.length}
                 defaultOpen
             >
                 {analysis.translationCruxes.length === 0 ? (
-                    <EmptyHint text={t('canonical.study.empty.cruxes', { defaultValue: 'Sin decisiones contestadas en este verso.' })} />
+                    <EmptyHint text={t('canonical.study.empty.cruxes')} />
                 ) : (
                     <ul className="space-y-3">
                         {analysis.translationCruxes.map((cx, idx) => (
@@ -278,7 +278,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                 <p className="text-xs italic text-foreground/85">{cx.description}</p>
                                 <div>
                                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
-                                        {t('canonical.study.cruxes.options', { defaultValue: 'Opciones' })}
+                                        {t('canonical.study.cruxes.options')}
                                     </p>
                                     <ul className="space-y-0.5">
                                         {cx.options.map((o, oidx) => (
@@ -292,7 +292,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                 {cx.commentatorPositions.length > 0 && (
                                     <div>
                                         <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
-                                            {t('canonical.study.cruxes.positions', { defaultValue: 'Posiciones de comentaristas' })}
+                                            {t('canonical.study.cruxes.positions')}
                                         </p>
                                         <ul className="space-y-0.5">
                                             {cx.commentatorPositions.map((p, pidx) => (
@@ -307,7 +307,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                 )}
                                 <div className="rounded bg-success-subtle/40 border border-success/30 p-2">
                                     <p className="text-[11px] uppercase tracking-wide font-semibold text-success-subtle-foreground mb-0.5">
-                                        {t('canonical.study.cruxes.commitment', { defaultValue: 'Compromiso adoptado' })}
+                                        {t('canonical.study.cruxes.commitment')}
                                     </p>
                                     <p className="text-xs font-semibold text-foreground">"{cx.commitment.chosen}"</p>
                                     <p className="text-[11px] italic text-foreground/85 mt-1">{cx.commitment.rationale}</p>
@@ -321,8 +321,8 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Verse thesis */}
             <Section
                 icon={<FileText className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.verseThesis', { defaultValue: 'Tesis del verso' })}
-                hint={t('canonical.study.verseThesisHint', { defaultValue: 'Qué establece este verso a partir del análisis.' })}
+                title={t('canonical.study.verseThesis')}
+                hint={t('canonical.study.verseThesisHint')}
                 defaultOpen
             >
                 <ProseField value={analysis.verseThesis} emphasized />
@@ -332,8 +332,8 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {analysis.theologicalHooks.length > 0 && (
                 <Section
                     icon={<Tag className="h-4 w-4" aria-hidden />}
-                    title={t('canonical.study.theologicalHooks', { defaultValue: 'Loci teológicos' })}
-                    hint={t('canonical.study.theologicalHooksHint', { defaultValue: 'Para composers no-académicos (sermón, devocional).' })}
+                    title={t('canonical.study.theologicalHooks')}
+                    hint={t('canonical.study.theologicalHooksHint')}
                     count={analysis.theologicalHooks.length}
                 >
                     <ul className="space-y-1.5">
@@ -353,8 +353,8 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {analysis.confidenceFlags.length > 0 && (
                 <Section
                     icon={<Sparkles className="h-4 w-4" aria-hidden />}
-                    title={t('canonical.study.confidence', { defaultValue: 'Flags de confianza' })}
-                    hint={t('canonical.study.confidenceHint', { defaultValue: 'Calibración del lenguaje hedge en la prosa final.' })}
+                    title={t('canonical.study.confidence')}
+                    hint={t('canonical.study.confidenceHint')}
                     count={analysis.confidenceFlags.length}
                 >
                     <ul className="space-y-1.5">
@@ -377,8 +377,8 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {analysis.footnoteExtensions.length > 0 && (
                 <Section
                     icon={<FileText className="h-4 w-4" aria-hidden />}
-                    title={t('canonical.study.footnotes', { defaultValue: 'Notas al pie potenciales' })}
-                    hint={t('canonical.study.footnotesHint', { defaultValue: 'El composer académico las renderiza como notas al pie reales.' })}
+                    title={t('canonical.study.footnotes')}
+                    hint={t('canonical.study.footnotesHint')}
                     count={analysis.footnoteExtensions.length}
                 >
                     <ul className="space-y-2">
@@ -484,7 +484,7 @@ function SyntaxBlock({ analysis }: { analysis: CanonicalVerseAnalysis }) {
     const hasParticles = sa.discourseParticles.length > 0;
 
     if (!hasMain && !hasNote && !hasConstructions && !hasParticles) {
-        return <EmptyHint text={t('canonical.study.empty.syntax', { defaultValue: 'Sin análisis sintáctico para este verso.' })} />;
+        return <EmptyHint text={t('canonical.study.empty.syntax')} />;
     }
 
     return (
@@ -492,21 +492,21 @@ function SyntaxBlock({ analysis }: { analysis: CanonicalVerseAnalysis }) {
             {hasMain && (
                 <div>
                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
-                        {t('canonical.study.syntax.mainVerb', { defaultValue: 'Verbo principal' })}
+                        {t('canonical.study.syntax.mainVerb')}
                     </p>
                     <SyntacticElementRow element={sa.mainVerb!} />
                 </div>
             )}
             {hasNote && (
                 <p className="text-[11px] italic text-muted-foreground">
-                    {t('canonical.study.syntax.noMainVerb', { defaultValue: 'Sin verbo principal en este verso.' })}{' '}
+                    {t('canonical.study.syntax.noMainVerb')}{' '}
                     {sa.mainVerbNote}
                 </p>
             )}
             {hasConstructions && (
                 <div>
                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
-                        {t('canonical.study.syntax.constructions', { defaultValue: 'Construcciones clave' })}
+                        {t('canonical.study.syntax.constructions')}
                     </p>
                     <ul className="space-y-2">
                         {sa.keyConstructions.map((kc, idx) => (
@@ -518,7 +518,7 @@ function SyntaxBlock({ analysis }: { analysis: CanonicalVerseAnalysis }) {
             {hasParticles && (
                 <div>
                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
-                        {t('canonical.study.syntax.particles', { defaultValue: 'Partículas discursivas' })}
+                        {t('canonical.study.syntax.particles')}
                     </p>
                     <ul className="space-y-1">
                         {sa.discourseParticles.map((p, idx) => (

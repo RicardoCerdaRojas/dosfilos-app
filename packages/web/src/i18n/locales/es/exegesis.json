@@ -1092,7 +1092,9 @@
             "savedToast": "Composición guardada en el paper (assembledMarkdown).",
             "persistWarning": "La composición se generó pero no se pudo guardar en el paper. Copiá o descargá el markdown antes de cerrar.",
             "saveToPaper": "Guardar al paper",
-            "saveToPaperTooltip": "Guarda esta composición como assembledMarkdown del paper. Puedes recomponer en cualquier momento."
+            "saveToPaperTooltip": "Guarda esta composición como assembledMarkdown del paper. Puedes recomponer en cualquier momento.",
+            "savedExists": "Hay una composición guardada en este paper.",
+            "savedHint": "Si los análisis de los versos cambiaron desde la última vez, reompone para que la salida refleje el estado actual."
         },
         "ministry": {
             "menuItem": "Material ministerial (sermón / devocional / guía)",

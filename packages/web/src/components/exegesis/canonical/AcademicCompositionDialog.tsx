@@ -21,6 +21,13 @@ interface AcademicCompositionDialogProps {
     paperId: string;
     /** File-name stem suggested for the .md download (e.g., "hebreos-1-1-4"). */
     suggestedFilename: string;
+    /**
+     * Existing composition saved on `paper.assembledMarkdown`, when
+     * present. Used to surface a "previously saved" state in the
+     * dialog so the user knows recomposing will overwrite. Empty
+     * string when the paper has no saved composition.
+     */
+    savedAssembledMarkdown: string;
 }
 
 /**
@@ -47,6 +54,7 @@ export function AcademicCompositionDialog({
     onOpenChange,
     paperId,
     suggestedFilename,
+    savedAssembledMarkdown,
 }: AcademicCompositionDialogProps) {
     const { t } = useTranslation('exegesis');
     const { composeAcademicPaper } = useExegesisPapers();
@@ -62,7 +70,7 @@ export function AcademicCompositionDialog({
             setResult(output);
             setView('rendered');
             if (persist) {
-                toast.success(t('canonical.compose.savedToast', { defaultValue: 'Composición guardada en el paper (assembledMarkdown).' }));
+                toast.success(t('canonical.compose.savedToast'));
             }
         } catch (err) {
             console.error('[exegesis] composeAcademicPaper failed:', err);
@@ -73,12 +81,10 @@ export function AcademicCompositionDialog({
             if (persistErr?.isPersistError && persistErr.output) {
                 setResult(persistErr.output);
                 setView('rendered');
-                toast.warning(t('canonical.compose.persistWarning', {
-                    defaultValue: 'La composición se generó pero no se pudo guardar en el paper. Copiá o descargá el markdown antes de cerrar.',
-                }));
+                toast.warning(t('canonical.compose.persistWarning'));
                 return;
             }
-            setErrorMessage((err as Error).message ?? t('canonical.compose.errorGeneric', { defaultValue: 'Error inesperado durante la composición.' }));
+            setErrorMessage((err as Error).message ?? t('canonical.compose.errorGeneric'));
         }
     };
 
@@ -91,10 +97,10 @@ export function AcademicCompositionDialog({
         if (!result) return;
         try {
             await navigator.clipboard.writeText(result.markdown);
-            toast.success(t('canonical.compose.copied', { defaultValue: 'Markdown copiado al portapapeles.' }));
+            toast.success(t('canonical.compose.copied'));
         } catch (err) {
             console.error('[exegesis] clipboard copy failed:', err);
-            toast.error(t('canonical.compose.copyFailed', { defaultValue: 'No se pudo copiar al portapapeles.' }));
+            toast.error(t('canonical.compose.copyFailed'));
         }
     };
 
@@ -129,18 +135,19 @@ export function AcademicCompositionDialog({
                 <DialogHeader>
                     <DialogTitle className="inline-flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-success" aria-hidden />
-                        {t('canonical.compose.title', { defaultValue: 'Componer paper académico' })}
+                        {t('canonical.compose.title')}
                     </DialogTitle>
-                    <DialogDescription>
-                        {t('canonical.compose.subtitle', {
-                            defaultValue: 'Generamos prosa académica TMS desde los análisis canónicos aceptados de cada verso. La guía de estilo configurada se aplica obligatoriamente.',
-                        })}
-                    </DialogDescription>
+                    <DialogDescription>{t('canonical.compose.subtitle')}</DialogDescription>
                 </DialogHeader>
 
                 <div className="flex-1 overflow-hidden flex flex-col">
                     {!result && !composeAcademicPaper.isPending && !errorMessage && (
-                        <IdleState onCompose={handleCompose} />
+                        savedAssembledMarkdown
+                            ? <SavedCompositionState
+                                savedMarkdown={savedAssembledMarkdown}
+                                onCompose={() => handleCompose(false)}
+                            />
+                            : <IdleState onCompose={handleCompose} />
                     )}
 
                     {composeAcademicPaper.isPending && <ComposingState />}
@@ -168,6 +175,95 @@ export function AcademicCompositionDialog({
 
 // ── Sub-components ──────────────────────────────────────────────────────
 
+/**
+ * Idle state for papers that already have a saved composition.
+ * Shows the saved markdown rendered + offers Recompose / Copy /
+ * Download actions. Recomposing will overwrite when the user opts
+ * into "Save to paper" later in the success view.
+ */
+function SavedCompositionState({
+    savedMarkdown,
+    onCompose,
+}: {
+    savedMarkdown: string;
+    onCompose: () => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const [view, setView] = useState<'rendered' | 'raw'>('rendered');
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(savedMarkdown);
+            toast.success(t('canonical.compose.copied'));
+        } catch (err) {
+            console.error('[exegesis] copy saved markdown failed:', err);
+            toast.error(t('canonical.compose.copyFailed'));
+        }
+    };
+
+    return (
+        <div className="flex-1 overflow-hidden flex flex-col gap-3">
+            <div className="rounded-md border border-success/30 bg-success-subtle/40 px-3 py-2 text-[11px] text-success-subtle-foreground inline-flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" />
+                {t('canonical.compose.savedExists')}
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+                <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-[11px]">
+                    <button
+                        type="button"
+                        onClick={() => setView('rendered')}
+                        className={[
+                            'px-2.5 py-1 rounded transition-colors',
+                            view === 'rendered'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                        ].join(' ')}
+                    >
+                        {t('canonical.compose.viewRendered')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setView('raw')}
+                        className={[
+                            'px-2.5 py-1 rounded transition-colors',
+                            view === 'raw'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                        ].join(' ')}
+                    >
+                        {t('canonical.compose.viewRaw')}
+                    </button>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <Button size="sm" variant="outline" onClick={handleCopy}>
+                        <Copy className="h-3.5 w-3.5 mr-1" />
+                        {t('canonical.compose.copy')}
+                    </Button>
+                    <Button size="sm" onClick={onCompose} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <Sparkles className="h-3.5 w-3.5 mr-1" />
+                        {t('canonical.compose.recompose')}
+                    </Button>
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto rounded-md border border-border bg-card p-4">
+                {view === 'rendered' ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{savedMarkdown}</ReactMarkdown>
+                    </div>
+                ) : (
+                    <pre className="text-[11px] font-mono whitespace-pre-wrap text-foreground/90">{savedMarkdown}</pre>
+                )}
+            </div>
+
+            <p className="text-[10px] text-muted-foreground italic text-center">
+                {t('canonical.compose.savedHint')}
+            </p>
+        </div>
+    );
+}
+
 function IdleState({ onCompose }: { onCompose: (persist?: boolean) => void }) {
     const { t } = useTranslation('exegesis');
     return (
@@ -176,18 +272,14 @@ function IdleState({ onCompose }: { onCompose: (persist?: boolean) => void }) {
                 <Sparkles className="h-6 w-6 text-success" aria-hidden />
             </div>
             <p className="text-sm text-foreground max-w-md leading-relaxed">
-                {t('canonical.compose.idleBody', {
-                    defaultValue: 'Los análisis canónicos de cada verso se transforman en un paper académico continuo: introducción + análisis verso por verso + conclusión + bibliografía. Las citas se aplican según la guía de estilo configurada.',
-                })}
+                {t('canonical.compose.idleBody')}
             </p>
             <Button onClick={() => onCompose(false)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Sparkles className="h-4 w-4 mr-1.5" />
-                {t('canonical.compose.cta', { defaultValue: 'Componer paper' })}
+                {t('canonical.compose.cta')}
             </Button>
             <p className="text-[11px] text-muted-foreground italic max-w-md">
-                {t('canonical.compose.cost', {
-                    defaultValue: 'Cada composición consume una llamada de Gemini Pro 2.5 con contexto extenso. La salida no se persiste automáticamente — copiá o descargá el markdown.',
-                })}
+                {t('canonical.compose.cost')}
             </p>
         </div>
     );
@@ -199,12 +291,10 @@ function ComposingState() {
         <div className="flex flex-col items-center justify-center py-16 space-y-3">
             <Loader2 className="h-8 w-8 text-primary animate-spin" />
             <p className="text-sm text-foreground">
-                {t('canonical.compose.composingTitle', { defaultValue: 'Componiendo paper académico…' })}
+                {t('canonical.compose.composingTitle')}
             </p>
             <p className="text-[11px] text-muted-foreground italic max-w-md text-center">
-                {t('canonical.compose.composingBody', {
-                    defaultValue: 'Esto puede tardar entre 30 y 120 segundos según la cantidad de versos y la densidad del análisis.',
-                })}
+                {t('canonical.compose.composingBody')}
             </p>
         </div>
     );
@@ -215,13 +305,13 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     return (
         <div className="flex flex-col items-center justify-center py-12 px-6 space-y-3 text-center">
             <p className="text-sm font-semibold text-destructive">
-                {t('canonical.compose.errorTitle', { defaultValue: 'No se pudo componer el paper' })}
+                {t('canonical.compose.errorTitle')}
             </p>
             <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
                 {message}
             </p>
             <Button onClick={onRetry} variant="outline">
-                {t('canonical.compose.retry', { defaultValue: 'Reintentar' })}
+                {t('canonical.compose.retry')}
             </Button>
         </div>
     );
@@ -261,7 +351,7 @@ function SuccessView({
                                 : 'text-muted-foreground hover:text-foreground',
                         ].join(' ')}
                     >
-                        {t('canonical.compose.viewRendered', { defaultValue: 'Renderizado' })}
+                        {t('canonical.compose.viewRendered')}
                     </button>
                     <button
                         type="button"
@@ -273,32 +363,30 @@ function SuccessView({
                                 : 'text-muted-foreground hover:text-foreground',
                         ].join(' ')}
                     >
-                        {t('canonical.compose.viewRaw', { defaultValue: 'Markdown' })}
+                        {t('canonical.compose.viewRaw')}
                     </button>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <Button size="sm" variant="outline" onClick={onCopy}>
                         <Copy className="h-3.5 w-3.5 mr-1" />
-                        {t('canonical.compose.copy', { defaultValue: 'Copiar' })}
+                        {t('canonical.compose.copy')}
                     </Button>
                     <Button size="sm" variant="outline" onClick={onDownload}>
                         <Download className="h-3.5 w-3.5 mr-1" />
-                        {t('canonical.compose.download', { defaultValue: 'Descargar .md' })}
+                        {t('canonical.compose.download')}
                     </Button>
                     <Button
                         size="sm"
                         onClick={onSaveToPaper}
                         className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                        title={t('canonical.compose.saveToPaperTooltip', {
-                            defaultValue: 'Guarda esta composición como assembledMarkdown del paper. Puedes recomponer en cualquier momento.',
-                        })}
+                        title={t('canonical.compose.saveToPaperTooltip')}
                     >
                         <Sparkles className="h-3.5 w-3.5 mr-1" />
-                        {t('canonical.compose.saveToPaper', { defaultValue: 'Guardar al paper' })}
+                        {t('canonical.compose.saveToPaper')}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={onRecompose}>
                         <Sparkles className="h-3.5 w-3.5 mr-1" />
-                        {t('canonical.compose.recompose', { defaultValue: 'Recomponer' })}
+                        {t('canonical.compose.recompose')}
                     </Button>
                 </div>
             </div>
@@ -320,7 +408,6 @@ function SuccessView({
             {result.tokensUsed !== null && (
                 <p className="text-[10px] text-muted-foreground italic text-right">
                     {t('canonical.compose.tokensUsed', {
-                        defaultValue: '{{tokens}} tokens · modelo {{model}}',
                         tokens: result.tokensUsed.toLocaleString(),
                         model: result.modelId,
                     })}
@@ -335,26 +422,20 @@ function FormatterStatusBanner({ status }: { status: ComposeAcademicPaperOutput[
     if (status === 'applied') {
         return (
             <div className="rounded-md border border-success/30 bg-success-subtle/40 px-3 py-2 text-[11px] text-success-subtle-foreground">
-                ✓ {t('canonical.compose.formatterApplied', {
-                    defaultValue: 'Guía de estilo aplicada (capa 1: prompt, capa 2: formatter determinístico).',
-                })}
+                ✓ {t('canonical.compose.formatterApplied')}
             </div>
         );
     }
     if (status === 'skipped') {
         return (
             <div className="rounded-md border border-warning/30 bg-warning-subtle/40 px-3 py-2 text-[11px] text-warning-subtle-foreground">
-                ⚠ {t('canonical.compose.formatterSkipped', {
-                    defaultValue: 'Sin manifest de guía de estilo extraído. Solo aplicada la capa 1 (prompt). Extrae el manifest desde la pestaña "Guía de estilo" para activar la capa 2.',
-                })}
+                ⚠ {t('canonical.compose.formatterSkipped')}
             </div>
         );
     }
     return (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
-            ⚠ {t('canonical.compose.formatterError', {
-                defaultValue: 'Hubo un error aplicando el formatter determinístico. La composición LLM (capa 1) sigue válida.',
-            })}
+            ⚠ {t('canonical.compose.formatterError')}
         </div>
     );
 }

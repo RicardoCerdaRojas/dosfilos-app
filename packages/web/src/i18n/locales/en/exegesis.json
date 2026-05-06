@@ -1092,7 +1092,9 @@
             "savedToast": "Composition saved on the paper (assembledMarkdown).",
             "persistWarning": "Composition succeeded but could not be saved to the paper. Copy or download the markdown before closing.",
             "saveToPaper": "Save to paper",
-            "saveToPaperTooltip": "Saves this composition as the paper's assembledMarkdown. You can recompose at any time."
+            "saveToPaperTooltip": "Saves this composition as the paper's assembledMarkdown. You can recompose at any time.",
+            "savedExists": "A saved composition exists for this paper.",
+            "savedHint": "If the verse analyses changed since last time, recompose so the output reflects the current state."
         },
         "ministry": {
             "menuItem": "Ministry material (sermon / devotional / study guide)",

@@ -135,7 +135,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             setViewMode('study');
         } catch (err) {
             console.error('[exegesis] canonical analysis failed:', err);
-            toast.error(t('canonical.toast.analyzeFailed', { defaultValue: 'No se pudo generar el análisis canónico.' }));
+            toast.error(t('canonical.toast.analyzeFailed'));
         }
     };
     const isVerse = step.kind === 'verse';
@@ -152,7 +152,6 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         } catch (err) {
             console.error('[exegesis] compose conclusion failed:', err);
             toast.error(t('canonical.toast.composeSectionFailed', {
-                defaultValue: 'No se pudo componer esta sección. {{message}}',
                 message: (err as Error).message ?? '',
             }));
         }
@@ -163,7 +162,6 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         } catch (err) {
             console.error('[exegesis] compose introduction failed:', err);
             toast.error(t('canonical.toast.composeSectionFailed', {
-                defaultValue: 'No se pudo componer esta sección. {{message}}',
                 message: (err as Error).message ?? '',
             }));
         }
@@ -174,6 +172,25 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         || analyzeVerseCanonically.isPending
         || composeConclusionFromAnalyses.isPending
         || composeIntroductionFromAnalyses.isPending;
+
+    // Adaptive regenerate routing: when the verse step's CURRENT
+    // version was produced by the canonical analyzer (markers:
+    // `canonicalAnalysis` is populated), regenerate via the canonical
+    // pipeline. Otherwise route to the legacy generateStep. This
+    // makes "Regenerar" and "Aplicar hint" do the right thing
+    // automatically without forcing the user to remember which path
+    // they're on. Conclusion/introduction kinds keep legacy
+    // regeneration for now — when the user wants a canonical
+    // recomposition they can re-trigger from the composer button on
+    // pending state.
+    const currentHasCanonical = !!step.current?.canonicalAnalysis;
+    const shouldRegenerateCanonically = isVerse && currentHasCanonical;
+    const handleAdaptiveRegenerate = (regenerationHint?: string) => {
+        if (shouldRegenerateCanonically) {
+            return handleAnalyzeCanonically(regenerationHint);
+        }
+        return handleGenerate(regenerationHint);
+    };
 
     const handleAccept = async () => {
         if (!step.current) return;
@@ -252,10 +269,10 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 variant="outline"
                                 onClick={() => handleAnalyzeCanonically()}
                                 disabled={anyPipelinePending}
-                                title={t('canonical.actions.analyzeTooltip', { defaultValue: 'Genera el análisis estructurado (study mode + paper composer)' })}
+                                title={t('canonical.actions.analyzeTooltip')}
                             >
                                 {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.analyze', { defaultValue: 'Análisis canónico' })}
+                                {t('canonical.actions.analyze')}
                             </Button>
                         )}
                         {isConclusion && (
@@ -264,10 +281,10 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 variant="outline"
                                 onClick={handleComposeConclusion}
                                 disabled={anyPipelinePending}
-                                title={t('canonical.actions.composeConclusionTooltip', { defaultValue: 'Compone la conclusión a partir de los análisis canónicos aceptados' })}
+                                title={t('canonical.actions.composeConclusionTooltip')}
                             >
                                 {composeConclusionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.composeFromAnalyses', { defaultValue: 'Componer desde análisis' })}
+                                {t('canonical.actions.composeFromAnalyses')}
                             </Button>
                         )}
                         {isIntroduction && (
@@ -276,10 +293,10 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 variant="outline"
                                 onClick={handleComposeIntroduction}
                                 disabled={anyPipelinePending}
-                                title={t('canonical.actions.composeIntroductionTooltip', { defaultValue: 'Compone la introducción al final, usando los análisis aceptados + la conclusión aceptada' })}
+                                title={t('canonical.actions.composeIntroductionTooltip')}
                             >
                                 {composeIntroductionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.composeFromAnalyses', { defaultValue: 'Componer desde análisis' })}
+                                {t('canonical.actions.composeFromAnalyses')}
                             </Button>
                         )}
                         <Button
@@ -303,7 +320,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 disabled={anyPipelinePending}
                             >
                                 {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.analyzeRetry', { defaultValue: 'Reintentar análisis' })}
+                                {t('canonical.actions.analyzeRetry')}
                             </Button>
                         )}
                         <Button
@@ -372,7 +389,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                             : 'text-muted-foreground hover:text-foreground',
                                     )}
                                 >
-                                    {t('canonical.view.prose', { defaultValue: 'Vista de prosa' })}
+                                    {t('canonical.view.prose')}
                                 </button>
                                 <button
                                     type="button"
@@ -384,7 +401,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                             : 'text-muted-foreground hover:text-foreground',
                                     )}
                                 >
-                                    {t('canonical.view.study', { defaultValue: 'Vista de estudio' })}
+                                    {t('canonical.view.study')}
                                 </button>
                             </div>
                         )}
@@ -450,17 +467,17 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleGenerate()}
-                            disabled={generateStep.isPending || acceptStep.isPending}
+                            onClick={() => handleAdaptiveRegenerate()}
+                            disabled={anyPipelinePending || acceptStep.isPending}
                         >
-                            {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
-                            {generateStep.isPending ? t('detail.steps.action.regenerating') : t('detail.steps.action.regenerate')}
+                            {anyPipelinePending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                            {anyPipelinePending ? t('detail.steps.action.regenerating') : t('detail.steps.action.regenerate')}
                         </Button>
                         <Button
                             size="sm"
                             variant="outline"
                             onClick={() => setHintMode(v => !v)}
-                            disabled={generateStep.isPending || acceptStep.isPending}
+                            disabled={anyPipelinePending || acceptStep.isPending}
                         >
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.regenerateWithHint')}
@@ -469,7 +486,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                             size="sm"
                             variant="ghost"
                             onClick={startEdit}
-                            disabled={generateStep.isPending || acceptStep.isPending}
+                            disabled={anyPipelinePending || acceptStep.isPending}
                         >
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.editManual')}
@@ -485,18 +502,18 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                                 className="flex-1 rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && hintDraft.trim()) {
-                                        handleGenerate(hintDraft.trim());
+                                        handleAdaptiveRegenerate(hintDraft.trim());
                                     }
                                 }}
                             />
                             <Button
                                 size="sm"
-                                onClick={() => hintDraft.trim() && handleGenerate(hintDraft.trim())}
-                                disabled={!hintDraft.trim() || generateStep.isPending}
+                                onClick={() => hintDraft.trim() && handleAdaptiveRegenerate(hintDraft.trim())}
+                                disabled={!hintDraft.trim() || anyPipelinePending}
                                 className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
                             >
-                                {generateStep.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-                                {generateStep.isPending ? t('detail.steps.action.regenerating') : t('detail.steps.action.applyHint')}
+                                {anyPipelinePending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                                {anyPipelinePending ? t('detail.steps.action.regenerating') : t('detail.steps.action.applyHint')}
                             </Button>
                             <button
                                 type="button"
