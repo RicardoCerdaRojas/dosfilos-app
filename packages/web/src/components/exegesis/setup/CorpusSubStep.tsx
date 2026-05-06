@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+    AlertTriangle,
     BookOpenText,
+    Check,
     CheckCircle2,
     ChevronDown,
     ChevronRight,
+    Eye,
+    ExternalLink,
     FileStack,
     FileText,
     Library,
     Loader2,
     Quote,
+    RefreshCcw,
     Search,
     Sparkles,
     Upload,
@@ -18,14 +23,30 @@ import { toast } from 'sonner';
 import { libraryService } from '@dosfilos/application';
 import {
     CITABLE_SOURCE_TYPES,
+    LIBRARY_TYPES_BY_ROLE,
+    STRATEGY_SUGGESTED_RANGES,
+    TYPICAL_SOURCE_TYPE_BY_ROLE,
+    computeEffectiveRoleTargets,
+    computeRoleCoverage,
+    computeRoleExpectations,
+    findMissingRoles,
+    suggestRoleForType,
+    formatPassageReference,
+    getBookById,
+    isExcerptSetStale,
+    resourceMatchesTestament,
     type ExegeticalPaper,
     type LibraryResource,
     type ProjectSource,
     type ResourceIndexStatus,
+    type ResourceType,
+    type SourceRole,
     type SourceType,
+    type Testament,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { useLibrary } from '@/hooks/library';
+import { useExtractExcerpts } from '@/hooks/exegesis/useExtractExcerpts';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -79,6 +100,11 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     // the auto-scroll-to-bottom problem the inline form caused.
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogInitialType, setDialogInitialType] = useState<SourceType | null>(null);
+    // When the user opens the dialog from a role-specific button on
+    // the dialectical hero (e.g. "Elegir el ANCLA"), this seeds the
+    // dialog's library-mode + library-type-filter so they land on
+    // commentary-expository pre-filtered to broad-category 'commentary'.
+    const [dialogInitialRole, setDialogInitialRole] = useState<SourceRole | null>(null);
     // v1.5: separate dialog for the library-extraction flow. Opens
     // independently from the upload dialog so the two paths don't
     // tangle their state — the upload dialog is "I'm bringing a new
@@ -89,39 +115,86 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
 
     const openDialog = (preselect: SourceType | null) => {
         setDialogInitialType(preselect);
+        setDialogInitialRole(null);
         setDialogOpen(true);
     };
 
+    const openDialogForRole = (role: SourceRole) => {
+        setDialogInitialType(TYPICAL_SOURCE_TYPE_BY_ROLE[role]);
+        setDialogInitialRole(role);
+        setDialogOpen(true);
+    };
+
+    // When the paper has zero sources, the user's first decision is
+    // "how do I bring sources in?" — so the SourcesList (which renders
+    // the extraction hero in that state) becomes the top action and
+    // the rubric gap card drops below as a preview of what's coming.
+    // Once the user has at least one source, the gap card moves back
+    // up because it's now the guidance for what to add next.
+    const isStartingEmpty = paper.sources.length === 0;
+
     return (
         <div className="space-y-6">
-            <header className="flex items-start gap-3">
-                <FileStack className="h-5 w-5 text-success mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-semibold text-foreground">
-                        {t('paperSetup.subSteps.corpus.heading')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {t('paperSetup.subSteps.corpus.description')}
-                    </p>
+            <header className="flex items-center gap-3">
+                <FileStack className="h-5 w-5 text-success shrink-0" />
+                <h2 className="text-lg font-semibold text-foreground flex-1 min-w-0">
+                    {t('paperSetup.subSteps.corpus.heading')}
+                </h2>
+                <div className="flex items-center gap-2 shrink-0">
+                    <PageBalanceHint />
+                    <StrategyModeBadge strategy={paper.exegeticalStrategy ?? 'free'} />
                 </div>
-                <PageBalanceHint />
             </header>
 
             {paper.rubric && <RubricRigorIndicator rubric={paper.rubric} />}
 
-            <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
-
-            <CorpusSourcesList
-                paper={paper}
-                onAdd={() => openDialog(null)}
-                onExtract={() => setExtractDialogOpen(true)}
-            />
+            {isStartingEmpty ? (
+                <>
+                    <CorpusSourcesList
+                        paper={paper}
+                        onAdd={() => openDialog(null)}
+                        onExtract={() => setExtractDialogOpen(true)}
+                        onPickRole={openDialogForRole}
+                    />
+                    <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
+                </>
+            ) : (
+                <>
+                    {(paper.exegeticalStrategy ?? 'free') === 'dialectical' && (
+                        <RoleCoverageCard paper={paper} onPickRole={openDialogForRole} />
+                    )}
+                    {/* Suppress the rubric-gap card for dialectical
+                        papers whose rubric has no per-type minimums
+                        (strategy-only preset). The RoleCoverageCard
+                        is the canonical compliance signal in that
+                        scenario; rendering RubricGapCard's "cumple la
+                        rúbrica" message on top would falsely declare
+                        success while the strategy still expects three
+                        roles covered. For free-mode papers OR
+                        rubrics that DO carry requirements, both cards
+                        coexist (rubric answers "which types matter",
+                        strategy answers "which roles are balanced"). */}
+                    {!(
+                        (paper.exegeticalStrategy ?? 'free') === 'dialectical'
+                        && (paper.rubric?.sourceRequirements?.length ?? 0) === 0
+                    ) && (
+                        <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
+                    )}
+                    <CorpusSourcesList
+                        paper={paper}
+                        onAdd={() => openDialog(null)}
+                        onExtract={() => setExtractDialogOpen(true)}
+                        onPickRole={openDialogForRole}
+                    />
+                </>
+            )}
 
             <AddSourceDialog
                 paper={paper}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 initialType={dialogInitialType}
+                initialRole={dialogInitialRole}
             />
 
             <ExtractFromLibraryDialog
@@ -139,53 +212,206 @@ function CorpusSourcesList({
     paper,
     onAdd,
     onExtract,
+    onPickRole,
 }: {
     paper: ExegeticalPaper;
     onAdd: () => void;
     onExtract: () => void;
+    onPickRole: (role: SourceRole) => void;
 }) {
     const { t } = useTranslation('exegesis');
+    const library = useLibrary();
+    const strategy = paper.exegeticalStrategy ?? 'free';
     const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
+    // When the user has a stocked library AND no sources on this paper,
+    // the curated-extraction path is the differentiator we want them to
+    // try first. Hide the secondary buttons and show a hero card instead.
+    const showExtractHero = sorted.length === 0 && library.resources.length > 0;
+    // Curated-corpus summary: drives the value-reminder banner shown
+    // above the source list once the user has extracted excerpts. The
+    // banner reinforces the differentiator at the moment of decision
+    // (just before "Plan de uso" / generation) so the user feels what
+    // they actually built.
+    const excerptedSources = sorted.filter(s => s.mode === 'extracted-excerpts');
+    const totalExcerpts = excerptedSources.reduce((sum, s) => sum + s.excerpts.length, 0);
 
     return (
         <section className="space-y-2">
-            <header className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-foreground">
-                    {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
-                </h3>
-                <div className="flex items-center gap-1.5">
-                    {/* Extract from library: secondary visual weight
-                        (outline) because the primary path for new
-                        users is still the direct upload. Veterans
-                        with built-up libraries flip the priority
-                        in their head naturally. */}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onExtract}
-                        className="text-xs"
-                    >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        {t('paperSetup.subSteps.corpus.list.extractCta')}
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={onAdd}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
-                    >
-                        <Upload className="h-3 w-3 mr-1" />
-                        {t('paperSetup.subSteps.corpus.list.addCta')}
-                    </Button>
-                </div>
-            </header>
+            {/* Header only when there are sources to label. The empty
+                state's hero card is doing the entry-point work and
+                the "(0)" header was just noise on first paint. */}
+            {sorted.length > 0 && (
+                <header className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">
+                        {t('paperSetup.subSteps.corpus.list.title')} ({sorted.length})
+                    </h3>
+                    <div className="flex items-center gap-1.5">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onExtract}
+                            className="text-xs"
+                        >
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {t('paperSetup.subSteps.corpus.list.extractCta')}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={onAdd}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                        >
+                            <Upload className="h-3 w-3 mr-1" />
+                            {t('paperSetup.subSteps.corpus.list.addCta')}
+                        </Button>
+                    </div>
+                </header>
+            )}
             {sorted.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">
-                    {t('paperSetup.subSteps.corpus.list.empty')}
+                showExtractHero ? (
+                    <ExtractHeroCard
+                        libraryCount={library.resources.length}
+                        strategy={strategy}
+                        onExtract={onExtract}
+                        onAdd={onAdd}
+                        onPickRole={onPickRole}
+                    />
+                ) : (
+                    <EmptySourcesState onAdd={onAdd} />
+                )
+            ) : (
+                <>
+                    {totalExcerpts > 0 && (
+                        <CuratedSummaryBanner
+                            excerptCount={totalExcerpts}
+                            sourceCount={excerptedSources.length}
+                        />
+                    )}
+                    {strategy === 'dialectical' ? (
+                        <GroupedByRoleList paper={paper} sources={sorted} onPickRole={onPickRole} />
+                    ) : (
+                        <ul className="space-y-2">
+                            {sorted.map(source => (
+                                <SourceRow key={source.id} paper={paper} source={source} />
+                            ))}
+                        </ul>
+                    )}
+                </>
+            )}
+        </section>
+    );
+}
+
+/**
+ * Slim summary banner shown above the source list once the user has
+ * extracted excerpts. Surfaces the value of the curated approach at
+ * the moment they're about to move on to "Plan de uso" / generation:
+ * the corpus they built is N fragments from M sources, every fragment
+ * traceable back to its original page. Reinforces the differentiator
+ * vs runtime RAG (NotebookLM) where the user never sees what the
+ * model is actually consuming.
+ */
+
+/**
+ * Source list grouped into anchor / contrast / technical / sin rol
+ * sections, used in dialectical mode so the student can see at a
+ * glance how each upload maps to the strategy. Sources whose
+ * `sourceType` doesn't suggest a role (style templates, "other")
+ * fall into the "sin rol" bucket so nothing disappears.
+ *
+ * Empty buckets render as a one-line "vacío" hint with an inline
+ * "Agregar X" button so the user can fill the gap from the same
+ * surface they're scanning. Mirrors the per-chip CTA on the role
+ * coverage card — same call to `openDialogForRole` upstream.
+ */
+function GroupedByRoleList({
+    paper,
+    sources,
+    onPickRole,
+}: {
+    paper: ExegeticalPaper;
+    sources: ReadonlyArray<ProjectSource>;
+    onPickRole: (role: SourceRole) => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const groups = useMemo(() => {
+        const buckets: Record<SourceRole | 'unrolled', ProjectSource[]> = {
+            anchor: [], contrast: [], technical: [], unrolled: [],
+        };
+        for (const s of sources) {
+            const role = suggestRoleForType(s.sourceType);
+            buckets[role ?? 'unrolled'].push(s);
+        }
+        return buckets;
+    }, [sources]);
+
+    const orderedRoles: ReadonlyArray<SourceRole> = ['anchor', 'contrast', 'technical'];
+
+    return (
+        <div className="space-y-4">
+            {orderedRoles.map(role => (
+                <RoleGroupSection
+                    key={role}
+                    role={role}
+                    paper={paper}
+                    sources={groups[role]}
+                    onAdd={() => onPickRole(role)}
+                />
+            ))}
+            {groups.unrolled.length > 0 && (
+                <section className="space-y-1.5">
+                    <h4 className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+                        {t('paperSetup.subSteps.corpus.list.groupUnrolled', { count: groups.unrolled.length })}
+                    </h4>
+                    <ul className="space-y-2">
+                        {groups.unrolled.map(s => (
+                            <SourceRow key={s.id} paper={paper} source={s} />
+                        ))}
+                    </ul>
+                </section>
+            )}
+        </div>
+    );
+}
+
+function RoleGroupSection({
+    role,
+    paper,
+    sources,
+    onAdd,
+}: {
+    role: SourceRole;
+    paper: ExegeticalPaper;
+    sources: ReadonlyArray<ProjectSource>;
+    onAdd: () => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const empty = sources.length === 0;
+    return (
+        <section className="space-y-1.5">
+            <header className="flex items-center justify-between gap-2">
+                <h4 className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+                    {t(`paperSetup.subSteps.corpus.roleCoverage.role.${role}`)}
+                    <span className="ml-1.5 text-muted-foreground/70 normal-case tracking-normal font-normal">
+                        ({sources.length})
+                    </span>
+                </h4>
+                <button
+                    type="button"
+                    onClick={onAdd}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground rounded px-1.5 py-0.5 hover:bg-muted transition-colors"
+                >
+                    <Upload className="h-3 w-3" aria-hidden />
+                    {t(`paperSetup.subSteps.corpus.roleCoverage.addCta.${role}`)}
+                </button>
+            </header>
+            {empty ? (
+                <p className="text-[11.5px] italic text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+                    {t('paperSetup.subSteps.corpus.list.groupEmpty')}
                 </p>
             ) : (
                 <ul className="space-y-2">
-                    {sorted.map(source => (
-                        <SourceRow key={source.id} paperId={paper.id} source={source} />
+                    {sources.map(s => (
+                        <SourceRow key={s.id} paper={paper} source={s} />
                     ))}
                 </ul>
             )}
@@ -193,11 +419,550 @@ function CorpusSourcesList({
     );
 }
 
-function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource }) {
+function CuratedSummaryBanner({
+    excerptCount,
+    sourceCount,
+}: {
+    excerptCount: number;
+    sourceCount: number;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-lg border border-success/30 bg-success-subtle/40 px-4 py-2.5 flex items-start gap-3 mb-2">
+            <Sparkles className="h-4 w-4 text-success mt-0.5 shrink-0" aria-hidden />
+            <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] font-semibold text-foreground">
+                    {t('paperSetup.subSteps.corpus.summary.title', {
+                        excerptCount,
+                        sourceCount,
+                    })}
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                    {t('paperSetup.subSteps.corpus.summary.body')}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Empty state for users who don't have any library yet — falls back
+ * to highlighting the upload path. Lighter visual weight than the
+ * extract hero because new users haven't paid the cost of building
+ * a library and we don't want to gatekeep them.
+ */
+/**
+ * Compact pill that tells the user which methodology mode the paper
+ * is in. Renders next to the page-balance hint at the top of the
+ * corpus tab so the framing is visible from the entry point.
+ *
+ * Read-only for now — switching modes from here is a follow-up that
+ * needs a backend mutation (`updatePaperStrategy`). The pill exists
+ * primarily to make the chosen mode legible: students see "Modo:
+ * Estrategia exegética" and understand WHY they're seeing the
+ * role-coverage card; or "Modo: Libre" and understand WHY they're
+ * not.
+ */
+function StrategyModeBadge({ strategy }: { strategy: 'free' | 'dialectical' }) {
+    const { t } = useTranslation('exegesis');
+    const dialectical = strategy === 'dialectical';
+    return (
+        <span
+            className={[
+                'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide whitespace-nowrap',
+                dialectical
+                    ? 'border-success/40 bg-success-subtle text-success-subtle-foreground'
+                    : 'border-border bg-muted text-muted-foreground',
+            ].join(' ')}
+            title={t(`paperSetup.subSteps.corpus.strategyBadge.tooltip.${strategy}`)}
+        >
+            <Sparkles className="h-2.5 w-2.5" aria-hidden />
+            {t(`paperSetup.subSteps.corpus.strategyBadge.${strategy}`)}
+        </span>
+    );
+}
+
+/**
+ * Dialectical-strategy coverage card. Counts the corpus by suggested
+ * role (anchor/contrast/technical) and surfaces "te falta X" nudges
+ * when a role is empty. Only rendered for dialectical-mode papers —
+ * free-mode users never see it (their explicit choice was no
+ * methodology scaffolding).
+ *
+ * The card is informational + actionable: each missing-role nudge is
+ * a button that opens the add-source dialog with the suggested
+ * SourceType pre-selected, so the student can fill the gap without
+ * navigating menus.
+ */
+function RoleCoverageCard({
+    paper,
+    onPickRole,
+}: {
+    paper: ExegeticalPaper;
+    onPickRole: (role: SourceRole) => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const coverage = useMemo(() => computeRoleCoverage(paper.sources), [paper.sources]);
+    const rubricExpectations = useMemo(() => computeRoleExpectations(paper.rubric), [paper.rubric]);
+    const effectiveTargets = useMemo(() => computeEffectiveRoleTargets(rubricExpectations), [rubricExpectations]);
+
+    // No sources yet: don't render — the hero card is doing the
+    // entry-point work in that state.
+    if (coverage.total === 0) return null;
+
+    // Three-tier compliance state, per the dialectical strategy's
+    // own logic (NOT the rubric's per-type minimums):
+    //   - 'missing'  → at least one role has zero sources. Treat as
+    //                  non-compliance — the strategy literally requires
+    //                  three roles to function (an "ancla + contraste
+    //                  + técnica" triangle); zero of any role breaks
+    //                  the method, regardless of how many sources the
+    //                  other roles carry.
+    //   - 'partial'  → every role has ≥1 source but at least one is
+    //                  below its target. Real progress, but the user
+    //                  can still go deeper. Soft warning tone.
+    //   - 'balanced' → every role meets its effective target.
+    //
+    // This replaces the previous binary (allGood vs not) which couldn't
+    // distinguish "5 anchors / 0 contrast / 0 technical" from "3/3/2"
+    // — the user pointed out both states currently rendered identically
+    // even though only one of them is a structural problem.
+    const missingRoles = (['anchor', 'contrast', 'technical'] as const).filter(r => coverage[r] === 0);
+    const allBalanced =
+        coverage.anchor >= effectiveTargets.anchor &&
+        coverage.contrast >= effectiveTargets.contrast &&
+        coverage.technical >= effectiveTargets.technical;
+    const state: 'missing' | 'partial' | 'balanced' =
+        missingRoles.length > 0 ? 'missing' : (allBalanced ? 'balanced' : 'partial');
+
+    const containerTone =
+        state === 'balanced' ? 'border-success/30 bg-success-subtle/40'
+            : state === 'missing' ? 'border-warning/60 bg-warning-subtle/60'
+                : 'border-warning/40 bg-warning-subtle/40';
+    const iconTone =
+        state === 'balanced' ? 'text-success'
+            : 'text-warning-subtle-foreground';
+    const Icon = state === 'balanced' ? Sparkles : AlertTriangle;
+    const titleKey =
+        state === 'balanced' ? 'paperSetup.subSteps.corpus.roleCoverage.balancedTitle'
+            : state === 'missing' ? 'paperSetup.subSteps.corpus.roleCoverage.missingTitle'
+                : 'paperSetup.subSteps.corpus.roleCoverage.partialTitle';
+
+    // Per-role deficit list for the body. Names which roles are
+    // below target and by how much, so the user doesn't have to
+    // scan three chips to figure out where the gap is. Empty for
+    // the balanced state.
+    const deficits = (['anchor', 'contrast', 'technical'] as const)
+        .map(r => ({ role: r, gap: Math.max(0, effectiveTargets[r] - coverage[r]) }))
+        .filter(d => d.gap > 0);
+    const bodyText = (() => {
+        if (state === 'balanced') return null;
+        if (state === 'missing') return t('paperSetup.subSteps.corpus.roleCoverage.missingBody');
+        // Partial: enumerate the specific roles below target. The
+        // generic "suma fuentes en los roles que aún están bajo el
+        // target" copy was easy to misread when the actual gap was
+        // a single source on one role — the user mistook the chip
+        // for "close enough" instead of seeing it as a real miss.
+        const parts = deficits.map(d => t('paperSetup.subSteps.corpus.roleCoverage.partialDeficitItem', {
+            role: t(`paperSetup.subSteps.corpus.roleCoverage.role.${d.role}`).toLowerCase(),
+            gap: d.gap,
+        }));
+        const list = parts.join(t('paperSetup.subSteps.corpus.roleCoverage.partialDeficitJoiner'));
+        return t('paperSetup.subSteps.corpus.roleCoverage.partialBody', { gaps: list });
+    })();
+
+    return (
+        <section className={`rounded-xl border p-4 space-y-3 ${containerTone}`}>
+            <header className="flex items-start gap-2.5">
+                <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${iconTone}`} aria-hidden />
+                <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground">
+                        {t('paperSetup.subSteps.corpus.roleCoverage.eyebrow')}
+                    </p>
+                    <h3 className="text-sm font-semibold text-foreground mt-0.5">
+                        {t(titleKey)}
+                    </h3>
+                </div>
+            </header>
+
+            <div className="grid grid-cols-3 gap-2">
+                <RoleCountChip
+                    role="anchor"
+                    count={coverage.anchor}
+                    target={effectiveTargets.anchor}
+                    fromRubric={rubricExpectations.anchor > 0}
+                    onAdd={() => onPickRole('anchor')}
+                />
+                <RoleCountChip
+                    role="contrast"
+                    count={coverage.contrast}
+                    target={effectiveTargets.contrast}
+                    fromRubric={rubricExpectations.contrast > 0}
+                    onAdd={() => onPickRole('contrast')}
+                />
+                <RoleCountChip
+                    role="technical"
+                    count={coverage.technical}
+                    target={effectiveTargets.technical}
+                    fromRubric={rubricExpectations.technical > 0}
+                    onAdd={() => onPickRole('technical')}
+                />
+            </div>
+
+            {bodyText && (
+                <p className="text-[11.5px] text-muted-foreground leading-snug">
+                    {bodyText}
+                </p>
+            )}
+        </section>
+    );
+}
+
+function RoleCountChip({
+    role,
+    count,
+    target,
+    fromRubric,
+    onAdd,
+}: {
+    role: SourceRole;
+    count: number;
+    /** Effective target — rubric minimum if present, strategy suggestion otherwise. */
+    target: number;
+    /** True when the target came from the rubric (vs strategy fallback). */
+    fromRubric: boolean;
+    /**
+     * Opens the add-source dialog with this role's library filter +
+     * typical SourceType pre-selected. The chip becomes the entry
+     * point per role once the user has at least one source — before
+     * this, the only role-aware entry point was the empty-state
+     * `RolePickerButton` in the hero, which disappeared after the
+     * first source was added (so dialectical-mode users couldn't
+     * easily route a new source to "contrast" or "technical" without
+     * navigating the full dialog).
+     */
+    onAdd: () => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const ok = count >= target;
+    const gap = Math.max(0, target - count);
+    return (
+        <div
+            className={[
+                'rounded-lg border px-3 py-2 flex flex-col',
+                ok ? 'border-success/30 bg-card' : 'border-warning/40 bg-card',
+            ].join(' ')}
+        >
+            <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                {t(`paperSetup.subSteps.corpus.roleCoverage.role.${role}`)}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+                <p className={[
+                    'text-lg font-semibold tabular-nums leading-tight',
+                    ok ? 'text-success' : 'text-warning-subtle-foreground',
+                ].join(' ')}>
+                    {count}
+                    <span className="text-[11px] text-muted-foreground font-normal ml-1">
+                        / {target}
+                    </span>
+                </p>
+                {/* Explicit deficit badge so the gap doesn't hide
+                    behind subtle color shifts. The user reported
+                    that "3/4" reads as "good enough" without this
+                    cue — the warning border alone wasn't loud
+                    enough when the deficit was a single source. */}
+                {!ok && (
+                    <span className="inline-flex items-center rounded-full border border-warning/50 bg-warning-subtle px-1.5 py-0 text-[10px] font-semibold uppercase tracking-wide text-warning-subtle-foreground whitespace-nowrap">
+                        {t('paperSetup.subSteps.corpus.roleCoverage.deficitBadge', { gap })}
+                    </span>
+                )}
+            </div>
+            {/* Single-line hint. The previous "(estrategia)" /
+                "(rúbrica)" suffix wrapped on every chip and added
+                noise — the source of the target is already conveyed
+                by the section copy ("Si tu rúbrica especifica un
+                mínimo, ese gana; si no, mostramos la estrategia").
+                Hidden behind `title` so power users can still inspect
+                it on hover. */}
+            <p
+                className="text-[10.5px] text-muted-foreground leading-tight mt-0.5"
+                title={t(fromRubric
+                    ? 'paperSetup.subSteps.corpus.roleCoverage.targetSource.rubric'
+                    : 'paperSetup.subSteps.corpus.roleCoverage.targetSource.strategy') as string}
+            >
+                {t(`paperSetup.subSteps.corpus.roleCoverage.hint.${role}`)}
+            </p>
+            {/* Per-chip CTA. Always visible (not just on misses) so
+                the user can add MORE for an already-satisfied role
+                without hunting for a generic button. Tone shifts:
+                primary tint on misses (the action you should take
+                next), muted on satisfied roles (still available, but
+                doesn't compete for attention). */}
+            <button
+                type="button"
+                onClick={onAdd}
+                className={[
+                    'mt-2 inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+                    ok
+                        ? 'border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        : 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15',
+                ].join(' ')}
+            >
+                <Upload className="h-3 w-3" aria-hidden />
+                {t(`paperSetup.subSteps.corpus.roleCoverage.addCta.${role}`)}
+            </button>
+        </div>
+    );
+}
+
+function EmptySourcesState({ onAdd }: { onAdd: () => void }) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-5 text-center space-y-3">
+            <p className="text-xs text-muted-foreground italic">
+                {t('paperSetup.subSteps.corpus.list.empty')}
+            </p>
+            <Button
+                type="button"
+                onClick={onAdd}
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+            >
+                <Upload className="h-3 w-3 mr-1" />
+                {t('paperSetup.subSteps.corpus.list.addCta')}
+            </Button>
+        </div>
+    );
+}
+
+/**
+ * Hero card for users who already have a library stocked. Sells the
+ * curated-extraction path as the primary route and contrasts it
+ * against the dump-the-whole-PDF approach so the differentiator vs
+ * generic AI tools (NotebookLM et al.) lands at the entry point —
+ * not buried behind a small "Extract" button.
+ *
+ * Falls back to "Subir archivo nuevo" as a secondary link so the
+ * upload path stays one click away.
+ */
+function ExtractHeroCard({
+    libraryCount,
+    strategy,
+    onExtract,
+    onAdd,
+    onPickRole,
+}: {
+    libraryCount: number;
+    strategy: 'free' | 'dialectical';
+    onExtract: () => void;
+    onAdd: () => void;
+    onPickRole: (role: SourceRole) => void;
+}) {
+    const { t } = useTranslation('exegesis');
+
+    if (strategy === 'dialectical') {
+        return (
+            <div className="rounded-xl border border-success/30 bg-success-subtle/40 p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-success/15 p-2 shrink-0">
+                        <Sparkles className="h-5 w-5 text-success" aria-hidden />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-success font-semibold">
+                            {t('paperSetup.subSteps.corpus.hero.dialecticalEyebrow')}
+                        </p>
+                        <h4 className="text-base font-semibold text-foreground mt-0.5">
+                            {t('paperSetup.subSteps.corpus.hero.dialecticalTitle', { count: libraryCount })}
+                        </h4>
+                        <p className="text-[12.5px] text-foreground/80 leading-relaxed mt-1.5">
+                            {t('paperSetup.subSteps.corpus.hero.dialecticalBody')}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <RolePickerButton role="anchor" recommended onClick={() => onPickRole('anchor')} />
+                    <RolePickerButton role="contrast" onClick={() => onPickRole('contrast')} />
+                    <RolePickerButton role="technical" onClick={() => onPickRole('technical')} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 border-t border-success/20 mt-2 -mb-1">
+                    <p className="text-[10.5px] text-muted-foreground uppercase tracking-wide font-semibold">
+                        {t('paperSetup.subSteps.corpus.hero.dialecticalAlt')}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={onExtract}
+                        className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2 inline-flex items-center gap-1"
+                    >
+                        <Sparkles className="h-3 w-3" />
+                        {t('paperSetup.subSteps.corpus.hero.dialecticalAltExtract')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onAdd}
+                        className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                    >
+                        {t('paperSetup.subSteps.corpus.hero.secondaryCta')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Free mode — generic curated-extraction pitch.
+    return (
+        <div className="rounded-xl border border-success/30 bg-success-subtle/40 p-5 space-y-4">
+            <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-success/15 p-2 shrink-0">
+                    <Sparkles className="h-5 w-5 text-success" aria-hidden />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-success font-semibold">
+                        {t('paperSetup.subSteps.corpus.hero.eyebrow')}
+                    </p>
+                    <h4 className="text-base font-semibold text-foreground mt-0.5">
+                        {t('paperSetup.subSteps.corpus.hero.title', { count: libraryCount })}
+                    </h4>
+                    <p className="text-[12.5px] text-foreground/80 leading-relaxed mt-1.5">
+                        {t('paperSetup.subSteps.corpus.hero.body')}
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11.5px]">
+                <ComparisonChip
+                    icon={<Quote className="h-3.5 w-3.5" />}
+                    label={t('paperSetup.subSteps.corpus.hero.bullet1Title')}
+                    body={t('paperSetup.subSteps.corpus.hero.bullet1Body')}
+                />
+                <ComparisonChip
+                    icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                    label={t('paperSetup.subSteps.corpus.hero.bullet2Title')}
+                    body={t('paperSetup.subSteps.corpus.hero.bullet2Body')}
+                />
+                <ComparisonChip
+                    icon={<ExternalLink className="h-3.5 w-3.5" />}
+                    label={t('paperSetup.subSteps.corpus.hero.bullet3Title')}
+                    body={t('paperSetup.subSteps.corpus.hero.bullet3Body')}
+                />
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+                <Button
+                    type="button"
+                    onClick={onExtract}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
+                >
+                    <Sparkles className="h-4 w-4" />
+                    {t('paperSetup.subSteps.corpus.hero.primaryCta')}
+                </Button>
+                <button
+                    type="button"
+                    onClick={onAdd}
+                    className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                >
+                    {t('paperSetup.subSteps.corpus.hero.secondaryCta')}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Per-role primary action button for the dialectical hero. Each opens
+ * the add-source dialog with the role's typical SourceType + library
+ * filter pre-applied so the student lands directly on plausible
+ * candidates for that role. Anchor gets a "Recomendado" hint because
+ * starting with the anchor is the canonical step-1 of the method.
+ */
+function RolePickerButton({
+    role,
+    onClick,
+    recommended = false,
+}: {
+    role: SourceRole;
+    onClick: () => void;
+    recommended?: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
+    const range = STRATEGY_SUGGESTED_RANGES[role];
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={[
+                'text-left rounded-lg border-2 p-3 transition-colors space-y-1.5 bg-card',
+                recommended
+                    ? 'border-primary hover:border-primary/80 shadow-sm'
+                    : 'border-border hover:border-foreground/40',
+            ].join(' ')}
+        >
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10.5px] uppercase tracking-wide font-bold text-primary">
+                    {t(`paperSetup.subSteps.corpus.hero.role.${role}.action`)}
+                </span>
+                {recommended && (
+                    <span className="text-[9px] uppercase tracking-wide font-medium rounded-full border border-success/40 bg-success-subtle text-success-subtle-foreground px-1.5 py-0">
+                        {t('paperSetup.subSteps.corpus.hero.recommended')}
+                    </span>
+                )}
+            </div>
+            <p className="text-[11.5px] text-muted-foreground leading-snug">
+                {t(`paperSetup.subSteps.corpus.hero.role.${role}.body`)}
+            </p>
+            <p className="text-[10.5px] font-medium text-foreground/70 inline-flex items-center gap-1 pt-0.5">
+                <span className="tabular-nums rounded bg-muted px-1.5 py-0.5 text-[10px]">
+                    {range.min}–{range.max}
+                </span>
+                <span>{t('paperSetup.subSteps.corpus.hero.suggestedCount')}</span>
+            </p>
+        </button>
+    );
+}
+
+function ComparisonChip({
+    icon,
+    label,
+    body,
+}: {
+    icon: React.ReactNode;
+    label: string;
+    body: string;
+}) {
+    return (
+        <div className="rounded-md border border-success/20 bg-card/80 px-2.5 py-2">
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-success">
+                {icon}
+                {label}
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                {body}
+            </p>
+        </div>
+    );
+}
+
+function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectSource }) {
     const { t } = useTranslation('exegesis');
     const { updateSource, removeSource } = useExegesisPapers();
+    const extractExcerpts = useExtractExcerpts();
+    const library = useLibrary();
     const isCitable = CITABLE_SOURCE_TYPES.has(source.sourceType);
     const isExtracted = source.mode === 'extracted-excerpts';
+    const isStale = isExcerptSetStale(source, {
+        passageRef: formatPassageReference(paper.passage, paper.displayLanguage),
+        assignmentBrief: paper.assignmentBrief,
+    });
+    const canReExtract = isExtracted && !!source.sourceLibraryResourceId;
+    // The library_resource backref lets us link to the original PDF
+    // for "verify the citation against the source" workflows. Only
+    // populated when the source came from the library-extraction flow
+    // (Caso 1/2). Direct uploads (Caso 3) never have it.
+    const libraryResource = source.sourceLibraryResourceId
+        ? library.resources.find(r => r.id === source.sourceLibraryResourceId)
+        : null;
+    const originalUrl = libraryResource?.storageUrl ?? null;
     // Excerpts panel is collapsed by default — sources can have up to
     // 30 chunks each and unfolding them all by default would dwarf
     // everything else on the page. The user expands when they want
@@ -207,7 +972,7 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
     const handleTypeChange = async (next: SourceType) => {
         try {
             await updateSource.mutateAsync({
-                paperId,
+                paperId: paper.id,
                 sourceId: source.id,
                 sourceType: next,
             });
@@ -220,11 +985,30 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
 
     const handleRemove = async () => {
         try {
-            await removeSource.mutateAsync({ paperId, sourceId: source.id });
+            await removeSource.mutateAsync({ paperId: paper.id, sourceId: source.id });
             toast.success(t('paperSetup.subSteps.corpus.toast.removed'));
         } catch (err) {
             console.error('[exegesis] remove source failed:', err);
             toast.error(t('paperSetup.subSteps.corpus.toast.removeFailed'));
+        }
+    };
+
+    const handleReExtract = async () => {
+        if (!source.sourceLibraryResourceId) return;
+        try {
+            await extractExcerpts.mutateAsync({
+                paperId: paper.id,
+                selections: [{
+                    libraryResourceId: source.sourceLibraryResourceId,
+                    sourceType: source.sourceType,
+                    displayLabel: source.displayLabel,
+                    citationKey: source.citationKey ?? undefined,
+                }],
+            });
+            toast.success(t('paperSetup.subSteps.corpus.staleBanner.toastSuccess'));
+        } catch (err) {
+            console.error('[exegesis] re-extract source failed:', err);
+            toast.error(t('paperSetup.subSteps.corpus.staleBanner.toastError'));
         }
     };
 
@@ -250,6 +1034,18 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                         </p>
                     )}
                 </div>
+                {originalUrl && (
+                    <a
+                        href={originalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 rounded text-muted-foreground hover:text-primary hover:bg-accent transition-colors inline-flex items-center"
+                        aria-label={t('paperSetup.subSteps.corpus.list.viewOriginal')}
+                        title={t('paperSetup.subSteps.corpus.list.viewOriginal')}
+                    >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                )}
                 <button
                     type="button"
                     onClick={handleRemove}
@@ -261,6 +1057,14 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                     <X className="h-3.5 w-3.5" />
                 </button>
             </div>
+
+            {isStale && canReExtract && (
+                <StaleBanner
+                    onReExtract={handleReExtract}
+                    isReExtracting={extractExcerpts.isPending}
+                />
+            )}
+
             <SourceTypePicker
                 value={source.sourceType}
                 onChange={handleTypeChange}
@@ -297,13 +1101,48 @@ function SourceRow({ paperId, source }: { paperId: string; source: ProjectSource
                     </button>
                     {excerptsExpanded && (
                         <ExcerptsReviewPanel
-                            paperId={paperId}
+                            paperId={paper.id}
                             source={source}
                         />
                     )}
                 </div>
             )}
         </li>
+    );
+}
+
+function StaleBanner({
+    onReExtract,
+    isReExtracting,
+}: {
+    onReExtract: () => void;
+    isReExtracting: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="rounded-md border border-warning/40 bg-warning-subtle/60 px-2.5 py-2 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-warning-subtle-foreground mt-0.5 shrink-0" aria-hidden />
+            <div className="flex-1 min-w-0">
+                <p className="text-[11.5px] font-semibold text-warning-subtle-foreground leading-tight">
+                    {t('paperSetup.subSteps.corpus.staleBanner.title')}
+                </p>
+                <p className="text-[11px] text-warning-subtle-foreground/80 leading-snug mt-0.5">
+                    {t('paperSetup.subSteps.corpus.staleBanner.body')}
+                </p>
+            </div>
+            <Button
+                type="button"
+                size="sm"
+                onClick={onReExtract}
+                disabled={isReExtracting}
+                className="text-[11px] h-7 gap-1 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+            >
+                {isReExtracting
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <RefreshCcw className="h-3 w-3" />}
+                {t('paperSetup.subSteps.corpus.staleBanner.cta')}
+            </Button>
+        </div>
     );
 }
 
@@ -455,11 +1294,20 @@ function AddSourceDialog({
     open,
     onOpenChange,
     initialType,
+    initialRole,
 }: {
     paper: ExegeticalPaper;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initialType: SourceType | null;
+    /**
+     * When set (dialectical-mode role buttons), the dialog opens
+     * directly in library mode with the role's library types pre-
+     * filtered — student lands on plausible candidates for the role
+     * they're filling. Falls back to the standard 'upload' mode +
+     * 'all' filter when null.
+     */
+    initialRole: SourceRole | null;
 }) {
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
@@ -476,8 +1324,24 @@ function AddSourceDialog({
     const [citationKey, setCitationKey] = useState('');
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState<number | null>(null);
-    const [pickedResourceId, setPickedResourceId] = useState<string | null>(null);
+    // Library mode: multi-select. The Set holds the picked library
+    // resource ids; an empty set means "nothing selected", a 1-set
+    // means "single resource picked" (we still let the user customize
+    // label + cite for that one), and a ≥2 set means "bulk attach"
+    // (per-resource label + cite get auto-derived at submit).
+    const [pickedResourceIds, setPickedResourceIds] = useState<Set<string>>(new Set());
     const [librarySearch, setLibrarySearch] = useState('');
+    const [libraryTypeFilter, setLibraryTypeFilter] = useState<ResourceType | 'all'>('all');
+    // Testament filter: when the paper has a clear NT or OT passage,
+    // hide library resources that demonstrably belong to the other
+    // testament (HALOT on a NT paper, BDAG on an OT paper). The
+    // chip-toggle below lets the user disable this if they want a
+    // resource the inferer might have classified incorrectly.
+    const [testamentFilterEnabled, setTestamentFilterEnabled] = useState(true);
+
+    const paperTestament: Testament | null = useMemo(() => {
+        return getBookById(paper.passage.bookId)?.testament ?? null;
+    }, [paper.passage.bookId]);
 
     // Reset / pre-select on every open. The dialog is one-shot per
     // open: closing always discards the form so reopening starts
@@ -485,15 +1349,24 @@ function AddSourceDialog({
     // we honor it as the initial selection.
     useEffect(() => {
         if (open) {
-            setMode('upload');
+            // When the user opened from a role-specific button on the
+            // dialectical hero, jump straight to library mode with the
+            // role's library type pre-filtered. Otherwise default to
+            // upload mode with no filter.
+            const roleLibTypes = initialRole ? LIBRARY_TYPES_BY_ROLE[initialRole] : null;
+            const seedFilter: ResourceType | 'all' = roleLibTypes && roleLibTypes.length > 0
+                ? (roleLibTypes[0] as ResourceType)
+                : 'all';
+            setMode(initialRole ? 'library' : 'upload');
             setFile(null);
             setDisplayName('');
             setSourceType(initialType ?? 'commentary-critical');
             setCitationKey('');
-            setPickedResourceId(null);
+            setPickedResourceIds(new Set());
             setLibrarySearch('');
+            setLibraryTypeFilter(seedFilter);
         }
-    }, [open, initialType]);
+    }, [open, initialType, initialRole]);
 
     // Reads from the globally synced library cache (`useLibrarySync`
     // mounted at the dashboard shell). First open is instant for any
@@ -505,24 +1378,58 @@ function AddSourceDialog({
         [paper.sources],
     );
 
-    const filteredResources = useMemo(() => {
-        const all = library.resources;
-        const searchLower = librarySearch.trim().toLowerCase();
-        return all
-            // Don't list resources already attached to THIS paper —
-            // duplicating would create two ProjectSource entries to
-            // the same corpus, which is meaningless and inflates the
-            // gap card.
+    // Resources visible to the type filter (after the attached-already
+    // gate AND optional testament narrowing). Drives the filtered list
+    // and the per-type count chips — counts reflect what the user can
+    // actually pick, not the raw library size.
+    const availableForPicker = useMemo(
+        () => library.resources
             .filter(r => !attachedCorpusIds.has(r.id))
+            .filter(r => !testamentFilterEnabled || !paperTestament
+                ? true
+                : resourceMatchesTestament(r, paperTestament)),
+        [library.resources, attachedCorpusIds, testamentFilterEnabled, paperTestament],
+    );
+
+    // Count of resources EXCLUDED purely by the testament filter — drives
+    // the toggle chip's secondary label so the user knows what they're
+    // hiding.
+    const excludedByTestament = useMemo(() => {
+        if (!paperTestament) return 0;
+        return library.resources
+            .filter(r => !attachedCorpusIds.has(r.id))
+            .filter(r => !resourceMatchesTestament(r, paperTestament))
+            .length;
+    }, [library.resources, attachedCorpusIds, paperTestament]);
+
+    const filteredResources = useMemo(() => {
+        const searchLower = librarySearch.trim().toLowerCase();
+        return availableForPicker
+            .filter(r => libraryTypeFilter === 'all' || r.type === libraryTypeFilter)
             .filter(r => searchLower === ''
                 || r.title.toLowerCase().includes(searchLower)
                 || r.author.toLowerCase().includes(searchLower));
-    }, [library.resources, attachedCorpusIds, librarySearch]);
+    }, [availableForPicker, libraryTypeFilter, librarySearch]);
 
+    // Per-type counts for the chip row. Only types with ≥1 resource
+    // get a chip — empty chips are noise.
+    const typeCounts = useMemo(() => {
+        const counts = new Map<ResourceType, number>();
+        for (const r of availableForPicker) {
+            counts.set(r.type, (counts.get(r.type) ?? 0) + 1);
+        }
+        return counts;
+    }, [availableForPicker]);
+
+    const pickedCount = pickedResourceIds.size;
+    const isBulkLibrary = mode === 'library' && pickedCount >= 2;
+    // Single-pick label is the user-editable one; bulk skips it.
     const labelOk = displayName.trim().length >= 3;
     const canSubmit = mode === 'upload'
         ? !!file && labelOk && !!user?.uid && !uploading
-        : !!pickedResourceId && labelOk && !!user?.uid && !uploading;
+        : isBulkLibrary
+            ? pickedCount >= 2 && !!user?.uid && !uploading
+            : pickedCount === 1 && labelOk && !!user?.uid && !uploading;
 
     const handleFile = (f: File | null) => {
         setFile(f);
@@ -532,18 +1439,32 @@ function AddSourceDialog({
     };
 
     const handlePickResource = (resource: LibraryResource) => {
-        setPickedResourceId(resource.id);
-        // Pre-fill label with the library resource's title; the
-        // student can still tweak before submit.
-        setDisplayName(resource.title || resource.id);
-        // Pre-fill citation key from the resource's author. The student
-        // can still tweak — this is a starting point, not authoritative.
-        // Empty author or empty derivation leaves the field blank so the
-        // generation step's `deriveCitationKey` fallback (which works
-        // off the displayLabel) takes over.
-        if (resource.author) {
-            const key = deriveCitationKeyFromAuthor(resource.author);
-            if (key) setCitationKey(key);
+        setPickedResourceIds(prev => {
+            const next = new Set(prev);
+            if (next.has(resource.id)) {
+                next.delete(resource.id);
+            } else {
+                next.add(resource.id);
+            }
+            return next;
+        });
+        // When the user lands on a single selection, pre-fill the
+        // editable label + cite from THAT resource so the form acts
+        // like the original single-pick UX. Toggling away from single
+        // (back to zero, or up to 2+) clears them so we don't leak
+        // stale data into a subsequent submit.
+        const willBeSingle = !pickedResourceIds.has(resource.id) && pickedResourceIds.size === 0;
+        if (willBeSingle) {
+            setDisplayName(resource.title || resource.id);
+            if (resource.author) {
+                const key = deriveCitationKeyFromAuthor(resource.author);
+                if (key) setCitationKey(key);
+            }
+        } else {
+            // Multi-select or deselect → clear the per-row fields so
+            // the bulk path can autoderive cleanly.
+            setDisplayName('');
+            setCitationKey('');
         }
     };
 
@@ -553,7 +1474,6 @@ function AddSourceDialog({
         setUploading(true);
         setProgress(0);
         try {
-            let corpusId: string;
             if (mode === 'upload') {
                 if (!file) return;
                 // Upload through the library pipeline. `type: 'other'`
@@ -570,20 +1490,49 @@ function AddSourceDialog({
                     },
                     (p) => setProgress(p),
                 );
-                corpusId = resource.id;
+                await addSource.mutateAsync({
+                    paperId: paper.id,
+                    corpusId: resource.id,
+                    sourceType,
+                    displayLabel: displayName.trim(),
+                    citationKey: citationKey.trim() || undefined,
+                });
+            } else if (isBulkLibrary) {
+                // Bulk attach: loop the selections, autoderive
+                // displayLabel and citationKey from each resource.
+                // Sequential to avoid concurrent updates fighting on
+                // the paper's `sources` array (the repo writes the
+                // whole array per addSource).
+                const picked = Array.from(pickedResourceIds)
+                    .map(id => library.resources.find(r => r.id === id))
+                    .filter((r): r is LibraryResource => !!r);
+                for (const r of picked) {
+                    const autoCite = r.author ? deriveCitationKeyFromAuthor(r.author) : '';
+                    await addSource.mutateAsync({
+                        paperId: paper.id,
+                        corpusId: r.id,
+                        sourceType,
+                        displayLabel: r.title || r.id,
+                        citationKey: autoCite || undefined,
+                    });
+                }
             } else {
-                if (!pickedResourceId) return;
-                corpusId = pickedResourceId;
+                // Single library pick — keep the editable label/cite
+                // path so the user can override what was pre-filled.
+                const onlyId = pickedResourceIds.values().next().value;
+                if (!onlyId) return;
+                await addSource.mutateAsync({
+                    paperId: paper.id,
+                    corpusId: onlyId,
+                    sourceType,
+                    displayLabel: displayName.trim(),
+                    citationKey: citationKey.trim() || undefined,
+                });
             }
-
-            await addSource.mutateAsync({
-                paperId: paper.id,
-                corpusId,
-                sourceType,
-                displayLabel: displayName.trim(),
-                citationKey: citationKey.trim() || undefined,
-            });
-            toast.success(t('paperSetup.subSteps.corpus.toast.added'));
+            const successKey = isBulkLibrary
+                ? 'paperSetup.subSteps.corpus.toast.bulkAdded'
+                : 'paperSetup.subSteps.corpus.toast.added';
+            toast.success(t(successKey, { count: pickedCount || 1 }));
             // Close the dialog on success. The open-effect resets
             // the form on the next open, so we don't need to clear
             // state here.
@@ -657,33 +1606,50 @@ function AddSourceDialog({
                                 <LibraryPicker
                                     isLoading={library.isLoading}
                                     resources={filteredResources}
-                                    pickedResourceId={pickedResourceId}
+                                    pickedResourceIds={pickedResourceIds}
                                     onPick={handlePickResource}
                                     searchTerm={librarySearch}
                                     onSearchChange={setLibrarySearch}
                                     totalAttached={attachedCorpusIds.size}
                                     totalAvailable={library.resources.length}
+                                    typeFilter={libraryTypeFilter}
+                                    onTypeFilterChange={setLibraryTypeFilter}
+                                    typeCounts={typeCounts}
+                                    paperTestament={paperTestament}
+                                    testamentFilterEnabled={testamentFilterEnabled}
+                                    onToggleTestamentFilter={() => setTestamentFilterEnabled(v => !v)}
+                                    excludedByTestament={excludedByTestament}
                                 />
                             )}
 
-                            <FieldGroup>
-                                <FieldLabel htmlFor="addsource-label">
-                                    {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
-                                </FieldLabel>
-                                <input
-                                    id="addsource-label"
-                                    type="text"
-                                    value={displayName}
-                                    onChange={(e) => setDisplayName(e.target.value)}
-                                    disabled={uploading}
-                                    placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
-                                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                                />
-                            </FieldGroup>
+                            {/* In bulk-library mode the per-source label
+                                and citation key are auto-derived at submit
+                                from each resource's title + author. The
+                                form collapses to a single shared "type"
+                                picker plus an explicit autoderivation
+                                hint so the user knows what's happening. */}
+                            {!isBulkLibrary && (
+                                <FieldGroup>
+                                    <FieldLabel htmlFor="addsource-label">
+                                        {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
+                                    </FieldLabel>
+                                    <input
+                                        id="addsource-label"
+                                        type="text"
+                                        value={displayName}
+                                        onChange={(e) => setDisplayName(e.target.value)}
+                                        disabled={uploading}
+                                        placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
+                                        className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                                    />
+                                </FieldGroup>
+                            )}
 
                             <FieldGroup>
                                 <FieldLabel htmlFor="addsource-type">
-                                    {t('paperSetup.subSteps.corpus.upload.typeLabel')}
+                                    {isBulkLibrary
+                                        ? t('paperSetup.subSteps.corpus.upload.typeLabelBulk', { count: pickedCount })
+                                        : t('paperSetup.subSteps.corpus.upload.typeLabel')}
                                 </FieldLabel>
                                 <SourceTypePicker
                                     id="addsource-type"
@@ -693,7 +1659,9 @@ function AddSourceDialog({
                                     className="w-full !py-2 !text-sm"
                                 />
                                 <FieldHint>
-                                    {t('paperSetup.subSteps.corpus.upload.typeDescription')}
+                                    {isBulkLibrary
+                                        ? t('paperSetup.subSteps.corpus.upload.typeDescriptionBulk')
+                                        : t('paperSetup.subSteps.corpus.upload.typeDescription')}
                                 </FieldHint>
                                 {!isCitable && (
                                     <p className="text-[11px] text-warning-subtle-foreground inline-flex items-start gap-1.5 mt-0.5">
@@ -703,7 +1671,7 @@ function AddSourceDialog({
                                 )}
                             </FieldGroup>
 
-                            {isCitable && (
+                            {isCitable && !isBulkLibrary && (
                                 <FieldGroup>
                                     <FieldLabel htmlFor="addsource-cite">
                                         {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}
@@ -722,6 +1690,12 @@ function AddSourceDialog({
                                         {t('paperSetup.subSteps.corpus.upload.citationKeyHint')}
                                     </FieldHint>
                                 </FieldGroup>
+                            )}
+
+                            {isBulkLibrary && isCitable && (
+                                <FieldHint>
+                                    {t('paperSetup.subSteps.corpus.upload.citationKeyAutoderiveHint')}
+                                </FieldHint>
                             )}
                         </div>
                     </div>
@@ -758,7 +1732,9 @@ function AddSourceDialog({
                                 )}
                                 {mode === 'upload'
                                     ? t('paperSetup.subSteps.corpus.upload.submit')
-                                    : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
+                                    : isBulkLibrary
+                                        ? t('paperSetup.subSteps.corpus.upload.submitBulkFromLibrary', { count: pickedCount })
+                                        : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
                             </Button>
                         </div>
                     </div>
@@ -843,23 +1819,46 @@ function SidebarTab({
 function LibraryPicker({
     isLoading,
     resources,
-    pickedResourceId,
+    pickedResourceIds,
     onPick,
     searchTerm,
     onSearchChange,
     totalAttached,
     totalAvailable,
+    typeFilter,
+    onTypeFilterChange,
+    typeCounts,
+    paperTestament,
+    testamentFilterEnabled,
+    onToggleTestamentFilter,
+    excludedByTestament,
 }: {
     isLoading: boolean;
     resources: ReadonlyArray<LibraryResource>;
-    pickedResourceId: string | null;
+    pickedResourceIds: Set<string>;
     onPick: (resource: LibraryResource) => void;
     searchTerm: string;
     onSearchChange: (next: string) => void;
     totalAttached: number;
     totalAvailable: number;
+    typeFilter: ResourceType | 'all';
+    onTypeFilterChange: (next: ResourceType | 'all') => void;
+    typeCounts: Map<ResourceType, number>;
+    paperTestament: Testament | null;
+    testamentFilterEnabled: boolean;
+    onToggleTestamentFilter: () => void;
+    excludedByTestament: number;
 }) {
     const { t } = useTranslation('exegesis');
+
+    // Stable order: most common exegesis-relevant types first, then
+    // the long tail. Skip types with zero items — empty chips are noise.
+    const orderedTypes: ResourceType[] = ([
+        'commentary', 'exegetical-commentary', 'theological-dictionary',
+        'bible-dictionary', 'theology', 'grammar', 'critical-text',
+        'historical-context', 'biblical-survey', 'article', 'other',
+    ] as ResourceType[]).filter(t => (typeCounts.get(t) ?? 0) > 0);
+    const totalAvailableForFilter = Array.from(typeCounts.values()).reduce((s, n) => s + n, 0);
 
     return (
         <div className="space-y-3">
@@ -873,6 +1872,58 @@ function LibraryPicker({
                     className="w-full rounded-md border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 />
             </div>
+
+            {/* Testament filter pill — visible only when the paper has
+                a clear testament AND there's something to hide. The
+                pill toggles on/off; "off" reveals everything (escape
+                hatch when the user knows the inferer mis-classified). */}
+            {paperTestament && excludedByTestament > 0 && (
+                <button
+                    type="button"
+                    onClick={onToggleTestamentFilter}
+                    aria-pressed={testamentFilterEnabled}
+                    className={[
+                        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] transition-colors',
+                        testamentFilterEnabled
+                            ? 'border-success/40 bg-success-subtle/40 text-success-subtle-foreground hover:bg-success-subtle/60'
+                            : 'border-border bg-card text-muted-foreground hover:bg-accent/40',
+                    ].join(' ')}
+                    title={testamentFilterEnabled
+                        ? t('paperSetup.subSteps.corpus.libraryFilter.testamentTooltipOff', { count: excludedByTestament })
+                        : t('paperSetup.subSteps.corpus.libraryFilter.testamentTooltipOn')}
+                >
+                    {testamentFilterEnabled ? <Check className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    <span>
+                        {testamentFilterEnabled
+                            ? t(`paperSetup.subSteps.corpus.libraryFilter.testamentActive.${paperTestament}`, { count: excludedByTestament })
+                            : t('paperSetup.subSteps.corpus.libraryFilter.testamentInactive')}
+                    </span>
+                </button>
+            )}
+
+            {/* Type filter chips — show only when there are ≥2 distinct
+                types in the available pool (one type = no choice to
+                make). Horizontal scroll on overflow so we don't wrap a
+                wall of chips on narrow viewports. */}
+            {orderedTypes.length >= 2 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-0.5 px-0.5">
+                    <FilterChip
+                        active={typeFilter === 'all'}
+                        onClick={() => onTypeFilterChange('all')}
+                        label={t('paperSetup.subSteps.corpus.libraryFilter.all')}
+                        count={totalAvailableForFilter}
+                    />
+                    {orderedTypes.map(type => (
+                        <FilterChip
+                            key={type}
+                            active={typeFilter === type}
+                            onClick={() => onTypeFilterChange(type)}
+                            label={t(`paperSetup.subSteps.corpus.libraryFilter.types.${type}`)}
+                            count={typeCounts.get(type) ?? 0}
+                        />
+                    ))}
+                </div>
+            )}
 
             {isLoading ? (
                 <div className="rounded-lg border border-border bg-muted/20 px-4 py-8 text-center">
@@ -895,12 +1946,13 @@ function LibraryPicker({
                 <ul className="max-h-[320px] overflow-y-auto rounded-lg border border-border bg-card divide-y divide-border">
                     {resources.map(r => {
                         const status = libraryService.getResourceIndexStatus(r);
-                        const picked = pickedResourceId === r.id;
+                        const picked = pickedResourceIds.has(r.id);
                         return (
                             <li key={r.id}>
                                 <button
                                     type="button"
                                     onClick={() => onPick(r)}
+                                    aria-pressed={picked}
                                     className={[
                                         'w-full text-left px-3.5 py-2.5 flex items-start gap-3 transition-colors',
                                         picked
@@ -908,6 +1960,21 @@ function LibraryPicker({
                                             : 'hover:bg-accent/40',
                                     ].join(' ')}
                                 >
+                                    {/* Checkbox-style indicator so the
+                                        multi-select intent is visible
+                                        before any toggle. Clicking
+                                        anywhere on the row toggles. */}
+                                    <span
+                                        aria-hidden
+                                        className={[
+                                            'h-4 w-4 mt-0.5 shrink-0 rounded border-2 flex items-center justify-center transition-colors',
+                                            picked
+                                                ? 'bg-primary border-primary text-primary-foreground'
+                                                : 'border-border bg-card',
+                                        ].join(' ')}
+                                    >
+                                        {picked && <CheckCircle2 className="h-3 w-3" />}
+                                    </span>
                                     <FileText className={[
                                         'h-4 w-4 mt-0.5 shrink-0',
                                         picked ? 'text-success' : 'text-muted-foreground',
@@ -925,9 +1992,6 @@ function LibraryPicker({
                                             <ResourceReadinessBadge status={status} />
                                         </div>
                                     </div>
-                                    {picked && (
-                                        <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
-                                    )}
                                 </button>
                             </li>
                         );
@@ -935,6 +1999,45 @@ function LibraryPicker({
                 </ul>
             )}
         </div>
+    );
+}
+
+/**
+ * Toggle pill for the resource-type filter strip. Uses the `aria-pressed`
+ * pattern instead of native radios so the chip row can scroll
+ * horizontally without being broken up by form-control semantics.
+ */
+function FilterChip({
+    active,
+    onClick,
+    label,
+    count,
+}: {
+    active: boolean;
+    onClick: () => void;
+    label: string;
+    count: number;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={active}
+            className={[
+                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-medium whitespace-nowrap transition-colors shrink-0',
+                active
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground',
+            ].join(' ')}
+        >
+            <span>{label}</span>
+            <span className={[
+                'tabular-nums text-[10.5px] rounded-full px-1.5 py-0',
+                active ? 'bg-primary/20' : 'bg-muted text-muted-foreground/80',
+            ].join(' ')}>
+                {count}
+            </span>
+        </button>
     );
 }
 

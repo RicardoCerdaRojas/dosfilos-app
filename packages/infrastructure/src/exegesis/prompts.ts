@@ -16,7 +16,8 @@ import {
  * passage. Per-step-kind variants emphasize different exegetical work:
  *
  *   verse        — translation + decisions + morphology + syntax + source
- *                  interaction + own position + verse-level conclusion
+ *                  interaction + own position + a verse-specific thesis
+ *                  (NOT a passage summary — that's the conclusion step's job)
  *   conclusion   — synthesizes accepted verses; introduces NO new arguments
  *   introduction — written last; presents thesis derived from the body,
  *                  brief methodology, and direction of argument
@@ -125,26 +126,64 @@ function buildUserMessage(input: ExegesisGenerationInput): string {
 
     if (input.kind === 'verse' && input.verseRef) {
         const verse = formatPassageReference(input.verseRef, lang);
+        // INTERIM PROMPT — see docs/exegesis/METODOLOGIA.md and the
+        // VerseAnalysis schema in @dosfilos/domain. The verse step
+        // currently emits markdown directly; the architectural target
+        // is to emit a structured `VerseAnalysis` object that
+        // composers (academic / sermon / devotional) consume. This
+        // 8-step structure is preserved as study-mode output until
+        // the structured pipeline lands. Do NOT iterate further on
+        // this prompt — invest in the schema migration instead.
         const expected = lang === 'en'
             ? [
+                `**Internal order BEFORE writing**: do the morphological + syntactic + lexical analysis MENTALLY first. The translation you present in section 2 must be the OUTPUT of that analysis, not a guess justified afterwards. The reader sees translation-then-defense (sections 2-5), but you must derive it analysis-first.`,
+                ``,
                 `1. Present the Greek text of ${verse}.`,
-                `2. Present your own translation.`,
+                `2. Present your own translation (derived from the mental analysis below).`,
                 `3. Explain the main translation decisions.`,
                 `4. Morphological analysis of relevant forms.`,
                 `5. Syntactic analysis of clauses, participles, genitives, prepositional phrases, modifiers, and internal relations.`,
                 `6. Interact with the configured sources by name and page.`,
                 `7. Take an explicit position on the main translation decisions.`,
-                `8. Close with a brief exegetical conclusion explaining how this verse contributes to the argument of ${formatPassageReference(input.paperPassage, lang)}.`,
+                `8. **Final section — title MUST BE exactly "Tesis del verso" (in Spanish output) or "Verse thesis" (in English output). DO NOT use the word "Conclusion" / "Conclusión" anywhere.** 1-3 sentences. State what THIS specific verse establishes from the analysis above.`,
+                ``,
+                `   What this section CAN do:`,
+                `   - Articulate the verse's specific contribution (a thesis — what the verse asserts, given the grammar/lexis you analyzed).`,
+                `   - Reference the IMMEDIATELY ADJACENT verse (the one immediately before or after ${verse}) ONLY when the verse forms an inseparable grammatical/argumentative unit with it — μέν...δέ contrasts, participial chains spanning two verses, comparative pairs whose conclusion requires naming both members. The reference must be DEMANDED BY THE GRAMMAR of ${verse} itself, not added to summarize.`,
+                ``,
+                `   HARD PROHIBITIONS:`,
+                `   - Do NOT mention verses more than ONE verse away from ${verse}. The whole-passage range, distant verses inside the pericope, and chains of references like "vv. N-M, v. P, v. Q" are forbidden. Only the immediate neighbor (and only when grammatically required) is allowed.`,
+                `   - Do NOT recap the pericope's overall structure. Verbs like "transitions to", "introduces the section", "marks the inflection point", "develops the theme", "constitutes the climax of", "completes the structure that began in..." signal recap mode and are banned.`,
+                `   - Do NOT describe how this verse fits the paper's full argument — that synthesis is the JOB OF THE PAPER'S CONCLUSION STEP.`,
+                `   - Do NOT restate the translation or re-quote Greek terms already discussed above.`,
+                ``,
+                `   Correct mold (when ${verse} stands grammatically alone): "Verse ${verse} establishes that X, given that the grammatical/lexical analysis demonstrates Y."`,
+                `   Correct mold (when ${verse} is grammatically inseparable from its neighbor): "Verse ${verse} establishes X, setting up [or completing] the contrast with the immediately adjacent verse where Y." (Name the neighbor verse only if the grammar demands it.)`,
             ].join('\n')
             : [
+                `**Orden interno ANTES de escribir**: hacé el análisis morfológico + sintáctico + léxico MENTALMENTE primero. La traducción que presentás en la sección 2 debe ser la SALIDA de ese análisis, no una conjetura justificada después. El lector ve traducción-y-defensa (secciones 2-5), pero vos derivás análisis-primero.`,
+                ``,
                 `1. Presentá el texto griego de ${verse}.`,
-                `2. Presentá tu traducción propia.`,
+                `2. Presentá tu traducción propia (derivada del análisis mental que sigue).`,
                 `3. Explicá las decisiones principales de traducción.`,
                 `4. Análisis morfológico de las formas relevantes.`,
                 `5. Análisis sintáctico de cláusulas, participios, genitivos, frases preposicionales, modificadores y relaciones internas.`,
                 `6. Interactuá con las fuentes configuradas por nombre y página.`,
                 `7. Tomá posición explícita sobre las principales decisiones de traducción.`,
-                `8. Cerrá con una conclusión exegética breve sobre cómo este verso contribuye al argumento de ${formatPassageReference(input.paperPassage, lang)}.`,
+                `8. **Sección final — el título debe ser exactamente "Tesis del verso" (en salida español) o "Verse thesis" (en salida inglés). NO uses la palabra "Conclusión" / "Conclusion" en ningún lado.** 1-3 oraciones. Decí qué establece ESTE verso específicamente a partir del análisis anterior.`,
+                ``,
+                `   Lo que esta sección PUEDE hacer:`,
+                `   - Articular el aporte específico del verso (una tesis — qué afirma el verso, dado el análisis gramatical/léxico).`,
+                `   - Referenciar al verso INMEDIATAMENTE ADYACENTE (el de inmediatamente antes o después de ${verse}) SOLO cuando el verso forma una unidad gramatical/argumentativa inseparable con él — contrastes μέν...δέ, cadenas participiales que cruzan dos versos, pares comparativos cuya conclusión exige nombrar ambos miembros. La referencia debe estar EXIGIDA POR LA GRAMÁTICA misma de ${verse}, no agregada para resumir.`,
+                ``,
+                `   PROHIBICIONES DURAS:`,
+                `   - NO menciones versos a más de UN verso de distancia de ${verse}. El rango completo del pasaje, versos distantes dentro de la pericopa y cadenas de referencias tipo "vv. N-M, v. P, v. Q" están prohibidos. Solo el vecino inmediato (y solo cuando la gramática lo exige) está permitido.`,
+                `   - NO recapitules la estructura global de la pericopa. Verbos como "transita a", "introduce la sección", "marca el punto de inflexión", "desarrolla el tema", "constituye el clímax de", "completa la estructura que comenzó en..." señalan modo recap y están vetados.`,
+                `   - NO describas cómo este verso encaja en el argumento del paper completo — esa síntesis es TRABAJO DEL PASO CONCLUSIÓN DEL PAPER.`,
+                `   - NO repitas la traducción ni cites términos griegos ya discutidos arriba.`,
+                ``,
+                `   Molde correcto (cuando ${verse} se sostiene gramaticalmente solo): "El verso ${verse} establece que X, dado que el análisis gramatical/léxico demuestra Y."`,
+                `   Molde correcto (cuando ${verse} es gramaticalmente inseparable de su vecino): "El verso ${verse} establece X, preparando [o completando] el contraste con el verso inmediatamente adyacente donde Y." (Nombrá al verso vecino solo si la gramática lo exige.)`,
             ].join('\n');
         return [
             lang === 'en'

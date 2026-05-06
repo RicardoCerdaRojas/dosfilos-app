@@ -1,0 +1,216 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+    formatPassageReference,
+    type ComposeConclusionInput,
+    type ComposeConclusionOutput,
+    type ComposerSourceMetadata,
+    type IConclusionComposer,
+    type StyleGuideManifest,
+} from '@dosfilos/domain';
+import { withGeminiRetry } from '../geminiRetry';
+import { serializeAnalysis } from '../composer/serializeAnalysis';
+
+/**
+ * Gemini implementation of `IConclusionComposer`.
+ *
+ * Composes the conclusion section from the body's accepted verse
+ * analyses. The prompt enforces academic methodology: no new
+ * arguments, no new sources, no new analytic frame — synthesize
+ * what the body established and articulate the thesis it actually
+ * demonstrated.
+ *
+ * Output: 2-3 paragraphs of TMS-style academic prose. The use case
+ * runs the deterministic style formatter post-composition.
+ *
+ * Configuration:
+ *   - Model: Pro 2.5 by default. Synthesis benefits from Pro's
+ *     reasoning.
+ *   - Temperature: 0.4. Modest variation in connective tissue
+ *     between paragraphs without drifting into invention.
+ *   - Output tokens: 8k. Conclusions are SHORT — 8k provides ample
+ *     headroom for 2-3 paragraphs even in dense Spanish prose.
+ */
+export class GeminiConclusionComposer implements IConclusionComposer {
+    private genAI: GoogleGenerativeAI;
+    private modelName: string;
+
+    constructor(apiKey: string, modelName?: string) {
+        this.genAI = new GoogleGenerativeAI(apiKey);
+        this.modelName = modelName || 'gemini-2.5-pro';
+    }
+
+    async composeConclusion(input: ComposeConclusionInput): Promise<ComposeConclusionOutput> {
+        const { systemInstruction, userMessage } = buildConclusionPrompt(input);
+
+        const model = this.genAI.getGenerativeModel({
+            model: this.modelName,
+            systemInstruction,
+            generationConfig: {
+                temperature: 0.4,
+                topP: 0.9,
+                maxOutputTokens: 8192,
+            },
+        });
+
+        console.log('[GeminiConclusionComposer] composing', {
+            verseCount: input.verseAnalyses.length,
+            sourceCount: input.sources.length,
+            hasStyleGuide: Boolean(input.styleGuideContent || input.styleGuideManifest),
+            language: input.language,
+        });
+
+        const result = await withGeminiRetry(
+            () => model.generateContent(userMessage),
+            { contextLabel: 'GeminiConclusionComposer' },
+        );
+        const markdown = result.response.text();
+        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
+
+        return {
+            markdown,
+            modelId: this.modelName,
+            tokensUsed,
+            // Adapter doesn't run the deterministic formatter — that's
+            // the use case's job. Always reports 'skipped' here; the
+            // use case overrides to 'applied' / 'error'.
+            formatterStatus: 'skipped',
+        };
+    }
+}
+
+// ── Prompt construction ─────────────────────────────────────────────────
+
+function buildConclusionPrompt(input: ComposeConclusionInput): { systemInstruction: string; userMessage: string } {
+    const lang = input.language;
+    const passage = formatPassageReference(input.paperPassage, lang);
+    const styleGuideBlock = formatStyleGuide(input.styleGuideContent, input.styleGuideManifest, lang);
+    const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
+    const fallback = !input.styleGuideContent && !input.styleGuideManifest;
+
+    const system = lang === 'en'
+        ? [
+            `You are an academic writer composing the CONCLUSION section of a TMS-style exegetical research paper.`,
+            ``,
+            `## Paper`,
+            `Passage: **${passage}**`,
+            briefBlock,
+            ``,
+            `## Mandatory style guide`,
+            fallback
+                ? `(NO style guide attached. Apply The Master's Seminary / Turabian conventions explicitly: footnotes for citations, French quotation marks «...», italics for foreign-language terms, sober academic register.)`
+                : styleGuideBlock,
+            ``,
+            `## Hard rules for the conclusion`,
+            `- Synthesize what the body's verse analyses ACTUALLY ESTABLISHED. Do NOT introduce new arguments, new sources, or new lines of inquiry.`,
+            `- Restate the paper's thesis in the form the body demonstrated it — not the form the author originally hoped for.`,
+            `- 2-3 paragraphs. NOT a checklist. Continuous academic prose.`,
+            `- Citations sparingly: only when restating an exact verse-level claim that benefits from anchor citation. The bibliographic apparatus belongs to the body, not the conclusion.`,
+            `- NO devotional language, NO pastoral application, NO modern relevance. Pure synthesis of what the analysis established.`,
+            ``,
+            `## Hallucination guardrail`,
+            `- Only refer to ideas, decisions, and citations present in the verse analyses below. NEVER invent claims, citations, or commitments.`,
+            `- Translation commitments mentioned in the conclusion must be ones the body's analyses actually adopted (in their \`translationCruxes.commitment\`).`,
+            ``,
+            `## Output`,
+            `Single markdown block, 2-3 paragraphs. Start the section with a heading "## Conclusion" (English) or "## Conclusión" (Spanish), then the prose. No "##" sub-headings within.`,
+        ].filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n')
+        : [
+            `Sos un redactor académico componiendo la sección de CONCLUSIÓN de un trabajo exegético TMS-style.`,
+            ``,
+            `## Paper`,
+            `Pasaje: **${passage}**`,
+            briefBlock,
+            ``,
+            `## Guía de estilo obligatoria`,
+            fallback
+                ? `(SIN guía de estilo adjunta. Aplicá explícitamente convenciones The Master's Seminary / Turabian: notas al pie para citas, comillas francesas «...», itálicas para términos en lenguas extranjeras, registro académico sobrio.)`
+                : styleGuideBlock,
+            ``,
+            `## Reglas duras para la conclusión`,
+            `- Sintetizá lo que los análisis verso por verso EFECTIVAMENTE ESTABLECIERON. NO introduzcas argumentos nuevos, fuentes nuevas, ni líneas de indagación nuevas.`,
+            `- Reformulá la tesis del paper en la forma que el cuerpo demostró — no la forma que el autor inicialmente esperaba.`,
+            `- 2-3 párrafos. NO un checklist. Prosa académica continua.`,
+            `- Citas con moderación: solo al reformular un compromiso específico del cuerpo que se beneficia de cita ancla. El aparato bibliográfico pertenece al cuerpo, no a la conclusión.`,
+            `- SIN lenguaje devocional, SIN aplicación pastoral, SIN relevancia contemporánea. Síntesis pura de lo que el análisis estableció.`,
+            ``,
+            `## Salvaguarda contra alucinación`,
+            `- Solo referenciá ideas, decisiones y citas presentes en los análisis abajo. NUNCA inventes afirmaciones, citas o compromisos.`,
+            `- Los compromisos de traducción mencionados deben ser los que los análisis del cuerpo efectivamente adoptaron (en su \`translationCruxes.commitment\`).`,
+            ``,
+            `## Salida`,
+            `Un único bloque markdown, 2-3 párrafos. Comenzá la sección con un heading "## Conclusión", después la prosa. Sin sub-headings "##" adentro.`,
+        ].filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n');
+
+    const briefings = input.verseAnalyses.map(a => serializeAnalysis(a, lang)).join('\n\n');
+    const sourcesBlock = formatSourceRegistry(input.sources, lang);
+    const hint = input.regenerationHint
+        ? (lang === 'en'
+            ? `\n\n### Regeneration hint\n${input.regenerationHint}\n`
+            : `\n\n### Hint de regeneración\n${input.regenerationHint}\n`)
+        : '';
+
+    const userPrefix = lang === 'en'
+        ? `Compose the conclusion section for the paper on **${passage}**.`
+        : `Componé la sección de conclusión del paper sobre **${passage}**.`;
+    const briefingsHeading = lang === 'en'
+        ? '### Body — accepted verse analyses (synthesize from these only)'
+        : '### Cuerpo — análisis verso por verso aceptados (sintetizá solo desde estos)';
+    const sourcesHeading = lang === 'en'
+        ? '### Source registry (cite only these keys)'
+        : '### Registro de fuentes (citá solo estas claves)';
+
+    const user = [
+        userPrefix,
+        ``,
+        briefingsHeading,
+        ``,
+        briefings,
+        ``,
+        sourcesHeading,
+        ``,
+        sourcesBlock,
+        hint,
+        ``,
+        lang === 'en'
+            ? `Now produce the conclusion. 2-3 paragraphs of continuous academic prose, opening with "## Conclusion".`
+            : `Ahora producí la conclusión. 2-3 párrafos de prosa académica continua, abriendo con "## Conclusión".`,
+    ].filter(Boolean).join('\n');
+
+    return { systemInstruction: system, userMessage: user };
+}
+
+function formatAssignmentBrief(brief: string | null, lang: 'es' | 'en'): string {
+    if (!brief || !brief.trim()) return '';
+    const heading = lang === 'en' ? '## Paper framing' : '## Encuadre del paper';
+    return [``, heading, brief.trim()].join('\n');
+}
+
+function formatStyleGuide(content: string, manifest: StyleGuideManifest | null, lang: 'es' | 'en'): string {
+    const parts: string[] = [];
+    if (content && content.trim()) {
+        const truncated = content.length > 15_000 ? content.slice(0, 15_000) + '\n\n[…]' : content;
+        parts.push(lang === 'en' ? '**Style guide (verbatim)**' : '**Guía de estilo (verbatim)**');
+        parts.push('```');
+        parts.push(truncated);
+        parts.push('```');
+    }
+    if (manifest) {
+        parts.push('');
+        parts.push(lang === 'en' ? '**Structured manifest rules**' : '**Reglas estructuradas del manifest**');
+        parts.push('```json');
+        parts.push(JSON.stringify(manifest, null, 2));
+        parts.push('```');
+    }
+    return parts.length === 0
+        ? (lang === 'en'
+            ? '(Style guide present but content empty. Apply TMS / Turabian defaults.)'
+            : '(Guía de estilo presente pero contenido vacío. Aplicá defaults TMS / Turabian.)')
+        : parts.join('\n');
+}
+
+function formatSourceRegistry(sources: ReadonlyArray<ComposerSourceMetadata>, lang: 'es' | 'en'): string {
+    if (sources.length === 0) {
+        return lang === 'en' ? '(No sources configured.)' : '(Sin fuentes configuradas.)';
+    }
+    return sources.map(s => `- **${s.citationKey}**: ${s.author}, *${s.title}*`).join('\n');
+}

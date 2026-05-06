@@ -22,6 +22,8 @@ function makeSource(id: string, label: string, citationKey: string | null = null
         mode: 'full-document',
         excerpts: [],
         sourceLibraryResourceId: null,
+        extractedAt: null,
+        extractionFingerprint: null,
         createdAt: NOW,
     };
 }

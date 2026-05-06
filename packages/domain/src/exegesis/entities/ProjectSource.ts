@@ -99,6 +99,26 @@ export interface ProjectSource {
      */
     sourceLibraryResourceId: string | null;
 
+    /**
+     * Timestamp of the last successful extraction run for this source.
+     * Null for sources never extracted (`mode === 'full-document'`) or
+     * pre-v1.5.1 sources that predate stale tracking.
+     */
+    extractedAt: Date | null;
+
+    /**
+     * Stable digest of `(passage + assignmentBrief)` at extraction
+     * time. The UI compares this against the live paper's fingerprint
+     * to decide whether the excerpts are stale (brief or passage edited
+     * after extraction). Null for sources that don't have excerpts or
+     * predate the field.
+     *
+     * Use `computeExtractionFingerprint()` from this module to compute
+     * — never raw `JSON.stringify` so the format stays consistent
+     * across writers.
+     */
+    extractionFingerprint: string | null;
+
     createdAt: Date;
 }
 
@@ -152,6 +172,50 @@ export interface ProjectSourceExcerpt {
      * audit trails and stale-excerpt detection.
      */
     editedAt: Date | null;
+}
+
+/**
+ * Pure helper to derive the extraction fingerprint from the inputs
+ * the extractor actually feeds the retriever. Anything that affects
+ * which chunks come back belongs in here.
+ *
+ * Caller formats `passage` to its display string (typically via
+ * `formatPassageReference`) — keeping this helper string-only avoids
+ * a circular import with `bible/canon`.
+ *
+ * Format is stable so the UI's stale check works across different
+ * writers (use case + future migrators). Don't change without
+ * bumping a version prefix.
+ */
+export function computeExtractionFingerprint(
+    passageRef: string,
+    assignmentBrief: string | null,
+): string {
+    const passageNorm = (passageRef ?? '').trim().toLowerCase();
+    // Brief is sliced to the same window the extractor uses (first 500
+    // chars per v1.5 spec). Keep this in sync with
+    // `RetrieveChunksExcerptExtractor`'s query construction — if the
+    // window grows there, grow it here too.
+    const briefNorm = (assignmentBrief ?? '').trim().slice(0, 500);
+    return `v1|${passageNorm}|${briefNorm}`;
+}
+
+/**
+ * Returns true when the source's excerpts were extracted against a
+ * passage/brief that has since been edited. UI uses this to surface
+ * a "re-extract" banner. Returns false for sources never extracted
+ * (no fingerprint) — not stale, just empty.
+ *
+ * Caller passes the LIVE passage as a formatted string so the helper
+ * stays decoupled from the `bible/canon` module.
+ */
+export function isExcerptSetStale(
+    source: Pick<ProjectSource, 'mode' | 'extractionFingerprint'>,
+    livePaper: { passageRef: string; assignmentBrief: string | null },
+): boolean {
+    if (source.mode !== 'extracted-excerpts') return false;
+    if (!source.extractionFingerprint) return false;
+    return source.extractionFingerprint !== computeExtractionFingerprint(livePaper.passageRef, livePaper.assignmentBrief);
 }
 
 /**

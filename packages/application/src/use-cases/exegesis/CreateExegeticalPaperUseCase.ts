@@ -1,10 +1,19 @@
-import type {
-    CreateExegeticalPaperInput,
-    ExegeticalPaper,
-    IExegeticalPaperRepository,
-    IUserRubricRepository,
-    PaperRubric,
+import {
+    buildStrategyOnlyRubric,
+    STRATEGY_ONLY_RUBRIC_PRESET_ID,
+    type CreateExegeticalPaperInput,
+    type ExegeticalPaper,
+    type IExegeticalPaperRepository,
+    type IUserRubricRepository,
+    type PaperRubric,
 } from '@dosfilos/domain';
+
+/**
+ * Re-export so older callers (web hooks) that imported the sentinel
+ * from the application barrel keep working. The domain is the source
+ * of truth — see `PaperRubric.ts`.
+ */
+export { STRATEGY_ONLY_RUBRIC_PRESET_ID };
 
 /**
  * Creates a new exegetical paper in 'configuring' phase.
@@ -66,11 +75,24 @@ export class CreateExegeticalPaperUseCase {
             ownerId: input.ownerId,
             passage: input.passage,
             displayLanguage: input.displayLanguage,
+            exegeticalStrategy: input.exegeticalStrategy ?? 'dialectical',
             title: input.title,
             assignmentBrief: normalizeBrief(input.assignmentBrief),
             styleGuideId: input.styleGuideId,
             sources: [],
         });
+
+        // Strategy-only preset short-circuits template resolution.
+        // The repo seeded `buildDefaultRubric()` (TMS rigorous); we
+        // overwrite with `buildStrategyOnlyRubric()` so the role-
+        // coverage card falls back to the strategy's typical counts.
+        if (input.rubricTemplateId === STRATEGY_ONLY_RUBRIC_PRESET_ID) {
+            return this.paperRepository.setRubric(
+                input.ownerId,
+                created.id,
+                buildStrategyOnlyRubric(),
+            );
+        }
 
         // Resolve and apply rubric template if needed. The repo
         // already seeded `paper.rubric` with the system default, so
@@ -102,6 +124,10 @@ export class CreateExegeticalPaperUseCase {
         input: CreateExegeticalPaperInput,
     ): Promise<{ rubric: PaperRubric; templateId: string } | null> {
         if (!this.userRubricRepository) return null;
+
+        // Strategy-only is handled by the caller before this method
+        // — it's not a real template.
+        if (input.rubricTemplateId === STRATEGY_ONLY_RUBRIC_PRESET_ID) return null;
 
         // Explicit template wins.
         if (input.rubricTemplateId) {

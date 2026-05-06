@@ -56,6 +56,11 @@ export class AddProjectSourceUseCase {
             mode: input.mode ?? 'full-document',
             excerpts: input.excerpts ?? [],
             sourceLibraryResourceId: input.sourceLibraryResourceId ?? null,
+            // Direct-upload sources never go through extraction so they
+            // start unfingerprinted. The repo's deserializer treats null
+            // as "not stale", which is what we want.
+            extractedAt: null,
+            extractionFingerprint: null,
         });
     }
 }

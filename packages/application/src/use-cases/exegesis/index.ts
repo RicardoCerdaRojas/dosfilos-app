@@ -16,6 +16,7 @@ export { UpdateUserRubricUseCase } from './UpdateUserRubricUseCase';
 export { DeleteUserRubricUseCase } from './DeleteUserRubricUseCase';
 export { SetDefaultUserRubricUseCase } from './SetDefaultUserRubricUseCase';
 export { ApplyRubricTemplateToPaperUseCase } from './ApplyRubricTemplateToPaperUseCase';
+export { ApplyStrategyOnlyRubricToPaperUseCase } from './ApplyStrategyOnlyRubricToPaperUseCase';
 export { SaveCurrentRubricAsTemplateUseCase } from './SaveCurrentRubricAsTemplateUseCase';
 export { CreateUserRubricFromTextUseCase } from './CreateUserRubricFromTextUseCase';
 
@@ -60,6 +61,31 @@ export {
 // Steps (D.1: state machine + placeholder generation; Gemini lands in D.2)
 export { SeedStepsForPassageUseCase } from './SeedStepsForPassageUseCase';
 export { GenerateStepUseCase } from './GenerateStepUseCase';
+export {
+    AnalyzeVerseCanonicallyUseCase,
+    type AnalyzeVerseCanonicallyUseCaseInput,
+} from './AnalyzeVerseCanonicallyUseCase';
+export {
+    ComposeAcademicPaperUseCase,
+    ComposeAcademicPaperPersistError,
+    type ComposeAcademicPaperUseCaseInput,
+} from './ComposeAcademicPaperUseCase';
+export {
+    ComposeConclusionFromAnalysesUseCase,
+    type ComposeConclusionFromAnalysesUseCaseInput,
+} from './ComposeConclusionFromAnalysesUseCase';
+export {
+    ComposeIntroductionFromAnalysesUseCase,
+    type ComposeIntroductionFromAnalysesUseCaseInput,
+} from './ComposeIntroductionFromAnalysesUseCase';
+export {
+    ComposeSermonFromAnalysesUseCase,
+    ComposeDevotionalFromAnalysesUseCase,
+    ComposeStudyGuideFromAnalysesUseCase,
+    type ComposeSermonFromAnalysesUseCaseInput,
+    type ComposeDevotionalFromAnalysesUseCaseInput,
+    type ComposeStudyGuideFromAnalysesUseCaseInput,
+} from './MinistryComposerUseCases';
 export { AcceptStepUseCase } from './AcceptStepUseCase';
 export { SaveStepEditUseCase } from './SaveStepEditUseCase';
 

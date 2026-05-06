@@ -1,0 +1,143 @@
+import type { PassageReference } from '../../bible/canon/passage-reference';
+import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
+import type { StyleGuideManifest } from '../entities/StyleGuideManifest';
+
+/**
+ * Port for the academic-paper composer — the composition stage of
+ * the two-stage architecture (analysis → composition).
+ *
+ * Consumes a sequence of `CanonicalVerseAnalysis` (the full pericope
+ * analyzed verse by verse) plus optional intro/conclusion structured
+ * data, and emits academic prose in TMS-style rigor: continuous
+ * paragraphs (no numbered checklist), morphology integrated into
+ * prose, citations distributed inline, footnotes for argument
+ * extension, closing synthesis paragraphs per verse with translation
+ * commitments + verse thesis.
+ *
+ * Style guide enforcement is mandatory and lives at two layers:
+ *
+ *   1. **Prompt layer** — `styleGuideContent` (raw text the user
+ *      uploaded) and `styleGuideManifest` (structured rules: citation
+ *      templates, ibid handling, quotation marks, italics
+ *      conventions, etc.) are embedded in the composer's system
+ *      prompt as authoritative formatting rules. Gemini composes
+ *      prose that respects them from the start.
+ *
+ *   2. **Post-process layer** — the use case feeds the composer's
+ *      output through the existing `DeterministicStyleFormatter`,
+ *      which rewrites inline citations per the manifest's templates
+ *      (full vs short, ibid for consecutive same-source, paginación,
+ *      etc.). The formatter is mechanical and idempotent: same
+ *      manifest + same markdown → same output.
+ *
+ * Fallback policy: when no style guide is configured, the composer
+ * declares the fallback explicitly in the prompt ("no guide attached,
+ * apply TMS / Turabian conventions") and the deterministic formatter
+ * is bypassed (no manifest to drive it). Never silently ignore the
+ * absence — log it.
+ */
+export interface IAcademicComposer {
+    composeAcademicPaper(input: ComposeAcademicPaperInput): Promise<ComposeAcademicPaperOutput>;
+}
+
+export interface ComposeAcademicPaperInput {
+    /** Whole-paper passage. Used for the title and global framing. */
+    paperPassage: PassageReference;
+
+    /** Optional explicit paper title; falls back to the passage when absent. */
+    paperTitle?: string | null;
+
+    /** Output language for prose-bearing content. */
+    language: 'es' | 'en';
+
+    /**
+     * The student's paper-level framing — assignment brief + chosen
+     * angle. Threaded into intro/conclusion composition so they align
+     * with the paper's identity. Null when not supplied.
+     */
+    assignmentBrief: string | null;
+
+    /**
+     * The structured analyses for every verse in the pericope, in
+     * canonical order (by `reference.verseStart`). The composer
+     * weaves these into the body of the paper.
+     */
+    verseAnalyses: ReadonlyArray<CanonicalVerseAnalysis>;
+
+    /**
+     * Style guide content (TMS or equivalent) verbatim. Embedded in
+     * the prompt as authoritative formatting rules. Empty string
+     * acceptable — the composer falls back to TMS defaults explicitly.
+     */
+    styleGuideContent: string;
+
+    /**
+     * Structured style-guide manifest. When present, drives the
+     * deterministic post-formatter. When null, the formatter is
+     * bypassed and the composer relies exclusively on the prompt
+     * layer for style adherence.
+     */
+    styleGuideManifest: StyleGuideManifest | null;
+
+    /**
+     * Citation key → metadata table assembled by the use case from
+     * the paper's `ProjectSource[]`. The composer uses this for
+     * bibliography rendering and for resolving `sourceKey` references
+     * in the analyses to readable author/title strings.
+     */
+    sources: ReadonlyArray<ComposerSourceMetadata>;
+}
+
+/**
+ * Per-source metadata the composer needs for prose rendering and
+ * bibliography. The use case populates this from `paper.sources` +
+ * the configured `library_resources` documents.
+ */
+export interface ComposerSourceMetadata {
+    /** Citation key — matches `sourceKey` in `CanonicalVerseAnalysis` references. */
+    citationKey: string;
+    /** Human-readable author. e.g. "William L. Lane". */
+    author: string;
+    /** Work title. e.g. "Hebrews 1–8". */
+    title: string;
+    /** Series + volume when applicable. e.g. "Word Biblical Commentary 47a". */
+    seriesVolume?: string;
+    /** Publication city. e.g. "Dallas, TX". */
+    city?: string;
+    /** Publisher. e.g. "Word". */
+    publisher?: string;
+    /** Year. e.g. 1991. */
+    year?: number;
+    /** Edition designator when relevant. e.g. "Ed. rev." */
+    edition?: string;
+}
+
+export interface ComposeAcademicPaperOutput {
+    /**
+     * Final composed markdown — academic prose with footnote markers
+     * `[^N]`, footnote bodies at the document end, citations inline
+     * per the style guide, bibliography section. Ready for export to
+     * .docx or PDF.
+     */
+    markdown: string;
+
+    /**
+     * The model id that produced the underlying composition. Persisted
+     * for audit (cost tracking, post-hoc quality comparison).
+     */
+    modelId: string;
+
+    /**
+     * Token usage. Null when the model didn't report.
+     */
+    tokensUsed: number | null;
+
+    /**
+     * Style-formatter status: 'applied' when the deterministic
+     * formatter ran (manifest was available); 'skipped' when no
+     * manifest was attached (composer relied on prompt layer alone);
+     * 'error' when the formatter ran but failed gracefully (the raw
+     * composition is still returned).
+     */
+    formatterStatus: 'applied' | 'skipped' | 'error';
+}

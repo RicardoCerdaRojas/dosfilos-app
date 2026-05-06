@@ -109,6 +109,17 @@ export class ProposeStepCorpusAllocationsUseCase {
             if (!allocation) continue;
             const pinned = allocation.pinnedSources.filter(id => validSourceIds.has(id));
             if (pinned.length > 0) nonEmptyAllocationCount++;
+            // Filter roles to ids that survived sanitation. Any orphaned
+            // role entries (planner referenced an id we just dropped)
+            // are silently discarded — the chip would have nowhere to
+            // anchor its badge anyway.
+            const sanitizedRoles: Record<string, 'anchor' | 'contrast' | 'technical'> = {};
+            if (allocation.pinnedSourceRoles) {
+                for (const id of pinned) {
+                    const role = allocation.pinnedSourceRoles[id];
+                    if (role) sanitizedRoles[id] = role;
+                }
+            }
             const existing = nextPerStep[step.id];
             nextPerStep[step.id] = {
                 stepId: step.id,
@@ -119,6 +130,7 @@ export class ProposeStepCorpusAllocationsUseCase {
                     citationOverrides: [],
                 },
                 pinnedSources: pinned,
+                ...(Object.keys(sanitizedRoles).length > 0 ? { pinnedSourceRoles: sanitizedRoles } : {}),
                 suppressedSources: existing?.suppressedSources ?? [],
                 note: allocation.rationale.trim() || existing?.note || null,
             };

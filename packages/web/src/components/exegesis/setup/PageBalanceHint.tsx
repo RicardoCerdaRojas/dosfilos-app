@@ -2,20 +2,25 @@ import { Zap, Sparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { usePageBalance } from '@/hooks/usePageBalance';
 
+const STD_LOW_THRESHOLD = 200;
+const PREM_LOW_THRESHOLD = 20;
+
 /**
- * Compact pill that surfaces the user's current processing balance
- * inline on the exegesis setup page. The user discovers their saldo
- * BEFORE choosing to upload (or extract from library), instead of
- * crashing into the credit-pack modal at upload time.
+ * Compact warning pill that surfaces the user's processing balance
+ * ONLY when it's low or empty. Earlier versions showed the saldo at
+ * all times, but with a typical balance of thousands of pages the
+ * numbers were noise that competed with the corpus task itself. Now
+ * the pill stays hidden until the user is genuinely close to the cap
+ * — a "safety net" UX rather than ambient telemetry.
  *
  * Color tone:
- *   - balance > 20% of monthly plan quota → muted (informational)
- *   - balance ≤ 20% of monthly plan quota → warning
- *   - balance == 0 → destructive
+ *   - both balances above their low thresholds → render nothing.
+ *   - either at low threshold → warning.
+ *   - either at zero → destructive.
  *
- * The thresholds are absolute (200 std / 20 prem) rather than %
- * relative to the plan because we don't want to fetch the plan doc
- * here — keeping this component dependency-light for fast first paint.
+ * Thresholds are absolute (200 std / 20 prem) so we don't fetch the
+ * plan doc here — keeping the component dependency-light for fast
+ * first paint.
  */
 export function PageBalanceHint() {
     const { t } = useTranslation('exegesis');
@@ -25,29 +30,37 @@ export function PageBalanceHint() {
 
     const std = balance.standardPagesAvailable;
     const prem = balance.premiumPagesAvailable;
-    const stdTone = toneFor(std, 200);
-    const premTone = toneFor(prem, 20);
+    const stdLow = std < STD_LOW_THRESHOLD;
+    const premLow = prem < PREM_LOW_THRESHOLD;
+
+    // High balance — silently hide. The user can always check from
+    // the dashboard / subscription pages; corpus tab doesn't need to
+    // remind them constantly.
+    if (!stdLow && !premLow) return null;
 
     return (
-        <div className="inline-flex items-center gap-3 text-[11px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-                <Zap className="h-3 w-3" />
-                <span className={stdTone}>
-                    {t('paperSetup.subSteps.corpus.balance.standard', { count: std })}
+        <div className="inline-flex items-center gap-3 text-[11px]">
+            {stdLow && (
+                <span className="inline-flex items-center gap-1">
+                    <Zap className="h-3 w-3" />
+                    <span className={toneFor(std)}>
+                        {t('paperSetup.subSteps.corpus.balance.standard', { count: std })}
+                    </span>
                 </span>
-            </span>
-            <span className="inline-flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                <span className={premTone}>
-                    {t('paperSetup.subSteps.corpus.balance.premium', { count: prem })}
+            )}
+            {premLow && (
+                <span className="inline-flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    <span className={toneFor(prem)}>
+                        {t('paperSetup.subSteps.corpus.balance.premium', { count: prem })}
+                    </span>
                 </span>
-            </span>
+            )}
         </div>
     );
 }
 
-function toneFor(value: number, lowThreshold: number): string {
+function toneFor(value: number): string {
     if (value === 0) return 'text-destructive font-medium';
-    if (value < lowThreshold) return 'text-warning font-medium';
-    return 'text-foreground';
+    return 'text-warning font-medium';
 }

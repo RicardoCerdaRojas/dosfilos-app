@@ -57,6 +57,7 @@ export function ExegesisPaperSetupPage() {
     const { paperId } = useParams<{ paperId: string }>();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation('exegesis');
+    const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
     const { paper, isLoading, error } = useExegesisPaper(paperId);
 
     // Tab state lives in the URL (`?tab=corpus`) so deep-links from
@@ -121,13 +122,18 @@ export function ExegesisPaperSetupPage() {
                             it implied the paper had no identity even
                             though the passage IS the identity. */}
                         <h1 className="text-lg font-semibold text-foreground font-serif truncate">
-                            {paper.title || formatPassageReference(
-                                paper.passage,
-                                (i18n.language?.split('-')[0] === 'en' ? 'en' : 'es') as SupportedLanguage,
-                            )}
+                            {paper.title || formatPassageReference(paper.passage, activeLanguage)}
                         </h1>
+                        {/* Mirror the paper detail page: passage + phase
+                            so orientation survives the navigation back-
+                            and-forth. The previous "Configuración
+                            académica..." subtitle was redundant — the
+                            tab strip below already names the four
+                            configuration surfaces, but the passage is
+                            the one fact the user needs at-a-glance and
+                            it was missing here. */}
                         <p className="text-xs text-muted-foreground">
-                            {t('paperSetup.subtitle')}
+                            {formatPassageReference(paper.passage, activeLanguage)} · {t(`list.phase.${paper.phase}`)}
                         </p>
                     </div>
                 </div>

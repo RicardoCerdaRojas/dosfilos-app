@@ -328,14 +328,40 @@
             "subtitle": "The language the agent will use to write verses, conclusion, and introduction. Editable later — it always affects the WHOLE paper.",
             "hint": "Independent of the UI language or the rubric you paste."
         },
+        "strategy": {
+            "title": "Exegetical strategy",
+            "subtitle": "How do you want to build this paper? This sets the level of methodological guidance you get when picking sources and planning how they're used.",
+            "recommended": "Recommended",
+            "hint": "You can change it later from the paper setup.",
+            "dialectical": {
+                "title": "With exegetical strategy",
+                "body": "We guide you to a corpus with dialectical balance: anchor (base reading) + contrast (alternate voice) + technical (lexicon, grammar). The usage plan reflects those roles. The classical method for serious work."
+            },
+            "free": {
+                "title": "Without exegetical strategy (free)",
+                "body": "Pick sources your way, no methodology nudges. We then suggest how to use them per step and you adjust. Useful when you already know what you need or want to work fast."
+            }
+        },
         "rubric": {
             "title": "Rubric",
             "subtitle": "Apply a saved template or use the academic default. You can tweak it in the paper setup later.",
-            "useDefault": "Use your default template ({{name}})",
-            "useDefaultNone": "Use the academic TMS default (no saved templates)",
+            "useDefault": "Your default: {{name}}",
+            "useDefaultNone": "Automatic — academic TMS default",
             "savedTemplates": "Your saved templates",
-            "noTemplate": "No template — start with the academic TMS default",
-            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\")."
+            "noTemplate": "Academic TMS default",
+            "strategyOnly": "Strategy only",
+            "strategyOnlyDescription": "No per-type minimums. The dialectical strategy (anchors + contrasts + technicals) is the sole guidance. Useful when your professor only asks for quantity or doesn't specify types.",
+            "groupRecommended": "Recommended",
+            "groupAuto": "System",
+            "autoSystem": "Automatic — academic TMS default",
+            "autoSystemDescription": "Applies the system's default academic TMS rubric. Suitable for rigorous master's-level work.",
+            "autoFromUserDefault": "Applies the template you marked as default from \"My rubrics\".",
+            "systemTitle": "Academic TMS default",
+            "systemDescription": "13 requirements · TMS / Turabian style · suitable for rigorous research.",
+            "templateIsDefault": "Your template marked as default.",
+            "search": "Search template…",
+            "noMatches": "No matches",
+            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\"). \"Strategy only\" leaves all guidance to the dialectical method — useful when your professor only asks for quantity or doesn't specify types."
         },
         "brief": {
             "title": "Paper framing",
@@ -466,16 +492,16 @@
                 },
                 "templates": {
                     "title": "Rubric templates",
-                    "subtitle": "Apply a saved template or save the current rubric for reuse on other papers.",
-                    "applyLabel": "Apply a saved template",
+                    "subtitle": "Change this paper's rubric: apply the \"Strategy only\" preset, the academic TMS default, or one of your saved templates.",
+                    "applyLabel": "Apply to this paper",
                     "applyPlaceholder": "pick a template",
                     "applyCta": "Apply",
                     "applyConfirmTitle": "Replace the current rubric",
-                    "applyConfirmBody": "We'll replace the current rubric with the chosen template. Your manual edits will be discarded.",
-                    "applyConfirmCta": "Yes, apply template",
-                    "applied": "Template applied",
+                    "applyConfirmBody": "We'll replace the current rubric with the chosen option. Your manual edits will be discarded.",
+                    "applyConfirmCta": "Yes, replace",
+                    "applied": "Rubric applied",
                     "appliedBadge": "Applied",
-                    "applyFailed": "Could not apply the template",
+                    "applyFailed": "Could not apply the rubric",
                     "saveCta": "Save as template",
                     "saveHint": "Save the current rubric to reuse it across papers.",
                     "emptyHint": "No templates yet. Once you tweak this rubric, you can save it here.",
@@ -613,7 +639,112 @@
                     "extractCta": "Extract from my library",
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
-                    "remove": "Remove source"
+                    "remove": "Remove source",
+                    "viewOriginal": "Open the original PDF in a new tab",
+                    "groupEmpty": "No sources in this role yet.",
+                    "groupUnrolled_one": "No role assigned ({{count}})",
+                    "groupUnrolled_other": "No role assigned ({{count}})"
+                },
+                "summary": {
+                    "title": "{{excerptCount}} curated fragments from {{sourceCount}} sources",
+                    "body": "Every citation in the paper will point to one of these fragments — all verifiable against the original PDF."
+                },
+                "roleCoverage": {
+                    "eyebrow": "Your corpus by dialectical role",
+                    "balancedTitle": "Balanced corpus: meets strategy and rubric",
+                    "missingTitle": "Non-compliant: entire roles are missing",
+                    "missingBody": "The dialectical strategy needs all three roles to function. Add at least one source per role before moving to the structural plan.",
+                    "partialTitle": "Partial compliance: all three roles present, depth still pending",
+                    "partialBody": "You have at least one source per role — good starting point. To hit the target you still need {{gaps}}.",
+                    "partialDeficitItem_one": "{{gap}} {{role}}",
+                    "partialDeficitItem_other": "{{gap}} {{role}}",
+                    "partialDeficitJoiner": ", ",
+                    "deficitBadge_one": "{{gap}} short",
+                    "deficitBadge_other": "{{gap}} short",
+                    "targetSource": {
+                        "rubric": "rubric",
+                        "strategy": "strategy"
+                    },
+                    "role": {
+                        "anchor": "Anchors",
+                        "contrast": "Contrasts",
+                        "technical": "Technical"
+                    },
+                    "hint": {
+                        "anchor": "Expository commentaries — the base reading",
+                        "contrast": "Other voice: critical commentaries, monographs, theological dictionaries",
+                        "technical": "Lexicons, grammars, critical apparatus"
+                    },
+                    "addCta": {
+                        "anchor": "Add anchor",
+                        "contrast": "Add contrast",
+                        "technical": "Add technical"
+                    }
+                },
+                "libraryFilter": {
+                    "all": "All",
+                    "testamentActive": {
+                        "NT": "NT only · {{count}} hidden",
+                        "OT": "OT only · {{count}} hidden"
+                    },
+                    "testamentInactive": "Showing all books",
+                    "testamentTooltipOff": "Click to also show resources from the other testament ({{count}} hidden)",
+                    "testamentTooltipOn": "Click to filter by the passage's testament again",
+                    "types": {
+                        "commentary": "Commentaries",
+                        "exegetical-commentary": "Exegetical commentaries",
+                        "theological-dictionary": "Theological dictionaries",
+                        "bible-dictionary": "Bible dictionaries",
+                        "theology": "Theology",
+                        "grammar": "Grammars / lexicons",
+                        "critical-text": "Critical texts",
+                        "historical-context": "Historical context",
+                        "biblical-survey": "Biblical surveys",
+                        "article": "Articles",
+                        "other": "Other"
+                    }
+                },
+                "strategyBadge": {
+                    "dialectical": "Exegetical strategy",
+                    "free": "Free mode",
+                    "tooltip": {
+                        "dialectical": "Build your corpus with dialectical balance — anchors + contrasts + technical.",
+                        "free": "Pick sources your way; no methodology nudges."
+                    }
+                },
+                "hero": {
+                    "eyebrow": "Your corpus, curated",
+                    "title": "Use your library of {{count}} resources",
+                    "body": "Instead of feeding whole PDFs to the model, we extract only the fragments relevant to your passage. You review and edit them before generating — that visibility is what sets us apart from NotebookLM and similar tools.",
+                    "dialecticalEyebrow": "Seed the three roles",
+                    "dialecticalTitle": "Your library has {{count}} resources — let's build a dialectical corpus",
+                    "dialecticalBody": "A serious corpus is built in three roles: ANCHOR (base reading, expository commentary), CONTRAST (another voice: critical, monograph, dictionary), TECHNICAL (lexicon, grammar, or apparatus). Use the buttons below to seed at least one of each; then add MORE sources per role as the rubric requires (a rigorous paper typically has 4-5 anchors, 4-5 contrasts, and 3-4 technicals).",
+                    "recommended": "Recommended",
+                    "suggestedCount": "sources recommended for a rigorous paper",
+                    "dialecticalAlt": "Or:",
+                    "dialecticalAltExtract": "Extract fragments from my whole library",
+                    "role": {
+                        "anchor": {
+                            "action": "Pick the ANCHOR",
+                            "body": "Expository commentary that orients the passage's reading."
+                        },
+                        "contrast": {
+                            "action": "Pick the CONTRAST",
+                            "body": "Another voice: critical commentary, monograph, or theological dictionary."
+                        },
+                        "technical": {
+                            "action": "Pick the TECHNICAL",
+                            "body": "Lexicon, grammar, or critical apparatus for specific decisions."
+                        }
+                    },
+                    "bullet1Title": "Fragments, not books",
+                    "bullet1Body": "Up to 30 chunks per source, ranked by similarity to the passage + brief.",
+                    "bullet2Title": "You review",
+                    "bullet2Body": "Edit, delete or accept each fragment before it enters the prompt.",
+                    "bullet3Title": "Verifiable",
+                    "bullet3Body": "Every fragment keeps its anchor (\"p. 47\") and a link to the original PDF.",
+                    "primaryCta": "Extract from my library",
+                    "secondaryCta": "or upload a new file"
                 },
                 "extract": {
                     "dialogTitle": "Extract excerpts from your library",
@@ -658,6 +789,13 @@
                         "saveFailed": "Couldn't save changes"
                     }
                 },
+                "staleBanner": {
+                    "title": "Excerpts out of date",
+                    "body": "You edited the passage or brief after extracting. Re-extract so the excerpts reflect the changes.",
+                    "cta": "Re-extract",
+                    "toastSuccess": "Excerpts re-extracted against the current brief",
+                    "toastError": "Couldn't re-extract excerpts. Try again."
+                },
                 "balance": {
                     "standard_one": "{{count}} std page",
                     "standard_other": "{{count}} std pages",
@@ -686,12 +824,16 @@
                     "displayNameLabel": "Corpus label",
                     "displayNamePlaceholder": "e.g. Lane WBC 47a, pp. 1-30",
                     "typeLabel": "Academic type",
+                    "typeLabelBulk": "Academic type for the {{count}} sources",
                     "typeDescription": "Pick the type that best describes the source. The rubric uses this type to decide whether it satisfies minimums.",
+                    "typeDescriptionBulk": "Applies to every selected source. If you need different types, you can adjust them one by one from the corpus list afterwards.",
                     "citationKeyLabel": "Citation key",
                     "citationKeyPlaceholder": "e.g. Lane",
                     "citationKeyHint": "Used in footnotes. Leave empty and we derive it from the corpus.",
+                    "citationKeyAutoderiveHint": "Label and citation key are auto-derived from each source's title and author.",
                     "submit": "Upload and add to corpus",
                     "submitFromLibrary": "Add to corpus",
+                    "submitBulkFromLibrary": "Add {{count}} sources to corpus",
                     "uploading": "Uploading... {{progress}}%",
                     "modelPaperHint": "Style templates are used as form models only. They are NEVER cited inline.",
                     "fileRequired": "Choose a file first",
@@ -699,6 +841,8 @@
                 },
                 "toast": {
                     "added": "Source added to corpus",
+                    "bulkAdded_one": "{{count}} source added to corpus",
+                    "bulkAdded_other": "{{count}} sources added to corpus",
                     "addFailed": "Could not add the source. Please try again.",
                     "removed": "Source removed",
                     "removeFailed": "Could not remove the source.",
@@ -724,6 +868,21 @@
                 "staleRegenerate": "Regenerate",
                 "colStep": "Step",
                 "colPinned": "Pinned sources",
+                "coverage": {
+                    "allCovered_one": "✓ The source is assigned to at least one step",
+                    "allCovered_other": "✓ All {{count}} sources are assigned to at least one step",
+                    "partial": "{{used}} of {{total}} sources assigned · {{unused}} unused",
+                    "partialBody": "These sources were left out of the automatic plan. Pin them by hand if you want them used in some step, or leave them — generation will still see them as secondary."
+                },
+                "regenerating": {
+                    "title": "Regenerating plan…",
+                    "body": "Usually takes 10-30 seconds"
+                },
+                "role": {
+                    "anchor": "Anchor",
+                    "contrast": "Contrast",
+                    "technical": "Technical"
+                },
                 "kind": {
                     "introduction": "Introduction",
                     "verse": "Verse",
@@ -757,6 +916,11 @@
                 },
                 "rubricSuggestion": "Rubric suggestion",
                 "rubricEmpty": "The rubric has no emphasis for this step. Pick the types that fit your paper.",
+                "rubricJustification": {
+                    "introduction": "The introduction presents the thesis and positions the passage. Your voice leads: historical-cultural context and theological positioning support it, and technical analysis (lexicon, grammar, critical apparatus) belongs in the body.",
+                    "verse": "Verse-by-verse work is where the dialectical method is fully exercised. The three voices dialogue: the anchor (base reading), the contrasts (other critical/theological voice), and the technical apparatus (lexicon, grammar, critical) that defends each decision.",
+                    "conclusion": "The conclusion synthesizes the findings into a coherent theological reading. It's your voice integrating the work: commentaries and monographs scaffold the synthesis — no new voices are introduced and no critical debates are opened."
+                },
                 "noRubric": "No rubric attached yet. Configure the rubric first to see academic suggestions.",
                 "emphasizedTypesLabel": "Types to prioritize",
                 "emphasizedTypesHint": "The agent cites these types generously in this step.",
@@ -772,7 +936,16 @@
                 "saved": "Plan updated",
                 "saveFailed": "Could not save the plan",
                 "savedHint": "Plan last updated",
-                "neverSaved": "You have not saved a custom plan yet. The rubric applies as the active suggestion."
+                "neverSaved": "You have not saved a custom plan yet. The rubric applies as the active suggestion.",
+                "dialectical": {
+                    "summaryLabel": "Dialectical emphasis",
+                    "role": {
+                        "anchor": "Anchor",
+                        "contrast": "Contrast",
+                        "technical": "Technical",
+                        "unrolled": "No role"
+                    }
+                }
             }
         }
     },
@@ -840,6 +1013,127 @@
             "planned-not-cited": "Planned in {{plannedCount}} step(s) but not cited — consider regenerating.",
             "cited-not-planned": "Cited in {{citedCount}} step(s) without being planned (model adaptation).",
             "never-cited": "Never cited — consider removing from the corpus if it adds nothing."
+        }
+    },
+    "canonical": {
+        "actions": {
+            "analyze": "Canonical analysis",
+            "analyzeTooltip": "Generate the structured analysis (study mode + academic composer)",
+            "analyzeRetry": "Retry analysis",
+            "composeConclusionTooltip": "Compose the conclusion from the accepted canonical analyses",
+            "composeIntroductionTooltip": "Compose the introduction LAST, using the accepted analyses + accepted conclusion",
+            "composeFromAnalyses": "Compose from analyses"
+        },
+        "toast": {
+            "analyzeFailed": "Could not generate the canonical analysis.",
+            "composeSectionFailed": "Could not compose this section. {{message}}"
+        },
+        "view": {
+            "prose": "Prose view",
+            "study": "Study view"
+        },
+        "study": {
+            "headerLabel": "Text and translation",
+            "initialTranslation": "Initial translation",
+            "finalTranslation": "Final translation",
+            "argumentativeRole": "Argumentative role",
+            "argumentativeRoleHint": "What this verse does in the pericope's flow.",
+            "syntax": "Syntactic analysis",
+            "syntaxHint": "Main verb, key constructions, and discourse particles.",
+            "lexis": "Lexical analysis",
+            "lexisHint": "General semantic range vs. verse-specific loading.",
+            "textualCriticism": "Textual criticism",
+            "textualCriticismHint": "Mandatory apparatus review. Empty with note when no variants exist.",
+            "historicalContext": "Historical-cultural background",
+            "oldTestamentLinks": "OT intertextuality",
+            "commentators": "Commentator engagement",
+            "commentatorsHint": "Dialectical strategy: anchor + contrast + (technical).",
+            "cruxes": "Translation cruxes",
+            "cruxesHint": "Each contested decision with options, positions, and commitment.",
+            "verseThesis": "Verse thesis",
+            "verseThesisHint": "What this verse establishes from the analysis.",
+            "theologicalHooks": "Theological loci",
+            "theologicalHooksHint": "Used by non-academic composers (sermon, devotional).",
+            "confidence": "Confidence flags",
+            "confidenceHint": "Hedge-language calibration for the final prose.",
+            "footnotes": "Potential footnotes",
+            "footnotesHint": "The academic composer renders these as actual footnotes.",
+            "empty": {
+                "greek": "Greek text pending.",
+                "syntax": "No syntactic analysis for this verse yet.",
+                "lexis": "No lexical analyses for this verse yet.",
+                "commentators": "No commentator engagement for this verse yet.",
+                "cruxes": "No contested decisions in this verse."
+            }
+        },
+        "compose": {
+            "menuItem": "Compose academic paper",
+            "title": "Compose academic paper",
+            "subtitle": "We generate TMS-style academic prose from the accepted canonical analyses of each verse. The configured style guide is mandatorily applied.",
+            "idleBody": "The canonical analyses of each verse are turned into a continuous academic paper: introduction + verse-by-verse body + conclusion + bibliography. Citations follow the configured style guide.",
+            "cta": "Compose paper",
+            "cost": "Each composition consumes one Gemini Pro 2.5 call with extended context. The output is NOT auto-persisted — copy or download the markdown.",
+            "composingTitle": "Composing academic paper…",
+            "composingBody": "This may take 30 to 120 seconds depending on verse count and analysis density.",
+            "errorTitle": "Could not compose the paper",
+            "errorGeneric": "Unexpected error during composition.",
+            "retry": "Retry",
+            "viewRendered": "Rendered",
+            "viewRaw": "Markdown",
+            "copy": "Copy",
+            "copyFailed": "Could not copy to clipboard.",
+            "copied": "Markdown copied to clipboard.",
+            "download": "Download .md",
+            "recompose": "Recompose",
+            "tokensUsed": "{{tokens}} tokens · model {{model}}",
+            "formatterApplied": "Style guide applied (layer 1: prompt, layer 2: deterministic formatter).",
+            "formatterSkipped": "No style-guide manifest extracted. Only layer 1 (prompt) applied. Extract the manifest from the \"Style guide\" tab to activate layer 2.",
+            "formatterError": "Error applying the deterministic formatter. The LLM composition (layer 1) is still valid.",
+            "savedToast": "Composition saved on the paper (assembledMarkdown).",
+            "persistWarning": "Composition succeeded but could not be saved to the paper. Copy or download the markdown before closing.",
+            "saveToPaper": "Save to paper",
+            "saveToPaperTooltip": "Saves this composition as the paper's assembledMarkdown. You can recompose at any time.",
+            "savedExists": "A saved composition exists for this paper.",
+            "savedHint": "If the verse analyses changed since last time, recompose so the output reflects the current state."
+        },
+        "ministry": {
+            "menuItem": "Ministry material (sermon / devotional / study guide)",
+            "title": "Ministry material from the canonical analysis",
+            "subtitle": "Produce sermon, devotional, or inductive study guide from the accepted canonical analyses. The exegetical work is preserved across formats; register and audience adapt.",
+            "format": {
+                "sermon": "Sermon",
+                "devotional": "Devotional",
+                "studyGuide": "Study guide"
+            },
+            "idleHint": "Each composition consumes a Gemini Pro 2.5 call. Output is NOT auto-persisted — copy or download the markdown.",
+            "cta": "Compose",
+            "composing": "Composing ministry material…",
+            "errorTitle": "Could not compose the material",
+            "errorGeneric": "Unexpected error during composition.",
+            "sermon": {
+                "toneLabel": "Sermon tone",
+                "tone": {
+                    "pastoral": "Pastoral",
+                    "expositivo": "Expository",
+                    "narrativo": "Narrative"
+                }
+            },
+            "devotional": {
+                "audienceLabel": "Devotional audience",
+                "audience": {
+                    "general": "General audience",
+                    "smallGroup": "Small group",
+                    "individual": "Individual reflection"
+                }
+            },
+            "studyGuide": {
+                "audienceLabel": "Study guide audience",
+                "audience": {
+                    "smallGroup": "Small group",
+                    "sundaySchool": "Sunday school",
+                    "individual": "Individual study"
+                }
+            }
         }
     },
     "detail": {

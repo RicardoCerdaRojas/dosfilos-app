@@ -38,6 +38,30 @@ export interface ExegeticalPaper {
     /** Output language for the assembled paper (also drives prompt selection). */
     displayLanguage: 'es' | 'en';
 
+    /**
+     * Methodological framing for the paper — chosen at creation time,
+     * editable from the setup page later.
+     *
+     * - `'dialectical'` (default for new papers): the student is
+     *   building a paper around the classical dialectical method
+     *   (anchor + contrast + technical per step). The corpus tab
+     *   shows a role-coverage card that nudges them to balance their
+     *   bibliography by role; the planner already understands roles
+     *   so the corpus signal it gets is much stronger.
+     *
+     * - `'free'`: the student wants to pick sources freely and let
+     *   the planner figure out how to use them. No role-coverage
+     *   nudges in the corpus tab; the existing rubric-gap card is
+     *   the only guidance. Power-user mode for users who already
+     *   know what they're doing or who don't want the methodology
+     *   scaffolding.
+     *
+     * Optional for backward compat — pre-strategy papers deserialize
+     * as `'free'` so they don't suddenly bug-banner on missing
+     * roles. New papers always pick a value at creation.
+     */
+    exegeticalStrategy?: ExegeticalStrategy;
+
     /** Optional human title; defaults to the formatted passage. */
     title?: string;
 
@@ -140,6 +164,13 @@ export type ExegeticalPaperPhase =
     | 'in-progress'
     | 'assembled'
     | 'archived';
+
+/**
+ * Methodology mode picked by the student. See the
+ * `ExegeticalPaper.exegeticalStrategy` field doc for what each mode
+ * implies in the UI.
+ */
+export type ExegeticalStrategy = 'free' | 'dialectical';
 
 /**
  * Shape used by `CreatePaper` use cases — id and timestamps are assigned

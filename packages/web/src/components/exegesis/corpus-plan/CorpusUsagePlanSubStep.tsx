@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Sparkles, AlertTriangle, Loader2, RefreshCw, Lightbulb } from 'lucide-react';
+import { Sparkles, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 import {
@@ -176,30 +176,47 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
                                 </Button>
                             </div>
 
-                            <div className="rounded-lg border border-border bg-card overflow-hidden">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
-                                        <tr>
-                                            <th className="text-left px-3 py-2 w-[140px]">
-                                                {t('paperSetup.subSteps.corpus-plan.colStep')}
-                                            </th>
-                                            <th className="text-left px-3 py-2">
-                                                {t('paperSetup.subSteps.corpus-plan.colPinned')}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {plannableSteps.map(step => (
-                                            <PlanRow
-                                                key={step.id}
-                                                step={step}
-                                                paper={paper}
-                                                onChangePinned={pinned => handleUpdateRow(step.id, pinned)}
-                                                disabled={updateAllocation.isPending}
-                                            />
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="relative">
+                                {/* Wrap the coverage panel + table so the
+                                    regenerate overlay covers both — visually
+                                    locking the whole "current plan" section
+                                    while the new one is being built. */}
+                                <div
+                                    className={[
+                                        'space-y-2 transition-opacity duration-200',
+                                        propose.isPending ? 'opacity-30 pointer-events-none' : '',
+                                    ].join(' ')}
+                                >
+                                    <CoveragePanel paper={paper} plannableSteps={plannableSteps} />
+
+                                    <div className="rounded-lg border border-border bg-card overflow-hidden">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
+                                                <tr>
+                                                    <th className="text-left px-3 py-2 w-[140px]">
+                                                        {t('paperSetup.subSteps.corpus-plan.colStep')}
+                                                    </th>
+                                                    <th className="text-left px-3 py-2">
+                                                        {t('paperSetup.subSteps.corpus-plan.colPinned')}
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {plannableSteps.map(step => (
+                                                    <PlanRow
+                                                        key={step.id}
+                                                        step={step}
+                                                        paper={paper}
+                                                        onChangePinned={pinned => handleUpdateRow(step.id, pinned)}
+                                                        disabled={updateAllocation.isPending}
+                                                    />
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {propose.isPending && <RegenerateOverlay />}
                             </div>
                         </div>
                     )}
@@ -210,6 +227,117 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────
+
+/**
+ * Overlay shown on top of the plan table while a regenerate is in
+ * flight. Anchors a centered card with spinner + helper copy so the
+ * user understands the whole section is being recomputed (vs a
+ * single-row edit). The underlying content fades to ~30% opacity so
+ * the user keeps spatial context but knows it's stale.
+ */
+function RegenerateOverlay() {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-card/95 backdrop-blur-sm px-6 py-5 shadow-lg">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+                <p className="text-sm font-semibold text-foreground">
+                    {t('paperSetup.subSteps.corpus-plan.regenerating.title')}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                    {t('paperSetup.subSteps.corpus-plan.regenerating.body')}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Aggregates pinned-source usage across every step in the plan and
+ * surfaces two numbers: how many sources got at least one assignment,
+ * and how many were left out. Unused sources show as removable chips
+ * the user can click to act on (today: highlights they need manual
+ * placement; future: opens a quick-pin popover).
+ *
+ * Two visual states:
+ *   - All sources used → green "todo asignado" pill, no chips.
+ *   - Some unused      → amber callout listing them so the user can
+ *                        decide whether to manually pin or accept.
+ */
+function CoveragePanel({
+    paper,
+    plannableSteps,
+}: {
+    paper: ExegeticalPaper;
+    plannableSteps: ReadonlyArray<ExegeticalStep>;
+}) {
+    const { t } = useTranslation('exegesis');
+
+    const { totalSources, usedCount, unusedSources } = useMemo(() => {
+        const usage = new Set<string>();
+        for (const step of plannableSteps) {
+            const entry = paper.stepPlan.perStep[step.id];
+            if (!entry?.pinnedSources) continue;
+            for (const id of entry.pinnedSources) usage.add(id);
+        }
+        const unused = paper.sources.filter(s => !usage.has(s.id));
+        return {
+            totalSources: paper.sources.length,
+            usedCount: paper.sources.length - unused.length,
+            unusedSources: unused,
+        };
+    }, [paper.stepPlan.perStep, paper.sources, plannableSteps]);
+
+    if (totalSources === 0) return null;
+
+    const allCovered = unusedSources.length === 0;
+
+    return (
+        <div
+            className={[
+                'rounded-lg border px-3 py-2.5 flex items-start gap-2.5',
+                allCovered
+                    ? 'border-success/30 bg-success-subtle/40'
+                    : 'border-warning/30 bg-warning-subtle/40',
+            ].join(' ')}
+        >
+            {allCovered
+                ? <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" aria-hidden />
+                : <AlertTriangle className="h-4 w-4 text-warning-subtle-foreground mt-0.5 shrink-0" aria-hidden />}
+            <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] font-semibold text-foreground">
+                    {allCovered
+                        ? t('paperSetup.subSteps.corpus-plan.coverage.allCovered', { count: totalSources })
+                        : t('paperSetup.subSteps.corpus-plan.coverage.partial', {
+                            used: usedCount,
+                            total: totalSources,
+                            unused: unusedSources.length,
+                        })}
+                </p>
+                {!allCovered && (
+                    <>
+                        <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                            {t('paperSetup.subSteps.corpus-plan.coverage.partialBody')}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                            {unusedSources.map(s => (
+                                <span
+                                    key={s.id}
+                                    className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-card px-2 py-0.5 text-[11px] text-foreground"
+                                    title={s.displayLabel}
+                                >
+                                    {s.displayLabel.length > 40
+                                        ? `${s.displayLabel.slice(0, 38)}…`
+                                        : s.displayLabel}
+                                </span>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
 
 function PlanRow({
     step,
@@ -225,6 +353,7 @@ function PlanRow({
     const { t } = useTranslation('exegesis');
     const entry = paper.stepPlan.perStep[step.id];
     const pinned = entry?.pinnedSources ?? [];
+    const roles = entry?.pinnedSourceRoles;
     const note = entry?.note ?? null;
     const label = stepLabel(step, paper.displayLanguage, t);
 
@@ -240,6 +369,7 @@ function PlanRow({
                 <PinnedSourcesPicker
                     sources={paper.sources}
                     selected={pinned}
+                    roles={roles}
                     onChange={onChangePinned}
                     disabled={disabled}
                 />

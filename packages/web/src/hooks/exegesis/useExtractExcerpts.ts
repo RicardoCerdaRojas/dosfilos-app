@@ -24,6 +24,12 @@ export function useExtractExcerpts() {
             paperId: string;
             selections: ReadonlyArray<ExtractExcerptsSelection>;
             maxExcerptsPerResource?: number;
+            /**
+             * Defaults to true: re-running keeps `userEdited` excerpts at the
+             * top and appends fresh ones. Pass false from "rebuild from
+             * scratch" flows that should discard manual edits.
+             */
+            preserveUserEdited?: boolean;
         }) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return exegesisService.extractExcerpts.execute({
@@ -31,6 +37,7 @@ export function useExtractExcerpts() {
                 paperId: input.paperId,
                 selections: input.selections,
                 maxExcerptsPerResource: input.maxExcerptsPerResource,
+                preserveUserEdited: input.preserveUserEdited,
             });
         },
         onSuccess: () => {

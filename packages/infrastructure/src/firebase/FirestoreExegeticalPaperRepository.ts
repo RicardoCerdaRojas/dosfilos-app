@@ -117,6 +117,12 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             updatedAt: now,
             passage: draft.passage,
             displayLanguage: draft.displayLanguage,
+            // New papers default to dialectical methodology — the
+            // differentiator pitch hinges on guided strategy. Caller
+            // can override at create time (the create UI surfaces the
+            // choice). Pre-strategy docs that get re-saved through
+            // this path will inherit the field naturally.
+            exegeticalStrategy: draft.exegeticalStrategy ?? 'dialectical',
             title: draft.title,
             assignmentBrief: draft.assignmentBrief ?? null,
             styleGuideId: draft.styleGuideId,
@@ -240,6 +246,8 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             mode: source.mode ?? 'full-document',
             excerpts: source.excerpts ?? [],
             sourceLibraryResourceId: source.sourceLibraryResourceId ?? null,
+            extractedAt: source.extractedAt ?? null,
+            extractionFingerprint: source.extractionFingerprint ?? null,
         };
 
         await runTransaction(db, async (tx) => {
@@ -269,7 +277,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         ownerId: string,
         paperId: string,
         sourceId: string,
-        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts'>>
+        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'extractedAt' | 'extractionFingerprint'>>
     ): Promise<ProjectSource> {
         const ref = this.docRef(paperId);
         let updated: ProjectSource | null = null;
@@ -299,6 +307,8 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             if (patch.citationKey !== undefined) merged.citationKey = patch.citationKey;
             if (patch.order !== undefined) merged.order = patch.order;
             if (patch.excerpts !== undefined) merged.excerpts = patch.excerpts;
+            if (patch.extractedAt !== undefined) merged.extractedAt = patch.extractedAt;
+            if (patch.extractionFingerprint !== undefined) merged.extractionFingerprint = patch.extractionFingerprint;
             sources[idx] = serializeSource(merged);
             updated = merged;
             tx.update(ref, {
@@ -448,6 +458,16 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             tokensUsed: version.tokensUsed,
             verifications: version.verifications,
         };
+        // Only attach `canonicalAnalysis` when the caller produced one
+        // (the new analysis pipeline). Firestore rejects `undefined`,
+        // so legacy `GenerateStepUseCase` callers continue to omit the
+        // field cleanly. The structured payload includes its own
+        // Date fields (createdAt/updatedAt) which Firestore converts
+        // to Timestamp on write — auto-conversion is fine here because
+        // the downstream `*.toDate?.()` pattern handles either shape.
+        if (version.canonicalAnalysis) {
+            fullVersion.canonicalAnalysis = version.canonicalAnalysis;
+        }
 
         await this.mutateStep(ownerId, paperId, stepId, (step) => {
             step.versions = [...step.versions, fullVersion];
@@ -591,6 +611,7 @@ function serialize(paper: ExegeticalPaper): DocumentData {
         archivedAt: paper.archivedAt,
     };
     if (paper.title !== undefined) data.title = paper.title;
+    if (paper.exegeticalStrategy !== undefined) data.exegeticalStrategy = paper.exegeticalStrategy;
     return data;
 }
 
@@ -602,6 +623,10 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
         updatedAt: data.updatedAt?.toDate?.() ?? data.updatedAt ?? new Date(),
         passage: data.passage,
         displayLanguage: data.displayLanguage ?? 'es',
+        // Pre-strategy papers default to 'free' so we don't suddenly
+        // bug-banner about missing dialectical roles on existing work.
+        // New papers always carry an explicit value.
+        exegeticalStrategy: data.exegeticalStrategy === 'dialectical' ? 'dialectical' : 'free',
         title: data.title,
         assignmentBrief: data.assignmentBrief ?? null,
         styleGuideId: data.styleGuideId ?? null,
@@ -644,6 +669,11 @@ function deserializeSource(raw: any): ProjectSource {
         mode: raw.mode === 'extracted-excerpts' ? 'extracted-excerpts' : 'full-document',
         excerpts: Array.isArray(raw.excerpts) ? raw.excerpts.map(deserializeExcerpt) : [],
         sourceLibraryResourceId: raw.sourceLibraryResourceId ?? null,
+        // v1.5.1 stale-detection fields. Null on pre-v1.5.1 sources;
+        // the UI treats null fingerprint as "not stale" so legacy
+        // excerpts don't suddenly bug-banner the user.
+        extractedAt: raw.extractedAt?.toDate?.() ?? raw.extractedAt ?? null,
+        extractionFingerprint: typeof raw.extractionFingerprint === 'string' ? raw.extractionFingerprint : null,
         createdAt: raw.createdAt?.toDate?.() ?? raw.createdAt ?? new Date(),
     };
 }
@@ -684,6 +714,8 @@ function serializeSource(source: ProjectSource): DocumentData {
         mode: source.mode,
         excerpts: source.excerpts.map(serializeExcerpt),
         sourceLibraryResourceId: source.sourceLibraryResourceId ?? null,
+        extractedAt: source.extractedAt ?? null,
+        extractionFingerprint: source.extractionFingerprint ?? null,
         createdAt: source.createdAt,
     };
 }

@@ -11,10 +11,12 @@ export * from './entities/PaperRubric';
 export * from './entities/ProjectSource';
 export * from './entities/SourceType';
 export * from './entities/StepSourcePlan';
+export * from './entities/sourceRoleMapping';
 export * from './entities/corpusUsagePlan';
 export * from './entities/StyleGuideManifest';
 export * from './entities/UserRubric';
 export * from './entities/UserStyleGuide';
+export * from './entities/CanonicalVerseAnalysis';
 
 export * from './repositories/IExegeticalPaperRepository';
 export * from './repositories/IUserRubricRepository';
@@ -22,6 +24,11 @@ export * from './repositories/IUserStyleGuideRepository';
 
 export * from './use-cases/dtos';
 
+export * from './ports/IAcademicComposer';
+export * from './ports/ICanonicalVerseAnalyzer';
+export * from './ports/IConclusionComposer';
+export * from './ports/IIntroductionComposer';
+export * from './ports/IMinistryComposers';
 export * from './ports/IExcerptExtractor';
 export * from './ports/IExegesisOrchestrator';
 export * from './ports/IExpositoryAssistant';

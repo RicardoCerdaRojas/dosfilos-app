@@ -167,6 +167,124 @@ export function useExegesisPapers() {
         },
     });
 
+    // Canonical analysis pipeline (Phase 2 architecture). Produces a
+    // structured `CanonicalVerseAnalysis` for one verse step instead
+    // of free-form markdown. Coexists with `generateStep` during the
+    // migration — verse cards opt into the new path via a dedicated
+    // CTA. The mutation invalidates the same papers cache so the UI
+    // re-fetches the step with its new accepted analysis.
+    const analyzeVerseCanonically = useMutation({
+        mutationFn: async ({ paperId, stepId, regenerationHint }: { paperId: string; stepId: string; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.analyzeVerseCanonically.execute({
+                ownerId: user.uid,
+                paperId,
+                stepId,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    // Academic-paper composer over accepted verse analyses (Phase 3).
+    // Returns the composed markdown + formatter status. The caller
+    // surfaces it to the user (export dialog, preview pane, etc.) —
+    // we do NOT auto-persist the composition because the same
+    // analyses can produce many compositions (academic, sermon,
+    // devotional) and persisting wholesale would muddle that.
+    // The `persist` flag opts into saving to `paper.assembledMarkdown`.
+    const composeAcademicPaper = useMutation({
+        mutationFn: async ({ paperId, persist }: { paperId: string; persist?: boolean }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeAcademicPaper.execute({
+                ownerId: user.uid,
+                paperId,
+                persist,
+            });
+        },
+        onSuccess: (_data, vars) => {
+            // Only invalidate when we persisted — otherwise the
+            // papers cache wasn't touched and an invalidation would
+            // trigger a needless refetch.
+            if (vars.persist) {
+                queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+            }
+        },
+    });
+
+    // Section composers (Phase 5). Granular path that lets the user
+    // compose conclusion and introduction independently. Both append
+    // a new step version that the user reviews + accepts the same
+    // way as legacy generation. Introduction enforces academic order:
+    // it requires the conclusion to be accepted first.
+    const composeConclusionFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, regenerationHint }: { paperId: string; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeConclusionFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    const composeIntroductionFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, regenerationHint }: { paperId: string; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeIntroductionFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    // Ministry composers (Phase 6) — sermon, devotional, study guide.
+    // None of them mutate paper state, so no cache invalidation
+    // needed. The output goes to the user via copy/download/handoff
+    // dialogs.
+    const composeSermonFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, tone, regenerationHint }: { paperId: string; tone: 'pastoral' | 'expositivo' | 'narrativo'; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeSermonFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                tone,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+    });
+    const composeDevotionalFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, audience, regenerationHint }: { paperId: string; audience: 'general' | 'small-group' | 'individual'; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeDevotionalFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                audience,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+    });
+    const composeStudyGuideFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, audience, regenerationHint }: { paperId: string; audience: 'small-group' | 'sunday-school' | 'individual'; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeStudyGuideFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                audience,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+    });
+
     const acceptStep = useMutation({
         mutationFn: async ({ paperId, stepId, versionId }: { paperId: string; stepId: string; versionId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -233,5 +351,12 @@ export function useExegesisPapers() {
         acceptStep,
         saveStepEdit,
         generateSermonFromPaper,
+        analyzeVerseCanonically,
+        composeAcademicPaper,
+        composeConclusionFromAnalyses,
+        composeIntroductionFromAnalyses,
+        composeSermonFromAnalyses,
+        composeDevotionalFromAnalyses,
+        composeStudyGuideFromAnalyses,
     };
 }
