@@ -634,6 +634,22 @@
                     "title": "{{excerptCount}} curated fragments from {{sourceCount}} sources",
                     "body": "Every citation in the paper will point to one of these fragments — all verifiable against the original PDF."
                 },
+                "roleCoverage": {
+                    "eyebrow": "Your corpus by dialectical role",
+                    "balancedTitle": "Balanced corpus: you have anchors, contrasts, and technicals",
+                    "partialTitle": "Your corpus isn't balanced by role yet",
+                    "partialBody": "Cells at zero show which role is missing. Generation still works, but a balanced corpus produces a stronger argument.",
+                    "role": {
+                        "anchor": "Anchors",
+                        "contrast": "Contrasts",
+                        "technical": "Technical"
+                    },
+                    "hint": {
+                        "anchor": "Expository commentaries — the base reading",
+                        "contrast": "Other voice: critical commentaries, monographs, theological dictionaries",
+                        "technical": "Lexicons, grammars, critical apparatus"
+                    }
+                },
                 "libraryFilter": {
                     "all": "All",
                     "types": {

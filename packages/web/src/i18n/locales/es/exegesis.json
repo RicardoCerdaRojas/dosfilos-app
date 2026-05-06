@@ -634,6 +634,22 @@
                     "title": "{{excerptCount}} fragmentos curados de {{sourceCount}} fuentes",
                     "body": "Cada cita en el paper apuntará a uno de estos fragmentos — todos verificables contra el PDF original."
                 },
+                "roleCoverage": {
+                    "eyebrow": "Tu corpus por rol dialéctico",
+                    "balancedTitle": "Corpus balanceado: tienes anclas, contrastes y técnicas",
+                    "partialTitle": "Tu corpus aún no está balanceado por rol",
+                    "partialBody": "Las celdas en cero indican qué rol falta. La generación funciona igual, pero un corpus balanceado produce un paper con argumento más fuerte.",
+                    "role": {
+                        "anchor": "Anclas",
+                        "contrast": "Contrastes",
+                        "technical": "Técnicas"
+                    },
+                    "hint": {
+                        "anchor": "Comentarios expositivos — la lectura base",
+                        "contrast": "Otra voz: comentarios críticos, monografías, diccionarios teológicos",
+                        "technical": "Léxicos, gramáticas, aparatos críticos"
+                    }
+                },
                 "libraryFilter": {
                     "all": "Todos",
                     "types": {

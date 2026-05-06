@@ -21,6 +21,8 @@ import { toast } from 'sonner';
 import { libraryService } from '@dosfilos/application';
 import {
     CITABLE_SOURCE_TYPES,
+    computeRoleCoverage,
+    findMissingRoles,
     formatPassageReference,
     isExcerptSetStale,
     type ExegeticalPaper,
@@ -28,6 +30,7 @@ import {
     type ProjectSource,
     type ResourceIndexStatus,
     type ResourceType,
+    type SourceRole,
     type SourceType,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
@@ -135,6 +138,9 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </>
             ) : (
                 <>
+                    {paper.exegeticalStrategy === 'dialectical' && (
+                        <RoleCoverageCard paper={paper} />
+                    )}
                     <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
                     <CorpusSourcesList
                         paper={paper}
@@ -284,6 +290,98 @@ function CuratedSummaryBanner({
  * extract hero because new users haven't paid the cost of building
  * a library and we don't want to gatekeep them.
  */
+/**
+ * Dialectical-strategy coverage card. Counts the corpus by suggested
+ * role (anchor/contrast/technical) and surfaces "te falta X" nudges
+ * when a role is empty. Only rendered for dialectical-mode papers —
+ * free-mode users never see it (their explicit choice was no
+ * methodology scaffolding).
+ *
+ * The card is informational + actionable: each missing-role nudge is
+ * a button that opens the add-source dialog with the suggested
+ * SourceType pre-selected, so the student can fill the gap without
+ * navigating menus.
+ */
+function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
+    const { t } = useTranslation('exegesis');
+    const coverage = useMemo(() => computeRoleCoverage(paper.sources), [paper.sources]);
+    const missing = useMemo(() => findMissingRoles(coverage), [coverage]);
+
+    // No sources yet: don't render — the hero card is doing the
+    // entry-point work in that state.
+    if (coverage.total === 0) return null;
+
+    const allCovered = missing.length === 0;
+
+    return (
+        <section
+            className={[
+                'rounded-xl border p-4 space-y-3',
+                allCovered
+                    ? 'border-success/30 bg-success-subtle/40'
+                    : 'border-warning/40 bg-warning-subtle/40',
+            ].join(' ')}
+        >
+            <header className="flex items-start gap-2.5">
+                <Sparkles className={[
+                    'h-4 w-4 mt-0.5 shrink-0',
+                    allCovered ? 'text-success' : 'text-warning-subtle-foreground',
+                ].join(' ')} aria-hidden />
+                <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground">
+                        {t('paperSetup.subSteps.corpus.roleCoverage.eyebrow')}
+                    </p>
+                    <h3 className="text-sm font-semibold text-foreground mt-0.5">
+                        {allCovered
+                            ? t('paperSetup.subSteps.corpus.roleCoverage.balancedTitle')
+                            : t('paperSetup.subSteps.corpus.roleCoverage.partialTitle')}
+                    </h3>
+                </div>
+            </header>
+
+            <div className="grid grid-cols-3 gap-2">
+                <RoleCountChip role="anchor" count={coverage.anchor} />
+                <RoleCountChip role="contrast" count={coverage.contrast} />
+                <RoleCountChip role="technical" count={coverage.technical} />
+            </div>
+
+            {!allCovered && (
+                <p className="text-[11.5px] text-muted-foreground leading-snug">
+                    {t('paperSetup.subSteps.corpus.roleCoverage.partialBody')}
+                </p>
+            )}
+        </section>
+    );
+}
+
+function RoleCountChip({ role, count }: { role: SourceRole; count: number }) {
+    const { t } = useTranslation('exegesis');
+    const empty = count === 0;
+    return (
+        <div
+            className={[
+                'rounded-lg border px-3 py-2',
+                empty
+                    ? 'border-warning/40 bg-card'
+                    : 'border-success/30 bg-card',
+            ].join(' ')}
+        >
+            <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                {t(`paperSetup.subSteps.corpus.roleCoverage.role.${role}`)}
+            </p>
+            <p className={[
+                'text-lg font-semibold tabular-nums',
+                empty ? 'text-warning-subtle-foreground' : 'text-success',
+            ].join(' ')}>
+                {count}
+            </p>
+            <p className="text-[10.5px] text-muted-foreground leading-tight">
+                {t(`paperSetup.subSteps.corpus.roleCoverage.hint.${role}`)}
+            </p>
+        </div>
+    );
+}
+
 function EmptySourcesState({ onAdd }: { onAdd: () => void }) {
     const { t } = useTranslation('exegesis');
     return (

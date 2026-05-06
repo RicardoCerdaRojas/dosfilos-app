@@ -11,6 +11,7 @@ export * from './entities/PaperRubric';
 export * from './entities/ProjectSource';
 export * from './entities/SourceType';
 export * from './entities/StepSourcePlan';
+export * from './entities/sourceRoleMapping';
 export * from './entities/corpusUsagePlan';
 export * from './entities/StyleGuideManifest';
 export * from './entities/UserRubric';
