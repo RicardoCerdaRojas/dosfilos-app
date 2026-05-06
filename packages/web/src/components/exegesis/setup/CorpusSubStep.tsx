@@ -21,6 +21,8 @@ import { toast } from 'sonner';
 import { libraryService } from '@dosfilos/application';
 import {
     CITABLE_SOURCE_TYPES,
+    LIBRARY_TYPES_BY_ROLE,
+    TYPICAL_SOURCE_TYPE_BY_ROLE,
     computeRoleCoverage,
     findMissingRoles,
     formatPassageReference,
@@ -89,6 +91,11 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     // the auto-scroll-to-bottom problem the inline form caused.
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogInitialType, setDialogInitialType] = useState<SourceType | null>(null);
+    // When the user opens the dialog from a role-specific button on
+    // the dialectical hero (e.g. "Elegir el ANCLA"), this seeds the
+    // dialog's library-mode + library-type-filter so they land on
+    // commentary-expository pre-filtered to broad-category 'commentary'.
+    const [dialogInitialRole, setDialogInitialRole] = useState<SourceRole | null>(null);
     // v1.5: separate dialog for the library-extraction flow. Opens
     // independently from the upload dialog so the two paths don't
     // tangle their state — the upload dialog is "I'm bringing a new
@@ -99,6 +106,13 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
 
     const openDialog = (preselect: SourceType | null) => {
         setDialogInitialType(preselect);
+        setDialogInitialRole(null);
+        setDialogOpen(true);
+    };
+
+    const openDialogForRole = (role: SourceRole) => {
+        setDialogInitialType(TYPICAL_SOURCE_TYPE_BY_ROLE[role]);
+        setDialogInitialRole(role);
         setDialogOpen(true);
     };
 
@@ -136,6 +150,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                         paper={paper}
                         onAdd={() => openDialog(null)}
                         onExtract={() => setExtractDialogOpen(true)}
+                        onPickRole={openDialogForRole}
                     />
                     <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
                 </>
@@ -149,6 +164,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                         paper={paper}
                         onAdd={() => openDialog(null)}
                         onExtract={() => setExtractDialogOpen(true)}
+                        onPickRole={openDialogForRole}
                     />
                 </>
             )}
@@ -158,6 +174,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 initialType={dialogInitialType}
+                initialRole={dialogInitialRole}
             />
 
             <ExtractFromLibraryDialog
@@ -175,10 +192,12 @@ function CorpusSourcesList({
     paper,
     onAdd,
     onExtract,
+    onPickRole,
 }: {
     paper: ExegeticalPaper;
     onAdd: () => void;
     onExtract: () => void;
+    onPickRole: (role: SourceRole) => void;
 }) {
     const { t } = useTranslation('exegesis');
     const library = useLibrary();
@@ -231,6 +250,7 @@ function CorpusSourcesList({
                         strategy={strategy}
                         onExtract={onExtract}
                         onAdd={onAdd}
+                        onPickRole={onPickRole}
                     />
                 ) : (
                     <EmptySourcesState onAdd={onAdd} />
@@ -453,26 +473,67 @@ function ExtractHeroCard({
     strategy,
     onExtract,
     onAdd,
+    onPickRole,
 }: {
     libraryCount: number;
     strategy: 'free' | 'dialectical';
     onExtract: () => void;
     onAdd: () => void;
+    onPickRole: (role: SourceRole) => void;
 }) {
     const { t } = useTranslation('exegesis');
-    // Per-mode copy: dialectical mode reframes the entry-point as
-    // "start with the ANCHOR" so the strategy is explicit from the
-    // first decision the student makes. Free mode keeps the generic
-    // curated-vs-runtime-RAG pitch.
-    const eyebrowKey = strategy === 'dialectical'
-        ? 'paperSetup.subSteps.corpus.hero.dialecticalEyebrow'
-        : 'paperSetup.subSteps.corpus.hero.eyebrow';
-    const titleKey = strategy === 'dialectical'
-        ? 'paperSetup.subSteps.corpus.hero.dialecticalTitle'
-        : 'paperSetup.subSteps.corpus.hero.title';
-    const bodyKey = strategy === 'dialectical'
-        ? 'paperSetup.subSteps.corpus.hero.dialecticalBody'
-        : 'paperSetup.subSteps.corpus.hero.body';
+
+    if (strategy === 'dialectical') {
+        return (
+            <div className="rounded-xl border border-success/30 bg-success-subtle/40 p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-success/15 p-2 shrink-0">
+                        <Sparkles className="h-5 w-5 text-success" aria-hidden />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-success font-semibold">
+                            {t('paperSetup.subSteps.corpus.hero.dialecticalEyebrow')}
+                        </p>
+                        <h4 className="text-base font-semibold text-foreground mt-0.5">
+                            {t('paperSetup.subSteps.corpus.hero.dialecticalTitle', { count: libraryCount })}
+                        </h4>
+                        <p className="text-[12.5px] text-foreground/80 leading-relaxed mt-1.5">
+                            {t('paperSetup.subSteps.corpus.hero.dialecticalBody')}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <RolePickerButton role="anchor" recommended onClick={() => onPickRole('anchor')} />
+                    <RolePickerButton role="contrast" onClick={() => onPickRole('contrast')} />
+                    <RolePickerButton role="technical" onClick={() => onPickRole('technical')} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 border-t border-success/20 mt-2 -mb-1">
+                    <p className="text-[10.5px] text-muted-foreground uppercase tracking-wide font-semibold">
+                        {t('paperSetup.subSteps.corpus.hero.dialecticalAlt')}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={onExtract}
+                        className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2 inline-flex items-center gap-1"
+                    >
+                        <Sparkles className="h-3 w-3" />
+                        {t('paperSetup.subSteps.corpus.hero.dialecticalAltExtract')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onAdd}
+                        className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                    >
+                        {t('paperSetup.subSteps.corpus.hero.secondaryCta')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Free mode — generic curated-extraction pitch.
     return (
         <div className="rounded-xl border border-success/30 bg-success-subtle/40 p-5 space-y-4">
             <div className="flex items-start gap-3">
@@ -481,13 +542,13 @@ function ExtractHeroCard({
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-success font-semibold">
-                        {t(eyebrowKey)}
+                        {t('paperSetup.subSteps.corpus.hero.eyebrow')}
                     </p>
                     <h4 className="text-base font-semibold text-foreground mt-0.5">
-                        {t(titleKey, { count: libraryCount })}
+                        {t('paperSetup.subSteps.corpus.hero.title', { count: libraryCount })}
                     </h4>
                     <p className="text-[12.5px] text-foreground/80 leading-relaxed mt-1.5">
-                        {t(bodyKey)}
+                        {t('paperSetup.subSteps.corpus.hero.body')}
                     </p>
                 </div>
             </div>
@@ -528,6 +589,51 @@ function ExtractHeroCard({
                 </button>
             </div>
         </div>
+    );
+}
+
+/**
+ * Per-role primary action button for the dialectical hero. Each opens
+ * the add-source dialog with the role's typical SourceType + library
+ * filter pre-applied so the student lands directly on plausible
+ * candidates for that role. Anchor gets a "Recomendado" hint because
+ * starting with the anchor is the canonical step-1 of the method.
+ */
+function RolePickerButton({
+    role,
+    onClick,
+    recommended = false,
+}: {
+    role: SourceRole;
+    onClick: () => void;
+    recommended?: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={[
+                'text-left rounded-lg border-2 p-3 transition-colors space-y-1 bg-card',
+                recommended
+                    ? 'border-primary hover:border-primary/80 shadow-sm'
+                    : 'border-border hover:border-foreground/40',
+            ].join(' ')}
+        >
+            <div className="flex items-center gap-2">
+                <span className="text-[10.5px] uppercase tracking-wide font-bold text-primary">
+                    {t(`paperSetup.subSteps.corpus.hero.role.${role}.action`)}
+                </span>
+                {recommended && (
+                    <span className="text-[9px] uppercase tracking-wide font-medium rounded-full border border-success/40 bg-success-subtle text-success-subtle-foreground px-1.5 py-0">
+                        {t('paperSetup.subSteps.corpus.hero.recommended')}
+                    </span>
+                )}
+            </div>
+            <p className="text-[11.5px] text-muted-foreground leading-snug">
+                {t(`paperSetup.subSteps.corpus.hero.role.${role}.body`)}
+            </p>
+        </button>
     );
 }
 
@@ -904,11 +1010,20 @@ function AddSourceDialog({
     open,
     onOpenChange,
     initialType,
+    initialRole,
 }: {
     paper: ExegeticalPaper;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initialType: SourceType | null;
+    /**
+     * When set (dialectical-mode role buttons), the dialog opens
+     * directly in library mode with the role's library types pre-
+     * filtered — student lands on plausible candidates for the role
+     * they're filling. Falls back to the standard 'upload' mode +
+     * 'all' filter when null.
+     */
+    initialRole: SourceRole | null;
 }) {
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
@@ -940,16 +1055,24 @@ function AddSourceDialog({
     // we honor it as the initial selection.
     useEffect(() => {
         if (open) {
-            setMode('upload');
+            // When the user opened from a role-specific button on the
+            // dialectical hero, jump straight to library mode with the
+            // role's library type pre-filtered. Otherwise default to
+            // upload mode with no filter.
+            const roleLibTypes = initialRole ? LIBRARY_TYPES_BY_ROLE[initialRole] : null;
+            const seedFilter: ResourceType | 'all' = roleLibTypes && roleLibTypes.length > 0
+                ? (roleLibTypes[0] as ResourceType)
+                : 'all';
+            setMode(initialRole ? 'library' : 'upload');
             setFile(null);
             setDisplayName('');
             setSourceType(initialType ?? 'commentary-critical');
             setCitationKey('');
             setPickedResourceIds(new Set());
             setLibrarySearch('');
-            setLibraryTypeFilter('all');
+            setLibraryTypeFilter(seedFilter);
         }
-    }, [open, initialType]);
+    }, [open, initialType, initialRole]);
 
     // Reads from the globally synced library cache (`useLibrarySync`
     // mounted at the dashboard shell). First open is instant for any

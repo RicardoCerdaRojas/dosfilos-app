@@ -680,7 +680,24 @@
                     "body": "Instead of feeding whole PDFs to the model, we extract only the fragments relevant to your passage. You review and edit them before generating — that visibility is what sets us apart from NotebookLM and similar tools.",
                     "dialecticalEyebrow": "Start with the ANCHOR",
                     "dialecticalTitle": "Your library has {{count}} resources — let's build a dialectical corpus",
-                    "dialecticalBody": "A serious corpus has three roles: ANCHOR (the base reading, typically an expository commentary), CONTRAST (another voice: critical, monograph, theological dictionary), and TECHNICAL (lexicon, grammar, or critical apparatus). Start by picking an anchor and we'll build from there.",
+                    "dialecticalBody": "A serious corpus has three roles: ANCHOR (the base reading, typically an expository commentary), CONTRAST (another voice: critical, monograph, theological dictionary), and TECHNICAL (lexicon, grammar, or critical apparatus). Each button below opens your library filtered to the role you pick.",
+                    "recommended": "Recommended",
+                    "dialecticalAlt": "Or:",
+                    "dialecticalAltExtract": "Extract fragments from my whole library",
+                    "role": {
+                        "anchor": {
+                            "action": "Pick the ANCHOR",
+                            "body": "Expository commentary that orients the passage's reading."
+                        },
+                        "contrast": {
+                            "action": "Pick the CONTRAST",
+                            "body": "Another voice: critical commentary, monograph, or theological dictionary."
+                        },
+                        "technical": {
+                            "action": "Pick the TECHNICAL",
+                            "body": "Lexicon, grammar, or critical apparatus for specific decisions."
+                        }
+                    },
                     "bullet1Title": "Fragments, not books",
                     "bullet1Body": "Up to 30 chunks per source, ranked by similarity to the passage + brief.",
                     "bullet2Title": "You review",

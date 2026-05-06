@@ -680,7 +680,24 @@
                     "body": "En lugar de inyectar PDFs completos al modelo, extraemos solo los fragmentos relevantes para tu pasaje. Tú los revisas y editas antes de generar — esa visibilidad es lo que nos distingue de NotebookLM y similares.",
                     "dialecticalEyebrow": "Empieza por la ANCLA",
                     "dialecticalTitle": "Tu biblioteca tiene {{count}} recursos — armemos un corpus dialéctico",
-                    "dialecticalBody": "El corpus serio se arma en tres roles: ANCLA (la lectura base, normalmente un comentario expositivo), CONTRASTE (otra voz: crítico, monografía, diccionario teológico), y TÉCNICA (léxico, gramática o aparato crítico). Empieza por elegir una ancla y de ahí construimos.",
+                    "dialecticalBody": "El corpus serio se arma en tres roles: ANCLA (la lectura base, normalmente un comentario expositivo), CONTRASTE (otra voz: crítico, monografía, diccionario teológico), y TÉCNICA (léxico, gramática o aparato crítico). Cada botón de abajo abre tu biblioteca filtrada al rol que escojas.",
+                    "recommended": "Recomendado",
+                    "dialecticalAlt": "O bien:",
+                    "dialecticalAltExtract": "Extraer fragmentos de toda mi biblioteca",
+                    "role": {
+                        "anchor": {
+                            "action": "Elegir el ANCLA",
+                            "body": "Comentario expositivo que orientará la lectura del pasaje."
+                        },
+                        "contrast": {
+                            "action": "Elegir el CONTRASTE",
+                            "body": "Otra voz: comentario crítico, monografía o diccionario teológico."
+                        },
+                        "technical": {
+                            "action": "Elegir la TÉCNICA",
+                            "body": "Léxico, gramática o aparato crítico para decisiones puntuales."
+                        }
+                    },
                     "bullet1Title": "Fragmentos, no libros",
                     "bullet1Body": "Hasta 30 chunks por fuente, rankeados por similitud al pasaje + brief.",
                     "bullet2Title": "Tú revisas",

@@ -107,3 +107,35 @@ export function findMissingRoles(coverage: RoleCoverage): SourceRole[] {
     if (coverage.technical === 0) missing.push('technical');
     return missing;
 }
+
+/**
+ * The granular `SourceType` (the 13-value academic catalog) that
+ * best represents each dialectical role for new-source defaults.
+ * When the user clicks "Elegir el ANCLA" in the corpus hero, the
+ * add-source dialog opens with this type pre-selected in the
+ * academic-type picker — they can change it but the typical case
+ * is correct out of the box.
+ */
+export const TYPICAL_SOURCE_TYPE_BY_ROLE: Readonly<Record<SourceRole, SourceType>> = {
+    anchor: 'commentary-expository',
+    contrast: 'commentary-critical',
+    technical: 'lexicon-technical',
+};
+
+/**
+ * Library `LibraryResource.type` values that should pre-filter the
+ * library picker when the user is choosing a source for each role.
+ * Multi-value: anchor surfaces broad-category 'commentary' resources;
+ * contrast surfaces 'exegetical-commentary' + theological/bible
+ * dictionaries + historical context; technical surfaces grammars +
+ * critical-texts.
+ *
+ * Keys are read on the corpus hero buttons; the dialog uses them to
+ * narrow the library list to plausible candidates without HIDING
+ * the rest (the user can clear the chip filter to see everything).
+ */
+export const LIBRARY_TYPES_BY_ROLE: Readonly<Record<SourceRole, ReadonlyArray<string>>> = {
+    anchor: ['commentary'],
+    contrast: ['exegetical-commentary', 'theological-dictionary', 'bible-dictionary', 'historical-context'],
+    technical: ['grammar', 'critical-text'],
+};
