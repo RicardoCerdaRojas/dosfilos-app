@@ -27,6 +27,7 @@ import {
     type LibraryResource,
     type ProjectSource,
     type ResourceIndexStatus,
+    type ResourceType,
     type SourceType,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
@@ -777,6 +778,7 @@ function AddSourceDialog({
     const [progress, setProgress] = useState<number | null>(null);
     const [pickedResourceId, setPickedResourceId] = useState<string | null>(null);
     const [librarySearch, setLibrarySearch] = useState('');
+    const [libraryTypeFilter, setLibraryTypeFilter] = useState<ResourceType | 'all'>('all');
 
     // Reset / pre-select on every open. The dialog is one-shot per
     // open: closing always discards the form so reopening starts
@@ -791,6 +793,7 @@ function AddSourceDialog({
             setCitationKey('');
             setPickedResourceId(null);
             setLibrarySearch('');
+            setLibraryTypeFilter('all');
         }
     }, [open, initialType]);
 
@@ -804,19 +807,33 @@ function AddSourceDialog({
         [paper.sources],
     );
 
+    // Resources visible to the type filter (after the attached-already
+    // gate). Drives both the filtered list and the per-type count chips
+    // — so chips show how many ARE available, not how many exist in the
+    // raw library (which would be misleading when half are attached).
+    const availableForPicker = useMemo(
+        () => library.resources.filter(r => !attachedCorpusIds.has(r.id)),
+        [library.resources, attachedCorpusIds],
+    );
+
     const filteredResources = useMemo(() => {
-        const all = library.resources;
         const searchLower = librarySearch.trim().toLowerCase();
-        return all
-            // Don't list resources already attached to THIS paper —
-            // duplicating would create two ProjectSource entries to
-            // the same corpus, which is meaningless and inflates the
-            // gap card.
-            .filter(r => !attachedCorpusIds.has(r.id))
+        return availableForPicker
+            .filter(r => libraryTypeFilter === 'all' || r.type === libraryTypeFilter)
             .filter(r => searchLower === ''
                 || r.title.toLowerCase().includes(searchLower)
                 || r.author.toLowerCase().includes(searchLower));
-    }, [library.resources, attachedCorpusIds, librarySearch]);
+    }, [availableForPicker, libraryTypeFilter, librarySearch]);
+
+    // Per-type counts for the chip row. Only types with ≥1 resource
+    // get a chip — empty chips are noise.
+    const typeCounts = useMemo(() => {
+        const counts = new Map<ResourceType, number>();
+        for (const r of availableForPicker) {
+            counts.set(r.type, (counts.get(r.type) ?? 0) + 1);
+        }
+        return counts;
+    }, [availableForPicker]);
 
     const labelOk = displayName.trim().length >= 3;
     const canSubmit = mode === 'upload'
@@ -962,6 +979,9 @@ function AddSourceDialog({
                                     onSearchChange={setLibrarySearch}
                                     totalAttached={attachedCorpusIds.size}
                                     totalAvailable={library.resources.length}
+                                    typeFilter={libraryTypeFilter}
+                                    onTypeFilterChange={setLibraryTypeFilter}
+                                    typeCounts={typeCounts}
                                 />
                             )}
 
@@ -1148,6 +1168,9 @@ function LibraryPicker({
     onSearchChange,
     totalAttached,
     totalAvailable,
+    typeFilter,
+    onTypeFilterChange,
+    typeCounts,
 }: {
     isLoading: boolean;
     resources: ReadonlyArray<LibraryResource>;
@@ -1157,8 +1180,20 @@ function LibraryPicker({
     onSearchChange: (next: string) => void;
     totalAttached: number;
     totalAvailable: number;
+    typeFilter: ResourceType | 'all';
+    onTypeFilterChange: (next: ResourceType | 'all') => void;
+    typeCounts: Map<ResourceType, number>;
 }) {
     const { t } = useTranslation('exegesis');
+
+    // Stable order: most common exegesis-relevant types first, then
+    // the long tail. Skip types with zero items — empty chips are noise.
+    const orderedTypes: ResourceType[] = ([
+        'commentary', 'exegetical-commentary', 'theological-dictionary',
+        'bible-dictionary', 'theology', 'grammar', 'critical-text',
+        'historical-context', 'biblical-survey', 'article', 'other',
+    ] as ResourceType[]).filter(t => (typeCounts.get(t) ?? 0) > 0);
+    const totalAvailableForFilter = Array.from(typeCounts.values()).reduce((s, n) => s + n, 0);
 
     return (
         <div className="space-y-3">
@@ -1172,6 +1207,30 @@ function LibraryPicker({
                     className="w-full rounded-md border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 />
             </div>
+
+            {/* Type filter chips — show only when there are ≥2 distinct
+                types in the available pool (one type = no choice to
+                make). Horizontal scroll on overflow so we don't wrap a
+                wall of chips on narrow viewports. */}
+            {orderedTypes.length >= 2 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-0.5 px-0.5">
+                    <FilterChip
+                        active={typeFilter === 'all'}
+                        onClick={() => onTypeFilterChange('all')}
+                        label={t('paperSetup.subSteps.corpus.libraryFilter.all')}
+                        count={totalAvailableForFilter}
+                    />
+                    {orderedTypes.map(type => (
+                        <FilterChip
+                            key={type}
+                            active={typeFilter === type}
+                            onClick={() => onTypeFilterChange(type)}
+                            label={t(`paperSetup.subSteps.corpus.libraryFilter.types.${type}`)}
+                            count={typeCounts.get(type) ?? 0}
+                        />
+                    ))}
+                </div>
+            )}
 
             {isLoading ? (
                 <div className="rounded-lg border border-border bg-muted/20 px-4 py-8 text-center">
@@ -1234,6 +1293,45 @@ function LibraryPicker({
                 </ul>
             )}
         </div>
+    );
+}
+
+/**
+ * Toggle pill for the resource-type filter strip. Uses the `aria-pressed`
+ * pattern instead of native radios so the chip row can scroll
+ * horizontally without being broken up by form-control semantics.
+ */
+function FilterChip({
+    active,
+    onClick,
+    label,
+    count,
+}: {
+    active: boolean;
+    onClick: () => void;
+    label: string;
+    count: number;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={active}
+            className={[
+                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-medium whitespace-nowrap transition-colors shrink-0',
+                active
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground',
+            ].join(' ')}
+        >
+            <span>{label}</span>
+            <span className={[
+                'tabular-nums text-[10.5px] rounded-full px-1.5 py-0',
+                active ? 'bg-primary/20' : 'bg-muted text-muted-foreground/80',
+            ].join(' ')}>
+                {count}
+            </span>
+        </button>
     );
 }
 

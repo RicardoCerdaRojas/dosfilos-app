@@ -620,6 +620,22 @@
                     "title": "{{excerptCount}} curated fragments from {{sourceCount}} sources",
                     "body": "Every citation in the paper will point to one of these fragments — all verifiable against the original PDF."
                 },
+                "libraryFilter": {
+                    "all": "All",
+                    "types": {
+                        "commentary": "Commentaries",
+                        "exegetical-commentary": "Exegetical commentaries",
+                        "theological-dictionary": "Theological dictionaries",
+                        "bible-dictionary": "Bible dictionaries",
+                        "theology": "Theology",
+                        "grammar": "Grammars / lexicons",
+                        "critical-text": "Critical texts",
+                        "historical-context": "Historical context",
+                        "biblical-survey": "Biblical surveys",
+                        "article": "Articles",
+                        "other": "Other"
+                    }
+                },
                 "hero": {
                     "eyebrow": "Your corpus, curated",
                     "title": "Use your library of {{count}} resources",

@@ -620,6 +620,22 @@
                     "title": "{{excerptCount}} fragmentos curados de {{sourceCount}} fuentes",
                     "body": "Cada cita en el paper apuntará a uno de estos fragmentos — todos verificables contra el PDF original."
                 },
+                "libraryFilter": {
+                    "all": "Todos",
+                    "types": {
+                        "commentary": "Comentarios",
+                        "exegetical-commentary": "Comentarios exegéticos",
+                        "theological-dictionary": "Diccionarios teológicos",
+                        "bible-dictionary": "Diccionarios bíblicos",
+                        "theology": "Teología",
+                        "grammar": "Gramáticas / léxicos",
+                        "critical-text": "Textos críticos",
+                        "historical-context": "Contexto histórico",
+                        "biblical-survey": "Panoramas bíblicos",
+                        "article": "Artículos",
+                        "other": "Otros"
+                    }
+                },
                 "hero": {
                     "eyebrow": "Tu corpus, curado",
                     "title": "Aprovecha tu biblioteca de {{count}} recursos",
