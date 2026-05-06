@@ -22,6 +22,7 @@ import { libraryService } from '@dosfilos/application';
 import {
     CITABLE_SOURCE_TYPES,
     LIBRARY_TYPES_BY_ROLE,
+    STRATEGY_SUGGESTED_RANGES,
     TYPICAL_SOURCE_TYPE_BY_ROLE,
     computeEffectiveRoleTargets,
     computeRoleCoverage,
@@ -652,18 +653,19 @@ function RolePickerButton({
     recommended?: boolean;
 }) {
     const { t } = useTranslation('exegesis');
+    const range = STRATEGY_SUGGESTED_RANGES[role];
     return (
         <button
             type="button"
             onClick={onClick}
             className={[
-                'text-left rounded-lg border-2 p-3 transition-colors space-y-1 bg-card',
+                'text-left rounded-lg border-2 p-3 transition-colors space-y-1.5 bg-card',
                 recommended
                     ? 'border-primary hover:border-primary/80 shadow-sm'
                     : 'border-border hover:border-foreground/40',
             ].join(' ')}
         >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10.5px] uppercase tracking-wide font-bold text-primary">
                     {t(`paperSetup.subSteps.corpus.hero.role.${role}.action`)}
                 </span>
@@ -675,6 +677,12 @@ function RolePickerButton({
             </div>
             <p className="text-[11.5px] text-muted-foreground leading-snug">
                 {t(`paperSetup.subSteps.corpus.hero.role.${role}.body`)}
+            </p>
+            <p className="text-[10.5px] font-medium text-foreground/70 inline-flex items-center gap-1 pt-0.5">
+                <span className="tabular-nums rounded bg-muted px-1.5 py-0.5 text-[10px]">
+                    {range.min}–{range.max}
+                </span>
+                <span>{t('paperSetup.subSteps.corpus.hero.suggestedCount')}</span>
             </p>
         </button>
     );

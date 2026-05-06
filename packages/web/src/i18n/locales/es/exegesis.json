@@ -698,6 +698,7 @@
                     "dialecticalTitle": "Tu biblioteca tiene {{count}} recursos — armemos un corpus dialéctico",
                     "dialecticalBody": "El corpus serio se construye en tres roles: ANCLA (lectura base, comentario expositivo), CONTRASTE (otra voz: crítico, monografía, diccionario), TÉCNICA (léxico, gramática o aparato). Empieza por los botones de abajo para sembrar al menos uno de cada rol; después agrega MÁS fuentes del rol que la rúbrica te pida (un paper riguroso suele tener 4-5 anclas, 4-5 contrastes y 3-4 técnicas).",
                     "recommended": "Recomendado",
+                    "suggestedCount": "fuentes recomendadas para un paper riguroso",
                     "dialecticalAlt": "O bien:",
                     "dialecticalAltExtract": "Extraer fragmentos de toda mi biblioteca",
                     "role": {

@@ -119,23 +119,29 @@ export interface RoleExpectations {
 }
 
 /**
- * Per-role counts the dialectical strategy considers typical for a
- * RIGOROUS exegetical paper, used as the fallback target when the
- * paper's rubric stays silent on a role (e.g. no rubric chosen, or
- * the rubric only specifies a total quantity without per-type
- * minimums).
- *
- * These numbers come from the same heuristic that informs the hero
- * copy ("un paper riguroso suele tener 4-5 anclas, 4-5 contrastes y
- * 3-4 técnicas") — keep them in sync if you bump the copy.
- *
- * Rubric expectations always WIN when present; the strategy fills in
- * only when the rubric stays at zero for a role.
+ * Per-role count RANGES the dialectical strategy considers typical
+ * for a rigorous exegetical paper. The hero card uses the range as
+ * a "X-Y fuentes recomendadas" badge per role, and the coverage card
+ * uses `min` as the fallback target when the rubric is silent. Keep
+ * these synced with any copy that mentions explicit numbers.
+ */
+export const STRATEGY_SUGGESTED_RANGES: Readonly<Record<SourceRole, { min: number; max: number }>> = {
+    anchor: { min: 4, max: 5 },
+    contrast: { min: 4, max: 5 },
+    technical: { min: 3, max: 4 },
+};
+
+/**
+ * Lower-bound counts derived from `STRATEGY_SUGGESTED_RANGES`. Used
+ * as the per-role fallback target in the coverage card when the
+ * rubric stays silent on a role (no rubric chosen, or it only
+ * specifies a total quantity without per-type minimums). Rubric
+ * expectations always WIN when present.
  */
 export const STRATEGY_SUGGESTED_COUNTS: RoleExpectations = {
-    anchor: 4,
-    contrast: 4,
-    technical: 3,
+    anchor: STRATEGY_SUGGESTED_RANGES.anchor.min,
+    contrast: STRATEGY_SUGGESTED_RANGES.contrast.min,
+    technical: STRATEGY_SUGGESTED_RANGES.technical.min,
 };
 
 /**
