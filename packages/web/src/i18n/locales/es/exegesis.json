@@ -668,6 +668,13 @@
                 },
                 "libraryFilter": {
                     "all": "Todos",
+                    "testamentActive": {
+                        "NT": "Solo NT · {{count}} ocultos",
+                        "OT": "Solo AT · {{count}} ocultos"
+                    },
+                    "testamentInactive": "Mostrando todos los libros",
+                    "testamentTooltipOff": "Click para ver también los recursos del otro testamento ({{count}} ocultos)",
+                    "testamentTooltipOn": "Click para volver a filtrar por el testamento del pasaje",
                     "types": {
                         "commentary": "Comentarios",
                         "exegetical-commentary": "Comentarios exegéticos",

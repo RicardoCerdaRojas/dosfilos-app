@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import {
     AlertTriangle,
     BookOpenText,
+    Check,
     CheckCircle2,
     ChevronDown,
     ChevronRight,
+    Eye,
     ExternalLink,
     FileStack,
     FileText,
@@ -29,7 +31,9 @@ import {
     computeRoleExpectations,
     findMissingRoles,
     formatPassageReference,
+    getBookById,
     isExcerptSetStale,
+    resourceMatchesTestament,
     type ExegeticalPaper,
     type LibraryResource,
     type ProjectSource,
@@ -37,6 +41,7 @@ import {
     type ResourceType,
     type SourceRole,
     type SourceType,
+    type Testament,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { useLibrary } from '@/hooks/library';
@@ -1097,6 +1102,16 @@ function AddSourceDialog({
     const [pickedResourceIds, setPickedResourceIds] = useState<Set<string>>(new Set());
     const [librarySearch, setLibrarySearch] = useState('');
     const [libraryTypeFilter, setLibraryTypeFilter] = useState<ResourceType | 'all'>('all');
+    // Testament filter: when the paper has a clear NT or OT passage,
+    // hide library resources that demonstrably belong to the other
+    // testament (HALOT on a NT paper, BDAG on an OT paper). The
+    // chip-toggle below lets the user disable this if they want a
+    // resource the inferer might have classified incorrectly.
+    const [testamentFilterEnabled, setTestamentFilterEnabled] = useState(true);
+
+    const paperTestament: Testament | null = useMemo(() => {
+        return getBookById(paper.passage.bookId)?.testament ?? null;
+    }, [paper.passage.bookId]);
 
     // Reset / pre-select on every open. The dialog is one-shot per
     // open: closing always discards the form so reopening starts
@@ -1134,13 +1149,28 @@ function AddSourceDialog({
     );
 
     // Resources visible to the type filter (after the attached-already
-    // gate). Drives both the filtered list and the per-type count chips
-    // — so chips show how many ARE available, not how many exist in the
-    // raw library (which would be misleading when half are attached).
+    // gate AND optional testament narrowing). Drives the filtered list
+    // and the per-type count chips — counts reflect what the user can
+    // actually pick, not the raw library size.
     const availableForPicker = useMemo(
-        () => library.resources.filter(r => !attachedCorpusIds.has(r.id)),
-        [library.resources, attachedCorpusIds],
+        () => library.resources
+            .filter(r => !attachedCorpusIds.has(r.id))
+            .filter(r => !testamentFilterEnabled || !paperTestament
+                ? true
+                : resourceMatchesTestament(r, paperTestament)),
+        [library.resources, attachedCorpusIds, testamentFilterEnabled, paperTestament],
     );
+
+    // Count of resources EXCLUDED purely by the testament filter — drives
+    // the toggle chip's secondary label so the user knows what they're
+    // hiding.
+    const excludedByTestament = useMemo(() => {
+        if (!paperTestament) return 0;
+        return library.resources
+            .filter(r => !attachedCorpusIds.has(r.id))
+            .filter(r => !resourceMatchesTestament(r, paperTestament))
+            .length;
+    }, [library.resources, attachedCorpusIds, paperTestament]);
 
     const filteredResources = useMemo(() => {
         const searchLower = librarySearch.trim().toLowerCase();
@@ -1355,6 +1385,10 @@ function AddSourceDialog({
                                     typeFilter={libraryTypeFilter}
                                     onTypeFilterChange={setLibraryTypeFilter}
                                     typeCounts={typeCounts}
+                                    paperTestament={paperTestament}
+                                    testamentFilterEnabled={testamentFilterEnabled}
+                                    onToggleTestamentFilter={() => setTestamentFilterEnabled(v => !v)}
+                                    excludedByTestament={excludedByTestament}
                                 />
                             )}
 
@@ -1564,6 +1598,10 @@ function LibraryPicker({
     typeFilter,
     onTypeFilterChange,
     typeCounts,
+    paperTestament,
+    testamentFilterEnabled,
+    onToggleTestamentFilter,
+    excludedByTestament,
 }: {
     isLoading: boolean;
     resources: ReadonlyArray<LibraryResource>;
@@ -1576,6 +1614,10 @@ function LibraryPicker({
     typeFilter: ResourceType | 'all';
     onTypeFilterChange: (next: ResourceType | 'all') => void;
     typeCounts: Map<ResourceType, number>;
+    paperTestament: Testament | null;
+    testamentFilterEnabled: boolean;
+    onToggleTestamentFilter: () => void;
+    excludedByTestament: number;
 }) {
     const { t } = useTranslation('exegesis');
 
@@ -1600,6 +1642,34 @@ function LibraryPicker({
                     className="w-full rounded-md border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
                 />
             </div>
+
+            {/* Testament filter pill — visible only when the paper has
+                a clear testament AND there's something to hide. The
+                pill toggles on/off; "off" reveals everything (escape
+                hatch when the user knows the inferer mis-classified). */}
+            {paperTestament && excludedByTestament > 0 && (
+                <button
+                    type="button"
+                    onClick={onToggleTestamentFilter}
+                    aria-pressed={testamentFilterEnabled}
+                    className={[
+                        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] transition-colors',
+                        testamentFilterEnabled
+                            ? 'border-success/40 bg-success-subtle/40 text-success-subtle-foreground hover:bg-success-subtle/60'
+                            : 'border-border bg-card text-muted-foreground hover:bg-accent/40',
+                    ].join(' ')}
+                    title={testamentFilterEnabled
+                        ? t('paperSetup.subSteps.corpus.libraryFilter.testamentTooltipOff', { count: excludedByTestament })
+                        : t('paperSetup.subSteps.corpus.libraryFilter.testamentTooltipOn')}
+                >
+                    {testamentFilterEnabled ? <Check className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    <span>
+                        {testamentFilterEnabled
+                            ? t(`paperSetup.subSteps.corpus.libraryFilter.testamentActive.${paperTestament}`, { count: excludedByTestament })
+                            : t('paperSetup.subSteps.corpus.libraryFilter.testamentInactive')}
+                    </span>
+                </button>
+            )}
 
             {/* Type filter chips — show only when there are ≥2 distinct
                 types in the available pool (one type = no choice to

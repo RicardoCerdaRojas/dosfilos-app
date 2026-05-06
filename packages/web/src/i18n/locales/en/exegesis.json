@@ -668,6 +668,13 @@
                 },
                 "libraryFilter": {
                     "all": "All",
+                    "testamentActive": {
+                        "NT": "NT only · {{count}} hidden",
+                        "OT": "OT only · {{count}} hidden"
+                    },
+                    "testamentInactive": "Showing all books",
+                    "testamentTooltipOff": "Click to also show resources from the other testament ({{count}} hidden)",
+                    "testamentTooltipOn": "Click to filter by the passage's testament again",
                     "types": {
                         "commentary": "Commentaries",
                         "exegetical-commentary": "Exegetical commentaries",
