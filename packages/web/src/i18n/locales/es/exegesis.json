@@ -328,6 +328,20 @@
             "subtitle": "El idioma en el que el agente va a redactar versos, conclusión e introducción. Lo puedes cambiar luego, pero siempre afecta a TODO el paper.",
             "hint": "Independiente del idioma de la UI o de la rúbrica que pegues."
         },
+        "strategy": {
+            "title": "Estrategia exegética",
+            "subtitle": "¿Cómo quieres armar tu trabajo? Esto define el nivel de guía metodológica que vas a recibir al elegir fuentes y al planear cómo se usan.",
+            "recommended": "Recomendado",
+            "hint": "Puedes cambiarlo después desde el setup del trabajo.",
+            "dialectical": {
+                "title": "Con estrategia exegética",
+                "body": "Te guiamos para que tu corpus tenga balance dialéctico: ancla (lectura base) + contraste (otra voz) + técnica (léxico, gramática). El plan de uso refleja esos roles. Es la metodología clásica de un trabajo serio."
+            },
+            "free": {
+                "title": "Sin estrategia exegética (libre)",
+                "body": "Eliges fuentes a tu manera, sin nudges metodológicos. Después te sugerimos cómo usarlas en cada paso y tú ajustas. Útil cuando ya sabes qué necesitas o quieres trabajar express."
+            }
+        },
         "rubric": {
             "title": "Rúbrica",
             "subtitle": "Aplica una plantilla guardada o usa la rúbrica académica por defecto. Después puedes ajustarla en el setup del trabajo.",

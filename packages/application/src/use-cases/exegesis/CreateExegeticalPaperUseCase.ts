@@ -66,6 +66,7 @@ export class CreateExegeticalPaperUseCase {
             ownerId: input.ownerId,
             passage: input.passage,
             displayLanguage: input.displayLanguage,
+            exegeticalStrategy: input.exegeticalStrategy ?? 'dialectical',
             title: input.title,
             assignmentBrief: normalizeBrief(input.assignmentBrief),
             styleGuideId: input.styleGuideId,

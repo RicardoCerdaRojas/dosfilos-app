@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages, FileCheck2 } from 'lucide-react';
+import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages, FileCheck2, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
-import type { PassageReference, SupportedLanguage } from '@dosfilos/domain';
+import type { ExegeticalStrategy, PassageReference, SupportedLanguage } from '@dosfilos/domain';
 
 /**
  * Step 1 of the exegesis creation flow — minimal page.
@@ -48,6 +48,10 @@ export function ExegesisCreatePage() {
     // language for every step.
     const initialLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
     const [displayLanguage, setDisplayLanguage] = useState<SupportedLanguage>(initialLanguage);
+    // Methodology mode. Defaults to dialectical because that's the
+    // differentiator we want users to land on; opting out is a
+    // deliberate, named choice (`free`) — not the absence of one.
+    const [exegeticalStrategy, setExegeticalStrategy] = useState<ExegeticalStrategy>('dialectical');
     const isCreating = createPaper.isPending;
     const canCreate = !!passage && !isCreating;
     const briefCharCount = assignmentBrief.length;
@@ -59,6 +63,7 @@ export function ExegesisCreatePage() {
             const paper = await createPaper.mutateAsync({
                 passage,
                 displayLanguage,
+                exegeticalStrategy,
                 styleGuideId: null,
                 assignmentBrief: assignmentBrief.trim() || null,
                 rubricTemplateId,
@@ -138,6 +143,34 @@ export function ExegesisCreatePage() {
 
                 <Step
                     number={3}
+                    icon={<Compass className="h-4 w-4" />}
+                    title={t('create.strategy.title')}
+                    subtitle={t('create.strategy.subtitle')}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <StrategyOption
+                            value="dialectical"
+                            selected={exegeticalStrategy === 'dialectical'}
+                            onSelect={() => setExegeticalStrategy('dialectical')}
+                            recommended
+                            title={t('create.strategy.dialectical.title')}
+                            body={t('create.strategy.dialectical.body')}
+                        />
+                        <StrategyOption
+                            value="free"
+                            selected={exegeticalStrategy === 'free'}
+                            onSelect={() => setExegeticalStrategy('free')}
+                            title={t('create.strategy.free.title')}
+                            body={t('create.strategy.free.body')}
+                        />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground italic mt-2">
+                        {t('create.strategy.hint')}
+                    </p>
+                </Step>
+
+                <Step
+                    number={4}
                     icon={<FileCheck2 className="h-4 w-4" />}
                     title={t('create.rubric.title')}
                     subtitle={t('create.rubric.subtitle')}
@@ -176,7 +209,7 @@ export function ExegesisCreatePage() {
                 </Step>
 
                 <Step
-                    number={4}
+                    number={5}
                     icon={<Lightbulb className="h-4 w-4" />}
                     title={t('create.brief.title')}
                     subtitle={t('create.brief.subtitle')}
@@ -283,6 +316,50 @@ function LanguageOption({
         >
             <span className="text-[10px] uppercase tracking-wide opacity-70 mr-2">{value}</span>
             {label}
+        </button>
+    );
+}
+
+function StrategyOption({
+    value,
+    selected,
+    onSelect,
+    title,
+    body,
+    recommended = false,
+}: {
+    value: ExegeticalStrategy;
+    selected: boolean;
+    onSelect: () => void;
+    title: string;
+    body: string;
+    recommended?: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            aria-pressed={selected}
+            data-strategy={value}
+            className={[
+                'text-left rounded-lg border-2 p-3 transition-colors space-y-1',
+                selected
+                    ? 'border-primary bg-primary/5 text-foreground shadow-sm'
+                    : 'border-border bg-card text-foreground hover:border-foreground/30',
+            ].join(' ')}
+        >
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">{title}</span>
+                {recommended && (
+                    <span className="text-[10px] uppercase tracking-wide font-medium rounded-full border border-success/40 bg-success-subtle text-success-subtle-foreground px-1.5 py-0">
+                        {t('create.strategy.recommended')}
+                    </span>
+                )}
+            </div>
+            <p className="text-[12px] text-muted-foreground leading-snug">
+                {body}
+            </p>
         </button>
     );
 }

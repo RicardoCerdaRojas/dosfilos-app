@@ -65,6 +65,13 @@ export interface CreateExegeticalPaperInput {
      * later via `AddProjectSource` while the paper is in 'configuring'.
      */
     initialSources?: AddProjectSourceInput[];
+    /**
+     * Methodology mode. When omitted the use case picks `'dialectical'`
+     * — the differentiator pitch defaults users into the guided method
+     * and they can opt down to `'free'` from the create UI when they
+     * want to skip the role scaffolding.
+     */
+    exegeticalStrategy?: 'free' | 'dialectical';
 }
 
 // ── UpdatePaperBrief ────────────────────────────────────────────────────

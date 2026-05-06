@@ -117,6 +117,12 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             updatedAt: now,
             passage: draft.passage,
             displayLanguage: draft.displayLanguage,
+            // New papers default to dialectical methodology — the
+            // differentiator pitch hinges on guided strategy. Caller
+            // can override at create time (the create UI surfaces the
+            // choice). Pre-strategy docs that get re-saved through
+            // this path will inherit the field naturally.
+            exegeticalStrategy: draft.exegeticalStrategy ?? 'dialectical',
             title: draft.title,
             assignmentBrief: draft.assignmentBrief ?? null,
             styleGuideId: draft.styleGuideId,
@@ -595,6 +601,7 @@ function serialize(paper: ExegeticalPaper): DocumentData {
         archivedAt: paper.archivedAt,
     };
     if (paper.title !== undefined) data.title = paper.title;
+    if (paper.exegeticalStrategy !== undefined) data.exegeticalStrategy = paper.exegeticalStrategy;
     return data;
 }
 
@@ -606,6 +613,10 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
         updatedAt: data.updatedAt?.toDate?.() ?? data.updatedAt ?? new Date(),
         passage: data.passage,
         displayLanguage: data.displayLanguage ?? 'es',
+        // Pre-strategy papers default to 'free' so we don't suddenly
+        // bug-banner about missing dialectical roles on existing work.
+        // New papers always carry an explicit value.
+        exegeticalStrategy: data.exegeticalStrategy === 'dialectical' ? 'dialectical' : 'free',
         title: data.title,
         assignmentBrief: data.assignmentBrief ?? null,
         styleGuideId: data.styleGuideId ?? null,

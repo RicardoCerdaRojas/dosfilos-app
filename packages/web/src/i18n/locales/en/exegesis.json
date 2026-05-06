@@ -328,6 +328,20 @@
             "subtitle": "The language the agent will use to write verses, conclusion, and introduction. Editable later — it always affects the WHOLE paper.",
             "hint": "Independent of the UI language or the rubric you paste."
         },
+        "strategy": {
+            "title": "Exegetical strategy",
+            "subtitle": "How do you want to build this paper? This sets the level of methodological guidance you get when picking sources and planning how they're used.",
+            "recommended": "Recommended",
+            "hint": "You can change it later from the paper setup.",
+            "dialectical": {
+                "title": "With exegetical strategy",
+                "body": "We guide you to a corpus with dialectical balance: anchor (base reading) + contrast (alternate voice) + technical (lexicon, grammar). The usage plan reflects those roles. The classical method for serious work."
+            },
+            "free": {
+                "title": "Without exegetical strategy (free)",
+                "body": "Pick sources your way, no methodology nudges. We then suggest how to use them per step and you adjust. Useful when you already know what you need or want to work fast."
+            }
+        },
         "rubric": {
             "title": "Rubric",
             "subtitle": "Apply a saved template or use the academic default. You can tweak it in the paper setup later.",
