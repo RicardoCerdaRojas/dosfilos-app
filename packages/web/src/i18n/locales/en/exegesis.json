@@ -638,7 +638,11 @@
                     "eyebrow": "Your corpus by dialectical role",
                     "balancedTitle": "Balanced corpus: meets strategy and rubric",
                     "partialTitle": "Your corpus doesn't yet cover what the strategy or rubric expects",
-                    "partialBody": "Each cell shows how many sources you have vs how many are expected (rubric if present; minimum 1 per role for dialectical viability). Add more of the amber roles.",
+                    "partialBody": "Each cell shows how many sources you have vs the target. If your rubric specifies a minimum for the role, that wins; if not, we show the target suggested by the strategy for a rigorous paper.",
+                    "targetSource": {
+                        "rubric": "rubric",
+                        "strategy": "strategy"
+                    },
                     "role": {
                         "anchor": "Anchors",
                         "contrast": "Contrasts",

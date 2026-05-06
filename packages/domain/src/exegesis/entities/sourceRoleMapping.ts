@@ -119,6 +119,42 @@ export interface RoleExpectations {
 }
 
 /**
+ * Per-role counts the dialectical strategy considers typical for a
+ * RIGOROUS exegetical paper, used as the fallback target when the
+ * paper's rubric stays silent on a role (e.g. no rubric chosen, or
+ * the rubric only specifies a total quantity without per-type
+ * minimums).
+ *
+ * These numbers come from the same heuristic that informs the hero
+ * copy ("un paper riguroso suele tener 4-5 anclas, 4-5 contrastes y
+ * 3-4 técnicas") — keep them in sync if you bump the copy.
+ *
+ * Rubric expectations always WIN when present; the strategy fills in
+ * only when the rubric stays at zero for a role.
+ */
+export const STRATEGY_SUGGESTED_COUNTS: RoleExpectations = {
+    anchor: 4,
+    contrast: 4,
+    technical: 3,
+};
+
+/**
+ * Effective per-role target to display in the coverage chip. Rule:
+ * use the rubric expectation if it speaks (>0); otherwise fall back
+ * to the strategy's suggested count. The chip turns green when the
+ * actual count meets this effective target.
+ */
+export function computeEffectiveRoleTargets(
+    expectations: RoleExpectations,
+): RoleExpectations {
+    return {
+        anchor: expectations.anchor > 0 ? expectations.anchor : STRATEGY_SUGGESTED_COUNTS.anchor,
+        contrast: expectations.contrast > 0 ? expectations.contrast : STRATEGY_SUGGESTED_COUNTS.contrast,
+        technical: expectations.technical > 0 ? expectations.technical : STRATEGY_SUGGESTED_COUNTS.technical,
+    };
+}
+
+/**
  * Maps each rubric source-requirement to its dialectical role and
  * sums the minimums per role. Lets the corpus role-coverage card
  * display "Anclas: 2 / 5" — bridging the rubric (which speaks in

@@ -638,7 +638,11 @@
                     "eyebrow": "Tu corpus por rol dialéctico",
                     "balancedTitle": "Corpus balanceado: cumple estrategia y rúbrica",
                     "partialTitle": "Tu corpus aún no cubre lo que pide la estrategia o la rúbrica",
-                    "partialBody": "Cada celda muestra cuántas fuentes tienes vs cuántas se esperan (rúbrica si la hay; mínimo 1 por rol para viabilidad dialéctica). Agrega más del rol en ámbar.",
+                    "partialBody": "Cada celda muestra cuántas fuentes tienes vs el target. Si tu rúbrica especifica un mínimo para el rol, ese gana; si no, mostramos el target sugerido por la estrategia para un paper riguroso.",
+                    "targetSource": {
+                        "rubric": "rúbrica",
+                        "strategy": "estrategia"
+                    },
                     "role": {
                         "anchor": "Anclas",
                         "contrast": "Contrastes",

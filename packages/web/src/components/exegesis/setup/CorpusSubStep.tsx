@@ -23,6 +23,7 @@ import {
     CITABLE_SOURCE_TYPES,
     LIBRARY_TYPES_BY_ROLE,
     TYPICAL_SOURCE_TYPE_BY_ROLE,
+    computeEffectiveRoleTargets,
     computeRoleCoverage,
     computeRoleExpectations,
     findMissingRoles,
@@ -362,24 +363,20 @@ function StrategyModeBadge({ strategy }: { strategy: 'free' | 'dialectical' }) {
 function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
     const { t } = useTranslation('exegesis');
     const coverage = useMemo(() => computeRoleCoverage(paper.sources), [paper.sources]);
-    const expectations = useMemo(() => computeRoleExpectations(paper.rubric), [paper.rubric]);
-    const missing = useMemo(() => findMissingRoles(coverage), [coverage]);
+    const rubricExpectations = useMemo(() => computeRoleExpectations(paper.rubric), [paper.rubric]);
+    const effectiveTargets = useMemo(() => computeEffectiveRoleTargets(rubricExpectations), [rubricExpectations]);
 
     // No sources yet: don't render — the hero card is doing the
     // entry-point work in that state.
     if (coverage.total === 0) return null;
 
-    // Two pass/fail criteria coexist:
-    //   1. Dialectical viability: ≥1 of each role.
-    //   2. Rubric quantity: actual ≥ expected per role (when rubric
-    //      sets expectations).
-    // The card reports both and shades by the strictest unmet rule.
-    const dialecticallyViable = missing.length === 0;
-    const meetsRubric =
-        coverage.anchor >= expectations.anchor &&
-        coverage.contrast >= expectations.contrast &&
-        coverage.technical >= expectations.technical;
-    const allGood = dialecticallyViable && meetsRubric;
+    // Effective targets blend rubric (when present) with strategy
+    // suggestions (when rubric is silent). All chips green = paper
+    // satisfies whichever criterion is active per role.
+    const allGood =
+        coverage.anchor >= effectiveTargets.anchor &&
+        coverage.contrast >= effectiveTargets.contrast &&
+        coverage.technical >= effectiveTargets.technical;
 
     return (
         <section
@@ -408,9 +405,24 @@ function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
             </header>
 
             <div className="grid grid-cols-3 gap-2">
-                <RoleCountChip role="anchor" count={coverage.anchor} expected={expectations.anchor} />
-                <RoleCountChip role="contrast" count={coverage.contrast} expected={expectations.contrast} />
-                <RoleCountChip role="technical" count={coverage.technical} expected={expectations.technical} />
+                <RoleCountChip
+                    role="anchor"
+                    count={coverage.anchor}
+                    target={effectiveTargets.anchor}
+                    fromRubric={rubricExpectations.anchor > 0}
+                />
+                <RoleCountChip
+                    role="contrast"
+                    count={coverage.contrast}
+                    target={effectiveTargets.contrast}
+                    fromRubric={rubricExpectations.contrast > 0}
+                />
+                <RoleCountChip
+                    role="technical"
+                    count={coverage.technical}
+                    target={effectiveTargets.technical}
+                    fromRubric={rubricExpectations.technical > 0}
+                />
             </div>
 
             {!allGood && (
@@ -425,18 +437,17 @@ function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
 function RoleCountChip({
     role,
     count,
-    expected,
+    target,
+    fromRubric,
 }: {
     role: SourceRole;
     count: number;
-    expected: number;
+    /** Effective target — rubric minimum if present, strategy suggestion otherwise. */
+    target: number;
+    /** True when the target came from the rubric (vs strategy fallback). */
+    fromRubric: boolean;
 }) {
     const { t } = useTranslation('exegesis');
-    // Status: green when count ≥ max(1, expected); amber when below.
-    // The "≥1 dialectical viability" floor kicks in when the rubric
-    // has no expectation for the role (expected === 0) — even then we
-    // want at least one source per role for the strategy to work.
-    const target = Math.max(1, expected);
     const ok = count >= target;
     return (
         <div
@@ -453,14 +464,18 @@ function RoleCountChip({
                 ok ? 'text-success' : 'text-warning-subtle-foreground',
             ].join(' ')}>
                 {count}
-                {expected > 0 && (
-                    <span className="text-[11px] text-muted-foreground font-normal ml-1">
-                        / {expected}
-                    </span>
-                )}
+                <span className="text-[11px] text-muted-foreground font-normal ml-1">
+                    / {target}
+                </span>
             </p>
             <p className="text-[10.5px] text-muted-foreground leading-tight mt-0.5">
                 {t(`paperSetup.subSteps.corpus.roleCoverage.hint.${role}`)}
+                {' '}
+                <span className="text-[10px] italic">
+                    ({t(fromRubric
+                        ? 'paperSetup.subSteps.corpus.roleCoverage.targetSource.rubric'
+                        : 'paperSetup.subSteps.corpus.roleCoverage.targetSource.strategy')})
+                </span>
             </p>
         </div>
     );
