@@ -777,6 +777,10 @@
                     "partial": "{{used}} of {{total}} sources assigned · {{unused}} unused",
                     "partialBody": "These sources were left out of the automatic plan. Pin them by hand if you want them used in some step, or leave them — generation will still see them as secondary."
                 },
+                "regenerating": {
+                    "title": "Regenerating plan…",
+                    "body": "Usually takes 10-30 seconds"
+                },
                 "kind": {
                     "introduction": "Introduction",
                     "verse": "Verse",

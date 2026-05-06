@@ -50,7 +50,14 @@ export class GeminiStepCorpusPlanner implements IStepCorpusPlanner {
                 // stays comparable across regenerations.
                 temperature: 0.4,
                 topP: 0.9,
-                maxOutputTokens: 8192,
+                // Bumped 8k → 32k after observing truncation on a paper
+                // with 16 sources × 15 steps. The full coverage rules
+                // (every step gets ≥1 source + every source appears ≥1
+                // time) push the response into the 4-8k range easily,
+                // and rationales add another 1-2k. 32k gives 4× headroom
+                // even for ~30 sources × ~30 steps. Pro 2.5 supports up
+                // to 65k so we're nowhere near the model ceiling.
+                maxOutputTokens: 32768,
             },
         });
 

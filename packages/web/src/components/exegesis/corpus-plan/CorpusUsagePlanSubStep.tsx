@@ -176,32 +176,47 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
                                 </Button>
                             </div>
 
-                            <CoveragePanel paper={paper} plannableSteps={plannableSteps} />
+                            <div className="relative">
+                                {/* Wrap the coverage panel + table so the
+                                    regenerate overlay covers both — visually
+                                    locking the whole "current plan" section
+                                    while the new one is being built. */}
+                                <div
+                                    className={[
+                                        'space-y-2 transition-opacity duration-200',
+                                        propose.isPending ? 'opacity-30 pointer-events-none' : '',
+                                    ].join(' ')}
+                                >
+                                    <CoveragePanel paper={paper} plannableSteps={plannableSteps} />
 
-                            <div className="rounded-lg border border-border bg-card overflow-hidden">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
-                                        <tr>
-                                            <th className="text-left px-3 py-2 w-[140px]">
-                                                {t('paperSetup.subSteps.corpus-plan.colStep')}
-                                            </th>
-                                            <th className="text-left px-3 py-2">
-                                                {t('paperSetup.subSteps.corpus-plan.colPinned')}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {plannableSteps.map(step => (
-                                            <PlanRow
-                                                key={step.id}
-                                                step={step}
-                                                paper={paper}
-                                                onChangePinned={pinned => handleUpdateRow(step.id, pinned)}
-                                                disabled={updateAllocation.isPending}
-                                            />
-                                        ))}
-                                    </tbody>
-                                </table>
+                                    <div className="rounded-lg border border-border bg-card overflow-hidden">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
+                                                <tr>
+                                                    <th className="text-left px-3 py-2 w-[140px]">
+                                                        {t('paperSetup.subSteps.corpus-plan.colStep')}
+                                                    </th>
+                                                    <th className="text-left px-3 py-2">
+                                                        {t('paperSetup.subSteps.corpus-plan.colPinned')}
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {plannableSteps.map(step => (
+                                                    <PlanRow
+                                                        key={step.id}
+                                                        step={step}
+                                                        paper={paper}
+                                                        onChangePinned={pinned => handleUpdateRow(step.id, pinned)}
+                                                        disabled={updateAllocation.isPending}
+                                                    />
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {propose.isPending && <RegenerateOverlay />}
                             </div>
                         </div>
                     )}
@@ -212,6 +227,30 @@ export function CorpusUsagePlanSubStep({ paper }: CorpusUsagePlanSubStepProps) {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────
+
+/**
+ * Overlay shown on top of the plan table while a regenerate is in
+ * flight. Anchors a centered card with spinner + helper copy so the
+ * user understands the whole section is being recomputed (vs a
+ * single-row edit). The underlying content fades to ~30% opacity so
+ * the user keeps spatial context but knows it's stale.
+ */
+function RegenerateOverlay() {
+    const { t } = useTranslation('exegesis');
+    return (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-card/95 backdrop-blur-sm px-6 py-5 shadow-lg">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+                <p className="text-sm font-semibold text-foreground">
+                    {t('paperSetup.subSteps.corpus-plan.regenerating.title')}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                    {t('paperSetup.subSteps.corpus-plan.regenerating.body')}
+                </p>
+            </div>
+        </div>
+    );
+}
 
 /**
  * Aggregates pinned-source usage across every step in the plan and

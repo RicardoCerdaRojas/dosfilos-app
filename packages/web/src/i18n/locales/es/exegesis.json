@@ -777,6 +777,10 @@
                     "partial": "{{used}} de {{total}} fuentes asignadas · {{unused}} sin uso",
                     "partialBody": "Estas fuentes quedaron fuera del plan automático. Asígnalas a mano si las quieres usar en algún paso, o déjalas — la generación las verá igual como secundarias."
                 },
+                "regenerating": {
+                    "title": "Regenerando plan…",
+                    "body": "Suele tomar 10-30 segundos"
+                },
                 "kind": {
                     "introduction": "Introducción",
                     "verse": "Verso",
