@@ -7,8 +7,11 @@ import {
     GeminiAcademicComposer,
     GeminiCanonicalVerseAnalyzer,
     GeminiConclusionComposer,
+    GeminiDevotionalComposer,
     GeminiIntroductionComposer,
     GeminiExegesisOrchestrator,
+    GeminiSermonComposer,
+    GeminiStudyGuideComposer,
     GeminiPaperRubricExtractor,
     GeminiPaperToSermonTransformer,
     GeminiStyleGuideManifestExtractor,
@@ -62,7 +65,10 @@ import {
     AnalyzeVerseCanonicallyUseCase,
     ComposeAcademicPaperUseCase,
     ComposeConclusionFromAnalysesUseCase,
+    ComposeDevotionalFromAnalysesUseCase,
     ComposeIntroductionFromAnalysesUseCase,
+    ComposeSermonFromAnalysesUseCase,
+    ComposeStudyGuideFromAnalysesUseCase,
     GenerateStepUseCase,
     AcceptStepUseCase,
     SaveStepEditUseCase,
@@ -149,6 +155,15 @@ class ExegesisService {
     // user reviews + accepts the same way as legacy generation.
     public composeConclusionFromAnalyses: ComposeConclusionFromAnalysesUseCase;
     public composeIntroductionFromAnalyses: ComposeIntroductionFromAnalysesUseCase;
+
+    // Ministry composers (Phase 6) — sermon / devotional / study
+    // guide composed from the same `CanonicalVerseAnalysis` artifact.
+    // No persistence layer in the use cases themselves: caller
+    // surfaces the markdown via copy / download / handoff to the
+    // existing sermon module.
+    public composeSermonFromAnalyses: ComposeSermonFromAnalysesUseCase;
+    public composeDevotionalFromAnalyses: ComposeDevotionalFromAnalysesUseCase;
+    public composeStudyGuideFromAnalyses: ComposeStudyGuideFromAnalysesUseCase;
 
     // Bridge: paper → sermon
     public generateSermonFromPaper: GenerateSermonFromPaperUseCase;
@@ -330,6 +345,34 @@ class ExegesisService {
             contentReader,
             introductionComposer,
             styleFormatter,
+        );
+
+        // Ministry composers (sermon / devotional / study guide).
+        // Each uses the canonical verse analyses + theologicalHooks
+        // bridge to produce format-appropriate markdown. No
+        // deterministic style formatter — ministry registers diverge
+        // from academic citation conventions, and citation post-
+        // processing would harm the homiletic feel.
+        const sermonComposer = new GeminiSermonComposer(apiKey || '', exegesisModelId);
+        this.composeSermonFromAnalyses = new ComposeSermonFromAnalysesUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            sermonComposer,
+        );
+        const devotionalComposer = new GeminiDevotionalComposer(apiKey || '', exegesisModelId);
+        this.composeDevotionalFromAnalyses = new ComposeDevotionalFromAnalysesUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            devotionalComposer,
+        );
+        const studyGuideComposer = new GeminiStudyGuideComposer(apiKey || '', exegesisModelId);
+        this.composeStudyGuideFromAnalyses = new ComposeStudyGuideFromAnalysesUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            studyGuideComposer,
         );
 
         // Bridge: paper → sermon (Phase 2). Sermon repo is shared with the

@@ -16,6 +16,9 @@ export { GeminiCanonicalVerseAnalyzer } from './canonicalAnalyzer/GeminiCanonica
 export { GeminiAcademicComposer } from './composer/GeminiAcademicComposer';
 export { GeminiConclusionComposer } from './sectionComposers/GeminiConclusionComposer';
 export { GeminiIntroductionComposer } from './sectionComposers/GeminiIntroductionComposer';
+export { GeminiSermonComposer } from './ministryComposers/GeminiSermonComposer';
+export { GeminiDevotionalComposer } from './ministryComposers/GeminiDevotionalComposer';
+export { GeminiStudyGuideComposer } from './ministryComposers/GeminiStudyGuideComposer';
 // Pipeline-version constant for the v1.5+ expository assistant.
 // Exposed so the application layer can use it as part of the cache
 // document key without re-declaring the same string.

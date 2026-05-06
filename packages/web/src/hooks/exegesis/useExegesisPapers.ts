@@ -247,6 +247,44 @@ export function useExegesisPapers() {
         },
     });
 
+    // Ministry composers (Phase 6) — sermon, devotional, study guide.
+    // None of them mutate paper state, so no cache invalidation
+    // needed. The output goes to the user via copy/download/handoff
+    // dialogs.
+    const composeSermonFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, tone, regenerationHint }: { paperId: string; tone: 'pastoral' | 'expositivo' | 'narrativo'; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeSermonFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                tone,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+    });
+    const composeDevotionalFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, audience, regenerationHint }: { paperId: string; audience: 'general' | 'small-group' | 'individual'; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeDevotionalFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                audience,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+    });
+    const composeStudyGuideFromAnalyses = useMutation({
+        mutationFn: async ({ paperId, audience, regenerationHint }: { paperId: string; audience: 'small-group' | 'sunday-school' | 'individual'; regenerationHint?: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeStudyGuideFromAnalyses.execute({
+                ownerId: user.uid,
+                paperId,
+                audience,
+                regenerationHint: regenerationHint ?? null,
+            });
+        },
+    });
+
     const acceptStep = useMutation({
         mutationFn: async ({ paperId, stepId, versionId }: { paperId: string; stepId: string; versionId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -317,5 +355,8 @@ export function useExegesisPapers() {
         composeAcademicPaper,
         composeConclusionFromAnalyses,
         composeIntroductionFromAnalyses,
+        composeSermonFromAnalyses,
+        composeDevotionalFromAnalyses,
+        composeStudyGuideFromAnalyses,
     };
 }

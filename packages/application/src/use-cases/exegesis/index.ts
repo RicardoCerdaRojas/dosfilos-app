@@ -78,6 +78,14 @@ export {
     ComposeIntroductionFromAnalysesUseCase,
     type ComposeIntroductionFromAnalysesUseCaseInput,
 } from './ComposeIntroductionFromAnalysesUseCase';
+export {
+    ComposeSermonFromAnalysesUseCase,
+    ComposeDevotionalFromAnalysesUseCase,
+    ComposeStudyGuideFromAnalysesUseCase,
+    type ComposeSermonFromAnalysesUseCaseInput,
+    type ComposeDevotionalFromAnalysesUseCaseInput,
+    type ComposeStudyGuideFromAnalysesUseCaseInput,
+} from './MinistryComposerUseCases';
 export { AcceptStepUseCase } from './AcceptStepUseCase';
 export { SaveStepEditUseCase } from './SaveStepEditUseCase';
 

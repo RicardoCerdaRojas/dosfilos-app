@@ -28,6 +28,7 @@ export * from './ports/IAcademicComposer';
 export * from './ports/ICanonicalVerseAnalyzer';
 export * from './ports/IConclusionComposer';
 export * from './ports/IIntroductionComposer';
+export * from './ports/IMinistryComposers';
 export * from './ports/IExcerptExtractor';
 export * from './ports/IExegesisOrchestrator';
 export * from './ports/IExpositoryAssistant';

@@ -19,6 +19,7 @@ import {
     BookOpen,
     Mic,
     MessageCircle,
+    Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -46,6 +47,7 @@ import { StepCard } from '@/components/exegesis/StepCard';
 import { CorpusCoverageReport } from '@/components/exegesis/corpus-plan/CorpusCoverageReport';
 import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
 import { AcademicCompositionDialog } from '@/components/exegesis/canonical/AcademicCompositionDialog';
+import { MinistryCompositionDialog } from '@/components/exegesis/canonical/MinistryCompositionDialog';
 import {
     exportPaperToMarkdown,
     formatPassageReference,
@@ -85,6 +87,7 @@ export function ExegesisPaperPage() {
     const [facultyDrawerOpen, setFacultyDrawerOpen] = useState(false);
     const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
     const [composeDialogOpen, setComposeDialogOpen] = useState(false);
+    const [ministryDialogOpen, setMinistryDialogOpen] = useState(false);
 
     if (isLoading) {
         return <CenteredMessage icon={<Loader2 className="h-5 w-5 animate-spin" />} text={t('detail.loading')} />;
@@ -263,6 +266,10 @@ export function ExegesisPaperPage() {
                                 <NotebookPen className="h-4 w-4 mr-2" />
                                 {t('canonical.compose.menuItem', { defaultValue: 'Componer paper académico' })}
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setMinistryDialogOpen(true)}>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                {t('canonical.ministry.menuItem')}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={() => setArchiveConfirmOpen(true)}
@@ -276,6 +283,13 @@ export function ExegesisPaperPage() {
                     <AcademicCompositionDialog
                         open={composeDialogOpen}
                         onOpenChange={setComposeDialogOpen}
+                        paperId={paper.id}
+                        suggestedFilename={buildPaperFilename(paper, activeLanguage)}
+                    />
+
+                    <MinistryCompositionDialog
+                        open={ministryDialogOpen}
+                        onOpenChange={setMinistryDialogOpen}
                         paperId={paper.id}
                         suggestedFilename={buildPaperFilename(paper, activeLanguage)}
                     />

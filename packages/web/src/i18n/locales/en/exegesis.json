@@ -1019,10 +1019,14 @@
         "actions": {
             "analyze": "Canonical analysis",
             "analyzeTooltip": "Generate the structured analysis (study mode + academic composer)",
-            "analyzeRetry": "Retry analysis"
+            "analyzeRetry": "Retry analysis",
+            "composeConclusionTooltip": "Compose the conclusion from the accepted canonical analyses",
+            "composeIntroductionTooltip": "Compose the introduction LAST, using the accepted analyses + accepted conclusion",
+            "composeFromAnalyses": "Compose from analyses"
         },
         "toast": {
-            "analyzeFailed": "Could not generate the canonical analysis."
+            "analyzeFailed": "Could not generate the canonical analysis.",
+            "composeSectionFailed": "Could not compose this section. {{message}}"
         },
         "view": {
             "prose": "Prose view",
@@ -1084,7 +1088,50 @@
             "tokensUsed": "{{tokens}} tokens · model {{model}}",
             "formatterApplied": "Style guide applied (layer 1: prompt, layer 2: deterministic formatter).",
             "formatterSkipped": "No style-guide manifest extracted. Only layer 1 (prompt) applied. Extract the manifest from the \"Style guide\" tab to activate layer 2.",
-            "formatterError": "Error applying the deterministic formatter. The LLM composition (layer 1) is still valid."
+            "formatterError": "Error applying the deterministic formatter. The LLM composition (layer 1) is still valid.",
+            "savedToast": "Composition saved on the paper (assembledMarkdown).",
+            "persistWarning": "Composition succeeded but could not be saved to the paper. Copy or download the markdown before closing.",
+            "saveToPaper": "Save to paper",
+            "saveToPaperTooltip": "Saves this composition as the paper's assembledMarkdown. You can recompose at any time."
+        },
+        "ministry": {
+            "menuItem": "Ministry material (sermon / devotional / study guide)",
+            "title": "Ministry material from the canonical analysis",
+            "subtitle": "Produce sermon, devotional, or inductive study guide from the accepted canonical analyses. The exegetical work is preserved across formats; register and audience adapt.",
+            "format": {
+                "sermon": "Sermon",
+                "devotional": "Devotional",
+                "studyGuide": "Study guide"
+            },
+            "idleHint": "Each composition consumes a Gemini Pro 2.5 call. Output is NOT auto-persisted — copy or download the markdown.",
+            "cta": "Compose",
+            "composing": "Composing ministry material…",
+            "errorTitle": "Could not compose the material",
+            "errorGeneric": "Unexpected error during composition.",
+            "sermon": {
+                "toneLabel": "Sermon tone",
+                "tone": {
+                    "pastoral": "Pastoral",
+                    "expositivo": "Expository",
+                    "narrativo": "Narrative"
+                }
+            },
+            "devotional": {
+                "audienceLabel": "Devotional audience",
+                "audience": {
+                    "general": "General audience",
+                    "smallGroup": "Small group",
+                    "individual": "Individual reflection"
+                }
+            },
+            "studyGuide": {
+                "audienceLabel": "Study guide audience",
+                "audience": {
+                    "smallGroup": "Small group",
+                    "sundaySchool": "Sunday school",
+                    "individual": "Individual study"
+                }
+            }
         }
     },
     "detail": {

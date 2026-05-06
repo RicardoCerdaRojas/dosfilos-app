@@ -1019,10 +1019,14 @@
         "actions": {
             "analyze": "Análisis canónico",
             "analyzeTooltip": "Genera el análisis estructurado (study mode + composer académico)",
-            "analyzeRetry": "Reintentar análisis"
+            "analyzeRetry": "Reintentar análisis",
+            "composeConclusionTooltip": "Compone la conclusión a partir de los análisis canónicos aceptados",
+            "composeIntroductionTooltip": "Compone la introducción al final, usando los análisis aceptados + la conclusión aceptada",
+            "composeFromAnalyses": "Componer desde análisis"
         },
         "toast": {
-            "analyzeFailed": "No se pudo generar el análisis canónico."
+            "analyzeFailed": "No se pudo generar el análisis canónico.",
+            "composeSectionFailed": "No se pudo componer esta sección. {{message}}"
         },
         "view": {
             "prose": "Vista de prosa",
@@ -1084,7 +1088,50 @@
             "tokensUsed": "{{tokens}} tokens · modelo {{model}}",
             "formatterApplied": "Guía de estilo aplicada (capa 1: prompt, capa 2: formatter determinístico).",
             "formatterSkipped": "Sin manifest de guía de estilo extraído. Solo aplicada la capa 1 (prompt). Extrae el manifest desde la pestaña \"Guía de estilo\" para activar la capa 2.",
-            "formatterError": "Hubo un error aplicando el formatter determinístico. La composición LLM (capa 1) sigue válida."
+            "formatterError": "Hubo un error aplicando el formatter determinístico. La composición LLM (capa 1) sigue válida.",
+            "savedToast": "Composición guardada en el paper (assembledMarkdown).",
+            "persistWarning": "La composición se generó pero no se pudo guardar en el paper. Copiá o descargá el markdown antes de cerrar.",
+            "saveToPaper": "Guardar al paper",
+            "saveToPaperTooltip": "Guarda esta composición como assembledMarkdown del paper. Puedes recomponer en cualquier momento."
+        },
+        "ministry": {
+            "menuItem": "Material ministerial (sermón / devocional / guía)",
+            "title": "Material ministerial desde el análisis canónico",
+            "subtitle": "Producí sermón, devocional o guía de estudio inductivo a partir de los análisis canónicos aceptados. El trabajo exegético se preserva en el formato; cambia el registro y la audiencia.",
+            "format": {
+                "sermon": "Sermón",
+                "devotional": "Devocional",
+                "studyGuide": "Guía de estudio"
+            },
+            "idleHint": "Cada composición consume una llamada de Gemini Pro 2.5. La salida no se persiste — copiá o descargá el markdown.",
+            "cta": "Componer",
+            "composing": "Componiendo material ministerial…",
+            "errorTitle": "No se pudo componer el material",
+            "errorGeneric": "Error inesperado durante la composición.",
+            "sermon": {
+                "toneLabel": "Tono del sermón",
+                "tone": {
+                    "pastoral": "Pastoral",
+                    "expositivo": "Expositivo",
+                    "narrativo": "Narrativo"
+                }
+            },
+            "devotional": {
+                "audienceLabel": "Audiencia del devocional",
+                "audience": {
+                    "general": "Audiencia general",
+                    "smallGroup": "Pequeño grupo",
+                    "individual": "Reflexión individual"
+                }
+            },
+            "studyGuide": {
+                "audienceLabel": "Audiencia de la guía",
+                "audience": {
+                    "smallGroup": "Pequeño grupo",
+                    "sundaySchool": "Escuela Dominical",
+                    "individual": "Estudio individual"
+                }
+            }
         }
     },
     "detail": {
