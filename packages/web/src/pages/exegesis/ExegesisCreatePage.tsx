@@ -429,12 +429,15 @@ function RubricTemplatePicker({
                 </Button>
             </PopoverTrigger>
             <PopoverContent
-                className="w-[var(--radix-popover-trigger-width)] p-0 shadow-xl border-2 border-border z-50"
+                className="w-[var(--radix-popover-trigger-width)] p-0 shadow-xl border border-border z-50 rounded-md overflow-hidden"
                 align="start"
                 sideOffset={4}
             >
                 <Command>
-                    <CommandInput placeholder={t('create.rubric.search')} className="text-[12px]" />
+                    <CommandInput
+                        placeholder={t('create.rubric.search')}
+                        className="text-[12px] focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
+                    />
                     <CommandList className="max-h-[400px]">
                         <CommandEmpty>{t('create.rubric.noMatches')}</CommandEmpty>
 
