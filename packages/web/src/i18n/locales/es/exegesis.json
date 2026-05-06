@@ -781,6 +781,11 @@
                     "title": "Regenerando plan…",
                     "body": "Suele tomar 10-30 segundos"
                 },
+                "role": {
+                    "anchor": "Ancla",
+                    "contrast": "Contraste",
+                    "technical": "Técnica"
+                },
                 "kind": {
                     "introduction": "Introducción",
                     "verse": "Verso",

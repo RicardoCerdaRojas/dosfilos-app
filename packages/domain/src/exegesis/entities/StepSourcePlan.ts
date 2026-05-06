@@ -94,12 +94,38 @@ export interface StepSourcePlanEntry {
     pinnedSources: ReadonlyArray<string>;
     suppressedSources: ReadonlyArray<string>;
     /**
+     * Dialectical role each pinned source plays in this step. Drives
+     * the role badges in the UI ("ancla" / "contraste" / "técnica")
+     * and is what makes the planner output read as a curated
+     * exegetical strategy rather than a flat list. Map keys are
+     * `ProjectSource.id`; entries WITHOUT a role render without a
+     * badge — backward-compatible with pre-roles plans.
+     */
+    pinnedSourceRoles?: Readonly<Record<string, SourceRole>>;
+    /**
      * The student's reason / note. Useful at generation time (the
      * note is mentioned in the prompt) and for self-reflection
      * later. Empty when the student took the default.
      */
     note: string | null;
 }
+
+/**
+ * Role a pinned source plays inside a step. Encodes the classical
+ * exegetical-paper dialectic: pick an anchor reading, contrast it
+ * with another commentary's voice, and (when the verse warrants it)
+ * back the reading with a technical anchor.
+ *
+ * - `'anchor'`    — primary reading. Typically an expository or
+ *                   exegetical commentary that orients the verse.
+ * - `'contrast'`  — alternate voice. Different school, different
+ *                   register (e.g. critical commentary opposite the
+ *                   anchor expository), or simply a documented
+ *                   alternate reading.
+ * - `'technical'` — lexicon, grammar, or critical apparatus that
+ *                   backs a specific lexical/syntactic decision.
+ */
+export type SourceRole = 'anchor' | 'contrast' | 'technical';
 
 export interface StepEmphasis {
     /** Source types to weight up in this step. */

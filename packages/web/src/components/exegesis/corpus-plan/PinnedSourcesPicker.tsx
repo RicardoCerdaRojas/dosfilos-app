@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import type { ProjectSource } from '@dosfilos/domain';
+import type { ProjectSource, SourceRole } from '@dosfilos/domain';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,9 +24,23 @@ interface PinnedSourcesPickerProps {
     sources: ReadonlyArray<ProjectSource>;
     /** Currently pinned ids (controlled). */
     selected: ReadonlyArray<string>;
+    /**
+     * Optional dialectical role per pinned id. When provided, each
+     * chip renders a small role badge (anchor / contrast / technical)
+     * so the user sees the strategy at a glance instead of a flat list.
+     * Pre-roles plans (or sources the planner couldn't classify) just
+     * render without a badge — visually backward-compatible.
+     */
+    roles?: Readonly<Record<string, SourceRole>>;
     onChange: (next: ReadonlyArray<string>) => void;
     disabled?: boolean;
 }
+
+const ROLE_BADGE_CLASSES: Record<SourceRole, string> = {
+    anchor: 'bg-success/15 text-success border-success/30',
+    contrast: 'bg-info/15 text-info border-info/30',
+    technical: 'bg-warning/15 text-warning-subtle-foreground border-warning/30',
+};
 
 /**
  * v1.7 corpus-usage planning — multi-select picker over the paper's
@@ -40,6 +54,7 @@ interface PinnedSourcesPickerProps {
 export function PinnedSourcesPicker({
     sources,
     selected,
+    roles,
     onChange,
     disabled = false,
 }: PinnedSourcesPickerProps) {
@@ -72,14 +87,24 @@ export function PinnedSourcesPicker({
                     {selected.map(id => {
                         const source = sourcesById.get(id);
                         const label = source?.displayLabel ?? id;
+                        const role = roles?.[id];
                         return (
                             <Badge
                                 key={id}
                                 variant="secondary"
-                                className="gap-1 pr-1 text-[10.5px] max-w-[280px]"
+                                className="gap-1 pr-1 text-[10.5px] max-w-[320px]"
                                 role="listitem"
-                                title={label}
+                                title={role
+                                    ? `${t(`paperSetup.subSteps.corpus-plan.role.${role}`)} · ${label}`
+                                    : label}
                             >
+                                {role && (
+                                    <span
+                                        className={`shrink-0 rounded-full border px-1.5 py-0 text-[9.5px] font-semibold uppercase tracking-wide leading-tight ${ROLE_BADGE_CLASSES[role]}`}
+                                    >
+                                        {t(`paperSetup.subSteps.corpus-plan.role.${role}`)}
+                                    </span>
+                                )}
                                 <span className="truncate">{label}</span>
                                 <button
                                     type="button"

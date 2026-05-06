@@ -353,6 +353,7 @@ function PlanRow({
     const { t } = useTranslation('exegesis');
     const entry = paper.stepPlan.perStep[step.id];
     const pinned = entry?.pinnedSources ?? [];
+    const roles = entry?.pinnedSourceRoles;
     const note = entry?.note ?? null;
     const label = stepLabel(step, paper.displayLanguage, t);
 
@@ -368,6 +369,7 @@ function PlanRow({
                 <PinnedSourcesPicker
                     sources={paper.sources}
                     selected={pinned}
+                    roles={roles}
                     onChange={onChangePinned}
                     disabled={disabled}
                 />

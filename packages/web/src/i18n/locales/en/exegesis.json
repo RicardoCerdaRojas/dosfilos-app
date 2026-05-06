@@ -781,6 +781,11 @@
                     "title": "Regenerating plan…",
                     "body": "Usually takes 10-30 seconds"
                 },
+                "role": {
+                    "anchor": "Anchor",
+                    "contrast": "Contrast",
+                    "technical": "Technical"
+                },
                 "kind": {
                     "introduction": "Introduction",
                     "verse": "Verse",

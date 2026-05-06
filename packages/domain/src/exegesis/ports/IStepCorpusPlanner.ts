@@ -86,6 +86,15 @@ export interface ProposedAllocation {
      */
     pinnedSources: ReadonlyArray<string>;
     /**
+     * Optional role for each pinned source — `'anchor'` / `'contrast'`
+     * / `'technical'`. When the planner returns roles, the use case
+     * persists them on `StepSourcePlanEntry.pinnedSourceRoles` so the
+     * UI can render the badges. Pre-roles planners (or sources the
+     * planner couldn't classify) return without an entry; the UI
+     * falls back to a plain chip.
+     */
+    pinnedSourceRoles?: Readonly<Record<string, 'anchor' | 'contrast' | 'technical'>>;
+    /**
      * Short justification (1-2 sentences) the user can read to decide
      * whether to accept the allocation. Localized to `input.language`.
      * Empty string when the planner had nothing useful to say.

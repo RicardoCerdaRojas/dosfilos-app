@@ -93,44 +93,56 @@ function buildPlannerPrompt(input: ProposeStepCorpusInput): {
     const passageLabel = formatPassageReference(input.passage, input.language);
 
     const systemInstruction = isSpanish
-        ? `Eres un profesor experto en exégesis bíblica que asesora a un estudiante de seminario en cómo distribuir su bibliografía a lo largo de un paper exegético.
+        ? `Eres un profesor experto en exégesis bíblica que asesora a un estudiante de seminario en cómo construir la bibliografía dialéctica de cada paso de su paper.
 
-Tu tarea: dada la lista de fuentes que el estudiante ya tiene en su corpus y la lista de pasos del paper (introducción, versículos individuales, conclusión), proponer qué fuentes "pinear" (priorizar) para cada paso.
+Tu tarea: para cada paso (versículo / introducción / conclusión), arma una **mini-bibliografía dialéctica** asignando 1-3 fuentes con ROLES explícitos. La idea NO es repartir fuentes por tipo — es construir el diálogo crítico que sostiene el argumento exegético del paso.
 
-REGLAS DE COBERTURA (críticas):
-1. CADA paso DEBE tener al menos 1 fuente asignada. Sin excepciones. Un comentario expositivo siempre cubre cada versículo del libro — si dudas, asígnalo como mínima cobertura.
-2. CADA fuente del corpus DEBE aparecer al menos UNA VEZ en alguna asignación, salvo que sea genuinamente irrelevante para el pasaje completo (caso raro — el estudiante ya curó su corpus para este paper). Si una fuente queda sin un lugar obvio, asígnala al paso de Conclusión o al versículo más temáticamente cercano.
+ESTRATEGIA DIALÉCTICA (este es el corazón de la tarea):
 
-Criterios académicos para repartir:
-- Comentarios críticos (WBC, NIGTC, Hermeneia) van bien en versículos densos donde la exégesis técnica importa.
-- Comentarios expositivos (NICNT, BECNT, Pillar) son útiles transversalmente — úsalos para garantizar la cobertura mínima de cada versículo.
-- Léxicos y gramáticas se pinean a versículos donde una decisión léxico-sintáctica concreta carga el argumento.
-- Trasfondo histórico es útil en introducción y versículos donde se referencia contexto.
-- Monografías teológicas suelen ir en conclusión (síntesis) o en versículos clave.
-- Fuentes primarias antiguas (Filón, Josefo) se pinean cuando el versículo dialoga con esa tradición.
+1. **ANCLA** (\`anchor\`) — UNA fuente que sirve como lectura base del paso. Típicamente el comentario expositivo más cercano al género del paper (NICNT, BECNT, Pillar) o el comentario crítico principal del libro si solo hay uno. Cada paso DEBE tener una ancla.
 
-LÍMITE: no pineess más de 4 fuentes por paso (saturas el contexto). Prefiere 2-3.
+2. **CONTRASTE** (\`contrast\`) — UNA fuente que ofrece una voz distinta al ancla. Más técnica si el ancla es expositiva, otra escuela teológica, lectura alternativa documentada. Si todas las fuentes del corpus son de la misma escuela y registro, omite el contraste.
 
-Justifica cada asignación con UNA oración breve en español, concreta y académica (no "es útil", sino "establece la conexión sintáctica con Hebreos 7:25").`
-        : `You are an expert biblical exegesis professor advising a seminary student on how to distribute their bibliography across an exegetical paper.
+3. **TÉCNICA** (\`technical\`) — UNA fuente puntual que respalda una decisión léxico-sintáctica del verso: léxico (BDAG, HALOT), gramática (Wallace, BDF), aparato crítico (NA28, BHS). Solo cuando el verso pide decisión técnica concreta. Si el verso es transparente, omítela.
 
-Task: given the list of sources the student already has in their corpus and the list of paper steps (introduction, individual verses, conclusion), propose which sources to "pin" (prioritize) for each step.
+REGLAS DE COBERTURA:
+- CADA paso debe tener al menos un ANCLA. Si dudas qué usar, el comentario expositivo más general es válido siempre.
+- CADA fuente del corpus debe aparecer al menos UNA VEZ en algún paso (ancla, contraste o técnica), salvo que sea genuinamente irrelevante para el pasaje completo. Si no tiene casa obvia, llévala a Conclusión.
+- Total objetivo por paso: 2-3 fuentes (ancla + contraste, +técnica si aplica). 4 es máximo absoluto. Más es ruido.
 
-COVERAGE RULES (critical):
-1. EVERY step MUST have at least 1 source assigned. No exceptions. An expository commentary always covers every verse of the book — if unsure, assign it as minimal coverage.
-2. EVERY source in the corpus MUST appear at least ONCE somewhere, unless it's genuinely irrelevant to the entire passage (rare — the student already curated their corpus for this paper). If a source has no obvious home, assign it to the Conclusion step or the verse it's most thematically related to.
+CRITERIOS POR TIPO (orientación, no obligación):
+- Comentarios críticos (WBC, NIGTC, Hermeneia, ICC, Anchor): excelente como contraste a un ancla expositiva, o como ancla en versos densos.
+- Comentarios expositivos (NICNT, BECNT, Pillar, Tyndale): el ancla por defecto en la mayoría de versos.
+- Léxicos / gramáticas / aparato crítico: rol técnico exclusivamente.
+- Trasfondo histórico, diccionarios teológicos: típicamente ancla o contraste de introducción y versos con tema doctrinal.
+- Monografías teológicas: ancla o contraste en conclusión y versos clave.
 
-Academic criteria for distribution:
-- Critical commentaries (WBC, NIGTC, Hermeneia) belong on dense verses where technical exegesis matters.
-- Expository commentaries (NICNT, BECNT, Pillar) are useful across the board — use them to guarantee minimum coverage on every verse.
-- Lexicons and grammars get pinned to verses where a concrete lexical-syntactic decision carries the argument.
-- Historical background fits introduction and verses that reference context.
-- Theological monographs usually go in conclusion (synthesis) or key verses.
-- Primary ancient sources (Philo, Josephus) get pinned when the verse engages that tradition.
+JUSTIFICACIÓN: una sola oración en español, NOMBRA explícitamente los roles. Ejemplo: "Ancla: Cranfield orienta la lectura paulina del genitivo absoluto. Contraste: Moo añade la perspectiva crítica de la nueva perspectiva. Técnica: BDAG confirma el campo semántico de \`δικαιοσύνη\`."`
+        : `You are an expert biblical exegesis professor advising a seminary student on how to build the dialectical bibliography for each step of their paper.
 
-LIMIT: do NOT pin more than 4 sources per step (context bloat). Prefer 2-3.
+Task: for each step (verse / introduction / conclusion), construct a **dialectical mini-bibliography** by assigning 1-3 sources with EXPLICIT ROLES. The point is NOT to distribute sources by type — it's to build the critical dialogue that supports the step's exegetical argument.
 
-Justify each allocation in ONE short sentence — concrete and academic (not "useful here," but "establishes the syntactic link to Hebrews 7:25").`;
+DIALECTICAL STRATEGY (this is the heart of the task):
+
+1. **ANCHOR** (\`anchor\`) — ONE source that serves as the step's base reading. Typically the expository commentary closest to the paper's genre (NICNT, BECNT, Pillar) or the principal critical commentary on the book if only one is available. Every step MUST have an anchor.
+
+2. **CONTRAST** (\`contrast\`) — ONE source that brings a different voice from the anchor. More technical if the anchor is expository, a different theological school, a documented alternate reading. Skip when every corpus source shares the anchor's school and register.
+
+3. **TECHNICAL** (\`technical\`) — ONE source that backs a specific lexical-syntactic decision in the verse: lexicon (BDAG, HALOT), grammar (Wallace, BDF), critical apparatus (NA28, BHS). Only when the verse calls for a concrete technical decision. Skip when the verse is transparent.
+
+COVERAGE RULES:
+- EVERY step must have at least an ANCHOR. If unsure, the most general expository commentary is always valid.
+- EVERY source in the corpus must appear at least ONCE somewhere (as anchor, contrast, or technical), unless genuinely irrelevant to the entire passage. If no obvious home, send it to Conclusion.
+- Per-step target: 2-3 sources (anchor + contrast, + technical if applicable). 4 is the absolute ceiling. More is noise.
+
+TYPE CRITERIA (guidance, not obligation):
+- Critical commentaries (WBC, NIGTC, Hermeneia, ICC, Anchor): excellent as contrast to an expository anchor, or as anchor on dense verses.
+- Expository commentaries (NICNT, BECNT, Pillar, Tyndale): the default anchor on most verses.
+- Lexicons / grammars / critical apparatus: technical role exclusively.
+- Historical background, theological dictionaries: usually anchor or contrast in introduction and theme-heavy verses.
+- Theological monographs: anchor or contrast in conclusion and key verses.
+
+JUSTIFICATION: one sentence in English, NAME the roles explicitly. Example: "Anchor: Cranfield orients the Pauline reading of the genitive absolute. Contrast: Moo adds the New Perspective's critical angle. Technical: BDAG confirms the semantic range of \`δικαιοσύνη\`."`;
 
     const passageLine = isSpanish
         ? `**Pasaje del paper:** ${passageLabel}`
@@ -157,8 +169,13 @@ Justify each allocation in ONE short sentence — concrete and academic (not "us
     const schemaExample = `{
   "allocations": {
     "<step-id>": {
-      "pinnedSources": ["<source-id>", "<source-id>"],
-      "rationale": "${isSpanish ? 'Una oración breve.' : 'One short sentence.'}"
+      "pinnedSources": ["<source-id-anchor>", "<source-id-contrast>", "<source-id-technical>"],
+      "pinnedSourceRoles": {
+        "<source-id-anchor>": "anchor",
+        "<source-id-contrast>": "contrast",
+        "<source-id-technical>": "technical"
+      },
+      "rationale": "${isSpanish ? 'Una oración breve nombrando los roles.' : 'One short sentence naming the roles.'}"
     }
   }
 }`;
@@ -167,15 +184,17 @@ Justify each allocation in ONE short sentence — concrete and academic (not "us
         ? `Restricciones:
 - Usa SOLO los ids exactos listados arriba (no inventes nuevos).
 - Usa SOLO ids de pasos listados arriba.
-- TODOS los pasos deben aparecer en "allocations" con al menos 1 fuente. No omitas pasos.
-- TODAS las fuentes deben aparecer al menos una vez en algún paso, salvo que sean claramente irrelevantes para el pasaje completo.
-- Máximo 4 fuentes por paso.`
+- TODOS los pasos deben aparecer en "allocations" con al menos 1 fuente con rol "anchor".
+- TODAS las fuentes deben aparecer al menos una vez en algún paso, salvo que sean claramente irrelevantes.
+- Cada id en "pinnedSources" DEBE tener una entrada correspondiente en "pinnedSourceRoles".
+- Máximo 4 fuentes por paso. Apunta a 2-3.`
         : `Constraints:
 - Use ONLY the exact ids listed above (don't invent new ones).
 - Use ONLY step ids listed above.
-- ALL steps must appear in "allocations" with at least 1 source. Do not omit steps.
-- ALL sources must appear at least once in some step, unless clearly irrelevant to the whole passage.
-- Max 4 sources per step.`;
+- ALL steps must appear in "allocations" with at least 1 source with role "anchor".
+- ALL sources must appear at least once in some step, unless clearly irrelevant.
+- Every id in "pinnedSources" MUST have a corresponding entry in "pinnedSourceRoles".
+- Max 4 sources per step. Aim for 2-3.`;
 
     const userMessage = [
         passageLine,
@@ -201,8 +220,14 @@ Justify each allocation in ONE short sentence — concrete and academic (not "us
 // ── Response parsing ────────────────────────────────────────────────────
 
 interface ParsedPlannerResponse {
-    allocations?: Record<string, { pinnedSources?: unknown; rationale?: unknown }>;
+    allocations?: Record<string, {
+        pinnedSources?: unknown;
+        pinnedSourceRoles?: unknown;
+        rationale?: unknown;
+    }>;
 }
+
+const VALID_ROLES = new Set(['anchor', 'contrast', 'technical']);
 
 function parsePlannerJson(rawJson: string): ParsedPlannerResponse {
     try {
@@ -225,8 +250,24 @@ function mapToAllocations(parsed: ParsedPlannerResponse): Record<string, Propose
         const pinned = Array.isArray(raw?.pinnedSources)
             ? raw.pinnedSources.filter((id): id is string => typeof id === 'string' && id.length > 0)
             : [];
+        // Sanitize roles: keep only entries where value is a valid
+        // role string AND the key is in pinnedSources (drops orphaned
+        // role entries that the model may invent on its own).
+        const pinnedSet = new Set(pinned);
+        const roles: Record<string, 'anchor' | 'contrast' | 'technical'> = {};
+        if (raw?.pinnedSourceRoles && typeof raw.pinnedSourceRoles === 'object') {
+            for (const [id, role] of Object.entries(raw.pinnedSourceRoles as Record<string, unknown>)) {
+                if (!pinnedSet.has(id)) continue;
+                if (typeof role !== 'string' || !VALID_ROLES.has(role)) continue;
+                roles[id] = role as 'anchor' | 'contrast' | 'technical';
+            }
+        }
         const rationale = typeof raw?.rationale === 'string' ? raw.rationale.trim() : '';
-        out[stepId] = { pinnedSources: pinned, rationale };
+        out[stepId] = {
+            pinnedSources: pinned,
+            ...(Object.keys(roles).length > 0 ? { pinnedSourceRoles: roles } : {}),
+            rationale,
+        };
     }
     return out;
 }
