@@ -24,6 +24,7 @@ import {
     LIBRARY_TYPES_BY_ROLE,
     TYPICAL_SOURCE_TYPE_BY_ROLE,
     computeRoleCoverage,
+    computeRoleExpectations,
     findMissingRoles,
     formatPassageReference,
     isExcerptSetStale,
@@ -361,19 +362,30 @@ function StrategyModeBadge({ strategy }: { strategy: 'free' | 'dialectical' }) {
 function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
     const { t } = useTranslation('exegesis');
     const coverage = useMemo(() => computeRoleCoverage(paper.sources), [paper.sources]);
+    const expectations = useMemo(() => computeRoleExpectations(paper.rubric), [paper.rubric]);
     const missing = useMemo(() => findMissingRoles(coverage), [coverage]);
 
     // No sources yet: don't render — the hero card is doing the
     // entry-point work in that state.
     if (coverage.total === 0) return null;
 
-    const allCovered = missing.length === 0;
+    // Two pass/fail criteria coexist:
+    //   1. Dialectical viability: ≥1 of each role.
+    //   2. Rubric quantity: actual ≥ expected per role (when rubric
+    //      sets expectations).
+    // The card reports both and shades by the strictest unmet rule.
+    const dialecticallyViable = missing.length === 0;
+    const meetsRubric =
+        coverage.anchor >= expectations.anchor &&
+        coverage.contrast >= expectations.contrast &&
+        coverage.technical >= expectations.technical;
+    const allGood = dialecticallyViable && meetsRubric;
 
     return (
         <section
             className={[
                 'rounded-xl border p-4 space-y-3',
-                allCovered
+                allGood
                     ? 'border-success/30 bg-success-subtle/40'
                     : 'border-warning/40 bg-warning-subtle/40',
             ].join(' ')}
@@ -381,14 +393,14 @@ function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
             <header className="flex items-start gap-2.5">
                 <Sparkles className={[
                     'h-4 w-4 mt-0.5 shrink-0',
-                    allCovered ? 'text-success' : 'text-warning-subtle-foreground',
+                    allGood ? 'text-success' : 'text-warning-subtle-foreground',
                 ].join(' ')} aria-hidden />
                 <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground">
                         {t('paperSetup.subSteps.corpus.roleCoverage.eyebrow')}
                     </p>
                     <h3 className="text-sm font-semibold text-foreground mt-0.5">
-                        {allCovered
+                        {allGood
                             ? t('paperSetup.subSteps.corpus.roleCoverage.balancedTitle')
                             : t('paperSetup.subSteps.corpus.roleCoverage.partialTitle')}
                     </h3>
@@ -396,12 +408,12 @@ function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
             </header>
 
             <div className="grid grid-cols-3 gap-2">
-                <RoleCountChip role="anchor" count={coverage.anchor} />
-                <RoleCountChip role="contrast" count={coverage.contrast} />
-                <RoleCountChip role="technical" count={coverage.technical} />
+                <RoleCountChip role="anchor" count={coverage.anchor} expected={expectations.anchor} />
+                <RoleCountChip role="contrast" count={coverage.contrast} expected={expectations.contrast} />
+                <RoleCountChip role="technical" count={coverage.technical} expected={expectations.technical} />
             </div>
 
-            {!allCovered && (
+            {!allGood && (
                 <p className="text-[11.5px] text-muted-foreground leading-snug">
                     {t('paperSetup.subSteps.corpus.roleCoverage.partialBody')}
                 </p>
@@ -410,28 +422,44 @@ function RoleCoverageCard({ paper }: { paper: ExegeticalPaper }) {
     );
 }
 
-function RoleCountChip({ role, count }: { role: SourceRole; count: number }) {
+function RoleCountChip({
+    role,
+    count,
+    expected,
+}: {
+    role: SourceRole;
+    count: number;
+    expected: number;
+}) {
     const { t } = useTranslation('exegesis');
-    const empty = count === 0;
+    // Status: green when count ≥ max(1, expected); amber when below.
+    // The "≥1 dialectical viability" floor kicks in when the rubric
+    // has no expectation for the role (expected === 0) — even then we
+    // want at least one source per role for the strategy to work.
+    const target = Math.max(1, expected);
+    const ok = count >= target;
     return (
         <div
             className={[
                 'rounded-lg border px-3 py-2',
-                empty
-                    ? 'border-warning/40 bg-card'
-                    : 'border-success/30 bg-card',
+                ok ? 'border-success/30 bg-card' : 'border-warning/40 bg-card',
             ].join(' ')}
         >
             <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                 {t(`paperSetup.subSteps.corpus.roleCoverage.role.${role}`)}
             </p>
             <p className={[
-                'text-lg font-semibold tabular-nums',
-                empty ? 'text-warning-subtle-foreground' : 'text-success',
+                'text-lg font-semibold tabular-nums leading-tight',
+                ok ? 'text-success' : 'text-warning-subtle-foreground',
             ].join(' ')}>
                 {count}
+                {expected > 0 && (
+                    <span className="text-[11px] text-muted-foreground font-normal ml-1">
+                        / {expected}
+                    </span>
+                )}
             </p>
-            <p className="text-[10.5px] text-muted-foreground leading-tight">
+            <p className="text-[10.5px] text-muted-foreground leading-tight mt-0.5">
                 {t(`paperSetup.subSteps.corpus.roleCoverage.hint.${role}`)}
             </p>
         </div>

@@ -1,3 +1,4 @@
+import type { PaperRubric } from './PaperRubric';
 import type { ProjectSource } from './ProjectSource';
 import type { SourceType } from './SourceType';
 import type { SourceRole } from './StepSourcePlan';
@@ -106,6 +107,38 @@ export function findMissingRoles(coverage: RoleCoverage): SourceRole[] {
     if (coverage.contrast === 0) missing.push('contrast');
     if (coverage.technical === 0) missing.push('technical');
     return missing;
+}
+
+export interface RoleExpectations {
+    /** How many anchor-role sources the rubric expects (sum of minimums). */
+    anchor: number;
+    /** How many contrast-role sources the rubric expects. */
+    contrast: number;
+    /** How many technical-role sources the rubric expects. */
+    technical: number;
+}
+
+/**
+ * Maps each rubric source-requirement to its dialectical role and
+ * sums the minimums per role. Lets the corpus role-coverage card
+ * display "Anclas: 2 / 5" — bridging the rubric (which speaks in
+ * sourceTypes) with the strategy (which speaks in roles).
+ *
+ * Returns all-zero expectations when the rubric has no source
+ * requirements (the very-permissive default) so the card falls
+ * back to "≥1 of each role" semantics.
+ */
+export function computeRoleExpectations(
+    rubric: Pick<PaperRubric, 'sourceRequirements'> | null,
+): RoleExpectations {
+    const out: RoleExpectations = { anchor: 0, contrast: 0, technical: 0 };
+    if (!rubric?.sourceRequirements) return out;
+    for (const req of rubric.sourceRequirements) {
+        const role = suggestRoleForType(req.sourceType);
+        if (!role) continue;
+        out[role] += req.minimum;
+    }
+    return out;
 }
 
 /**
