@@ -776,7 +776,12 @@ function AddSourceDialog({
     const [citationKey, setCitationKey] = useState('');
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState<number | null>(null);
-    const [pickedResourceId, setPickedResourceId] = useState<string | null>(null);
+    // Library mode: multi-select. The Set holds the picked library
+    // resource ids; an empty set means "nothing selected", a 1-set
+    // means "single resource picked" (we still let the user customize
+    // label + cite for that one), and a ≥2 set means "bulk attach"
+    // (per-resource label + cite get auto-derived at submit).
+    const [pickedResourceIds, setPickedResourceIds] = useState<Set<string>>(new Set());
     const [librarySearch, setLibrarySearch] = useState('');
     const [libraryTypeFilter, setLibraryTypeFilter] = useState<ResourceType | 'all'>('all');
 
@@ -791,7 +796,7 @@ function AddSourceDialog({
             setDisplayName('');
             setSourceType(initialType ?? 'commentary-critical');
             setCitationKey('');
-            setPickedResourceId(null);
+            setPickedResourceIds(new Set());
             setLibrarySearch('');
             setLibraryTypeFilter('all');
         }
@@ -835,10 +840,15 @@ function AddSourceDialog({
         return counts;
     }, [availableForPicker]);
 
+    const pickedCount = pickedResourceIds.size;
+    const isBulkLibrary = mode === 'library' && pickedCount >= 2;
+    // Single-pick label is the user-editable one; bulk skips it.
     const labelOk = displayName.trim().length >= 3;
     const canSubmit = mode === 'upload'
         ? !!file && labelOk && !!user?.uid && !uploading
-        : !!pickedResourceId && labelOk && !!user?.uid && !uploading;
+        : isBulkLibrary
+            ? pickedCount >= 2 && !!user?.uid && !uploading
+            : pickedCount === 1 && labelOk && !!user?.uid && !uploading;
 
     const handleFile = (f: File | null) => {
         setFile(f);
@@ -848,18 +858,32 @@ function AddSourceDialog({
     };
 
     const handlePickResource = (resource: LibraryResource) => {
-        setPickedResourceId(resource.id);
-        // Pre-fill label with the library resource's title; the
-        // student can still tweak before submit.
-        setDisplayName(resource.title || resource.id);
-        // Pre-fill citation key from the resource's author. The student
-        // can still tweak — this is a starting point, not authoritative.
-        // Empty author or empty derivation leaves the field blank so the
-        // generation step's `deriveCitationKey` fallback (which works
-        // off the displayLabel) takes over.
-        if (resource.author) {
-            const key = deriveCitationKeyFromAuthor(resource.author);
-            if (key) setCitationKey(key);
+        setPickedResourceIds(prev => {
+            const next = new Set(prev);
+            if (next.has(resource.id)) {
+                next.delete(resource.id);
+            } else {
+                next.add(resource.id);
+            }
+            return next;
+        });
+        // When the user lands on a single selection, pre-fill the
+        // editable label + cite from THAT resource so the form acts
+        // like the original single-pick UX. Toggling away from single
+        // (back to zero, or up to 2+) clears them so we don't leak
+        // stale data into a subsequent submit.
+        const willBeSingle = !pickedResourceIds.has(resource.id) && pickedResourceIds.size === 0;
+        if (willBeSingle) {
+            setDisplayName(resource.title || resource.id);
+            if (resource.author) {
+                const key = deriveCitationKeyFromAuthor(resource.author);
+                if (key) setCitationKey(key);
+            }
+        } else {
+            // Multi-select or deselect → clear the per-row fields so
+            // the bulk path can autoderive cleanly.
+            setDisplayName('');
+            setCitationKey('');
         }
     };
 
@@ -869,7 +893,6 @@ function AddSourceDialog({
         setUploading(true);
         setProgress(0);
         try {
-            let corpusId: string;
             if (mode === 'upload') {
                 if (!file) return;
                 // Upload through the library pipeline. `type: 'other'`
@@ -886,20 +909,49 @@ function AddSourceDialog({
                     },
                     (p) => setProgress(p),
                 );
-                corpusId = resource.id;
+                await addSource.mutateAsync({
+                    paperId: paper.id,
+                    corpusId: resource.id,
+                    sourceType,
+                    displayLabel: displayName.trim(),
+                    citationKey: citationKey.trim() || undefined,
+                });
+            } else if (isBulkLibrary) {
+                // Bulk attach: loop the selections, autoderive
+                // displayLabel and citationKey from each resource.
+                // Sequential to avoid concurrent updates fighting on
+                // the paper's `sources` array (the repo writes the
+                // whole array per addSource).
+                const picked = Array.from(pickedResourceIds)
+                    .map(id => library.resources.find(r => r.id === id))
+                    .filter((r): r is LibraryResource => !!r);
+                for (const r of picked) {
+                    const autoCite = r.author ? deriveCitationKeyFromAuthor(r.author) : '';
+                    await addSource.mutateAsync({
+                        paperId: paper.id,
+                        corpusId: r.id,
+                        sourceType,
+                        displayLabel: r.title || r.id,
+                        citationKey: autoCite || undefined,
+                    });
+                }
             } else {
-                if (!pickedResourceId) return;
-                corpusId = pickedResourceId;
+                // Single library pick — keep the editable label/cite
+                // path so the user can override what was pre-filled.
+                const onlyId = pickedResourceIds.values().next().value;
+                if (!onlyId) return;
+                await addSource.mutateAsync({
+                    paperId: paper.id,
+                    corpusId: onlyId,
+                    sourceType,
+                    displayLabel: displayName.trim(),
+                    citationKey: citationKey.trim() || undefined,
+                });
             }
-
-            await addSource.mutateAsync({
-                paperId: paper.id,
-                corpusId,
-                sourceType,
-                displayLabel: displayName.trim(),
-                citationKey: citationKey.trim() || undefined,
-            });
-            toast.success(t('paperSetup.subSteps.corpus.toast.added'));
+            const successKey = isBulkLibrary
+                ? 'paperSetup.subSteps.corpus.toast.bulkAdded'
+                : 'paperSetup.subSteps.corpus.toast.added';
+            toast.success(t(successKey, { count: pickedCount || 1 }));
             // Close the dialog on success. The open-effect resets
             // the form on the next open, so we don't need to clear
             // state here.
@@ -973,7 +1025,7 @@ function AddSourceDialog({
                                 <LibraryPicker
                                     isLoading={library.isLoading}
                                     resources={filteredResources}
-                                    pickedResourceId={pickedResourceId}
+                                    pickedResourceIds={pickedResourceIds}
                                     onPick={handlePickResource}
                                     searchTerm={librarySearch}
                                     onSearchChange={setLibrarySearch}
@@ -985,24 +1037,34 @@ function AddSourceDialog({
                                 />
                             )}
 
-                            <FieldGroup>
-                                <FieldLabel htmlFor="addsource-label">
-                                    {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
-                                </FieldLabel>
-                                <input
-                                    id="addsource-label"
-                                    type="text"
-                                    value={displayName}
-                                    onChange={(e) => setDisplayName(e.target.value)}
-                                    disabled={uploading}
-                                    placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
-                                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                                />
-                            </FieldGroup>
+                            {/* In bulk-library mode the per-source label
+                                and citation key are auto-derived at submit
+                                from each resource's title + author. The
+                                form collapses to a single shared "type"
+                                picker plus an explicit autoderivation
+                                hint so the user knows what's happening. */}
+                            {!isBulkLibrary && (
+                                <FieldGroup>
+                                    <FieldLabel htmlFor="addsource-label">
+                                        {t('paperSetup.subSteps.corpus.upload.displayNameLabel')}
+                                    </FieldLabel>
+                                    <input
+                                        id="addsource-label"
+                                        type="text"
+                                        value={displayName}
+                                        onChange={(e) => setDisplayName(e.target.value)}
+                                        disabled={uploading}
+                                        placeholder={t('paperSetup.subSteps.corpus.upload.displayNamePlaceholder')}
+                                        className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                                    />
+                                </FieldGroup>
+                            )}
 
                             <FieldGroup>
                                 <FieldLabel htmlFor="addsource-type">
-                                    {t('paperSetup.subSteps.corpus.upload.typeLabel')}
+                                    {isBulkLibrary
+                                        ? t('paperSetup.subSteps.corpus.upload.typeLabelBulk', { count: pickedCount })
+                                        : t('paperSetup.subSteps.corpus.upload.typeLabel')}
                                 </FieldLabel>
                                 <SourceTypePicker
                                     id="addsource-type"
@@ -1012,7 +1074,9 @@ function AddSourceDialog({
                                     className="w-full !py-2 !text-sm"
                                 />
                                 <FieldHint>
-                                    {t('paperSetup.subSteps.corpus.upload.typeDescription')}
+                                    {isBulkLibrary
+                                        ? t('paperSetup.subSteps.corpus.upload.typeDescriptionBulk')
+                                        : t('paperSetup.subSteps.corpus.upload.typeDescription')}
                                 </FieldHint>
                                 {!isCitable && (
                                     <p className="text-[11px] text-warning-subtle-foreground inline-flex items-start gap-1.5 mt-0.5">
@@ -1022,7 +1086,7 @@ function AddSourceDialog({
                                 )}
                             </FieldGroup>
 
-                            {isCitable && (
+                            {isCitable && !isBulkLibrary && (
                                 <FieldGroup>
                                     <FieldLabel htmlFor="addsource-cite">
                                         {t('paperSetup.subSteps.corpus.upload.citationKeyLabel')}
@@ -1041,6 +1105,12 @@ function AddSourceDialog({
                                         {t('paperSetup.subSteps.corpus.upload.citationKeyHint')}
                                     </FieldHint>
                                 </FieldGroup>
+                            )}
+
+                            {isBulkLibrary && isCitable && (
+                                <FieldHint>
+                                    {t('paperSetup.subSteps.corpus.upload.citationKeyAutoderiveHint')}
+                                </FieldHint>
                             )}
                         </div>
                     </div>
@@ -1077,7 +1147,9 @@ function AddSourceDialog({
                                 )}
                                 {mode === 'upload'
                                     ? t('paperSetup.subSteps.corpus.upload.submit')
-                                    : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
+                                    : isBulkLibrary
+                                        ? t('paperSetup.subSteps.corpus.upload.submitBulkFromLibrary', { count: pickedCount })
+                                        : t('paperSetup.subSteps.corpus.upload.submitFromLibrary')}
                             </Button>
                         </div>
                     </div>
@@ -1162,7 +1234,7 @@ function SidebarTab({
 function LibraryPicker({
     isLoading,
     resources,
-    pickedResourceId,
+    pickedResourceIds,
     onPick,
     searchTerm,
     onSearchChange,
@@ -1174,7 +1246,7 @@ function LibraryPicker({
 }: {
     isLoading: boolean;
     resources: ReadonlyArray<LibraryResource>;
-    pickedResourceId: string | null;
+    pickedResourceIds: Set<string>;
     onPick: (resource: LibraryResource) => void;
     searchTerm: string;
     onSearchChange: (next: string) => void;
@@ -1253,12 +1325,13 @@ function LibraryPicker({
                 <ul className="max-h-[320px] overflow-y-auto rounded-lg border border-border bg-card divide-y divide-border">
                     {resources.map(r => {
                         const status = libraryService.getResourceIndexStatus(r);
-                        const picked = pickedResourceId === r.id;
+                        const picked = pickedResourceIds.has(r.id);
                         return (
                             <li key={r.id}>
                                 <button
                                     type="button"
                                     onClick={() => onPick(r)}
+                                    aria-pressed={picked}
                                     className={[
                                         'w-full text-left px-3.5 py-2.5 flex items-start gap-3 transition-colors',
                                         picked
@@ -1266,6 +1339,21 @@ function LibraryPicker({
                                             : 'hover:bg-accent/40',
                                     ].join(' ')}
                                 >
+                                    {/* Checkbox-style indicator so the
+                                        multi-select intent is visible
+                                        before any toggle. Clicking
+                                        anywhere on the row toggles. */}
+                                    <span
+                                        aria-hidden
+                                        className={[
+                                            'h-4 w-4 mt-0.5 shrink-0 rounded border-2 flex items-center justify-center transition-colors',
+                                            picked
+                                                ? 'bg-primary border-primary text-primary-foreground'
+                                                : 'border-border bg-card',
+                                        ].join(' ')}
+                                    >
+                                        {picked && <CheckCircle2 className="h-3 w-3" />}
+                                    </span>
                                     <FileText className={[
                                         'h-4 w-4 mt-0.5 shrink-0',
                                         picked ? 'text-success' : 'text-muted-foreground',
@@ -1283,9 +1371,6 @@ function LibraryPicker({
                                             <ResourceReadinessBadge status={status} />
                                         </div>
                                     </div>
-                                    {picked && (
-                                        <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
-                                    )}
                                 </button>
                             </li>
                         );
