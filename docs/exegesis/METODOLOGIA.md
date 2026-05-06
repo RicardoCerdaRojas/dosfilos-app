@@ -2,8 +2,10 @@
 
 **Plataforma:** Preach (DosFilos)
 **Módulo:** Exégesis
-**Versión:** 1.0
+**Versión:** 1.1 — pipeline canónico operacional con seis composers (académico all-in-one + conclusión + introducción + sermón + devocional + guía de estudio)
 **Fecha:** Mayo 2026
+
+> **Documento vivo.** Se actualiza junto con la implementación. Cuando agreguemos un composer nuevo (ej. Escuela Dominical especializada, contenido para redes), su descripción se incorpora a la sección 5 y al mapa de archivos en la 8.
 
 ---
 
@@ -195,23 +197,104 @@ Las herramientas existentes asumen un mapeo uno-a-uno entre análisis y formato:
 
 ### Nuestra arquitectura: dos etapas separadas
 
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  ETAPA 1 — Análisis canónico estructurado (una vez por verso)    │
+│                                                                   │
+│  Por cada verso del pasaje:                                       │
+│    AnalyzeVerseCanonicallyUseCase                                 │
+│       └─→ ICanonicalVerseAnalyzer (Gemini Pro 2.5 + JSON schema)  │
+│              └─→ CanonicalVerseAnalysis estructurado:             │
+│                    • texto griego                                 │
+│                    • crítica textual (siempre presente)           │
+│                    • análisis sintáctico (con morfología inline)  │
+│                    • análisis léxico (rango general / carga local)│
+│                    • partículas discursivas                       │
+│                    • rol argumentativo                            │
+│                    • contexto histórico (condicional)             │
+│                    • intertextualidad AT (condicional)            │
+│                    • engagement con comentaristas (dialéctica)    │
+│                    • cruces de traducción (con compromisos)       │
+│                    • tesis del verso                              │
+│                    • theological hooks (puente a sistemática)     │
+│                    • confidence flags (calibración hedge)         │
+│                    • footnote extensions                          │
+│                                                                   │
+│  → Persiste como ExegeticalStepVersion.canonicalAnalysis          │
+│  → El usuario revisa atómicamente y acepta                        │
+└──────────────────────────────────────────────────────────────────┘
+                            │
+                            ▼  (mismo artefacto, seis composers)
+┌──────────────────────────────────────────────────────────────────┐
+│  ETAPA 2 — Composición hacia formatos                             │
+│                                                                   │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │ ACADÉMICO (formal, riguroso, citado)                     │    │
+│  │                                                           │    │
+│  │ ComposeAcademicPaperUseCase   → paper completo TMS-style │    │
+│  │   (intro + cuerpo + conclusión + bibliografía)           │    │
+│  │                                                           │    │
+│  │ ComposeConclusionFromAnalysesUseCase                     │    │
+│  │   → conclusión sola (granular; ejecutar PRIMERO)         │    │
+│  │                                                           │    │
+│  │ ComposeIntroductionFromAnalysesUseCase                   │    │
+│  │   → introducción sola (ejecutar AL FINAL,                │    │
+│  │      requiere conclusión aceptada)                       │    │
+│  └──────────────────────────────────────────────────────────┘    │
+│                                                                   │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │ MINISTERIAL (registro adaptado a la audiencia)           │    │
+│  │                                                           │    │
+│  │ ComposeSermonFromAnalysesUseCase                         │    │
+│  │   → sermón expositivo                                    │    │
+│  │   tones: pastoral / expositivo / narrativo               │    │
+│  │                                                           │    │
+│  │ ComposeDevotionalFromAnalysesUseCase                     │    │
+│  │   → reflexión devocional                                 │    │
+│  │   audiences: general / small-group / individual          │    │
+│  │                                                           │    │
+│  │ ComposeStudyGuideFromAnalysesUseCase                     │    │
+│  │   → guía OIA (Observación / Interpretación / Aplicación) │    │
+│  │   audiences: small-group / sunday-school / individual    │    │
+│  └──────────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
 **Etapa 1 — Análisis canónico estructurado** (una sola vez por pasaje):
-Por cada verso producimos un objeto estructurado (`CanonicalVerseAnalysis`) que captura los once pasos canónicos como datos atómicos: texto griego, crítica textual, esqueleto sintáctico, análisis morfológico/léxico, partículas discursivas, rol argumentativo, contexto histórico, intertextualidad, engagement con comentaristas, cruces de traducción con compromisos, tesis del verso, theological hooks, confidence flags, extensiones para notas al pie.
+Por cada verso producimos un objeto estructurado (`CanonicalVerseAnalysis`) que captura los once pasos canónicos como datos atómicos. Este artefacto es **canónico**: se construye una vez, se revisa, se acepta. Persiste como conocimiento auditable en `ExegeticalStepVersion.canonicalAnalysis`.
 
-Este artefacto es **canónico**: se construye una vez, se revisa, se acepta. Persiste como conocimiento auditable.
+**Etapa 2 — Composición hacia formatos** (múltiples veces, según necesidad). Seis composers operacionales sobre el mismo análisis:
 
-**Etapa 2 — Composición hacia formatos** (múltiples veces, según necesidad):
-Sobre el análisis canónico, distintos *composers* producen formatos específicos:
+#### Composers académicos
 
-- **Composer académico (TMS-style)** — prosa académica continua, párrafos temáticos, citas inline distribuidas, notas al pie con extensión argumentativa, párrafo de cierre con compromiso de traducción + tesis del verso. Este es el output que tu profesor de seminario espera.
+**1. Composer académico all-in-one** — prosa académica continua TMS-style, párrafos temáticos, citas inline distribuidas, notas al pie con extensión argumentativa, párrafo de cierre con compromiso de traducción + tesis del verso. Este es el output que tu profesor de seminario espera.
 
-- **Composer de sermón expositivo** — usa `theological hooks` para identificar el énfasis doctrinal, transforma el análisis en bosquejo de sermón con introducción narrativa, desarrollo expositivo verso-a-verso, ilustraciones contextualmente apropiadas y aplicación pastoral. La fidelidad exegética se preserva porque la base es el mismo análisis canónico.
+**2. Composer de conclusión** — sintetiza solamente la conclusión a partir de los análisis del cuerpo. Académicamente debe componerse PRIMERO porque la introducción se redacta al final, sobre lo que el cuerpo + conclusión efectivamente demostraron.
 
-- **Composer devocional** — destila el análisis a una reflexión accesible, manteniendo la fidelidad al sentido del texto pero adaptando el registro a lectores generales.
+**3. Composer de introducción** — escrito AL FINAL en el flujo académico. Recibe los análisis verso por verso + la conclusión aceptada y produce una introducción que articula la tesis que el cuerpo demostró (no la tesis pre-imaginada). Use case enforcea este orden: rechaza ejecutarse si la conclusión no está aceptada.
 
-- **Composer de guía de estudio bíblico** — preguntas de inducción, preguntas de observación, preguntas de aplicación, todas ancladas en el análisis estructurado.
+#### Composers ministeriales
 
-- **Composers futuros** — lecciones de Escuela Dominical, materiales para estudios de hogar, contenido para redes sociales con base bíblica sólida, etc. Cada uno es un nuevo composer sobre el mismo dato canónico.
+**4. Composer de sermón expositivo** — usa los `theological hooks` para identificar el énfasis doctrinal, transforma el análisis en bosquejo de sermón + manuscrito ~25-40 minutos. Tone-driven: pastoral, expositivo, o narrativo. Cada tone produce estructura distinta.
+
+**5. Composer devocional** — destila el análisis a una reflexión accesible (1-2 páginas), manteniendo la fidelidad al sentido del texto pero adaptando el registro a lectores generales. Audience-driven: general / pequeño grupo / reflexión individual.
+
+**6. Composer de guía de estudio bíblico** — produce una guía inductiva siguiendo el marco OIA (Observación → Interpretación → Aplicación). Audience-driven: pequeño grupo / Escuela Dominical / estudio individual. Incluye notas para el líder cuando aplica.
+
+**Composers futuros** — lecciones de Escuela Dominical especializadas, materiales para estudios de hogar, contenido para redes sociales con base bíblica sólida, etc. Cada uno es un nuevo composer sobre el mismo dato canónico — sin re-analizar.
+
+### Garantías arquitectónicas de la Etapa 2
+
+**Hallucination guardrail compartido.** Los seis composers comparten una salvaguarda explícita en sus prompts: *"the exegetical work is ALREADY DONE. Only use ideas, decisions, and citations PRESENT in the analyses. NEVER invent claims, citations, or commitments."* La fidelidad exegética se preserva porque ningún composer puede inventar — solo puede transformar el dato canónico al registro pedido.
+
+**Calibración de confianza automática.** Los `confidenceFlags` de cada análisis dictan el lenguaje hedge en la prosa final: *high* → "demuestra"; *medium* → "sostiene"; *tentative* → "sugiere". Esta calibración cruza los seis composers, así que afirmaciones tentativas en el análisis no se vuelven afirmaciones definitivas en el sermón.
+
+**Style-guide enforcement diferenciado.** Los composers académicos aplican la guía de estilo del seminario en dos capas (prompt + post-formatter determinístico). Los composers ministeriales tratan la guía como advisoria — la convención de citación TMS no manda en el púlpito o en el devocional. La política se documenta en cada port del dominio.
+
+**Persistencia diferenciada.**
+- Conclusión + introducción composers persisten como step versions del paper (mismo pattern que la generación legacy).
+- Composer académico all-in-one tiene `persist: true` opt-in que actualiza `paper.assembledMarkdown`.
+- Composers ministeriales NO persisten en el paper — la salida se entrega para copy/download/handoff. Razón: sermón/devocional/guía son artefactos derivados que pueden vivir en sus propios módulos del producto.
 
 ### Por qué esta arquitectura importa
 
@@ -302,9 +385,71 @@ El schema vive en [`packages/domain/src/exegesis/entities/CanonicalVerseAnalysis
 
 **Auditoría de fuentes obligatoria.** Toda afirmación en cualquier formato derivado debe poder rastrearse a una fuente citada en el análisis canónico, o marcarse explícitamente como conocimiento general no respaldado por el corpus. Sin excepciones.
 
+### Mapa de archivos por capa (referencia rápida)
+
+| Capa | Componente | Archivo |
+|------|------------|---------|
+| Domain | Schema canónico | `packages/domain/src/exegesis/entities/CanonicalVerseAnalysis.ts` |
+| Domain | Puerto del analyzer | `packages/domain/src/exegesis/ports/ICanonicalVerseAnalyzer.ts` |
+| Domain | Puerto académico (paper completo) | `packages/domain/src/exegesis/ports/IAcademicComposer.ts` |
+| Domain | Puerto de conclusión | `packages/domain/src/exegesis/ports/IConclusionComposer.ts` |
+| Domain | Puerto de introducción | `packages/domain/src/exegesis/ports/IIntroductionComposer.ts` |
+| Domain | Puertos ministeriales (3) | `packages/domain/src/exegesis/ports/IMinistryComposers.ts` |
+| Infra | Analyzer Gemini + JSON schema | `packages/infrastructure/src/exegesis/canonicalAnalyzer/` |
+| Infra | Composer académico | `packages/infrastructure/src/exegesis/composer/` |
+| Infra | Composers de sección (intro/conclusion) | `packages/infrastructure/src/exegesis/sectionComposers/` |
+| Infra | Composers ministeriales (3) | `packages/infrastructure/src/exegesis/ministryComposers/` |
+| Infra | Style formatter determinístico | `packages/infrastructure/src/exegesis/DeterministicStyleFormatter.ts` |
+| Application | Use case de análisis | `packages/application/src/use-cases/exegesis/AnalyzeVerseCanonicallyUseCase.ts` |
+| Application | Use case académico all-in-one | `packages/application/src/use-cases/exegesis/ComposeAcademicPaperUseCase.ts` |
+| Application | Use case de conclusión | `packages/application/src/use-cases/exegesis/ComposeConclusionFromAnalysesUseCase.ts` |
+| Application | Use case de introducción | `packages/application/src/use-cases/exegesis/ComposeIntroductionFromAnalysesUseCase.ts` |
+| Application | Use cases ministeriales (3) | `packages/application/src/use-cases/exegesis/MinistryComposerUseCases.ts` |
+| Web | Study view del análisis | `packages/web/src/components/exegesis/canonical/CanonicalAnalysisStudyView.tsx` |
+| Web | Dialog académico | `packages/web/src/components/exegesis/canonical/AcademicCompositionDialog.tsx` |
+| Web | Dialog ministerial (3 tabs) | `packages/web/src/components/exegesis/canonical/MinistryCompositionDialog.tsx` |
+
 ---
 
-## 9. Bibliografía
+## 9. Superficies de UX (dónde acceder cada composer)
+
+### Estado del paper antes de componer
+
+Para que cualquier composer funcione, el paper necesita **al menos un análisis canónico aceptado** en una step de tipo `verse`. Sin esto, todos los use cases lanzan error explícito ("paper has no accepted verse analyses"). El usuario llega a este estado:
+
+1. Configurando rúbrica + corpus + plan de uso desde la página de setup.
+2. En la página del paper, sembrando los pasos verso por verso (`seedSteps`).
+3. En cada step de verso, presionando **"Análisis canónico"** (botón outline al lado del "Generar" legacy).
+4. Revisando el output en study mode (toggle al lado del prose mode).
+5. Aceptando el análisis (mismo botón "Aceptar" del flow legacy).
+
+### Composers académicos
+
+| Composer | Acceso | Persistencia |
+|----------|--------|--------------|
+| Académico all-in-one | Menú overflow del paper → "Componer paper académico" | Opt-in a `paper.assembledMarkdown` desde el dialog ("Guardar al paper") |
+| Conclusión | Step de tipo `conclusion` en estado `pending` → "Componer desde análisis" | Auto: nueva versión de la step de conclusión |
+| Introducción | Step de tipo `introduction` en estado `pending` → "Componer desde análisis" | Auto: nueva versión de la step de introducción. Use case enforce que la conclusión esté aceptada primero. |
+
+### Composers ministeriales
+
+| Composer | Acceso | Persistencia |
+|----------|--------|--------------|
+| Sermón | Menú overflow → "Material ministerial" → tab "Sermón" + tone | Sin persistencia auto. Copy/download del markdown. |
+| Devocional | Menú overflow → "Material ministerial" → tab "Devocional" + audience | Sin persistencia auto. Copy/download. |
+| Guía de estudio | Menú overflow → "Material ministerial" → tab "Guía de estudio" + audience | Sin persistencia auto. Copy/download. |
+
+### Regeneración con hint
+
+En los step cards de tipo `verse`, los botones "Regenerar" y "Aplicar hint" son **adaptive**: cuando la versión actual lleva `canonicalAnalysis` populated, el hint se enruta al pipeline canónico (`analyzeVerseCanonically`). Cuando no, va al legacy `generateStep`. Esto preserva el modo de trabajo del usuario sin obligarlo a recordar qué path está usando.
+
+### Vista estructurada vs. prosa en cada verso
+
+Cuando un verso tiene `canonicalAnalysis` aceptado, el step card expone un toggle **"Vista de prosa | Vista de estudio"**. La vista de estudio renderiza los 11 pasos canónicos en secciones colapsables auditables; la vista de prosa renderiza el markdown legacy si existe. Si solo hay análisis canónico (no markdown), la vista de estudio es la default automática.
+
+---
+
+## 10. Bibliografía
 
 ### Metodología exegética
 
@@ -380,4 +525,4 @@ El schema vive en [`packages/domain/src/exegesis/entities/CanonicalVerseAnalysis
 
 ---
 
-*Este documento se mantiene actualizado conforme la metodología y arquitectura del módulo evolucionan. Última revisión: mayo 2026.*
+*Este documento se mantiene actualizado conforme la metodología y arquitectura del módulo evolucionan. Última revisión: mayo 2026 — v1.1 con pipeline canónico operacional + seis composers + UX surfaces documentadas.*
