@@ -1232,6 +1232,66 @@
             "other": "Otro"
         }
     },
+    "quota": {
+        "badge": {
+            "compactRemaining": "{{studies}} estudios",
+            "compactNoAccess": "Sin acceso",
+            "compactTooltip": "Cuota de estudios bíblicos profundos. Click para ver detalles.",
+            "bannerTitle": "{{studies}} estudios disponibles · cuota total {{total}}/mes",
+            "noAccessTitle": "Estudios bíblicos profundos · upgrade requerido",
+            "noAccessHint": "Tu plan actual no incluye este módulo. Upgrade a Pro o Equipo para activarlo.",
+            "hardCapHint": "Cuota agotada este ciclo. Compra un pack para continuar.",
+            "softWarnHint": "Quedan pocos estudios. Considera comprar un pack.",
+            "okHint": "Cuota disponible. Cada operación descuenta del bucket.",
+            "actionCta": "Ver detalles"
+        },
+        "outOfCredits": {
+            "title": "Cuota insuficiente",
+            "noAccessDescription": "Este módulo requiere plan Pro o Equipo. Hace análisis exegético, composición académica, sermones y más con rigor TMS.",
+            "depletedDescription": "Tu cuota mensual de estudios se agotó. Compra un pack adicional o espera al próximo ciclo de facturación.",
+            "loading": "Cargando saldo…",
+            "neededLabel": "Operación requería:",
+            "neededValue": "${{usd}} USD · {{studies}} estudios",
+            "balanceLabel": "Saldo actual:",
+            "balancePlan": "${{usd}} plan",
+            "balancePack": "${{usd}} pack",
+            "upgradeCta": "Upgrade a Pro",
+            "buyPackCta": "Comprar pack de estudios",
+            "waitForCycleHint": "O espera al próximo ciclo de tu plan para que se renueve la cuota.",
+            "close": "Cerrar"
+        },
+        "preConfirm": {
+            "title": "Confirmar operación",
+            "description": "Esta operación ({{operation}}) tiene un costo notable y se descontará de tu cuota.",
+            "costLabel": "Costo estimado:",
+            "costStudies": "(~{{studies}} estudios)",
+            "afterLabel": "Saldo después de la operación:",
+            "afterValue": "${{usd}} USD · {{studies}} estudios",
+            "insufficientHint": "Saldo insuficiente. Compra un pack o ajusta el alcance.",
+            "cancel": "Cancelar",
+            "confirm": "Continuar"
+        }
+    },
+    "studies": {
+        "operations": {
+            "analyzeVerseCanonically": "Análisis canónico (1 verso)",
+            "composeVerseAcademicProse": "Componer prosa académica (1 verso)",
+            "composeConclusionFromAnalyses": "Componer conclusión",
+            "composeIntroductionFromAnalyses": "Componer introducción",
+            "composeAcademicPaper": "Componer paper académico (full)",
+            "composeSermonFromAnalyses": "Componer sermón",
+            "composeDevotionalFromAnalyses": "Componer devocional",
+            "composeStudyGuideFromAnalyses": "Componer guía de estudio",
+            "verifyStepCitations": "Verificar citas (paso)",
+            "runCoherencePass": "Revisión de coherencia",
+            "extractRubricFromText": "Extraer rúbrica (texto)",
+            "extractRubricFromDocument": "Extraer rúbrica (documento)",
+            "extractStyleGuideManifest": "Extraer manifest de guía de estilo",
+            "classifySourceType": "Clasificar tipo de fuente",
+            "generateStep": "Generar paso (legacy)",
+            "generateSermonFromPaper": "Generar sermón desde paper"
+        }
+    },
     "detail": {
         "back": "Volver al listado",
         "loading": "Cargando trabajo...",

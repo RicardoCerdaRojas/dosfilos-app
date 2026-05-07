@@ -1232,6 +1232,66 @@
             "other": "Other"
         }
     },
+    "quota": {
+        "badge": {
+            "compactRemaining": "{{studies}} studies",
+            "compactNoAccess": "No access",
+            "compactTooltip": "Deep biblical study quota. Click for details.",
+            "bannerTitle": "{{studies}} studies available · monthly cap {{total}}",
+            "noAccessTitle": "Deep biblical studies · upgrade required",
+            "noAccessHint": "Your current plan doesn't include this module. Upgrade to Pro or Team to enable it.",
+            "hardCapHint": "Quota exhausted for this cycle. Buy a pack to continue.",
+            "softWarnHint": "Few studies left. Consider buying a pack.",
+            "okHint": "Quota available. Each operation deducts from the bucket.",
+            "actionCta": "View details"
+        },
+        "outOfCredits": {
+            "title": "Insufficient quota",
+            "noAccessDescription": "This module requires the Pro or Team plan. It runs exegetical analysis, academic composition, sermons, and more with TMS rigor.",
+            "depletedDescription": "Your monthly study quota is exhausted. Buy an extra pack or wait for the next billing cycle.",
+            "loading": "Loading balance…",
+            "neededLabel": "Operation required:",
+            "neededValue": "${{usd}} USD · {{studies}} studies",
+            "balanceLabel": "Current balance:",
+            "balancePlan": "${{usd}} plan",
+            "balancePack": "${{usd}} pack",
+            "upgradeCta": "Upgrade to Pro",
+            "buyPackCta": "Buy a study pack",
+            "waitForCycleHint": "Or wait for the next billing cycle for your plan quota to renew.",
+            "close": "Close"
+        },
+        "preConfirm": {
+            "title": "Confirm operation",
+            "description": "This operation ({{operation}}) has a notable cost and will be deducted from your quota.",
+            "costLabel": "Estimated cost:",
+            "costStudies": "(~{{studies}} studies)",
+            "afterLabel": "Balance after the operation:",
+            "afterValue": "${{usd}} USD · {{studies}} studies",
+            "insufficientHint": "Insufficient balance. Buy a pack or reduce the scope.",
+            "cancel": "Cancel",
+            "confirm": "Continue"
+        }
+    },
+    "studies": {
+        "operations": {
+            "analyzeVerseCanonically": "Canonical analysis (1 verse)",
+            "composeVerseAcademicProse": "Compose academic prose (1 verse)",
+            "composeConclusionFromAnalyses": "Compose conclusion",
+            "composeIntroductionFromAnalyses": "Compose introduction",
+            "composeAcademicPaper": "Compose academic paper (full)",
+            "composeSermonFromAnalyses": "Compose sermon",
+            "composeDevotionalFromAnalyses": "Compose devotional",
+            "composeStudyGuideFromAnalyses": "Compose study guide",
+            "verifyStepCitations": "Verify citations (step)",
+            "runCoherencePass": "Coherence review",
+            "extractRubricFromText": "Extract rubric (text)",
+            "extractRubricFromDocument": "Extract rubric (document)",
+            "extractStyleGuideManifest": "Extract style-guide manifest",
+            "classifySourceType": "Classify source type",
+            "generateStep": "Generate step (legacy)",
+            "generateSermonFromPaper": "Generate sermon from paper"
+        }
+    },
     "detail": {
         "back": "Back to list",
         "loading": "Loading paper...",
