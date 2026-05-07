@@ -315,6 +315,21 @@ export function useExegesisPapers() {
         },
     });
 
+    // Source-type auto-classification — single Gemini call over the
+    // first ~5k chars of a resource's extracted text. Used by the
+    // corpus-attach UI to pre-select the SourceType dropdown.
+    const classifySourceType = useMutation({
+        mutationFn: async (input: {
+            rawText: string;
+            title?: string | null;
+            author?: string | null;
+            language?: 'es' | 'en';
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.classifySourceType.execute(input);
+        },
+    });
+
     // Citation verification (v1.5 — programmatic fuzzy match). Returns
     // the per-citation list AND the persisted summary; the dialog
     // renders the list, the badge in the step header reflects the
@@ -374,6 +389,7 @@ export function useExegesisPapers() {
         acceptStep,
         saveStepEdit,
         verifyStepCitations,
+        classifySourceType,
         generateSermonFromPaper,
         analyzeVerseCanonically,
         composeAcademicPaper,

@@ -93,6 +93,11 @@ export {
     type VerifyStepCitationsInput,
     type VerifyStepCitationsOutput,
 } from './VerifyStepCitationsUseCase';
+export {
+    ClassifySourceTypeUseCase,
+    type ClassifySourceTypeInput,
+    type ClassifySourceTypeUseCaseOutput,
+} from './ClassifySourceTypeUseCase';
 
 // Bridge: paper → sermon (Phase 2 of the sermon-series pipeline)
 export {
