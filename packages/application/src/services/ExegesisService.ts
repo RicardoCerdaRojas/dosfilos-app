@@ -17,6 +17,7 @@ import {
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
     FuzzyCitationVerifier,
+    GeminiCoherenceReviewer,
     GeminiSourceTypeClassifier,
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
@@ -76,6 +77,7 @@ import {
     AcceptStepUseCase,
     SaveStepEditUseCase,
     VerifyStepCitationsUseCase,
+    RunCoherencePassUseCase,
     ClassifySourceTypeUseCase,
     GenerateSermonFromPaperUseCase,
 } from '../use-cases/exegesis';
@@ -146,6 +148,10 @@ class ExegesisService {
     // matches cited sources against the paper's project-source list,
     // and persists a per-status summary on the version.
     public verifyStepCitations: VerifyStepCitationsUseCase;
+    // Cross-section coherence reviewer — single Gemini pass over the
+    // accepted intro + verses + conclusion to surface inconsistencies
+    // the per-step prompts cannot see (they only get one step at a time).
+    public runCoherencePass: RunCoherencePassUseCase;
     // Source-type auto-classification — pre-fills the SourceType
     // dropdown when the user attaches a corpus item, removing the
     // friction of scrolling 13 categories per upload.
@@ -329,6 +335,14 @@ class ExegesisService {
             paperRepository,
             contentReader,
             citationVerifier,
+        );
+
+        // Coherence reviewer — single Gemini call over the entire
+        // accepted paper. Adversarial: returns issues, not praise.
+        const coherenceReviewer = new GeminiCoherenceReviewer(apiKey || '', exegesisModelId);
+        this.runCoherencePass = new RunCoherencePassUseCase(
+            paperRepository,
+            coherenceReviewer,
         );
 
         // Source-type classifier — Gemini Pro 2.5 with enum-locked

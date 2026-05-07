@@ -95,6 +95,11 @@ export {
     type VerifyStepCitationsOutput,
 } from './VerifyStepCitationsUseCase';
 export {
+    RunCoherencePassUseCase,
+    type RunCoherencePassInput,
+    type RunCoherencePassOutput,
+} from './RunCoherencePassUseCase';
+export {
     ClassifySourceTypeUseCase,
     type ClassifySourceTypeInput,
     type ClassifySourceTypeUseCaseOutput,

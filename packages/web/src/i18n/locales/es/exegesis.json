@@ -806,7 +806,9 @@
                     "body": "Editaste el pasaje o el brief después de extraer. Vuelve a extraer para que los fragmentos reflejen los cambios.",
                     "cta": "Re-extraer",
                     "toastSuccess": "Fragmentos re-extraídos con el brief actual",
-                    "toastError": "No se pudieron re-extraer los fragmentos. Intenta de nuevo."
+                    "toastError": "No se pudieron re-extraer los fragmentos. Intenta de nuevo.",
+                    "preservesEdits_one": "Tus {{count}} fragmento editado se conserva al re-extraer.",
+                    "preservesEdits_other": "Tus {{count}} fragmentos editados se conservan al re-extraer."
                 },
                 "balance": {
                     "standard_one": "{{count}} pág. estándar",
@@ -1183,6 +1185,39 @@
             }
         }
     },
+    "coherence": {
+        "menuItem": "Revisar coherencia",
+        "dialog": {
+            "title": "Revisión de coherencia",
+            "description": "Una pasada de Gemini sobre todo el paper aceptado para detectar inconsistencias entre introducción, versículos y conclusión.",
+            "idleBody": "El revisor lee TODAS las secciones aceptadas (introducción + versículos + conclusión) y devuelve solo problemas verificables. No elogia ni resume.",
+            "cost": "Una llamada de Gemini Pro 2.5 (~$0.05–0.15 según extensión del paper).",
+            "runCta": "Correr revisión",
+            "running": "Revisando coherencia…",
+            "errorTitle": "No se pudo correr la revisión",
+            "errorGeneric": "Error inesperado.",
+            "retry": "Reintentar",
+            "rerun": "Volver a correr",
+            "close": "Cerrar",
+            "allClear": "El paper es internamente consistente.",
+            "relatedSteps_one": "Afecta {{count}} sección",
+            "relatedSteps_other": "Afecta {{count}} secciones"
+        },
+        "severity": {
+            "high": "Alta",
+            "medium": "Media",
+            "low": "Baja"
+        },
+        "category": {
+            "thesis-mismatch": "Tesis no coincide con conclusión",
+            "verse-conflict": "Versículos en conflicto",
+            "translation-inconsistency": "Inconsistencia de traducción",
+            "unfulfilled-promise": "Promesa incumplida",
+            "conclusion-overreach": "Conclusión excede el cuerpo",
+            "tone-drift": "Cambio de registro",
+            "other": "Otro"
+        }
+    },
     "detail": {
         "back": "Volver al listado",
         "loading": "Cargando trabajo...",
@@ -1208,6 +1243,26 @@
             "failedHint": "Algo falló al generar este paso. Prueba de nuevo.",
             "editHint": "Editado a mano — la verificación de citas no corre automáticamente.",
             "hintPlaceholder": "Ej. más sintaxis, más teología, cita más a Cockerill",
+            "quickHints": {
+                "label": "Hint rápido:",
+                "verse": {
+                    "syntax": "Más sintaxis",
+                    "theology": "Más teología",
+                    "historical": "Más trasfondo histórico",
+                    "lexis": "Más léxico",
+                    "lessGeneral": "Menos generalizaciones"
+                },
+                "conclusion": {
+                    "concise": "Más conciso",
+                    "verseFocus": "Foco en este verso, no recap",
+                    "highlightThesis": "Destaca la tesis del verso"
+                },
+                "introduction": {
+                    "concise": "Más conciso",
+                    "previewStructure": "Anticipa la estructura",
+                    "pastoralHook": "Más enganche pastoral"
+                }
+            },
             "kind": {
                 "verse": "Verso",
                 "conclusion": "Conclusión",
