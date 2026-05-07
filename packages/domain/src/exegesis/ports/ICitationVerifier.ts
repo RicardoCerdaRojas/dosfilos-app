@@ -35,6 +35,13 @@ export interface CitationVerifierInput {
     markdown: string;
     /** All citable sources attached to the paper. */
     sources: ReadonlyArray<VerifierSource>;
+    /**
+     * Owner of the paper. Required by adapters that do per-citation
+     * embedding retrieval against the user's library (the
+     * `retrieveChunks` callable scopes by userId server-side). Token-
+     * overlap adapters ignore it.
+     */
+    userId?: string;
 }
 
 export interface CitationVerifierOutput {

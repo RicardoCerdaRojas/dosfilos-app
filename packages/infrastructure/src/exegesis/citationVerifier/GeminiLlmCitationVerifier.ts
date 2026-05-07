@@ -4,6 +4,7 @@ import type {
     CitationVerifierInput,
     CitationVerifierOutput,
     ICitationVerifier,
+    IRelevantChunkRetriever,
     ParsedCitation,
     VerifiedCitation,
     VerifierSource,
@@ -49,8 +50,12 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
     private modelName: string;
     /** Per-source-chunk character cap to keep prompt tokens bounded. */
     private maxCharsPerChunk: number;
-    /** Per-citation chunk cap. Excerpts win first; full-doc fallback gets sliced. */
+    /** Per-citation chunk cap. Excerpts win first; retrieved + full-doc fallback fill the rest. */
     private maxChunksPerCitation: number;
+    /** Per-citation top-K passed to the relevant-chunk retriever. */
+    private retrievalTopK: number;
+    /** Optional retriever for per-citation embedding-based chunk fetch. */
+    private relevantChunkRetriever: IRelevantChunkRetriever | null;
 
     constructor(
         apiKey: string,
@@ -58,12 +63,16 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
             modelName?: string;
             maxCharsPerChunk?: number;
             maxChunksPerCitation?: number;
+            retrievalTopK?: number;
+            relevantChunkRetriever?: IRelevantChunkRetriever | null;
         },
     ) {
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.modelName = options?.modelName || 'gemini-2.5-pro';
         this.maxCharsPerChunk = options?.maxCharsPerChunk ?? 4000;
         this.maxChunksPerCitation = options?.maxChunksPerCitation ?? 8;
+        this.retrievalTopK = options?.retrievalTopK ?? 5;
+        this.relevantChunkRetriever = options?.relevantChunkRetriever ?? null;
     }
 
     async verify(input: CitationVerifierInput): Promise<CitationVerifierOutput> {
@@ -76,7 +85,7 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
         const language = detectLanguage(parsed);
 
         const verdicts = await Promise.all(
-            parsed.map(p => this.verifyOne(p, lookup, language)),
+            parsed.map(p => this.verifyOne(p, lookup, language, input.userId ?? null)),
         );
 
         return { citations: verdicts };
@@ -86,6 +95,7 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
         parsed: ParsedCitation,
         lookup: SourceMatcher,
         language: 'es' | 'en',
+        userId: string | null,
     ): Promise<VerifiedCitation> {
         const matched = lookup.match(parsed.author, parsed.title);
         if (!matched) {
@@ -116,7 +126,19 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
             };
         }
 
-        const chunks = this.prepareChunks(matched.chunks);
+        // Augment the matched source's chunks with embedding-retrieved
+        // chunks for THIS citation. Critical for long books (700-page
+        // commentaries): `textContent` is capped at the Firestore
+        // 1MB doc limit and rarely contains the cited deep-page,
+        // but `document_chunks` does. We query top-K chunks scoped to
+        // the source's resourceId using the citation's evidence as
+        // the embedding query, then merge with the static chunks.
+        const retrievedChunks = await this.tryRetrieveRelevantChunks({
+            evidence: parsed.evidence,
+            resourceId: matched.corpusId,
+            userId,
+        });
+        const chunks = this.prepareChunks([...matched.chunks, ...retrievedChunks]);
         if (chunks.length === 0) {
             return {
                 ...parsed,
@@ -203,16 +225,27 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
     }
 
     /**
-     * Prepares the chunks the verifier sends to Gemini. Caps both per-
-     * chunk character count (so one giant chunk doesn't blow the
-     * context) and total chunk count per citation. Excerpts (with
-     * pageHints) win first since they're the user's curated evidence
-     * and preserve page-mismatch detection; full-document fallback
-     * chunks fill the remainder.
+     * Prepares the chunks the verifier sends to Gemini. Three tasks:
+     *   1. Dedup by trimmed text — embedding-retrieved chunks may
+     *      duplicate excerpts the user already curated.
+     *   2. Sort so chunks with `pageHint` (curated excerpts +
+     *      retrieved chunks with page metadata) lead — they preserve
+     *      page-mismatch detection. Page-less full-document fallback
+     *      chunks fill the tail.
+     *   3. Cap per-chunk char count + total chunk count so the prompt
+     *      stays within the 1024-output-token budget at reasonable
+     *      input cost.
      */
     private prepareChunks(chunks: ReadonlyArray<VerifierSourceChunk>): VerifierSourceChunk[] {
-        const sorted = [...chunks].sort((a, b) => {
-            // pageHint=null (full doc) goes last
+        const seen = new Set<string>();
+        const deduped: VerifierSourceChunk[] = [];
+        for (const c of chunks) {
+            const key = c.text.trim().slice(0, 200);
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            deduped.push(c);
+        }
+        const sorted = deduped.sort((a, b) => {
             if (!!a.pageHint === !!b.pageHint) return 0;
             return a.pageHint ? -1 : 1;
         });
@@ -225,6 +258,41 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
                 pageHint: c.pageHint,
             }))
             .filter(c => c.text.trim().length > 0);
+    }
+
+    /**
+     * Per-citation embedding retrieval. Returns empty when the
+     * retriever isn't configured, when userId is missing (use case
+     * didn't pass it), or when the call fails — verification falls
+     * back to the static chunks the use case provided. Failures are
+     * warning-logged, not thrown, so one slow / failed retrieval
+     * doesn't block the rest of the citations.
+     */
+    private async tryRetrieveRelevantChunks(input: {
+        evidence: string;
+        resourceId: string;
+        userId: string | null;
+    }): Promise<VerifierSourceChunk[]> {
+        if (!this.relevantChunkRetriever) return [];
+        if (!input.userId) return [];
+        if (!input.evidence || input.evidence.trim().length < 4) return [];
+        try {
+            const { chunks } = await this.relevantChunkRetriever.retrieve({
+                query: input.evidence,
+                userId: input.userId,
+                resourceId: input.resourceId,
+                topK: this.retrievalTopK,
+            });
+            return chunks.map<VerifierSourceChunk>(c => ({
+                text: c.text,
+                pageHint: c.page != null
+                    ? `p. ${c.page}`
+                    : (c.section ? c.section : null),
+            }));
+        } catch (err) {
+            console.warn('[GeminiLlmCitationVerifier] relevant-chunk retrieval failed:', err);
+            return [];
+        }
     }
 }
 

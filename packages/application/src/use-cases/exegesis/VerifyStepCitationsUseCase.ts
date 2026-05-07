@@ -79,6 +79,7 @@ export class VerifyStepCitationsUseCase {
         const { citations } = await this.verifier.verify({
             markdown: target.markdown,
             sources,
+            userId: ownerId,
         });
 
         const summary = buildSummary(citations);

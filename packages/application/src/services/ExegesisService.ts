@@ -19,6 +19,7 @@ import {
     DeterministicStyleFormatter,
     FuzzyCitationVerifier,
     GeminiLlmCitationVerifier,
+    RetrieveChunksRelevantChunkRetriever,
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
@@ -328,8 +329,17 @@ class ExegesisService {
         // so test suites or telemetry comparisons can re-wire it
         // without touching the use case.
         void FuzzyCitationVerifier;
+        // Per-citation embedding retrieval — solves the long-book
+        // problem (`textContent` is capped at the Firestore 1MB doc
+        // limit; for 700-page commentaries the cited deep-pages live
+        // exclusively in `document_chunks`). The verifier queries
+        // top-K chunks scoped to the cited resource using the
+        // citation's evidence sentence as the embedding query.
+        const relevantChunkRetriever = new RetrieveChunksRelevantChunkRetriever();
         const citationVerifier = new GeminiLlmCitationVerifier(apiKey || '', {
             modelName: exegesisModelId,
+            relevantChunkRetriever,
+            retrievalTopK: 5,
         });
         this.verifyStepCitations = new VerifyStepCitationsUseCase(
             paperRepository,
