@@ -205,6 +205,33 @@ export interface ExtractRubricFromTextOutput {
     reviewNotes: ReadonlyArray<string>;
 }
 
+// ── ExtractRubricFromDocument ──────────────────────────────────────────
+//
+// Sibling of `ExtractRubricFromText` for uploaded PDFs/images. The UI
+// uploads the file via `LibraryService.uploadResource` first (which
+// drives the existing LlamaParse extraction pipeline), then calls this
+// use case with the resulting `libraryResourceId`. The use case fetches
+// the extracted text via `IResourceContentReader` and runs the same
+// extractor pipeline as the text path, but with `source: 'document'`
+// and `sourceCorpusId` set so the rubric's provenance reflects its
+// origin.
+
+export interface ExtractRubricFromDocumentInput {
+    ownerId: string;
+    paperId: string;
+    /**
+     * The library resource id whose extracted text will feed the
+     * rubric extractor. Must be a resource the user owns AND whose
+     * extraction has finished (caller polls upstream — the use case
+     * fails fast when the text isn't available yet).
+     */
+    libraryResourceId: string;
+    /** Override for the extraction language. Defaults to paper.displayLanguage. */
+    language?: 'es' | 'en';
+}
+
+export type ExtractRubricFromDocumentOutput = ExtractRubricFromTextOutput;
+
 // ── AddProjectSource ────────────────────────────────────────────────────
 
 export interface AddProjectSourceInput {
