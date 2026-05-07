@@ -424,7 +424,19 @@
                         "medium": "The extraction needed some inference. Review requirements and justifications.",
                         "low": "The extraction has gaps. We recommend filling in what's missing manually."
                     },
-                    "reviewNotesTitle": "Extractor notes"
+                    "reviewNotesTitle": "Extractor notes",
+                    "tabText": "Paste text",
+                    "tabDocument": "Upload file",
+                    "documentLabel": "Rubric file (PDF or image)",
+                    "documentDropzone": "Drop a PDF or photo of the rubric, or click to pick",
+                    "documentHint": "PDF or image (PNG/JPG). Up to 20 MB. Typical processing 30–90 s.",
+                    "submitDocument": "Extract from file",
+                    "documentFailed": "Could not extract the rubric from the file. Make sure the document is legible and try again.",
+                    "phase": {
+                        "uploading": "Uploading file…",
+                        "extracting": "Extracting text from document…",
+                        "analyzing": "Analyzing rubric…"
+                    }
                 },
                 "metadata": {
                     "title": "General",
@@ -829,6 +841,13 @@
                     "typeLabelBulk": "Academic type for the {{count}} sources",
                     "typeDescription": "Pick the type that best describes the source. The rubric uses this type to decide whether it satisfies minimums.",
                     "typeDescriptionBulk": "Applies to every selected source. If you need different types, you can adjust them one by one from the corpus list afterwards.",
+                    "classifying": "Auto-classifying…",
+                    "classifierSuggested": "Auto-suggestion",
+                    "classifierConfidence": {
+                        "high": "high confidence",
+                        "medium": "medium confidence",
+                        "low": "low confidence — double-check the type"
+                    },
                     "citationKeyLabel": "Citation key",
                     "citationKeyPlaceholder": "e.g. Lane",
                     "citationKeyHint": "Used in footnotes. Leave empty and we derive it from the corpus.",

@@ -424,7 +424,19 @@
                         "medium": "La extracción tuvo algunas inferencias. Revisa los requisitos y justificaciones.",
                         "low": "La extracción quedó con gaps. Te recomendamos completar manualmente lo que falte."
                     },
-                    "reviewNotesTitle": "Notas del extractor"
+                    "reviewNotesTitle": "Notas del extractor",
+                    "tabText": "Pegar texto",
+                    "tabDocument": "Subir archivo",
+                    "documentLabel": "Archivo de la rúbrica (PDF o imagen)",
+                    "documentDropzone": "Arrastra un PDF o foto de la rúbrica, o haz click",
+                    "documentHint": "PDF o imagen (PNG/JPG). Hasta 20 MB. Procesamiento típico 30–90 s.",
+                    "submitDocument": "Extraer del archivo",
+                    "documentFailed": "No se pudo extraer la rúbrica desde el archivo. Verifica que el documento sea legible y prueba de nuevo.",
+                    "phase": {
+                        "uploading": "Subiendo archivo…",
+                        "extracting": "Extrayendo texto del documento…",
+                        "analyzing": "Analizando rúbrica…"
+                    }
                 },
                 "metadata": {
                     "title": "Datos generales",
@@ -829,6 +841,13 @@
                     "typeLabelBulk": "Tipo académico para las {{count}} fuentes",
                     "typeDescription": "Elegí el tipo que mejor describe la fuente. La rúbrica usa este tipo para decidir si cumple los mínimos.",
                     "typeDescriptionBulk": "Se aplica a todas las fuentes seleccionadas. Si necesitas tipos distintos, puedes ajustarlos uno por uno desde la lista del corpus.",
+                    "classifying": "Clasificando automáticamente…",
+                    "classifierSuggested": "Sugerencia automática",
+                    "classifierConfidence": {
+                        "high": "confianza alta",
+                        "medium": "confianza media",
+                        "low": "confianza baja — revisa el tipo"
+                    },
                     "citationKeyLabel": "Clave de cita",
                     "citationKeyPlaceholder": "Ej. Lane",
                     "citationKeyHint": "Se usa en las notas al pie. Si lo dejás vacío, lo derivamos del corpus.",

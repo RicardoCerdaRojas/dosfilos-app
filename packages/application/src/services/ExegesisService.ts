@@ -18,6 +18,7 @@ import {
     DeterministicStyleFormatter,
     FuzzyCitationVerifier,
     GeminiCoherenceReviewer,
+    GeminiSourceTypeClassifier,
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
@@ -39,6 +40,7 @@ import {
     UpdateRubricUseCase,
     ResetRubricUseCase,
     ExtractRubricFromTextUseCase,
+    ExtractRubricFromDocumentUseCase,
     ExtractStyleGuideManifestUseCase,
     ListUserRubricsUseCase,
     CreateUserRubricUseCase,
@@ -76,6 +78,7 @@ import {
     SaveStepEditUseCase,
     VerifyStepCitationsUseCase,
     RunCoherencePassUseCase,
+    ClassifySourceTypeUseCase,
     GenerateSermonFromPaperUseCase,
 } from '../use-cases/exegesis';
 
@@ -103,6 +106,7 @@ class ExegesisService {
     public updateRubric: UpdateRubricUseCase;
     public resetRubric: ResetRubricUseCase;
     public extractRubricFromText: ExtractRubricFromTextUseCase;
+    public extractRubricFromDocument: ExtractRubricFromDocumentUseCase;
     public extractStyleGuideManifest: ExtractStyleGuideManifestUseCase;
 
     // User-level rubric templates
@@ -148,6 +152,10 @@ class ExegesisService {
     // accepted intro + verses + conclusion to surface inconsistencies
     // the per-step prompts cannot see (they only get one step at a time).
     public runCoherencePass: RunCoherencePassUseCase;
+    // Source-type auto-classification — pre-fills the SourceType
+    // dropdown when the user attaches a corpus item, removing the
+    // friction of scrolling 13 categories per upload.
+    public classifySourceType: ClassifySourceTypeUseCase;
 
     // Canonical analysis pipeline (target architecture — see docs/exegesis/METODOLOGIA.md).
     // Coexists with `generateStep` during the migration; produces a
@@ -221,6 +229,11 @@ class ExegesisService {
         this.updateRubric = new UpdateRubricUseCase(paperRepository);
         this.resetRubric = new ResetRubricUseCase(paperRepository);
         this.extractRubricFromText = new ExtractRubricFromTextUseCase(paperRepository, rubricExtractor);
+        this.extractRubricFromDocument = new ExtractRubricFromDocumentUseCase(
+            paperRepository,
+            contentReader,
+            rubricExtractor,
+        );
         this.extractStyleGuideManifest = new ExtractStyleGuideManifestUseCase(
             styleGuideRepository,
             contentReader,
@@ -331,6 +344,12 @@ class ExegesisService {
             paperRepository,
             coherenceReviewer,
         );
+
+        // Source-type classifier — Gemini Pro 2.5 with enum-locked
+        // schema. Stateless: caller reads the resource text + metadata
+        // upstream and feeds the slice in.
+        const sourceTypeClassifier = new GeminiSourceTypeClassifier(apiKey || '', exegesisModelId);
+        this.classifySourceType = new ClassifySourceTypeUseCase(sourceTypeClassifier);
 
         // Canonical analysis pipeline. Wired in parallel to `generateStep`
         // so the legacy markdown path keeps working while the structured
