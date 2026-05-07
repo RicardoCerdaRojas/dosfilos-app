@@ -1277,12 +1277,23 @@
                 "sendFailed": "Could not send your message. Try again."
             }
         },
+        "export": {
+            "menuTooltip": "Export paper"
+        },
         "exportMarkdown": {
             "cta": "Export (.md)",
             "tooltip": "Download the paper as Markdown — includes whatever steps are accepted so far if assembly hasn't run yet",
             "disabledHint": "Available once you've accepted at least one paper step",
             "toast": {
                 "exported": "Paper exported as Markdown"
+            }
+        },
+        "exportDocx": {
+            "cta": "Export to Word (.docx)",
+            "tooltip": "Word with native footnotes — ready for academic submission",
+            "toast": {
+                "exported": "Paper exported as Word",
+                "failed": "Could not generate the .docx. Try again."
             }
         },
         "generateSermon": {

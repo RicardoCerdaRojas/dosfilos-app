@@ -38,8 +38,10 @@
     "ios": "expo run:ios"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
     "@types/node": "^20.10.0",
     "expo": "~52.0.0",
+    "happy-dom": "^20.9.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "prettier": "^3.1.0",
