@@ -64,6 +64,22 @@ export interface PlanDefinition {
          * are the natural upsell for the credit-pack tier.
          */
         premiumPagesPerMonth?: number;
+        /**
+         * Plan-included monthly USD allowance for the exegesis module.
+         * Resets on each Stripe billing-cycle invoice (no rollover) —
+         * same semantics as `standardPagesPerMonth`. Charged in USD
+         * (not pages) because each exegesis operation has a different
+         * LLM cost; the UI displays "estudios" via `STUDY_UNIT_USD`.
+         *
+         * Per EXEGESIS_PRICING_INTEGRATION.md §3.4:
+         *   - Free:     0 (module gated)
+         *   - Personal: 0 (module gated, upgrade to Pro to unlock)
+         *   - Pro:      10 (≈ 5 estudios)
+         *   - Equipo:  30 (≈ 15 estudios)
+         *
+         * Undefined = no plan allowance (the user falls back to packs only).
+         */
+        exegesisUsdPerMonth?: number;
         queriesPerMonth?: number;          // Chat messages/month (undefined = no quota, -1 = unlimited)
 
         // Legacy/deprecated fields (keep for backwards compatibility)
@@ -95,6 +111,14 @@ export interface PlanDefinition {
     bonusInitial?: {
         standardPages?: number;
         premiumPages?: number;
+        /**
+         * Optional one-shot exegesis USD bonus credited on first
+         * subscription activation. Currently unused (the rollout grants
+         * exegesis only via the recurring monthly allowance), but the
+         * field exists so the webhook can apply a "first-month bonus"
+         * pack later without a schema migration.
+         */
+        exegesisUsd?: number;
     };
 
     // Stripe integration

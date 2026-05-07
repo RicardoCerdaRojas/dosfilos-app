@@ -85,6 +85,27 @@ export interface ProcessingBalance {
     /** Lifetime spent counters for analytics / dashboard. */
     standardSpentTotal: number;
     premiumSpentTotal: number;
+
+    // ── Exégesis bucket (added 2026-05 — see EXEGESIS_PRICING_INTEGRATION.md) ──
+    //
+    // Tracks LLM spend for the exegesis module in USD (not pages).
+    // Surfaces in the UI as "estudios" via STUDY_UNIT_USD = $2 / study,
+    // but the canonical bucket is USD because each operation has a
+    // different LLM cost (analyzeVerseCanonically ~$0.10, composer
+    // académico ~$0.20, etc.). All four fields default to 0 for users
+    // on plans that don't include exegesis (Free / Personal); the
+    // reserve use case rejects with QuotaExceededError when the UC
+    // tries to spend against an empty bucket.
+
+    /** Plan-included exégesis $USD — reset monthly by Stripe invoice webhook. */
+    planExegesisUsd?: number;
+    /** Pack-purchased exégesis $USD — persistent, no expiration on the value (pack itself may expire 12mo). */
+    packExegesisUsd?: number;
+    /** Aggregate available = plan + pack. Same dual-write semantics as the page buckets. */
+    exegesisUsdAvailable?: number;
+    /** Lifetime exégesis spend in USD. Useful for telemetry + breakdown drawer. */
+    exegesisSpentTotalUsd?: number;
+
     /** Last time the balance changed, used in admin/usage dashboards. */
     updatedAt?: Date;
 }
