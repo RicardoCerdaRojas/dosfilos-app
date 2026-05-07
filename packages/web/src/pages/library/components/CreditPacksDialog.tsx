@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Sparkles, Wand2 } from 'lucide-react';
+import { BookOpen, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { useTranslation } from '@/i18n';
 import { authService } from '@dosfilos/application';
 import {
     CREDIT_PACK_CATALOG,
+    STUDY_UNIT_USD,
     packsByMode,
     type CreditPackDefinition,
     type ProcessingMode,
@@ -16,9 +17,17 @@ import {
 interface CreditPacksDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /**
+     * Optional initial section to render expanded / scrolled-to. The
+     * exegesis OutOfCredits dialog uses `'exegesis'` so the user lands
+     * directly on the relevant packs without scrolling past the page
+     * packs they don't want. When omitted, the dialog renders all
+     * sections in catalog order.
+     */
+    focusMode?: 'exegesis';
 }
 
-export function CreditPacksDialog({ open, onOpenChange }: CreditPacksDialogProps) {
+export function CreditPacksDialog({ open, onOpenChange, focusMode }: CreditPacksDialogProps) {
     const { t } = useTranslation('library');
     const [redirecting, setRedirecting] = useState<string | null>(null);
 
@@ -47,6 +56,20 @@ export function CreditPacksDialog({ open, onOpenChange }: CreditPacksDialogProps
                     <DialogDescription>{t('creditPacks.subtitle')}</DialogDescription>
                 </DialogHeader>
 
+                {/* When the dialog is opened with focusMode='exegesis'
+                    (out-of-credits flow from the exegesis module), put
+                    the exegesis section first so the user lands on
+                    relevant packs without scrolling past the page-based
+                    ones. Default catalog order otherwise. */}
+                {focusMode === 'exegesis' && (
+                    <PackSection
+                        mode="exegesis"
+                        headerKey="creditPacks.exegesisHeader"
+                        helpKey="creditPacks.exegesisHelp"
+                        redirecting={redirecting}
+                        onBuy={handleBuy}
+                    />
+                )}
                 <PackSection
                     mode="standard"
                     headerKey="creditPacks.standardHeader"
@@ -61,6 +84,15 @@ export function CreditPacksDialog({ open, onOpenChange }: CreditPacksDialogProps
                     redirecting={redirecting}
                     onBuy={handleBuy}
                 />
+                {focusMode !== 'exegesis' && (
+                    <PackSection
+                        mode="exegesis"
+                        headerKey="creditPacks.exegesisHeader"
+                        helpKey="creditPacks.exegesisHelp"
+                        redirecting={redirecting}
+                        onBuy={handleBuy}
+                    />
+                )}
 
                 <p className="text-[11px] text-muted-foreground italic">
                     Total catalog: {CREDIT_PACK_CATALOG.length} packs.
@@ -78,10 +110,22 @@ interface PackSectionProps {
     onBuy: (pack: CreditPackDefinition) => void;
 }
 
+const SECTION_ICONS: Record<ProcessingMode, typeof Wand2> = {
+    standard: Wand2,
+    premium: Sparkles,
+    exegesis: BookOpen,
+};
+
+const SECTION_TONES: Record<ProcessingMode, string> = {
+    standard: 'text-info',
+    premium: 'text-success',
+    exegesis: 'text-primary',
+};
+
 function PackSection({ mode, headerKey, helpKey, redirecting, onBuy }: PackSectionProps) {
     const { t } = useTranslation('library');
-    const Icon = mode === 'standard' ? Wand2 : Sparkles;
-    const tone = mode === 'standard' ? 'text-info' : 'text-success';
+    const Icon = SECTION_ICONS[mode];
+    const tone = SECTION_TONES[mode];
 
     return (
         <div className="space-y-2">
@@ -114,7 +158,19 @@ interface PackCardProps {
 
 function PackCard({ pack, loading, disabled, onBuy }: PackCardProps) {
     const { t } = useTranslation('library');
-    const ratePerPage = (pack.priceUsd / pack.pages).toFixed(3);
+
+    // Exegesis packs report `usdAmount` (USD credit) and display
+    // estudios via STUDY_UNIT_USD; page-based packs report `pages`.
+    // Two body variants keep the card visually consistent across
+    // modes without forcing a wrapper component per shape.
+    const isExegesis = pack.mode === 'exegesis';
+    const studies = isExegesis && pack.usdAmount
+        ? Math.round(pack.usdAmount / STUDY_UNIT_USD)
+        : 0;
+    const ratePerPage = !isExegesis ? (pack.priceUsd / pack.pages).toFixed(3) : null;
+    const ratePerStudy = isExegesis && studies > 0
+        ? (pack.priceUsd / studies).toFixed(2)
+        : null;
 
     return (
         <Card className="p-4 flex flex-col gap-2">
@@ -125,12 +181,25 @@ function PackCard({ pack, loading, disabled, onBuy }: PackCardProps) {
                 <span className="text-[20px] font-bold tabular-nums">${pack.priceUsd}</span>
             </div>
             <div>
-                <p className="text-sm font-semibold">
-                    {t('creditPacks.pages', { count: pack.pages })}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                    {t('creditPacks.perPage', { rate: ratePerPage })}
-                </p>
+                {isExegesis ? (
+                    <>
+                        <p className="text-sm font-semibold">
+                            {t('creditPacks.studies', { count: studies })}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                            {t('creditPacks.perStudy', { rate: ratePerStudy ?? '0.00' })}
+                        </p>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-sm font-semibold">
+                            {t('creditPacks.pages', { count: pack.pages })}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                            {t('creditPacks.perPage', { rate: ratePerPage ?? '0.000' })}
+                        </p>
+                    </>
+                )}
             </div>
             <Button
                 onClick={onBuy}

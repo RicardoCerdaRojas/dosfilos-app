@@ -9,6 +9,8 @@ import { useFirebase } from '@/context/firebase-context';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { UserRubricsSection } from '@/components/exegesis/directory/UserRubricsSection';
 import { UserStyleGuidesSection } from '@/components/exegesis/directory/UserStyleGuidesSection';
+import { ExegesisQuotaBadge } from '@/components/exegesis/ExegesisQuotaBadge';
+import { CreditPacksDialog } from '@/pages/library/components/CreditPacksDialog';
 import {
     formatPassageReference,
     type ExegeticalPaper,
@@ -35,8 +37,10 @@ export function ExegesisPage() {
     const { t, i18n } = useTranslation('exegesis');
     const navigate = useNavigate();
     const goToSetup = () => navigate('/dashboard/exegesis/new');
+    const goToBilling = () => navigate('/dashboard/settings/billing');
     const { papers, isLoading, error } = useExegesisPapers();
     const { user } = useFirebase();
+    const [packsOpen, setPacksOpen] = useState(false);
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
     // Fetch the user's series so we can show "belongs to series X" on
@@ -137,6 +141,13 @@ export function ExegesisPage() {
                 vision while scrolling through papers. On narrow
                 screens the columns stack. */}
             <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+                <div className="mb-6">
+                    <ExegesisQuotaBadge
+                        variant="banner"
+                        onBuyPacks={() => setPacksOpen(true)}
+                        onUpgradePlan={goToBilling}
+                    />
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
                     {/* Main column — papers */}
                     <section>
@@ -243,6 +254,11 @@ export function ExegesisPage() {
                     </aside>
                 </div>
             </main>
+            <CreditPacksDialog
+                open={packsOpen}
+                onOpenChange={setPacksOpen}
+                focusMode="exegesis"
+            />
         </div>
     );
 }
