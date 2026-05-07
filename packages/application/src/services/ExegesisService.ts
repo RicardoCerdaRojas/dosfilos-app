@@ -18,6 +18,8 @@ import {
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
     FuzzyCitationVerifier,
+    GeminiLlmCitationVerifier,
+    RetrieveChunksRelevantChunkRetriever,
     GeminiCoherenceReviewer,
     GeminiSourceTypeClassifier,
     RetrieveChunksExcerptExtractor,
@@ -334,10 +336,30 @@ class ExegesisService {
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
 
-        // Citation verifier — token-overlap fuzzy match over the
-        // paper's project sources. Reuses the same `contentReader`
-        // for full-document mode so legacy sources also verify.
-        const citationVerifier = new FuzzyCitationVerifier();
+        // Citation verifier — defaults to the LLM-based adapter so
+        // cross-language papers (Spanish prose paraphrasing English
+        // commentary) verify correctly. The token-set Jaccard adapter
+        // (`FuzzyCitationVerifier`) returns zero overlap in that
+        // realistic scenario; the LLM verifier judges meaning, not
+        // lexical match.
+        //
+        // The Fuzzy adapter stays exported (and instantiated as a
+        // void reference here for type-checked tree-shake reachability)
+        // so test suites or telemetry comparisons can re-wire it
+        // without touching the use case.
+        void FuzzyCitationVerifier;
+        // Per-citation embedding retrieval — solves the long-book
+        // problem (`textContent` is capped at the Firestore 1MB doc
+        // limit; for 700-page commentaries the cited deep-pages live
+        // exclusively in `document_chunks`). The verifier queries
+        // top-K chunks scoped to the cited resource using the
+        // citation's evidence sentence as the embedding query.
+        const relevantChunkRetriever = new RetrieveChunksRelevantChunkRetriever();
+        const citationVerifier = new GeminiLlmCitationVerifier(apiKey || '', {
+            modelName: exegesisModelId,
+            relevantChunkRetriever,
+            retrievalTopK: 5,
+        });
         this.verifyStepCitations = new VerifyStepCitationsUseCase(
             paperRepository,
             contentReader,

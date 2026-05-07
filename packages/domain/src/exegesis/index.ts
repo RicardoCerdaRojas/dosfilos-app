@@ -41,6 +41,7 @@ export * from './ports/IPaperToSermonTransformer';
 export * from './ports/IPericopeDetector';
 export * from './ports/IResourceContentReader';
 export * from './ports/IResourceRanker';
+export * from './ports/IRelevantChunkRetriever';
 export * from './ports/ISourceTypeClassifier';
 export * from './ports/IStepCorpusPlanner';
 export * from './ports/IStyleFormatter';

@@ -21,6 +21,8 @@ export { GeminiSermonComposer } from './ministryComposers/GeminiSermonComposer';
 export { GeminiDevotionalComposer } from './ministryComposers/GeminiDevotionalComposer';
 export { GeminiStudyGuideComposer } from './ministryComposers/GeminiStudyGuideComposer';
 export { FuzzyCitationVerifier } from './citationVerifier/FuzzyCitationVerifier';
+export { GeminiLlmCitationVerifier } from './citationVerifier/GeminiLlmCitationVerifier';
+export { RetrieveChunksRelevantChunkRetriever } from './citationVerifier/RetrieveChunksRelevantChunkRetriever';
 export { GeminiCoherenceReviewer } from './coherenceReviewer/GeminiCoherenceReviewer';
 export { GeminiSourceTypeClassifier } from './sourceTypeClassifier/GeminiSourceTypeClassifier';
 // Pipeline-version constant for the v1.5+ expository assistant.
