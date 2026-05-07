@@ -9,6 +9,24 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { initI18n } from '@/i18n'
 initI18n();
 
+// Wire exégesis pricing telemetry into the existing trackUserActivity
+// callable so the 6 events (reserve_attempted/_succeeded/exceeded/
+// refunded/pack.purchased/upgrade.cta_clicked) reach `user_activities`.
+import { setExegesisPricingTracker } from '@dosfilos/application'
+import { getFunctions, httpsCallable } from 'firebase/functions'
+setExegesisPricingTracker((event, metadata) => {
+    try {
+        const trackFn = httpsCallable(getFunctions(), 'trackUserActivity');
+        void trackFn({
+            eventType: 'feature_used',
+            metadata: { feature: 'exegesis_pricing', event, ...metadata },
+            sessionId: sessionStorage.getItem('sessionId') || undefined,
+        }).catch((err) => console.debug('[exegesis-tracker]', err));
+    } catch (err) {
+        console.debug('[exegesis-tracker] init failed', err);
+    }
+});
+
 // Create a client
 const queryClient = new QueryClient();
 

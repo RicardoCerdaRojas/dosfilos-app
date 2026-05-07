@@ -24,11 +24,17 @@ vi.mock('../ProcessingBalanceService', async () => {
 
 import { ExegesisCreditReservation } from '../ExegesisCreditReservation';
 import { InsufficientExegesisCreditsError } from '../ProcessingBalanceService';
+import { setExegesisPricingTracker, type ExegesisPricingEvent } from '../exegesisPricingTracker';
 
 describe('ExegesisCreditReservation', () => {
+    let trackerCalls: Array<{ event: ExegesisPricingEvent; metadata: Record<string, unknown> }>;
     beforeEach(() => {
         consumeExegesisMock.mockReset();
         refundExegesisMock.mockReset();
+        trackerCalls = [];
+        setExegesisPricingTracker((event, metadata) => {
+            trackerCalls.push({ event, metadata });
+        });
     });
 
     it('opens by consuming the catalog cost for the operation', async () => {
@@ -118,5 +124,58 @@ describe('ExegesisCreditReservation', () => {
         );
         await reservation.refundIfPreLlm();
         expect(refundExegesisMock).not.toHaveBeenCalled();
+    });
+
+    it('fires reserve_attempted + reserve_succeeded on a happy-path open', async () => {
+        consumeExegesisMock.mockResolvedValue(undefined);
+        await ExegesisCreditReservation.open('user-1', 'analyzeVerseCanonically');
+        const events = trackerCalls.map(c => c.event);
+        expect(events).toEqual([
+            'exegesis.quota.reserve_attempted',
+            'exegesis.quota.reserve_succeeded',
+        ]);
+    });
+
+    it('fires exceeded when consume throws InsufficientExegesisCreditsError', async () => {
+        consumeExegesisMock.mockRejectedValue(
+            new InsufficientExegesisCreditsError(0.10, 0.05),
+        );
+        await expect(
+            ExegesisCreditReservation.open('user-1', 'analyzeVerseCanonically'),
+        ).rejects.toBeInstanceOf(InsufficientExegesisCreditsError);
+        const events = trackerCalls.map(c => c.event);
+        expect(events).toEqual([
+            'exegesis.quota.reserve_attempted',
+            'exegesis.quota.exceeded',
+        ]);
+        expect(trackerCalls[1].metadata).toMatchObject({
+            ownerId: 'user-1',
+            requiredUsd: 0.10,
+            availableUsd: 0.05,
+        });
+    });
+
+    it('fires refunded only on successful pre-LLM refund', async () => {
+        consumeExegesisMock.mockResolvedValue(undefined);
+        refundExegesisMock.mockResolvedValue(undefined);
+        const reservation = await ExegesisCreditReservation.open(
+            'user-1',
+            'composeAcademicPaper',
+        );
+        await reservation.refundIfPreLlm();
+        const events = trackerCalls.map(c => c.event);
+        expect(events).toContain('exegesis.quota.refunded');
+    });
+
+    it('does NOT fire refunded when refund itself fails', async () => {
+        consumeExegesisMock.mockResolvedValue(undefined);
+        refundExegesisMock.mockRejectedValue(new Error('firestore down'));
+        const reservation = await ExegesisCreditReservation.open(
+            'user-1',
+            'composeAcademicPaper',
+        );
+        await reservation.refundIfPreLlm();
+        const events = trackerCalls.map(c => c.event);
+        expect(events).not.toContain('exegesis.quota.refunded');
     });
 });
