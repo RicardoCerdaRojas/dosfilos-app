@@ -1062,6 +1062,7 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                 <StaleBanner
                     onReExtract={handleReExtract}
                     isReExtracting={extractExcerpts.isPending}
+                    userEditedCount={source.excerpts.filter(e => e.userEdited).length}
                 />
             )}
 
@@ -1114,9 +1115,11 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
 function StaleBanner({
     onReExtract,
     isReExtracting,
+    userEditedCount,
 }: {
     onReExtract: () => void;
     isReExtracting: boolean;
+    userEditedCount: number;
 }) {
     const { t } = useTranslation('exegesis');
     return (
@@ -1129,6 +1132,11 @@ function StaleBanner({
                 <p className="text-[11px] text-warning-subtle-foreground/80 leading-snug mt-0.5">
                     {t('paperSetup.subSteps.corpus.staleBanner.body')}
                 </p>
+                {userEditedCount > 0 && (
+                    <p className="text-[10.5px] text-warning-subtle-foreground/80 leading-snug mt-1 italic">
+                        {t('paperSetup.subSteps.corpus.staleBanner.preservesEdits', { count: userEditedCount })}
+                    </p>
+                )}
             </div>
             <Button
                 type="button"
