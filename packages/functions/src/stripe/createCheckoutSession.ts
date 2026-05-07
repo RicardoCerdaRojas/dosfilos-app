@@ -30,6 +30,10 @@ export const createCheckoutSession = onCall<CheckoutSessionData>(
             'STRIPE_PRICE_PACK_PREMIUM_S',
             'STRIPE_PRICE_PACK_PREMIUM_M',
             'STRIPE_PRICE_PACK_PREMIUM_L',
+            // Exégesis packs (Fase 3 of EXEGESIS_PRICING_INTEGRATION).
+            'STRIPE_PRICE_PACK_EXEGESIS_S',
+            'STRIPE_PRICE_PACK_EXEGESIS_M',
+            'STRIPE_PRICE_PACK_EXEGESIS_L',
         ],
     },
     async (request) => {

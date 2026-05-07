@@ -1,6 +1,14 @@
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 export type ProcessingMode = 'standard' | 'premium';
+/**
+ * Pack-mode discriminator (superset of `ProcessingMode`). Exegesis
+ * packs credit a USD bucket, not pages — they need their own ledger
+ * methods. Same shape as the domain `ProcessingMode` so the catalog
+ * + webhook can dispatch on it without ever feeding `'exegesis'` to
+ * the page-based admin helpers.
+ */
+export type PackMode = ProcessingMode | 'exegesis';
 
 /**
  * Server-side mirror of `ProcessingBalanceService` (admin SDK). Used by:
@@ -205,6 +213,99 @@ export async function setPlanQuotaAdmin(
     await ref.update({
         [planField]: newPlan,
         [availableField]: newPlan + packAvailable,
+        'processingBalance.updatedAt': FieldValue.serverTimestamp(),
+    });
+}
+
+// ── Exégesis bucket (USD-based, separate from pages) ──
+//
+// Mirrors the domain ProcessingBalanceService methods on the admin SDK
+// so the Stripe webhook (which runs server-side with admin creds) can
+// credit packs and reset monthly allowances without touching the
+// client-side service. Same dual-write pattern (plan + pack +
+// aggregate available) the page buckets use.
+
+interface ExegesisBucketShape {
+    planExegesisUsd?: number;
+    packExegesisUsd?: number;
+    exegesisUsdAvailable?: number;
+    exegesisSpentTotalUsd?: number;
+}
+
+async function readExegesisBucket(userId: string): Promise<Required<ExegesisBucketShape>> {
+    const db = getFirestore();
+    const snap = await db.collection('users').doc(userId).get();
+    const balance = snap.data()?.processingBalance as ExegesisBucketShape | undefined;
+    if (!balance) {
+        return {
+            planExegesisUsd: 0,
+            packExegesisUsd: 0,
+            exegesisUsdAvailable: 0,
+            exegesisSpentTotalUsd: 0,
+        };
+    }
+    const plan = balance.planExegesisUsd ?? 0;
+    const pack = balance.packExegesisUsd ?? 0;
+    return {
+        planExegesisUsd: plan,
+        packExegesisUsd: pack,
+        exegesisUsdAvailable: balance.exegesisUsdAvailable ?? plan + pack,
+        exegesisSpentTotalUsd: balance.exegesisSpentTotalUsd ?? 0,
+    };
+}
+
+/**
+ * Credits `usdAmount` to the user's exégesis PACK bucket. Used by the
+ * Stripe webhook when an `exegesis-*` pack is purchased. Idempotent
+ * given the caller deduplicates by Stripe session id.
+ */
+export async function addExegesisPackAdmin(userId: string, usdAmount: number): Promise<void> {
+    if (usdAmount <= 0) return;
+    const db = getFirestore();
+    const ref = db.collection('users').doc(userId);
+    const snap = await ref.get();
+    const bucket = await readExegesisBucket(userId);
+    const newPack = bucket.packExegesisUsd + usdAmount;
+
+    if (!snap.exists || !snap.data()?.processingBalance) {
+        await ref.set(
+            { processingBalance: { ...ZERO_BUCKETS } },
+            { merge: true },
+        );
+    }
+
+    await ref.update({
+        'processingBalance.packExegesisUsd': newPack,
+        'processingBalance.exegesisUsdAvailable': bucket.planExegesisUsd + newPack,
+        'processingBalance.updatedAt': FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * SETs the user's exégesis PLAN bucket to `usdAmount`. Used by:
+ *   - subscription activation (bonus-inicial seed if `bonusInitial.exegesisUsd` set)
+ *   - monthly billing-cycle invoice (resets the recurring allowance)
+ *
+ * Pack bucket is untouched. Caller MUST deduplicate by invoice/sub id
+ * before invoking — this function unconditionally overwrites.
+ */
+export async function setExegesisPlanQuotaAdmin(userId: string, usdAmount: number): Promise<void> {
+    const db = getFirestore();
+    const ref = db.collection('users').doc(userId);
+    const snap = await ref.get();
+    const bucket = await readExegesisBucket(userId);
+    const newPlan = Math.max(0, usdAmount);
+
+    if (!snap.exists || !snap.data()?.processingBalance) {
+        await ref.set(
+            { processingBalance: { ...ZERO_BUCKETS } },
+            { merge: true },
+        );
+    }
+
+    await ref.update({
+        'processingBalance.planExegesisUsd': newPlan,
+        'processingBalance.exegesisUsdAvailable': newPlan + bucket.packExegesisUsd,
         'processingBalance.updatedAt': FieldValue.serverTimestamp(),
     });
 }
