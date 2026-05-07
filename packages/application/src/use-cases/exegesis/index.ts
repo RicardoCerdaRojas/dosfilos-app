@@ -7,6 +7,7 @@ export { UpdateStepPlanUseCase } from './UpdateStepPlanUseCase';
 export { UpdateRubricUseCase } from './UpdateRubricUseCase';
 export { ResetRubricUseCase } from './ResetRubricUseCase';
 export { ExtractRubricFromTextUseCase } from './ExtractRubricFromTextUseCase';
+export { ExtractRubricFromDocumentUseCase } from './ExtractRubricFromDocumentUseCase';
 export { ExtractStyleGuideManifestUseCase } from './ExtractStyleGuideManifestUseCase';
 
 // User-level rubric templates
@@ -98,6 +99,16 @@ export {
     type VerifyStepCitationsInput,
     type VerifyStepCitationsOutput,
 } from './VerifyStepCitationsUseCase';
+export {
+    RunCoherencePassUseCase,
+    type RunCoherencePassInput,
+    type RunCoherencePassOutput,
+} from './RunCoherencePassUseCase';
+export {
+    ClassifySourceTypeUseCase,
+    type ClassifySourceTypeInput,
+    type ClassifySourceTypeUseCaseOutput,
+} from './ClassifySourceTypeUseCase';
 
 // Bridge: paper → sermon (Phase 2 of the sermon-series pipeline)
 export {

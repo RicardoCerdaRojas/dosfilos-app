@@ -19,6 +19,7 @@ import {
     BookOpen,
     Mic,
     MessageCircle,
+    ShieldAlert,
     Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,7 @@ import { CorpusCoverageReport } from '@/components/exegesis/corpus-plan/CorpusCo
 import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
 import { AcademicCompositionDialog } from '@/components/exegesis/canonical/AcademicCompositionDialog';
 import { MinistryCompositionDialog } from '@/components/exegesis/canonical/MinistryCompositionDialog';
+import { CoherencePassDialog } from '@/components/exegesis/CoherencePassDialog';
 import { exportPaperToDocx } from '@/lib/exegesis/exportPaperToDocx';
 import {
     exportPaperToMarkdown,
@@ -89,6 +91,7 @@ export function ExegesisPaperPage() {
     const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
     const [composeDialogOpen, setComposeDialogOpen] = useState(false);
     const [ministryDialogOpen, setMinistryDialogOpen] = useState(false);
+    const [coherenceDialogOpen, setCoherenceDialogOpen] = useState(false);
 
     if (isLoading) {
         return <CenteredMessage icon={<Loader2 className="h-5 w-5 animate-spin" />} text={t('detail.loading')} />;
@@ -300,6 +303,10 @@ export function ExegesisPaperPage() {
                                 <Sparkles className="h-4 w-4 mr-2" />
                                 {t('canonical.ministry.menuItem')}
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setCoherenceDialogOpen(true)}>
+                                <ShieldAlert className="h-4 w-4 mr-2" />
+                                {t('coherence.menuItem')}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={() => setArchiveConfirmOpen(true)}
@@ -323,6 +330,13 @@ export function ExegesisPaperPage() {
                         onOpenChange={setMinistryDialogOpen}
                         paperId={paper.id}
                         suggestedFilename={buildPaperFilename(paper, activeLanguage)}
+                    />
+
+                    <CoherencePassDialog
+                        open={coherenceDialogOpen}
+                        onOpenChange={setCoherenceDialogOpen}
+                        paperId={paper.id}
+                        language={paper.displayLanguage}
                     />
 
 

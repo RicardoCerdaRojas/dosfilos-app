@@ -424,7 +424,19 @@
                         "medium": "The extraction needed some inference. Review requirements and justifications.",
                         "low": "The extraction has gaps. We recommend filling in what's missing manually."
                     },
-                    "reviewNotesTitle": "Extractor notes"
+                    "reviewNotesTitle": "Extractor notes",
+                    "tabText": "Paste text",
+                    "tabDocument": "Upload file",
+                    "documentLabel": "Rubric file (PDF or image)",
+                    "documentDropzone": "Drop a PDF or photo of the rubric, or click to pick",
+                    "documentHint": "PDF or image (PNG/JPG). Up to 20 MB. Typical processing 30–90 s.",
+                    "submitDocument": "Extract from file",
+                    "documentFailed": "Could not extract the rubric from the file. Make sure the document is legible and try again.",
+                    "phase": {
+                        "uploading": "Uploading file…",
+                        "extracting": "Extracting text from document…",
+                        "analyzing": "Analyzing rubric…"
+                    }
                 },
                 "metadata": {
                     "title": "General",
@@ -794,7 +806,9 @@
                     "body": "You edited the passage or brief after extracting. Re-extract so the excerpts reflect the changes.",
                     "cta": "Re-extract",
                     "toastSuccess": "Excerpts re-extracted against the current brief",
-                    "toastError": "Couldn't re-extract excerpts. Try again."
+                    "toastError": "Couldn't re-extract excerpts. Try again.",
+                    "preservesEdits_one": "Your {{count}} edited excerpt is preserved on re-extract.",
+                    "preservesEdits_other": "Your {{count}} edited excerpts are preserved on re-extract."
                 },
                 "balance": {
                     "standard_one": "{{count}} std page",
@@ -827,6 +841,13 @@
                     "typeLabelBulk": "Academic type for the {{count}} sources",
                     "typeDescription": "Pick the type that best describes the source. The rubric uses this type to decide whether it satisfies minimums.",
                     "typeDescriptionBulk": "Applies to every selected source. If you need different types, you can adjust them one by one from the corpus list afterwards.",
+                    "classifying": "Auto-classifying…",
+                    "classifierSuggested": "Auto-suggestion",
+                    "classifierConfidence": {
+                        "high": "high confidence",
+                        "medium": "medium confidence",
+                        "low": "low confidence — double-check the type"
+                    },
                     "citationKeyLabel": "Citation key",
                     "citationKeyPlaceholder": "e.g. Lane",
                     "citationKeyHint": "Used in footnotes. Leave empty and we derive it from the corpus.",
@@ -1178,6 +1199,39 @@
             }
         }
     },
+    "coherence": {
+        "menuItem": "Run coherence pass",
+        "dialog": {
+            "title": "Coherence review",
+            "description": "A single Gemini pass over the entire accepted paper to surface inconsistencies between introduction, verses, and conclusion.",
+            "idleBody": "The reviewer reads ALL accepted sections (introduction + verses + conclusion) and returns verifiable problems only. No praise, no summaries.",
+            "cost": "One Gemini Pro 2.5 call (~$0.05–0.15 depending on paper length).",
+            "runCta": "Run review",
+            "running": "Reviewing coherence…",
+            "errorTitle": "Coherence pass failed",
+            "errorGeneric": "Unexpected error.",
+            "retry": "Retry",
+            "rerun": "Re-run",
+            "close": "Close",
+            "allClear": "Paper is internally consistent.",
+            "relatedSteps_one": "Affects {{count}} section",
+            "relatedSteps_other": "Affects {{count}} sections"
+        },
+        "severity": {
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+        },
+        "category": {
+            "thesis-mismatch": "Thesis ≠ conclusion",
+            "verse-conflict": "Verses conflict",
+            "translation-inconsistency": "Translation inconsistency",
+            "unfulfilled-promise": "Unfulfilled promise",
+            "conclusion-overreach": "Conclusion overreach",
+            "tone-drift": "Tone drift",
+            "other": "Other"
+        }
+    },
     "detail": {
         "back": "Back to list",
         "loading": "Loading paper...",
@@ -1203,6 +1257,26 @@
             "failedHint": "Something failed while generating this step. Try again.",
             "editHint": "Manually edited — citation verification does NOT auto-run.",
             "hintPlaceholder": "e.g. more syntax, more theology, cite Cockerill more",
+            "quickHints": {
+                "label": "Quick hint:",
+                "verse": {
+                    "syntax": "More syntax",
+                    "theology": "More theology",
+                    "historical": "More historical context",
+                    "lexis": "More lexical detail",
+                    "lessGeneral": "Fewer generalizations"
+                },
+                "conclusion": {
+                    "concise": "More concise",
+                    "verseFocus": "Focus on this verse, no recap",
+                    "highlightThesis": "Highlight the verse's thesis"
+                },
+                "introduction": {
+                    "concise": "More concise",
+                    "previewStructure": "Preview the structure",
+                    "pastoralHook": "Stronger pastoral hook"
+                }
+            },
             "kind": {
                 "verse": "Verse",
                 "conclusion": "Conclusion",

@@ -25,7 +25,13 @@ export interface PassagePickerProps {
      * The parent decides whether to enable downstream UI based on `ref`.
      */
     onChange: (ref: PassageReference | null, error?: { code: string; hint: string }) => void;
-    /** Defaults to 'free-text'. Persists across renders inside the component. */
+    /**
+     * Defaults to 'picker' — the structured form is the primary input
+     * surface because typos in book names / verse numbers were the
+     * leading cause of bad PassageReferences in v1. Free-text remains
+     * available via the mode toggle for users who prefer typing
+     * "Heb 1:1-4" directly.
+     */
     initialMode?: Mode;
     /** Lock the language used for book display labels. Defaults to UI language. */
     displayLanguage?: 'es' | 'en';
@@ -52,13 +58,17 @@ export interface PassagePickerProps {
 export function PassagePicker({
     value,
     onChange,
-    initialMode = 'free-text',
+    initialMode = 'picker',
     displayLanguage,
 }: PassagePickerProps) {
     const { t, i18n } = useTranslation('exegesis');
     const lang = displayLanguage ?? (i18n.language?.split('-')[0] === 'en' ? 'en' : 'es');
 
-    const [mode, setMode] = useState<Mode>(initialMode);
+    // Sticky mode preference: once the user picks a mode, remember it
+    // for next session. Only honored when the caller didn't pin
+    // `initialMode` explicitly. Falls back to the prop default
+    // (`picker`) when storage is unavailable or empty.
+    const [mode, setMode] = useState<Mode>(() => readStoredMode() ?? initialMode);
 
     // Free-text mode state
     const [freeText, setFreeText] = useState<string>(
@@ -137,6 +147,7 @@ export function PassagePicker({
             }
         }
         setMode(next);
+        writeStoredMode(next);
     };
 
     const selectedBook: BibleCanonBook | null = useMemo(() => {
@@ -204,6 +215,31 @@ export function PassagePicker({
             />
         </div>
     );
+}
+
+// ── Sticky mode preference ──────────────────────────────────────────
+
+const STORAGE_KEY = 'exegesis.passagePickerMode';
+
+function readStoredMode(): Mode | null {
+    if (typeof window === 'undefined') return null;
+    try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        return stored === 'free-text' || stored === 'picker' ? stored : null;
+    } catch {
+        return null;
+    }
+}
+
+function writeStoredMode(mode: Mode): void {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(STORAGE_KEY, mode);
+    } catch {
+        // localStorage may be disabled (private mode, quota); the
+        // user's choice still applies for the current session via
+        // component state.
+    }
 }
 
 function ModeButton({

@@ -1062,6 +1062,7 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                 <StaleBanner
                     onReExtract={handleReExtract}
                     isReExtracting={extractExcerpts.isPending}
+                    userEditedCount={source.excerpts.filter(e => e.userEdited).length}
                 />
             )}
 
@@ -1114,9 +1115,11 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
 function StaleBanner({
     onReExtract,
     isReExtracting,
+    userEditedCount,
 }: {
     onReExtract: () => void;
     isReExtracting: boolean;
+    userEditedCount: number;
 }) {
     const { t } = useTranslation('exegesis');
     return (
@@ -1129,6 +1132,11 @@ function StaleBanner({
                 <p className="text-[11px] text-warning-subtle-foreground/80 leading-snug mt-0.5">
                     {t('paperSetup.subSteps.corpus.staleBanner.body')}
                 </p>
+                {userEditedCount > 0 && (
+                    <p className="text-[10.5px] text-warning-subtle-foreground/80 leading-snug mt-1 italic">
+                        {t('paperSetup.subSteps.corpus.staleBanner.preservesEdits', { count: userEditedCount })}
+                    </p>
+                )}
             </div>
             <Button
                 type="button"
@@ -1311,7 +1319,16 @@ function AddSourceDialog({
 }) {
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
-    const { addSource } = useExegesisPapers();
+    const { addSource, classifySourceType } = useExegesisPapers();
+    // Suggestion from the classifier when the user single-picks a
+    // library resource. Surfaces as a chip near the SourceType
+    // dropdown — informational, not blocking. Reset every dialog open.
+    const [classification, setClassification] = useState<{
+        type: SourceType;
+        confidence: 'high' | 'medium' | 'low';
+        reasoning: string;
+        sourceTitle: string;
+    } | null>(null);
 
     // Two ways to add a source: upload a fresh file OR pick one
     // already in the user's library (e.g. they uploaded BDAG for a
@@ -1362,6 +1379,7 @@ function AddSourceDialog({
             setDisplayName('');
             setSourceType(initialType ?? 'commentary-critical');
             setCitationKey('');
+            setClassification(null);
             setPickedResourceIds(new Set());
             setLibrarySearch('');
             setLibraryTypeFilter(seedFilter);
@@ -1460,11 +1478,43 @@ function AddSourceDialog({
                 const key = deriveCitationKeyFromAuthor(resource.author);
                 if (key) setCitationKey(key);
             }
+            // Auto-classify in the background. Best-effort: failures
+            // (no extracted text yet, Gemini overload) leave the
+            // dropdown at its current selection, no toast — the user
+            // still sees the manual control. Resource without text
+            // (textContent is null on legacy entries) short-circuits
+            // before the LLM call.
+            void runClassification(resource);
         } else {
             // Multi-select or deselect → clear the per-row fields so
             // the bulk path can autoderive cleanly.
             setDisplayName('');
             setCitationKey('');
+            setClassification(null);
+        }
+    };
+
+    const runClassification = async (resource: LibraryResource) => {
+        try {
+            const fresh = await libraryService.getResource(resource.id);
+            const text = fresh?.textContent;
+            if (!text || text.trim().length < 50) return;
+            const result = await classifySourceType.mutateAsync({
+                rawText: text,
+                title: resource.title || null,
+                author: resource.author || null,
+                language: paper.displayLanguage,
+            });
+            setSourceType(result.sourceType);
+            setClassification({
+                type: result.sourceType,
+                confidence: result.confidence,
+                reasoning: result.reasoning,
+                sourceTitle: resource.title || resource.id,
+            });
+        } catch (err) {
+            console.warn('[exegesis] source-type classification failed:', err);
+            setClassification(null);
         }
     };
 
@@ -1654,10 +1704,26 @@ function AddSourceDialog({
                                 <SourceTypePicker
                                     id="addsource-type"
                                     value={sourceType}
-                                    onChange={setSourceType}
+                                    onChange={(next) => {
+                                        setSourceType(next);
+                                        // Manual override clears the
+                                        // suggestion chip so it doesn't
+                                        // misleadingly say "verified" when
+                                        // the user just disagreed with it.
+                                        setClassification(null);
+                                    }}
                                     disabled={uploading}
                                     className="w-full !py-2 !text-sm"
                                 />
+                                {classifySourceType.isPending && (
+                                    <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5 mt-1">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        {t('paperSetup.subSteps.corpus.upload.classifying')}
+                                    </p>
+                                )}
+                                {classification && classification.type === sourceType && (
+                                    <ClassificationChip classification={classification} />
+                                )}
                                 <FieldHint>
                                     {isBulkLibrary
                                         ? t('paperSetup.subSteps.corpus.upload.typeDescriptionBulk')
@@ -2127,4 +2193,38 @@ function deriveCitationKeyFromAuthor(author: string): string {
     const tokens = firstAuthor.split(/\s+/).filter(Boolean);
     if (tokens.length === 0) return firstAuthor;
     return tokens[tokens.length - 1]!;
+}
+
+/**
+ * Inline chip surfaced under the SourceType picker after the
+ * classifier has run on a single-picked library resource. Fades into
+ * the dropdown's helper area; clears as soon as the user manually
+ * overrides the type.
+ */
+function ClassificationChip({
+    classification,
+}: {
+    classification: { type: SourceType; confidence: 'high' | 'medium' | 'low'; reasoning: string; sourceTitle: string };
+}) {
+    const { t } = useTranslation('exegesis');
+    const tone = classification.confidence === 'high'
+        ? 'border-success/40 bg-success-subtle text-success-subtle-foreground'
+        : classification.confidence === 'medium'
+            ? 'border-info/40 bg-info-subtle text-info-subtle-foreground'
+            : 'border-warning/40 bg-warning-subtle text-warning-subtle-foreground';
+    return (
+        <div className={`mt-1 rounded-md border ${tone} px-2 py-1 text-[11px] inline-flex items-start gap-1.5`}>
+            <Sparkles className="h-3 w-3 mt-0.5 shrink-0" />
+            <span className="leading-snug">
+                <strong>{t('paperSetup.subSteps.corpus.upload.classifierSuggested')}</strong>
+                {' · '}
+                {t(`paperSetup.subSteps.corpus.upload.classifierConfidence.${classification.confidence}`)}
+                {classification.reasoning && (
+                    <span className="block opacity-80 italic mt-0.5">
+                        {classification.reasoning}
+                    </span>
+                )}
+            </span>
+        </div>
+    );
 }
