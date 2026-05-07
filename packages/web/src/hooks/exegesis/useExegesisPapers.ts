@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { exegesisService } from '@dosfilos/application';
+import { exegesisService, libraryService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import type {
     AddProjectSourceInput,
@@ -104,6 +104,47 @@ export function useExegesisPapers() {
         mutationFn: async (input: Omit<ExtractRubricFromTextInput, 'ownerId'>) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return exegesisService.extractRubricFromText.execute({ ...input, ownerId: user.uid });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    // Document-backed rubric extraction. Uploads a PDF/image via the
+    // library pipeline, waits for the LlamaParse extraction to land,
+    // then runs the rubric extractor over the resulting text. The
+    // optional `onPhase` callback drives the UI's stepper (uploading
+    // → extracting → analyzing) so the user knows where they are
+    // during the ~30-90s round trip.
+    const extractRubricFromDocument = useMutation({
+        mutationFn: async (input: {
+            paperId: string;
+            file: File;
+            language?: 'es' | 'en';
+            onUploadProgress?: (percentage: number) => void;
+            onPhase?: (phase: 'uploading' | 'extracting' | 'analyzing') => void;
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            input.onPhase?.('uploading');
+            const resource = await libraryService.uploadResource(
+                user.uid,
+                input.file,
+                {
+                    title: input.file.name.replace(/\.[^.]+$/, ''),
+                    author: '',
+                    type: 'other',
+                },
+                input.onUploadProgress,
+            );
+            input.onPhase?.('extracting');
+            await waitForResourceTextReady(resource.id);
+            input.onPhase?.('analyzing');
+            return exegesisService.extractRubricFromDocument.execute({
+                ownerId: user.uid,
+                paperId: input.paperId,
+                libraryResourceId: resource.id,
+                language: input.language,
+            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
@@ -333,6 +374,21 @@ export function useExegesisPapers() {
         },
     });
 
+    // Source-type auto-classification — single Gemini call over the
+    // first ~5k chars of a resource's extracted text. Used by the
+    // corpus-attach UI to pre-select the SourceType dropdown.
+    const classifySourceType = useMutation({
+        mutationFn: async (input: {
+            rawText: string;
+            title?: string | null;
+            author?: string | null;
+            language?: 'es' | 'en';
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.classifySourceType.execute(input);
+        },
+    });
+
     // Citation verification (v1.5 — programmatic fuzzy match). Returns
     // the per-citation list AND the persisted summary; the dialog
     // renders the list, the badge in the step header reflects the
@@ -353,6 +409,23 @@ export function useExegesisPapers() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    // Cross-section coherence pass — single Gemini call across the
+    // whole accepted paper. Result is NOT persisted; the dialog
+    // renders the snapshot.
+    const runCoherencePass = useMutation({
+        mutationFn: async ({ paperId, language }: {
+            paperId: string;
+            language?: 'es' | 'en';
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.runCoherencePass.execute({
+                ownerId: user.uid,
+                paperId,
+                language,
+            });
         },
     });
 
@@ -384,6 +457,7 @@ export function useExegesisPapers() {
         updateRubric,
         resetRubric,
         extractRubricFromText,
+        extractRubricFromDocument,
         addSource,
         updateSource,
         removeSource,
@@ -392,6 +466,8 @@ export function useExegesisPapers() {
         acceptStep,
         saveStepEdit,
         verifyStepCitations,
+        runCoherencePass,
+        classifySourceType,
         generateSermonFromPaper,
         analyzeVerseCanonically,
         composeAcademicPaper,
@@ -402,4 +478,38 @@ export function useExegesisPapers() {
         composeDevotionalFromAnalyses,
         composeStudyGuideFromAnalyses,
     };
+}
+
+/**
+ * Polls `libraryService.getResource` until the resource has extracted
+ * text available, or the timeout elapses. Used by the document-backed
+ * rubric extractor mutation — the UI uploaded the file via the
+ * library pipeline but can't run the rubric extractor until LlamaParse
+ * (or the Gemini fallback) lands the text.
+ *
+ * Resolves with the resource on success, throws otherwise. The 90s
+ * window covers typical 1-3 page rubrics; longer documents push
+ * latency but rubrics rarely exceed a handful of pages.
+ */
+async function waitForResourceTextReady(
+    resourceId: string,
+    options: { timeoutMs?: number; intervalMs?: number } = {},
+): Promise<void> {
+    const timeoutMs = options.timeoutMs ?? 90_000;
+    const intervalMs = options.intervalMs ?? 2_000;
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        const resource = await libraryService.getResource(resourceId);
+        if (resource?.textContent && resource.textContent.trim().length > 0) {
+            return;
+        }
+        // textExtractionStatus on the entity tracks failure; bail
+        // early instead of waiting for the timeout.
+        if (resource?.textExtractionStatus === 'failed') {
+            throw new Error('Library resource extraction failed; cannot extract rubric.');
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+    throw new Error('Library resource extraction timed out; please retry.');
 }

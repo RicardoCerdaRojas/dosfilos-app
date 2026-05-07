@@ -24,6 +24,7 @@ import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIn
 import { RubricTemplatePicker } from '@/components/exegesis/setup/RubricTemplatePicker';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { FileDropzone } from '@/components/ui/file-dropzone';
 import {
     Dialog,
     DialogContent,
@@ -283,7 +284,10 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                             {t('paperSetup.subSteps.rubric.extract.subtitle')}
                         </DialogDescription>
                     </DialogHeader>
-                    <RubricExtractFromTextPanel paper={paper} onExtracted={() => setExtractOpen(false)} />
+                    <ExtractSourceTabs
+                        text={<RubricExtractFromTextPanel paper={paper} onExtracted={() => setExtractOpen(false)} />}
+                        document={<RubricExtractFromDocumentPanel paper={paper} onExtracted={() => setExtractOpen(false)} />}
+                    />
                 </DialogContent>
             </Dialog>
 
@@ -812,6 +816,180 @@ function RubricExtractFromTextPanel({ paper, onExtracted }: RubricExtractFromTex
                         <>
                             <Sparkles className="h-3 w-3 mr-1" />
                             {t('paperSetup.subSteps.rubric.extract.submit')}
+                        </>
+                    )}
+                </Button>
+            </div>
+
+            {lastResult && <ExtractionResultCard result={lastResult} />}
+
+            <ConfirmDialog
+                open={confirmReplaceOpen}
+                onOpenChange={setConfirmReplaceOpen}
+                title={t('paperSetup.subSteps.rubric.extract.confirmReplaceTitle')}
+                body={t('paperSetup.subSteps.rubric.extract.confirmReplaceBody')}
+                confirmLabel={t('paperSetup.subSteps.rubric.extract.confirmReplaceCta')}
+                cancelLabel={t('setup.cancel')}
+                onConfirm={doExtract}
+            />
+        </div>
+    );
+}
+
+/**
+ * Two-tab switcher inside the extract dialog: paste-text vs upload
+ * document. Local state keeps the chosen tab — no need to bubble up
+ * to the parent because the dialog is short-lived and re-opens fresh.
+ */
+function ExtractSourceTabs({
+    text,
+    document,
+}: {
+    text: React.ReactNode;
+    document: React.ReactNode;
+}) {
+    const { t } = useTranslation('exegesis');
+    const [tab, setTab] = useState<'text' | 'document'>('text');
+    return (
+        <div className="space-y-3">
+            <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-xs">
+                <button
+                    type="button"
+                    onClick={() => setTab('text')}
+                    className={`px-3 py-1.5 rounded transition-colors ${tab === 'text' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    {t('paperSetup.subSteps.rubric.extract.tabText')}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setTab('document')}
+                    className={`px-3 py-1.5 rounded transition-colors ${tab === 'document' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    {t('paperSetup.subSteps.rubric.extract.tabDocument')}
+                </button>
+            </div>
+            {tab === 'text' ? text : document}
+        </div>
+    );
+}
+
+interface RubricExtractFromDocumentPanelProps {
+    paper: ExegeticalPaper;
+    onExtracted?: () => void;
+}
+
+function RubricExtractFromDocumentPanel({ paper, onExtracted }: RubricExtractFromDocumentPanelProps) {
+    const { t } = useTranslation('exegesis');
+    const { extractRubricFromDocument } = useExegesisPapers();
+    const [file, setFile] = useState<File | null>(null);
+    const [outputLanguage, setOutputLanguage] = useState<'es' | 'en'>(paper.displayLanguage);
+    const [phase, setPhase] = useState<'idle' | 'uploading' | 'extracting' | 'analyzing'>('idle');
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [lastResult, setLastResult] = useState<ExtractionResultSummary | null>(null);
+    const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
+
+    const isBusy = phase !== 'idle' || extractRubricFromDocument.isPending;
+    const canSubmit = !!file && !isBusy;
+
+    const handleSubmit = () => {
+        if (!canSubmit) return;
+        if (paper.rubric && paper.rubric.provenance === 'user-edited') {
+            setConfirmReplaceOpen(true);
+            return;
+        }
+        void doExtract();
+    };
+
+    const doExtract = async () => {
+        if (!file) return;
+        setConfirmReplaceOpen(false);
+        setLastResult(null);
+        try {
+            const result = await extractRubricFromDocument.mutateAsync({
+                paperId: paper.id,
+                file,
+                language: outputLanguage,
+                onUploadProgress: setUploadProgress,
+                onPhase: setPhase,
+            });
+            setLastResult({ confidence: result.confidence, reviewNotes: result.reviewNotes });
+            toast.success(t('paperSetup.subSteps.rubric.extract.success'));
+            if (onExtracted && result.confidence === 'high' && result.reviewNotes.length === 0) {
+                onExtracted();
+            }
+        } catch (err) {
+            console.error('[exegesis] extract rubric from document failed:', err);
+            const isOverload = (err as { isExegesisOverload?: boolean })?.isExegesisOverload === true;
+            toast.error(isOverload
+                ? t('paperSetup.subSteps.rubric.extract.overloaded')
+                : t('paperSetup.subSteps.rubric.extract.documentFailed'),
+            );
+        } finally {
+            setPhase('idle');
+            setUploadProgress(0);
+        }
+    };
+
+    return (
+        <div className="space-y-3">
+            <div>
+                <label className="block text-xs font-medium text-foreground mb-1">
+                    {t('paperSetup.subSteps.rubric.extract.documentLabel')}
+                </label>
+                <FileDropzone
+                    accept=".pdf,application/pdf,image/png,image/jpeg,.png,.jpg,.jpeg"
+                    value={file}
+                    onChange={setFile}
+                    disabled={isBusy}
+                    size="compact"
+                    emptyLabel={t('paperSetup.subSteps.rubric.extract.documentDropzone')}
+                    hint={t('paperSetup.subSteps.rubric.extract.documentHint')}
+                    maxSizeMB={20}
+                />
+            </div>
+
+            {phase !== 'idle' && (
+                <div className="rounded-md border border-info/30 bg-info-subtle px-3 py-2 text-[11px] text-info-subtle-foreground">
+                    <p className="inline-flex items-center gap-1.5 font-medium">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        {t(`paperSetup.subSteps.rubric.extract.phase.${phase}`)}
+                    </p>
+                    {phase === 'uploading' && uploadProgress > 0 && (
+                        <p className="mt-0.5 opacity-80">{Math.round(uploadProgress)}%</p>
+                    )}
+                </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-medium text-foreground">
+                        {t('paperSetup.subSteps.rubric.extract.outputLanguageLabel')}
+                    </label>
+                    <select
+                        value={outputLanguage}
+                        onChange={(e) => setOutputLanguage(e.target.value as 'es' | 'en')}
+                        disabled={isBusy}
+                        className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
+                    >
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <Button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!canSubmit}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                >
+                    {isBusy ? (
+                        <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            {t('paperSetup.subSteps.rubric.extract.extracting')}
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {t('paperSetup.subSteps.rubric.extract.submitDocument')}
                         </>
                     )}
                 </Button>
