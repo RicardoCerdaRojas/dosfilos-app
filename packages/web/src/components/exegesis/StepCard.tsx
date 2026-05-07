@@ -555,6 +555,24 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.editManual')}
                         </Button>
+                        {/* Migrate-to-canonical entry point also lives in
+                            the awaiting-review footer for verse steps that
+                            haven't yet been analyzed canonically. Saves the
+                            user a "accept then migrate" two-click. */}
+                        {isVerse && !canonicalAnalysis && (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleAnalyzeCanonically()}
+                                disabled={anyPipelinePending || acceptStep.isPending}
+                                title={t('canonical.actions.analyzeFromAcceptedTooltip')}
+                            >
+                                {analyzeVerseCanonically.isPending
+                                    ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                                    : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                {t('canonical.actions.analyzeFromAccepted')}
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             variant="ghost"
