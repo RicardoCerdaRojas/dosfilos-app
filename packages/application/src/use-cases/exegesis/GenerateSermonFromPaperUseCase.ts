@@ -5,6 +5,7 @@ import {
     type ISermonRepository,
     type PaperToSermonTone,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Generates a sermon draft from an assembled exegetical paper.
@@ -64,30 +65,41 @@ export class GenerateSermonFromPaperUseCase {
             throw new Error('El paper no tiene contenido ensamblado');
         }
 
-        const result = await this.transformer.transform({
-            paperPassage: paper.passage,
-            paperTitle: paper.title ?? null,
-            assignmentBrief: paper.assignmentBrief,
-            assembledMarkdown: paper.assembledMarkdown,
-            tone: input.tone,
-            language: paper.displayLanguage,
-        });
+        const reservation = await ExegesisCreditReservation.open(
+            input.actorUserId,
+            'generateSermonFromPaper',
+        );
 
-        const sermon = SermonEntity.create({
-            userId: paper.ownerId,
-            title: result.title,
-            content: result.content,
-            bibleReferences: result.bibleReferences,
-            sourcePaperId: paper.id,
-            status: 'draft',
-        });
+        try {
+            reservation.markLlmContacted();
+            const result = await this.transformer.transform({
+                paperPassage: paper.passage,
+                paperTitle: paper.title ?? null,
+                assignmentBrief: paper.assignmentBrief,
+                assembledMarkdown: paper.assembledMarkdown,
+                tone: input.tone,
+                language: paper.displayLanguage,
+            });
 
-        await this.sermonRepository.create(sermon);
+            const sermon = SermonEntity.create({
+                userId: paper.ownerId,
+                title: result.title,
+                content: result.content,
+                bibleReferences: result.bibleReferences,
+                sourcePaperId: paper.id,
+                status: 'draft',
+            });
 
-        return {
-            sermonId: sermon.id,
-            modelId: result.modelId,
-            tokensUsed: result.tokensUsed,
-        };
+            await this.sermonRepository.create(sermon);
+
+            return {
+                sermonId: sermon.id,
+                modelId: result.modelId,
+                tokensUsed: result.tokensUsed,
+            };
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }

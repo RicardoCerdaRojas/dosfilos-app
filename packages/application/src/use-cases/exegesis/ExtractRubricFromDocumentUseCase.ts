@@ -6,6 +6,7 @@ import type {
     IResourceContentReader,
     PaperRubric,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Document-backed counterpart to `ExtractRubricFromTextUseCase`.
@@ -65,26 +66,37 @@ export class ExtractRubricFromDocumentUseCase {
 
         const language = input.language ?? paper.displayLanguage;
 
-        const extracted = await this.rubricExtractor.extract({
-            rawText: trimmed,
-            source: 'document',
-            sourceCorpusId: input.libraryResourceId,
-            language,
-        });
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'extractRubricFromDocument',
+        );
 
-        const now = new Date();
-        const rubric: PaperRubric = {
-            ...extracted.rubric,
-            createdAt: paper.rubric?.createdAt ?? now,
-            updatedAt: now,
-        };
+        try {
+            reservation.markLlmContacted();
+            const extracted = await this.rubricExtractor.extract({
+                rawText: trimmed,
+                source: 'document',
+                sourceCorpusId: input.libraryResourceId,
+                language,
+            });
 
-        const updated = await this.paperRepository.setRubric(input.ownerId, input.paperId, rubric);
+            const now = new Date();
+            const rubric: PaperRubric = {
+                ...extracted.rubric,
+                createdAt: paper.rubric?.createdAt ?? now,
+                updatedAt: now,
+            };
 
-        return {
-            paper: updated,
-            confidence: extracted.confidence,
-            reviewNotes: extracted.reviewNotes,
-        };
+            const updated = await this.paperRepository.setRubric(input.ownerId, input.paperId, rubric);
+
+            return {
+                paper: updated,
+                confidence: extracted.confidence,
+                reviewNotes: extracted.reviewNotes,
+            };
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }

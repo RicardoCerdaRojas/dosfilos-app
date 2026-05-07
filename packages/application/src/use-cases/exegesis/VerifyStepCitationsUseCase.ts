@@ -13,6 +13,7 @@ import type {
     VerifierSourceChunk,
 } from '@dosfilos/domain';
 import { isCitableSourceType } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 export interface VerifyStepCitationsInput {
     ownerId: string;
@@ -75,23 +76,34 @@ export class VerifyStepCitationsUseCase {
         const target = pickVersion(step, input.versionId);
         if (!target) throw new Error(`No version available to verify on step ${stepId}`);
 
-        const sources = await this.buildVerifierSources(paper);
-        const { citations } = await this.verifier.verify({
-            markdown: target.markdown,
-            sources,
-            userId: ownerId,
-        });
-
-        const summary = buildSummary(citations);
-        await this.paperRepository.setStepVersionVerifications(
+        const reservation = await ExegesisCreditReservation.open(
             ownerId,
-            paperId,
-            stepId,
-            target.id,
-            summary,
+            'verifyStepCitations',
         );
 
-        return { summary, citations, versionId: target.id };
+        try {
+            const sources = await this.buildVerifierSources(paper);
+            reservation.markLlmContacted();
+            const { citations } = await this.verifier.verify({
+                markdown: target.markdown,
+                sources,
+                userId: ownerId,
+            });
+
+            const summary = buildSummary(citations);
+            await this.paperRepository.setStepVersionVerifications(
+                ownerId,
+                paperId,
+                stepId,
+                target.id,
+                summary,
+            );
+
+            return { summary, citations, versionId: target.id };
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 
     private async buildVerifierSources(paper: ExegeticalPaper): Promise<VerifierSource[]> {

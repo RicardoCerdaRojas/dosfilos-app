@@ -5,6 +5,7 @@ import type {
     IPaperRubricExtractor,
     PaperRubric,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Pastes-text → extracts rubric → saves on the paper.
@@ -47,26 +48,37 @@ export class ExtractRubricFromTextUseCase {
 
         const language = input.language ?? paper.displayLanguage;
 
-        const extracted = await this.rubricExtractor.extract({
-            rawText: trimmed,
-            source: 'text',
-            sourceCorpusId: null,
-            language,
-        });
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'extractRubricFromText',
+        );
 
-        const now = new Date();
-        const rubric: PaperRubric = {
-            ...extracted.rubric,
-            createdAt: paper.rubric?.createdAt ?? now,
-            updatedAt: now,
-        };
+        try {
+            reservation.markLlmContacted();
+            const extracted = await this.rubricExtractor.extract({
+                rawText: trimmed,
+                source: 'text',
+                sourceCorpusId: null,
+                language,
+            });
 
-        const updated = await this.paperRepository.setRubric(input.ownerId, input.paperId, rubric);
+            const now = new Date();
+            const rubric: PaperRubric = {
+                ...extracted.rubric,
+                createdAt: paper.rubric?.createdAt ?? now,
+                updatedAt: now,
+            };
 
-        return {
-            paper: updated,
-            confidence: extracted.confidence,
-            reviewNotes: extracted.reviewNotes,
-        };
+            const updated = await this.paperRepository.setRubric(input.ownerId, input.paperId, rubric);
+
+            return {
+                paper: updated,
+                confidence: extracted.confidence,
+                reviewNotes: extracted.reviewNotes,
+            };
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }

@@ -15,6 +15,7 @@ import {
     EMPTY_VERIFICATION_SUMMARY,
     computeRubricCompliance,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Generates a `CanonicalVerseAnalysis` for one verse step — the
@@ -72,6 +73,14 @@ export class AnalyzeVerseCanonicallyUseCase {
             throw new Error(`Verse step ${input.stepId} has no verseRef`);
         }
 
+        // Reserve exégesis credits BEFORE any state mutation so
+        // InsufficientExegesisCreditsError aborts cleanly without
+        // leaving the step stuck in 'generating'.
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'analyzeVerseCanonically',
+        );
+
         await this.paperRepository.setStepState(input.ownerId, input.paperId, input.stepId, 'generating');
 
         try {
@@ -104,6 +113,7 @@ export class AnalyzeVerseCanonicallyUseCase {
                 missingSourceTypes,
             };
 
+            reservation.markLlmContacted();
             const result = await this.analyzer.analyzeVerse(analyzerInput);
 
             // Sanitize hallucinated source keys against the actual
@@ -146,6 +156,11 @@ export class AnalyzeVerseCanonicallyUseCase {
             } catch (rollbackErr) {
                 console.error('[AnalyzeVerseCanonicallyUseCase] failed to roll state back to failed:', rollbackErr);
             }
+            // Refund the reservation when the failure happened BEFORE
+            // the LLM was contacted. Post-LLM failures (Gemini error,
+            // parse failure, persist hiccup) keep the charge — the
+            // tokens were spent for real.
+            await reservation.refundIfPreLlm();
             throw err;
         }
     }

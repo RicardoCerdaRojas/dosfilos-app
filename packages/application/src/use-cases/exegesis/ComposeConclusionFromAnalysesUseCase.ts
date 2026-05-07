@@ -17,6 +17,7 @@ import {
     EMPTY_VERIFICATION_SUMMARY,
     isCitableSourceType,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Composes the conclusion section from accepted canonical verse
@@ -68,6 +69,11 @@ export class ComposeConclusionFromAnalysesUseCase {
             );
         }
 
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'composeConclusionFromAnalyses',
+        );
+
         await this.paperRepository.setStepState(input.ownerId, input.paperId, conclusionStep.id, 'generating');
 
         try {
@@ -87,6 +93,7 @@ export class ComposeConclusionFromAnalysesUseCase {
                 regenerationHint: input.regenerationHint ?? null,
             };
 
+            reservation.markLlmContacted();
             const result = await this.composer.composeConclusion(composerInput);
 
             const finalMarkdown = await this.applyFormatter(result.markdown, manifest, citableSources);
@@ -112,6 +119,7 @@ export class ComposeConclusionFromAnalysesUseCase {
             } catch (rollbackErr) {
                 console.error('[ComposeConclusionFromAnalysesUseCase] roll-back to failed errored:', rollbackErr);
             }
+            await reservation.refundIfPreLlm();
             throw err;
         }
     }

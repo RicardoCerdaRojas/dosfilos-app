@@ -32,6 +32,23 @@ export class InsufficientBalanceError extends Error {
     }
 }
 
+/**
+ * Thrown by `consumeExegesis()` when the user's exégesis bucket is
+ * insufficient. The UI surfaces an upgrade / pack-purchase modal.
+ */
+export class InsufficientExegesisCreditsError extends Error {
+    readonly code = 'insufficient-exegesis-credits' as const;
+    readonly neededUsd: number;
+    readonly availableUsd: number;
+    constructor(neededUsd: number, availableUsd: number) {
+        super(
+            `Not enough exegesis credits: needed $${neededUsd.toFixed(4)}, available $${availableUsd.toFixed(4)}`,
+        );
+        this.neededUsd = neededUsd;
+        this.availableUsd = availableUsd;
+    }
+}
+
 const ZERO_BALANCE: ProcessingBalance = {
     planStandardPages: 0,
     planPremiumPages: 0,
@@ -115,6 +132,13 @@ export class ProcessingBalanceService {
         const packPremium = balance.packPremiumPages
             ?? balance.premiumPagesAvailable
             ?? 0;
+        // Exegesis bucket — defaults to 0 / undefined for legacy users
+        // who haven't been migrated yet. The reserve UC treats 0 as
+        // "no access" + throws InsufficientExegesisCreditsError.
+        const planExegesis = balance.planExegesisUsd ?? 0;
+        const packExegesis = balance.packExegesisUsd ?? 0;
+        const exegesisAvailable = balance.exegesisUsdAvailable
+            ?? (planExegesis + packExegesis);
         return {
             planStandardPages: planStandard,
             planPremiumPages: planPremium,
@@ -124,6 +148,10 @@ export class ProcessingBalanceService {
             premiumPagesAvailable: planPremium + packPremium,
             standardSpentTotal: balance.standardSpentTotal ?? 0,
             premiumSpentTotal: balance.premiumSpentTotal ?? 0,
+            planExegesisUsd: planExegesis,
+            packExegesisUsd: packExegesis,
+            exegesisUsdAvailable: exegesisAvailable,
+            exegesisSpentTotalUsd: balance.exegesisSpentTotalUsd ?? 0,
             updatedAt: balance.updatedAt,
         };
     }
@@ -274,6 +302,157 @@ export class ProcessingBalanceService {
         await updateDoc(ref, {
             [planField]: newPlan,
             [availableField]: newPlan + packAvailable,
+            'processingBalance.updatedAt': serverTimestamp(),
+        });
+    }
+
+    // ── Exégesis bucket (USD-based, separate from page buckets) ──
+    //
+    // Same plan-first / pack-second consumption order as pages. Same
+    // dual-write pattern (plan + pack + aggregate available + lifetime
+    // total). Storage = nested USD scalars on `processingBalance` per
+    // the schema added in PR #112 (Fase 1 of the EXEGESIS_PRICING
+    // roadmap).
+
+    /**
+     * Returns true when the user has at least `costUsd` available
+     * across plan + pack exégesis budgets.
+     */
+    async hasExegesisCapacity(userId: string, costUsd: number): Promise<boolean> {
+        const balance = await this.getBalance(userId);
+        const available = (balance.exegesisUsdAvailable ?? 0);
+        return available >= costUsd;
+    }
+
+    /**
+     * Atomically debits `costUsd` from the user's exégesis budget.
+     * Plan bucket drains first (it resets monthly so wasting it is
+     * silly), then the pack bucket. Throws
+     * `InsufficientExegesisCreditsError` when the combined buckets
+     * can't cover the request.
+     *
+     * Caller is responsible for invoking `refundExegesis` if the
+     * downstream operation fails BEFORE the LLM was contacted —
+     * see use-case wrappers for the policy. Failures AFTER the LLM
+     * was hit are not refundable (tokens were paid).
+     */
+    async consumeExegesis(userId: string, costUsd: number): Promise<void> {
+        if (costUsd <= 0) return;
+        const balance = await this.getBalance(userId);
+        const planAvailable = balance.planExegesisUsd ?? 0;
+        const packAvailable = balance.packExegesisUsd ?? 0;
+        const total = planAvailable + packAvailable;
+        if (total < costUsd) {
+            throw new InsufficientExegesisCreditsError(costUsd, total);
+        }
+
+        const fromPlan = Math.min(planAvailable, costUsd);
+        const fromPack = costUsd - fromPlan;
+
+        const newPlan = planAvailable - fromPlan;
+        const newPack = packAvailable - fromPack;
+
+        const db = getFirestore();
+        const ref = doc(db, this.USERS, userId);
+
+        await updateDoc(ref, {
+            'processingBalance.planExegesisUsd': newPlan,
+            'processingBalance.packExegesisUsd': newPack,
+            'processingBalance.exegesisUsdAvailable': newPlan + newPack,
+            'processingBalance.exegesisSpentTotalUsd':
+                (balance.exegesisSpentTotalUsd ?? 0) + costUsd,
+            'processingBalance.updatedAt': serverTimestamp(),
+        });
+    }
+
+    /**
+     * Refunds `costUsd` to the user's exégesis budget. Used by the
+     * use-case error path when an operation fails BEFORE the Gemini
+     * call (validation error, missing entity, quota exceeded
+     * downstream). The split favors the bucket that was last drained:
+     * we top up the plan bucket first to avoid pretending the user has
+     * more pack credits than they bought.
+     */
+    async refundExegesis(userId: string, costUsd: number): Promise<void> {
+        if (costUsd <= 0) return;
+        const balance = await this.getBalance(userId);
+        const planAvailable = balance.planExegesisUsd ?? 0;
+        const packAvailable = balance.packExegesisUsd ?? 0;
+
+        const newPlan = planAvailable + costUsd;
+        const newPack = packAvailable;
+
+        const db = getFirestore();
+        const ref = doc(db, this.USERS, userId);
+
+        await updateDoc(ref, {
+            'processingBalance.planExegesisUsd': newPlan,
+            'processingBalance.packExegesisUsd': newPack,
+            'processingBalance.exegesisUsdAvailable': newPlan + newPack,
+            'processingBalance.exegesisSpentTotalUsd': Math.max(
+                0,
+                (balance.exegesisSpentTotalUsd ?? 0) - costUsd,
+            ),
+            'processingBalance.updatedAt': serverTimestamp(),
+        });
+    }
+
+    /**
+     * Credits `usdAmount` to the user's exégesis PACK bucket. Used by
+     * the Stripe webhook when an `exegesis-*` pack is purchased.
+     * Idempotent given a stable caller (the webhook deduplicates per
+     * Stripe session id).
+     */
+    async addExegesisPack(userId: string, usdAmount: number): Promise<void> {
+        if (usdAmount <= 0) return;
+        const balance = await this.getBalance(userId);
+        const planExisting = balance.planExegesisUsd ?? 0;
+        const newPack = (balance.packExegesisUsd ?? 0) + usdAmount;
+
+        const db = getFirestore();
+        const ref = doc(db, this.USERS, userId);
+
+        const snap = await getDoc(ref);
+        if (!snap.exists() || !snap.data()?.processingBalance) {
+            await setDoc(
+                ref,
+                { processingBalance: { ...ZERO_BALANCE } },
+                { merge: true },
+            );
+        }
+
+        await updateDoc(ref, {
+            'processingBalance.packExegesisUsd': newPack,
+            'processingBalance.exegesisUsdAvailable': planExisting + newPack,
+            'processingBalance.updatedAt': serverTimestamp(),
+        });
+    }
+
+    /**
+     * SETs the user's exégesis PLAN bucket to `usdAmount`. Used by the
+     * monthly billing-cycle webhook to reset the plan allowance at
+     * the start of each billing period. Pack bucket is untouched.
+     */
+    async setExegesisPlanQuota(userId: string, usdAmount: number): Promise<void> {
+        const balance = await this.getBalance(userId);
+        const newPlan = Math.max(0, usdAmount);
+        const packExisting = balance.packExegesisUsd ?? 0;
+
+        const db = getFirestore();
+        const ref = doc(db, this.USERS, userId);
+
+        const snap = await getDoc(ref);
+        if (!snap.exists() || !snap.data()?.processingBalance) {
+            await setDoc(
+                ref,
+                { processingBalance: { ...ZERO_BALANCE } },
+                { merge: true },
+            );
+        }
+
+        await updateDoc(ref, {
+            'processingBalance.planExegesisUsd': newPlan,
+            'processingBalance.exegesisUsdAvailable': newPlan + packExisting,
             'processingBalance.updatedAt': serverTimestamp(),
         });
     }
