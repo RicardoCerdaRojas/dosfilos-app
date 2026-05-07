@@ -979,6 +979,7 @@
             "modePicker": "Picker",
             "freeTextPlaceholder": "e.g. Hebrews 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
             "pickBook": "Pick a book",
+            "searchBook": "Search book… (e.g. heb, rom, gn)",
             "testamentOt": "Old Testament",
             "testamentNt": "New Testament",
             "chapter": "Ch.",

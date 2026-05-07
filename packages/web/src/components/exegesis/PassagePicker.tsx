@@ -344,6 +344,7 @@ function PickerMode({
                 bookId={bookId}
                 onBookChange={onBookChange}
                 placeholder={pickBookLabel}
+                searchPlaceholder={t('setup.passage.searchBook')}
                 otGroupLabel={otGroupLabel}
                 ntGroupLabel={ntGroupLabel}
             />
@@ -379,6 +380,7 @@ interface BookComboboxProps {
     bookId: BibleBookId | '';
     onBookChange: (id: BibleBookId | '') => void;
     placeholder: string;
+    searchPlaceholder: string;
     otGroupLabel: string;
     ntGroupLabel: string;
 }
@@ -396,6 +398,7 @@ function BookCombobox({
     bookId,
     onBookChange,
     placeholder,
+    searchPlaceholder,
     otGroupLabel,
     ntGroupLabel,
 }: BookComboboxProps) {
@@ -407,25 +410,38 @@ function BookCombobox({
     );
 
     const renderItems = (books: BibleCanonBook[]) =>
-        books.map(b => (
-            <CommandItem
-                key={b.id}
-                value={`${labelFor(b)} ${b.id}`}
-                onSelect={() => {
-                    onBookChange(b.id);
-                    setOpen(false);
-                }}
-                className="cursor-pointer"
-            >
-                <Check
+        books.map(b => {
+            const isSelected = bookId === b.id;
+            return (
+                <CommandItem
+                    key={b.id}
+                    value={`${labelFor(b)} ${b.id}`}
+                    onSelect={() => {
+                        onBookChange(b.id);
+                        setOpen(false);
+                    }}
                     className={cn(
-                        'mr-2 h-3.5 w-3.5 text-emerald-600',
-                        bookId === b.id ? 'opacity-100' : 'opacity-0',
+                        // Override the cmdk default `bg-accent` (which the
+                        // app theme maps to a saturated emerald) with a
+                        // softer subtle background. Keeps the keyboard
+                        // highlight readable without feeling like a
+                        // permanent selection.
+                        'cursor-pointer rounded-md text-[14px] py-1.5',
+                        'data-[selected=true]:bg-emerald-50 data-[selected=true]:text-emerald-900',
+                        'dark:data-[selected=true]:bg-emerald-950/40 dark:data-[selected=true]:text-emerald-100',
+                        isSelected && 'font-semibold',
                     )}
-                />
-                <span>{labelFor(b)}</span>
-            </CommandItem>
-        ));
+                >
+                    <Check
+                        className={cn(
+                            'mr-2 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400',
+                            isSelected ? 'opacity-100' : 'opacity-0',
+                        )}
+                    />
+                    <span className="truncate">{labelFor(b)}</span>
+                </CommandItem>
+            );
+        });
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -447,16 +463,24 @@ function BookCombobox({
             </PopoverTrigger>
             <PopoverContent
                 align="start"
-                className="p-0 w-[--radix-popover-trigger-width] min-w-[260px] max-h-[360px] overflow-hidden border border-slate-200 dark:border-zinc-800 shadow-lg"
+                className="p-0 w-[--radix-popover-trigger-width] min-w-[280px] max-h-[380px] overflow-hidden border border-slate-200 dark:border-zinc-800 shadow-xl rounded-lg"
             >
                 <Command>
-                    <CommandInput placeholder={placeholder} className="h-10" />
-                    <CommandList className="max-h-[300px]">
-                        <CommandEmpty>—</CommandEmpty>
-                        <CommandGroup heading={otGroupLabel}>
+                    <CommandInput placeholder={searchPlaceholder} className="h-10 text-[14px]" />
+                    <CommandList className="max-h-[320px] py-1">
+                        <CommandEmpty className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                            —
+                        </CommandEmpty>
+                        <CommandGroup
+                            heading={otGroupLabel}
+                            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-slate-500 dark:[&_[cmdk-group-heading]]:text-slate-400"
+                        >
                             {renderItems(otBooks)}
                         </CommandGroup>
-                        <CommandGroup heading={ntGroupLabel}>
+                        <CommandGroup
+                            heading={ntGroupLabel}
+                            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-slate-500 dark:[&_[cmdk-group-heading]]:text-slate-400"
+                        >
                             {renderItems(ntBooks)}
                         </CommandGroup>
                     </CommandList>
