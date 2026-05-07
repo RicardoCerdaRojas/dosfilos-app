@@ -17,6 +17,7 @@ export * from './entities/StyleGuideManifest';
 export * from './entities/UserRubric';
 export * from './entities/UserStyleGuide';
 export * from './entities/CanonicalVerseAnalysis';
+export * from './entities/CitationVerification';
 
 export * from './repositories/IExegeticalPaperRepository';
 export * from './repositories/IUserRubricRepository';
@@ -26,6 +27,7 @@ export * from './use-cases/dtos';
 
 export * from './ports/IAcademicComposer';
 export * from './ports/ICanonicalVerseAnalyzer';
+export * from './ports/ICitationVerifier';
 export * from './ports/IConclusionComposer';
 export * from './ports/IIntroductionComposer';
 export * from './ports/IMinistryComposers';

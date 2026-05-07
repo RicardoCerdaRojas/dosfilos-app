@@ -88,6 +88,11 @@ export {
 } from './MinistryComposerUseCases';
 export { AcceptStepUseCase } from './AcceptStepUseCase';
 export { SaveStepEditUseCase } from './SaveStepEditUseCase';
+export {
+    VerifyStepCitationsUseCase,
+    type VerifyStepCitationsInput,
+    type VerifyStepCitationsOutput,
+} from './VerifyStepCitationsUseCase';
 
 // Bridge: paper → sermon (Phase 2 of the sermon-series pipeline)
 export {

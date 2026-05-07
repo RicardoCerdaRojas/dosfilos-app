@@ -315,6 +315,29 @@ export function useExegesisPapers() {
         },
     });
 
+    // Citation verification (v1.5 — programmatic fuzzy match). Returns
+    // the per-citation list AND the persisted summary; the dialog
+    // renders the list, the badge in the step header reflects the
+    // summary that was written back to the version.
+    const verifyStepCitations = useMutation({
+        mutationFn: async ({ paperId, stepId, versionId }: {
+            paperId: string;
+            stepId: string;
+            versionId?: string;
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.verifyStepCitations.execute({
+                ownerId: user.uid,
+                paperId,
+                stepId,
+                versionId,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     // Bridge: paper → sermon. On success we invalidate the sermons cache too
     // so the dashboard's "Material reciente" picks up the new draft without
     // a manual refresh.
@@ -350,6 +373,7 @@ export function useExegesisPapers() {
         generateStep,
         acceptStep,
         saveStepEdit,
+        verifyStepCitations,
         generateSermonFromPaper,
         analyzeVerseCanonically,
         composeAcademicPaper,

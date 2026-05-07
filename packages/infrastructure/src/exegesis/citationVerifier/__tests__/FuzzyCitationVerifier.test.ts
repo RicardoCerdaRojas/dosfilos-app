@@ -1,0 +1,130 @@
+import { describe, it, expect } from 'vitest';
+import type { VerifierSource } from '@dosfilos/domain';
+import { FuzzyCitationVerifier } from '../FuzzyCitationVerifier';
+
+describe('FuzzyCitationVerifier', () => {
+    const verifier = new FuzzyCitationVerifier();
+
+    const laneSource: VerifierSource = {
+        corpusId: 'corpus-lane',
+        citationKey: 'Lane',
+        fullAuthor: 'Lane, William L.',
+        displayLabel: 'Hebrews 1-8',
+        chunks: [
+            {
+                text: 'In these last days God has spoken to us in his Son. The polyphony of prophetic revelation reaches its climax in the Son who shares the divine nature.',
+                pageHint: 'p. 47',
+            },
+            {
+                text: 'The author articulates a sustained Christological argument running through the first chapter.',
+                pageHint: 'p. 53',
+            },
+        ],
+    };
+
+    const bruceSource: VerifierSource = {
+        corpusId: 'corpus-bruce',
+        citationKey: 'Bruce',
+        fullAuthor: 'Bruce, F. F.',
+        displayLabel: 'The Epistle to the Hebrews',
+        chunks: [
+            {
+                text: 'The exordium of Hebrews introduces the readers to a Son superior to angels.',
+                pageHint: 'p. 12',
+            },
+        ],
+    };
+
+    it('returns verified for a quoted phrase that overlaps an excerpt', () => {
+        const markdown = [
+            'The author claims, "the polyphony of prophetic revelation reaches its climax in the Son" (Lane, "Hebrews 1-8", p. 47).',
+        ].join('\n');
+        const { citations } = verifier.verify({
+            markdown,
+            sources: [laneSource, bruceSource],
+        });
+        expect(citations).toHaveLength(1);
+        expect(citations[0]!.status).toBe('verified');
+        expect(citations[0]!.matchedCorpusId).toBe('corpus-lane');
+    });
+
+    it('flags page-mismatch when the cited page differs from the matching excerpt', () => {
+        const markdown = [
+            'The author argues that "the polyphony of prophetic revelation reaches its climax in the Son" (Lane, "Hebrews 1-8", p. 99).',
+        ].join('\n');
+        const { citations } = verifier.verify({
+            markdown,
+            sources: [laneSource],
+        });
+        expect(citations).toHaveLength(1);
+        expect(citations[0]!.status).toBe('page-mismatch');
+        expect(citations[0]!.matchedPage).toBe('47');
+    });
+
+    it('returns not-found when the source matches but the claim text is absent', () => {
+        const markdown = [
+            'Lane interprets the chapter cosmologically — "the seven seals open the celestial liturgy" (Lane, "Hebrews 1-8", p. 47).',
+        ].join('\n');
+        const { citations } = verifier.verify({
+            markdown,
+            sources: [laneSource],
+        });
+        expect(citations).toHaveLength(1);
+        expect(citations[0]!.status).toBe('not-found');
+        expect(citations[0]!.matchedCorpusId).toBe('corpus-lane');
+    });
+
+    it('returns not-found when the author is unknown', () => {
+        const markdown = 'Some claim (Phantom, "Phantom Title", p. 1).';
+        const { citations } = verifier.verify({
+            markdown,
+            sources: [laneSource, bruceSource],
+        });
+        expect(citations).toHaveLength(1);
+        expect(citations[0]!.status).toBe('not-found');
+        expect(citations[0]!.matchedCorpusId).toBeNull();
+    });
+
+    it('matches via title-fragment when author token is unfamiliar', () => {
+        const markdown = [
+            'The author articulates a sustained Christological argument running through the first chapter (Anonymous, "Hebrews 1-8", p. 53).',
+        ].join('\n');
+        const { citations } = verifier.verify({
+            markdown,
+            sources: [laneSource],
+        });
+        expect(citations[0]!.matchedCorpusId).toBe('corpus-lane');
+        expect(citations[0]!.status).toBe('verified');
+    });
+
+    it('handles full-document mode by skipping page-mismatch detection', () => {
+        const fullDocSource: VerifierSource = {
+            corpusId: 'corpus-full',
+            citationKey: 'Cockerill',
+            fullAuthor: 'Cockerill, Gareth',
+            displayLabel: 'NICNT Hebrews',
+            chunks: [
+                {
+                    text: 'The exordium presents God speaking definitively in the Son after a long history of prophetic speech.',
+                    pageHint: null,
+                },
+            ],
+        };
+        const markdown = [
+            'God speaks "definitively in the Son after a long history of prophetic speech" (Cockerill, "NICNT Hebrews", p. 99).',
+        ].join('\n');
+        const { citations } = verifier.verify({
+            markdown,
+            sources: [fullDocSource],
+        });
+        // Full-document has no pageHint → page-mismatch is skipped,
+        // verdict stays at the text-similarity tier.
+        expect(citations[0]!.status).toBe('verified');
+        expect(citations[0]!.matchedPage).toBeNull();
+    });
+
+    it('returns no citations when markdown is empty', () => {
+        const { citations } = verifier.verify({ markdown: '', sources: [laneSource] });
+        expect(citations).toHaveLength(0);
+    });
+});

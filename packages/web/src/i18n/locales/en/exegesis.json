@@ -1134,6 +1134,34 @@
                     "individual": "Individual study"
                 }
             }
+        },
+        "verify": {
+            "button": {
+                "label": "Verify citations",
+                "tooltip": "Compares each inline citation with your source content (text + page). Manual."
+            },
+            "badge": {
+                "tooltip": "{{verified}} of {{total}} citations verified · {{issues}} flagged"
+            },
+            "status": {
+                "verified": "Verified",
+                "page-mismatch": "Page mismatch",
+                "fuzzy-low": "Low match",
+                "not-found": "Not found",
+                "manual-pending": "Manual review"
+            },
+            "dialog": {
+                "title": "Citation verification",
+                "description": "Each inline citation was checked against the paper's sources. Yellow or red items need a closer look.",
+                "empty": "No citations detected in this step. If you expected some, make sure they follow the (Author, \"Title\", p. N) pattern.",
+                "running": "Checking citations against sources…",
+                "rerun": "Re-verify",
+                "close": "Close",
+                "matchedSource": "Source"
+            },
+            "toast": {
+                "failed": "Verification failed. Try again."
+            }
         }
     },
     "detail": {
