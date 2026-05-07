@@ -186,6 +186,36 @@ firebase deploy --only functions:reprocessWithLlamaParse,functions:extractPdfWit
 
 - [ ] Verificar que `plans/basic.stripeProductIds`, `plans/pro.stripeProductIds`, `plans/team.stripeProductIds` siguen apuntando a los price IDs reales (el script no los toca, pero confirma)
 
+### 3.3 Migración de cuotas de exégesis (EXEGESIS_PRICING_INTEGRATION Fase 6)
+
+Sin esto, suscriptores Pro/Equipo existentes ven "0 estudios" hasta que su próxima invoice de Stripe corra (hasta 30 días) y el modal de upgrade les insiste a pesar de que su plan ya incluye la cuota.
+
+- [ ] **Paso A — Sembrar `plans/{id}.limits.exegesisUsdPerMonth`** (si no se hizo todavía):
+  ```bash
+  node scripts/billing/migrate-exegesis-plan-quotas.js
+  ```
+  Salida esperada: `pro: $10`, `team: $30`, `free: $0`, `basic: $0`. Idempotente.
+
+- [ ] **Paso B — Backup de Firestore** (Firebase Console → Backups → Export).
+
+- [ ] **Paso C — Dry-run del backfill por usuario** (Firebase Console → Functions → `backfillExegesisQuotas` → Test):
+  ```json
+  { "dryRun": true }
+  ```
+  Validar `summary.credited > 0` y `grantsByPlan` solo con `pro` / `team`.
+
+- [ ] **Paso D — Ejecutar backfill real**:
+  ```json
+  {}
+  ```
+  Marker prefix: `exegesis-backfill-{ts}`. Re-correr con el mismo ts es no-op (markers existen).
+
+- [ ] **Paso E — Verificar usuario Pro de muestra**:
+  1. Firestore → `users/{uid}.processingBalance`:
+     - `planExegesisUsd: 10`
+     - `exegesisUsdAvailable: 10` (asumiendo `packExegesisUsd: 0`)
+  2. UI: tile "Estudios" en Library banner debe mostrar `5` (10 / STUDY_UNIT_USD).
+
 ---
 
 ## 4. Validación de seguridad y citas (Hito 1)
