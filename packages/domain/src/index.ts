@@ -1,6 +1,8 @@
 // Entities
 export * from './entities/User';
 export * from './entities/CreditPack';
+export * from './entities/ExegesisOperationCatalog';
+export * from './services/computeExegesisQuotaState';
 export * from './entities/LlamaParseAccount';
 export * from './entities/Feature';
 export * from './entities/Subscription';
