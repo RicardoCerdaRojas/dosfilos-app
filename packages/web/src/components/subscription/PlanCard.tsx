@@ -22,6 +22,7 @@ interface PlanCardProps {
      */
     standardPagesPerMonth?: number;
     premiumPagesPerMonth?: number;
+    exegesisUsdPerMonth?: number;
 }
 
 /**
@@ -49,6 +50,7 @@ export function PlanCard({
     showCurrentBadge = false,
     standardPagesPerMonth,
     premiumPagesPerMonth,
+    exegesisUsdPerMonth,
 }: PlanCardProps) {
     const isFree = plan.priceMonthly === 0;
 
@@ -111,11 +113,12 @@ export function PlanCard({
                 {/* Monthly processing quota block. Hidden for Free
                     (quota 0/0) so the empty state doesn't compete
                     visually with the paid tiers. */}
-                {(standardPagesPerMonth || premiumPagesPerMonth) ? (
+                {(standardPagesPerMonth || premiumPagesPerMonth || exegesisUsdPerMonth) ? (
                     <div className="mb-4">
                         <ProcessingQuotaBlock
                             standardPagesPerMonth={standardPagesPerMonth}
                             premiumPagesPerMonth={premiumPagesPerMonth}
+                            exegesisUsdPerMonth={exegesisUsdPerMonth}
                         />
                     </div>
                 ) : null}

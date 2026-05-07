@@ -100,6 +100,7 @@ export function PricingPage() {
                         }}
                         standardPagesPerMonth={plan.limits?.standardPagesPerMonth}
                         premiumPagesPerMonth={plan.limits?.premiumPagesPerMonth}
+                        exegesisUsdPerMonth={plan.limits?.exegesisUsdPerMonth}
                         isPopular={isPopular}
                         ctaLabel="Empezar 30 días gratis"
                         onCtaClick={() => handlePlanSelect(plan.id)}
