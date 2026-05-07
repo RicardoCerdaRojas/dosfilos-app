@@ -35,11 +35,11 @@ describe('FuzzyCitationVerifier', () => {
         ],
     };
 
-    it('returns verified for a quoted phrase that overlaps an excerpt', () => {
+    it('returns verified for a quoted phrase that overlaps an excerpt', async () => {
         const markdown = [
             'The author claims, "the polyphony of prophetic revelation reaches its climax in the Son" (Lane, "Hebrews 1-8", p. 47).',
         ].join('\n');
-        const { citations } = verifier.verify({
+        const { citations } = await verifier.verify({
             markdown,
             sources: [laneSource, bruceSource],
         });
@@ -48,11 +48,11 @@ describe('FuzzyCitationVerifier', () => {
         expect(citations[0]!.matchedCorpusId).toBe('corpus-lane');
     });
 
-    it('flags page-mismatch when the cited page differs from the matching excerpt', () => {
+    it('flags page-mismatch when the cited page differs from the matching excerpt', async () => {
         const markdown = [
             'The author argues that "the polyphony of prophetic revelation reaches its climax in the Son" (Lane, "Hebrews 1-8", p. 99).',
         ].join('\n');
-        const { citations } = verifier.verify({
+        const { citations } = await verifier.verify({
             markdown,
             sources: [laneSource],
         });
@@ -61,11 +61,11 @@ describe('FuzzyCitationVerifier', () => {
         expect(citations[0]!.matchedPage).toBe('47');
     });
 
-    it('returns not-found when the source matches but the claim text is absent', () => {
+    it('returns not-found when the source matches but the claim text is absent', async () => {
         const markdown = [
             'Lane interprets the chapter cosmologically — "the seven seals open the celestial liturgy" (Lane, "Hebrews 1-8", p. 47).',
         ].join('\n');
-        const { citations } = verifier.verify({
+        const { citations } = await verifier.verify({
             markdown,
             sources: [laneSource],
         });
@@ -74,9 +74,9 @@ describe('FuzzyCitationVerifier', () => {
         expect(citations[0]!.matchedCorpusId).toBe('corpus-lane');
     });
 
-    it('returns not-found when the author is unknown', () => {
+    it('returns not-found when the author is unknown', async () => {
         const markdown = 'Some claim (Phantom, "Phantom Title", p. 1).';
-        const { citations } = verifier.verify({
+        const { citations } = await verifier.verify({
             markdown,
             sources: [laneSource, bruceSource],
         });
@@ -85,11 +85,11 @@ describe('FuzzyCitationVerifier', () => {
         expect(citations[0]!.matchedCorpusId).toBeNull();
     });
 
-    it('matches via title-fragment when author token is unfamiliar', () => {
+    it('matches via title-fragment when author token is unfamiliar', async () => {
         const markdown = [
             'The author articulates a sustained Christological argument running through the first chapter (Anonymous, "Hebrews 1-8", p. 53).',
         ].join('\n');
-        const { citations } = verifier.verify({
+        const { citations } = await verifier.verify({
             markdown,
             sources: [laneSource],
         });
@@ -97,7 +97,7 @@ describe('FuzzyCitationVerifier', () => {
         expect(citations[0]!.status).toBe('verified');
     });
 
-    it('handles full-document mode by skipping page-mismatch detection', () => {
+    it('handles full-document mode by skipping page-mismatch detection', async () => {
         const fullDocSource: VerifierSource = {
             corpusId: 'corpus-full',
             citationKey: 'Cockerill',
@@ -113,7 +113,7 @@ describe('FuzzyCitationVerifier', () => {
         const markdown = [
             'God speaks "definitively in the Son after a long history of prophetic speech" (Cockerill, "NICNT Hebrews", p. 99).',
         ].join('\n');
-        const { citations } = verifier.verify({
+        const { citations } = await verifier.verify({
             markdown,
             sources: [fullDocSource],
         });
@@ -123,8 +123,8 @@ describe('FuzzyCitationVerifier', () => {
         expect(citations[0]!.matchedPage).toBeNull();
     });
 
-    it('returns no citations when markdown is empty', () => {
-        const { citations } = verifier.verify({ markdown: '', sources: [laneSource] });
+    it('returns no citations when markdown is empty', async () => {
+        const { citations } = await verifier.verify({ markdown: '', sources: [laneSource] });
         expect(citations).toHaveLength(0);
     });
 });

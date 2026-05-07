@@ -39,7 +39,7 @@ import {
  * the dialog surfaces the mismatch, they decide whether to edit.
  */
 export class FuzzyCitationVerifier implements ICitationVerifier {
-    verify(input: CitationVerifierInput): CitationVerifierOutput {
+    async verify(input: CitationVerifierInput): Promise<CitationVerifierOutput> {
         const lookup = new SourceMatcher(input.sources);
         const sourceTokensCache = new Map<string, string[]>();
 

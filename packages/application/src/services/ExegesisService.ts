@@ -18,6 +18,7 @@ import {
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
     FuzzyCitationVerifier,
+    GeminiLlmCitationVerifier,
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
@@ -315,10 +316,21 @@ class ExegesisService {
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
 
-        // Citation verifier — token-overlap fuzzy match over the
-        // paper's project sources. Reuses the same `contentReader`
-        // for full-document mode so legacy sources also verify.
-        const citationVerifier = new FuzzyCitationVerifier();
+        // Citation verifier — defaults to the LLM-based adapter so
+        // cross-language papers (Spanish prose paraphrasing English
+        // commentary) verify correctly. The token-set Jaccard adapter
+        // (`FuzzyCitationVerifier`) returns zero overlap in that
+        // realistic scenario; the LLM verifier judges meaning, not
+        // lexical match.
+        //
+        // The Fuzzy adapter stays exported (and instantiated as a
+        // void reference here for type-checked tree-shake reachability)
+        // so test suites or telemetry comparisons can re-wire it
+        // without touching the use case.
+        void FuzzyCitationVerifier;
+        const citationVerifier = new GeminiLlmCitationVerifier(apiKey || '', {
+            modelName: exegesisModelId,
+        });
         this.verifyStepCitations = new VerifyStepCitationsUseCase(
             paperRepository,
             contentReader,

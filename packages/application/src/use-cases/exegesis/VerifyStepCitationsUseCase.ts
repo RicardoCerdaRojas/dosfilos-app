@@ -76,7 +76,7 @@ export class VerifyStepCitationsUseCase {
         if (!target) throw new Error(`No version available to verify on step ${stepId}`);
 
         const sources = await this.buildVerifierSources(paper);
-        const { citations } = this.verifier.verify({
+        const { citations } = await this.verifier.verify({
             markdown: target.markdown,
             sources,
         });
@@ -112,12 +112,30 @@ export class VerifyStepCitationsUseCase {
 
     private async buildChunks(source: ProjectSource): Promise<VerifierSourceChunk[]> {
         if (source.mode === 'extracted-excerpts') {
-            return source.excerpts
+            const excerptChunks = source.excerpts
                 .map<VerifierSourceChunk>(excerpt => ({
                     text: excerpt.text,
                     pageHint: excerpt.sourceLocation || null,
                 }))
                 .filter(c => c.text.trim().length > 0);
+
+            // Fallback chunk: also pull the full library-resource text
+            // when available. The user's curated excerpts are the
+            // primary evidence (preserving page-mismatch detection),
+            // but a citation may reference content elsewhere in the
+            // resource — the verifier should not return "not found"
+            // just because the cited passage wasn't curated for paper
+            // writing. The fallback chunk has no `pageHint` so any
+            // match against it doesn't trigger page-mismatch.
+            if (source.sourceLibraryResourceId) {
+                const fullText = await this.contentReader.getTextContent(
+                    source.sourceLibraryResourceId,
+                );
+                if (fullText && fullText.trim().length > 0) {
+                    excerptChunks.push({ text: fullText, pageHint: null });
+                }
+            }
+            return excerptChunks;
         }
         // 'full-document' (or legacy sources without `mode`): pull the
         // whole corpus text. Page-mismatch detection is impossible

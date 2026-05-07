@@ -42,14 +42,16 @@ export interface CitationVerifierOutput {
 }
 
 /**
- * Programmatic citation verifier. Pure function in shape — given the
- * markdown and the paper's source material, returns one verdict per
- * detected citation. No side effects.
+ * Programmatic citation verifier. Returns one verdict per detected
+ * citation. No side effects (the use case persists the summary).
  *
- * The use case persists the resulting summary on the step version's
- * `verifications` field; the per-citation list is returned to the UI
- * for the verification dialog.
+ * Async because the v2 LLM-based adapter needs to make per-citation
+ * model calls (to support cross-language verification — a Spanish
+ * paper paraphrasing English commentary won't match on token overlap
+ * but a multilingual LLM handles it natively). The legacy
+ * `FuzzyCitationVerifier` simply wraps its sync verdict in
+ * `Promise.resolve(...)` so existing callers stay valid.
  */
 export interface ICitationVerifier {
-    verify(input: CitationVerifierInput): CitationVerifierOutput;
+    verify(input: CitationVerifierInput): Promise<CitationVerifierOutput>;
 }
