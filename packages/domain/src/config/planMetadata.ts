@@ -18,8 +18,10 @@ export interface PlanMetadata {
 
 export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
     basic: {
+        // Legacy ID retained from pre-Hito-4. Display label is
+        // "Personal" — see `planIds.ts` for the canonical mapping.
         id: 'basic',
-        name: 'Basic',
+        name: 'Personal',
         description: 'Para comenzar tu ministerio de predicación',
         priceMonthly: 9.99,
         stripePriceId: 'price_1Snh3X08MCNNnSDL4izMKQex',
@@ -52,8 +54,10 @@ export const PLAN_CONFIGS: Record<string, PlanMetadata> = {
         trialDays: 30,
     },
     team: {
+        // Legacy ID retained from pre-Hito-4. Display label is
+        // "Equipo" — see `planIds.ts`.
         id: 'team',
-        name: 'Team',
+        name: 'Equipo',
         description: 'Para equipos pastorales e iglesias',
         priceMonthly: 24.99,
         stripePriceId: 'price_1SgDiK08MCNNnSDL3mCVFwl4',

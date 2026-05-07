@@ -51,6 +51,7 @@ export * from './repositories/IVectorRepository';
 
 // Config
 export * from './config/planMetadata';
+export * from './config/planIds';
 
 // Services
 export * from './services/IAIService';
