@@ -80,6 +80,11 @@ export {
     type ComposeIntroductionFromAnalysesUseCaseInput,
 } from './ComposeIntroductionFromAnalysesUseCase';
 export {
+    ComposeVerseAcademicProseUseCase,
+    type ComposeVerseAcademicProseInput,
+    type ComposeVerseAcademicProseOutput,
+} from './ComposeVerseAcademicProseUseCase';
+export {
     ComposeSermonFromAnalysesUseCase,
     ComposeDevotionalFromAnalysesUseCase,
     ComposeStudyGuideFromAnalysesUseCase,

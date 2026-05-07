@@ -1041,9 +1041,23 @@
             "analyze": "Canonical analysis",
             "analyzeTooltip": "Generate the structured analysis (study mode + academic composer)",
             "analyzeRetry": "Retry analysis",
+            "analyzeFromAccepted": "Migrate to canonical analysis",
+            "analyzeFromAcceptedTooltip": "Generate the structured analysis for this verse (replaces the legacy markdown with study view + payload reusable by composers).",
+            "regenAnalysis": "Regenerate analysis",
+            "regenAnalysisTooltip": "Re-run the canonical analysis for this verse. The previous per-verse prose is invalidated until you recompose it.",
             "composeConclusionTooltip": "Compose the conclusion from the accepted canonical analyses",
             "composeIntroductionTooltip": "Compose the introduction LAST, using the accepted analyses + accepted conclusion",
             "composeFromAnalyses": "Compose from analyses"
+        },
+        "verseProse": {
+            "button": {
+                "compose": "Compose academic prose",
+                "recompose": "Recompose prose",
+                "tooltip": "Turn the verse's canonical analysis into 1-3 paragraphs of TMS-style academic prose. Persisted on this verse — re-renders cost nothing."
+            },
+            "toast": {
+                "failed": "Could not compose the verse's prose. Try again."
+            }
         },
         "toast": {
             "analyzeFailed": "Could not generate the canonical analysis.",

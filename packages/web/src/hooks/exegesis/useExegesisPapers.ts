@@ -288,6 +288,24 @@ export function useExegesisPapers() {
         },
     });
 
+    // Per-verse academic-prose composer. PERSISTS the result on the
+    // version's `markdown` field so re-renders are free until the
+    // analysis changes (a new analysis version starts with empty
+    // markdown again).
+    const composeVerseAcademicProse = useMutation({
+        mutationFn: async ({ paperId, stepId }: { paperId: string; stepId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.composeVerseAcademicProse.execute({
+                ownerId: user.uid,
+                paperId,
+                stepId,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     // Ministry composers (Phase 6) — sermon, devotional, study guide.
     // None of them mutate paper state, so no cache invalidation
     // needed. The output goes to the user via copy/download/handoff
@@ -455,6 +473,7 @@ export function useExegesisPapers() {
         composeAcademicPaper,
         composeConclusionFromAnalyses,
         composeIntroductionFromAnalyses,
+        composeVerseAcademicProse,
         composeSermonFromAnalyses,
         composeDevotionalFromAnalyses,
         composeStudyGuideFromAnalyses,

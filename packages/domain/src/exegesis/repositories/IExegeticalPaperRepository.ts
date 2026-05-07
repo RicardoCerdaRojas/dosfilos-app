@@ -184,4 +184,22 @@ export interface IExegeticalPaperRepository {
         versionId: string,
         verifications: VerificationSummary
     ): Promise<ExegeticalStepVersion>;
+
+    /**
+     * Sets the `markdown` field of a specific step version. Used by the
+     * per-verse academic composer to persist its output without
+     * appending a new version (recomposing prose over the same
+     * canonicalAnalysis is idempotent — no point growing the history
+     * for it). Both `current` and `accepted` references on the step
+     * are kept in sync if either points at the target version.
+     *
+     * Throws when the version doesn't belong to the step.
+     */
+    setStepVersionMarkdown(
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        versionId: string,
+        markdown: string
+    ): Promise<ExegeticalStepVersion>;
 }
