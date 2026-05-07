@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisQuota } from '@/hooks/exegesis/useExegesisQuota';
 import { STUDY_UNIT_USD } from '@dosfilos/domain';
+import { fireExegesisPricingEvent } from '@dosfilos/application';
+import { useFirebase } from '@/context/firebase-context';
 
 interface ExegesisOutOfCreditsDialogProps {
     open: boolean;
@@ -54,9 +56,17 @@ export function ExegesisOutOfCreditsDialog({
 }: ExegesisOutOfCreditsDialogProps) {
     const { t } = useTranslation('exegesis');
     const quota = useExegesisQuota();
+    const { user } = useFirebase();
 
     const noAccess = quota?.noAccess === true;
     const hasPack = (quota?.packBalanceUsd ?? 0) > 0;
+
+    const trackUpgradeClick = (surface: 'upgrade_plan' | 'buy_pack') => {
+        fireExegesisPricingEvent('exegesis.upgrade.cta_clicked', {
+            ownerId: user?.uid,
+            surface,
+        });
+    };
 
     const neededStudies = neededUsd != null ? Math.max(0.1, neededUsd / STUDY_UNIT_USD) : null;
 
@@ -118,7 +128,11 @@ export function ExegesisOutOfCreditsDialog({
                         <div className="flex flex-col gap-2 pt-2">
                             {noAccess && (
                                 <Button
-                                    onClick={() => { onUpgradePlan?.(); onOpenChange(false); }}
+                                    onClick={() => {
+                                        trackUpgradeClick('upgrade_plan');
+                                        onUpgradePlan?.();
+                                        onOpenChange(false);
+                                    }}
                                     className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
                                 >
                                     <Sparkles className="h-4 w-4 mr-1.5" />
@@ -128,7 +142,11 @@ export function ExegesisOutOfCreditsDialog({
                             {!noAccess && (
                                 <>
                                     <Button
-                                        onClick={() => { onBuyPacks?.(); onOpenChange(false); }}
+                                        onClick={() => {
+                                            trackUpgradeClick('buy_pack');
+                                            onBuyPacks?.();
+                                            onOpenChange(false);
+                                        }}
                                         disabled={!onBuyPacks}
                                         className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
                                     >

@@ -2,7 +2,8 @@ import {
     type ExegesisOperationKey,
     getExegesisOperationCostUsd,
 } from '@dosfilos/domain';
-import { processingBalanceService } from './ProcessingBalanceService';
+import { processingBalanceService, InsufficientExegesisCreditsError } from './ProcessingBalanceService';
+import { fireExegesisPricingEvent } from './exegesisPricingTracker';
 
 /**
  * Thin reservation handle that consolidates the reserve / refund
@@ -44,9 +45,32 @@ export class ExegesisCreditReservation {
         operation: ExegesisOperationKey,
     ): Promise<ExegesisCreditReservation> {
         const reservation = new ExegesisCreditReservation(userId, operation);
-        if (reservation.costUsd > 0) {
-            await processingBalanceService.consumeExegesis(userId, reservation.costUsd);
+        if (reservation.costUsd <= 0) {
+            return reservation;
         }
+        fireExegesisPricingEvent('exegesis.quota.reserve_attempted', {
+            ownerId: userId,
+            operation,
+            costUsd: reservation.costUsd,
+        });
+        try {
+            await processingBalanceService.consumeExegesis(userId, reservation.costUsd);
+        } catch (err) {
+            if (err instanceof InsufficientExegesisCreditsError) {
+                fireExegesisPricingEvent('exegesis.quota.exceeded', {
+                    ownerId: userId,
+                    operation,
+                    requiredUsd: err.neededUsd,
+                    availableUsd: err.availableUsd,
+                });
+            }
+            throw err;
+        }
+        fireExegesisPricingEvent('exegesis.quota.reserve_succeeded', {
+            ownerId: userId,
+            operation,
+            costUsd: reservation.costUsd,
+        });
         return reservation;
     }
 
@@ -67,6 +91,12 @@ export class ExegesisCreditReservation {
         if (this.llmContacted || this.costUsd <= 0) return;
         try {
             await processingBalanceService.refundExegesis(this.userId, this.costUsd);
+            fireExegesisPricingEvent('exegesis.quota.refunded', {
+                ownerId: this.userId,
+                operation: this.operation,
+                costUsd: this.costUsd,
+                reason: 'pre-llm-failure',
+            });
         } catch (err) {
             console.error('[ExegesisCreditReservation] refund failed:', err);
         }

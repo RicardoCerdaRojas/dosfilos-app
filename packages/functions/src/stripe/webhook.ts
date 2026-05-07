@@ -328,6 +328,10 @@ async function handleCreditPackPurchase(
             currency: session.currency ?? null,
             createdAt: FieldValue.serverTimestamp(),
         });
+        await logExegesisPricingActivity(db, firebaseUID, 'exegesis.pack.purchased', {
+            packSku: pack.id,
+            amountUsd: usd,
+        });
         console.log(
             `[CreditPack] Credited $${usd} exégesis to ${firebaseUID} (pack=${pack.id}, session=${session.id})`,
         );
@@ -577,4 +581,32 @@ async function applyMonthlyQuotaIfPending(
     console.log(
         `[MonthlyQuota] reset plan bucket for ${firebaseUID} to ${standardQuota} std + ${premiumQuota} prem + $${exegesisQuota} exégesis (plan=${planId}, invoice=${invoiceId}, reason=${invoice.billing_reason})`,
     );
+}
+
+/**
+ * Server-side mirror of the web `fireExegesisPricingEvent` tracker.
+ * Writes to `user_activities` with the same `feature_used` shape so
+ * dashboards can union web + webhook events without two pipelines.
+ * Fire-and-forget — telemetry failure must not block the Stripe ack.
+ */
+async function logExegesisPricingActivity(
+    db: Firestore,
+    userId: string,
+    event: string,
+    metadata: Record<string, unknown>,
+) {
+    try {
+        const now = new Date();
+        const activityId = `${userId}_${now.getTime()}_${event}`;
+        await db.collection('user_activities').doc(activityId).set({
+            userId,
+            sessionId: `webhook_${now.getTime()}`,
+            eventType: 'feature_used',
+            metadata: { feature: 'exegesis_pricing', event, ...metadata },
+            timestamp: FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
+        });
+    } catch (err) {
+        console.error('[logExegesisPricingActivity] failed:', err);
+    }
 }

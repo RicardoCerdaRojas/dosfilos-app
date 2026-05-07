@@ -19,6 +19,8 @@ export * from './services/CoreLibraryRAGService'; // 🎯 Phase 2: Vector-search
 export * from './services/LeadsService';
 export * from './services/CoreLibraryAdminService';
 export * from './services/ProcessingBalanceService';
+export * from './services/exegesisPricingTracker';
+export * from './services/ExegesisCreditReservation';
 export * from './greek-tutor/use-cases/GenerateTrainingUnitsUseCase';
 export * from './greek-tutor/use-cases/EvaluateUserResponseUseCase';
 export * from './greek-tutor/use-cases/SaveInsightUseCase';
