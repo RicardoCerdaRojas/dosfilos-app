@@ -26,6 +26,7 @@ import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { CanonicalAnalysisStudyView } from '@/components/exegesis/canonical/CanonicalAnalysisStudyView';
 import { CitationVerificationDialog } from '@/components/exegesis/CitationVerificationDialog';
+import { ExegesisOutOfCreditsDialog } from '@/components/exegesis/ExegesisOutOfCreditsDialog';
 import {
     formatPassageReference,
     type ExegeticalStep,
@@ -78,6 +79,10 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     // user can re-open the dialog without re-running the verifier.
     const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
     const [verifiedCitations, setVerifiedCitations] = useState<VerifiedCitation[]>([]);
+    // Out-of-credits dialog. Triggered when any exegesis mutation
+    // throws `InsufficientExegesisCreditsError` (Fase 2 reserve fails).
+    const [outOfCreditsOpen, setOutOfCreditsOpen] = useState(false);
+    const [outOfCreditsNeededUsd, setOutOfCreditsNeededUsd] = useState<number | undefined>(undefined);
     // Collapse behavior:
     //   - Accepted steps default to COLLAPSED (the user already
     //     approved; detail is rarely re-read in the same session).
@@ -120,6 +125,28 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         setEditing(true);
     };
 
+    /**
+     * Catches the Fase-2 InsufficientExegesisCreditsError thrown by
+     * any exegesis mutation (the use case calls
+     * `processingBalanceService.consumeExegesis` before the LLM call;
+     * if the bucket can't cover the catalog cost, the error
+     * propagates here). Opens the OutOfCredits dialog with the
+     * needed-USD pre-populated. Returns true when handled so the
+     * caller can skip the generic toast.
+     */
+    const handleQuotaError = (err: unknown): boolean => {
+        if (
+            err instanceof Error
+            && (err as { code?: string }).code === 'insufficient-exegesis-credits'
+        ) {
+            const neededUsd = (err as { neededUsd?: number }).neededUsd;
+            setOutOfCreditsNeededUsd(neededUsd);
+            setOutOfCreditsOpen(true);
+            return true;
+        }
+        return false;
+    };
+
     const cancelEdit = () => {
         setEditDraft('');
         setEditing(false);
@@ -131,6 +158,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             setHintMode(false);
             setHintDraft('');
         } catch (err) {
+            if (handleQuotaError(err)) return;
             console.error('[exegesis] generate failed:', err);
             toast.error(t('detail.steps.toast.generateFailed'));
         }
@@ -153,6 +181,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             // the structured payload that just came back.
             setViewMode('study');
         } catch (err) {
+            if (handleQuotaError(err)) return;
             console.error('[exegesis] canonical analysis failed:', err);
             toast.error(t('canonical.toast.analyzeFailed'));
         }
@@ -169,6 +198,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         try {
             await composeConclusionFromAnalyses.mutateAsync({ paperId });
         } catch (err) {
+            if (handleQuotaError(err)) return;
             console.error('[exegesis] compose conclusion failed:', err);
             toast.error(t('canonical.toast.composeSectionFailed', {
                 message: (err as Error).message ?? '',
@@ -179,6 +209,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         try {
             await composeIntroductionFromAnalyses.mutateAsync({ paperId });
         } catch (err) {
+            if (handleQuotaError(err)) return;
             console.error('[exegesis] compose introduction failed:', err);
             toast.error(t('canonical.toast.composeSectionFailed', {
                 message: (err as Error).message ?? '',
@@ -205,6 +236,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             // controlled by the user's last choice.
             setViewMode('prose');
         } catch (err) {
+            if (handleQuotaError(err)) return;
             console.error('[exegesis] compose verse prose failed:', err);
             toast.error(t('canonical.verseProse.toast.failed'));
         }
@@ -267,6 +299,10 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             });
             setVerifiedCitations(result.citations);
         } catch (err) {
+            if (handleQuotaError(err)) {
+                setVerifyDialogOpen(false);
+                return;
+            }
             console.error('[exegesis] verify failed:', err);
             toast.error(t('canonical.verify.toast.failed'));
             setVerifiedCitations([]);
@@ -888,6 +924,11 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 citations={verifiedCitations}
                 isVerifying={verifyStepCitations.isPending}
                 onReverify={handleVerifyCitations}
+            />
+            <ExegesisOutOfCreditsDialog
+                open={outOfCreditsOpen}
+                onOpenChange={setOutOfCreditsOpen}
+                neededUsd={outOfCreditsNeededUsd}
             />
         </article>
     );

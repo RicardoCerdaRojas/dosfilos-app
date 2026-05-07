@@ -50,6 +50,7 @@ import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
 import { AcademicCompositionDialog } from '@/components/exegesis/canonical/AcademicCompositionDialog';
 import { MinistryCompositionDialog } from '@/components/exegesis/canonical/MinistryCompositionDialog';
 import { CoherencePassDialog } from '@/components/exegesis/CoherencePassDialog';
+import { ExegesisQuotaBadge } from '@/components/exegesis/ExegesisQuotaBadge';
 import { exportPaperToDocx } from '@/lib/exegesis/exportPaperToDocx';
 import {
     exportPaperToMarkdown,
@@ -219,6 +220,13 @@ export function ExegesisPaperPage() {
                             {passageDisplay} · {t(`list.phase.${paper.phase}`)}
                         </p>
                     </div>
+
+                    {/* Persistent exégesis quota badge — visible from
+                        every paper detail page so the user always
+                        sees their remaining studies before triggering
+                        a costly op. Click opens the OutOfCredits
+                        dialog with breakdown + buy/upgrade CTAs. */}
+                    <ExegesisQuotaBadge variant="compact" />
 
                     {/* Secondary actions — icon-only with tooltips. Visually
                         grouped tight so they read as a strip rather than
