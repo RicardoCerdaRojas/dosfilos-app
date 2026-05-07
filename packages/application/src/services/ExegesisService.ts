@@ -16,6 +16,7 @@ import {
     GeminiPaperToSermonTransformer,
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
+    FuzzyCitationVerifier,
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
@@ -72,6 +73,7 @@ import {
     GenerateStepUseCase,
     AcceptStepUseCase,
     SaveStepEditUseCase,
+    VerifyStepCitationsUseCase,
     GenerateSermonFromPaperUseCase,
 } from '../use-cases/exegesis';
 
@@ -135,6 +137,11 @@ class ExegesisService {
     public generateStep: GenerateStepUseCase;
     public acceptStep: AcceptStepUseCase;
     public saveStepEdit: SaveStepEditUseCase;
+    // Programmatic citation verification (v1.5 differentiator vs
+    // NotebookLM). Runs over a step version's accepted markdown,
+    // matches cited sources against the paper's project-source list,
+    // and persists a per-status summary on the version.
+    public verifyStepCitations: VerifyStepCitationsUseCase;
 
     // Canonical analysis pipeline (target architecture — see docs/exegesis/METODOLOGIA.md).
     // Coexists with `generateStep` during the migration; produces a
@@ -300,6 +307,16 @@ class ExegesisService {
         );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
+
+        // Citation verifier — token-overlap fuzzy match over the
+        // paper's project sources. Reuses the same `contentReader`
+        // for full-document mode so legacy sources also verify.
+        const citationVerifier = new FuzzyCitationVerifier();
+        this.verifyStepCitations = new VerifyStepCitationsUseCase(
+            paperRepository,
+            contentReader,
+            citationVerifier,
+        );
 
         // Canonical analysis pipeline. Wired in parallel to `generateStep`
         // so the legacy markdown path keeps working while the structured

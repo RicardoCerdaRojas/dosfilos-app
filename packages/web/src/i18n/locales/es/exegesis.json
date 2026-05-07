@@ -1134,6 +1134,34 @@
                     "individual": "Estudio individual"
                 }
             }
+        },
+        "verify": {
+            "button": {
+                "label": "Verificar citas",
+                "tooltip": "Compara cada cita inline con el contenido de tus fuentes (texto + página). Manual."
+            },
+            "badge": {
+                "tooltip": "{{verified}} de {{total}} citas verificadas · {{issues}} con observaciones"
+            },
+            "status": {
+                "verified": "Verificada",
+                "page-mismatch": "Página no coincide",
+                "fuzzy-low": "Coincidencia baja",
+                "not-found": "No encontrada",
+                "manual-pending": "Revisión manual"
+            },
+            "dialog": {
+                "title": "Verificación de citas",
+                "description": "Cada cita inline se contrastó contra las fuentes del paper. Las marcadas en amarillo o rojo necesitan revisión.",
+                "empty": "No se detectaron citas en este paso. Si esperabas ver alguna, asegúrate de usar el formato (Autor, \"Título\", p. N).",
+                "running": "Comparando citas con las fuentes…",
+                "rerun": "Volver a verificar",
+                "close": "Cerrar",
+                "matchedSource": "Fuente"
+            },
+            "toast": {
+                "failed": "No se pudo verificar las citas. Intenta de nuevo."
+            }
         }
     },
     "detail": {

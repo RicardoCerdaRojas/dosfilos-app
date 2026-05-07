@@ -7,6 +7,7 @@ import type {
     ExegeticalStep,
     ExegeticalStepState,
     ExegeticalStepVersion,
+    VerificationSummary,
 } from '../entities/ExegeticalStep';
 import type { PaperRubric } from '../entities/PaperRubric';
 import type { ProjectSource } from '../entities/ProjectSource';
@@ -165,4 +166,22 @@ export interface IExegeticalPaperRepository {
         stepId: string,
         markdown: string
     ): Promise<ExegeticalStep>;
+
+    /**
+     * Replaces the `verifications` summary on a specific step version.
+     * Used by the citation verifier use case after running over an
+     * accepted version. Both `current` and `accepted` references on the
+     * step are kept in sync if either one points at the target version
+     * — the UI reads from whichever is set, so divergence would silently
+     * surface stale counts.
+     *
+     * Throws when the version doesn't belong to the step.
+     */
+    setStepVersionVerifications(
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        versionId: string,
+        verifications: VerificationSummary
+    ): Promise<ExegeticalStepVersion>;
 }

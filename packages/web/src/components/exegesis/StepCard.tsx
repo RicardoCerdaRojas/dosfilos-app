@@ -15,6 +15,7 @@ import {
     ChevronDown,
     ChevronRight,
     NotebookPen,
+    ShieldCheck,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -24,10 +25,13 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { CanonicalAnalysisStudyView } from '@/components/exegesis/canonical/CanonicalAnalysisStudyView';
+import { CitationVerificationDialog } from '@/components/exegesis/CitationVerificationDialog';
 import {
     formatPassageReference,
     type ExegeticalStep,
     type SupportedLanguage,
+    type VerifiedCitation,
+    type VerificationSummary,
 } from '@dosfilos/domain';
 
 interface StepCardProps {
@@ -62,12 +66,17 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         analyzeVerseCanonically,
         composeConclusionFromAnalyses,
         composeIntroductionFromAnalyses,
+        verifyStepCitations,
     } = useExegesisPapers();
 
     const [editing, setEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
     const [hintDraft, setHintDraft] = useState('');
     const [hintMode, setHintMode] = useState(false);
+    // Citation verifier dialog state. Last results live here so the
+    // user can re-open the dialog without re-running the verifier.
+    const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
+    const [verifiedCitations, setVerifiedCitations] = useState<VerifiedCitation[]>([]);
     // Accepted steps collapse by default to keep the page short for
     // multi-verse papers — the user already approved them, so the
     // detailed content is rarely re-read in the same session. Click
@@ -214,6 +223,37 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         }
     };
 
+    // Citation verifier — runs over the version the UI is currently
+    // displaying (`accepted ?? current`, the use case picks). The
+    // dialog opens regardless of success/failure so the user always
+    // sees feedback.
+    const handleVerifyCitations = async () => {
+        const targetVersion = step.accepted ?? step.current;
+        if (!targetVersion) return;
+        setVerifyDialogOpen(true);
+        try {
+            const result = await verifyStepCitations.mutateAsync({
+                paperId,
+                stepId: step.id,
+                versionId: targetVersion.id,
+            });
+            setVerifiedCitations(result.citations);
+        } catch (err) {
+            console.error('[exegesis] verify failed:', err);
+            toast.error(t('canonical.verify.toast.failed'));
+            setVerifiedCitations([]);
+        }
+    };
+
+    // Display-only summary lookup — picks from the version the UI is
+    // showing so the badge in the header reflects the same content the
+    // user is reading. Null until verification has ever run.
+    const displayVerificationSummary: VerificationSummary | null = (() => {
+        const v = step.accepted?.verifications ?? step.current?.verifications ?? null;
+        if (!v || !v.lastRunAt) return null;
+        return v;
+    })();
+
     return (
         <article
             className={cn(
@@ -256,9 +296,14 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                     <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                         {displayLabel}
                     </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {t(`detail.steps.state.${step.state}`)}
-                        {step.versions.length > 0 ? ` · v${step.versions.length}` : ''}
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                        <span>
+                            {t(`detail.steps.state.${step.state}`)}
+                            {step.versions.length > 0 ? ` · v${step.versions.length}` : ''}
+                        </span>
+                        {displayVerificationSummary && (
+                            <VerificationBadge summary={displayVerificationSummary} />
+                        )}
                     </p>
                 </div>
                 {isPending && (
@@ -491,6 +536,17 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                             <Pencil className="h-3.5 w-3.5 mr-1.5" />
                             {t('detail.steps.action.editManual')}
                         </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleVerifyCitations}
+                            disabled={verifyStepCitations.isPending || !step.current}
+                            className="ml-auto"
+                            title={t('canonical.verify.button.tooltip')}
+                        >
+                            {verifyStepCitations.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />}
+                            {t('canonical.verify.button.label')}
+                        </Button>
                     </div>
                     {hintMode && (
                         <div className="flex items-center gap-2">
@@ -529,7 +585,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             )}
 
             {showAccepted && !editing && (
-                <footer className="px-5 py-2.5 border-t border-slate-100 dark:border-zinc-800 flex items-center gap-2">
+                <footer className="px-5 py-2.5 border-t border-slate-100 dark:border-zinc-800 flex items-center gap-3">
                     <button
                         type="button"
                         onClick={startEdit}
@@ -538,11 +594,68 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         <Pencil className="h-3 w-3" />
                         {t('detail.steps.action.editAccepted')}
                     </button>
+                    <button
+                        type="button"
+                        onClick={handleVerifyCitations}
+                        disabled={verifyStepCitations.isPending}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
+                        title={t('canonical.verify.button.tooltip')}
+                    >
+                        {verifyStepCitations.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
+                        {t('canonical.verify.button.label')}
+                    </button>
                 </footer>
             )}
             </>
             )}
+            <CitationVerificationDialog
+                open={verifyDialogOpen}
+                onOpenChange={setVerifyDialogOpen}
+                citations={verifiedCitations}
+                isVerifying={verifyStepCitations.isPending}
+                onReverify={handleVerifyCitations}
+            />
         </article>
+    );
+}
+
+/**
+ * Compact summary chip the step header shows once verification has
+ * run on the displayed version. Three flavors:
+ *   - "all clear": green, count of verified.
+ *   - "issues": orange/red, breakdown of mismatches.
+ *   - empty (`null`) when verification has never run on this version.
+ */
+function VerificationBadge({ summary }: { summary: VerificationSummary }) {
+    const { t } = useTranslation('exegesis');
+    const issues = summary.counts.pageMismatch
+        + summary.counts.notFound
+        + summary.counts.fuzzyLow;
+    const allVerified = issues === 0 && summary.counts.verified > 0;
+    if (summary.totalCitations === 0) return null;
+
+    return (
+        <span
+            className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-1.5 py-0 text-[10px]',
+                allVerified
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300'
+                    : issues > 0
+                        ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300'
+                        : 'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300',
+            )}
+            title={t('canonical.verify.badge.tooltip', {
+                verified: summary.counts.verified,
+                total: summary.totalCitations,
+                issues,
+            })}
+        >
+            <ShieldCheck className="h-2.5 w-2.5" />
+            {summary.counts.verified}/{summary.totalCitations}
+            {issues > 0 && (
+                <span className="opacity-70">· {issues}!</span>
+            )}
+        </span>
     );
 }
 

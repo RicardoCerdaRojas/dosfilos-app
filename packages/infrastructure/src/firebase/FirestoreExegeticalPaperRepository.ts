@@ -26,6 +26,7 @@ import type {
     ProjectSourceExcerpt,
     SourceType,
     StepSourcePlan,
+    VerificationSummary,
 } from '@dosfilos/domain';
 import {
     EMPTY_STEP_SOURCE_PLAN,
@@ -536,6 +537,38 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             step.updatedAt = new Date();
             return step;
         });
+    }
+
+    async setStepVersionVerifications(
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        versionId: string,
+        verifications: VerificationSummary
+    ): Promise<ExegeticalStepVersion> {
+        let updatedVersion: ExegeticalStepVersion | null = null;
+        await this.mutateStep(ownerId, paperId, stepId, (step) => {
+            const idx = step.versions.findIndex(v => v.id === versionId);
+            if (idx === -1) {
+                throw new Error(`Version ${versionId} not found in step ${stepId}`);
+            }
+            const next: ExegeticalStepVersion = {
+                ...step.versions[idx]!,
+                verifications,
+            };
+            const versions = [...step.versions];
+            versions[idx] = next;
+            step.versions = versions;
+            // Keep `current` and `accepted` references in sync so the
+            // UI (which reads from either) sees fresh counts immediately.
+            if (step.current?.id === versionId) step.current = next;
+            if (step.accepted?.id === versionId) step.accepted = next;
+            step.updatedAt = new Date();
+            updatedVersion = next;
+            return step;
+        });
+        if (!updatedVersion) throw new Error('Verification mutation produced no result');
+        return updatedVersion;
     }
 
     /**
