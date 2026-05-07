@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Type, ListFilter, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Type, ListFilter, CheckCircle2, AlertCircle, BookOpen, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import {
@@ -12,6 +12,8 @@ import {
     type BibleBookId,
     type BibleCanonBook,
 } from '@dosfilos/domain';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 
 type Mode = 'free-text' | 'picker';
 
@@ -335,25 +337,16 @@ function PickerMode({
 }: PickerModeProps) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-2">
-            {/* Book — native <select> with optgroup is the simplest accessible
-                way to handle 66 entries grouped by testament. */}
-            <select
-                value={bookId}
-                onChange={(e) => onBookChange(e.target.value as BibleBookId | '')}
-                className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-[15px] text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-            >
-                <option value="">{pickBookLabel}</option>
-                <optgroup label={otGroupLabel}>
-                    {otBooks.map(b => (
-                        <option key={b.id} value={b.id}>{labelFor(b)}</option>
-                    ))}
-                </optgroup>
-                <optgroup label={ntGroupLabel}>
-                    {ntBooks.map(b => (
-                        <option key={b.id} value={b.id}>{labelFor(b)}</option>
-                    ))}
-                </optgroup>
-            </select>
+            <BookCombobox
+                otBooks={otBooks}
+                ntBooks={ntBooks}
+                labelFor={labelFor}
+                bookId={bookId}
+                onBookChange={onBookChange}
+                placeholder={pickBookLabel}
+                otGroupLabel={otGroupLabel}
+                ntGroupLabel={ntGroupLabel}
+            />
 
             <NumberPair
                 startLabel={t('setup.passage.chapter')}
@@ -376,6 +369,100 @@ function PickerMode({
                 disabled={!selectedBook || !chapterStart}
             />
         </div>
+    );
+}
+
+interface BookComboboxProps {
+    otBooks: BibleCanonBook[];
+    ntBooks: BibleCanonBook[];
+    labelFor: (b: BibleCanonBook) => string;
+    bookId: BibleBookId | '';
+    onBookChange: (id: BibleBookId | '') => void;
+    placeholder: string;
+    otGroupLabel: string;
+    ntGroupLabel: string;
+}
+
+/**
+ * Premium combobox replacement for the native `<select>`. Search-as-you-type
+ * across 66 books (typing "heb" filters to Hebreos / Hebrews instantly),
+ * grouped headings for OT/NT, keyboard navigation via cmdk, popover-based
+ * surface with the same emerald focus ring as the rest of the picker.
+ */
+function BookCombobox({
+    otBooks,
+    ntBooks,
+    labelFor,
+    bookId,
+    onBookChange,
+    placeholder,
+    otGroupLabel,
+    ntGroupLabel,
+}: BookComboboxProps) {
+    const [open, setOpen] = useState(false);
+    const allBooks = useMemo(() => [...otBooks, ...ntBooks], [otBooks, ntBooks]);
+    const selected = useMemo(
+        () => allBooks.find(b => b.id === bookId) ?? null,
+        [allBooks, bookId],
+    );
+
+    const renderItems = (books: BibleCanonBook[]) =>
+        books.map(b => (
+            <CommandItem
+                key={b.id}
+                value={`${labelFor(b)} ${b.id}`}
+                onSelect={() => {
+                    onBookChange(b.id);
+                    setOpen(false);
+                }}
+                className="cursor-pointer"
+            >
+                <Check
+                    className={cn(
+                        'mr-2 h-3.5 w-3.5 text-emerald-600',
+                        bookId === b.id ? 'opacity-100' : 'opacity-0',
+                    )}
+                />
+                <span>{labelFor(b)}</span>
+            </CommandItem>
+        ));
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <button
+                    type="button"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="inline-flex items-center justify-between rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-[15px] text-left text-slate-800 dark:text-slate-100 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 data-[state=open]:ring-2 data-[state=open]:ring-emerald-500/40 data-[state=open]:border-emerald-500"
+                >
+                    <span className="inline-flex items-center gap-2 min-w-0">
+                        <BookOpen className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                        <span className={cn('truncate', !selected && 'text-slate-400 dark:text-slate-500 font-normal')}>
+                            {selected ? labelFor(selected) : placeholder}
+                        </span>
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+                </button>
+            </PopoverTrigger>
+            <PopoverContent
+                align="start"
+                className="p-0 w-[--radix-popover-trigger-width] min-w-[260px] max-h-[360px] overflow-hidden border border-slate-200 dark:border-zinc-800 shadow-lg"
+            >
+                <Command>
+                    <CommandInput placeholder={placeholder} className="h-10" />
+                    <CommandList className="max-h-[300px]">
+                        <CommandEmpty>—</CommandEmpty>
+                        <CommandGroup heading={otGroupLabel}>
+                            {renderItems(otBooks)}
+                        </CommandGroup>
+                        <CommandGroup heading={ntGroupLabel}>
+                            {renderItems(ntBooks)}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
     );
 }
 
