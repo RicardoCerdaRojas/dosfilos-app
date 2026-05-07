@@ -195,7 +195,7 @@ export default function SubscriptionPage() {
             </CardTitle>
             <CardDescription className="mt-2">
               {t('freePlan.upgradeMessage', { 
-                defaultValue: 'Desbloquea todo el potencial de DosFilos.Preach con acceso a generación de sermones con IA, análisis homilético avanzado, y mucho más.' 
+                defaultValue: 'Desbloquea todo el potencial de DosFilos.Preach con acceso a generación avanzada de sermones, análisis homilético y mucho más.'
               })}
             </CardDescription>
           </CardHeader>

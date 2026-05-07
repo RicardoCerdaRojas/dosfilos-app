@@ -484,7 +484,7 @@ export function ExpandedSection({
                             variant="ghost"
                             size="sm"
                             onClick={() => onRegenerate(i)}
-                            title="Regenerar este punto con IA"
+                            title="Regenerar este punto"
                             className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
                           >
                             <Redo2 className="h-4 w-4" />

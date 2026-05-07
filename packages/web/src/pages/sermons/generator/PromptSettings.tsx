@@ -94,7 +94,7 @@ export function PromptSettings({ phase }: PromptSettingsProps) {
                         </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground px-1">
-                        La IA utilizará automáticamente los recursos de la biblioteca central (Exégesis, Homilética) para fundamentar el contenido.
+                        El asistente utilizará automáticamente los recursos de la biblioteca central (Exégesis, Homilética) para fundamentar el contenido.
                     </p>
                 </div>
 
@@ -157,7 +157,7 @@ export function PromptSettings({ phase }: PromptSettingsProps) {
                     <Textarea
                         value={rules.customInstructions || ''}
                         onChange={(e) => handleChange('customInstructions', e.target.value)}
-                        placeholder="Instrucciones específicas para la IA..."
+                        placeholder="Instrucciones específicas para el asistente..."
                         className="h-20"
                     />
                 </div>

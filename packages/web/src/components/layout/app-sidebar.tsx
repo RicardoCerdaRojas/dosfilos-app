@@ -165,7 +165,7 @@ export function AppSidebar() {
   const adminNavigation = [
     { name: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
     { name: 'Gestión de Usuarios', href: '/dashboard/admin/users', icon: Users },
-    { name: 'Tutores IA', href: '/dashboard/admin/tutors', icon: Bot },
+    { name: 'Tutores', href: '/dashboard/admin/tutors', icon: Bot },
     { name: 'Pistas Hebreo', href: '/dashboard/admin/hebrew-tutor-hints', icon: BookOpen },
     { name: 'Glosario Léxico', href: '/dashboard/admin/hebrew-lexicon', icon: BookOpenText },
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },

@@ -169,7 +169,7 @@ export default function TutorEditor() {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">
-                            {isEditing ? 'Editar Tutor' : 'Nuevo Tutor IA'}
+                            {isEditing ? 'Editar Tutor' : 'Nuevo Tutor'}
                         </h1>
                         <p className="text-muted-foreground mt-2">
                             Configura la experticia y las instrucciones maestras del agente. Cada idioma se edita por separado en su pestaña.

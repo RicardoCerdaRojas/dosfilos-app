@@ -63,7 +63,7 @@ function checkTriggers(context: TriggerContext, navigate: any) {
             },
             action: (nav) => {
                 toast("¿Predicas este domingo?", {
-                    description: "Prepara tu bosquejo en minutos con nuestra IA.",
+                    description: "Prepara tu bosquejo en minutos con tu asistente.",
                     icon: React.createElement(Calendar, { className: "h-5 w-5 text-blue-500" }),
                     duration: 8000,
                     action: {

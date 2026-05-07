@@ -438,8 +438,8 @@ export function SettingsPage() {
                     <Settings className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Configuración de IA</h1>
-                    <p className="text-muted-foreground">Personaliza tus asistentes de IA y preferencias.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Configuración del asistente</h1>
+                    <p className="text-muted-foreground">Personaliza tus asistentes y preferencias.</p>
                 </div>
             </div>
 
@@ -512,7 +512,7 @@ export function SettingsPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Configuración por Fase</CardTitle>
-                            <CardDescription>Personaliza cada experto IA del flujo de generación.</CardDescription>
+                            <CardDescription>Personaliza cada experto del flujo de generación.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Accordion type="single" collapsible className="w-full">

@@ -85,7 +85,7 @@ export function GenerationProgress({ phase }: GenerationProgressProps) {
                         {steps[currentStep]}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        El experto IA está trabajando en tu sermón...
+                        El experto está trabajando en tu sermón...
                     </p>
                 </div>
             </div>
