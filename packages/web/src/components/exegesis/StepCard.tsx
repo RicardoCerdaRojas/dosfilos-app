@@ -66,6 +66,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         analyzeVerseCanonically,
         composeConclusionFromAnalyses,
         composeIntroductionFromAnalyses,
+        composeVerseAcademicProse,
         verifyStepCitations,
     } = useExegesisPapers();
 
@@ -180,7 +181,25 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         generateStep.isPending
         || analyzeVerseCanonically.isPending
         || composeConclusionFromAnalyses.isPending
-        || composeIntroductionFromAnalyses.isPending;
+        || composeIntroductionFromAnalyses.isPending
+        || composeVerseAcademicProse.isPending;
+
+    // Per-verse academic prose composer. Persists on the version's
+    // `markdown` field, so re-rendering after the user clicks once is
+    // free until the analysis itself changes.
+    const handleComposeVerseProse = async () => {
+        if (step.kind !== 'verse') return;
+        try {
+            await composeVerseAcademicProse.mutateAsync({ paperId, stepId: step.id });
+            // Surface the prose by switching the view toggle so the
+            // user sees the result immediately. The toggle is otherwise
+            // controlled by the user's last choice.
+            setViewMode('prose');
+        } catch (err) {
+            console.error('[exegesis] compose verse prose failed:', err);
+            toast.error(t('canonical.verseProse.toast.failed'));
+        }
+    };
 
     // Adaptive regenerate routing: when the verse step's CURRENT
     // version was produced by the canonical analyzer (markers:
@@ -585,11 +604,12 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             )}
 
             {showAccepted && !editing && (
-                <footer className="px-5 py-2.5 border-t border-slate-100 dark:border-zinc-800 flex items-center gap-3">
+                <footer className="px-5 py-2.5 border-t border-slate-100 dark:border-zinc-800 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                     <button
                         type="button"
                         onClick={startEdit}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300"
+                        disabled={anyPipelinePending}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
                     >
                         <Pencil className="h-3 w-3" />
                         {t('detail.steps.action.editAccepted')}
@@ -597,13 +617,110 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                     <button
                         type="button"
                         onClick={handleVerifyCitations}
-                        disabled={verifyStepCitations.isPending}
+                        disabled={verifyStepCitations.isPending || anyPipelinePending}
                         className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
                         title={t('canonical.verify.button.tooltip')}
                     >
                         {verifyStepCitations.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
                         {t('canonical.verify.button.label')}
                     </button>
+
+                    {/* Verse-only affordances. Two paths:
+                        - Legacy (no canonicalAnalysis): offer the
+                          canonical-analyzer entry point so the user can
+                          migrate accepted legacy verses to the new
+                          structured pipeline without recreating them.
+                        - Canonical (has canonicalAnalysis): offer the
+                          per-verse prose composer + the regen / hint
+                          flow that the awaiting-review footer exposes
+                          but the accepted footer used to hide. */}
+                    {isVerse && !canonicalAnalysis && (
+                        <button
+                            type="button"
+                            onClick={() => handleAnalyzeCanonically()}
+                            disabled={anyPipelinePending}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
+                            title={t('canonical.actions.analyzeFromAcceptedTooltip')}
+                        >
+                            {analyzeVerseCanonically.isPending
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <NotebookPen className="h-3 w-3" />}
+                            {t('canonical.actions.analyzeFromAccepted')}
+                        </button>
+                    )}
+                    {isVerse && canonicalAnalysis && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleComposeVerseProse}
+                                disabled={anyPipelinePending}
+                                className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
+                                title={t('canonical.verseProse.button.tooltip')}
+                            >
+                                {composeVerseAcademicProse.isPending
+                                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                                    : <Wand2 className="h-3 w-3" />}
+                                {previewMarkdown.trim().length > 0
+                                    ? t('canonical.verseProse.button.recompose')
+                                    : t('canonical.verseProse.button.compose')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleAdaptiveRegenerate()}
+                                disabled={anyPipelinePending}
+                                className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
+                                title={t('canonical.actions.regenAnalysisTooltip')}
+                            >
+                                {analyzeVerseCanonically.isPending
+                                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                                    : <RotateCcw className="h-3 w-3" />}
+                                {t('canonical.actions.regenAnalysis')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setHintMode(v => !v)}
+                                disabled={anyPipelinePending}
+                                className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
+                            >
+                                <Pencil className="h-3 w-3" />
+                                {t('detail.steps.action.regenerateWithHint')}
+                            </button>
+                        </>
+                    )}
+
+                    {hintMode && isVerse && canonicalAnalysis && (
+                        <div className="basis-full flex items-center gap-2 mt-1">
+                            <input
+                                type="text"
+                                value={hintDraft}
+                                onChange={(e) => setHintDraft(e.target.value)}
+                                placeholder={t('detail.steps.hintPlaceholder')}
+                                className="flex-1 rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && hintDraft.trim()) {
+                                        handleAdaptiveRegenerate(hintDraft.trim());
+                                    }
+                                }}
+                            />
+                            <Button
+                                size="sm"
+                                onClick={() => hintDraft.trim() && handleAdaptiveRegenerate(hintDraft.trim())}
+                                disabled={!hintDraft.trim() || anyPipelinePending}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                            >
+                                {anyPipelinePending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                                {anyPipelinePending ? t('detail.steps.action.regenerating') : t('detail.steps.action.applyHint')}
+                            </Button>
+                            <button
+                                type="button"
+                                onClick={() => { setHintMode(false); setHintDraft(''); }}
+                                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                aria-label={t('setup.cancel')}
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    )}
                 </footer>
             )}
             </>

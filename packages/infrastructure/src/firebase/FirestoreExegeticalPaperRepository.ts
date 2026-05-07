@@ -571,6 +571,36 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         return updatedVersion;
     }
 
+    async setStepVersionMarkdown(
+        ownerId: string,
+        paperId: string,
+        stepId: string,
+        versionId: string,
+        markdown: string
+    ): Promise<ExegeticalStepVersion> {
+        let updatedVersion: ExegeticalStepVersion | null = null;
+        await this.mutateStep(ownerId, paperId, stepId, (step) => {
+            const idx = step.versions.findIndex(v => v.id === versionId);
+            if (idx === -1) {
+                throw new Error(`Version ${versionId} not found in step ${stepId}`);
+            }
+            const next: ExegeticalStepVersion = {
+                ...step.versions[idx]!,
+                markdown,
+            };
+            const versions = [...step.versions];
+            versions[idx] = next;
+            step.versions = versions;
+            if (step.current?.id === versionId) step.current = next;
+            if (step.accepted?.id === versionId) step.accepted = next;
+            step.updatedAt = new Date();
+            updatedVersion = next;
+            return step;
+        });
+        if (!updatedVersion) throw new Error('Markdown mutation produced no result');
+        return updatedVersion;
+    }
+
     /**
      * Generic step mutator: reads the paper, finds the step by id,
      * applies the mutator, writes back. Wrapped in a transaction so the

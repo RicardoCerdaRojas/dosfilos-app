@@ -1020,9 +1020,23 @@
             "analyze": "Análisis canónico",
             "analyzeTooltip": "Genera el análisis estructurado (study mode + composer académico)",
             "analyzeRetry": "Reintentar análisis",
+            "analyzeFromAccepted": "Migrar a análisis canónico",
+            "analyzeFromAcceptedTooltip": "Genera el análisis estructurado para este verso (reemplaza el markdown legacy con study view + payload reusable por composers).",
+            "regenAnalysis": "Regenerar análisis",
+            "regenAnalysisTooltip": "Vuelve a correr el análisis canónico para este verso. La prosa per-verso anterior se invalida hasta que la recompongas.",
             "composeConclusionTooltip": "Compone la conclusión a partir de los análisis canónicos aceptados",
             "composeIntroductionTooltip": "Compone la introducción al final, usando los análisis aceptados + la conclusión aceptada",
             "composeFromAnalyses": "Componer desde análisis"
+        },
+        "verseProse": {
+            "button": {
+                "compose": "Componer prosa académica",
+                "recompose": "Recomponer prosa",
+                "tooltip": "Convierte el análisis canónico de este verso en 1-3 párrafos de prosa académica TMS. Se persiste en este verso, sin gastar tokens en la próxima visita."
+            },
+            "toast": {
+                "failed": "No se pudo componer la prosa del verso. Intenta de nuevo."
+            }
         },
         "toast": {
             "analyzeFailed": "No se pudo generar el análisis canónico.",

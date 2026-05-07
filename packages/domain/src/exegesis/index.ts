@@ -30,6 +30,7 @@ export * from './ports/ICanonicalVerseAnalyzer';
 export * from './ports/ICitationVerifier';
 export * from './ports/IConclusionComposer';
 export * from './ports/IIntroductionComposer';
+export * from './ports/IVerseAcademicComposer';
 export * from './ports/IMinistryComposers';
 export * from './ports/IExcerptExtractor';
 export * from './ports/IExegesisOrchestrator';

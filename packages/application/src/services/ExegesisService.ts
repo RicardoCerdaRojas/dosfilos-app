@@ -9,6 +9,7 @@ import {
     GeminiConclusionComposer,
     GeminiDevotionalComposer,
     GeminiIntroductionComposer,
+    GeminiVerseAcademicComposer,
     GeminiExegesisOrchestrator,
     GeminiSermonComposer,
     GeminiStudyGuideComposer,
@@ -68,6 +69,7 @@ import {
     ComposeConclusionFromAnalysesUseCase,
     ComposeDevotionalFromAnalysesUseCase,
     ComposeIntroductionFromAnalysesUseCase,
+    ComposeVerseAcademicProseUseCase,
     ComposeSermonFromAnalysesUseCase,
     ComposeStudyGuideFromAnalysesUseCase,
     GenerateStepUseCase,
@@ -162,6 +164,11 @@ class ExegesisService {
     // user reviews + accepts the same way as legacy generation.
     public composeConclusionFromAnalyses: ComposeConclusionFromAnalysesUseCase;
     public composeIntroductionFromAnalyses: ComposeIntroductionFromAnalysesUseCase;
+    // Per-verse academic prose composer. Reads ONE verse's accepted
+    // canonical analysis, produces 1-3 paragraphs of TMS-style prose,
+    // PERSISTS on that version's `markdown` field so re-renders are
+    // free until the analysis changes.
+    public composeVerseAcademicProse: ComposeVerseAcademicProseUseCase;
 
     // Ministry composers (Phase 6) — sermon / devotional / study
     // guide composed from the same `CanonicalVerseAnalysis` artifact.
@@ -361,6 +368,14 @@ class ExegesisService {
             styleGuideRepository,
             contentReader,
             introductionComposer,
+            styleFormatter,
+        );
+        const verseAcademicComposer = new GeminiVerseAcademicComposer(apiKey || '', exegesisModelId);
+        this.composeVerseAcademicProse = new ComposeVerseAcademicProseUseCase(
+            paperRepository,
+            styleGuideRepository,
+            contentReader,
+            verseAcademicComposer,
             styleFormatter,
         );
 
