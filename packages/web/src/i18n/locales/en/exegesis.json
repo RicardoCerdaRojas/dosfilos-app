@@ -839,6 +839,13 @@
                     "typeLabelBulk": "Academic type for the {{count}} sources",
                     "typeDescription": "Pick the type that best describes the source. The rubric uses this type to decide whether it satisfies minimums.",
                     "typeDescriptionBulk": "Applies to every selected source. If you need different types, you can adjust them one by one from the corpus list afterwards.",
+                    "classifying": "Auto-classifying…",
+                    "classifierSuggested": "Auto-suggestion",
+                    "classifierConfidence": {
+                        "high": "high confidence",
+                        "medium": "medium confidence",
+                        "low": "low confidence — double-check the type"
+                    },
                     "citationKeyLabel": "Citation key",
                     "citationKeyPlaceholder": "e.g. Lane",
                     "citationKeyHint": "Used in footnotes. Leave empty and we derive it from the corpus.",

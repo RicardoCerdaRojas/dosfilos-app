@@ -839,6 +839,13 @@
                     "typeLabelBulk": "Tipo académico para las {{count}} fuentes",
                     "typeDescription": "Elegí el tipo que mejor describe la fuente. La rúbrica usa este tipo para decidir si cumple los mínimos.",
                     "typeDescriptionBulk": "Se aplica a todas las fuentes seleccionadas. Si necesitas tipos distintos, puedes ajustarlos uno por uno desde la lista del corpus.",
+                    "classifying": "Clasificando automáticamente…",
+                    "classifierSuggested": "Sugerencia automática",
+                    "classifierConfidence": {
+                        "high": "confianza alta",
+                        "medium": "confianza media",
+                        "low": "confianza baja — revisa el tipo"
+                    },
                     "citationKeyLabel": "Clave de cita",
                     "citationKeyPlaceholder": "Ej. Lane",
                     "citationKeyHint": "Se usa en las notas al pie. Si lo dejás vacío, lo derivamos del corpus.",
