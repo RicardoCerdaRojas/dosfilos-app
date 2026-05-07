@@ -2,12 +2,15 @@
 /**
  * Sister of `migrate-plan-quotas.js` for the EXEGESIS_PRICING_INTEGRATION
  * roadmap (Fase 3). Writes the per-plan exégesis USD allowance to
- * Firestore `plans/{free,basic,personal,pro,team}.limits.exegesisUsdPerMonth`.
+ * Firestore `plans/{free,basic,pro,team}.limits.exegesisUsdPerMonth`.
  *
- *   Free:     $0 — module gated, upgrade modal in UI.
- *   Personal: $0 — same as Free.
- *   Pro:      $10 — ~5 estudios at STUDY_UNIT_USD = $2.
- *   Team:     $30 — ~15 estudios.
+ *   free  → $0 (display: "Free")     — module gated.
+ *   basic → $0 (display: "Personal") — module gated, upgrade modal in UI.
+ *   pro   → $10 (display: "Pro")     — ~5 estudios at STUDY_UNIT_USD = $2.
+ *   team  → $30 (display: "Equipo")  — ~15 estudios.
+ *
+ * IDs are LEGACY (Hito 4 kept the document keys; only display labels
+ * changed). See `packages/domain/src/config/planIds.ts`.
  *
  * Idempotent (uses `set merge: true`). Re-running is safe.
  *
@@ -27,11 +30,11 @@ const db = admin.firestore();
 
 const EXEGESIS_QUOTAS = {
     // USD per month. Maps to ~estudios via STUDY_UNIT_USD = $2 in domain.
+    // Plan IDs are LEGACY — basic == "Personal" in display.
     free: 0,
-    basic: 0,
-    personal: 0,
-    pro: 10,
-    team: 30,
+    basic: 0,   // display: Personal — gated, upgrade required
+    pro: 10,    // ~5 estudios
+    team: 30,   // ~15 estudios — display: Equipo
 };
 
 const EXEGESIS_BONUS = {
@@ -40,7 +43,6 @@ const EXEGESIS_BONUS = {
     // experiments.
     free: 0,
     basic: 0,
-    personal: 0,
     pro: 0,
     team: 0,
 };
