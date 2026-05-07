@@ -1249,12 +1249,23 @@
                 "sendFailed": "No se pudo enviar tu mensaje. Intenta de nuevo."
             }
         },
+        "export": {
+            "menuTooltip": "Exportar trabajo"
+        },
         "exportMarkdown": {
             "cta": "Exportar (.md)",
             "tooltip": "Descarga el trabajo en Markdown — incluye lo aceptado hasta ahora si aún no está ensamblado",
             "disabledHint": "Disponible cuando hayas aceptado al menos un paso del trabajo",
             "toast": {
                 "exported": "Trabajo exportado en Markdown"
+            }
+        },
+        "exportDocx": {
+            "cta": "Exportar a Word (.docx)",
+            "tooltip": "Word con notas al pie nativas — ideal para entrega académica",
+            "toast": {
+                "exported": "Trabajo exportado en Word",
+                "failed": "No se pudo generar el .docx. Intenta de nuevo."
             }
         },
         "generateSermon": {

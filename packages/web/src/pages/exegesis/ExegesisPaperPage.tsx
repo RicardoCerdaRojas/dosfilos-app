@@ -48,6 +48,7 @@ import { CorpusCoverageReport } from '@/components/exegesis/corpus-plan/CorpusCo
 import { PaperFacultyDrawer } from '@/components/exegesis/PaperFacultyDrawer';
 import { AcademicCompositionDialog } from '@/components/exegesis/canonical/AcademicCompositionDialog';
 import { MinistryCompositionDialog } from '@/components/exegesis/canonical/MinistryCompositionDialog';
+import { exportPaperToDocx } from '@/lib/exegesis/exportPaperToDocx';
 import {
     exportPaperToMarkdown,
     formatPassageReference,
@@ -152,15 +153,16 @@ export function ExegesisPaperPage() {
         }
     };
 
-    const handleExportMarkdown = () => {
-        const markdown = exportPaperToMarkdown(paper);
-        const safeTitle = (paper.title || formatPassageReference(paper.passage, activeLanguage))
+    const buildSafeFilename = (extension: 'md' | 'docx'): string => {
+        const stem = (paper.title || formatPassageReference(paper.passage, activeLanguage))
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '')
             .slice(0, 60) || 'paper';
-        const filename = `${safeTitle}.md`;
-        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+        return `${stem}.${extension}`;
+    };
+
+    const triggerDownload = (blob: Blob, filename: string) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -169,7 +171,24 @@ export function ExegesisPaperPage() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    };
+
+    const handleExportMarkdown = () => {
+        const markdown = exportPaperToMarkdown(paper);
+        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+        triggerDownload(blob, buildSafeFilename('md'));
         toast.success(t('detail.exportMarkdown.toast.exported'));
+    };
+
+    const handleExportDocx = async () => {
+        try {
+            const blob = await exportPaperToDocx(paper);
+            triggerDownload(blob, buildSafeFilename('docx'));
+            toast.success(t('detail.exportDocx.toast.exported'));
+        } catch (err) {
+            console.error('[exegesis] export docx failed:', err);
+            toast.error(t('detail.exportDocx.toast.failed'));
+        }
     };
 
     const passageShape = passageEligibleForGeneration(paper);
@@ -223,18 +242,29 @@ export function ExegesisPaperPage() {
                             const hasContent = paper.assembledMarkdown !== null
                                 || paper.steps.some(s => s.accepted !== null);
                             return (
-                                <button
-                                    type="button"
-                                    onClick={handleExportMarkdown}
-                                    disabled={!hasContent}
-                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border text-foreground hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                                    title={hasContent
-                                        ? t('detail.exportMarkdown.cta') as string
-                                        : t('detail.exportMarkdown.disabledHint') as string}
-                                    aria-label={t('detail.exportMarkdown.cta') as string}
-                                >
-                                    <Download className="h-3.5 w-3.5" />
-                                </button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            disabled={!hasContent}
+                                            className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border text-foreground hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                            title={hasContent
+                                                ? t('detail.export.menuTooltip') as string
+                                                : t('detail.exportMarkdown.disabledHint') as string}
+                                            aria-label={t('detail.export.menuTooltip') as string}
+                                        >
+                                            <Download className="h-3.5 w-3.5" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="min-w-[220px]">
+                                        <DropdownMenuItem onClick={handleExportMarkdown}>
+                                            {t('detail.exportMarkdown.cta')}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleExportDocx}>
+                                            {t('detail.exportDocx.cta')}
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             );
                         })()}
                     </div>
