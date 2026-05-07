@@ -463,7 +463,7 @@ function BookCombobox({
             </PopoverTrigger>
             <PopoverContent
                 align="start"
-                className="p-0 w-[--radix-popover-trigger-width] min-w-[280px] max-h-[380px] overflow-hidden border border-slate-200 dark:border-zinc-800 shadow-xl rounded-lg"
+                className="p-0 w-[var(--radix-popover-trigger-width)] min-w-[280px] max-h-[380px] overflow-hidden border border-slate-200 dark:border-zinc-800 shadow-xl rounded-lg"
             >
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} className="h-10 text-[14px]" />
