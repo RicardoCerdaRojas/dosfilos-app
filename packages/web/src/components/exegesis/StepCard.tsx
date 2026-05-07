@@ -27,8 +27,12 @@ import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { CanonicalAnalysisStudyView } from '@/components/exegesis/canonical/CanonicalAnalysisStudyView';
 import { CitationVerificationDialog } from '@/components/exegesis/CitationVerificationDialog';
 import { ExegesisOutOfCreditsDialog } from '@/components/exegesis/ExegesisOutOfCreditsDialog';
+import { ExegesisPreConfirmDialog } from '@/components/exegesis/ExegesisPreConfirmDialog';
+import { CreditPacksDialog } from '@/pages/library/components/CreditPacksDialog';
 import {
     formatPassageReference,
+    operationRequiresPreConfirm,
+    type ExegesisOperationKey,
     type ExegeticalStep,
     type SupportedLanguage,
     type VerifiedCitation,
@@ -83,6 +87,10 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     // throws `InsufficientExegesisCreditsError` (Fase 2 reserve fails).
     const [outOfCreditsOpen, setOutOfCreditsOpen] = useState(false);
     const [outOfCreditsNeededUsd, setOutOfCreditsNeededUsd] = useState<number | undefined>(undefined);
+    const [packsOpen, setPacksOpen] = useState(false);
+    const [pendingConfirm, setPendingConfirm] = useState<
+        { operation: ExegesisOperationKey; run: () => void } | null
+    >(null);
     // Collapse behavior:
     //   - Accepted steps default to COLLAPSED (the user already
     //     approved; detail is rarely re-read in the same session).
@@ -152,7 +160,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         setEditing(false);
     };
 
-    const handleGenerate = async (regenerationHint?: string) => {
+    const runGenerate = async (regenerationHint?: string) => {
         try {
             await generateStep.mutateAsync({ paperId, stepId: step.id, regenerationHint });
             setHintMode(false);
@@ -164,10 +172,21 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         }
     };
 
+    const handleGenerate = (regenerationHint?: string) => {
+        if (operationRequiresPreConfirm('generateStep')) {
+            setPendingConfirm({
+                operation: 'generateStep',
+                run: () => { void runGenerate(regenerationHint); },
+            });
+            return;
+        }
+        void runGenerate(regenerationHint);
+    };
+
     // Phase 2 path: structured analysis instead of free markdown.
     // Only meaningful for verse-kind steps. Other kinds keep the
     // legacy `generateStep` path until composers for them ship.
-    const handleAnalyzeCanonically = async (regenerationHint?: string) => {
+    const runAnalyzeCanonically = async (regenerationHint?: string) => {
         if (step.kind !== 'verse') return;
         try {
             await analyzeVerseCanonically.mutateAsync({
@@ -177,14 +196,24 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
             });
             setHintMode(false);
             setHintDraft('');
-            // Auto-switch to study view on success so the user sees
-            // the structured payload that just came back.
             setViewMode('study');
         } catch (err) {
             if (handleQuotaError(err)) return;
             console.error('[exegesis] canonical analysis failed:', err);
             toast.error(t('canonical.toast.analyzeFailed'));
         }
+    };
+
+    const handleAnalyzeCanonically = (regenerationHint?: string) => {
+        if (step.kind !== 'verse') return;
+        if (operationRequiresPreConfirm('analyzeVerseCanonically')) {
+            setPendingConfirm({
+                operation: 'analyzeVerseCanonically',
+                run: () => { void runAnalyzeCanonically(regenerationHint); },
+            });
+            return;
+        }
+        void runAnalyzeCanonically(regenerationHint);
     };
     const isVerse = step.kind === 'verse';
     const isConclusion = step.kind === 'conclusion';
@@ -929,7 +958,24 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 open={outOfCreditsOpen}
                 onOpenChange={setOutOfCreditsOpen}
                 neededUsd={outOfCreditsNeededUsd}
+                onBuyPacks={() => setPacksOpen(true)}
             />
+            <CreditPacksDialog
+                open={packsOpen}
+                onOpenChange={setPacksOpen}
+                focusMode="exegesis"
+            />
+            {pendingConfirm && (
+                <ExegesisPreConfirmDialog
+                    open
+                    onOpenChange={(open) => { if (!open) setPendingConfirm(null); }}
+                    operation={pendingConfirm.operation}
+                    onConfirm={() => {
+                        pendingConfirm.run();
+                        setPendingConfirm(null);
+                    }}
+                />
+            )}
         </article>
     );
 }

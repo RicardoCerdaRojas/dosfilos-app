@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Wand2, Loader2 } from 'lucide-react';
+import { BookOpen, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { processingBalanceService, type ProcessingMode } from '@dosfilos/application';
-import type { ProcessingBalance } from '@dosfilos/domain';
+import {
+    STUDY_UNIT_USD,
+    computeExegesisQuotaState,
+    type ProcessingBalance,
+} from '@dosfilos/domain';
 import { CreditPacksDialog } from './CreditPacksDialog';
 
 /**
@@ -64,6 +68,12 @@ export function BalanceBanner() {
                         packPages={balance?.packPremiumPages ?? 0}
                         loading={loading}
                     />
+                    {/* Exegesis bucket: USD-based, displayed in
+                        "estudios" via STUDY_UNIT_USD. Only meaningful
+                        for plans that include exégesis or users with
+                        a pack — `noAccess` is the Free / Personal
+                        case and the tile renders an upgrade hint. */}
+                    <ExegesisBalanceTile balance={balance} loading={loading} />
                     <Button onClick={() => setPacksOpen(true)} className="self-center">
                         {t('balance.buyButton')}
                     </Button>
@@ -106,6 +116,53 @@ function BalanceTile({ mode, pages, planPages, packPages, loading }: BalanceTile
             )}
             <p className="text-[10px] text-muted-foreground/70 mt-0.5 leading-tight">
                 {t(`balance.${mode}Help`)}
+            </p>
+        </div>
+    );
+}
+
+interface ExegesisBalanceTileProps {
+    balance: ProcessingBalance | null;
+    loading: boolean;
+}
+
+function ExegesisBalanceTile({ balance, loading }: ExegesisBalanceTileProps) {
+    const { t } = useTranslation('library');
+    const state = computeExegesisQuotaState(balance);
+
+    const tone =
+        state.capState === 'hard-cap'
+            ? 'text-destructive'
+            : state.capState === 'soft-warn'
+                ? 'text-warning'
+                : 'text-primary';
+
+    const studiesDisplay = state.remainingStudies < 0.1 && state.remainingUsd > 0
+        ? '<0.1'
+        : state.remainingStudies.toLocaleString(undefined, { maximumFractionDigits: 1 });
+
+    const planStudies = Math.round(state.planAllowanceUsd / STUDY_UNIT_USD);
+    const packStudies = Math.round(state.packBalanceUsd / STUDY_UNIT_USD);
+
+    return (
+        <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 min-w-[160px]">
+            <div className={`flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider ${tone}`}>
+                <BookOpen className="h-3 w-3" />
+                <span>{t('balance.exegesis')}</span>
+            </div>
+            <div className="text-[20px] font-bold leading-tight tabular-nums text-foreground mt-0.5">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : studiesDisplay}
+            </div>
+            {!loading && !state.noAccess && (
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight tabular-nums">
+                    {t('balance.split', {
+                        plan: planStudies.toLocaleString(),
+                        pack: packStudies.toLocaleString(),
+                    })}
+                </p>
+            )}
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5 leading-tight">
+                {state.noAccess ? t('balance.exegesisNoAccess') : t('balance.exegesisHelp')}
             </p>
         </div>
     );
