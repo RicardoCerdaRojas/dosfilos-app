@@ -1164,6 +1164,39 @@
             }
         }
     },
+    "coherence": {
+        "menuItem": "Run coherence pass",
+        "dialog": {
+            "title": "Coherence review",
+            "description": "A single Gemini pass over the entire accepted paper to surface inconsistencies between introduction, verses, and conclusion.",
+            "idleBody": "The reviewer reads ALL accepted sections (introduction + verses + conclusion) and returns verifiable problems only. No praise, no summaries.",
+            "cost": "One Gemini Pro 2.5 call (~$0.05–0.15 depending on paper length).",
+            "runCta": "Run review",
+            "running": "Reviewing coherence…",
+            "errorTitle": "Coherence pass failed",
+            "errorGeneric": "Unexpected error.",
+            "retry": "Retry",
+            "rerun": "Re-run",
+            "close": "Close",
+            "allClear": "Paper is internally consistent.",
+            "relatedSteps_one": "Affects {{count}} section",
+            "relatedSteps_other": "Affects {{count}} sections"
+        },
+        "severity": {
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+        },
+        "category": {
+            "thesis-mismatch": "Thesis ≠ conclusion",
+            "verse-conflict": "Verses conflict",
+            "translation-inconsistency": "Translation inconsistency",
+            "unfulfilled-promise": "Unfulfilled promise",
+            "conclusion-overreach": "Conclusion overreach",
+            "tone-drift": "Tone drift",
+            "other": "Other"
+        }
+    },
     "detail": {
         "back": "Back to list",
         "loading": "Loading paper...",
@@ -1189,6 +1222,26 @@
             "failedHint": "Something failed while generating this step. Try again.",
             "editHint": "Manually edited — citation verification does NOT auto-run.",
             "hintPlaceholder": "e.g. more syntax, more theology, cite Cockerill more",
+            "quickHints": {
+                "label": "Quick hint:",
+                "verse": {
+                    "syntax": "More syntax",
+                    "theology": "More theology",
+                    "historical": "More historical context",
+                    "lexis": "More lexical detail",
+                    "lessGeneral": "Fewer generalizations"
+                },
+                "conclusion": {
+                    "concise": "More concise",
+                    "verseFocus": "Focus on this verse, no recap",
+                    "highlightThesis": "Highlight the verse's thesis"
+                },
+                "introduction": {
+                    "concise": "More concise",
+                    "previewStructure": "Preview the structure",
+                    "pastoralHook": "Stronger pastoral hook"
+                }
+            },
             "kind": {
                 "verse": "Verse",
                 "conclusion": "Conclusion",

@@ -338,6 +338,23 @@ export function useExegesisPapers() {
         },
     });
 
+    // Cross-section coherence pass — single Gemini call across the
+    // whole accepted paper. Result is NOT persisted; the dialog
+    // renders the snapshot.
+    const runCoherencePass = useMutation({
+        mutationFn: async ({ paperId, language }: {
+            paperId: string;
+            language?: 'es' | 'en';
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.runCoherencePass.execute({
+                ownerId: user.uid,
+                paperId,
+                language,
+            });
+        },
+    });
+
     // Bridge: paper → sermon. On success we invalidate the sermons cache too
     // so the dashboard's "Material reciente" picks up the new draft without
     // a manual refresh.
@@ -374,6 +391,7 @@ export function useExegesisPapers() {
         acceptStep,
         saveStepEdit,
         verifyStepCitations,
+        runCoherencePass,
         generateSermonFromPaper,
         analyzeVerseCanonically,
         composeAcademicPaper,

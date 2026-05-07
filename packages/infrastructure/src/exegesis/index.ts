@@ -20,6 +20,7 @@ export { GeminiSermonComposer } from './ministryComposers/GeminiSermonComposer';
 export { GeminiDevotionalComposer } from './ministryComposers/GeminiDevotionalComposer';
 export { GeminiStudyGuideComposer } from './ministryComposers/GeminiStudyGuideComposer';
 export { FuzzyCitationVerifier } from './citationVerifier/FuzzyCitationVerifier';
+export { GeminiCoherenceReviewer } from './coherenceReviewer/GeminiCoherenceReviewer';
 // Pipeline-version constant for the v1.5+ expository assistant.
 // Exposed so the application layer can use it as part of the cache
 // document key without re-declaring the same string.

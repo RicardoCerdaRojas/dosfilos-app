@@ -28,6 +28,7 @@ export * from './use-cases/dtos';
 export * from './ports/IAcademicComposer';
 export * from './ports/ICanonicalVerseAnalyzer';
 export * from './ports/ICitationVerifier';
+export * from './ports/ICoherenceReviewer';
 export * from './ports/IConclusionComposer';
 export * from './ports/IIntroductionComposer';
 export * from './ports/IMinistryComposers';

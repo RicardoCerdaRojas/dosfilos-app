@@ -17,6 +17,7 @@ import {
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
     FuzzyCitationVerifier,
+    GeminiCoherenceReviewer,
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
@@ -74,6 +75,7 @@ import {
     AcceptStepUseCase,
     SaveStepEditUseCase,
     VerifyStepCitationsUseCase,
+    RunCoherencePassUseCase,
     GenerateSermonFromPaperUseCase,
 } from '../use-cases/exegesis';
 
@@ -142,6 +144,10 @@ class ExegesisService {
     // matches cited sources against the paper's project-source list,
     // and persists a per-status summary on the version.
     public verifyStepCitations: VerifyStepCitationsUseCase;
+    // Cross-section coherence reviewer — single Gemini pass over the
+    // accepted intro + verses + conclusion to surface inconsistencies
+    // the per-step prompts cannot see (they only get one step at a time).
+    public runCoherencePass: RunCoherencePassUseCase;
 
     // Canonical analysis pipeline (target architecture — see docs/exegesis/METODOLOGIA.md).
     // Coexists with `generateStep` during the migration; produces a
@@ -316,6 +322,14 @@ class ExegesisService {
             paperRepository,
             contentReader,
             citationVerifier,
+        );
+
+        // Coherence reviewer — single Gemini call over the entire
+        // accepted paper. Adversarial: returns issues, not praise.
+        const coherenceReviewer = new GeminiCoherenceReviewer(apiKey || '', exegesisModelId);
+        this.runCoherencePass = new RunCoherencePassUseCase(
+            paperRepository,
+            coherenceReviewer,
         );
 
         // Canonical analysis pipeline. Wired in parallel to `generateStep`

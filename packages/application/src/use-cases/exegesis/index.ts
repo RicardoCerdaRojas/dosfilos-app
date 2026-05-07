@@ -93,6 +93,11 @@ export {
     type VerifyStepCitationsInput,
     type VerifyStepCitationsOutput,
 } from './VerifyStepCitationsUseCase';
+export {
+    RunCoherencePassUseCase,
+    type RunCoherencePassInput,
+    type RunCoherencePassOutput,
+} from './RunCoherencePassUseCase';
 
 // Bridge: paper → sermon (Phase 2 of the sermon-series pipeline)
 export {
