@@ -220,6 +220,57 @@ cd packages/web && npm run build
 
 ---
 
+## Test 9 — Exegesis pricing end-to-end (EXEGESIS_PRICING_INTEGRATION)
+
+**Objetivo:** confirmar reserve → consume → pre-confirm → out-of-credits → pack purchase → telemetry para el bucket de exégesis.
+
+**Pre-requisitos:** usuario test en plan Pro con `processingBalance.planExegesisUsd ≥ 10` (correr `backfillExegesisQuotas` si hace falta).
+
+### 9.1 Reserve happy-path
+
+1. Login con cuenta Pro de test
+2. Ir a `/dashboard/exegesis`
+3. Banner debe mostrar tono `ok` y "X estudios disponibles"
+4. Abrir un paper → click "Análisis canónico" en un verso
+5. **Pre-confirm modal** debe aparecer con costo `~$0.10` y preview de saldo después
+6. Click "Continuar"
+7. **Verificar:**
+   - [ ] Operación corre, análisis se renderiza
+   - [ ] Tile de balance baja `$0.10` (banner Library)
+   - [ ] Firestore `user_activities`: 2 docs nuevos con `metadata.event` = `exegesis.quota.reserve_attempted` y `exegesis.quota.reserve_succeeded`
+
+### 9.2 Out-of-credits flow
+
+1. Bajar manualmente `processingBalance.exegesisUsdAvailable` a `0` (Firestore console)
+2. Click "Análisis canónico" en otro verso
+3. **Verificar:**
+   - [ ] OutOfCreditsDialog aparece con `neededUsd: 0.10`
+   - [ ] Click "Comprar pack" → CreditPacksDialog abre con sección Estudios primero
+   - [ ] Firestore `user_activities`: 1 doc con `event = exegesis.quota.exceeded`
+   - [ ] Cerrar y re-abrir, click "Mejorar plan" → 1 doc con `event = exegesis.upgrade.cta_clicked, surface = upgrade_plan`
+
+### 9.3 Pack purchase
+
+1. En el CreditPacksDialog (sección Estudios), click "Comprar" en pack S Estudios ($9)
+2. Stripe Checkout → tarjeta `4242...`
+3. Tras pagar, redirect a library
+4. **Verificar:**
+   - [ ] Tile "Estudios" suma 3 estudios (S = $6 credit / $2 STUDY_UNIT_USD = 3)
+   - [ ] Firestore `users/{uid}/credit_pack_purchases/{sessionId}` con `mode: 'exegesis'`, `usdAmount: 6`
+   - [ ] Firestore `user_activities`: 1 doc con `event = exegesis.pack.purchased`, `packSku = exegesis-s`, `amountUsd = 6`
+
+### 9.4 noAccess gate (plan Free / Personal)
+
+1. Login con cuenta Free
+2. Ir a `/dashboard/exegesis`
+3. **Verificar:**
+   - [ ] Banner muestra tono `hard-cap` con texto "Disponible en planes Pro y Equipo"
+   - [ ] Click banner → OutOfCreditsDialog en estado `noAccess` (botón "Comprar pack" disabled, solo upgrade)
+
+**Result:** ✅ / ❌
+
+---
+
 ## Frecuencia recomendada
 
 | Test | Antes de cada deploy | Antes de launch | Diario post-launch |
@@ -232,6 +283,7 @@ cd packages/web && npm run build
 | 6. Pre-commit hook | ❌ | ✅ | si modifico el script |
 | 7. Type-check global | ✅ | ✅ | siempre antes de commit |
 | 8. Build producción | ✅ | ✅ | siempre antes de deploy |
+| 9. Exegesis pricing end-to-end | ❌ | ✅ | después de tocar exégesis o Stripe |
 
 ---
 
