@@ -572,7 +572,7 @@ export default function CoreLibraryAdmin() {
             const resource = await libraryService.uploadResource(firebase.user.uid, uploadFile, uploadMetadata);
             await coreLibraryAdminService.addResourceToStore(resource.id, contextKey);
 
-            toast.success(`Documento subido y añadido a ${contextKey}. Procesando IA en segundo plano...`);
+            toast.success(`Documento subido y añadido a ${contextKey}. Procesando en segundo plano...`);
             setUploadFile(null);
             setFileSizeWarning(false);
             setUploadMetadata({ title: '', author: '', type: 'theology' });
@@ -998,7 +998,7 @@ export default function CoreLibraryAdmin() {
                         </Popover>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Contextos de conocimiento teológico para tutores IA
+                        Contextos de conocimiento teológico para tutores
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -1013,7 +1013,7 @@ export default function CoreLibraryAdmin() {
                             <DialogHeader>
                                 <DialogTitle>Crear Nuevo Store</DialogTitle>
                                 <DialogDescription>
-                                    Crea un nuevo contexto de archivos para el asistente de IA.
+                                    Crea un nuevo contexto de archivos para el asistente.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
@@ -1583,7 +1583,7 @@ export default function CoreLibraryAdmin() {
                                                                         ) : !hasGeminiUri ? (
                                                                             <div className="flex items-center gap-2">
                                                                                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
-                                                                                    Procesando IA
+                                                                                    Procesando
                                                                                 </Badge>
                                                                                 <Button
                                                                                     variant="ghost"

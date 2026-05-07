@@ -191,7 +191,7 @@ export function BiblePassageSelector({
                         debouncedValue.length > 3 && !isLoading && (
                             <div className="flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-950/30 p-3 rounded-md border border-yellow-200 dark:border-yellow-900">
                                 <AlertCircle className="h-4 w-4" />
-                                <span>Pasaje no reconocido en la biblioteca local. La IA intentará interpretarlo igual.</span>
+                                <span>Pasaje no reconocido en la biblioteca local. El asistente intentará interpretarlo igual.</span>
                             </div>
                         )
                     )}

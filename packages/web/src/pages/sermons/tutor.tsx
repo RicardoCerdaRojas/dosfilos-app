@@ -315,7 +315,7 @@ export function SermonTutorPage() {
                                 </div>
                             </form>
                             <div className="text-center mt-3 text-[12px] text-slate-400 font-medium">
-                                El Tutor de IA puede cometer errores. Considera verificar la información importante obtenida en tu investigación.
+                                Tu tutor puede cometer errores. Considera verificar la información importante obtenida en tu investigación.
                             </div>
                         </div>
                     </div>
@@ -431,7 +431,7 @@ export function SermonTutorPage() {
                                                 disabled={!analysisResult.passage || !analysisResult.idea || isChatLoading}
                                             >
                                                 <Sparkles className="h-5 w-5" />
-                                                Generar Sermón con IA
+                                                Generar Sermón
                                             </Button>
                                         )}
                                     </div>

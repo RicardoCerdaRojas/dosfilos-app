@@ -224,7 +224,7 @@ export function AnalyticsDashboard() {
                                     {metrics.totalGreekSessions || 0}
                                 </p>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    Tutor IA · Total
+                                    Tutor · Total
                                 </p>
                             </div>
 

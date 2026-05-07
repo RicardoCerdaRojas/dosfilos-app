@@ -28,15 +28,18 @@ export const featureLabels: Record<string, string> = {
     'tutor:hebrew': 'Tutor de Hebreo',
     'tutor:hebrew_unlimited': 'Tutor de Hebreo ilimitado',
 
-    // ── Faculty (AI agents) ─────────────────────────────────────────────────
-    'faculty:chat': 'Faculty: chat con tutores AI',
+    // ── Faculty ─────────────────────────────────────────────────────────────
+    'faculty:chat': 'Faculty: tu equipo de tutores especializados',
+
+    // ── Exegesis ────────────────────────────────────────────────────────────
+    'exegesis:studies': 'Papers académicos verso por verso',
 
     // ── Team / collaboration ────────────────────────────────────────────────
     'team:multi_user': 'Multi-usuario',
 
     // ── Legacy aliases (kept so old plan docs don't break the UI) ───────────
-    'sermon:ai_assistant': 'Asistente de IA para sermones',
-    'sermon:advanced_homiletics': 'Homilética avanzada con IA',
+    'sermon:ai_assistant': 'Asistente de redacción de sermones',
+    'sermon:advanced_homiletics': 'Homilética avanzada',
     'library:unlimited_storage': 'Almacenamiento ilimitado',
     'courses:view': 'Acceso a cursos',
     'courses:certificates': 'Certificados de cursos',

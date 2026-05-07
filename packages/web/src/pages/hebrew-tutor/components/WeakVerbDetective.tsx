@@ -170,7 +170,7 @@ export const WeakVerbDetective: React.FC<{ word: WordAnalysis }> = ({ word }) =>
           )}
 
           <div className="bg-white dark:bg-slate-950 border rounded-lg p-3 text-center space-y-1">
-            <p className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Veredicto de la IA</p>
+            <p className="text-[10px] uppercase text-muted-foreground font-semibold tracking-wider">Veredicto del tutor</p>
             <p className="text-sm font-medium">Binyan: <span className="text-primary">{morphology.binyan}</span></p>
             <p className="text-sm font-medium">Tipo de Raíz: <span className="text-primary">{actualType ? actualType.replace(/_/g, ' ') : 'N/A'}</span></p>
           </div>

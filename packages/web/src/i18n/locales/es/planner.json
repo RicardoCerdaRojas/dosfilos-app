@@ -71,7 +71,7 @@
         "consultedSources": "Fuentes Consultadas",
         "sourceLibrary": "Biblioteca",
         "sourceGeneral": "Conocimiento General",
-        "sourcesDisclaimer": "Las fuentes marcadas como \"Biblioteca\" provienen de tus recursos. Las de \"Conocimiento General\" son inferencias teológicas del AI.",
+        "sourcesDisclaimer": "Las fuentes marcadas como \"Biblioteca\" provienen de tus recursos. Las de \"Conocimiento General\" son inferencias teológicas del asistente.",
         "sermonLabel": "Sermón {{number}}",
         "sermonTitle": "Título",
         "biblicalPassage": "Pasaje Bíblico",

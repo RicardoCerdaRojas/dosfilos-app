@@ -103,9 +103,9 @@ ${generatedSermon.callToAction ? `\n**Llamado a la acción:** ${generatedSermon.
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Generar Sermón con IA</h1>
+        <h1 className="text-3xl font-bold">Generar Sermón</h1>
         <p className="text-muted-foreground">
-          Usa inteligencia artificial para crear sermones personalizados
+          Crea sermones personalizados con tu asistente de redacción
         </p>
       </div>
 
@@ -141,7 +141,7 @@ ${generatedSermon.callToAction ? `\n**Llamado a la acción:** ${generatedSermon.
                 disabled={loading}
               />
               <p className="text-xs text-muted-foreground">
-                Si no especificas, la IA sugerirá referencias apropiadas
+                Si no especificas, tu asistente sugerirá referencias apropiadas
               </p>
             </div>
 

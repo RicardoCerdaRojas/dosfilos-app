@@ -87,6 +87,7 @@ export function PlanCard({
             <ProcessingQuotaBlock
                 standardPagesPerMonth={plan.limits?.standardPagesPerMonth as number | undefined}
                 premiumPagesPerMonth={plan.limits?.premiumPagesPerMonth as number | undefined}
+                exegesisUsdPerMonth={plan.limits?.exegesisUsdPerMonth as number | undefined}
             />
         </div>
 

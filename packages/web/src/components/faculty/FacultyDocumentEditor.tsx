@@ -212,7 +212,7 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
                     {isProcessing ? (
                         <div className="p-4 flex flex-col items-center justify-center gap-3 text-muted-foreground">
                             <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                            <p className="text-sm font-medium">La IA está trabajando en tu texto...</p>
+                            <p className="text-sm font-medium">Tu asistente está trabajando en el texto...</p>
                         </div>
                     ) : previewState ? (
                         <div className="p-4 flex flex-col gap-3">
@@ -237,11 +237,11 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
                             <div className="flex items-center gap-1 border-b pb-2">
                                 <div className="px-2 text-xs font-semibold text-primary/70 flex items-center gap-1 border-r mr-1">
                                     <Sparkles className="w-3 h-3" />
-                                    IA
+                                    Asistente
                                 </div>
-                                <input 
-                                    type="text" 
-                                    placeholder="Pide a la IA que modifique este texto..." 
+                                <input
+                                    type="text"
+                                    placeholder="Pide a tu asistente que modifique este texto..."
                                     className="flex-1 min-w-0 text-xs h-7 px-2 rounded border bg-muted/50 focus:outline-none focus:ring-1 focus:ring-primary"
                                     value={customPrompt}
                                     onChange={(e) => setCustomPrompt(e.target.value)}

@@ -8,15 +8,15 @@ export function GeneratePage() {
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Generar Sermón</h2>
         <p className="text-muted-foreground">
-          Crea sermones personalizados con IA
+          Crea sermones personalizados con tu asistente de redacción
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Generador de Sermones con IA</CardTitle>
+          <CardTitle>Generador de Sermones</CardTitle>
           <CardDescription>
-            Utiliza inteligencia artificial para crear sermones basados en tus necesidades
+            Crea sermones personalizados a partir de tus pasajes y notas
           </CardDescription>
         </CardHeader>
         <CardContent>

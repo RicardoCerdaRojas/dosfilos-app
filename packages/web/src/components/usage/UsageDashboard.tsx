@@ -254,7 +254,7 @@ export function UsageDashboard() {
 
                 {/* Faculty queries — quota that hits Free first */}
                 <QuotaRow
-                    label="Consultas a tutores AI"
+                    label="Consultas a tutores"
                     icon={MessageSquareQuote}
                     quota={usage.queries}
                     unit="consultas"
