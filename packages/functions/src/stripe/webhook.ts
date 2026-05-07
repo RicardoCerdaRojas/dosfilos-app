@@ -2,7 +2,13 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { stripe, STRIPE_WEBHOOK_SECRET } from '../config/stripe';
 import { getFirestore, FieldValue, type Firestore } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
-import { addPackAdmin, setPlanQuotaAdmin, type ProcessingMode } from '../library/processingBalance';
+import {
+    addPackAdmin,
+    setPlanQuotaAdmin,
+    addExegesisPackAdmin,
+    setExegesisPlanQuotaAdmin,
+    type ProcessingMode,
+} from '../library/processingBalance';
 import { getPackById } from './creditPackCatalog';
 import { resend } from '../emails/resendClient';
 import { getPaymentFailedTemplate, getPaymentFailedSubject } from '../emails/templates/paymentFailed';
@@ -241,7 +247,8 @@ async function creditBonusInitialIfPending(
     const bonus = planData?.bonusInitial ?? {};
     const standardPages = Math.max(0, Number(bonus.standardPages) || 0);
     const premiumPages = Math.max(0, Number(bonus.premiumPages) || 0);
-    if (standardPages === 0 && premiumPages === 0) return;
+    const exegesisUsd = Math.max(0, Number(bonus.exegesisUsd) || 0);
+    if (standardPages === 0 && premiumPages === 0 && exegesisUsd === 0) return;
 
     const grantRef = db
         .collection('users').doc(firebaseUID)
@@ -258,15 +265,19 @@ async function creditBonusInitialIfPending(
     // are untouched.
     await setPlanQuotaAdmin(firebaseUID, 'standard', standardPages);
     await setPlanQuotaAdmin(firebaseUID, 'premium', premiumPages);
+    if (exegesisUsd > 0) {
+        await setExegesisPlanQuotaAdmin(firebaseUID, exegesisUsd);
+    }
     await grantRef.set({
         subscriptionId,
         standardPages,
         premiumPages,
+        exegesisUsd,
         grantedAt: FieldValue.serverTimestamp(),
     });
 
     console.log(
-        `[BonusInitial] credited ${standardPages} standard + ${premiumPages} premium to ${firebaseUID} plan bucket (subscription=${subscriptionId})`,
+        `[BonusInitial] credited ${standardPages} standard + ${premiumPages} premium + $${exegesisUsd} exégesis to ${firebaseUID} plan bucket (subscription=${subscriptionId})`,
     );
 }
 
@@ -300,6 +311,26 @@ async function handleCreditPackPurchase(
     const existing = await purchaseRef.get();
     if (existing.exists) {
         console.log(`[CreditPack] Session ${session.id} already credited; skipping`);
+        return;
+    }
+
+    // Dispatch on pack mode: page-based packs credit pages, exegesis
+    // packs credit USD into the LLM-budget bucket.
+    if (pack.mode === 'exegesis') {
+        const usd = Math.max(0, pack.usdAmount ?? 0);
+        await addExegesisPackAdmin(firebaseUID, usd);
+        await purchaseRef.set({
+            sessionId: session.id,
+            packId: pack.id,
+            mode: pack.mode,
+            usdAmount: usd,
+            amountTotal: session.amount_total ?? null,
+            currency: session.currency ?? null,
+            createdAt: FieldValue.serverTimestamp(),
+        });
+        console.log(
+            `[CreditPack] Credited $${usd} exégesis to ${firebaseUID} (pack=${pack.id}, session=${session.id})`,
+        );
         return;
     }
 
@@ -500,8 +531,9 @@ async function applyMonthlyQuotaIfPending(
     const limits = planSnap.data()?.limits ?? {};
     const standardQuota = Math.max(0, Number(limits.standardPagesPerMonth) || 0);
     const premiumQuota = Math.max(0, Number(limits.premiumPagesPerMonth) || 0);
+    const exegesisQuota = Math.max(0, Number(limits.exegesisUsdPerMonth) || 0);
 
-    if (standardQuota === 0 && premiumQuota === 0) {
+    if (standardQuota === 0 && premiumQuota === 0 && exegesisQuota === 0) {
         // Free-tier subscription or unconfigured plan — nothing to credit.
         // Still write the marker so we don't re-evaluate on every replay.
         await grantRef.set({
@@ -509,6 +541,7 @@ async function applyMonthlyQuotaIfPending(
             planId,
             standardQuota: 0,
             premiumQuota: 0,
+            exegesisQuota: 0,
             note: 'no quota configured for this plan',
             grantedAt: FieldValue.serverTimestamp(),
         });
@@ -517,11 +550,20 @@ async function applyMonthlyQuotaIfPending(
 
     await setPlanQuotaAdmin(firebaseUID, 'standard', standardQuota);
     await setPlanQuotaAdmin(firebaseUID, 'premium', premiumQuota);
+    // Exegesis bucket is USD, not pages. setExegesisPlanQuotaAdmin
+    // unconditionally overwrites — same no-rollover semantics as the
+    // page buckets. Skip the call when the plan doesn't include
+    // exégesis (Free / Personal) so we don't reset a pack-only user
+    // to 0 every cycle.
+    if (exegesisQuota > 0) {
+        await setExegesisPlanQuotaAdmin(firebaseUID, exegesisQuota);
+    }
     await grantRef.set({
         invoiceId,
         planId,
         standardQuota,
         premiumQuota,
+        exegesisQuota,
         billingReason: invoice.billing_reason ?? null,
         periodStart: invoice.period_start
             ? new Date(invoice.period_start * 1000)
@@ -533,6 +575,6 @@ async function applyMonthlyQuotaIfPending(
     });
 
     console.log(
-        `[MonthlyQuota] reset plan bucket for ${firebaseUID} to ${standardQuota} std + ${premiumQuota} prem (plan=${planId}, invoice=${invoiceId}, reason=${invoice.billing_reason})`,
+        `[MonthlyQuota] reset plan bucket for ${firebaseUID} to ${standardQuota} std + ${premiumQuota} prem + $${exegesisQuota} exégesis (plan=${planId}, invoice=${invoiceId}, reason=${invoice.billing_reason})`,
     );
 }
