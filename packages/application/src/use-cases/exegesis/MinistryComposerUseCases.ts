@@ -20,6 +20,7 @@ import type {
     StyleGuideManifest,
 } from '@dosfilos/domain';
 import { isCitableSourceType } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Three parallel ministry composer use cases — sermon, devotional,
@@ -60,18 +61,28 @@ export class ComposeSermonFromAnalysesUseCase {
 
     async execute(input: ComposeSermonFromAnalysesUseCaseInput): Promise<ComposeSermonOutput> {
         const ctx = await loadContext(this.paperRepository, this.styleGuideRepository, this.contentReader, input.ownerId, input.paperId);
-        const composerInput: ComposeSermonInput = {
-            paperPassage: ctx.paper.passage,
-            language: ctx.paper.displayLanguage,
-            assignmentBrief: ctx.paper.assignmentBrief,
-            verseAnalyses: ctx.verseAnalyses,
-            styleGuideContent: ctx.styleGuideContent,
-            styleGuideManifest: ctx.manifest,
-            sources: ctx.composerSources,
-            regenerationHint: input.regenerationHint ?? null,
-            tone: input.tone,
-        };
-        return this.composer.composeSermon(composerInput);
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'composeSermonFromAnalyses',
+        );
+        try {
+            const composerInput: ComposeSermonInput = {
+                paperPassage: ctx.paper.passage,
+                language: ctx.paper.displayLanguage,
+                assignmentBrief: ctx.paper.assignmentBrief,
+                verseAnalyses: ctx.verseAnalyses,
+                styleGuideContent: ctx.styleGuideContent,
+                styleGuideManifest: ctx.manifest,
+                sources: ctx.composerSources,
+                regenerationHint: input.regenerationHint ?? null,
+                tone: input.tone,
+            };
+            reservation.markLlmContacted();
+            return await this.composer.composeSermon(composerInput);
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }
 
@@ -94,18 +105,28 @@ export class ComposeDevotionalFromAnalysesUseCase {
 
     async execute(input: ComposeDevotionalFromAnalysesUseCaseInput): Promise<ComposeDevotionalOutput> {
         const ctx = await loadContext(this.paperRepository, this.styleGuideRepository, this.contentReader, input.ownerId, input.paperId);
-        const composerInput: ComposeDevotionalInput = {
-            paperPassage: ctx.paper.passage,
-            language: ctx.paper.displayLanguage,
-            assignmentBrief: ctx.paper.assignmentBrief,
-            verseAnalyses: ctx.verseAnalyses,
-            styleGuideContent: ctx.styleGuideContent,
-            styleGuideManifest: ctx.manifest,
-            sources: ctx.composerSources,
-            regenerationHint: input.regenerationHint ?? null,
-            audience: input.audience,
-        };
-        return this.composer.composeDevotional(composerInput);
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'composeDevotionalFromAnalyses',
+        );
+        try {
+            const composerInput: ComposeDevotionalInput = {
+                paperPassage: ctx.paper.passage,
+                language: ctx.paper.displayLanguage,
+                assignmentBrief: ctx.paper.assignmentBrief,
+                verseAnalyses: ctx.verseAnalyses,
+                styleGuideContent: ctx.styleGuideContent,
+                styleGuideManifest: ctx.manifest,
+                sources: ctx.composerSources,
+                regenerationHint: input.regenerationHint ?? null,
+                audience: input.audience,
+            };
+            reservation.markLlmContacted();
+            return await this.composer.composeDevotional(composerInput);
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }
 
@@ -128,18 +149,28 @@ export class ComposeStudyGuideFromAnalysesUseCase {
 
     async execute(input: ComposeStudyGuideFromAnalysesUseCaseInput): Promise<ComposeStudyGuideOutput> {
         const ctx = await loadContext(this.paperRepository, this.styleGuideRepository, this.contentReader, input.ownerId, input.paperId);
-        const composerInput: ComposeStudyGuideInput = {
-            paperPassage: ctx.paper.passage,
-            language: ctx.paper.displayLanguage,
-            assignmentBrief: ctx.paper.assignmentBrief,
-            verseAnalyses: ctx.verseAnalyses,
-            styleGuideContent: ctx.styleGuideContent,
-            styleGuideManifest: ctx.manifest,
-            sources: ctx.composerSources,
-            regenerationHint: input.regenerationHint ?? null,
-            audience: input.audience,
-        };
-        return this.composer.composeStudyGuide(composerInput);
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'composeStudyGuideFromAnalyses',
+        );
+        try {
+            const composerInput: ComposeStudyGuideInput = {
+                paperPassage: ctx.paper.passage,
+                language: ctx.paper.displayLanguage,
+                assignmentBrief: ctx.paper.assignmentBrief,
+                verseAnalyses: ctx.verseAnalyses,
+                styleGuideContent: ctx.styleGuideContent,
+                styleGuideManifest: ctx.manifest,
+                sources: ctx.composerSources,
+                regenerationHint: input.regenerationHint ?? null,
+                audience: input.audience,
+            };
+            reservation.markLlmContacted();
+            return await this.composer.composeStudyGuide(composerInput);
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }
 

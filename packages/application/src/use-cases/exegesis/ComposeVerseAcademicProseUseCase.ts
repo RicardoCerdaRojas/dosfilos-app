@@ -12,6 +12,7 @@ import type {
     StyleGuideManifest,
 } from '@dosfilos/domain';
 import { isCitableSourceType } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 export interface ComposeVerseAcademicProseInput {
     ownerId: string;
@@ -85,58 +86,69 @@ export class ComposeVerseAcademicProseUseCase {
             );
         }
 
-        const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-        const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
-
-        const composerInput: ComposeVerseInput = {
-            verseAnalysis: target.canonicalAnalysis,
-            paperPassage: paper.passage,
-            language: paper.displayLanguage,
-            assignmentBrief: paper.assignmentBrief,
-            styleGuideContent,
-            styleGuideManifest: manifest,
-            sources: buildComposerSources(paper),
-        };
-        const raw = await this.composer.composeVerse(composerInput);
-
-        // Optional deterministic style formatter — same pattern as
-        // the whole-paper composer.
-        let finalMarkdown = raw.markdown;
-        let formatterStatus: 'applied' | 'skipped' | 'error' = 'skipped';
-        const citableSources = buildFormatterSources(paper);
-        if (this.styleFormatter && manifest && citableSources.length > 0) {
-            try {
-                const formatted = this.styleFormatter.format({
-                    markdown: raw.markdown,
-                    manifest,
-                    citableSources,
-                    priorFootnoteAnchors: [],
-                });
-                if (formatted.warnings.length > 0) {
-                    console.warn('[ComposeVerseAcademicProseUseCase] formatter warnings:', formatted.warnings);
-                }
-                finalMarkdown = formatted.markdown;
-                formatterStatus = 'applied';
-            } catch (err) {
-                console.error('[ComposeVerseAcademicProseUseCase] formatter threw, persisting raw:', err);
-                formatterStatus = 'error';
-            }
-        }
-
-        await this.paperRepository.setStepVersionMarkdown(
+        const reservation = await ExegesisCreditReservation.open(
             input.ownerId,
-            input.paperId,
-            input.stepId,
-            target.id,
-            finalMarkdown,
+            'composeVerseAcademicProse',
         );
 
-        return {
-            ...raw,
-            markdown: finalMarkdown,
-            formatterStatus,
-            versionId: target.id,
-        };
+        try {
+            const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
+            const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
+
+            const composerInput: ComposeVerseInput = {
+                verseAnalysis: target.canonicalAnalysis,
+                paperPassage: paper.passage,
+                language: paper.displayLanguage,
+                assignmentBrief: paper.assignmentBrief,
+                styleGuideContent,
+                styleGuideManifest: manifest,
+                sources: buildComposerSources(paper),
+            };
+            reservation.markLlmContacted();
+            const raw = await this.composer.composeVerse(composerInput);
+
+            // Optional deterministic style formatter — same pattern as
+            // the whole-paper composer.
+            let finalMarkdown = raw.markdown;
+            let formatterStatus: 'applied' | 'skipped' | 'error' = 'skipped';
+            const citableSources = buildFormatterSources(paper);
+            if (this.styleFormatter && manifest && citableSources.length > 0) {
+                try {
+                    const formatted = this.styleFormatter.format({
+                        markdown: raw.markdown,
+                        manifest,
+                        citableSources,
+                        priorFootnoteAnchors: [],
+                    });
+                    if (formatted.warnings.length > 0) {
+                        console.warn('[ComposeVerseAcademicProseUseCase] formatter warnings:', formatted.warnings);
+                    }
+                    finalMarkdown = formatted.markdown;
+                    formatterStatus = 'applied';
+                } catch (err) {
+                    console.error('[ComposeVerseAcademicProseUseCase] formatter threw, persisting raw:', err);
+                    formatterStatus = 'error';
+                }
+            }
+
+            await this.paperRepository.setStepVersionMarkdown(
+                input.ownerId,
+                input.paperId,
+                input.stepId,
+                target.id,
+                finalMarkdown,
+            );
+
+            return {
+                ...raw,
+                markdown: finalMarkdown,
+                formatterStatus,
+                versionId: target.id,
+            };
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 
     private async loadStyleGuideContent(ownerId: string, styleGuideId: string | null): Promise<string> {

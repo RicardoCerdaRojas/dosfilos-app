@@ -5,6 +5,7 @@ import type {
     IStyleGuideManifestExtractor,
     IUserStyleGuideRepository,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Reads a `UserStyleGuide`'s corpus text → calls the
@@ -47,20 +48,32 @@ export class ExtractStyleGuideManifestUseCase {
         }
 
         const language = input.language ?? 'es';
-        const result = await this.manifestExtractor.extract({
-            rawText,
-            language,
-        });
 
-        const updated = await this.styleGuideRepository.setManifest(
+        const reservation = await ExegesisCreditReservation.open(
             input.ownerId,
-            input.guideId,
-            result.manifest,
+            'extractStyleGuideManifest',
         );
 
-        return {
-            guide: updated,
-            tokensUsed: result.tokensUsed,
-        };
+        try {
+            reservation.markLlmContacted();
+            const result = await this.manifestExtractor.extract({
+                rawText,
+                language,
+            });
+
+            const updated = await this.styleGuideRepository.setManifest(
+                input.ownerId,
+                input.guideId,
+                result.manifest,
+            );
+
+            return {
+                guide: updated,
+                tokensUsed: result.tokensUsed,
+            };
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }

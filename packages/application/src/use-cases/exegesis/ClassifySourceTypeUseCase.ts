@@ -56,6 +56,11 @@ export interface ClassifySourceTypeUseCaseOutput extends ClassifySourceTypeOutpu
 export class ClassifySourceTypeUseCase {
     constructor(private classifier: ISourceTypeClassifier) { }
 
+    // TODO(billing): wire ExegesisCreditReservation. Skipped for now —
+    // input shape lacks `ownerId` (caller is the upload hook, not the
+    // user-scoped paper editor) and threading a userId through every
+    // call site would touch many surfaces. Catalog cost is $0.001 so
+    // skipping is negligible until the call site is refactored.
     async execute(input: ClassifySourceTypeInput): Promise<ClassifySourceTypeUseCaseOutput> {
         const trimmed = (input.rawText ?? '').trim();
         if (trimmed.length === 0) {

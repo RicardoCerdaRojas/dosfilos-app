@@ -8,6 +8,22 @@ import {
     type PaperToSermonInput,
     type PaperToSermonOutput,
 } from '@dosfilos/domain';
+
+// Mock the credit reservation singleton so the test doesn't need to
+// initialize Firebase. Fase 2 of the EXEGESIS_PRICING roadmap wires
+// reservation into this UC; the test focuses on transformer + repo
+// orchestration, not on quota accounting (covered by the
+// ProcessingBalanceService tests).
+vi.mock('../../../services/ExegesisCreditReservation', () => ({
+    ExegesisCreditReservation: {
+        open: vi.fn(async () => ({
+            markLlmContacted: vi.fn(),
+            refundIfPreLlm: vi.fn(async () => { }),
+            costUsd: 0,
+        })),
+    },
+}));
+
 import { GenerateSermonFromPaperUseCase } from '../GenerateSermonFromPaperUseCase';
 
 // Minimal fake paper sufficient to drive the use case. Fields not

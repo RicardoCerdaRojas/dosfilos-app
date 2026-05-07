@@ -17,6 +17,7 @@ import {
     EMPTY_VERIFICATION_SUMMARY,
     isCitableSourceType,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Composes the introduction section LAST in the academic flow —
@@ -74,6 +75,11 @@ export class ComposeIntroductionFromAnalysesUseCase {
             );
         }
 
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'composeIntroductionFromAnalyses',
+        );
+
         await this.paperRepository.setStepState(input.ownerId, input.paperId, introStep.id, 'generating');
 
         try {
@@ -94,6 +100,7 @@ export class ComposeIntroductionFromAnalysesUseCase {
                 regenerationHint: input.regenerationHint ?? null,
             };
 
+            reservation.markLlmContacted();
             const result = await this.composer.composeIntroduction(composerInput);
 
             const finalMarkdown = await this.applyFormatter(result.markdown, manifest, citableSources);
@@ -119,6 +126,7 @@ export class ComposeIntroductionFromAnalysesUseCase {
             } catch (rollbackErr) {
                 console.error('[ComposeIntroductionFromAnalysesUseCase] roll-back to failed errored:', rollbackErr);
             }
+            await reservation.refundIfPreLlm();
             throw err;
         }
     }

@@ -13,6 +13,7 @@ import type {
     StyleGuideManifest,
 } from '@dosfilos/domain';
 import { isCitableSourceType } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Composes a TMS-style academic paper from a paper's accepted verse
@@ -80,103 +81,114 @@ export class ComposeAcademicPaperUseCase {
             );
         }
 
-        // ── Resolve style guide (content + manifest) ─────────────────
-        const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-        const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'composeAcademicPaper',
+        );
 
-        if (!paper.styleGuideId) {
-            console.warn(
-                `[ComposeAcademicPaperUseCase] Paper ${paper.id} has no style guide attached. ` +
-                'Falling back to TMS / Turabian conventions in prompt; deterministic formatter bypassed.',
-            );
-        } else if (!manifest) {
-            console.warn(
-                `[ComposeAcademicPaperUseCase] Paper ${paper.id} has style guide ${paper.styleGuideId} ` +
-                'but no extracted manifest. Prompt layer active; deterministic formatter bypassed.',
-            );
-        }
+        try {
+            // ── Resolve style guide (content + manifest) ─────────────────
+            const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
+            const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
 
-        // ── Build the source registry for the composer ───────────────
-        // Composer needs author/title/series/etc for bibliography.
-        // We populate from `paper.sources` directly — when richer
-        // library_resource metadata becomes wired (publisher, city,
-        // year, volume), this method is the single place to extend.
-        const composerSources = buildComposerSources(paper);
-
-        // ── Build citable sources for the deterministic formatter ───
-        const citableSources = buildFormatterSources(paper);
-
-        // ── Compose ──────────────────────────────────────────────────
-        const composerInput: ComposeAcademicPaperInput = {
-            paperPassage: paper.passage,
-            paperTitle: paper.title ?? null,
-            language: paper.displayLanguage,
-            assignmentBrief: paper.assignmentBrief,
-            verseAnalyses,
-            styleGuideContent,
-            styleGuideManifest: manifest,
-            sources: composerSources,
-        };
-        const raw = await this.composer.composeAcademicPaper(composerInput);
-
-        // ── Apply the deterministic post-formatter when possible ─────
-        let finalOutput: ComposeAcademicPaperOutput;
-        if (this.styleFormatter && manifest && citableSources.length > 0) {
-            try {
-                const formatted = this.styleFormatter.format({
-                    markdown: raw.markdown,
-                    manifest,
-                    citableSources,
-                    // Composition is single-shot over the whole paper
-                    // — no cross-step prior anchors. Each citation is
-                    // either a first occurrence or a subsequent
-                    // occurrence within the same composition, decided
-                    // by sequence within the markdown.
-                    priorFootnoteAnchors: [],
-                });
-                if (formatted.warnings.length > 0) {
-                    console.warn('[ComposeAcademicPaperUseCase] formatter warnings:', formatted.warnings);
-                }
-                finalOutput = {
-                    ...raw,
-                    markdown: formatted.markdown,
-                    formatterStatus: 'applied',
-                };
-            } catch (err) {
-                console.error('[ComposeAcademicPaperUseCase] formatter threw, returning raw markdown:', err);
-                finalOutput = { ...raw, formatterStatus: 'error' };
-            }
-        } else {
-            finalOutput = { ...raw, formatterStatus: 'skipped' };
-        }
-
-        // ── Optional persistence ────────────────────────────────────
-        // Persist the composed markdown on `paper.assembledMarkdown`
-        // when the caller opted in. This is the canonical "save the
-        // assembled paper" surface — overwrites prior assembly.
-        // Composition output is large; persisting on every run would
-        // bloat history without proportional benefit. The caller (UI)
-        // exposes a dedicated "Save to paper" CTA so the user
-        // explicitly chooses when a composition is the canonical one.
-        if (input.persist) {
-            try {
-                await this.paperRepository.updatePaper(input.ownerId, input.paperId, {
-                    assembledMarkdown: finalOutput.markdown,
-                });
-            } catch (err) {
-                console.error('[ComposeAcademicPaperUseCase] persist failed:', err);
-                // Persistence failure must not lose the composition.
-                // Return the markdown so the user can still copy /
-                // download / retry. The caller surfaces the persist
-                // failure as a warning, not as a hard error.
-                throw new ComposeAcademicPaperPersistError(
-                    'Composition completed but could not be saved to the paper. The markdown is in the error payload — copy or download before retrying.',
-                    finalOutput,
+            if (!paper.styleGuideId) {
+                console.warn(
+                    `[ComposeAcademicPaperUseCase] Paper ${paper.id} has no style guide attached. ` +
+                    'Falling back to TMS / Turabian conventions in prompt; deterministic formatter bypassed.',
+                );
+            } else if (!manifest) {
+                console.warn(
+                    `[ComposeAcademicPaperUseCase] Paper ${paper.id} has style guide ${paper.styleGuideId} ` +
+                    'but no extracted manifest. Prompt layer active; deterministic formatter bypassed.',
                 );
             }
-        }
 
-        return finalOutput;
+            // ── Build the source registry for the composer ───────────────
+            // Composer needs author/title/series/etc for bibliography.
+            // We populate from `paper.sources` directly — when richer
+            // library_resource metadata becomes wired (publisher, city,
+            // year, volume), this method is the single place to extend.
+            const composerSources = buildComposerSources(paper);
+
+            // ── Build citable sources for the deterministic formatter ───
+            const citableSources = buildFormatterSources(paper);
+
+            // ── Compose ──────────────────────────────────────────────────
+            const composerInput: ComposeAcademicPaperInput = {
+                paperPassage: paper.passage,
+                paperTitle: paper.title ?? null,
+                language: paper.displayLanguage,
+                assignmentBrief: paper.assignmentBrief,
+                verseAnalyses,
+                styleGuideContent,
+                styleGuideManifest: manifest,
+                sources: composerSources,
+            };
+            reservation.markLlmContacted();
+            const raw = await this.composer.composeAcademicPaper(composerInput);
+
+            // ── Apply the deterministic post-formatter when possible ─────
+            let finalOutput: ComposeAcademicPaperOutput;
+            if (this.styleFormatter && manifest && citableSources.length > 0) {
+                try {
+                    const formatted = this.styleFormatter.format({
+                        markdown: raw.markdown,
+                        manifest,
+                        citableSources,
+                        // Composition is single-shot over the whole paper
+                        // — no cross-step prior anchors. Each citation is
+                        // either a first occurrence or a subsequent
+                        // occurrence within the same composition, decided
+                        // by sequence within the markdown.
+                        priorFootnoteAnchors: [],
+                    });
+                    if (formatted.warnings.length > 0) {
+                        console.warn('[ComposeAcademicPaperUseCase] formatter warnings:', formatted.warnings);
+                    }
+                    finalOutput = {
+                        ...raw,
+                        markdown: formatted.markdown,
+                        formatterStatus: 'applied',
+                    };
+                } catch (err) {
+                    console.error('[ComposeAcademicPaperUseCase] formatter threw, returning raw markdown:', err);
+                    finalOutput = { ...raw, formatterStatus: 'error' };
+                }
+            } else {
+                finalOutput = { ...raw, formatterStatus: 'skipped' };
+            }
+
+            // ── Optional persistence ────────────────────────────────────
+            // Persist the composed markdown on `paper.assembledMarkdown`
+            // when the caller opted in. This is the canonical "save the
+            // assembled paper" surface — overwrites prior assembly.
+            // Composition output is large; persisting on every run would
+            // bloat history without proportional benefit. The caller (UI)
+            // exposes a dedicated "Save to paper" CTA so the user
+            // explicitly chooses when a composition is the canonical one.
+            if (input.persist) {
+                try {
+                    await this.paperRepository.updatePaper(input.ownerId, input.paperId, {
+                        assembledMarkdown: finalOutput.markdown,
+                    });
+                } catch (err) {
+                    console.error('[ComposeAcademicPaperUseCase] persist failed:', err);
+                    // Persistence failure must not lose the composition.
+                    // Return the markdown so the user can still copy /
+                    // download / retry. The caller surfaces the persist
+                    // failure as a warning, not as a hard error.
+                    throw new ComposeAcademicPaperPersistError(
+                        'Composition completed but could not be saved to the paper. The markdown is in the error payload — copy or download before retrying.',
+                        finalOutput,
+                    );
+                }
+            }
+
+            return finalOutput;
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

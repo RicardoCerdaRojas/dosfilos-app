@@ -6,6 +6,7 @@ import type {
     ICoherenceReviewer,
 } from '@dosfilos/domain';
 import { formatPassageReference } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 export interface RunCoherencePassInput {
     ownerId: string;
@@ -49,12 +50,23 @@ export class RunCoherencePassUseCase {
         const language = input.language ?? paper.displayLanguage;
         const passageDisplay = formatPassageReference(paper.passage, language);
 
-        return this.reviewer.review({
-            sections,
-            passageDisplay,
-            assignmentBrief: paper.assignmentBrief,
-            language,
-        });
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'runCoherencePass',
+        );
+
+        try {
+            reservation.markLlmContacted();
+            return await this.reviewer.review({
+                sections,
+                passageDisplay,
+                assignmentBrief: paper.assignmentBrief,
+                language,
+            });
+        } catch (err) {
+            await reservation.refundIfPreLlm();
+            throw err;
+        }
     }
 }
 

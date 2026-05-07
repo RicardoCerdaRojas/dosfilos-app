@@ -22,6 +22,7 @@ import {
     formatPassageReference,
     isCitableSourceType,
 } from '@dosfilos/domain';
+import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
  * Generates content for a single step.
@@ -86,6 +87,11 @@ export class GenerateStepUseCase {
 
         // ── LLM-driven kinds (verse / conclusion / introduction) ───────
 
+        const reservation = await ExegesisCreditReservation.open(
+            input.ownerId,
+            'generateStep',
+        );
+
         // Mark generating immediately so the UI shows a spinner.
         await this.paperRepository.setStepState(input.ownerId, input.paperId, input.stepId, 'generating');
 
@@ -128,6 +134,7 @@ export class GenerateStepUseCase {
                 missingSourceTypes,
             };
 
+            reservation.markLlmContacted();
             const result = await this.orchestrator.generateStep(orchestratorInput);
 
             // Run the deterministic style formatter on the LLM's
@@ -170,6 +177,7 @@ export class GenerateStepUseCase {
             } catch (rollbackErr) {
                 console.error('[GenerateStepUseCase] failed to roll state back to failed:', rollbackErr);
             }
+            await reservation.refundIfPreLlm();
             throw err;
         }
     }
