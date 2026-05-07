@@ -78,12 +78,21 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     // user can re-open the dialog without re-running the verifier.
     const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
     const [verifiedCitations, setVerifiedCitations] = useState<VerifiedCitation[]>([]);
-    // Accepted steps collapse by default to keep the page short for
-    // multi-verse papers — the user already approved them, so the
-    // detailed content is rarely re-read in the same session. Click
-    // the header to expand. Editing automatically expands.
-    const [collapsed, setCollapsed] = useState(true);
+    // Collapse behavior:
+    //   - Accepted steps default to COLLAPSED (the user already
+    //     approved; detail is rarely re-read in the same session).
+    //   - Awaiting-review steps default to EXPANDED (user needs to
+    //     read before deciding) but can be collapsed manually so
+    //     long multi-verse papers don't force them to scroll past
+    //     several open cards.
+    //   - Pending / generating / failed are not collapsible — the
+    //     header is the entire content there.
+    // Lazy-init so the initial value reflects the step's state on
+    // first mount; later state changes don't re-derive (the user's
+    // explicit toggle takes precedence).
+    const [collapsed, setCollapsed] = useState(() => step.state === 'accepted');
     const isExpanded = !collapsed || editing;
+    const collapsible = step.state === 'accepted' || step.state === 'awaiting-review';
     // View mode toggle for verse steps that have a CanonicalVerseAnalysis
     // attached (Phase 2 architecture). Defaults to 'prose' so legacy
     // markdown output stays visible by default; users opt in to the
@@ -280,27 +289,28 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 isAccepted ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-slate-200 dark:border-zinc-800'
             )}
         >
-            {/* Header — clickable when accepted to toggle collapse.
-                For other states the click target is inert (no value in
-                hiding an in-progress step). */}
+            {/* Header — clickable when collapsible (accepted or
+                awaiting-review) to toggle collapse. For pending /
+                generating / failed the header is the entire content,
+                so the click target is inert. */}
             <header
                 className={cn(
                     'flex items-center gap-3 px-5 py-3 border-b border-slate-100 dark:border-zinc-800',
-                    isAccepted && 'cursor-pointer select-none',
-                    isAccepted && !isExpanded && 'border-b-0',
+                    collapsible && 'cursor-pointer select-none',
+                    collapsible && !isExpanded && 'border-b-0',
                 )}
-                onClick={isAccepted ? () => setCollapsed(c => !c) : undefined}
-                role={isAccepted ? 'button' : undefined}
-                tabIndex={isAccepted ? 0 : undefined}
-                onKeyDown={isAccepted ? (e) => {
+                onClick={collapsible ? () => setCollapsed(c => !c) : undefined}
+                role={collapsible ? 'button' : undefined}
+                tabIndex={collapsible ? 0 : undefined}
+                onKeyDown={collapsible ? (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         setCollapsed(c => !c);
                     }
                 } : undefined}
-                aria-expanded={isAccepted ? isExpanded : undefined}
+                aria-expanded={collapsible ? isExpanded : undefined}
             >
-                {isAccepted && (
+                {collapsible && (
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setCollapsed(c => !c); }}
@@ -401,10 +411,11 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 )}
             </header>
 
-            {/* Body + footer — hidden when accepted step is collapsed.
-                Other states always render (you don't want to hide an
-                awaiting-review step). */}
-            {(!isAccepted || isExpanded) && (
+            {/* Body + footer — hidden when a collapsible step is
+                collapsed (accepted or awaiting-review). Pending /
+                generating / failed always render their body since
+                the header alone isn't informative there. */}
+            {(!collapsible || isExpanded) && (
             <>
             {/* Body — state-aware */}
             <div className="px-5 py-4">
