@@ -216,7 +216,23 @@ function formatSourceRegistry(sources: ReadonlyArray<ComposerSourceMetadata>, la
     if (sources.length === 0) {
         return lang === 'en' ? '(No sources configured.)' : '(Sin fuentes configuradas.)';
     }
-    return sources.map(s => `- **${s.citationKey}**: ${s.author}, *${s.title}*`).join('\n');
+    const lines: string[] = [];
+    for (const s of sources) {
+        const badge = s.isPinned
+            ? (lang === 'en' ? ' ⭐ PINNED' : ' ⭐ ASIGNADA')
+            : '';
+        lines.push(`- **${s.citationKey}**${badge}: ${s.author}, *${s.title}*`);
+        if (s.isPinned && s.textContent && s.textContent.trim()) {
+            const truncated = s.textContent.length > 6000
+                ? s.textContent.slice(0, 6000) + '\n[…content truncated to fit context window…]'
+                : s.textContent;
+            const heading = lang === 'en'
+                ? `\n  _Excerpt for grounding the pinned citation:_\n`
+                : `\n  _Extracto para anclar la cita asignada:_\n`;
+            lines.push(heading + '  ```\n  ' + truncated.replace(/\n/g, '\n  ') + '\n  ```');
+        }
+    }
+    return lines.join('\n');
 }
 
 /**

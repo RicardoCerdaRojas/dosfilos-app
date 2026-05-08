@@ -85,8 +85,6 @@ export class ComposeIntroductionFromAnalysesUseCase {
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
             const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
-            const composerSources = buildComposerSources(paper);
-            const citableSources = buildFormatterSources(paper);
 
             // Plan-pinned sources for the introduction step. Composer
             // treats them as a contract.
@@ -96,6 +94,13 @@ export class ComposeIntroductionFromAnalysesUseCase {
             const pinnedSourceKeys = paper.sources
                 .filter(s => pinnedIds.has(s.id) && s.citationKey)
                 .map(s => s.citationKey!);
+
+            const composerSources = await buildComposerSourcesWithPinnedContent(
+                paper,
+                pinnedIds,
+                this.contentReader,
+            );
+            const citableSources = buildFormatterSources(paper);
 
             const composerInput: ComposeIntroductionInput = {
                 paperPassage: paper.passage,
@@ -194,6 +199,32 @@ function buildComposerSources(paper: ExegeticalPaper): ComposerSourceMetadata[] 
             const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
             return { citationKey: key, author: key, title: s.displayLabel };
         });
+}
+
+async function buildComposerSourcesWithPinnedContent(
+    paper: ExegeticalPaper,
+    pinnedIds: ReadonlySet<string>,
+    contentReader: IResourceContentReader,
+): Promise<ComposerSourceMetadata[]> {
+    const citable = paper.sources.filter(s => isCitableSourceType(s.sourceType));
+    return Promise.all(citable.map(async s => {
+        const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
+        const isPinned = pinnedIds.has(s.id);
+        const base: ComposerSourceMetadata = {
+            citationKey: key,
+            author: key,
+            title: s.displayLabel,
+            isPinned,
+        };
+        if (!isPinned) return base;
+        try {
+            const text = await contentReader.getTextContent(s.corpusId);
+            return { ...base, textContent: text ?? '' };
+        } catch (err) {
+            console.warn('[compose] failed to load pinned source textContent:', s.corpusId, err);
+            return base;
+        }
+    }));
 }
 
 function buildFormatterSources(paper: ExegeticalPaper): FormatterSourceMetadata[] {

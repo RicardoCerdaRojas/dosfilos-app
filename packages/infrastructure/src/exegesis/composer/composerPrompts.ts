@@ -264,19 +264,28 @@ function formatSourceRegistry(
             ? '(No sources registered. Cite only what the analyses cite — but they should also be empty.)'
             : '(No hay fuentes registradas. Citá solamente lo que los análisis citen — aunque ellos también deberían estar vacíos.)';
     }
-    return sources
-        .map(s => {
-            const parts: string[] = [`- **${s.citationKey}**: ${s.author}, *${s.title}*`];
-            if (s.seriesVolume) parts.push(`(${s.seriesVolume})`);
-            if (s.edition) parts.push(`[${s.edition}]`);
-            const pub: string[] = [];
-            if (s.city) pub.push(s.city);
-            if (s.publisher) pub.push(s.publisher);
-            if (s.year) pub.push(String(s.year));
-            if (pub.length > 0) parts.push(`(${pub.join(': ')})`);
-            return parts.join(' ');
-        })
-        .join('\n');
+    const blocks: string[] = [];
+    for (const s of sources) {
+        const parts: string[] = [`- **${s.citationKey}**${s.isPinned ? (lang === 'en' ? ' ⭐ PINNED' : ' ⭐ ASIGNADA') : ''}: ${s.author}, *${s.title}*`];
+        if (s.seriesVolume) parts.push(`(${s.seriesVolume})`);
+        if (s.edition) parts.push(`[${s.edition}]`);
+        const pub: string[] = [];
+        if (s.city) pub.push(s.city);
+        if (s.publisher) pub.push(s.publisher);
+        if (s.year) pub.push(String(s.year));
+        if (pub.length > 0) parts.push(`(${pub.join(': ')})`);
+        blocks.push(parts.join(' '));
+        if (s.isPinned && s.textContent && s.textContent.trim()) {
+            const truncated = s.textContent.length > 6000
+                ? s.textContent.slice(0, 6000) + '\n[…content truncated…]'
+                : s.textContent;
+            const heading = lang === 'en'
+                ? `\n  _Excerpt for grounding the pinned citation:_\n`
+                : `\n  _Extracto para anclar la cita asignada:_\n`;
+            blocks.push(heading + '  ```\n  ' + truncated.replace(/\n/g, '\n  ') + '\n  ```');
+        }
+    }
+    return blocks.join('\n');
 }
 
 function truncate(text: string, maxChars: number): string {

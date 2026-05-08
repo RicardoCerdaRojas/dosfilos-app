@@ -79,8 +79,6 @@ export class ComposeConclusionFromAnalysesUseCase {
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
             const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
-            const composerSources = buildComposerSources(paper);
-            const citableSources = buildFormatterSources(paper);
 
             // Pull the conclusion step's pinned source keys from the
             // student's plan. Composer treats them as a contract — must
@@ -91,6 +89,18 @@ export class ComposeConclusionFromAnalysesUseCase {
             const pinnedSourceKeys = paper.sources
                 .filter(s => pinnedIds.has(s.id) && s.citationKey)
                 .map(s => s.citationKey!);
+
+            // Build composer sources WITH textContent loaded for
+            // pinned sources. Without this, the composer can be told
+            // "must cite Lucas" but lacks the source material to
+            // synthesize Lucas's position — particularly when the
+            // body verse analyses didn't engage that source.
+            const composerSources = await buildComposerSourcesWithPinnedContent(
+                paper,
+                pinnedIds,
+                this.contentReader,
+            );
+            const citableSources = buildFormatterSources(paper);
 
             const composerInput: ComposeConclusionInput = {
                 paperPassage: paper.passage,
@@ -188,6 +198,35 @@ function buildComposerSources(paper: ExegeticalPaper): ComposerSourceMetadata[] 
             const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
             return { citationKey: key, author: key, title: s.displayLabel };
         });
+}
+
+async function buildComposerSourcesWithPinnedContent(
+    paper: ExegeticalPaper,
+    pinnedIds: ReadonlySet<string>,
+    contentReader: IResourceContentReader,
+): Promise<ComposerSourceMetadata[]> {
+    const citable = paper.sources.filter(s => isCitableSourceType(s.sourceType));
+    return Promise.all(citable.map(async s => {
+        const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
+        const isPinned = pinnedIds.has(s.id);
+        const base: ComposerSourceMetadata = {
+            citationKey: key,
+            author: key,
+            title: s.displayLabel,
+            isPinned,
+        };
+        if (!isPinned) return base;
+        // Load textContent ONLY for pinned sources — bandwidth +
+        // token cost both grow with content size, so we keep
+        // unpinned sources as bibliographic shells.
+        try {
+            const text = await contentReader.getTextContent(s.corpusId);
+            return { ...base, textContent: text ?? '' };
+        } catch (err) {
+            console.warn('[compose] failed to load pinned source textContent:', s.corpusId, err);
+            return base;
+        }
+    }));
 }
 
 function buildFormatterSources(paper: ExegeticalPaper): FormatterSourceMetadata[] {

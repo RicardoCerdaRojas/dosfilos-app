@@ -103,16 +103,6 @@ export class ComposeAcademicPaperUseCase {
                 );
             }
 
-            // ── Build the source registry for the composer ───────────────
-            // Composer needs author/title/series/etc for bibliography.
-            // We populate from `paper.sources` directly — when richer
-            // library_resource metadata becomes wired (publisher, city,
-            // year, volume), this method is the single place to extend.
-            const composerSources = buildComposerSources(paper);
-
-            // ── Build citable sources for the deterministic formatter ───
-            const citableSources = buildFormatterSources(paper);
-
             // ── Compose ──────────────────────────────────────────────────
             // Union of pinned source keys across every step of the
             // plan. The academic composer must cite each at least
@@ -125,6 +115,20 @@ export class ComposeAcademicPaperUseCase {
             const pinnedSourceKeys = paper.sources
                 .filter(s => pinnedIdSet.has(s.id) && s.citationKey)
                 .map(s => s.citationKey!);
+
+            // ── Build the source registry for the composer ───────────────
+            // Pinned sources get textContent loaded so the composer
+            // has material to ground citations even when verse
+            // analyses didn't engage them. Unpinned sources stay as
+            // bibliographic shells (author/title only).
+            const composerSources = await buildComposerSourcesWithPinnedContent(
+                paper,
+                pinnedIdSet,
+                this.contentReader,
+            );
+
+            // ── Build citable sources for the deterministic formatter ───
+            const citableSources = buildFormatterSources(paper);
 
             const composerInput: ComposeAcademicPaperInput = {
                 paperPassage: paper.passage,
@@ -244,6 +248,32 @@ function collectAcceptedVerseAnalyses(paper: ExegeticalPaper): CanonicalVerseAna
  * publisher/city/year/edition stay undefined until library_resource
  * metadata gets surfaced through the source.
  */
+async function buildComposerSourcesWithPinnedContent(
+    paper: ExegeticalPaper,
+    pinnedIds: ReadonlySet<string>,
+    contentReader: IResourceContentReader,
+): Promise<ComposerSourceMetadata[]> {
+    const citable = paper.sources.filter(s => isCitableSourceType(s.sourceType));
+    return Promise.all(citable.map(async s => {
+        const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
+        const isPinned = pinnedIds.has(s.id);
+        const base: ComposerSourceMetadata = {
+            citationKey: key,
+            author: key,
+            title: s.displayLabel,
+            isPinned,
+        };
+        if (!isPinned) return base;
+        try {
+            const text = await contentReader.getTextContent(s.corpusId);
+            return { ...base, textContent: text ?? '' };
+        } catch (err) {
+            console.warn('[compose] failed to load pinned source textContent:', s.corpusId, err);
+            return base;
+        }
+    }));
+}
+
 function buildComposerSources(paper: ExegeticalPaper): ComposerSourceMetadata[] {
     return paper.sources
         .filter(s => isCitableSourceType(s.sourceType))
