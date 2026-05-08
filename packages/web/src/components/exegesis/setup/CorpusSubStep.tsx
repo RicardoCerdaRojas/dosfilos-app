@@ -681,7 +681,7 @@ function RoleCountChip({
                     enough when the deficit was a single source. */}
                 {!ok && (
                     <span className="inline-flex items-center rounded-full border border-warning/50 bg-warning-subtle px-1.5 py-0 text-[10px] font-semibold uppercase tracking-wide text-warning-subtle-foreground whitespace-nowrap">
-                        {t('paperSetup.subSteps.corpus.roleCoverage.deficitBadge', { gap })}
+                        {t('paperSetup.subSteps.corpus.roleCoverage.deficitBadge', { count: gap, gap })}
                     </span>
                 )}
             </div>
