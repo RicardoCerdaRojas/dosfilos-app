@@ -271,21 +271,33 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         }
     };
 
-    // Adaptive regenerate routing: when the verse step's CURRENT
-    // version was produced by the canonical analyzer (markers:
-    // `canonicalAnalysis` is populated), regenerate via the canonical
-    // pipeline. Otherwise route to the legacy generateStep. This
-    // makes "Regenerar" and "Aplicar hint" do the right thing
-    // automatically without forcing the user to remember which path
-    // they're on. Conclusion/introduction kinds keep legacy
-    // regeneration for now — when the user wants a canonical
-    // recomposition they can re-trigger from the composer button on
-    // pending state.
+    // Adaptive regenerate routing — picks the right pipeline for the
+    // step kind so "Regenerar" / "Aplicar hint" land in the same flow
+    // that produced the current version:
+    //   - verse + canonicalAnalysis present → canonical analyzer
+    //   - conclusion → ComposeConclusionFromAnalysesUseCase (carries the
+    //     pinned-source contract + textContent — issue #126 follow-up)
+    //   - introduction → ComposeIntroductionFromAnalysesUseCase (same)
+    //   - everything else → legacy GenerateStepUseCase fallback
+    // Routing conclusion/intro through the legacy path here would
+    // bypass the composer's plan-pinned source contract and re-fall
+    // into the cross-pollination bug from issue #126.
     const currentHasCanonical = !!step.current?.canonicalAnalysis;
     const shouldRegenerateCanonically = isVerse && currentHasCanonical;
     const handleAdaptiveRegenerate = (regenerationHint?: string) => {
         if (shouldRegenerateCanonically) {
             return handleAnalyzeCanonically(regenerationHint);
+        }
+        // Hint flow keeps the legacy generateStep path because the
+        // composer use cases don't accept regenerationHint yet — TODO
+        // in issue #126 follow-up. Plain "Regenerar" (no hint) goes
+        // through the composer so the pinned-source contract +
+        // textContent injection apply.
+        if (isConclusion && !regenerationHint) {
+            return handleComposeConclusion();
+        }
+        if (isIntroduction && !regenerationHint) {
+            return handleComposeIntroduction();
         }
         return handleGenerate(regenerationHint);
     };
