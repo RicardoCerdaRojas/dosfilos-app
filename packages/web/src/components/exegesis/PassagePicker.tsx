@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, AlertCircle, Pencil, BookOpen } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Search, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import {
+    parsePassageReference,
     formatPassageReference,
     type PassageReference,
     type ParseResult,
 } from '@dosfilos/domain';
 import { BiblePassageBuilder } from './BiblePassageBuilder';
+import { Button } from '@/components/ui/button';
 
 export interface PassagePickerProps {
     /** Current parsed passage (if any). The parent owns the state. */
@@ -24,13 +26,23 @@ export interface PassagePickerProps {
 }
 
 /**
- * Inline passage picker for the exegesis setup wizard.
+ * Date-picker-style passage input.
  *
- * Single integrated drill-down (book → chapter → verse) with a search
- * bar that also parses freeform refs ("Heb 12:1-2"). The builder body
- * collapses automatically once the user finishes a complete selection
- * (verse range set), and re-expands when they click the summary chip
- * to edit. No popover — everything stays in the wizard step's flow.
+ * Always-visible text input shows the formatted reference. Focusing the
+ * input opens an inline drill-down panel underneath (book → chapter →
+ * verse). Picking through the panel writes the formatted ref back into
+ * the input; typing in the input live-parses freeform refs ("heb 12:1-2")
+ * and feeds them to the panel so the stages stay in sync. The panel
+ * closes on:
+ *   - "Listo" button click
+ *   - Click outside the container
+ *   - Escape key
+ *   - Enter key in the input (commits the current parsed ref)
+ *
+ * The committed value travels through `onChange` only when parsing
+ * succeeds. While the input holds an unparseable string the parent is
+ * told `null` + the error hint, so the wizard's "Continue" CTA stays
+ * gated until the user produces a real reference.
  */
 export function PassagePicker({
     value,
@@ -40,162 +52,215 @@ export function PassagePicker({
     const { t, i18n } = useTranslation('exegesis');
     const lang = displayLanguage ?? (i18n.language?.split('-')[0] === 'en' ? 'en' : 'es');
 
-    const [result, setResult] = useState<ParseResult | null>(null);
-    const [expanded, setExpanded] = useState<boolean>(value === null);
-    // Reset signal: bumping this prop forces the builder to re-mount
-    // with the current `value`, useful when the user re-opens after
-    // collapsing so stale internal stage state doesn't survive.
+    // Input text — what the user sees/types. Sync from external `value`
+    // changes (e.g. parent reset) but otherwise the user owns it.
+    const [inputText, setInputText] = useState<string>(
+        value ? formatPassageReference(value, lang) : '',
+    );
+    const [expanded, setExpanded] = useState<boolean>(false);
+    // Last parse attempt of the input text. `null` = empty input.
+    const [textParseResult, setTextParseResult] = useState<ParseResult | null>(null);
+    // Last result coming from the builder (overrides textParseResult
+    // because picking via stages is the authoritative path).
+    const [builderResult, setBuilderResult] = useState<ParseResult | null>(null);
+    // Bumping this re-mounts the builder so it re-initializes from the
+    // current `value`. Useful when the user closes/reopens the panel.
     const [resetSignal, setResetSignal] = useState(0);
-    const previousResultRef = useRef<ParseResult | null>(null);
 
-    // Push results upward + auto-collapse on a complete result.
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+
+    // External value → input text sync. Only when the user isn't
+    // actively editing (panel closed) so we don't fight typing.
     useEffect(() => {
-        if (result === null) {
+        if (expanded) return;
+        setInputText(value ? formatPassageReference(value, lang) : '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value, lang]);
+
+    // Live parse of the input text.
+    useEffect(() => {
+        const trimmed = inputText.trim();
+        if (!trimmed) {
+            setTextParseResult(null);
+            return;
+        }
+        setTextParseResult(parsePassageReference(trimmed));
+    }, [inputText]);
+
+    // Push the authoritative result up. Builder result wins when the
+    // user is interacting with the panel; otherwise text parse drives.
+    const effectiveResult: ParseResult | null = useMemo(() => {
+        if (builderResult) return builderResult;
+        return textParseResult;
+    }, [builderResult, textParseResult]);
+
+    useEffect(() => {
+        if (effectiveResult === null) {
+            // Empty → null. Parent disables CTA, no error shown.
             onChange(null);
             return;
         }
-        if (result.ok) {
-            onChange(result.ref);
-            // Auto-collapse only on transitions to a NEW complete ref —
-            // not while the user is still editing. A complete ref is
-            // one with a non-null verseStart (verseEnd defaults to
-            // verseStart for single-verse picks, both signal "done").
-            const becameComplete =
-                previousResultRef.current?.ok !== true ||
-                !sameRef(previousResultRef.current.ref, result.ref);
-            if (result.ref.verseStart !== null && becameComplete) {
-                setExpanded(false);
-            }
+        if (effectiveResult.ok) {
+            onChange(effectiveResult.ref);
         } else {
-            onChange(null, { code: result.error, hint: result.hint });
+            onChange(null, { code: effectiveResult.error, hint: effectiveResult.hint });
         }
-        previousResultRef.current = result;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [result]);
+    }, [effectiveResult]);
 
-    const handleEdit = () => {
+    // When the builder picks a complete ref, mirror it into the input.
+    useEffect(() => {
+        if (!builderResult?.ok) return;
+        setInputText(formatPassageReference(builderResult.ref, lang));
+    }, [builderResult, lang]);
+
+    // Click-outside closes the panel (committing whatever's parsed).
+    useEffect(() => {
+        if (!expanded) return;
+        const handler = (e: MouseEvent | TouchEvent) => {
+            const node = containerRef.current;
+            if (!node) return;
+            if (e.target instanceof Node && node.contains(e.target)) return;
+            setExpanded(false);
+        };
+        document.addEventListener('mousedown', handler);
+        document.addEventListener('touchstart', handler);
+        return () => {
+            document.removeEventListener('mousedown', handler);
+            document.removeEventListener('touchstart', handler);
+        };
+    }, [expanded]);
+
+    const handleOpen = () => {
+        if (expanded) return;
         setResetSignal((s) => s + 1);
         setExpanded(true);
     };
 
+    const handleClose = () => {
+        setExpanded(false);
+        // Drop the builder result on close so the next open re-derives
+        // from the committed value (avoids stale "becameComplete" pings).
+        setBuilderResult(null);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Escape') {
+            handleClose();
+            return;
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Commit whatever's parsed; don't toggle state if empty.
+            if (textParseResult?.ok) {
+                handleClose();
+            }
+        }
+    };
+
     return (
-        <div className="space-y-2">
-            {/* Summary chip — visible always so the user always sees the
-                current selection. Clickable to re-open the builder. */}
-            <PassageSummary
-                value={value}
-                lang={lang}
-                expanded={expanded}
-                onEdit={handleEdit}
-                t={t}
-            />
+        <div ref={containerRef} className="space-y-2">
+            <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputText}
+                    onChange={(e) => {
+                        setInputText(e.target.value);
+                        // User typed → reset builder dominance so the
+                        // text parse drives until they click stages
+                        // again.
+                        setBuilderResult(null);
+                    }}
+                    onFocus={handleOpen}
+                    onKeyDown={handleKeyDown}
+                    placeholder={t('setup.passage.inputPlaceholder')}
+                    spellCheck={false}
+                    autoComplete="off"
+                    className={cn(
+                        'w-full rounded-lg border bg-white dark:bg-zinc-900 pl-9 pr-9 py-2.5 text-[15px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-colors',
+                        textParseResult && !textParseResult.ok
+                            ? 'border-rose-300 dark:border-rose-800'
+                            : 'border-slate-200 dark:border-zinc-800',
+                    )}
+                />
+                {inputText && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setInputText('');
+                            setBuilderResult(null);
+                            inputRef.current?.focus();
+                        }}
+                        aria-label={t('setup.passage.clear')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                        <X className="h-3.5 w-3.5" />
+                    </button>
+                )}
+            </div>
 
             {expanded && (
-                <BiblePassageBuilder
-                    key={resetSignal}
-                    value={value}
-                    onResult={setResult}
-                    displayLanguage={lang}
-                    t={t}
-                />
+                <div className="space-y-2">
+                    <BiblePassageBuilder
+                        key={resetSignal}
+                        value={textParseResult?.ok ? textParseResult.ref : value}
+                        onResult={setBuilderResult}
+                        displayLanguage={lang}
+                        t={t}
+                    />
+                    <div className="flex items-center justify-between gap-2">
+                        <FeedbackLine result={effectiveResult} lang={lang} t={t} />
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleClose}
+                            disabled={!effectiveResult?.ok}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            {t('setup.passage.done')}
+                        </Button>
+                    </div>
+                </div>
             )}
 
-            <FeedbackLine result={result} value={value} lang={lang} t={t} />
-        </div>
-    );
-}
-
-function sameRef(a: PassageReference, b: PassageReference): boolean {
-    return a.bookId === b.bookId
-        && a.chapterStart === b.chapterStart
-        && a.chapterEnd === b.chapterEnd
-        && a.verseStart === b.verseStart
-        && a.verseEnd === b.verseEnd;
-}
-
-function PassageSummary({
-    value,
-    lang,
-    expanded,
-    onEdit,
-    t,
-}: {
-    value: PassageReference | null;
-    lang: 'es' | 'en';
-    expanded: boolean;
-    onEdit: () => void;
-    t: (key: string, opts?: Record<string, unknown>) => string;
-}) {
-    if (!value) {
-        return null;
-    }
-    return (
-        <div
-            className={cn(
-                'inline-flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors',
-                expanded
-                    ? 'border-emerald-300 bg-emerald-50/40 dark:border-emerald-800 dark:bg-emerald-950/20'
-                    : 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40',
-            )}
-        >
-            <BookOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span className="text-[14px] font-semibold text-emerald-900 dark:text-emerald-100 tabular-nums">
-                {formatPassageReference(value, lang)}
-            </span>
-            {!expanded && (
-                <button
-                    type="button"
-                    onClick={onEdit}
-                    className="ml-1 inline-flex items-center gap-1 text-[12px] text-emerald-700 dark:text-emerald-300 hover:underline"
-                >
-                    <Pencil className="h-3 w-3" />
-                    {t('setup.passage.edit')}
-                </button>
-            )}
+            {!expanded && <FeedbackLine result={effectiveResult} lang={lang} t={t} />}
         </div>
     );
 }
 
 function FeedbackLine({
     result,
-    value,
     lang,
     t,
 }: {
     result: ParseResult | null;
-    value: PassageReference | null;
     lang: 'es' | 'en';
     t: (key: string) => string;
 }) {
-    // Empty state — no result yet, no value. Hint the user.
-    if (result === null && value === null) {
+    if (result === null) {
         return (
             <p className="text-xs text-slate-400 dark:text-slate-500">
                 {t('setup.passage.helperHint')}
             </p>
         );
     }
-    // Error state — only show when the user is actively editing
-    // (otherwise a stale error from a half-typed search lingers
-    // after a successful pick).
-    if (result && !result.ok) {
+    if (result.ok) {
         return (
-            <p className="inline-flex items-start gap-1.5 text-xs font-medium text-rose-700 dark:text-rose-300">
-                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <span>{result.hint}</span>
+            <p className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>
+                    {t('setup.passage.parsedAs')} <strong>{formatPassageReference(result.ref, lang)}</strong>
+                </span>
             </p>
         );
     }
-    // Success state — small confirmation. Same copy as the existing
-    // wizard, just rendered after the summary chip.
-    const ok = result?.ok ? result.ref : value;
-    if (!ok) return null;
     return (
-        <p className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>
-                {t('setup.passage.parsedAs')} <strong>{formatPassageReference(ok, lang)}</strong>
-            </span>
+        <p className="inline-flex items-start gap-1.5 text-xs font-medium text-rose-700 dark:text-rose-300">
+            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>{result.hint}</span>
         </p>
     );
 }

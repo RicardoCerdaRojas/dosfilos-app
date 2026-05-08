@@ -982,6 +982,9 @@
             "searchBook": "Buscar libro… (ej. heb, rom, gn)",
             "back": "Volver",
             "edit": "Editar",
+            "done": "Listo",
+            "clear": "Limpiar",
+            "inputPlaceholder": "Hebreos 12:1-2 · escribe o usa el selector",
             "builder": {
                 "searchBook": "Busca un libro o pega \"Heb 12:1-2\"",
                 "searchChapter": "Filtra capítulo (1, 2, 3…) o pega referencia",

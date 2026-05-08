@@ -982,6 +982,9 @@
             "searchBook": "Search book… (e.g. heb, rom, gn)",
             "back": "Back",
             "edit": "Edit",
+            "done": "Done",
+            "clear": "Clear",
+            "inputPlaceholder": "Hebrews 12:1-2 · type or use the picker",
             "builder": {
                 "searchBook": "Search a book or paste \"Heb 12:1-2\"",
                 "searchChapter": "Filter chapter (1, 2, 3…) or paste reference",
