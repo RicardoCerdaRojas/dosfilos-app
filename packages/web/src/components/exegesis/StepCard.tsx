@@ -111,17 +111,27 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     // markdown output stays visible by default; users opt in to the
     // structured study view via the toggle.
     const [viewMode, setViewMode] = useState<'prose' | 'study'>('prose');
-    const canonicalAnalysis = step.accepted?.canonicalAnalysis ?? step.current?.canonicalAnalysis ?? null;
+    const canonicalAnalysis = step.state === 'awaiting-review'
+        ? step.current?.canonicalAnalysis ?? step.accepted?.canonicalAnalysis ?? null
+        : step.accepted?.canonicalAnalysis ?? step.current?.canonicalAnalysis ?? null;
     const supportsStudyView = step.kind === 'verse' && !!canonicalAnalysis;
 
     const displayLabel = stepDisplayLabel(step, language, t);
-    const previewMarkdown = step.accepted?.markdown ?? step.current?.markdown ?? '';
 
     const isPending = step.state === 'pending';
     const isGenerating = step.state === 'generating';
     const isReview = step.state === 'awaiting-review';
     const isAccepted = step.state === 'accepted';
     const isFailed = step.state === 'failed';
+
+    // In awaiting-review, the user must see the NEW draft (step.current),
+    // not a previously accepted version. After regenerating from an
+    // accepted state, step.accepted still holds the old version while
+    // step.current holds the fresh draft — rendering accepted there
+    // makes the UI lie about what was just produced.
+    const previewMarkdown = isReview
+        ? step.current?.markdown ?? step.accepted?.markdown ?? ''
+        : step.accepted?.markdown ?? step.current?.markdown ?? '';
 
     const canGenerate = isPending || isFailed;
     const canRegenerate = isReview;
@@ -367,7 +377,9 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     // showing so the badge in the header reflects the same content the
     // user is reading. Null until verification has ever run.
     const displayVerificationSummary: VerificationSummary | null = (() => {
-        const v = step.accepted?.verifications ?? step.current?.verifications ?? null;
+        const v = isReview
+            ? step.current?.verifications ?? step.accepted?.verifications ?? null
+            : step.accepted?.verifications ?? step.current?.verifications ?? null;
         if (!v || !v.lastRunAt) return null;
         return v;
     })();
