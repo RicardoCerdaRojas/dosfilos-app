@@ -144,18 +144,15 @@ export class ComposeAcademicPaperUseCase {
             reservation.markLlmContacted();
             let raw = await this.composer.composeAcademicPaper(composerInput);
 
-            // [#126 Approach B] Post-validation retry on missing pinned keys.
+            // Post-validation retry on missing pinned keys.
+            // ComposeAcademicPaperInput has no regenerationHint slot,
+            // so the corrective directive is appended to assignmentBrief.
             const missing = pinnedSourceKeys.filter(
                 key => !raw.markdown.toLowerCase().includes(key.toLowerCase()),
             );
             if (missing.length > 0) {
-                console.warn('[exegesis][#126] academic composer missed pinned keys, retrying once:', missing);
+                console.warn('[exegesis] academic composer missed pinned keys, retrying once:', missing);
                 try {
-                    // ComposeAcademicPaperInput doesn't carry a
-                    // regenerationHint slot; piggy-back on the
-                    // assignmentBrief by appending the corrective
-                    // directive. Best effort — schema-level enforcement
-                    // (Approach C) remains the durable fix.
                     const correction = paper.displayLanguage === 'en'
                         ? `\n\n[CORRECTIVE PASS] Your previous output skipped pinned sources [${missing.join(', ')}]. Cite each one at least once across the paper using the source content provided in the registry.`
                         : `\n\n[PASE CORRECTIVO] Tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. Citá cada una al menos una vez en el paper usando el contenido provisto en el registro.`;
@@ -170,7 +167,7 @@ export class ComposeAcademicPaperUseCase {
                         raw = retryResult;
                     }
                 } catch (retryErr) {
-                    console.warn('[exegesis][#126] academic retry failed:', retryErr);
+                    console.warn('[exegesis] academic retry failed:', retryErr);
                 }
             }
 

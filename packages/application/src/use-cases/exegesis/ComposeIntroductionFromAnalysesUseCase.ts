@@ -118,12 +118,15 @@ export class ComposeIntroductionFromAnalysesUseCase {
             reservation.markLlmContacted();
             let result = await this.composer.composeIntroduction(composerInput);
 
-            // [#126 Approach B] Post-validation retry on missing pinned keys.
+            // Post-validation retry: if the composer skipped any
+            // pinned sources, fire one corrective regen with an
+            // explicit hint. Single retry — further enforcement should
+            // escalate to schema-level constraints.
             const missing = pinnedSourceKeys.filter(
                 key => !result.markdown.toLowerCase().includes(key.toLowerCase()),
             );
             if (missing.length > 0) {
-                console.warn('[exegesis][#126] intro composer missed pinned keys, retrying once:', missing);
+                console.warn('[exegesis] intro composer missed pinned keys, retrying once:', missing);
                 const retryHint = paper.displayLanguage === 'en'
                     ? `CRITICAL: your previous output skipped pinned sources [${missing.join(', ')}]. You MUST cite each one at least once in this introduction. Use the source content provided in the registry to ground the citation. Do NOT substitute another source.`
                     : `CRÍTICO: tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. DEBES citar cada una al menos una vez en esta introducción. Usá el contenido de la fuente provisto en el registro para anclar la cita. NO sustituyas por otra fuente.`;
@@ -139,7 +142,7 @@ export class ComposeIntroductionFromAnalysesUseCase {
                         result = retryResult;
                     }
                 } catch (retryErr) {
-                    console.warn('[exegesis][#126] intro retry failed:', retryErr);
+                    console.warn('[exegesis] intro retry failed:', retryErr);
                 }
             }
 
