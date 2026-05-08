@@ -276,12 +276,13 @@ function formatSourceRegistry(
         if (pub.length > 0) parts.push(`(${pub.join(': ')})`);
         blocks.push(parts.join(' '));
         if (s.isPinned && s.textContent && s.textContent.trim()) {
-            const truncated = s.textContent.length > 6000
-                ? s.textContent.slice(0, 6000) + '\n[…content truncated…]'
+            // 80k char cap per pinned source — see GeminiConclusionComposer.
+            const truncated = s.textContent.length > 80000
+                ? s.textContent.slice(0, 80000) + '\n[…content truncated…]'
                 : s.textContent;
             const heading = lang === 'en'
-                ? `\n  _Excerpt for grounding the pinned citation:_\n`
-                : `\n  _Extracto para anclar la cita asignada:_\n`;
+                ? `\n  _Source content for grounding the pinned citation. Find the passage most relevant to ${s.citationKey}'s commentary on this paper's pericope and paraphrase or quote from there:_\n`
+                : `\n  _Contenido de la fuente para anclar la cita asignada. Encontrá el pasaje más relevante del comentario de ${s.citationKey} sobre la perícopa de este paper y parafraseá o citá desde ahí:_\n`;
             blocks.push(heading + '  ```\n  ' + truncated.replace(/\n/g, '\n  ') + '\n  ```');
         }
     }
