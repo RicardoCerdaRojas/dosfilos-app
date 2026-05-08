@@ -980,6 +980,20 @@
             "freeTextPlaceholder": "e.g. Hebrews 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
             "pickBook": "Pick a book",
             "searchBook": "Search book… (e.g. heb, rom, gn)",
+            "back": "Back",
+            "builder": {
+                "searchBook": "Search a book or paste \"Heb 12:1-2\"",
+                "searchChapter": "Filter chapter (1, 2, 3…) or paste reference",
+                "searchVerse": "Filter verse or paste \"Heb 12:1-2\"",
+                "verses": "Verses",
+                "showMore": "Show more",
+                "clear": "Clear selection",
+                "verseHint": {
+                    "idle": "Tap the starting verse",
+                    "pickEnd": "Verse {{start}} selected. Tap another verse to create a range (or the same one for a single verse).",
+                    "range": "Selection: {{start}}–{{end}}"
+                }
+            },
             "testamentOt": "Old Testament",
             "testamentNt": "New Testament",
             "chapter": "Ch.",

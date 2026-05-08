@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Type, ListFilter, CheckCircle2, AlertCircle, BookOpen, ChevronsUpDown, Check } from 'lucide-react';
+import { Type, ListFilter, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import {
     parsePassageReference,
-    buildPassageReference,
     formatPassageReference,
-    getAllBooks,
     type PassageReference,
     type ParseResult,
-    type BibleBookId,
-    type BibleCanonBook,
 } from '@dosfilos/domain';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { BiblePassageBuilder } from './BiblePassageBuilder';
 
 type Mode = 'free-text' | 'picker';
 
@@ -77,18 +72,11 @@ export function PassagePicker({
         value ? formatPassageReference(value, lang) : ''
     );
 
-    // Picker mode state
-    const [pickerBookId, setPickerBookId] = useState<BibleBookId | ''>(value?.bookId ?? '');
-    const [pickerChapterStart, setPickerChapterStart] = useState<string>(value ? String(value.chapterStart) : '');
-    const [pickerChapterEnd, setPickerChapterEnd] = useState<string>(
-        value && value.chapterEnd !== value.chapterStart ? String(value.chapterEnd) : ''
-    );
-    const [pickerVerseStart, setPickerVerseStart] = useState<string>(value?.verseStart ? String(value.verseStart) : '');
-    const [pickerVerseEnd, setPickerVerseEnd] = useState<string>(value?.verseEnd ? String(value.verseEnd) : '');
-
-    const allBooks = useMemo(() => getAllBooks(), []);
-    const otBooks = useMemo(() => allBooks.filter(b => b.testament === 'OT'), [allBooks]);
-    const ntBooks = useMemo(() => allBooks.filter(b => b.testament === 'NT'), [allBooks]);
+    // Picker mode state — driven entirely by BiblePassageBuilder.
+    // The builder owns the per-stage state internally; we just keep
+    // the latest `ParseResult` it surfaced via `onResult` so the
+    // feedback line + parent push can read from the same source.
+    const [pickerResult, setPickerResult] = useState<ParseResult | null>(null);
 
     // ── Free-text parsing ───────────────────────────────────────────────
     const freeTextResult: ParseResult | null = useMemo(() => {
@@ -97,29 +85,10 @@ export function PassagePicker({
         return parsePassageReference(freeText);
     }, [mode, freeText]);
 
-    // ── Picker building ─────────────────────────────────────────────────
-    const pickerResult: ParseResult | null = useMemo(() => {
-        if (mode !== 'picker') return null;
-        if (!pickerBookId || !pickerChapterStart) return null;
-        const chStart = parseInt(pickerChapterStart, 10);
-        if (!Number.isFinite(chStart)) return null;
-        const chEnd = pickerChapterEnd ? parseInt(pickerChapterEnd, 10) : chStart;
-        const vStart = pickerVerseStart ? parseInt(pickerVerseStart, 10) : null;
-        const vEnd = pickerVerseEnd ? parseInt(pickerVerseEnd, 10) : (vStart ?? null);
-        return buildPassageReference({
-            bookId: pickerBookId as BibleBookId,
-            chapterStart: chStart,
-            chapterEnd: chEnd,
-            verseStart: vStart,
-            verseEnd: vEnd,
-        });
-    }, [mode, pickerBookId, pickerChapterStart, pickerChapterEnd, pickerVerseStart, pickerVerseEnd]);
-
     // Push results upward — single effect for both modes.
     useEffect(() => {
         const result = mode === 'free-text' ? freeTextResult : pickerResult;
         if (result === null) {
-            // Empty input → null with no error (parent disables CTA, no message yet).
             onChange(null);
             return;
         }
@@ -128,36 +97,22 @@ export function PassagePicker({
         } else {
             onChange(null, { code: result.error, hint: result.hint });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, freeTextResult, pickerResult]);
 
-    // When the user switches modes, sync the OTHER mode's fields to the
-    // current value so the toggle is non-destructive.
+    // When the user switches modes, sync the free-text input from the
+    // last good builder result so the toggle is non-destructive.
+    // Builder mounts fresh from `value` each time, so going free-text
+    // → builder is handled by its own initialization.
     const switchMode = (next: Mode) => {
         if (next === mode) return;
-        const current = mode === 'free-text' ? freeTextResult : pickerResult;
-        if (current?.ok) {
-            const ref = current.ref;
-            if (next === 'free-text') {
-                setFreeText(formatPassageReference(ref, lang));
-            } else {
-                setPickerBookId(ref.bookId);
-                setPickerChapterStart(String(ref.chapterStart));
-                setPickerChapterEnd(ref.chapterEnd !== ref.chapterStart ? String(ref.chapterEnd) : '');
-                setPickerVerseStart(ref.verseStart !== null ? String(ref.verseStart) : '');
-                setPickerVerseEnd(ref.verseEnd !== null ? String(ref.verseEnd) : '');
-            }
+        if (next === 'free-text') {
+            const current = pickerResult?.ok ? pickerResult.ref : value;
+            if (current) setFreeText(formatPassageReference(current, lang));
         }
         setMode(next);
         writeStoredMode(next);
     };
-
-    const selectedBook: BibleCanonBook | null = useMemo(() => {
-        if (!pickerBookId) return null;
-        return allBooks.find(b => b.id === pickerBookId) ?? null;
-    }, [pickerBookId, allBooks]);
-
-    const labelFor = (b: BibleCanonBook) => (lang === 'en' ? b.nameEn : b.nameEs);
 
     return (
         <div className="space-y-3">
@@ -179,33 +134,11 @@ export function PassagePicker({
                     placeholder={t('setup.passage.freeTextPlaceholder')}
                 />
             ) : (
-                <PickerMode
-                    otBooks={otBooks}
-                    ntBooks={ntBooks}
-                    labelFor={labelFor}
-                    bookId={pickerBookId}
-                    onBookChange={(id) => {
-                        setPickerBookId(id);
-                        // Reset numeric fields when book changes; the user almost
-                        // always means a different chapter/verse for a new book.
-                        setPickerChapterStart('');
-                        setPickerChapterEnd('');
-                        setPickerVerseStart('');
-                        setPickerVerseEnd('');
-                    }}
-                    selectedBook={selectedBook}
-                    chapterStart={pickerChapterStart}
-                    chapterEnd={pickerChapterEnd}
-                    verseStart={pickerVerseStart}
-                    verseEnd={pickerVerseEnd}
-                    onChapterStartChange={setPickerChapterStart}
-                    onChapterEndChange={setPickerChapterEnd}
-                    onVerseStartChange={setPickerVerseStart}
-                    onVerseEndChange={setPickerVerseEnd}
+                <BiblePassageBuilder
+                    value={value}
+                    onResult={setPickerResult}
+                    displayLanguage={lang}
                     t={t}
-                    pickBookLabel={t('setup.passage.pickBook')}
-                    otGroupLabel={t('setup.passage.testamentOt')}
-                    ntGroupLabel={t('setup.passage.testamentNt')}
                 />
             )}
 
@@ -294,249 +227,6 @@ function FreeTextMode({
     );
 }
 
-interface PickerModeProps {
-    otBooks: BibleCanonBook[];
-    ntBooks: BibleCanonBook[];
-    labelFor: (b: BibleCanonBook) => string;
-    bookId: BibleBookId | '';
-    onBookChange: (id: BibleBookId | '') => void;
-    selectedBook: BibleCanonBook | null;
-    chapterStart: string;
-    chapterEnd: string;
-    verseStart: string;
-    verseEnd: string;
-    onChapterStartChange: (v: string) => void;
-    onChapterEndChange: (v: string) => void;
-    onVerseStartChange: (v: string) => void;
-    onVerseEndChange: (v: string) => void;
-    t: (key: string) => string;
-    pickBookLabel: string;
-    otGroupLabel: string;
-    ntGroupLabel: string;
-}
-
-function PickerMode({
-    otBooks,
-    ntBooks,
-    labelFor,
-    bookId,
-    onBookChange,
-    selectedBook,
-    chapterStart,
-    chapterEnd,
-    verseStart,
-    verseEnd,
-    onChapterStartChange,
-    onChapterEndChange,
-    onVerseStartChange,
-    onVerseEndChange,
-    t,
-    pickBookLabel,
-    otGroupLabel,
-    ntGroupLabel,
-}: PickerModeProps) {
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-2">
-            <BookCombobox
-                otBooks={otBooks}
-                ntBooks={ntBooks}
-                labelFor={labelFor}
-                bookId={bookId}
-                onBookChange={onBookChange}
-                placeholder={pickBookLabel}
-                searchPlaceholder={t('setup.passage.searchBook')}
-                otGroupLabel={otGroupLabel}
-                ntGroupLabel={ntGroupLabel}
-            />
-
-            <NumberPair
-                startLabel={t('setup.passage.chapter')}
-                endLabel={t('setup.passage.chapterEnd')}
-                startValue={chapterStart}
-                endValue={chapterEnd}
-                onStartChange={onChapterStartChange}
-                onEndChange={onChapterEndChange}
-                max={selectedBook?.chapterCount}
-                disabled={!selectedBook}
-            />
-
-            <NumberPair
-                startLabel={t('setup.passage.verse')}
-                endLabel={t('setup.passage.verseEnd')}
-                startValue={verseStart}
-                endValue={verseEnd}
-                onStartChange={onVerseStartChange}
-                onEndChange={onVerseEndChange}
-                disabled={!selectedBook || !chapterStart}
-            />
-        </div>
-    );
-}
-
-interface BookComboboxProps {
-    otBooks: BibleCanonBook[];
-    ntBooks: BibleCanonBook[];
-    labelFor: (b: BibleCanonBook) => string;
-    bookId: BibleBookId | '';
-    onBookChange: (id: BibleBookId | '') => void;
-    placeholder: string;
-    searchPlaceholder: string;
-    otGroupLabel: string;
-    ntGroupLabel: string;
-}
-
-/**
- * Premium combobox replacement for the native `<select>`. Search-as-you-type
- * across 66 books (typing "heb" filters to Hebreos / Hebrews instantly),
- * grouped headings for OT/NT, keyboard navigation via cmdk, popover-based
- * surface with the same emerald focus ring as the rest of the picker.
- */
-function BookCombobox({
-    otBooks,
-    ntBooks,
-    labelFor,
-    bookId,
-    onBookChange,
-    placeholder,
-    searchPlaceholder,
-    otGroupLabel,
-    ntGroupLabel,
-}: BookComboboxProps) {
-    const [open, setOpen] = useState(false);
-    const allBooks = useMemo(() => [...otBooks, ...ntBooks], [otBooks, ntBooks]);
-    const selected = useMemo(
-        () => allBooks.find(b => b.id === bookId) ?? null,
-        [allBooks, bookId],
-    );
-
-    const renderItems = (books: BibleCanonBook[]) =>
-        books.map(b => {
-            const isSelected = bookId === b.id;
-            return (
-                <CommandItem
-                    key={b.id}
-                    value={`${labelFor(b)} ${b.id}`}
-                    onSelect={() => {
-                        onBookChange(b.id);
-                        setOpen(false);
-                    }}
-                    className={cn(
-                        // Override the cmdk default `bg-accent` (which the
-                        // app theme maps to a saturated emerald) with a
-                        // softer subtle background. Keeps the keyboard
-                        // highlight readable without feeling like a
-                        // permanent selection.
-                        'cursor-pointer rounded-md text-[14px] py-1.5',
-                        'data-[selected=true]:bg-emerald-50 data-[selected=true]:text-emerald-900',
-                        'dark:data-[selected=true]:bg-emerald-950/40 dark:data-[selected=true]:text-emerald-100',
-                        isSelected && 'font-semibold',
-                    )}
-                >
-                    <Check
-                        className={cn(
-                            'mr-2 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400',
-                            isSelected ? 'opacity-100' : 'opacity-0',
-                        )}
-                    />
-                    <span className="truncate">{labelFor(b)}</span>
-                </CommandItem>
-            );
-        });
-
-    return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <button
-                    type="button"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="inline-flex items-center justify-between rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-[15px] text-left text-slate-800 dark:text-slate-100 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 data-[state=open]:ring-2 data-[state=open]:ring-emerald-500/40 data-[state=open]:border-emerald-500"
-                >
-                    <span className="inline-flex items-center gap-2 min-w-0">
-                        <BookOpen className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                        <span className={cn('truncate', !selected && 'text-slate-400 dark:text-slate-500 font-normal')}>
-                            {selected ? labelFor(selected) : placeholder}
-                        </span>
-                    </span>
-                    <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                </button>
-            </PopoverTrigger>
-            <PopoverContent
-                align="start"
-                className="p-0 w-[var(--radix-popover-trigger-width)] min-w-[280px] max-h-[380px] overflow-hidden border border-slate-200 dark:border-zinc-800 shadow-xl rounded-lg"
-            >
-                <Command>
-                    <CommandInput placeholder={searchPlaceholder} className="h-10 text-[14px]" />
-                    <CommandList className="max-h-[320px] py-1">
-                        <CommandEmpty className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                            —
-                        </CommandEmpty>
-                        <CommandGroup
-                            heading={otGroupLabel}
-                            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-slate-500 dark:[&_[cmdk-group-heading]]:text-slate-400"
-                        >
-                            {renderItems(otBooks)}
-                        </CommandGroup>
-                        <CommandGroup
-                            heading={ntGroupLabel}
-                            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-slate-500 dark:[&_[cmdk-group-heading]]:text-slate-400"
-                        >
-                            {renderItems(ntBooks)}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
-    );
-}
-
-function NumberPair({
-    startLabel,
-    endLabel,
-    startValue,
-    endValue,
-    onStartChange,
-    onEndChange,
-    max,
-    disabled,
-}: {
-    startLabel: string;
-    endLabel: string;
-    startValue: string;
-    endValue: string;
-    onStartChange: (v: string) => void;
-    onEndChange: (v: string) => void;
-    max?: number;
-    disabled?: boolean;
-}) {
-    return (
-        <div className="flex items-stretch gap-1">
-            <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={max}
-                value={startValue}
-                onChange={(e) => onStartChange(e.target.value)}
-                placeholder={startLabel}
-                disabled={disabled}
-                className="w-full min-w-0 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-2.5 text-[15px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            <span className="self-center text-slate-400 px-0.5">–</span>
-            <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={max}
-                value={endValue}
-                onChange={(e) => onEndChange(e.target.value)}
-                placeholder={endLabel}
-                disabled={disabled}
-                className="w-full min-w-0 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-2.5 text-[15px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-        </div>
-    );
-}
 
 function FeedbackLine({
     result,
