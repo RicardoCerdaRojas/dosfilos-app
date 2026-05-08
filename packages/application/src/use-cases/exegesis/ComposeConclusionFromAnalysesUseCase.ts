@@ -112,6 +112,7 @@ export class ComposeConclusionFromAnalysesUseCase {
                 sources: composerSources,
                 pinnedSourceKeys,
                 paperRubric: paper.rubric ?? null,
+                exegeticalStrategy: paper.exegeticalStrategy ?? null,
                 regenerationHint: input.regenerationHint ?? null,
             };
 

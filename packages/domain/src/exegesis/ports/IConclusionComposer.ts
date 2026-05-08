@@ -1,5 +1,6 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
+import type { ExegeticalStrategy } from '../entities/ExegeticalPaper';
 import type { PaperRubric } from '../entities/PaperRubric';
 import type { StyleGuideManifest } from '../entities/StyleGuideManifest';
 import type { ComposerSourceMetadata } from './IAcademicComposer';
@@ -68,6 +69,10 @@ export interface ComposeConclusionInput {
      * attached.
      */
     paperRubric: PaperRubric | null;
+    /**
+     * Corpus-building strategy. See `IAcademicComposer` for rationale.
+     */
+    exegeticalStrategy: ExegeticalStrategy | null;
     /**
      * Optional regeneration hint provided by the user when re-running
      * the composer (e.g. "más énfasis en la cristología", "menos

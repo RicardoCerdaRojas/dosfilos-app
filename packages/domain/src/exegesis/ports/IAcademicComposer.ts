@@ -1,5 +1,6 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
+import type { ExegeticalStrategy } from '../entities/ExegeticalPaper';
 import type { PaperRubric } from '../entities/PaperRubric';
 import type { StyleGuideManifest } from '../entities/StyleGuideManifest';
 
@@ -105,6 +106,16 @@ export interface ComposeAcademicPaperInput {
      * attached — the composer falls back to TMS / Turabian defaults.
      */
     paperRubric: PaperRubric | null;
+    /**
+     * Corpus-building strategy chosen by the student (`'dialectical'` or
+     * `'free'`). Surfaced to the composer as methodology context — the
+     * dialectical mode tells the model the corpus is balanced across
+     * anchors / contrasts / technical roles, so the prose should
+     * reflect that dialectical engagement rather than treating sources
+     * as a flat list. Independent of the rubric: a paper can have any
+     * strategy + any rubric.
+     */
+    exegeticalStrategy: ExegeticalStrategy | null;
 }
 
 /**

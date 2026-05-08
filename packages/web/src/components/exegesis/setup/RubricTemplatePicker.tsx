@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Check, ChevronsUpDown, FileText, Layers, Sparkles, Star, Wand2 } from 'lucide-react';
-import { STRATEGY_ONLY_RUBRIC_PRESET_ID, type UserRubric } from '@dosfilos/domain';
+import { Check, ChevronsUpDown, FileText, Layers, Sparkles, Star } from 'lucide-react';
+import { type UserRubric } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import {
     Command,
@@ -29,10 +29,14 @@ import { cn } from '@/lib/utils';
  *   - `null`                               → "no template": apply the
  *                                            system TMS default
  *                                            explicitly.
- *   - `STRATEGY_ONLY_RUBRIC_PRESET_ID`     → apply the strategy-only
- *                                            system preset.
  *   - any other string                     → apply the user template
  *                                            with that id.
+ *
+ * The strategy-only preset was previously surfaced here, conflating
+ * the corpus-building strategy (a separate concept stored on
+ * `paper.exegeticalStrategy`) with the professor's grading rubric.
+ * Strategy is now picked independently in the wizard's strategy step;
+ * the rubric is purely the evaluation instrument.
  *
  * `mode` selects which audience the picker is rendered for:
  *   - `'create'` (default) — used at paper creation; offers the
@@ -43,8 +47,8 @@ import { cn } from '@/lib/utils';
  *                            paper. Hides the "automatic" option
  *                            because there is no template-resolution
  *                            step at this point — the only meaningful
- *                            choices are: strategy-only, system
- *                            default, or a user template.
+ *                            choices are the system default or a user
+ *                            template.
  */
 export interface RubricTemplatePickerProps {
     value: string | null | undefined;
@@ -67,9 +71,6 @@ export function RubricTemplatePicker({
     const [open, setOpen] = useState(false);
 
     const selectedLabel = (() => {
-        if (value === STRATEGY_ONLY_RUBRIC_PRESET_ID) {
-            return { title: t('create.rubric.strategyOnly'), kind: 'strategy' as const };
-        }
         if (value === null) {
             return { title: t('create.rubric.noTemplate'), kind: 'system' as const };
         }
@@ -125,19 +126,6 @@ export function RubricTemplatePicker({
                     />
                     <CommandList className="max-h-[400px]">
                         <CommandEmpty>{t('create.rubric.noMatches')}</CommandEmpty>
-
-                        <CommandGroup heading={t('create.rubric.groupRecommended')}>
-                            <RubricOption
-                                value={STRATEGY_ONLY_RUBRIC_PRESET_ID}
-                                selected={value === STRATEGY_ONLY_RUBRIC_PRESET_ID}
-                                title={t('create.rubric.strategyOnly')}
-                                description={t('create.rubric.strategyOnlyDescription')}
-                                icon={<Wand2 className="h-3.5 w-3.5 text-success" aria-hidden />}
-                                onSelect={() => select(STRATEGY_ONLY_RUBRIC_PRESET_ID)}
-                            />
-                        </CommandGroup>
-
-                        <CommandSeparator />
 
                         <CommandGroup heading={t('create.rubric.groupAuto')}>
                             {mode === 'create' && (
@@ -236,8 +224,7 @@ function RubricOption({
     );
 }
 
-function RubricKindIcon({ kind }: { kind: 'strategy' | 'auto' | 'system' | 'template' | 'placeholder' }) {
-    if (kind === 'strategy') return <Wand2 className="h-3.5 w-3.5 text-success shrink-0" aria-hidden />;
+function RubricKindIcon({ kind }: { kind: 'auto' | 'system' | 'template' | 'placeholder' }) {
     if (kind === 'auto') return <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden />;
     if (kind === 'system') return <Layers className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden />;
     if (kind === 'placeholder') return <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden />;
