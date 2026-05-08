@@ -26,7 +26,9 @@ import {
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
+    MorphhbOriginalLanguageProvider,
     SBLGNTBibleProvider,
+    TestamentDispatcherOriginalLanguageProvider,
     extractFootnoteAnchorsFromFormattedMarkdown,
 } from '@dosfilos/infrastructure';
 import type {
@@ -405,19 +407,27 @@ class ExegesisService {
         // so the legacy markdown path keeps working while the structured
         // pipeline is exercised on opt-in surfaces.
         //
-        // SBL GNT provider gives the analyzer authoritative Greek text
-        // for every NT verse — fetched from the public-domain MorphGNT
-        // CDN, cached per-session inside the provider instance. The
-        // analyzer treats it as the base text every grammatical /
-        // lexical / syntactic claim must square with.
+        // Original-language base text for the analyzer:
+        //   - NT verses → SBL GNT (Greek) via MorphGNT CDN.
+        //   - OT verses → Westminster Leningrad Codex (Hebrew) via the
+        //     morphhb provider used by the Hebrew tutor.
+        // The dispatcher wraps both providers behind a single port so
+        // the use case stays unaware of testament dispatch. Per-session
+        // in-memory cache lives inside each underlying provider — the
+        // dispatcher itself is stateless.
         const canonicalAnalyzer = new GeminiCanonicalVerseAnalyzer(apiKey || '', exegesisModelId);
         const greekProvider = new SBLGNTBibleProvider();
+        const hebrewProvider = new MorphhbOriginalLanguageProvider();
+        const originalLanguageProvider = new TestamentDispatcherOriginalLanguageProvider(
+            greekProvider,
+            hebrewProvider,
+        );
         this.analyzeVerseCanonically = new AnalyzeVerseCanonicallyUseCase(
             paperRepository,
             styleGuideRepository,
             contentReader,
             canonicalAnalyzer,
-            greekProvider,
+            originalLanguageProvider,
         );
 
         // Academic-paper composer. Reuses the existing
