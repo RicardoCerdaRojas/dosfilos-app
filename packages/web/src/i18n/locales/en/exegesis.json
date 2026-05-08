@@ -373,7 +373,32 @@
             "placeholder": "Ex: My professor assigned an exegetical analysis of Hebrews 1:1-4 with a Christological focus. I want to argue that the final revelation in the Son establishes the thematic superiority of the epistle.",
             "optional": "Optional but strongly recommended. You can edit it later.",
             "characterCount": "{{count}} / {{max}} characters",
-            "tip": "The clearer the framing, the more cohesive the paper. Mention the passage, the emphasis (Christological, ecclesiological, etc.), and any explicit professor expectations."
+            "tip": "The clearer the framing, the more cohesive the paper. Mention the passage, the emphasis (Christological, ecclesiological, etc.), and any explicit professor expectations.",
+            "templates": {
+                "pickLabel": "Load saved template",
+                "defaultLabel": "Template: {{name}}",
+                "listHeader": "My framings",
+                "loading": "Loading…",
+                "empty": "No saved templates yet. Write a framing and save it to reuse later.",
+                "saveCta": "Save as template",
+                "saveDisabledTooltip": "Type at least 30 characters to save as a template.",
+                "namePrompt": "Template name (e.g. \"Hebrews Christological\"):",
+                "saveDialogTitle": "Save as template",
+                "saveDialogBody": "Give it a clear name so you recognize it later when starting another paper.",
+                "nameLabel": "Template name",
+                "namePlaceholder": "e.g. Hebrews Christological",
+                "saveConfirm": "Save",
+                "cancel": "Cancel",
+                "savedToast": "Saved: {{name}}",
+                "saveFailed": "Couldn't save. Please try again.",
+                "markDefault": "Mark as default",
+                "delete": "Delete",
+                "deleteDialogTitle": "Delete template",
+                "deleteConfirm": "Delete",
+                "confirmDelete": "Delete template \"{{name}}\"? This action can't be undone.",
+                "deletedToast": "Template deleted",
+                "deleteFailed": "Couldn't delete. Please try again."
+            }
         },
         "toast": {
             "created": "Paper created — let's configure it",

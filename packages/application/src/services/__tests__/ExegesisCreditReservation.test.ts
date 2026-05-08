@@ -28,12 +28,14 @@ import { setExegesisPricingTracker, type ExegesisPricingEvent } from '../exegesi
 
 describe('ExegesisCreditReservation', () => {
     let trackerCalls: Array<{ event: ExegesisPricingEvent; metadata: Record<string, unknown> }>;
+    // ts: ExegesisPricingEventMetadata isn't a Record<string, unknown>;
+    // wrap to a plain object for the test snapshot.
     beforeEach(() => {
         consumeExegesisMock.mockReset();
         refundExegesisMock.mockReset();
         trackerCalls = [];
         setExegesisPricingTracker((event, metadata) => {
-            trackerCalls.push({ event, metadata });
+            trackerCalls.push({ event, metadata: { ...metadata } });
         });
     });
 

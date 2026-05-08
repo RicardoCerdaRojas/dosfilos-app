@@ -21,6 +21,19 @@ export { ApplyStrategyOnlyRubricToPaperUseCase } from './ApplyStrategyOnlyRubric
 export { SaveCurrentRubricAsTemplateUseCase } from './SaveCurrentRubricAsTemplateUseCase';
 export { CreateUserRubricFromTextUseCase } from './CreateUserRubricFromTextUseCase';
 
+// User-level assignment-brief templates
+export {
+    ListUserAssignmentBriefsUseCase,
+    CreateUserAssignmentBriefUseCase,
+    UpdateUserAssignmentBriefUseCase,
+    DeleteUserAssignmentBriefUseCase,
+    SetDefaultUserAssignmentBriefUseCase,
+    type CreateUserAssignmentBriefInput,
+    type UpdateUserAssignmentBriefInput,
+    type DeleteUserAssignmentBriefInput,
+    type SetDefaultUserAssignmentBriefInput,
+} from './UserAssignmentBriefUseCases';
+
 // User style guides
 export { ListUserStyleGuidesUseCase } from './ListUserStyleGuidesUseCase';
 export { GetActiveStyleGuideUseCase } from './GetActiveStyleGuideUseCase';
