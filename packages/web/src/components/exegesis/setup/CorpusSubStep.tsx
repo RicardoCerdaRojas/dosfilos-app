@@ -58,6 +58,7 @@ import {
 } from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { useAutoClassifyOtherSources } from '@/hooks/exegesis/useAutoClassifyOtherSources';
 import { SourceTypePicker } from './SourceTypePicker';
 import { RubricGapCard } from './RubricGapCard';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
@@ -89,6 +90,13 @@ interface CorpusSubStepProps {
 
 export function CorpusSubStep({ paper }: CorpusSubStepProps) {
     const { t } = useTranslation('exegesis');
+    const topLibrary = useLibrary();
+    // Background pass: auto-classifies any source still tagged as
+    // 'other' once its underlying library resource finishes
+    // extracting text. Silent on success (the source row updates in
+    // place via the `paper.sources` subscription); silent on failure
+    // (logged only). See the hook for skip rules.
+    useAutoClassifyOtherSources(paper, topLibrary.resources);
 
     // Add-source dialog state. A single dialog handles both:
     //   - "Agregar fuente" button at the top of the list (no
