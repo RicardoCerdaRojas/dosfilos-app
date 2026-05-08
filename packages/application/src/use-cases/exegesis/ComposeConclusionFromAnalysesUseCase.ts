@@ -105,18 +105,19 @@ export class ComposeConclusionFromAnalysesUseCase {
             // [#126 diagnostic] Surface what reaches the composer so we
             // can verify the pinned-source contract + textContent
             // injection work end-to-end. Remove once stable.
+            const pinnedDetail = composerSources
+                .filter(s => s.isPinned)
+                .map(s => `${s.citationKey} (${s.title}) → textLength=${s.textContent?.length ?? 0}`);
             console.log('[exegesis][#126] ComposeConclusion firing', {
                 pinnedSourceKeys,
-                pinnedSourcesWithText: composerSources
-                    .filter(s => s.isPinned)
-                    .map(s => ({
-                        key: s.citationKey,
-                        title: s.title,
-                        textLength: s.textContent?.length ?? 0,
-                        textSample: s.textContent?.slice(0, 200) ?? '',
-                    })),
+                pinnedDetail,
                 allComposerSourceKeys: composerSources.map(s => s.citationKey),
             });
+            // Print each pinned source's text sample on its own line
+            // so it's visible without expanding nested objects.
+            for (const s of composerSources.filter(s => s.isPinned)) {
+                console.log(`[exegesis][#126] PINNED ${s.citationKey} textSample:`, s.textContent?.slice(0, 400) || '<EMPTY>');
+            }
 
             const composerInput: ComposeConclusionInput = {
                 paperPassage: paper.passage,
