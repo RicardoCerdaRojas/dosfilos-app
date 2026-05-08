@@ -1095,7 +1095,8 @@
             "regenAnalysisTooltip": "Re-run the canonical analysis for this verse. The previous per-verse prose is invalidated until you recompose it.",
             "composeConclusionTooltip": "Compose the conclusion from the accepted canonical analyses",
             "composeIntroductionTooltip": "Compose the introduction LAST, using the accepted analyses + accepted conclusion",
-            "composeFromAnalyses": "Compose from analyses"
+            "composeFromAnalyses": "Compose from analyses",
+            "recomposeFromAnalyses": "Recompose from analyses"
         },
         "verseProse": {
             "button": {

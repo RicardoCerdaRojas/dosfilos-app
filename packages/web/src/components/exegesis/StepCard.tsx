@@ -789,6 +789,30 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         </>
                     )}
 
+                    {/* Section composer re-trigger for accepted
+                        intro / conclusion. Lets the user run the
+                        composer again after acceptance — useful when
+                        the accepted output missed a pinned source
+                        and a re-run with the tightened prompts (issue
+                        #126 / Approach A) should produce a compliant
+                        version. */}
+                    {(isConclusion || isIntroduction) && (
+                        <button
+                            type="button"
+                            onClick={isConclusion ? handleComposeConclusion : handleComposeIntroduction}
+                            disabled={anyPipelinePending}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
+                            title={t(isConclusion
+                                ? 'canonical.actions.composeConclusionTooltip'
+                                : 'canonical.actions.composeIntroductionTooltip')}
+                        >
+                            {(composeConclusionFromAnalyses.isPending || composeIntroductionFromAnalyses.isPending)
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <RotateCcw className="h-3 w-3" />}
+                            {t('canonical.actions.recomposeFromAnalyses')}
+                        </button>
+                    )}
+
                     {hintMode && isVerse && canonicalAnalysis && (
                         <div className="basis-full flex items-center gap-2 mt-1">
                             <input

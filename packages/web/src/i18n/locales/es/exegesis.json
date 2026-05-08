@@ -1095,7 +1095,8 @@
             "regenAnalysisTooltip": "Vuelve a correr el análisis canónico para este verso. La prosa per-verso anterior se invalida hasta que la recompongas.",
             "composeConclusionTooltip": "Compone la conclusión a partir de los análisis canónicos aceptados",
             "composeIntroductionTooltip": "Compone la introducción al final, usando los análisis aceptados + la conclusión aceptada",
-            "composeFromAnalyses": "Componer desde análisis"
+            "composeFromAnalyses": "Componer desde análisis",
+            "recomposeFromAnalyses": "Recomponer desde análisis"
         },
         "verseProse": {
             "button": {
