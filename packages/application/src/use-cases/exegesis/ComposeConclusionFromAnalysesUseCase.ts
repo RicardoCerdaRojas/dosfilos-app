@@ -102,6 +102,22 @@ export class ComposeConclusionFromAnalysesUseCase {
             );
             const citableSources = buildFormatterSources(paper);
 
+            // [#126 diagnostic] Surface what reaches the composer so we
+            // can verify the pinned-source contract + textContent
+            // injection work end-to-end. Remove once stable.
+            console.log('[exegesis][#126] ComposeConclusion firing', {
+                pinnedSourceKeys,
+                pinnedSourcesWithText: composerSources
+                    .filter(s => s.isPinned)
+                    .map(s => ({
+                        key: s.citationKey,
+                        title: s.title,
+                        textLength: s.textContent?.length ?? 0,
+                        textSample: s.textContent?.slice(0, 200) ?? '',
+                    })),
+                allComposerSourceKeys: composerSources.map(s => s.citationKey),
+            });
+
             const composerInput: ComposeConclusionInput = {
                 paperPassage: paper.passage,
                 language: paper.displayLanguage,

@@ -285,7 +285,17 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     const currentHasCanonical = !!step.current?.canonicalAnalysis;
     const shouldRegenerateCanonically = isVerse && currentHasCanonical;
     const handleAdaptiveRegenerate = (regenerationHint?: string) => {
+        // [#126 diagnostic] Verify routing end-to-end. Remove later.
+        console.log('[exegesis][#126] handleAdaptiveRegenerate', {
+            stepKind: step.kind,
+            isVerse,
+            isConclusion,
+            isIntroduction,
+            shouldRegenerateCanonically,
+            hasHint: !!regenerationHint,
+        });
         if (shouldRegenerateCanonically) {
+            console.log('[exegesis][#126] → handleAnalyzeCanonically');
             return handleAnalyzeCanonically(regenerationHint);
         }
         // Hint flow keeps the legacy generateStep path because the
@@ -294,11 +304,14 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         // through the composer so the pinned-source contract +
         // textContent injection apply.
         if (isConclusion && !regenerationHint) {
+            console.log('[exegesis][#126] → handleComposeConclusion');
             return handleComposeConclusion();
         }
         if (isIntroduction && !regenerationHint) {
+            console.log('[exegesis][#126] → handleComposeIntroduction');
             return handleComposeIntroduction();
         }
+        console.log('[exegesis][#126] → handleGenerate (legacy)');
         return handleGenerate(regenerationHint);
     };
 
