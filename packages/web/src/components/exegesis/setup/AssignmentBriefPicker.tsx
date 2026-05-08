@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Bookmark, BookmarkCheck, Check, ChevronDown, Loader2, Save, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Bookmark, BookmarkCheck, Check, ChevronDown, Loader2, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,14 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useUserAssignmentBriefs } from '@/hooks/exegesis/useUserAssignmentBriefs';
 import { toast } from 'sonner';
 
@@ -37,6 +45,17 @@ export function AssignmentBriefPicker({ currentBody, onApply }: AssignmentBriefP
     const { briefs, isLoading, createBrief, deleteBrief, setDefault } = useUserAssignmentBriefs();
     const [open, setOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+    const [pendingName, setPendingName] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+    const nameInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (saveDialogOpen) {
+            // Defer to allow Radix to mount + portal before focusing.
+            setTimeout(() => nameInputRef.current?.focus(), 50);
+        }
+    }, [saveDialogOpen]);
 
     const sorted = [...briefs].sort((a, b) => {
         if (a.isDefault && !b.isDefault) return -1;
@@ -50,18 +69,25 @@ export function AssignmentBriefPicker({ currentBody, onApply }: AssignmentBriefP
 
     const canSave = currentBody.trim().length >= 30;
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!canSave) return;
-        const name = window.prompt(t('create.brief.templates.namePrompt'));
-        if (!name?.trim()) return;
+        setPendingName('');
+        setSaveDialogOpen(true);
+    };
+
+    const confirmSave = async () => {
+        const name = pendingName.trim();
+        if (!name) return;
         setSaving(true);
         try {
             await createBrief.mutateAsync({
-                displayName: name.trim(),
+                displayName: name,
                 body: currentBody,
                 markAsDefault: briefs.length === 0,
             });
-            toast.success(t('create.brief.templates.savedToast', { name: name.trim() }));
+            toast.success(t('create.brief.templates.savedToast', { name }));
+            setSaveDialogOpen(false);
+            setPendingName('');
         } catch (err) {
             console.error('[exegesis] save brief failed:', err);
             toast.error(t('create.brief.templates.saveFailed'));
@@ -70,14 +96,20 @@ export function AssignmentBriefPicker({ currentBody, onApply }: AssignmentBriefP
         }
     };
 
-    const handleDelete = async (briefId: string, name: string) => {
-        if (!window.confirm(t('create.brief.templates.confirmDelete', { name }))) return;
+    const requestDelete = (briefId: string, name: string) => {
+        setDeleteTarget({ id: briefId, name });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await deleteBrief.mutateAsync(briefId);
+            await deleteBrief.mutateAsync(deleteTarget.id);
             toast.success(t('create.brief.templates.deletedToast'));
         } catch (err) {
             console.error('[exegesis] delete brief failed:', err);
             toast.error(t('create.brief.templates.deleteFailed'));
+        } finally {
+            setDeleteTarget(null);
         }
     };
 
@@ -160,7 +192,7 @@ export function AssignmentBriefPicker({ currentBody, onApply }: AssignmentBriefP
                                     <button
                                         type="button"
                                         title={t('create.brief.templates.delete')}
-                                        onClick={() => handleDelete(b.id, b.displayName)}
+                                        onClick={() => requestDelete(b.id, b.displayName)}
                                         className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                                     >
                                         <Trash2 className="h-3 w-3" />
@@ -184,6 +216,80 @@ export function AssignmentBriefPicker({ currentBody, onApply }: AssignmentBriefP
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 {t('create.brief.templates.saveCta')}
             </Button>
+
+            {/* Save dialog — replaces native window.prompt(). */}
+            <Dialog open={saveDialogOpen} onOpenChange={(o) => { if (!saving) setSaveDialogOpen(o); }}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="inline-flex items-center gap-2">
+                            <Save className="h-4 w-4 text-primary" />
+                            {t('create.brief.templates.saveDialogTitle')}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {t('create.brief.templates.saveDialogBody')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2 py-2">
+                        <label className="text-[11px] font-medium text-muted-foreground">
+                            {t('create.brief.templates.nameLabel')}
+                        </label>
+                        <input
+                            ref={nameInputRef}
+                            type="text"
+                            value={pendingName}
+                            onChange={(e) => setPendingName(e.target.value.slice(0, 80))}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && pendingName.trim() && !saving) {
+                                    e.preventDefault();
+                                    void confirmSave();
+                                }
+                            }}
+                            placeholder={t('create.brief.templates.namePlaceholder')}
+                            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSaveDialogOpen(false)} disabled={saving}>
+                            {t('create.brief.templates.cancel')}
+                        </Button>
+                        <Button
+                            onClick={confirmSave}
+                            disabled={!pendingName.trim() || saving}
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                            {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                            {t('create.brief.templates.saveConfirm')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete confirmation — replaces native window.confirm(). */}
+            <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="inline-flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
+                            {t('create.brief.templates.deleteDialogTitle')}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {t('create.brief.templates.confirmDelete', { name: deleteTarget?.name ?? '' })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                            {t('create.brief.templates.cancel')}
+                        </Button>
+                        <Button
+                            onClick={confirmDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                            {t('create.brief.templates.deleteConfirm')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
