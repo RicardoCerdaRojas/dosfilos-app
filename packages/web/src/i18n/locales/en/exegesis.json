@@ -1129,16 +1129,25 @@
                 "constructions": "Key constructions",
                 "particles": "Discourse particles"
             },
-            "lexis": "Lexical analysis",
+            "lexisTitle": "Lexical analysis",
             "lexisHint": "General semantic range vs. verse-specific loading.",
+            "lexis": {
+                "range": "Semantic range",
+                "loading": "Loading in this verse"
+            },
             "textualCriticism": "Textual criticism",
             "textualCriticismHint": "Mandatory apparatus review. Empty with note when no variants exist.",
             "historicalContext": "Historical-cultural background",
             "oldTestamentLinks": "OT intertextuality",
             "commentators": "Commentator engagement",
             "commentatorsHint": "Dialectical strategy: anchor + contrast + (technical).",
-            "cruxes": "Translation cruxes",
+            "cruxesTitle": "Translation cruxes",
             "cruxesHint": "Each contested decision with options, positions, and commitment.",
+            "cruxes": {
+                "options": "Options",
+                "positions": "Positions",
+                "commitment": "Commitment"
+            },
             "verseThesis": "Verse thesis",
             "verseThesisHint": "What this verse establishes from the analysis.",
             "theologicalHooks": "Theological loci",

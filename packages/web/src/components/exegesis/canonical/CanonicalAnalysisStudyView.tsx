@@ -104,7 +104,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Lexical analyses */}
             <Section
                 icon={<Highlighter className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.lexis')}
+                title={t('canonical.study.lexisTitle')}
                 hint={t('canonical.study.lexisHint')}
                 count={analysis.lexicalAnalyses.length}
             >
@@ -263,7 +263,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Translation cruxes */}
             <Section
                 icon={<NotebookText className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.cruxes')}
+                title={t('canonical.study.cruxesTitle')}
                 hint={t('canonical.study.cruxesHint')}
                 count={analysis.translationCruxes.length}
                 defaultOpen
