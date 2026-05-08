@@ -1,5 +1,6 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
+import type { PaperRubric } from '../entities/PaperRubric';
 import type { StyleGuideManifest } from '../entities/StyleGuideManifest';
 import type { ComposerSourceMetadata } from './IAcademicComposer';
 
@@ -65,6 +66,13 @@ export interface ComposeIntroductionInput {
      * still apply per METODOLOGIA.md.
      */
     pinnedSourceKeys: ReadonlyArray<string>;
+    /**
+     * The paper's rubric. Threaded into the prompt so the introduction
+     * matches the expected length, citation standard, and section
+     * emphasis declared by the seminary. Null when no rubric is
+     * attached.
+     */
+    paperRubric: PaperRubric | null;
     /** Optional regeneration hint. */
     regenerationHint: string | null;
 }
