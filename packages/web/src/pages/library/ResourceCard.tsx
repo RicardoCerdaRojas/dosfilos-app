@@ -241,16 +241,18 @@ export function ResourceCard({
             >
                 <Eye className="h-4 w-4" />
             </Button>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                onClick={onEdit}
-                title={t('card.actions.edit')}
-            >
-                <Edit2 className="h-4 w-4" />
-            </Button>
-            {indexStatus === 'indexed' && onReindex ? (
+            {!resource.isSystemSource && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={onEdit}
+                    title={t('card.actions.edit')}
+                >
+                    <Edit2 className="h-4 w-4" />
+                </Button>
+            )}
+            {!resource.isSystemSource && indexStatus === 'indexed' && onReindex ? (
                 <Button
                     variant="ghost"
                     size="sm"
@@ -261,7 +263,7 @@ export function ResourceCard({
                 >
                     {isIndexing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                 </Button>
-            ) : indexStatus === 'not-indexed' && resource.textExtractionStatus === 'ready' ? (
+            ) : !resource.isSystemSource && indexStatus === 'not-indexed' && resource.textExtractionStatus === 'ready' ? (
                 <Button
                     variant="ghost"
                     size="sm"
@@ -307,14 +309,16 @@ export function ResourceCard({
                         {t('card.actions.assignToCore')}
                     </DropdownMenuItem>
                 )}
-                {(hasPhasesAction || hasCoreStoresAction) && <DropdownMenuSeparator />}
-                <DropdownMenuItem
-                    onClick={onDelete}
-                    className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-                >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t('card.actions.delete')}
-                </DropdownMenuItem>
+                {(hasPhasesAction || hasCoreStoresAction) && !resource.isSystemSource && <DropdownMenuSeparator />}
+                {!resource.isSystemSource && (
+                    <DropdownMenuItem
+                        onClick={onDelete}
+                        className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                    >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t('card.actions.delete')}
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     ) : null;
@@ -425,6 +429,19 @@ export function ResourceCard({
         </span>
     ) : null;
 
+    // System badge — preloaded by the platform (e.g. SBL GNT). The
+    // user didn't upload it; it doesn't consume their library quota
+    // and edit/delete are disabled.
+    const systemBadge = resource.isSystemSource ? (
+        <span
+            className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary border border-primary/30"
+            title={t('card.systemSourceHint')}
+        >
+            <Sparkles className="h-3 w-3" />
+            {t('card.systemSourceLabel')}
+        </span>
+    ) : null;
+
     const coreStoreBadges = resource.coreStores && resource.coreStores.length > 0 ? (
         <>
             {(resource.coreStores as Array<keyof typeof STORE_META>).map(key => {
@@ -498,6 +515,7 @@ export function ResourceCard({
                         </div>
                     </div>
                     <div className="hidden md:flex items-center gap-1.5 flex-wrap justify-end max-w-[40%]">
+                        {systemBadge}
                         {statusBadge}
                         {engineBadge}
                         {metadataBadge}

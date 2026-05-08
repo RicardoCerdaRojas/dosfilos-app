@@ -44,10 +44,24 @@ export function useLibrarySync(): void {
         lastIndexingState.current = new Map();
         initialEmissionDone.current = false;
 
+        // System sources (SBL GNT etc.) are fetched once and prepended
+        // to every snapshot the user listener emits. They live under
+        // the sentinel `__system__` userId, so the per-user listener
+        // never sees them on its own. Mutations to system docs are
+        // platform-side and rare enough that one-shot fetching is fine.
+        let systemResources: LibraryResourceEntity[] = [];
+        let cancelled = false;
+        libraryService.getSystemResources().then(rs => {
+            if (!cancelled) systemResources = rs;
+        }).catch(err => console.error('[useLibrarySync] system fetch failed', err));
+
         const unsubscribe = libraryService.subscribeToUserResources(
             uid,
             (resources: LibraryResourceEntity[]) => {
-                queryClient.setQueryData(libraryQueryKey(uid), resources);
+                queryClient.setQueryData(
+                    libraryQueryKey(uid),
+                    [...systemResources, ...resources],
+                );
 
                 if (initialEmissionDone.current) {
                     for (const r of resources) {
@@ -81,6 +95,9 @@ export function useLibrarySync(): void {
                 console.error('[useLibrarySync] subscription error', error);
             },
         );
-        return () => unsubscribe();
+        return () => {
+            cancelled = true;
+            unsubscribe();
+        };
     }, [user?.uid, queryClient, t]);
 }

@@ -78,6 +78,8 @@
         "deleting": "Deleting…",
         "metadataIncomplete": "Metadata missing",
         "metadataIncompleteHint": "Bible-book coverage is missing. Edit so this resource appears in the smart paper search.",
+        "systemSourceLabel": "System",
+        "systemSourceHint": "Preloaded by the platform. Available to everyone without consuming your quota; read-only.",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} page",
         "metaPagesActual_other": "{{count}} pages",

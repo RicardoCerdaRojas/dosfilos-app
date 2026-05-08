@@ -217,9 +217,33 @@ export interface LibraryResource {
     // Extensible metadata (e.g. for Gemini File URIs)
     metadata?: Record<string, any>;
 
+    /**
+     * Marks a resource as a system source — preloaded by the platform
+     * (e.g. SBL Greek New Testament critical text), available to every
+     * user without consuming their library quota or processing balance.
+     * The `userId` field for system sources is the sentinel
+     * `SYSTEM_SOURCE_OWNER_ID` so per-user queries skip them; the
+     * library service unions user-owned + system-owned resources for
+     * UI display.
+     *
+     * System resources are read-only: the UI hides edit / delete
+     * controls and the orchestrator treats them as non-billable.
+     */
+    isSystemSource?: boolean;
+
     createdAt: Date;
     updatedAt: Date;
 }
+
+/**
+ * Sentinel `userId` used by every `LibraryResource` flagged as
+ * `isSystemSource: true`. The double-underscore prefix is impossible
+ * for a Firebase Auth uid, which guarantees no collision with real
+ * user-owned resources. Repos query system resources by this
+ * sentinel and the library service unions them with the requesting
+ * user's own library before rendering.
+ */
+export const SYSTEM_SOURCE_OWNER_ID = '__system__';
 
 export class LibraryResourceEntity implements LibraryResource {
     public preferredForPhases?: WorkflowPhase[];
@@ -247,6 +271,12 @@ export class LibraryResourceEntity implements LibraryResource {
      */
     public coversBibleBooks?: ReadonlyArray<BibleBookId>;
     public scope?: LibraryResourceScope;
+    /**
+     * v1.7 Sprint 2 — owned by deserialization. Repos set this when
+     * the Firestore doc carries `isSystemSource: true`. UI uses it to
+     * render the "system" badge and to suppress edit/delete controls.
+     */
+    public isSystemSource?: boolean;
 
     constructor(
         public id: string,
