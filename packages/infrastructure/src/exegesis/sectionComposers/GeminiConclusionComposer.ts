@@ -57,13 +57,7 @@ export class GeminiConclusionComposer implements IConclusionComposer {
             sourceCount: input.sources.length,
             hasStyleGuide: Boolean(input.styleGuideContent || input.styleGuideManifest),
             language: input.language,
-            userMessageLength: userMessage.length,
-            systemInstructionLength: systemInstruction.length,
             pinnedKeysInPrompt: input.pinnedSourceKeys,
-            mentionsLucasInUserMessage: userMessage.toLowerCase().includes('lucas'),
-            // [#126 marker v3] If Vite served a fresh bundle this
-            // string appears in the log. Old bundle = no marker.
-            buildMarker: 'cap-bump-80k-v3',
         });
 
         const result = await withGeminiRetry(
