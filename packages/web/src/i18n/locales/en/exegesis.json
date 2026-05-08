@@ -361,7 +361,11 @@
             "templateIsDefault": "Your template marked as default.",
             "search": "Search template…",
             "noMatches": "No matches",
-            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\"). \"Strategy only\" leaves all guidance to the dialectical method — useful when your professor only asks for quantity or doesn't specify types."
+            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\"). \"Strategy only\" leaves all guidance to the dialectical method — useful when your professor only asks for quantity or doesn't specify types.",
+            "autoAppliedTitle": "Applied: Strategy-only dialectical",
+            "autoAppliedBody": "Since you chose \"With exegetical strategy\", we apply this rubric automatically — the strategy already covers the methodological guidance. Nothing else to do.",
+            "customize": "Customize (pick another template)",
+            "resetToAuto": "Back to automatic"
         },
         "brief": {
             "title": "Paper framing",

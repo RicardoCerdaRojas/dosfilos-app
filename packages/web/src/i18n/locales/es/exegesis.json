@@ -361,7 +361,11 @@
             "templateIsDefault": "Tu plantilla marcada como default.",
             "search": "Buscar plantilla…",
             "noMatches": "Sin coincidencias",
-            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\"). \"Solo estrategia\" deja la guía 100% en manos del método dialéctico — útil si tu profe solo pide cantidad o no especifica tipos."
+            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\"). \"Solo estrategia\" deja la guía 100% en manos del método dialéctico — útil si tu profe solo pide cantidad o no especifica tipos.",
+            "autoAppliedTitle": "Aplicado: Solo estrategia dialéctica",
+            "autoAppliedBody": "Como elegiste \"Con estrategia exegética\", aplicamos esta rúbrica automáticamente — la estrategia ya cubre la guía metodológica. No necesitas hacer nada más.",
+            "customize": "Personalizar (elegir otra plantilla)",
+            "resetToAuto": "Volver al automático"
         },
         "brief": {
             "title": "Encuadre del trabajo",
