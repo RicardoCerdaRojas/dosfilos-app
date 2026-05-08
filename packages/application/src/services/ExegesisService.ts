@@ -26,6 +26,7 @@ import {
     RetrieveChunksExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
+    SBLGNTBibleProvider,
     extractFootnoteAnchorsFromFormattedMarkdown,
 } from '@dosfilos/infrastructure';
 import type {
@@ -403,12 +404,20 @@ class ExegesisService {
         // Canonical analysis pipeline. Wired in parallel to `generateStep`
         // so the legacy markdown path keeps working while the structured
         // pipeline is exercised on opt-in surfaces.
+        //
+        // SBL GNT provider gives the analyzer authoritative Greek text
+        // for every NT verse — fetched from the public-domain MorphGNT
+        // CDN, cached per-session inside the provider instance. The
+        // analyzer treats it as the base text every grammatical /
+        // lexical / syntactic claim must square with.
         const canonicalAnalyzer = new GeminiCanonicalVerseAnalyzer(apiKey || '', exegesisModelId);
+        const greekProvider = new SBLGNTBibleProvider();
         this.analyzeVerseCanonically = new AnalyzeVerseCanonicallyUseCase(
             paperRepository,
             styleGuideRepository,
             contentReader,
             canonicalAnalyzer,
+            greekProvider,
         );
 
         // Academic-paper composer. Reuses the existing

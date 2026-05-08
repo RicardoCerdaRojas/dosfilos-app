@@ -59,6 +59,21 @@ export interface AnalyzeVerseInput {
     language: 'es' | 'en';
 
     /**
+     * Original-language text for this verse (Greek for NT, Hebrew
+     * for OT). Loaded by the use case from
+     * `IOriginalLanguageBibleProvider` (e.g. SBL GNT for NT, WLC
+     * for OT) and surfaced to the analyzer as authoritative base
+     * text — every grammatical / lexical / syntactic decision the
+     * analyzer documents must square with this text.
+     *
+     * Null when the provider doesn't support the verse's book or
+     * the fetch failed (network, CDN outage); the analyzer falls
+     * back to whatever Greek/Hebrew it knows from training, with
+     * a note in confidenceFlags acknowledging the gap.
+     */
+    originalLanguageText: string | null;
+
+    /**
      * Free-text framing of the paper — typically the assignment
      * brief + the student's chosen angle. Threaded into the analyzer
      * so the verse's `argumentativeRole` and `verseThesis` align with
