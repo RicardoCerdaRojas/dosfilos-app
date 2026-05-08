@@ -361,7 +361,11 @@
             "templateIsDefault": "Tu plantilla marcada como default.",
             "search": "Buscar plantilla…",
             "noMatches": "Sin coincidencias",
-            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\"). \"Solo estrategia\" deja la guía 100% en manos del método dialéctico — útil si tu profe solo pide cantidad o no especifica tipos."
+            "hint": "Las plantillas se manejan desde la página principal de Exégesis (\"Mis rúbricas\"). \"Solo estrategia\" deja la guía 100% en manos del método dialéctico — útil si tu profe solo pide cantidad o no especifica tipos.",
+            "autoAppliedTitle": "Aplicado: Solo estrategia dialéctica",
+            "autoAppliedBody": "Como elegiste \"Con estrategia exegética\", aplicamos esta rúbrica automáticamente — la estrategia ya cubre la guía metodológica. No necesitas hacer nada más.",
+            "customize": "Personalizar (elegir otra plantilla)",
+            "resetToAuto": "Volver al automático"
         },
         "brief": {
             "title": "Encuadre del trabajo",
@@ -978,7 +982,26 @@
             "modeFreeText": "Texto libre",
             "modePicker": "Selector",
             "freeTextPlaceholder": "Ej. Hebreos 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
-            "pickBook": "Elegí un libro",
+            "pickBook": "Elige un libro",
+            "searchBook": "Buscar libro… (ej. heb, rom, gn)",
+            "back": "Volver",
+            "edit": "Editar",
+            "done": "Listo",
+            "clear": "Limpiar",
+            "inputPlaceholder": "Hebreos 12:1-2 · escribe o usa el selector",
+            "builder": {
+                "searchBook": "Busca un libro o pega \"Heb 12:1-2\"",
+                "searchChapter": "Filtra capítulo (1, 2, 3…) o pega referencia",
+                "searchVerse": "Filtra verso o pega \"Heb 12:1-2\"",
+                "verses": "Versos",
+                "showMore": "Mostrar más",
+                "clear": "Limpiar selección",
+                "verseHint": {
+                    "idle": "Toca el verso inicial",
+                    "pickEnd": "Verso {{start}} elegido. Toca otro verso para crear un rango (o el mismo para verso único).",
+                    "range": "Selección: {{start}}–{{end}}"
+                }
+            },
             "testamentOt": "Antiguo Testamento",
             "testamentNt": "Nuevo Testamento",
             "chapter": "Cap.",

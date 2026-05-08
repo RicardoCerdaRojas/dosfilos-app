@@ -361,7 +361,11 @@
             "templateIsDefault": "Your template marked as default.",
             "search": "Search template…",
             "noMatches": "No matches",
-            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\"). \"Strategy only\" leaves all guidance to the dialectical method — useful when your professor only asks for quantity or doesn't specify types."
+            "hint": "Templates are managed from the main Exegesis page (\"My rubrics\"). \"Strategy only\" leaves all guidance to the dialectical method — useful when your professor only asks for quantity or doesn't specify types.",
+            "autoAppliedTitle": "Applied: Strategy-only dialectical",
+            "autoAppliedBody": "Since you chose \"With exegetical strategy\", we apply this rubric automatically — the strategy already covers the methodological guidance. Nothing else to do.",
+            "customize": "Customize (pick another template)",
+            "resetToAuto": "Back to automatic"
         },
         "brief": {
             "title": "Paper framing",
@@ -979,6 +983,25 @@
             "modePicker": "Picker",
             "freeTextPlaceholder": "e.g. Hebrews 1:1-4, Heb 1.1-4, 1 Cor 13:4-7",
             "pickBook": "Pick a book",
+            "searchBook": "Search book… (e.g. heb, rom, gn)",
+            "back": "Back",
+            "edit": "Edit",
+            "done": "Done",
+            "clear": "Clear",
+            "inputPlaceholder": "Hebrews 12:1-2 · type or use the picker",
+            "builder": {
+                "searchBook": "Search a book or paste \"Heb 12:1-2\"",
+                "searchChapter": "Filter chapter (1, 2, 3…) or paste reference",
+                "searchVerse": "Filter verse or paste \"Heb 12:1-2\"",
+                "verses": "Verses",
+                "showMore": "Show more",
+                "clear": "Clear selection",
+                "verseHint": {
+                    "idle": "Tap the starting verse",
+                    "pickEnd": "Verse {{start}} selected. Tap another verse to create a range (or the same one for a single verse).",
+                    "range": "Selection: {{start}}–{{end}}"
+                }
+            },
             "testamentOt": "Old Testament",
             "testamentNt": "New Testament",
             "chapter": "Ch.",
