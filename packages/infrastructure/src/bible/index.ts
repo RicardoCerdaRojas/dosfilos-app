@@ -5,3 +5,4 @@ export * from './BibleVersionFactory';
 // Original-language sources for the v1.6 expository assistant.
 export * from './original-language/SBLGNTBibleProvider';
 export * from './original-language/MorphhbOriginalLanguageProvider';
+export * from './original-language/TestamentDispatcherOriginalLanguageProvider';
