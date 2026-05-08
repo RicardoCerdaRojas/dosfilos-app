@@ -1495,10 +1495,20 @@ function AddSourceDialog({
             void runClassification(resource);
         } else {
             // Multi-select or deselect → clear the per-row fields so
-            // the bulk path can autoderive cleanly.
+            // the bulk path can autoderive cleanly. Also reset the
+            // sourceType back to the role-driven `initialType` (or
+            // `'commentary-critical'` when no role is set), otherwise
+            // a stale auto-classification from the previous single-
+            // pick leaks into the bulk submit and every selected
+            // resource lands with the wrong type. Surfaced as a bug
+            // when the user clicked "Agregar técnica" → single-picked
+            // a Tuggy lexicon (auto-classified to `'other'`) →
+            // additional picks → bulk save → all rows ended up under
+            // "SIN ROL ASIGNADO" instead of the technical bucket.
             setDisplayName('');
             setCitationKey('');
             setClassification(null);
+            setSourceType(initialType ?? 'commentary-critical');
         }
     };
 
