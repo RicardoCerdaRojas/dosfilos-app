@@ -71,6 +71,9 @@ export class GeminiCanonicalVerseAnalyzer implements ICanonicalVerseAnalyzer {
             sourceCount: input.sources.length,
             priorAnalysisCount: input.priorAcceptedAnalyses.length,
             language: input.language,
+            hasOriginalLanguageText: !!input.originalLanguageText,
+            originalLanguageTextSample: input.originalLanguageText?.slice(0, 120) ?? null,
+            systemPromptHasBaseTextBlock: systemInstruction.includes('Texto base') || systemInstruction.includes('Base text'),
         });
 
         const result = await withGeminiRetry(
