@@ -981,6 +981,7 @@
             "pickBook": "Pick a book",
             "searchBook": "Search book… (e.g. heb, rom, gn)",
             "back": "Back",
+            "edit": "Edit",
             "builder": {
                 "searchBook": "Search a book or paste \"Heb 12:1-2\"",
                 "searchChapter": "Filter chapter (1, 2, 3…) or paste reference",
