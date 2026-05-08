@@ -143,6 +143,13 @@ export class ComposeConclusionFromAnalysesUseCase {
             const missing = pinnedSourceKeys.filter(
                 key => !result.markdown.toLowerCase().includes(key.toLowerCase()),
             );
+            console.log('[exegesis][#126][approach-b] post-validation', {
+                pinnedSourceKeys,
+                missing,
+                markdownLength: result.markdown.length,
+                lucasOccurrences: (result.markdown.toLowerCase().match(/lucas/g) ?? []).length,
+                bauckhamOccurrences: (result.markdown.toLowerCase().match(/bauckham/g) ?? []).length,
+            });
             if (missing.length > 0) {
                 console.warn('[exegesis][#126] composer missed pinned keys, retrying once:', missing);
                 const retryHint = paper.displayLanguage === 'en'
