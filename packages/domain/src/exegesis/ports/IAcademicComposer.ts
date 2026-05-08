@@ -86,6 +86,16 @@ export interface ComposeAcademicPaperInput {
      * in the analyses to readable author/title strings.
      */
     sources: ReadonlyArray<ComposerSourceMetadata>;
+    /**
+     * v1.7+ — UNION of sourceKeys pinned across every step of this
+     * paper. The composer MUST cite each at least once across the
+     * full output (intro / verses / conclusion / footnotes). Empty
+     * when no plan was set. Per-step assignment is in
+     * `paper.stepPlan.perStep[*].pinnedSources` — surfaced here as a
+     * flat union so the composer can verify global plan honor in one
+     * pass without re-walking the per-step structure.
+     */
+    pinnedSourceKeys: ReadonlyArray<string>;
 }
 
 /**
@@ -110,6 +120,21 @@ export interface ComposerSourceMetadata {
     year?: number;
     /** Edition designator when relevant. e.g. "Ed. rev." */
     edition?: string;
+    /**
+     * v1.7+ — full source text content. Populated by the use case
+     * ONLY for sources pinned for the composer's scope (per-step for
+     * intro/conclusion composers; UNION across steps for the academic
+     * composer). Lets the composer cite a pinned source even when
+     * the body's verse analyses didn't engage it. Absent for sources
+     * the composer doesn't need to ground from text directly.
+     */
+    textContent?: string;
+    /**
+     * v1.7+ — true when this source is pinned for the composer's
+     * scope. Composer prompts surface a stronger instruction near
+     * the source's textContent block when set.
+     */
+    isPinned?: boolean;
 }
 
 export interface ComposeAcademicPaperOutput {

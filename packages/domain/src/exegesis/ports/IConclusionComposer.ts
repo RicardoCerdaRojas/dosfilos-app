@@ -53,6 +53,14 @@ export interface ComposeConclusionInput {
     /** Source registry — for citation lookup if the conclusion cites sparingly. */
     sources: ReadonlyArray<ComposerSourceMetadata>;
     /**
+     * v1.7+ — sourceKeys the student's plan pinned for the conclusion
+     * step. The composer MUST cite each at least once (paraphrase or
+     * verbatim). Empty when no plan was set or the conclusion step had
+     * no pinned sources. Asymmetry rules (default 1, hard cap 2,
+     * never technical) still apply per METODOLOGIA.md.
+     */
+    pinnedSourceKeys: ReadonlyArray<string>;
+    /**
      * Optional regeneration hint provided by the user when re-running
      * the composer (e.g. "más énfasis en la cristología", "menos
      * referencia a contexto histórico").

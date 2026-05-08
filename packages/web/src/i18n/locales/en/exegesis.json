@@ -1095,7 +1095,8 @@
             "regenAnalysisTooltip": "Re-run the canonical analysis for this verse. The previous per-verse prose is invalidated until you recompose it.",
             "composeConclusionTooltip": "Compose the conclusion from the accepted canonical analyses",
             "composeIntroductionTooltip": "Compose the introduction LAST, using the accepted analyses + accepted conclusion",
-            "composeFromAnalyses": "Compose from analyses"
+            "composeFromAnalyses": "Compose from analyses",
+            "recomposeFromAnalyses": "Recompose from analyses"
         },
         "verseProse": {
             "button": {
@@ -1121,18 +1122,33 @@
             "finalTranslation": "Final translation",
             "argumentativeRole": "Argumentative role",
             "argumentativeRoleHint": "What this verse does in the pericope's flow.",
-            "syntax": "Syntactic analysis",
+            "syntaxTitle": "Syntactic analysis",
             "syntaxHint": "Main verb, key constructions, and discourse particles.",
-            "lexis": "Lexical analysis",
+            "syntax": {
+                "mainVerb": "Main verb",
+                "noMainVerb": "No main verb —",
+                "constructions": "Key constructions",
+                "particles": "Discourse particles"
+            },
+            "lexisTitle": "Lexical analysis",
             "lexisHint": "General semantic range vs. verse-specific loading.",
+            "lexis": {
+                "range": "Semantic range",
+                "loading": "Loading in this verse"
+            },
             "textualCriticism": "Textual criticism",
             "textualCriticismHint": "Mandatory apparatus review. Empty with note when no variants exist.",
             "historicalContext": "Historical-cultural background",
             "oldTestamentLinks": "OT intertextuality",
             "commentators": "Commentator engagement",
             "commentatorsHint": "Dialectical strategy: anchor + contrast + (technical).",
-            "cruxes": "Translation cruxes",
+            "cruxesTitle": "Translation cruxes",
             "cruxesHint": "Each contested decision with options, positions, and commitment.",
+            "cruxes": {
+                "options": "Options",
+                "positions": "Positions",
+                "commitment": "Commitment"
+            },
             "verseThesis": "Verse thesis",
             "verseThesisHint": "What this verse establishes from the analysis.",
             "theologicalHooks": "Theological loci",

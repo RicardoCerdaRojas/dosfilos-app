@@ -242,4 +242,54 @@ describe('computeCorpusCoverageReport', () => {
         });
         expect(computeCorpusCoverageReport(paper)[0]?.status).toBe('cited-not-planned');
     });
+
+    it('detects citations inside the structured canonicalAnalysis payload', () => {
+        // Canonical-pipeline verses store sourceKey references in
+        // commentatorEngagement / lexicalAnalyses / etc. The accepted
+        // markdown is empty (composer hasn't run yet) but the source
+        // IS cited.
+        const accepted = {
+            id: 'step-1-v1',
+            markdown: '',
+            origin: 'generated' as const,
+            parentVersionId: null,
+            createdAt: NOW,
+            canonicalAnalysis: {
+                commentatorEngagement: [
+                    { sourceKey: 'Bauckham', stance: 'agrees', summary: '...', quoteOrParaphrase: '...' },
+                ],
+            } as unknown as ExegeticalStepVersion['canonicalAnalysis'],
+        } as unknown as ExegeticalStepVersion;
+        const paper = makePaper({
+            sources: [makeSource('s-1', 'Bauckham WBC', 'Bauckham')],
+            stepPlan: {
+                ...EMPTY_STEP_SOURCE_PLAN,
+                perStep: {
+                    'step-1': {
+                        stepId: 'step-1',
+                        kind: 'verse',
+                        emphasis: { emphasizedTypes: [], deemphasizedTypes: [], citationOverrides: [] },
+                        pinnedSources: ['s-1'],
+                        suppressedSources: [],
+                        note: null,
+                    },
+                },
+            },
+            steps: [{
+                id: 'step-1',
+                paperId: 'paper-1',
+                kind: 'verse',
+                verseRef: null,
+                order: 1,
+                state: 'accepted',
+                current: accepted,
+                accepted,
+                versions: [accepted],
+                createdAt: NOW,
+                updatedAt: NOW,
+            }],
+        });
+        const report = computeCorpusCoverageReport(paper);
+        expect(report[0]?.status).toBe('planned-and-cited');
+    });
 });

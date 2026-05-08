@@ -2,6 +2,7 @@
   "name": "dosfilos-app",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "yarn@1.22.22",
   "description": "Sistema de herramientas para pastores y predicadores - Gestor y Generador de Sermones",
   "workspaces": [
     "packages/*"

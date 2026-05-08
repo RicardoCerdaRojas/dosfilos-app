@@ -79,8 +79,45 @@ export class ComposeConclusionFromAnalysesUseCase {
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
             const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
-            const composerSources = buildComposerSources(paper);
+
+            // Pull the conclusion step's pinned source keys from the
+            // student's plan. Composer treats them as a contract — must
+            // cite each at least once. Empty when no plan was set.
+            const pinnedIds = new Set(
+                paper.stepPlan.perStep[conclusionStep.id]?.pinnedSources ?? [],
+            );
+            const pinnedSourceKeys = paper.sources
+                .filter(s => pinnedIds.has(s.id) && s.citationKey)
+                .map(s => s.citationKey!);
+
+            // Build composer sources WITH textContent loaded for
+            // pinned sources. Without this, the composer can be told
+            // "must cite Lucas" but lacks the source material to
+            // synthesize Lucas's position — particularly when the
+            // body verse analyses didn't engage that source.
+            const composerSources = await buildComposerSourcesWithPinnedContent(
+                paper,
+                pinnedIds,
+                this.contentReader,
+            );
             const citableSources = buildFormatterSources(paper);
+
+            // [#126 diagnostic] Surface what reaches the composer so we
+            // can verify the pinned-source contract + textContent
+            // injection work end-to-end. Remove once stable.
+            const pinnedDetail = composerSources
+                .filter(s => s.isPinned)
+                .map(s => `${s.citationKey} (${s.title}) → textLength=${s.textContent?.length ?? 0}`);
+            console.log('[exegesis][#126] ComposeConclusion firing', {
+                pinnedSourceKeys,
+                pinnedDetail,
+                allComposerSourceKeys: composerSources.map(s => s.citationKey),
+            });
+            // Print each pinned source's text sample on its own line
+            // so it's visible without expanding nested objects.
+            for (const s of composerSources.filter(s => s.isPinned)) {
+                console.log(`[exegesis][#126] PINNED ${s.citationKey} textSample:`, s.textContent?.slice(0, 400) || '<EMPTY>');
+            }
 
             const composerInput: ComposeConclusionInput = {
                 paperPassage: paper.passage,
@@ -90,11 +127,54 @@ export class ComposeConclusionFromAnalysesUseCase {
                 styleGuideContent,
                 styleGuideManifest: manifest,
                 sources: composerSources,
+                pinnedSourceKeys,
                 regenerationHint: input.regenerationHint ?? null,
             };
 
             reservation.markLlmContacted();
-            const result = await this.composer.composeConclusion(composerInput);
+            let result = await this.composer.composeConclusion(composerInput);
+
+            // [#126 Approach B] Post-validation: scan the composed
+            // markdown for each pinned sourceKey. When any are
+            // missing, fire ONE corrective regen with an explicit
+            // hint listing the skipped keys. Capped at one retry to
+            // avoid runaway costs; further enforcement should escalate
+            // to schema-level (Approach C).
+            const missing = pinnedSourceKeys.filter(
+                key => !result.markdown.toLowerCase().includes(key.toLowerCase()),
+            );
+            console.log('[exegesis][#126][approach-b] post-validation', {
+                pinnedSourceKeys,
+                missing,
+                markdownLength: result.markdown.length,
+                lucasOccurrences: (result.markdown.toLowerCase().match(/lucas/g) ?? []).length,
+                bauckhamOccurrences: (result.markdown.toLowerCase().match(/bauckham/g) ?? []).length,
+            });
+            if (missing.length > 0) {
+                console.warn('[exegesis][#126] composer missed pinned keys, retrying once:', missing);
+                const retryHint = paper.displayLanguage === 'en'
+                    ? `CRITICAL: your previous output skipped pinned sources [${missing.join(', ')}]. You MUST cite each one at least once in this conclusion. Use the source content provided in the registry to ground the citation. Do NOT substitute another source.`
+                    : `CRÍTICO: tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. DEBES citar cada una al menos una vez en esta conclusión. Usá el contenido de la fuente provisto en el registro para anclar la cita. NO sustituyas por otra fuente.`;
+                const retryInput: ComposeConclusionInput = {
+                    ...composerInput,
+                    regenerationHint: retryHint,
+                };
+                try {
+                    const retryResult = await this.composer.composeConclusion(retryInput);
+                    const stillMissing = pinnedSourceKeys.filter(
+                        key => !retryResult.markdown.toLowerCase().includes(key.toLowerCase()),
+                    );
+                    if (stillMissing.length === 0 || stillMissing.length < missing.length) {
+                        console.log('[exegesis][#126] retry honored missing keys:', missing);
+                        result = retryResult;
+                    } else {
+                        console.warn('[exegesis][#126] retry still missing keys:', stillMissing);
+                    }
+                } catch (retryErr) {
+                    console.warn('[exegesis][#126] retry failed:', retryErr);
+                    // Keep first-pass result on retry failure.
+                }
+            }
 
             const finalMarkdown = await this.applyFormatter(result.markdown, manifest, citableSources);
 
@@ -177,6 +257,35 @@ function buildComposerSources(paper: ExegeticalPaper): ComposerSourceMetadata[] 
             const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
             return { citationKey: key, author: key, title: s.displayLabel };
         });
+}
+
+async function buildComposerSourcesWithPinnedContent(
+    paper: ExegeticalPaper,
+    pinnedIds: ReadonlySet<string>,
+    contentReader: IResourceContentReader,
+): Promise<ComposerSourceMetadata[]> {
+    const citable = paper.sources.filter(s => isCitableSourceType(s.sourceType));
+    return Promise.all(citable.map(async s => {
+        const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
+        const isPinned = pinnedIds.has(s.id);
+        const base: ComposerSourceMetadata = {
+            citationKey: key,
+            author: key,
+            title: s.displayLabel,
+            isPinned,
+        };
+        if (!isPinned) return base;
+        // Load textContent ONLY for pinned sources — bandwidth +
+        // token cost both grow with content size, so we keep
+        // unpinned sources as bibliographic shells.
+        try {
+            const text = await contentReader.getTextContent(s.corpusId);
+            return { ...base, textContent: text ?? '' };
+        } catch (err) {
+            console.warn('[compose] failed to load pinned source textContent:', s.corpusId, err);
+            return base;
+        }
+    }));
 }
 
 function buildFormatterSources(paper: ExegeticalPaper): FormatterSourceMetadata[] {

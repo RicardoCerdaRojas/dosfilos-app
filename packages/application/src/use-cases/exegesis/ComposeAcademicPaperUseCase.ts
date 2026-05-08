@@ -103,17 +103,33 @@ export class ComposeAcademicPaperUseCase {
                 );
             }
 
+            // ── Compose ──────────────────────────────────────────────────
+            // Union of pinned source keys across every step of the
+            // plan. The academic composer must cite each at least
+            // once across the full output (intro / verses /
+            // conclusion / footnotes). Empty when no plan was set.
+            const pinnedIdSet = new Set<string>();
+            for (const entry of Object.values(paper.stepPlan.perStep)) {
+                for (const id of entry.pinnedSources) pinnedIdSet.add(id);
+            }
+            const pinnedSourceKeys = paper.sources
+                .filter(s => pinnedIdSet.has(s.id) && s.citationKey)
+                .map(s => s.citationKey!);
+
             // ── Build the source registry for the composer ───────────────
-            // Composer needs author/title/series/etc for bibliography.
-            // We populate from `paper.sources` directly — when richer
-            // library_resource metadata becomes wired (publisher, city,
-            // year, volume), this method is the single place to extend.
-            const composerSources = buildComposerSources(paper);
+            // Pinned sources get textContent loaded so the composer
+            // has material to ground citations even when verse
+            // analyses didn't engage them. Unpinned sources stay as
+            // bibliographic shells (author/title only).
+            const composerSources = await buildComposerSourcesWithPinnedContent(
+                paper,
+                pinnedIdSet,
+                this.contentReader,
+            );
 
             // ── Build citable sources for the deterministic formatter ───
             const citableSources = buildFormatterSources(paper);
 
-            // ── Compose ──────────────────────────────────────────────────
             const composerInput: ComposeAcademicPaperInput = {
                 paperPassage: paper.passage,
                 paperTitle: paper.title ?? null,
@@ -123,9 +139,40 @@ export class ComposeAcademicPaperUseCase {
                 styleGuideContent,
                 styleGuideManifest: manifest,
                 sources: composerSources,
+                pinnedSourceKeys,
             };
             reservation.markLlmContacted();
-            const raw = await this.composer.composeAcademicPaper(composerInput);
+            let raw = await this.composer.composeAcademicPaper(composerInput);
+
+            // [#126 Approach B] Post-validation retry on missing pinned keys.
+            const missing = pinnedSourceKeys.filter(
+                key => !raw.markdown.toLowerCase().includes(key.toLowerCase()),
+            );
+            if (missing.length > 0) {
+                console.warn('[exegesis][#126] academic composer missed pinned keys, retrying once:', missing);
+                try {
+                    // ComposeAcademicPaperInput doesn't carry a
+                    // regenerationHint slot; piggy-back on the
+                    // assignmentBrief by appending the corrective
+                    // directive. Best effort — schema-level enforcement
+                    // (Approach C) remains the durable fix.
+                    const correction = paper.displayLanguage === 'en'
+                        ? `\n\n[CORRECTIVE PASS] Your previous output skipped pinned sources [${missing.join(', ')}]. Cite each one at least once across the paper using the source content provided in the registry.`
+                        : `\n\n[PASE CORRECTIVO] Tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. Citá cada una al menos una vez en el paper usando el contenido provisto en el registro.`;
+                    const retryResult = await this.composer.composeAcademicPaper({
+                        ...composerInput,
+                        assignmentBrief: (composerInput.assignmentBrief ?? '') + correction,
+                    });
+                    const stillMissing = pinnedSourceKeys.filter(
+                        key => !retryResult.markdown.toLowerCase().includes(key.toLowerCase()),
+                    );
+                    if (stillMissing.length === 0 || stillMissing.length < missing.length) {
+                        raw = retryResult;
+                    }
+                } catch (retryErr) {
+                    console.warn('[exegesis][#126] academic retry failed:', retryErr);
+                }
+            }
 
             // ── Apply the deterministic post-formatter when possible ─────
             let finalOutput: ComposeAcademicPaperOutput;
@@ -231,6 +278,32 @@ function collectAcceptedVerseAnalyses(paper: ExegeticalPaper): CanonicalVerseAna
  * publisher/city/year/edition stay undefined until library_resource
  * metadata gets surfaced through the source.
  */
+async function buildComposerSourcesWithPinnedContent(
+    paper: ExegeticalPaper,
+    pinnedIds: ReadonlySet<string>,
+    contentReader: IResourceContentReader,
+): Promise<ComposerSourceMetadata[]> {
+    const citable = paper.sources.filter(s => isCitableSourceType(s.sourceType));
+    return Promise.all(citable.map(async s => {
+        const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
+        const isPinned = pinnedIds.has(s.id);
+        const base: ComposerSourceMetadata = {
+            citationKey: key,
+            author: key,
+            title: s.displayLabel,
+            isPinned,
+        };
+        if (!isPinned) return base;
+        try {
+            const text = await contentReader.getTextContent(s.corpusId);
+            return { ...base, textContent: text ?? '' };
+        } catch (err) {
+            console.warn('[compose] failed to load pinned source textContent:', s.corpusId, err);
+            return base;
+        }
+    }));
+}
+
 function buildComposerSources(paper: ExegeticalPaper): ComposerSourceMetadata[] {
     return paper.sources
         .filter(s => isCitableSourceType(s.sourceType))

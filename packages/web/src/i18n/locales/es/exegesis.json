@@ -1095,7 +1095,8 @@
             "regenAnalysisTooltip": "Vuelve a correr el análisis canónico para este verso. La prosa per-verso anterior se invalida hasta que la recompongas.",
             "composeConclusionTooltip": "Compone la conclusión a partir de los análisis canónicos aceptados",
             "composeIntroductionTooltip": "Compone la introducción al final, usando los análisis aceptados + la conclusión aceptada",
-            "composeFromAnalyses": "Componer desde análisis"
+            "composeFromAnalyses": "Componer desde análisis",
+            "recomposeFromAnalyses": "Recomponer desde análisis"
         },
         "verseProse": {
             "button": {
@@ -1121,18 +1122,33 @@
             "finalTranslation": "Traducción final",
             "argumentativeRole": "Rol argumentativo",
             "argumentativeRoleHint": "Qué hace este verso en el flujo de la pericopa.",
-            "syntax": "Análisis sintáctico",
+            "syntaxTitle": "Análisis sintáctico",
             "syntaxHint": "Verbo principal, construcciones clave y partículas discursivas.",
-            "lexis": "Análisis léxico",
+            "syntax": {
+                "mainVerb": "Verbo principal",
+                "noMainVerb": "Sin verbo principal —",
+                "constructions": "Construcciones clave",
+                "particles": "Partículas discursivas"
+            },
+            "lexisTitle": "Análisis léxico",
             "lexisHint": "Rango semántico general vs. carga específica en el verso.",
+            "lexis": {
+                "range": "Rango semántico",
+                "loading": "Carga en este verso"
+            },
             "textualCriticism": "Crítica textual",
             "textualCriticismHint": "Revisión obligatoria del aparato. Vacío con nota cuando no hay variantes.",
             "historicalContext": "Trasfondo histórico-cultural",
             "oldTestamentLinks": "Intertextualidad con el AT",
             "commentators": "Diálogo con comentaristas",
             "commentatorsHint": "Estrategia dialéctica: ancla + contraste + (técnica).",
-            "cruxes": "Decisiones de traducción",
+            "cruxesTitle": "Decisiones de traducción",
             "cruxesHint": "Cada decisión contestada con opciones, posiciones, y compromiso.",
+            "cruxes": {
+                "options": "Opciones",
+                "positions": "Posiciones",
+                "commitment": "Compromiso"
+            },
             "verseThesis": "Tesis del verso",
             "verseThesisHint": "Qué establece este verso a partir del análisis.",
             "theologicalHooks": "Loci teológicos",

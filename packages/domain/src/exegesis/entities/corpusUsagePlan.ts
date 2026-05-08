@@ -95,17 +95,33 @@ function buildCoverageRow(source: ProjectSource, paper: ExegeticalPaper): Corpus
     }
 
     // Citation detection: substring-match the source's citationKey or
-    // displayLabel against each accepted step's markdown. Cheap and
-    // good enough for the report's signal — the user closes the loop.
+    // displayLabel against each accepted step's content. Two haystacks
+    // are unioned so canonical-pipeline verses (whose citations live in
+    // the structured `canonicalAnalysis` payload — sourceKey fields
+    // inside commentatorEngagement, lexicalAnalyses, translationCruxes,
+    // footnoteSeeds, etc.) count as cited even when the legacy
+    // `markdown` is empty (the academic prose composer hasn't run yet).
+    // Cheap and good enough for the report's SIGNAL purpose; the user
+    // closes the loop.
     const citedStepIds: string[] = [];
     const needles = [source.citationKey, source.displayLabel]
         .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
         .map(s => s.toLowerCase());
     for (const step of paper.steps) {
-        const markdown = step.accepted?.markdown;
-        if (!markdown) continue;
-        const haystack = markdown.toLowerCase();
-        if (needles.some(n => haystack.includes(n))) {
+        const accepted = step.accepted;
+        if (!accepted) continue;
+        const haystacks: string[] = [];
+        if (accepted.markdown) {
+            haystacks.push(accepted.markdown.toLowerCase());
+        }
+        if (accepted.canonicalAnalysis) {
+            // JSON-serialize the structured payload — `sourceKey`
+            // strings inside any nested array land in the haystack
+            // verbatim, so substring-matching still works.
+            haystacks.push(JSON.stringify(accepted.canonicalAnalysis).toLowerCase());
+        }
+        if (haystacks.length === 0) continue;
+        if (needles.some(n => haystacks.some(h => h.includes(n)))) {
             citedStepIds.push(step.id);
         }
     }

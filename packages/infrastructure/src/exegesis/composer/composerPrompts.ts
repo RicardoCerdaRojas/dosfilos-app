@@ -137,6 +137,7 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
         ? '### Source registry (use ONLY these citation keys)'
         : '### Registro de fuentes (usá SOLO estas claves de cita)';
     const sourcesBlock = formatSourceRegistry(input.sources, lang);
+    const pinnedBlock = formatPinnedContract(input.pinnedSourceKeys, lang);
 
     const titleLine = input.paperTitle && input.paperTitle.trim()
         ? input.paperTitle.trim()
@@ -147,6 +148,7 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
             `Compose the academic paper for **${passage}**.`,
             `Title: ${titleLine}`,
             ``,
+            pinnedBlock,
             briefingsHeading,
             ``,
             briefings,
@@ -156,13 +158,14 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
             sourcesBlock,
             ``,
             `Now produce the full markdown document. Follow the system instruction's structure and rules without exception.`,
-        ].join('\n');
+        ].filter(Boolean).join('\n');
     }
 
     return [
         `Componé el paper académico para **${passage}**.`,
         `Título: ${titleLine}`,
         ``,
+        pinnedBlock,
         briefingsHeading,
         ``,
         briefings,
@@ -172,6 +175,37 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
         sourcesBlock,
         ``,
         `Ahora producí el documento markdown completo. Seguí la estructura y reglas del system instruction sin excepción.`,
+    ].filter(Boolean).join('\n');
+}
+
+/**
+ * Pinned-source contract block for the academic composer. Uses the
+ * UNION of pinned keys across every step of the plan so the composer
+ * verifies the global plan honor in one pass.
+ */
+function formatPinnedContract(keys: ReadonlyArray<string>, lang: 'es' | 'en'): string {
+    if (keys.length === 0) return '';
+    if (lang === 'en') {
+        return [
+            '### Plan-pinned source contract (CRITICAL — applies across the whole paper)',
+            '',
+            'The student\'s corpus plan pinned the following sourceKeys (union across intro / verses / conclusion). You MUST cite each one at least once across the full output (paraphrase or verbatim — the location is your choice, but every key MUST appear). Skipping any pinned source is a critical failure of the plan:',
+            '',
+            ...keys.map(k => `- \`${k}\``),
+            '',
+            'Non-pinned sources from the registry below may also appear when they strengthen the argument — but never as a SUBSTITUTE for a pinned one. The asymmetry rules (default 1 source for intro/conclusion, hard cap 2, never technical there; verses 2-3 with 4 ceiling) still hold.',
+            '',
+        ].join('\n');
+    }
+    return [
+        '### Contrato global de fuentes asignadas (CRÍTICO — aplica a todo el paper)',
+        '',
+        'El plan de corpus del alumno asignó los siguientes sourceKeys (unión de intro / versos / conclusión). DEBES citar cada uno al menos una vez a lo largo del output completo (parafraseo o verbatim — la ubicación es tu elección, pero cada clave TIENE que aparecer). Saltarse una fuente asignada es una falla crítica del plan:',
+        '',
+        ...keys.map(k => `- \`${k}\``),
+        '',
+        'Las fuentes no-asignadas del registro abajo pueden aparecer cuando refuercen el argumento — pero nunca como SUSTITUTO de una asignada. Las reglas de asimetría (default 1 fuente para intro/conclusión, hard cap 2, nunca técnica ahí; versos 2-3 con techo 4) siguen aplicando.',
+        '',
     ].join('\n');
 }
 
@@ -230,19 +264,29 @@ function formatSourceRegistry(
             ? '(No sources registered. Cite only what the analyses cite — but they should also be empty.)'
             : '(No hay fuentes registradas. Citá solamente lo que los análisis citen — aunque ellos también deberían estar vacíos.)';
     }
-    return sources
-        .map(s => {
-            const parts: string[] = [`- **${s.citationKey}**: ${s.author}, *${s.title}*`];
-            if (s.seriesVolume) parts.push(`(${s.seriesVolume})`);
-            if (s.edition) parts.push(`[${s.edition}]`);
-            const pub: string[] = [];
-            if (s.city) pub.push(s.city);
-            if (s.publisher) pub.push(s.publisher);
-            if (s.year) pub.push(String(s.year));
-            if (pub.length > 0) parts.push(`(${pub.join(': ')})`);
-            return parts.join(' ');
-        })
-        .join('\n');
+    const blocks: string[] = [];
+    for (const s of sources) {
+        const parts: string[] = [`- **${s.citationKey}**${s.isPinned ? (lang === 'en' ? ' ⭐ PINNED' : ' ⭐ ASIGNADA') : ''}: ${s.author}, *${s.title}*`];
+        if (s.seriesVolume) parts.push(`(${s.seriesVolume})`);
+        if (s.edition) parts.push(`[${s.edition}]`);
+        const pub: string[] = [];
+        if (s.city) pub.push(s.city);
+        if (s.publisher) pub.push(s.publisher);
+        if (s.year) pub.push(String(s.year));
+        if (pub.length > 0) parts.push(`(${pub.join(': ')})`);
+        blocks.push(parts.join(' '));
+        if (s.isPinned && s.textContent && s.textContent.trim()) {
+            // 80k char cap per pinned source — see GeminiConclusionComposer.
+            const truncated = s.textContent.length > 80000
+                ? s.textContent.slice(0, 80000) + '\n[…content truncated…]'
+                : s.textContent;
+            const heading = lang === 'en'
+                ? `\n  _Source content for grounding the pinned citation. Find the passage most relevant to ${s.citationKey}'s commentary on this paper's pericope and paraphrase or quote from there:_\n`
+                : `\n  _Contenido de la fuente para anclar la cita asignada. Encontrá el pasaje más relevante del comentario de ${s.citationKey} sobre la perícopa de este paper y parafraseá o citá desde ahí:_\n`;
+            blocks.push(heading + '  ```\n  ' + truncated.replace(/\n/g, '\n  ') + '\n  ```');
+        }
+    }
+    return blocks.join('\n');
 }
 
 function truncate(text: string, maxChars: number): string {

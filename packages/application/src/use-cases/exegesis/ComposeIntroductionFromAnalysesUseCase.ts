@@ -85,7 +85,21 @@ export class ComposeIntroductionFromAnalysesUseCase {
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
             const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
-            const composerSources = buildComposerSources(paper);
+
+            // Plan-pinned sources for the introduction step. Composer
+            // treats them as a contract.
+            const pinnedIds = new Set(
+                paper.stepPlan.perStep[introStep.id]?.pinnedSources ?? [],
+            );
+            const pinnedSourceKeys = paper.sources
+                .filter(s => pinnedIds.has(s.id) && s.citationKey)
+                .map(s => s.citationKey!);
+
+            const composerSources = await buildComposerSourcesWithPinnedContent(
+                paper,
+                pinnedIds,
+                this.contentReader,
+            );
             const citableSources = buildFormatterSources(paper);
 
             const composerInput: ComposeIntroductionInput = {
@@ -97,11 +111,37 @@ export class ComposeIntroductionFromAnalysesUseCase {
                 styleGuideContent,
                 styleGuideManifest: manifest,
                 sources: composerSources,
+                pinnedSourceKeys,
                 regenerationHint: input.regenerationHint ?? null,
             };
 
             reservation.markLlmContacted();
-            const result = await this.composer.composeIntroduction(composerInput);
+            let result = await this.composer.composeIntroduction(composerInput);
+
+            // [#126 Approach B] Post-validation retry on missing pinned keys.
+            const missing = pinnedSourceKeys.filter(
+                key => !result.markdown.toLowerCase().includes(key.toLowerCase()),
+            );
+            if (missing.length > 0) {
+                console.warn('[exegesis][#126] intro composer missed pinned keys, retrying once:', missing);
+                const retryHint = paper.displayLanguage === 'en'
+                    ? `CRITICAL: your previous output skipped pinned sources [${missing.join(', ')}]. You MUST cite each one at least once in this introduction. Use the source content provided in the registry to ground the citation. Do NOT substitute another source.`
+                    : `CRÍTICO: tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. DEBES citar cada una al menos una vez en esta introducción. Usá el contenido de la fuente provisto en el registro para anclar la cita. NO sustituyas por otra fuente.`;
+                try {
+                    const retryResult = await this.composer.composeIntroduction({
+                        ...composerInput,
+                        regenerationHint: retryHint,
+                    });
+                    const stillMissing = pinnedSourceKeys.filter(
+                        key => !retryResult.markdown.toLowerCase().includes(key.toLowerCase()),
+                    );
+                    if (stillMissing.length === 0 || stillMissing.length < missing.length) {
+                        result = retryResult;
+                    }
+                } catch (retryErr) {
+                    console.warn('[exegesis][#126] intro retry failed:', retryErr);
+                }
+            }
 
             const finalMarkdown = await this.applyFormatter(result.markdown, manifest, citableSources);
 
@@ -184,6 +224,32 @@ function buildComposerSources(paper: ExegeticalPaper): ComposerSourceMetadata[] 
             const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
             return { citationKey: key, author: key, title: s.displayLabel };
         });
+}
+
+async function buildComposerSourcesWithPinnedContent(
+    paper: ExegeticalPaper,
+    pinnedIds: ReadonlySet<string>,
+    contentReader: IResourceContentReader,
+): Promise<ComposerSourceMetadata[]> {
+    const citable = paper.sources.filter(s => isCitableSourceType(s.sourceType));
+    return Promise.all(citable.map(async s => {
+        const key = s.citationKey ?? deriveCitationKey(s.displayLabel);
+        const isPinned = pinnedIds.has(s.id);
+        const base: ComposerSourceMetadata = {
+            citationKey: key,
+            author: key,
+            title: s.displayLabel,
+            isPinned,
+        };
+        if (!isPinned) return base;
+        try {
+            const text = await contentReader.getTextContent(s.corpusId);
+            return { ...base, textContent: text ?? '' };
+        } catch (err) {
+            console.warn('[compose] failed to load pinned source textContent:', s.corpusId, err);
+            return base;
+        }
+    }));
 }
 
 function buildFormatterSources(paper: ExegeticalPaper): FormatterSourceMetadata[] {

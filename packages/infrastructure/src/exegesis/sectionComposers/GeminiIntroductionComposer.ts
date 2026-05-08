@@ -138,6 +138,7 @@ function buildIntroductionPrompt(input: ComposeIntroductionInput): { systemInstr
 
     const briefings = input.verseAnalyses.map(a => serializeAnalysis(a, lang)).join('\n\n');
     const sourcesBlock = formatSourceRegistry(input.sources, lang);
+    const pinnedBlock = formatPinnedContract(input.pinnedSourceKeys, lang);
     const hint = input.regenerationHint
         ? (lang === 'en'
             ? `\n\n### Regeneration hint\n${input.regenerationHint}\n`
@@ -160,6 +161,7 @@ function buildIntroductionPrompt(input: ComposeIntroductionInput): { systemInstr
     const user = [
         userPrefix,
         ``,
+        pinnedBlock,
         briefingsHeading,
         ``,
         briefings,
@@ -214,5 +216,54 @@ function formatSourceRegistry(sources: ReadonlyArray<ComposerSourceMetadata>, la
     if (sources.length === 0) {
         return lang === 'en' ? '(No sources configured.)' : '(Sin fuentes configuradas.)';
     }
-    return sources.map(s => `- **${s.citationKey}**: ${s.author}, *${s.title}*`).join('\n');
+    const lines: string[] = [];
+    for (const s of sources) {
+        const badge = s.isPinned
+            ? (lang === 'en' ? ' ⭐ PINNED' : ' ⭐ ASIGNADA')
+            : '';
+        lines.push(`- **${s.citationKey}**${badge}: ${s.author}, *${s.title}*`);
+        if (s.isPinned && s.textContent && s.textContent.trim()) {
+            // 80k char cap (~20k tokens) per pinned source. See
+            // matching note in GeminiConclusionComposer.
+            const truncated = s.textContent.length > 80000
+                ? s.textContent.slice(0, 80000) + '\n[…content truncated to fit context window…]'
+                : s.textContent;
+            const heading = lang === 'en'
+                ? `\n  _Source content for grounding the pinned citation. Find the passage most relevant to ${s.citationKey}'s commentary on this paper's pericope and paraphrase or quote from there:_\n`
+                : `\n  _Contenido de la fuente para anclar la cita asignada. Encontrá el pasaje más relevante del comentario de ${s.citationKey} sobre la perícopa de este paper y parafraseá o citá desde ahí:_\n`;
+            lines.push(heading + '  ```\n  ' + truncated.replace(/\n/g, '\n  ') + '\n  ```');
+        }
+    }
+    return lines.join('\n');
+}
+
+/**
+ * Pinned-source contract block for the introduction step. Same shape
+ * as the conclusion composer's. Asymmetry rules (default 1, hard cap
+ * 2, never technical) hold per METODOLOGIA.md.
+ */
+function formatPinnedContract(keys: ReadonlyArray<string>, lang: 'es' | 'en'): string {
+    if (keys.length === 0) return '';
+    if (lang === 'en') {
+        return [
+            '### Pinned-source contract for THIS introduction (CRITICAL)',
+            '',
+            'The student\'s corpus plan pins the following sourceKeys to this introduction step. You MUST cite each one at least once in the introduction (paraphrase or verbatim). Skipping a pinned source is a critical failure of the plan; cross-pollinating with sources pinned for other steps does NOT count.',
+            '',
+            ...keys.map(k => `- \`${k}\``),
+            '',
+            'Asymmetry rules from the methodology still apply: default 1 source, hard cap 2, never technical (lexicons / grammars / apparatus).',
+            '',
+        ].join('\n');
+    }
+    return [
+        '### Contrato de fuentes asignadas para ESTA introducción (CRÍTICO)',
+        '',
+        'El plan de corpus del alumno asigna los siguientes sourceKeys a este paso de introducción. DEBES citar cada uno al menos una vez en la introducción (parafraseo o verbatim). Saltarse una fuente asignada es una falla crítica del plan; cross-poll-inizar con fuentes asignadas a otros pasos NO cuenta.',
+        '',
+        ...keys.map(k => `- \`${k}\``),
+        '',
+        'Las reglas de asimetría de la metodología siguen aplicando: default 1 fuente, hard cap 2, nunca técnica (léxicos / gramáticas / aparato).',
+        '',
+    ].join('\n');
 }

@@ -58,6 +58,13 @@ export interface ComposeIntroductionInput {
     styleGuideManifest: StyleGuideManifest | null;
     /** Source registry. */
     sources: ReadonlyArray<ComposerSourceMetadata>;
+    /**
+     * v1.7+ — sourceKeys the student's plan pinned for the introduction
+     * step. Composer MUST cite each at least once. Empty when no plan
+     * was set. Asymmetry rules (default 1, hard cap 2, never technical)
+     * still apply per METODOLOGIA.md.
+     */
+    pinnedSourceKeys: ReadonlyArray<string>;
     /** Optional regeneration hint. */
     regenerationHint: string | null;
 }
