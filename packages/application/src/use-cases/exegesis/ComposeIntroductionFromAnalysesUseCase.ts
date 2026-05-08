@@ -116,7 +116,32 @@ export class ComposeIntroductionFromAnalysesUseCase {
             };
 
             reservation.markLlmContacted();
-            const result = await this.composer.composeIntroduction(composerInput);
+            let result = await this.composer.composeIntroduction(composerInput);
+
+            // [#126 Approach B] Post-validation retry on missing pinned keys.
+            const missing = pinnedSourceKeys.filter(
+                key => !result.markdown.toLowerCase().includes(key.toLowerCase()),
+            );
+            if (missing.length > 0) {
+                console.warn('[exegesis][#126] intro composer missed pinned keys, retrying once:', missing);
+                const retryHint = paper.displayLanguage === 'en'
+                    ? `CRITICAL: your previous output skipped pinned sources [${missing.join(', ')}]. You MUST cite each one at least once in this introduction. Use the source content provided in the registry to ground the citation. Do NOT substitute another source.`
+                    : `CRÍTICO: tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. DEBES citar cada una al menos una vez en esta introducción. Usá el contenido de la fuente provisto en el registro para anclar la cita. NO sustituyas por otra fuente.`;
+                try {
+                    const retryResult = await this.composer.composeIntroduction({
+                        ...composerInput,
+                        regenerationHint: retryHint,
+                    });
+                    const stillMissing = pinnedSourceKeys.filter(
+                        key => !retryResult.markdown.toLowerCase().includes(key.toLowerCase()),
+                    );
+                    if (stillMissing.length === 0 || stillMissing.length < missing.length) {
+                        result = retryResult;
+                    }
+                } catch (retryErr) {
+                    console.warn('[exegesis][#126] intro retry failed:', retryErr);
+                }
+            }
 
             const finalMarkdown = await this.applyFormatter(result.markdown, manifest, citableSources);
 

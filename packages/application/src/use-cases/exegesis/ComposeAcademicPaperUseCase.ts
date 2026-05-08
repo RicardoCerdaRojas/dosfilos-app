@@ -142,7 +142,37 @@ export class ComposeAcademicPaperUseCase {
                 pinnedSourceKeys,
             };
             reservation.markLlmContacted();
-            const raw = await this.composer.composeAcademicPaper(composerInput);
+            let raw = await this.composer.composeAcademicPaper(composerInput);
+
+            // [#126 Approach B] Post-validation retry on missing pinned keys.
+            const missing = pinnedSourceKeys.filter(
+                key => !raw.markdown.toLowerCase().includes(key.toLowerCase()),
+            );
+            if (missing.length > 0) {
+                console.warn('[exegesis][#126] academic composer missed pinned keys, retrying once:', missing);
+                try {
+                    // ComposeAcademicPaperInput doesn't carry a
+                    // regenerationHint slot; piggy-back on the
+                    // assignmentBrief by appending the corrective
+                    // directive. Best effort — schema-level enforcement
+                    // (Approach C) remains the durable fix.
+                    const correction = paper.displayLanguage === 'en'
+                        ? `\n\n[CORRECTIVE PASS] Your previous output skipped pinned sources [${missing.join(', ')}]. Cite each one at least once across the paper using the source content provided in the registry.`
+                        : `\n\n[PASE CORRECTIVO] Tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. Citá cada una al menos una vez en el paper usando el contenido provisto en el registro.`;
+                    const retryResult = await this.composer.composeAcademicPaper({
+                        ...composerInput,
+                        assignmentBrief: (composerInput.assignmentBrief ?? '') + correction,
+                    });
+                    const stillMissing = pinnedSourceKeys.filter(
+                        key => !retryResult.markdown.toLowerCase().includes(key.toLowerCase()),
+                    );
+                    if (stillMissing.length === 0 || stillMissing.length < missing.length) {
+                        raw = retryResult;
+                    }
+                } catch (retryErr) {
+                    console.warn('[exegesis][#126] academic retry failed:', retryErr);
+                }
+            }
 
             // ── Apply the deterministic post-formatter when possible ─────
             let finalOutput: ComposeAcademicPaperOutput;

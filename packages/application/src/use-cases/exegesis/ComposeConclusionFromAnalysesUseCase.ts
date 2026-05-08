@@ -132,7 +132,42 @@ export class ComposeConclusionFromAnalysesUseCase {
             };
 
             reservation.markLlmContacted();
-            const result = await this.composer.composeConclusion(composerInput);
+            let result = await this.composer.composeConclusion(composerInput);
+
+            // [#126 Approach B] Post-validation: scan the composed
+            // markdown for each pinned sourceKey. When any are
+            // missing, fire ONE corrective regen with an explicit
+            // hint listing the skipped keys. Capped at one retry to
+            // avoid runaway costs; further enforcement should escalate
+            // to schema-level (Approach C).
+            const missing = pinnedSourceKeys.filter(
+                key => !result.markdown.toLowerCase().includes(key.toLowerCase()),
+            );
+            if (missing.length > 0) {
+                console.warn('[exegesis][#126] composer missed pinned keys, retrying once:', missing);
+                const retryHint = paper.displayLanguage === 'en'
+                    ? `CRITICAL: your previous output skipped pinned sources [${missing.join(', ')}]. You MUST cite each one at least once in this conclusion. Use the source content provided in the registry to ground the citation. Do NOT substitute another source.`
+                    : `CRÍTICO: tu salida anterior se saltó las fuentes asignadas [${missing.join(', ')}]. DEBES citar cada una al menos una vez en esta conclusión. Usá el contenido de la fuente provisto en el registro para anclar la cita. NO sustituyas por otra fuente.`;
+                const retryInput: ComposeConclusionInput = {
+                    ...composerInput,
+                    regenerationHint: retryHint,
+                };
+                try {
+                    const retryResult = await this.composer.composeConclusion(retryInput);
+                    const stillMissing = pinnedSourceKeys.filter(
+                        key => !retryResult.markdown.toLowerCase().includes(key.toLowerCase()),
+                    );
+                    if (stillMissing.length === 0 || stillMissing.length < missing.length) {
+                        console.log('[exegesis][#126] retry honored missing keys:', missing);
+                        result = retryResult;
+                    } else {
+                        console.warn('[exegesis][#126] retry still missing keys:', stillMissing);
+                    }
+                } catch (retryErr) {
+                    console.warn('[exegesis][#126] retry failed:', retryErr);
+                    // Keep first-pass result on retry failure.
+                }
+            }
 
             const finalMarkdown = await this.applyFormatter(result.markdown, manifest, citableSources);
 
