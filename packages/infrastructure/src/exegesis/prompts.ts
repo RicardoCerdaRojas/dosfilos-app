@@ -334,8 +334,17 @@ function formatSources(
                 ? `\n_Curated excerpts only. Cite using the anchors that prefix each block (e.g. \`(${s.citationKey ?? 'Author'}, "${s.displayLabel}", ${s.excerptAnchors[0]})\`). Do NOT invent pages outside these anchors._`
                 : `\n_Solo excerpts curados. Citá usando los anchors que prefijan cada bloque (ej. \`(${s.citationKey ?? 'Autor'}, "${s.displayLabel}", ${s.excerptAnchors[0]})\`). NO inventes páginas fuera de esos anchors._`)
             : '';
+        // v1.7+: surface plan-pinned sources with an explicit imperative
+        // marker. The student's plan listed THIS source as required for
+        // THIS step — the LLM must cite it, paraphrase or quote, before
+        // wandering to the secondary corpus.
+        const pinnedBadge = s.priority === 'primary'
+            ? (lang === 'en'
+                ? '⭐ PINNED FOR THIS STEP — MUST cite at least once. '
+                : '⭐ FUENTE ASIGNADA PARA ESTE PASO — DEBES citarla al menos una vez. ')
+            : '';
         return [
-            `### ${s.displayLabel}`,
+            `### ${pinnedBadge}${s.displayLabel}`,
             `_${typeLabel}${citationKey}${usageNote}_${excerptNote}`,
             '```',
             truncated || (lang === 'en' ? '(extraction not yet available)' : '(extracción aún no disponible)'),
@@ -343,7 +352,41 @@ function formatSources(
         ].join('\n');
     });
 
-    return blocks.join('\n\n');
+    // Lead the source block with a directive listing the pinned keys
+    // (when any) so the model sees the contract before wading into
+    // text. Skipping a pinned source = critical plan failure; cross-
+    // pollinating with a non-pinned source where a pinned one fits =
+    // also a failure. Cite extras only when they genuinely strengthen
+    // the argument beyond the pinned set.
+    const pinnedKeys = sources
+        .filter(s => s.priority === 'primary')
+        .map(s => s.citationKey || s.displayLabel);
+    let directive = '';
+    if (pinnedKeys.length > 0) {
+        directive = lang === 'en'
+            ? [
+                '## Pinned-source contract for THIS step',
+                '',
+                `The student's corpus plan pins the following sources to this step. You MUST cite each one at least once in your output (paraphrase or verbatim, your choice — but they MUST appear):`,
+                '',
+                ...pinnedKeys.map(k => `- ${k}`),
+                '',
+                'Skipping a pinned source is a critical failure of the plan. You may also cite non-pinned sources from the corpus when they strengthen the argument — but never as a SUBSTITUTE for a pinned source.',
+                '',
+            ].join('\n')
+            : [
+                '## Contrato de fuentes asignadas para ESTE paso',
+                '',
+                `El plan de corpus del alumno asigna las siguientes fuentes a este paso. DEBES citar cada una al menos una vez en tu output (parafraseo o verbatim, tu elección — pero TIENEN que aparecer):`,
+                '',
+                ...pinnedKeys.map(k => `- ${k}`),
+                '',
+                'Saltarse una fuente asignada es una falla crítica del plan. Podés también citar fuentes no-asignadas del corpus cuando refuercen el argumento — pero nunca como SUSTITUTO de una asignada.',
+                '',
+            ].join('\n');
+    }
+
+    return directive + blocks.join('\n\n');
 }
 
 function formatPriorSteps(steps: ExegesisPriorStep[], lang: 'es' | 'en'): string {

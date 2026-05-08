@@ -86,6 +86,16 @@ export interface ComposeAcademicPaperInput {
      * in the analyses to readable author/title strings.
      */
     sources: ReadonlyArray<ComposerSourceMetadata>;
+    /**
+     * v1.7+ — UNION of sourceKeys pinned across every step of this
+     * paper. The composer MUST cite each at least once across the
+     * full output (intro / verses / conclusion / footnotes). Empty
+     * when no plan was set. Per-step assignment is in
+     * `paper.stepPlan.perStep[*].pinnedSources` — surfaced here as a
+     * flat union so the composer can verify global plan honor in one
+     * pass without re-walking the per-step structure.
+     */
+    pinnedSourceKeys: ReadonlyArray<string>;
 }
 
 /**

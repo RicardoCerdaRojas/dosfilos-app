@@ -258,13 +258,51 @@ function formatSources(
     }
     const totalBudget = SOURCE_BUDGET_CHARS_TOTAL;
     const perSourceBudget = Math.floor(totalBudget / sources.length);
-    return sources
+
+    // v1.7+: lead the source block with a directive that names the
+    // pinned sourceKeys so the model treats them as a contract, not a
+    // suggestion. The structured analysis has explicit slots for
+    // commentator engagement (commentatorEngagement) and lexis
+    // sources — pinned sources MUST appear in at least one of those
+    // slots when their content bears on this verse.
+    const pinnedKeys = sources
+        .filter(s => s.priority === 'primary' && s.citationKey)
+        .map(s => s.citationKey!);
+    let directive = '';
+    if (pinnedKeys.length > 0) {
+        directive = lang === 'en'
+            ? [
+                '## Pinned-source contract for THIS verse',
+                '',
+                `The student's corpus plan pins the following \`sourceKey\`s to this verse. You MUST reference each one at least once in your structured analysis — typically inside \`commentatorEngagement\` (with \`role\` set to anchor / contrast / technical) or \`lexicalAnalyses[*].generalSemanticRange.sources\` / \`loadingSources\` for lexicons / grammars:`,
+                '',
+                ...pinnedKeys.map(k => `- \`${k}\``),
+                '',
+                'Skipping a pinned source is a critical failure of the plan. Non-pinned sources may also appear when they strengthen the analysis — but never as a SUBSTITUTE for a pinned one.',
+                '',
+            ].join('\n') + '\n'
+            : [
+                '## Contrato de fuentes asignadas para ESTE verso',
+                '',
+                `El plan de corpus del alumno asigna los siguientes \`sourceKey\` a este verso. DEBES referenciar cada uno al menos una vez en tu análisis estructurado — típicamente dentro de \`commentatorEngagement\` (con \`role\` en anchor / contrast / technical) o \`lexicalAnalyses[*].generalSemanticRange.sources\` / \`loadingSources\` para léxicos / gramáticas:`,
+                '',
+                ...pinnedKeys.map(k => `- \`${k}\``),
+                '',
+                'Saltarse una fuente asignada es una falla crítica del plan. Las no-asignadas pueden aparecer cuando refuercen el análisis — pero nunca como SUSTITUTO de una asignada.',
+                '',
+            ].join('\n') + '\n';
+    }
+
+    const blocks = sources
         .map(s => {
             const truncated = truncate(s.textContent, perSourceBudget);
             const keyLine = s.citationKey ? `sourceKey: \`${s.citationKey}\`` : `(no citation key)`;
             const typeLine = s.sourceType;
+            const pinnedBadge = s.priority === 'primary'
+                ? (lang === 'en' ? '⭐ PINNED — MUST cite. ' : '⭐ ASIGNADA — DEBES citarla. ')
+                : '';
             return [
-                `### ${s.displayLabel}`,
+                `### ${pinnedBadge}${s.displayLabel}`,
                 `_${keyLine} · type: ${typeLine}_`,
                 '```',
                 truncated || (lang === 'en' ? '(content not yet extracted)' : '(contenido aún no extraído)'),
@@ -272,6 +310,8 @@ function formatSources(
             ].join('\n');
         })
         .join('\n\n');
+
+    return directive + blocks;
 }
 
 function formatPriorAnalyses(

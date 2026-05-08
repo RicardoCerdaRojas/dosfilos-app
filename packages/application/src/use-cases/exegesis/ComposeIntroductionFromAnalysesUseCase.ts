@@ -88,6 +88,15 @@ export class ComposeIntroductionFromAnalysesUseCase {
             const composerSources = buildComposerSources(paper);
             const citableSources = buildFormatterSources(paper);
 
+            // Plan-pinned sources for the introduction step. Composer
+            // treats them as a contract.
+            const pinnedIds = new Set(
+                paper.stepPlan.perStep[introStep.id]?.pinnedSources ?? [],
+            );
+            const pinnedSourceKeys = paper.sources
+                .filter(s => pinnedIds.has(s.id) && s.citationKey)
+                .map(s => s.citationKey!);
+
             const composerInput: ComposeIntroductionInput = {
                 paperPassage: paper.passage,
                 language: paper.displayLanguage,
@@ -97,6 +106,7 @@ export class ComposeIntroductionFromAnalysesUseCase {
                 styleGuideContent,
                 styleGuideManifest: manifest,
                 sources: composerSources,
+                pinnedSourceKeys,
                 regenerationHint: input.regenerationHint ?? null,
             };
 

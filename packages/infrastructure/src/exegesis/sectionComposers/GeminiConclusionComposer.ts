@@ -143,6 +143,7 @@ function buildConclusionPrompt(input: ComposeConclusionInput): { systemInstructi
 
     const briefings = input.verseAnalyses.map(a => serializeAnalysis(a, lang)).join('\n\n');
     const sourcesBlock = formatSourceRegistry(input.sources, lang);
+    const pinnedBlock = formatPinnedContract(input.pinnedSourceKeys, lang);
     const hint = input.regenerationHint
         ? (lang === 'en'
             ? `\n\n### Regeneration hint\n${input.regenerationHint}\n`
@@ -162,6 +163,7 @@ function buildConclusionPrompt(input: ComposeConclusionInput): { systemInstructi
     const user = [
         userPrefix,
         ``,
+        pinnedBlock,
         briefingsHeading,
         ``,
         briefings,
@@ -213,4 +215,36 @@ function formatSourceRegistry(sources: ReadonlyArray<ComposerSourceMetadata>, la
         return lang === 'en' ? '(No sources configured.)' : '(Sin fuentes configuradas.)';
     }
     return sources.map(s => `- **${s.citationKey}**: ${s.author}, *${s.title}*`).join('\n');
+}
+
+/**
+ * Pinned-source contract block. Lists the keys the student's plan
+ * pinned for the conclusion step and demands at least one citation
+ * each. Empty string when no pinned keys (no plan ran or empty step
+ * pin set).
+ */
+function formatPinnedContract(keys: ReadonlyArray<string>, lang: 'es' | 'en'): string {
+    if (keys.length === 0) return '';
+    if (lang === 'en') {
+        return [
+            '### Pinned-source contract for THIS conclusion (CRITICAL)',
+            '',
+            'The student\'s corpus plan pins the following sourceKeys to this conclusion step. You MUST cite each one at least once in the conclusion (paraphrase or verbatim). Skipping a pinned source is a critical failure of the plan; cross-pollinating with sources pinned for other steps does NOT count.',
+            '',
+            ...keys.map(k => `- \`${k}\``),
+            '',
+            'Asymmetry rules from the methodology still apply: default 1 source, hard cap 2, never technical (lexicons / grammars / apparatus). Pinned sources above respect those rules.',
+            '',
+        ].join('\n');
+    }
+    return [
+        '### Contrato de fuentes asignadas para ESTA conclusión (CRÍTICO)',
+        '',
+        'El plan de corpus del alumno asigna los siguientes sourceKeys a este paso de conclusión. DEBES citar cada uno al menos una vez en la conclusión (parafraseo o verbatim). Saltarse una fuente asignada es una falla crítica del plan; cross-poll-inizar con fuentes asignadas a otros pasos NO cuenta.',
+        '',
+        ...keys.map(k => `- \`${k}\``),
+        '',
+        'Las reglas de asimetría de la metodología siguen aplicando: default 1 fuente, hard cap 2, nunca técnica (léxicos / gramáticas / aparato). Las fuentes asignadas arriba respetan esas reglas.',
+        '',
+    ].join('\n');
 }

@@ -137,6 +137,7 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
         ? '### Source registry (use ONLY these citation keys)'
         : '### Registro de fuentes (usá SOLO estas claves de cita)';
     const sourcesBlock = formatSourceRegistry(input.sources, lang);
+    const pinnedBlock = formatPinnedContract(input.pinnedSourceKeys, lang);
 
     const titleLine = input.paperTitle && input.paperTitle.trim()
         ? input.paperTitle.trim()
@@ -147,6 +148,7 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
             `Compose the academic paper for **${passage}**.`,
             `Title: ${titleLine}`,
             ``,
+            pinnedBlock,
             briefingsHeading,
             ``,
             briefings,
@@ -156,13 +158,14 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
             sourcesBlock,
             ``,
             `Now produce the full markdown document. Follow the system instruction's structure and rules without exception.`,
-        ].join('\n');
+        ].filter(Boolean).join('\n');
     }
 
     return [
         `Componé el paper académico para **${passage}**.`,
         `Título: ${titleLine}`,
         ``,
+        pinnedBlock,
         briefingsHeading,
         ``,
         briefings,
@@ -172,6 +175,37 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
         sourcesBlock,
         ``,
         `Ahora producí el documento markdown completo. Seguí la estructura y reglas del system instruction sin excepción.`,
+    ].filter(Boolean).join('\n');
+}
+
+/**
+ * Pinned-source contract block for the academic composer. Uses the
+ * UNION of pinned keys across every step of the plan so the composer
+ * verifies the global plan honor in one pass.
+ */
+function formatPinnedContract(keys: ReadonlyArray<string>, lang: 'es' | 'en'): string {
+    if (keys.length === 0) return '';
+    if (lang === 'en') {
+        return [
+            '### Plan-pinned source contract (CRITICAL — applies across the whole paper)',
+            '',
+            'The student\'s corpus plan pinned the following sourceKeys (union across intro / verses / conclusion). You MUST cite each one at least once across the full output (paraphrase or verbatim — the location is your choice, but every key MUST appear). Skipping any pinned source is a critical failure of the plan:',
+            '',
+            ...keys.map(k => `- \`${k}\``),
+            '',
+            'Non-pinned sources from the registry below may also appear when they strengthen the argument — but never as a SUBSTITUTE for a pinned one. The asymmetry rules (default 1 source for intro/conclusion, hard cap 2, never technical there; verses 2-3 with 4 ceiling) still hold.',
+            '',
+        ].join('\n');
+    }
+    return [
+        '### Contrato global de fuentes asignadas (CRÍTICO — aplica a todo el paper)',
+        '',
+        'El plan de corpus del alumno asignó los siguientes sourceKeys (unión de intro / versos / conclusión). DEBES citar cada uno al menos una vez a lo largo del output completo (parafraseo o verbatim — la ubicación es tu elección, pero cada clave TIENE que aparecer). Saltarse una fuente asignada es una falla crítica del plan:',
+        '',
+        ...keys.map(k => `- \`${k}\``),
+        '',
+        'Las fuentes no-asignadas del registro abajo pueden aparecer cuando refuercen el argumento — pero nunca como SUSTITUTO de una asignada. Las reglas de asimetría (default 1 fuente para intro/conclusión, hard cap 2, nunca técnica ahí; versos 2-3 con techo 4) siguen aplicando.',
+        '',
     ].join('\n');
 }
 

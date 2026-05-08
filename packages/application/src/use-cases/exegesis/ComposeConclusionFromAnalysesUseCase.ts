@@ -82,6 +82,16 @@ export class ComposeConclusionFromAnalysesUseCase {
             const composerSources = buildComposerSources(paper);
             const citableSources = buildFormatterSources(paper);
 
+            // Pull the conclusion step's pinned source keys from the
+            // student's plan. Composer treats them as a contract — must
+            // cite each at least once. Empty when no plan was set.
+            const pinnedIds = new Set(
+                paper.stepPlan.perStep[conclusionStep.id]?.pinnedSources ?? [],
+            );
+            const pinnedSourceKeys = paper.sources
+                .filter(s => pinnedIds.has(s.id) && s.citationKey)
+                .map(s => s.citationKey!);
+
             const composerInput: ComposeConclusionInput = {
                 paperPassage: paper.passage,
                 language: paper.displayLanguage,
@@ -90,6 +100,7 @@ export class ComposeConclusionFromAnalysesUseCase {
                 styleGuideContent,
                 styleGuideManifest: manifest,
                 sources: composerSources,
+                pinnedSourceKeys,
                 regenerationHint: input.regenerationHint ?? null,
             };
 

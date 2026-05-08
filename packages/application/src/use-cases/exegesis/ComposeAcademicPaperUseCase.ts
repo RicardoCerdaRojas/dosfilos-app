@@ -114,6 +114,18 @@ export class ComposeAcademicPaperUseCase {
             const citableSources = buildFormatterSources(paper);
 
             // ── Compose ──────────────────────────────────────────────────
+            // Union of pinned source keys across every step of the
+            // plan. The academic composer must cite each at least
+            // once across the full output (intro / verses /
+            // conclusion / footnotes). Empty when no plan was set.
+            const pinnedIdSet = new Set<string>();
+            for (const entry of Object.values(paper.stepPlan.perStep)) {
+                for (const id of entry.pinnedSources) pinnedIdSet.add(id);
+            }
+            const pinnedSourceKeys = paper.sources
+                .filter(s => pinnedIdSet.has(s.id) && s.citationKey)
+                .map(s => s.citationKey!);
+
             const composerInput: ComposeAcademicPaperInput = {
                 paperPassage: paper.passage,
                 paperTitle: paper.title ?? null,
@@ -123,6 +135,7 @@ export class ComposeAcademicPaperUseCase {
                 styleGuideContent,
                 styleGuideManifest: manifest,
                 sources: composerSources,
+                pinnedSourceKeys,
             };
             reservation.markLlmContacted();
             const raw = await this.composer.composeAcademicPaper(composerInput);
