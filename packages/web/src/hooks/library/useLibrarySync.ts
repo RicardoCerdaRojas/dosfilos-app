@@ -49,19 +49,32 @@ export function useLibrarySync(): void {
         // the sentinel `__system__` userId, so the per-user listener
         // never sees them on its own. Mutations to system docs are
         // platform-side and rare enough that one-shot fetching is fine.
+        //
+        // Two updaters share the cache write: the user listener (fires
+        // on every Firestore snapshot) and the one-shot system fetch
+        // (fires once when the promise resolves). Both go through
+        // `pushMerged` so whichever finishes first still emits a valid
+        // merged list, and the slower one re-pushes once it lands.
         let systemResources: LibraryResourceEntity[] = [];
+        let userResources: LibraryResourceEntity[] = [];
         let cancelled = false;
+        const pushMerged = () => {
+            queryClient.setQueryData(
+                libraryQueryKey(uid),
+                [...systemResources, ...userResources],
+            );
+        };
         libraryService.getSystemResources().then(rs => {
-            if (!cancelled) systemResources = rs;
+            if (cancelled) return;
+            systemResources = rs;
+            pushMerged();
         }).catch(err => console.error('[useLibrarySync] system fetch failed', err));
 
         const unsubscribe = libraryService.subscribeToUserResources(
             uid,
             (resources: LibraryResourceEntity[]) => {
-                queryClient.setQueryData(
-                    libraryQueryKey(uid),
-                    [...systemResources, ...resources],
-                );
+                userResources = resources;
+                pushMerged();
 
                 if (initialEmissionDone.current) {
                     for (const r of resources) {
