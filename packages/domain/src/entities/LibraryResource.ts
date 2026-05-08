@@ -312,8 +312,11 @@ export class LibraryResourceEntity implements LibraryResource {
         if (!this.title || this.title.trim().length < 3) {
             throw new Error('El título del recurso debe tener al menos 3 caracteres');
         }
-        if (!this.storageUrl) {
-            throw new Error('El recurso debe tener una URL de almacenamiento');
+        // System sources and text-only seeds carry their content
+        // inline via `textContent` and don't need a Cloud Storage
+        // object. Either is sufficient — require at least one.
+        if (!this.storageUrl && !this.textContent) {
+            throw new Error('El recurso debe tener una URL de almacenamiento o contenido de texto');
         }
     }
 
