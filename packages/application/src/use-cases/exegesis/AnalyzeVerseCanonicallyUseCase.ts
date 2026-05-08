@@ -7,8 +7,10 @@ import type {
     ExegesisSourceContext,
     ICanonicalVerseAnalyzer,
     IExegeticalPaperRepository,
+    IOriginalLanguageBibleProvider,
     IResourceContentReader,
     IUserStyleGuideRepository,
+    PassageReference,
     SourceCitation,
 } from '@dosfilos/domain';
 import {
@@ -52,6 +54,11 @@ export class AnalyzeVerseCanonicallyUseCase {
         private styleGuideRepository: IUserStyleGuideRepository,
         private contentReader: IResourceContentReader,
         private analyzer: ICanonicalVerseAnalyzer,
+        // Optional: when wired, the use case loads the verse's
+        // original-language text (Greek for NT via SBL GNT, Hebrew for
+        // OT via WLC) and threads it into the analyzer prompt so the
+        // model isn't guessing the base text from training memory.
+        private originalLanguageProvider?: IOriginalLanguageBibleProvider,
     ) { }
 
     async execute(input: AnalyzeVerseCanonicallyUseCaseInput): Promise<ExegeticalStepVersion> {
@@ -100,9 +107,12 @@ export class AnalyzeVerseCanonicallyUseCase {
                 }))
                 : [];
 
+            const originalLanguageText = await this.loadOriginalLanguageText(step.verseRef);
+
             const analyzerInput: AnalyzeVerseInput = {
                 paperPassage: paper.passage,
                 verseRef: step.verseRef,
+                originalLanguageText,
                 language: paper.displayLanguage,
                 assignmentBrief: paper.assignmentBrief,
                 stepEmphasis,
@@ -166,6 +176,33 @@ export class AnalyzeVerseCanonicallyUseCase {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────
+
+    /**
+     * Loads the original-language text for the verse range and returns
+     * it as a single string. Returns null when no provider is wired,
+     * the provider doesn't support the book, or the fetch fails — the
+     * analyzer falls back to whatever it knows from training.
+     */
+    private async loadOriginalLanguageText(verseRef: PassageReference): Promise<string | null> {
+        if (!this.originalLanguageProvider) return null;
+        const provider = this.originalLanguageProvider;
+        if (!provider.supports(verseRef.bookId)) return null;
+        try {
+            const verses = await provider.getChapterContent(verseRef.bookId, verseRef.chapterStart);
+            const start = (verseRef.verseStart ?? 1) - 1;
+            const end = verseRef.verseEnd ?? verseRef.verseStart ?? verses.length;
+            const slice = verses.slice(start, end);
+            if (slice.length === 0) return null;
+            const numbered = slice.map((text, i) => {
+                const v = (verseRef.verseStart ?? 1) + i;
+                return `${verseRef.chapterStart}:${v} ${text}`;
+            });
+            return numbered.join(' ');
+        } catch (err) {
+            console.warn('[AnalyzeVerseCanonicallyUseCase] original-language load failed:', err);
+            return null;
+        }
+    }
 
     private async loadStyleGuideContent(ownerId: string, styleGuideId: string | null): Promise<string> {
         if (!styleGuideId) return '';

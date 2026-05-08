@@ -42,6 +42,7 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
     const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
     const styleGuideBlock = formatStyleGuide(input.styleGuideContent, lang);
     const corpusGapsBlock = formatCorpusGaps(input.missingSourceTypes, lang);
+    const baseTextBlock = formatOriginalLanguageText(input.originalLanguageText, lang);
 
     if (lang === 'en') {
         return [
@@ -50,6 +51,7 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
             `## Verse and paper`,
             `Verse: **${verse}**`,
             `Within paper passage: ${passage}`,
+            baseTextBlock,
             briefBlock,
             ``,
             `## Methodological foundation`,
@@ -90,6 +92,7 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
         `## Versículo y paper`,
         `Versículo: **${verse}**`,
         `Dentro del pasaje del paper: ${passage}`,
+        baseTextBlock,
         briefBlock,
         ``,
         `## Fundamento metodológico`,
@@ -235,6 +238,23 @@ function formatAssignmentBrief(brief: string | null, lang: 'es' | 'en'): string 
     if (!brief || !brief.trim()) return '';
     const heading = lang === 'en' ? '## Paper framing' : '## Encuadre del paper';
     return [``, heading, brief.trim()].join('\n');
+}
+
+/**
+ * Surfaces the verse's original-language text (Greek for NT via SBL
+ * GNT, Hebrew for OT via WLC) as the authoritative base text for
+ * every grammatical / lexical / syntactic decision the analyzer
+ * documents. When null (no provider, unsupported book, or fetch
+ * failed), emits an empty string and the analyzer falls back to
+ * its training memory of the text.
+ */
+function formatOriginalLanguageText(text: string | null, lang: 'es' | 'en'): string {
+    if (!text || !text.trim()) return '';
+    const heading = lang === 'en' ? '## Base text (SBL GNT / WLC)' : '## Texto base (SBL GNT / WLC)';
+    const note = lang === 'en'
+        ? 'This is the authoritative base text for the verse. Every grammatical, lexical, and syntactic claim you make MUST square with the wording below; do not paraphrase from memory.'
+        : 'Este es el texto base autoritativo del versículo. Toda afirmación gramatical, léxica y sintáctica que hagas DEBE coincidir con la redacción de abajo; no parafrasees desde memoria.';
+    return [``, heading, '```', text.trim(), '```', note].join('\n');
 }
 
 function formatStyleGuide(content: string, lang: 'es' | 'en'): string {
