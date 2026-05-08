@@ -260,8 +260,27 @@ export class LibraryService {
         return this.libraryRepository.findByUserId(userId);
     }
 
+    /**
+     * Returns the user's own resources alongside platform-preloaded
+     * system resources (e.g. SBL GNT). System resources appear at the
+     * top of the list — they're freebies the user didn't upload, so
+     * surfacing them first reinforces "this came with the platform".
+     * The UI badges them and disables edit/delete.
+     */
+    async getUserResourcesWithSystem(userId: string): Promise<LibraryResourceEntity[]> {
+        const [own, system] = await Promise.all([
+            this.libraryRepository.findByUserId(userId),
+            this.libraryRepository.findSystemResources(),
+        ]);
+        return [...system, ...own];
+    }
+
     async getCoreResources(): Promise<LibraryResourceEntity[]> {
         return this.libraryRepository.findCoreResources();
+    }
+
+    async getSystemResources(): Promise<LibraryResourceEntity[]> {
+        return this.libraryRepository.findSystemResources();
     }
 
     /**

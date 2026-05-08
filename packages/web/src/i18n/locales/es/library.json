@@ -78,6 +78,8 @@
         "deleting": "Eliminando…",
         "metadataIncomplete": "Faltan datos",
         "metadataIncompleteHint": "Falta indicar qué libros bíblicos cubre. Editar para que aparezca en la búsqueda inteligente de papers.",
+        "systemSourceLabel": "Del sistema",
+        "systemSourceHint": "Recurso precargado por la plataforma. Disponible para todos sin consumir tu cuota; solo lectura.",
         "metaPagesEstimated": "~{{count}} p. (est.)",
         "metaPagesActual_one": "{{count}} pág.",
         "metaPagesActual_other": "{{count}} págs.",

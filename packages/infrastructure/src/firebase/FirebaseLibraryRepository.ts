@@ -13,7 +13,7 @@ import {
     onSnapshot
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { LibraryResourceEntity } from '@dosfilos/domain';
+import { LibraryResourceEntity, SYSTEM_SOURCE_OWNER_ID } from '@dosfilos/domain';
 
 export interface ILibraryRepository {
     create(resource: LibraryResourceEntity): Promise<void>;
@@ -23,6 +23,7 @@ export interface ILibraryRepository {
     update(id: string, updates: Partial<LibraryResourceEntity>): Promise<void>;
     delete(id: string): Promise<void>;
     findCoreResources(): Promise<LibraryResourceEntity[]>;
+    findSystemResources(): Promise<LibraryResourceEntity[]>;
 }
 
 export class FirebaseLibraryRepository implements ILibraryRepository {
@@ -49,6 +50,22 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
             orderBy('createdAt', 'desc')
         );
 
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => this.firestoreToResource(doc.id, doc.data()));
+    }
+
+    /**
+     * System sources are platform-preloaded resources (e.g. SBL GNT)
+     * stored under the sentinel `SYSTEM_SOURCE_OWNER_ID`. Every user
+     * sees them in their library alongside their own uploads — the
+     * library service unions both sets before returning.
+     */
+    async findSystemResources(): Promise<LibraryResourceEntity[]> {
+        const q = query(
+            collection(db, this.collectionName),
+            where('userId', '==', SYSTEM_SOURCE_OWNER_ID),
+            orderBy('createdAt', 'desc')
+        );
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => this.firestoreToResource(doc.id, doc.data()));
     }
@@ -167,6 +184,9 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         if (resource.scope !== undefined) {
             doc.scope = resource.scope;
         }
+        if (resource.isSystemSource !== undefined) {
+            doc.isSystemSource = resource.isSystemSource;
+        }
         return doc;
     }
 
@@ -216,6 +236,7 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
             ? [...data.coversBibleBooks]
             : [];
         (resource as any).scope = data.scope ?? 'book';
+        (resource as any).isSystemSource = data.isSystemSource === true ? true : undefined;
         return resource;
     }
 }

@@ -44,7 +44,7 @@ export function useLibrary(): UseLibraryResult {
         queryKey: libraryQueryKey(user?.uid),
         queryFn: async () => {
             if (!user?.uid) return [] as LibraryResourceEntity[];
-            return libraryService.getUserResources(user.uid);
+            return libraryService.getUserResourcesWithSystem(user.uid);
         },
         enabled: !!user?.uid,
         staleTime: Infinity,
