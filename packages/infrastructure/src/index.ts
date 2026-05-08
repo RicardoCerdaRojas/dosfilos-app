@@ -19,6 +19,7 @@ export * from './firebase/FirestoreExegeticalPaperRepository'; // ✍️ Exegesi
 export * from './firebase/FirestoreExpositoryAssistantCacheRepository'; // ✍️ Expository Assistant — server-side cache for Pases 1-3 (v1.6)
 export * from './firebase/FirestoreUserRubricRepository'; // ✍️ Exegesis Module — rubric template repo
 export * from './firebase/FirestoreUserStyleGuideRepository'; // ✍️ Exegesis Module — style guide repo
+export * from './firebase/FirestoreUserAssignmentBriefRepository'; // ✍️ Exegesis Module — assignment brief template repo
 export * from './exegesis'; // ✍️ Exegesis Module — Gemini orchestrator
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';

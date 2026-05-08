@@ -369,7 +369,24 @@
             "placeholder": "Ej: Mi profesor pidió un análisis exegético de Hebreos 1:1-4 con énfasis cristológico. Quiero argumentar que la revelación final en el Hijo establece la superioridad temática de la epístola.",
             "optional": "Opcional pero muy recomendado. Lo puedes editar luego.",
             "characterCount": "{{count}} / {{max}} caracteres",
-            "tip": "Cuanto más claro sea el encuadre, mejor cohesión tendrá el paper. Menciona el pasaje, el énfasis (cristológico, eclesiológico, etc.) y cualquier expectativa explícita del profesor."
+            "tip": "Cuanto más claro sea el encuadre, mejor cohesión tendrá el paper. Menciona el pasaje, el énfasis (cristológico, eclesiológico, etc.) y cualquier expectativa explícita del profesor.",
+            "templates": {
+                "pickLabel": "Cargar plantilla guardada",
+                "defaultLabel": "Plantilla: {{name}}",
+                "listHeader": "Mis encuadres",
+                "loading": "Cargando…",
+                "empty": "Aún no guardas plantillas. Escribe un encuadre y guárdalo para reusarlo.",
+                "saveCta": "Guardar como plantilla",
+                "saveDisabledTooltip": "Escribe al menos 30 caracteres para guardar como plantilla.",
+                "namePrompt": "Nombre de la plantilla (ej. \"Hebreos cristológico\"):",
+                "savedToast": "Guardado: {{name}}",
+                "saveFailed": "No se pudo guardar. Intenta de nuevo.",
+                "markDefault": "Marcar como default",
+                "delete": "Eliminar",
+                "confirmDelete": "¿Eliminar la plantilla \"{{name}}\"? Esta acción no se puede deshacer.",
+                "deletedToast": "Plantilla eliminada",
+                "deleteFailed": "No se pudo eliminar. Intenta de nuevo."
+            }
         },
         "toast": {
             "created": "Trabajo creado — vamos a configurarlo",

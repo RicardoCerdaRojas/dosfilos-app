@@ -16,12 +16,14 @@ export * from './entities/corpusUsagePlan';
 export * from './entities/StyleGuideManifest';
 export * from './entities/UserRubric';
 export * from './entities/UserStyleGuide';
+export * from './entities/UserAssignmentBrief';
 export * from './entities/CanonicalVerseAnalysis';
 export * from './entities/CitationVerification';
 
 export * from './repositories/IExegeticalPaperRepository';
 export * from './repositories/IUserRubricRepository';
 export * from './repositories/IUserStyleGuideRepository';
+export * from './repositories/IUserAssignmentBriefRepository';
 
 export * from './use-cases/dtos';
 

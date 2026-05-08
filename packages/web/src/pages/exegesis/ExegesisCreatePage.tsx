@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages, FileCheck2, Compass } from 'lucide-react';
@@ -8,6 +8,8 @@ import { PassagePicker } from '@/components/exegesis/PassagePicker';
 import { RubricTemplatePicker } from '@/components/exegesis/setup/RubricTemplatePicker';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
+import { useUserAssignmentBriefs } from '@/hooks/exegesis/useUserAssignmentBriefs';
+import { AssignmentBriefPicker } from '@/components/exegesis/setup/AssignmentBriefPicker';
 import type { ExegeticalStrategy, PassageReference, SupportedLanguage } from '@dosfilos/domain';
 
 /**
@@ -30,10 +32,15 @@ export function ExegesisCreatePage() {
     const { t, i18n } = useTranslation('exegesis');
     const { createPaper } = useExegesisPapers();
     const { rubrics, defaultRubric } = useUserRubrics();
+    const { defaultBrief } = useUserAssignmentBriefs();
 
     const [passage, setPassage] = useState<PassageReference | null>(null);
     const [passageError, setPassageError] = useState<string | null>(null);
     const [assignmentBrief, setAssignmentBrief] = useState('');
+    // Track whether the user has typed into the brief — once they have,
+    // a default brief loaded from Firestore mustn't clobber their text.
+    const [briefUserTyped, setBriefUserTyped] = useState(false);
+    const briefMaxChars = 2000;
     // Rubric template choice. Three states:
     //   - undefined → "use default if any" (matches the use case's
     //     fallback). Initial value when the user hasn't touched the
@@ -53,10 +60,18 @@ export function ExegesisCreatePage() {
     // differentiator we want users to land on; opting out is a
     // deliberate, named choice (`free`) — not the absence of one.
     const [exegeticalStrategy, setExegeticalStrategy] = useState<ExegeticalStrategy>('dialectical');
+
+    // Auto-load the user's default brief once the hook resolves.
+    // Skip when the user already typed something so we don't clobber.
+    useEffect(() => {
+        if (briefUserTyped) return;
+        if (!defaultBrief) return;
+        setAssignmentBrief(defaultBrief.body.slice(0, briefMaxChars));
+    }, [defaultBrief, briefUserTyped]);
+
     const isCreating = createPaper.isPending;
     const canCreate = !!passage && !isCreating;
     const briefCharCount = assignmentBrief.length;
-    const briefMaxChars = 2000;
 
     const handleCreate = async () => {
         if (!passage) return;
@@ -196,9 +211,19 @@ export function ExegesisCreatePage() {
                     subtitle={t('create.brief.subtitle')}
                 >
                     <div className="space-y-2">
+                        <AssignmentBriefPicker
+                            currentBody={assignmentBrief}
+                            onApply={(body) => {
+                                setAssignmentBrief(body.slice(0, briefMaxChars));
+                                setBriefUserTyped(true);
+                            }}
+                        />
                         <textarea
                             value={assignmentBrief}
-                            onChange={(e) => setAssignmentBrief(e.target.value.slice(0, briefMaxChars))}
+                            onChange={(e) => {
+                                setAssignmentBrief(e.target.value.slice(0, briefMaxChars));
+                                setBriefUserTyped(true);
+                            }}
                             placeholder={t('create.brief.placeholder')}
                             rows={6}
                             className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-y"

@@ -2,6 +2,7 @@ import {
     FirestoreExegeticalPaperRepository,
     FirestoreUserRubricRepository,
     FirestoreUserStyleGuideRepository,
+    FirestoreUserAssignmentBriefRepository,
     FirebaseLibraryRepository,
     FirebaseSermonRepository,
     GeminiAcademicComposer,
@@ -50,6 +51,11 @@ import {
     UpdateUserRubricUseCase,
     DeleteUserRubricUseCase,
     SetDefaultUserRubricUseCase,
+    ListUserAssignmentBriefsUseCase,
+    CreateUserAssignmentBriefUseCase,
+    UpdateUserAssignmentBriefUseCase,
+    DeleteUserAssignmentBriefUseCase,
+    SetDefaultUserAssignmentBriefUseCase,
     ApplyRubricTemplateToPaperUseCase,
     ApplyStrategyOnlyRubricToPaperUseCase,
     SaveCurrentRubricAsTemplateUseCase,
@@ -123,6 +129,13 @@ class ExegesisService {
     public applyStrategyOnlyRubricToPaper: ApplyStrategyOnlyRubricToPaperUseCase;
     public saveCurrentRubricAsTemplate: SaveCurrentRubricAsTemplateUseCase;
     public createUserRubricFromText: CreateUserRubricFromTextUseCase;
+
+    // User-level assignment-brief templates
+    public listUserAssignmentBriefs: ListUserAssignmentBriefsUseCase;
+    public createUserAssignmentBrief: CreateUserAssignmentBriefUseCase;
+    public updateUserAssignmentBrief: UpdateUserAssignmentBriefUseCase;
+    public deleteUserAssignmentBrief: DeleteUserAssignmentBriefUseCase;
+    public setDefaultUserAssignmentBrief: SetDefaultUserAssignmentBriefUseCase;
 
     // User style guides
     public listStyleGuides: ListUserStyleGuidesUseCase;
@@ -212,6 +225,7 @@ class ExegesisService {
         const paperRepository = new FirestoreExegeticalPaperRepository();
         const styleGuideRepository = new FirestoreUserStyleGuideRepository();
         const userRubricRepository = new FirestoreUserRubricRepository();
+        const userAssignmentBriefRepository = new FirestoreUserAssignmentBriefRepository();
         const libraryRepository = new FirebaseLibraryRepository();
         const orchestrator = new GeminiExegesisOrchestrator(apiKey || '', exegesisModelId);
         const rubricExtractor = new GeminiPaperRubricExtractor(apiKey || '', exegesisModelId);
@@ -255,6 +269,12 @@ class ExegesisService {
         this.updateUserRubric = new UpdateUserRubricUseCase(userRubricRepository);
         this.deleteUserRubric = new DeleteUserRubricUseCase(userRubricRepository);
         this.setDefaultUserRubric = new SetDefaultUserRubricUseCase(userRubricRepository);
+
+        this.listUserAssignmentBriefs = new ListUserAssignmentBriefsUseCase(userAssignmentBriefRepository);
+        this.createUserAssignmentBrief = new CreateUserAssignmentBriefUseCase(userAssignmentBriefRepository);
+        this.updateUserAssignmentBrief = new UpdateUserAssignmentBriefUseCase(userAssignmentBriefRepository);
+        this.deleteUserAssignmentBrief = new DeleteUserAssignmentBriefUseCase(userAssignmentBriefRepository);
+        this.setDefaultUserAssignmentBrief = new SetDefaultUserAssignmentBriefUseCase(userAssignmentBriefRepository);
         this.applyRubricTemplateToPaper = new ApplyRubricTemplateToPaperUseCase(
             paperRepository,
             userRubricRepository,
