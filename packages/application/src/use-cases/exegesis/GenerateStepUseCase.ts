@@ -21,6 +21,7 @@ import {
     computeRubricCompliance,
     formatPassageReference,
     isCitableSourceType,
+    renderCanonicalAnalysisAsMarkdown,
 } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
@@ -379,7 +380,20 @@ export class GenerateStepUseCase {
             sections.push('---', '', intro.accepted.markdown, '');
         }
         for (const v of verses) {
-            if (v.accepted) sections.push('---', '', v.accepted.markdown, '');
+            if (!v.accepted) continue;
+            // Prefer the LLM-composed prose (markdown). When a verse
+            // was canonical-analyzed but the academic-prose composer
+            // hasn't run, markdown is empty — fall back to a
+            // deterministic render of the structured analysis so the
+            // assembly is never just intro + conclusion.
+            let body = v.accepted.markdown?.trim() ?? '';
+            if (!body && v.accepted.canonicalAnalysis) {
+                body = renderCanonicalAnalysisAsMarkdown(v.accepted.canonicalAnalysis, {
+                    verseRef: v.verseRef,
+                    lang,
+                });
+            }
+            if (body) sections.push('---', '', body, '');
         }
         if (conclusion?.accepted) {
             sections.push('---', '', conclusion.accepted.markdown, '');
