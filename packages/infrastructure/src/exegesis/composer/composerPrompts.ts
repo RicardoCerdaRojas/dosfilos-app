@@ -2,6 +2,7 @@ import {
     formatPassageReference,
     type ComposeAcademicPaperInput,
     type ComposerSourceMetadata,
+    type ExegeticalStrategy,
     type PaperRubric,
     type StyleGuideManifest,
 } from '@dosfilos/domain';
@@ -45,6 +46,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
     const styleGuideBlock = formatStyleGuide(input.styleGuideContent, input.styleGuideManifest, lang);
     const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
     const rubricBlock = formatPaperRubric(input.paperRubric, lang);
+    const strategyBlock = formatStrategy(input.exegeticalStrategy, lang);
     const fallbackDeclared = !input.styleGuideContent && !input.styleGuideManifest;
 
     if (lang === 'en') {
@@ -54,6 +56,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
             `## Paper`,
             `Passage: **${passage}**`,
             briefBlock,
+            strategyBlock,
             rubricBlock,
             ``,
             `## Mandatory style-guide adherence`,
@@ -93,6 +96,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
         `## Paper`,
         `Pasaje: **${passage}**`,
         briefBlock,
+        strategyBlock,
         rubricBlock,
         ``,
         `## Adherencia obligatoria a la guía de estilo`,
@@ -219,6 +223,45 @@ function formatAssignmentBrief(brief: string | null, lang: 'es' | 'en'): string 
     if (!brief || !brief.trim()) return '';
     const heading = lang === 'en' ? '## Paper framing' : '## Encuadre del paper';
     return [``, heading, brief.trim()].join('\n');
+}
+
+/**
+ * Renders the corpus-building strategy as a methodology block. The
+ * dialectical mode tells the model the corpus was deliberately built
+ * to balance anchors (lead reading) + contrasts (opposing voices) +
+ * technical sources (lexicons / grammars), so prose should reflect
+ * dialectical engagement rather than a flat citation list. Free mode
+ * surfaces no methodology framing — the model treats sources as the
+ * student supplied them.
+ *
+ * Exported because section composers build their prompts independently.
+ */
+export function formatStrategy(
+    strategy: ExegeticalStrategy | null,
+    lang: 'es' | 'en',
+): string {
+    if (strategy !== 'dialectical') return '';
+    const heading = lang === 'en' ? '## Corpus methodology' : '## Metodología del corpus';
+    if (lang === 'en') {
+        return [
+            ``,
+            heading,
+            `The student built the corpus dialectically — three roles in deliberate balance:`,
+            `- **Anchors**: expository commentaries that supply the lead reading the paper engages.`,
+            `- **Contrasts**: critical commentaries / monographs / theological dictionaries that surface alternative readings the paper must engage rather than dismiss.`,
+            `- **Technical**: lexicons, grammars, and critical apparatus that ground word-level and syntactic claims.`,
+            `Reflect this dialectical engagement in the prose: name competing readings explicitly when the body's analyses do, anchor lexical decisions in the technical sources, and present the synthesis as the resolution of a real interpretive tension rather than a flat assertion.`,
+        ].join('\n');
+    }
+    return [
+        ``,
+        heading,
+        `El alumno armó el corpus dialécticamente — tres roles en balance deliberado:`,
+        `- **Anclas**: comentarios expositivos que aportan la lectura base que el paper engancha.`,
+        `- **Contrastes**: comentarios críticos / monografías / diccionarios teológicos que surfacean lecturas alternativas que el paper debe enganchar, no descartar.`,
+        `- **Técnicas**: léxicos, gramáticas y aparato crítico que anclan decisiones léxicas y sintácticas.`,
+        `Reflejá ese engagement dialéctico en la prosa: nombrá lecturas competidoras explícitamente cuando los análisis del cuerpo lo hagan, anclá las decisiones léxicas en las fuentes técnicas, y presentá la síntesis como la resolución de una tensión interpretativa real — no como una aserción plana.`,
+    ].join('\n');
 }
 
 /**

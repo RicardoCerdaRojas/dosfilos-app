@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages, FileCheck2, Compass, Check } from 'lucide-react';
+import { ArrowLeft, BookText, Sparkles, Loader2, Lightbulb, Languages, FileCheck2, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
@@ -11,7 +11,6 @@ import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserAssignmentBriefs } from '@/hooks/exegesis/useUserAssignmentBriefs';
 import { AssignmentBriefPicker } from '@/components/exegesis/setup/AssignmentBriefPicker';
 import {
-    STRATEGY_ONLY_RUBRIC_PRESET_ID,
     type ExegeticalStrategy,
     type PassageReference,
     type SupportedLanguage,
@@ -52,12 +51,13 @@ export function ExegesisCreatePage() {
     //     picker.
     //   - templateId string → apply that template.
     //   - null → "no template, use system default rubric".
+    //
+    // Strategy and rubric used to be coupled here (picking dialectical
+    // auto-applied the strategy-only rubric). They are now independent:
+    // strategy drives how the corpus is built; rubric is the
+    // professor's grading instrument. A student can have a dialectical
+    // corpus AND a custom seminary rubric.
     const [rubricTemplateId, setRubricTemplateId] = useState<string | null | undefined>(undefined);
-    // Track whether the user explicitly opened the rubric picker — when
-    // strategy is `dialectical` we auto-apply the strategy-only rubric
-    // (the two are functionally redundant), but still let the user
-    // override by clicking "Personalizar".
-    const [rubricUserCustomized, setRubricUserCustomized] = useState(false);
 
     // Default the paper language to whatever the UI is set to, but
     // make it explicit + editable. The student may be using a Spanish
@@ -70,21 +70,6 @@ export function ExegesisCreatePage() {
     // differentiator we want users to land on; opting out is a
     // deliberate, named choice (`free`) — not the absence of one.
     const [exegeticalStrategy, setExegeticalStrategy] = useState<ExegeticalStrategy>('dialectical');
-
-    // Strategy ↔ rubric coupling: dialectical strategy already
-    // encodes the same guidance as the strategy-only rubric, so picking
-    // both is redundant. Auto-apply the strategy-only rubric when the
-    // user is on dialectical AND hasn't manually picked something else.
-    // Switching to `free` releases the auto-pick so the picker shows
-    // the user's default again.
-    useEffect(() => {
-        if (rubricUserCustomized) return;
-        if (exegeticalStrategy === 'dialectical') {
-            setRubricTemplateId(STRATEGY_ONLY_RUBRIC_PRESET_ID);
-        } else {
-            setRubricTemplateId(undefined);
-        }
-    }, [exegeticalStrategy, rubricUserCustomized]);
 
     // Auto-load the user's default brief once the hook resolves.
     // Skip when the user already typed something so we don't clobber.
@@ -216,54 +201,17 @@ export function ExegesisCreatePage() {
                     title={t('create.rubric.title')}
                     subtitle={t('create.rubric.subtitle')}
                 >
-                    {exegeticalStrategy === 'dialectical' && !rubricUserCustomized ? (
-                        <div className="rounded-lg border border-success/30 bg-success-subtle px-3 py-2.5 flex items-start gap-2">
-                            <Check className="h-4 w-4 text-success mt-0.5 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-medium text-success-subtle-foreground">
-                                    {t('create.rubric.autoAppliedTitle')}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                                    {t('create.rubric.autoAppliedBody')}
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={() => setRubricUserCustomized(true)}
-                                    className="text-[11px] font-medium text-primary hover:underline mt-1.5"
-                                >
-                                    {t('create.rubric.customize')}
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <RubricTemplatePicker
-                                value={rubricTemplateId}
-                                onChange={(id) => {
-                                    setRubricTemplateId(id);
-                                    setRubricUserCustomized(true);
-                                }}
-                                rubrics={rubrics}
-                                defaultRubric={defaultRubric}
-                            />
-                            <div className="flex items-center justify-between gap-3">
-                                <p className="text-[11px] text-muted-foreground italic flex-1">
-                                    {t('create.rubric.hint')}
-                                </p>
-                                {exegeticalStrategy === 'dialectical' && rubricUserCustomized && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setRubricUserCustomized(false);
-                                        }}
-                                        className="text-[11px] font-medium text-muted-foreground hover:text-foreground hover:underline shrink-0"
-                                    >
-                                        {t('create.rubric.resetToAuto')}
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    <div className="space-y-2">
+                        <RubricTemplatePicker
+                            value={rubricTemplateId}
+                            onChange={setRubricTemplateId}
+                            rubrics={rubrics}
+                            defaultRubric={defaultRubric}
+                        />
+                        <p className="text-[11px] text-muted-foreground italic">
+                            {t('create.rubric.hint')}
+                        </p>
+                    </div>
                 </Step>
 
                 <Step

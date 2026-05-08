@@ -141,6 +141,7 @@ export class ComposeAcademicPaperUseCase {
                 sources: composerSources,
                 pinnedSourceKeys,
                 paperRubric: paper.rubric ?? null,
+                exegeticalStrategy: paper.exegeticalStrategy ?? null,
             };
             reservation.markLlmContacted();
             let raw = await this.composer.composeAcademicPaper(composerInput);
