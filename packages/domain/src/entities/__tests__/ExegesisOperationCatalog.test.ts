@@ -22,17 +22,22 @@ describe('ExegesisOperationCatalog', () => {
         });
 
         it('the most expensive single-call operations require pre-confirm', () => {
-            // Pre-confirm gates anything user-visible at ≥ $0.10 OR the
-            // ones that are easy to accidentally re-trigger (recompose
-            // academic). Spot-check the critical entries.
+            // Pre-confirm gates one-shot batch operations the user
+            // would NOT re-trigger casually (composeAcademicPaper +
+            // runCoherencePass). Verse-level repeating ops
+            // (analyzeVerseCanonically, generateStep) DO NOT pre-
+            // confirm even though they're $0.08-$0.10 — the modal-
+            // per-click friction outweighs the cost transparency the
+            // always-visible balance tile already gives.
             expect(EXEGESIS_OPERATION_CATALOG.composeAcademicPaper.requiresPreConfirm).toBe(true);
             expect(EXEGESIS_OPERATION_CATALOG.runCoherencePass.requiresPreConfirm).toBe(true);
-            expect(EXEGESIS_OPERATION_CATALOG.analyzeVerseCanonically.requiresPreConfirm).toBe(true);
         });
 
-        it('cheap operations skip pre-confirm', () => {
+        it('cheap + repeating operations skip pre-confirm', () => {
             expect(EXEGESIS_OPERATION_CATALOG.classifySourceType.requiresPreConfirm).toBe(false);
             expect(EXEGESIS_OPERATION_CATALOG.composeVerseAcademicProse.requiresPreConfirm).toBe(false);
+            expect(EXEGESIS_OPERATION_CATALOG.analyzeVerseCanonically.requiresPreConfirm).toBe(false);
+            expect(EXEGESIS_OPERATION_CATALOG.generateStep.requiresPreConfirm).toBe(false);
         });
     });
 

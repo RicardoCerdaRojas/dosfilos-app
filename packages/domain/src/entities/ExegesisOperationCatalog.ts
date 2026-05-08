@@ -73,7 +73,13 @@ export const EXEGESIS_OPERATION_CATALOG: Readonly<Record<ExegesisOperationKey, E
     analyzeVerseCanonically: {
         key: 'analyzeVerseCanonically',
         estimatedCostUsd: 0.10,
-        requiresPreConfirm: true,
+        // Verse-level op: user runs this 7-15× per paper (one per
+        // verse). A pre-confirm modal on every click adds friction
+        // out of proportion to the cost (0.05 estudios). Telemetry
+        // + the always-visible balance tile already give cost
+        // transparency; reserve the modal for one-shot batch ops
+        // (composeAcademicPaper, runCoherencePass).
+        requiresPreConfirm: false,
         displayKeyI18n: 'studies.operations.analyzeVerseCanonically',
     },
     composeVerseAcademicProse: {
@@ -157,7 +163,11 @@ export const EXEGESIS_OPERATION_CATALOG: Readonly<Record<ExegesisOperationKey, E
     generateStep: {
         key: 'generateStep',
         estimatedCostUsd: 0.08,
-        requiresPreConfirm: true,
+        // Same rationale as `analyzeVerseCanonically`: legacy verse
+        // generation runs many times per paper; a modal on every
+        // click is friction. Reserve pre-confirm for one-shot batch
+        // ops (composeAcademicPaper, runCoherencePass).
+        requiresPreConfirm: false,
         displayKeyI18n: 'studies.operations.generateStep',
     },
     generateSermonFromPaper: {
