@@ -112,6 +112,7 @@ export class ComposeIntroductionFromAnalysesUseCase {
                 styleGuideManifest: manifest,
                 sources: composerSources,
                 pinnedSourceKeys,
+                paperRubric: paper.rubric ?? null,
                 regenerationHint: input.regenerationHint ?? null,
             };
 

@@ -2,6 +2,7 @@ import {
     formatPassageReference,
     type ComposeAcademicPaperInput,
     type ComposerSourceMetadata,
+    type PaperRubric,
     type StyleGuideManifest,
 } from '@dosfilos/domain';
 import { serializeAnalysis } from './serializeAnalysis';
@@ -43,6 +44,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
     const passage = formatPassageReference(input.paperPassage, lang);
     const styleGuideBlock = formatStyleGuide(input.styleGuideContent, input.styleGuideManifest, lang);
     const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
+    const rubricBlock = formatPaperRubric(input.paperRubric, lang);
     const fallbackDeclared = !input.styleGuideContent && !input.styleGuideManifest;
 
     if (lang === 'en') {
@@ -52,6 +54,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
             `## Paper`,
             `Passage: **${passage}**`,
             briefBlock,
+            rubricBlock,
             ``,
             `## Mandatory style-guide adherence`,
             fallbackDeclared
@@ -90,6 +93,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
         `## Paper`,
         `Pasaje: **${passage}**`,
         briefBlock,
+        rubricBlock,
         ``,
         `## Adherencia obligatoria a la guía de estilo`,
         fallbackDeclared
@@ -215,6 +219,87 @@ function formatAssignmentBrief(brief: string | null, lang: 'es' | 'en'): string 
     if (!brief || !brief.trim()) return '';
     const heading = lang === 'en' ? '## Paper framing' : '## Encuadre del paper';
     return [``, heading, brief.trim()].join('\n');
+}
+
+/**
+ * Renders the paper's rubric as a prompt block. Surfaces only the
+ * fields the composer can act on: target length, citation standard,
+ * source-type minimums (so the composer aims to engage them), and the
+ * relevant section emphasis. Section composers (intro/conclusion)
+ * filter `structuralExpectations` to their own section before
+ * presenting; the academic composer surfaces all sections.
+ *
+ * Exported because section composers (Gemini Conclusion / Introduction)
+ * build their prompts independently and need the same renderer.
+ */
+export function formatPaperRubric(
+    rubric: PaperRubric | null,
+    lang: 'es' | 'en',
+    section?: 'introduction' | 'conclusion',
+): string {
+    if (!rubric) return '';
+    const lines: string[] = [];
+    const heading = lang === 'en' ? '## Rubric requirements' : '## Requisitos de la rúbrica';
+    lines.push('', heading);
+
+    if (rubric.description && rubric.description.trim()) {
+        lines.push('', rubric.description.trim());
+    }
+
+    if (rubric.expectedLength) {
+        const { unit, min, max } = rubric.expectedLength;
+        const unitLabel = unit === 'pages'
+            ? (lang === 'en' ? 'pages' : 'páginas')
+            : (lang === 'en' ? 'words' : 'palabras');
+        let range: string;
+        if (min != null && max != null) range = `${min}–${max} ${unitLabel}`;
+        else if (min != null) range = lang === 'en' ? `at least ${min} ${unitLabel}` : `al menos ${min} ${unitLabel}`;
+        else if (max != null) range = lang === 'en' ? `up to ${max} ${unitLabel}` : `hasta ${max} ${unitLabel}`;
+        else range = '';
+        if (range) {
+            lines.push(lang === 'en'
+                ? `- **Target length**: ${range}. Calibrate paragraph density to land within this range.`
+                : `- **Extensión esperada**: ${range}. Calibrá la densidad de los párrafos para caer dentro de este rango.`);
+        }
+    }
+
+    if (rubric.citationStandard && rubric.citationStandard.trim()) {
+        lines.push(lang === 'en'
+            ? `- **Citation standard**: ${rubric.citationStandard.trim()}. Apply unless the attached style guide overrides it.`
+            : `- **Estándar de citación**: ${rubric.citationStandard.trim()}. Aplicalo a menos que la guía de estilo adjunta lo sobrescriba.`);
+    }
+
+    if (rubric.sourceRequirements.length > 0) {
+        const required = rubric.sourceRequirements.filter(r => r.minimum > 0);
+        if (required.length > 0) {
+            lines.push('');
+            lines.push(lang === 'en'
+                ? `**Source-type expectations** (the seminary requires the paper to engage these types — your prose should reflect that engagement, not just list them in the bibliography):`
+                : `**Expectativas por tipo de fuente** (el seminario exige que el paper interactúe con estos tipos — tu prosa debe reflejar esa interacción, no solamente listarlos en la bibliografía):`);
+            for (const req of required) {
+                const range = req.maximum != null ? `${req.minimum}–${req.maximum}` : `≥${req.minimum}`;
+                lines.push(`  - \`${req.sourceType}\` (${range}) — ${req.justification}`);
+            }
+        }
+    }
+
+    if (rubric.structuralExpectations.length > 0) {
+        const relevant = section
+            ? rubric.structuralExpectations.filter(e => e.section === section)
+            : rubric.structuralExpectations;
+        if (relevant.length > 0) {
+            lines.push('');
+            lines.push(lang === 'en'
+                ? `**Section emphasis** (lead with these source types where applicable):`
+                : `**Énfasis por sección** (priorizá estos tipos de fuente donde aplique):`);
+            for (const exp of relevant) {
+                const types = exp.emphasizedTypes.map(t => `\`${t}\``).join(', ');
+                lines.push(`  - **${exp.section}**: ${types} — ${exp.justification}`);
+            }
+        }
+    }
+
+    return lines.length > 2 ? lines.join('\n') : '';
 }
 
 function formatStyleGuide(

@@ -111,6 +111,7 @@ export class ComposeConclusionFromAnalysesUseCase {
                 styleGuideManifest: manifest,
                 sources: composerSources,
                 pinnedSourceKeys,
+                paperRubric: paper.rubric ?? null,
                 regenerationHint: input.regenerationHint ?? null,
             };
 

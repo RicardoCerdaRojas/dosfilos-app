@@ -140,6 +140,7 @@ export class ComposeAcademicPaperUseCase {
                 styleGuideManifest: manifest,
                 sources: composerSources,
                 pinnedSourceKeys,
+                paperRubric: paper.rubric ?? null,
             };
             reservation.markLlmContacted();
             let raw = await this.composer.composeAcademicPaper(composerInput);

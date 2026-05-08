@@ -1,5 +1,6 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
+import type { PaperRubric } from '../entities/PaperRubric';
 import type { StyleGuideManifest } from '../entities/StyleGuideManifest';
 
 /**
@@ -96,6 +97,14 @@ export interface ComposeAcademicPaperInput {
      * pass without re-walking the per-step structure.
      */
     pinnedSourceKeys: ReadonlyArray<string>;
+    /**
+     * The paper's rubric (seminary's grading criteria, or system
+     * default). Threaded into the prompt so the composer aligns the
+     * paper with expected length, citation standard, source-type
+     * requirements, and per-section emphasis. Null when no rubric is
+     * attached — the composer falls back to TMS / Turabian defaults.
+     */
+    paperRubric: PaperRubric | null;
 }
 
 /**

@@ -8,6 +8,7 @@ import {
     type StyleGuideManifest,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { formatPaperRubric } from '../composer/composerPrompts';
 import { serializeAnalysis } from '../composer/serializeAnalysis';
 
 /**
@@ -78,6 +79,7 @@ function buildIntroductionPrompt(input: ComposeIntroductionInput): { systemInstr
     const passage = formatPassageReference(input.paperPassage, lang);
     const styleGuideBlock = formatStyleGuide(input.styleGuideContent, input.styleGuideManifest, lang);
     const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
+    const rubricBlock = formatPaperRubric(input.paperRubric, lang, 'introduction');
     const fallback = !input.styleGuideContent && !input.styleGuideManifest;
 
     const system = lang === 'en'
@@ -87,6 +89,7 @@ function buildIntroductionPrompt(input: ComposeIntroductionInput): { systemInstr
             `## Paper`,
             `Passage: **${passage}**`,
             briefBlock,
+            rubricBlock,
             ``,
             `## Mandatory style guide`,
             fallback
@@ -114,6 +117,7 @@ function buildIntroductionPrompt(input: ComposeIntroductionInput): { systemInstr
             `## Paper`,
             `Pasaje: **${passage}**`,
             briefBlock,
+            rubricBlock,
             ``,
             `## Guía de estilo obligatoria`,
             fallback
