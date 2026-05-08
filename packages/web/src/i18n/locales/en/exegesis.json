@@ -1121,8 +1121,14 @@
             "finalTranslation": "Final translation",
             "argumentativeRole": "Argumentative role",
             "argumentativeRoleHint": "What this verse does in the pericope's flow.",
-            "syntax": "Syntactic analysis",
+            "syntaxTitle": "Syntactic analysis",
             "syntaxHint": "Main verb, key constructions, and discourse particles.",
+            "syntax": {
+                "mainVerb": "Main verb",
+                "noMainVerb": "No main verb —",
+                "constructions": "Key constructions",
+                "particles": "Discourse particles"
+            },
             "lexis": "Lexical analysis",
             "lexisHint": "General semantic range vs. verse-specific loading.",
             "textualCriticism": "Textual criticism",

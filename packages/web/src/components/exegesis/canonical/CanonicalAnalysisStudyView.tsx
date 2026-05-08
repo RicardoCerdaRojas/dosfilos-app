@@ -94,7 +94,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
             {/* Syntactic analysis */}
             <Section
                 icon={<ListTree className="h-4 w-4" aria-hidden />}
-                title={t('canonical.study.syntax')}
+                title={t('canonical.study.syntaxTitle')}
                 hint={t('canonical.study.syntaxHint')}
                 defaultOpen
             >

@@ -1121,8 +1121,14 @@
             "finalTranslation": "Traducción final",
             "argumentativeRole": "Rol argumentativo",
             "argumentativeRoleHint": "Qué hace este verso en el flujo de la pericopa.",
-            "syntax": "Análisis sintáctico",
+            "syntaxTitle": "Análisis sintáctico",
             "syntaxHint": "Verbo principal, construcciones clave y partículas discursivas.",
+            "syntax": {
+                "mainVerb": "Verbo principal",
+                "noMainVerb": "Sin verbo principal —",
+                "constructions": "Construcciones clave",
+                "particles": "Partículas discursivas"
+            },
             "lexis": "Análisis léxico",
             "lexisHint": "Rango semántico general vs. carga específica en el verso.",
             "textualCriticism": "Crítica textual",
