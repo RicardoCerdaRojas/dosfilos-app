@@ -146,6 +146,14 @@
         "heroTitle": "My Tutors",
         "heroSubtitle": "Ask the faculty a question — the orchestrator will automatically select and coordinate the specialists you need.",
         "inputPlaceholder": "What do you want to study, prepare, or resolve today?",
+        "attachment": {
+            "attachLabel": "Attach image",
+            "remove": "Remove image",
+            "tooLarge": "Image exceeds 5 MB.",
+            "unsupportedType": "Only images (PNG, JPG, WEBP).",
+            "pastedToast": "Image pasted — ready to send to the tutor.",
+            "encodeFailed": "Could not encode the image. Try again."
+        },
         "quickPrompts": {
             "outline": {
                 "label": "Sermon Outline",

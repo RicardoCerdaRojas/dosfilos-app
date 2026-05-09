@@ -146,6 +146,14 @@
         "heroTitle": "Mis Tutores",
         "heroSubtitle": "Hazle una pregunta al cuerpo docente — el orquestador seleccionará y coordinará automáticamente los especialistas que tu necesitas.",
         "inputPlaceholder": "¿Qué quieres estudiar, preparar o resolver hoy?",
+        "attachment": {
+            "attachLabel": "Adjuntar imagen",
+            "remove": "Quitar imagen",
+            "tooLarge": "La imagen supera 5 MB.",
+            "unsupportedType": "Solo imágenes (PNG, JPG, WEBP).",
+            "pastedToast": "Imagen pegada — lista para enviar al tutor.",
+            "encodeFailed": "No se pudo codificar la imagen. Intenta de nuevo."
+        },
         "quickPrompts": {
             "outline": {
                 "label": "Bosquejo de Sermón",
