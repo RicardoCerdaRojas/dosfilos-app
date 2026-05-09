@@ -26,6 +26,7 @@ import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEdito
 import { ProjectEditDialog } from './ProjectEditDialog';
 import { type AIProject, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
+import { takePendingFacultyInput } from './utils/pendingFacultyInput';
 
 // ── Extraction type-to-key mapping ───────────────────────────────────────────
 
@@ -202,6 +203,52 @@ export function FacultyChatPage() {
     // and `/faculty/{id}`, so a per-route key alone (the previous design)
     // misfires after the first auto-send because the ref persists.
     const hasAutoSent = useRef<Record<string, boolean>>({});
+
+    // Bridge: when the user pasted/uploaded an image on the directory
+    // landing page, the question + base64 attachment was stashed in
+    // sessionStorage (URL params can't carry binary). Drain it once on
+    // new-session mount, replay create-session-and-send-with-attachment.
+    const pendingHandled = useRef(false);
+    useEffect(() => {
+        if (pendingHandled.current) return;
+        if (!isNewSession) return;
+        const pending = takePendingFacultyInput();
+        if (!pending || !pending.attachment) return;
+        pendingHandled.current = true;
+        const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
+        if (!targetAgentId) {
+            // Agents not loaded yet — re-stage and let next render retry.
+            pendingHandled.current = false;
+            return;
+        }
+        (async () => {
+            try {
+                const newSession = await createSession.mutateAsync({
+                    agentId: targetAgentId,
+                    projectId: projectIdForNew,
+                    context: contextForNew,
+                });
+                navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
+                await sendOrchestratedMessage({
+                    message: pending.question,
+                    lengthPreference,
+                    attachments: [{
+                        mimeType: pending.attachment!.mimeType,
+                        data: pending.attachment!.base64,
+                    }],
+                    attachmentsMeta: [{
+                        filename: pending.attachment!.filename,
+                        mimeType: pending.attachment!.mimeType,
+                        sizeBytes: pending.attachment!.sizeBytes,
+                    }],
+                });
+            } catch (err) {
+                console.error('[FacultyChat] failed to replay pending attachment:', err);
+                pendingHandled.current = false;
+                setInput(pending.question);
+            }
+        })();
+    }, [isNewSession, agentIdForNew, agents, projectIdForNew, contextForNew, createSession, navigate, sendOrchestratedMessage, lengthPreference]);
 
     useEffect(() => {
         const initialQuestion = searchParams.get('q');

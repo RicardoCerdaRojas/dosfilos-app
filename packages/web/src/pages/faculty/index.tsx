@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
     Search, GraduationCap, Library, ScrollText, HeartHandshake,
-    Mic, Send, Sparkles, ArrowRight, Loader2, BookOpen, Brain, MessageCircle, Users
+    Mic, Send, Sparkles, ArrowRight, Loader2, BookOpen, Brain, MessageCircle, Users,
+    Paperclip, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +15,22 @@ import type { SupportedLanguage } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { FreeStarterCard } from './components/FreeStarterCard';
+import { setPendingFacultyInput } from './utils/pendingFacultyInput';
+
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
+async function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = String(reader.result ?? '');
+            const comma = result.indexOf(',');
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+        reader.readAsDataURL(file);
+    });
+}
 
 // Icon + i18n key map. Both label and prompt are resolved per-render so the
 // chip row reflects the active locale without a remount.
@@ -39,13 +57,70 @@ export function FacultyDirectoryPage() {
     const [searchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     const [orchestratorInput, setOrchestratorInput] = useState('');
+    const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
+    const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data: agents = [], isLoading: isLoadingAgents } = useFacultyAgents();
     const { user } = useFirebase();
     const { sessions, isLoading: isLoadingSessions } = useFacultySessions();
     const { t, i18n } = useTranslation('faculty');
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+
+    // Build / tear down the object URL whenever the staged file changes.
+    useEffect(() => {
+        if (!pendingAttachment) {
+            setAttachmentPreview(null);
+            return;
+        }
+        const url = URL.createObjectURL(pendingAttachment);
+        setAttachmentPreview(url);
+        return () => URL.revokeObjectURL(url);
+    }, [pendingAttachment]);
+
+    // Clipboard paste — anywhere on the directory page, an image
+    // pasted into the OS clipboard lands in the orchestrator input
+    // slot. Mirrors the FacultyChatInput behavior so the entry point
+    // and the chat body offer the same affordance.
+    useEffect(() => {
+        const onPaste = (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        if (blob.size > MAX_ATTACHMENT_BYTES) {
+                            toast.error(t('directory.attachment.tooLarge'));
+                            return;
+                        }
+                        const ext = blob.type.split('/')[1] || 'png';
+                        setPendingAttachment(new File([blob], `pasted.${ext}`, { type: blob.type }));
+                        toast.info(t('directory.attachment.pastedToast'));
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+        };
+        window.addEventListener('paste', onPaste);
+        return () => window.removeEventListener('paste', onPaste);
+    }, [t]);
+
+    const handlePickFile = (file: File | null) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            toast.error(t('directory.attachment.unsupportedType'));
+            return;
+        }
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+            toast.error(t('directory.attachment.tooLarge'));
+            return;
+        }
+        setPendingAttachment(file);
+    };
 
     // Free-tier starter card — visible only until the user fires their first
     // query. Hito 5.1: closes the activation gap that the existing always-on
@@ -74,17 +149,44 @@ export function FacultyDirectoryPage() {
         }
     }, [orchestratorInput]);
 
-    // Lazy navigation — no session created until the user sends a first message
-    const handleStartOrchestrated = (question: string) => {
+    // Lazy navigation — no session created until the user sends a first message.
+    // When an image attachment is staged, route through sessionStorage so the
+    // chat page can replay create-session-and-send-with-attachment cleanly
+    // (URL params can't carry binary).
+    const handleStartOrchestrated = async (question: string) => {
         const q = question.trim();
-        if (!q || agents.length === 0) return;
+        // Allow attachment-only sends — image alone can be the prompt.
+        if ((!q && !pendingAttachment) || agents.length === 0) return;
+
+        if (pendingAttachment) {
+            try {
+                const base64 = await fileToBase64(pendingAttachment);
+                setPendingFacultyInput({
+                    question: q,
+                    attachment: {
+                        mimeType: pendingAttachment.type || 'image/png',
+                        base64,
+                        filename: pendingAttachment.name,
+                        sizeBytes: pendingAttachment.size,
+                    },
+                });
+                setPendingAttachment(null);
+                navigate(`/dashboard/faculty/new${newSessionQuery('')}`);
+                return;
+            } catch (err) {
+                console.error('[FacultyDirectory] failed to encode attachment:', err);
+                toast.error(t('directory.attachment.encodeFailed'));
+                return;
+            }
+        }
+
         navigate(`/dashboard/faculty/new${newSessionQuery(`q=${encodeURIComponent(q)}`)}`);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleStartOrchestrated(orchestratorInput);
+            void handleStartOrchestrated(orchestratorInput);
         }
     };
 
@@ -136,6 +238,28 @@ export function FacultyDirectoryPage() {
 
                     {/* Orchestrator input */}
                     <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl p-2 shadow-2xl shadow-black/40">
+                        {pendingAttachment && attachmentPreview && (
+                            <div className="flex items-center gap-2 px-2 pt-1.5 pb-1 mb-1 border-b border-white/[0.08]">
+                                <img
+                                    src={attachmentPreview}
+                                    alt={pendingAttachment.name}
+                                    className="h-10 w-10 object-cover rounded-md border border-white/[0.12]"
+                                />
+                                <div className="flex-1 min-w-0 text-[11px]">
+                                    <div className="text-slate-200 truncate">{pendingAttachment.name}</div>
+                                    <div className="text-slate-400">{(pendingAttachment.size / 1024).toFixed(0)} KB</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setPendingAttachment(null)}
+                                    className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-white/[0.05] transition-colors"
+                                    aria-label={t('directory.attachment.remove')}
+                                    title={t('directory.attachment.remove')}
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        )}
                         <div className="flex items-end gap-2">
                             <Sparkles className="h-5 w-5 text-amber-400/80 shrink-0 mb-3 ml-2" />
                             <textarea
@@ -147,9 +271,29 @@ export function FacultyDirectoryPage() {
                                 rows={1}
                                 className="flex-1 resize-none bg-transparent text-white placeholder:text-slate-400/70 text-[15px] leading-relaxed outline-none py-2.5 px-1 max-h-40 overflow-y-hidden"
                             />
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="sr-only"
+                                onChange={(e) => {
+                                    handlePickFile(e.target.files?.[0] ?? null);
+                                    e.target.value = '';
+                                }}
+                            />
                             <Button
-                                onClick={() => handleStartOrchestrated(orchestratorInput)}
-                                disabled={!orchestratorInput.trim() || isBusy || agents.length === 0}
+                                type="button"
+                                variant="ghost"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isBusy || agents.length === 0}
+                                className="shrink-0 h-10 w-10 p-0 rounded-xl text-slate-300 hover:text-amber-300 hover:bg-white/[0.08]"
+                                title={t('directory.attachment.attachLabel')}
+                            >
+                                <Paperclip className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                onClick={() => void handleStartOrchestrated(orchestratorInput)}
+                                disabled={(!orchestratorInput.trim() && !pendingAttachment) || isBusy || agents.length === 0}
                                 className="shrink-0 h-10 w-10 p-0 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-900 shadow-sm transition-all"
                             >
                                 <Send className="h-4 w-4" />
