@@ -457,14 +457,16 @@
                     "tabText": "Pegar texto",
                     "tabDocument": "Subir archivo",
                     "documentLabel": "Archivo de la rúbrica (PDF o imagen)",
-                    "documentDropzone": "Arrastra un PDF o foto de la rúbrica, o haz click",
-                    "documentHint": "PDF o imagen (PNG/JPG). Hasta 20 MB. Procesamiento típico 30–90 s.",
+                    "documentDropzone": "Arrastra, pega o haz click para subir un PDF o imagen de la rúbrica",
+                    "documentHint": "PDF (procesamiento ~30-90 s) o imagen PNG/JPG/WEBP (procesamiento ~5-10 s). También puedes pegar una captura de pantalla con Cmd/Ctrl+V. Hasta 20 MB.",
                     "submitDocument": "Extraer del archivo",
                     "documentFailed": "No se pudo extraer la rúbrica desde el archivo. Verifica que el documento sea legible y prueba de nuevo.",
+                    "pastedToast": "Imagen pegada — lista para extraer.",
                     "phase": {
                         "uploading": "Subiendo archivo…",
                         "extracting": "Extrayendo texto del documento…",
-                        "analyzing": "Analizando rúbrica…"
+                        "analyzing": "Analizando rúbrica…",
+                        "encoding": "Preparando imagen…"
                     }
                 },
                 "metadata": {

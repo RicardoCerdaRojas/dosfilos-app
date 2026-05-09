@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, type Part } from '@google/generative-ai';
 import {
     type ExtractRubricInput,
     type ExtractedRubric,
@@ -62,13 +62,31 @@ export class GeminiPaperRubricExtractor implements IPaperRubricExtractor {
             language: input.language,
             source: input.source,
             rawTextChars: input.rawText.length,
+            hasInlineImage: !!input.inlineImage,
+            imageMimeType: input.inlineImage?.mimeType,
         });
+
+        // Image source: send the bytes inline alongside the text
+        // instructions so Gemini Vision parses the rubric directly from
+        // the picture. Skips the PDF-text-extraction roundtrip that
+        // breaks for screenshots and clipboard pastes.
+        const requestParts: string | Part[] = input.inlineImage
+            ? [
+                { text: userMessage },
+                {
+                    inlineData: {
+                        mimeType: input.inlineImage.mimeType,
+                        data: input.inlineImage.base64,
+                    },
+                },
+            ] as Part[]
+            : userMessage;
 
         // Pro 2.5 hits intermittent 503s ("model experiencing high demand")
         // during peak windows. Retry transparently with exponential
         // backoff before surfacing the failure to the user.
         const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+            () => model.generateContent(requestParts),
             { contextLabel: 'GeminiPaperRubricExtractor' },
         );
         const response = result.response;
@@ -115,7 +133,7 @@ function buildExtractionPrompt(input: ExtractRubricInput): BuiltPrompt {
                 ``,
                 `Output JSON ONLY — no markdown fences, no commentary, no preamble.`,
             ].join('\n'),
-            userMessage: buildUserMessageEN(input.rawText, typeList),
+            userMessage: buildUserMessageEN(input.rawText, typeList, input.source),
         };
     }
 
@@ -127,16 +145,20 @@ function buildExtractionPrompt(input: ExtractRubricInput): BuiltPrompt {
             ``,
             `Devolvé SOLO JSON — sin fences markdown, sin comentarios, sin preámbulo.`,
         ].join('\n'),
-        userMessage: buildUserMessageES(input.rawText, typeList),
+        userMessage: buildUserMessageES(input.rawText, typeList, input.source),
     };
 }
 
-function buildUserMessageEN(rawText: string, typeList: string): string {
+function buildUserMessageEN(rawText: string, typeList: string, source: 'document' | 'text' | 'image'): string {
+    const header = source === 'image'
+        ? `Extract the rubric from the attached image:`
+        : `Extract the rubric from this document:`;
+    const body = source === 'image' && !rawText.trim()
+        ? '(Source is the attached image — read it directly.)'
+        : ['```', rawText.trim(), '```'].join('\n');
     return [
-        `Extract the rubric from this document:`,
-        '```',
-        rawText.trim(),
-        '```',
+        header,
+        body,
         ``,
         `## Output schema`,
         `Return a single JSON object with these fields (use null where the rubric is silent):`,
@@ -183,12 +205,16 @@ function buildUserMessageEN(rawText: string, typeList: string): string {
     ].join('\n');
 }
 
-function buildUserMessageES(rawText: string, typeList: string): string {
+function buildUserMessageES(rawText: string, typeList: string, source: 'document' | 'text' | 'image'): string {
+    const header = source === 'image'
+        ? `Extraé la rúbrica de la imagen adjunta:`
+        : `Extraé la rúbrica de este documento:`;
+    const body = source === 'image' && !rawText.trim()
+        ? '(La fuente es la imagen adjunta — leéla directamente.)'
+        : ['```', rawText.trim(), '```'].join('\n');
     return [
-        `Extraé la rúbrica de este documento:`,
-        '```',
-        rawText.trim(),
-        '```',
+        header,
+        body,
         ``,
         `## Esquema de salida`,
         `Devolvé un único objeto JSON con estos campos (usá null donde la rúbrica calle):`,
@@ -311,7 +337,7 @@ function mapToDomain(raw: RawExtractionResult, input: ExtractRubricInput): Omit<
         }));
 
     return {
-        provenance: input.source === 'document' ? 'extracted-from-document' : 'extracted-from-text',
+        provenance: input.source === 'text' ? 'extracted-from-text' : 'extracted-from-document',
         description: raw.description,
         expectedLength: raw.expectedLength,
         citationStandard: raw.citationStandard,

@@ -457,14 +457,16 @@
                     "tabText": "Paste text",
                     "tabDocument": "Upload file",
                     "documentLabel": "Rubric file (PDF or image)",
-                    "documentDropzone": "Drop a PDF or photo of the rubric, or click to pick",
-                    "documentHint": "PDF or image (PNG/JPG). Up to 20 MB. Typical processing 30–90 s.",
+                    "documentDropzone": "Drop, paste, or click to upload a PDF or image of the rubric",
+                    "documentHint": "PDF (~30-90 s) or image PNG/JPG/WEBP (~5-10 s). You can also paste a screenshot with Cmd/Ctrl+V. Up to 20 MB.",
                     "submitDocument": "Extract from file",
                     "documentFailed": "Could not extract the rubric from the file. Make sure the document is legible and try again.",
+                    "pastedToast": "Image pasted — ready to extract.",
                     "phase": {
                         "uploading": "Uploading file…",
                         "extracting": "Extracting text from document…",
-                        "analyzing": "Analyzing rubric…"
+                        "analyzing": "Analyzing rubric…",
+                        "encoding": "Preparing image…"
                     }
                 },
                 "metadata": {

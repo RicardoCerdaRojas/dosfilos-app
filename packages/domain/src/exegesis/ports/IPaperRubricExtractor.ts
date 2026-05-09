@@ -35,16 +35,30 @@ export interface ExtractRubricInput {
      * The raw text of the rubric. The use case fetches this from the
      * library content reader (for uploaded documents) or passes the
      * pasted text directly. Whitespace-trimmed; the extractor MAY
-     * normalize further if needed.
+     * normalize further if needed. May be empty when `inlineImage` is
+     * present — image-only extraction relies on Gemini Vision.
      */
     rawText: string;
     /**
-     * 'document' for uploaded PDFs/EPUBs (corpusId-backed),
-     * 'text' for pasted-text rubrics. The extractor uses this only to
-     * set the provenance on the returned rubric — the parsing
-     * algorithm is the same either way.
+     * Inline image data when the rubric was uploaded / pasted as an
+     * image (PNG / JPEG / WEBP) instead of a PDF or text. The extractor
+     * sends this to Gemini Vision multimodally so the rubric is parsed
+     * directly from the image — no PDF text-extraction step required.
+     * `rawText` may be empty in that case (the image is the source).
      */
-    source: 'document' | 'text';
+    inlineImage?: {
+        mimeType: string;
+        /** Base64-encoded image bytes, no `data:...;base64,` prefix. */
+        base64: string;
+    };
+    /**
+     * 'document' for uploaded PDFs/EPUBs (corpusId-backed),
+     * 'text' for pasted-text rubrics, 'image' for image uploads or
+     * clipboard pastes (handled inline via Gemini Vision). The
+     * extractor uses this to set the provenance on the returned
+     * rubric.
+     */
+    source: 'document' | 'text' | 'image';
     /** If `source === 'document'`, the corpus id to record on the rubric. */
     sourceCorpusId: string | null;
     /** Output language for `justification` strings. */

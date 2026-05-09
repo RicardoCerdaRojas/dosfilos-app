@@ -43,6 +43,7 @@ export type ExegesisOperationKey =
     | 'runCoherencePass'
     | 'extractRubricFromText'
     | 'extractRubricFromDocument'
+    | 'extractRubricFromImage'
     | 'extractStyleGuideManifest'
     | 'classifySourceType'
     | 'generateStep'
@@ -147,6 +148,12 @@ export const EXEGESIS_OPERATION_CATALOG: Readonly<Record<ExegesisOperationKey, E
         estimatedCostUsd: 0.03,
         requiresPreConfirm: false,
         displayKeyI18n: 'studies.operations.extractRubricFromDocument',
+    },
+    extractRubricFromImage: {
+        key: 'extractRubricFromImage',
+        estimatedCostUsd: 0.02,
+        requiresPreConfirm: false,
+        displayKeyI18n: 'studies.operations.extractRubricFromImage',
     },
     extractStyleGuideManifest: {
         key: 'extractStyleGuideManifest',

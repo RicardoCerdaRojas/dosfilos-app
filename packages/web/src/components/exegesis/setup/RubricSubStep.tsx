@@ -880,16 +880,48 @@ interface RubricExtractFromDocumentPanelProps {
 
 function RubricExtractFromDocumentPanel({ paper, onExtracted }: RubricExtractFromDocumentPanelProps) {
     const { t } = useTranslation('exegesis');
-    const { extractRubricFromDocument } = useExegesisPapers();
+    const { extractRubricFromDocument, extractRubricFromImage } = useExegesisPapers();
     const [file, setFile] = useState<File | null>(null);
     const [outputLanguage, setOutputLanguage] = useState<'es' | 'en'>(paper.displayLanguage);
-    const [phase, setPhase] = useState<'idle' | 'uploading' | 'extracting' | 'analyzing'>('idle');
+    const [phase, setPhase] = useState<'idle' | 'uploading' | 'extracting' | 'analyzing' | 'encoding'>('idle');
     const [uploadProgress, setUploadProgress] = useState(0);
     const [lastResult, setLastResult] = useState<ExtractionResultSummary | null>(null);
     const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
 
-    const isBusy = phase !== 'idle' || extractRubricFromDocument.isPending;
+    const isImageFile = (f: File | null): boolean => !!f && f.type.startsWith('image/');
+    const isBusy =
+        phase !== 'idle' ||
+        extractRubricFromDocument.isPending ||
+        extractRubricFromImage.isPending;
     const canSubmit = !!file && !isBusy;
+
+    // Clipboard paste support: when the panel is mounted and idle, a
+    // global paste anywhere on the page that contains an image item
+    // gets routed into the file slot. The user can paste a screenshot
+    // of their syllabus directly without opening a file picker first.
+    useEffect(() => {
+        if (isBusy) return;
+        const onPaste = (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        const ext = blob.type.split('/')[1] || 'png';
+                        const named = new File([blob], `pasted-rubric.${ext}`, { type: blob.type });
+                        setFile(named);
+                        toast.info(t('paperSetup.subSteps.rubric.extract.pastedToast'));
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+        };
+        window.addEventListener('paste', onPaste);
+        return () => window.removeEventListener('paste', onPaste);
+    }, [isBusy, t]);
 
     const handleSubmit = () => {
         if (!canSubmit) return;
@@ -905,13 +937,22 @@ function RubricExtractFromDocumentPanel({ paper, onExtracted }: RubricExtractFro
         setConfirmReplaceOpen(false);
         setLastResult(null);
         try {
-            const result = await extractRubricFromDocument.mutateAsync({
-                paperId: paper.id,
-                file,
-                language: outputLanguage,
-                onUploadProgress: setUploadProgress,
-                onPhase: setPhase,
-            });
+            // Image path → Gemini Vision multimodal, no library upload.
+            // PDF / EPUB path → existing library + LlamaParse pipeline.
+            const result = isImageFile(file)
+                ? await extractRubricFromImage.mutateAsync({
+                    paperId: paper.id,
+                    file,
+                    language: outputLanguage,
+                    onPhase: (p) => setPhase(p),
+                })
+                : await extractRubricFromDocument.mutateAsync({
+                    paperId: paper.id,
+                    file,
+                    language: outputLanguage,
+                    onUploadProgress: setUploadProgress,
+                    onPhase: (p) => setPhase(p),
+                });
             setLastResult({ confidence: result.confidence, reviewNotes: result.reviewNotes });
             toast.success(t('paperSetup.subSteps.rubric.extract.success'));
             if (onExtracted && result.confidence === 'high' && result.reviewNotes.length === 0) {
@@ -937,7 +978,7 @@ function RubricExtractFromDocumentPanel({ paper, onExtracted }: RubricExtractFro
                     {t('paperSetup.subSteps.rubric.extract.documentLabel')}
                 </label>
                 <FileDropzone
-                    accept=".pdf,application/pdf,image/png,image/jpeg,.png,.jpg,.jpeg"
+                    accept=".pdf,application/pdf,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
                     value={file}
                     onChange={setFile}
                     disabled={isBusy}
