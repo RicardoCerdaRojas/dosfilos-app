@@ -62,6 +62,12 @@ export function FacultyDirectoryPage() {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const { data: agents = [], isLoading: isLoadingAgents } = useFacultyAgents();
+    const { user } = useFirebase();
+    const { sessions, isLoading: isLoadingSessions } = useFacultySessions();
+    const { t, i18n } = useTranslation('faculty');
+    const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+
     // Build / tear down the object URL whenever the staged file changes.
     useEffect(() => {
         if (!pendingAttachment) {
@@ -115,12 +121,6 @@ export function FacultyDirectoryPage() {
         }
         setPendingAttachment(file);
     };
-
-    const { data: agents = [], isLoading: isLoadingAgents } = useFacultyAgents();
-    const { user } = useFirebase();
-    const { sessions, isLoading: isLoadingSessions } = useFacultySessions();
-    const { t, i18n } = useTranslation('faculty');
-    const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
     // Free-tier starter card — visible only until the user fires their first
     // query. Hito 5.1: closes the activation gap that the existing always-on
