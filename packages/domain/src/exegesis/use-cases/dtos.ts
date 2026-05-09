@@ -232,6 +232,27 @@ export interface ExtractRubricFromDocumentInput {
 
 export type ExtractRubricFromDocumentOutput = ExtractRubricFromTextOutput;
 
+// ── ExtractRubricFromImage ─────────────────────────────────────────────
+//
+// Inline image path that bypasses the library upload pipeline. Used
+// when the student pastes a screenshot from the clipboard or uploads
+// a PNG/JPEG of the syllabus directly. Sends the image to Gemini
+// Vision multimodally so no PDF text-extraction step is required —
+// the image IS the source.
+
+export interface ExtractRubricFromImageInput {
+    ownerId: string;
+    paperId: string;
+    /** MIME type of the image (e.g. `image/png`, `image/jpeg`, `image/webp`). */
+    mimeType: string;
+    /** Base64-encoded image bytes, no `data:...;base64,` prefix. */
+    imageBase64: string;
+    /** Override for the extraction language. Defaults to paper.displayLanguage. */
+    language?: 'es' | 'en';
+}
+
+export type ExtractRubricFromImageOutput = ExtractRubricFromTextOutput;
+
 // ── AddProjectSource ────────────────────────────────────────────────────
 
 export interface AddProjectSourceInput {

@@ -12,6 +12,24 @@ import type {
 } from '@dosfilos/domain';
 
 /**
+ * Reads a File's bytes as base64 (no `data:` URI prefix). Used by the
+ * image-rubric extraction path that sends the image inline to Gemini
+ * Vision instead of routing through the library upload pipeline.
+ */
+async function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = String(reader.result ?? '');
+            const comma = result.indexOf(',');
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
  * React Query hook for the exegetical papers list + paper-level mutations.
  * Mirrors the cache-key conventions of `useFacultyProjects`:
  * `['exegesis', 'papers', userId]` for the list, and any mutation
@@ -143,6 +161,37 @@ export function useExegesisPapers() {
                 ownerId: user.uid,
                 paperId: input.paperId,
                 libraryResourceId: resource.id,
+                language: input.language,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
+    /**
+     * Image rubric extraction. Bypasses the library upload + extraction
+     * pipeline entirely — encodes the file to base64 in the browser and
+     * sends it inline to Gemini Vision in a single multimodal call.
+     * Used for clipboard pastes and direct image uploads (PNG / JPEG /
+     * WEBP screenshots of a syllabus).
+     */
+    const extractRubricFromImage = useMutation({
+        mutationFn: async (input: {
+            paperId: string;
+            file: File;
+            language?: 'es' | 'en';
+            onPhase?: (phase: 'encoding' | 'analyzing') => void;
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            input.onPhase?.('encoding');
+            const base64 = await fileToBase64(input.file);
+            input.onPhase?.('analyzing');
+            return exegesisService.extractRubricFromImage.execute({
+                ownerId: user.uid,
+                paperId: input.paperId,
+                mimeType: input.file.type || 'image/png',
+                imageBase64: base64,
                 language: input.language,
             });
         },
@@ -458,6 +507,7 @@ export function useExegesisPapers() {
         resetRubric,
         extractRubricFromText,
         extractRubricFromDocument,
+        extractRubricFromImage,
         addSource,
         updateSource,
         removeSource,

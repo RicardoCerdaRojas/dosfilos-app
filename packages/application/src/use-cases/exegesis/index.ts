@@ -8,6 +8,7 @@ export { UpdateRubricUseCase } from './UpdateRubricUseCase';
 export { ResetRubricUseCase } from './ResetRubricUseCase';
 export { ExtractRubricFromTextUseCase } from './ExtractRubricFromTextUseCase';
 export { ExtractRubricFromDocumentUseCase } from './ExtractRubricFromDocumentUseCase';
+export { ExtractRubricFromImageUseCase } from './ExtractRubricFromImageUseCase';
 export { ExtractStyleGuideManifestUseCase } from './ExtractStyleGuideManifestUseCase';
 
 // User-level rubric templates

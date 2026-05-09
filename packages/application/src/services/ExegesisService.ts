@@ -48,6 +48,7 @@ import {
     ResetRubricUseCase,
     ExtractRubricFromTextUseCase,
     ExtractRubricFromDocumentUseCase,
+    ExtractRubricFromImageUseCase,
     ExtractStyleGuideManifestUseCase,
     ListUserRubricsUseCase,
     CreateUserRubricUseCase,
@@ -120,6 +121,7 @@ class ExegesisService {
     public resetRubric: ResetRubricUseCase;
     public extractRubricFromText: ExtractRubricFromTextUseCase;
     public extractRubricFromDocument: ExtractRubricFromDocumentUseCase;
+    public extractRubricFromImage: ExtractRubricFromImageUseCase;
     public extractStyleGuideManifest: ExtractStyleGuideManifestUseCase;
 
     // User-level rubric templates
@@ -258,6 +260,10 @@ class ExegesisService {
         this.extractRubricFromDocument = new ExtractRubricFromDocumentUseCase(
             paperRepository,
             contentReader,
+            rubricExtractor,
+        );
+        this.extractRubricFromImage = new ExtractRubricFromImageUseCase(
+            paperRepository,
             rubricExtractor,
         );
         this.extractStyleGuideManifest = new ExtractStyleGuideManifestUseCase(
