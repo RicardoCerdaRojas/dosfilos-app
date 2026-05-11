@@ -160,6 +160,15 @@ export interface PreachableInput extends AssistantBookContext {
      * the reviewer's concerns must be addressed in the new output.
      */
     regenerationHint?: string;
+    /**
+     * v1.6 strict mode. When true the pastor has confirmed that every
+     * exegetical unit has an accepted exegetical paper backing it —
+     * the prompt swaps its "panoramic hypothesis" framing for
+     * "exegetically validated proposition" and the wizard hides the
+     * "preliminary, pending validation" disclaimer. Affects prompt
+     * wording only — the input shape is otherwise unchanged.
+     */
+    strictMode?: boolean;
 }
 
 export interface FidelityInput extends AssistantBookContext {

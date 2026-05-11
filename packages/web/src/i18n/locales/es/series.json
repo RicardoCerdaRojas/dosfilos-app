@@ -136,6 +136,8 @@
             "targetCountPlaceholder": "Ej. 12",
             "twoTierLabel": "División en 2 niveles (libros largos)",
             "twoTierHint": "Para Génesis, Hechos, Isaías, Jeremías, Salmos. Agrega un pase previo (Pase 2a) que divide el libro en 2-5 super-macros y las macros se anidan bajo cada uno.",
+            "strictLabel": "Modo estricto (exégesis validada por unidad)",
+            "strictHint": "Detiene el pipeline después del Pase 3. Vos confirmás por unidad que tenés un paper exegético aceptado. El Pase 4 corre con prompt autoritativo (sin lenguaje de hipótesis preliminar) solo cuando todas las unidades están confirmadas.",
             "translationNote": "v1.6: el análisis se hace sobre el texto original (SBLGNT para NT en griego, WLC para AT en hebreo). Si la descarga del original falla, el asistente cae a la traducción (RVR1960/ASV) y avisa.",
             "start": "Iniciar análisis",
             "running": "Ejecutando pipeline...",
@@ -249,10 +251,12 @@
             },
             "micro": {
                 "function": "Función",
-                "signals": "Marcadores"
+                "signals": "Marcadores",
+                "hasPaper": "Tiene paper aceptado"
             },
             "preachable": {
                 "preliminaryBanner": "Estas son hipótesis homiléticas iniciales basadas en una lectura panorámica del texto. Refínalas tras tu estudio exegético detallado (botón \"Crear paper desde unidad\" en el detalle de la serie). Los campos son editables: ajusta título, hipótesis, línea homilética y objetivo a tu criterio antes de crear la serie.",
+                "strictBanner": "Modo estricto: cada unidad fue confirmada con paper exegético aceptado. Las proposiciones reflejan exégesis validada y se redactan en voz autoritativa.",
                 "preliminaryChip": "Pendiente de validación exegética",
                 "editTitle": "Editar título de la unidad",
                 "exegeticalProp": "Hipótesis exegética inicial",
@@ -319,6 +323,8 @@
             "macroFailed": "No se pudo generar la macroestructura. Intenta de nuevo.",
             "microFailed": "No se pudo generar la microestructura. Intenta de nuevo.",
             "superMacroFailed": "No se pudieron generar los super-macros. Intenta de nuevo.",
+            "strictAwaitingPapers": "Pase 3 listo. Confirma por unidad que tienes paper exegético aceptado, luego presiona \"Continuar Pase 4\".",
+            "strictAllUnitsRequired": "Confirma TODAS las unidades antes de continuar al Pase 4 estricto.",
             "preachableFailed": "No se pudieron generar las unidades predicables. Intenta de nuevo.",
             "fidelityFailed": "No se pudo completar la evaluación de fidelidad. Intenta de nuevo.",
             "pipelineDone": "Pipeline completo. Revisa las unidades predicables y los issues antes de crear la serie.",
@@ -358,7 +364,11 @@
             },
             "micro": {
                 "title": "Microestructura",
-                "subtitle": "Identifica unidades exegéticas dentro de cada macro-sección, con criterios específicos por género."
+                "subtitle": "Identifica unidades exegéticas dentro de cada macro-sección, con criterios específicos por género.",
+                "strictCtaTitle": "Confirmar exégesis por unidad",
+                "strictCtaBody": "{{confirmed}} de {{total}} unidades confirmadas con paper aceptado. Cuando estén todas, el Pase 4 puede correr en modo estricto.",
+                "strictContinue": "Continuar Pase 4",
+                "strictBlocked": "Confirma todas las unidades antes de continuar."
             },
             "preachable": {
                 "title": "Conversión predicable",

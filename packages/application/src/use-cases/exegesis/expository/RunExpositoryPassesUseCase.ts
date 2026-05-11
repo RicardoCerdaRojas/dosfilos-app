@@ -83,6 +83,7 @@ export class RunExpositoryPassesUseCase {
             exegeticalUnits: input.exegeticalUnits,
             ...(input.targetPreachableCount !== undefined ? { targetPreachableCount: input.targetPreachableCount } : {}),
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+            ...(input.strictMode === true ? { strictMode: true } : {}),
         });
     }
 
@@ -134,6 +135,8 @@ export interface PreachableCallInput extends BaseCallInput {
     macroSections: MacroSection[];
     exegeticalUnits: ExegeticalUnit[];
     targetPreachableCount?: number;
+    /** v1.6 strict mode — pastor confirms exegetical papers exist per unit. */
+    strictMode?: boolean;
 }
 
 export interface FidelityCallInput extends BaseCallInput {

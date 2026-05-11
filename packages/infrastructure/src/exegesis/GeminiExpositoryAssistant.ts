@@ -297,7 +297,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
     // ── Pase 4: Conversión predicable ───────────────────────────────────
 
     async runPreachableConversion(input: PreachableInput): Promise<PassResult<PreachableUnit[]>> {
-        const systemInstruction = buildPreachableSystemInstruction(input.displayLanguage);
+        const systemInstruction = buildPreachableSystemInstruction(input.displayLanguage, input.strictMode === true);
         const userMessage = buildPreachableUserMessage(input);
 
         const model = this.genAI.getGenerativeModel({

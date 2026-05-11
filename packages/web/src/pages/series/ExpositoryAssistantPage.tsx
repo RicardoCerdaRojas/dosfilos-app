@@ -84,6 +84,7 @@ export function ExpositoryAssistantPage() {
     // Run state — accumulates as each pass completes.
     const [verses, setVerses] = useState<AssistantVerseInput[] | null>(null);
     const [bookDisplay, setBookDisplay] = useState<string | null>(null);
+    const [sourceLanguageInState, setSourceLanguageInState] = useState<'greek' | 'hebrew' | 'translation' | null>(null);
     const [panorama, setPanorama] = useState<BookPanorama | null>(null);
     const [macroSections, setMacroSections] = useState<MacroSection[] | null>(null);
     // v1.6 item 3: two-tier mode for long books. When enabled, a
@@ -91,6 +92,21 @@ export function ExpositoryAssistantPage() {
     // the macro pass nests each macro under one of the super-macros.
     const [twoTierMode, setTwoTierMode] = useState(false);
     const [superMacroSections, setSuperMacroSections] = useState<SuperMacroSection[] | null>(null);
+    // v1.6 item 2: strict mode. When enabled the pipeline stops after
+    // Pase 3, the pastor confirms per-unit that an exegetical paper
+    // exists, and Pase 4 runs only when every unit is confirmed. The
+    // preachable prompt swaps its "panoramic hypothesis" framing for
+    // an authoritative voice.
+    const [strictMode, setStrictMode] = useState(false);
+    const [unitsConfirmedHavePapers, setUnitsConfirmedHavePapers] = useState<Set<string>>(new Set());
+    const toggleUnitHasPaper = (unitId: string) => {
+        setUnitsConfirmedHavePapers((prev) => {
+            const next = new Set(prev);
+            if (next.has(unitId)) next.delete(unitId);
+            else next.add(unitId);
+            return next;
+        });
+    };
     const [exegeticalUnits, setExegeticalUnits] = useState<ExegeticalUnit[] | null>(null);
     const [preachableUnits, setPreachableUnits] = useState<PreachableUnit[] | null>(null);
     const [fidelityReview, setFidelityReview] = useState<FidelityReview | null>(null);
@@ -305,6 +321,7 @@ export function ExpositoryAssistantPage() {
                 : loaded.source === 'original-hebrew'
                   ? ('hebrew' as const)
                   : ('translation' as const);
+        setSourceLanguageInState(sourceLanguage);
         const baseInput = {
             book: loaded.book,
             displayLanguage: lang,
@@ -356,6 +373,14 @@ export function ExpositoryAssistantPage() {
                 {
                     onSuccess: (microResult) => {
                         setExegeticalUnits(microResult.payload);
+                        // v1.6 strict mode: STOP after Pase 3. The pastor
+                        // confirms per-unit that an exegetical paper
+                        // exists, then clicks "Continuar (Pase 4)" which
+                        // triggers `handleRunPreachableStrict` below.
+                        if (strictMode) {
+                            toast.success(t('expository.toast.strictAwaitingPapers') as string);
+                            return;
+                        }
                         runPreachableAndDownstream(panoramaResult, macroResult, microResult);
                     },
                     onError: (err: any) => {
@@ -378,6 +403,7 @@ export function ExpositoryAssistantPage() {
                     panorama: panoramaResult.payload,
                     macroSections: macroResult.payload,
                     exegeticalUnits: microResult.payload,
+                    ...(strictMode ? { strictMode: true } : {}),
                 },
                 {
                     onSuccess: (preachableResult) => {
@@ -545,57 +571,27 @@ export function ExpositoryAssistantPage() {
     };
 
     /**
-     * Pase 4 refine: feeds Pase 5's unaddressed/non-ignored issues
-     * back into the preachable converter as `regenerationHint` and
-     * chains a fresh Pase 5 over the new output. The methodology
-     * principle: the fidelity review is advisory — pastor decides
-     * which concerns to fold back into the proposal. Addressed or
-     * ignored issues are skipped so refinement only fires on what's
-     * still open.
+     * v1.6 strict mode: manual trigger for Pase 4 + 5 after the pastor
+     * has confirmed an exegetical paper exists for every unit. Fires
+     * runPreachable with `strictMode: true` so the prompt drops the
+     * "preliminary hypothesis" framing.
      */
-    const handleRefinePreachable = () => {
-        if (!fidelityReview || !panorama || !macroSections || !exegeticalUnits) return;
-        if (!bookId || !bookDisplay) return;
-
-        const openIssues = fidelityReview.issues
-            .map((issue, idx) => ({ issue, idx }))
-            .filter(({ idx }) => !addressedIssues.has(idx) && !ignoredIssues.has(idx))
-            .map(({ issue }) => issue);
-
-        if (openIssues.length === 0) {
-            toast.info(t('expository.toast.noOpenIssues') as string);
+    const handleContinueStrictPase4 = () => {
+        if (!panorama || !macroSections || !exegeticalUnits || verses.length === 0 || !bookId || !bookDisplay) return;
+        const allConfirmed = exegeticalUnits.every((u) => unitsConfirmedHavePapers.has(u.id));
+        if (!allConfirmed) {
+            toast.error(t('expository.toast.strictAllUnitsRequired') as string);
             return;
         }
 
-        const isSpanish = lang === 'es';
-        const hint = openIssues.map((issue, idx) => {
-            const severityLabel = isSpanish
-                ? { info: 'info', warning: 'advertencia', critical: 'crítico' }[issue.severity]
-                : issue.severity;
-            const anchor = issue.unitId
-                ? (isSpanish ? `unidad ${issue.unitId}` : `unit ${issue.unitId}`)
-                : (isSpanish ? 'general' : 'global');
-            const lines = [
-                `${idx + 1}. [${severityLabel}] (${anchor}) ${issue.description}`,
-            ];
-            if (issue.recommendation && issue.recommendation.trim()) {
-                lines.push(
-                    isSpanish
-                        ? `   Recomendación: ${issue.recommendation.trim()}`
-                        : `   Recommendation: ${issue.recommendation.trim()}`,
-                );
-            }
-            return lines.join('\n');
-        }).join('\n\n');
-
+        const sourceLanguage = sourceLanguageInState ?? 'translation';
         const baseInput = {
             book: bookDisplay,
-            bookId,
             displayLanguage: lang,
-            sourceLanguage: lang === 'es' ? ('es' as const) : ('en' as const),
             verses,
+            sourceLanguage,
         };
-        const targetOpt = targetCount ? { targetPreachableCount: targetCount } : {};
+        const targetOpt = typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {};
 
         assistant.runPreachable.mutate(
             {
@@ -604,19 +600,11 @@ export function ExpositoryAssistantPage() {
                 panorama,
                 macroSections,
                 exegeticalUnits,
-                regenerationHint: hint,
+                strictMode: true,
             },
             {
                 onSuccess: (preachableResult) => {
                     setPreachableUnits(preachableResult.payload);
-                    // Refresh fidelity over the new output. Reset issue
-                    // triage — old indices no longer correspond to new
-                    // issues, and the pastor needs a clean slate to
-                    // review what the refinement produced.
-                    setFidelityReview(null);
-                    setAddressedIssues(new Set());
-                    setIgnoredIssues(new Set());
-
                     assistant.runFidelity.mutate(
                         {
                             ...baseInput,
@@ -628,17 +616,17 @@ export function ExpositoryAssistantPage() {
                         {
                             onSuccess: (fidelityResult) => {
                                 setFidelityReview(fidelityResult.payload);
-                                toast.success(t('expository.toast.refineDone') as string);
+                                toast.success(t('expository.toast.pipelineDone') as string);
                             },
                             onError: (err: any) => {
-                                console.error('[expository] refine runFidelity failed:', err);
+                                console.error('[expository] strict runFidelity failed:', err);
                                 toast.error(toastErrorMessage(err, t, 'expository.toast.fidelityFailed'));
                             },
                         },
                     );
                 },
                 onError: (err: any) => {
-                    console.error('[expository] refine runPreachable failed:', err);
+                    console.error('[expository] strict runPreachable failed:', err);
                     toast.error(toastErrorMessage(err, t, 'expository.toast.preachableFailed'));
                 },
             },
@@ -767,6 +755,8 @@ export function ExpositoryAssistantPage() {
                     onTargetCountChange={setTargetCount}
                     twoTierMode={twoTierMode}
                     onTwoTierModeChange={setTwoTierMode}
+                    strictMode={strictMode}
+                    onStrictModeChange={setStrictMode}
                     lang={lang}
                     allBooks={allBooks}
                     isRunning={isRunning}
@@ -840,12 +830,26 @@ export function ExpositoryAssistantPage() {
                         t={t}
                     >
                         {exegeticalUnits && macroSections && bookDisplay && (
-                            <MicroResult
-                                units={exegeticalUnits}
-                                macros={macroSections}
-                                bookDisplay={bookDisplay}
-                                t={t}
-                            />
+                            <>
+                                <MicroResult
+                                    units={exegeticalUnits}
+                                    macros={macroSections}
+                                    bookDisplay={bookDisplay}
+                                    strictMode={strictMode}
+                                    unitsConfirmedHavePapers={unitsConfirmedHavePapers}
+                                    onToggleHasPaper={toggleUnitHasPaper}
+                                    t={t}
+                                />
+                                {strictMode && !preachableUnits && (
+                                    <StrictContinueCta
+                                        units={exegeticalUnits}
+                                        confirmed={unitsConfirmedHavePapers}
+                                        isRunning={assistant.runPreachable.isPending || assistant.runFidelity.isPending}
+                                        onContinue={handleContinueStrictPase4}
+                                        t={t}
+                                    />
+                                )}
+                            </>
                         )}
                     </PassCard>
                 )}
@@ -863,6 +867,7 @@ export function ExpositoryAssistantPage() {
                             <PreachableResult
                                 units={preachableUnits}
                                 bookDisplay={bookDisplay}
+                                strictMode={strictMode}
                                 onUnitChange={(id, patch) => {
                                     setPreachableUnits((prev) =>
                                         prev
@@ -1095,6 +1100,8 @@ function SetupCard({
     onTargetCountChange,
     twoTierMode,
     onTwoTierModeChange,
+    strictMode,
+    onStrictModeChange,
     lang,
     allBooks,
     isRunning,
@@ -1110,6 +1117,8 @@ function SetupCard({
     onTargetCountChange: (n: number | '') => void;
     twoTierMode: boolean;
     onTwoTierModeChange: (next: boolean) => void;
+    strictMode: boolean;
+    onStrictModeChange: (next: boolean) => void;
     lang: 'es' | 'en';
     allBooks: ReadonlyArray<{ id: BibleBookId; nameEs: string; nameEn: string; testament: 'OT' | 'NT' }>;
     isRunning: boolean;
@@ -1203,6 +1212,20 @@ function SetupCard({
                 <span className="flex flex-col">
                     <span className="font-medium">{t('expository.setup.twoTierLabel')}</span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('expository.setup.twoTierHint')}</span>
+                </span>
+            </label>
+
+            <label className="mt-3 flex items-start gap-2 text-[12px] text-slate-700 dark:text-slate-200 cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={strictMode}
+                    onChange={(e) => onStrictModeChange(e.target.checked)}
+                    disabled={isRunning}
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 dark:border-zinc-700 text-emerald-500 focus:ring-emerald-400 disabled:opacity-50"
+                />
+                <span className="flex flex-col">
+                    <span className="font-medium">{t('expository.setup.strictLabel')}</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('expository.setup.strictHint')}</span>
                 </span>
             </label>
 
@@ -1556,11 +1579,18 @@ function MicroResult({
     units,
     macros,
     bookDisplay,
+    strictMode,
+    unitsConfirmedHavePapers,
+    onToggleHasPaper,
     t,
 }: {
     units: ReadonlyArray<ExegeticalUnit>;
     macros: ReadonlyArray<MacroSection>;
     bookDisplay: string;
+    /** v1.6 strict mode — surfaces per-unit "tiene paper aceptado" checkbox. */
+    strictMode?: boolean;
+    unitsConfirmedHavePapers?: Set<string>;
+    onToggleHasPaper?: (unitId: string) => void;
     t: (key: string) => string;
 }) {
     // Group units by their macroSectionId to preserve the macro→micro
@@ -1594,6 +1624,17 @@ function MicroResult({
                                         <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                                             {bookDisplay} {formatRange(u.syntacticUnit)}
                                         </span>
+                                        {strictMode && unitsConfirmedHavePapers && onToggleHasPaper && (
+                                            <label className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={unitsConfirmedHavePapers.has(u.id)}
+                                                    onChange={() => onToggleHasPaper(u.id)}
+                                                    className="h-3 w-3 rounded border-slate-300 dark:border-zinc-700 text-emerald-500 focus:ring-emerald-400"
+                                                />
+                                                <span>{t('expository.results.micro.hasPaper')}</span>
+                                            </label>
+                                        )}
                                     </div>
                                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
                                         <span className="font-medium">{t('expository.results.micro.function')}:</span> {u.functionInArgument}
@@ -1612,6 +1653,53 @@ function MicroResult({
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+// ── Strict mode continue CTA ───────────────────────────────────────────
+//
+// v1.6 item 2: in strict mode the pipeline stops after Pase 3. The
+// pastor confirms per-unit that an exegetical paper exists, then
+// clicks this button to fire Pase 4 + 5 with the strict prompt. The
+// button is disabled until every unit is in the confirmed set —
+// surfaces an inline count so the pastor sees what's missing.
+
+interface StrictContinueCtaProps {
+    units: ReadonlyArray<ExegeticalUnit>;
+    confirmed: Set<string>;
+    isRunning: boolean;
+    onContinue: () => void;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function StrictContinueCta({ units, confirmed, isRunning, onContinue, t }: StrictContinueCtaProps) {
+    const total = units.length;
+    const confirmedCount = units.filter((u) => confirmed.has(u.id)).length;
+    const allConfirmed = confirmedCount === total && total > 0;
+    return (
+        <div className="mt-4 pt-4 border-t border-border/60 flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                    {t('expository.passes.micro.strictCtaTitle')}
+                </p>
+                <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
+                    {t('expository.passes.micro.strictCtaBody', { confirmed: confirmedCount, total })}
+                </p>
+            </div>
+            <Button
+                type="button"
+                size="sm"
+                onClick={onContinue}
+                disabled={!allConfirmed || isRunning}
+                className="shrink-0"
+                title={!allConfirmed ? (t('expository.passes.micro.strictBlocked') as string) : undefined}
+            >
+                {isRunning
+                    ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+                {t('expository.passes.micro.strictContinue')}
+            </Button>
         </div>
     );
 }
@@ -1773,28 +1861,38 @@ function NumberField({
 function PreachableResult({
     units,
     bookDisplay,
+    strictMode,
     onUnitChange,
     t,
 }: {
     units: ReadonlyArray<PreachableUnit>;
     bookDisplay: string;
+    strictMode?: boolean;
     onUnitChange: (id: string, patch: Partial<PreachableUnit>) => void;
     t: (key: string) => string;
 }) {
     return (
         <div className="space-y-3">
-            {/* Preliminary-output disclaimer. The propositions below are
-                LLM-generated panoramic readings, not exegetically validated
-                conclusions. Surfaced prominently so a serious pastor or
-                seminary student treats them as starting hypotheses to
-                confirm via the paper workflow, not as authoritative
-                output. */}
-            <div className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/20 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-200">
-                <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                    <p>{t('expository.results.preachable.preliminaryBanner')}</p>
+            {/* Banner: panoramic disclaimer in draft mode; validated
+                marker in strict mode. The strict-mode banner replaces
+                "treat as hypothesis" with "treat as exegetically
+                grounded" so the pastor knows the propositions reflect
+                completed exegetical work, not panoramic guesses. */}
+            {strictMode ? (
+                <div className="rounded-lg border border-emerald-300 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2.5 text-xs text-emerald-800 dark:text-emerald-200">
+                    <div className="flex items-start gap-2">
+                        <Check className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                        <p>{t('expository.results.preachable.strictBanner')}</p>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                <div className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/20 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-200">
+                    <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                        <p>{t('expository.results.preachable.preliminaryBanner')}</p>
+                    </div>
+                </div>
+            )}
             <ol className="space-y-3">
                 {units.map((u, idx) => (
                     <li
@@ -1829,10 +1927,12 @@ function PreachableResult({
                                             {t(`expository.results.preachable.case.${u.caseTreatment}`)}
                                         </span>
                                     )}
-                                    <span className="text-[10px] uppercase tracking-wide font-medium text-amber-700 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1">
-                                        <AlertTriangle className="h-3 w-3" />
-                                        {t('expository.results.preachable.preliminaryChip')}
-                                    </span>
+                                    {!strictMode && (
+                                        <span className="text-[10px] uppercase tracking-wide font-medium text-amber-700 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                            <AlertTriangle className="h-3 w-3" />
+                                            {t('expository.results.preachable.preliminaryChip')}
+                                        </span>
+                                    )}
                                 </div>
                                 <EditablePropositionRow
                                     label={t('expository.results.preachable.exegeticalProp') as string}
