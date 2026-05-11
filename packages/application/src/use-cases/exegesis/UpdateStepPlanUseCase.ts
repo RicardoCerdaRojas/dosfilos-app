@@ -5,6 +5,7 @@ import type {
     StepSourcePlan,
     UpdateStepPlanInput,
 } from '@dosfilos/domain';
+import { getEffectiveSectionStructuralExpectation } from '@dosfilos/domain';
 
 /**
  * Patches the per-kind defaults of `paper.stepPlan`.
@@ -48,20 +49,22 @@ export class UpdateStepPlanUseCase {
     }
 
     /**
-     * Convenience: returns the rubric-derived defaults so callers
-     * (e.g. the "reset to rubric default" button) can rebuild the
-     * suggestion without re-implementing the mapping.
+     * Convenience: returns the structural-expectation defaults so
+     * callers (e.g. the "reset to rubric default" button) can rebuild
+     * the suggestion without re-implementing the mapping.
      *
-     * Pulls from `paper.rubric.structuralExpectations` if present;
-     * falls back to empty arrays when the rubric has no expectation
-     * for that kind (which is rare — the default rubric has all
-     * three).
+     * Routes through the domain helper so the planned strategy↔rubric
+     * data move (memory entry
+     * `feature_exegesis_strategy_rubric_separation`) is a single-file
+     * change. Today the helper resolves to
+     * `paper.rubric.structuralExpectations` (or the system default
+     * when absent).
      */
     static rubricDefaultEmphasis(
         paper: ExegeticalPaper,
         kind: 'introduction' | 'verse' | 'conclusion',
     ): StepEmphasis {
-        const expectation = paper.rubric?.structuralExpectations.find(e => e.section === kind);
+        const expectation = getEffectiveSectionStructuralExpectation(paper, kind);
         return {
             emphasizedTypes: expectation?.emphasizedTypes ?? [],
             deemphasizedTypes: [],

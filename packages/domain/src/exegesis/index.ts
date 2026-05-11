@@ -70,3 +70,4 @@ export * from './expository/SuperMacroSection';
 // whose academic-prose composer hasn't run yet. Used by the assembly
 // step so the final output is never just intro + conclusion.
 export * from './services/renderCanonicalAnalysisAsMarkdown';
+export * from './services/getEffectiveStructuralExpectations';

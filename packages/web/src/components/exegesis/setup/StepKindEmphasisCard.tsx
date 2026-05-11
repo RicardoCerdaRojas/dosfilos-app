@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, RotateCcw, Sparkles, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
+    getEffectiveSectionStructuralExpectation,
     SOURCE_TYPE_GROUPS,
     suggestRoleForType,
     type ExegeticalPaper,
@@ -105,7 +106,12 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
         setDeemphasized([...nextDeemphasized]);
     }, [persistedEmphasis, rubricSuggestion]);
 
-    const expectation = paper.rubric?.structuralExpectations.find(e => e.section === kind);
+    // v1.6 Phase 2 chokepoint: route paper-level structuralExpectations
+    // lookup through the domain helper so the future strategy↔rubric
+    // data move is one-file. Today this resolves to
+    // `paper.rubric.structuralExpectations` (or the system default
+    // when the rubric is silent); same semantics as before.
+    const expectation = getEffectiveSectionStructuralExpectation(paper, kind);
     // Resolution order, most-specific to most-general:
     //   1. Data carries an explicit i18n key → use it. (Newly-applied
     //      system-default / strategy-only rubrics always do.)
