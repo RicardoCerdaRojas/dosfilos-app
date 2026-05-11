@@ -267,6 +267,20 @@
                     "law-code": "Law code",
                     "parable": "Parable",
                     "oracle": "Oracle"
+                },
+                "boundary": {
+                    "editTooltip": "Click to adjust the verse range",
+                    "title": "Adjust verse range",
+                    "chapterStart": "Ch. start",
+                    "verseStart": "V. start",
+                    "chapterEnd": "Ch. end",
+                    "verseEnd": "V. end",
+                    "apply": "Apply",
+                    "cancel": "Cancel",
+                    "invalidNumbers": "All fields must be numbers.",
+                    "positive": "Chapters and verses must be ≥ 1.",
+                    "chapterOrder": "Start chapter cannot be greater than end chapter.",
+                    "verseOrder": "Within the same chapter, start verse cannot be greater than end verse."
                 }
             },
             "fidelity": {

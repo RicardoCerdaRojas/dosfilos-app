@@ -267,6 +267,20 @@
                     "law-code": "Código legal",
                     "parable": "Parábola",
                     "oracle": "Oráculo"
+                },
+                "boundary": {
+                    "editTooltip": "Haz click para ajustar el rango de versículos",
+                    "title": "Ajustar rango de versículos",
+                    "chapterStart": "Cap. inicio",
+                    "verseStart": "Vers. inicio",
+                    "chapterEnd": "Cap. fin",
+                    "verseEnd": "Vers. fin",
+                    "apply": "Aplicar",
+                    "cancel": "Cancelar",
+                    "invalidNumbers": "Todos los campos deben ser números.",
+                    "positive": "Capítulos y versículos deben ser ≥ 1.",
+                    "chapterOrder": "El capítulo de inicio no puede ser mayor que el de fin.",
+                    "verseOrder": "Dentro del mismo capítulo, el versículo de inicio no puede ser mayor que el de fin."
                 }
             },
             "fidelity": {
