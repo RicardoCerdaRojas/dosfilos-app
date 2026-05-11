@@ -44,9 +44,11 @@ import {
     type FidelityIssue,
     type FidelityReview,
     type MacroSection,
+    type PassResult,
     type PlannedSermon,
     type PlannedSermonExpositoryEnrichment,
     type PreachableUnit,
+    type SuperMacroSection,
     type SyntacticUnit,
 } from '@dosfilos/domain';
 
@@ -84,6 +86,11 @@ export function ExpositoryAssistantPage() {
     const [bookDisplay, setBookDisplay] = useState<string | null>(null);
     const [panorama, setPanorama] = useState<BookPanorama | null>(null);
     const [macroSections, setMacroSections] = useState<MacroSection[] | null>(null);
+    // v1.6 item 3: two-tier mode for long books. When enabled, a
+    // super-macro pass (Pase 2a) runs between panorama and macro and
+    // the macro pass nests each macro under one of the super-macros.
+    const [twoTierMode, setTwoTierMode] = useState(false);
+    const [superMacroSections, setSuperMacroSections] = useState<SuperMacroSection[] | null>(null);
     const [exegeticalUnits, setExegeticalUnits] = useState<ExegeticalUnit[] | null>(null);
     const [preachableUnits, setPreachableUnits] = useState<PreachableUnit[] | null>(null);
     const [fidelityReview, setFidelityReview] = useState<FidelityReview | null>(null);
@@ -248,6 +255,7 @@ export function ExpositoryAssistantPage() {
     const handleStart = async () => {
         // Reset prior run state if the pastor restarts.
         setPanorama(null);
+        setSuperMacroSections(null);
         setMacroSections(null);
         setExegeticalUnits(null);
         setPreachableUnits(null);
@@ -309,80 +317,123 @@ export function ExpositoryAssistantPage() {
         // nesting level adds one pass; failures at any level surface
         // a toast and stop the chain (the pastor sees the failed
         // card and can restart).
+        // Helper closure: kicks off the macro pass + downstream chain.
+        // Called either directly (single-tier) or after the super-macro
+        // pass lands (two-tier).
+        const runMacroAndDownstream = (
+            panoramaResult: PassResult<BookPanorama>,
+            supers: SuperMacroSection[] | undefined,
+        ) => {
+            assistant.runMacro.mutate(
+                {
+                    ...baseInput,
+                    panorama: panoramaResult.payload,
+                    ...(supers && supers.length > 0 ? { superMacroSections: supers } : {}),
+                },
+                {
+                    onSuccess: (macroResult) => {
+                        setMacroSections(macroResult.payload);
+                        runMicroAndDownstream(panoramaResult, macroResult);
+                    },
+                    onError: (err: any) => {
+                        console.error('[expository] runMacro failed:', err);
+                        toast.error(toastErrorMessage(err, t, 'expository.toast.macroFailed'));
+                    },
+                },
+            );
+        };
+
+        const runMicroAndDownstream = (
+            panoramaResult: PassResult<BookPanorama>,
+            macroResult: PassResult<MacroSection[]>,
+        ) => {
+            assistant.runMicro.mutate(
+                {
+                    ...baseInput,
+                    panorama: panoramaResult.payload,
+                    macroSections: macroResult.payload,
+                },
+                {
+                    onSuccess: (microResult) => {
+                        setExegeticalUnits(microResult.payload);
+                        runPreachableAndDownstream(panoramaResult, macroResult, microResult);
+                    },
+                    onError: (err: any) => {
+                        console.error('[expository] runMicro failed:', err);
+                        toast.error(toastErrorMessage(err, t, 'expository.toast.microFailed'));
+                    },
+                },
+            );
+        };
+
+        const runPreachableAndDownstream = (
+            panoramaResult: PassResult<BookPanorama>,
+            macroResult: PassResult<MacroSection[]>,
+            microResult: PassResult<ExegeticalUnit[]>,
+        ) => {
+            assistant.runPreachable.mutate(
+                {
+                    ...baseInput,
+                    ...targetOpt,
+                    panorama: panoramaResult.payload,
+                    macroSections: macroResult.payload,
+                    exegeticalUnits: microResult.payload,
+                },
+                {
+                    onSuccess: (preachableResult) => {
+                        setPreachableUnits(preachableResult.payload);
+                        assistant.runFidelity.mutate(
+                            {
+                                ...baseInput,
+                                panorama: panoramaResult.payload,
+                                macroSections: macroResult.payload,
+                                exegeticalUnits: microResult.payload,
+                                preachableUnits: preachableResult.payload,
+                            },
+                            {
+                                onSuccess: (fidelityResult) => {
+                                    setFidelityReview(fidelityResult.payload);
+                                    toast.success(t('expository.toast.pipelineDone') as string);
+                                },
+                                onError: (err: any) => {
+                                    console.error('[expository] runFidelity failed:', err);
+                                    toast.error(toastErrorMessage(err, t, 'expository.toast.fidelityFailed'));
+                                },
+                            },
+                        );
+                    },
+                    onError: (err: any) => {
+                        console.error('[expository] runPreachable failed:', err);
+                        toast.error(toastErrorMessage(err, t, 'expository.toast.preachableFailed'));
+                    },
+                },
+            );
+        };
+
         assistant.runPanorama.mutate(
             { ...baseInput, ...targetOpt },
             {
                 onSuccess: (panoramaResult) => {
                     setPanorama(panoramaResult.payload);
 
-                    assistant.runMacro.mutate(
-                        { ...baseInput, panorama: panoramaResult.payload },
-                        {
-                            onSuccess: (macroResult) => {
-                                setMacroSections(macroResult.payload);
-
-                                assistant.runMicro.mutate(
-                                    {
-                                        ...baseInput,
-                                        panorama: panoramaResult.payload,
-                                        macroSections: macroResult.payload,
-                                    },
-                                    {
-                                        onSuccess: (microResult) => {
-                                            setExegeticalUnits(microResult.payload);
-
-                                            assistant.runPreachable.mutate(
-                                                {
-                                                    ...baseInput,
-                                                    ...targetOpt,
-                                                    panorama: panoramaResult.payload,
-                                                    macroSections: macroResult.payload,
-                                                    exegeticalUnits: microResult.payload,
-                                                },
-                                                {
-                                                    onSuccess: (preachableResult) => {
-                                                        setPreachableUnits(preachableResult.payload);
-
-                                                        assistant.runFidelity.mutate(
-                                                            {
-                                                                ...baseInput,
-                                                                panorama: panoramaResult.payload,
-                                                                macroSections: macroResult.payload,
-                                                                exegeticalUnits: microResult.payload,
-                                                                preachableUnits: preachableResult.payload,
-                                                            },
-                                                            {
-                                                                onSuccess: (fidelityResult) => {
-                                                                    setFidelityReview(fidelityResult.payload);
-                                                                    toast.success(t('expository.toast.pipelineDone') as string);
-                                                                },
-                                                                onError: (err: any) => {
-                                                                    console.error('[expository] runFidelity failed:', err);
-                                                                    toast.error(toastErrorMessage(err, t, 'expository.toast.fidelityFailed'));
-                                                                },
-                                                            },
-                                                        );
-                                                    },
-                                                    onError: (err: any) => {
-                                                        console.error('[expository] runPreachable failed:', err);
-                                                        toast.error(toastErrorMessage(err, t, 'expository.toast.preachableFailed'));
-                                                    },
-                                                },
-                                            );
-                                        },
-                                        onError: (err: any) => {
-                                            console.error('[expository] runMicro failed:', err);
-                                            toast.error(toastErrorMessage(err, t, 'expository.toast.microFailed'));
-                                        },
-                                    },
-                                );
+                    if (twoTierMode) {
+                        // Pase 2a — super-macros first, then macros nest under them.
+                        assistant.runSuperMacro.mutate(
+                            { ...baseInput, panorama: panoramaResult.payload },
+                            {
+                                onSuccess: (smResult) => {
+                                    setSuperMacroSections(smResult.payload);
+                                    runMacroAndDownstream(panoramaResult, smResult.payload);
+                                },
+                                onError: (err: any) => {
+                                    console.error('[expository] runSuperMacro failed:', err);
+                                    toast.error(toastErrorMessage(err, t, 'expository.toast.superMacroFailed'));
+                                },
                             },
-                            onError: (err: any) => {
-                                console.error('[expository] runMacro failed:', err);
-                                toast.error(toastErrorMessage(err, t, 'expository.toast.macroFailed'));
-                            },
-                        },
-                    );
+                        );
+                    } else {
+                        runMacroAndDownstream(panoramaResult, undefined);
+                    }
                 },
                 onError: (err: any) => {
                     console.error('[expository] runPanorama failed:', err);
@@ -613,6 +664,8 @@ export function ExpositoryAssistantPage() {
                     onBookIdChange={setBookId}
                     targetCount={targetCount}
                     onTargetCountChange={setTargetCount}
+                    twoTierMode={twoTierMode}
+                    onTwoTierModeChange={setTwoTierMode}
                     lang={lang}
                     allBooks={allBooks}
                     isRunning={isRunning}
@@ -939,6 +992,8 @@ function SetupCard({
     onBookIdChange,
     targetCount,
     onTargetCountChange,
+    twoTierMode,
+    onTwoTierModeChange,
     lang,
     allBooks,
     isRunning,
@@ -952,6 +1007,8 @@ function SetupCard({
     onBookIdChange: (id: BibleBookId) => void;
     targetCount: number | '';
     onTargetCountChange: (n: number | '') => void;
+    twoTierMode: boolean;
+    onTwoTierModeChange: (next: boolean) => void;
     lang: 'es' | 'en';
     allBooks: ReadonlyArray<{ id: BibleBookId; nameEs: string; nameEn: string; testament: 'OT' | 'NT' }>;
     isRunning: boolean;
@@ -1033,6 +1090,20 @@ function SetupCard({
                     />
                 </div>
             </div>
+
+            <label className="mt-4 flex items-start gap-2 text-[12px] text-slate-700 dark:text-slate-200 cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={twoTierMode}
+                    onChange={(e) => onTwoTierModeChange(e.target.checked)}
+                    disabled={isRunning}
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 dark:border-zinc-700 text-emerald-500 focus:ring-emerald-400 disabled:opacity-50"
+                />
+                <span className="flex flex-col">
+                    <span className="font-medium">{t('expository.setup.twoTierLabel')}</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('expository.setup.twoTierHint')}</span>
+                </span>
+            </label>
 
             <div className="mt-4 flex items-center justify-between gap-4">
                 <p className="text-[11px] text-amber-700 dark:text-amber-300 max-w-xl">

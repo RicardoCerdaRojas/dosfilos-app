@@ -160,12 +160,14 @@ export function buildMacroUserMessage(input: MacroInput): string {
         ? `Cantidad sugerida (guía suave, escalada al tamaño del libro de ${input.verses.length} versos): aproximadamente ${recommended} macro-secciones. Diverge si los marcadores estructurales canónicos del género lo demandan.`
         : `Suggested count (soft guide, scaled to the ${input.verses.length}-verse book): approximately ${recommended} macro-sections. Diverge if the genre's canonical structural markers demand it.`;
     const sourcePreamble = buildSourcePreamble(input.sourceLanguage, input.displayLanguage);
+    const superBlock = formatSuperMacroBlock(input.superMacroSections, isSpanish);
 
     if (isSpanish) {
         return [
             `Libro: ${input.book}`,
             '',
             panoramaBlock,
+            superBlock,
             '',
             countHint,
             sourcePreamble,
@@ -175,13 +177,14 @@ export function buildMacroUserMessage(input: MacroInput): string {
             '',
             '---',
             'Devuelve únicamente JSON estricto siguiendo el schema del system prompt.',
-        ].join('\n');
+        ].filter(Boolean).join('\n');
     }
 
     return [
         `Book: ${input.book}`,
         '',
         panoramaBlock,
+        superBlock,
         '',
         countHint,
         sourcePreamble,
@@ -191,7 +194,38 @@ export function buildMacroUserMessage(input: MacroInput): string {
         '',
         '---',
         'Return only strict JSON conforming to the system prompt schema.',
-    ].join('\n');
+    ].filter(Boolean).join('\n');
+}
+
+/**
+ * Two-tier mode (v1.6): when the wizard ran Pase 2a and produced
+ * super-macros, surface them in the user message so the model nests
+ * each macro under one. Each output macro must populate
+ * `parentSuperMacroId` matching one of the listed super-macro ids;
+ * macros may not cross super-macro boundaries.
+ */
+function formatSuperMacroBlock(
+    superMacros: ReadonlyArray<{ id: string; title: string; chapterStart: number; verseStart: number; chapterEnd: number; verseEnd: number; theme: string }> | undefined,
+    isSpanish: boolean,
+): string {
+    if (!superMacros || superMacros.length === 0) return '';
+    const lines: string[] = [''];
+    if (isSpanish) {
+        lines.push('## Super-macros del libro (Pase 2a — modo dos-niveles)');
+        lines.push('Las macros que produzcas DEBEN anidar bajo uno de los siguientes super-macros. Cada macro de salida debe llevar `parentSuperMacroId` igual al id del super-macro contenedor. Las macros no pueden cruzar los límites de un super-macro.');
+        lines.push('');
+    } else {
+        lines.push('## Book super-macros (Pass 2a — two-tier mode)');
+        lines.push('Macros you produce MUST nest under one of the following super-macros. Each output macro must carry `parentSuperMacroId` matching the enclosing super-macro id. Macros may not cross super-macro boundaries.');
+        lines.push('');
+    }
+    for (const sm of superMacros) {
+        const range = sm.chapterStart === sm.chapterEnd
+            ? `${sm.chapterStart}:${sm.verseStart}-${sm.verseEnd}`
+            : `${sm.chapterStart}:${sm.verseStart}-${sm.chapterEnd}:${sm.verseEnd}`;
+        lines.push(`- \`${sm.id}\` — ${sm.title} (${range}): ${sm.theme}`);
+    }
+    return lines.join('\n');
 }
 
 function formatPanoramaForPrompt(panorama: BookPanorama, isSpanish: boolean): string {
@@ -256,6 +290,8 @@ export const MACRO_RESPONSE_SCHEMA = {
                         ],
                     },
                     order: { type: 'integer' },
+                    /** v1.6 two-tier mode — set when super-macros were passed. */
+                    parentSuperMacroId: { type: 'string' },
                 },
                 required: [
                     'id',

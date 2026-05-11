@@ -28,6 +28,14 @@ export interface MacroSection {
     functionInBook: MacroFunction;
     /** Stable order in the book; preserved when the user reorders. */
     order: number;
+    /**
+     * v1.6 — optional reference to the parent `SuperMacroSection` when
+     * the wizard ran in two-tier mode. Undefined for flat (single-tier)
+     * runs and for books short enough to skip Pase 2a. Used by the UI
+     * to render macros under their super-macro accordion group; the
+     * downstream micro / preachable / fidelity passes don't read it.
+     */
+    parentSuperMacroId?: string;
 }
 
 /**
