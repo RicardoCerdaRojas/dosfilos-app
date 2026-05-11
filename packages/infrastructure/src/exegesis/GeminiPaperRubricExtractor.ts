@@ -182,8 +182,22 @@ function buildUserMessageEN(rawText: string, typeList: string, source: 'document
         `      "justification": string`,
         `    }, ...`,
         `  ],`,
+        `  "qualityCriteria": [                                              // one entry per qualitative grading criterion (e.g. "Estilo", "Coherencia"). EMPTY when the rubric is purely prescriptive.`,
+        `    {`,
+        `      "id": string,                                                 // stable id like "qc-style"`,
+        `      "name": string,                                               // criterion label as in the rubric grid`,
+        `      "description": string | null,                                 // one-line summary of what the criterion evaluates`,
+        `      "maxPoints": number | null,                                   // total points the criterion can earn (null when no weights)`,
+        `      "levels": [                                                   // 2-5 entries, ordered from BEST to WORST quality`,
+        `        { "label": string, "description": string, "points": number | null }, ...`,
+        `      ]`,
+        `    }, ...`,
+        `  ],`,
         `  "extractionNotes": string[]                                       // anything you were unsure about, in English`,
         `}`,
+        ``,
+        `## Quality criteria extraction`,
+        `Many real-world seminary rubrics are levels-based grids — rows like "Style and format / Organization / Academic interaction / Coherence / Evidence", each with 4 quality levels (Exemplary / Competent / Acceptable / Deficient) and per-level descriptions plus point ranges (e.g. 15/13/11/7). Capture EVERY visible row of that grid into \`qualityCriteria\`, ONE entry per row. Each entry MUST keep the level descriptions verbatim — they are the exact text the professor uses to grade. Do not paraphrase. When the grid has point columns, populate \`maxPoints\` with the highest level's points and each level's \`points\` accordingly.`,
         ``,
         `## Mapping guide`,
         `- "critical commentary / technical commentary / WBC / NIGTC / Hermeneia / ICC" → commentary-critical`,
@@ -238,8 +252,22 @@ function buildUserMessageES(rawText: string, typeList: string, source: 'document
         `      "justification": string`,
         `    }, ...`,
         `  ],`,
+        `  "qualityCriteria": [                                              // un entry por criterio cualitativo de evaluación (ej. "Estilo", "Coherencia"). VACÍO cuando la rúbrica es puramente prescriptiva.`,
+        `    {`,
+        `      "id": string,                                                 // id estable tipo "qc-estilo"`,
+        `      "name": string,                                               // etiqueta del criterio como aparece en la grilla`,
+        `      "description": string | null,                                 // resumen de una línea de qué evalúa`,
+        `      "maxPoints": number | null,                                   // puntos totales del criterio (null si no hay pesos)`,
+        `      "levels": [                                                   // 2-5 entries, ordenados de MEJOR a PEOR calidad`,
+        `        { "label": string, "description": string, "points": number | null }, ...`,
+        `      ]`,
+        `    }, ...`,
+        `  ],`,
         `  "extractionNotes": string[]                                       // todo lo que no quedó claro, en español`,
         `}`,
+        ``,
+        `## Extracción de criterios cualitativos`,
+        `Muchas rúbricas reales del seminario son grillas por niveles — filas como "Estilo y formato / Organización / Interacción académica / Coherencia / Evidencia", cada una con 4 niveles de calidad (Ejemplar / Competente / Aceptable / Deficiente), descripciones por nivel y rangos de puntos (ej. 15/13/11/7). Capturá CADA fila visible de esa grilla en \`qualityCriteria\`, UN entry por fila. Cada entry DEBE preservar las descripciones de nivel verbatim — son el texto exacto que el profesor usa para calificar. NO parafrasees. Cuando la grilla tenga columna de puntos, poné \`maxPoints\` con los puntos del nivel más alto y \`points\` por nivel correspondiente.`,
         ``,
         `## Guía de mapeo`,
         `- "comentario crítico / comentario técnico / WBC / NIGTC / Hermeneia / ICC" → commentary-critical`,
@@ -278,6 +306,13 @@ interface RawExtractionResult {
         emphasizedTypes: string[];
         justification: string;
     }>;
+    qualityCriteria: Array<{
+        id?: string;
+        name: string;
+        description: string | null;
+        maxPoints: number | null;
+        levels: Array<{ label: string; description: string; points: number | null }>;
+    }>;
     extractionNotes: string[];
 }
 
@@ -308,6 +343,7 @@ function parseExtractorJson(rawJson: string): RawExtractionResult {
             : null,
         sourceRequirements: Array.isArray(parsed.sourceRequirements) ? parsed.sourceRequirements : [],
         structuralExpectations: Array.isArray(parsed.structuralExpectations) ? parsed.structuralExpectations : [],
+        qualityCriteria: Array.isArray(parsed.qualityCriteria) ? parsed.qualityCriteria : [],
         extractionNotes: Array.isArray(parsed.extractionNotes) ? parsed.extractionNotes.filter((n: any) => typeof n === 'string') : [],
     };
 }
@@ -336,6 +372,26 @@ function mapToDomain(raw: RawExtractionResult, input: ExtractRubricInput): Omit<
             justification: typeof e.justification === 'string' ? e.justification : '',
         }));
 
+    const qualityCriteria = (Array.isArray(raw.qualityCriteria) ? raw.qualityCriteria : [])
+        .filter(c => c && typeof c.name === 'string' && c.name.trim() && Array.isArray(c.levels) && c.levels.length >= 2)
+        .map((c, idx) => ({
+            id: typeof c.id === 'string' && c.id.trim()
+                ? c.id.trim()
+                : `qc-${idx + 1}`,
+            name: c.name.trim(),
+            description: typeof c.description === 'string' && c.description.trim() ? c.description.trim() : undefined,
+            maxPoints: typeof c.maxPoints === 'number' && Number.isFinite(c.maxPoints) ? c.maxPoints : undefined,
+            levels: c.levels
+                .filter(l => l && typeof l.label === 'string' && typeof l.description === 'string')
+                .map(l => ({
+                    label: l.label.trim(),
+                    description: l.description.trim(),
+                    points: typeof l.points === 'number' && Number.isFinite(l.points) ? l.points : undefined,
+                }))
+                .slice(0, 5),
+        }))
+        .filter(c => c.levels.length >= 2);
+
     return {
         provenance: input.source === 'text' ? 'extracted-from-text' : 'extracted-from-document',
         description: raw.description,
@@ -343,6 +399,7 @@ function mapToDomain(raw: RawExtractionResult, input: ExtractRubricInput): Omit<
         citationStandard: raw.citationStandard,
         sourceRequirements,
         structuralExpectations,
+        qualityCriteria,
         sourceCorpusId: input.sourceCorpusId,
         sourcePastedText: input.source === 'text' ? input.rawText : null,
         // Extraction creates a fresh origin; any prior template link
@@ -361,6 +418,15 @@ function inferConfidence(raw: RawExtractionResult): 'high' | 'medium' | 'low' {
     else if (raw.sourceRequirements.length >= 1) score += 1;
     if (raw.structuralExpectations.length === 3) score += 2;
     else if (raw.structuralExpectations.length >= 1) score += 1;
+    // Qualitative rubric: 4+ criteria with their level descriptions
+    // is a strong signal of a complete grid extraction (the typical
+    // 4-row × 4-column seminary rubric). Counts toward 'high'
+    // confidence even when the prescriptive side is sparse — purely
+    // qualitative rubrics are legitimate and shouldn't be flagged
+    // low.
+    if (raw.qualityCriteria.length >= 4) score += 3;
+    else if (raw.qualityCriteria.length >= 2) score += 2;
+    else if (raw.qualityCriteria.length >= 1) score += 1;
 
     if (score >= 7) return 'high';
     if (score >= 4) return 'medium';

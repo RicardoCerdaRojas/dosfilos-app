@@ -612,6 +612,10 @@ function RubricSummaryView({
                 </ul>
             </div>
 
+            {rubric.qualityCriteria.length > 0 && (
+                <RubricQualityCriteriaPanel criteria={rubric.qualityCriteria} t={t} />
+            )}
+
             <footer className="flex items-center justify-end pt-3 border-t border-border">
                 <Button
                     type="button"
@@ -629,6 +633,59 @@ function RubricSummaryView({
                 </Button>
             </footer>
         </section>
+    );
+}
+
+/**
+ * v1.7 qualitative-rubric panel. Surfaces the level-based grading
+ * criteria (Estilo / Coherencia / etc.) when the rubric carries
+ * them. Read-only for v1.7 ship — re-extracting the rubric from a
+ * fresh document refreshes the criteria. A v1.8 follow-up adds
+ * inline editing of criterion labels, descriptions, and per-level
+ * descriptors.
+ */
+function RubricQualityCriteriaPanel({
+    criteria,
+    t,
+}: {
+    criteria: ReadonlyArray<import('@dosfilos/domain').QualityCriterion>;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    return (
+        <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('paperSetup.subSteps.rubric.summary.qualityTitle')}
+            </h4>
+            <p className="text-[11px] text-muted-foreground italic">
+                {t('paperSetup.subSteps.rubric.summary.qualityHint')}
+            </p>
+            <div className="space-y-2">
+                {criteria.map(crit => (
+                    <div key={crit.id} className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-1.5">
+                        <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                            <span className="text-sm font-semibold text-foreground">{crit.name}</span>
+                            {typeof crit.maxPoints === 'number' && (
+                                <span className="text-[11px] text-muted-foreground font-mono">{crit.maxPoints} pts</span>
+                            )}
+                        </div>
+                        {crit.description && (
+                            <p className="text-[12px] text-muted-foreground leading-snug">{crit.description}</p>
+                        )}
+                        <ul className="space-y-1 mt-1">
+                            {crit.levels.map(level => (
+                                <li key={level.label} className="text-[11.5px] leading-snug">
+                                    <span className="font-medium text-foreground">{level.label}</span>
+                                    {typeof level.points === 'number' && (
+                                        <span className="text-muted-foreground font-mono"> · {level.points} pts</span>
+                                    )}
+                                    <span className="text-muted-foreground"> — {level.description}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 

@@ -809,6 +809,7 @@ function deserializeRubric(raw: any): ExegeticalPaper['rubric'] {
         citationStandard: raw.citationStandard ?? null,
         sourceRequirements: Array.isArray(raw.sourceRequirements) ? raw.sourceRequirements : [],
         structuralExpectations: Array.isArray(raw.structuralExpectations) ? raw.structuralExpectations : [],
+        qualityCriteria: Array.isArray(raw.qualityCriteria) ? raw.qualityCriteria : [],
         sourceCorpusId: raw.sourceCorpusId ?? null,
         sourcePastedText: raw.sourcePastedText ?? null,
         sourceTemplateId: raw.sourceTemplateId ?? null,
