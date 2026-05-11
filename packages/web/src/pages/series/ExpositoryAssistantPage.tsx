@@ -15,6 +15,7 @@ import {
     Check,
     EyeOff,
     GraduationCap,
+    RotateCcw,
 } from 'lucide-react';
 import {
     hasMethodologyBeenShown,
@@ -390,6 +391,107 @@ export function ExpositoryAssistantPage() {
         );
     };
 
+    /**
+     * Pase 4 refine: feeds Pase 5's unaddressed/non-ignored issues
+     * back into the preachable converter as `regenerationHint` and
+     * chains a fresh Pase 5 over the new output. The methodology
+     * principle: the fidelity review is advisory — pastor decides
+     * which concerns to fold back into the proposal. Addressed or
+     * ignored issues are skipped so refinement only fires on what's
+     * still open.
+     */
+    const handleRefinePreachable = () => {
+        if (!fidelityReview || !panorama || !macroSections || !exegeticalUnits) return;
+        if (!bookId || !bookDisplay) return;
+
+        const openIssues = fidelityReview.issues
+            .map((issue, idx) => ({ issue, idx }))
+            .filter(({ idx }) => !addressedIssues.has(idx) && !ignoredIssues.has(idx))
+            .map(({ issue }) => issue);
+
+        if (openIssues.length === 0) {
+            toast.info(t('expository.toast.noOpenIssues') as string);
+            return;
+        }
+
+        const isSpanish = lang === 'es';
+        const hint = openIssues.map((issue, idx) => {
+            const severityLabel = isSpanish
+                ? { info: 'info', warning: 'advertencia', critical: 'crítico' }[issue.severity]
+                : issue.severity;
+            const anchor = issue.unitId
+                ? (isSpanish ? `unidad ${issue.unitId}` : `unit ${issue.unitId}`)
+                : (isSpanish ? 'general' : 'global');
+            const lines = [
+                `${idx + 1}. [${severityLabel}] (${anchor}) ${issue.description}`,
+            ];
+            if (issue.recommendation && issue.recommendation.trim()) {
+                lines.push(
+                    isSpanish
+                        ? `   Recomendación: ${issue.recommendation.trim()}`
+                        : `   Recommendation: ${issue.recommendation.trim()}`,
+                );
+            }
+            return lines.join('\n');
+        }).join('\n\n');
+
+        const baseInput = {
+            book: bookDisplay,
+            bookId,
+            displayLanguage: lang,
+            sourceLanguage: lang === 'es' ? ('es' as const) : ('en' as const),
+            verses,
+        };
+        const targetOpt = targetCount ? { targetPreachableCount: targetCount } : {};
+
+        assistant.runPreachable.mutate(
+            {
+                ...baseInput,
+                ...targetOpt,
+                panorama,
+                macroSections,
+                exegeticalUnits,
+                regenerationHint: hint,
+            },
+            {
+                onSuccess: (preachableResult) => {
+                    setPreachableUnits(preachableResult.payload);
+                    // Refresh fidelity over the new output. Reset issue
+                    // triage — old indices no longer correspond to new
+                    // issues, and the pastor needs a clean slate to
+                    // review what the refinement produced.
+                    setFidelityReview(null);
+                    setAddressedIssues(new Set());
+                    setIgnoredIssues(new Set());
+
+                    assistant.runFidelity.mutate(
+                        {
+                            ...baseInput,
+                            panorama,
+                            macroSections,
+                            exegeticalUnits,
+                            preachableUnits: preachableResult.payload,
+                        },
+                        {
+                            onSuccess: (fidelityResult) => {
+                                setFidelityReview(fidelityResult.payload);
+                                toast.success(t('expository.toast.refineDone') as string);
+                            },
+                            onError: (err: any) => {
+                                console.error('[expository] refine runFidelity failed:', err);
+                                toast.error(toastErrorMessage(err, t, 'expository.toast.fidelityFailed'));
+                            },
+                        },
+                    );
+                },
+                onError: (err: any) => {
+                    console.error('[expository] refine runPreachable failed:', err);
+                    toast.error(toastErrorMessage(err, t, 'expository.toast.preachableFailed'));
+                },
+            },
+        );
+    };
+
     const handleCreateSeries = async () => {
         if (!user?.uid || !preachableUnits || preachableUnits.length === 0 || !bookDisplay) return;
         if (!seriesTitle.trim()) {
@@ -629,15 +731,25 @@ export function ExpositoryAssistantPage() {
                         t={t}
                     >
                         {fidelityReview && (
-                            <FidelityResult
-                                review={fidelityReview}
-                                preachableUnits={preachableUnits ?? []}
-                                addressedIssues={addressedIssues}
-                                ignoredIssues={ignoredIssues}
-                                onToggleAddressed={toggleIssueAddressed}
-                                onToggleIgnored={toggleIssueIgnored}
-                                t={t}
-                            />
+                            <>
+                                <FidelityResult
+                                    review={fidelityReview}
+                                    preachableUnits={preachableUnits ?? []}
+                                    addressedIssues={addressedIssues}
+                                    ignoredIssues={ignoredIssues}
+                                    onToggleAddressed={toggleIssueAddressed}
+                                    onToggleIgnored={toggleIssueIgnored}
+                                    t={t}
+                                />
+                                <RefinePreachableCta
+                                    review={fidelityReview}
+                                    addressedIssues={addressedIssues}
+                                    ignoredIssues={ignoredIssues}
+                                    isRefining={assistant.runPreachable.isPending || assistant.runFidelity.isPending}
+                                    onRefine={handleRefinePreachable}
+                                    t={t}
+                                />
+                            </>
                         )}
                     </PassCard>
                 )}
@@ -660,6 +772,64 @@ export function ExpositoryAssistantPage() {
                     />
                 )}
             </main>
+        </div>
+    );
+}
+
+// ── Refine preachable CTA ──────────────────────────────────────────────
+//
+// Sits at the bottom of the Pase 5 card. When the fidelity review has
+// any non-ignored, non-addressed issues, surfaces a single button that
+// re-runs Pase 4 with those issues serialized as a `regenerationHint`,
+// then chains a fresh Pase 5 over the new preachable units. One round
+// trip from "the reviewer flagged something" to "the proposal answers
+// the flag".
+
+interface RefinePreachableCtaProps {
+    review: FidelityReview;
+    addressedIssues: Set<number>;
+    ignoredIssues: Set<number>;
+    isRefining: boolean;
+    onRefine: () => void;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function RefinePreachableCta({
+    review,
+    addressedIssues,
+    ignoredIssues,
+    isRefining,
+    onRefine,
+    t,
+}: RefinePreachableCtaProps) {
+    const openCount = review.issues
+        .filter((_, idx) => !addressedIssues.has(idx) && !ignoredIssues.has(idx))
+        .length;
+    if (openCount === 0) return null;
+    return (
+        <div className="mt-4 pt-4 border-t border-border/60 flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                    {t('expository.passes.fidelity.refineCtaTitle')}
+                </p>
+                <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
+                    {t('expository.passes.fidelity.refineCtaBody', { count: openCount })}
+                </p>
+            </div>
+            <Button
+                type="button"
+                size="sm"
+                onClick={onRefine}
+                disabled={isRefining}
+                className="shrink-0"
+            >
+                {isRefining
+                    ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                {isRefining
+                    ? t('expository.passes.fidelity.refining')
+                    : t('expository.passes.fidelity.refine')}
+            </Button>
         </div>
     );
 }
