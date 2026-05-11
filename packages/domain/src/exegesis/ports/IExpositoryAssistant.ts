@@ -125,6 +125,16 @@ export interface PreachableInput extends AssistantBookContext {
     exegeticalUnits: ExegeticalUnit[];
     /** Soft hint, same as in panorama input. */
     targetPreachableCount?: number;
+    /**
+     * Optional regeneration hint produced by the wizard's "Refinar con
+     * feedback" affordance. When the user has already seen a fidelity
+     * review (Pase 5) and wants to fold the reviewer's issues +
+     * recommendations back into Pase 4, the wizard serializes those
+     * into a free-text hint and re-runs preachable conversion with it.
+     * The prompt builder appends the hint as authoritative guidance —
+     * the reviewer's concerns must be addressed in the new output.
+     */
+    regenerationHint?: string;
 }
 
 export interface FidelityInput extends AssistantBookContext {

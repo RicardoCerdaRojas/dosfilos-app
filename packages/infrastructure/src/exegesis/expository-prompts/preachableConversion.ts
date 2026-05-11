@@ -169,6 +169,7 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
               : `\n\nSoft guide: the preacher targets approximately ${input.targetPreachableCount} sermons.`)
         : '';
     const sourcePreamble = buildSourcePreamble(input.sourceLanguage, input.displayLanguage);
+    const refineBlock = formatRefineBlock(input.regenerationHint, isSpanish);
 
     if (isSpanish) {
         return [
@@ -176,7 +177,7 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
             `Género: ${input.panorama.genre}`,
             `Tema central: ${input.panorama.centralTheme}`,
             `Problema pastoral: ${input.panorama.pastoralProblem}${targetBlock}`,
-            '',
+            refineBlock,
             macroBlock,
             '',
             microBlock,
@@ -187,7 +188,7 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
             '',
             '---',
             'Devuelve únicamente JSON estricto siguiendo el schema. Cada preachableUnit debe citar al menos un sourcedExegeticalUnitId existente.',
-        ].join('\n');
+        ].filter(Boolean).join('\n');
     }
 
     return [
@@ -195,7 +196,7 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
         `Genre: ${input.panorama.genre}`,
         `Central theme: ${input.panorama.centralTheme}`,
         `Pastoral problem: ${input.panorama.pastoralProblem}${targetBlock}`,
-        '',
+        refineBlock,
         macroBlock,
         '',
         microBlock,
@@ -206,6 +207,35 @@ export function buildPreachableUserMessage(input: PreachableInput): string {
         '',
         '---',
         'Return only strict JSON. Each preachableUnit must cite at least one existing sourcedExegeticalUnitId.',
+    ].filter(Boolean).join('\n');
+}
+
+/**
+ * Renders the optional refinement hint as an authoritative block at
+ * the top of the user message. The wizard's "Refinar con feedback"
+ * affordance serializes the fidelity reviewer's issues +
+ * recommendations into this hint so the model addresses them in the
+ * new preachable output.
+ */
+function formatRefineBlock(hint: string | undefined, isSpanish: boolean): string {
+    if (!hint || !hint.trim()) return '';
+    if (isSpanish) {
+        return [
+            '',
+            '## Refinamiento solicitado (autoridad sobre las propuestas anteriores)',
+            'En una corrida previa, la revisión de fidelidad (Pase 5) detectó los siguientes problemas. Tu nueva propuesta DEBE atenderlos explícitamente — ajustar boundaries, agrupar/separar unidades, replantear proposiciones o pastoral objectives — sin invalidar el panorama ni la macroestructura ya aceptadas.',
+            '',
+            hint.trim(),
+            '',
+        ].join('\n');
+    }
+    return [
+        '',
+        '## Refinement requested (authoritative over the previous output)',
+        'A prior run\'s fidelity review (Pass 5) surfaced the following concerns. Your new proposal MUST address them explicitly — adjust boundaries, merge or split units, restate propositions or pastoral objectives — without invalidating the panorama or the macro structure already accepted.',
+        '',
+        hint.trim(),
+        '',
     ].join('\n');
 }
 
