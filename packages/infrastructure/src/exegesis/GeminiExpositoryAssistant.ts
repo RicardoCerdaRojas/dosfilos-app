@@ -18,6 +18,8 @@ import {
     type PassResult,
     type PreachableInput,
     type PreachableUnit,
+    type SuperMacroInput,
+    type SuperMacroSection,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from './geminiRetry';
 import {
@@ -30,6 +32,11 @@ import {
     buildMacroUserMessage,
     MACRO_RESPONSE_SCHEMA,
 } from './expository-prompts/macroStructure';
+import {
+    buildSuperMacroSystemInstruction,
+    buildSuperMacroUserMessage,
+    SUPER_MACRO_RESPONSE_SCHEMA,
+} from './expository-prompts/superMacroStructure';
 import {
     buildMicroSystemInstruction,
     buildMicroUserMessage,
@@ -151,6 +158,48 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
     }
 
     // ── Pase 2: Macroestructura ─────────────────────────────────────────
+
+    async runSuperMacroStructure(input: SuperMacroInput): Promise<PassResult<SuperMacroSection[]>> {
+        const systemInstruction = buildSuperMacroSystemInstruction(input.displayLanguage);
+        const userMessage = buildSuperMacroUserMessage(input);
+
+        const model = this.genAI.getGenerativeModel({
+            model: this.modelName,
+            systemInstruction,
+            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
+            generationConfig: {
+                maxOutputTokens: 4096,
+                temperature: 0.3,
+                topP: 0.9,
+                responseMimeType: 'application/json',
+                responseSchema: SUPER_MACRO_RESPONSE_SCHEMA as any,
+            },
+        });
+
+        console.log('[GeminiExpositoryAssistant] runSuperMacroStructure', {
+            book: input.book,
+            language: input.displayLanguage,
+            verseCount: input.verses.length,
+            panoramaGenre: input.panorama.genre,
+        });
+
+        const result = await withGeminiRetry(
+            () => model.generateContent(userMessage),
+            { contextLabel: 'GeminiExpositoryAssistant.runSuperMacroStructure' },
+        );
+        const response = result.response;
+        const raw = readResponseTextOrThrow(response, 'superMacroStructure');
+
+        const parsed = parseJsonOrThrow(raw, 'superMacroStructure');
+        const payload = normalizeSuperMacroSections(parsed);
+
+        return {
+            payload,
+            modelId: this.modelName,
+            tokensUsed: extractTokens(response.usageMetadata),
+            passVersion: this.passVersion('super-macro', input),
+        };
+    }
 
     async runMacroStructure(input: MacroInput): Promise<PassResult<MacroSection[]>> {
         const systemInstruction = buildMacroSystemInstruction(input.displayLanguage);
@@ -712,6 +761,53 @@ function normalizePreachableUnits(
     return units.sort((a, b) => a.order - b.order);
 }
 
+function normalizeSuperMacroSections(raw: any): SuperMacroSection[] {
+    const arr: unknown = raw?.superMacroSections;
+    if (!Array.isArray(arr)) {
+        throw new Error('superMacroStructure response missing or invalid superMacroSections array');
+    }
+
+    const sections: SuperMacroSection[] = [];
+    arr.forEach((item, index) => {
+        if (!item || typeof item !== 'object') return;
+        const o = item as Record<string, unknown>;
+
+        const id = typeof o.id === 'string' && o.id.trim() ? o.id.trim() : `sm-${index + 1}`;
+        const title = typeof o.title === 'string' ? o.title.trim() : '';
+        const cs = intOrNull(o.chapterStart);
+        const vs = intOrNull(o.verseStart);
+        const ce = intOrNull(o.chapterEnd);
+        const ve = intOrNull(o.verseEnd);
+        const theme = typeof o.theme === 'string' ? o.theme.trim() : '';
+        const order = intOrNull(o.order) ?? index + 1;
+
+        if (!title || !theme) return;
+        if (cs === null || vs === null || ce === null || ve === null) return;
+        if (ce < cs || (ce === cs && ve < vs)) return;
+
+        sections.push({
+            id,
+            title,
+            chapterStart: cs,
+            verseStart: vs,
+            chapterEnd: ce,
+            verseEnd: ve,
+            theme,
+            order,
+        });
+    });
+
+    if (sections.length === 0) {
+        throw new Error('superMacroStructure returned zero valid sections');
+    }
+    // Hard cap: 5 is the design ceiling per the prompt. Honor it
+    // server-side so a misbehaving model can't flood the wizard.
+    if (sections.length > 5) {
+        return sections.slice(0, 5).sort((a, b) => a.order - b.order);
+    }
+    return sections.sort((a, b) => a.order - b.order);
+}
+
 function normalizeMacroSections(raw: any): MacroSection[] {
     const arr: unknown = raw?.macroSections;
     if (!Array.isArray(arr)) {
@@ -739,6 +835,10 @@ function normalizeMacroSections(raw: any): MacroSection[] {
         if (cs === null || vs === null || ce === null || ve === null) return;
         if (ce < cs || (ce === cs && ve < vs)) return; // boundary sanity
 
+        const parentSuperMacroId = typeof o.parentSuperMacroId === 'string' && o.parentSuperMacroId.trim()
+            ? o.parentSuperMacroId.trim()
+            : undefined;
+
         sections.push({
             id,
             title,
@@ -749,6 +849,7 @@ function normalizeMacroSections(raw: any): MacroSection[] {
             theme,
             functionInBook: fn,
             order,
+            ...(parentSuperMacroId ? { parentSuperMacroId } : {}),
         });
     });
 

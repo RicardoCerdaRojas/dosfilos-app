@@ -7,6 +7,7 @@ import type {
     MacroSection,
     PreachableUnit,
     PassResult,
+    SuperMacroSection,
 } from '@dosfilos/domain';
 
 /**
@@ -40,12 +41,23 @@ export class RunExpositoryPassesUseCase {
         });
     }
 
+    async runSuperMacroStructure(input: SuperMacroCallInput): Promise<PassResult<SuperMacroSection[]>> {
+        return this.assistant.runSuperMacroStructure({
+            book: input.book,
+            displayLanguage: input.displayLanguage,
+            verses: input.verses,
+            panorama: input.panorama,
+            ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+        });
+    }
+
     async runMacroStructure(input: MacroCallInput): Promise<PassResult<MacroSection[]>> {
         return this.assistant.runMacroStructure({
             book: input.book,
             displayLanguage: input.displayLanguage,
             verses: input.verses,
             panorama: input.panorama,
+            ...(input.superMacroSections ? { superMacroSections: input.superMacroSections } : {}),
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
         });
     }
@@ -102,8 +114,14 @@ export interface PanoramaCallInput extends BaseCallInput {
     targetPreachableCount?: number;
 }
 
+export interface SuperMacroCallInput extends BaseCallInput {
+    panorama: BookPanorama;
+}
+
 export interface MacroCallInput extends BaseCallInput {
     panorama: BookPanorama;
+    /** v1.6 two-tier mode — when set, macros nest under these super-macros. */
+    superMacroSections?: SuperMacroSection[];
 }
 
 export interface MicroCallInput extends BaseCallInput {

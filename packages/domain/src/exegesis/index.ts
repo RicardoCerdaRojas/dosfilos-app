@@ -64,6 +64,7 @@ export * from './expository/ExpositoryAssistantRun';
 export * from './expository/FidelityReview';
 export * from './expository/MacroSection';
 export * from './expository/PreachableUnit';
+export * from './expository/SuperMacroSection';
 
 // Deterministic markdown rescue render for canonical-pipeline verses
 // whose academic-prose composer hasn't run yet. Used by the assembly

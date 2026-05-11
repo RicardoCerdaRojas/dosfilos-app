@@ -3,6 +3,7 @@ import type { ExegeticalUnit } from '../expository/ExegeticalUnit';
 import type { FidelityReview } from '../expository/FidelityReview';
 import type { MacroSection } from '../expository/MacroSection';
 import type { PreachableUnit } from '../expository/PreachableUnit';
+import type { SuperMacroSection } from '../expository/SuperMacroSection';
 
 /**
  * Port for the v1.5 expository assistant — a 5-pass pipeline that
@@ -37,9 +38,22 @@ export interface IExpositoryAssistant {
     runPanorama(input: PanoramaInput): Promise<PassResult<BookPanorama>>;
 
     /**
+     * Pase 2a — Super-macro estructura (OPTIONAL, two-tier mode only).
+     * For long books (Génesis, Hechos, Isaías, etc.), divides the book
+     * into 2-5 broad super-sections before the regular macro pass
+     * runs. Wizard activates this for books where a flat 5-7 macro
+     * list would collapse 100+ verses per macro. Skipped for short
+     * books (the wizard goes straight to `runMacroStructure`).
+     */
+    runSuperMacroStructure(input: SuperMacroInput): Promise<PassResult<SuperMacroSection[]>>;
+
+    /**
      * Pase 2 — Macroestructura. Receives panorama + text, divides
      * the book into 3-7 macro-sections, each with function. The
-     * panorama's `movements` is a hint, not a constraint.
+     * panorama's `movements` is a hint, not a constraint. When the
+     * wizard ran in two-tier mode, `superMacroSections` arrives
+     * populated and the assistant nests each macro under one
+     * (stamping `parentSuperMacroId`).
      */
     runMacroStructure(input: MacroInput): Promise<PassResult<MacroSection[]>>;
 
@@ -110,8 +124,19 @@ export interface PanoramaInput extends AssistantBookContext {
     targetPreachableCount?: number;
 }
 
+export interface SuperMacroInput extends AssistantBookContext {
+    panorama: BookPanorama;
+}
+
 export interface MacroInput extends AssistantBookContext {
     panorama: BookPanorama;
+    /**
+     * v1.6 two-tier mode. When present, the assistant must produce
+     * macros that fit within these super-macro ranges and stamp each
+     * macro's `parentSuperMacroId` to the enclosing super-macro id.
+     * Absent for single-tier (legacy) runs.
+     */
+    superMacroSections?: SuperMacroSection[];
 }
 
 export interface MicroInput extends AssistantBookContext {

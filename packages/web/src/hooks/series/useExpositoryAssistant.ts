@@ -9,6 +9,7 @@ import type {
     PassResult,
     PreachableUnit,
     AssistantVerseInput,
+    SuperMacroSection,
 } from '@dosfilos/domain';
 
 /**
@@ -39,6 +40,19 @@ export function useExpositoryAssistant() {
         },
     });
 
+    const runSuperMacro = useMutation({
+        mutationFn: async (input: SuperMacroHookInput): Promise<PassResult<SuperMacroSection[]>> => {
+            const payload: Parameters<typeof seriesService.expositoryPasses.runSuperMacroStructure>[0] = {
+                book: input.book,
+                displayLanguage: input.displayLanguage,
+                verses: input.verses,
+                panorama: input.panorama,
+            };
+            if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            return seriesService.expositoryPasses.runSuperMacroStructure(payload);
+        },
+    });
+
     const runMacro = useMutation({
         mutationFn: async (input: MacroInput): Promise<PassResult<MacroSection[]>> => {
             const payload: Parameters<typeof seriesService.expositoryPasses.runMacroStructure>[0] = {
@@ -47,6 +61,7 @@ export function useExpositoryAssistant() {
                 verses: input.verses,
                 panorama: input.panorama,
             };
+            if (input.superMacroSections) payload.superMacroSections = input.superMacroSections;
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
             return seriesService.expositoryPasses.runMacroStructure(payload);
         },
@@ -101,6 +116,7 @@ export function useExpositoryAssistant() {
     return {
         loadVerses,
         runPanorama,
+        runSuperMacro,
         runMacro,
         runMicro,
         runPreachable,
@@ -122,8 +138,14 @@ interface PanoramaInput extends BaseInput {
     targetPreachableCount?: number;
 }
 
+interface SuperMacroHookInput extends BaseInput {
+    panorama: BookPanorama;
+}
+
 interface MacroInput extends BaseInput {
     panorama: BookPanorama;
+    /** v1.6 two-tier mode — when set, macros nest under these super-macros. */
+    superMacroSections?: SuperMacroSection[];
 }
 
 interface MicroInput extends BaseInput {

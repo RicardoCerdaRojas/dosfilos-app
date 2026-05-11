@@ -15,6 +15,8 @@ import {
     type PassResult,
     type PreachableInput,
     type PreachableUnit,
+    type SuperMacroInput,
+    type SuperMacroSection,
 } from '@dosfilos/domain';
 
 /**
@@ -49,6 +51,17 @@ export class CachedExpositoryAssistant implements IExpositoryAssistant {
         private readonly cacheRepo: IExpositoryAssistantCacheRepository,
         private readonly pipelineVersion: string,
     ) {}
+
+    /**
+     * v1.6 two-tier mode. NOT cached for v1.6 — super-macros are
+     * canonical like panorama / macro / micro but cache schema in
+     * `IExpositoryAssistantCacheRepository` doesn't have a slot for
+     * them yet. Pass-through to the wrapped assistant. A v1.7 cache
+     * schema extension can fold them in alongside the other passes.
+     */
+    async runSuperMacroStructure(input: SuperMacroInput): Promise<PassResult<SuperMacroSection[]>> {
+        return this.wrapped.runSuperMacroStructure(input);
+    }
 
     async runPanorama(input: PanoramaInput): Promise<PassResult<BookPanorama>> {
         const bookId = this.resolveBookId(input.book);
