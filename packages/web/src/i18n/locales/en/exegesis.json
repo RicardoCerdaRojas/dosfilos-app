@@ -529,6 +529,8 @@
                     "editCta": "Edit rubric",
                     "requirementsTitle": "Corpus requirements",
                     "structuralTitle": "Structural recommendations",
+                    "qualityTitle": "Qualitative grading criteria",
+                    "qualityHint": "Dimensions the professor will grade. The composer targets the top-level descriptor of each criterion when writing the paper.",
                     "optionalCount_one": "+ {{count}} optional recommended requirement",
                     "optionalCount_other": "+ {{count}} optional recommended requirements",
                     "optionalCount": "+ {{count}} optional recommended"

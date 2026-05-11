@@ -194,6 +194,7 @@ function deserialize(id: string, data: DocumentData): UserRubric {
             citationStandard: inner.citationStandard ?? null,
             sourceRequirements: Array.isArray(inner.sourceRequirements) ? inner.sourceRequirements : [],
             structuralExpectations: Array.isArray(inner.structuralExpectations) ? inner.structuralExpectations : [],
+            qualityCriteria: Array.isArray(inner.qualityCriteria) ? inner.qualityCriteria : [],
             sourceCorpusId: inner.sourceCorpusId ?? null,
             sourcePastedText: inner.sourcePastedText ?? null,
             sourceTemplateId: inner.sourceTemplateId ?? null,

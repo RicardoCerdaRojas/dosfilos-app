@@ -342,6 +342,34 @@ export function formatPaperRubric(
         }
     }
 
+    // v1.7 qualitative grading criteria. When the rubric carries
+    // levels-based criteria (Ejemplar / Competente / Aceptable /
+    // Deficiente per dimension), surface them as a SEPARATE block
+    // titled "Criterios cualitativos de evaluación" — distinct
+    // semantically from the prescriptive expectations above. The
+    // composer treats them as evaluation targets: the prose should
+    // visibly satisfy the level descriptors of the "Ejemplar" (or
+    // top) tier in each criterion.
+    if (rubric.qualityCriteria.length > 0) {
+        lines.push('');
+        lines.push(lang === 'en'
+            ? `## Qualitative grading criteria`
+            : `## Criterios cualitativos de evaluación`);
+        lines.push(lang === 'en'
+            ? `The professor will grade this paper against the dimensions below. Target the TOP-LEVEL descriptor (first level in each list) — write prose that visibly satisfies it. The level descriptors are verbatim from the rubric; do not paraphrase them, but use them as benchmarks.`
+            : `El profesor calificará este paper contra las siguientes dimensiones. Apuntá al descriptor de NIVEL SUPERIOR (primero de cada lista) — redactá prosa que lo satisfaga visiblemente. Los descriptores por nivel son textuales de la rúbrica; no los parafrasees, usalos como referencia.`);
+        for (const crit of rubric.qualityCriteria) {
+            lines.push('');
+            const weight = typeof crit.maxPoints === 'number' ? ` (${crit.maxPoints} pts)` : '';
+            lines.push(`### ${crit.name}${weight}`);
+            if (crit.description) lines.push(crit.description);
+            for (const level of crit.levels) {
+                const pts = typeof level.points === 'number' ? ` — ${level.points} pts` : '';
+                lines.push(`  - **${level.label}**${pts}: ${level.description}`);
+            }
+        }
+    }
+
     return lines.length > 2 ? lines.join('\n') : '';
 }
 

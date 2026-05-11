@@ -78,6 +78,24 @@ export interface PaperRubric {
     structuralExpectations: ReadonlyArray<StructuralExpectation>;
 
     /**
+     * v1.7+ qualitative grading criteria. The "rubric levels" half of
+     * the dual model: each criterion (e.g. "Estilo de escritura",
+     * "Coherencia y lógica") carries level-based descriptions
+     * (Ejemplar / Competente / Aceptable / Deficiente) with optional
+     * point ranges. Real-world seminary rubrics often live ENTIRELY in
+     * this qualitative space — the prescriptive fields above
+     * (`sourceRequirements`, `expectedLength`) stay empty for them.
+     *
+     * The composer emits these as a `## Criterios cualitativos de
+     * evaluación` block so the model writes prose that targets the
+     * exact dimensions the professor will grade.
+     *
+     * Empty by default. Backward-compatible: legacy rubrics (created
+     * before this field existed) deserialize as `[]`.
+     */
+    qualityCriteria: ReadonlyArray<QualityCriterion>;
+
+    /**
      * Optional pointer to the corpus that originated this rubric (for
      * uploaded rubrics). Null for system defaults and pasted-text
      * rubrics. Lets the UI offer "view original" and lets the
@@ -182,6 +200,54 @@ export interface StructuralExpectation {
      * Absent for user-extracted rubrics (no key to look up).
      */
     justificationKey?: string;
+}
+
+/**
+ * v1.7+ qualitative grading criterion. One row of the classic
+ * "levels-based" rubric grid (Estilo de escritura, Coherencia y
+ * lógica, Evidencia de investigación, etc.). The composer surfaces
+ * these to the model so the prose targets the dimensions the
+ * professor will grade.
+ */
+export interface QualityCriterion {
+    /** Stable id within the rubric (e.g. "qc-style", "qc-coherence"). */
+    id: string;
+    /** Short label as it appears in the rubric grid ("Estilo de escritura y formato"). */
+    name: string;
+    /**
+     * One-line description of what this criterion evaluates. Optional —
+     * many real-world rubrics use the criterion name + the level
+     * descriptions as the whole signal.
+     */
+    description?: string;
+    /**
+     * Maximum points the criterion can earn (e.g. 15 for "Estilo",
+     * 25 for "Organización"). Optional for rubrics that grade
+     * without numeric weights. When present, the editor surfaces a
+     * compact "X pts max" badge so the student sees the relative
+     * weight of each criterion.
+     */
+    maxPoints?: number;
+    /**
+     * Level-by-level descriptors. The ordering is meaningful: highest
+     * quality first (Ejemplar → Competente → Aceptable → Deficiente).
+     * Typically 4 levels but the schema accepts 2-5 so rubrics with
+     * different banding (e.g. "Outstanding / Satisfactory /
+     * Unsatisfactory") fit.
+     */
+    levels: ReadonlyArray<QualityCriterionLevel>;
+}
+
+export interface QualityCriterionLevel {
+    /** Label of the level ("Ejemplar", "Competente", "Excellent"). */
+    label: string;
+    /** Full description of what work at this level looks like. */
+    description: string;
+    /**
+     * Points awarded at this level. Optional. When present, must
+     * not exceed the parent criterion's `maxPoints`.
+     */
+    points?: number;
 }
 
 /**
@@ -295,6 +361,7 @@ export const DEFAULT_TMS_EXEGETICAL_RUBRIC: PaperRubric = {
             justificationKey: 'paperSetup.subSteps.plan.rubricJustification.conclusion',
         },
     ],
+    qualityCriteria: [],
     sourceCorpusId: null,
     sourcePastedText: null,
     sourceTemplateId: null,
@@ -357,6 +424,7 @@ export function buildStrategyOnlyRubric(): PaperRubric {
         // useful guidance for the planner regardless of whether the
         // rubric specifies per-type minimums.
         structuralExpectations: DEFAULT_TMS_EXEGETICAL_RUBRIC.structuralExpectations,
+        qualityCriteria: [],
         sourceCorpusId: null,
         sourcePastedText: null,
         sourceTemplateId: null,

@@ -529,6 +529,8 @@
                     "editCta": "Editar rúbrica",
                     "requirementsTitle": "Requisitos del corpus",
                     "structuralTitle": "Recomendaciones estructurales",
+                    "qualityTitle": "Criterios cualitativos de evaluación",
+                    "qualityHint": "Dimensiones que el profesor calificará. El composer apunta al descriptor de nivel superior de cada criterio al redactar el paper.",
                     "optionalCount_one": "+ {{count}} requisito recomendado opcional",
                     "optionalCount_other": "+ {{count}} requisitos recomendados opcionales",
                     "optionalCount": "+ {{count}} recomendados opcionales"
