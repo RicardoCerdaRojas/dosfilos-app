@@ -136,6 +136,8 @@
             "targetCountPlaceholder": "e.g. 12",
             "twoTierLabel": "Two-tier division (long books)",
             "twoTierHint": "For Genesis, Acts, Isaiah, Jeremiah, Psalms. Adds a prior pass (Pass 2a) that divides the book into 2-5 super-macros and nests the macros under each one.",
+            "strictLabel": "Strict mode (per-unit exegesis validated)",
+            "strictHint": "Stops the pipeline after Pass 3. You confirm per unit that an accepted exegetical paper exists. Pass 4 runs with authoritative prompt (no \"preliminary hypothesis\" framing) only when every unit is confirmed.",
             "translationNote": "v1.6: analysis runs on the original text (SBLGNT for NT in Greek, WLC for OT in Hebrew). If the original download fails, the assistant falls back to the translation (RVR1960/ASV) and notifies.",
             "start": "Start analysis",
             "running": "Running pipeline...",
@@ -249,10 +251,12 @@
             },
             "micro": {
                 "function": "Function",
-                "signals": "Signals"
+                "signals": "Signals",
+                "hasPaper": "Has accepted paper"
             },
             "preachable": {
                 "preliminaryBanner": "These are initial homiletical hypotheses based on a panoramic reading of the text. Refine them after detailed exegetical study (\"Create paper from unit\" in the series detail). The fields are editable — adjust title, hypothesis, homiletical line and objective at your discretion before creating the series.",
+                "strictBanner": "Strict mode: every unit was confirmed with an accepted exegetical paper. Propositions reflect validated exegesis and are written in authoritative voice.",
                 "preliminaryChip": "Pending exegetical validation",
                 "editTitle": "Edit unit title",
                 "exegeticalProp": "Initial exegetical hypothesis",
@@ -319,6 +323,8 @@
             "macroFailed": "Couldn't generate the macrostructure. Try again.",
             "microFailed": "Couldn't generate the microstructure. Try again.",
             "superMacroFailed": "Couldn't generate the super-macros. Try again.",
+            "strictAwaitingPapers": "Pass 3 complete. Confirm per unit that you have an accepted exegetical paper, then click \"Continue to Pass 4\".",
+            "strictAllUnitsRequired": "Confirm ALL units before continuing to strict Pass 4.",
             "preachableFailed": "Couldn't generate the preachable units. Try again.",
             "fidelityFailed": "Couldn't complete the fidelity review. Try again.",
             "pipelineDone": "Pipeline complete. Review the preachable units and issues before creating the series.",
@@ -358,7 +364,11 @@
             },
             "micro": {
                 "title": "Microstructure",
-                "subtitle": "Identifies exegetical units within each macro-section, with genre-specific criteria."
+                "subtitle": "Identifies exegetical units within each macro-section, with genre-specific criteria.",
+                "strictCtaTitle": "Confirm per-unit exegesis",
+                "strictCtaBody": "{{confirmed}} of {{total}} units confirmed with an accepted paper. When all are confirmed, Pass 4 can run in strict mode.",
+                "strictContinue": "Continue to Pass 4",
+                "strictBlocked": "Confirm every unit before continuing."
             },
             "preachable": {
                 "title": "Preachable conversion",

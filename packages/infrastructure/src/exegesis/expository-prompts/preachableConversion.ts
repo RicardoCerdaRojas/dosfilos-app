@@ -20,12 +20,43 @@ import { buildSourcePreamble, formatVerses } from './shared';
  * would degrade the quality of the conversion decisions.
  */
 
-export function buildPreachableSystemInstruction(displayLanguage: 'es' | 'en'): string {
-    if (displayLanguage === 'es') {
-        return PREACHABLE_SYSTEM_PROMPT_ES;
-    }
-    return PREACHABLE_SYSTEM_PROMPT_EN;
+export function buildPreachableSystemInstruction(
+    displayLanguage: 'es' | 'en',
+    strictMode: boolean = false,
+): string {
+    const base = displayLanguage === 'es' ? PREACHABLE_SYSTEM_PROMPT_ES : PREACHABLE_SYSTEM_PROMPT_EN;
+    if (!strictMode) return base;
+    const strictOverride = displayLanguage === 'es'
+        ? STRICT_MODE_OVERRIDE_ES
+        : STRICT_MODE_OVERRIDE_EN;
+    return `${base}\n\n${strictOverride}`;
 }
+
+const STRICT_MODE_OVERRIDE_ES = [
+    '## Modo estricto activado (override autoritativo)',
+    '',
+    'El predicador HA COMPLETADO el estudio exegético detallado de cada unidad (papers exegéticos aceptados por unidad, consulta de comentarios técnicos, lexicones, sintaxis original, aparato crítico).',
+    '',
+    'Por lo tanto, REEMPLAZA la sección "Naturaleza epistemológica" anterior por estas reglas:',
+    '',
+    '- Redacta las dos proposiciones en VOZ AUTORITATIVA, no de sugerencia. "Pedro establece" en lugar de "Pedro parece establecer".',
+    '- NO uses los hedges "sugiere", "parece", "podría". El estudio exegético ya validó la lectura.',
+    '- La calidad sigue importando: cita el marcador textual concreto cuando consolide ("la cadena participial en 1:5-7 fundamenta…", "el dativo instrumental ἰδίᾳ δόξῃ asegura que…").',
+    '- Las proposiciones son CONCLUSIONES respaldadas por exégesis, no hipótesis pendientes de validación.',
+].join('\n');
+
+const STRICT_MODE_OVERRIDE_EN = [
+    '## Strict mode active (authoritative override)',
+    '',
+    'The preacher HAS COMPLETED detailed exegetical study of each unit (accepted per-unit exegetical papers, technical commentary lookup, lexicons, original-language syntax, critical apparatus).',
+    '',
+    'Therefore, REPLACE the previous "Epistemological nature" section with these rules:',
+    '',
+    '- Write both propositions in AUTHORITATIVE voice, not suggestive. "Peter establishes" instead of "Peter appears to establish".',
+    '- DO NOT use the hedges "suggests", "appears", "may". The exegetical study already validated the reading.',
+    '- Quality still matters: cite the concrete textual marker when it consolidates the point ("the participial chain in 1:5-7 grounds…", "the instrumental dative ἰδίᾳ δόξῃ secures that…").',
+    '- The propositions are CONCLUSIONS backed by exegesis, not hypotheses pending validation.',
+].join('\n');
 
 const PREACHABLE_SYSTEM_PROMPT_ES = [
     'Eres un homileta y exegeta experto en la metodología histórico-gramatical-literal aplicada a la planificación de predicaciones expositivas.',

@@ -93,6 +93,7 @@ export function useExpositoryAssistant() {
             };
             if (input.targetPreachableCount !== undefined) payload.targetPreachableCount = input.targetPreachableCount;
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            if (input.strictMode === true) payload.strictMode = true;
             return seriesService.expositoryPasses.runPreachableConversion(payload);
         },
     });
@@ -158,6 +159,7 @@ interface PreachableInput extends BaseInput {
     macroSections: MacroSection[];
     exegeticalUnits: ExegeticalUnit[];
     targetPreachableCount?: number;
+    strictMode?: boolean;
 }
 
 interface FidelityInput extends BaseInput {
