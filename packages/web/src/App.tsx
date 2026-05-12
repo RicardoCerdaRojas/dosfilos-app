@@ -28,6 +28,7 @@ import { PricingPage } from '@/pages/public/pricing';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
 import { Landing } from '@/pages/Landing';
+import { LandingV0 } from '@/pages/LandingV0';
 import { TermsOfServicePage } from '@/pages/legal/TermsOfService';
 import { PrivacyPolicyPage } from '@/pages/legal/PrivacyPolicy';
 import { DMCAPolicyPage } from '@/pages/legal/DMCAPolicy';
@@ -94,6 +95,11 @@ function App() {
         <Routes>
           {/* Public Landing Page - Root */}
           <Route path="/" element={<Landing />} />
+          {/* Frozen v0 snapshot for visual side-by-side comparison
+              while the conversion-optimization rewrite ships. Remove
+              this route + the LandingV0 import + the pages/landing-v0
+              folder when the new landing is finalized. */}
+          <Route path="/landing-v0" element={<LandingV0 />} />
 
           {/* Public Pricing Page */}
           <Route path="/pricing" element={<PricingPage />} />
