@@ -5,14 +5,6 @@ import { Reveal } from '../shared/Reveal';
 
 const FAQ_ITEMS = [
     {
-        q: '¿Preach escribe el sermón por mí?',
-        a: 'No. Preach está diseñado para acompañar tu proceso de estudio, no para reemplazarlo. Puede ayudarte a organizar observaciones, consultar fuentes, estructurar bosquejos y preparar notas, pero el discernimiento, la evaluación teológica y la predicación siguen siendo responsabilidad del ministro.',
-    },
-    {
-        q: '¿Puedo confiar en las respuestas?',
-        a: 'Preach reduce la opacidad común de las herramientas de IA respondiendo con referencias trazables cada vez que consulta tu biblioteca o los recursos disponibles: autor, título y página. Aun así, toda respuesta debe ser revisada por el usuario, especialmente en temas doctrinales, exegéticos o pastoralmente sensibles.',
-    },
-    {
         q: '¿Qué significa que el sistema tiene citas con estándar académico?',
         a: 'Cada respuesta del tutor cita sus fuentes indicando autor, título y página exacta. La referencia es rastreable al documento original que tú subiste o que vive en la biblioteca especializada. La bibliografía completa aparece al pie de cada consulta.',
     },
@@ -35,10 +27,6 @@ const FAQ_ITEMS = [
     {
         q: '¿Qué pasa cuando termina el trial de 30 días?',
         a: 'Si no cancelas antes del día 30, se cobra automáticamente el primer mes del plan que elegiste. Puedes cancelar en cualquier momento desde tu cuenta sin letra chica. Si cancelas durante el trial, no se cobra nada.',
-    },
-    {
-        q: '¿Hay material gratuito para empezar a usar mejor el tiempo de estudio?',
-        a: 'Sí. Puedes descargar gratis el manual de predicación expositiva en /recursos/manual-para-predicadores —una guía práctica para preparar sermones con metodología histórico-gramatical, fidelidad al texto y orden en el proceso de estudio. Te lo enviamos al correo en cuanto dejes tu email.',
     },
 ];
 

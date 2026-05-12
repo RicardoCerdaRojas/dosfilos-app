@@ -2,6 +2,7 @@
 export { aggregateDailyMetrics } from './aggregateDailyMetrics';
 export { onUserLogin } from './onUserLogin';
 export { trackUserActivity } from './trackUserActivity';
+export { trackFunnelEvent } from './trackFunnelEvent';
 
 // Export new event-driven analytics functions
 export {

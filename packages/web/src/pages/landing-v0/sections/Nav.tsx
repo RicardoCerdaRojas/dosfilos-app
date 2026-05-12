@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/i18n';
-import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 interface NavProps {
@@ -12,11 +11,9 @@ interface NavProps {
 }
 
 const NAV_LINKS: Array<[string, string]> = [
-    ['Problema', '#problema'],
+    ['Filosofía', '#filosofia'],
     ['Pilares', '#pilar-1'],
     ['Cómo funciona', '#como-funciona'],
-    ['Principios', '#filosofia'],
-    ['Casos de uso', '#casos-de-uso'],
     ['Precios', '#precios'],
     ['FAQ', '#faq'],
 ];
@@ -68,7 +65,6 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                             <a
                                 key={href}
                                 href={href}
-                                onClick={() => track('nav_link_click', { label, href })}
                                 className="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition-colors"
                             >
                                 {label}
@@ -81,10 +77,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                                 Iniciar sesión
                             </Button>
                         </Link>
-                        <Link
-                            to="/register?plan=free"
-                            onClick={() => track('cta_hero_click', { source: 'nav', destination: 'register_free' })}
-                        >
+                        <Link to="/register?plan=free">
                             <Button className="bg-white text-slate-900 hover:bg-slate-200 text-[13px] font-medium h-8 rounded-md ml-1 px-3.5">
                                 Empezar gratis
                             </Button>

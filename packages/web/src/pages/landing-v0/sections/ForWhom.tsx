@@ -1,22 +1,10 @@
 import { Reveal } from '../shared/Reveal';
 
 const PERSONAS = [
-    {
-        title: 'Pastores y predicadores',
-        text: 'Para preparar sermones expositivos semana a semana con respaldo bíblico, orden de estudio y fuentes trazables.',
-    },
-    {
-        title: 'Seminaristas',
-        text: 'Para trabajos exegéticos, investigación académica, idiomas bíblicos y organización de fuentes.',
-    },
-    {
-        title: 'Profesores de teología',
-        text: 'Para preparar clases, apuntes, guías y material didáctico con estructura y profundidad.',
-    },
-    {
-        title: 'Consejeros pastorales',
-        text: 'Para pensar casos desde la Escritura, la teología práctica y la aplicación pastoral responsable.',
-    },
+    { title: 'Pastores predicadores', text: 'Preparación expositiva semana a semana con respaldo exegético y metodología histórico-gramatical.' },
+    { title: 'Seminaristas', text: 'Investigación académica, tesis y trabajos con citas trazables a fuentes primarias.' },
+    { title: 'Profesores de teología', text: 'Material didáctico, apuntes estructurados y consulta cruzada entre autores.' },
+    { title: 'Consejeros pastorales', text: 'Consulta en teología práctica, consejería noutética y aplicación a casos reales.' },
 ];
 
 /** Persona-targeting section — who the platform is built for. */
@@ -30,7 +18,7 @@ export function ForWhom() {
                             Para quién es
                         </div>
                         <h2 className="font-reading text-[36px] md:text-[52px] leading-[1.05] tracking-[-0.02em] text-slate-900">
-                            Hecho para quienes sirven con la Palabra.
+                            Hecho para quienes tienen el llamado.
                         </h2>
                     </div>
                 </Reveal>

@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useFirebase } from '@/context/firebase-context';
 import { useTrackActivity } from '@/hooks/useTrackActivity';
 import { usePlans } from '@/hooks/usePlans';
+import { track, ScrollDepthTracker } from '@/lib/analytics';
 
 import { LANDING_STYLES } from './landing/shared/landingStyles';
 import { Nav } from './landing/sections/Nav';
 import { Hero } from './landing/sections/Hero';
 import { TrustStrip } from './landing/sections/TrustStrip';
+import { Problem } from './landing/sections/Problem';
 import { Philosophy } from './landing/sections/Philosophy';
+import { UseCases } from './landing/sections/UseCases';
+import { LeadMagnetPromo } from './landing/sections/LeadMagnetPromo';
 import { PillarBiblioteca, PillarLenguas, PillarTutores, PillarProduccion } from './landing/sections/Pillars';
 import { HowItWorks } from './landing/sections/HowItWorks';
 import { StatsBand } from './landing/sections/StatsBand';
@@ -56,6 +60,14 @@ export function Landing() {
 
     useEffect(() => {
         if (!user) trackLandingVisit();
+        // Fire `landing_view` once per session through the unified
+        // tracker so GA4 + Meta + Clarity + Firestore mirror all see
+        // the same canonical event with UTM context attached. The
+        // legacy `trackLandingVisit()` above keeps its own dedup
+        // logic for the user_activities collection.
+        track('landing_view', {
+            authenticated: !!user,
+        });
     }, [user, trackLandingVisit]);
 
     const handlePlanSelect = (planId: string) => {
@@ -67,10 +79,14 @@ export function Landing() {
         <div className="bg-white text-slate-900 antialiased overflow-x-hidden" style={{ colorScheme: 'light' }}>
             <style>{LANDING_STYLES}</style>
 
+            <ScrollDepthTracker />
             <Nav mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
             <Hero />
             <TrustStrip />
-            <Philosophy />
+            {/* Problem agitation BEFORE the capability tour. The
+                visitor needs to feel the pain in order for the four
+                pillars to read as relief instead of as a feature list. */}
+            <Problem />
             <PillarBiblioteca />
             <PillarLenguas />
             <PillarTutores />
@@ -78,7 +94,21 @@ export function Landing() {
             <HowItWorks />
             <StatsBand />
             <ForWhom />
+            {/* Principios (antes "Filosofía") sale después de que el
+                visitante entendió qué hace el producto + para quién es.
+                El orden narrativo importa: hablar de responsabilidad
+                pastoral DESPUÉS de mostrar capacidades evita sonar
+                defensivo desde el inicio. */}
+            <Philosophy />
+            {/* Casos de uso — slot reservado para testimonios reales.
+                Mientras llegan, surfacea patrones de uso concretos por
+                persona. Reemplazable uno-a-uno cuando haya testimonios. */}
+            <UseCases />
             <Pricing plans={plans} loading={plansLoading} onPlanSelect={handlePlanSelect} />
+            {/* Soft off-ramp after Pricing — for visitors not ready to
+                commit. Email-gated free manual keeps the relationship
+                alive instead of letting them bounce. */}
+            <LeadMagnetPromo />
             <FAQ />
             <FinalCTA />
             <Footer />

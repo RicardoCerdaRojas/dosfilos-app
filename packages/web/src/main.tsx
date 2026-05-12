@@ -9,6 +9,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { initI18n } from '@/i18n'
 initI18n();
 
+// Initialize analytics — captures UTM params, then dynamically
+// loads GA4 + Microsoft Clarity (+ Meta Pixel when the ID is
+// filled in). Skipped in dev unless VITE_ANALYTICS_FORCE_ON=1.
+import { initAnalytics } from '@/lib/analytics'
+initAnalytics();
+
 // Wire exégesis pricing telemetry into the existing trackUserActivity
 // callable so the 6 events (reserve_attempted/_succeeded/exceeded/
 // refunded/pack.purchased/upgrade.cta_clicked) reach `user_activities`.

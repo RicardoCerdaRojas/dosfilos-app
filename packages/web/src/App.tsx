@@ -28,11 +28,15 @@ import { PricingPage } from '@/pages/public/pricing';
 import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
 import { Landing } from '@/pages/Landing';
+import { LandingV0 } from '@/pages/LandingV0';
+import { ManualPredicacionLandingPage } from '@/pages/recursos/ManualPredicacionLandingPage';
+import { ManualPredicacionThankYouPage } from '@/pages/recursos/ManualPredicacionThankYouPage';
 import { TermsOfServicePage } from '@/pages/legal/TermsOfService';
 import { PrivacyPolicyPage } from '@/pages/legal/PrivacyPolicy';
 import { DMCAPolicyPage } from '@/pages/legal/DMCAPolicy';
 import { CreditsPage } from '@/pages/legal/Credits';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
+import { AdminLeadMagnets } from '@/pages/admin/AdminLeadMagnets';
 import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { AnalyticsDashboard } from '@/pages/admin/AnalyticsDashboard';
 import { GeographicDashboard } from '@/pages/admin/GeographicDashboard';
@@ -94,6 +98,14 @@ function App() {
         <Routes>
           {/* Public Landing Page - Root */}
           <Route path="/" element={<Landing />} />
+          {/* Frozen v0 snapshot for visual side-by-side comparison
+              while the conversion-optimization rewrite ships. Remove
+              this route + the LandingV0 import + the pages/landing-v0
+              folder when the new landing is finalized. */}
+          <Route path="/landing-v0" element={<LandingV0 />} />
+          {/* Lead-magnet funnel (Fase B). Public, no auth. */}
+          <Route path="/recursos/manual-para-predicadores" element={<ManualPredicacionLandingPage />} />
+          <Route path="/recursos/manual-para-predicadores/gracias" element={<ManualPredicacionThankYouPage />} />
 
           {/* Public Pricing Page */}
           <Route path="/pricing" element={<PricingPage />} />
@@ -160,6 +172,11 @@ function App() {
           <Route path="/admin/leads" element={
             <ProtectedRoute>
               <AdminLeads />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/lead-magnets" element={
+            <ProtectedRoute>
+              <AdminLeadMagnets />
             </ProtectedRoute>
           } />
 

@@ -262,6 +262,20 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin();
     }
 
+    // Lead magnet submissions (from /recursos/* funnel pages)
+    // The captureLead Cloud Function writes via admin SDK so it
+    // bypasses these rules entirely; the client SDK only reads,
+    // and only the super admin can do so (admin dashboard).
+    // `update` is allowed for the admin to bump nurtureStage; the
+    // resendLeadMagnet callable also runs server-side and bypasses
+    // these rules.
+    match /lead_magnet_submissions/{submissionId} {
+      allow read, update, delete: if isSuperAdmin();
+      // No client-side create — the captureLead callable is the only
+      // legitimate writer (admin SDK bypasses these rules).
+      allow create: if false;
+    }
+
     // Plans collection (subscription plan definitions)
     // PUBLIC READ - Landing page needs to show plans without authentication
     // Only admin or Cloud Functions can modify
