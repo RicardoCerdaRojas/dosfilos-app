@@ -36,6 +36,7 @@ import { PrivacyPolicyPage } from '@/pages/legal/PrivacyPolicy';
 import { DMCAPolicyPage } from '@/pages/legal/DMCAPolicy';
 import { CreditsPage } from '@/pages/legal/Credits';
 import { AdminLeads } from '@/pages/admin/AdminLeads';
+import { AdminLeadMagnets } from '@/pages/admin/AdminLeadMagnets';
 import CoreLibraryAdmin from '@/pages/admin/CoreLibraryAdmin';
 import { AnalyticsDashboard } from '@/pages/admin/AnalyticsDashboard';
 import { GeographicDashboard } from '@/pages/admin/GeographicDashboard';
@@ -171,6 +172,11 @@ function App() {
           <Route path="/admin/leads" element={
             <ProtectedRoute>
               <AdminLeads />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/lead-magnets" element={
+            <ProtectedRoute>
+              <AdminLeadMagnets />
             </ProtectedRoute>
           } />
 
