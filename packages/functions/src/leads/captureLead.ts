@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { sendDeliveryEmail } from './leadMagnetMailer';
+import { dispatchToMetaCapi, hashEmail } from '../analytics/metaCapi';
 
 interface CaptureLeadRequest {
     email: string;
@@ -104,6 +105,33 @@ export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadRespons
                 nurtureStage: 0,
             });
         }
+
+        // Fire a high-quality CAPI Lead event directly server-side
+        // with the hashed email attached. Better match quality than
+        // the generic mirror from `trackFunnelEvent` because Meta
+        // uses the hashed email to stitch this event to its known
+        // user graph. The client-side `lead_magnet_submitted` event
+        // still fires through `track()` for the browser pixel +
+        // generic CAPI mirror — Meta dedups via different `event_id`
+        // by treating them as separate events (acceptable: one is
+        // Lead with email, the other is the Pixel PageView-style
+        // submit). If we want strict dedup later, plumb the same
+        // eventId from client→captureLead→CAPI.
+        void dispatchToMetaCapi({
+            eventName: 'lead_magnet_submitted',
+            eventId: `capi_lead_${leadId}_${Date.now()}`,
+            timestampMs: Date.now(),
+            sourceUrl: 'https://dosfilosapp.web.app/recursos/manual-para-predicadores',
+            ip: request.rawRequest?.headers['x-forwarded-for'] as string | undefined ?? null,
+            userAgent: request.rawRequest?.headers['user-agent'] as string | undefined ?? null,
+            customData: {
+                lead_magnet: magnetSlug,
+                utm_source: utm?.utm_source ?? null,
+                utm_medium: utm?.utm_medium ?? null,
+                utm_campaign: utm?.utm_campaign ?? null,
+            },
+            hashedEmail: hashEmail(normalizedEmail),
+        });
 
         try {
             await sendDeliveryEmail({

@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { dispatchToMetaCapi } from './metaCapi';
 
 interface TrackFunnelEventRequest {
     /** Deterministic event id used to dedup against Meta CAPI later. */
@@ -65,6 +66,8 @@ export const trackFunnelEvent = onCall<TrackFunnelEventRequest>(
             }
         }
 
+        const ip = (request.rawRequest?.headers['x-forwarded-for'] as string | undefined) ?? null;
+
         await db.collection('funnel_events').doc(eventId).set({
             eventName,
             props: cleanProps,
@@ -78,7 +81,20 @@ export const trackFunnelEvent = onCall<TrackFunnelEventRequest>(
             // Country + IP are auto-attached by Firebase request context
             // when accessible. Use the X-Forwarded-For header (Firebase
             // sets it from Cloud Load Balancer) when present.
-            ip: request.rawRequest?.headers['x-forwarded-for'] ?? null,
+            ip,
+        });
+
+        // Mirror to Meta Conversions API server-side. Same eventId
+        // as the browser pixel so Meta dedups the pair. Fail-soft:
+        // a CAPI outage doesn't undo the Firestore write above.
+        void dispatchToMetaCapi({
+            eventName,
+            eventId,
+            timestampMs: typeof timestamp === 'number' ? timestamp : Date.now(),
+            sourceUrl: url ?? null,
+            ip,
+            userAgent: userAgent ?? null,
+            customData: cleanProps,
         });
 
         return { ok: true, eventId };
