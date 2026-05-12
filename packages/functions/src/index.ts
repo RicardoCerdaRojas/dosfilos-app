@@ -47,6 +47,9 @@ export { submitCancellationFeedback } from './subscription/submitCancellationFee
 // Export Analytics functions
 export { trackUserActivity } from './analytics/trackUserActivity';
 export { trackFunnelEvent } from './analytics/trackFunnelEvent';
+
+// Lead-magnet capture (Fase B funnel)
+export { captureLead } from './leads/captureLead';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 export { recalculateAnalytics, recalculateAnalyticsHttp, recalculateAnalyticsCallable } from './analytics/recalculateAnalytics';

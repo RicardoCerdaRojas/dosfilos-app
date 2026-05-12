@@ -29,6 +29,8 @@ import { GeneratorSettings } from '@/pages/settings/GeneratorSettings';
 import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
 import { Landing } from '@/pages/Landing';
 import { LandingV0 } from '@/pages/LandingV0';
+import { ManualPredicacionLandingPage } from '@/pages/recursos/ManualPredicacionLandingPage';
+import { ManualPredicacionThankYouPage } from '@/pages/recursos/ManualPredicacionThankYouPage';
 import { TermsOfServicePage } from '@/pages/legal/TermsOfService';
 import { PrivacyPolicyPage } from '@/pages/legal/PrivacyPolicy';
 import { DMCAPolicyPage } from '@/pages/legal/DMCAPolicy';
@@ -100,6 +102,9 @@ function App() {
               this route + the LandingV0 import + the pages/landing-v0
               folder when the new landing is finalized. */}
           <Route path="/landing-v0" element={<LandingV0 />} />
+          {/* Lead-magnet funnel (Fase B). Public, no auth. */}
+          <Route path="/recursos/manual-para-predicadores" element={<ManualPredicacionLandingPage />} />
+          <Route path="/recursos/manual-para-predicadores/gracias" element={<ManualPredicacionThankYouPage />} />
 
           {/* Public Pricing Page */}
           <Route path="/pricing" element={<PricingPage />} />
