@@ -11,6 +11,7 @@ interface NavProps {
 }
 
 const NAV_LINKS: Array<[string, string]> = [
+    ['Problema', '#problema'],
     ['Pilares', '#pilar-1'],
     ['Cómo funciona', '#como-funciona'],
     ['Principios', '#filosofia'],

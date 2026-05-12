@@ -8,6 +8,7 @@ import { LANDING_STYLES } from './landing/shared/landingStyles';
 import { Nav } from './landing/sections/Nav';
 import { Hero } from './landing/sections/Hero';
 import { TrustStrip } from './landing/sections/TrustStrip';
+import { Problem } from './landing/sections/Problem';
 import { Philosophy } from './landing/sections/Philosophy';
 import { PillarBiblioteca, PillarLenguas, PillarTutores, PillarProduccion } from './landing/sections/Pillars';
 import { HowItWorks } from './landing/sections/HowItWorks';
@@ -70,6 +71,10 @@ export function Landing() {
             <Nav mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
             <Hero />
             <TrustStrip />
+            {/* Problem agitation BEFORE the capability tour. The
+                visitor needs to feel the pain in order for the four
+                pillars to read as relief instead of as a feature list. */}
+            <Problem />
             <PillarBiblioteca />
             <PillarLenguas />
             <PillarTutores />
