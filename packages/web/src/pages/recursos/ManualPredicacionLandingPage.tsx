@@ -26,6 +26,10 @@ export function ManualPredicacionLandingPage() {
     const { submit, loading, error } = useCaptureLead();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
+    // Honeypot — humans never see this field, but naïve scrapers fill
+    // every input they encounter. Server silently drops submissions
+    // where `website` is non-empty.
+    const [website, setWebsite] = useState('');
 
     useEffect(() => {
         track('lead_magnet_viewed', { magnet: 'manual-para-predicadores' });
@@ -41,6 +45,7 @@ export function ManualPredicacionLandingPage() {
                 email: email.trim(),
                 name: name.trim() || undefined,
                 leadMagnet: 'manual-para-predicadores',
+                website: website.trim() || undefined,
             });
             track('lead_magnet_submitted', {
                 magnet: 'manual-para-predicadores',
@@ -132,6 +137,35 @@ export function ManualPredicacionLandingPage() {
                                 onSubmit={handleSubmit}
                                 className="space-y-3 max-w-md"
                             >
+                                {/* Honeypot — visually hidden, off-screen,
+                                    not focusable. Real users never see or
+                                    interact with this; scraper bots that
+                                    fill every <input> trip it. tabindex
+                                    -1 + autocomplete off prevents accidental
+                                    focus from accessibility tooling. */}
+                                <div
+                                    aria-hidden="true"
+                                    style={{
+                                        position: 'absolute',
+                                        left: '-10000px',
+                                        top: 'auto',
+                                        width: '1px',
+                                        height: '1px',
+                                        overflow: 'hidden',
+                                    }}
+                                >
+                                    <label htmlFor="lm-website">Website (no completar)</label>
+                                    <input
+                                        type="text"
+                                        id="lm-website"
+                                        name="website"
+                                        tabIndex={-1}
+                                        autoComplete="off"
+                                        value={website}
+                                        onChange={(e) => setWebsite(e.target.value)}
+                                    />
+                                </div>
+
                                 <div className="grid sm:grid-cols-2 gap-3">
                                     <input
                                         type="text"

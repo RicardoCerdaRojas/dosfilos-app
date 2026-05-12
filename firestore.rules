@@ -276,6 +276,15 @@ service cloud.firestore {
       allow create: if false;
     }
 
+    // Per-IP rate-limit counters used by captureLead. Written from
+    // the admin SDK inside the Cloud Function (which bypasses rules).
+    // Admin-only client read for forensic inspection of abusers.
+    // Never client-writable.
+    match /rate_limits/{ipKey} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
     // Plans collection (subscription plan definitions)
     // PUBLIC READ - Landing page needs to show plans without authentication
     // Only admin or Cloud Functions can modify

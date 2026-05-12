@@ -18,7 +18,23 @@ interface CaptureLeadRequest {
     };
     /** Session id from analytics — lets us join leads to funnel events. */
     sessionId?: string;
+    /**
+     * Honeypot field. The form renders this as a hidden input that
+     * humans never see; bots that fill every field they find leave
+     * a value. Any non-empty value triggers a silent reject (we
+     * return success to avoid telling the bot it failed).
+     */
+    website?: string;
 }
+
+/**
+ * Per-IP submission cap to mitigate volume abuse. Naïve sliding-window
+ * counter persisted in Firestore. Five-per-hour is generous for a
+ * real human (one retry + a few legitimate re-tests) and brutal for
+ * scripted floods.
+ */
+const RATE_LIMIT_MAX_PER_HOUR = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 interface CaptureLeadResponse {
     ok: true;
@@ -57,7 +73,18 @@ export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadRespons
         // tech-debt for the whole email stack — not a per-function fix.
     },
     async (request) => {
-        const { email, name, leadMagnet, utm, sessionId } = request.data;
+        const { email, name, leadMagnet, utm, sessionId, website } = request.data;
+
+        // Honeypot: hidden field humans never fill. Bots that scrape
+        // every form input leave it populated. Return success so the
+        // attacker doesn't learn the trap exists; do nothing else.
+        if (typeof website === 'string' && website.trim().length > 0) {
+            console.warn('[captureLead] honeypot tripped — silent drop', {
+                ip: request.rawRequest?.headers['x-forwarded-for'],
+                userAgent: request.rawRequest?.headers['user-agent'],
+            });
+            return { ok: true, leadId: 'honeypot', duplicate: false };
+        }
 
         const normalizedEmail = (email ?? '').trim().toLowerCase();
         if (!isValidEmail(normalizedEmail)) {
@@ -72,6 +99,28 @@ export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadRespons
         }
 
         const db = getFirestore();
+
+        // IP rate limit. Track per-IP submission counts in a sliding
+        // 1-hour window. Skipped entirely when we can't determine the
+        // caller's IP (rare — Firebase puts x-forwarded-for in
+        // practically every callable request). Fail-open on Firestore
+        // errors so a transient outage doesn't take the form offline.
+        const callerIp = (request.rawRequest?.headers['x-forwarded-for'] as string | undefined) ?? null;
+        if (callerIp) {
+            try {
+                const allowed = await consumeRateLimitToken(db, callerIp);
+                if (!allowed) {
+                    throw new HttpsError(
+                        'resource-exhausted',
+                        'Demasiados intentos. Espera unos minutos antes de volver a intentar.',
+                    );
+                }
+            } catch (err) {
+                if (err instanceof HttpsError) throw err;
+                console.warn('[captureLead] rate-limit check failed (fail-open):', err);
+            }
+        }
+
         const leadId = buildLeadId(normalizedEmail, magnetSlug);
         const leadRef = db.collection('lead_magnet_submissions').doc(leadId);
 
@@ -172,4 +221,51 @@ function isValidEmail(email: string): boolean {
 function buildLeadId(email: string, magnetSlug: string): string {
     const safeEmail = email.replace(/[^a-z0-9@._-]/g, '_');
     return `${magnetSlug}__${safeEmail}`;
+}
+
+/**
+ * Sliding-window rate-limit token consumer. Uses a deterministic
+ * doc id per IP in `rate_limits/{ipKey}` to track recent submission
+ * timestamps. Returns `true` when the request is allowed,
+ * `false` when over the cap.
+ *
+ * Idempotent under retry: a Firebase callable retry that re-runs
+ * this function will count as a single attempt because the timestamp
+ * advance happens via `arrayUnion` of the current ms — re-running
+ * within the same millisecond is a no-op array-set semantics.
+ *
+ * Single-doc reads/writes; no transaction needed because the worst
+ * race is one bot getting one extra request through.
+ */
+async function consumeRateLimitToken(
+    db: FirebaseFirestore.Firestore,
+    ip: string,
+): Promise<boolean> {
+    // The x-forwarded-for header can be a comma-separated chain when
+    // the request passed through multiple proxies. Take the left-most
+    // entry (the original client) and sanitize for use as doc id.
+    const firstHop = ip.split(',')[0]?.trim() ?? ip;
+    const ipKey = firstHop.replace(/[^a-zA-Z0-9.:_-]/g, '_').slice(0, 80);
+    if (!ipKey) return true;
+
+    const ref = db.collection('rate_limits').doc(`lead_magnet__${ipKey}`);
+    const snap = await ref.get();
+    const now = Date.now();
+    const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+    const data = snap.exists ? snap.data() : null;
+    const recentRaw = (data?.recentMs as number[] | undefined) ?? [];
+    const recent = recentRaw.filter(ms => typeof ms === 'number' && ms >= windowStart);
+
+    if (recent.length >= RATE_LIMIT_MAX_PER_HOUR) {
+        return false;
+    }
+
+    recent.push(now);
+    await ref.set({
+        recentMs: recent,
+        lastSeenAt: FieldValue.serverTimestamp(),
+        ip: firstHop,
+    });
+    return true;
 }
