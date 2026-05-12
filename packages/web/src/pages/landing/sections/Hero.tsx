@@ -94,6 +94,20 @@ export function Hero() {
                         >
                             Plan gratuito disponible · Sin tarjeta · Sin compromiso.
                         </p>
+
+                        {/* Tertiary off-ramp — for visitors not ready to
+                            sign up but willing to leave an email for a
+                            free resource. Lives below the CTAs, visually
+                            quieter so it doesn't compete with primary. */}
+                        <Link
+                            to="/recursos/manual-para-predicadores?utm_source=landing&utm_medium=hero_link&utm_campaign=manual_predicacion"
+                            onClick={() => track('cta_secondary_click', { destination: 'lead_magnet_manual' })}
+                            className="inline-flex items-center gap-1.5 text-[13px] text-indigo-300 hover:text-white transition-colors mt-4 animate-fade-up"
+                            style={{ animationDelay: '450ms' }}
+                        >
+                            ¿No estás listo? Descarga el manual de predicación gratis
+                            <ArrowRight className="h-3 w-3" />
+                        </Link>
                     </div>
 
                     <div

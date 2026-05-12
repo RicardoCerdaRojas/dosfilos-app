@@ -12,6 +12,7 @@ import { TrustStrip } from './landing/sections/TrustStrip';
 import { Problem } from './landing/sections/Problem';
 import { Philosophy } from './landing/sections/Philosophy';
 import { UseCases } from './landing/sections/UseCases';
+import { LeadMagnetPromo } from './landing/sections/LeadMagnetPromo';
 import { PillarBiblioteca, PillarLenguas, PillarTutores, PillarProduccion } from './landing/sections/Pillars';
 import { HowItWorks } from './landing/sections/HowItWorks';
 import { StatsBand } from './landing/sections/StatsBand';
@@ -104,6 +105,10 @@ export function Landing() {
                 persona. Reemplazable uno-a-uno cuando haya testimonios. */}
             <UseCases />
             <Pricing plans={plans} loading={plansLoading} onPlanSelect={handlePlanSelect} />
+            {/* Soft off-ramp after Pricing — for visitors not ready to
+                commit. Email-gated free manual keeps the relationship
+                alive instead of letting them bounce. */}
+            <LeadMagnetPromo />
             <FAQ />
             <FinalCTA />
             <Footer />

@@ -36,6 +36,10 @@ const FAQ_ITEMS = [
         q: '¿Qué pasa cuando termina el trial de 30 días?',
         a: 'Si no cancelas antes del día 30, se cobra automáticamente el primer mes del plan que elegiste. Puedes cancelar en cualquier momento desde tu cuenta sin letra chica. Si cancelas durante el trial, no se cobra nada.',
     },
+    {
+        q: '¿Hay material gratuito para empezar a usar mejor el tiempo de estudio?',
+        a: 'Sí. Puedes descargar gratis el manual de predicación expositiva en /recursos/manual-para-predicadores —una guía práctica para preparar sermones con metodología histórico-gramatical, fidelidad al texto y orden en el proceso de estudio. Te lo enviamos al correo en cuanto dejes tu email.',
+    },
 ];
 
 interface FAQItemProps {
