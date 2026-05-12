@@ -44,6 +44,7 @@ export type ExegesisOperationKey =
     | 'extractRubricFromText'
     | 'extractRubricFromDocument'
     | 'extractRubricFromImage'
+    | 'extractRubricPreviewFromImage'
     | 'extractStyleGuideManifest'
     | 'classifySourceType'
     | 'generateStep'
@@ -154,6 +155,15 @@ export const EXEGESIS_OPERATION_CATALOG: Readonly<Record<ExegesisOperationKey, E
         estimatedCostUsd: 0.02,
         requiresPreConfirm: false,
         displayKeyI18n: 'studies.operations.extractRubricFromImage',
+    },
+    extractRubricPreviewFromImage: {
+        key: 'extractRubricPreviewFromImage',
+        // Same Gemini Vision call as `extractRubricFromImage` — the
+        // only difference is whether we persist the result. Cost is
+        // identical so the operation costs the same credits.
+        estimatedCostUsd: 0.02,
+        requiresPreConfirm: false,
+        displayKeyI18n: 'studies.operations.extractRubricPreviewFromImage',
     },
     extractStyleGuideManifest: {
         key: 'extractStyleGuideManifest',

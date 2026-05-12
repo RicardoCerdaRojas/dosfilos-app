@@ -101,6 +101,7 @@ export interface UpdatePaperBriefInput {
 import type { StepEmphasis } from '../entities/StepSourcePlan';
 import type {
     PaperRubric,
+    QualityCriterion,
     SourceRequirement,
     StructuralExpectation,
 } from '../entities/PaperRubric';
@@ -133,6 +134,7 @@ export interface UpdateRubricInput {
     expectedLength?: PaperRubric['expectedLength'];
     sourceRequirements?: ReadonlyArray<SourceRequirement>;
     structuralExpectations?: ReadonlyArray<StructuralExpectation>;
+    qualityCriteria?: ReadonlyArray<QualityCriterion>;
 }
 
 // ── ResetRubric ────────────────────────────────────────────────────────
@@ -252,6 +254,36 @@ export interface ExtractRubricFromImageInput {
 }
 
 export type ExtractRubricFromImageOutput = ExtractRubricFromTextOutput;
+
+// ── ExtractRubricPreviewFromImage ──────────────────────────────────────
+//
+// Same Gemini Vision call as `ExtractRubricFromImage` but the result
+// is RETURNED to the caller without persisting on `paper.rubric`.
+// Used by the qualitative-criteria editor to let the student pull
+// criteria from a fresh image WITHOUT replacing the prescriptive
+// section of the rubric they already configured. The client cherry-
+// picks `qualityCriteria` from the response, merges into local state,
+// and persists via `UpdateRubric` on the editor's Save action.
+
+export interface ExtractRubricPreviewFromImageInput {
+    ownerId: string;
+    paperId: string;
+    /** MIME type of the image (e.g. `image/png`, `image/jpeg`, `image/webp`). */
+    mimeType: string;
+    /** Base64-encoded image bytes, no `data:...;base64,` prefix. */
+    imageBase64: string;
+    /** Override for the extraction language. Defaults to paper.displayLanguage. */
+    language?: 'es' | 'en';
+}
+
+export interface ExtractRubricPreviewFromImageOutput {
+    /** Full extracted rubric — caller decides which fields to consume. */
+    rubric: import('../entities/PaperRubric').PaperRubric;
+    /** Extractor confidence. */
+    confidence: 'high' | 'medium' | 'low';
+    /** Notes from the extractor about ambiguities. Localized to `language`. */
+    reviewNotes: ReadonlyArray<string>;
+}
 
 // ── AddProjectSource ────────────────────────────────────────────────────
 

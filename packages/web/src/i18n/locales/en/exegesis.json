@@ -556,6 +556,81 @@
                     "nameRequired": "Enter a name for the template",
                     "saved": "Template saved to your library",
                     "saveFailed": "Could not save the template"
+                },
+                "editor": {
+                    "tabPrescriptive": "Prescriptive",
+                    "tabPrescriptiveHint": "Countable minimums (sources, length, citation, structure).",
+                    "tabQualitative": "Qualitative",
+                    "tabQualitativeHint": "Levels-based criteria (Exemplary / Competent / etc.)."
+                },
+                "qualityEditor": {
+                    "title": "Qualitative criteria",
+                    "subtitle": "Each criterion is graded by levels (Exemplary / Competent / Acceptable / Deficient grid). The composer targets the top-level descriptor while writing.",
+                    "empty": "No qualitative criteria yet. Add one or extract the rubric from a photo/PDF.",
+                    "addCriterion": "Add criterion",
+                    "extractFromImageCta": "Extract from image",
+                    "extractFromImageTitle": "Extract qualitative criteria from image",
+                    "extractFromImageSubtitle": "Upload or paste a rubric image. We pull only the qualitative criteria and append them to your list — the prescriptive section is left untouched.",
+                    "extractFromImageDropzone": "Drag, paste, or click to upload a rubric image",
+                    "extractFromImageHint": "PNG/JPG/WEBP up to 10 MB. Cmd/Ctrl+V also works inside the dialog.",
+                    "extractFromImageSubmit": "Extract and append",
+                    "extractFromImageExtracting": "Extracting qualitative criteria...",
+                    "extractFromImageEncoding": "Preparing image...",
+                    "extractFromImageNoCriteria": "The image didn't contain detectable qualitative criteria. Try a clearer image with the grid visible.",
+                    "extractFromImageAddedOne": "Added 1 new criterion",
+                    "extractFromImageAddedMany": "Added {{count}} new criteria",
+                    "extractFromImageAddedWithDupes": "Added {{added}} ({{skipped}} duplicate(s) by name were skipped)",
+                    "extractFromImageFailed": "Could not extract from the image. Make sure it's legible and try again.",
+                    "extractFromImageOverloaded": "The analysis engine is overloaded. Try again in a few seconds.",
+                    "removeCriterion": "Remove criterion",
+                    "criterionNameLabel": "Criterion name",
+                    "criterionNamePlaceholder": "e.g. Technical exegesis quality",
+                    "criterionDescriptionLabel": "Description (optional)",
+                    "criterionDescriptionPlaceholder": "What this criterion evaluates in general.",
+                    "maxPointsLabel": "Max points",
+                    "maxPointsPlaceholder": "e.g. 25",
+                    "levelsTitle": "Levels",
+                    "addLevel": "Add level",
+                    "removeLevel": "Remove level",
+                    "levelLabelPlaceholder": "e.g. Exemplary",
+                    "levelPointsPlaceholder": "Pts",
+                    "levelDescriptionPlaceholder": "What the work must demonstrate to reach this level.",
+                    "defaultLevel": {
+                        "exemplary": "Exemplary",
+                        "competent": "Competent",
+                        "acceptable": "Acceptable",
+                        "deficient": "Deficient"
+                    }
+                },
+                "chooser": {
+                    "title": "How do you want to set up the rubric?",
+                    "subtitle": "Pick an entry point. You can edit whatever lands here at any time.",
+                    "activeBadge": "✓ In use",
+                    "cards": {
+                        "photo": {
+                            "label": "Photo or PDF",
+                            "hint": "Upload an image or PDF of the seminary's rubric. Cmd/Ctrl+V also works."
+                        },
+                        "paste": {
+                            "label": "Paste text",
+                            "hint": "Copy the brief from your LMS or syllabus and we'll extract it to a structured format."
+                        },
+                        "default": {
+                            "label": "Academic TMS default",
+                            "hint": "Standard exegetical minimums — useful when the professor didn't hand a formal rubric."
+                        },
+                        "template": {
+                            "label": "Saved template",
+                            "hint_one": "{{count}} saved template in your library",
+                            "hint_other": "{{count}} saved templates in your library",
+                            "empty": "No templates yet. Save one from the summary view.",
+                            "pickerLabel": "Pick which one to apply"
+                        },
+                        "none": {
+                            "label": "No formal rubric",
+                            "hint": "Strategy-only — the composer works without source requirements."
+                        }
+                    }
                 }
             },
             "manifest": {

@@ -10,21 +10,24 @@ import {
  * that a paper should follow (per-section emphasis: which source
  * types lead the introduction, the verse body, the conclusion).
  *
- * Today the data lives on `paper.rubric.structuralExpectations`.
- * Conceptually it belongs to the corpus strategy (the method the
- * student uses to build the corpus, not the seminary's grading
- * criteria). The decoupling refactor (memory entry
- * `feature_exegesis_strategy_rubric_separation`) plans to move it
- * to a richer `ExegeticalStrategy` entity in a future pass.
+ * Conceptually the data belongs to the corpus strategy (the method
+ * the student uses to build the corpus, not the seminary's grading
+ * criteria). The Phase 2B decoupling moved it from PaperRubric to
+ * ExegeticalPaper.structuralExpectations as a top-level field —
+ * still kept dual-written to the rubric for back-compat with
+ * documents persisted before the move.
  *
- * Routing every paper-level read through this helper means that
- * future move is a SINGLE-FILE change — internals of the helper —
- * and downstream consumers stay stable.
+ * Routing every paper-level read through this helper means the move
+ * is a one-line change inside the helper and downstream consumers
+ * stay stable.
  *
  * Resolution order:
- *   1. `paper.rubric.structuralExpectations` when present and non-
- *      empty (today's authoritative source).
- *   2. `DEFAULT_TMS_EXEGETICAL_RUBRIC.structuralExpectations` as
+ *   1. `paper.structuralExpectations` when present and non-empty
+ *      (canonical post-Phase-2B source).
+ *   2. `paper.rubric.structuralExpectations` when present and non-
+ *      empty (back-compat for legacy papers persisted before the
+ *      paper-level field existed).
+ *   3. `DEFAULT_TMS_EXEGETICAL_RUBRIC.structuralExpectations` as
  *      the system fallback (covers papers without a rubric, plus
  *      papers whose rubric was extracted without per-section
  *      emphasis filled in).
@@ -32,6 +35,8 @@ import {
 export function getEffectiveStructuralExpectations(
     paper: ExegeticalPaper,
 ): ReadonlyArray<StructuralExpectation> {
+    const fromPaper = paper.structuralExpectations ?? [];
+    if (fromPaper.length > 0) return fromPaper;
     const fromRubric = paper.rubric?.structuralExpectations ?? [];
     if (fromRubric.length > 0) return fromRubric;
     return DEFAULT_TMS_EXEGETICAL_RUBRIC.structuralExpectations;
