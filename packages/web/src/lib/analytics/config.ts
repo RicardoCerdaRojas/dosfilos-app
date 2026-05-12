@@ -19,10 +19,11 @@ export const ANALYTICS_CONFIG = {
 
     /**
      * Meta (Facebook) Pixel ID. Empty string disables the Meta path.
-     * When the Business Manager account finishes provisioning,
-     * paste the pixel id here and the adapter activates automatically.
+     * Created 2026-05-12 in the DosFilos Business Manager with
+     * Conversions API enabled — the CAPI access token is generated
+     * separately in the Pixel settings and lives server-side.
      */
-    metaPixelId: '',
+    metaPixelId: '860436937085301',
 } as const;
 
 /**
