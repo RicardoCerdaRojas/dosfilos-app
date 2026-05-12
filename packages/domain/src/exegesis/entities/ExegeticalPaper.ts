@@ -1,7 +1,7 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { ProjectSource } from './ProjectSource';
 import type { ExegeticalStep } from './ExegeticalStep';
-import type { PaperRubric } from './PaperRubric';
+import type { PaperRubric, StructuralExpectation } from './PaperRubric';
 import type { StepSourcePlan } from './StepSourcePlan';
 
 /**
@@ -120,6 +120,27 @@ export interface ExegeticalPaper {
      * a null rubric.
      */
     rubric: PaperRubric | null;
+
+    /**
+     * Per-section emphasis (which source types lead the introduction,
+     * the verse body, the conclusion). Conceptually part of the
+     * student's exegetical strategy — what method they use to build
+     * the corpus — NOT part of the seminary's grading rubric.
+     *
+     * Today the same data also lives on `paper.rubric.structuralExpectations`
+     * for back-compat with documents persisted before this field was
+     * introduced. `getEffectiveStructuralExpectations(paper)` is the
+     * canonical chokepoint for resolving the effective value: it
+     * prefers the paper-level field when populated and falls back to
+     * the rubric field, then the system default. Writers should now
+     * dual-write to both locations until a future cleanup PR purges
+     * the rubric field entirely.
+     *
+     * Optional + may be empty: legacy papers won't carry this field
+     * until the next save, and freshly-created papers seed from the
+     * default rubric so the field is rarely empty in practice.
+     */
+    structuralExpectations?: ReadonlyArray<StructuralExpectation>;
 
     /**
      * Per-step source-emphasis plan the student configured (or accepted

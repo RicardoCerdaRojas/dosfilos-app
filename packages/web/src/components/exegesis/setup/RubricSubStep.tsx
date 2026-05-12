@@ -1,27 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
     AlertTriangle,
+    Camera,
     CheckCircle2,
+    Clipboard,
     FileCheck2,
+    GraduationCap,
     Loader2,
+    Minus,
     RotateCcw,
     Pencil,
     Save,
     Sparkles,
+    Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     SOURCE_TYPE_GROUPS,
-    STRATEGY_ONLY_RUBRIC_PRESET_ID,
+    getEffectiveStructuralExpectations,
     getSourceTypeOrderIndex,
     type ExegeticalPaper,
     type PaperRubric,
+    type QualityCriterion,
     type SourceRequirement,
     type SourceType,
 } from '@dosfilos/domain';
+import { QualityCriteriaEditor } from '@/components/exegesis/rubric/QualityCriteriaEditor';
 import { RequirementRow, AddRequirementButton } from '@/components/exegesis/rubric/RequirementRow';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
-import { RubricTemplatePicker } from '@/components/exegesis/setup/RubricTemplatePicker';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FileDropzone } from '@/components/ui/file-dropzone';
@@ -117,11 +123,13 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
     // flips to 'editing'; saving or cancelling flips back.
     const [mode, setMode] = useState<'summary' | 'editing'>('summary');
 
-    // Extract-from-text dialog. Lives behind a button in the header
-    // because most of the time the user doesn't need it (they apply
-    // a saved template). When they DO need it, it warrants the focus
-    // a modal gives.
+    // Extract dialog state. The 5-card chooser routes the user here:
+    // photo/PDF card → opens with `document` tab, paste card → opens
+    // with `text` tab. `extractInitialTab` seeds the dialog tab on
+    // open and resets back to null on close so a fresh open from a
+    // different card lands on the right tab.
     const [extractOpen, setExtractOpen] = useState(false);
+    const [extractInitialTab, setExtractInitialTab] = useState<'text' | 'document'>('text');
 
     // Form state seeded from the persisted rubric. Re-syncs whenever
     // the persisted rubric reference changes (e.g. another tab saved
@@ -133,6 +141,12 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
     const [lengthMin, setLengthMin] = useState<string>(rubric.expectedLength?.min?.toString() ?? '');
     const [lengthMax, setLengthMax] = useState<string>(rubric.expectedLength?.max?.toString() ?? '');
     const [requirements, setRequirements] = useState<SourceRequirement[]>([...rubric.sourceRequirements]);
+    const [qualityCriteria, setQualityCriteria] = useState<ReadonlyArray<QualityCriterion>>(rubric.qualityCriteria);
+    // Tab inside the editor: 'prescriptive' (the existing form for
+    // metadata + requirements + structural) vs 'qualitative' (the
+    // levels-grid criteria). Editing is shared across tabs — Save
+    // commits both at once.
+    const [editTab, setEditTab] = useState<'prescriptive' | 'qualitative'>('prescriptive');
 
     useEffect(() => {
         setDescription(rubric.description ?? '');
@@ -141,9 +155,11 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
         setLengthMin(rubric.expectedLength?.min?.toString() ?? '');
         setLengthMax(rubric.expectedLength?.max?.toString() ?? '');
         setRequirements([...rubric.sourceRequirements]);
+        setQualityCriteria(rubric.qualityCriteria);
         // When the rubric reference changes (template applied / extracted /
         // reset), drop edit mode so the user sees the new content first.
         setMode('summary');
+        setEditTab('prescriptive');
     }, [rubric]);
 
     const usedTypes = useMemo(() => new Set(requirements.map(r => r.sourceType)), [requirements]);
@@ -185,6 +201,7 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                 citationStandard: citationStandard.trim() || null,
                 expectedLength,
                 sourceRequirements: requirements,
+                qualityCriteria,
             });
             toast.success(t('paperSetup.subSteps.rubric.actions.saved'));
             // The useEffect on [rubric] will flip mode back to
@@ -255,23 +272,25 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                         {t('paperSetup.subSteps.rubric.description')}
                     </p>
                 </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setExtractOpen(true)}
-                    className="shrink-0 text-xs"
-                >
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    {t('paperSetup.subSteps.rubric.extract.openCta')}
-                </Button>
             </header>
 
-            {/* Plantillas FIRST — primary path for repeat users. The
-                extract-from-text path lives in a dialog opened from
-                the header (secondary action — most users apply a
-                saved template, not extract from scratch every time). */}
-            <RubricTemplatesPanel paper={paper} />
+            {/* Single explicit entry point. The 5 cards collapse what
+                used to be a templates panel + a separate "Extract"
+                header button into one obvious chooser. The active
+                option is badged so the student always knows what's in
+                effect. */}
+            <RubricSetupChooser
+                paper={paper}
+                rubric={rubric}
+                onPhotoOrPdf={() => {
+                    setExtractInitialTab('document');
+                    setExtractOpen(true);
+                }}
+                onPasteText={() => {
+                    setExtractInitialTab('text');
+                    setExtractOpen(true);
+                }}
+            />
 
             <Dialog open={extractOpen} onOpenChange={setExtractOpen}>
                 <DialogContent className="sm:max-w-2xl">
@@ -285,6 +304,7 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                         </DialogDescription>
                     </DialogHeader>
                     <ExtractSourceTabs
+                        initialTab={extractInitialTab}
                         text={<RubricExtractFromTextPanel paper={paper} onExtracted={() => setExtractOpen(false)} />}
                         document={<RubricExtractFromDocumentPanel paper={paper} onExtracted={() => setExtractOpen(false)} />}
                     />
@@ -302,6 +322,42 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
             )}
 
             {mode === 'editing' && (
+                <>
+
+            {/* ── Tab bar (Prescriptiva | Cualitativa) ── */}
+            <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-xs">
+                <button
+                    type="button"
+                    onClick={() => setEditTab('prescriptive')}
+                    className={`px-3 py-1.5 rounded transition-colors ${editTab === 'prescriptive' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    {t('paperSetup.subSteps.rubric.editor.tabPrescriptive')}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setEditTab('qualitative')}
+                    className={`px-3 py-1.5 rounded transition-colors ${editTab === 'qualitative' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    {t('paperSetup.subSteps.rubric.editor.tabQualitative')}
+                </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground italic -mt-2">
+                {editTab === 'prescriptive'
+                    ? t('paperSetup.subSteps.rubric.editor.tabPrescriptiveHint')
+                    : t('paperSetup.subSteps.rubric.editor.tabQualitativeHint')}
+            </p>
+
+            {editTab === 'qualitative' && (
+                <QualityCriteriaEditor
+                    paperId={paper.id}
+                    language={paper.displayLanguage}
+                    criteria={qualityCriteria}
+                    onChange={setQualityCriteria}
+                    disabled={updatePending}
+                />
+            )}
+
+            {editTab === 'prescriptive' && (
                 <>
 
             {/* ── Metadata ── */}
@@ -410,7 +466,7 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                 </header>
                 <ul className="space-y-2">
                     {(['introduction', 'verse', 'conclusion'] as const).map(section => {
-                        const exp = rubric.structuralExpectations.find(e => e.section === section);
+                        const exp = getEffectiveStructuralExpectations(paper).find(e => e.section === section);
                         return (
                             <li
                                 key={section}
@@ -449,6 +505,9 @@ function RubricEditor({ paper, rubric }: RubricEditorProps) {
                     })}
                 </ul>
             </section>
+
+                </>
+            )}
 
             {/* ── Actions ── */}
             <footer className="flex items-center justify-between pt-4 border-t border-border">
@@ -595,7 +654,7 @@ function RubricSummaryView({
                 </h4>
                 <ul className="space-y-1.5">
                     {(['introduction', 'verse', 'conclusion'] as const).map(section => {
-                        const exp = rubric.structuralExpectations.find(e => e.section === section);
+                        const exp = getEffectiveStructuralExpectations(paper).find(e => e.section === section);
                         return (
                             <li key={section} className="text-xs text-foreground">
                                 <span className="font-medium">
@@ -616,7 +675,8 @@ function RubricSummaryView({
                 <RubricQualityCriteriaPanel criteria={rubric.qualityCriteria} t={t} />
             )}
 
-            <footer className="flex items-center justify-end pt-3 border-t border-border">
+            <footer className="flex items-center justify-between flex-wrap gap-2 pt-3 border-t border-border">
+                <SaveAsTemplateAction paper={paper} />
                 <Button
                     type="button"
                     variant="ghost"
@@ -901,12 +961,19 @@ function RubricExtractFromTextPanel({ paper, onExtracted }: RubricExtractFromTex
 function ExtractSourceTabs({
     text,
     document,
+    initialTab = 'text',
 }: {
     text: React.ReactNode;
     document: React.ReactNode;
+    initialTab?: 'text' | 'document';
 }) {
     const { t } = useTranslation('exegesis');
-    const [tab, setTab] = useState<'text' | 'document'>('text');
+    // Re-seed when `initialTab` changes (caller flips it from
+    // chooser cards). Inside the dialog session the user can still
+    // switch tabs freely; the seed only fires when the prop value
+    // changes which mirrors a fresh open-from-chooser.
+    const [tab, setTab] = useState<'text' | 'document'>(initialTab);
+    useEffect(() => { setTab(initialTab); }, [initialTab]);
     return (
         <div className="space-y-3">
             <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-xs">
@@ -1145,237 +1212,332 @@ function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// ── Templates panel ────────────────────────────────────────────────────
+// ── Setup chooser (single explicit entry point) ────────────────────────
 //
-// Bridges the paper-embedded rubric to the user-level template
-// library. Two affordances:
-//   1. **Apply template** — pick a saved template and copy its
-//      content into `paper.rubric` (overwriting). Confirms when the
-//      current rubric was user-edited so manual tweaks aren't
-//      silently lost.
-//   2. **Save current as template** — snapshot `paper.rubric` into
-//      a new `UserRubric` for reuse on future papers.
+// Five-card chooser that replaces the old templates-panel + extract
+// header button. Each card maps to one of the discrete ways a
+// student can populate `paper.rubric`:
 //
-// When the user has no templates yet, the panel collapses to a
-// single "Save current as template" CTA — applying nothing is a
-// no-op so we don't surface an empty picker.
+//   📷 Photo/PDF        → opens extract dialog on the document tab
+//   📄 Paste text       → opens extract dialog on the text tab
+//   🎓 TMS default      → resets to the system-default rubric
+//   ⭐ Saved template   → expands inline picker, then applies
+//   ➖ No formal rubric → applies the strategy-only preset
+//
+// The card matching the current rubric state shows an "✓ En uso"
+// badge so the student can see at a glance what's active. Cards
+// that would replace a user-edited rubric show a confirm dialog
+// before firing — same behavior the old templates-panel had, kept
+// because losing manual tweaks silently is a real footgun.
+//
+// Photo/paste are wired through callback props because the dialog
+// state lives in the parent (so it can also drive the dialog tab
+// selection without prop-drilling deep). The other three actions
+// fire local mutations because the chooser owns the templates
+// inline picker + confirm dialog state already.
 
-function RubricTemplatesPanel({ paper }: { paper: ExegeticalPaper }) {
+interface RubricSetupChooserProps {
+    paper: ExegeticalPaper;
+    rubric: PaperRubric;
+    onPhotoOrPdf: () => void;
+    onPasteText: () => void;
+}
+
+function RubricSetupChooser({ paper, rubric, onPhotoOrPdf, onPasteText }: RubricSetupChooserProps) {
     const { t } = useTranslation('exegesis');
-    const { rubrics, defaultRubric, applyTemplate, applyStrategyOnly, saveAsTemplate } = useUserRubrics();
+    const { rubrics, applyTemplate, applyStrategyOnly } = useUserRubrics();
     const { resetRubric } = useExegesisPapers();
 
-    const rubric = paper.rubric;
-    // Derive what the picker should pre-select to mirror the paper's
-    // current rubric. We use this to disable the Apply button when
-    // the user picks the option that's already in effect (avoids
-    // pointless writes + flicker).
-    //
-    // Detection rules (in priority order):
-    //   1. Rubric stamped with `sourceTemplateId` AND that template
-    //      still exists in the user's library → the template id.
-    //   2. Empty `sourceRequirements` + `provenance === 'system-default'`
-    //      → strategy-only preset (matches `buildStrategyOnlyRubric`).
-    //   3. Non-empty requirements + `provenance === 'system-default'`
-    //      → system TMS default (sentinel `null`).
-    //   4. Anything else (user-edited, extracted, deleted-template
-    //      remnant) → `undefined` ("no clean match"). The picker
-    //      shows a "elige qué aplicar" placeholder and any choice
-    //      enables Apply.
-    const currentTemplateId = rubric?.sourceTemplateId ?? null;
-    const templateStillExists = currentTemplateId !== null && rubrics.some(r => r.id === currentTemplateId);
-    const currentSelection: string | null | undefined = (() => {
-        if (!rubric) return undefined;
-        if (templateStillExists) return currentTemplateId!;
-        if (rubric.sourceRequirements.length === 0 && rubric.provenance === 'system-default') {
-            return STRATEGY_ONLY_RUBRIC_PRESET_ID;
+    // Detect the active card so we can render an "✓ En uso" badge.
+    // Mirrors the resolution rules the old templates-panel used.
+    const activeCard: 'photo' | 'paste' | 'default' | 'template' | 'none' | null = (() => {
+        if (rubric.provenance === 'extracted-from-document') return 'photo';
+        if (rubric.provenance === 'extracted-from-text') return 'paste';
+        if (rubric.provenance === 'from-template') {
+            const tmplId = rubric.sourceTemplateId;
+            if (tmplId && rubrics.some(r => r.id === tmplId)) return 'template';
+            return null;
         }
-        if (rubric.provenance === 'system-default') return null;
-        return undefined;
+        if (rubric.provenance === 'system-default') {
+            return rubric.sourceRequirements.length === 0 ? 'none' : 'default';
+        }
+        // user-edited → don't badge any card; the user has diverged
+        // from every preset.
+        return null;
     })();
 
-    const [pickerValue, setPickerValue] = useState<string | null | undefined>(currentSelection);
-    useEffect(() => {
-        setPickerValue(currentSelection);
-    }, [currentSelection]);
+    // Inline picker for the template card. Toggles open when the
+    // student clicks the template card; collapses back when they
+    // pick + apply or click the card again.
+    const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
 
-    const [savingMode, setSavingMode] = useState(false);
-    const [templateName, setTemplateName] = useState('');
-    const [confirmApplyOpen, setConfirmApplyOpen] = useState(false);
+    // Confirmation routing: when the current rubric is user-edited,
+    // any apply action confirms before firing. We stash the pending
+    // action in state so a single ConfirmDialog instance can drive
+    // them all.
+    const [pendingAction, setPendingAction] = useState<
+        | { kind: 'default' }
+        | { kind: 'none' }
+        | { kind: 'template'; templateId: string }
+        | null
+    >(null);
 
     const applyPending = applyTemplate.isPending || applyStrategyOnly.isPending || resetRubric.isPending;
-    const isStrategy = pickerValue === STRATEGY_ONLY_RUBRIC_PRESET_ID;
-    const isSystem = pickerValue === null;
-    const isTemplate = typeof pickerValue === 'string' && !isStrategy;
-    const hasSelection = isStrategy || isSystem || isTemplate;
-    // "Already in effect" → disable Apply so we don't let the user
-    // re-apply what's already there.
-    const alreadyInEffect = hasSelection && pickerValue === currentSelection;
 
-    const handleApply = () => {
-        if (!hasSelection || alreadyInEffect) return;
-        // The current rubric carries user edits — confirm before
-        // overwriting. Otherwise apply directly.
-        if (rubric?.provenance === 'user-edited') {
-            setConfirmApplyOpen(true);
+    const requestApply = (action: NonNullable<typeof pendingAction>) => {
+        if (rubric.provenance === 'user-edited') {
+            setPendingAction(action);
             return;
         }
-        void doApply();
+        void doApply(action);
     };
 
-    const doApply = async () => {
-        setConfirmApplyOpen(false);
+    const doApply = async (action: NonNullable<typeof pendingAction>) => {
+        setPendingAction(null);
         try {
-            if (isStrategy) {
-                await applyStrategyOnly.mutateAsync({ paperId: paper.id });
-            } else if (isSystem) {
+            if (action.kind === 'default') {
                 await resetRubric.mutateAsync({ paperId: paper.id });
-            } else if (isTemplate) {
+            } else if (action.kind === 'none') {
+                await applyStrategyOnly.mutateAsync({ paperId: paper.id });
+            } else {
                 await applyTemplate.mutateAsync({
                     paperId: paper.id,
-                    rubricTemplateId: pickerValue as string,
+                    rubricTemplateId: action.templateId,
                 });
-            } else {
-                return;
             }
             toast.success(t('paperSetup.subSteps.rubric.templates.applied'));
+            setTemplatePickerOpen(false);
         } catch (err) {
             console.error('[exegesis] apply rubric failed:', err);
             toast.error(t('paperSetup.subSteps.rubric.templates.applyFailed'));
         }
     };
 
+    const cards: ReadonlyArray<{
+        kind: 'photo' | 'paste' | 'default' | 'template' | 'none';
+        icon: React.ReactNode;
+        label: string;
+        hint: string;
+        onClick: () => void;
+        disabled?: boolean;
+    }> = [
+        {
+            kind: 'photo',
+            icon: <Camera className="h-5 w-5" />,
+            label: t('paperSetup.subSteps.rubric.chooser.cards.photo.label'),
+            hint: t('paperSetup.subSteps.rubric.chooser.cards.photo.hint'),
+            onClick: onPhotoOrPdf,
+        },
+        {
+            kind: 'paste',
+            icon: <Clipboard className="h-5 w-5" />,
+            label: t('paperSetup.subSteps.rubric.chooser.cards.paste.label'),
+            hint: t('paperSetup.subSteps.rubric.chooser.cards.paste.hint'),
+            onClick: onPasteText,
+        },
+        {
+            kind: 'default',
+            icon: <GraduationCap className="h-5 w-5" />,
+            label: t('paperSetup.subSteps.rubric.chooser.cards.default.label'),
+            hint: t('paperSetup.subSteps.rubric.chooser.cards.default.hint'),
+            onClick: () => requestApply({ kind: 'default' }),
+        },
+        {
+            kind: 'template',
+            icon: <Star className="h-5 w-5" />,
+            label: t('paperSetup.subSteps.rubric.chooser.cards.template.label'),
+            hint: rubrics.length === 0
+                ? t('paperSetup.subSteps.rubric.chooser.cards.template.empty')
+                : t('paperSetup.subSteps.rubric.chooser.cards.template.hint', { count: rubrics.length }),
+            onClick: () => setTemplatePickerOpen(o => !o),
+            disabled: rubrics.length === 0,
+        },
+        {
+            kind: 'none',
+            icon: <Minus className="h-5 w-5" />,
+            label: t('paperSetup.subSteps.rubric.chooser.cards.none.label'),
+            hint: t('paperSetup.subSteps.rubric.chooser.cards.none.hint'),
+            onClick: () => requestApply({ kind: 'none' }),
+        },
+    ];
+
+    return (
+        <section className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+            <header>
+                <h3 className="text-sm font-semibold text-foreground">
+                    {t('paperSetup.subSteps.rubric.chooser.title')}
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {t('paperSetup.subSteps.rubric.chooser.subtitle')}
+                </p>
+            </header>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {cards.map(card => {
+                    const isActive = activeCard === card.kind;
+                    const isExpanded = card.kind === 'template' && templatePickerOpen;
+                    return (
+                        <button
+                            key={card.kind}
+                            type="button"
+                            onClick={card.onClick}
+                            disabled={card.disabled || applyPending}
+                            className={[
+                                'rounded-lg border text-left p-3 space-y-1.5 transition-colors',
+                                'focus:outline-none focus:ring-2 focus:ring-primary/40',
+                                'disabled:opacity-50 disabled:cursor-not-allowed',
+                                isActive
+                                    ? 'border-success bg-success-subtle'
+                                    : isExpanded
+                                        ? 'border-primary bg-card'
+                                        : 'border-border bg-card hover:border-primary/60 hover:bg-card',
+                            ].join(' ')}
+                        >
+                            <div className="flex items-start justify-between gap-2">
+                                <span className={isActive ? 'text-success' : 'text-muted-foreground'}>
+                                    {card.icon}
+                                </span>
+                                {isActive && (
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold text-success">
+                                        {t('paperSetup.subSteps.rubric.chooser.activeBadge')}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs font-semibold text-foreground leading-tight">
+                                {card.label}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground leading-snug">
+                                {card.hint}
+                            </p>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {templatePickerOpen && rubrics.length > 0 && (
+                <div className="rounded-md border border-primary/30 bg-card p-3 space-y-2">
+                    <p className="text-[11px] font-medium text-foreground">
+                        {t('paperSetup.subSteps.rubric.chooser.cards.template.pickerLabel')}
+                    </p>
+                    <ul className="space-y-1">
+                        {rubrics.map(template => {
+                            const isCurrent = rubric.sourceTemplateId === template.id;
+                            return (
+                                <li key={template.id}>
+                                    <button
+                                        type="button"
+                                        onClick={() => requestApply({ kind: 'template', templateId: template.id })}
+                                        disabled={applyPending || isCurrent}
+                                        className="w-full text-left px-2.5 py-1.5 rounded text-xs hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-between gap-2"
+                                    >
+                                        <span className="font-medium text-foreground truncate">{template.displayName}</span>
+                                        {isCurrent && (
+                                            <span className="text-[10px] uppercase tracking-wide font-semibold text-success shrink-0">
+                                                {t('paperSetup.subSteps.rubric.chooser.activeBadge')}
+                                            </span>
+                                        )}
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
+            )}
+
+            {applyPending && (
+                <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {t('paperSetup.subSteps.rubric.templates.applyCta')}…
+                </p>
+            )}
+
+            <ConfirmDialog
+                open={pendingAction !== null}
+                onOpenChange={(open) => { if (!open) setPendingAction(null); }}
+                title={t('paperSetup.subSteps.rubric.templates.applyConfirmTitle')}
+                body={t('paperSetup.subSteps.rubric.templates.applyConfirmBody')}
+                confirmLabel={t('paperSetup.subSteps.rubric.templates.applyConfirmCta')}
+                cancelLabel={t('setup.cancel')}
+                onConfirm={() => { if (pendingAction) void doApply(pendingAction); }}
+            />
+        </section>
+    );
+}
+
+// ── Save-as-template (summary footer) ──────────────────────────────────
+//
+// Snapshots the current paper rubric into a new UserRubric row.
+// Lives in the summary view footer because it operates on what's
+// already in the paper — applying a different rubric belongs to
+// the chooser at the top of the step.
+
+function SaveAsTemplateAction({ paper }: { paper: ExegeticalPaper }) {
+    const { t } = useTranslation('exegesis');
+    const { saveAsTemplate } = useUserRubrics();
+    const [open, setOpen] = useState(false);
+    const [name, setName] = useState('');
+
     const handleSave = async () => {
-        const name = templateName.trim();
-        if (!name) {
+        const trimmed = name.trim();
+        if (!trimmed) {
             toast.error(t('paperSetup.subSteps.rubric.templates.nameRequired'));
             return;
         }
         try {
-            await saveAsTemplate.mutateAsync({ paperId: paper.id, displayName: name });
+            await saveAsTemplate.mutateAsync({ paperId: paper.id, displayName: trimmed });
             toast.success(t('paperSetup.subSteps.rubric.templates.saved'));
-            setSavingMode(false);
-            setTemplateName('');
+            setOpen(false);
+            setName('');
         } catch (err) {
             console.error('[exegesis] save as template failed:', err);
             toast.error(t('paperSetup.subSteps.rubric.templates.saveFailed'));
         }
     };
 
+    if (!open) {
+        return (
+            <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(true)}
+                className="text-xs"
+            >
+                <Save className="h-3 w-3 mr-1" />
+                {t('paperSetup.subSteps.rubric.templates.saveCta')}
+            </Button>
+        );
+    }
+
     return (
-        <section className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
-            <header>
-                <h3 className="text-sm font-semibold text-foreground">
-                    {t('paperSetup.subSteps.rubric.templates.title')}
-                </h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {t('paperSetup.subSteps.rubric.templates.subtitle')}
-                </p>
-            </header>
-
-            <div className="flex flex-col sm:flex-row sm:items-end gap-2">
-                <div className="flex-1 min-w-0">
-                    <label className="block text-[11px] font-medium text-foreground mb-1">
-                        {t('paperSetup.subSteps.rubric.templates.applyLabel')}
-                    </label>
-                    <RubricTemplatePicker
-                        value={pickerValue}
-                        onChange={setPickerValue}
-                        rubrics={rubrics}
-                        defaultRubric={defaultRubric}
-                        mode="apply"
-                        disabled={applyPending}
-                    />
-                </div>
-                <Button
-                    type="button"
-                    onClick={handleApply}
-                    disabled={!hasSelection || alreadyInEffect || applyPending}
-                    className={alreadyInEffect
-                        ? 'bg-success-subtle text-success-subtle-foreground border border-success/30 text-xs cursor-default'
-                        : 'bg-primary hover:bg-primary/90 text-primary-foreground text-xs'
-                    }
-                >
-                    {applyPending ? (
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    ) : alreadyInEffect ? (
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                    ) : null}
-                    {alreadyInEffect
-                        ? t('paperSetup.subSteps.rubric.templates.appliedBadge')
-                        : t('paperSetup.subSteps.rubric.templates.applyCta')}
-                </Button>
-            </div>
-
-            {!savingMode ? (
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
-                    <p className="text-[11px] text-muted-foreground">
-                        {rubrics.length === 0
-                            ? t('paperSetup.subSteps.rubric.templates.emptyHint')
-                            : t('paperSetup.subSteps.rubric.templates.saveHint')}
-                    </p>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setSavingMode(true)}
-                        className="text-xs"
-                    >
-                        <Save className="h-3 w-3 mr-1" />
-                        {t('paperSetup.subSteps.rubric.templates.saveCta')}
-                    </Button>
-                </div>
-            ) : (
-                <div className="flex flex-col sm:flex-row sm:items-end gap-2 pt-2 border-t border-border">
-                    <div className="flex-1 min-w-0">
-                        <label className="block text-[11px] font-medium text-foreground mb-1">
-                            {t('paperSetup.subSteps.rubric.templates.namePromptLabel')}
-                        </label>
-                        <input
-                            type="text"
-                            autoFocus
-                            value={templateName}
-                            onChange={(e) => setTemplateName(e.target.value)}
-                            placeholder={t('paperSetup.subSteps.rubric.templates.namePromptPlaceholder')}
-                            disabled={saveAsTemplate.isPending}
-                            className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
-                        />
-                    </div>
-                    <div className="flex gap-1.5">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => {
-                                setSavingMode(false);
-                                setTemplateName('');
-                            }}
-                            disabled={saveAsTemplate.isPending}
-                            className="text-xs"
-                        >
-                            {t('setup.cancel')}
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={handleSave}
-                            disabled={saveAsTemplate.isPending}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
-                        >
-                            {saveAsTemplate.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                            {t('paperSetup.subSteps.rubric.templates.saveConfirm')}
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            <ConfirmDialog
-                open={confirmApplyOpen}
-                onOpenChange={setConfirmApplyOpen}
-                title={t('paperSetup.subSteps.rubric.templates.applyConfirmTitle')}
-                body={t('paperSetup.subSteps.rubric.templates.applyConfirmBody')}
-                confirmLabel={t('paperSetup.subSteps.rubric.templates.applyConfirmCta')}
-                cancelLabel={t('setup.cancel')}
-                onConfirm={doApply}
+        <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <input
+                type="text"
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t('paperSetup.subSteps.rubric.templates.namePromptPlaceholder')}
+                disabled={saveAsTemplate.isPending}
+                className="flex-1 sm:w-56 rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
             />
-        </section>
+            <Button
+                type="button"
+                variant="ghost"
+                onClick={() => { setOpen(false); setName(''); }}
+                disabled={saveAsTemplate.isPending}
+                className="text-xs"
+            >
+                {t('setup.cancel')}
+            </Button>
+            <Button
+                type="button"
+                onClick={handleSave}
+                disabled={saveAsTemplate.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+            >
+                {saveAsTemplate.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                {t('paperSetup.subSteps.rubric.templates.saveConfirm')}
+            </Button>
+        </div>
     );
 }
 

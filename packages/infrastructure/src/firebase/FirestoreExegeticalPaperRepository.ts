@@ -111,6 +111,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         // sub-steps overwrite them once the student uploads a real rubric
         // and configures the per-step plan. Generating against the default
         // is allowed but the UI nudges the student to confirm first.
+        const defaultRubric = buildDefaultRubric();
         const paper: ExegeticalPaper = {
             id: ref.id,
             ownerId: draft.ownerId,
@@ -128,7 +129,12 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             assignmentBrief: draft.assignmentBrief ?? null,
             styleGuideId: draft.styleGuideId,
             sources: draft.sources,
-            rubric: buildDefaultRubric(),
+            rubric: defaultRubric,
+            // Phase 2B: seed the paper-level field from the same
+            // default the rubric carries. The chokepoint helper now
+            // prefers this top-level field; the rubric copy stays for
+            // back-compat reads.
+            structuralExpectations: defaultRubric.structuralExpectations,
             stepPlan: { ...EMPTY_STEP_SOURCE_PLAN, updatedAt: now },
             phase: 'configuring',
             steps: [],
@@ -183,9 +189,21 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         // accepts null but rejects undefined). When saving, stamp
         // updatedAt on the rubric so the UI surfaces a "last edited"
         // hint without us having to track it elsewhere.
+        //
+        // Phase 2B dual-write: paper.structuralExpectations mirrors
+        // rubric.structuralExpectations so the chokepoint helper's
+        // paper-level read returns fresh data without legacy callers
+        // needing to learn the new field name. On clear we leave the
+        // paper-level field as-is — losing it would force a fall back
+        // to the system default, but the student probably wanted to
+        // retain their structure even after dropping the rubric.
         const payload = rubric === null
             ? { rubric: null, updatedAt: now }
-            : { rubric: { ...rubric, updatedAt: now }, updatedAt: now };
+            : {
+                rubric: { ...rubric, updatedAt: now },
+                structuralExpectations: rubric.structuralExpectations,
+                updatedAt: now,
+            };
         await updateDoc(this.docRef(paperId), payload);
         const fresh = await this.getPaper(ownerId, paperId);
         if (!fresh) throw new Error(`Paper ${paperId} not found after setRubric`);
@@ -675,6 +693,9 @@ function serialize(paper: ExegeticalPaper): DocumentData {
     };
     if (paper.title !== undefined) data.title = paper.title;
     if (paper.exegeticalStrategy !== undefined) data.exegeticalStrategy = paper.exegeticalStrategy;
+    if (paper.structuralExpectations !== undefined) {
+        data.structuralExpectations = paper.structuralExpectations;
+    }
     return data;
 }
 
@@ -695,6 +716,13 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
         styleGuideId: data.styleGuideId ?? null,
         sources: Array.isArray(data.sources) ? data.sources.map(deserializeSource) : [],
         rubric: data.rubric ? deserializeRubric(data.rubric) : null,
+        // Phase 2B paper-level field. Legacy papers don't carry it
+        // (the helper falls back to rubric.structuralExpectations).
+        // Read as-is so downstream code can detect `undefined` and
+        // route through `getEffectiveStructuralExpectations`.
+        structuralExpectations: Array.isArray(data.structuralExpectations)
+            ? data.structuralExpectations
+            : undefined,
         stepPlan: deserializeStepPlan(data.stepPlan),
         phase: data.phase ?? 'configuring',
         steps: Array.isArray(data.steps) ? data.steps : [],

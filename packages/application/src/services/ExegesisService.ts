@@ -49,6 +49,7 @@ import {
     ExtractRubricFromTextUseCase,
     ExtractRubricFromDocumentUseCase,
     ExtractRubricFromImageUseCase,
+    ExtractRubricPreviewFromImageUseCase,
     ExtractStyleGuideManifestUseCase,
     ListUserRubricsUseCase,
     CreateUserRubricUseCase,
@@ -122,6 +123,7 @@ class ExegesisService {
     public extractRubricFromText: ExtractRubricFromTextUseCase;
     public extractRubricFromDocument: ExtractRubricFromDocumentUseCase;
     public extractRubricFromImage: ExtractRubricFromImageUseCase;
+    public extractRubricPreviewFromImage: ExtractRubricPreviewFromImageUseCase;
     public extractStyleGuideManifest: ExtractStyleGuideManifestUseCase;
 
     // User-level rubric templates
@@ -263,6 +265,10 @@ class ExegesisService {
             rubricExtractor,
         );
         this.extractRubricFromImage = new ExtractRubricFromImageUseCase(
+            paperRepository,
+            rubricExtractor,
+        );
+        this.extractRubricPreviewFromImage = new ExtractRubricPreviewFromImageUseCase(
             paperRepository,
             rubricExtractor,
         );

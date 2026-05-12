@@ -200,6 +200,36 @@ export function useExegesisPapers() {
         },
     });
 
+    /**
+     * Preview-only image extraction: runs the same Gemini Vision call
+     * as `extractRubricFromImage` but returns the extracted rubric
+     * to the caller WITHOUT persisting on the paper. Used by the
+     * qualitative-criteria editor so the student can append criteria
+     * pulled from an image without clobbering the prescriptive
+     * sections (source requirements, structural recommendations).
+     */
+    const extractRubricPreviewFromImage = useMutation({
+        mutationFn: async (input: {
+            paperId: string;
+            file: File;
+            language?: 'es' | 'en';
+            onPhase?: (phase: 'encoding' | 'analyzing') => void;
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            input.onPhase?.('encoding');
+            const base64 = await fileToBase64(input.file);
+            input.onPhase?.('analyzing');
+            return exegesisService.extractRubricPreviewFromImage.execute({
+                ownerId: user.uid,
+                paperId: input.paperId,
+                mimeType: input.file.type || 'image/png',
+                imageBase64: base64,
+                language: input.language,
+            });
+        },
+        // No invalidate — this mutation doesn't write to the paper.
+    });
+
     const addSource = useMutation({
         mutationFn: async (input: AddProjectSourceInput & { paperId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -508,6 +538,7 @@ export function useExegesisPapers() {
         extractRubricFromText,
         extractRubricFromDocument,
         extractRubricFromImage,
+        extractRubricPreviewFromImage,
         addSource,
         updateSource,
         removeSource,

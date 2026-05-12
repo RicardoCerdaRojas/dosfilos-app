@@ -2,6 +2,7 @@ import type {
     ExegeticalPaper,
     IExegeticalPaperRepository,
     PaperRubric,
+    QualityCriterion,
     UpdateRubricInput,
 } from '@dosfilos/domain';
 
@@ -47,6 +48,10 @@ export class UpdateRubricUseCase {
             }))
             : existing.sourceRequirements;
 
+        const qualityCriteria = input.qualityCriteria
+            ? normalizeQualityCriteria(input.qualityCriteria)
+            : existing.qualityCriteria;
+
         const next: PaperRubric = {
             ...existing,
             description: input.description !== undefined ? input.description : existing.description,
@@ -54,6 +59,7 @@ export class UpdateRubricUseCase {
             expectedLength: input.expectedLength !== undefined ? input.expectedLength : existing.expectedLength,
             sourceRequirements,
             structuralExpectations: input.structuralExpectations ?? existing.structuralExpectations,
+            qualityCriteria,
             // Authorship: any patch flips provenance to user-edited
             // unless we were already there. Re-extracting from a doc
             // would explicitly set provenance back via
@@ -64,4 +70,44 @@ export class UpdateRubricUseCase {
 
         return this.paperRepository.setRubric(input.ownerId, input.paperId, next);
     }
+}
+
+/**
+ * Quality criteria normalization mirrors the rules the Gemini
+ * extractor applies on intake: every criterion needs a non-empty
+ * id (auto-generate when blank), name (skip silently when blank),
+ * and at least one level. Points are clamped to non-negative
+ * integers when present. We don't enforce the extractor's hard cap
+ * of 5 levels here — a professor's real-life rubric occasionally
+ * has 6 (e.g. add a "no entregado" tier) and we trust the user's
+ * intent on a manual edit.
+ */
+function normalizeQualityCriteria(
+    raw: ReadonlyArray<QualityCriterion>,
+): ReadonlyArray<QualityCriterion> {
+    const out: QualityCriterion[] = [];
+    raw.forEach((crit, idx) => {
+        const name = crit.name?.trim() ?? '';
+        if (!name) return;
+        const levels = (crit.levels ?? [])
+            .map(level => ({
+                label: level.label?.trim() ?? '',
+                description: level.description?.trim() ?? '',
+                points: typeof level.points === 'number' && Number.isFinite(level.points)
+                    ? Math.max(0, Math.floor(level.points))
+                    : undefined,
+            }))
+            .filter(level => level.label !== '');
+        if (levels.length === 0) return;
+        out.push({
+            id: crit.id?.trim() || `qc-${idx + 1}-${Date.now()}`,
+            name,
+            description: crit.description?.trim() || undefined,
+            maxPoints: typeof crit.maxPoints === 'number' && Number.isFinite(crit.maxPoints)
+                ? Math.max(0, Math.floor(crit.maxPoints))
+                : undefined,
+            levels,
+        });
+    });
+    return out;
 }
