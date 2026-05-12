@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { track } from '@/lib/analytics';
 import { HeroCarousel } from './HeroCarousel';
 
 /**
@@ -68,7 +69,10 @@ export function Hero() {
                             className="flex flex-col sm:flex-row gap-3 items-start sm:items-center animate-fade-up"
                             style={{ animationDelay: '300ms' }}
                         >
-                            <Link to="/register?plan=free">
+                            <Link
+                                to="/register?plan=free"
+                                onClick={() => track('cta_hero_click', { destination: 'register_free' })}
+                            >
                                 <Button className="bg-white text-slate-900 hover:bg-slate-200 h-11 px-6 rounded-md text-[14px] font-medium gap-1.5">
                                     Empezar gratis sin tarjeta
                                     <ArrowRight className="h-3.5 w-3.5" />
@@ -76,6 +80,7 @@ export function Hero() {
                             </Link>
                             <a
                                 href="#como-funciona"
+                                onClick={() => track('cta_secondary_click', { destination: 'como_funciona' })}
                                 className="text-slate-400 hover:text-white text-[14px] transition-colors inline-flex items-center gap-1 px-3 py-2"
                             >
                                 Ver cómo funciona

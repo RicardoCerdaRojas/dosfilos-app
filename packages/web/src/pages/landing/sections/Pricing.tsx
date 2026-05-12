@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { PlanCard } from '@/components/subscription/PlanCard';
 import { FreeTierBanner } from '@/components/subscription/FreeTierBanner';
 import { getPlanPriceId } from '@/hooks/usePlans';
+import { track } from '@/lib/analytics';
 import { Reveal } from '../shared/Reveal';
 
 interface PricingProps {
@@ -57,12 +58,19 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                                         exegesisUsdPerMonth={plan.limits?.exegesisUsdPerMonth}
                                         isPopular={plan.highlightText === 'Más Popular'}
                                         ctaLabel="Empezar 30 días gratis sin tarjeta"
-                                        onCtaClick={() => onPlanSelect(plan.id)}
+                                        onCtaClick={() => {
+                                            track('cta_pricing_click', { planId: plan.id, planName: plan.name });
+                                            track('plan_selected', { planId: plan.id, planName: plan.name });
+                                            onPlanSelect(plan.id);
+                                        }}
                                     />
                                 ))}
                         </div>
 
-                        <FreeTierBanner onCtaClick={() => onPlanSelect('free')} />
+                        <FreeTierBanner onCtaClick={() => {
+                            track('cta_pricing_free_click', { planId: 'free' });
+                            onPlanSelect('free');
+                        }} />
                     </>
                 )}
 

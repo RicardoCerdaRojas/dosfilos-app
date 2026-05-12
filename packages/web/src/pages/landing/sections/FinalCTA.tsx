@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { track } from '@/lib/analytics';
 import { Reveal } from '../shared/Reveal';
 
 /** Final CTA section — last call to action before the footer. Dark with subtle radial glow. */
@@ -25,7 +26,10 @@ export function FinalCTA() {
                         producción ministerial para ayudarte a preparar sermones y estudios
                         con mayor fidelidad, trazabilidad y profundidad.
                     </p>
-                    <Link to="/register?plan=free">
+                    <Link
+                        to="/register?plan=free"
+                        onClick={() => track('cta_finalcta_click', { destination: 'register_free' })}
+                    >
                         <Button className="bg-white text-slate-900 hover:bg-slate-200 h-12 px-7 rounded-md text-[14px] font-medium gap-1.5">
                             Empezar gratis sin tarjeta
                             <ArrowRight className="h-3.5 w-3.5" />

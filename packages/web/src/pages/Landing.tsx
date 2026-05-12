@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFirebase } from '@/context/firebase-context';
 import { useTrackActivity } from '@/hooks/useTrackActivity';
 import { usePlans } from '@/hooks/usePlans';
+import { track, ScrollDepthTracker } from '@/lib/analytics';
 
 import { LANDING_STYLES } from './landing/shared/landingStyles';
 import { Nav } from './landing/sections/Nav';
@@ -57,6 +58,14 @@ export function Landing() {
 
     useEffect(() => {
         if (!user) trackLandingVisit();
+        // Fire `landing_view` once per session through the unified
+        // tracker so GA4 + Meta + Clarity + Firestore mirror all see
+        // the same canonical event with UTM context attached. The
+        // legacy `trackLandingVisit()` above keeps its own dedup
+        // logic for the user_activities collection.
+        track('landing_view', {
+            authenticated: !!user,
+        });
     }, [user, trackLandingVisit]);
 
     const handlePlanSelect = (planId: string) => {
@@ -68,6 +77,7 @@ export function Landing() {
         <div className="bg-white text-slate-900 antialiased overflow-x-hidden" style={{ colorScheme: 'light' }}>
             <style>{LANDING_STYLES}</style>
 
+            <ScrollDepthTracker />
             <Nav mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
             <Hero />
             <TrustStrip />
