@@ -56,7 +56,12 @@ interface CaptureLeadResponse {
 export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadResponse>>(
     {
         region: 'us-central1',
-        secrets: ['RESEND_API_KEY'],
+        // RESEND_API_KEY is read from process.env to match the rest
+        // of the email stack (sendVerificationEmail / EmailService /
+        // sendWelcomeEmail). Firebase Functions v2 loads the value
+        // from packages/functions/.env at deploy time. Migrating to
+        // Secret Manager (`secrets: ['RESEND_API_KEY']`) is tracked
+        // tech-debt for the whole email stack — not a per-function fix.
     },
     async (request) => {
         const { email, name, leadMagnet, utm, sessionId } = request.data;

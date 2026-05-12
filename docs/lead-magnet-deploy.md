@@ -20,22 +20,28 @@ Alternatively, upload via Firebase Console → Storage → create folder
 Keep ACL **private** — the function generates a fresh signed URL per
 request. A public ACL would let anyone bypass the email gate.
 
-### 2. Set the Resend secret
+### 2. Confirm the Resend API key is in `packages/functions/.env`
+
+The `RESEND_API_KEY` is already used by the existing email stack
+(`sendVerificationEmail`, `EmailService`, etc.) which reads from
+`process.env`. Firebase Functions v2 loads `packages/functions/.env`
+at deploy time. `captureLead` follows the same pattern.
+
+Verify the key is present:
 
 ```bash
-firebase functions:secrets:set RESEND_API_KEY --project dosfilosapp
-# When prompted, paste: re_5ThpzZTS_HSr3P8nEJoVqwt2xb85j8Rn5
+grep -c '^RESEND_API_KEY=' packages/functions/.env
+# Expect: 1
 ```
 
-Verify:
+If the file is missing or the key is empty, the function will
+return a 500 (`RESEND_API_KEY environment variable is required`).
+Add the key to the `.env` file (the file is gitignored).
 
-```bash
-firebase functions:secrets:access RESEND_API_KEY --project dosfilosapp
-```
-
-Should print the key. The `captureLead` function declares
-`{ secrets: ['RESEND_API_KEY'] }` so Firebase mounts it as an env
-var at runtime — no further wiring required.
+Tech debt note: migrating the entire email stack to Firebase Secret
+Manager (`functions:secrets:set`) is tracked separately. We don't
+do it per-function to avoid drift between which functions use
+Secret Manager and which read from `.env`.
 
 ### 3. Verify the Resend sender domain
 
