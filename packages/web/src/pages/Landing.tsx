@@ -11,6 +11,7 @@ import { Hero } from './landing/sections/Hero';
 import { TrustStrip } from './landing/sections/TrustStrip';
 import { Problem } from './landing/sections/Problem';
 import { Philosophy } from './landing/sections/Philosophy';
+import { UseCases } from './landing/sections/UseCases';
 import { PillarBiblioteca, PillarLenguas, PillarTutores, PillarProduccion } from './landing/sections/Pillars';
 import { HowItWorks } from './landing/sections/HowItWorks';
 import { StatsBand } from './landing/sections/StatsBand';
@@ -98,6 +99,10 @@ export function Landing() {
                 pastoral DESPUÉS de mostrar capacidades evita sonar
                 defensivo desde el inicio. */}
             <Philosophy />
+            {/* Casos de uso — slot reservado para testimonios reales.
+                Mientras llegan, surfacea patrones de uso concretos por
+                persona. Reemplazable uno-a-uno cuando haya testimonios. */}
+            <UseCases />
             <Pricing plans={plans} loading={plansLoading} onPlanSelect={handlePlanSelect} />
             <FAQ />
             <FinalCTA />

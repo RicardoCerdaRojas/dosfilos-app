@@ -16,6 +16,7 @@ const NAV_LINKS: Array<[string, string]> = [
     ['Pilares', '#pilar-1'],
     ['Cómo funciona', '#como-funciona'],
     ['Principios', '#filosofia'],
+    ['Casos de uso', '#casos-de-uso'],
     ['Precios', '#precios'],
     ['FAQ', '#faq'],
 ];
