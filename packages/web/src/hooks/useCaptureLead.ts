@@ -6,6 +6,8 @@ interface CaptureLeadInput {
     email: string;
     name?: string;
     leadMagnet?: string;
+    /** Honeypot value — only forwarded so the server can drop bot fills. */
+    website?: string;
 }
 
 interface CaptureLeadResult {
