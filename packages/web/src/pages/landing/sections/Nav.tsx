@@ -11,9 +11,9 @@ interface NavProps {
 }
 
 const NAV_LINKS: Array<[string, string]> = [
-    ['Filosofía', '#filosofia'],
     ['Pilares', '#pilar-1'],
     ['Cómo funciona', '#como-funciona'],
+    ['Principios', '#filosofia'],
     ['Precios', '#precios'],
     ['FAQ', '#faq'],
 ];

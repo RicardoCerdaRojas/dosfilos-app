@@ -70,7 +70,6 @@ export function Landing() {
             <Nav mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
             <Hero />
             <TrustStrip />
-            <Philosophy />
             <PillarBiblioteca />
             <PillarLenguas />
             <PillarTutores />
@@ -78,6 +77,12 @@ export function Landing() {
             <HowItWorks />
             <StatsBand />
             <ForWhom />
+            {/* Principios (antes "Filosofía") sale después de que el
+                visitante entendió qué hace el producto + para quién es.
+                El orden narrativo importa: hablar de responsabilidad
+                pastoral DESPUÉS de mostrar capacidades evita sonar
+                defensivo desde el inicio. */}
+            <Philosophy />
             <Pricing plans={plans} loading={plansLoading} onPlanSelect={handlePlanSelect} />
             <FAQ />
             <FinalCTA />

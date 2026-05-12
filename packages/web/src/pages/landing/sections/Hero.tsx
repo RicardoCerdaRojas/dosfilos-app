@@ -43,24 +43,25 @@ export function Hero() {
                             className="font-reading text-[44px] sm:text-[56px] md:text-[64px] lg:text-[76px] leading-[1.0] tracking-[-0.025em] text-white mb-6 animate-fade-up"
                             style={{ animationDelay: '100ms' }}
                         >
-                            Prepara sermones expositivos con respaldo exegético.
+                            Estudia con rigor. Sirve con fidelidad.
                         </h1>
 
                         <p
                             className="font-reading text-[20px] md:text-[24px] leading-snug text-slate-300 mb-6 animate-fade-up max-w-xl"
                             style={{ animationDelay: '200ms' }}
                         >
-                            Organiza tu biblioteca, consulta idiomas bíblicos, revisa fuentes
-                            trazables y transforma tu estudio en bosquejos, notas y material
-                            ministerial útil.
+                            La plataforma para pastores, predicadores, seminaristas y
+                            profesores de teología. Organiza tu biblioteca, consulta idiomas
+                            bíblicos, revisa fuentes trazables y transforma tu estudio en
+                            sermones, clases, ensayos y material ministerial útil.
                         </p>
 
                         <p
                             className="text-[14px] text-slate-400 italic mb-10 animate-fade-up max-w-xl"
                             style={{ animationDelay: '250ms' }}
                         >
-                            Preach no predica por ti. Te ayuda a estudiar mejor para que
-                            prediques con fidelidad.
+                            Preach no predica por ti ni hace tu tesis. Te ayuda a estudiar
+                            mejor para que prediques, enseñes y aconsejes con fidelidad.
                         </p>
 
                         <div
@@ -86,7 +87,7 @@ export function Hero() {
                             className="text-[12px] text-slate-500 mt-6 animate-fade-up"
                             style={{ animationDelay: '400ms' }}
                         >
-                            Plan gratuito disponible. Cancela cuando quieras.
+                            Plan gratuito disponible · Sin tarjeta · Sin compromiso.
                         </p>
                     </div>
 
@@ -103,10 +104,10 @@ export function Hero() {
                     style={{ animationDelay: '600ms' }}
                 >
                     <p className="text-[15px] md:text-[16px] leading-[1.7] text-slate-400">
-                        <span className="text-white">Una herramienta seria para ministros responsables.</span>{' '}
-                        Reúne tu biblioteca, idiomas bíblicos, tutores especializados y producción
-                        ministerial en un solo entorno diseñado para el estudio bíblico responsable
-                        y la predicación expositiva fiel.
+                        <span className="text-white">Una herramienta seria para quienes trabajan con la Palabra.</span>{' '}
+                        Biblioteca personal, tutores especializados, idiomas bíblicos y producción
+                        ministerial en un solo entorno —para predicación expositiva, estudios
+                        académicos, preparación de clases y consejería pastoral.
                     </p>
                 </div>
             </div>
