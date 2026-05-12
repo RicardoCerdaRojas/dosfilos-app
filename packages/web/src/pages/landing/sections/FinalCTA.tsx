@@ -18,20 +18,21 @@ export function FinalCTA() {
             <div className="relative max-w-3xl mx-auto text-center">
                 <Reveal>
                     <h2 className="font-reading text-[40px] md:text-[56px] lg:text-[64px] leading-[1.05] tracking-[-0.02em] mb-8">
-                        El ministerio merece herramientas a su altura.
+                        Estudia con más orden. Predica con más claridad.
                     </h2>
                     <p className="text-[16.5px] text-slate-400 leading-relaxed mb-10 max-w-xl mx-auto">
-                        Empieza hoy. 30 días para probarlo sin costo.
-                        Cancela antes del día 30 y no pagarás nada.
+                        Preach reúne biblioteca, idiomas bíblicos, tutores especializados y
+                        producción ministerial para ayudarte a preparar sermones y estudios
+                        con mayor fidelidad, trazabilidad y profundidad.
                     </p>
-                    <Link to="/pricing">
+                    <Link to="/register?plan=free">
                         <Button className="bg-white text-slate-900 hover:bg-slate-200 h-12 px-7 rounded-md text-[14px] font-medium gap-1.5">
-                            Empezar 30 días gratis
+                            Empezar gratis sin tarjeta
                             <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                     </Link>
                     <p className="text-[12px] text-slate-500 mt-6">
-                        Sin compromiso · Cancela cuando quieras
+                        No necesitas tarjeta para comenzar.
                     </p>
                 </Reveal>
             </div>

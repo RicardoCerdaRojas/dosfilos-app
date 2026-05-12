@@ -43,32 +43,41 @@ export function Hero() {
                             className="font-reading text-[44px] sm:text-[56px] md:text-[64px] lg:text-[76px] leading-[1.0] tracking-[-0.025em] text-white mb-6 animate-fade-up"
                             style={{ animationDelay: '100ms' }}
                         >
-                            Estudio, Exposición, Aplicación.
+                            Prepara sermones expositivos con respaldo exegético.
                         </h1>
 
                         <p
-                            className="font-reading text-[20px] md:text-[24px] leading-snug text-slate-300 mb-10 animate-fade-up max-w-xl"
+                            className="font-reading text-[20px] md:text-[24px] leading-snug text-slate-300 mb-6 animate-fade-up max-w-xl"
                             style={{ animationDelay: '200ms' }}
                         >
-                            Profundo en el estudio. Fiel en la exposición.
-                            Claro en la aplicación.
+                            Organiza tu biblioteca, consulta idiomas bíblicos, revisa fuentes
+                            trazables y transforma tu estudio en bosquejos, notas y material
+                            ministerial útil.
+                        </p>
+
+                        <p
+                            className="text-[14px] text-slate-400 italic mb-10 animate-fade-up max-w-xl"
+                            style={{ animationDelay: '250ms' }}
+                        >
+                            Preach no predica por ti. Te ayuda a estudiar mejor para que
+                            prediques con fidelidad.
                         </p>
 
                         <div
                             className="flex flex-col sm:flex-row gap-3 items-start sm:items-center animate-fade-up"
                             style={{ animationDelay: '300ms' }}
                         >
-                            <Link to="/pricing">
+                            <Link to="/register?plan=free">
                                 <Button className="bg-white text-slate-900 hover:bg-slate-200 h-11 px-6 rounded-md text-[14px] font-medium gap-1.5">
-                                    Empezar 30 días gratis
+                                    Empezar gratis sin tarjeta
                                     <ArrowRight className="h-3.5 w-3.5" />
                                 </Button>
                             </Link>
                             <a
-                                href="#pilar-1"
+                                href="#como-funciona"
                                 className="text-slate-400 hover:text-white text-[14px] transition-colors inline-flex items-center gap-1 px-3 py-2"
                             >
-                                Ver los pilares
+                                Ver cómo funciona
                                 <ChevronDown className="h-3.5 w-3.5" />
                             </a>
                         </div>
@@ -77,7 +86,7 @@ export function Hero() {
                             className="text-[12px] text-slate-500 mt-6 animate-fade-up"
                             style={{ animationDelay: '400ms' }}
                         >
-                            Sin tarjeta al registrarte · Cancela cuando quieras
+                            Plan gratuito disponible. Cancela cuando quieras.
                         </p>
                     </div>
 
@@ -94,10 +103,10 @@ export function Hero() {
                     style={{ animationDelay: '600ms' }}
                 >
                     <p className="text-[15px] md:text-[16px] leading-[1.7] text-slate-400">
-                        <span className="text-white">Un sistema integral para el ministro pastoral.</span>{' '}
-                        Organiza tu estudio, domina las lenguas originales, consulta a tutores expertos
-                        y produce material con estándar académico —todo en un solo entorno diseñado
-                        para la preparación seria del ministerio.
+                        <span className="text-white">Una herramienta seria para ministros responsables.</span>{' '}
+                        Reúne tu biblioteca, idiomas bíblicos, tutores especializados y producción
+                        ministerial en un solo entorno diseñado para el estudio bíblico responsable
+                        y la predicación expositiva fiel.
                     </p>
                 </div>
             </div>

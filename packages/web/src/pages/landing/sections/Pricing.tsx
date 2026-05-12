@@ -20,12 +20,14 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                     <div className="text-center max-w-2xl mx-auto mb-8">
                         <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-3">
                             <span>Precios</span>
-                            <span className="text-slate-300 normal-case tracking-normal">·</span>
-                            <span className="text-slate-500 normal-case tracking-normal">Plan gratis · 30 días en pagados · sin compromiso</span>
                         </div>
-                        <h2 className="font-reading text-[32px] md:text-[42px] leading-[1.05] tracking-[-0.02em] text-slate-900">
-                            Elige tu plan.
+                        <h2 className="font-reading text-[32px] md:text-[42px] leading-[1.05] tracking-[-0.02em] text-slate-900 mb-4">
+                            Elige cómo quieres empezar.
                         </h2>
+                        <p className="text-[15px] text-slate-600 leading-snug">
+                            Puedes probar Preach gratis sin tarjeta, o activar 30 días gratis
+                            en cualquier plan pagado. Cancelas cuando quieras.
+                        </p>
                     </div>
                 </Reveal>
 

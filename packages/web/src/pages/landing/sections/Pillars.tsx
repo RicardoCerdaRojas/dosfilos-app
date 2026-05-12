@@ -40,11 +40,11 @@ export function PillarLenguas() {
             id="pilar-2"
             number="02"
             eyebrow="Pilar 02 · Lenguas originales"
-            title="Hebreo bíblico y griego koiné con metodología académica."
-            description="Entrenadores especializados con análisis morfológico, sintaxis y vocabulario. Tipografía SBL especializada para renderizado correcto de niqqud, cantilación y acentos politónicos."
+            title="Hebreo bíblico y griego koiné para el trabajo exegético."
+            description="Consulta el texto bíblico con apoyo morfológico, sintáctico y léxico. El sistema te ayuda a observar mejor el texto sin reemplazar tu estudio ni convertir los idiomas bíblicos en conclusiones automáticas."
             bullets={[
-                'Entrenador Hebreo con BHS + análisis morfológico',
-                'Tutor Griego con NA28 + análisis sintáctico',
+                'Tutor de Hebreo con BHS + análisis morfológico',
+                'Tutor de Griego con NA28 + análisis sintáctico',
                 'Referencias bíblicas interactivas (RVR 1960 inline)',
                 'Tipografía académica: Ezra SIL, SBL Hebrew, SBL Greek',
             ]}
@@ -61,14 +61,14 @@ export function PillarTutores() {
             id="pilar-3"
             number="03"
             eyebrow="Pilar 03 · Tutores"
-            title="Especialistas entrenados para cada área del ministerio."
-            description="El sistema detecta tu pregunta y enruta automáticamente al tutor adecuado. Cada respuesta se adapta al modo elegido: académico, pastoral, conciso o para laicos."
+            title="Consulta al especialista adecuado para cada pregunta."
+            description="El sistema identifica el tipo de pregunta y la dirige al tutor más adecuado. Puedes recibir respuestas en modo académico, pastoral, conciso o explicado para laicos."
             bullets={[
-                'Dr. Alétheia · Exégesis e interpretación bíblica',
-                'Dr. Berith · Hebreo y Antiguo Testamento',
-                'Dr. Crisóstomo · Griego y Nuevo Testamento',
-                'Pastor Noutético · Consejería y aplicación pastoral',
-                'Dr. Calvino · Teología sistemática reformada',
+                'Tutor de Exégesis · Interpretación histórico-gramatical',
+                'Tutor de Hebreo Bíblico · Análisis morfológico y sintáctico del AT',
+                'Tutor de Griego del NT · Koiné con análisis sintáctico y léxico',
+                'Tutor de Teología Sistemática · Doctrina con respaldo bíblico',
+                'Tutor de Consejería Pastoral · Casos pastorales con fundamento bíblico',
             ]}
             mockup={<TutorsMock />}
         />
@@ -80,12 +80,12 @@ export function PillarProduccion() {
         <PillarSection
             id="pilar-4"
             number="04"
-            eyebrow="Pilar 04 · Producción"
+            eyebrow="Pilar 04 · Producción ministerial"
             title="Del estudio al púlpito, con respaldo exegético."
-            description="Genera sermones expositivos, planes de predicación y notas de estudio. Cada pieza producida mantiene las referencias al material fuente y puede exportarse en formatos útiles para el ministerio."
+            description="Transforma tus hallazgos en bosquejos, proposiciones, notas de estudio, series de predicación y material exportable. Cada pieza conserva referencias a las fuentes consultadas para que la trazabilidad llegue hasta el documento final."
             bullets={[
-                'Generador de sermones con metodología histórico-gramatical',
-                'Planificador de series de predicación',
+                'Asistente para estructurar sermones expositivos',
+                'Planificador de series expositivas sobre libros completos',
                 'Proyectos de investigación sobre libros, pasajes y temas',
                 'Exportación en Markdown, PDF y texto plano',
             ]}
