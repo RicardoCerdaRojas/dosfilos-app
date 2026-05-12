@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics';
 import { HeroCarousel } from './HeroCarousel';
@@ -51,10 +51,8 @@ export function Hero() {
                             className="font-reading text-[20px] md:text-[24px] leading-snug text-slate-300 mb-6 animate-fade-up max-w-xl"
                             style={{ animationDelay: '200ms' }}
                         >
-                            La plataforma para pastores, predicadores, seminaristas y
-                            profesores de teología. Organiza tu biblioteca, consulta idiomas
-                            bíblicos, revisa fuentes trazables y transforma tu estudio en
-                            sermones, clases, ensayos y material ministerial útil.
+                            Estudio bíblico con respaldo académico.
+                            Producción ministerial con fuentes trazables.
                         </p>
 
                         <p
@@ -97,16 +95,22 @@ export function Hero() {
 
                         {/* Tertiary off-ramp — for visitors not ready to
                             sign up but willing to leave an email for a
-                            free resource. Lives below the CTAs, visually
-                            quieter so it doesn't compete with primary. */}
+                            free resource. Pill treatment with icon +
+                            border gives it enough visual weight to be
+                            noticed without competing with the primary
+                            white CTA above. */}
                         <Link
                             to="/recursos/manual-para-predicadores?utm_source=landing&utm_medium=hero_link&utm_campaign=manual_predicacion"
                             onClick={() => track('cta_secondary_click', { destination: 'lead_magnet_manual' })}
-                            className="inline-flex items-center gap-1.5 text-[13px] text-indigo-300 hover:text-white transition-colors mt-4 animate-fade-up"
+                            className="inline-flex items-center gap-2 mt-8 px-4 py-2.5 rounded-md border border-indigo-400/30 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-400/50 text-[13.5px] text-indigo-200 hover:text-white transition-colors animate-fade-up group"
                             style={{ animationDelay: '450ms' }}
                         >
-                            ¿No estás listo? Descarga el manual de predicación gratis
-                            <ArrowRight className="h-3 w-3" />
+                            <BookOpen className="h-4 w-4 text-indigo-300 group-hover:text-white transition-colors" strokeWidth={1.5} />
+                            <span>
+                                <span className="text-slate-400 group-hover:text-slate-300 transition-colors">¿No estás listo?</span>{' '}
+                                Descarga el manual de predicación gratis
+                            </span>
+                            <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                     </div>
 
