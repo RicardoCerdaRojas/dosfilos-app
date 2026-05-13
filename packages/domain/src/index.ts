@@ -31,6 +31,7 @@ export * from './models/Plan'; // 🎯 Plan models (refactored system)
 export * from './entities/AIAgent';
 export * from './entities/AIChatSession';
 export * from './entities/AIProject';
+export * from './entities/Extraction';
 export * from './entities/SermonPersonalization';
 
 // Repositories
@@ -46,6 +47,7 @@ export * from './repositories/IGeoEventRepository'; // 📊 Geographic Event Rep
 export * from './repositories/IAIAgentRepository'; // 🎓 Multi-Agent Agent Repository
 export * from './repositories/IAIChatRepository'; // 🎓 Multi-Agent Chat Repository
 export * from './repositories/IAIProjectRepository'; // 🎓 Multi-Agent Project Repository
+export * from './repositories/IExtractionRepository'; // 🎓 Multi-Agent Persisted Extractions
 export * from './repositories/IAuthRepository';
 export * from './repositories/IVectorRepository';
 

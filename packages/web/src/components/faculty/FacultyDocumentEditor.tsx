@@ -14,6 +14,7 @@ import {
     transformCallouts,
     wrapScriptureRefs,
     wrapLanguageRuns,
+    normalizeAssistantMarkdown,
     Callout,
     ScriptureRef,
 } from '@/lib/citations';
@@ -63,7 +64,8 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
     // extracted documents don't carry the `sources` array — citations
     // were already resolved into prose when the extraction ran.
     const renderedMarkdown = (() => {
-        const step1 = wrapScriptureRefs(markdown);
+        const step0 = normalizeAssistantMarkdown(markdown);
+        const step1 = wrapScriptureRefs(step0);
         const step2 = transformCallouts(step1);
         const step3 = wrapLanguageRuns(step2);
         return step3;

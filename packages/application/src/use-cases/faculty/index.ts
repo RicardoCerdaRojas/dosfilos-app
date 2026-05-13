@@ -20,3 +20,5 @@ export * from './DeleteChatMessageUseCase';
 export * from './ProcessMicroActionUseCase';
 // Project outputs
 export * from './ProjectOutputUseCases';
+// Persisted extractions
+export * from './extractions';

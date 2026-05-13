@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sparkles, MessageSquareQuote, Trash2, Loader2, GraduationCap, Copy, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
@@ -178,6 +178,38 @@ export function FacultyChatMessages({
     // source is marked `publiclyCitable=true` in the Core Library.
     const { isAdmin } = useAuthorization();
 
+    // Provenance highlight — triggered by an extraction's "Ver origen"
+    // action that navigates with `#origin=msg1,msg2,...`. Each id gets
+    // a scroll-into-view + temporary indigo ring so the user sees which
+    // turns produced the artifact they're looking at.
+    const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
+    useEffect(() => {
+        const apply = () => {
+            const hash = window.location.hash;
+            const match = hash.match(/origin=([^&]+)/);
+            if (!match) return;
+            const ids = match[1].split(',').filter(Boolean);
+            if (ids.length === 0) return;
+            setHighlightedIds(new Set(ids));
+            // Defer scroll so the messages have rendered with their
+            // data-message-id attributes.
+            setTimeout(() => {
+                const first = ids[0];
+                const node = document.querySelector(`[data-message-id="${CSS.escape(first)}"]`);
+                node?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+            // Auto-fade after 6s and strip the hash so a reload doesn't
+            // re-trigger the highlight.
+            setTimeout(() => {
+                setHighlightedIds(new Set());
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }, 6000);
+        };
+        apply();
+        window.addEventListener('hashchange', apply);
+        return () => window.removeEventListener('hashchange', apply);
+    }, [messages.length]);
+
     return (
         <>
             {/* New-session blank state */}
@@ -213,10 +245,11 @@ export function FacultyChatMessages({
                     <div
                         data-message-id={msg.id || undefined}
                         className={cn(
-                            "relative text-[15px] leading-relaxed",
+                            "relative text-[15px] leading-relaxed transition-shadow duration-500",
                             msg.role === 'user'
                                 ? "bg-indigo-600 text-white rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
-                                : "flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5"
+                                : "flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5",
+                            msg.id && highlightedIds.has(msg.id) && "ring-2 ring-indigo-400 ring-offset-2 ring-offset-background"
                         )}
                     >
                         {msg.role === 'user' ? (

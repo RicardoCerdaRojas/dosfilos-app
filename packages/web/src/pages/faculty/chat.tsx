@@ -15,7 +15,7 @@ import { Loader2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
-import { useFacultyChat, useFacultySessions, useFacultyAgents } from '../../hooks/faculty';
+import { useFacultyChat, useFacultySessions, useFacultyAgents, useSessionExtractions, useExtractionMutations } from '../../hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { SermonOutlinePreviewModal, type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
 import { FacultyChatHeader } from '@/components/faculty/FacultyChatHeader';
@@ -25,7 +25,7 @@ import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { ProjectEditDialog } from './ProjectEditDialog';
-import { type AIProject, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
+import { type AIProject, type Extraction, type ExtractionType, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
 import { takePendingFacultyInput } from './utils/pendingFacultyInput';
 
@@ -120,11 +120,16 @@ export function FacultyChatPage() {
         streamingMessage,
         isStreaming,
         extractContent,
+        generateAndSaveExtraction,
         deleteMessage,
         isDeleting,
         processMicroAction,
         isProcessingMicroAction,
     } = useFacultyChat(effectiveSessionId);
+
+    // Persisted extractions for this session — drives the "Generados" tab.
+    const { extractions, error: extractionsError, refetch: refetchExtractions } = useSessionExtractions(effectiveSessionId);
+    const { updateMarkdown: updateExtractionMarkdown, rename: renameExtraction, pinToProject: pinExtraction, deleteExtraction } = useExtractionMutations();
 
     const isSending = isOrchestrating;
 
@@ -167,7 +172,15 @@ export function FacultyChatPage() {
         localStorage.setItem('faculty-extraction-panel', String(isRightSidebarOpen));
     }, [isRightSidebarOpen]);
     const [lengthPreference, setLengthPreference] = useState<ResponseMode>('auto');
-    const [extractedContent, setExtractedContent] = useState<{ title: string; markdown: string } | null>(null);
+    // Unified document editor state. Either an in-memory sermon (sermon
+    // module owns its own collection — we just render the markdown
+    // returned by the wizard modal) or a persisted Extraction. Mutually
+    // exclusive sources; `closeDocument()` resets both.
+    const [documentSource, setDocumentSource] = useState<'sermon' | 'extraction' | null>(null);
+    const [documentExtractionId, setDocumentExtractionId] = useState<string | null>(null);
+    const [documentTitle, setDocumentTitle] = useState<string>('');
+    const [documentMarkdown, setDocumentMarkdown] = useState<string>('');
+    const isDocumentOpen = documentSource !== null;
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
     const [extractingType, setExtractingType] = useState<string | null>(null);
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
@@ -458,10 +471,33 @@ export function FacultyChatPage() {
         }
     };
 
-    const handleExtract = async (type: string) => {
+    const openExtractionInEditor = (extraction: Extraction) => {
+        setDocumentSource('extraction');
+        setDocumentExtractionId(extraction.id);
+        setDocumentTitle(extraction.title);
+        setDocumentMarkdown(extraction.markdown);
+        // Reclaim horizontal space: both side rails collapse when a
+        // document opens. User can re-expand from the header toggles.
+        setIsLeftSidebarOpen(false);
+        setIsRightSidebarOpen(false);
+    };
+
+    const closeDocument = () => {
+        setDocumentSource(null);
+        setDocumentExtractionId(null);
+        setDocumentTitle('');
+        setDocumentMarkdown('');
+        setIsZenMode(false);
+    };
+
+    const handleExtract = async (type: ExtractionType) => {
         if (extractingType) return;
         setExtractingType(type);
         try {
+            // SERMON has a richer flow (wizard modal + dedicated sermons
+            // collection). The preview SERMON_OUTLINE JSON is NOT
+            // persisted — only the final approved sermon is, via the
+            // modal's onSuccess path which calls generateAndSaveExtraction.
             if (type === 'SERMON') {
                 const raw = await extractContent({ type: 'SERMON_OUTLINE' });
                 const json = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
@@ -469,13 +505,24 @@ export function FacultyChatPage() {
                 setSermonOutline(outline);
                 return;
             }
-            const result = await extractContent({ type });
-            setExtractedContent({
-                title: t(EXTRACTION_TITLE_KEYS[type] || 'extraction.extractedDocument'),
-                markdown: result,
-            });
-            setIsLeftSidebarOpen(false);
-            setIsRightSidebarOpen(false);
+            const fallbackTitle = t(EXTRACTION_TITLE_KEYS[type] || 'extraction.extractedDocument');
+            const extraction = await generateAndSaveExtraction({ type, fallbackTitle });
+            // Queue UX: don't auto-open if a document is already in the
+            // editor. Surface a toast with "Ver" so the user keeps their
+            // current work but can discover the new artifact.
+            if (isDocumentOpen) {
+                toast.success(
+                    t('extraction.toast.generated', { title: extraction.title }),
+                    {
+                        action: {
+                            label: t('extraction.toast.view'),
+                            onClick: () => openExtractionInEditor(extraction),
+                        },
+                    },
+                );
+            } else {
+                openExtractionInEditor(extraction);
+            }
         } catch (error) {
             console.error('Extraction failed:', error);
             toast.error(t('extraction.extractionFailed'));
@@ -485,7 +532,71 @@ export function FacultyChatPage() {
     };
 
     const handleGenerateFullSermon = async (approvedOutline: SermonOutline, personalization?: SermonPersonalization): Promise<string> => {
+        // The modal expects the markdown back so it can render the
+        // sermon preview before calling its onSuccess hook (which is
+        // where we persist the Extraction with the sermonId externalRef).
         return await extractContent({ type: 'SERMON', approvedOutline, personalization });
+    };
+
+    // Debounced autosave for in-editor edits on a persisted Extraction.
+    // The editor calls onChange on every keystroke; we batch saves to
+    // Firestore every 1.5s of idle to avoid hammering the write quota.
+    useEffect(() => {
+        if (documentSource !== 'extraction' || !documentExtractionId) return;
+        const current = extractions.find(e => e.id === documentExtractionId);
+        if (!current || current.markdown === documentMarkdown) return;
+        const handle = setTimeout(() => {
+            updateExtractionMarkdown.mutate({
+                extractionId: documentExtractionId,
+                markdown: documentMarkdown,
+            });
+        }, 1500);
+        return () => clearTimeout(handle);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [documentMarkdown, documentSource, documentExtractionId]);
+
+    // ── Extraction list handlers (panel "Generados" tab) ─────────────────────
+
+    const handleRenameExtraction = (extraction: Extraction) => {
+        const next = window.prompt(t('extractionsList.actions.rename'), extraction.title);
+        if (!next || next.trim() === extraction.title) return;
+        renameExtraction.mutate({ extractionId: extraction.id, title: next.trim() });
+        if (documentExtractionId === extraction.id) setDocumentTitle(next.trim());
+    };
+
+    const handlePinExtraction = (extraction: Extraction) => {
+        // First-cut: toggle pin without a picker UI. When projects are
+        // available the panel can grow a sub-menu. For now, unpin if
+        // pinned, otherwise pin to the session's current project (if any).
+        if (extraction.projectId) {
+            pinExtraction.mutate({ extractionId: extraction.id, projectId: null });
+            toast.success(t('extractionsList.toast.unpinned'));
+        } else if (session?.projectId) {
+            pinExtraction.mutate({ extractionId: extraction.id, projectId: session.projectId });
+            toast.success(t('extractionsList.toast.pinned'));
+        } else {
+            toast.info(t('extractionsList.toast.noProject'));
+        }
+    };
+
+    const handleDeleteExtraction = (extraction: Extraction) => {
+        if (!window.confirm(t('extractionsList.confirmDelete'))) return;
+        deleteExtraction.mutate(extraction.id);
+        if (documentExtractionId === extraction.id) closeDocument();
+    };
+
+    const handleJumpToOrigin = (extraction: Extraction) => {
+        if (!extraction.sessionId) return;
+        const messageHash = extraction.derivedFromMessageIds.length > 0
+            ? `#origin=${extraction.derivedFromMessageIds.slice(-3).join(',')}`
+            : '';
+        if (extraction.sessionId === effectiveSessionId) {
+            // Same session — scroll behavior is handled by a hash effect
+            // in FacultyChatMessages that watches `#origin=...`.
+            window.location.hash = messageHash.slice(1);
+        } else {
+            navigate(`/dashboard/faculty/${extraction.sessionId}${messageHash}`);
+        }
     };
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -547,8 +658,8 @@ export function FacultyChatPage() {
                         className="w-full h-full"
                     >
                         {/* Main chat area */}
-                        {!(extractedContent && isZenMode) && (
-                            <Panel defaultSize={extractedContent ? 50 : 100} minSize={25} id="chat">
+                        {!(isDocumentOpen && isZenMode) && (
+                            <Panel defaultSize={isDocumentOpen ? 50 : 100} minSize={25} id="chat">
                                 <main className="flex flex-col h-full min-w-0 relative">
                                     {isHomeState ? (
                                         <div className="flex-1 overflow-y-auto">
@@ -600,16 +711,17 @@ export function FacultyChatPage() {
                         )}
 
                         {/* Resize handle — visible only when both panels
-                            are shown (extracted doc open, not in zen mode). */}
-                        {extractedContent && !isZenMode && (
+                            are shown (document open, not in zen mode). */}
+                        {isDocumentOpen && !isZenMode && (
                             <PanelResizeHandle className="w-1 bg-border hover:bg-primary/40 active:bg-primary/60 transition-colors cursor-col-resize" />
                         )}
 
-                        {/* Document editor panel. Title + close + view
-                            toggle + copy buttons all live in the
-                            FacultyDocumentEditor toolbar — no separate
-                            header bar. */}
-                        {extractedContent && (
+                        {/* Document editor panel. Single source of truth
+                            for both ephemeral sermons (from the wizard
+                            modal) and persisted extractions (from the
+                            "Generados" tab). Title + close + view toggle
+                            + copy buttons live in the editor toolbar. */}
+                        {isDocumentOpen && (
                             <Panel
                                 defaultSize={isZenMode ? 100 : 50}
                                 minSize={30}
@@ -618,10 +730,10 @@ export function FacultyChatPage() {
                                 <aside className="flex flex-col h-full bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l">
                                     <div className="flex-1 overflow-hidden bg-background">
                                         <FacultyDocumentEditor
-                                            title={extractedContent.title}
-                                            onClose={() => { setExtractedContent(null); setIsZenMode(false); }}
-                                            markdown={extractedContent.markdown}
-                                            onChange={(md) => setExtractedContent(prev => prev ? { ...prev, markdown: md } : null)}
+                                            title={documentTitle}
+                                            onClose={closeDocument}
+                                            markdown={documentMarkdown}
+                                            onChange={setDocumentMarkdown}
                                             onMicroAction={(actionType, selectedText, context, customPrompt) => processMicroAction({ actionType, selectedText, documentContext: context, customPrompt })}
                                             isProcessing={isProcessingMicroAction}
                                             isZenMode={isZenMode}
@@ -640,6 +752,15 @@ export function FacultyChatPage() {
                     extractingType={extractingType}
                     messageCount={session?.messages.length || 0}
                     onExtract={handleExtract}
+                    extractions={extractions}
+                    selectedExtractionId={documentExtractionId}
+                    onSelectExtraction={openExtractionInEditor}
+                    onDeleteExtraction={handleDeleteExtraction}
+                    onRenameExtraction={handleRenameExtraction}
+                    onPinExtraction={handlePinExtraction}
+                    onJumpToOrigin={handleJumpToOrigin}
+                    extractionsError={extractionsError}
+                    onRefreshExtractions={() => refetchExtractions()}
                 />
             </div>
 
@@ -650,7 +771,14 @@ export function FacultyChatPage() {
                 onClose={() => setSermonOutline(null)}
                 onGenerateFullSermon={handleGenerateFullSermon}
                 onSuccess={(sermonId, content, title) => {
-                    setExtractedContent({ title, markdown: content });
+                    // Ephemeral sermon preview — owned by the sermons
+                    // collection, NOT persisted as an Extraction (avoid
+                    // double source-of-truth). Renders in the same doc
+                    // panel as extractions for visual continuity.
+                    setDocumentSource('sermon');
+                    setDocumentExtractionId(null);
+                    setDocumentTitle(title);
+                    setDocumentMarkdown(content);
                     setIsLeftSidebarOpen(false);
                     setIsRightSidebarOpen(false);
                 }}

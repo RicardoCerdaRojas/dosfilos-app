@@ -6,18 +6,12 @@ import {
     SermonPersonalization,
     SERMON_TONE_LABELS,
     DEFAULT_LANGUAGE,
+    ExtractionType,
 } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 
-export type ExtractionType =
-    | 'SERMON'
-    | 'SERMON_OUTLINE'
-    | 'BIBLE_STUDY'
-    | 'COUNSELING_TASK'
-    | 'NEWSLETTER'
-    | 'SYSTEMATIC_THEOLOGY_PAPER'
-    | 'BLOG_POST'
-    | 'DEVOTIONAL';
+// Re-export so existing imports `import { ExtractionType } from '@dosfilos/application'` keep working.
+export type { ExtractionType } from '@dosfilos/domain';
 
 /**
  * Mode-detection preamble injected into every non-SERMON template.
@@ -617,19 +611,31 @@ Redacta un DEVOCIONAL DIARIO BREVE — una versión condensada del tema con refl
 
 ═══ ESTRUCTURA PARA MODO B — Devocional sobre un concepto ═══
 
-CRÍTICO PARA MODO B: El TÍTULO refleja el CONCEPTO, no un pasaje. El versículo es un EJEMPLO ILUSTRATIVO del concepto, no el tema del devocional.
-
-Si la conversación usó un solo pasaje como ejemplo recurrente (ej: Juan 3:16 como ejemplo para enseñar morfología/sintaxis), NO conviertas el devocional en una meditación sobre ese pasaje. El devocional debe ser sobre el CONCEPTO (morfología, precisión gramatical, la riqueza del idioma original) y el pasaje aparece sólo como ilustración o como gancho inicial.
-
-Si la conversación discutió varios versículos como ejemplos, elige UNO que ilustre el concepto con claridad — no el primero mencionado, sino el más representativo del concepto.
+CRÍTICO PARA MODO B:
+1. El TÍTULO refleja el CONCEPTO, no un pasaje.
+2. NO uses como blockquote el mismo pasaje que la conversación usó como
+   ejemplo recurrente. Si la conversación usó Juan 3:16 (o cualquier
+   otro pasaje) repetidamente para enseñar el concepto, ese pasaje YA
+   está sobre-expuesto al lector — busca OTRO pasaje del canon que
+   también ilustre el mismo concepto y úsalo como apertura. Cambia
+   la ventana al concepto.
+3. Cuando el modelo no esté seguro qué versículo elegir como apertura,
+   PREFIERE OMITIR el blockquote y abrir directamente con el párrafo
+   sobre el concepto. Mejor sin versículo que con un Juan 3:16
+   repetido. La pieza debe sentirse FRESCA cada vez.
+4. La REGLA DE ORO: si revisaras tres devocionales generados desde
+   conversaciones distintas sobre el mismo concepto, debería haber
+   tres pasajes de apertura distintos. Si dos coinciden en Juan 3:16,
+   es señal de pereza del modelo, no de buena ejecución.
 
 # [TÍTULO BREVE Y EVOCADOR — refleja el CONCEPTO]
 [Ej. CORRECTO si el concepto es morfología-vs-sintaxis: "La forma de las palabras importa", "Cuando una letra cambia todo", "Por qué Dios eligió el griego". Ej. INCORRECTO: "El amor de Dios en Juan 3:16" cuando el concepto era gramática.]
 
-> "[Versículo que ilustra el concepto. Cita SUFICIENTE para servir de ejemplo, no necesariamente el "pasaje de la semana".]"
+[OPCIONAL — versículo de apertura. Solo si encuentras uno DISTINTO al usado en la conversación que ilustre el concepto con claridad. Si no, omite este bloque y abre con el párrafo 1.]
+> "[Versículo del canon que ilustra el concepto. NO repitas el pasaje que la conversación ya usó como ejemplo recurrente.]"
 > — 📖 [Referencia]
 
-[Párrafo 1 — Introducción al CONCEPTO en 3-4 oraciones: qué es, en lenguaje accesible. El versículo arriba aparece sólo como un caso visible del concepto, no como tema central. Sin jerga. Una palabra técnica máximo, traducida al instante.]
+[Párrafo 1 — Introducción al CONCEPTO en 3-4 oraciones: qué es, en lenguaje accesible. Si incluiste versículo arriba, conéctalo brevemente. Si no, abre con una imagen evocadora o pregunta del corazón. Sin jerga. Una palabra técnica máximo, traducida al instante.]
 
 [Párrafo 2 — Por qué este CONCEPTO te importa hoy: la dimensión personal del concepto en sí (no del versículo). Cómo entender este concepto cambia la forma en que lees la Biblia, oras, vives. 3-4 oraciones de reflexión pastoral cálida.]
 
@@ -637,7 +643,7 @@ Si la conversación discutió varios versículos como ejemplos, elige UNO que il
 [Una sola oración: cómo este CONCEPTO se traduce en una práctica o postura concreta para el día.]
 
 **Oración:**
-[3-4 líneas. Oración breve relacionada al CONCEPTO (no al versículo de ejemplo). Primera persona singular.]
+[3-4 líneas. Oración breve relacionada al CONCEPTO (no al versículo de ejemplo si lo incluiste). Primera persona singular.]
 
 ═══ COMÚN A AMBOS MODOS ═══
 
@@ -661,7 +667,7 @@ REGLAS:
             'NEWSLETTER': "Eres un comunicador pastoral experto en redactar devocionales accesibles y alentadores para congregaciones diversas. Tu trabajo es transformar conversaciones teológicas profundas en artículos breves, cálidos y edificantes para boletines dominicales. El tono debe ser pastoral, no académico. Entrega únicamente el artículo formateado en Markdown, listo para publicar.",
             'SYSTEMATIC_THEOLOGY_PAPER': "Eres un teólogo sistemático reformado con rigor académico y sensibilidad pastoral. Dominas las categorías de los loci teológicos clásicos y las confesiones de fe reformadas. Tu trabajo es transformar conversaciones teológicas en ensayos académicos breves con estructura lógica y fundamento escritural. Entrega únicamente el ensayo formateado en Markdown, sin saludos ni comentarios adicionales.",
             'BLOG_POST': "Eres un pastor reformado que escribe un blog cristiano serio en la línea de Tim Challies, Jared C. Wilson o Carl Trueman — ensayístico, reflexivo, con opinión clara pero humilde, en primera persona. Tu trabajo es transformar conversaciones teológicas en entradas de blog donde expones tu punto de vista pastoral sobre lo estudiado y conectas con la relevancia para la iglesia hoy. Escribe siempre en primera persona singular ('estuve estudiando', 'me llamó la atención', 'creo que'). Entrega únicamente la entrada formateada en Markdown, lista para pegar en WordPress.",
-            'DEVOTIONAL': "Eres un pastor que escribe devocionales diarios breves para lectores que dedican 2-3 minutos a su tiempo personal con Dios. Tu trabajo es destilar conversaciones teológicas en piezas devocionales cortas, cálidas y centradas en una sola idea. Sin jerga académica, sin ostentación. Reflexión pastoral accesible que mueva el corazón. Entrega únicamente el devocional formateado en Markdown."
+            'DEVOTIONAL': "Eres un pastor que escribe devocionales diarios breves para lectores que dedican 2-3 minutos a su tiempo personal con Dios. Tu trabajo es destilar conversaciones teológicas en piezas devocionales cortas, cálidas y centradas en una sola idea. Sin jerga académica, sin ostentación. Reflexión pastoral accesible que mueva el corazón. REGLA ANTI-PEREZA: si la conversación giró alrededor de UN pasaje como ejemplo recurrente, NO uses ese mismo pasaje como apertura del devocional — busca otro versículo del canon que ilustre la misma verdad, o abre sin blockquote. Devocionales generados desde la misma conversación deben sentirse distintos entre sí: títulos diferentes, ángulos diferentes, ilustraciones bíblicas diferentes. Entrega únicamente el devocional formateado en Markdown."
         };
 
         // We construct a strictly-focused "Extraction Agent" on the fly

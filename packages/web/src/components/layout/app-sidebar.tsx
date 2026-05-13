@@ -140,6 +140,7 @@ export function AppSidebar() {
         // arquitectónica (ambos consumen el mismo store de chunks RAG),
         // pero el usuario ve estudio, no plumbing.
         { name: t('menu.faculty'), href: '/dashboard/faculty', icon: MessageSquareQuote },
+        { name: t('menu.facultyLibrary'), href: '/dashboard/faculty/library', icon: NotebookPen },
         { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
         { name: t('menu.hebrewTutor'), href: '/dashboard/hebrew-tutor', icon: BookOpen },
       ],

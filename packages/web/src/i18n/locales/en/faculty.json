@@ -121,7 +121,51 @@
         "devotional": "Daily Devotional",
         "devotionalDesc": "Short reflection with personal prayer.",
         "extractedDocument": "Extracted Document",
-        "extractionFailed": "Could not generate content. Please try again."
+        "extractionFailed": "Could not generate content. Please try again.",
+        "tabs": {
+            "tools": "Tools",
+            "generated": "Generated"
+        },
+        "toast": {
+            "generated": "{{title}} ready",
+            "view": "View"
+        }
+    },
+    "extractionsList": {
+        "empty": "No documents generated in this session yet. Use the Tools tab to create the first one.",
+        "orphan": "session deleted",
+        "confirmDelete": "Delete this document? This action cannot be undone.",
+        "errorLoading": "Couldn't load your documents.",
+        "errorIndexBuilding": "Firestore index still building (5-10 min after deploy). Retry in a moment.",
+        "retry": "Retry",
+        "refresh": "Refresh",
+        "actions": {
+            "menu": "Document actions",
+            "rename": "Rename",
+            "pin": "Pin to project",
+            "unpin": "Unpin from project",
+            "jumpToOrigin": "View origin in conversation",
+            "delete": "Delete"
+        },
+        "toast": {
+            "pinned": "Pinned to project",
+            "unpinned": "Unpinned from project",
+            "noProject": "This session has no project. Assign the session to a project first.",
+            "noProjectsAvailable": "You haven't created any projects yet."
+        }
+    },
+    "library": {
+        "title": "My library",
+        "subtitle": "Every document you've generated from your conversations.",
+        "searchPlaceholder": "Search by title, type, or content...",
+        "loading": "Loading library...",
+        "emptyState": "Select a document from the list to view it.",
+        "projectLibraryFallbackTitle": "Project library",
+        "projectSubtitle": "Documents pinned to this project.",
+        "count_one": "{{count}} document",
+        "count_other": "{{count}} documents",
+        "pickProject": "Type the number of the project to pin to:",
+        "microActionsUnavailable": "AI micro-actions are only available inside a chat session."
     },
     "dialogs": {
         "deleteSessionTitle": "Delete this session?",

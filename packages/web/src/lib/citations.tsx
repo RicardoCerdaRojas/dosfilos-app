@@ -217,7 +217,51 @@ export function normalizeAssistantMarkdown(content: string): string {
     //   `> -`  alt bullet syntax
     //   `> **` bold-prefixed line (often a label)
     //   `> 1.` numbered list
-    return content.replace(/ > (?=>|\*|-|\*\*|\d+\.)/g, '\n> ');
+    let out = content.replace(/ > (?=>|\*|-|\*\*|\d+\.)/g, '\n> ');
+
+    // Force inline bold globally. ReactMarkdown + remark-gfm
+    // intermittently fails to process `**X**` emphasis inside table
+    // cells, definition lists, and other contexts when the content
+    // contains accents, apostrophes, or mixed RTL/LTR characters
+    // (e.g. "**Raíz**", "**Pi'el**", Hebrew labels). The literal
+    // asterisks then leak into the rendered DOM.
+    //
+    // Defensive fix: rewrite every `**X**` to `<strong>X</strong>`
+    // outside of fenced code blocks AND outside blockquote lines.
+    // rehype-raw renders the HTML form regardless of whether the
+    // markdown parser fired. Since `**X**` and `<strong>X</strong>`
+    // produce identical HTML, this is idempotent on already-correct
+    // prose — no double-bolding.
+    //
+    // Skip rules and the reason for each:
+    //   - Code fences: didactic examples like "use `**bold**`" must
+    //     keep their literal asterisks for display.
+    //   - Blockquote lines (starting with `>`): the later
+    //     `transformCallouts` pass detects callouts via the literal
+    //     `> **Label:**` pattern. If we convert the asterisks first,
+    //     the callout detection breaks and the styled box (Ejemplo,
+    //     Nota, etc.) falls back to a plain blockquote.
+    //
+    // Each skip-zone is a contract with another pipeline step; do not
+    // remove without coordinating downstream.
+    {
+        let inCodeFence = false;
+        out = out.split('\n').map(line => {
+            if (line.trimStart().startsWith('```')) {
+                inCodeFence = !inCodeFence;
+                return line;
+            }
+            if (inCodeFence) return line;
+            if (line.trimStart().startsWith('>')) return line;
+            // Lazy match `**X**` where X has no asterisks or newlines.
+            // Lazy + `[^*]` prevents collapsing `**a** **b**` into one
+            // span. The negative-lookbehind `(?<!\*)` and lookahead
+            // `(?!\*)` keep us from breaking `***triple***` (italic+bold).
+            return line.replace(/(?<!\*)\*\*([^*\n]+?)\*\*(?!\*)/g, '<strong>$1</strong>');
+        }).join('\n');
+    }
+
+    return out;
 }
 
 /**
@@ -296,6 +340,8 @@ export function Callout({ children, ...rest }: CalloutProps) {
     const Icon = style.icon;
     return (
         <div
+            data-callout={kind}
+            data-label={label}
             className={cn(
                 "my-3 rounded-lg border px-4 py-3 not-prose",
                 style.classes

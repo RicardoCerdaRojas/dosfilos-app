@@ -292,6 +292,9 @@ export function useFacultyChat(sessionId: string) {
         }
     });
 
+    // Raw extraction — returns the LLM markdown string. Used for preview
+    // flows (e.g. SERMON_OUTLINE JSON parsed into the wizard modal) where
+    // we do NOT want a persisted Extraction document.
     const extractContentMutation = useMutation({
         mutationFn: async ({ type, approvedOutline, personalization, onChunk }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER' | 'BLOG_POST' | 'DEVOTIONAL'; approvedOutline?: ApprovedSermonOutline; personalization?: SermonPersonalization; onChunk?: (chunk: string) => void }) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -299,6 +302,29 @@ export function useFacultyChat(sessionId: string) {
                 user.uid, sessionId, type, approvedOutline, personalization, onChunk,
                 resolveActiveLanguage(i18n.language),
             );
+        }
+    });
+
+    // Persisted extraction — generates AND writes a top-level Extraction
+    // doc. Use for any artifact the user should be able to return to,
+    // edit, or pin. Returns the saved Extraction so the caller can
+    // surface a toast with "Ver" action that opens it in the editor.
+    const generateAndSaveExtractionMutation = useMutation({
+        mutationFn: async ({ type, approvedOutline, personalization, onChunk, fallbackTitle }: { type: 'SERMON' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER' | 'BLOG_POST' | 'DEVOTIONAL'; approvedOutline?: ApprovedSermonOutline; personalization?: SermonPersonalization; onChunk?: (chunk: string) => void; fallbackTitle: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return await facultyService.generateAndSaveExtraction.execute({
+                userId: user.uid,
+                sessionId,
+                type,
+                approvedOutline,
+                personalization,
+                onChunk,
+                language: resolveActiveLanguage(i18n.language),
+                fallbackTitle,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['faculty', 'extractions'] });
         }
     });
 
@@ -334,6 +360,8 @@ export function useFacultyChat(sessionId: string) {
         isStreaming,
         extractContent: extractContentMutation.mutateAsync,
         isExtracting: extractContentMutation.isPending,
+        generateAndSaveExtraction: generateAndSaveExtractionMutation.mutateAsync,
+        isGeneratingExtraction: generateAndSaveExtractionMutation.isPending,
         processMicroAction: processMicroActionMutation.mutateAsync,
         isProcessingMicroAction: processMicroActionMutation.isPending,
         deleteMessage: deleteMessageMutation.mutateAsync,
