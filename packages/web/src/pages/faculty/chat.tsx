@@ -15,6 +15,7 @@ import { Loader2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
+import { track } from '@/lib/analytics/track';
 import { useFacultyChat, useFacultySessions, useFacultyAgents, useSessionExtractions, useExtractionMutations } from '../../hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { SermonOutlinePreviewModal, type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
@@ -507,6 +508,15 @@ export function FacultyChatPage() {
             }
             const fallbackTitle = t(EXTRACTION_TITLE_KEYS[type] || 'extraction.extractedDocument');
             const extraction = await generateAndSaveExtraction({ type, fallbackTitle });
+            // Hito 7 — feature activation. Captures every successful
+            // artifact generation so we can compute generation-rate-
+            // per-paid-user when the analysis window opens.
+            track('faculty_artifact_generated', {
+                type,
+                sessionId: effectiveSessionId,
+                hasProject: !!session?.projectId,
+                messageCount: session?.messages.length ?? 0,
+            });
             // Queue UX: don't auto-open if a document is already in the
             // editor. Surface a toast with "Ver" so the user keeps their
             // current work but can discover the new artifact.
@@ -573,6 +583,10 @@ export function FacultyChatPage() {
             toast.success(t('extractionsList.toast.unpinned'));
         } else if (session?.projectId) {
             pinExtraction.mutate({ extractionId: extraction.id, projectId: session.projectId });
+            track('faculty_artifact_pinned_to_project', {
+                type: extraction.type,
+                projectId: session.projectId,
+            });
             toast.success(t('extractionsList.toast.pinned'));
         } else {
             toast.info(t('extractionsList.toast.noProject'));
@@ -582,6 +596,10 @@ export function FacultyChatPage() {
     const handleDeleteExtraction = (extraction: Extraction) => {
         if (!window.confirm(t('extractionsList.confirmDelete'))) return;
         deleteExtraction.mutate(extraction.id);
+        track('faculty_artifact_deleted', {
+            type: extraction.type,
+            ageHours: Math.round((Date.now() - extraction.createdAt.getTime()) / 3_600_000),
+        });
         if (documentExtractionId === extraction.id) closeDocument();
     };
 
@@ -754,7 +772,14 @@ export function FacultyChatPage() {
                     onExtract={handleExtract}
                     extractions={extractions}
                     selectedExtractionId={documentExtractionId}
-                    onSelectExtraction={openExtractionInEditor}
+                    onSelectExtraction={(extraction) => {
+                        track('faculty_artifact_opened_from_library', {
+                            type: extraction.type,
+                            ageHours: Math.round((Date.now() - extraction.createdAt.getTime()) / 3_600_000),
+                            sameSession: extraction.sessionId === effectiveSessionId,
+                        });
+                        openExtractionInEditor(extraction);
+                    }}
                     onDeleteExtraction={handleDeleteExtraction}
                     onRenameExtraction={handleRenameExtraction}
                     onPinExtraction={handlePinExtraction}
