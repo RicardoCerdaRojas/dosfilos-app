@@ -98,10 +98,24 @@ export function FacultyExtractionsList({
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (editingId && inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.select();
-        }
+        if (!editingId || !inputRef.current) return;
+        // Radix DropdownMenu returns focus to its trigger button as
+        // part of its close-animation flow, which races against our
+        // own focus() and wins — the input briefly receives focus,
+        // then immediately loses it back to the kebab button.
+        // Deferring past the menu's focus restoration (queues after
+        // the next paint) lets our focus call land last and stick.
+        let inner: number | undefined;
+        const outer = requestAnimationFrame(() => {
+            inner = requestAnimationFrame(() => {
+                inputRef.current?.focus();
+                inputRef.current?.select();
+            });
+        });
+        return () => {
+            cancelAnimationFrame(outer);
+            if (inner !== undefined) cancelAnimationFrame(inner);
+        };
     }, [editingId]);
 
     const beginEdit = (extraction: Extraction) => {
