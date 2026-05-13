@@ -157,7 +157,28 @@ export function useExtractionMutations() {
             if (!user?.uid) throw new Error('User not authenticated');
             await facultyService.renameExtraction.execute(user.uid, extractionId, title);
         },
-        onSuccess: invalidateAll,
+        onMutate: ({ extractionId, title }) => {
+            // Optimistic title swap so the inline editor commits to a
+            // visible change immediately rather than flickering back to
+            // the old title for ~500ms until the backend acks.
+            queryClient.cancelQueries({ queryKey: ['faculty', 'extractions'] });
+            const snapshots: Array<[readonly unknown[], unknown]> = [];
+            queryClient
+                .getQueriesData<Extraction[]>({ queryKey: ['faculty', 'extractions'] })
+                .forEach(([key, data]) => {
+                    if (!Array.isArray(data)) return;
+                    snapshots.push([key, data]);
+                    queryClient.setQueryData(
+                        key,
+                        data.map(e => (e.id === extractionId ? { ...e, title } : e)),
+                    );
+                });
+            return { snapshots };
+        },
+        onError: (_err, _vars, context) => {
+            context?.snapshots.forEach(([key, data]) => queryClient.setQueryData(key, data));
+        },
+        onSettled: invalidateAll,
     });
 
     /**

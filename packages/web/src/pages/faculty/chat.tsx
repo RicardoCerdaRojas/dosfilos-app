@@ -567,11 +567,9 @@ export function FacultyChatPage() {
 
     // ── Extraction list handlers (panel "Generados" tab) ─────────────────────
 
-    const handleRenameExtraction = (extraction: Extraction) => {
-        const next = window.prompt(t('extractionsList.actions.rename'), extraction.title);
-        if (!next || next.trim() === extraction.title) return;
-        renameExtraction.mutate({ extractionId: extraction.id, title: next.trim() });
-        if (documentExtractionId === extraction.id) setDocumentTitle(next.trim());
+    const handleRenameExtraction = (extraction: Extraction, newTitle: string) => {
+        renameExtraction.mutate({ extractionId: extraction.id, title: newTitle });
+        if (documentExtractionId === extraction.id) setDocumentTitle(newTitle);
     };
 
     const handleAddExtractionToProject = (extraction: Extraction, projectId: string) => {

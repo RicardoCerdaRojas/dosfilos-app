@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,7 +55,8 @@ interface FacultyExtractionsListProps {
     selectedId: string | null;
     onSelect: (extraction: Extraction) => void;
     onDelete: (extraction: Extraction) => void;
-    onRename: (extraction: Extraction) => void;
+    /** Called with the new title once the inline editor commits (Enter or blur). */
+    onRename: (extraction: Extraction, newTitle: string) => void;
     onAddToProject: (extraction: Extraction, projectId: string) => void;
     onRemoveFromProject: (extraction: Extraction, projectId: string) => void;
     projects: AIProject[];
@@ -87,6 +88,40 @@ export function FacultyExtractionsList({
     const locale = i18n.language || 'es';
 
     const items = useMemo(() => extractions, [extractions]);
+
+    // Inline rename state — single editing row at a time. Title text
+    // collapses into an input box that commits on Enter or blur, and
+    // cancels on Esc. Avoids the generic browser prompt() modal and
+    // keeps the user's focus inside the surface they were already in.
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingDraft, setEditingDraft] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (editingId && inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+        }
+    }, [editingId]);
+
+    const beginEdit = (extraction: Extraction) => {
+        setEditingId(extraction.id);
+        setEditingDraft(extraction.title);
+    };
+
+    const commitEdit = (extraction: Extraction) => {
+        const next = editingDraft.trim();
+        if (next && next !== extraction.title) {
+            onRename(extraction, next);
+        }
+        setEditingId(null);
+        setEditingDraft('');
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditingDraft('');
+    };
 
     if (error) {
         const message = (error as Error)?.message ?? String(error);
@@ -129,14 +164,40 @@ export function FacultyExtractionsList({
                     <div
                         key={item.id}
                         className={cn(
-                            "group rounded-lg border bg-card hover:bg-accent/40 transition-colors cursor-pointer flex items-start gap-2.5 p-2.5",
+                            "group rounded-lg border bg-card hover:bg-accent/40 transition-colors flex items-start gap-2.5 p-2.5",
+                            editingId === item.id ? "cursor-default" : "cursor-pointer",
                             isSelected ? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30" : "border-slate-200 dark:border-zinc-800",
                         )}
-                        onClick={() => onSelect(item)}
+                        onClick={() => {
+                            if (editingId === item.id) return;
+                            onSelect(item);
+                        }}
                     >
                         <Icon className={cn("w-4 h-4 shrink-0 mt-0.5", visual.color)} />
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{item.title}</div>
+                            {editingId === item.id ? (
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={editingDraft}
+                                    onChange={e => setEditingDraft(e.target.value)}
+                                    onBlur={() => commitEdit(item)}
+                                    onClick={e => e.stopPropagation()}
+                                    onKeyDown={e => {
+                                        e.stopPropagation();
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            commitEdit(item);
+                                        } else if (e.key === 'Escape') {
+                                            e.preventDefault();
+                                            cancelEdit();
+                                        }
+                                    }}
+                                    className="w-full text-sm font-medium bg-background border border-indigo-500 rounded px-1.5 py-0.5 -mx-1.5 -my-0.5 outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900"
+                                />
+                            ) : (
+                                <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{item.title}</div>
+                            )}
                             <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                                 <span>{t(TYPE_LABEL_KEY[item.type])}</span>
                                 <span aria-hidden>·</span>
@@ -194,7 +255,7 @@ export function FacultyExtractionsList({
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
-                                    <DropdownMenuItem onClick={() => onRename(item)}>
+                                    <DropdownMenuItem onClick={() => beginEdit(item)}>
                                         <Pencil className="w-3.5 h-3.5 mr-2" />
                                         {t('extractionsList.actions.rename')}
                                     </DropdownMenuItem>

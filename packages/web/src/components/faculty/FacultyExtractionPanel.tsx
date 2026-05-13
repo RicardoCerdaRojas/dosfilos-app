@@ -36,7 +36,7 @@ interface FacultyExtractionPanelProps {
     selectedExtractionId: string | null;
     onSelectExtraction: (extraction: Extraction) => void;
     onDeleteExtraction: (extraction: Extraction) => void;
-    onRenameExtraction: (extraction: Extraction) => void;
+    onRenameExtraction: (extraction: Extraction, newTitle: string) => void;
     onAddExtractionToProject: (extraction: Extraction, projectId: string) => void;
     onRemoveExtractionFromProject: (extraction: Extraction, projectId: string) => void;
     projects: AIProject[];

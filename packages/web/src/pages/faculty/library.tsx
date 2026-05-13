@@ -82,10 +82,8 @@ export function FacultyLibraryPage() {
         [extractions, selectedId],
     );
 
-    const handleRename = (extraction: Extraction) => {
-        const next = window.prompt(t('extractionsList.actions.rename'), extraction.title);
-        if (!next || next.trim() === extraction.title) return;
-        rename.mutate({ extractionId: extraction.id, title: next.trim() });
+    const handleRename = (extraction: Extraction, newTitle: string) => {
+        rename.mutate({ extractionId: extraction.id, title: newTitle });
     };
 
     const handleAddToProject = (extraction: Extraction, projectId: string) => {
