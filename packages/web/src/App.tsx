@@ -63,6 +63,7 @@ const SubscriptionPage = lazy(() => import('@/pages/subscription/SubscriptionPag
 // Admin
 const AdminLeads = lazy(() => import('@/pages/admin/AdminLeads').then(m => ({ default: m.AdminLeads })));
 const AdminLeadMagnets = lazy(() => import('@/pages/admin/AdminLeadMagnets').then(m => ({ default: m.AdminLeadMagnets })));
+const AdminEmailPreviews = lazy(() => import('@/pages/admin/AdminEmailPreviews').then(m => ({ default: m.AdminEmailPreviews })));
 const CoreLibraryAdmin = lazy(() => import('@/pages/admin/CoreLibraryAdmin'));
 const AnalyticsDashboard = lazy(() => import('@/pages/admin/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
 const GeographicDashboard = lazy(() => import('@/pages/admin/GeographicDashboard').then(m => ({ default: m.GeographicDashboard })));
@@ -222,6 +223,11 @@ function App() {
           <Route path="/admin/lead-magnets" element={
             <ProtectedRoute>
               <AdminLeadMagnets />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/email-previews" element={
+            <ProtectedRoute>
+              <AdminEmailPreviews />
             </ProtectedRoute>
           } />
 
