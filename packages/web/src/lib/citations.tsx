@@ -227,13 +227,23 @@ export function normalizeAssistantMarkdown(content: string): string {
     // asterisks then leak into the rendered DOM.
     //
     // Defensive fix: rewrite every `**X**` to `<strong>X</strong>`
-    // outside of fenced code blocks. rehype-raw renders the HTML
-    // form regardless of whether the markdown parser fired. Since
-    // `**X**` and `<strong>X</strong>` produce identical HTML, this
-    // is idempotent on already-correct prose — no double-bolding.
+    // outside of fenced code blocks AND outside blockquote lines.
+    // rehype-raw renders the HTML form regardless of whether the
+    // markdown parser fired. Since `**X**` and `<strong>X</strong>`
+    // produce identical HTML, this is idempotent on already-correct
+    // prose — no double-bolding.
     //
-    // Skip code fences so technical examples (e.g. "use `**bold**`")
-    // keep their literal asterisks for didactic display.
+    // Skip rules and the reason for each:
+    //   - Code fences: didactic examples like "use `**bold**`" must
+    //     keep their literal asterisks for display.
+    //   - Blockquote lines (starting with `>`): the later
+    //     `transformCallouts` pass detects callouts via the literal
+    //     `> **Label:**` pattern. If we convert the asterisks first,
+    //     the callout detection breaks and the styled box (Ejemplo,
+    //     Nota, etc.) falls back to a plain blockquote.
+    //
+    // Each skip-zone is a contract with another pipeline step; do not
+    // remove without coordinating downstream.
     {
         let inCodeFence = false;
         out = out.split('\n').map(line => {
@@ -242,6 +252,7 @@ export function normalizeAssistantMarkdown(content: string): string {
                 return line;
             }
             if (inCodeFence) return line;
+            if (line.trimStart().startsWith('>')) return line;
             // Lazy match `**X**` where X has no asterisks or newlines.
             // Lazy + `[^*]` prevents collapsing `**a** **b**` into one
             // span. The negative-lookbehind `(?<!\*)` and lookahead
