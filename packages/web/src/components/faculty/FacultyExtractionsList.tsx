@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
-import type { Extraction, ExtractionType } from '@dosfilos/domain';
+import type { Extraction, ExtractionType, AIProject } from '@dosfilos/domain';
+import { ExtractionProjectsPicker } from './ExtractionProjectsPicker';
 
 /** Icon + tint per artifact type — matches the tools tab for visual continuity. */
 const TYPE_VISUAL: Record<ExtractionType, { icon: typeof BookOpen; color: string }> = {
@@ -55,7 +56,9 @@ interface FacultyExtractionsListProps {
     onSelect: (extraction: Extraction) => void;
     onDelete: (extraction: Extraction) => void;
     onRename: (extraction: Extraction) => void;
-    onPin: (extraction: Extraction) => void;
+    onAddToProject: (extraction: Extraction, projectId: string) => void;
+    onRemoveFromProject: (extraction: Extraction, projectId: string) => void;
+    projects: AIProject[];
     onJumpToOrigin?: (extraction: Extraction) => void;
     error?: unknown;
     onRetry?: () => void;
@@ -73,7 +76,9 @@ export function FacultyExtractionsList({
     onSelect,
     onDelete,
     onRename,
-    onPin,
+    onAddToProject,
+    onRemoveFromProject,
+    projects,
     onJumpToOrigin,
     error,
     onRetry,
@@ -136,10 +141,13 @@ export function FacultyExtractionsList({
                                 <span>{t(TYPE_LABEL_KEY[item.type])}</span>
                                 <span aria-hidden>·</span>
                                 <span>{formatRelative(item.updatedAt, locale)}</span>
-                                {item.projectId && (
+                                {item.projectIds.length > 0 && (
                                     <>
                                         <span aria-hidden>·</span>
-                                        <Pin className="w-3 h-3" />
+                                        <span className="inline-flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400">
+                                            <Pin className="w-3 h-3 fill-current" />
+                                            {item.projectIds.length}
+                                        </span>
                                     </>
                                 )}
                                 {item.sourceSessionDeleted && (
@@ -150,43 +158,63 @@ export function FacultyExtractionsList({
                                 )}
                             </div>
                         </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="w-7 h-7 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                    onClick={e => e.stopPropagation()}
-                                    aria-label={t('extractionsList.actions.menu')}
-                                >
-                                    <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
-                                <DropdownMenuItem onClick={() => onRename(item)}>
-                                    <Pencil className="w-3.5 h-3.5 mr-2" />
-                                    {t('extractionsList.actions.rename')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onPin(item)}>
-                                    <Pin className="w-3.5 h-3.5 mr-2" />
-                                    {item.projectId ? t('extractionsList.actions.unpin') : t('extractionsList.actions.pin')}
-                                </DropdownMenuItem>
-                                {onJumpToOrigin && !item.sourceSessionDeleted && item.sessionId && (
-                                    <DropdownMenuItem onClick={() => onJumpToOrigin(item)}>
-                                        <ExternalLink className="w-3.5 h-3.5 mr-2" />
-                                        {t('extractionsList.actions.jumpToOrigin')}
+                        <div
+                            className="flex items-center gap-0.5 shrink-0"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <ExtractionProjectsPicker
+                                extraction={item}
+                                projects={projects}
+                                onAddToProject={projectId => onAddToProject(item, projectId)}
+                                onRemoveFromProject={projectId => onRemoveFromProject(item, projectId)}
+                                trigger={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="w-7 h-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        aria-label={t('extractionsList.actions.pin')}
+                                    >
+                                        <Pin className={cn(
+                                            "w-3.5 h-3.5",
+                                            item.projectIds.length > 0 && "fill-current text-indigo-500"
+                                        )} />
+                                    </Button>
+                                }
+                            />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="w-7 h-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        onClick={e => e.stopPropagation()}
+                                        aria-label={t('extractionsList.actions.menu')}
+                                    >
+                                        <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+                                    <DropdownMenuItem onClick={() => onRename(item)}>
+                                        <Pencil className="w-3.5 h-3.5 mr-2" />
+                                        {t('extractionsList.actions.rename')}
                                     </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onClick={() => onDelete(item)}
-                                >
-                                    <Trash2 className="w-3.5 h-3.5 mr-2" />
-                                    {t('extractionsList.actions.delete')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    {onJumpToOrigin && !item.sourceSessionDeleted && item.sessionId && (
+                                        <DropdownMenuItem onClick={() => onJumpToOrigin(item)}>
+                                            <ExternalLink className="w-3.5 h-3.5 mr-2" />
+                                            {t('extractionsList.actions.jumpToOrigin')}
+                                        </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive"
+                                        onClick={() => onDelete(item)}
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                        {t('extractionsList.actions.delete')}
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
                 );
             })}

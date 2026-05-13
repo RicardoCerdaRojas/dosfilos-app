@@ -1,13 +1,27 @@
 import { IExtractionRepository } from '@dosfilos/domain';
 
 /**
- * Sets the projectId on an extraction so it appears in that project's
- * library view. Pass null to unpin. Idempotent.
+ * Adds an extraction to a project's library. Idempotent — pinning to
+ * a project the artifact already belongs to is a no-op. An artifact
+ * can be pinned to multiple projects (cross-project reuse).
  */
-export class PinExtractionToProjectUseCase {
+export class AddExtractionToProjectUseCase {
     constructor(private readonly repo: IExtractionRepository) {}
 
-    execute(userId: string, extractionId: string, projectId: string | null): Promise<void> {
-        return this.repo.pinToProject(userId, extractionId, projectId);
+    execute(userId: string, extractionId: string, projectId: string): Promise<void> {
+        if (!projectId.trim()) throw new Error('projectId required');
+        return this.repo.addToProject(userId, extractionId, projectId);
+    }
+}
+
+/**
+ * Removes an extraction from a project's library. Idempotent.
+ */
+export class RemoveExtractionFromProjectUseCase {
+    constructor(private readonly repo: IExtractionRepository) {}
+
+    execute(userId: string, extractionId: string, projectId: string): Promise<void> {
+        if (!projectId.trim()) throw new Error('projectId required');
+        return this.repo.removeFromProject(userId, extractionId, projectId);
     }
 }

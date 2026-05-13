@@ -142,10 +142,15 @@
         "actions": {
             "menu": "Acciones del documento",
             "rename": "Renombrar",
-            "pin": "Anclar al proyecto",
+            "pin": "Proyectos",
             "unpin": "Desanclar del proyecto",
             "jumpToOrigin": "Ver origen en la conversación",
             "delete": "Eliminar"
+        },
+        "picker": {
+            "title": "Anclar a proyectos",
+            "empty": "Aún no has creado proyectos. Crea uno desde la barra lateral.",
+            "hint": "Marca varios para compartir el documento entre proyectos."
         },
         "toast": {
             "pinned": "Anclado al proyecto",

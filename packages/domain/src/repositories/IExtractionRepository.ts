@@ -12,7 +12,7 @@ export interface CreateExtractionInput {
     markdown: string;
     derivedFromMessageIds: string[];
     externalRef?: ExtractionExternalRef | null;
-    projectId?: string | null;
+    projectIds?: string[];
 }
 
 /**
@@ -43,8 +43,11 @@ export interface IExtractionRepository {
     /** Renames the artifact (does not bump version). */
     rename(userId: string, extractionId: string, title: string): Promise<void>;
 
-    /** Sets or clears projectId. Pass null to unpin. */
-    pinToProject(userId: string, extractionId: string, projectId: string | null): Promise<void>;
+    /** Adds projectId to the artifact's projectIds array. Idempotent. */
+    addToProject(userId: string, extractionId: string, projectId: string): Promise<void>;
+
+    /** Removes projectId from the artifact's projectIds array. Idempotent. */
+    removeFromProject(userId: string, extractionId: string, projectId: string): Promise<void>;
 
     /** Hard-deletes the artifact. */
     delete(userId: string, extractionId: string): Promise<void>;
@@ -57,9 +60,11 @@ export interface IExtractionRepository {
     orphanBySession(userId: string, sessionId: string): Promise<void>;
 
     /**
-     * Called when a project is deleted. Sets projectId=null on every
-     * extraction pinned to that project. Mirrors the pattern projects
-     * already use for chat sessions.
+     * Called when a project is deleted. Removes projectId from every
+     * artifact's `projectIds` array. Artifacts pinned to other
+     * projects still survive in those project libraries; artifacts
+     * pinned only to the deleted project become library-orphans
+     * (visible in cross-session view, no project chips).
      */
     orphanByProject(userId: string, projectId: string): Promise<void>;
 }

@@ -12,6 +12,8 @@ import {
     where,
     writeBatch,
     Timestamp,
+    arrayUnion,
+    arrayRemove,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import {
@@ -43,11 +45,18 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
 
     private fromFirestore(snap: { id: string; data: () => any }): Extraction {
         const data = snap.data();
+        // Lazy migration: pre-2026-05-13 docs stored a single
+        // `projectId: string | null` field. Coerce to the new
+        // `projectIds: string[]` shape on read so the entity is
+        // consistent regardless of when the doc was created.
+        const projectIds: string[] = Array.isArray(data.projectIds)
+            ? data.projectIds
+            : (data.projectId ? [data.projectId] : []);
         return {
             id: snap.id,
             userId: data.userId,
             sessionId: data.sessionId ?? null,
-            projectId: data.projectId ?? null,
+            projectIds,
             type: data.type,
             title: data.title,
             markdown: data.markdown,
@@ -67,7 +76,7 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
             id: docRef.id,
             userId: input.userId,
             sessionId: input.sessionId,
-            projectId: input.projectId ?? null,
+            projectIds: input.projectIds ?? [],
             type: input.type,
             title: input.title,
             markdown: input.markdown,
@@ -128,7 +137,7 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
         const q = query(
             this.getCollectionRef(),
             where('userId', '==', userId),
-            where('projectId', '==', projectId),
+            where('projectIds', 'array-contains', projectId),
             orderBy('createdAt', 'desc'),
         );
         const snap = await getDocs(q);
@@ -170,14 +179,31 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
         });
     }
 
-    async pinToProject(userId: string, extractionId: string, projectId: string | null): Promise<void> {
+    async addToProject(userId: string, extractionId: string, projectId: string): Promise<void> {
+        const docRef = this.getDocRef(extractionId);
+        const snap = await getDoc(docRef);
+        if (!snap.exists() || snap.data().userId !== userId) {
+            throw new Error('Extraction not found or not owned by user');
+        }
+        // arrayUnion is idempotent + safe under concurrent edits.
+        // Also clears the legacy `projectId` field so docs migrated
+        // from the v1 single-pin schema can't drift back into ambiguity.
+        await updateDoc(docRef, {
+            projectIds: arrayUnion(projectId),
+            projectId: null,
+            updatedAt: Timestamp.fromDate(new Date()),
+        });
+    }
+
+    async removeFromProject(userId: string, extractionId: string, projectId: string): Promise<void> {
         const docRef = this.getDocRef(extractionId);
         const snap = await getDoc(docRef);
         if (!snap.exists() || snap.data().userId !== userId) {
             throw new Error('Extraction not found or not owned by user');
         }
         await updateDoc(docRef, {
-            projectId: projectId ?? null,
+            projectIds: arrayRemove(projectId),
+            projectId: null,
             updatedAt: Timestamp.fromDate(new Date()),
         });
     }
@@ -214,13 +240,14 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
         const q = query(
             this.getCollectionRef(),
             where('userId', '==', userId),
-            where('projectId', '==', projectId),
+            where('projectIds', 'array-contains', projectId),
         );
         const snap = await getDocs(q);
         if (snap.empty) return;
         const batch = writeBatch(db);
         const now = Timestamp.fromDate(new Date());
         snap.docs.forEach(d => batch.update(d.ref, {
+            projectIds: arrayRemove(projectId),
             projectId: null,
             updatedAt: now,
         }));

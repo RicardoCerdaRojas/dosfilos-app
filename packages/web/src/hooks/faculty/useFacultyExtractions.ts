@@ -160,10 +160,18 @@ export function useExtractionMutations() {
         onSuccess: invalidateAll,
     });
 
-    const pinToProject = useMutation({
-        mutationFn: async ({ extractionId, projectId }: { extractionId: string; projectId: string | null }) => {
+    const addToProject = useMutation({
+        mutationFn: async ({ extractionId, projectId }: { extractionId: string; projectId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            await facultyService.pinExtractionToProject.execute(user.uid, extractionId, projectId);
+            await facultyService.addExtractionToProject.execute(user.uid, extractionId, projectId);
+        },
+        onSuccess: invalidateAll,
+    });
+
+    const removeFromProject = useMutation({
+        mutationFn: async ({ extractionId, projectId }: { extractionId: string; projectId: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            await facultyService.removeExtractionFromProject.execute(user.uid, extractionId, projectId);
         },
         onSuccess: invalidateAll,
     });
@@ -176,5 +184,5 @@ export function useExtractionMutations() {
         onSuccess: invalidateAll,
     });
 
-    return { updateMarkdown, rename, pinToProject, deleteExtraction };
+    return { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction };
 }

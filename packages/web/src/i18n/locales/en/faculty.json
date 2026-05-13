@@ -142,10 +142,15 @@
         "actions": {
             "menu": "Document actions",
             "rename": "Rename",
-            "pin": "Pin to project",
+            "pin": "Projects",
             "unpin": "Unpin from project",
             "jumpToOrigin": "View origin in conversation",
             "delete": "Delete"
+        },
+        "picker": {
+            "title": "Pin to projects",
+            "empty": "No projects yet. Create one from the sidebar.",
+            "hint": "Pick several to share this document across projects."
         },
         "toast": {
             "pinned": "Pinned to project",

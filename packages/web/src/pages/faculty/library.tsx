@@ -22,7 +22,7 @@ export function FacultyLibraryPage() {
     const navigate = useNavigate();
     const { extractions, isLoading } = useUserExtractions();
     const { projects } = useFacultyProjects();
-    const { updateMarkdown, rename, pinToProject, deleteExtraction } = useExtractionMutations();
+    const { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction } = useExtractionMutations();
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [query, setQuery] = useState('');
@@ -88,24 +88,14 @@ export function FacultyLibraryPage() {
         rename.mutate({ extractionId: extraction.id, title: next.trim() });
     };
 
-    const handlePin = (extraction: Extraction) => {
-        // Library view: cycle through projects via a prompt rather than
-        // a dropdown. First-cut UX — a project picker comes in a follow-up.
-        if (extraction.projectId) {
-            pinToProject.mutate({ extractionId: extraction.id, projectId: null });
-            toast.success(t('extractionsList.toast.unpinned'));
-            return;
-        }
-        if (projects.length === 0) {
-            toast.info(t('extractionsList.toast.noProjectsAvailable'));
-            return;
-        }
-        const list = projects.map((p, i) => `${i + 1}. ${p.title}`).join('\n');
-        const choice = window.prompt(`${t('library.pickProject')}\n${list}`, '1');
-        const idx = Number(choice) - 1;
-        if (Number.isNaN(idx) || idx < 0 || idx >= projects.length) return;
-        pinToProject.mutate({ extractionId: extraction.id, projectId: projects[idx].id });
+    const handleAddToProject = (extraction: Extraction, projectId: string) => {
+        addToProject.mutate({ extractionId: extraction.id, projectId });
         toast.success(t('extractionsList.toast.pinned'));
+    };
+
+    const handleRemoveFromProject = (extraction: Extraction, projectId: string) => {
+        removeFromProject.mutate({ extractionId: extraction.id, projectId });
+        toast.success(t('extractionsList.toast.unpinned'));
     };
 
     const handleDelete = (extraction: Extraction) => {
@@ -154,7 +144,9 @@ export function FacultyLibraryPage() {
                             onSelect={selectExtraction}
                             onDelete={handleDelete}
                             onRename={handleRename}
-                            onPin={handlePin}
+                            onAddToProject={handleAddToProject}
+                            onRemoveFromProject={handleRemoveFromProject}
+                            projects={projects}
                             onJumpToOrigin={handleJumpToOrigin}
                         />
                     )}

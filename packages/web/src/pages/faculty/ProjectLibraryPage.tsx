@@ -23,7 +23,7 @@ export function ProjectLibraryPage() {
     const { t } = useTranslation('faculty');
     const { extractions, isLoading } = useProjectExtractions(projectId);
     const { projects } = useFacultyProjects();
-    const { updateMarkdown, rename, pinToProject, deleteExtraction } = useExtractionMutations();
+    const { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction } = useExtractionMutations();
 
     const project = useMemo(() => projects.find(p => p.id === projectId), [projects, projectId]);
 
@@ -73,9 +73,13 @@ export function ProjectLibraryPage() {
         rename.mutate({ extractionId: extraction.id, title: next.trim() });
     };
 
-    const handleUnpin = (extraction: Extraction) => {
-        if (!extraction.projectId) return;
-        pinToProject.mutate({ extractionId: extraction.id, projectId: null });
+    const handleAddToProject = (extraction: Extraction, pid: string) => {
+        addToProject.mutate({ extractionId: extraction.id, projectId: pid });
+        toast.success(t('extractionsList.toast.pinned'));
+    };
+
+    const handleRemoveFromProject = (extraction: Extraction, pid: string) => {
+        removeFromProject.mutate({ extractionId: extraction.id, projectId: pid });
         toast.success(t('extractionsList.toast.unpinned'));
     };
 
@@ -129,7 +133,9 @@ export function ProjectLibraryPage() {
                             onSelect={selectExtraction}
                             onDelete={handleDelete}
                             onRename={handleRename}
-                            onPin={handleUnpin}
+                            onAddToProject={handleAddToProject}
+                            onRemoveFromProject={handleRemoveFromProject}
+                            projects={projects}
                             onJumpToOrigin={handleJumpToOrigin}
                         />
                     )}
