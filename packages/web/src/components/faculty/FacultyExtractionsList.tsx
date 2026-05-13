@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -97,17 +97,12 @@ export function FacultyExtractionsList({
     const [editingDraft, setEditingDraft] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        const el = inputRef.current;
-        if (!editingId || !el) return;
-        // Chrome and Firefox treat `select()` as a no-op when the
-        // focus didn't come from a user gesture on the input itself.
-        // `setSelectionRange(0, length)` works regardless of the
-        // gesture origin, so use it explicitly to highlight the full
-        // title — what the user expects when they click "Renombrar".
-        el.focus();
-        el.setSelectionRange(0, el.value.length);
-    }, [editingId]);
+    // Focus + selection is handled inline via the input's `autoFocus`
+    // + `onFocus` props (see render). useEffect ran AFTER Radix's
+    // focus restoration in some cases, so we moved the logic to the
+    // input element itself where React invokes `onFocus` natively when
+    // the element receives focus — regardless of which actor (us,
+    // autoFocus, Radix) caused the focus event.
 
     const beginEdit = (extraction: Extraction) => {
         setEditingId(extraction.id);
@@ -184,6 +179,19 @@ export function FacultyExtractionsList({
                                 <input
                                     ref={inputRef}
                                     type="text"
+                                    // autoFocus + onFocus is the only
+                                    // combo that wins reliably against
+                                    // Radix DropdownMenu's focus dance.
+                                    // autoFocus fires before the input's
+                                    // first paint; the onFocus handler
+                                    // re-applies selection if anything
+                                    // (Radix, layout shift) re-fires the
+                                    // focus event afterwards.
+                                    autoFocus
+                                    onFocus={e => {
+                                        const el = e.currentTarget;
+                                        el.setSelectionRange(0, el.value.length);
+                                    }}
                                     value={editingDraft}
                                     onChange={e => setEditingDraft(e.target.value)}
                                     onBlur={() => commitEdit(item)}
