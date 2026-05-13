@@ -11,7 +11,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { useFacultyChat, useFacultySessions, useFacultyAgents } from '../../hooks/faculty';
@@ -36,6 +37,8 @@ const EXTRACTION_TITLE_KEYS: Record<string, string> = {
     COUNSELING_TASK: 'extraction.counselingTask',
     NEWSLETTER: 'extraction.newsletter',
     SYSTEMATIC_THEOLOGY_PAPER: 'extraction.theologyPaper',
+    BLOG_POST: 'extraction.blogPost',
+    DEVOTIONAL: 'extraction.devotional',
 };
 
 /**
@@ -157,7 +160,12 @@ export function FacultyChatPage() {
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(
         () => localStorage.getItem('faculty-sidebar') !== 'false'
     );
-    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(
+        () => localStorage.getItem('faculty-extraction-panel') !== 'false'
+    );
+    useEffect(() => {
+        localStorage.setItem('faculty-extraction-panel', String(isRightSidebarOpen));
+    }, [isRightSidebarOpen]);
     const [lengthPreference, setLengthPreference] = useState<ResponseMode>('auto');
     const [extractedContent, setExtractedContent] = useState<{ title: string; markdown: string } | null>(null);
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
@@ -527,76 +535,103 @@ export function FacultyChatPage() {
                 />
 
                 <div className="flex-1 flex overflow-hidden">
-                    {/* Main chat area */}
-                    <main className={cn("flex flex-col min-w-0 relative transition-all duration-300", extractedContent ? (isZenMode ? "hidden" : "w-1/2 border-r") : "w-full")}>
-                        {isHomeState ? (
-                            <div className="flex-1 overflow-y-auto">
-                                <FacultyHomeContent />
-                            </div>
-                        ) : isLoadingSession && !isNewSession ? (
-                            <div className="flex-1 flex items-center justify-center">
-                                <div className="flex flex-col items-center gap-3 text-slate-400">
-                                    <Loader2 className="w-6 h-6 animate-spin" />
-                                    <p className="text-sm">{t('chat.loadingConversation')}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
-                                    <div className="max-w-3xl mx-auto space-y-6 w-full">
-                                        <FacultyChatMessages
-                                            messages={session?.messages || []}
-                                            isNewSession={isNewSession}
-                                            isStreaming={isStreaming}
-                                            isSending={isSending}
-                                            deletingMessageId={deletingMessageId}
-                                            streamingMessage={streamingMessage}
-                                            activeAgents={activeAgents}
-                                            agentNameForNew={agentNameForNew}
-                                            onRequestDeleteMessage={(messageId) => setDeleteMessageConfirmId(messageId)}
-                                            onCopyMessage={handleCopyMessage}
-                                        />
-                                        <div ref={messagesEndRef} />
-                                    </div>
-                                </div>
+                    {/* Two-panel layout when an extracted document is open.
+                        Resizable horizontally so the user can give more
+                        space to the chat (skim reference messages while
+                        editing the doc) or to the editor (full-document
+                        focus). Persisted via `autoSaveId` so the split
+                        survives reloads. */}
+                    <PanelGroup
+                        orientation="horizontal"
+                        id="faculty-chat-doc-split"
+                        className="w-full h-full"
+                    >
+                        {/* Main chat area */}
+                        {!(extractedContent && isZenMode) && (
+                            <Panel defaultSize={extractedContent ? 50 : 100} minSize={25} id="chat">
+                                <main className="flex flex-col h-full min-w-0 relative">
+                                    {isHomeState ? (
+                                        <div className="flex-1 overflow-y-auto">
+                                            <FacultyHomeContent />
+                                        </div>
+                                    ) : isLoadingSession && !isNewSession ? (
+                                        <div className="flex-1 flex items-center justify-center">
+                                            <div className="flex flex-col items-center gap-3 text-slate-400">
+                                                <Loader2 className="w-6 h-6 animate-spin" />
+                                                <p className="text-sm">{t('chat.loadingConversation')}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
+                                                <div className="max-w-3xl mx-auto space-y-6 w-full">
+                                                    <FacultyChatMessages
+                                                        messages={session?.messages || []}
+                                                        isNewSession={isNewSession}
+                                                        isStreaming={isStreaming}
+                                                        isSending={isSending}
+                                                        deletingMessageId={deletingMessageId}
+                                                        streamingMessage={streamingMessage}
+                                                        activeAgents={activeAgents}
+                                                        agentNameForNew={agentNameForNew}
+                                                        onRequestDeleteMessage={(messageId) => setDeleteMessageConfirmId(messageId)}
+                                                        onCopyMessage={handleCopyMessage}
+                                                    />
+                                                    <div ref={messagesEndRef} />
+                                                </div>
+                                            </div>
 
-                                <FacultyChatInput
-                                    input={input}
-                                    isSending={isSending}
-                                    isStreaming={isStreaming}
-                                    isLoading={isLoadingSession}
-                                    streamingMessage={streamingMessage}
-                                    isHidden={isHomeState}
-                                    onInputChange={setInput}
-                                    onSubmit={handleSendMessage}
-                                    attachment={pendingAttachment}
-                                    onAttach={setPendingAttachment}
-                                />
-                            </>
+                                            <FacultyChatInput
+                                                input={input}
+                                                isSending={isSending}
+                                                isStreaming={isStreaming}
+                                                isLoading={isLoadingSession}
+                                                streamingMessage={streamingMessage}
+                                                isHidden={isHomeState}
+                                                onInputChange={setInput}
+                                                onSubmit={handleSendMessage}
+                                                attachment={pendingAttachment}
+                                                onAttach={setPendingAttachment}
+                                            />
+                                        </>
+                                    )}
+                                </main>
+                            </Panel>
                         )}
-                    </main>
 
-                    {/* Editor Panel */}
-                    {extractedContent && (
-                        <aside className={cn("flex flex-col bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l transition-all duration-300", isZenMode ? "w-full" : "w-1/2")}>
-                            <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/10 h-14 shrink-0">
-                                <h3 className="font-semibold text-sm truncate pr-4 text-foreground/80">{extractedContent.title}</h3>
-                                <button onClick={() => { setExtractedContent(null); setIsZenMode(false); }} className="p-1.5 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors">
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-                            <div className="flex-1 overflow-hidden bg-background">
-                                <FacultyDocumentEditor
-                                    markdown={extractedContent.markdown}
-                                    onChange={(md) => setExtractedContent(prev => prev ? { ...prev, markdown: md } : null)}
-                                    onMicroAction={(actionType, selectedText, context, customPrompt) => processMicroAction({ actionType, selectedText, documentContext: context, customPrompt })}
-                                    isProcessing={isProcessingMicroAction}
-                                    isZenMode={isZenMode}
-                                    onToggleZenMode={() => setIsZenMode(prev => !prev)}
-                                />
-                            </div>
-                        </aside>
-                    )}
+                        {/* Resize handle — visible only when both panels
+                            are shown (extracted doc open, not in zen mode). */}
+                        {extractedContent && !isZenMode && (
+                            <PanelResizeHandle className="w-1 bg-border hover:bg-primary/40 active:bg-primary/60 transition-colors cursor-col-resize" />
+                        )}
+
+                        {/* Document editor panel. Title + close + view
+                            toggle + copy buttons all live in the
+                            FacultyDocumentEditor toolbar — no separate
+                            header bar. */}
+                        {extractedContent && (
+                            <Panel
+                                defaultSize={isZenMode ? 100 : 50}
+                                minSize={30}
+                                id="document"
+                            >
+                                <aside className="flex flex-col h-full bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l">
+                                    <div className="flex-1 overflow-hidden bg-background">
+                                        <FacultyDocumentEditor
+                                            title={extractedContent.title}
+                                            onClose={() => { setExtractedContent(null); setIsZenMode(false); }}
+                                            markdown={extractedContent.markdown}
+                                            onChange={(md) => setExtractedContent(prev => prev ? { ...prev, markdown: md } : null)}
+                                            onMicroAction={(actionType, selectedText, context, customPrompt) => processMicroAction({ actionType, selectedText, documentContext: context, customPrompt })}
+                                            isProcessing={isProcessingMicroAction}
+                                            isZenMode={isZenMode}
+                                            onToggleZenMode={() => setIsZenMode(prev => !prev)}
+                                        />
+                                    </div>
+                                </aside>
+                            </Panel>
+                        )}
+                    </PanelGroup>
                 </div>
 
                 {/* Right extraction panel */}

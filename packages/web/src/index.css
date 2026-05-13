@@ -429,6 +429,56 @@
   }
 
   /*
+   * Global quiet scrollbars — thin, low-contrast, reveal on hover.
+   *
+   * Every scrollable container in the app gets a 6px thumb that sits
+   * near-transparent at rest and brightens when the container is
+   * hovered or focused. The goal is to keep scroll affordance without
+   * the chunky default rail competing visually with the chat surface,
+   * sidebars, and document editor.
+   *
+   * macOS hides overlay scrollbars unless the user has "Always show"
+   * enabled — there this is a no-op. On Windows/Linux this replaces
+   * the heavy default rail with overlay-style chrome.
+   */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.18);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 200ms ease;
+  }
+
+  *:hover::-webkit-scrollbar-thumb,
+  *:focus-within::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.4);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.6);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /*
    * View-transition tuning for the expository wizard's card↔chip
    * morph. Browser default is 250ms ease; we lengthen slightly and
    * use a curve that emphasizes the takeoff so the lift feels

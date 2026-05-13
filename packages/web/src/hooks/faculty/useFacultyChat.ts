@@ -293,7 +293,7 @@ export function useFacultyChat(sessionId: string) {
     });
 
     const extractContentMutation = useMutation({
-        mutationFn: async ({ type, approvedOutline, personalization, onChunk }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER'; approvedOutline?: ApprovedSermonOutline; personalization?: SermonPersonalization; onChunk?: (chunk: string) => void }) => {
+        mutationFn: async ({ type, approvedOutline, personalization, onChunk }: { type: 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER' | 'BLOG_POST' | 'DEVOTIONAL'; approvedOutline?: ApprovedSermonOutline; personalization?: SermonPersonalization; onChunk?: (chunk: string) => void }) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return await facultyService.extractContent.execute(
                 user.uid, sessionId, type, approvedOutline, personalization, onChunk,
