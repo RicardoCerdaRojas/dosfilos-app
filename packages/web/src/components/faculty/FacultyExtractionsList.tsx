@@ -99,23 +99,8 @@ export function FacultyExtractionsList({
 
     useEffect(() => {
         if (!editingId || !inputRef.current) return;
-        // Radix DropdownMenu returns focus to its trigger button as
-        // part of its close-animation flow, which races against our
-        // own focus() and wins — the input briefly receives focus,
-        // then immediately loses it back to the kebab button.
-        // Deferring past the menu's focus restoration (queues after
-        // the next paint) lets our focus call land last and stick.
-        let inner: number | undefined;
-        const outer = requestAnimationFrame(() => {
-            inner = requestAnimationFrame(() => {
-                inputRef.current?.focus();
-                inputRef.current?.select();
-            });
-        });
-        return () => {
-            cancelAnimationFrame(outer);
-            if (inner !== undefined) cancelAnimationFrame(inner);
-        };
+        inputRef.current.focus();
+        inputRef.current.select();
     }, [editingId]);
 
     const beginEdit = (extraction: Extraction) => {
@@ -268,7 +253,22 @@ export function FacultyExtractionsList({
                                         <MoreHorizontal className="w-4 h-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+                                <DropdownMenuContent
+                                    align="end"
+                                    onClick={e => e.stopPropagation()}
+                                    // Canonical Radix fix: prevent the menu
+                                    // from restoring focus to its trigger
+                                    // after close. Without this, picking
+                                    // "Renombrar" lands focus in the rename
+                                    // input for one frame, then Radix yanks
+                                    // it back to the kebab button → input
+                                    // fires onBlur → commitEdit unmounts the
+                                    // input before the user can type. Other
+                                    // actions (Delete, Pin, JumpToOrigin)
+                                    // don't need focus to return to the
+                                    // kebab; the body gets focus instead.
+                                    onCloseAutoFocus={e => e.preventDefault()}
+                                >
                                     <DropdownMenuItem onClick={() => beginEdit(item)}>
                                         <Pencil className="w-3.5 h-3.5 mr-2" />
                                         {t('extractionsList.actions.rename')}
