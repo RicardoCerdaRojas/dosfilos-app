@@ -36,18 +36,24 @@ export function ProjectLibraryPage() {
         [extractions, selectedId],
     );
 
+    /**
+     * Atomic selection setter — see library.tsx for the underlying
+     * race the synchronous batch resolves.
+     */
+    const selectExtraction = (extraction: Extraction) => {
+        setSelectedId(extraction.id);
+        setDraftMarkdown(extraction.markdown);
+        setDraftFor(extraction.id);
+    };
+
+    // Fallback re-seed for clicks that landed before the list loaded.
     useEffect(() => {
-        if (!selectedId) {
-            setDraftMarkdown('');
-            setDraftFor(null);
-            return;
-        }
+        if (!selectedId) return;
+        if (draftFor === selectedId) return;
         const found = extractions.find(e => e.id === selectedId);
         if (!found) return;
-        if (draftFor !== selectedId) {
-            setDraftMarkdown(found.markdown);
-            setDraftFor(selectedId);
-        }
+        setDraftMarkdown(found.markdown);
+        setDraftFor(selectedId);
     }, [selectedId, extractions, draftFor]);
 
     useEffect(() => {
@@ -120,7 +126,7 @@ export function ProjectLibraryPage() {
                         <FacultyExtractionsList
                             extractions={extractions}
                             selectedId={selectedId}
-                            onSelect={e => setSelectedId(e.id)}
+                            onSelect={selectExtraction}
                             onDelete={handleDelete}
                             onRename={handleRename}
                             onPin={handleUnpin}

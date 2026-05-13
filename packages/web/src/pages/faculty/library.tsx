@@ -29,19 +29,30 @@ export function FacultyLibraryPage() {
     const [draftMarkdown, setDraftMarkdown] = useState<string>('');
     const [draftFor, setDraftFor] = useState<string | null>(null);
 
-    // Seed the draft when the user picks a different artifact.
+    /**
+     * Atomic selection setter. Updates id + draft + draftFor in one batch
+     * so a single render observes all three values consistent. Doing this
+     * via useEffect created a race where the editor would mount with the
+     * previous selection's markdown (or empty on first click) because
+     * setSelectedId triggered a render before the effect could seed the
+     * draft.
+     */
+    const selectExtraction = (extraction: Extraction) => {
+        setSelectedId(extraction.id);
+        setDraftMarkdown(extraction.markdown);
+        setDraftFor(extraction.id);
+    };
+
+    // Fallback re-seed: covers the case where the user picked an
+    // artifact before the extractions list finished loading (no entry
+    // in the list at click time → we can't seed synchronously).
     useEffect(() => {
-        if (!selectedId) {
-            setDraftMarkdown('');
-            setDraftFor(null);
-            return;
-        }
+        if (!selectedId) return;
+        if (draftFor === selectedId) return;
         const found = extractions.find(e => e.id === selectedId);
         if (!found) return;
-        if (draftFor !== selectedId) {
-            setDraftMarkdown(found.markdown);
-            setDraftFor(selectedId);
-        }
+        setDraftMarkdown(found.markdown);
+        setDraftFor(selectedId);
     }, [selectedId, extractions, draftFor]);
 
     // Debounced autosave: save 1.5s after the user stops typing.
@@ -140,7 +151,7 @@ export function FacultyLibraryPage() {
                         <FacultyExtractionsList
                             extractions={filtered}
                             selectedId={selectedId}
-                            onSelect={e => setSelectedId(e.id)}
+                            onSelect={selectExtraction}
                             onDelete={handleDelete}
                             onRename={handleRename}
                             onPin={handlePin}
