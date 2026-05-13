@@ -340,6 +340,8 @@ export function Callout({ children, ...rest }: CalloutProps) {
     const Icon = style.icon;
     return (
         <div
+            data-callout={kind}
+            data-label={label}
             className={cn(
                 "my-3 rounded-lg border px-4 py-3 not-prose",
                 style.classes
