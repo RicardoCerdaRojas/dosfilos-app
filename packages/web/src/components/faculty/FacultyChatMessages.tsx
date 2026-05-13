@@ -7,7 +7,7 @@ import rehypeRaw from 'rehype-raw';
 import { useTranslation } from '@/i18n';
 import type { SourceReference, ConcreteResponseMode, SupportedLanguage } from '@dosfilos/domain';
 import { resolveLocalized } from '@dosfilos/domain';
-import { extractCitations, CitationSup, Bibliography, wrapLanguageRuns, transformCallouts, Callout, wrapScriptureRefs, ScriptureRef } from '@/lib/citations';
+import { extractCitations, CitationSup, Bibliography, wrapLanguageRuns, transformCallouts, Callout, wrapScriptureRefs, ScriptureRef, normalizeAssistantMarkdown } from '@/lib/citations';
 import { useModeMeta } from './FacultyChatHeader';
 import { useAuthorization } from '@/hooks/useAuthorization';
 
@@ -62,15 +62,22 @@ function InferredModeBadge({ mode }: { mode: ConcreteResponseMode }) {
  */
 function AssistantMessageContent({ content, sources, isAdmin }: { content: string; sources?: SourceReference[]; isAdmin: boolean }) {
     const { rendered, citations, protectedSourcesCount } = React.useMemo(() => {
-        // Pipeline: citations → scripture refs → callouts → hebrew/greek language tagging.
+        // Pipeline: normalize → citations → scripture refs → callouts → hebrew/greek language tagging.
         // Order matters: citations have a latin format that scripture regex won't match;
         // scripture must run before language tagging so the wrapping span stays intact.
+        //
+        // Step 0 (normalize) repairs malformed assistant markdown where
+        // multi-line blockquotes arrive on a single line with literal
+        // " > " separators. Without it, ReactMarkdown renders the raw
+        // `>` characters as text instead of structured blockquotes.
+        // Idempotent on well-formed responses.
         //
         // Gating: non-admin users only see citations whose source has `publiclyCitable=true`
         // (per-document flag managed by admin in Core Library). Citations of private/
         // pending-licensed material are stripped entirely from the prose, and those
         // sources are excluded from the Bibliography panel.
-        const step1 = extractCitations(content, sources ?? [], { onlyCitableSources: !isAdmin });
+        const step0 = normalizeAssistantMarkdown(content);
+        const step1 = extractCitations(step0, sources ?? [], { onlyCitableSources: !isAdmin });
         const step2 = wrapScriptureRefs(step1.rendered);
         const step3 = transformCallouts(step2);
         const step4 = wrapLanguageRuns(step3);

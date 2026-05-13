@@ -173,6 +173,54 @@ const CALLOUT_STYLES: Record<CalloutKind, { icon: React.ComponentType<any>; labe
 };
 
 /**
+ * Repairs malformed assistant markdown where the model concatenates
+ * what should be multi-line content onto a single line, separating
+ * blockquote lines with literal " > " runs instead of real newlines.
+ *
+ * The bug pattern (observed in faculty tutor responses):
+ *   "> > * **a** ... > * **b** ... > > Cierre del callout."
+ *
+ * The intended markdown is:
+ *   > > * **a** ...
+ *   > > * **b** ...
+ *   >
+ *   > Cierre del callout.
+ *
+ * Why it happens: the multi-agent prompt teaches the model to use
+ * blockquotes for callouts (with `> ` prefix per line). When the
+ * model wants nested bullets inside a callout, it improvises with
+ * `> >` AND keeps the whole structure on a single line because some
+ * sampling temperature run made it skip newlines. The renderer then
+ * sees "> > * X > * Y" as a single inline blockquote with raw `>` `*`
+ * characters because there are no actual paragraph breaks.
+ *
+ * Strategy: find inline ` > ` runs that start a new bullet/blockquote
+ * marker (`> *`, `> >`, `> **`, `> 1.`) and replace the inline " > "
+ * with "\n> " so the markdown parser sees a structured multi-line
+ * blockquote. Idempotent: a well-formatted response (no inline runs)
+ * is returned unchanged.
+ *
+ * Defensive — this normalizer is a safety net. The prompt should
+ * be the primary fix; this catches model regressions without round-
+ * tripping the entire chat history through a re-generation.
+ */
+export function normalizeAssistantMarkdown(content: string): string {
+    // Match space-separated `>` runs that look like concatenated
+    // markdown markers. The lookahead ensures we only split when the
+    // following character starts a new block-level marker — we don't
+    // want to break " > " sequences that are part of natural prose
+    // (rare but possible in quoted text).
+    //
+    // Markers we recognize:
+    //   `> >`  nested blockquote
+    //   `> *`  bullet inside blockquote
+    //   `> -`  alt bullet syntax
+    //   `> **` bold-prefixed line (often a label)
+    //   `> 1.` numbered list
+    return content.replace(/ > (?=>|\*|-|\*\*|\d+\.)/g, '\n> ');
+}
+
+/**
  * Detects callout blockquotes like "> **Nota:** ..." and converts them into
  * styled div containers that ReactMarkdown will pass through via rehype-raw.
  *
