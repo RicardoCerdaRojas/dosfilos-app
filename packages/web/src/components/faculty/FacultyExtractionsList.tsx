@@ -98,9 +98,15 @@ export function FacultyExtractionsList({
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (!editingId || !inputRef.current) return;
-        inputRef.current.focus();
-        inputRef.current.select();
+        const el = inputRef.current;
+        if (!editingId || !el) return;
+        // Chrome and Firefox treat `select()` as a no-op when the
+        // focus didn't come from a user gesture on the input itself.
+        // `setSelectionRange(0, length)` works regardless of the
+        // gesture origin, so use it explicitly to highlight the full
+        // title — what the user expects when they click "Renombrar".
+        el.focus();
+        el.setSelectionRange(0, el.value.length);
     }, [editingId]);
 
     const beginEdit = (extraction: Extraction) => {
