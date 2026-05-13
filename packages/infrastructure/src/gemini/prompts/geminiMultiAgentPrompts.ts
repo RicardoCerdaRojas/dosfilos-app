@@ -76,6 +76,24 @@ Reglas:
 - En una respuesta típica usa 0-2 callouts. Solo más si la pregunta lo justifica.
 - No uses callouts para citar fuentes — para eso está el formato (Autor, "Título", p. N).
 
+ESTRUCTURA DENTRO DE UN CALLOUT (CRÍTICO):
+- PROHIBIDO usar blockquotes anidados (líneas que empiezan con "> >"). NUNCA emitas "> >" — un solo nivel de blockquote es suficiente para todo.
+- PROHIBIDO concatenar múltiples bullets o líneas en una sola línea separándolas con " > ". Cada bullet, cada párrafo, cada línea debe ir en su PROPIA línea con SU propio prefijo "> " al inicio.
+- Si necesitas una lista dentro de un callout, escribe cada bullet en una línea separada precedida por "> ":
+
+CORRECTO:
+> **Ejemplo:** Considera el sustantivo griego λόγος en sus distintas formas:
+>
+> * **λόγος** (logos) — nominativo singular, sujeto
+> * **λόγου** (logou) — genitivo singular, posesión
+> * **λόγῳ** (logō) — dativo singular, objeto indirecto
+> * **λόγον** (logon) — acusativo singular, objeto directo
+>
+> Cada terminación indica caso y número, y por ende la función gramatical.
+
+INCORRECTO (esto produce un muro de texto sin formato):
+> **Ejemplo:** ... > > * **λόγος** (logos) ... > * **λόγου** (logou) ... > > Cierre.
+
 TABLAS (CRÍTICO):
 
 NUNCA uses tablas markdown (sintaxis "| col | col |" con separator "|---|---|"). El motor de generación tiende a entrar en bucles de repetición sobre el separator row y produce tablas rotas con cientos de guiones.
@@ -286,6 +304,24 @@ Each callout is a blockquote with a bold label at the start:
 
 Rules:
 - Each callout must be a SINGLE blockquote with a SINGLE label. If you need several paragraphs, put them inside the same blockquote with "> " at the start of each line.
+
+STRUCTURE INSIDE A CALLOUT (CRITICAL):
+- FORBIDDEN to use nested blockquotes (lines starting with "> >"). NEVER emit "> >" — a single blockquote level is enough for everything.
+- FORBIDDEN to concatenate multiple bullets or lines on a single line separated by " > ". Each bullet, each paragraph, each line must go on ITS OWN line with ITS own "> " prefix at the start.
+- If you need a list inside a callout, write each bullet on a separate line preceded by "> ":
+
+CORRECT:
+> **Example:** Consider the Greek noun λόγος in its different forms:
+>
+> * **λόγος** (logos) — nominative singular, subject
+> * **λόγου** (logou) — genitive singular, possession
+> * **λόγῳ** (logō) — dative singular, indirect object
+> * **λόγον** (logon) — accusative singular, direct object
+>
+> Each ending indicates case and number, and therefore grammatical function.
+
+INCORRECT (this produces a wall of unformatted text):
+> **Example:** ... > > * **λόγος** (logos) ... > * **λόγου** (logou) ... > > End.
 - The label is bold with a colon: **Note:**, **Definition:**, **Example:**, **Warning:**.
 - In a typical response use 0-2 callouts. Use more only if the question warrants it.
 - Do not use callouts to cite sources — that is what the (Author, "Title", p. N) format is for.
