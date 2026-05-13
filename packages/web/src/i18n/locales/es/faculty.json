@@ -116,6 +116,10 @@
         "newsletterDesc": "Artículo devocional para la newsletter de la iglesia.",
         "theologyPaper": "Ensayo Teológico",
         "theologyPaperDesc": "Paper académico con rigor doctrinal reformado.",
+        "blogPost": "Post para Blog",
+        "blogPostDesc": "Entrada ensayística en primera persona para tu WordPress.",
+        "devotional": "Devocional Diario",
+        "devotionalDesc": "Reflexión breve (2-3 min) con oración para tiempo personal.",
         "extractedDocument": "Documento Extraído",
         "extractionFailed": "No se pudo generar el contenido. Intenta de nuevo."
     },

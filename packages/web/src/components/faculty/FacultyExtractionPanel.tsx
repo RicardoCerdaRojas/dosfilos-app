@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, Loader2 } from 'lucide-react';
+import { Download, BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
@@ -17,6 +17,8 @@ const EXTRACTION_BUTTONS: ExtractionButton[] = [
     { type: 'BIBLE_STUDY', icon: Briefcase, iconColor: 'text-blue-600', labelKey: 'extraction.bibleStudy', descKey: 'extraction.bibleStudyDesc' },
     { type: 'COUNSELING_TASK', icon: MessageSquareQuote, iconColor: 'text-amber-600', labelKey: 'extraction.counselingTask', descKey: 'extraction.counselingTaskDesc' },
     { type: 'NEWSLETTER', icon: Newspaper, iconColor: 'text-rose-600', labelKey: 'extraction.newsletter', descKey: 'extraction.newsletterDesc' },
+    { type: 'BLOG_POST', icon: PenLine, iconColor: 'text-indigo-600', labelKey: 'extraction.blogPost', descKey: 'extraction.blogPostDesc' },
+    { type: 'DEVOTIONAL', icon: Sunrise, iconColor: 'text-orange-600', labelKey: 'extraction.devotional', descKey: 'extraction.devotionalDesc' },
     { type: 'SYSTEMATIC_THEOLOGY_PAPER', icon: FileText, iconColor: 'text-purple-600', labelKey: 'extraction.theologyPaper', descKey: 'extraction.theologyPaperDesc' },
 ];
 

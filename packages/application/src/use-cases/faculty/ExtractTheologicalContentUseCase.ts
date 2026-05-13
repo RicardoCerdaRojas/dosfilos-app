@@ -9,7 +9,58 @@ import {
 } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 
-export type ExtractionType = 'SERMON' | 'SERMON_OUTLINE' | 'BIBLE_STUDY' | 'COUNSELING_TASK' | 'NEWSLETTER' | 'SYSTEMATIC_THEOLOGY_PAPER';
+export type ExtractionType =
+    | 'SERMON'
+    | 'SERMON_OUTLINE'
+    | 'BIBLE_STUDY'
+    | 'COUNSELING_TASK'
+    | 'NEWSLETTER'
+    | 'SYSTEMATIC_THEOLOGY_PAPER'
+    | 'BLOG_POST'
+    | 'DEVOTIONAL';
+
+/**
+ * Mode-detection preamble injected into every non-SERMON template.
+ *
+ * Existing templates assumed the conversation was always about a SPECIFIC
+ * Bible passage. When a user discusses a CONCEPT instead (morphology vs
+ * syntax, doctrine of justification, noutetic method), the model forced
+ * the concept content into a passage-anchored template and produced
+ * generic devotionals/studies that lost the actual topic.
+ *
+ * This preamble lets the template branch: passage-focused conversations
+ * keep the current behavior; concept-focused conversations get a
+ * concept-anchored variant that uses biblical references as supporting
+ * examples rather than as the central organizing element.
+ */
+const MODE_DETECTION_PREAMBLE = `
+═══════════════════════════════════════════════════════════
+ANTES DE REDACTAR — IDENTIFICA EL TIPO DE CONVERSACIÓN
+═══════════════════════════════════════════════════════════
+
+MODO A — Conversación centrada en un PASAJE BÍBLICO específico
+  Ejemplos: "exégesis de Juan 3:16", "estudio de 1 Pedro 2:11-17",
+  "qué significa Romanos 8:28 en contexto", "análisis de Génesis 1".
+  → Estructura el output AROUND ese pasaje. El pasaje es el
+    corazón del documento. Los conceptos teológicos sirven al
+    pasaje.
+
+MODO B — Conversación centrada en un CONCEPTO teológico o método
+  Ejemplos: "diferencia entre morfología y sintaxis", "doctrina
+  de la justificación por fe", "método histórico-gramatical",
+  "consejería noutética vs. psicología secular", "qué es la
+  inerrancia bíblica".
+  → Estructura el output AROUND ese concepto. El concepto es el
+    corazón del documento. Los pasajes bíblicos aparecen como
+    ejemplos ilustrativos y respaldo del concepto, no como tema
+    principal.
+
+Identifica el modo PRIMERO. Después adapta el formato del template
+a ese modo. Las instrucciones específicas por sección indican qué
+escribir en cada modo. No mezcles modos en el mismo documento.
+
+═══════════════════════════════════════════════════════════
+`;
 
 export interface ApprovedSermonOutline {
     title: string;
@@ -168,14 +219,14 @@ ${approvedOutline ? `- CRÍTICO: El título, pasaje, proposición y puntos ya fu
                 break;
             }
             case 'BIBLE_STUDY':
-                extractionPrompt = `
-Analiza la conversación teológica y genera una GUÍA DE ESTUDIO BÍBLICO para un grupo pequeño siguiendo el método inductivo (Observación → Interpretación → Aplicación).
+                extractionPrompt = `${MODE_DETECTION_PREAMBLE}
+Genera una GUÍA DE ESTUDIO BÍBLICO para un grupo pequeño basada en la conversación teológica.
 
-Usa esta estructura Markdown EXACTA:
+═══ ESTRUCTURA PARA MODO A — Pasaje específico ═══
 
-# [TÍTULO DEL ESTUDIO]
+# [TÍTULO DEL ESTUDIO — refleja el pasaje y su mensaje]
 **Pasaje Central:** 📖 [Referencia bíblica principal]
-**Objetivo del Estudio:** [Una oración clara que describe lo que el participante aprenderá]
+**Objetivo del Estudio:** [Una oración clara que describe lo que el participante aprenderá del pasaje]
 
 ---
 
@@ -185,59 +236,92 @@ Usa esta estructura Markdown EXACTA:
 ---
 
 ## Observación: ¿Qué dice el texto?
-*Guía al grupo a leer el pasaje detenidamente antes de interpretar.*
-
 **Preguntas de Observación:**
-1. [Pregunta que invite a notar un detalle específico del texto]
-2. [Pregunta sobre personajes, acciones o mandamientos presentes en el pasaje]
-3. [Pregunta sobre palabras, frases repetidas o contrastes en el texto]
-
----
+1. [Pregunta sobre detalles del texto]
+2. [Pregunta sobre personajes, acciones o mandamientos]
+3. [Pregunta sobre palabras o frases repetidas]
 
 ## Interpretación: ¿Qué significa el texto?
-
-**Idea Principal:**
-[Declaración teológica central del pasaje en 1-2 oraciones]
+**Idea Principal:** [Declaración teológica central en 1-2 oraciones]
 
 **Preguntas de Interpretación:**
-1. [Pregunta sobre el significado de un concepto clave del pasaje]
-2. [Pregunta que explore la intención del autor para su audiencia original]
-3. [Pregunta que conecte con la teología bíblica más amplia o con otro pasaje de las Escrituras]
+1. [Pregunta sobre significado de un concepto clave]
+2. [Pregunta sobre intención del autor]
+3. [Pregunta que conecte con teología bíblica más amplia]
 
 **Nota Exegética:**
-> [Si en la conversación se discutió griego/hebreo, incluir aquí el término transliterado, su significado y su relevancia para entender el pasaje. Si no se discutió ningún término, omitir esta sección.]
+> [Si se discutió griego/hebreo en la conversación: transliteración + significado + relevancia. Omitir si no aplica.]
+
+## Aplicación: ¿Cómo debo responder?
+**Preguntas de Aplicación:**
+1. [Pregunta personal de auto-reflexión a la luz del texto]
+2. [Pregunta sobre relaciones o vida en comunidad]
+3. [Pregunta sobre acción práctica para esta semana]
+
+═══ ESTRUCTURA PARA MODO B — Concepto teológico/gramatical ═══
+
+# [TÍTULO DEL ESTUDIO — refleja el concepto y su importancia para la vida cristiana]
+**Tema:** [El concepto en cuestión, ej: "La diferencia entre morfología y sintaxis en el griego del NT"]
+**Objetivo del Estudio:** [Una oración clara: qué entenderá el participante sobre el concepto y por qué importa para su vida]
 
 ---
 
-## Aplicación: ¿Cómo debo responder?
+## ¿De qué se trata este concepto?
+[2-3 párrafos definiendo el concepto en términos accesibles. Usa información de la conversación.]
 
+---
+
+## Anclas Bíblicas: ¿Dónde vemos esto en la Escritura?
+[Pasajes bíblicos mencionados en la conversación que ilustran el concepto. Para cada uno:]
+- 📖 **[Referencia]** — Cómo este pasaje muestra el concepto.
+
+---
+
+## Exploración del Concepto
+**Preguntas de Comprensión:**
+1. [Pregunta que invite a explicar el concepto con palabras propias]
+2. [Pregunta que distinga el concepto de otros relacionados]
+3. [Pregunta sobre la dimensión teológica/exegética que el concepto ilumina]
+
+**Profundización:**
+[2-3 párrafos desarrollando matices del concepto. Si se discutieron términos técnicos del griego/hebreo, transliteración + significado aquí.]
+
+**Preguntas de Discernimiento:**
+1. [Pregunta sobre errores comunes al aplicar este concepto]
+2. [Pregunta sobre cómo este concepto cambia nuestra lectura de la Escritura]
+
+## Aplicación a la Vida Cristiana
 **Preguntas de Aplicación:**
-1. [Pregunta personal concreta que invite a la auto-reflexión a la luz del texto]
-2. [Pregunta sobre cómo este pasaje impacta nuestras relaciones o vida en comunidad]
-3. [Pregunta sobre una acción práctica específica para esta semana]
+1. [Pregunta sobre cómo este concepto afecta la lectura personal de la Biblia]
+2. [Pregunta sobre implicaciones para la enseñanza en la iglesia o el grupo]
+3. [Pregunta sobre una práctica concreta que el participante puede adoptar]
+
+═══ COMÚN A AMBOS MODOS ═══
 
 ---
 
 ## Versículo para Memorizar
-> "[Texto completo del versículo más relevante]"
+> "[Texto del versículo más relevante — del pasaje en MODO A, o de los discutidos en MODO B]"
 > — 📖 [Referencia]
 
 ## Oración de Cierre
-[Sugerencia de oración breve (3-4 líneas) basada en las verdades del pasaje estudiado]
+[Oración breve (3-4 líneas) basada en lo estudiado]
 
-REGLAS:
-- Usa ÚNICAMENTE información discutida en la conversación. No inventes datos ni referencias no mencionadas.
-- Las preguntas deben ser ABIERTAS y promover el diálogo, NO de respuesta sí/no.
-- Incluye entre 9-12 preguntas en total distribuidas entre Observación, Interpretación y Aplicación.
-- Si se discutieron términos griegos/hebreos, inclúyelos en la Nota Exegética con transliteración.
-- El tono debe ser pastoral, accesible y adecuado para un grupo diverso.
+REGLAS COMUNES:
+- Usa ÚNICAMENTE información discutida en la conversación. No inventes datos.
+- Preguntas ABIERTAS, no de sí/no.
+- 9-12 preguntas totales distribuidas en las secciones.
+- Tono pastoral, accesible, adecuado para grupo diverso.
+- Si se discutieron términos griegos/hebreos, transliteración obligatoria.
 `;
                 break;
             case 'COUNSELING_TASK':
-                extractionPrompt = `
-Analiza la conversación de consejería pastoral y genera un documento de TAREAS NOUTÉTICAS (homework bíblico) estructurado para uso del consejero y del aconsejado.
+                extractionPrompt = `${MODE_DETECTION_PREAMBLE}
+Genera un documento de TAREAS NOUTÉTICAS (homework bíblico) para uso del consejero y del aconsejado, basado en la conversación.
 
-Usa esta estructura Markdown EXACTA:
+NOTA DE MODO: las conversaciones de consejería suelen ser MODO A (caso específico anclado a uno o más pasajes) PERO también pueden ser MODO B (discusión sobre principios noutéticos, el rol del corazón, idolatría funcional, etc.) En MODO B el documento se convierte en una guía para que el consejero APLIQUE esos principios en casos futuros, no para asignar a un aconsejado específico.
+
+═══ ESTRUCTURA PARA MODO A — Caso específico de consejería ═══
 
 # Tareas Bíblicas para la Semana
 **Tema de la sesión:** [Tema o situación principal discutida]
@@ -291,90 +375,161 @@ Usa esta estructura Markdown EXACTA:
 ---
 
 ## Verdad del Evangelio para Recordar
-> "[Una promesa del Evangelio directamente relevante a la lucha del aconsejado — gracia, perdón, nueva identidad en Cristo, poder del Espíritu]"
+> "[Una promesa del Evangelio directamente relevante a la lucha del aconsejado]"
 > — 📖 [Referencia]
 
+═══ ESTRUCTURA PARA MODO B — Guía noutética sobre un principio/concepto ═══
+
+# [TÍTULO — refleja el principio noutético discutido]
+**Tema noutético:** [Principio o concepto, ej: "Diagnóstico de ídolos funcionales del corazón"]
+**Para uso del consejero pastoral**
+
+---
+
+## El Principio en Síntesis
+[2-3 párrafos definiendo el principio con claridad. Usa la conversación.]
+
+## Fundamento Bíblico
+[Pasajes discutidos en la conversación que sustentan el principio. Para cada uno:]
+- 📖 **[Referencia]** — Cómo este texto fundamenta el principio.
+
+## Diagnóstico Pastoral: Cómo Reconocerlo en Casos
+[3-5 señales prácticas que ayudan al consejero a identificar cuándo este principio aplica a una sesión.]
+
+## Aplicación Pastoral: Preguntas para Usar con el Aconsejado
+1. [Pregunta diagnóstica que un consejero puede hacer]
+2. [Pregunta de exposición del corazón]
+3. [Pregunta de aplicación bíblica concreta]
+4. [Pregunta de seguimiento sobre cambio práctico]
+
+## Riesgos y Errores Comunes
+[Cómo este principio puede mal-aplicarse. Distinción de psicologías secularizadas si la conversación lo trató.]
+
+## Pasajes Clave para Tener a Mano
+- 📖 **[Referencia]** — Aplicación contextual.
+- 📖 **[Referencia]** — Aplicación contextual.
+
+═══ COMÚN A AMBOS MODOS ═══
+
 REGLAS:
-- Fundamenta CADA tarea en un pasaje bíblico específico con texto citado.
-- Las tareas deben ser CONCRETAS, MEDIBLES y ALCANZABLES en una semana.
-- El tono debe ser pastoral, esperanzador y firme; nunca condenatorio ni tibio.
-- Distingue claramente entre el resumen confidencial del consejero y las tareas del aconsejado.
-- Incluye siempre el "Diagnóstico del Corazón" con deseo raíz e ídolo funcional (principios de David Powlison).
-- Las 3 tareas deben cubrir: (1) estudio bíblico personal, (2) cambio de conducta, (3) dimensión relacional.
-- Termina SIEMPRE con una verdad del Evangelio que dé esperanza.
+- En MODO A: fundamenta CADA tarea en pasaje bíblico con texto citado; tareas CONCRETAS, MEDIBLES, ALCANZABLES en una semana; las 3 tareas cubren estudio personal, cambio de conducta, dimensión relacional; cierra con verdad del Evangelio.
+- En MODO B: el documento es un recurso PARA EL CONSEJERO sobre el principio. No incluye tareas para un aconsejado específico (no hay uno). Mantiene rigor noutético (Powlison, Adams, Tripp) si la conversación lo invocó.
+- Ambos modos: tono pastoral, esperanzador y firme. Nunca condenatorio ni tibio.
 - Usa ÚNICAMENTE información y pasajes discutidos en la conversación.
 `;
                 break;
             case 'NEWSLETTER':
-                extractionPrompt = `
-Basándote en la conversación teológica, redacta un artículo devocional para el BOLETÍN DOMINICAL de la iglesia.
+                extractionPrompt = `${MODE_DETECTION_PREAMBLE}
+Redacta un artículo devocional para el BOLETÍN DOMINICAL de la iglesia, basado en la conversación.
 
-Usa esta estructura Markdown EXACTA:
+═══ ESTRUCTURA PARA MODO A — Pasaje específico ═══
 
-# [TÍTULO ATRACTIVO Y PASTORAL]
-*Por [nombre del pastor/autor si se mencionó, o "Tu pastor"]*
+# [TÍTULO ATRACTIVO Y PASTORAL — sobre el pasaje]
+*Por Tu pastor*
 
 ---
 
 **Pasaje de la semana:** 📖 [Referencia bíblica principal]
 
-[Párrafo 1 — Gancho: Comienza con una situación cotidiana, una pregunta provocadora o una ilustración breve que conecte con la vida diaria del lector y lo guíe naturalmente al tema bíblico.]
+[Párrafo 1 — Gancho: situación cotidiana, pregunta provocadora o ilustración breve que conecte con la vida diaria y guíe al tema bíblico del pasaje.]
 
-[Párrafo 2 — Desarrollo teológico: Presenta la verdad central del pasaje de forma accesible. Si en la conversación se discutió un término griego/hebreo, menciónalo de forma breve y comprensible para un lector no especializado.]
+[Párrafo 2 — Desarrollo teológico: presenta la verdad central del pasaje de forma accesible. Si se discutió un término griego/hebreo en la conversación, menciónalo de forma breve y comprensible.]
 
-[Párrafo 3 — Aplicación pastoral: Conecta la verdad bíblica con la vida práctica de la congregación. Ofrece ánimo, exhortación o consuelo según corresponda al tema.]
+[Párrafo 3 — Aplicación pastoral: conecta la verdad bíblica con la vida práctica de la congregación. Ánimo, exhortación o consuelo según corresponda.]
 
 ---
 
 > "[Versículo clave del pasaje]"
 > — 📖 [Referencia]
 
+═══ ESTRUCTURA PARA MODO B — Concepto teológico/gramatical ═══
+
+# [TÍTULO ATRACTIVO Y PASTORAL — sobre el concepto y por qué importa]
+*Por Tu pastor*
+
+---
+
+**Tema de la semana:** [El concepto, ej: "Por qué la gramática del griego del NT importa para tu lectura de la Biblia"]
+
+[Párrafo 1 — Gancho: pregunta o ilustración que conecte el concepto con la experiencia del lector. Algo como "¿Alguna vez te has preguntado por qué dos traducciones del mismo versículo dicen cosas distintas?" si el tema es traducción/gramática.]
+
+[Párrafo 2 — Desarrollo accesible: explica el concepto en términos comprensibles para un lector no especializado. Usa ejemplos concretos. Si la conversación incluyó términos técnicos (griego/hebreo, gramaticales, teológicos), tradúcelos al lenguaje del lector promedio.]
+
+[Párrafo 3 — Aplicación pastoral: por qué este concepto importa para la vida del creyente y la salud de la iglesia. Cómo cambia o profundiza la lectura personal de la Escritura.]
+
+---
+
+> "[Versículo bíblico citado en la conversación que ilustra el concepto]"
+> — 📖 [Referencia]
+
+═══ COMÚN A AMBOS MODOS ═══
+
 **Para reflexionar esta semana:**
 - [Una pregunta personal breve para meditar]
 - [Un desafío práctico sencillo]
 
 REGLAS:
-- El tono debe ser cálido, pastoral, alentador y accesible para TODA la congregación (incluyendo nuevos creyentes).
-- Extensión ideal: 300-500 palabras en total (3 párrafos sustanciales).
-- No uses jerga teológica excesiva. Si mencionas un término técnico, explícalo brevemente.
+- Tono cálido, pastoral, alentador, accesible para TODA la congregación (incluyendo nuevos creyentes).
+- Extensión: 300-500 palabras (3 párrafos sustanciales).
+- Sin jerga teológica excesiva. Términos técnicos explicados brevemente.
 - Usa ÚNICAMENTE ideas y pasajes de la conversación.
-- El formato debe ser listo para copiar y pegar en un boletín impreso o digital.
+- Formato listo para copiar/pegar en boletín impreso o digital.
 `;
                 break;
             case 'SYSTEMATIC_THEOLOGY_PAPER':
-                extractionPrompt = `
-Basándote en los conceptos teológicos discutidos en la conversación, redacta un ENSAYO TEOLÓGICO ACADÉMICO breve (paper) con rigor doctrinal.
+                extractionPrompt = `${MODE_DETECTION_PREAMBLE}
+Redacta un ENSAYO TEOLÓGICO ACADÉMICO breve (paper) con rigor doctrinal, basado en la conversación.
 
-Usa esta estructura Markdown EXACTA:
+═══ ESTRUCTURA PARA MODO A — Ensayo anclado en un pasaje ═══
 
-# [TÍTULO ACADÉMICO DEL ENSAYO]
-**Locus Teológico:** [Categoría sistemática: Soteriología, Cristología, Eclesiología, Escatología, Pneumatología, Teología Propia, Antropología, Hamartiología, etc.]
+# [TÍTULO ACADÉMICO — refleja el pasaje y su carga doctrinal]
+**Locus Teológico:** [Categoría sistemática que el pasaje toca]
 **Tradición Confesional:** Reformada
 
 ---
 
 ## Introducción
-[Planteamiento del problema o pregunta teológica. Breve contexto histórico de por qué esta doctrina es relevante. Tesis del ensayo en una oración clara.]
+[Planteamiento: por qué este pasaje genera la cuestión doctrinal. Tesis del ensayo en una oración.]
 
 ## Fundamento Bíblico-Exegético
-[Análisis de los pasajes bíblicos claves discutidos en la conversación. Si se trataron términos griegos/hebreos, incluir su análisis con transliteración. Conectar los textos con la doctrina en cuestión.]
+[Análisis del pasaje central. Términos griegos/hebreos con transliteración si se discutieron.]
 
 **Textos primarios:**
-- 📖 [Referencia 1] — [Breve explicación de su aporte al argumento]
-- 📖 [Referencia 2] — [Breve explicación de su aporte al argumento]
+- 📖 [Pasaje central] — [Aporte al argumento]
+- 📖 [Referencias cruzadas discutidas] — [Aporte]
+
+═══ ESTRUCTURA PARA MODO B — Ensayo anclado en un concepto/locus ═══
+
+# [TÍTULO ACADÉMICO — refleja el concepto/doctrina como locus]
+**Locus Teológico:** [La categoría sistemática del concepto, ej: "Bibliología — Doctrina de la Inspiración", "Hermenéutica — Método Histórico-Gramatical"]
+**Tradición Confesional:** Reformada
+
+---
+
+## Introducción
+[Planteamiento del problema teológico. Por qué el concepto importa. Tesis del ensayo en una oración.]
+
+## Definición y Delimitación del Concepto
+[2-3 párrafos definiendo el concepto con precisión académica. Distinción de conceptos vecinos. Usa terminología técnica discutida en la conversación.]
+
+## Fundamento Bíblico
+[Pasajes discutidos que sustentan el concepto. Para cada uno:]
+- 📖 [Referencia] — [Cómo este texto fundamenta o ilustra el concepto]
+
+═══ COMÚN A AMBOS MODOS ═══
 
 ## Desarrollo Dogmático
-[Presentación sistemática del argumento teológico. Incluir referencias a confesiones de fe (Westminster, 1689), teólogos reformados históricos (Calvino, Turretín, Bavinck, Berkhof) o contemporáneos (Sproul, Frame, Horton) si fueron mencionados en la conversación.]
+[Argumento sistemático. Referencias a confesiones (Westminster, 1689) y teólogos reformados (Calvino, Turretín, Bavinck, Berkhof, Sproul, Frame, Horton) si la conversación los invocó.]
 
 **Cita Teológica:**
-> "[Cita relevante de un teólogo o confesión]"
+> "[Cita relevante]"
 > — *Autor, Obra*
 
 ## Errores Históricos y Refutación
-[Si en la conversación se discutieron herejías o posiciones heterodoxas, presentarlas brevemente y ofrecer la respuesta ortodoxa con fundamento bíblico.]
+[Posiciones heterodoxas relevantes discutidas en la conversación + respuesta ortodoxa con fundamento bíblico.]
 
 ## Implicaciones Pastorales
-[Cómo esta doctrina impacta la vida de la iglesia, la predicación, la adoración o la piedad personal del creyente.]
+[Cómo el pasaje/concepto impacta la vida de la iglesia: predicación, adoración, piedad, formación. Diferencia entre MODO A (el pasaje predicado fielmente) y MODO B (el concepto enseñado y aplicado).]
 
 ## Conclusión
 [Síntesis del argumento. Reafirmación de la tesis. Declaración doctrinal final.]
@@ -385,11 +540,107 @@ Usa esta estructura Markdown EXACTA:
 - [Autor, *Obra* — si fue mencionado en la conversación]
 
 REGLAS:
-- Mantén rigor académico pero accesibilidad pastoral. El lector es un pastor o estudiante de seminario.
-- Cita las Escrituras como autoridad primaria; los teólogos como autoridad secundaria.
+- Rigor académico + accesibilidad pastoral. Lector: pastor o estudiante de seminario.
+- Escrituras como autoridad primaria; teólogos como secundaria.
 - Usa ÚNICAMENTE conceptos, pasajes y autores discutidos en la conversación.
-- Extensión ideal: 800-1200 palabras.
+- Extensión: 800-1200 palabras.
 - Perspectiva: Reformada y confesional.
+`;
+                break;
+
+            case 'BLOG_POST':
+                extractionPrompt = `${MODE_DETECTION_PREAMBLE}
+Redacta una entrada para un BLOG PASTORAL en WordPress. El autor del blog es un pastor que expone SU PUNTO DE VISTA personal sobre lo que estudia, conectándolo con la relevancia para la iglesia hoy. NO es un ensayo académico ni un sermón — es ensayístico, reflexivo, pastoral-personal.
+
+═══ ESTRUCTURA PARA MODO A — Reflexión sobre un pasaje ═══
+
+# [TÍTULO PROVOCATIVO — invita a leer]
+
+[Párrafo 1 — Hook personal: el pastor cuenta por qué este pasaje lo ha estado ocupando. Una experiencia, una pregunta que le surgió, algo que vio en su iglesia. Primera persona singular ("esta semana estuve estudiando", "me llamó la atención", "no había notado").]
+
+[Párrafo 2 — Lo que dice el pasaje: explica el pasaje en términos accesibles. Si en la conversación se discutió griego/hebreo, lo menciona con la naturalidad de alguien que conoce el idioma sin asfixiar al lector con tecnicismos. Una transliteración suelta + significado pastoral.]
+
+[Párrafo 3 — Lo que veo aquí (su POV): la lectura PERSONAL del pastor. Su énfasis. Lo que él destaca o re-enmarca. Esta es la voz editorial del blog — no neutral, comprometida.]
+
+[Párrafo 4 — Por qué importa para la iglesia hoy: cómo este pasaje habla a la situación de la iglesia contemporánea. Crítica suave a errores comunes. Llamado a una práctica o postura.]
+
+[Párrafo 5 — Cierre reflexivo: una invitación a meditar, una pregunta abierta para los lectores, o una declaración personal de cómo este estudio lo cambió a él.]
+
+═══ ESTRUCTURA PARA MODO B — Reflexión sobre un concepto ═══
+
+# [TÍTULO PROVOCATIVO — invita a leer]
+
+[Párrafo 1 — Hook personal: por qué este concepto lo tiene ocupado al pastor. La conversación o estudio que lo llevó a pensar en esto. Una observación de su iglesia o de la cultura cristiana que lo hizo volver al tema.]
+
+[Párrafo 2 — Qué es el concepto (en términos accesibles): definición desde la voz del pastor, no desde un manual. Si el concepto involucra términos técnicos (griego/hebreo/dogmática), los traduce con calidez.]
+
+[Párrafo 3 — Por qué el concepto se distorsiona o se ignora: la crítica del pastor. Errores comunes que ha visto. Confusiones populares.]
+
+[Párrafo 4 — Lo que cambia cuando lo recuperamos: cómo entender bien este concepto reforma la lectura de la Biblia, la predicación, la consejería, la vida cristiana — según lo que el pastor identifica.]
+
+[Párrafo 5 — Cierre con llamado: invitación a los lectores a estudiar, a corregir una práctica, o a sumarse a una conversación. Pregunta abierta opcional.]
+
+═══ COMÚN A AMBOS MODOS ═══
+
+REGLAS:
+- VOZ PRIMERA PERSONA SINGULAR del pastor ("estuve estudiando", "me llamó la atención", "creo que", "veo en mi iglesia"). NO voz institucional ni académica.
+- Tono ensayístico-pastoral: reflexivo, comprometido, con opinión clara pero humilde. Estilo blog cristiano serio (piensa Tim Challies, Jared Wilson, Carl Trueman — no Christianity Today devocional).
+- Extensión: 600-1000 palabras (5 párrafos sustanciales).
+- Citas bíblicas inline cuando aporten — formato natural, no académico (ej: "Pablo escribe en Romanos 8:28 que..." más que "Romanos 8:28 dice...").
+- Términos técnicos: explicados con naturalidad pastoral. Una transliteración suelta es OK, no listas exhaustivas.
+- Usa ÚNICAMENTE ideas, pasajes y referencias discutidos en la conversación.
+- NO incluyas título con "Por Tu pastor" — el blog tiene autor implícito.
+- Markdown limpio, listo para pegar en WordPress.
+`;
+                break;
+
+            case 'DEVOTIONAL':
+                extractionPrompt = `${MODE_DETECTION_PREAMBLE}
+Redacta un DEVOCIONAL DIARIO BREVE — una versión condensada del tema con reflexión pastoral, pensado para que un creyente lo lea en 2-3 minutos como parte de su tiempo personal con Dios.
+
+═══ ESTRUCTURA PARA MODO A — Devocional sobre un pasaje ═══
+
+# [TÍTULO BREVE Y EVOCADOR]
+
+> "[Texto del versículo central — máximo 2 versículos]"
+> — 📖 [Referencia]
+
+[Párrafo 1 — Observación pastoral del pasaje en 3-4 oraciones: qué dice, qué llama la atención. Si se discutió griego/hebreo en la conversación, una palabra clave con su significado en una oración suelta. Sin tecnicismo pesado.]
+
+[Párrafo 2 — Reflexión personal en 3-4 oraciones: qué nos enseña este texto sobre Dios, sobre nosotros, sobre el evangelio. La verdad central del pasaje aplicada al corazón del lector. Tono pastoral cálido.]
+
+**Para hoy:**
+[Una sola oración: un pensamiento concreto para llevar al día. Acción, postura o meditación.]
+
+**Oración:**
+[3-4 líneas. Oración breve que el lector puede hacer suya. Primera persona singular.]
+
+═══ ESTRUCTURA PARA MODO B — Devocional sobre un concepto ═══
+
+# [TÍTULO BREVE Y EVOCADOR]
+
+> "[Versículo bíblico discutido en la conversación que ilustra el concepto]"
+> — 📖 [Referencia]
+
+[Párrafo 1 — Introducción al concepto en 3-4 oraciones: qué es, en lenguaje accesible. Sin jerga. Una palabra técnica máximo, traducida al instante.]
+
+[Párrafo 2 — Por qué este concepto te importa hoy: la dimensión personal del concepto. Cómo cambia la forma en que lees la Biblia, oras, vives. 3-4 oraciones de reflexión pastoral cálida.]
+
+**Para hoy:**
+[Una sola oración: cómo este concepto se traduce en una práctica o postura concreta para el día.]
+
+**Oración:**
+[3-4 líneas. Oración breve. Primera persona singular.]
+
+═══ COMÚN A AMBOS MODOS ═══
+
+REGLAS:
+- Extensión TOTAL: 150-300 palabras. Es BREVE — un devocional matutino, no un sermón.
+- Tono cálido, personal, accesible. Sin jerga teológica. Sin ostentación académica.
+- Lectura: 2-3 minutos máximo.
+- Usa ÚNICAMENTE ideas y pasajes de la conversación.
+- "Para hoy" + "Oración" son OBLIGATORIOS en ambos modos.
+- Markdown limpio.
 `;
                 break;
         }
@@ -401,7 +652,9 @@ REGLAS:
             'BIBLE_STUDY': "Eres un educador teológico experto en diseño de estudios bíblicos inductivos para grupos pequeños. Dominas el método de Observación-Interpretación-Aplicación (Howard Hendricks). Tu trabajo es transformar conversaciones teológicas en guías de estudio estructuradas, pastorales y pedagógicamente sólidas. Entrega únicamente el documento formateado en Markdown, sin saludos ni comentarios adicionales.",
             'COUNSELING_TASK': "Eres un consejero bíblico noutético con profundo conocimiento de los principios de Jay Adams y David Powlison. Dominas el diagnóstico de ídolos del corazón y la asignación de tareas bíblicas (homework) concretas y medibles. Tu trabajo es transformar sesiones de consejería en documentos estructurados con diagnóstico del corazón y tareas prácticas. Entrega únicamente el documento formateado en Markdown, sin saludos ni comentarios adicionales.",
             'NEWSLETTER': "Eres un comunicador pastoral experto en redactar devocionales accesibles y alentadores para congregaciones diversas. Tu trabajo es transformar conversaciones teológicas profundas en artículos breves, cálidos y edificantes para boletines dominicales. El tono debe ser pastoral, no académico. Entrega únicamente el artículo formateado en Markdown, listo para publicar.",
-            'SYSTEMATIC_THEOLOGY_PAPER': "Eres un teólogo sistemático reformado con rigor académico y sensibilidad pastoral. Dominas las categorías de los loci teológicos clásicos y las confesiones de fe reformadas. Tu trabajo es transformar conversaciones teológicas en ensayos académicos breves con estructura lógica y fundamento escritural. Entrega únicamente el ensayo formateado en Markdown, sin saludos ni comentarios adicionales."
+            'SYSTEMATIC_THEOLOGY_PAPER': "Eres un teólogo sistemático reformado con rigor académico y sensibilidad pastoral. Dominas las categorías de los loci teológicos clásicos y las confesiones de fe reformadas. Tu trabajo es transformar conversaciones teológicas en ensayos académicos breves con estructura lógica y fundamento escritural. Entrega únicamente el ensayo formateado en Markdown, sin saludos ni comentarios adicionales.",
+            'BLOG_POST': "Eres un pastor reformado que escribe un blog cristiano serio en la línea de Tim Challies, Jared C. Wilson o Carl Trueman — ensayístico, reflexivo, con opinión clara pero humilde, en primera persona. Tu trabajo es transformar conversaciones teológicas en entradas de blog donde expones tu punto de vista pastoral sobre lo estudiado y conectas con la relevancia para la iglesia hoy. Escribe siempre en primera persona singular ('estuve estudiando', 'me llamó la atención', 'creo que'). Entrega únicamente la entrada formateada en Markdown, lista para pegar en WordPress.",
+            'DEVOTIONAL': "Eres un pastor que escribe devocionales diarios breves para lectores que dedican 2-3 minutos a su tiempo personal con Dios. Tu trabajo es destilar conversaciones teológicas en piezas devocionales cortas, cálidas y centradas en una sola idea. Sin jerga académica, sin ostentación. Reflexión pastoral accesible que mueva el corazón. Entrega únicamente el devocional formateado en Markdown."
         };
 
         // We construct a strictly-focused "Extraction Agent" on the fly

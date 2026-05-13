@@ -36,6 +36,8 @@ const EXTRACTION_TITLE_KEYS: Record<string, string> = {
     COUNSELING_TASK: 'extraction.counselingTask',
     NEWSLETTER: 'extraction.newsletter',
     SYSTEMATIC_THEOLOGY_PAPER: 'extraction.theologyPaper',
+    BLOG_POST: 'extraction.blogPost',
+    DEVOTIONAL: 'extraction.devotional',
 };
 
 /**
