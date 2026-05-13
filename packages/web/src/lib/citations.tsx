@@ -217,7 +217,24 @@ export function normalizeAssistantMarkdown(content: string): string {
     //   `> -`  alt bullet syntax
     //   `> **` bold-prefixed line (often a label)
     //   `> 1.` numbered list
-    return content.replace(/ > (?=>|\*|-|\*\*|\d+\.)/g, '\n> ');
+    let out = content.replace(/ > (?=>|\*|-|\*\*|\d+\.)/g, '\n> ');
+
+    // Force inline bold inside table cells. ReactMarkdown + remark-gfm
+    // intermittently fails to process `**X**` emphasis inside table
+    // cells when the cell content contains accents, apostrophes, or
+    // mixed RTL/LTR characters (e.g. "**Raíz**", "**Pi'el**", Hebrew
+    // labels). The literal asterisks then leak into the rendered DOM.
+    //
+    // Defensive fix: walk every table row (line starting with `|`) and
+    // convert `**X**` to `<strong>X</strong>` so rehype-raw renders
+    // bold even if the markdown emphasis parser bailed. Idempotent on
+    // already-correct rows (no `**` → no replacement).
+    out = out.split('\n').map(line => {
+        if (!line.trimStart().startsWith('|')) return line;
+        return line.replace(/\*\*([^*\n|]+?)\*\*/g, '<strong>$1</strong>');
+    }).join('\n');
+
+    return out;
 }
 
 /**
