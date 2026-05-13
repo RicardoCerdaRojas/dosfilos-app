@@ -146,8 +146,22 @@
         "toast": {
             "pinned": "Pinned to project",
             "unpinned": "Unpinned from project",
-            "noProject": "This session has no project. Assign the session to a project first."
+            "noProject": "This session has no project. Assign the session to a project first.",
+            "noProjectsAvailable": "You haven't created any projects yet."
         }
+    },
+    "library": {
+        "title": "My library",
+        "subtitle": "Every document you've generated from your conversations.",
+        "searchPlaceholder": "Search by title, type, or content...",
+        "loading": "Loading library...",
+        "emptyState": "Select a document from the list to view it.",
+        "projectLibraryFallbackTitle": "Project library",
+        "projectSubtitle": "Documents pinned to this project.",
+        "count_one": "{{count}} document",
+        "count_other": "{{count}} documents",
+        "pickProject": "Type the number of the project to pin to:",
+        "microActionsUnavailable": "AI micro-actions are only available inside a chat session."
     },
     "dialogs": {
         "deleteSessionTitle": "Delete this session?",

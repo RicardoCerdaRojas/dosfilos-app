@@ -146,8 +146,22 @@
         "toast": {
             "pinned": "Anclado al proyecto",
             "unpinned": "Desanclado del proyecto",
-            "noProject": "Esta sesión no tiene proyecto. Primero asigna la sesión a un proyecto."
+            "noProject": "Esta sesión no tiene proyecto. Primero asigna la sesión a un proyecto.",
+            "noProjectsAvailable": "Aún no has creado proyectos. Crea uno desde la barra lateral."
         }
+    },
+    "library": {
+        "title": "Mi biblioteca",
+        "subtitle": "Todos los documentos que has generado desde tus conversaciones.",
+        "searchPlaceholder": "Buscar por título, tipo o contenido...",
+        "loading": "Cargando biblioteca...",
+        "emptyState": "Selecciona un documento de la lista para verlo.",
+        "projectLibraryFallbackTitle": "Biblioteca del proyecto",
+        "projectSubtitle": "Documentos anclados a este proyecto.",
+        "count_one": "{{count}} documento",
+        "count_other": "{{count}} documentos",
+        "pickProject": "Elige el número del proyecto al que quieres anclar:",
+        "microActionsUnavailable": "Las micro-acciones de IA solo están disponibles dentro de una sesión de chat."
     },
     "dialogs": {
         "deleteSessionTitle": "¿Eliminar esta sesión?",

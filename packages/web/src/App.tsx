@@ -83,6 +83,8 @@ const HebrewTutorPage = lazy(() => import('@/pages/hebrew-tutor/HebrewTutorPage'
 const BiblePage = lazy(() => import('@/pages/bible/BiblePage').then(m => ({ default: m.BiblePage })));
 const BibleProvider = lazy(() => import('@/context/BibleContext').then(m => ({ default: m.BibleProvider })));
 const FacultyChatPage = lazy(() => import('@/pages/faculty/chat').then(m => ({ default: m.FacultyChatPage })));
+const FacultyLibraryPage = lazy(() => import('@/pages/faculty/library').then(m => ({ default: m.FacultyLibraryPage })));
+const ProjectLibraryPage = lazy(() => import('@/pages/faculty/ProjectLibraryPage').then(m => ({ default: m.ProjectLibraryPage })));
 const ProjectDashboard = lazy(() => import('@/pages/faculty/ProjectDashboard').then(m => ({ default: m.ProjectDashboard })));
 const ExegesisPage = lazy(() => import('@/pages/exegesis/ExegesisPage').then(m => ({ default: m.ExegesisPage })));
 const ExegesisCreatePage = lazy(() => import('@/pages/exegesis/ExegesisCreatePage').then(m => ({ default: m.ExegesisCreatePage })));
@@ -281,6 +283,8 @@ function App() {
             {/* Faculty Module — free conversations & directory */}
             <Route path="faculty">
               <Route index element={<FacultyChatPage />} />
+              <Route path="library" element={<FacultyLibraryPage />} />
+              <Route path="projects/:projectId/library" element={<ProjectLibraryPage />} />
               <Route path=":sessionId" element={<FacultyChatPage />} />
             </Route>
 
