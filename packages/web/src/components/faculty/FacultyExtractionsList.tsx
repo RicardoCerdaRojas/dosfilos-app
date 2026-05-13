@@ -61,6 +61,13 @@ interface FacultyExtractionsListProps {
     onRemoveFromProject: (extraction: Extraction, projectId: string) => void;
     projects: AIProject[];
     onJumpToOrigin?: (extraction: Extraction) => void;
+    /**
+     * Called when the user opens an artifact whose externalRef points
+     * at a record in another module (e.g. SERMON → sermons/{id}).
+     * If the row has an externalRef AND this handler is provided, the
+     * row click navigates externally instead of opening inline preview.
+     */
+    onOpenExternal?: (extraction: Extraction) => void;
     error?: unknown;
     onRetry?: () => void;
 }
@@ -81,6 +88,7 @@ export function FacultyExtractionsList({
     onRemoveFromProject,
     projects,
     onJumpToOrigin,
+    onOpenExternal,
     error,
     onRetry,
 }: FacultyExtractionsListProps) {
@@ -171,6 +179,15 @@ export function FacultyExtractionsList({
                         )}
                         onClick={() => {
                             if (editingId === item.id) return;
+                            // Sermons (and other future external-ref artifacts)
+                            // navigate to their canonical module; inline preview
+                            // wouldn't show the full sermon experience (RichSermon
+                            // editor, publish flow). Fall back to inline select
+                            // when no external ref or no handler.
+                            if (item.externalRef && onOpenExternal) {
+                                onOpenExternal(item);
+                                return;
+                            }
                             onSelect(item);
                         }}
                     >
@@ -259,6 +276,15 @@ export function FacultyExtractionsList({
                                     <>
                                         <span aria-hidden>·</span>
                                         <span className="text-amber-600">{t('extractionsList.orphan')}</span>
+                                    </>
+                                )}
+                                {item.externalRef && (
+                                    <>
+                                        <span aria-hidden>·</span>
+                                        <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                                            <ExternalLink className="w-3 h-3" />
+                                            {t(`extractionsList.externalRef.${item.externalRef.collection}`)}
+                                        </span>
                                     </>
                                 )}
                             </div>

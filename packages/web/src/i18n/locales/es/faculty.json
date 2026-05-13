@@ -135,6 +135,10 @@
         "empty": "Aún no has creado recursos en esta sesión. Usa la pestaña Crear para generar el primero.",
         "orphan": "sesión eliminada",
         "confirmDelete": "¿Eliminar este recurso? Esta acción no se puede deshacer.",
+        "externalRef": {
+            "sermons": "Sermón",
+            "exegeticalPapers": "Paper"
+        },
         "errorLoading": "No pudimos cargar tus documentos.",
         "errorIndexBuilding": "El índice de Firestore aún se está construyendo (5-10 min post-deploy). Reintenta en un momento.",
         "retry": "Reintentar",

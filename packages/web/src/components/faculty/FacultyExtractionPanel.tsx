@@ -41,6 +41,7 @@ interface FacultyExtractionPanelProps {
     onRemoveExtractionFromProject: (extraction: Extraction, projectId: string) => void;
     projects: AIProject[];
     onJumpToOrigin?: (extraction: Extraction) => void;
+    onOpenExternal?: (extraction: Extraction) => void;
     extractionsError?: unknown;
     onRefreshExtractions?: () => void;
 }
@@ -67,6 +68,7 @@ export function FacultyExtractionPanel({
     onRemoveExtractionFromProject,
     projects,
     onJumpToOrigin,
+    onOpenExternal,
     extractionsError,
     onRefreshExtractions,
 }: FacultyExtractionPanelProps) {
@@ -134,6 +136,7 @@ export function FacultyExtractionPanel({
                     onRemoveFromProject={onRemoveExtractionFromProject}
                     projects={projects}
                     onJumpToOrigin={onJumpToOrigin}
+                    onOpenExternal={onOpenExternal}
                     error={extractionsError}
                     onRetry={onRefreshExtractions}
                 />

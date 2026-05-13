@@ -16,6 +16,8 @@ import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'reac
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { track } from '@/lib/analytics/track';
+import { facultyService } from '@dosfilos/application';
+import { useFirebase } from '@/context/firebase-context';
 import { useFacultyChat, useFacultySessions, useFacultyAgents, useSessionExtractions, useExtractionMutations } from '../../hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { SermonOutlinePreviewModal, type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
@@ -109,6 +111,7 @@ export function FacultyChatPage() {
     const effectiveSessionId = isHomeState || isNewSession ? '' : (sessionId ?? '');
 
     // ── Hooks ────────────────────────────────────────────────────────────────
+    const { user } = useFirebase();
     const { sessions, isLoading: isLoadingSessions, deleteSession: deleteSessionMutation, createSession, renameSession } = useFacultySessions();
     const { projects, deleteProject: deleteProjectMutation, assignToProject } = useFacultyProjects();
     const { data: agents = [] } = useFacultyAgents();
@@ -788,6 +791,11 @@ export function FacultyChatPage() {
                     onRemoveExtractionFromProject={handleRemoveExtractionFromProject}
                     projects={projects}
                     onJumpToOrigin={handleJumpToOrigin}
+                    onOpenExternal={(extraction) => {
+                        if (extraction.externalRef?.collection === 'sermons') {
+                            navigate(`/dashboard/sermons/${extraction.externalRef.id}`);
+                        }
+                    }}
                     extractionsError={extractionsError}
                     onRefreshExtractions={() => refetchExtractions()}
                 />
@@ -800,10 +808,27 @@ export function FacultyChatPage() {
                 onClose={() => setSermonOutline(null)}
                 onGenerateFullSermon={handleGenerateFullSermon}
                 onSuccess={(sermonId, content, title) => {
-                    // Ephemeral sermon preview — owned by the sermons
-                    // collection, NOT persisted as an Extraction (avoid
-                    // double source-of-truth). Renders in the same doc
-                    // panel as extractions for visual continuity.
+                    // Sermon doc is canonical (sermons/{id}); persist a
+                    // companion Extraction so the artifact also surfaces
+                    // in the user's resource library with a back-link
+                    // to the sermons module via externalRef.
+                    if (user?.uid && effectiveSessionId) {
+                        const messageIds = session?.messages?.map(m => m.id) ?? [];
+                        facultyService.saveSermonExtraction.execute({
+                            userId: user.uid,
+                            sessionId: effectiveSessionId,
+                            sermonId,
+                            title,
+                            markdown: content,
+                            derivedFromMessageIds: messageIds,
+                        }).catch(err => {
+                            console.error('[chat] saveSermonExtraction failed', err);
+                        });
+                    }
+                    // Inline preview keeps working for visual continuity —
+                    // the user sees the sermon body in the doc panel
+                    // immediately, even before the Extraction listener
+                    // refreshes the Generados tab.
                     setDocumentSource('sermon');
                     setDocumentExtractionId(null);
                     setDocumentTitle(title);
