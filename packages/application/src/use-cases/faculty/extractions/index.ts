@@ -7,3 +7,4 @@ export * from './UpdateExtractionMarkdownUseCase';
 export * from './RenameExtractionUseCase';
 export * from './DeleteExtractionUseCase';
 export * from './PinExtractionToProjectUseCase';
+export * from './SaveSermonExtractionUseCase';

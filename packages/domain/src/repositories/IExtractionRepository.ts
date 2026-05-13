@@ -67,4 +67,14 @@ export interface IExtractionRepository {
      * (visible in cross-session view, no project chips).
      */
     orphanByProject(userId: string, projectId: string): Promise<void>;
+
+    /**
+     * Called when a record in another collection that an Extraction
+     * references via `externalRef` gets deleted (e.g. a sermon in
+     * `sermons/{id}`). Sets `externalRef = null` on every matching
+     * artifact — the Extraction itself is preserved because its
+     * `markdown` snapshot is the durable value, but the broken link
+     * to the deleted record is cleared.
+     */
+    orphanByExternalRef(userId: string, collection: 'sermons' | 'exegeticalPapers', id: string): Promise<void>;
 }

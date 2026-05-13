@@ -45,6 +45,8 @@ import {
     DeleteExtractionUseCase,
     AddExtractionToProjectUseCase,
     RemoveExtractionFromProjectUseCase,
+    SaveSermonExtractionUseCase,
+    OrphanExtractionsBySermonUseCase,
 } from '../use-cases/faculty';
 
 class FacultyService {
@@ -84,6 +86,8 @@ class FacultyService {
     public deleteExtraction: DeleteExtractionUseCase;
     public addExtractionToProject: AddExtractionToProjectUseCase;
     public removeExtractionFromProject: RemoveExtractionFromProjectUseCase;
+    public saveSermonExtraction: SaveSermonExtractionUseCase;
+    public orphanExtractionsBySermon: OrphanExtractionsBySermonUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -132,6 +136,8 @@ class FacultyService {
         this.deleteExtraction = new DeleteExtractionUseCase(extractionRepository);
         this.addExtractionToProject = new AddExtractionToProjectUseCase(extractionRepository);
         this.removeExtractionFromProject = new RemoveExtractionFromProjectUseCase(extractionRepository);
+        this.saveSermonExtraction = new SaveSermonExtractionUseCase(extractionRepository);
+        this.orphanExtractionsBySermon = new OrphanExtractionsBySermonUseCase(extractionRepository);
         this.processMicroAction = new ProcessMicroActionUseCase(chatRepository, generatorService);
         this.getAgents = new GetFacultyAgentsUseCase(agentRepository);
         // Projects

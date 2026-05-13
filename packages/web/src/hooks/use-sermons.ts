@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SermonEntity, FindOptions } from '@dosfilos/domain';
-import { sermonService } from '@dosfilos/application';
+import { sermonService, facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 
@@ -138,12 +138,26 @@ export function useUpdateSermon() {
 }
 
 export function useDeleteSermon() {
+    const { user } = useFirebase();
     const [loading, setLoading] = useState(false);
 
     const deleteSermon = async (id: string) => {
         setLoading(true);
         try {
             await sermonService.deleteSermon(id);
+            // Sermon is canonical, but any Faculty Extraction that
+            // linked back via externalRef now points at a missing
+            // doc. Null the externalRef on those Extractions so the
+            // resource library falls back to inline preview instead
+            // of trying to navigate to a deleted sermon. The
+            // Extraction itself survives — the user keeps the
+            // markdown snapshot. Fire-and-forget so a slow orphan
+            // pass doesn't block the success toast.
+            if (user?.uid) {
+                facultyService.orphanExtractionsBySermon
+                    .execute(user.uid, id)
+                    .catch(err => console.error('[useDeleteSermon] orphan failed', err));
+            }
             toast.success('Sermón eliminado exitosamente');
         } catch (err: any) {
             toast.error(err.message);

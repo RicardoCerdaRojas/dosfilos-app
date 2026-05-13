@@ -135,6 +135,10 @@
         "empty": "No resources created in this session yet. Use the Create tab to generate the first one.",
         "orphan": "session deleted",
         "confirmDelete": "Delete this resource? This action cannot be undone.",
+        "externalRef": {
+            "sermons": "Sermon",
+            "exegeticalPapers": "Paper"
+        },
         "errorLoading": "Couldn't load your documents.",
         "errorIndexBuilding": "Firestore index still building (5-10 min after deploy). Retry in a moment.",
         "retry": "Retry",

@@ -156,6 +156,11 @@ export function FacultyLibraryPage() {
                             onRemoveFromProject={handleRemoveFromProject}
                             projects={projects}
                             onJumpToOrigin={handleJumpToOrigin}
+                            onOpenExternal={(extraction) => {
+                                if (extraction.externalRef?.collection === 'sermons') {
+                                    navigate(`/dashboard/sermons/${extraction.externalRef.id}`);
+                                }
+                            }}
                         />
                     )}
                 </aside>

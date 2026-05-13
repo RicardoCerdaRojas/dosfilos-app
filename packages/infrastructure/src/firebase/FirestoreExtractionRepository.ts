@@ -236,6 +236,38 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
         await batch.commit();
     }
 
+    async orphanByExternalRef(userId: string, collection: 'sermons' | 'exegeticalPapers', id: string): Promise<void> {
+        // Firestore can't query nested object fields with two
+        // simultaneous equality clauses + a userId filter without a
+        // dedicated index. We denormalize `externalRef.collection`
+        // and `externalRef.id` into top-level filters by querying
+        // userId + the nested fields. For a low-cardinality external
+        // ref like sermons (one user, dozens of artifacts) this scans
+        // all the user's extractions client-side — acceptable for
+        // the delete path, which is rare and not latency-sensitive.
+        const q = query(
+            this.getCollectionRef(),
+            where('userId', '==', userId),
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) return;
+        const batch = writeBatch(db);
+        const now = Timestamp.fromDate(new Date());
+        let touched = 0;
+        snap.docs.forEach(d => {
+            const data = d.data();
+            const ref = data.externalRef;
+            if (ref && ref.collection === collection && ref.id === id) {
+                batch.update(d.ref, {
+                    externalRef: null,
+                    updatedAt: now,
+                });
+                touched++;
+            }
+        });
+        if (touched > 0) await batch.commit();
+    }
+
     async orphanByProject(userId: string, projectId: string): Promise<void> {
         const q = query(
             this.getCollectionRef(),
