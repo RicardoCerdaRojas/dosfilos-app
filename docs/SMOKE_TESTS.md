@@ -271,6 +271,100 @@ cd packages/web && npm run build
 
 ---
 
+## Test 10 — Faculty Extractions Persistence (PR #153)
+
+**Cuándo correr:** después de cualquier cambio en Faculty extraction flow, antes de cada deploy mayor.
+
+**Prerequisito:** estar autenticado con cuenta Pro/Team que tenga al menos una sesión de Faculty con 4+ mensajes.
+
+### 10.1 Generate + queue UX
+
+1. Abrir sesión de Faculty con conversación existente.
+2. Panel derecho → tab `Herramientas`.
+3. Click `Devocional Diario`.
+4. **Verificar:**
+   - [ ] Loading state visible en la card durante generación
+   - [ ] Al terminar: si NO había documento abierto → editor se abre auto con el devocional
+   - [ ] Si HABÍA documento abierto → toast "✓ {título} listo · Ver" sin reemplazar el editor
+   - [ ] Click "Ver" en toast → editor cambia al nuevo artifact
+
+### 10.2 Persistencia + listener
+
+1. Después de generar al menos 2 artifacts en la sesión.
+2. Click tab `Generados`.
+3. **Verificar:**
+   - [ ] Badge cuenta correctamente (`Generados · N`)
+   - [ ] Lista cronológica con icon + título + "hace X min" + chip de tipo
+   - [ ] Click en un item → editor cambia a ese artifact
+   - [ ] Item seleccionado tiene highlight indigo
+
+### 10.3 Reload survival
+
+1. Generar artifact → cerrar editor.
+2. Hard refresh (`Cmd+Shift+R`).
+3. **Verificar:**
+   - [ ] Tab `Generados` aún muestra el artifact
+   - [ ] Click → abre con markdown intacto
+
+### 10.4 Autosave
+
+1. Abrir artifact desde lista.
+2. Editar texto en el editor.
+3. Esperar 2s (debounce 1.5s + buffer).
+4. Reload.
+5. **Verificar:**
+   - [ ] Cambios persisten
+   - [ ] En Firestore Console → doc tiene `version` incrementado
+
+### 10.5 Cross-session library
+
+1. Navegar a `/dashboard/faculty/library`.
+2. **Verificar:**
+   - [ ] Lista TODOS los artifacts del user (de cualquier sesión)
+   - [ ] Search filtra por título/tipo/contenido
+   - [ ] Click → editor en panel derecho
+
+### 10.6 Provenance jump-back
+
+1. En `/library` → click menú `⋯` de un artifact → "Ver origen en la conversación".
+2. **Verificar:**
+   - [ ] Navega a la sesión origen
+   - [ ] Scroll automático al mensaje origen
+   - [ ] Highlight indigo en el mensaje (6 segundos)
+   - [ ] Hash URL `#origin=...` desaparece después del fade
+
+### 10.7 Orphan después de delete sesión
+
+1. En `/library` localizar artifact de una sesión.
+2. Volver a la sesión origen → menú → eliminar sesión.
+3. Confirmar.
+4. Reload `/library`.
+5. **Verificar:**
+   - [ ] Artifact aún visible
+   - [ ] Chip muestra "sesión eliminada"
+   - [ ] Menú `⋯` ya NO ofrece "Ver origen"
+
+### 10.8 Pin a proyecto
+
+1. En sesión asociada a un proyecto → generar artifact.
+2. Tab `Generados` → menú → `Anclar al proyecto`.
+3. Navegar a `/dashboard/faculty/projects/{projectId}/library`.
+4. **Verificar:**
+   - [ ] Artifact aparece en la lista del proyecto
+   - [ ] En tab `Generados` original muestra icono pin
+
+### 10.9 Markdown rendering en tablas
+
+1. Generar un sermón o estudio que produzca tabla (e.g. paradigma griego).
+2. **Verificar:**
+   - [ ] Tablas con `**Label**` en celdas renderizan bold (no asteriscos literales)
+   - [ ] Callouts Ejemplo/Nota/Definición/Atención están dentro del box verde/azul/violeta/ámbar (NO como blockquote raw)
+   - [ ] Multi-paragraph callouts mantienen todo el cuerpo dentro del box
+
+**Result:** ✅ / ❌
+
+---
+
 ## Frecuencia recomendada
 
 | Test | Antes de cada deploy | Antes de launch | Diario post-launch |
@@ -284,6 +378,7 @@ cd packages/web && npm run build
 | 7. Type-check global | ✅ | ✅ | siempre antes de commit |
 | 8. Build producción | ✅ | ✅ | siempre antes de deploy |
 | 9. Exegesis pricing end-to-end | ❌ | ✅ | después de tocar exégesis o Stripe |
+| 10. Faculty Extractions Persistence | ❌ | ✅ | después de tocar Faculty o cada release semanal |
 
 ---
 

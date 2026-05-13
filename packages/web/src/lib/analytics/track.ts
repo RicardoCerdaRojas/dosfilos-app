@@ -32,7 +32,19 @@ export type FunnelEventName =
     // Lead magnet surface (Fase B)
     | 'lead_magnet_viewed'
     | 'lead_magnet_submitted'
-    | 'lead_magnet_downloaded';
+    | 'lead_magnet_downloaded'
+    // Faculty engagement (Hito 7 — feature activation + retention)
+    //
+    // These events measure whether the Faculty module — the platform's
+    // primary value driver post-onboarding — is actually getting used.
+    // Hito 7 activates at ≥50 users or 30 days post-launch; events are
+    // instrumented now so the data is sitting in funnel_events/ when
+    // the analysis window opens.
+    | 'faculty_session_started'
+    | 'faculty_artifact_generated'
+    | 'faculty_artifact_opened_from_library'
+    | 'faculty_artifact_pinned_to_project'
+    | 'faculty_artifact_deleted';
 
 export type EventProps = Record<string, string | number | boolean | undefined>;
 

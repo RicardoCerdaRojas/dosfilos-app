@@ -3,6 +3,7 @@ import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { useTranslation } from 'react-i18next';
 import type { AIChatSessionContext, SupportedLanguage } from '@dosfilos/domain';
+import { track } from '@/lib/analytics/track';
 
 
 export function useFacultySessions() {
@@ -42,8 +43,18 @@ export function useFacultySessions() {
                 context,
             );
         },
-        onSuccess: () => {
+        onSuccess: (session, variables) => {
             queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid] });
+            // Hito 7 — Faculty top-of-funnel. Every new session = a
+            // user activating the primary feature surface. Lets us
+            // compute activation-rate-per-cohort once enough users
+            // accumulate.
+            track('faculty_session_started', {
+                agentId: variables.agentId,
+                hasProject: !!variables.projectId,
+                hasContext: !!variables.context,
+                hasInitialMessage: !!variables.initialMessage,
+            });
         }
     });
 
