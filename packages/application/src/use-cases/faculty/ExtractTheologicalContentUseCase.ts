@@ -6,18 +6,12 @@ import {
     SermonPersonalization,
     SERMON_TONE_LABELS,
     DEFAULT_LANGUAGE,
+    ExtractionType,
 } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 
-export type ExtractionType =
-    | 'SERMON'
-    | 'SERMON_OUTLINE'
-    | 'BIBLE_STUDY'
-    | 'COUNSELING_TASK'
-    | 'NEWSLETTER'
-    | 'SYSTEMATIC_THEOLOGY_PAPER'
-    | 'BLOG_POST'
-    | 'DEVOTIONAL';
+// Re-export so existing imports `import { ExtractionType } from '@dosfilos/application'` keep working.
+export type { ExtractionType } from '@dosfilos/domain';
 
 /**
  * Mode-detection preamble injected into every non-SERMON template.

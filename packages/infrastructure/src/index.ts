@@ -15,6 +15,7 @@ export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository
 export * from './firebase/FirebaseUserActivityRepository'; // 📊 User Activity Repository
 export * from './firebase/FirestoreAIChatRepository'; // 🎓 Multi-Agent Chat Repository
 export * from './firebase/FirestoreAIProjectRepository'; // 🎓 Multi-Agent Project Repository
+export * from './firebase/FirestoreExtractionRepository'; // 🎓 Persisted Faculty Extractions
 export * from './firebase/FirestoreExegeticalPaperRepository'; // ✍️ Exegesis Module — paper repo
 export * from './firebase/FirestoreExpositoryAssistantCacheRepository'; // ✍️ Expository Assistant — server-side cache for Pases 1-3 (v1.6)
 export * from './firebase/FirestoreUserRubricRepository'; // ✍️ Exegesis Module — rubric template repo

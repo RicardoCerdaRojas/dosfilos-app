@@ -2,6 +2,7 @@ import {
     FirestoreAIAgentRepository,
     FirestoreAIChatRepository,
     FirestoreAIProjectRepository,
+    FirestoreExtractionRepository,
     FirestoreExegeticalPaperRepository,
     FirebaseSeriesRepository,
     GeminiMultiAgentService,
@@ -33,6 +34,16 @@ import {
     CreateProjectOutputUseCase,
     UpdateProjectOutputUseCase,
     DeleteProjectOutputUseCase,
+    // Extractions
+    GenerateAndSaveExtractionUseCase,
+    ListSessionExtractionsUseCase,
+    ListProjectExtractionsUseCase,
+    ListUserExtractionsUseCase,
+    GetExtractionUseCase,
+    UpdateExtractionMarkdownUseCase,
+    RenameExtractionUseCase,
+    DeleteExtractionUseCase,
+    PinExtractionToProjectUseCase,
 } from '../use-cases/faculty';
 
 class FacultyService {
@@ -61,6 +72,16 @@ class FacultyService {
     public createOutput: CreateProjectOutputUseCase;
     public updateOutput: UpdateProjectOutputUseCase;
     public deleteOutput: DeleteProjectOutputUseCase;
+    // Persisted extractions
+    public generateAndSaveExtraction: GenerateAndSaveExtractionUseCase;
+    public listSessionExtractions: ListSessionExtractionsUseCase;
+    public listProjectExtractions: ListProjectExtractionsUseCase;
+    public listUserExtractions: ListUserExtractionsUseCase;
+    public getExtraction: GetExtractionUseCase;
+    public updateExtractionMarkdown: UpdateExtractionMarkdownUseCase;
+    public renameExtraction: RenameExtractionUseCase;
+    public deleteExtraction: DeleteExtractionUseCase;
+    public pinExtractionToProject: PinExtractionToProjectUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -74,6 +95,7 @@ class FacultyService {
         const agentRepository = new FirestoreAIAgentRepository();
         const chatRepository = new FirestoreAIChatRepository();
         const projectRepository = new FirestoreAIProjectRepository();
+        const extractionRepository = new FirestoreExtractionRepository();
         // Phase 4 enrichment refs — wired here so chat sessions
         // launched from a paper / series / pericope can show the
         // model the right anchor without the UI having to thread it.
@@ -94,16 +116,29 @@ class FacultyService {
             seriesRepository,
         );
         this.extractContent = new ExtractTheologicalContentUseCase(chatRepository, generatorService, projectRepository);
+        this.generateAndSaveExtraction = new GenerateAndSaveExtractionUseCase(
+            this.extractContent,
+            chatRepository,
+            extractionRepository,
+        );
+        this.listSessionExtractions = new ListSessionExtractionsUseCase(extractionRepository);
+        this.listProjectExtractions = new ListProjectExtractionsUseCase(extractionRepository);
+        this.listUserExtractions = new ListUserExtractionsUseCase(extractionRepository);
+        this.getExtraction = new GetExtractionUseCase(extractionRepository);
+        this.updateExtractionMarkdown = new UpdateExtractionMarkdownUseCase(extractionRepository);
+        this.renameExtraction = new RenameExtractionUseCase(extractionRepository);
+        this.deleteExtraction = new DeleteExtractionUseCase(extractionRepository);
+        this.pinExtractionToProject = new PinExtractionToProjectUseCase(extractionRepository);
         this.processMicroAction = new ProcessMicroActionUseCase(chatRepository, generatorService);
         this.getAgents = new GetFacultyAgentsUseCase(agentRepository);
         // Projects
         this.getProjects = new GetUserProjectsUseCase(projectRepository);
         this.createProject = new CreateProjectUseCase(projectRepository);
         this.updateProject = new UpdateProjectUseCase(projectRepository);
-        this.deleteProject = new DeleteProjectUseCase(projectRepository, chatRepository);
+        this.deleteProject = new DeleteProjectUseCase(projectRepository, chatRepository, extractionRepository);
         this.setProjectArchived = new SetProjectArchivedUseCase(projectRepository);
         this.setProjectDeleted = new SetProjectDeletedUseCase(projectRepository);
-        this.deleteSession = new DeleteChatSessionUseCase(chatRepository);
+        this.deleteSession = new DeleteChatSessionUseCase(chatRepository, extractionRepository);
         this.deleteMessage = new DeleteChatMessageUseCase(chatRepository);
         this.renameSession = new RenameChatSessionUseCase(chatRepository);
         this.generateProjectContext = new GenerateProjectContextUseCase(chatRepository, projectRepository, generatorService);
