@@ -163,6 +163,7 @@ export function FacultyExtractionsList({
                 return (
                     <div
                         key={item.id}
+                        data-extraction-row
                         className={cn(
                             "group rounded-lg border bg-card hover:bg-accent/40 transition-colors flex items-start gap-2.5 p-2.5",
                             editingId === item.id ? "cursor-default" : "cursor-pointer",
@@ -204,7 +205,27 @@ export function FacultyExtractionsList({
                                     // Backup: if the user clicks back into
                                     // the input later, re-select all.
                                     onFocus={e => e.currentTarget.select()}
-                                    onBlur={e => commitEditFromValue(item, e.currentTarget.value)}
+                                    onBlur={e => {
+                                        // Some sibling interactions in the same row
+                                        // (pin button hover, kebab menu) can briefly
+                                        // pull focus and fire blur even on a small
+                                        // mouse move. If focus is heading to anything
+                                        // inside the same row container, the user did
+                                        // NOT intend to commit — keep the input open.
+                                        const el = e.currentTarget;
+                                        const next = e.relatedTarget as HTMLElement | null;
+                                        const row = el.closest('[data-extraction-row]');
+                                        if (next && row && row.contains(next)) {
+                                            // Restore focus + selection on next tick
+                                            // so the sibling's action runs first.
+                                            setTimeout(() => {
+                                                el.focus();
+                                                el.select();
+                                            }, 0);
+                                            return;
+                                        }
+                                        commitEditFromValue(item, el.value);
+                                    }}
                                     onClick={e => e.stopPropagation()}
                                     onKeyDown={e => {
                                         e.stopPropagation();
