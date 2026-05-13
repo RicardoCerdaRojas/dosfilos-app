@@ -135,6 +135,10 @@
         "empty": "Aún no has generado documentos en esta sesión. Usa la pestaña Herramientas para crear el primero.",
         "orphan": "sesión eliminada",
         "confirmDelete": "¿Eliminar este documento? Esta acción no se puede deshacer.",
+        "errorLoading": "No pudimos cargar tus documentos.",
+        "errorIndexBuilding": "El índice de Firestore aún se está construyendo (5-10 min post-deploy). Reintenta en un momento.",
+        "retry": "Reintentar",
+        "refresh": "Actualizar",
         "actions": {
             "menu": "Acciones del documento",
             "rename": "Renombrar",

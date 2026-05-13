@@ -39,6 +39,8 @@ interface FacultyExtractionPanelProps {
     onRenameExtraction: (extraction: Extraction) => void;
     onPinExtraction: (extraction: Extraction) => void;
     onJumpToOrigin?: (extraction: Extraction) => void;
+    extractionsError?: unknown;
+    onRefreshExtractions?: () => void;
 }
 
 /**
@@ -61,6 +63,8 @@ export function FacultyExtractionPanel({
     onRenameExtraction,
     onPinExtraction,
     onJumpToOrigin,
+    extractionsError,
+    onRefreshExtractions,
 }: FacultyExtractionPanelProps) {
     const { t } = useTranslation('faculty');
     const [tab, setTab] = useState<Tab>('tools');
@@ -124,6 +128,8 @@ export function FacultyExtractionPanel({
                     onRename={onRenameExtraction}
                     onPin={onPinExtraction}
                     onJumpToOrigin={onJumpToOrigin}
+                    error={extractionsError}
+                    onRetry={onRefreshExtractions}
                 />
             )}
         </aside>

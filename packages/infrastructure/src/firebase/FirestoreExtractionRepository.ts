@@ -77,10 +77,30 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
             externalRef: input.externalRef ?? null,
             version: 1,
         };
-        await setDoc(docRef, {
-            ...extraction,
-            createdAt: Timestamp.fromDate(now),
-            updatedAt: Timestamp.fromDate(now),
+        try {
+            await setDoc(docRef, {
+                ...extraction,
+                createdAt: Timestamp.fromDate(now),
+                updatedAt: Timestamp.fromDate(now),
+            });
+        } catch (err) {
+            // Surface write failures — without this log a rejected
+            // setDoc (rules mismatch, network) reads as a silent
+            // success because the in-memory Extraction is still
+            // returned to the caller and rendered in the editor.
+            console.error('[FirestoreExtractionRepository.create] setDoc failed', {
+                userId: input.userId,
+                sessionId: input.sessionId,
+                type: input.type,
+                error: err,
+            });
+            throw err;
+        }
+        console.info('[FirestoreExtractionRepository.create] wrote extraction', {
+            id: extraction.id,
+            userId: extraction.userId,
+            sessionId: extraction.sessionId,
+            type: extraction.type,
         });
         return extraction;
     }

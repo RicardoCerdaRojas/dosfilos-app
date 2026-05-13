@@ -57,6 +57,8 @@ interface FacultyExtractionsListProps {
     onRename: (extraction: Extraction) => void;
     onPin: (extraction: Extraction) => void;
     onJumpToOrigin?: (extraction: Extraction) => void;
+    error?: unknown;
+    onRetry?: () => void;
 }
 
 /**
@@ -73,16 +75,41 @@ export function FacultyExtractionsList({
     onRename,
     onPin,
     onJumpToOrigin,
+    error,
+    onRetry,
 }: FacultyExtractionsListProps) {
     const { t, i18n } = useTranslation('faculty');
     const locale = i18n.language || 'es';
 
     const items = useMemo(() => extractions, [extractions]);
 
+    if (error) {
+        const message = (error as Error)?.message ?? String(error);
+        const isIndexBuilding = /requires an index|failed-precondition/i.test(message);
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-3">
+                <p className="text-xs text-destructive">
+                    {isIndexBuilding ? t('extractionsList.errorIndexBuilding') : t('extractionsList.errorLoading')}
+                </p>
+                <p className="text-[10px] text-muted-foreground break-all max-w-full">{message}</p>
+                {onRetry && (
+                    <Button size="sm" variant="outline" onClick={onRetry}>
+                        {t('extractionsList.retry')}
+                    </Button>
+                )}
+            </div>
+        );
+    }
+
     if (items.length === 0) {
         return (
-            <div className="flex-1 flex items-center justify-center p-6 text-center text-xs text-muted-foreground">
-                {t('extractionsList.empty')}
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-3 text-xs text-muted-foreground">
+                <span>{t('extractionsList.empty')}</span>
+                {onRetry && (
+                    <Button size="sm" variant="ghost" onClick={onRetry}>
+                        {t('extractionsList.refresh')}
+                    </Button>
+                )}
             </div>
         );
     }

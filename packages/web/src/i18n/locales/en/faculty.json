@@ -135,6 +135,10 @@
         "empty": "No documents generated in this session yet. Use the Tools tab to create the first one.",
         "orphan": "session deleted",
         "confirmDelete": "Delete this document? This action cannot be undone.",
+        "errorLoading": "Couldn't load your documents.",
+        "errorIndexBuilding": "Firestore index still building (5-10 min after deploy). Retry in a moment.",
+        "retry": "Retry",
+        "refresh": "Refresh",
         "actions": {
             "menu": "Document actions",
             "rename": "Rename",

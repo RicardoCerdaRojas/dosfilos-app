@@ -28,9 +28,22 @@ export function useSessionExtractions(sessionId: string | undefined) {
         queryKey: queryKeys.bySession(user?.uid, sessionId),
         queryFn: async () => {
             if (!user?.uid || !sessionId) return [] as Extraction[];
-            return facultyService.listSessionExtractions.execute(user.uid, sessionId);
+            try {
+                return await facultyService.listSessionExtractions.execute(user.uid, sessionId);
+            } catch (err) {
+                // Make Firestore errors visible — most common cause of a
+                // silently empty "Generados" list is a composite index
+                // that hasn't finished building (5-10 min after deploy).
+                console.error('[useSessionExtractions] query failed', {
+                    userId: user.uid,
+                    sessionId,
+                    error: err,
+                });
+                throw err;
+            }
         },
         enabled: !!user?.uid && !!sessionId,
+        retry: 1,
     });
 
     const invalidateAll = () => {

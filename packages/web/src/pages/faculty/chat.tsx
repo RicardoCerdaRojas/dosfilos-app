@@ -128,7 +128,7 @@ export function FacultyChatPage() {
     } = useFacultyChat(effectiveSessionId);
 
     // Persisted extractions for this session — drives the "Generados" tab.
-    const { extractions } = useSessionExtractions(effectiveSessionId);
+    const { extractions, error: extractionsError, refetch: refetchExtractions } = useSessionExtractions(effectiveSessionId);
     const { updateMarkdown: updateExtractionMarkdown, rename: renameExtraction, pinToProject: pinExtraction, deleteExtraction } = useExtractionMutations();
 
     const isSending = isOrchestrating;
@@ -476,7 +476,10 @@ export function FacultyChatPage() {
         setDocumentExtractionId(extraction.id);
         setDocumentTitle(extraction.title);
         setDocumentMarkdown(extraction.markdown);
+        // Reclaim horizontal space: both side rails collapse when a
+        // document opens. User can re-expand from the header toggles.
         setIsLeftSidebarOpen(false);
+        setIsRightSidebarOpen(false);
     };
 
     const closeDocument = () => {
@@ -756,6 +759,8 @@ export function FacultyChatPage() {
                     onRenameExtraction={handleRenameExtraction}
                     onPinExtraction={handlePinExtraction}
                     onJumpToOrigin={handleJumpToOrigin}
+                    extractionsError={extractionsError}
+                    onRefreshExtractions={() => refetchExtractions()}
                 />
             </div>
 
@@ -775,6 +780,7 @@ export function FacultyChatPage() {
                     setDocumentTitle(title);
                     setDocumentMarkdown(content);
                     setIsLeftSidebarOpen(false);
+                    setIsRightSidebarOpen(false);
                 }}
             />
 
