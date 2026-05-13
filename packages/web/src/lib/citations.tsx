@@ -193,8 +193,18 @@ export function transformCallouts(content: string): string {
     ];
 
     // Match contiguous blockquote blocks whose first line opens with a callout label.
-    // A blockquote block = one or more consecutive lines starting with "> ".
-    const calloutBlockRe = /(^|\n)((?:> [^\n]*\n?)+)/g;
+    // A blockquote block = one or more consecutive lines starting with ">".
+    //
+    // Critical: empty blockquote lines (just ">\n", no space + content) MUST
+    // count as part of the block. Without that, the callout body terminates
+    // at the first paragraph break and any bullets / following paragraphs
+    // render OUTSIDE the callout box as raw blockquote — exactly the bug
+    // users report ("walls of literal `>` and `*` characters").
+    //
+    // Pattern `>(?: [^\n]*)?\n?` matches:
+    //   - `> content\n`    line with content (with required leading space)
+    //   - `>\n`            empty blockquote line (no space, no content)
+    const calloutBlockRe = /(^|\n)((?:>(?: [^\n]*)?\n?)+)/g;
 
     return content.replace(calloutBlockRe, (_match, lead, block) => {
         // Find the label from the first line of the block
