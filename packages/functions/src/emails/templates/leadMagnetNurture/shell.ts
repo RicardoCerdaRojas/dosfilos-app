@@ -31,13 +31,17 @@ interface ShellOptions {
 const LOGO_URL = 'https://preach.dosfilos.com/logo_dfp.png';
 
 /**
- * Brand palette — kept in sync with the app's primary token
- * (HSL 244 76% 59% ≈ #5247E6, rendered here as indigo-600 #4f46e5
- * which is the closest hex Gmail's renderer supports without
- * dithering issues).
+ * Brand palette tuned to harmonize with the official Preach logo
+ * (warm amber P + dark wordmark). The app's primary token is
+ * indigo, but the email surface follows the logo's palette so the
+ * masthead and the CTA read as one piece — an indigo button under
+ * an amber logo looked discordant in practice (user feedback,
+ * 2026-05-13).
+ *
+ * Tailwind references: amber-600 / amber-100.
  */
-const BRAND_PRIMARY = '#4f46e5';
-const BRAND_PRIMARY_TINT = '#eef2ff';
+const BRAND_PRIMARY = '#D97706';
+const BRAND_PRIMARY_TINT = '#fef3c7';
 const TEXT_PRIMARY = '#1f2937';
 const TEXT_SECONDARY = '#4b5563';
 const TEXT_MUTED = '#9ca3af';
