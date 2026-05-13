@@ -94,33 +94,33 @@ export function FacultyExtractionsList({
     // cancels on Esc. Avoids the generic browser prompt() modal and
     // keeps the user's focus inside the surface they were already in.
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [editingDraft, setEditingDraft] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Focus + selection is handled inline via the input's `autoFocus`
-    // + `onFocus` props (see render). useEffect ran AFTER Radix's
-    // focus restoration in some cases, so we moved the logic to the
-    // input element itself where React invokes `onFocus` natively when
-    // the element receives focus — regardless of which actor (us,
-    // autoFocus, Radix) caused the focus event.
+    // Uncontrolled input pattern. We don't track the in-flight value
+    // in React state — the DOM input owns it via defaultValue, and
+    // we read currentTarget.value on commit. Reasons:
+    //   1. Controlled inputs interact badly with `autoFocus` + initial
+    //      selection: React schedules the value update across commits,
+    //      and the selection set during onFocus often gets clobbered
+    //      by the next React render that re-applies the value prop.
+    //   2. The pattern matches how Notion/Linear/Google Drive do
+    //      inline rename — focus on mount + select all text + commit
+    //      on Enter/blur.
 
     const beginEdit = (extraction: Extraction) => {
         setEditingId(extraction.id);
-        setEditingDraft(extraction.title);
     };
 
-    const commitEdit = (extraction: Extraction) => {
-        const next = editingDraft.trim();
+    const commitEditFromValue = (extraction: Extraction, raw: string) => {
+        const next = raw.trim();
         if (next && next !== extraction.title) {
             onRename(extraction, next);
         }
         setEditingId(null);
-        setEditingDraft('');
     };
 
     const cancelEdit = () => {
         setEditingId(null);
-        setEditingDraft('');
     };
 
     if (error) {
@@ -179,28 +179,16 @@ export function FacultyExtractionsList({
                                 <input
                                     ref={inputRef}
                                     type="text"
-                                    // autoFocus + onFocus is the only
-                                    // combo that wins reliably against
-                                    // Radix DropdownMenu's focus dance.
-                                    // autoFocus fires before the input's
-                                    // first paint; the onFocus handler
-                                    // re-applies selection if anything
-                                    // (Radix, layout shift) re-fires the
-                                    // focus event afterwards.
                                     autoFocus
-                                    onFocus={e => {
-                                        const el = e.currentTarget;
-                                        el.setSelectionRange(0, el.value.length);
-                                    }}
-                                    value={editingDraft}
-                                    onChange={e => setEditingDraft(e.target.value)}
-                                    onBlur={() => commitEdit(item)}
+                                    defaultValue={item.title}
+                                    onFocus={e => e.currentTarget.select()}
+                                    onBlur={e => commitEditFromValue(item, e.currentTarget.value)}
                                     onClick={e => e.stopPropagation()}
                                     onKeyDown={e => {
                                         e.stopPropagation();
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
-                                            commitEdit(item);
+                                            commitEditFromValue(item, e.currentTarget.value);
                                         } else if (e.key === 'Escape') {
                                             e.preventDefault();
                                             cancelEdit();
