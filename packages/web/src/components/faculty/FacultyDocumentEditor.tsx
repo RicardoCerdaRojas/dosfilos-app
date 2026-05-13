@@ -1,11 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { RichSermonEditor } from '../ui/RichSermonEditor';
 import { MDXEditorMethods } from '@mdxeditor/editor';
-import { Wand2, Sparkles, Quote, BookOpen, GraduationCap, Heart, Loader2, Minimize2, Maximize2, List, Check, X, Send } from 'lucide-react';
+import { Wand2, Sparkles, Quote, BookOpen, GraduationCap, Heart, Loader2, Minimize2, Maximize2, List, Check, X, Send, Eye, Pencil, Copy, FileCode } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { MicroActionType } from '@dosfilos/application';
+import {
+    transformCallouts,
+    wrapScriptureRefs,
+    wrapLanguageRuns,
+    Callout,
+    ScriptureRef,
+} from '@/lib/citations';
 
 interface FacultyDocumentEditorProps {
     markdown: string;
@@ -25,10 +36,71 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
     const isInteractingWithBubbleRef = useRef(false);
     const clearSelectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Preview state
+    // Preview state for the micro-action "review-before-replace" flow
+    // (unrelated to the document-level preview mode added below).
     const [previewState, setPreviewState] = useState<{ originalText: string; newText: string } | null>(null);
     const [customPrompt, setCustomPrompt] = useState('');
     const [savedRange, setSavedRange] = useState<Range | null>(null);
+
+    // Document-level view mode: 'edit' shows the rich WYSIWYG editor,
+    // 'preview' shows a read-only render of the markdown with the same
+    // pipeline used by the chat (callouts + scripture + language).
+    const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+
+    // Hidden DOM render of the markdown — used as the source of HTML
+    // for the "Copy formatted" button regardless of the current view
+    // mode. Always mounted so a user in Edit mode can copy formatted
+    // output without first switching to Preview.
+    const hiddenRenderRef = useRef<HTMLDivElement>(null);
+
+    // Apply the chat's rendering pipeline so callouts render styled,
+    // scripture refs become interactive pills, and Hebrew/Greek runs
+    // get proper typography. We skip the citations pipeline because
+    // extracted documents don't carry the `sources` array — citations
+    // were already resolved into prose when the extraction ran.
+    const renderedMarkdown = (() => {
+        const step1 = wrapScriptureRefs(markdown);
+        const step2 = transformCallouts(step1);
+        const step3 = wrapLanguageRuns(step2);
+        return step3;
+    })();
+
+    const copyAsFormatted = async () => {
+        const node = hiddenRenderRef.current;
+        if (!node) {
+            toast.error('No se pudo preparar la vista previa para copiar.');
+            return;
+        }
+        const html = node.innerHTML;
+        const text = node.innerText;
+        try {
+            if (navigator.clipboard && typeof window.ClipboardItem !== 'undefined') {
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([html], { type: 'text/html' }),
+                        'text/plain': new Blob([text], { type: 'text/plain' }),
+                    }),
+                ]);
+            } else {
+                // Fallback for browsers without ClipboardItem (older Firefox).
+                await navigator.clipboard.writeText(text);
+            }
+            toast.success('Copiado con formato — pega en WordPress, Docs, Notion, etc.');
+        } catch (err) {
+            console.error('[FacultyDocumentEditor] copy formatted failed:', err);
+            toast.error('No se pudo copiar. Tu navegador puede haber bloqueado el portapapeles.');
+        }
+    };
+
+    const copyAsMarkdown = async () => {
+        try {
+            await navigator.clipboard.writeText(markdown);
+            toast.success('Markdown copiado al portapapeles');
+        } catch (err) {
+            console.error('[FacultyDocumentEditor] copy markdown failed:', err);
+            toast.error('No se pudo copiar. Revisa los permisos de portapapeles.');
+        }
+    };
 
     // Listen to selection changes to position the bubble menu
     useEffect(() => {
@@ -166,20 +238,71 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
             <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Wand2 className="w-4 h-4" />
-                    {t('editor.title', 'Editor de Co-autoría')}
+                    {viewMode === 'edit'
+                        ? t('editor.title', 'Editor de Co-autoría')
+                        : t('editor.previewTitle', 'Vista previa')}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     {isProcessing && (
                         <div className="flex items-center gap-2 text-sm text-primary mr-2">
                             <Loader2 className="w-4 h-4 animate-spin" />
                             {t('editor.processing', 'Procesando...')}
                         </div>
                     )}
+
+                    {/* Edit / Preview toggle. Single button that flips
+                        between the two modes. Disabled while a
+                        micro-action preview is open (the inline preview
+                        UI would get confusing layered with the document
+                        preview). */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => setViewMode(prev => prev === 'edit' ? 'preview' : 'edit')}
+                        disabled={!!previewState}
+                        title={viewMode === 'edit' ? 'Ver con formato final' : 'Volver al editor'}
+                    >
+                        {viewMode === 'edit' ? <Eye className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                        <span className="ml-1.5 hidden sm:inline">
+                            {viewMode === 'edit' ? 'Vista previa' : 'Editar'}
+                        </span>
+                    </Button>
+
+                    {/* Copy formatted — writes both text/html and
+                        text/plain to the clipboard. Paste into WordPress,
+                        Google Docs, Notion, Word, etc. preserves bold,
+                        headings, lists, blockquotes. */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={copyAsFormatted}
+                        title="Copiar con formato (HTML) — listo para pegar en WordPress, Google Docs, Notion."
+                    >
+                        <Copy className="w-4 h-4" />
+                        <span className="ml-1.5 hidden sm:inline">Copiar con formato</span>
+                    </Button>
+
+                    {/* Copy raw markdown — for users who paste into
+                        markdown-native tools (Obsidian, GitHub, Logos
+                        Notes, etc.) or want to keep source-of-truth. */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={copyAsMarkdown}
+                        title="Copiar como Markdown — para editores que entienden la sintaxis."
+                    >
+                        <FileCode className="w-4 h-4" />
+                        <span className="ml-1.5 hidden md:inline">Markdown</span>
+                    </Button>
+
                     {onToggleZenMode && (
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 px-2 text-xs" 
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-xs"
                             onClick={onToggleZenMode}
                             title={isZenMode ? "Salir de Modo Enfoque" : "Modo Enfoque"}
                         >
@@ -190,12 +313,88 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
             </div>
 
             <div className="flex-1 overflow-auto">
-                <RichSermonEditor
-                    ref={editorRef}
-                    markdown={markdown}
-                    onChange={onChange}
-                    className={cn("h-full", isProcessing && "opacity-70 pointer-events-none transition-opacity")}
-                />
+                {viewMode === 'edit' ? (
+                    <RichSermonEditor
+                        ref={editorRef}
+                        markdown={markdown}
+                        onChange={onChange}
+                        className={cn("h-full", isProcessing && "opacity-70 pointer-events-none transition-opacity")}
+                    />
+                ) : (
+                    /* Read-only preview. Uses the same Markdown pipeline
+                       as the chat so callouts render styled, scripture
+                       refs are interactive, and Hebrew/Greek runs have
+                       proper typography. Prose styling mirrors the
+                       chat's `AssistantMessageContent` so the on-screen
+                       preview matches what the user will paste into
+                       WordPress / Docs. */
+                    <div className="h-full overflow-auto px-8 py-6 bg-white dark:bg-zinc-900">
+                        <article className={cn(
+                            "prose prose-slate prose-sm md:prose-base dark:prose-invert max-w-4xl mx-auto break-words",
+                            "font-reading",
+                            "prose-p:leading-[1.75]",
+                            "prose-li:leading-normal prose-li:my-0.5",
+                            "prose-ul:my-3 prose-ol:my-3",
+                            "prose-li:marker:text-slate-400",
+                            "prose-headings:font-sans prose-headings:tracking-tight",
+                            "prose-h2:mt-6 prose-h2:mb-3 prose-h3:mt-5 prose-h3:mb-2",
+                            "prose-strong:text-slate-900 dark:prose-strong:text-slate-100",
+                            "prose-table:text-sm prose-th:bg-slate-50 dark:prose-th:bg-zinc-800/60",
+                        )}>
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                rehypePlugins={[rehypeRaw]}
+                                components={{
+                                    div: (props: any) => {
+                                        if (props['data-callout']) return <Callout {...props} />;
+                                        return <div {...props} />;
+                                    },
+                                    span: (props: any) => {
+                                        if (props['data-scripture']) return <ScriptureRef {...props} />;
+                                        return <span {...props} />;
+                                    },
+                                }}
+                            >
+                                {renderedMarkdown}
+                            </ReactMarkdown>
+                        </article>
+                    </div>
+                )}
+            </div>
+
+            {/* Hidden HTML render used as the source for "Copy formatted".
+                Kept mounted in both view modes so the copy button works
+                regardless of what the user currently sees. `aria-hidden`
+                + offscreen positioning so screen readers + sighted users
+                don't see a duplicate document. */}
+            <div
+                ref={hiddenRenderRef}
+                aria-hidden="true"
+                style={{
+                    position: 'absolute',
+                    left: '-99999px',
+                    top: 0,
+                    width: '800px',
+                    pointerEvents: 'none',
+                    opacity: 0,
+                }}
+            >
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                        div: (props: any) => {
+                            if (props['data-callout']) return <Callout {...props} />;
+                            return <div {...props} />;
+                        },
+                        span: (props: any) => {
+                            if (props['data-scripture']) return <ScriptureRef {...props} />;
+                            return <span {...props} />;
+                        },
+                    }}
+                >
+                    {renderedMarkdown}
+                </ReactMarkdown>
             </div>
 
             {/* Floating AI Interface (Menu / Processing / Preview) */}
