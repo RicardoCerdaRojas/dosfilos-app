@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AppSidebar } from '@/components/layout/app-sidebar';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggleButtons } from '@/components/theme-toggle-buttons';
 import { cn } from '@/lib/utils';
@@ -74,6 +74,7 @@ export function DashboardLayout() {
 
   return (
     <SidebarProvider>
+      <AutoCollapseOnFaculty />
       <AppSidebar />
       <SidebarInset className={cn(
         isFullScreen ? "h-svh overflow-hidden print:h-auto print:overflow-visible" : "min-h-svh print:h-auto", 
@@ -109,4 +110,29 @@ export function DashboardLayout() {
       </SidebarInset>
     </SidebarProvider>
   );
+}
+
+/**
+ * Collapses the global app sidebar when the user enters /dashboard/faculty/*.
+ * The Faculty module owns its own session list + extraction panel, so the
+ * outer rail competes for horizontal space. We collapse on entry only —
+ * once inside, manual expand is respected until the user leaves and re-enters.
+ */
+function AutoCollapseOnFaculty() {
+  const { setOpen, isMobile } = useSidebar();
+  const location = useLocation();
+  const prevPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const prev = prevPathRef.current;
+    const curr = location.pathname;
+    const wasFaculty = prev !== null && prev.includes('/dashboard/faculty');
+    const isFaculty = curr.includes('/dashboard/faculty');
+    if (!wasFaculty && isFaculty && !isMobile) {
+      setOpen(false);
+    }
+    prevPathRef.current = curr;
+  }, [location.pathname, isMobile, setOpen]);
+
+  return null;
 }

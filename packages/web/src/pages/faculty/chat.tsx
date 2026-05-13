@@ -160,7 +160,12 @@ export function FacultyChatPage() {
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(
         () => localStorage.getItem('faculty-sidebar') !== 'false'
     );
-    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(
+        () => localStorage.getItem('faculty-extraction-panel') !== 'false'
+    );
+    useEffect(() => {
+        localStorage.setItem('faculty-extraction-panel', String(isRightSidebarOpen));
+    }, [isRightSidebarOpen]);
     const [lengthPreference, setLengthPreference] = useState<ResponseMode>('auto');
     const [extractedContent, setExtractedContent] = useState<{ title: string; markdown: string } | null>(null);
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
