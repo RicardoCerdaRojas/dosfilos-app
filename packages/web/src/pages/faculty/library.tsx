@@ -152,6 +152,14 @@ export function FacultyLibraryPage() {
                 <main className="flex-1 overflow-hidden bg-background">
                     {selected ? (
                         <FacultyDocumentEditor
+                            // Remount on artifact change. MDXEditor is
+                            // uncontrolled — it only reads the `markdown`
+                            // prop on mount, so without a fresh key it
+                            // keeps showing whatever was loaded first
+                            // (in this case nothing). The Vista previa
+                            // path renders independently and was the
+                            // only thing showing content before this fix.
+                            key={selected.id}
                             title={selected.title}
                             markdown={draftMarkdown}
                             onChange={setDraftMarkdown}

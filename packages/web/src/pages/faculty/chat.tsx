@@ -748,6 +748,14 @@ export function FacultyChatPage() {
                                 <aside className="flex flex-col h-full bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l">
                                     <div className="flex-1 overflow-hidden bg-background">
                                         <FacultyDocumentEditor
+                                            // Remount on artifact swap so MDXEditor
+                                            // reads the fresh markdown. Without this,
+                                            // selecting a second artifact from the
+                                            // Generados list keeps the editor showing
+                                            // the previously-loaded body. The
+                                            // 'sermon-preview' branch covers the
+                                            // ephemeral sermon flow from the wizard.
+                                            key={documentExtractionId ?? 'sermon-preview'}
                                             title={documentTitle}
                                             onClose={closeDocument}
                                             markdown={documentMarkdown}

@@ -132,6 +132,10 @@ export function ProjectLibraryPage() {
                 <main className="flex-1 overflow-hidden bg-background">
                     {selected ? (
                         <FacultyDocumentEditor
+                            // Remount on artifact change — see library.tsx
+                            // for the underlying reason (MDXEditor is
+                            // uncontrolled past mount).
+                            key={selected.id}
                             title={selected.title}
                             markdown={draftMarkdown}
                             onChange={setDraftMarkdown}
