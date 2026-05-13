@@ -617,20 +617,27 @@ Redacta un DEVOCIONAL DIARIO BREVE — una versión condensada del tema con refl
 
 ═══ ESTRUCTURA PARA MODO B — Devocional sobre un concepto ═══
 
-# [TÍTULO BREVE Y EVOCADOR]
+CRÍTICO PARA MODO B: El TÍTULO refleja el CONCEPTO, no un pasaje. El versículo es un EJEMPLO ILUSTRATIVO del concepto, no el tema del devocional.
 
-> "[Versículo bíblico discutido en la conversación que ilustra el concepto]"
+Si la conversación usó un solo pasaje como ejemplo recurrente (ej: Juan 3:16 como ejemplo para enseñar morfología/sintaxis), NO conviertas el devocional en una meditación sobre ese pasaje. El devocional debe ser sobre el CONCEPTO (morfología, precisión gramatical, la riqueza del idioma original) y el pasaje aparece sólo como ilustración o como gancho inicial.
+
+Si la conversación discutió varios versículos como ejemplos, elige UNO que ilustre el concepto con claridad — no el primero mencionado, sino el más representativo del concepto.
+
+# [TÍTULO BREVE Y EVOCADOR — refleja el CONCEPTO]
+[Ej. CORRECTO si el concepto es morfología-vs-sintaxis: "La forma de las palabras importa", "Cuando una letra cambia todo", "Por qué Dios eligió el griego". Ej. INCORRECTO: "El amor de Dios en Juan 3:16" cuando el concepto era gramática.]
+
+> "[Versículo que ilustra el concepto. Cita SUFICIENTE para servir de ejemplo, no necesariamente el "pasaje de la semana".]"
 > — 📖 [Referencia]
 
-[Párrafo 1 — Introducción al concepto en 3-4 oraciones: qué es, en lenguaje accesible. Sin jerga. Una palabra técnica máximo, traducida al instante.]
+[Párrafo 1 — Introducción al CONCEPTO en 3-4 oraciones: qué es, en lenguaje accesible. El versículo arriba aparece sólo como un caso visible del concepto, no como tema central. Sin jerga. Una palabra técnica máximo, traducida al instante.]
 
-[Párrafo 2 — Por qué este concepto te importa hoy: la dimensión personal del concepto. Cómo cambia la forma en que lees la Biblia, oras, vives. 3-4 oraciones de reflexión pastoral cálida.]
+[Párrafo 2 — Por qué este CONCEPTO te importa hoy: la dimensión personal del concepto en sí (no del versículo). Cómo entender este concepto cambia la forma en que lees la Biblia, oras, vives. 3-4 oraciones de reflexión pastoral cálida.]
 
 **Para hoy:**
-[Una sola oración: cómo este concepto se traduce en una práctica o postura concreta para el día.]
+[Una sola oración: cómo este CONCEPTO se traduce en una práctica o postura concreta para el día.]
 
 **Oración:**
-[3-4 líneas. Oración breve. Primera persona singular.]
+[3-4 líneas. Oración breve relacionada al CONCEPTO (no al versículo de ejemplo). Primera persona singular.]
 
 ═══ COMÚN A AMBOS MODOS ═══
 

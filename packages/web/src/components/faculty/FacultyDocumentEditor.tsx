@@ -25,9 +25,13 @@ interface FacultyDocumentEditorProps {
     isProcessing?: boolean;
     isZenMode?: boolean;
     onToggleZenMode?: () => void;
+    /** Document title shown in the toolbar. Pass null to hide. */
+    title?: string;
+    /** Close handler. When provided, renders an X button in the toolbar. */
+    onClose?: () => void;
 }
 
-export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isProcessing, isZenMode, onToggleZenMode }: FacultyDocumentEditorProps) {
+export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isProcessing, isZenMode, onToggleZenMode, title, onClose }: FacultyDocumentEditorProps) {
     const { t } = useTranslation(['faculty', 'common']);
     const editorRef = useRef<MDXEditorMethods>(null);
     const [selection, setSelection] = useState<{ text: string; rect: DOMRect | null }>({ text: '', rect: null });
@@ -235,12 +239,26 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
 
     return (
         <div ref={containerRef} className="relative h-full w-full flex flex-col bg-background rounded-lg border shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Wand2 className="w-4 h-4" />
-                    {viewMode === 'edit'
-                        ? t('editor.title', 'Editor de Co-autoría')
-                        : t('editor.previewTitle', 'Vista previa')}
+            <div className="flex items-center justify-between gap-3 px-4 py-2 bg-muted/30 border-b min-h-[3.5rem]">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {title ? (
+                        <>
+                            <Wand2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <h3 className="font-semibold text-sm text-foreground truncate" title={title}>
+                                {title}
+                            </h3>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0 hidden md:inline">
+                                · {viewMode === 'edit' ? 'editor' : 'vista previa'}
+                            </span>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                            <Wand2 className="w-4 h-4" />
+                            {viewMode === 'edit'
+                                ? t('editor.title', 'Editor de Co-autoría')
+                                : t('editor.previewTitle', 'Vista previa')}
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-1.5">
                     {isProcessing && (
@@ -307,6 +325,19 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
                             title={isZenMode ? "Salir de Modo Enfoque" : "Modo Enfoque"}
                         >
                             {isZenMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                        </Button>
+                    )}
+
+                    {onClose && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 ml-1"
+                            onClick={onClose}
+                            title="Cerrar documento"
+                            aria-label="Cerrar documento"
+                        >
+                            <X className="w-4 h-4" />
                         </Button>
                     )}
                 </div>
