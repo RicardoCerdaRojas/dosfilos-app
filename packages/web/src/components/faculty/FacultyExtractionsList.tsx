@@ -177,10 +177,32 @@ export function FacultyExtractionsList({
                         <div className="flex-1 min-w-0">
                             {editingId === item.id ? (
                                 <input
-                                    ref={inputRef}
+                                    ref={el => {
+                                        inputRef.current = el;
+                                        // Mount-time focus + select via
+                                        // setTimeout. autoFocus fires
+                                        // synchronously during commit
+                                        // when React/Radix focus events
+                                        // are still in flight, so select()
+                                        // gets clobbered. Deferring to
+                                        // the next macrotask waits past
+                                        // every concurrent focus dance,
+                                        // and then select() on the
+                                        // already-focused input sticks.
+                                        if (el && !el.dataset.focused) {
+                                            el.dataset.focused = 'true';
+                                            setTimeout(() => {
+                                                if (inputRef.current === el) {
+                                                    el.focus();
+                                                    el.select();
+                                                }
+                                            }, 0);
+                                        }
+                                    }}
                                     type="text"
-                                    autoFocus
                                     defaultValue={item.title}
+                                    // Backup: if the user clicks back into
+                                    // the input later, re-select all.
                                     onFocus={e => e.currentTarget.select()}
                                     onBlur={e => commitEditFromValue(item, e.currentTarget.value)}
                                     onClick={e => e.stopPropagation()}
