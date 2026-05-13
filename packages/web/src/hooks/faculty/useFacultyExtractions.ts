@@ -160,12 +160,56 @@ export function useExtractionMutations() {
         onSuccess: invalidateAll,
     });
 
+    /**
+     * Optimistically rewrites the projectIds array on every cached
+     * list query that contains this extraction, before the backend
+     * ack arrives. Without this, the checkbox in the picker UI lags
+     * ~500ms while React Query waits for the mutation to settle.
+     *
+     * Returns a snapshot of all touched queries so onError can roll
+     * back on failure. Skips single-extraction queries (`...,'id',...`)
+     * because the picker doesn't read from them — `onSettled` will
+     * invalidate them anyway.
+     */
+    const optimisticPatchProjectIds = (
+        extractionId: string,
+        patch: (current: string[]) => string[],
+    ) => {
+        queryClient.cancelQueries({ queryKey: ['faculty', 'extractions'] });
+        const snapshots: Array<[readonly unknown[], unknown]> = [];
+        queryClient
+            .getQueriesData<Extraction[]>({ queryKey: ['faculty', 'extractions'] })
+            .forEach(([key, data]) => {
+                if (!Array.isArray(data)) return;
+                snapshots.push([key, data]);
+                const next = data.map(e =>
+                    e.id === extractionId
+                        ? { ...e, projectIds: patch(e.projectIds) }
+                        : e,
+                );
+                queryClient.setQueryData(key, next);
+            });
+        return snapshots;
+    };
+
+    const rollback = (snapshots: Array<[readonly unknown[], unknown]>) => {
+        snapshots.forEach(([key, data]) => queryClient.setQueryData(key, data));
+    };
+
     const addToProject = useMutation({
         mutationFn: async ({ extractionId, projectId }: { extractionId: string; projectId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
             await facultyService.addExtractionToProject.execute(user.uid, extractionId, projectId);
         },
-        onSuccess: invalidateAll,
+        onMutate: ({ extractionId, projectId }) => ({
+            snapshots: optimisticPatchProjectIds(extractionId, current =>
+                current.includes(projectId) ? current : [...current, projectId],
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) rollback(context.snapshots);
+        },
+        onSettled: invalidateAll,
     });
 
     const removeFromProject = useMutation({
@@ -173,7 +217,15 @@ export function useExtractionMutations() {
             if (!user?.uid) throw new Error('User not authenticated');
             await facultyService.removeExtractionFromProject.execute(user.uid, extractionId, projectId);
         },
-        onSuccess: invalidateAll,
+        onMutate: ({ extractionId, projectId }) => ({
+            snapshots: optimisticPatchProjectIds(extractionId, current =>
+                current.filter(id => id !== projectId),
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) rollback(context.snapshots);
+        },
+        onSettled: invalidateAll,
     });
 
     const deleteExtraction = useMutation({
