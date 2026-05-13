@@ -121,7 +121,33 @@
         "devotional": "Devocional Diario",
         "devotionalDesc": "Reflexión breve con oración personal.",
         "extractedDocument": "Documento Extraído",
-        "extractionFailed": "No se pudo generar el contenido. Intenta de nuevo."
+        "extractionFailed": "No se pudo generar el contenido. Intenta de nuevo.",
+        "tabs": {
+            "tools": "Herramientas",
+            "generated": "Generados"
+        },
+        "toast": {
+            "generated": "{{title}} listo",
+            "view": "Ver"
+        }
+    },
+    "extractionsList": {
+        "empty": "Aún no has generado documentos en esta sesión. Usa la pestaña Herramientas para crear el primero.",
+        "orphan": "sesión eliminada",
+        "confirmDelete": "¿Eliminar este documento? Esta acción no se puede deshacer.",
+        "actions": {
+            "menu": "Acciones del documento",
+            "rename": "Renombrar",
+            "pin": "Anclar al proyecto",
+            "unpin": "Desanclar del proyecto",
+            "jumpToOrigin": "Ver origen en la conversación",
+            "delete": "Eliminar"
+        },
+        "toast": {
+            "pinned": "Anclado al proyecto",
+            "unpinned": "Desanclado del proyecto",
+            "noProject": "Esta sesión no tiene proyecto. Primero asigna la sesión a un proyecto."
+        }
     },
     "dialogs": {
         "deleteSessionTitle": "¿Eliminar esta sesión?",
