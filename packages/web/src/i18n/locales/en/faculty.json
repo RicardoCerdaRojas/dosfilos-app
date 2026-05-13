@@ -159,6 +159,10 @@
             "noProjectsAvailable": "You haven't created any projects yet."
         }
     },
+    "extractionsFilters": {
+        "allTypes": "All types",
+        "allTime": "Any time"
+    },
     "library": {
         "title": "My Resources",
         "subtitle": "Every resource you've generated from your conversations.",

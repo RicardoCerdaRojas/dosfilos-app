@@ -159,6 +159,10 @@
             "noProjectsAvailable": "Aún no has creado proyectos. Crea uno desde la barra lateral."
         }
     },
+    "extractionsFilters": {
+        "allTypes": "Todos los tipos",
+        "allTime": "Cualquier momento"
+    },
     "library": {
         "title": "Mis Recursos",
         "subtitle": "Todos los recursos que has generado desde tus conversaciones.",

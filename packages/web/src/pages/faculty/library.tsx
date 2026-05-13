@@ -5,6 +5,7 @@ import { useUserExtractions, useExtractionMutations } from '@/hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { FacultyExtractionsList } from '@/components/faculty/FacultyExtractionsList';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
+import { ExtractionFilters, filterExtractions, type TypeFilterValue, type TimeFilterValue } from '@/components/faculty/ExtractionFilters';
 import { Input } from '@/components/ui/input';
 import { Library, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,6 +27,8 @@ export function FacultyLibraryPage() {
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [query, setQuery] = useState('');
+    const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all');
+    const [timeFilter, setTimeFilter] = useState<TimeFilterValue>('all');
     const [draftMarkdown, setDraftMarkdown] = useState<string>('');
     const [draftFor, setDraftFor] = useState<string | null>(null);
 
@@ -68,14 +71,15 @@ export function FacultyLibraryPage() {
     }, [draftMarkdown, selectedId, draftFor]);
 
     const filtered = useMemo(() => {
+        const afterFilters = filterExtractions(extractions, typeFilter, timeFilter);
         const q = query.trim().toLowerCase();
-        if (!q) return extractions;
-        return extractions.filter(e =>
+        if (!q) return afterFilters;
+        return afterFilters.filter(e =>
             e.title.toLowerCase().includes(q) ||
             e.type.toLowerCase().includes(q) ||
             e.markdown.toLowerCase().includes(q),
         );
-    }, [extractions, query]);
+    }, [extractions, query, typeFilter, timeFilter]);
 
     const selected = useMemo(
         () => extractions.find(e => e.id === selectedId) ?? null,
@@ -131,6 +135,12 @@ export function FacultyLibraryPage() {
 
             <div className="flex-1 flex overflow-hidden">
                 <aside className="w-[24rem] border-r flex flex-col shrink-0">
+                    <ExtractionFilters
+                        typeFilter={typeFilter}
+                        timeFilter={timeFilter}
+                        onTypeChange={setTypeFilter}
+                        onTimeChange={setTimeFilter}
+                    />
                     {isLoading ? (
                         <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
                             {t('library.loading')}
