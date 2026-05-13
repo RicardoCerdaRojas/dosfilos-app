@@ -58,8 +58,19 @@ export interface Extraction {
     userId: string;
     /** Null when the source session has been deleted (orphan). */
     sessionId: string | null;
-    /** Set when the user pins this artifact to a project. */
-    projectId: string | null;
+    /**
+     * Projects this artifact is pinned to. Multi-value so the same
+     * artifact can live in several project libraries (e.g. a Romans
+     * 8 exegetical paper that's relevant to both an "Adviento" series
+     * and a "Justification" doctrinal study). Empty array = not
+     * pinned anywhere.
+     *
+     * Pre-2026-05-13 docs stored a single `projectId: string | null`
+     * field; the repo's fromFirestore coerces those to a 1-element
+     * array (or [] when null) so reads stay consistent during the
+     * lazy migration window.
+     */
+    projectIds: string[];
     type: ExtractionType;
     title: string;
     markdown: string;

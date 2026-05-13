@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
-import type { Extraction, ExtractionType } from '@dosfilos/domain';
+import type { Extraction, ExtractionType, AIProject } from '@dosfilos/domain';
+import { ExtractionProjectsPicker } from './ExtractionProjectsPicker';
 
 /** Icon + tint per artifact type — matches the tools tab for visual continuity. */
 const TYPE_VISUAL: Record<ExtractionType, { icon: typeof BookOpen; color: string }> = {
@@ -54,8 +55,11 @@ interface FacultyExtractionsListProps {
     selectedId: string | null;
     onSelect: (extraction: Extraction) => void;
     onDelete: (extraction: Extraction) => void;
-    onRename: (extraction: Extraction) => void;
-    onPin: (extraction: Extraction) => void;
+    /** Called with the new title once the inline editor commits (Enter or blur). */
+    onRename: (extraction: Extraction, newTitle: string) => void;
+    onAddToProject: (extraction: Extraction, projectId: string) => void;
+    onRemoveFromProject: (extraction: Extraction, projectId: string) => void;
+    projects: AIProject[];
     onJumpToOrigin?: (extraction: Extraction) => void;
     error?: unknown;
     onRetry?: () => void;
@@ -73,7 +77,9 @@ export function FacultyExtractionsList({
     onSelect,
     onDelete,
     onRename,
-    onPin,
+    onAddToProject,
+    onRemoveFromProject,
+    projects,
     onJumpToOrigin,
     error,
     onRetry,
@@ -82,6 +88,40 @@ export function FacultyExtractionsList({
     const locale = i18n.language || 'es';
 
     const items = useMemo(() => extractions, [extractions]);
+
+    // Inline rename state — single editing row at a time. Title text
+    // collapses into an input box that commits on Enter or blur, and
+    // cancels on Esc. Avoids the generic browser prompt() modal and
+    // keeps the user's focus inside the surface they were already in.
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Uncontrolled input pattern. We don't track the in-flight value
+    // in React state — the DOM input owns it via defaultValue, and
+    // we read currentTarget.value on commit. Reasons:
+    //   1. Controlled inputs interact badly with `autoFocus` + initial
+    //      selection: React schedules the value update across commits,
+    //      and the selection set during onFocus often gets clobbered
+    //      by the next React render that re-applies the value prop.
+    //   2. The pattern matches how Notion/Linear/Google Drive do
+    //      inline rename — focus on mount + select all text + commit
+    //      on Enter/blur.
+
+    const beginEdit = (extraction: Extraction) => {
+        setEditingId(extraction.id);
+    };
+
+    const commitEditFromValue = (extraction: Extraction, raw: string) => {
+        const next = raw.trim();
+        if (next && next !== extraction.title) {
+            onRename(extraction, next);
+        }
+        setEditingId(null);
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+    };
 
     if (error) {
         const message = (error as Error)?.message ?? String(error);
@@ -123,23 +163,96 @@ export function FacultyExtractionsList({
                 return (
                     <div
                         key={item.id}
+                        data-extraction-row
                         className={cn(
-                            "group rounded-lg border bg-card hover:bg-accent/40 transition-colors cursor-pointer flex items-start gap-2.5 p-2.5",
+                            "group rounded-lg border bg-card hover:bg-accent/40 transition-colors flex items-start gap-2.5 p-2.5",
+                            editingId === item.id ? "cursor-default" : "cursor-pointer",
                             isSelected ? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30" : "border-slate-200 dark:border-zinc-800",
                         )}
-                        onClick={() => onSelect(item)}
+                        onClick={() => {
+                            if (editingId === item.id) return;
+                            onSelect(item);
+                        }}
                     >
                         <Icon className={cn("w-4 h-4 shrink-0 mt-0.5", visual.color)} />
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{item.title}</div>
+                            {editingId === item.id ? (
+                                <input
+                                    ref={el => {
+                                        inputRef.current = el;
+                                        // Mount-time focus + select via
+                                        // setTimeout. autoFocus fires
+                                        // synchronously during commit
+                                        // when React/Radix focus events
+                                        // are still in flight, so select()
+                                        // gets clobbered. Deferring to
+                                        // the next macrotask waits past
+                                        // every concurrent focus dance,
+                                        // and then select() on the
+                                        // already-focused input sticks.
+                                        if (el && !el.dataset.focused) {
+                                            el.dataset.focused = 'true';
+                                            setTimeout(() => {
+                                                if (inputRef.current === el) {
+                                                    el.focus();
+                                                    el.select();
+                                                }
+                                            }, 0);
+                                        }
+                                    }}
+                                    type="text"
+                                    defaultValue={item.title}
+                                    // Backup: if the user clicks back into
+                                    // the input later, re-select all.
+                                    onFocus={e => e.currentTarget.select()}
+                                    onBlur={e => {
+                                        // Some sibling interactions in the same row
+                                        // (pin button hover, kebab menu) can briefly
+                                        // pull focus and fire blur even on a small
+                                        // mouse move. If focus is heading to anything
+                                        // inside the same row container, the user did
+                                        // NOT intend to commit — keep the input open.
+                                        const el = e.currentTarget;
+                                        const next = e.relatedTarget as HTMLElement | null;
+                                        const row = el.closest('[data-extraction-row]');
+                                        if (next && row && row.contains(next)) {
+                                            // Restore focus + selection on next tick
+                                            // so the sibling's action runs first.
+                                            setTimeout(() => {
+                                                el.focus();
+                                                el.select();
+                                            }, 0);
+                                            return;
+                                        }
+                                        commitEditFromValue(item, el.value);
+                                    }}
+                                    onClick={e => e.stopPropagation()}
+                                    onKeyDown={e => {
+                                        e.stopPropagation();
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            commitEditFromValue(item, e.currentTarget.value);
+                                        } else if (e.key === 'Escape') {
+                                            e.preventDefault();
+                                            cancelEdit();
+                                        }
+                                    }}
+                                    className="w-full text-sm font-medium bg-background border border-indigo-500 rounded px-1.5 py-0.5 -mx-1.5 -my-0.5 outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900"
+                                />
+                            ) : (
+                                <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{item.title}</div>
+                            )}
                             <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                                 <span>{t(TYPE_LABEL_KEY[item.type])}</span>
                                 <span aria-hidden>·</span>
                                 <span>{formatRelative(item.updatedAt, locale)}</span>
-                                {item.projectId && (
+                                {item.projectIds.length > 0 && (
                                     <>
                                         <span aria-hidden>·</span>
-                                        <Pin className="w-3 h-3" />
+                                        <span className="inline-flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400">
+                                            <Pin className="w-3 h-3 fill-current" />
+                                            {item.projectIds.length}
+                                        </span>
                                     </>
                                 )}
                                 {item.sourceSessionDeleted && (
@@ -150,43 +263,78 @@ export function FacultyExtractionsList({
                                 )}
                             </div>
                         </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="w-7 h-7 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        <div
+                            className="flex items-center gap-0.5 shrink-0"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <ExtractionProjectsPicker
+                                extraction={item}
+                                projects={projects}
+                                onAddToProject={projectId => onAddToProject(item, projectId)}
+                                onRemoveFromProject={projectId => onRemoveFromProject(item, projectId)}
+                                trigger={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="w-7 h-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        aria-label={t('extractionsList.actions.pin')}
+                                    >
+                                        <Pin className={cn(
+                                            "w-3.5 h-3.5",
+                                            item.projectIds.length > 0 && "fill-current text-indigo-500"
+                                        )} />
+                                    </Button>
+                                }
+                            />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="w-7 h-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        onClick={e => e.stopPropagation()}
+                                        aria-label={t('extractionsList.actions.menu')}
+                                    >
+                                        <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
                                     onClick={e => e.stopPropagation()}
-                                    aria-label={t('extractionsList.actions.menu')}
+                                    // Canonical Radix fix: prevent the menu
+                                    // from restoring focus to its trigger
+                                    // after close. Without this, picking
+                                    // "Renombrar" lands focus in the rename
+                                    // input for one frame, then Radix yanks
+                                    // it back to the kebab button → input
+                                    // fires onBlur → commitEdit unmounts the
+                                    // input before the user can type. Other
+                                    // actions (Delete, Pin, JumpToOrigin)
+                                    // don't need focus to return to the
+                                    // kebab; the body gets focus instead.
+                                    onCloseAutoFocus={e => e.preventDefault()}
                                 >
-                                    <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
-                                <DropdownMenuItem onClick={() => onRename(item)}>
-                                    <Pencil className="w-3.5 h-3.5 mr-2" />
-                                    {t('extractionsList.actions.rename')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onPin(item)}>
-                                    <Pin className="w-3.5 h-3.5 mr-2" />
-                                    {item.projectId ? t('extractionsList.actions.unpin') : t('extractionsList.actions.pin')}
-                                </DropdownMenuItem>
-                                {onJumpToOrigin && !item.sourceSessionDeleted && item.sessionId && (
-                                    <DropdownMenuItem onClick={() => onJumpToOrigin(item)}>
-                                        <ExternalLink className="w-3.5 h-3.5 mr-2" />
-                                        {t('extractionsList.actions.jumpToOrigin')}
+                                    <DropdownMenuItem onClick={() => beginEdit(item)}>
+                                        <Pencil className="w-3.5 h-3.5 mr-2" />
+                                        {t('extractionsList.actions.rename')}
                                     </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onClick={() => onDelete(item)}
-                                >
-                                    <Trash2 className="w-3.5 h-3.5 mr-2" />
-                                    {t('extractionsList.actions.delete')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    {onJumpToOrigin && !item.sourceSessionDeleted && item.sessionId && (
+                                        <DropdownMenuItem onClick={() => onJumpToOrigin(item)}>
+                                            <ExternalLink className="w-3.5 h-3.5 mr-2" />
+                                            {t('extractionsList.actions.jumpToOrigin')}
+                                        </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive"
+                                        onClick={() => onDelete(item)}
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                        {t('extractionsList.actions.delete')}
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
                 );
             })}

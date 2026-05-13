@@ -130,7 +130,7 @@ export function FacultyChatPage() {
 
     // Persisted extractions for this session — drives the "Generados" tab.
     const { extractions, error: extractionsError, refetch: refetchExtractions } = useSessionExtractions(effectiveSessionId);
-    const { updateMarkdown: updateExtractionMarkdown, rename: renameExtraction, pinToProject: pinExtraction, deleteExtraction } = useExtractionMutations();
+    const { updateMarkdown: updateExtractionMarkdown, rename: renameExtraction, addToProject: addExtractionToProject, removeFromProject: removeExtractionFromProject, deleteExtraction } = useExtractionMutations();
 
     const isSending = isOrchestrating;
 
@@ -567,30 +567,24 @@ export function FacultyChatPage() {
 
     // ── Extraction list handlers (panel "Generados" tab) ─────────────────────
 
-    const handleRenameExtraction = (extraction: Extraction) => {
-        const next = window.prompt(t('extractionsList.actions.rename'), extraction.title);
-        if (!next || next.trim() === extraction.title) return;
-        renameExtraction.mutate({ extractionId: extraction.id, title: next.trim() });
-        if (documentExtractionId === extraction.id) setDocumentTitle(next.trim());
+    const handleRenameExtraction = (extraction: Extraction, newTitle: string) => {
+        renameExtraction.mutate({ extractionId: extraction.id, title: newTitle });
+        if (documentExtractionId === extraction.id) setDocumentTitle(newTitle);
     };
 
-    const handlePinExtraction = (extraction: Extraction) => {
-        // First-cut: toggle pin without a picker UI. When projects are
-        // available the panel can grow a sub-menu. For now, unpin if
-        // pinned, otherwise pin to the session's current project (if any).
-        if (extraction.projectId) {
-            pinExtraction.mutate({ extractionId: extraction.id, projectId: null });
-            toast.success(t('extractionsList.toast.unpinned'));
-        } else if (session?.projectId) {
-            pinExtraction.mutate({ extractionId: extraction.id, projectId: session.projectId });
-            track('faculty_artifact_pinned_to_project', {
-                type: extraction.type,
-                projectId: session.projectId,
-            });
-            toast.success(t('extractionsList.toast.pinned'));
-        } else {
-            toast.info(t('extractionsList.toast.noProject'));
-        }
+    const handleAddExtractionToProject = (extraction: Extraction, projectId: string) => {
+        addExtractionToProject.mutate({ extractionId: extraction.id, projectId });
+        track('faculty_artifact_pinned_to_project', {
+            type: extraction.type,
+            projectId,
+            totalPinsAfter: extraction.projectIds.length + 1,
+        });
+        toast.success(t('extractionsList.toast.pinned'));
+    };
+
+    const handleRemoveExtractionFromProject = (extraction: Extraction, projectId: string) => {
+        removeExtractionFromProject.mutate({ extractionId: extraction.id, projectId });
+        toast.success(t('extractionsList.toast.unpinned'));
     };
 
     const handleDeleteExtraction = (extraction: Extraction) => {
@@ -748,6 +742,14 @@ export function FacultyChatPage() {
                                 <aside className="flex flex-col h-full bg-background shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 relative border-l">
                                     <div className="flex-1 overflow-hidden bg-background">
                                         <FacultyDocumentEditor
+                                            // Remount on artifact swap so MDXEditor
+                                            // reads the fresh markdown. Without this,
+                                            // selecting a second artifact from the
+                                            // Generados list keeps the editor showing
+                                            // the previously-loaded body. The
+                                            // 'sermon-preview' branch covers the
+                                            // ephemeral sermon flow from the wizard.
+                                            key={documentExtractionId ?? 'sermon-preview'}
                                             title={documentTitle}
                                             onClose={closeDocument}
                                             markdown={documentMarkdown}
@@ -782,7 +784,9 @@ export function FacultyChatPage() {
                     }}
                     onDeleteExtraction={handleDeleteExtraction}
                     onRenameExtraction={handleRenameExtraction}
-                    onPinExtraction={handlePinExtraction}
+                    onAddExtractionToProject={handleAddExtractionToProject}
+                    onRemoveExtractionFromProject={handleRemoveExtractionFromProject}
+                    projects={projects}
                     onJumpToOrigin={handleJumpToOrigin}
                     extractionsError={extractionsError}
                     onRefreshExtractions={() => refetchExtractions()}

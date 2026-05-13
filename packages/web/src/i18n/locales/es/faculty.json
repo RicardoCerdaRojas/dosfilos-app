@@ -11,9 +11,9 @@
         "detailedDescription": "Detallada y exhaustiva",
         "responseLength": "Longitud de la respuesta",
         "sessions": "Sesiones",
-        "extract": "Extraer",
+        "extract": "Crear recurso",
         "projectsAndSessions": "Proyectos y Sesiones",
-        "contentExtraction": "Extracción de Contenido"
+        "contentExtraction": "Recursos"
     },
     "sidebar": {
         "mySessions": "Mis Sesiones",
@@ -104,8 +104,8 @@
         }
     },
     "extraction": {
-        "title": "Extracción de Contenido",
-        "description": "Convierte esta conversación en documentos listos para usar.",
+        "title": "Recursos",
+        "description": "Convierte esta conversación en recursos listos para usar.",
         "sermonOutline": "Bosquejo de Sermón",
         "sermonOutlineDesc": "Estructura expositiva con puntos y aplicación.",
         "bibleStudy": "Guía de Estudio",
@@ -120,11 +120,11 @@
         "blogPostDesc": "Ensayo en primera persona para WordPress.",
         "devotional": "Devocional Diario",
         "devotionalDesc": "Reflexión breve con oración personal.",
-        "extractedDocument": "Documento Extraído",
+        "extractedDocument": "Recurso",
         "extractionFailed": "No se pudo generar el contenido. Intenta de nuevo.",
         "tabs": {
-            "tools": "Herramientas",
-            "generated": "Generados"
+            "tools": "Crear",
+            "generated": "Mis recursos"
         },
         "toast": {
             "generated": "{{title}} listo",
@@ -132,9 +132,9 @@
         }
     },
     "extractionsList": {
-        "empty": "Aún no has generado documentos en esta sesión. Usa la pestaña Herramientas para crear el primero.",
+        "empty": "Aún no has creado recursos en esta sesión. Usa la pestaña Crear para generar el primero.",
         "orphan": "sesión eliminada",
-        "confirmDelete": "¿Eliminar este documento? Esta acción no se puede deshacer.",
+        "confirmDelete": "¿Eliminar este recurso? Esta acción no se puede deshacer.",
         "errorLoading": "No pudimos cargar tus documentos.",
         "errorIndexBuilding": "El índice de Firestore aún se está construyendo (5-10 min post-deploy). Reintenta en un momento.",
         "retry": "Reintentar",
@@ -142,10 +142,15 @@
         "actions": {
             "menu": "Acciones del documento",
             "rename": "Renombrar",
-            "pin": "Anclar al proyecto",
+            "pin": "Proyectos",
             "unpin": "Desanclar del proyecto",
             "jumpToOrigin": "Ver origen en la conversación",
             "delete": "Eliminar"
+        },
+        "picker": {
+            "title": "Anclar a proyectos",
+            "empty": "Aún no has creado proyectos. Crea uno desde la barra lateral.",
+            "hint": "Marca varios para compartir el documento entre proyectos."
         },
         "toast": {
             "pinned": "Anclado al proyecto",
@@ -154,16 +159,20 @@
             "noProjectsAvailable": "Aún no has creado proyectos. Crea uno desde la barra lateral."
         }
     },
+    "extractionsFilters": {
+        "allTypes": "Todos los tipos",
+        "allTime": "Cualquier momento"
+    },
     "library": {
-        "title": "Mi biblioteca",
-        "subtitle": "Todos los documentos que has generado desde tus conversaciones.",
+        "title": "Mis Recursos",
+        "subtitle": "Todos los recursos que has generado desde tus conversaciones.",
         "searchPlaceholder": "Buscar por título, tipo o contenido...",
-        "loading": "Cargando biblioteca...",
-        "emptyState": "Selecciona un documento de la lista para verlo.",
-        "projectLibraryFallbackTitle": "Biblioteca del proyecto",
-        "projectSubtitle": "Documentos anclados a este proyecto.",
-        "count_one": "{{count}} documento",
-        "count_other": "{{count}} documentos",
+        "loading": "Cargando recursos...",
+        "emptyState": "Selecciona un recurso de la lista para verlo.",
+        "projectLibraryFallbackTitle": "Recursos del proyecto",
+        "projectSubtitle": "Recursos anclados a este proyecto.",
+        "count_one": "{{count}} recurso",
+        "count_other": "{{count}} recursos",
         "pickProject": "Elige el número del proyecto al que quieres anclar:",
         "microActionsUnavailable": "Las micro-acciones de IA solo están disponibles dentro de una sesión de chat."
     },

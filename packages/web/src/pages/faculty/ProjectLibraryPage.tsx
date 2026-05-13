@@ -5,6 +5,7 @@ import { useProjectExtractions, useExtractionMutations } from '@/hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { FacultyExtractionsList } from '@/components/faculty/FacultyExtractionsList';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
+import { ExtractionFilters, filterExtractions, type TypeFilterValue, type TimeFilterValue } from '@/components/faculty/ExtractionFilters';
 import { FolderOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -23,31 +24,43 @@ export function ProjectLibraryPage() {
     const { t } = useTranslation('faculty');
     const { extractions, isLoading } = useProjectExtractions(projectId);
     const { projects } = useFacultyProjects();
-    const { updateMarkdown, rename, pinToProject, deleteExtraction } = useExtractionMutations();
+    const { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction } = useExtractionMutations();
 
     const project = useMemo(() => projects.find(p => p.id === projectId), [projects, projectId]);
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [draftMarkdown, setDraftMarkdown] = useState<string>('');
     const [draftFor, setDraftFor] = useState<string | null>(null);
+    const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all');
+    const [timeFilter, setTimeFilter] = useState<TimeFilterValue>('all');
+    const filtered = useMemo(
+        () => filterExtractions(extractions, typeFilter, timeFilter),
+        [extractions, typeFilter, timeFilter],
+    );
 
     const selected = useMemo(
         () => extractions.find(e => e.id === selectedId) ?? null,
         [extractions, selectedId],
     );
 
+    /**
+     * Atomic selection setter — see library.tsx for the underlying
+     * race the synchronous batch resolves.
+     */
+    const selectExtraction = (extraction: Extraction) => {
+        setSelectedId(extraction.id);
+        setDraftMarkdown(extraction.markdown);
+        setDraftFor(extraction.id);
+    };
+
+    // Fallback re-seed for clicks that landed before the list loaded.
     useEffect(() => {
-        if (!selectedId) {
-            setDraftMarkdown('');
-            setDraftFor(null);
-            return;
-        }
+        if (!selectedId) return;
+        if (draftFor === selectedId) return;
         const found = extractions.find(e => e.id === selectedId);
         if (!found) return;
-        if (draftFor !== selectedId) {
-            setDraftMarkdown(found.markdown);
-            setDraftFor(selectedId);
-        }
+        setDraftMarkdown(found.markdown);
+        setDraftFor(selectedId);
     }, [selectedId, extractions, draftFor]);
 
     useEffect(() => {
@@ -61,15 +74,17 @@ export function ProjectLibraryPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [draftMarkdown, selectedId, draftFor]);
 
-    const handleRename = (extraction: Extraction) => {
-        const next = window.prompt(t('extractionsList.actions.rename'), extraction.title);
-        if (!next || next.trim() === extraction.title) return;
-        rename.mutate({ extractionId: extraction.id, title: next.trim() });
+    const handleRename = (extraction: Extraction, newTitle: string) => {
+        rename.mutate({ extractionId: extraction.id, title: newTitle });
     };
 
-    const handleUnpin = (extraction: Extraction) => {
-        if (!extraction.projectId) return;
-        pinToProject.mutate({ extractionId: extraction.id, projectId: null });
+    const handleAddToProject = (extraction: Extraction, pid: string) => {
+        addToProject.mutate({ extractionId: extraction.id, projectId: pid });
+        toast.success(t('extractionsList.toast.pinned'));
+    };
+
+    const handleRemoveFromProject = (extraction: Extraction, pid: string) => {
+        removeFromProject.mutate({ extractionId: extraction.id, projectId: pid });
         toast.success(t('extractionsList.toast.unpinned'));
     };
 
@@ -112,18 +127,26 @@ export function ProjectLibraryPage() {
 
             <div className="flex-1 flex overflow-hidden">
                 <aside className="w-[24rem] border-r flex flex-col shrink-0">
+                    <ExtractionFilters
+                        typeFilter={typeFilter}
+                        timeFilter={timeFilter}
+                        onTypeChange={setTypeFilter}
+                        onTimeChange={setTimeFilter}
+                    />
                     {isLoading ? (
                         <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
                             {t('library.loading')}
                         </div>
                     ) : (
                         <FacultyExtractionsList
-                            extractions={extractions}
+                            extractions={filtered}
                             selectedId={selectedId}
-                            onSelect={e => setSelectedId(e.id)}
+                            onSelect={selectExtraction}
                             onDelete={handleDelete}
                             onRename={handleRename}
-                            onPin={handleUnpin}
+                            onAddToProject={handleAddToProject}
+                            onRemoveFromProject={handleRemoveFromProject}
+                            projects={projects}
                             onJumpToOrigin={handleJumpToOrigin}
                         />
                     )}
@@ -132,6 +155,10 @@ export function ProjectLibraryPage() {
                 <main className="flex-1 overflow-hidden bg-background">
                     {selected ? (
                         <FacultyDocumentEditor
+                            // Remount on artifact change — see library.tsx
+                            // for the underlying reason (MDXEditor is
+                            // uncontrolled past mount).
+                            key={selected.id}
                             title={selected.title}
                             markdown={draftMarkdown}
                             onChange={setDraftMarkdown}

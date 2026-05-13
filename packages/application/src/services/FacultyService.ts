@@ -43,7 +43,8 @@ import {
     UpdateExtractionMarkdownUseCase,
     RenameExtractionUseCase,
     DeleteExtractionUseCase,
-    PinExtractionToProjectUseCase,
+    AddExtractionToProjectUseCase,
+    RemoveExtractionFromProjectUseCase,
 } from '../use-cases/faculty';
 
 class FacultyService {
@@ -81,7 +82,8 @@ class FacultyService {
     public updateExtractionMarkdown: UpdateExtractionMarkdownUseCase;
     public renameExtraction: RenameExtractionUseCase;
     public deleteExtraction: DeleteExtractionUseCase;
-    public pinExtractionToProject: PinExtractionToProjectUseCase;
+    public addExtractionToProject: AddExtractionToProjectUseCase;
+    public removeExtractionFromProject: RemoveExtractionFromProjectUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -128,7 +130,8 @@ class FacultyService {
         this.updateExtractionMarkdown = new UpdateExtractionMarkdownUseCase(extractionRepository);
         this.renameExtraction = new RenameExtractionUseCase(extractionRepository);
         this.deleteExtraction = new DeleteExtractionUseCase(extractionRepository);
-        this.pinExtractionToProject = new PinExtractionToProjectUseCase(extractionRepository);
+        this.addExtractionToProject = new AddExtractionToProjectUseCase(extractionRepository);
+        this.removeExtractionFromProject = new RemoveExtractionFromProjectUseCase(extractionRepository);
         this.processMicroAction = new ProcessMicroActionUseCase(chatRepository, generatorService);
         this.getAgents = new GetFacultyAgentsUseCase(agentRepository);
         // Projects

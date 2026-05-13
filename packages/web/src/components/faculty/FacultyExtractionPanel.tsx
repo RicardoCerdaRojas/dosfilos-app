@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
-import type { Extraction, ExtractionType } from '@dosfilos/domain';
+import type { Extraction, ExtractionType, AIProject } from '@dosfilos/domain';
 import { FacultyExtractionsList } from './FacultyExtractionsList';
 
 interface ExtractionButton {
@@ -36,8 +36,10 @@ interface FacultyExtractionPanelProps {
     selectedExtractionId: string | null;
     onSelectExtraction: (extraction: Extraction) => void;
     onDeleteExtraction: (extraction: Extraction) => void;
-    onRenameExtraction: (extraction: Extraction) => void;
-    onPinExtraction: (extraction: Extraction) => void;
+    onRenameExtraction: (extraction: Extraction, newTitle: string) => void;
+    onAddExtractionToProject: (extraction: Extraction, projectId: string) => void;
+    onRemoveExtractionFromProject: (extraction: Extraction, projectId: string) => void;
+    projects: AIProject[];
     onJumpToOrigin?: (extraction: Extraction) => void;
     extractionsError?: unknown;
     onRefreshExtractions?: () => void;
@@ -61,7 +63,9 @@ export function FacultyExtractionPanel({
     onSelectExtraction,
     onDeleteExtraction,
     onRenameExtraction,
-    onPinExtraction,
+    onAddExtractionToProject,
+    onRemoveExtractionFromProject,
+    projects,
     onJumpToOrigin,
     extractionsError,
     onRefreshExtractions,
@@ -126,7 +130,9 @@ export function FacultyExtractionPanel({
                     onSelect={onSelectExtraction}
                     onDelete={onDeleteExtraction}
                     onRename={onRenameExtraction}
-                    onPin={onPinExtraction}
+                    onAddToProject={onAddExtractionToProject}
+                    onRemoveFromProject={onRemoveExtractionFromProject}
+                    projects={projects}
                     onJumpToOrigin={onJumpToOrigin}
                     error={extractionsError}
                     onRetry={onRefreshExtractions}

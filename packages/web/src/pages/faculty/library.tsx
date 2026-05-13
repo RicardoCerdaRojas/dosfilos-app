@@ -5,6 +5,7 @@ import { useUserExtractions, useExtractionMutations } from '@/hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { FacultyExtractionsList } from '@/components/faculty/FacultyExtractionsList';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
+import { ExtractionFilters, filterExtractions, type TypeFilterValue, type TimeFilterValue } from '@/components/faculty/ExtractionFilters';
 import { Input } from '@/components/ui/input';
 import { Library, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,26 +23,39 @@ export function FacultyLibraryPage() {
     const navigate = useNavigate();
     const { extractions, isLoading } = useUserExtractions();
     const { projects } = useFacultyProjects();
-    const { updateMarkdown, rename, pinToProject, deleteExtraction } = useExtractionMutations();
+    const { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction } = useExtractionMutations();
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [query, setQuery] = useState('');
+    const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all');
+    const [timeFilter, setTimeFilter] = useState<TimeFilterValue>('all');
     const [draftMarkdown, setDraftMarkdown] = useState<string>('');
     const [draftFor, setDraftFor] = useState<string | null>(null);
 
-    // Seed the draft when the user picks a different artifact.
+    /**
+     * Atomic selection setter. Updates id + draft + draftFor in one batch
+     * so a single render observes all three values consistent. Doing this
+     * via useEffect created a race where the editor would mount with the
+     * previous selection's markdown (or empty on first click) because
+     * setSelectedId triggered a render before the effect could seed the
+     * draft.
+     */
+    const selectExtraction = (extraction: Extraction) => {
+        setSelectedId(extraction.id);
+        setDraftMarkdown(extraction.markdown);
+        setDraftFor(extraction.id);
+    };
+
+    // Fallback re-seed: covers the case where the user picked an
+    // artifact before the extractions list finished loading (no entry
+    // in the list at click time → we can't seed synchronously).
     useEffect(() => {
-        if (!selectedId) {
-            setDraftMarkdown('');
-            setDraftFor(null);
-            return;
-        }
+        if (!selectedId) return;
+        if (draftFor === selectedId) return;
         const found = extractions.find(e => e.id === selectedId);
         if (!found) return;
-        if (draftFor !== selectedId) {
-            setDraftMarkdown(found.markdown);
-            setDraftFor(selectedId);
-        }
+        setDraftMarkdown(found.markdown);
+        setDraftFor(selectedId);
     }, [selectedId, extractions, draftFor]);
 
     // Debounced autosave: save 1.5s after the user stops typing.
@@ -57,44 +71,33 @@ export function FacultyLibraryPage() {
     }, [draftMarkdown, selectedId, draftFor]);
 
     const filtered = useMemo(() => {
+        const afterFilters = filterExtractions(extractions, typeFilter, timeFilter);
         const q = query.trim().toLowerCase();
-        if (!q) return extractions;
-        return extractions.filter(e =>
+        if (!q) return afterFilters;
+        return afterFilters.filter(e =>
             e.title.toLowerCase().includes(q) ||
             e.type.toLowerCase().includes(q) ||
             e.markdown.toLowerCase().includes(q),
         );
-    }, [extractions, query]);
+    }, [extractions, query, typeFilter, timeFilter]);
 
     const selected = useMemo(
         () => extractions.find(e => e.id === selectedId) ?? null,
         [extractions, selectedId],
     );
 
-    const handleRename = (extraction: Extraction) => {
-        const next = window.prompt(t('extractionsList.actions.rename'), extraction.title);
-        if (!next || next.trim() === extraction.title) return;
-        rename.mutate({ extractionId: extraction.id, title: next.trim() });
+    const handleRename = (extraction: Extraction, newTitle: string) => {
+        rename.mutate({ extractionId: extraction.id, title: newTitle });
     };
 
-    const handlePin = (extraction: Extraction) => {
-        // Library view: cycle through projects via a prompt rather than
-        // a dropdown. First-cut UX — a project picker comes in a follow-up.
-        if (extraction.projectId) {
-            pinToProject.mutate({ extractionId: extraction.id, projectId: null });
-            toast.success(t('extractionsList.toast.unpinned'));
-            return;
-        }
-        if (projects.length === 0) {
-            toast.info(t('extractionsList.toast.noProjectsAvailable'));
-            return;
-        }
-        const list = projects.map((p, i) => `${i + 1}. ${p.title}`).join('\n');
-        const choice = window.prompt(`${t('library.pickProject')}\n${list}`, '1');
-        const idx = Number(choice) - 1;
-        if (Number.isNaN(idx) || idx < 0 || idx >= projects.length) return;
-        pinToProject.mutate({ extractionId: extraction.id, projectId: projects[idx].id });
+    const handleAddToProject = (extraction: Extraction, projectId: string) => {
+        addToProject.mutate({ extractionId: extraction.id, projectId });
         toast.success(t('extractionsList.toast.pinned'));
+    };
+
+    const handleRemoveFromProject = (extraction: Extraction, projectId: string) => {
+        removeFromProject.mutate({ extractionId: extraction.id, projectId });
+        toast.success(t('extractionsList.toast.unpinned'));
     };
 
     const handleDelete = (extraction: Extraction) => {
@@ -132,6 +135,12 @@ export function FacultyLibraryPage() {
 
             <div className="flex-1 flex overflow-hidden">
                 <aside className="w-[24rem] border-r flex flex-col shrink-0">
+                    <ExtractionFilters
+                        typeFilter={typeFilter}
+                        timeFilter={timeFilter}
+                        onTypeChange={setTypeFilter}
+                        onTimeChange={setTimeFilter}
+                    />
                     {isLoading ? (
                         <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
                             {t('library.loading')}
@@ -140,10 +149,12 @@ export function FacultyLibraryPage() {
                         <FacultyExtractionsList
                             extractions={filtered}
                             selectedId={selectedId}
-                            onSelect={e => setSelectedId(e.id)}
+                            onSelect={selectExtraction}
                             onDelete={handleDelete}
                             onRename={handleRename}
-                            onPin={handlePin}
+                            onAddToProject={handleAddToProject}
+                            onRemoveFromProject={handleRemoveFromProject}
+                            projects={projects}
                             onJumpToOrigin={handleJumpToOrigin}
                         />
                     )}
@@ -152,6 +163,14 @@ export function FacultyLibraryPage() {
                 <main className="flex-1 overflow-hidden bg-background">
                     {selected ? (
                         <FacultyDocumentEditor
+                            // Remount on artifact change. MDXEditor is
+                            // uncontrolled — it only reads the `markdown`
+                            // prop on mount, so without a fresh key it
+                            // keeps showing whatever was loaded first
+                            // (in this case nothing). The Vista previa
+                            // path renders independently and was the
+                            // only thing showing content before this fix.
+                            key={selected.id}
                             title={selected.title}
                             markdown={draftMarkdown}
                             onChange={setDraftMarkdown}
