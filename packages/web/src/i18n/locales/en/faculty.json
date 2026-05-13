@@ -11,9 +11,9 @@
         "detailedDescription": "Detailed and exhaustive",
         "responseLength": "Response length",
         "sessions": "Sessions",
-        "extract": "Extract",
+        "extract": "Create resource",
         "projectsAndSessions": "Projects and Sessions",
-        "contentExtraction": "Content Extraction"
+        "contentExtraction": "Resources"
     },
     "sidebar": {
         "mySessions": "My Sessions",
@@ -104,8 +104,8 @@
         }
     },
     "extraction": {
-        "title": "Content Extraction",
-        "description": "Turn this conversation into ready-to-use documents.",
+        "title": "Resources",
+        "description": "Turn this conversation into ready-to-use resources.",
         "sermonOutline": "Sermon Outline",
         "sermonOutlineDesc": "Expository structure with points and application.",
         "bibleStudy": "Study Guide",
@@ -120,11 +120,11 @@
         "blogPostDesc": "First-person essay for WordPress.",
         "devotional": "Daily Devotional",
         "devotionalDesc": "Short reflection with personal prayer.",
-        "extractedDocument": "Extracted Document",
+        "extractedDocument": "Resource",
         "extractionFailed": "Could not generate content. Please try again.",
         "tabs": {
-            "tools": "Tools",
-            "generated": "Generated"
+            "tools": "Create",
+            "generated": "My resources"
         },
         "toast": {
             "generated": "{{title}} ready",
@@ -132,9 +132,9 @@
         }
     },
     "extractionsList": {
-        "empty": "No documents generated in this session yet. Use the Tools tab to create the first one.",
+        "empty": "No resources created in this session yet. Use the Create tab to generate the first one.",
         "orphan": "session deleted",
-        "confirmDelete": "Delete this document? This action cannot be undone.",
+        "confirmDelete": "Delete this resource? This action cannot be undone.",
         "errorLoading": "Couldn't load your documents.",
         "errorIndexBuilding": "Firestore index still building (5-10 min after deploy). Retry in a moment.",
         "retry": "Retry",
@@ -160,15 +160,15 @@
         }
     },
     "library": {
-        "title": "My library",
-        "subtitle": "Every document you've generated from your conversations.",
+        "title": "My Resources",
+        "subtitle": "Every resource you've generated from your conversations.",
         "searchPlaceholder": "Search by title, type, or content...",
-        "loading": "Loading library...",
-        "emptyState": "Select a document from the list to view it.",
-        "projectLibraryFallbackTitle": "Project library",
-        "projectSubtitle": "Documents pinned to this project.",
-        "count_one": "{{count}} document",
-        "count_other": "{{count}} documents",
+        "loading": "Loading resources...",
+        "emptyState": "Select a resource from the list to view it.",
+        "projectLibraryFallbackTitle": "Project resources",
+        "projectSubtitle": "Resources pinned to this project.",
+        "count_one": "{{count}} resource",
+        "count_other": "{{count}} resources",
         "pickProject": "Type the number of the project to pin to:",
         "microActionsUnavailable": "AI micro-actions are only available inside a chat session."
     },
