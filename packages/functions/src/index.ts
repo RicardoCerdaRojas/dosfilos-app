@@ -51,6 +51,10 @@ export { trackFunnelEvent } from './analytics/trackFunnelEvent';
 // Lead-magnet capture (Fase B funnel)
 export { captureLead } from './leads/captureLead';
 export { resendLeadMagnet } from './leads/resendLeadMagnet';
+// Daily nurture sequence for magnet downloaders pre-signup (Fase 2.3).
+export { sendLeadMagnetNurture } from './leads/sendLeadMagnetNurture';
+// Super-admin callable to render any nurture template with sample inputs.
+export { previewLeadMagnetNurture } from './leads/previewLeadMagnetNurture';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 export { recalculateAnalytics, recalculateAnalyticsHttp, recalculateAnalyticsCallable } from './analytics/recalculateAnalytics';

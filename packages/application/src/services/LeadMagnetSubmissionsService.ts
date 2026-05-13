@@ -114,6 +114,27 @@ export class LeadMagnetSubmissionsService {
         const callable = httpsCallable(functions, 'resendLeadMagnet');
         await callable({ leadId: submissionId });
     }
+
+    /**
+     * Renders one of the lead-magnet nurture templates with sample
+     * inputs and returns the compiled subject + HTML. Used by the
+     * super-admin preview page so we can validate copy + design
+     * without sending real emails. Server-side gate on
+     * `previewLeadMagnetNurture` enforces the super-admin check.
+     */
+    async previewNurtureTemplate(input: {
+        stage: 'day1' | 'day3' | 'day5' | 'day7';
+        locale: 'es' | 'en';
+        name: string;
+    }): Promise<{ stage: string; locale: 'es' | 'en'; subject: string; html: string }> {
+        const functions = getFunctions();
+        const callable = httpsCallable<typeof input, { stage: string; locale: 'es' | 'en'; subject: string; html: string }>(
+            functions,
+            'previewLeadMagnetNurture',
+        );
+        const result = await callable(input);
+        return result.data;
+    }
 }
 
 export const leadMagnetSubmissionsService = new LeadMagnetSubmissionsService();

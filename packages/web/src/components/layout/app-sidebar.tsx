@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {
   Home, FileText, Sparkles, Settings, LogOut,
-  BookOpen, BookMarked, Library, ChevronUp, ChevronDown, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen, Zap, Download
+  BookOpen, BookMarked, Library, ChevronUp, ChevronDown, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen, Zap, Download, Mail
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -171,6 +171,7 @@ export function AppSidebar() {
     { name: 'Glosario Léxico', href: '/dashboard/admin/hebrew-lexicon', icon: BookOpenText },
     { name: t('menu.contactLeads'), href: '/admin/leads', icon: Users },
     { name: 'Lead Magnets', href: '/admin/lead-magnets', icon: Download },
+    { name: 'Email Previews', href: '/admin/email-previews', icon: Mail },
     { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
     { name: 'LlamaParse Monitor', href: '/dashboard/admin/llamaparse-monitoring', icon: Gauge },
     { name: 'Audit Log', href: '/dashboard/admin/audit-log', icon: ScrollText },
