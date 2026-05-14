@@ -4,6 +4,26 @@ import {
     getFirestore,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import type { PlanDefinition } from '@dosfilos/domain';
+
+export interface AdminUserUsageSnapshot {
+    usage: {
+        pagesProcessed: number;
+        queriesUsed: number;
+        docsUploadedThisMonth: number;
+        periodKey: string;
+    };
+    plan: PlanDefinition | null;
+}
+
+export interface AdminUserAnalytics {
+    userId: string;
+    sermons: { total: number; published: number; drafts: number };
+    greekSessions: { total: number; completed: number };
+    series: { total: number };
+    preachingPlans: { total: number };
+    logins: { total: number };
+}
 
 /**
  * Raw shape returned by `getDashboardSnapshot()`. The web hook
@@ -80,6 +100,72 @@ export class AdminDashboardService {
     async triggerRecalculation(): Promise<void> {
         const recalc = httpsCallable(getFunctions(), 'recalculateAnalyticsCallable');
         await recalc({});
+    }
+
+    /**
+     * Reads the current-period `usage_counters` doc for a user plus
+     * the matching plan definition so the admin user-detail view can
+     * render "X of Y" + percentage progress in one network round-trip.
+     * Returns zeros for missing counter docs (new user before any
+     * activity tracked).
+     */
+    async getUserUsageSnapshot(userId: string, planId?: string): Promise<AdminUserUsageSnapshot> {
+        const db = getFirestore();
+        const periodKey = this.currentPeriodKey();
+        const usageRef = doc(db, 'users', userId, 'usage_counters', periodKey);
+        const planRef = planId ? doc(db, 'plans', planId) : null;
+
+        const [usageSnap, planSnap] = await Promise.all([
+            getDoc(usageRef),
+            planRef ? getDoc(planRef) : Promise.resolve(null),
+        ]);
+
+        const usage = usageSnap.exists()
+            ? {
+                pagesProcessed: usageSnap.data().pagesProcessed ?? 0,
+                queriesUsed: usageSnap.data().queriesUsed ?? 0,
+                docsUploadedThisMonth: usageSnap.data().docsUploadedThisMonth ?? 0,
+                periodKey,
+            }
+            : { pagesProcessed: 0, queriesUsed: 0, docsUploadedThisMonth: 0, periodKey };
+
+        const plan = planSnap?.exists() ? (planSnap.data() as PlanDefinition) : null;
+
+        return { usage, plan };
+    }
+
+    /**
+     * Reads the pre-aggregated `user_analytics/{userId}` doc with
+     * lifetime counters across sermons, Greek sessions, series, plans
+     * and logins. Returns zeroed totals when the user has no analytics
+     * doc yet (created server-side after first activity).
+     */
+    async getUserAnalytics(userId: string): Promise<AdminUserAnalytics> {
+        const db = getFirestore();
+        const snap = await getDoc(doc(db, 'user_analytics', userId));
+        if (!snap.exists()) {
+            return {
+                userId,
+                sermons: { total: 0, published: 0, drafts: 0 },
+                greekSessions: { total: 0, completed: 0 },
+                series: { total: 0 },
+                preachingPlans: { total: 0 },
+                logins: { total: 0 },
+            };
+        }
+        const data = snap.data();
+        return {
+            userId,
+            sermons: data.sermons || { total: 0, published: 0, drafts: 0 },
+            greekSessions: data.greekSessions || { total: 0, completed: 0 },
+            series: data.series || { total: 0 },
+            preachingPlans: data.preachingPlans || { total: 0 },
+            logins: data.logins || { total: 0 },
+        };
+    }
+
+    private currentPeriodKey(date: Date = new Date()): string {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     }
 
     private todayKey(date: Date = new Date()): string {
