@@ -430,7 +430,7 @@ export function FacultyChatPage() {
     // ── Render ───────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50 dark:bg-zinc-950 font-sans">
+        <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/30 font-sans">
             {/* Header */}
             <FacultyChatHeader
                 isHomeState={isHomeState}
@@ -495,7 +495,7 @@ export function FacultyChatPage() {
                                         </div>
                                     ) : isLoadingSession && !isNewSession ? (
                                         <div className="flex-1 flex items-center justify-center">
-                                            <div className="flex flex-col items-center gap-3 text-slate-400">
+                                            <div className="flex flex-col items-center gap-3 text-muted-foreground">
                                                 <Loader2 className="w-6 h-6 animate-spin" />
                                                 <p className="text-sm">{t('chat.loadingConversation')}</p>
                                             </div>
