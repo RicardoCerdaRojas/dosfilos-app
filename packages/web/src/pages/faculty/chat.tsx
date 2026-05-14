@@ -1,16 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Loader2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
@@ -32,74 +22,12 @@ import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpres
 import { ProjectEditDialog } from './ProjectEditDialog';
 import { type AIProject, type Extraction, type ExtractionType, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
-import { takePendingFacultyInput } from './utils/pendingFacultyInput';
-
-// ── Extraction type-to-key mapping ───────────────────────────────────────────
-
-const EXTRACTION_TITLE_KEYS: Record<string, string> = {
-    SERMON: 'extraction.sermonOutline',
-    BIBLE_STUDY: 'extraction.bibleStudy',
-    COUNSELING_TASK: 'extraction.counselingTask',
-    NEWSLETTER: 'extraction.newsletter',
-    SYSTEMATIC_THEOLOGY_PAPER: 'extraction.theologyPaper',
-    BLOG_POST: 'extraction.blogPost',
-    DEVOTIONAL: 'extraction.devotional',
-};
-
-/**
- * Reads a File as base64 (no `data:` URI prefix) and returns the inline
- * payload Gemini expects plus the small metadata we persist alongside the
- * user message so the bubble can show a "📎 photo.jpg · 2.4 MB" badge
- * after reload. The binary itself is not stored.
- */
-async function prepareAttachmentForSend(file: File): Promise<{
-    inline: { mimeType: string; data: string };
-    meta: { filename: string; mimeType: string; sizeBytes: number };
-}> {
-    const data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            // FileReader returns "data:image/png;base64,iVBOR..." — strip
-            // the URI scheme so we hand Gemini just the base64 payload.
-            const result = String(reader.result ?? '');
-            const comma = result.indexOf(',');
-            resolve(comma >= 0 ? result.slice(comma + 1) : result);
-        };
-        reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
-        reader.readAsDataURL(file);
-    });
-    return {
-        inline: { mimeType: file.type || 'application/octet-stream', data },
-        meta: { filename: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size },
-    };
-}
-
-/**
- * Injects inline CSS into the rendered prose HTML so it survives a paste
- * into Word, Google Docs, or Notion. Those editors strip `class`
- * attributes but preserve inline `style="..."`, so tables would otherwise
- * render as borderless grids. We walk the parsed fragment with the
- * browser's DOMParser, tag the structural elements we care about, and
- * serialize back. Non-table content (headings, paragraphs, lists) keeps
- * its semantics — Word and Docs handle those out of the box, so we add
- * only enough styling to look intentional.
- */
-function injectInlineStylesForCopy(html: string): string {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
-
-    const tableStyle = 'border-collapse: collapse; width: 100%; margin: 12px 0; font-family: inherit;';
-    const headerCellStyle = 'border: 1px solid #999; padding: 8px 10px; background: #f3f3f3; text-align: left; vertical-align: top; font-weight: 600;';
-    const bodyCellStyle = 'border: 1px solid #999; padding: 8px 10px; vertical-align: top;';
-    const blockquoteStyle = 'margin: 12px 0; padding: 8px 14px; border-left: 4px solid #94a3b8; background: #f8fafc; color: #334155;';
-
-    doc.querySelectorAll('table').forEach((el) => el.setAttribute('style', tableStyle));
-    doc.querySelectorAll('th').forEach((el) => el.setAttribute('style', headerCellStyle));
-    doc.querySelectorAll('td').forEach((el) => el.setAttribute('style', bodyCellStyle));
-    doc.querySelectorAll('blockquote').forEach((el) => el.setAttribute('style', blockquoteStyle));
-
-    return doc.body.firstElementChild?.innerHTML ?? html;
-}
+import { EXTRACTION_TITLE_KEYS } from './utils/extractionTypeKeys';
+import { prepareAttachmentForSend } from './utils/prepareAttachmentForSend';
+import { injectInlineStylesForCopy } from './utils/injectInlineStylesForCopy';
+import { useAutoscrollChat } from './hooks/useAutoscrollChat';
+import { useAutoSendQuestion } from './hooks/useAutoSendQuestion';
+import { FacultyConfirmDialogs } from './components/FacultyConfirmDialogs';
 
 export function FacultyChatPage() {
     const { t } = useTranslation('faculty');
@@ -200,128 +128,30 @@ export function FacultyChatPage() {
     const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
 
     // ── Scroll management ────────────────────────────────────────────────────
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const chatScrollRef = useRef<HTMLDivElement>(null);
-    const userScrolledUp = useRef(false);
+    const { messagesEndRef, chatScrollRef, scrollToBottom } = useAutoscrollChat([
+        streamingMessage,
+        session?.messages,
+    ]);
 
-    const scrollToBottom = (force = false) => {
-        const container = chatScrollRef.current;
-        if (!container) return;
-        if (force || !userScrolledUp.current) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
-
-    useEffect(() => {
-        const container = chatScrollRef.current;
-        if (!container) return;
-        const handleScroll = () => {
-            const { scrollTop, scrollHeight, clientHeight } = container;
-            userScrolledUp.current = (scrollHeight - scrollTop - clientHeight) > 150;
-        };
-        container.addEventListener('scroll', handleScroll, { passive: true });
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    useEffect(() => { scrollToBottom(); }, [streamingMessage, session?.messages]);
-
-    // ── Auto-send initial question from ?q= ──────────────────────────────────
-    // The key combines route + question so a second visit to `/new?q=...` with
-    // a DIFFERENT question is not blocked by an earlier success on the same
-    // route. React Router reuses this component instance between `/faculty/new`
-    // and `/faculty/{id}`, so a per-route key alone (the previous design)
-    // misfires after the first auto-send because the ref persists.
-    const hasAutoSent = useRef<Record<string, boolean>>({});
-
-    // Bridge: when the user pasted/uploaded an image on the directory
-    // landing page, the question + base64 attachment was stashed in
-    // sessionStorage (URL params can't carry binary). Drain it once on
-    // new-session mount, replay create-session-and-send-with-attachment.
-    const pendingHandled = useRef(false);
-    useEffect(() => {
-        if (pendingHandled.current) return;
-        if (!isNewSession) return;
-        const pending = takePendingFacultyInput();
-        if (!pending || !pending.attachment) return;
-        pendingHandled.current = true;
-        const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
-        if (!targetAgentId) {
-            // Agents not loaded yet — re-stage and let next render retry.
-            pendingHandled.current = false;
-            return;
-        }
-        (async () => {
-            try {
-                const newSession = await createSession.mutateAsync({
-                    agentId: targetAgentId,
-                    projectId: projectIdForNew,
-                    context: contextForNew,
-                });
-                navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
-                await sendOrchestratedMessage({
-                    message: pending.question,
-                    lengthPreference,
-                    attachments: [{
-                        mimeType: pending.attachment!.mimeType,
-                        data: pending.attachment!.base64,
-                    }],
-                    attachmentsMeta: [{
-                        filename: pending.attachment!.filename,
-                        mimeType: pending.attachment!.mimeType,
-                        sizeBytes: pending.attachment!.sizeBytes,
-                    }],
-                });
-            } catch (err) {
-                console.error('[FacultyChat] failed to replay pending attachment:', err);
-                pendingHandled.current = false;
-                setInput(pending.question);
-            }
-        })();
-    }, [isNewSession, agentIdForNew, agents, projectIdForNew, contextForNew, createSession, navigate, sendOrchestratedMessage, lengthPreference]);
-
-    useEffect(() => {
-        const initialQuestion = searchParams.get('q');
-        if (!initialQuestion) return;
-        const sessionKey = `${effectiveSessionId || 'new'}::${initialQuestion}`;
-
-        if (!hasAutoSent.current[sessionKey] && !isSending && !isStreaming) {
-            hasAutoSent.current[sessionKey] = true;
-
-            const handleInitialQuestion = async () => {
-                if (isNewSession) {
-                    const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
-                    if (!targetAgentId) {
-                        // Agents not loaded yet — let useEffect re-fire when they are.
-                        hasAutoSent.current[sessionKey] = false;
-                        return;
-                    }
-                    try {
-                        const newSession = await createSession.mutateAsync({
-                            agentId: targetAgentId,
-                            projectId: projectIdForNew,
-                            context: contextForNew,
-                        });
-                        navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(initialQuestion)}`, { replace: true });
-                        return;
-                    } catch (err) {
-                        console.error('Failed to create initial session:', err);
-                        setInput(initialQuestion);
-                        return;
-                    }
-                }
-                if (session && session.messages.length === 0) {
-                    setSearchParams({}, { replace: true });
-                    setTimeout(() => {
-                        sendOrchestratedMessage({ message: initialQuestion, lengthPreference });
-                    }, 100);
-                } else if (!session) {
-                    hasAutoSent.current[sessionKey] = false;
-                }
-            };
-
-            handleInitialQuestion();
-        }
-    }, [isNewSession, effectiveSessionId, session, searchParams, isSending, isStreaming, sendOrchestratedMessage, lengthPreference, setSearchParams, createSession, navigate, agentIdForNew, agents]);
+    // ── Auto-send initial question from ?q= or sessionStorage ────────────────
+    useAutoSendQuestion({
+        isNewSession,
+        effectiveSessionId,
+        session,
+        isSending,
+        isStreaming,
+        agentIdForNew,
+        agents,
+        projectIdForNew,
+        contextForNew,
+        lengthPreference,
+        searchParams,
+        setSearchParams,
+        navigate,
+        createSession,
+        sendOrchestratedMessage,
+        setInput,
+    });
 
     // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -402,7 +232,6 @@ export function FacultyChatPage() {
         const stagedAttachment = pendingAttachment;
         setInput('');
         setPendingAttachment(null);
-        userScrolledUp.current = false;
         scrollToBottom(true);
 
         // Convert the file once up front so both the new-session path
@@ -864,55 +693,19 @@ export function FacultyChatPage() {
                 onClose={() => setWpDialogExtraction(null)}
             />
 
-            {/* Delete Session Confirmation */}
-            <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{t('dialogs.deleteSessionTitle')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {t('dialogs.deleteSessionDescription')}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>{t('dialogs.cancel')}</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => {
-                                if (deleteConfirmId) {
-                                    deleteSessionMutation.mutate(deleteConfirmId);
-                                    setDeleteConfirmId(null);
-                                }
-                            }}
-                            className="bg-rose-600 hover:bg-rose-700 text-white"
-                        >
-                            {t('dialogs.delete')}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            {/* Delete Message Confirmation */}
-            <AlertDialog
-                open={!!deleteMessageConfirmId}
-                onOpenChange={(open) => !open && setDeleteMessageConfirmId(null)}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{t('dialogs.deleteMessageTitle')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {t('dialogs.deleteMessageDescription')}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>{t('dialogs.cancel')}</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleConfirmDeleteMessage}
-                            className="bg-rose-600 hover:bg-rose-700 text-white"
-                        >
-                            {t('dialogs.delete')}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <FacultyConfirmDialogs
+                deleteSessionId={deleteConfirmId}
+                onCloseDeleteSession={() => setDeleteConfirmId(null)}
+                onConfirmDeleteSession={() => {
+                    if (deleteConfirmId) {
+                        deleteSessionMutation.mutate(deleteConfirmId);
+                        setDeleteConfirmId(null);
+                    }
+                }}
+                deleteMessageId={deleteMessageConfirmId}
+                onCloseDeleteMessage={() => setDeleteMessageConfirmId(null)}
+                onConfirmDeleteMessage={handleConfirmDeleteMessage}
+            />
         </div>
     );
 }
