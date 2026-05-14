@@ -22,12 +22,12 @@ import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpres
 import { ProjectEditDialog } from './ProjectEditDialog';
 import { type AIProject, type Extraction, type ExtractionType, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
-import { EXTRACTION_TITLE_KEYS } from './utils/extractionTypeKeys';
 import { prepareAttachmentForSend } from './utils/prepareAttachmentForSend';
 import { injectInlineStylesForCopy } from './utils/injectInlineStylesForCopy';
 import { useAutoscrollChat } from './hooks/useAutoscrollChat';
 import { useAutoSendQuestion } from './hooks/useAutoSendQuestion';
 import { useExtractionListHandlers } from './hooks/useExtractionListHandlers';
+import { useExtractionAction } from './hooks/useExtractionAction';
 import { FacultyConfirmDialogs } from './components/FacultyConfirmDialogs';
 
 export function FacultyChatPage() {
@@ -119,7 +119,6 @@ export function FacultyChatPage() {
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
     const [emailDialogExtraction, setEmailDialogExtraction] = useState<Extraction | null>(null);
     const [wpDialogExtraction, setWpDialogExtraction] = useState<Extraction | null>(null);
-    const [extractingType, setExtractingType] = useState<string | null>(null);
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [renameConfirmId, setRenameConfirmId] = useState<string | null>(null);
@@ -334,55 +333,15 @@ export function FacultyChatPage() {
         setIsZenMode(false);
     };
 
-    const handleExtract = async (type: ExtractionType) => {
-        if (extractingType) return;
-        setExtractingType(type);
-        try {
-            // SERMON has a richer flow (wizard modal + dedicated sermons
-            // collection). The preview SERMON_OUTLINE JSON is NOT
-            // persisted — only the final approved sermon is, via the
-            // modal's onSuccess path which calls generateAndSaveExtraction.
-            if (type === 'SERMON') {
-                const raw = await extractContent({ type: 'SERMON_OUTLINE' });
-                const json = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-                const outline: SermonOutline = JSON.parse(json);
-                setSermonOutline(outline);
-                return;
-            }
-            const fallbackTitle = t(EXTRACTION_TITLE_KEYS[type] || 'extraction.extractedDocument');
-            const extraction = await generateAndSaveExtraction({ type, fallbackTitle });
-            // Hito 7 — feature activation. Captures every successful
-            // artifact generation so we can compute generation-rate-
-            // per-paid-user when the analysis window opens.
-            track('faculty_artifact_generated', {
-                type,
-                sessionId: effectiveSessionId,
-                hasProject: !!session?.projectId,
-                messageCount: session?.messages.length ?? 0,
-            });
-            // Queue UX: don't auto-open if a document is already in the
-            // editor. Surface a toast with "Ver" so the user keeps their
-            // current work but can discover the new artifact.
-            if (isDocumentOpen) {
-                toast.success(
-                    t('extraction.toast.generated', { title: extraction.title }),
-                    {
-                        action: {
-                            label: t('extraction.toast.view'),
-                            onClick: () => openExtractionInEditor(extraction),
-                        },
-                    },
-                );
-            } else {
-                openExtractionInEditor(extraction);
-            }
-        } catch (error) {
-            console.error('Extraction failed:', error);
-            toast.error(t('extraction.extractionFailed'));
-        } finally {
-            setExtractingType(null);
-        }
-    };
+    const { extractingType, handleExtract } = useExtractionAction({
+        effectiveSessionId,
+        session,
+        isDocumentOpen,
+        extractContent,
+        generateAndSaveExtraction,
+        setSermonOutline,
+        openExtractionInEditor,
+    });
 
     const handleGenerateFullSermon = async (approvedOutline: SermonOutline, personalization?: SermonPersonalization): Promise<string> => {
         // The modal expects the markdown back so it can render the
