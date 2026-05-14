@@ -155,6 +155,26 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow write: if isOwner(userId);
       }
+
+      // 3rd-party integration credentials (WordPress, future:
+      // Mailchimp, Substack, etc.). Owner-only — credentials are
+      // sensitive (app passwords, API keys). Cloud Functions read
+      // via Admin SDK and bypass these rules.
+      match /integrations/{provider} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+
+      // Hourly counters used for rate-limit guards on send/publish
+      // actions. Owner-only read; Cloud Functions write via Admin SDK.
+      match /email_sends_hourly/{hourBucket} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+      match /wp_publishes_hourly/{hourBucket} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
       
       // Seminary Faculty - AI Chat Sessions
       match /ai_sessions/{sessionId} {

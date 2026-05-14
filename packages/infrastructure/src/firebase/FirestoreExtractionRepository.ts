@@ -45,13 +45,18 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
 
     private fromFirestore(snap: { id: string; data: () => any }): Extraction {
         const data = snap.data();
-        // Lazy migration: pre-2026-05-13 docs stored a single
-        // `projectId: string | null` field. Coerce to the new
-        // `projectIds: string[]` shape on read so the entity is
-        // consistent regardless of when the doc was created.
         const projectIds: string[] = Array.isArray(data.projectIds)
             ? data.projectIds
             : (data.projectId ? [data.projectId] : []);
+        const publishedRefs = Array.isArray(data.publishedRefs)
+            ? data.publishedRefs.map((r: any) => ({
+                platform: r.platform,
+                externalId: r.externalId,
+                externalUrl: r.externalUrl,
+                status: r.status,
+                publishedAt: r.publishedAt?.toDate?.() ?? new Date(r.publishedAt ?? Date.now()),
+            }))
+            : [];
         return {
             id: snap.id,
             userId: data.userId,
@@ -66,6 +71,7 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
             externalRef: data.externalRef ?? null,
             version: data.version ?? 1,
             sourceSessionDeleted: data.sourceSessionDeleted ?? false,
+            publishedRefs,
         };
     }
 

@@ -1,0 +1,31 @@
+{
+    "integrations": {
+        "title": "Integraciones",
+        "subtitle": "Conecta plataformas externas para publicar tus recursos directamente desde Preach.",
+        "wordpress": {
+            "title": "WordPress",
+            "description": "Publica posts directamente desde tus recursos generados.",
+            "siteUrlLabel": "URL del sitio",
+            "siteUrlHint": "Sin barra al final. Ej: https://miblog.com",
+            "usernameLabel": "Usuario de WordPress",
+            "appPasswordLabel": "App Password",
+            "appPasswordHint": "Genera una contraseña de aplicación en WP admin → Perfil → Contraseñas de aplicación.",
+            "howToGenerate": "Cómo generarla",
+            "defaultStatusLabel": "Estado por defecto",
+            "defaultStatusHint": "Borrador es lo más seguro — revisas en WP antes de publicar.",
+            "statusDraft": "Borrador (recomendado)",
+            "statusPublish": "Publicado inmediato",
+            "connect": "Conectar",
+            "saveChanges": "Guardar cambios",
+            "disconnect": "Desconectar",
+            "disconnectConfirm": "¿Desconectar WordPress? Tendrás que reconectar para volver a publicar.",
+            "saved": "Configuración guardada.",
+            "saveError": "No se pudo guardar: {{message}}",
+            "disconnected": "WordPress desconectado.",
+            "notConnected": "Sin conectar.",
+            "connected": "Conectado",
+            "connectedNoPublishYet": "Conectado · sin publicaciones aún",
+            "lastError": "Último envío falló"
+        }
+    }
+}

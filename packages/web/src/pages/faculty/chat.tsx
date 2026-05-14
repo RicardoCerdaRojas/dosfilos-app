@@ -28,6 +28,7 @@ import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
+import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpressDialog';
 import { ProjectEditDialog } from './ProjectEditDialog';
 import { type AIProject, type Extraction, type ExtractionType, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
@@ -188,6 +189,7 @@ export function FacultyChatPage() {
     const isDocumentOpen = documentSource !== null;
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
     const [emailDialogExtraction, setEmailDialogExtraction] = useState<Extraction | null>(null);
+    const [wpDialogExtraction, setWpDialogExtraction] = useState<Extraction | null>(null);
     const [extractingType, setExtractingType] = useState<string | null>(null);
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -799,6 +801,7 @@ export function FacultyChatPage() {
                         }
                     }}
                     onShareByEmail={setEmailDialogExtraction}
+                    onPublishToWordpress={setWpDialogExtraction}
                     extractionsError={extractionsError}
                     onRefreshExtractions={() => refetchExtractions()}
                 />
@@ -853,6 +856,12 @@ export function FacultyChatPage() {
             <EmailExtractionDialog
                 extraction={emailDialogExtraction}
                 onClose={() => setEmailDialogExtraction(null)}
+            />
+
+            {/* WordPress publish dialog */}
+            <PublishToWordpressDialog
+                extraction={wpDialogExtraction}
+                onClose={() => setWpDialogExtraction(null)}
             />
 
             {/* Delete Session Confirmation */}

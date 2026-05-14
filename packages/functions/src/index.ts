@@ -55,8 +55,14 @@ export { resendLeadMagnet } from './leads/resendLeadMagnet';
 export { sendLeadMagnetNurture } from './leads/sendLeadMagnetNurture';
 // Super-admin callable to render any nurture template with sample inputs.
 export { previewLeadMagnetNurture } from './leads/previewLeadMagnetNurture';
+// Super-admin callable to render the ShareEmail (extraction share) template.
+export { previewExtractionShareEmail } from './leads/previewExtractionShareEmail';
 // Pastor-initiated email send for any persisted extraction (Fase 3.3).
 export { sendExtractionByEmail } from './leads/sendExtractionByEmail';
+// WordPress draft publish for any persisted extraction (Fase 3.3.b).
+export { publishExtractionToWordpress } from './leads/publishExtractionToWordpress';
+// Diagnostic: probes the user's WP integration and returns roles/caps.
+export { testWordpressConnection } from './leads/testWordpressConnection';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 export { recalculateAnalytics, recalculateAnalyticsHttp, recalculateAnalyticsCallable } from './analytics/recalculateAnalytics';

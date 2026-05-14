@@ -58,6 +58,7 @@ const ExpositoryAssistantPage = lazy(() => import('@/pages/series/ExpositoryAssi
 const LibraryManager = lazy(() => import('@/pages/library/LibraryManager').then(m => ({ default: m.LibraryManager })));
 const PlannerWizard = lazy(() => import('@/pages/planner/PlannerWizard').then(m => ({ default: m.PlannerWizard })));
 const GeneratorSettings = lazy(() => import('@/pages/settings/GeneratorSettings').then(m => ({ default: m.GeneratorSettings })));
+const IntegrationsSettings = lazy(() => import('@/pages/settings/IntegrationsSettings').then(m => ({ default: m.IntegrationsSettings })));
 const SubscriptionPage = lazy(() => import('@/pages/subscription/SubscriptionPage'));
 
 // Admin
@@ -319,6 +320,7 @@ function App() {
 
             {/* Settings */}
             <Route path="settings" element={<GeneratorSettings />} />
+            <Route path="settings/integrations" element={<IntegrationsSettings />} />
 
             {/* 🎯 Admin Routes - Inside Dashboard Layout */}
             <Route path="admin/core-library" element={<CoreLibraryAdmin />} />

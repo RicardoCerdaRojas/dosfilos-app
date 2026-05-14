@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {
   Home, FileText, Sparkles, Settings, LogOut,
-  BookOpen, BookMarked, Library, ChevronUp, ChevronDown, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen, Zap, Download, Mail
+  BookOpen, BookMarked, Library, ChevronUp, ChevronDown, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen, Zap, Download, Mail, Globe
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -158,6 +158,7 @@ export function AppSidebar() {
       label: t('groups.account'),
       items: [
         { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
+        { name: t('menu.integrations'), href: '/dashboard/settings/integrations', icon: Globe },
         { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
       ],
     },

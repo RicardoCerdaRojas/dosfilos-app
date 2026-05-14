@@ -139,6 +139,9 @@
             "sermons": "Sermon",
             "exegeticalPapers": "Paper"
         },
+        "publishedTo": {
+            "wordpress": "Published to WordPress"
+        },
         "errorLoading": "Couldn't load your documents.",
         "errorIndexBuilding": "Firestore index still building (5-10 min after deploy). Retry in a moment.",
         "retry": "Retry",
@@ -150,6 +153,7 @@
             "unpin": "Unpin from project",
             "jumpToOrigin": "View origin in conversation",
             "email": "Send by email",
+            "publishWordpress": "Publish to WordPress",
             "delete": "Delete"
         },
         "picker": {
@@ -167,6 +171,29 @@
     "extractionsFilters": {
         "allTypes": "All types",
         "allTime": "Any time"
+    },
+    "publishWordpressDialog": {
+        "title": "Publish to WordPress",
+        "description": "Publish \"{{title}}\" as a post on your WordPress site.",
+        "notConfigured": "You haven't connected your WordPress site yet. Configure it in Settings → Integrations to publish.",
+        "configureCta": "Configure WordPress",
+        "connectedTo": "Connected to {{url}}",
+        "titleLabel": "Post title",
+        "excerptLabel": "Excerpt (optional)",
+        "excerptPlaceholder": "Short summary for listings and SEO...",
+        "excerptHint": "Leave blank to let WordPress auto-generate from the body.",
+        "statusLabel": "Status",
+        "statusDraft": "Draft",
+        "statusPublish": "Publish immediately",
+        "publishDraft": "Create draft",
+        "publishLive": "Publish now",
+        "cancel": "Cancel",
+        "openInWordpress": "Open in WordPress",
+        "success": {
+            "draft": "Draft created in WordPress.",
+            "publish": "Post published to WordPress."
+        },
+        "error": "Couldn't publish: {{message}}"
     },
     "emailDialog": {
         "title": "Send by email",

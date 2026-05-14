@@ -31,6 +31,25 @@ export interface ExtractionExternalRef {
 }
 
 /**
+ * Record of a publish event to an external platform — the user clicked
+ * a "publish to X" action and the platform responded with a doc/post
+ * id. Lets the UI show "Publicado en WordPress · ver borrador" badges
+ * without re-querying the external service every page load.
+ */
+export interface ExtractionPublishedRef {
+    /** External platform identifier. Add new entries as integrations land. */
+    platform: 'wordpress';
+    /** External record id (e.g. WordPress post id). */
+    externalId: string;
+    /** Public URL the user can click to view the published artifact. */
+    externalUrl: string;
+    /** State of the external record at publish time. */
+    status: 'draft' | 'publish' | 'pending' | 'private';
+    /** When the publish call succeeded. */
+    publishedAt: Date;
+}
+
+/**
  * A persisted artifact derived from a Faculty conversation. The
  * conversation itself stays in `users/{userId}/ai_sessions/{sessionId}`;
  * an Extraction crystallizes a slice of that conversation into a
@@ -84,6 +103,14 @@ export interface Extraction {
     derivedFromMessageIds: string[];
     /** Set when the artifact has a canonical mirror in another collection. */
     externalRef: ExtractionExternalRef | null;
+    /**
+     * Append-only log of publish events to external platforms
+     * (WordPress, future: Medium, Substack, etc.). Empty array when
+     * the artifact has never been published. Each entry is preserved
+     * even after deletes on the external side — the user can still
+     * see the historical click-through and republish if needed.
+     */
+    publishedRefs?: ExtractionPublishedRef[];
     /** Incremented on each material edit to the markdown body. */
     version: number;
     /**

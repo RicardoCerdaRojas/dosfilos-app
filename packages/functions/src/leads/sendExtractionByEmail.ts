@@ -1,9 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
-import { marked } from 'marked';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { render } from '@react-email/render';
 import { resend } from '../emails/resendClient';
-import { renderShareShell } from '../emails/templates/extractionShare/shell';
+import { ShareEmail } from '../emails/templates/extractionShare/ShareEmail';
 
 const db = admin.firestore();
 
@@ -88,18 +88,15 @@ export const sendExtractionByEmail = onCall<SendExtractionByEmailRequest>(
         }
 
         const finalSubject = (typeof subject === 'string' && subject.trim()) || extraction.title || 'Te comparto un recurso';
-        const noteHtml = (typeof senderNote === 'string' && senderNote.trim())
-            ? `<p>${escapeHtml(senderNote.trim())}</p>`
-            : null;
+        const cleanNote = (typeof senderNote === 'string' && senderNote.trim()) ? senderNote.trim() : null;
 
-        const bodyHtml = await marked.parse(extraction.markdown ?? '');
-        const html = renderShareShell({
+        const html = await render(ShareEmail({
             title: finalSubject,
             senderName: userName,
-            senderNoteHtml: noteHtml,
-            bodyHtml,
-            unsubscribeHref: 'mailto:' + (userEmail ?? 'hola@dosfilos.com') + '?subject=Baja',
-        });
+            senderEmail: userEmail,
+            senderNote: cleanNote,
+            markdown: extraction.markdown ?? '',
+        }));
 
         const fromName = userName.replace(/[<>"]/g, '');
         const fromAddress = `${fromName} <hola@dosfilos.com>`;
@@ -128,9 +125,14 @@ export const sendExtractionByEmail = onCall<SendExtractionByEmailRequest>(
         }
 
         // Persist the send log on the Extraction doc.
+        // Firestore disallows FieldValue.serverTimestamp() inside an
+        // array element (arrayUnion). Use Timestamp.now() — client-side
+        // wall clock, ~ms drift acceptable for an audit trail of email
+        // sends. The doc-level updatedAt below still uses
+        // serverTimestamp for the canonical lastTouched marker.
         const sendLog = {
             id: `send_${Date.now()}`,
-            sentAt: FieldValue.serverTimestamp(),
+            sentAt: Timestamp.now(),
             recipientCount: sent,
             failureCount: failures.length,
             subject: finalSubject,
@@ -175,11 +177,3 @@ export const sendExtractionByEmail = onCall<SendExtractionByEmailRequest>(
     },
 );
 
-function escapeHtml(s: string): string {
-    return s
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
