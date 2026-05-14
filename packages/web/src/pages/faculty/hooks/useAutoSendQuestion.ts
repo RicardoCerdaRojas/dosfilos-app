@@ -8,6 +8,7 @@ interface SendOrchestratedMessageInput {
     lengthPreference: ResponseMode;
     attachments?: Array<{ mimeType: string; data: string }>;
     attachmentsMeta?: Array<{ filename: string; mimeType: string; sizeBytes: number }>;
+    sessionIdOverride?: string;
 }
 
 interface CreateSessionInput {
@@ -101,6 +102,11 @@ export function useAutoSendQuestion(params: UseAutoSendQuestionParams) {
                     context: contextForNew,
                 });
                 navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
+                // sessionIdOverride bypasses the closure-captured sessionId
+                // ('' for /new). Without it the mutation reads sessionQuery
+                // from the pre-navigate render where the query was disabled
+                // (enabled requires a non-empty sessionId), so .data is
+                // undefined and the guard throws "Session not found".
                 await sendOrchestratedMessage({
                     message: pending.question,
                     lengthPreference,
@@ -113,6 +119,7 @@ export function useAutoSendQuestion(params: UseAutoSendQuestionParams) {
                         mimeType: pending.attachment!.mimeType,
                         sizeBytes: pending.attachment!.sizeBytes,
                     }],
+                    sessionIdOverride: newSession.id,
                 });
             } catch (err) {
                 console.error('[FacultyChat] failed to replay pending attachment:', err);
