@@ -49,7 +49,7 @@ export function FacultyConfirmDialogs({
                         <AlertDialogCancel>{t('dialogs.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={onConfirmDeleteSession}
-                            className="bg-rose-600 hover:bg-rose-700 text-white"
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
                             {t('dialogs.delete')}
                         </AlertDialogAction>
@@ -72,7 +72,7 @@ export function FacultyConfirmDialogs({
                         <AlertDialogCancel>{t('dialogs.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={onConfirmDeleteMessage}
-                            className="bg-rose-600 hover:bg-rose-700 text-white"
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
                             {t('dialogs.delete')}
                         </AlertDialogAction>
