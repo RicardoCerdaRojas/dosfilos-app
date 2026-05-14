@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { render } from '@react-email/render';
 import { resend } from '../emails/resendClient';
 import { ShareEmail } from '../emails/templates/extractionShare/ShareEmail';
@@ -125,9 +125,14 @@ export const sendExtractionByEmail = onCall<SendExtractionByEmailRequest>(
         }
 
         // Persist the send log on the Extraction doc.
+        // Firestore disallows FieldValue.serverTimestamp() inside an
+        // array element (arrayUnion). Use Timestamp.now() — client-side
+        // wall clock, ~ms drift acceptable for an audit trail of email
+        // sends. The doc-level updatedAt below still uses
+        // serverTimestamp for the canonical lastTouched marker.
         const sendLog = {
             id: `send_${Date.now()}`,
-            sentAt: FieldValue.serverTimestamp(),
+            sentAt: Timestamp.now(),
             recipientCount: sent,
             failureCount: failures.length,
             subject: finalSubject,
