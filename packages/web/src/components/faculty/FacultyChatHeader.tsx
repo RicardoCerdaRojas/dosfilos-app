@@ -77,16 +77,16 @@ export function FacultyChatHeader({
             : (sessionTitle || t('header.sessionActive'));
 
     return (
-        <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-zinc-900 border-b shrink-0 shadow-sm z-10">
+        <header className="flex items-center justify-between px-6 py-4 bg-background border-b shrink-0 shadow-sm z-10">
             <div className="flex items-center gap-4">
                 {!isHomeState && (
-                    <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-slate-100 dark:hover:bg-zinc-800">
+                    <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                 )}
                 <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
-                        <GraduationCap className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />
+                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <GraduationCap className="h-4 w-4 text-primary" />
                     </div>
                     <div>
                         <h1 className="text-lg font-bold leading-none tracking-tight">{displayTitle}</h1>
@@ -135,12 +135,12 @@ export function FacultyChatHeader({
                                     onClick={() => onSetLengthPreference('auto')}
                                     className={cn(
                                         "cursor-pointer flex items-start gap-2.5 py-2",
-                                        isActive && 'bg-indigo-50 dark:bg-indigo-900/30'
+                                        isActive && 'bg-accent'
                                     )}
                                 >
                                     <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", meta.iconColor)} />
                                     <div className="min-w-0">
-                                        <div className={cn("text-sm", isActive && "font-semibold text-indigo-900 dark:text-indigo-200")}>
+                                        <div className={cn("text-sm", isActive && "font-semibold text-accent-foreground")}>
                                             {meta.label}
                                         </div>
                                         <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
@@ -164,12 +164,12 @@ export function FacultyChatHeader({
                                     onClick={() => onSetLengthPreference(mode)}
                                     className={cn(
                                         "cursor-pointer flex items-start gap-2.5 py-2",
-                                        isActive && 'bg-indigo-50 dark:bg-indigo-900/30'
+                                        isActive && 'bg-accent'
                                     )}
                                 >
                                     <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", meta.iconColor)} />
                                     <div className="min-w-0">
-                                        <div className={cn("text-sm", isActive && "font-semibold text-indigo-900 dark:text-indigo-200")}>
+                                        <div className={cn("text-sm", isActive && "font-semibold text-accent-foreground")}>
                                             {meta.label}
                                         </div>
                                         <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
@@ -193,12 +193,12 @@ export function FacultyChatHeader({
                                     onClick={() => onSetLengthPreference(mode)}
                                     className={cn(
                                         "cursor-pointer flex items-start gap-2.5 py-2",
-                                        isActive && 'bg-indigo-50 dark:bg-indigo-900/30'
+                                        isActive && 'bg-accent'
                                     )}
                                 >
                                     <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", meta.iconColor)} />
                                     <div className="min-w-0">
-                                        <div className={cn("text-sm", isActive && "font-semibold text-indigo-900 dark:text-indigo-200")}>
+                                        <div className={cn("text-sm", isActive && "font-semibold text-accent-foreground")}>
                                             {meta.label}
                                         </div>
                                         <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
@@ -211,13 +211,13 @@ export function FacultyChatHeader({
                     </DropdownMenuContent>
                 </DropdownMenu>
 
-                <div className="h-4 w-px bg-slate-200 dark:bg-zinc-700 mx-1 hidden sm:block" />
+                <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
 
                 <Button
                     variant={isLeftSidebarOpen ? "secondary" : "ghost"}
                     size="sm"
                     onClick={onToggleLeftSidebar}
-                    className={cn("hidden md:flex items-center gap-2 transition-colors", isLeftSidebarOpen && "bg-slate-100 dark:bg-zinc-800")}
+                    className={cn("hidden md:flex items-center gap-2 transition-colors", isLeftSidebarOpen && "bg-secondary")}
                     title={t('header.projectsAndSessions')}
                 >
                     <Clock className="w-4 h-4" />
@@ -227,7 +227,7 @@ export function FacultyChatHeader({
                     variant={isRightSidebarOpen ? "secondary" : "ghost"}
                     size="sm"
                     onClick={onToggleRightSidebar}
-                    className={cn("hidden lg:flex items-center gap-2 transition-colors", isRightSidebarOpen && "bg-slate-100 dark:bg-zinc-800")}
+                    className={cn("hidden lg:flex items-center gap-2 transition-colors", isRightSidebarOpen && "bg-secondary")}
                     title={t('header.contentExtraction')}
                 >
                     <Download className="w-4 h-4" />
