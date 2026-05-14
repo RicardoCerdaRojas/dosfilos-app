@@ -55,6 +55,8 @@ export { resendLeadMagnet } from './leads/resendLeadMagnet';
 export { sendLeadMagnetNurture } from './leads/sendLeadMagnetNurture';
 // Super-admin callable to render any nurture template with sample inputs.
 export { previewLeadMagnetNurture } from './leads/previewLeadMagnetNurture';
+// Pastor-initiated email send for any persisted extraction (Fase 3.3).
+export { sendExtractionByEmail } from './leads/sendExtractionByEmail';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 export { recalculateAnalytics, recalculateAnalyticsHttp, recalculateAnalyticsCallable } from './analytics/recalculateAnalytics';

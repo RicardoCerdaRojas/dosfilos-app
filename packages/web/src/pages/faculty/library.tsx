@@ -6,6 +6,7 @@ import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { FacultyExtractionsList } from '@/components/faculty/FacultyExtractionsList';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { ExtractionFilters, filterExtractions, type TypeFilterValue, type TimeFilterValue } from '@/components/faculty/ExtractionFilters';
+import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
 import { Input } from '@/components/ui/input';
 import { Library, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export function FacultyLibraryPage() {
     const [query, setQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all');
     const [timeFilter, setTimeFilter] = useState<TimeFilterValue>('all');
+    const [emailDialogExtraction, setEmailDialogExtraction] = useState<Extraction | null>(null);
     const [draftMarkdown, setDraftMarkdown] = useState<string>('');
     const [draftFor, setDraftFor] = useState<string | null>(null);
 
@@ -161,6 +163,7 @@ export function FacultyLibraryPage() {
                                     navigate(`/dashboard/sermons/${extraction.externalRef.id}`);
                                 }
                             }}
+                            onShareByEmail={setEmailDialogExtraction}
                         />
                     )}
                 </aside>
@@ -197,6 +200,11 @@ export function FacultyLibraryPage() {
                     )}
                 </main>
             </div>
+
+            <EmailExtractionDialog
+                extraction={emailDialogExtraction}
+                onClose={() => setEmailDialogExtraction(null)}
+            />
         </div>
     );
 }

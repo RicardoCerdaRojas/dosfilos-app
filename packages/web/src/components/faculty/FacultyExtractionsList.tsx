@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react';
-import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin } from 'lucide-react';
+import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -68,6 +68,8 @@ interface FacultyExtractionsListProps {
      * row click navigates externally instead of opening inline preview.
      */
     onOpenExternal?: (extraction: Extraction) => void;
+    /** Open the email-share dialog for this artifact. */
+    onShareByEmail?: (extraction: Extraction) => void;
     error?: unknown;
     onRetry?: () => void;
 }
@@ -89,6 +91,7 @@ export function FacultyExtractionsList({
     projects,
     onJumpToOrigin,
     onOpenExternal,
+    onShareByEmail,
     error,
     onRetry,
 }: FacultyExtractionsListProps) {
@@ -344,6 +347,12 @@ export function FacultyExtractionsList({
                                         <Pencil className="w-3.5 h-3.5 mr-2" />
                                         {t('extractionsList.actions.rename')}
                                     </DropdownMenuItem>
+                                    {onShareByEmail && (
+                                        <DropdownMenuItem onClick={() => onShareByEmail(item)}>
+                                            <Mail className="w-3.5 h-3.5 mr-2" />
+                                            {t('extractionsList.actions.email')}
+                                        </DropdownMenuItem>
+                                    )}
                                     {onJumpToOrigin && !item.sourceSessionDeleted && item.sessionId && (
                                         <DropdownMenuItem onClick={() => onJumpToOrigin(item)}>
                                             <ExternalLink className="w-3.5 h-3.5 mr-2" />
