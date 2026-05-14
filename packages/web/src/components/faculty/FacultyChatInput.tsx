@@ -128,7 +128,7 @@ export function FacultyChatInput({
 
     return (
         <div className={cn(
-            "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-50 via-slate-50 dark:from-zinc-950 dark:via-zinc-950 to-transparent pt-12 pb-6 px-4 pointer-events-none",
+            "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-muted/30 via-muted/30 to-transparent pt-12 pb-6 px-4 pointer-events-none",
             isHidden && "hidden"
         )}>
             <div className="max-w-3xl mx-auto relative pointer-events-auto">
@@ -138,28 +138,28 @@ export function FacultyChatInput({
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     className={cn(
-                        "relative flex flex-col shadow-lg rounded-3xl bg-white dark:bg-zinc-900 border transition-all overflow-hidden",
+                        "relative flex flex-col shadow-lg rounded-3xl bg-card border transition-all overflow-hidden",
                         isDragging
-                            ? "border-indigo-400 dark:border-indigo-400 ring-2 ring-indigo-200 dark:ring-indigo-900/50"
-                            : "border-slate-200/80 dark:border-zinc-800 focus-within:border-indigo-300/70 dark:focus-within:border-indigo-500/50 focus-within:shadow-indigo-100 dark:focus-within:shadow-indigo-950/30"
+                            ? "border-primary ring-2 ring-primary/30"
+                            : "border-border focus-within:border-primary/50 focus-within:shadow-primary/10"
                     )}
                 >
                     {attachment && previewUrl && (
                         <div className="px-4 pt-3 space-y-2">
-                            <div className="inline-flex items-start gap-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 p-2 pr-3">
+                            <div className="inline-flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-2 pr-3">
                                 <img
                                     src={previewUrl}
                                     alt={attachment.name}
                                     className="h-14 w-14 rounded-lg object-cover"
                                 />
                                 <div className="flex flex-col text-[12px] leading-tight pt-1 max-w-[220px]">
-                                    <span className="font-medium text-slate-700 dark:text-slate-200 truncate">{attachment.name}</span>
-                                    <span className="text-slate-500 dark:text-slate-400">{formatBytes(attachment.size)}</span>
+                                    <span className="font-medium text-foreground truncate">{attachment.name}</span>
+                                    <span className="text-muted-foreground">{formatBytes(attachment.size)}</span>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => onAttach(null)}
-                                    className="ml-1 p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                                    className="ml-1 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                                     title={t('chat.attachment.remove')}
                                     aria-label={t('chat.attachment.remove')}
                                 >
@@ -191,7 +191,7 @@ export function FacultyChatInput({
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={disabled}
-                            className="absolute left-2 bottom-2 h-10 w-10 inline-flex items-center justify-center rounded-full text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+                            className="absolute left-2 bottom-2 h-10 w-10 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted disabled:opacity-30 transition-colors"
                             title={t('chat.attachment.attach')}
                             aria-label={t('chat.attachment.attach')}
                         >
@@ -210,7 +210,7 @@ export function FacultyChatInput({
                                 size="icon"
                                 className={cn(
                                     "h-10 w-10 rounded-full transition-all duration-300 shadow-sm",
-                                    canSubmit ? "bg-indigo-600 hover:bg-indigo-700 text-white" : "bg-slate-100 text-slate-400 dark:bg-zinc-800"
+                                    canSubmit ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-muted text-muted-foreground"
                                 )}
                                 disabled={!canSubmit}
                             >
@@ -223,8 +223,8 @@ export function FacultyChatInput({
                     </div>
 
                     {isDragging && (
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-indigo-50/80 dark:bg-indigo-950/40 rounded-3xl">
-                            <div className="flex items-center gap-2 text-sm font-medium text-indigo-700 dark:text-indigo-300">
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-primary/10 rounded-3xl">
+                            <div className="flex items-center gap-2 text-sm font-medium text-primary">
                                 <ImageIcon className="h-4 w-4" />
                                 {t('chat.attachment.dropHere')}
                             </div>

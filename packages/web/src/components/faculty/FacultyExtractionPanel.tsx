@@ -81,13 +81,13 @@ export function FacultyExtractionPanel({
 
     return (
         <aside className={cn(
-            "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hidden lg:flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out",
+            "border-border bg-card hidden lg:flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out",
             isOpen ? "w-[28rem] border-l opacity-100" : "w-0 border-l-0 opacity-0 overflow-hidden"
         )}>
-            <div className="px-6 pt-5 pb-3 border-b border-slate-100 dark:border-zinc-800/50 flex flex-col gap-3 w-[28rem]">
+            <div className="px-6 pt-5 pb-3 border-b border-border/50 flex flex-col gap-3 w-[28rem]">
                 <div className="flex items-center gap-2">
-                    <Download className="w-4 h-4 text-indigo-500" />
-                    <h3 className="font-semibold text-slate-800 dark:text-slate-100">
+                    <Download className="w-4 h-4 text-primary" />
+                    <h3 className="font-semibold text-foreground">
                         {t('extraction.title')}
                     </h3>
                 </div>
@@ -116,16 +116,16 @@ export function FacultyExtractionPanel({
                             variant="outline"
                             onClick={() => onExtract(type)}
                             disabled={!!extractingType || messageCount < 2}
-                            className="w-full justify-start h-auto p-3 flex flex-col items-start gap-1 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                            className="w-full justify-start h-auto p-3 flex flex-col items-start gap-1 hover:border-primary hover:bg-accent"
                         >
-                            <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-100 text-sm">
+                            <div className="flex items-center gap-1.5 font-semibold text-foreground text-sm">
                                 {extractingType === type
                                     ? <Loader2 className={cn("w-4 h-4 animate-spin shrink-0", iconColor)} />
                                     : <Icon className={cn("w-4 h-4 shrink-0", iconColor)} />
                                 }
                                 <span className="truncate">{t(labelKey)}</span>
                             </div>
-                            <span className="text-[11px] leading-snug text-slate-500 dark:text-slate-400 font-normal text-left whitespace-normal line-clamp-2">{t(descKey)}</span>
+                            <span className="text-[11px] leading-snug text-muted-foreground font-normal text-left whitespace-normal line-clamp-2">{t(descKey)}</span>
                         </Button>
                     ))}
                 </div>
@@ -159,7 +159,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
             className={cn(
                 "flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors",
                 active
-                    ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                    ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground",
             )}
         >

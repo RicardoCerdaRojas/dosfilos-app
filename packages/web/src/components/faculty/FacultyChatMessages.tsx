@@ -46,9 +46,9 @@ function InferredModeBadge({ mode }: { mode: ConcreteResponseMode }) {
     const Icon = meta.icon;
     return (
         <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Sparkles className="h-3 w-3 text-indigo-500" />
+            <Sparkles className="h-3 w-3 text-primary" />
             <span>{t('chat.inferredModeLabel')}</span>
-            <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
+            <span className="inline-flex items-center gap-1 font-medium text-foreground">
                 <Icon className={cn("h-3 w-3", meta.iconColor)} />
                 {meta.label}
             </span>
@@ -101,14 +101,14 @@ function AssistantMessageContent({ content, sources, isAdmin }: { content: strin
                 "prose-li:leading-normal prose-li:my-0.5",
                 "prose-ul:my-3 prose-ol:my-3",
                 // Paragraphs nested inside list items should not add extra vertical gap
-                "prose-li:marker:text-slate-400",
+                "prose-li:marker:text-muted-foreground",
                 // Tighter, modern sans-serif for headings to contrast with serif body
                 "prose-headings:font-sans prose-headings:tracking-tight",
                 "prose-h2:mt-5 prose-h2:mb-2 prose-h3:mt-4 prose-h3:mb-1.5",
                 // Subtle indigo accent for strong emphasis
-                "prose-strong:text-slate-900 dark:prose-strong:text-slate-100",
+                "prose-strong:text-foreground",
                 // Tables (paradigms, conjugations) — cleaner borders
-                "prose-table:text-sm prose-th:bg-slate-50 dark:prose-th:bg-zinc-800/60"
+                "prose-table:text-sm prose-th:bg-muted"
             )}>
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
@@ -214,22 +214,22 @@ export function FacultyChatMessages({
         <>
             {/* New-session blank state */}
             {isNewSession && !isStreaming && !isSending && (
-                <div className="text-center py-20 text-slate-500">
-                    <div className="w-16 h-16 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-4">
-                        <GraduationCap className="w-8 h-8 text-amber-500" />
+                <div className="text-center py-20 text-muted-foreground">
+                    <div className="w-16 h-16 mx-auto bg-warning/20 rounded-full flex items-center justify-center mb-4">
+                        <GraduationCap className="w-8 h-8 text-warning" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-800 mb-2">{t('chat.emptyNewTitle', { agentName: agentNameForNew })}</h3>
+                    <h3 className="text-lg font-medium text-foreground mb-2">{t('chat.emptyNewTitle', { agentName: agentNameForNew })}</h3>
                     <p className="max-w-md mx-auto">{t('chat.emptyNewDescription')}</p>
                 </div>
             )}
 
             {/* Existing session blank state */}
             {!isNewSession && messages.length === 0 && !isStreaming && !isSending && (
-                <div className="text-center py-20 text-slate-500">
-                    <div className="w-16 h-16 mx-auto bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                        <GraduationCap className="w-8 h-8 text-indigo-500" />
+                <div className="text-center py-20 text-muted-foreground">
+                    <div className="w-16 h-16 mx-auto bg-primary/15 rounded-full flex items-center justify-center mb-4">
+                        <GraduationCap className="w-8 h-8 text-primary" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-800 mb-2">{t('chat.emptyExistingTitle')}</h3>
+                    <h3 className="text-lg font-medium text-foreground mb-2">{t('chat.emptyExistingTitle')}</h3>
                     <p className="max-w-md mx-auto">{t('chat.emptyExistingDescription')}</p>
                 </div>
             )}
@@ -238,8 +238,8 @@ export function FacultyChatMessages({
             {messages.map((msg, i) => (
                 <div key={i} className={cn("flex w-full gap-4 group", msg.role === 'user' ? "justify-end" : "justify-start")}>
                     {msg.role !== 'user' && (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 border border-indigo-200 dark:from-indigo-900 dark:to-indigo-800 flex items-center justify-center shrink-0 mt-3 shadow-sm">
-                            <MessageSquareQuote className="h-4 w-4 text-indigo-700 dark:text-indigo-300" />
+                        <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-3 shadow-sm">
+                            <MessageSquareQuote className="h-4 w-4 text-primary" />
                         </div>
                     )}
                     <div
@@ -247,9 +247,9 @@ export function FacultyChatMessages({
                         className={cn(
                             "relative text-[15px] leading-relaxed transition-shadow duration-500",
                             msg.role === 'user'
-                                ? "bg-indigo-600 text-white rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
-                                : "flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5",
-                            msg.id && highlightedIds.has(msg.id) && "ring-2 ring-indigo-400 ring-offset-2 ring-offset-background"
+                                ? "bg-primary text-primary-foreground rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
+                                : "flex-1 min-w-0 bg-card border border-border shadow-sm rounded-3xl rounded-tl-sm px-6 py-5",
+                            msg.id && highlightedIds.has(msg.id) && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                         )}
                     >
                         {msg.role === 'user' ? (
@@ -290,7 +290,7 @@ export function FacultyChatMessages({
                                 <button
                                     type="button"
                                     onClick={() => onCopyMessage(msg.content, msg.id)}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-black/5 dark:hover:bg-white/5"
                                     title={t('dialogs.copy')}
                                     aria-label={t('dialogs.copy')}
                                 >
@@ -300,7 +300,7 @@ export function FacultyChatMessages({
                                     type="button"
                                     onClick={() => onRequestDeleteMessage(msg.id)}
                                     disabled={deletingMessageId === msg.id}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30"
+                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30"
                                     title={t('chat.deleteMessage')}
                                     aria-label={t('chat.deleteMessage')}
                                 >
@@ -317,11 +317,11 @@ export function FacultyChatMessages({
             {/* Streaming / loading indicator */}
             {(isStreaming || isSending) && (
                 <div className="flex w-full gap-4 justify-start animate-in fade-in duration-300">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 border border-indigo-200 flex items-center justify-center shrink-0 mt-3 shadow-sm">
-                        <Sparkles className="h-4 w-4 text-indigo-600 animate-pulse" />
+                    <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-3 shadow-sm">
+                        <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                     </div>
-                    <div className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-3xl rounded-tl-sm px-6 py-5">
-                        <div className="text-xs text-indigo-500 font-semibold mb-2 flex items-center gap-1.5">
+                    <div className="flex-1 min-w-0 bg-card border border-border shadow-sm rounded-3xl rounded-tl-sm px-6 py-5">
+                        <div className="text-xs text-primary font-semibold mb-2 flex items-center gap-1.5">
                             <Sparkles className="h-3 w-3" />
                             {activeAgents.length > 0
                                 ? activeAgents.map(a => resolveLocalized(a.name, activeLanguage)).join(' + ')
@@ -330,13 +330,13 @@ export function FacultyChatMessages({
                         {streamingMessage ? (
                             <div className="relative">
                                 <AssistantMessageContent content={streamingMessage} isAdmin={isAdmin} />
-                                <span className="inline-block w-1.5 h-4 ml-1 bg-indigo-500 animate-pulse align-middle" />
+                                <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse align-middle" />
                             </div>
                         ) : (
                             <div className="flex gap-1.5 align-middle h-6 items-center">
-                                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                <span className="w-2 h-2 rounded-full bg-primary/70 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-2 h-2 rounded-full bg-primary/70 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-2 h-2 rounded-full bg-primary/70 animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
                         )}
                     </div>
