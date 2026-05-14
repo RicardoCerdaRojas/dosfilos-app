@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '@dosfilos/infrastructure';
+import { adminDashboardService } from '@dosfilos/application';
 
 
 /**
@@ -39,10 +37,14 @@ export interface DashboardMetrics {
 }
 
 /**
- * Hook to fetch admin dashboard metrics from event-driven analytics
- * Reads from pre-aggregated collections:
- * - global_metrics/aggregate: Platform-wide totals (recalculated hourly)
- * - global_metrics_daily/{date}: Daily metrics
+ * Hook to fetch admin dashboard metrics from event-driven analytics.
+ * Reads via `adminDashboardService` (in @dosfilos/application) so the
+ * Firestore SDK stays out of the hook — keeps compliance gate C7.3
+ * clean and the hook a thin presenter.
+ *
+ * Underlying sources:
+ * - `global_metrics/aggregate`: platform-wide totals (recalculated hourly)
+ * - `global_metrics_daily/{today}`: today's per-day rollup
  */
 export function useAdminMetrics() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -56,33 +58,14 @@ export function useAdminMetrics() {
             setLoading(true);
             console.log('[useAdminMetrics] Fetching from event-driven analytics...');
 
-            // Read from global_metrics/aggregate
-            const aggregateRef = doc(db, 'global_metrics/aggregate');
-            const aggregateSnap = await getDoc(aggregateRef);
+            const { aggregate, daily } = await adminDashboardService.getDashboardSnapshot();
 
-            if (!aggregateSnap.exists()) {
+            if (!aggregate) {
                 console.warn('[useAdminMetrics] global_metrics/aggregate does not exist');
                 setMetrics(null);
                 setLoading(false);
                 return;
             }
-
-            const aggregate = aggregateSnap.data();
-            console.log('[useAdminMetrics] Aggregate data:', aggregate);
-
-            // Get today's date string (YYYY-MM-DD)
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const todayString = `${year}-${month}-${day}`;
-
-            // Read from global_metrics_daily collection (separate collection, not subcollection)
-            const dailyRef = doc(db, 'global_metrics_daily', todayString);
-            const dailySnap = await getDoc(dailyRef);
-
-            const daily = dailySnap.exists() ? dailySnap.data() : null;
-            console.log('[useAdminMetrics] Daily data:', daily);
 
             // Build metrics from aggregated data
             const dashboardMetrics: DashboardMetrics = {
@@ -118,14 +101,14 @@ export function useAdminMetrics() {
                 growthRate: 0,
 
                 hito7: {
-                    today: (daily?.hito7 ?? {}) as Record<string, number>,
-                    last30d: (aggregate.hito7?.last30d ?? {}) as Record<string, number>,
+                    today: daily?.hito7 ?? {},
+                    last30d: aggregate.hito7?.last30d ?? {},
                 },
             };
 
             console.log('[useAdminMetrics] Dashboard metrics:', dashboardMetrics);
             setMetrics(dashboardMetrics);
-            setLastUpdated(aggregate.lastUpdated?.toDate?.() || new Date());
+            setLastUpdated(aggregate.lastUpdated ?? new Date());
             setError(null);
 
         } catch (err) {
@@ -143,17 +126,15 @@ export function useAdminMetrics() {
 
     /**
      * Triggers the Cloud Function to force an immediate recalculation,
-     * then refetches the updated data from Firestore.
-     * Uses Firebase SDK Callable to avoid CORS and hardcoded project IDs.
+     * then refetches the updated data from Firestore. Uses the
+     * application service so the Firebase callable stays out of this hook.
      */
     const refreshMetrics = useCallback(async () => {
         try {
             setRefreshing(true);
-            console.log('[useAdminMetrics] Triggering manual recalculation via Callable...');
+            console.log('[useAdminMetrics] Triggering manual recalculation via service...');
 
-            const functions = getFunctions();
-            const recalculate = httpsCallable(functions, 'recalculateAnalyticsCallable');
-            await recalculate({});
+            await adminDashboardService.triggerRecalculation();
 
             // Wait a moment for Firestore to be updated, then refetch
             await new Promise(resolve => setTimeout(resolve, 1500));
@@ -169,4 +150,3 @@ export function useAdminMetrics() {
 
     return { metrics, loading, refreshing, lastUpdated, error, refreshMetrics };
 }
-
