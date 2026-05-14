@@ -9,6 +9,25 @@ import {
     Timestamp,
     updateDoc,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+export interface CaptureLeadInput {
+    email: string;
+    name?: string;
+    leadMagnet?: string;
+    /** Honeypot value — only forwarded so the server can drop bot fills. */
+    website?: string;
+    /** UTM context read from sessionStorage at submit time. */
+    utm?: Record<string, string | undefined>;
+    /** Analytics session id — links the lead row with funnel events. */
+    sessionId?: string | null;
+}
+
+export interface CaptureLeadResult {
+    ok: true;
+    leadId: string;
+    duplicate: boolean;
+}
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'closed';
 
@@ -62,6 +81,23 @@ export class LeadsService {
     async deleteLead(leadId: string): Promise<void> {
         const db = getFirestore();
         await deleteDoc(doc(db, this.collectionName, leadId));
+    }
+
+    /**
+     * Fires the public `captureLead` Cloud Function used by the
+     * lead-magnet landing form. The callable carries UTM context +
+     * the analytics session id so the lead row server-side joins
+     * naturally with the `funnel_events/` rows fired on the same
+     * visit. Returns `{ ok, leadId, duplicate }`; the hook surfaces
+     * the duplicate flag in the success toast.
+     */
+    async captureLead(input: CaptureLeadInput): Promise<CaptureLeadResult> {
+        const callable = httpsCallable<CaptureLeadInput, CaptureLeadResult>(
+            getFunctions(),
+            'captureLead',
+        );
+        const { data } = await callable(input);
+        return data;
     }
 }
 

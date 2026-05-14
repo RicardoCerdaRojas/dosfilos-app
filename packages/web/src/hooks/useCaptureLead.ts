@@ -1,52 +1,34 @@
 import { useState, useCallback } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { readPersistedUtm } from '@/lib/analytics';
+import { leadsService, type CaptureLeadInput, type CaptureLeadResult } from '@dosfilos/application';
 
-interface CaptureLeadInput {
-    email: string;
-    name?: string;
-    leadMagnet?: string;
-    /** Honeypot value — only forwarded so the server can drop bot fills. */
-    website?: string;
-}
-
-interface CaptureLeadResult {
-    ok: true;
-    leadId: string;
-    duplicate: boolean;
-}
+type SubmitInput = Omit<CaptureLeadInput, 'utm' | 'sessionId'>;
 
 /**
- * React hook wrapping the `captureLead` Cloud Function. Automatically
- * forwards persisted UTM params + the analytics session id so the
- * server-side lead row carries the same attribution context as the
- * funnel events fired on the same page.
+ * React hook wrapping `leadsService.captureLead`. Forwards persisted
+ * UTM params + the analytics session id so the server-side lead row
+ * carries the same attribution context as the funnel events fired on
+ * the same page.
  *
- * Returns a `submit` function plus `loading` / `error` state — the
- * lead-magnet landing form binds to these directly. No React Query
- * because the call is one-shot per visitor session and we don't
- * want background retries (a duplicate submit re-sends the email).
+ * Returns `submit` + `loading` / `error` state — the lead-magnet
+ * landing form binds to these directly. No React Query because the
+ * call is one-shot per visitor session and we don't want background
+ * retries (a duplicate submit re-sends the email).
  */
 export function useCaptureLead() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<CaptureLeadResult | null>(null);
 
-    const submit = useCallback(async (input: CaptureLeadInput): Promise<CaptureLeadResult> => {
+    const submit = useCallback(async (input: SubmitInput): Promise<CaptureLeadResult> => {
         setLoading(true);
         setError(null);
         try {
-            const functions = getFunctions();
-            const callable = httpsCallable<unknown, CaptureLeadResult>(functions, 'captureLead');
             const utm = readPersistedUtm();
             const sessionId = readSessionId();
-            const response = await callable({
-                ...input,
-                utm,
-                sessionId,
-            });
-            setResult(response.data);
-            return response.data;
+            const data = await leadsService.captureLead({ ...input, utm, sessionId });
+            setResult(data);
+            return data;
         } catch (err: any) {
             const message = err?.message ?? 'No pudimos enviar el manual. Intenta de nuevo.';
             setError(message);
