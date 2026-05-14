@@ -46,6 +46,29 @@ export function EmailLayout({ title, preview, children, footerExtra }: EmailLayo
                 <title>{title}</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
+                {/*
+                 * Lock to light-mode rendering across email clients.
+                 * Outlook Mobile (and some Gmail variants) auto-invert
+                 * light backgrounds in dark mode, mangling the amber
+                 * tint used for quotes/sender card into a muddy olive.
+                 * Declaring `light only` opts out of dark-mode
+                 * remapping so the design we ship is what every
+                 * recipient sees.
+                 *
+                 * Trade-off: dark-mode users see a light email, which
+                 * looks brighter than other inbox content. Acceptable
+                 * given the alternative (broken brand colors) and
+                 * common across pastoral/devotional senders.
+                 */}
+                <meta name="color-scheme" content="light only" />
+                <meta name="supported-color-schemes" content="light only" />
+                <style>{`
+                    /* Defensive overrides — some clients ignore the
+                       meta tags above and still try to invert. These
+                       force the brand surfaces to render as designed. */
+                    :root { color-scheme: light only; supported-color-schemes: light only; }
+                    [data-ogsc] body, [data-ogsb] body { background: ${t.palette.bgPage} !important; color: ${t.palette.textPrimary} !important; }
+                `}</style>
             </Head>
             {preview && <Preview>{preview}</Preview>}
             <Body style={bodyStyle}>
