@@ -142,11 +142,12 @@ export function RailDivider({
                     'absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 z-10',
                     'h-10 w-4 rounded-md border border-border bg-card shadow-sm',
                     'flex items-center justify-center',
-                    isOpen
-                        ? 'opacity-0 group-hover:opacity-100 transition-opacity'
-                        // 70% opacity at rest → 100% on hover so the
-                        // handle doesn't shout but is still findable.
-                        : 'opacity-70 group-hover:opacity-100 transition-opacity',
+                    // Always visible (70 % at rest, 100 % on hover) in
+                    // both open and closed states. Symmetric affordance:
+                    // user always sees where the boundary is and how to
+                    // collapse / expand it without having to discover
+                    // the hover region first.
+                    'opacity-70 group-hover:opacity-100 transition-opacity',
                 )}
             >
                 <Icon className="w-3 h-3 text-muted-foreground" />
