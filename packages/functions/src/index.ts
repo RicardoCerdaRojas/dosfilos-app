@@ -55,6 +55,8 @@ export { resendLeadMagnet } from './leads/resendLeadMagnet';
 export { sendLeadMagnetNurture } from './leads/sendLeadMagnetNurture';
 // Super-admin callable to render any nurture template with sample inputs.
 export { previewLeadMagnetNurture } from './leads/previewLeadMagnetNurture';
+// Super-admin callable to render the ShareEmail (extraction share) template.
+export { previewExtractionShareEmail } from './leads/previewExtractionShareEmail';
 // Pastor-initiated email send for any persisted extraction (Fase 3.3).
 export { sendExtractionByEmail } from './leads/sendExtractionByEmail';
 export { onUserLogin } from './analytics/onUserLogin';
