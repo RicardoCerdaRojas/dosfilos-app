@@ -61,6 +61,8 @@ export { previewExtractionShareEmail } from './leads/previewExtractionShareEmail
 export { sendExtractionByEmail } from './leads/sendExtractionByEmail';
 // WordPress draft publish for any persisted extraction (Fase 3.3.b).
 export { publishExtractionToWordpress } from './leads/publishExtractionToWordpress';
+// Diagnostic: probes the user's WP integration and returns roles/caps.
+export { testWordpressConnection } from './leads/testWordpressConnection';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 export { recalculateAnalytics, recalculateAnalyticsHttp, recalculateAnalyticsCallable } from './analytics/recalculateAnalytics';

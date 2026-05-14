@@ -1,5 +1,22 @@
 import { FirestoreUserIntegrationsRepository } from '@dosfilos/infrastructure';
 import { WordpressIntegration } from '@dosfilos/domain';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+interface WordpressConnectionTestResult {
+    ok: boolean;
+    status: number;
+    code?: string | null;
+    message?: string | null;
+    resolvedUser?: {
+        id: number | null;
+        name: string | null;
+        slug: string | null;
+        roles: string[];
+        canEditPosts: boolean;
+    };
+    warning?: string | null;
+    raw?: string;
+}
 
 /**
  * Web-side service for managing per-user 3rd-party integration
@@ -27,6 +44,21 @@ class UserIntegrationsService {
 
     deleteWordpress(userId: string): Promise<void> {
         return this.repo.deleteWordpress(userId);
+    }
+
+    /**
+     * Probes the WP integration. Returns the resolved user + caps so
+     * the UI can tell the operator whether auth + permission are OK
+     * before they try to publish a real post.
+     */
+    async testWordpressConnection(): Promise<WordpressConnectionTestResult> {
+        const functions = getFunctions();
+        const callable = httpsCallable<unknown, WordpressConnectionTestResult>(
+            functions,
+            'testWordpressConnection',
+        );
+        const result = await callable({});
+        return result.data;
     }
 }
 

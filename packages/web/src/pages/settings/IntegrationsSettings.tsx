@@ -13,7 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Globe, Loader2, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
+import { Globe, Loader2, CheckCircle2, AlertCircle, Trash2, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 
@@ -48,6 +48,13 @@ export function IntegrationsSettings() {
     const [username, setUsername] = useState('');
     const [appPassword, setAppPassword] = useState('');
     const [defaultStatus, setDefaultStatus] = useState<'draft' | 'publish'>('draft');
+    const [testing, setTesting] = useState(false);
+    const [testResult, setTestResult] = useState<{
+        ok: boolean;
+        roles?: string[];
+        canEditPosts?: boolean;
+        message: string;
+    } | null>(null);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -91,6 +98,34 @@ export function IntegrationsSettings() {
             toast.error(t('integrations.wordpress.saveError', { message: msg }));
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleTest = async () => {
+        setTesting(true);
+        setTestResult(null);
+        try {
+            const r = await userIntegrationsService.testWordpressConnection();
+            if (r.ok && r.resolvedUser) {
+                setTestResult({
+                    ok: r.resolvedUser.canEditPosts,
+                    roles: r.resolvedUser.roles,
+                    canEditPosts: r.resolvedUser.canEditPosts,
+                    message: r.resolvedUser.canEditPosts
+                        ? `OK — autenticado como "${r.resolvedUser.name}" (${(r.resolvedUser.roles || []).join(', ')}). Puede crear posts.`
+                        : `Auth OK pero el rol "${(r.resolvedUser.roles || []).join(', ')}" no puede crear posts. Asigna Author o superior en WP.`,
+                });
+            } else {
+                setTestResult({
+                    ok: false,
+                    message: `${r.code ?? 'Error'}: ${r.message ?? 'Sin detalle'}`,
+                });
+            }
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            setTestResult({ ok: false, message: msg });
+        } finally {
+            setTesting(false);
         }
     };
 
@@ -206,6 +241,31 @@ export function IntegrationsSettings() {
                         <p className="text-xs text-muted-foreground">{t('integrations.wordpress.defaultStatusHint')}</p>
                     </div>
                 </div>
+
+                {config && (
+                    <div className="space-y-2 pt-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleTest}
+                            disabled={testing}
+                            className="w-full"
+                        >
+                            {testing ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <Activity className="w-3.5 h-3.5 mr-2" />}
+                            Probar conexión
+                        </Button>
+                        {testResult && (
+                            <div className={cn(
+                                'text-xs p-3 rounded border',
+                                testResult.ok
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300'
+                                    : 'bg-destructive/10 border-destructive/30 text-destructive'
+                            )}>
+                                {testResult.message}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="flex items-center justify-between pt-2 border-t">
                     {config ? (
