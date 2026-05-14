@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, getDoc, setDoc, getFirestore } from 'firebase/firestore';
 import { debounce } from 'lodash';
+import { sermonService } from '@dosfilos/application';
 import type { AnnotationSnapshot } from '@/adapters/DrawingEngineAdapter';
-
-const db = getFirestore();
 
 export function useSermonAnnotations(sermonId: string | undefined) {
     const [initialSnapshot, setInitialSnapshot] = useState<AnnotationSnapshot | undefined>(undefined);
@@ -12,17 +10,13 @@ export function useSermonAnnotations(sermonId: string | undefined) {
     // Create stable debounced save function using ref
     const debouncedSaveRef = useRef<ReturnType<typeof debounce> | null>(null);
 
-    // Initialize debounced function once
+    // Initialize debounced function once. The service serializes to
+    // JSON internally (Firestore rejects nested arrays), so we hand
+    // it the snapshot object directly.
     if (!debouncedSaveRef.current) {
         debouncedSaveRef.current = debounce(async (sid: string, snapshot: AnnotationSnapshot) => {
             try {
-                // Firestore doesn't support nested arrays, so we store as JSON string
-                const snapshotJSON = JSON.stringify(snapshot);
-
-                await setDoc(doc(db, 'sermons', sid, 'annotations', 'main'), {
-                    snapshotJSON,
-                    updatedAt: new Date(),
-                });
+                await sermonService.saveAnnotationSnapshot(sid, snapshot);
             } catch (error) {
                 console.error('[useSermonAnnotations] Error saving annotations:', error);
             }
@@ -38,18 +32,9 @@ export function useSermonAnnotations(sermonId: string | undefined) {
 
         const fetchAnnotations = async () => {
             try {
-                const docRef = doc(db, 'sermons', sermonId, 'annotations', 'main');
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    // Try new JSON format first, fallback to old format
-                    if (data.snapshotJSON) {
-                        const snapshot = JSON.parse(data.snapshotJSON) as AnnotationSnapshot;
-                        setInitialSnapshot(snapshot);
-                    } else if (data.snapshot) {
-                        setInitialSnapshot(data.snapshot as AnnotationSnapshot);
-                    }
+                const snapshot = await sermonService.getAnnotationSnapshot(sermonId);
+                if (snapshot) {
+                    setInitialSnapshot(snapshot as AnnotationSnapshot);
                 }
             } catch (error) {
                 console.error('[useSermonAnnotations] Error fetching annotations:', error);
@@ -60,7 +45,7 @@ export function useSermonAnnotations(sermonId: string | undefined) {
 
         fetchAnnotations();
 
-        // We do NOT subscribe to updates here to avoid circular updates 
+        // We do NOT subscribe to updates here to avoid circular updates
         // resetting the editor state while the user is editing.
     }, [sermonId]);
 
