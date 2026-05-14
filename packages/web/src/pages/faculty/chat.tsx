@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
@@ -20,15 +19,16 @@ import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEdito
 import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
 import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpressDialog';
 import { ProjectEditDialog } from './ProjectEditDialog';
-import { type AIProject, type Extraction, type ExtractionType, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
+import { type AIProject, type Extraction, type ExtractionType, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
-import { prepareAttachmentForSend } from './utils/prepareAttachmentForSend';
 import { copyMessageToClipboard } from './utils/copyMessageToClipboard';
 import { useAutoscrollChat } from './hooks/useAutoscrollChat';
 import { useAutoSendQuestion } from './hooks/useAutoSendQuestion';
 import { useExtractionListHandlers } from './hooks/useExtractionListHandlers';
 import { useExtractionAction } from './hooks/useExtractionAction';
 import { useDocumentEditor } from './hooks/useDocumentEditor';
+import { useSendMessage } from './hooks/useSendMessage';
+import { useDeleteMessage } from './hooks/useDeleteMessage';
 import { FacultyConfirmDialogs } from './components/FacultyConfirmDialogs';
 
 export function FacultyChatPage() {
@@ -58,7 +58,6 @@ export function FacultyChatPage() {
         extractContent,
         generateAndSaveExtraction,
         deleteMessage,
-        isDeleting,
         processMicroAction,
         isProcessingMicroAction,
     } = useFacultyChat(effectiveSessionId);
@@ -97,7 +96,6 @@ export function FacultyChatPage() {
     })();
 
     // ── Local state ──────────────────────────────────────────────────────────
-    const [input, setInput] = useState('');
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(
         () => localStorage.getItem('faculty-sidebar') !== 'false'
     );
@@ -114,9 +112,6 @@ export function FacultyChatPage() {
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [renameConfirmId, setRenameConfirmId] = useState<string | null>(null);
-    const [deleteMessageConfirmId, setDeleteMessageConfirmId] = useState<string | null>(null);
-    const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
-    const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
 
     // Unified document editor state. Either an in-memory sermon (the
     // sermons module owns its own collection — we just render the
@@ -152,6 +147,36 @@ export function FacultyChatPage() {
         streamingMessage,
         session?.messages,
     ]);
+
+    // ── Send + delete message hooks ──────────────────────────────────────────
+    const {
+        input,
+        setInput,
+        pendingAttachment,
+        setPendingAttachment,
+        handleSendMessage,
+    } = useSendMessage({
+        isNewSession,
+        isSending,
+        isStreaming,
+        agentIdForNew,
+        agents,
+        projectIdForNew,
+        contextForNew,
+        lengthPreference,
+        scrollToBottom,
+        navigate,
+        createSession,
+        sendOrchestratedMessage,
+    });
+
+    const {
+        deleteMessageConfirmId,
+        deletingMessageId,
+        requestDeleteMessage,
+        cancelDelete: cancelDeleteMessage,
+        handleConfirmDeleteMessage,
+    } = useDeleteMessage({ deleteMessage });
 
     // ── Auto-send initial question from ?q= or sessionStorage ────────────────
     useAutoSendQuestion({
@@ -189,111 +214,6 @@ export function FacultyChatPage() {
         setRenameConfirmId(null);
     };
 
-    const handleConfirmDeleteMessage = async () => {
-        if (!deleteMessageConfirmId) return;
-        const id = deleteMessageConfirmId;
-        setDeleteMessageConfirmId(null);
-        setDeletingMessageId(id);
-        try {
-            await deleteMessage(id);
-        } finally {
-            setDeletingMessageId(null);
-        }
-    };
-
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // Allow image-only sends — the model is multimodal so a question
-        // can live entirely in the picture (e.g. "what does this say?").
-        const hasAttachment = !!pendingAttachment;
-        if ((!input.trim() && !hasAttachment) || isSending || isStreaming) return;
-
-        const userMsg = input;
-        const stagedAttachment = pendingAttachment;
-        setInput('');
-        setPendingAttachment(null);
-        scrollToBottom(true);
-
-        // Convert the file once up front so both the new-session path
-        // (which waits on createSession before sending) and the existing
-        // session path can reuse the same payload.
-        let inlineAndMeta: {
-            inline?: { mimeType: string; data: string };
-            meta?: { filename: string; mimeType: string; sizeBytes: number };
-        } = {};
-        if (stagedAttachment) {
-            try {
-                const prepared = await prepareAttachmentForSend(stagedAttachment);
-                inlineAndMeta = { inline: prepared.inline, meta: prepared.meta };
-                console.log('[FacultyChat] attachment ready:', {
-                    name: prepared.meta.filename,
-                    mime: prepared.meta.mimeType,
-                    bytes: prepared.meta.sizeBytes,
-                });
-            } catch (err) {
-                console.error('[FacultyChat] attachment encoding failed:', err);
-                toast.error(t('chat.attachment.tooLarge'));
-                setInput(userMsg);
-                setPendingAttachment(stagedAttachment);
-                return;
-            }
-        }
-
-        if (isNewSession) {
-            const targetAgentId = agentIdForNew || agents.find(a => a.isActive)?.id || agents[0]?.id || '';
-            if (!targetAgentId) {
-                setInput(userMsg);
-                if (stagedAttachment) setPendingAttachment(stagedAttachment);
-                return;
-            }
-            try {
-                const newSession = await createSession.mutateAsync({
-                    agentId: targetAgentId,
-                    projectId: projectIdForNew,
-                    context: contextForNew,
-                });
-                // The auto-send path via `?q=` can't carry an attachment, so
-                // when there's a file we send directly here instead, then
-                // navigate to the canonical session URL afterwards.
-                if (inlineAndMeta.inline) {
-                    navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
-                    // sessionIdOverride targets the freshly created session,
-                    // bypassing the closure-captured `sessionId=''` from the
-                    // pre-navigate /new render. Without it the mutation's
-                    // `sessionQuery.data` guard throws "Session not found"
-                    // because the query is disabled when `sessionId` is empty.
-                    await sendOrchestratedMessage({
-                        message: userMsg,
-                        lengthPreference,
-                        attachments: [inlineAndMeta.inline],
-                        ...(inlineAndMeta.meta && { attachmentsMeta: [inlineAndMeta.meta] }),
-                        sessionIdOverride: newSession.id,
-                    });
-                } else {
-                    navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
-                }
-            } catch (err) {
-                console.error('Failed to create session:', err);
-                setInput(userMsg);
-                if (stagedAttachment) setPendingAttachment(stagedAttachment);
-            }
-            return;
-        }
-
-        try {
-            await sendOrchestratedMessage({
-                message: userMsg,
-                lengthPreference,
-                ...(inlineAndMeta.inline && { attachments: [inlineAndMeta.inline] }),
-                ...(inlineAndMeta.meta && { attachmentsMeta: [inlineAndMeta.meta] }),
-            });
-        } catch (error) {
-            console.error('Failed to send message:', error);
-            setInput(userMsg);
-            if (stagedAttachment) setPendingAttachment(stagedAttachment);
-        }
-    };
-
     const { extractingType, handleExtract } = useExtractionAction({
         effectiveSessionId,
         session,
@@ -303,13 +223,6 @@ export function FacultyChatPage() {
         setSermonOutline,
         openExtractionInEditor,
     });
-
-    const handleGenerateFullSermon = async (approvedOutline: SermonOutline, personalization?: SermonPersonalization): Promise<string> => {
-        // The modal expects the markdown back so it can render the
-        // sermon preview before calling its onSuccess hook (which is
-        // where we persist the Extraction with the sermonId externalRef).
-        return await extractContent({ type: 'SERMON', approvedOutline, personalization });
-    };
 
     // ── Extraction list handlers (panel "Generados" tab) ─────────────────────
     const {
@@ -416,7 +329,7 @@ export function FacultyChatPage() {
                                                         streamingMessage={streamingMessage}
                                                         activeAgents={activeAgents}
                                                         agentNameForNew={agentNameForNew}
-                                                        onRequestDeleteMessage={(messageId) => setDeleteMessageConfirmId(messageId)}
+                                                        onRequestDeleteMessage={requestDeleteMessage}
                                                         onCopyMessage={(content, messageId) => copyMessageToClipboard(content, messageId, t)}
                                                     />
                                                     <div ref={messagesEndRef} />
@@ -524,7 +437,9 @@ export function FacultyChatPage() {
                 outline={sermonOutline}
                 sessionId={effectiveSessionId || undefined}
                 onClose={() => setSermonOutline(null)}
-                onGenerateFullSermon={handleGenerateFullSermon}
+                onGenerateFullSermon={(outline, personalization) =>
+                    extractContent({ type: 'SERMON', approvedOutline: outline, personalization })
+                }
                 onSuccess={(sermonId, content, title) => {
                     // Sermon doc is canonical (sermons/{id}); persist a
                     // companion Extraction so the artifact also surfaces
@@ -582,7 +497,7 @@ export function FacultyChatPage() {
                     }
                 }}
                 deleteMessageId={deleteMessageConfirmId}
-                onCloseDeleteMessage={() => setDeleteMessageConfirmId(null)}
+                onCloseDeleteMessage={cancelDeleteMessage}
                 onConfirmDeleteMessage={handleConfirmDeleteMessage}
             />
         </div>
