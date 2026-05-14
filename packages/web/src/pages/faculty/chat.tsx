@@ -27,6 +27,7 @@ import { prepareAttachmentForSend } from './utils/prepareAttachmentForSend';
 import { injectInlineStylesForCopy } from './utils/injectInlineStylesForCopy';
 import { useAutoscrollChat } from './hooks/useAutoscrollChat';
 import { useAutoSendQuestion } from './hooks/useAutoSendQuestion';
+import { useExtractionListHandlers } from './hooks/useExtractionListHandlers';
 import { FacultyConfirmDialogs } from './components/FacultyConfirmDialogs';
 
 export function FacultyChatPage() {
@@ -408,55 +409,28 @@ export function FacultyChatPage() {
     }, [documentMarkdown, documentSource, documentExtractionId]);
 
     // ── Extraction list handlers (panel "Generados" tab) ─────────────────────
-
-    const handleRenameExtraction = (extraction: Extraction, newTitle: string) => {
-        renameExtraction.mutate({ extractionId: extraction.id, title: newTitle });
-        if (documentExtractionId === extraction.id) setDocumentTitle(newTitle);
-    };
-
-    const handleAddExtractionToProject = (extraction: Extraction, projectId: string) => {
-        addExtractionToProject.mutate({ extractionId: extraction.id, projectId });
-        track('faculty_artifact_pinned_to_project', {
-            type: extraction.type,
-            projectId,
-            totalPinsAfter: extraction.projectIds.length + 1,
-        });
-        toast.success(t('extractionsList.toast.pinned'));
-    };
-
-    const handleRemoveExtractionFromProject = (extraction: Extraction, projectId: string) => {
-        removeExtractionFromProject.mutate({ extractionId: extraction.id, projectId });
-        toast.success(t('extractionsList.toast.unpinned'));
-    };
-
-    const handleDeleteExtraction = (extraction: Extraction) => {
-        if (!window.confirm(t('extractionsList.confirmDelete'))) return;
-        deleteExtraction.mutate(extraction.id);
-        track('faculty_artifact_deleted', {
-            type: extraction.type,
-            ageHours: Math.round((Date.now() - extraction.createdAt.getTime()) / 3_600_000),
-        });
-        if (documentExtractionId === extraction.id) closeDocument();
-    };
-
-    const handleJumpToOrigin = (extraction: Extraction) => {
-        if (!extraction.sessionId) return;
-        const messageHash = extraction.derivedFromMessageIds.length > 0
-            ? `#origin=${extraction.derivedFromMessageIds.slice(-3).join(',')}`
-            : '';
-        if (extraction.sessionId === effectiveSessionId) {
-            // Same session — scroll behavior is handled by a hash effect
-            // in FacultyChatMessages that watches `#origin=...`.
-            window.location.hash = messageHash.slice(1);
-        } else {
-            navigate(`/dashboard/faculty/${extraction.sessionId}${messageHash}`);
-        }
-    };
+    const {
+        handleRenameExtraction,
+        handleAddExtractionToProject,
+        handleRemoveExtractionFromProject,
+        handleDeleteExtraction,
+        handleJumpToOrigin,
+    } = useExtractionListHandlers({
+        documentExtractionId,
+        effectiveSessionId,
+        navigate,
+        setDocumentTitle,
+        closeDocument,
+        renameExtraction,
+        addExtractionToProject,
+        removeExtractionFromProject,
+        deleteExtraction,
+    });
 
     // ── Render ───────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50 dark:bg-zinc-950 font-sans">
+        <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/30 font-sans">
             {/* Header */}
             <FacultyChatHeader
                 isHomeState={isHomeState}
@@ -521,7 +495,7 @@ export function FacultyChatPage() {
                                         </div>
                                     ) : isLoadingSession && !isNewSession ? (
                                         <div className="flex-1 flex items-center justify-center">
-                                            <div className="flex flex-col items-center gap-3 text-slate-400">
+                                            <div className="flex flex-col items-center gap-3 text-muted-foreground">
                                                 <Loader2 className="w-6 h-6 animate-spin" />
                                                 <p className="text-sm">{t('chat.loadingConversation')}</p>
                                             </div>
