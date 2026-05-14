@@ -106,6 +106,8 @@
     "extraction": {
         "title": "Resources",
         "description": "Turn this conversation into ready-to-use resources.",
+        "openPanel": "Open resources panel",
+        "collapsePanel": "Collapse resources panel",
         "sermonOutline": "Sermon Outline",
         "sermonOutlineDesc": "Expository structure with points and application.",
         "bibleStudy": "Study Guide",

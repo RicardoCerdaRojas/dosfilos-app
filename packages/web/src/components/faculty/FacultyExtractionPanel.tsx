@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, Loader2, Sparkles, FolderOpen } from 'lucide-react';
+import { Download, BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, Loader2, Sparkles, FolderOpen, PanelRight, PanelRightClose } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,8 @@ type Tab = 'tools' | 'generated';
 
 interface FacultyExtractionPanelProps {
     isOpen: boolean;
+    /** Toggle handler for the rail's own open/close affordance. */
+    onToggle: () => void;
     extractingType: string | null;
     messageCount: number;
     onExtract: (type: ExtractionType) => void;
@@ -58,6 +60,7 @@ interface FacultyExtractionPanelProps {
  */
 export function FacultyExtractionPanel({
     isOpen,
+    onToggle,
     extractingType,
     messageCount,
     onExtract,
@@ -80,16 +83,27 @@ export function FacultyExtractionPanel({
     const [tab, setTab] = useState<Tab>('tools');
 
     return (
+        <>
         <aside className={cn(
             "border-border bg-card hidden lg:flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out",
             isOpen ? "w-[28rem] border-l opacity-100" : "w-0 border-l-0 opacity-0 overflow-hidden"
         )}>
             <div className="px-6 pt-5 pb-3 border-b border-border/50 flex flex-col gap-3 w-[28rem]">
-                <div className="flex items-center gap-2">
-                    <Download className="w-4 h-4 text-primary" />
-                    <h3 className="font-semibold text-foreground">
-                        {t('extraction.title')}
-                    </h3>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Download className="w-4 h-4 text-primary" />
+                        <h3 className="font-semibold text-foreground">
+                            {t('extraction.title')}
+                        </h3>
+                    </div>
+                    <button
+                        onClick={onToggle}
+                        className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                        title={t('extraction.collapsePanel')}
+                        aria-label={t('extraction.collapsePanel')}
+                    >
+                        <PanelRightClose className="w-3.5 h-3.5" />
+                    </button>
                 </div>
                 <div className="flex items-center gap-1 -mb-3 border-b border-transparent">
                     <TabButton active={tab === 'tools'} onClick={() => setTab('tools')}>
@@ -148,6 +162,24 @@ export function FacultyExtractionPanel({
                 />
             )}
         </aside>
+
+        {/*
+         * Edge-tab: when the panel is collapsed, render a small
+         * floating handle docked to the page's right edge so the
+         * user has a discoverable affordance to re-open without a
+         * global header. Mirrors the left sidebar's edge-tab.
+         */}
+        {!isOpen && (
+            <button
+                onClick={onToggle}
+                className="hidden lg:flex fixed right-0 top-20 z-30 items-center justify-center h-9 w-7 rounded-l-md border border-r-0 border-border bg-card hover:bg-accent text-muted-foreground hover:text-foreground shadow-sm transition-colors"
+                title={t('extraction.openPanel')}
+                aria-label={t('extraction.openPanel')}
+            >
+                <PanelRight className="w-4 h-4" />
+            </button>
+        )}
+        </>
     );
 }
 

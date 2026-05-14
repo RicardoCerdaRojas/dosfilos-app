@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
@@ -10,7 +10,6 @@ import { useFirebase } from '@/context/firebase-context';
 import { useFacultyChat, useFacultySessions, useFacultyAgents, useSessionExtractions, useExtractionMutations } from '../../hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { SermonOutlinePreviewModal, type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
-import { FacultyChatHeader } from '@/components/faculty/FacultyChatHeader';
 import { FacultySessionSidebar } from '@/components/faculty/FacultySessionSidebar';
 import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPanel';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
@@ -247,21 +246,14 @@ export function FacultyChatPage() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/30 font-sans">
-            {/* Header */}
-            <FacultyChatHeader
-                isHomeState={isHomeState}
-                isNewSession={isNewSession}
-                sessionTitle={session?.title}
-                sessionAgentId={session?.agentId}
-                agentNameForNew={agentNameForNew}
-                lengthPreference={lengthPreference}
-                isLeftSidebarOpen={isLeftSidebarOpen}
-                isRightSidebarOpen={isRightSidebarOpen}
-                onBack={() => navigate('/dashboard/faculty')}
-                onSetLengthPreference={setLengthPreference}
-                onToggleLeftSidebar={toggleSidebar}
-                onToggleRightSidebar={() => setIsRightSidebarOpen(prev => !prev)}
-            />
+            {/*
+             * No global page header. Rail toggles live as edge-tabs
+             * on each rail (FacultySessionSidebar / FacultyExtractionPanel),
+             * the mode selector is colocated with the input it
+             * affects, and the session context (back arrow + title)
+             * is rendered as a thin sticky strip inside the message
+             * area below — only when there's an actual session.
+             */}
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Left sidebar */}
@@ -318,6 +310,32 @@ export function FacultyChatPage() {
                                         </div>
                                     ) : (
                                         <>
+                                            {/*
+                                             * Compact session strip — replaces the
+                                             * old global page header in session view.
+                                             * Sticky at the top of the scroll area
+                                             * so the user always has back-to-home
+                                             * affordance + session title without a
+                                             * full chrome bar.
+                                             */}
+                                            <div className="sticky top-0 z-10 flex items-center gap-2 px-4 md:px-8 py-2 bg-background/80 backdrop-blur border-b border-border">
+                                                <button
+                                                    onClick={() => navigate('/dashboard/faculty')}
+                                                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                                                    title={t('header.backToHome')}
+                                                    aria-label={t('header.backToHome')}
+                                                >
+                                                    <ArrowLeft className="w-4 h-4" />
+                                                </button>
+                                                <h1 className="text-sm font-semibold leading-none truncate">
+                                                    {isNewSession ? agentNameForNew : (session?.title || t('header.sessionActive'))}
+                                                </h1>
+                                                {isNewSession && (
+                                                    <span className="text-[11px] text-muted-foreground ml-1 hidden sm:inline">
+                                                        · {t('header.newSession')}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
                                                 <div className="max-w-3xl mx-auto space-y-6 w-full">
                                                     <FacultyChatMessages
@@ -347,6 +365,8 @@ export function FacultyChatPage() {
                                                 onSubmit={handleSendMessage}
                                                 attachment={pendingAttachment}
                                                 onAttach={setPendingAttachment}
+                                                lengthPreference={lengthPreference}
+                                                onSetLengthPreference={setLengthPreference}
                                             />
                                         </>
                                     )}
@@ -401,6 +421,7 @@ export function FacultyChatPage() {
                 {/* Right extraction panel */}
                 <FacultyExtractionPanel
                     isOpen={isRightSidebarOpen}
+                    onToggle={() => setIsRightSidebarOpen(prev => !prev)}
                     extractingType={extractingType}
                     messageCount={session?.messages.length || 0}
                     onExtract={handleExtract}
