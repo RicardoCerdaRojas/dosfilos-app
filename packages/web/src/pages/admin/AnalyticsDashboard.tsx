@@ -282,6 +282,83 @@ export function AnalyticsDashboard() {
                             </div>
                         </div>
                     </Card>
+
+                    {/* Hito 7 — Faculty engagement + lead-magnet funnel.
+                        Sourced from `funnel_events/` rolled up by the
+                        recalculator. Activates as a real signal at ≥50
+                        users / 30d post-launch; until then the numbers
+                        are mostly internal smoke. */}
+                    <Card className="p-6">
+                        <h2 className="text-xl font-bold text-slate-900 mb-1">
+                            Hito 7 — Engagement Faculty
+                        </h2>
+                        <p className="text-xs text-slate-500 mb-4">
+                            Eventos del funnel · hoy / últimos 30 días
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <Hito7Tile
+                                label="Sesiones Faculty"
+                                today={metrics.hito7?.today.faculty_session_started ?? 0}
+                                last30d={metrics.hito7?.last30d.faculty_session_started ?? 0}
+                                accent="border-indigo-500"
+                            />
+                            <Hito7Tile
+                                label="Artefactos generados"
+                                today={metrics.hito7?.today.faculty_artifact_generated ?? 0}
+                                last30d={metrics.hito7?.last30d.faculty_artifact_generated ?? 0}
+                                accent="border-emerald-500"
+                            />
+                            <Hito7Tile
+                                label="Recursos enviados por email"
+                                today={metrics.hito7?.today.faculty_artifact_emailed ?? 0}
+                                last30d={metrics.hito7?.last30d.faculty_artifact_emailed ?? 0}
+                                accent="border-sky-500"
+                            />
+                            <Hito7Tile
+                                label="Publicados a WordPress"
+                                today={metrics.hito7?.today.faculty_artifact_published_wordpress ?? 0}
+                                last30d={metrics.hito7?.last30d.faculty_artifact_published_wordpress ?? 0}
+                                accent="border-rose-500"
+                            />
+                        </div>
+
+                        <h3 className="text-sm font-semibold text-slate-700 mt-6 mb-3">
+                            Lead magnet · funnel
+                        </h3>
+                        <div className="grid grid-cols-3 gap-4">
+                            <Hito7Tile
+                                label="Vistas landing"
+                                today={metrics.hito7?.today.lead_magnet_viewed ?? 0}
+                                last30d={metrics.hito7?.last30d.lead_magnet_viewed ?? 0}
+                                accent="border-slate-400"
+                            />
+                            <Hito7Tile
+                                label="Formularios enviados"
+                                today={metrics.hito7?.today.lead_magnet_submitted ?? 0}
+                                last30d={metrics.hito7?.last30d.lead_magnet_submitted ?? 0}
+                                accent="border-amber-500"
+                            />
+                            <Hito7Tile
+                                label="Descargas"
+                                today={metrics.hito7?.today.lead_magnet_downloaded ?? 0}
+                                last30d={metrics.hito7?.last30d.lead_magnet_downloaded ?? 0}
+                                accent="border-green-500"
+                            />
+                        </div>
+                        {/* Conversion view → download. Computed from 30d
+                            window so single events don't whipsaw the
+                            number when traffic is low. */}
+                        <p className="text-xs text-slate-500 mt-3">
+                            Conversión vista → descarga (30d):{' '}
+                            <span className="font-semibold text-slate-700">
+                                {(() => {
+                                    const v = metrics.hito7?.last30d.lead_magnet_viewed ?? 0;
+                                    const d = metrics.hito7?.last30d.lead_magnet_downloaded ?? 0;
+                                    return v > 0 ? `${((d / v) * 100).toFixed(1)}%` : '—';
+                                })()}
+                            </span>
+                        </p>
+                    </Card>
                 </>
             ) : (
                 <Card className="p-12 text-center">
@@ -292,6 +369,25 @@ export function AnalyticsDashboard() {
                     </Button>
                 </Card>
             )}
+        </div>
+    );
+}
+
+interface Hito7TileProps {
+    label: string;
+    today: number;
+    last30d: number;
+    accent: string;
+}
+
+function Hito7Tile({ label, today, last30d, accent }: Hito7TileProps) {
+    return (
+        <div className={`border-l-4 ${accent} pl-4`}>
+            <p className="text-sm text-slate-600">{label}</p>
+            <p className="text-2xl font-bold text-slate-900">{last30d}</p>
+            <p className="text-xs text-slate-500 mt-1">
+                Hoy: <span className="font-semibold text-slate-700">{today}</span>
+            </p>
         </div>
     );
 }

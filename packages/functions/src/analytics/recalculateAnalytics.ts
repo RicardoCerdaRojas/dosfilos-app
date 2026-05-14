@@ -154,7 +154,16 @@ async function runRecalculation(): Promise<void> {
         }
     }
 
-    // ── 8. Write results ──────────────────────────────────────────────────────
+    // ── 8. Hito 7 funnel events — Faculty engagement + lead magnet rollup ────
+    // Reads the funnel_events audit trail (written by trackFunnelEvent), groups
+    // by eventName, and produces two windows: today and last 30 days. The
+    // dashboard surfaces these so we can answer "are paid users actually using
+    // Faculty?" and "is the lead magnet funnel converting?" without manually
+    // pivoting GA4. Numbers stay independent of GA4's 14-month retention.
+    const hito7Today = await rollupFunnelEvents(db, todayStart);
+    const hito7Last30d = await rollupFunnelEvents(db, thirtyDaysAgo);
+
+    // ── 9. Write results ──────────────────────────────────────────────────────
     const batch = db.batch();
 
     const aggregateRef = db.doc('global_metrics/aggregate');
@@ -173,6 +182,9 @@ async function runRecalculation(): Promise<void> {
             mau,
             mrr: Math.round(mrr * 100) / 100,
             paidUsers,
+        },
+        hito7: {
+            last30d: hito7Last30d,
         },
         lastUpdated: new Date(),
     }, { merge: false });
@@ -194,6 +206,7 @@ async function runRecalculation(): Promise<void> {
         sermons: {
             created: sermonsCreatedToday,
         },
+        hito7: hito7Today,
         updatedAt: new Date(),
     }, { merge: false });
 
@@ -203,7 +216,33 @@ async function runRecalculation(): Promise<void> {
         totalUsers, dau, mau, mrr, paidUsers,
         planDist, totalSermons, totalGreekSessions, totalSeries,
         newUsersToday, sermonsCreatedToday, totalLoginsToday,
+        hito7Today, hito7Last30d,
     });
+}
+
+/**
+ * Counts `funnel_events` written since `since`, grouped by eventName.
+ * Returns a flat `{ eventName: count }` map so the dashboard can render
+ * any subset without the aggregator knowing about specific events.
+ *
+ * Uses `serverTimestamp` (the Firestore-stamped field, not the
+ * client-supplied `clientTimestamp`) so clock skew on the user's
+ * device doesn't move events between buckets.
+ */
+async function rollupFunnelEvents(
+    db: FirebaseFirestore.Firestore,
+    since: Date,
+): Promise<Record<string, number>> {
+    const snap = await db.collection('funnel_events')
+        .where('serverTimestamp', '>=', since)
+        .get();
+    const counts: Record<string, number> = {};
+    snap.forEach(doc => {
+        const name = doc.data().eventName;
+        if (typeof name !== 'string' || !name) return;
+        counts[name] = (counts[name] ?? 0) + 1;
+    });
+    return counts;
 }
 
 /**
