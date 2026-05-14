@@ -1,5 +1,6 @@
 import { FirebaseSermonRepository, AnalyticsService } from '@dosfilos/infrastructure';
 import { SermonEntity, FindOptions, Sermon } from '@dosfilos/domain';
+import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 
 export class SermonService {
     private sermonRepository: FirebaseSermonRepository;
@@ -345,6 +346,45 @@ export class SermonService {
 
     async getPublishedVersions(draftId: string, userId: string): Promise<SermonEntity[]> {
         return await this.sermonRepository.findByDraftId(draftId, userId);
+    }
+
+    /**
+     * Reads the canvas annotation snapshot persisted under
+     * `sermons/{id}/annotations/main`. Returns the parsed snapshot
+     * object (the engine-specific type lives in the web adapter; the
+     * service deals in opaque `unknown` so the domain doesn't depend
+     * on the drawing engine). Falls back to the legacy `snapshot`
+     * field for pre-JSON migration docs.
+     */
+    async getAnnotationSnapshot(sermonId: string): Promise<unknown | null> {
+        const db = getFirestore();
+        const snap = await getDoc(doc(db, 'sermons', sermonId, 'annotations', 'main'));
+        if (!snap.exists()) return null;
+        const data = snap.data();
+        if (data?.snapshotJSON) {
+            try {
+                return JSON.parse(data.snapshotJSON as string);
+            } catch (err) {
+                console.error('[SermonService] Failed to parse annotation JSON:', err);
+                return null;
+            }
+        }
+        if (data?.snapshot) return data.snapshot;
+        return null;
+    }
+
+    /**
+     * Persists an annotation snapshot. Stored as a JSON string
+     * because Firestore rejects nested arrays (which tldraw / canvas
+     * snapshots produce). Caller (the React hook) debounces writes —
+     * the service is a pure boundary.
+     */
+    async saveAnnotationSnapshot(sermonId: string, snapshot: unknown): Promise<void> {
+        const db = getFirestore();
+        await setDoc(doc(db, 'sermons', sermonId, 'annotations', 'main'), {
+            snapshotJSON: JSON.stringify(snapshot),
+            updatedAt: new Date(),
+        });
     }
 }
 

@@ -2,7 +2,7 @@ import { FirebaseAuthRepository, db } from '@dosfilos/infrastructure';
 import { UserEntity } from '@dosfilos/domain';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { signInWithCustomToken, getAuth } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface CompleteRegistrationResult {
     success: boolean;
@@ -230,6 +230,24 @@ export class AuthService {
 
         const message = errorMessages[errorCode] || error.message || 'Error desconocido';
         return new Error(message);
+    }
+
+    /**
+     * Reads the user's role from `users/{uid}.role`. Used by the
+     * admin route guard to gate `/dashboard/admin/**` behind a
+     * `super_admin` check. Returns `null` for missing users or
+     * read failures so the caller can fail closed (deny access).
+     */
+    async getUserRole(uid: string): Promise<string | null> {
+        try {
+            const snap = await getDoc(doc(db, 'users', uid));
+            if (!snap.exists()) return null;
+            const role = snap.data()?.role;
+            return typeof role === 'string' ? role : null;
+        } catch (err) {
+            console.error('[AuthService] Failed to read user role:', err);
+            return null;
+        }
     }
 }
 

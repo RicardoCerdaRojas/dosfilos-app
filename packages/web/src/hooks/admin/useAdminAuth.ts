@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@dosfilos/infrastructure';
+import { authService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 
 /**
- * Hook to verify and manage super admin access
- * Redirects non-admin users to dashboard
+ * Hook to verify and manage super admin access.
+ * Redirects non-admin users to dashboard. Role lookup goes through
+ * `authService.getUserRole` so the Firestore SDK stays out of this
+ * presenter (compliance C7.3).
  */
 export function useAdminAuth() {
     const { user } = useFirebase();
@@ -24,35 +25,22 @@ export function useAdminAuth() {
                 return;
             }
 
-            try {
-                // Check user role in Firestore
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-
-                if (!userDoc.exists()) {
-                    setIsAdmin(false);
-                    setLoading(false);
-                    toast.error('Usuario no encontrado');
-                    navigate('/dashboard');
-                    return;
-                }
-
-                const userData = userDoc.data();
-                const userRole = userData.role;
-
-                if (userRole === 'super_admin') {
-                    setIsAdmin(true);
-                    setLoading(false);
-                } else {
-                    setIsAdmin(false);
-                    setLoading(false);
-                    toast.error('No tienes permisos para acceder a esta sección');
-                    navigate('/dashboard');
-                }
-            } catch (error) {
-                console.error('Error checking admin access:', error);
+            const role = await authService.getUserRole(user.uid);
+            if (role === null) {
                 setIsAdmin(false);
                 setLoading(false);
-                toast.error('Error al verificar permisos');
+                toast.error('Usuario no encontrado');
+                navigate('/dashboard');
+                return;
+            }
+
+            if (role === 'super_admin') {
+                setIsAdmin(true);
+                setLoading(false);
+            } else {
+                setIsAdmin(false);
+                setLoading(false);
+                toast.error('No tienes permisos para acceder a esta sección');
                 navigate('/dashboard');
             }
         };
