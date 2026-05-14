@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import {
     Search, GraduationCap, Library, ScrollText, HeartHandshake,
     Mic, Send, Sparkles, ArrowRight, Loader2, BookOpen, Brain, MessageCircle, Users,
-    Paperclip, X,
+    Paperclip, X, ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,22 +32,25 @@ async function fileToBase64(file: File): Promise<string> {
     });
 }
 
-// Icon + i18n key map. Both label and prompt are resolved per-render so the
-// chip row reflects the active locale without a remount.
-const QUICK_PROMPT_KEYS: Array<{ key: 'outline' | 'counseling' | 'exegesis' | 'theology'; icon: React.ElementType }> = [
+// Two representative chips only — the previous 4 were redundant with
+// the right-side Recursos panel. Outline (most common) + Exegesis
+// (theological depth) cover the activation surface; users who want
+// the other shapes (counseling/theology) still get there via natural
+// language in the input.
+const QUICK_PROMPT_KEYS: Array<{ key: 'outline' | 'exegesis'; icon: React.ElementType }> = [
     { key: 'outline', icon: BookOpen },
-    { key: 'counseling', icon: HeartHandshake },
     { key: 'exegesis', icon: ScrollText },
-    { key: 'theology', icon: Brain },
 ];
 
-// Role-specific icon config — each agent has its own palette
+// Role-specific icon config — each agent has its own palette. Brand
+// identity colors stay raw (intentional per-agent visual identity);
+// semantic tokens cover the surrounding chrome.
 const ICON_CONFIG: Record<string, { icon: React.ElementType; bg: string; text: string; ring: string }> = {
     'book-a':          { icon: Library,       bg: 'bg-sky-100 dark:bg-sky-900/40',      text: 'text-sky-700 dark:text-sky-300',      ring: 'ring-sky-200 dark:ring-sky-700' },
     'scroll':          { icon: ScrollText,    bg: 'bg-amber-100 dark:bg-amber-900/40',  text: 'text-amber-700 dark:text-amber-300',  ring: 'ring-amber-200 dark:ring-amber-700' },
     'heart-handshake': { icon: HeartHandshake,bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300', ring: 'ring-emerald-200 dark:ring-emerald-700' },
     'mic':             { icon: Mic,           bg: 'bg-rose-100 dark:bg-rose-900/40',    text: 'text-rose-700 dark:text-rose-300',    ring: 'ring-rose-200 dark:ring-rose-700' },
-    'library':         { icon: Library,       bg: 'bg-slate-100 dark:bg-slate-800',     text: 'text-slate-700 dark:text-slate-300',  ring: 'ring-slate-200 dark:ring-slate-600' },
+    'library':         { icon: Library,       bg: 'bg-muted',                            text: 'text-foreground',                     ring: 'ring-border' },
     'users':           { icon: Users,         bg: 'bg-violet-100 dark:bg-violet-900/40',text: 'text-violet-700 dark:text-violet-300',ring: 'ring-violet-200 dark:ring-violet-700' },
 };
 const DEFAULT_ICON_CONFIG = ICON_CONFIG['users'];
@@ -59,6 +62,10 @@ export function FacultyDirectoryPage() {
     const [orchestratorInput, setOrchestratorInput] = useState('');
     const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
     const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+    // Specialists are now a secondary path behind a disclosure — the
+    // primary CTA is the orchestrator input. Keeps the home focused
+    // on "describe what you need" instead of a tutor-catalog dump.
+    const [showSpecialists, setShowSpecialists] = useState(false);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -204,55 +211,58 @@ export function FacultyDirectoryPage() {
     const isBusy = isLoadingAgents;
 
     return (
-        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50 font-sans overflow-y-auto">
+        <div className="flex flex-col h-full bg-background font-sans overflow-y-auto">
 
             {/* ── Hero + Orchestrator Input ─────────────────────────────────────── */}
             {/*
-                Color rationale: deep slate-900 (matches the app's sidebar dark navy) +
-                warm amber accents (gold = wisdom, knowledge — ministerial gravitas).
-                Replaces the previous vivid indigo/fuchsia which felt more "tech startup".
+                Theme-aware hero. Previous version forced a slate-900 dark
+                gradient even in light mode, which broke visual hierarchy
+                (the dark frame competed with surrounding chrome). Now the
+                hero uses `bg-card` over the page's `bg-background` so it
+                reads as a soft container in both themes — no jarring
+                cross-mode mismatch.
             */}
-            <div className="relative pt-14 pb-16 px-6 sm:px-12 lg:px-20 bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 text-white overflow-hidden shrink-0" style={{ background: 'linear-gradient(to bottom, #0f172a, #1e293b, #0f172a)' }}>
-                {/* Subtle warm texture overlay */}
-                <div className="absolute inset-0 opacity-[0.04]"
-                    style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(251,191,36,0.3) 2px, rgba(251,191,36,0.3) 3px)' }}
-                />
-                {/* Warm amber glow — top right */}
-                <div className="absolute -top-32 -right-32 w-80 h-80 bg-amber-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10" />
-                {/* Muted slate glow — bottom left */}
-                <div className="absolute -bottom-32 -left-16 w-72 h-72 bg-slate-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
+            <div className="relative pt-10 pb-10 px-6 sm:px-12 lg:px-20 bg-card border-b border-border overflow-hidden shrink-0">
+                {/* Subtle radial accent — adds warmth without the previous
+                    full-frame dark treatment. Same primary tint in both
+                    themes (token-driven), just a soft glow. */}
+                <div className="absolute -top-32 -right-32 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-32 -left-16 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 max-w-2xl mx-auto text-center">
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/25 text-amber-300 text-sm font-medium mb-5 backdrop-blur-sm">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-4">
                         <GraduationCap className="w-4 h-4" />
                         <span>{t('directory.badge')}</span>
                     </div>
 
-                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3 leading-tight font-serif drop-shadow-md">
+                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2 leading-tight font-serif">
                         {t('directory.heroTitle')}
                     </h1>
-                    <p className="text-slate-300/80 mb-8 text-base leading-relaxed">
+                    <p className="text-muted-foreground mb-6 text-sm md:text-base leading-relaxed">
                         {t('directory.heroSubtitle')}
                     </p>
 
-                    {/* Orchestrator input */}
-                    <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl p-2 shadow-2xl shadow-black/40">
+                    {/* Orchestrator input — primary CTA. Theme-aware
+                        styling: in light mode reads as a normal input
+                        with shadow; in dark mode same tokens give an
+                        elevated card look. */}
+                    <div className="bg-background border border-border rounded-2xl p-2 shadow-sm focus-within:border-primary/50 focus-within:shadow-md transition-shadow">
                         {pendingAttachment && attachmentPreview && (
-                            <div className="flex items-center gap-2 px-2 pt-1.5 pb-1 mb-1 border-b border-white/[0.08]">
+                            <div className="flex items-center gap-2 px-2 pt-1.5 pb-1 mb-1 border-b border-border">
                                 <img
                                     src={attachmentPreview}
                                     alt={pendingAttachment.name}
-                                    className="h-10 w-10 object-cover rounded-md border border-white/[0.12]"
+                                    className="h-10 w-10 object-cover rounded-md border border-border"
                                 />
                                 <div className="flex-1 min-w-0 text-[11px]">
-                                    <div className="text-slate-200 truncate">{pendingAttachment.name}</div>
-                                    <div className="text-slate-400">{(pendingAttachment.size / 1024).toFixed(0)} KB</div>
+                                    <div className="text-foreground truncate">{pendingAttachment.name}</div>
+                                    <div className="text-muted-foreground">{(pendingAttachment.size / 1024).toFixed(0)} KB</div>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setPendingAttachment(null)}
-                                    className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-white/[0.05] transition-colors"
+                                    className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
                                     aria-label={t('directory.attachment.remove')}
                                     title={t('directory.attachment.remove')}
                                 >
@@ -261,7 +271,7 @@ export function FacultyDirectoryPage() {
                             </div>
                         )}
                         <div className="flex items-end gap-2">
-                            <Sparkles className="h-5 w-5 text-amber-400/80 shrink-0 mb-3 ml-2" />
+                            <Sparkles className="h-5 w-5 text-primary shrink-0 mb-3 ml-2" />
                             <textarea
                                 ref={inputRef}
                                 value={orchestratorInput}
@@ -269,7 +279,7 @@ export function FacultyDirectoryPage() {
                                 onKeyDown={handleKeyDown}
                                 placeholder={t('directory.inputPlaceholder')}
                                 rows={1}
-                                className="flex-1 resize-none bg-transparent text-white placeholder:text-slate-400/70 text-[15px] leading-relaxed outline-none py-2.5 px-1 max-h-40 overflow-y-hidden"
+                                className="flex-1 resize-none bg-transparent text-foreground placeholder:text-muted-foreground text-[15px] leading-relaxed outline-none py-2.5 px-1 max-h-40 overflow-y-hidden"
                             />
                             <input
                                 ref={fileInputRef}
@@ -286,7 +296,7 @@ export function FacultyDirectoryPage() {
                                 variant="ghost"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isBusy || agents.length === 0}
-                                className="shrink-0 h-10 w-10 p-0 rounded-xl text-slate-300 hover:text-amber-300 hover:bg-white/[0.08]"
+                                className="shrink-0 h-10 w-10 p-0 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted"
                                 title={t('directory.attachment.attachLabel')}
                             >
                                 <Paperclip className="h-4 w-4" />
@@ -294,15 +304,17 @@ export function FacultyDirectoryPage() {
                             <Button
                                 onClick={() => void handleStartOrchestrated(orchestratorInput)}
                                 disabled={(!orchestratorInput.trim() && !pendingAttachment) || isBusy || agents.length === 0}
-                                className="shrink-0 h-10 w-10 p-0 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-900 shadow-sm transition-all"
+                                className="shrink-0 h-10 w-10 p-0 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-40 text-primary-foreground shadow-sm transition-all"
                             >
                                 <Send className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
 
-                    {/* Quick prompt chips */}
-                    <div className="flex flex-wrap justify-center gap-2 mt-4">
+                    {/* Quick prompt chips — reduced from 4 to 2 most
+                        representative starters. The Recursos right-rail
+                        already exposes the full template surface. */}
+                    <div className="flex flex-wrap justify-center gap-2 mt-3">
                         {QUICK_PROMPT_KEYS.map(({ key, icon: Icon }) => {
                             const label = t(`directory.quickPrompts.${key}.label`);
                             const prompt = t(`directory.quickPrompts.${key}.prompt`);
@@ -311,7 +323,7 @@ export function FacultyDirectoryPage() {
                                     key={key}
                                     onClick={() => handleStartOrchestrated(prompt)}
                                     disabled={isBusy || agents.length === 0}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.14] border border-white/[0.12] text-slate-300 hover:text-white text-xs font-medium transition-colors disabled:opacity-40"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-secondary border border-border text-foreground text-xs font-medium transition-colors disabled:opacity-40"
                                 >
                                     <Icon className="h-3 w-3" />
                                     {label}
@@ -329,80 +341,99 @@ export function FacultyDirectoryPage() {
                 </div>
             </div>
 
-            {/* ── Direct Specialists Section ────────────────────────────────────── */}
-            <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-10">
-                {/* Section header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-1 h-5 rounded-full bg-amber-500" />
-                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 font-serif">
+            {/* ── Direct Specialists (collapsed disclosure) ─────────────────────── */}
+            {/*
+                Demoted from primary section to disclosure. The orchestrator
+                input above already routes to the right specialist
+                automatically — direct selection is a power-user shortcut,
+                not the default path. Collapsed by default to keep the
+                home focused on the single primary action.
+            */}
+            <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-6">
+                <button
+                    type="button"
+                    onClick={() => setShowSpecialists(prev => !prev)}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-card border border-border hover:border-primary/40 hover:shadow-sm transition-all text-left group"
+                    aria-expanded={showSpecialists}
+                >
+                    <div className="flex items-center gap-3 min-w-0">
+                        <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                            <div className="text-sm font-semibold text-foreground">
                                 {t('directory.specialistsTitle')}
-                            </h2>
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                                {t('directory.specialistsSubtitle')}
+                            </div>
                         </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 pl-3">
-                            {t('directory.specialistsSubtitle')}
-                        </p>
                     </div>
-                    <div className="relative w-full md:w-72 shrink-0">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            type="text"
-                            placeholder={t('directory.specialistsSearchPlaceholder')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 focus:ring-amber-500 rounded-full shadow-sm text-sm"
-                        />
-                    </div>
-                </div>
+                    <ChevronDown
+                        className={cn(
+                            'h-4 w-4 text-muted-foreground transition-transform shrink-0',
+                            showSpecialists && 'rotate-180'
+                        )}
+                    />
+                </button>
 
-                {isLoadingAgents ? (
-                    <div className="py-16 flex justify-center items-center">
-                        <Loader2 className="h-7 w-7 animate-spin text-amber-500" />
-                    </div>
-                ) : filteredAgents.length === 0 ? (
-                    <div className="py-16 text-center text-slate-400">
-                        <MessageCircle className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                        <p>{t('directory.specialistsEmpty')}</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {filteredAgents.map((agent) => {
-                            const cfg = ICON_CONFIG[agent.icon ?? ''] ?? DEFAULT_ICON_CONFIG;
-                            const IconComponent = cfg.icon;
-                            return (
-                                <div
-                                    key={agent.id}
-                                    className="group relative bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-slate-200/60 dark:border-zinc-800 hover:shadow-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-300 flex flex-col overflow-hidden cursor-pointer"
-                                    onClick={() => !isBusy && handleStartSession(agent)}
-                                >
-                                    {/* Subtle corner accent */}
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-100/60 dark:from-slate-800/30 to-transparent rounded-bl-full -z-10 transition-transform group-hover:scale-125" />
+                {showSpecialists && (
+                    <div className="mt-4">
+                        <div className="relative w-full md:w-72 mb-5">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder={t('directory.specialistsSearchPlaceholder')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9 bg-card border-border focus-visible:ring-primary rounded-full shadow-sm text-sm"
+                            />
+                        </div>
 
-                                    {/* Icon — small circle, role-specific color, subtle hover scale */}
-                                    <div className={cn(
-                                        'mb-4 w-12 h-12 rounded-full flex items-center justify-center ring-2 transition-transform duration-200 group-hover:scale-110 shadow-sm',
-                                        cfg.bg, cfg.text, cfg.ring
-                                    )}>
-                                        <IconComponent className="w-5 h-5" />
-                                    </div>
+                        {isLoadingAgents ? (
+                            <div className="py-12 flex justify-center items-center">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                            </div>
+                        ) : filteredAgents.length === 0 ? (
+                            <div className="py-12 text-center text-muted-foreground">
+                                <MessageCircle className="h-9 w-9 mx-auto mb-3 opacity-40" />
+                                <p>{t('directory.specialistsEmpty')}</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredAgents.map((agent) => {
+                                    const cfg = ICON_CONFIG[agent.icon ?? ''] ?? DEFAULT_ICON_CONFIG;
+                                    const IconComponent = cfg.icon;
+                                    return (
+                                        <div
+                                            key={agent.id}
+                                            className="group relative bg-card rounded-2xl p-5 shadow-sm border border-border hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col cursor-pointer"
+                                            onClick={() => !isBusy && handleStartSession(agent)}
+                                        >
+                                            {/* Icon — small circle, role-specific brand color */}
+                                            <div className={cn(
+                                                'mb-3 w-11 h-11 rounded-full flex items-center justify-center ring-2 transition-transform duration-200 group-hover:scale-110 shadow-sm',
+                                                cfg.bg, cfg.text, cfg.ring
+                                            )}>
+                                                <IconComponent className="w-5 h-5" />
+                                            </div>
 
-                                    <div className="flex-1 mb-6">
-                                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{resolveLocalized(agent.name, activeLanguage)}</h2>
-                                        <p className={cn('text-sm font-medium mb-3', cfg.text)}>{resolveLocalized(agent.expertiseArea, activeLanguage)}</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">{resolveLocalized(agent.description, activeLanguage)}</p>
-                                    </div>
+                                            <div className="flex-1 mb-4">
+                                                <h2 className="text-lg font-bold text-foreground">{resolveLocalized(agent.name, activeLanguage)}</h2>
+                                                <p className={cn('text-sm font-medium mb-2', cfg.text)}>{resolveLocalized(agent.expertiseArea, activeLanguage)}</p>
+                                                <p className="text-sm text-muted-foreground line-clamp-3">{resolveLocalized(agent.description, activeLanguage)}</p>
+                                            </div>
 
-                                    <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/50 flex items-center justify-between mt-auto">
-                                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('directory.card.directSession')}</span>
-                                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                                            {t('directory.card.start')}
-                                            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                                            <div className="pt-3 border-t border-border/50 flex items-center justify-between mt-auto">
+                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('directory.card.directSession')}</span>
+                                                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                                    {t('directory.card.start')}
+                                                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
             </main>
