@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
+import { adminUserService } from '@dosfilos/application';
 
 export function useDisableUser() {
     const [isLoading, setIsLoading] = useState(false);
@@ -10,9 +10,7 @@ export function useDisableUser() {
     const disableUser = async (userId: string, userEmail: string): Promise<boolean> => {
         setIsLoading(true);
         try {
-            const functions = getFunctions();
-            const disableUserFn = httpsCallable(functions, 'disableUser');
-            await disableUserFn({ userId });
+            await adminUserService.disableUser(userId);
             toast.success(t('users.toasts.disableSuccess', { email: userEmail }));
             return true;
         } catch (error: any) {

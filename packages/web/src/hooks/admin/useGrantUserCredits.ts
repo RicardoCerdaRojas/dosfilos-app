@@ -1,24 +1,16 @@
 import { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
-
-interface GrantCreditsArgs {
-    userId: string;
-    standardPages?: number;
-    premiumPages?: number;
-    reason: string;
-}
+import { adminUserService, type GrantUserCreditsArgs } from '@dosfilos/application';
 
 export function useGrantUserCredits() {
     const [isLoading, setIsLoading] = useState(false);
     const { t } = useTranslation('admin');
 
-    const grant = async (args: GrantCreditsArgs): Promise<boolean> => {
+    const grant = async (args: GrantUserCreditsArgs): Promise<boolean> => {
         setIsLoading(true);
         try {
-            const fn = httpsCallable(getFunctions(), 'grantUserCredits');
-            await fn(args);
+            await adminUserService.grantUserCredits(args);
             toast.success(t('users.toasts.grantSuccess'));
             return true;
         } catch (err: any) {
