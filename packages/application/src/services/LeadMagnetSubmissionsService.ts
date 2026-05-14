@@ -135,6 +135,7 @@ export class LeadMagnetSubmissionsService {
         const result = await callable(input);
         return result.data;
     }
+
 }
 
 export const leadMagnetSubmissionsService = new LeadMagnetSubmissionsService();

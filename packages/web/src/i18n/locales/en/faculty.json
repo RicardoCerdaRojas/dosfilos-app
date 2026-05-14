@@ -149,6 +149,7 @@
             "pin": "Projects",
             "unpin": "Unpin from project",
             "jumpToOrigin": "View origin in conversation",
+            "email": "Send by email",
             "delete": "Delete"
         },
         "picker": {
@@ -166,6 +167,25 @@
     "extractionsFilters": {
         "allTypes": "All types",
         "allTime": "Any time"
+    },
+    "emailDialog": {
+        "title": "Send by email",
+        "description": "Share \"{{title}}\" with your congregation or team. It will be sent from your name.",
+        "recipientsLabel": "Recipients",
+        "recipientsHint": "Comma- or newline-separated. Max {{max}} per send.",
+        "recipientsValid": "{{count}} valid",
+        "recipientsInvalid": "{{count}} invalid (e.g. {{sample}})",
+        "subjectLabel": "Subject",
+        "subjectHint": "Leave empty to use the resource title.",
+        "noteLabel": "Personal note (optional)",
+        "notePlaceholder": "Sharing this with you all — something I've been studying...",
+        "send_one": "Send to {{count}}",
+        "send_other": "Send to {{count}}",
+        "cancel": "Cancel",
+        "success_one": "Sent to 1 recipient.",
+        "success_other": "Sent to {{count}} recipients.",
+        "partialSuccess": "Sent to {{sent}}, {{failed}} failed.",
+        "error": "Couldn't send: {{message}}"
     },
     "library": {
         "title": "My Resources",

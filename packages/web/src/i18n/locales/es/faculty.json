@@ -149,6 +149,7 @@
             "pin": "Proyectos",
             "unpin": "Desanclar del proyecto",
             "jumpToOrigin": "Ver origen en la conversación",
+            "email": "Enviar por email",
             "delete": "Eliminar"
         },
         "picker": {
@@ -166,6 +167,25 @@
     "extractionsFilters": {
         "allTypes": "Todos los tipos",
         "allTime": "Cualquier momento"
+    },
+    "emailDialog": {
+        "title": "Enviar por email",
+        "description": "Comparte \"{{title}}\" con tu congregación o equipo. Se enviará desde tu nombre.",
+        "recipientsLabel": "Destinatarios",
+        "recipientsHint": "Separados por coma o salto de línea. Máximo {{max}} por envío.",
+        "recipientsValid": "{{count}} válidos",
+        "recipientsInvalid": "{{count}} inválidos (ej. {{sample}})",
+        "subjectLabel": "Asunto",
+        "subjectHint": "Si lo dejas vacío, usaremos el título del recurso.",
+        "noteLabel": "Nota personal (opcional)",
+        "notePlaceholder": "Hermanos, les comparto esto que estuve estudiando...",
+        "send_one": "Enviar a {{count}}",
+        "send_other": "Enviar a {{count}}",
+        "cancel": "Cancelar",
+        "success_one": "Enviado a 1 persona.",
+        "success_other": "Enviado a {{count}} personas.",
+        "partialSuccess": "Enviado a {{sent}}, {{failed}} fallaron.",
+        "error": "No se pudo enviar: {{message}}"
     },
     "library": {
         "title": "Mis Recursos",

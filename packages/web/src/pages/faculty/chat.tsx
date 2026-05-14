@@ -27,6 +27,7 @@ import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPa
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
+import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
 import { ProjectEditDialog } from './ProjectEditDialog';
 import { type AIProject, type Extraction, type ExtractionType, type SermonPersonalization, type ResponseMode } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
@@ -186,6 +187,7 @@ export function FacultyChatPage() {
     const [documentMarkdown, setDocumentMarkdown] = useState<string>('');
     const isDocumentOpen = documentSource !== null;
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
+    const [emailDialogExtraction, setEmailDialogExtraction] = useState<Extraction | null>(null);
     const [extractingType, setExtractingType] = useState<string | null>(null);
     const [projectDialog, setProjectDialog] = useState<{ mode: 'create' } | { mode: 'edit'; project: AIProject } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -796,6 +798,7 @@ export function FacultyChatPage() {
                             navigate(`/dashboard/sermons/${extraction.externalRef.id}`);
                         }
                     }}
+                    onShareByEmail={setEmailDialogExtraction}
                     extractionsError={extractionsError}
                     onRefreshExtractions={() => refetchExtractions()}
                 />
@@ -845,6 +848,12 @@ export function FacultyChatPage() {
                     onClose={() => setProjectDialog(null)}
                 />
             )}
+
+            {/* Email-share dialog */}
+            <EmailExtractionDialog
+                extraction={emailDialogExtraction}
+                onClose={() => setEmailDialogExtraction(null)}
+            />
 
             {/* Delete Session Confirmation */}
             <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>

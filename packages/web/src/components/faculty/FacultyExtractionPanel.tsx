@@ -42,6 +42,7 @@ interface FacultyExtractionPanelProps {
     projects: AIProject[];
     onJumpToOrigin?: (extraction: Extraction) => void;
     onOpenExternal?: (extraction: Extraction) => void;
+    onShareByEmail?: (extraction: Extraction) => void;
     extractionsError?: unknown;
     onRefreshExtractions?: () => void;
 }
@@ -69,6 +70,7 @@ export function FacultyExtractionPanel({
     projects,
     onJumpToOrigin,
     onOpenExternal,
+    onShareByEmail,
     extractionsError,
     onRefreshExtractions,
 }: FacultyExtractionPanelProps) {
@@ -137,6 +139,7 @@ export function FacultyExtractionPanel({
                     projects={projects}
                     onJumpToOrigin={onJumpToOrigin}
                     onOpenExternal={onOpenExternal}
+                    onShareByEmail={onShareByEmail}
                     error={extractionsError}
                     onRetry={onRefreshExtractions}
                 />
