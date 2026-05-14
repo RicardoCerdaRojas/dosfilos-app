@@ -1,12 +1,14 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { render } from '@react-email/render';
 import { resend } from '../emails/resendClient';
-import { getDay1ErrorTemplate, getDay1ErrorSubject } from '../emails/templates/leadMagnetNurture/day1Error';
-import { getDay3PickBookTemplate, getDay3PickBookSubject } from '../emails/templates/leadMagnetNurture/day3PickBook';
-import { getDay5WorkflowTemplate, getDay5WorkflowSubject } from '../emails/templates/leadMagnetNurture/day5Workflow';
-import { getDay7TrialTemplate, getDay7TrialSubject } from '../emails/templates/leadMagnetNurture/day7Trial';
-import type { Locale } from '../emails/templates/leadMagnetNurture/shell';
+import { Day1ErrorEmail, getDay1ErrorSubject } from '../emails/templates/leadMagnetNurture/Day1ErrorEmail';
+import { Day3PickBookEmail, getDay3PickBookSubject } from '../emails/templates/leadMagnetNurture/Day3PickBookEmail';
+import { Day5WorkflowEmail, getDay5WorkflowSubject } from '../emails/templates/leadMagnetNurture/Day5WorkflowEmail';
+import { Day7TrialEmail, getDay7TrialSubject } from '../emails/templates/leadMagnetNurture/Day7TrialEmail';
+
+type Locale = 'es' | 'en';
 
 const db = admin.firestore();
 const SENDER = 'Ricardo de Preach <hola@dosfilos.com>';
@@ -20,14 +22,14 @@ const SENDER = 'Ricardo de Preach <hola@dosfilos.com>';
 const SCHEDULE: ReadonlyArray<{
     stage: number;
     daysAfterDelivery: number;
-    template: (name: string, locale: Locale) => string;
+    render: (name: string, locale: Locale) => Promise<string>;
     subject: (locale: Locale) => string;
     eventStage: string;
 }> = [
-    { stage: 1, daysAfterDelivery: 1, template: getDay1ErrorTemplate, subject: getDay1ErrorSubject, eventStage: 'day1_error' },
-    { stage: 2, daysAfterDelivery: 3, template: getDay3PickBookTemplate, subject: getDay3PickBookSubject, eventStage: 'day3_pickbook' },
-    { stage: 3, daysAfterDelivery: 5, template: getDay5WorkflowTemplate, subject: getDay5WorkflowSubject, eventStage: 'day5_workflow' },
-    { stage: 4, daysAfterDelivery: 7, template: getDay7TrialTemplate, subject: getDay7TrialSubject, eventStage: 'day7_trial' },
+    { stage: 1, daysAfterDelivery: 1, render: (n, l) => render(Day1ErrorEmail({ name: n, locale: l })), subject: getDay1ErrorSubject, eventStage: 'day1_error' },
+    { stage: 2, daysAfterDelivery: 3, render: (n, l) => render(Day3PickBookEmail({ name: n, locale: l })), subject: getDay3PickBookSubject, eventStage: 'day3_pickbook' },
+    { stage: 3, daysAfterDelivery: 5, render: (n, l) => render(Day5WorkflowEmail({ name: n, locale: l })), subject: getDay5WorkflowSubject, eventStage: 'day5_workflow' },
+    { stage: 4, daysAfterDelivery: 7, render: (n, l) => render(Day7TrialEmail({ name: n, locale: l })), subject: getDay7TrialSubject, eventStage: 'day7_trial' },
 ];
 
 const FINAL_STAGE = SCHEDULE[SCHEDULE.length - 1].stage;
@@ -109,7 +111,7 @@ export const sendLeadMagnetNurture = onSchedule(
             const locale = inferLocale(lead.utm);
             const name = pickName(lead.name, locale);
             const subject = nextStage.subject(locale);
-            const html = nextStage.template(name, locale);
+            const html = await nextStage.render(name, locale);
 
             try {
                 await resend.emails.send({
