@@ -12,13 +12,14 @@ import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { SermonOutlinePreviewModal, type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
 import { FacultySessionSidebar } from '@/components/faculty/FacultySessionSidebar';
 import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPanel';
+import { RailDivider } from '@/components/faculty/RailDivider';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
 import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpressDialog';
 import { ProjectEditDialog } from './ProjectEditDialog';
-import { type AIProject, type Extraction, type ExtractionType, type ResponseMode } from '@dosfilos/domain';
+import { type AIProject, type Extraction, type ExtractionType } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
 import { copyMessageToClipboard } from './utils/copyMessageToClipboard';
 import { useAutoscrollChat } from './hooks/useAutoscrollChat';
@@ -28,6 +29,7 @@ import { useExtractionAction } from './hooks/useExtractionAction';
 import { useDocumentEditor } from './hooks/useDocumentEditor';
 import { useSendMessage } from './hooks/useSendMessage';
 import { useDeleteMessage } from './hooks/useDeleteMessage';
+import { useResponseModePref } from './hooks/useResponseModePref';
 import { FacultyConfirmDialogs } from './components/FacultyConfirmDialogs';
 
 export function FacultyChatPage() {
@@ -104,7 +106,17 @@ export function FacultyChatPage() {
     useEffect(() => {
         localStorage.setItem('faculty-extraction-panel', String(isRightSidebarOpen));
     }, [isRightSidebarOpen]);
-    const [lengthPreference, setLengthPreference] = useState<ResponseMode>('auto');
+    // Mode preference is shared with the directory landing input via
+    // localStorage so the choice the user makes in either surface
+    // carries to the other (the chat session inherits the home pick
+    // and vice-versa).
+    const [lengthPreference, setLengthPreference] = useResponseModePref();
+    // Rail widths are state-driven so the RailDivider can resize
+    // them by mutating these. Sane defaults match the previous
+    // hardcoded `w-64` / `w-[28rem]`; clamps live in the resize
+    // handler below.
+    const [leftRailWidth, setLeftRailWidth] = useState(256);
+    const [rightRailWidth, setRightRailWidth] = useState(448);
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
     const [emailDialogExtraction, setEmailDialogExtraction] = useState<Extraction | null>(null);
     const [wpDialogExtraction, setWpDialogExtraction] = useState<Extraction | null>(null);
@@ -259,12 +271,12 @@ export function FacultyChatPage() {
                 {/* Left sidebar */}
                 <FacultySessionSidebar
                     isOpen={isLeftSidebarOpen}
+                    width={leftRailWidth}
                     sessions={sessions}
                     projects={projects}
                     activeSessionId={effectiveSessionId || undefined}
                     isLoading={isLoadingSessions}
                     renameConfirmId={renameConfirmId}
-                    onToggle={toggleSidebar}
                     onNewConversation={() => navigate(
                         projectIdForNew
                             ? `/dashboard/faculty/new?projectId=${projectIdForNew}`
@@ -279,6 +291,22 @@ export function FacultyChatPage() {
                     onAssignToProject={(sid, pid) => assignToProject.mutate({ sessionId: sid, projectId: pid })}
                     onEditProject={(project) => setProjectDialog({ mode: 'edit', project })}
                     onDeleteProject={(pid) => deleteProjectMutation.mutate(pid)}
+                />
+
+                {/*
+                 * Rail divider at the LEFT rail boundary. Click →
+                 * toggle. Drag → resize (clamped 200..400). When the
+                 * rail is closed, drag is disabled — only click opens.
+                 */}
+                <RailDivider
+                    side="left"
+                    isOpen={isLeftSidebarOpen}
+                    onToggle={toggleSidebar}
+                    onResize={isLeftSidebarOpen
+                        ? (delta) => setLeftRailWidth(w => Math.min(400, Math.max(200, w + delta)))
+                        : undefined
+                    }
+                    title={t('sidebar.openPanel')}
                 />
 
                 <div className="flex-1 flex overflow-hidden">
@@ -418,10 +446,26 @@ export function FacultyChatPage() {
                     </PanelGroup>
                 </div>
 
+                {/*
+                 * Rail divider at the RIGHT panel boundary. Same
+                 * pattern as the left divider — click toggles,
+                 * drag resizes (clamped 360..640).
+                 */}
+                <RailDivider
+                    side="right"
+                    isOpen={isRightSidebarOpen}
+                    onToggle={() => setIsRightSidebarOpen(prev => !prev)}
+                    onResize={isRightSidebarOpen
+                        ? (delta) => setRightRailWidth(w => Math.min(640, Math.max(360, w + delta)))
+                        : undefined
+                    }
+                    title={t('extraction.openPanel')}
+                />
+
                 {/* Right extraction panel */}
                 <FacultyExtractionPanel
                     isOpen={isRightSidebarOpen}
-                    onToggle={() => setIsRightSidebarOpen(prev => !prev)}
+                    width={rightRailWidth}
                     extractingType={extractingType}
                     messageCount={session?.messages.length || 0}
                     onExtract={handleExtract}

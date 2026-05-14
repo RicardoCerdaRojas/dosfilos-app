@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, X, SquarePen, FolderPlus, ChevronRight, Edit3, Trash2, FolderOpen, Loader2, LayoutGrid, PanelLeft, PanelLeftClose } from 'lucide-react';
+import { Search, X, SquarePen, FolderPlus, ChevronRight, Edit3, Trash2, FolderOpen, Loader2, LayoutGrid } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -166,12 +166,18 @@ function SessionItem({
 
 interface FacultySessionSidebarProps {
     isOpen: boolean;
+    /** Open-state width in pixels. Driven by chat.tsx so the
+     *  RailDivider can resize the rail by mutating that state. */
+    width?: number;
     sessions: AIChatSession[];
     projects: AIProject[];
     activeSessionId?: string;
     isLoading: boolean;
     renameConfirmId: string | null;
-    onToggle: () => void;
+    /** Optional — kept for callers that still wire it. The rail
+     *  itself no longer renders an internal close button; the
+     *  RailDivider on the rail boundary owns the open/close action. */
+    onToggle?: () => void;
     onNewConversation: () => void;
     onNewProject: () => void;
     onNavigateSession: (sessionId: string) => void;
@@ -186,12 +192,12 @@ interface FacultySessionSidebarProps {
 
 export function FacultySessionSidebar({
     isOpen,
+    width = 256,
     sessions,
     projects,
     activeSessionId,
     isLoading,
     renameConfirmId,
-    onToggle,
     onNewConversation,
     onNewProject,
     onNavigateSession,
@@ -268,11 +274,18 @@ export function FacultySessionSidebar({
              * page-header `PanelLeft` toggle so the user has one
              * consistent affordance for both rails.
              */}
-            <aside className={cn(
-                'border-border bg-muted/30 hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out',
-                isOpen ? 'w-64 border-r opacity-100' : 'w-0 border-r-0 opacity-0 overflow-hidden'
-            )}>
-                <div className="w-64 flex flex-col h-full overflow-x-hidden">
+            <aside
+                className={cn(
+                    'border-border bg-muted/30 hidden md:flex flex-col shrink-0 ease-in-out',
+                    // Animate only on open/close (length transition);
+                    // when dragging the resize handle we want the
+                    // width to follow the cursor without easing.
+                    'transition-[width,opacity] duration-300',
+                    isOpen ? 'border-r opacity-100' : 'w-0 border-r-0 opacity-0 overflow-hidden',
+                )}
+                style={isOpen ? { width: `${width}px` } : undefined}
+            >
+                <div style={{ width: `${width}px` }} className="flex flex-col h-full overflow-x-hidden">
                     {/* Action bar */}
                     <div className="px-2 py-2 flex items-center justify-between border-b border-border/50 shrink-0">
                         <span className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest pl-1">{t('sidebar.mySessions')}</span>
@@ -291,13 +304,11 @@ export function FacultySessionSidebar({
                             >
                                 <FolderPlus className="w-3.5 h-3.5" />
                             </button>
-                            <button
-                                onClick={onToggle}
-                                className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                                title={t('sidebar.collapsePanel')}
-                            >
-                                <PanelLeftClose className="w-3.5 h-3.5" />
-                            </button>
+                            {/*
+                             * Open / close moved to the RailDivider on
+                             * the rail boundary — single affordance,
+                             * also supports drag-to-resize.
+                             */}
                         </div>
                     </div>
                     {/* Search bar */}
@@ -416,23 +427,6 @@ export function FacultySessionSidebar({
                 </div>
             </aside>
 
-            {/*
-             * Edge-tab: when the rail is collapsed, render a small
-             * floating handle docked to the page's left edge so the
-             * user always has a discoverable affordance to re-open
-             * without needing a global header. Mirrors the right
-             * extraction panel's edge-tab.
-             */}
-            {!isOpen && (
-                <button
-                    onClick={onToggle}
-                    className="hidden md:flex fixed left-0 top-20 z-30 items-center justify-center h-9 w-7 rounded-r-md border border-l-0 border-border bg-card hover:bg-accent text-muted-foreground hover:text-foreground shadow-sm transition-colors"
-                    title={t('sidebar.openPanel')}
-                    aria-label={t('sidebar.openPanel')}
-                >
-                    <PanelLeft className="w-4 h-4" />
-                </button>
-            )}
         </>
     );
 }

@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { FreeStarterCard } from './components/FreeStarterCard';
 import { setPendingFacultyInput } from './utils/pendingFacultyInput';
+import { useResponseModePref } from './hooks/useResponseModePref';
+import { ModeSelectorButton } from '@/components/faculty/ModeSelectorButton';
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
@@ -60,6 +62,10 @@ export function FacultyDirectoryPage() {
     const [searchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     const [orchestratorInput, setOrchestratorInput] = useState('');
+    // Response-mode picker is shared with the chat session via
+    // localStorage so the choice carries across surfaces. Lives on
+    // the home input as a chip below the textarea.
+    const [responseMode, setResponseMode] = useResponseModePref();
     const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
     const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
     // Specialists are now a secondary path behind a disclosure — the
@@ -311,10 +317,15 @@ export function FacultyDirectoryPage() {
                         </div>
                     </div>
 
-                    {/* Quick prompt chips — reduced from 4 to 2 most
-                        representative starters. The Recursos right-rail
-                        already exposes the full template surface. */}
-                    <div className="flex flex-wrap justify-center gap-2 mt-3">
+                    {/*
+                     * Quick prompts + mode selector live together
+                     * directly under the input — both modify how the
+                     * orchestrator will behave on submit, so they
+                     * belong in the same proximity. ModeSelectorButton
+                     * persists via localStorage so the chat session
+                     * inherits whatever mode the user picked here.
+                     */}
+                    <div className="flex flex-wrap justify-center items-center gap-2 mt-3">
                         {QUICK_PROMPT_KEYS.map(({ key, icon: Icon }) => {
                             const label = t(`directory.quickPrompts.${key}.label`);
                             const prompt = t(`directory.quickPrompts.${key}.prompt`);
@@ -330,6 +341,7 @@ export function FacultyDirectoryPage() {
                                 </button>
                             );
                         })}
+                        <ModeSelectorButton value={responseMode} onChange={setResponseMode} />
                     </div>
 
                     {showFreeStarter && (
