@@ -101,30 +101,52 @@ export function RailDivider({
             aria-label={title}
             title={title}
             className={cn(
-                // Hairline divider that thickens slightly on hover.
-                // Cursor signals drag affordance; click handling lives
-                // in onMouseDown via the threshold check.
-                'group relative hidden md:flex shrink-0 w-1 cursor-col-resize transition-colors',
-                isOpen
-                    ? 'bg-border hover:bg-primary/40 active:bg-primary/60'
-                    // Closed: bar stays subtle until hovered so it
-                    // doesn't compete with the main content edge.
-                    : 'bg-transparent hover:bg-primary/30',
+                // Wider hit zone (12px) so the chevron handle can sit
+                // *inside* the parent's bounds — mouse-over-chevron
+                // still triggers `:hover` on the parent and the
+                // hover state stays stable. Previous 1px line had the
+                // chevron poking outside via negative margins, which
+                // caused a flicker loop as the cursor crossed the
+                // boundary.
+                'group relative hidden md:block shrink-0 w-3 cursor-col-resize select-none',
             )}
         >
             {/*
-             * Chevron handle — purely visual indicator, layered above
-             * the divider with `pointer-events-none` so the click +
-             * drag still goes to the parent div. Keeps interaction
-             * model simple: one element handles both gestures.
+             * Visible 1-px hairline centered inside the wider hit
+             * zone. Color picks up on hover/active.
+             */}
+            <div
+                className={cn(
+                    'pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 w-px transition-colors',
+                    isOpen
+                        ? 'bg-border group-hover:bg-primary/60 group-active:bg-primary'
+                        // Closed: keep a faint background so the user
+                        // can see *something* is there to click.
+                        : 'bg-border/60 group-hover:bg-primary/60',
+                )}
+            />
+
+            {/*
+             * Chevron handle. `pointer-events-auto` so the cursor
+             * over the chevron still counts as :hover on the parent
+             * (children of a `:hover` parent satisfy `group-hover`
+             * iff pointer events reach them).
+             *
+             * Open state → handle only on hover (avoids visual
+             * noise during normal reading).
+             * Closed state → handle always visible so the user knows
+             * there's an affordance to expand the rail.
              */}
             <span
                 className={cn(
-                    'pointer-events-none absolute top-1/2 -translate-y-1/2 z-10',
-                    side === 'left' ? '-right-2' : '-left-2',
-                    'h-12 w-4 rounded-md border border-border bg-card shadow-sm',
+                    'absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 z-10',
+                    'h-10 w-4 rounded-md border border-border bg-card shadow-sm',
                     'flex items-center justify-center',
-                    'opacity-0 group-hover:opacity-100 transition-opacity',
+                    isOpen
+                        ? 'opacity-0 group-hover:opacity-100 transition-opacity'
+                        // 70% opacity at rest → 100% on hover so the
+                        // handle doesn't shout but is still findable.
+                        : 'opacity-70 group-hover:opacity-100 transition-opacity',
                 )}
             >
                 <Icon className="w-3 h-3 text-muted-foreground" />
