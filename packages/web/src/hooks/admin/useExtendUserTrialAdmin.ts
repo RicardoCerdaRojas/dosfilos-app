@@ -1,13 +1,7 @@
 import { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
-
-interface ExtendTrialArgs {
-    userId: string;
-    days: number;
-    reason: string;
-}
+import { adminUserService, type ExtendTrialArgs } from '@dosfilos/application';
 
 export function useExtendUserTrialAdmin() {
     const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +10,7 @@ export function useExtendUserTrialAdmin() {
     const extendTrial = async (args: ExtendTrialArgs): Promise<boolean> => {
         setIsLoading(true);
         try {
-            const fn = httpsCallable(getFunctions(), 'extendUserTrialAdmin');
-            await fn(args);
+            await adminUserService.extendUserTrial(args);
             toast.success(t('users.toasts.extendTrialSuccess'));
             return true;
         } catch (err: any) {

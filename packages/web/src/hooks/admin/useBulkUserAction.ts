@@ -1,37 +1,19 @@
 import { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
-
-type BulkAction = 'disable' | 'enable';
-
-interface BulkResult {
-    userId: string;
-    success: boolean;
-    error?: string;
-}
-
-interface BulkResponse {
-    results: BulkResult[];
-    ok: number;
-    failed: number;
-}
+import { adminUserService, type BulkUserAction, type BulkUserActionResponse } from '@dosfilos/application';
 
 export function useBulkUserAction() {
     const [isLoading, setIsLoading] = useState(false);
     const { t } = useTranslation('admin');
 
     const runBulk = async (
-        action: BulkAction,
+        action: BulkUserAction,
         userIds: string[],
-    ): Promise<BulkResponse | null> => {
+    ): Promise<BulkUserActionResponse | null> => {
         setIsLoading(true);
         try {
-            const fn = httpsCallable<{ action: BulkAction; userIds: string[] }, BulkResponse>(
-                getFunctions(),
-                'bulkUserAction',
-            );
-            const { data } = await fn({ action, userIds });
+            const data = await adminUserService.bulkUserAction(action, userIds);
             if (data.failed === 0) {
                 toast.success(
                     t('users.bulkActions.successAll', { count: data.ok }),

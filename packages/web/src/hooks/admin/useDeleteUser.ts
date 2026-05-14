@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
+import { adminUserService } from '@dosfilos/application';
 
 export function useDeleteUser() {
     const [isLoading, setIsLoading] = useState(false);
@@ -10,11 +10,7 @@ export function useDeleteUser() {
     const deleteUser = async (userId: string) => {
         setIsLoading(true);
         try {
-            const functions = getFunctions();
-            const deleteUserFn = httpsCallable(functions, 'deleteUser');
-
-            await deleteUserFn({ userId });
-
+            await adminUserService.deleteUser(userId);
             toast.success(t('users.toasts.deleteSuccess'));
             return true;
         } catch (error: any) {

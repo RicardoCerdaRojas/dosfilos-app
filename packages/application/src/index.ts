@@ -23,6 +23,7 @@ export * from './services/UserIntegrationsService';
 export * from './services/CoreLibraryAdminService';
 export * from './services/ProcessingBalanceService';
 export * from './services/AdminDashboardService';
+export * from './services/AdminUserService';
 export * from './services/exegesisPricingTracker';
 export * from './services/ExegesisCreditReservation';
 export * from './greek-tutor/use-cases/GenerateTrainingUnitsUseCase';
