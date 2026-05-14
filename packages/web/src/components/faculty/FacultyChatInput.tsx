@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
+import type { ResponseMode } from '@dosfilos/domain';
+import { ModeSelectorButton } from './ModeSelectorButton';
 
 interface FacultyChatInputProps {
     input: string;
@@ -17,6 +19,10 @@ interface FacultyChatInputProps {
     /** File the user has staged for the next send (one image, MVP). */
     attachment: File | null;
     onAttach: (file: File | null) => void;
+    /** Current response mode + setter — colocated with the input
+     *  it modifies (replaces the old page-header dropdown). */
+    lengthPreference: ResponseMode;
+    onSetLengthPreference: (mode: ResponseMode) => void;
 }
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
@@ -37,6 +43,8 @@ export function FacultyChatInput({
     onSubmit,
     attachment,
     onAttach,
+    lengthPreference,
+    onSetLengthPreference,
 }: FacultyChatInputProps) {
     const { t } = useTranslation('faculty');
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -220,6 +228,19 @@ export function FacultyChatInput({
                                 }
                             </Button>
                         </div>
+                    </div>
+
+                    {/*
+                     * Mode selector colocated with the input it
+                     * affects. Replaces the old page-header
+                     * dropdown — the choice now lives where the
+                     * user is when they make it.
+                     */}
+                    <div className="flex items-center justify-start px-2 pb-1.5 -mt-1">
+                        <ModeSelectorButton
+                            value={lengthPreference}
+                            onChange={onSetLengthPreference}
+                        />
                     </div>
 
                     {isDragging && (

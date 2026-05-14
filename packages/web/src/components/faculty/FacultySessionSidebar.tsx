@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, X, SquarePen, FolderPlus, ChevronRight, Edit3, Trash2, FolderOpen, Loader2, LayoutGrid } from 'lucide-react';
+import { Search, X, SquarePen, FolderPlus, ChevronRight, Edit3, Trash2, FolderOpen, Loader2, LayoutGrid, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -291,13 +291,13 @@ export function FacultySessionSidebar({
                             >
                                 <FolderPlus className="w-3.5 h-3.5" />
                             </button>
-                            {/*
-                             * In-rail close button removed in favour of the
-                             * single source of truth in the page header
-                             * (FacultyChatHeader's PanelLeft toggle). Keeps
-                             * the symmetric collapse model with the right
-                             * extraction panel.
-                             */}
+                            <button
+                                onClick={onToggle}
+                                className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                                title={t('sidebar.collapsePanel')}
+                            >
+                                <PanelLeftClose className="w-3.5 h-3.5" />
+                            </button>
                         </div>
                     </div>
                     {/* Search bar */}
@@ -415,6 +415,24 @@ export function FacultySessionSidebar({
                     </div>
                 </div>
             </aside>
+
+            {/*
+             * Edge-tab: when the rail is collapsed, render a small
+             * floating handle docked to the page's left edge so the
+             * user always has a discoverable affordance to re-open
+             * without needing a global header. Mirrors the right
+             * extraction panel's edge-tab.
+             */}
+            {!isOpen && (
+                <button
+                    onClick={onToggle}
+                    className="hidden md:flex fixed left-0 top-20 z-30 items-center justify-center h-9 w-7 rounded-r-md border border-l-0 border-border bg-card hover:bg-accent text-muted-foreground hover:text-foreground shadow-sm transition-colors"
+                    title={t('sidebar.openPanel')}
+                    aria-label={t('sidebar.openPanel')}
+                >
+                    <PanelLeft className="w-4 h-4" />
+                </button>
+            )}
         </>
     );
 }
