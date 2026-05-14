@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FirestoreAIAgentRepository } from '@dosfilos/infrastructure';
 import { AIAgent } from '@dosfilos/domain';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { coreLibraryAdminService } from '@dosfilos/application';
 
 const repository = new FirestoreAIAgentRepository();
 
@@ -9,11 +9,8 @@ export function useCoreLibraryStores() {
     return useQuery({
         queryKey: ['core-library-stores'],
         queryFn: async () => {
-            const db = getFirestore();
-            const docRef = doc(db, 'config/coreLibraryStores');
-            const snap = await getDoc(docRef);
-            if (!snap.exists()) return {};
-            return snap.data().stores as Record<string, string | null>;
+            const config = await coreLibraryAdminService.getStoreConfig();
+            return config?.stores ?? {};
         }
     });
 }
