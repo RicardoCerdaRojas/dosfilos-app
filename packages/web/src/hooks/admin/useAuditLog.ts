@@ -1,28 +1,11 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
-import { db } from '@dosfilos/infrastructure';
+import {
+    adminUserQueryService,
+    type AuditAction,
+    type AuditLogEntry,
+} from '@dosfilos/application';
 
-export type AuditAction =
-    | 'user.delete'
-    | 'user.disable'
-    | 'user.enable'
-    | 'user.resend_welcome_email'
-    | 'user.change_plan'
-    | 'user.bulk_disable'
-    | 'user.bulk_enable'
-    | 'user.grant_credits'
-    | 'user.extend_trial';
-
-export interface AuditLogEntry {
-    id: string;
-    actorUid: string;
-    actorEmail: string | null;
-    action: AuditAction;
-    targetUid: string | null;
-    targetEmail: string | null;
-    details: Record<string, unknown>;
-    createdAt: Date;
-}
+export type { AuditAction, AuditLogEntry };
 
 export interface AuditLogFilters {
     targetUid?: string;
@@ -41,6 +24,9 @@ export interface AuditLogFilters {
  *
  * The hard cap of 500 entries per snapshot keeps the dashboard responsive.
  * For deeper history, consider a paginated audit-export endpoint later.
+ *
+ * Firestore SDK lives in `adminUserQueryService.subscribeAuditLog`
+ * (compliance C7.3); this hook stays a thin React adapter.
  */
 export function useAuditLog(filters?: AuditLogFilters, hardLimit = 500) {
     const [entries, setEntries] = useState<AuditLogEntry[]>([]);
@@ -49,32 +35,11 @@ export function useAuditLog(filters?: AuditLogFilters, hardLimit = 500) {
 
     useEffect(() => {
         setLoading(true);
-
-        // Build a query that's safe to compose: only `targetUid` is server-side
-        // because pairing multiple `where` against `orderBy` on a different
-        // field requires composite indexes — too many combinations to precompute.
-        const constraints: any[] = [orderBy('createdAt', 'desc'), limit(hardLimit)];
-        if (filters?.targetUid) constraints.unshift(where('targetUid', '==', filters.targetUid));
-
-        const q = query(collection(db, 'admin_audit_log'), ...constraints);
-
-        const unsubscribe = onSnapshot(
-            q,
-            (snapshot) => {
-                const data: AuditLogEntry[] = snapshot.docs.map(doc => {
-                    const d = doc.data();
-                    return {
-                        id: doc.id,
-                        actorUid: d.actorUid ?? '',
-                        actorEmail: d.actorEmail ?? null,
-                        action: d.action,
-                        targetUid: d.targetUid ?? null,
-                        targetEmail: d.targetEmail ?? null,
-                        details: d.details ?? {},
-                        createdAt: (d.createdAt as Timestamp | undefined)?.toDate() ?? new Date(),
-                    };
-                });
-                setEntries(data);
+        const unsubscribe = adminUserQueryService.subscribeAuditLog(
+            { targetUid: filters?.targetUid },
+            hardLimit,
+            (next) => {
+                setEntries(next);
                 setLoading(false);
             },
             (err) => {
@@ -83,7 +48,6 @@ export function useAuditLog(filters?: AuditLogFilters, hardLimit = 500) {
                 setLoading(false);
             },
         );
-
         return () => unsubscribe();
     }, [filters?.targetUid, hardLimit]);
 
