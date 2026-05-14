@@ -28,6 +28,7 @@ import { useAutoscrollChat } from './hooks/useAutoscrollChat';
 import { useAutoSendQuestion } from './hooks/useAutoSendQuestion';
 import { useExtractionListHandlers } from './hooks/useExtractionListHandlers';
 import { useExtractionAction } from './hooks/useExtractionAction';
+import { useDocumentEditor } from './hooks/useDocumentEditor';
 import { FacultyConfirmDialogs } from './components/FacultyConfirmDialogs';
 
 export function FacultyChatPage() {
@@ -107,15 +108,6 @@ export function FacultyChatPage() {
         localStorage.setItem('faculty-extraction-panel', String(isRightSidebarOpen));
     }, [isRightSidebarOpen]);
     const [lengthPreference, setLengthPreference] = useState<ResponseMode>('auto');
-    // Unified document editor state. Either an in-memory sermon (sermon
-    // module owns its own collection — we just render the markdown
-    // returned by the wizard modal) or a persisted Extraction. Mutually
-    // exclusive sources; `closeDocument()` resets both.
-    const [documentSource, setDocumentSource] = useState<'sermon' | 'extraction' | null>(null);
-    const [documentExtractionId, setDocumentExtractionId] = useState<string | null>(null);
-    const [documentTitle, setDocumentTitle] = useState<string>('');
-    const [documentMarkdown, setDocumentMarkdown] = useState<string>('');
-    const isDocumentOpen = documentSource !== null;
     const [sermonOutline, setSermonOutline] = useState<SermonOutline | null>(null);
     const [emailDialogExtraction, setEmailDialogExtraction] = useState<Extraction | null>(null);
     const [wpDialogExtraction, setWpDialogExtraction] = useState<Extraction | null>(null);
@@ -124,8 +116,36 @@ export function FacultyChatPage() {
     const [renameConfirmId, setRenameConfirmId] = useState<string | null>(null);
     const [deleteMessageConfirmId, setDeleteMessageConfirmId] = useState<string | null>(null);
     const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
-    const [isZenMode, setIsZenMode] = useState(false);
     const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
+
+    // Unified document editor state. Either an in-memory sermon (the
+    // sermons module owns its own collection — we just render the
+    // markdown returned by the wizard modal) or a persisted Extraction.
+    // Mutually exclusive sources; `closeDocument()` resets both. The
+    // editor also autosaves extraction edits via debounced mutation.
+    const {
+        documentSource,
+        documentExtractionId,
+        documentTitle,
+        documentMarkdown,
+        isDocumentOpen,
+        isZenMode,
+        setDocumentTitle,
+        setDocumentMarkdown,
+        setIsZenMode,
+        openExtractionInEditor,
+        openSermonPreview,
+        closeDocument,
+    } = useDocumentEditor({
+        extractions,
+        updateExtractionMarkdown,
+        onOpen: () => {
+            // Reclaim horizontal space: both side rails collapse when a
+            // document opens. User can re-expand from the header toggles.
+            setIsLeftSidebarOpen(false);
+            setIsRightSidebarOpen(false);
+        },
+    });
 
     // ── Scroll management ────────────────────────────────────────────────────
     const { messagesEndRef, chatScrollRef, scrollToBottom } = useAutoscrollChat([
@@ -274,25 +294,6 @@ export function FacultyChatPage() {
         }
     };
 
-    const openExtractionInEditor = (extraction: Extraction) => {
-        setDocumentSource('extraction');
-        setDocumentExtractionId(extraction.id);
-        setDocumentTitle(extraction.title);
-        setDocumentMarkdown(extraction.markdown);
-        // Reclaim horizontal space: both side rails collapse when a
-        // document opens. User can re-expand from the header toggles.
-        setIsLeftSidebarOpen(false);
-        setIsRightSidebarOpen(false);
-    };
-
-    const closeDocument = () => {
-        setDocumentSource(null);
-        setDocumentExtractionId(null);
-        setDocumentTitle('');
-        setDocumentMarkdown('');
-        setIsZenMode(false);
-    };
-
     const { extractingType, handleExtract } = useExtractionAction({
         effectiveSessionId,
         session,
@@ -309,23 +310,6 @@ export function FacultyChatPage() {
         // where we persist the Extraction with the sermonId externalRef).
         return await extractContent({ type: 'SERMON', approvedOutline, personalization });
     };
-
-    // Debounced autosave for in-editor edits on a persisted Extraction.
-    // The editor calls onChange on every keystroke; we batch saves to
-    // Firestore every 1.5s of idle to avoid hammering the write quota.
-    useEffect(() => {
-        if (documentSource !== 'extraction' || !documentExtractionId) return;
-        const current = extractions.find(e => e.id === documentExtractionId);
-        if (!current || current.markdown === documentMarkdown) return;
-        const handle = setTimeout(() => {
-            updateExtractionMarkdown.mutate({
-                extractionId: documentExtractionId,
-                markdown: documentMarkdown,
-            });
-        }, 1500);
-        return () => clearTimeout(handle);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [documentMarkdown, documentSource, documentExtractionId]);
 
     // ── Extraction list handlers (panel "Generados" tab) ─────────────────────
     const {
@@ -562,13 +546,9 @@ export function FacultyChatPage() {
                     // Inline preview keeps working for visual continuity —
                     // the user sees the sermon body in the doc panel
                     // immediately, even before the Extraction listener
-                    // refreshes the Generados tab.
-                    setDocumentSource('sermon');
-                    setDocumentExtractionId(null);
-                    setDocumentTitle(title);
-                    setDocumentMarkdown(content);
-                    setIsLeftSidebarOpen(false);
-                    setIsRightSidebarOpen(false);
+                    // refreshes the Generados tab. The hook's `onOpen`
+                    // collapses both rails.
+                    openSermonPreview(title, content);
                 }}
             />
 
