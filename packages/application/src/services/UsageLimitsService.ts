@@ -5,6 +5,7 @@ import {
 } from '@dosfilos/domain';
 import { db } from '@dosfilos/infrastructure';
 import { collection, query, where, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export interface LimitCheckResult {
     allowed: boolean;
@@ -479,5 +480,23 @@ export class UsageLimitsService {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
         return startOfMonth;
+    }
+
+    /**
+     * Fires the `incrementUsage` callable to bump the user's monthly
+     * query counter. Fail-soft: counter drift is preferred over
+     * blocking the chat on a usage-tracking glitch, so the caller
+     * should fire-and-forget (`void incrementQuery(...)`).
+     *
+     * Lives here (vs. inline in the hook) so the Firebase callable
+     * SDK stays out of `useFacultyChat` — compliance C7.3.
+     */
+    async incrementQuery(): Promise<void> {
+        try {
+            const fn = httpsCallable(getFunctions(), 'incrementUsage');
+            await fn({ kind: 'query' });
+        } catch (err) {
+            console.warn('[UsageLimitsService] Failed to increment query counter:', err);
+        }
     }
 }

@@ -13,7 +13,6 @@ import type {
     MessageAttachmentMeta,
 } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 
 /**
@@ -41,20 +40,6 @@ class QuotaExceededError extends Error {
     constructor(public readonly reason: string) {
         super(reason);
         this.name = 'QuotaExceededError';
-    }
-}
-
-/**
- * Fire-and-forget call to increment the user's monthly query counter.
- * Errors are logged but never surface to the user — counter drift is preferable
- * to blocking the chat on a usage-tracking glitch.
- */
-async function incrementQueryCounter(): Promise<void> {
-    try {
-        const fn = httpsCallable(getFunctions(), 'incrementUsage');
-        await fn({ kind: 'query' });
-    } catch (err) {
-        console.warn('[useFacultyChat] Failed to increment query counter:', err);
     }
 }
 
@@ -278,7 +263,7 @@ export function useFacultyChat(sessionId: string) {
                 );
                 // Increment the monthly query counter server-side. Fire-and-forget
                 // so it doesn't delay the response rendering.
-                void incrementQueryCounter();
+                void quotaService.incrementQuery();
                 return response;
             } finally {
                 setIsStreaming(false);
