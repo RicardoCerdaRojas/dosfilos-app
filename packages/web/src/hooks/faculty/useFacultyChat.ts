@@ -107,8 +107,17 @@ export function useFacultyChat(sessionId: string) {
         modeUsed: ConcreteResponseMode | undefined,
         modeWasAuto: boolean,
         attachmentsMeta?: MessageAttachmentMeta[],
+        targetSessionId?: string,
     ) => {
-        queryClient.setQueryData<AIChatSession | null>(sessionQueryKey, (prev) => {
+        // Override path covers the new-session-creation race: the mutation
+        // was started while the page still had `sessionId=''`, but the
+        // service call wrote against the freshly created session. Without
+        // this, the optimistic write goes to the wrong cache key and the
+        // user sees an empty chat until the background refetch lands.
+        const targetKey = targetSessionId
+            ? ['faculty', 'sessions', user?.uid, targetSessionId]
+            : sessionQueryKey;
+        queryClient.setQueryData<AIChatSession | null>(targetKey, (prev) => {
             if (!prev) return prev;
             const now = new Date();
             const userMsg: AIChatMessage = {
@@ -198,6 +207,7 @@ export function useFacultyChat(sessionId: string) {
             lengthPreference,
             attachments,
             attachmentsMeta,
+            sessionIdOverride,
         }: {
             message: string;
             lengthPreference?: ResponseMode;
@@ -205,9 +215,21 @@ export function useFacultyChat(sessionId: string) {
             attachments?: InlineAttachment[];
             /** Display metadata for the user bubble (persisted to Firestore). */
             attachmentsMeta?: MessageAttachmentMeta[];
+            /**
+             * Bypass closure-captured `sessionId` for the new-session
+             * race: caller just created the session and needs the send
+             * to target the fresh id, even though the page hasn't re-
+             * rendered with the new `sessionId` param yet (so
+             * `sessionQuery.data` is still `undefined`).
+             */
+            sessionIdOverride?: string;
         }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            if (!sessionQuery.data) throw new Error('Session not found');
+            const targetSessionId = sessionIdOverride ?? sessionId;
+            // Skip the sessionQuery.data guard when an override is
+            // provided — the caller just persisted the session and
+            // owns the id directly; the query just hasn't refetched.
+            if (!sessionIdOverride && !sessionQuery.data) throw new Error('Session not found');
 
             const quota = await quotaService.canQuery(user.uid);
             if (!quota.allowed) {
@@ -226,7 +248,7 @@ export function useFacultyChat(sessionId: string) {
             try {
                 const { response, effectiveMode } = await facultyService.orchestratedMessage.execute(
                     user.uid,
-                    sessionId,
+                    targetSessionId,
                     message,
                     (chunk) => { setStreamingMessage((prev) => prev + chunk); },
                     (agents) => { setActiveAgents(agents); },
@@ -252,6 +274,7 @@ export function useFacultyChat(sessionId: string) {
                     capturedMode ?? effectiveMode,
                     capturedWasAuto,
                     attachmentsMeta,
+                    sessionIdOverride,
                 );
                 // Increment the monthly query counter server-side. Fire-and-forget
                 // so it doesn't delay the response rendering.

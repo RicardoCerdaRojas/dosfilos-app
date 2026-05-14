@@ -277,11 +277,17 @@ export function FacultyChatPage() {
                 // navigate to the canonical session URL afterwards.
                 if (inlineAndMeta.inline) {
                     navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
+                    // sessionIdOverride targets the freshly created session,
+                    // bypassing the closure-captured `sessionId=''` from the
+                    // pre-navigate /new render. Without it the mutation's
+                    // `sessionQuery.data` guard throws "Session not found"
+                    // because the query is disabled when `sessionId` is empty.
                     await sendOrchestratedMessage({
                         message: userMsg,
                         lengthPreference,
                         attachments: [inlineAndMeta.inline],
                         ...(inlineAndMeta.meta && { attachmentsMeta: [inlineAndMeta.meta] }),
+                        sessionIdOverride: newSession.id,
                     });
                 } else {
                     navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
