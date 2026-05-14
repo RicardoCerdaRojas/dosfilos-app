@@ -72,9 +72,16 @@
     --secondary: 45 93% 47%;
     --secondary-foreground: 222 47% 11%;
 
-    /* Accent - Verde (crecimiento, vida) */
-    --accent: 142 76% 36%;
-    --accent-foreground: 210 40% 98%;
+    /*
+     * Accent — SUBTLE neutral surface used by shadcn primitives
+     * (DropdownMenu, Button, Badge, Command, Calendar, Dialog) for
+     * hover / focus / selected states. NOT a brand colour. Brand
+     * lives in `--primary`. Earlier definition set this to vivid
+     * green which made every hover state across the app look
+     * shouty + neon in dark mode.
+     */
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 11%;
 
     /* Muted */
     --muted: 210 40% 96%;
@@ -166,7 +173,9 @@
     --secondary: 45 93% 47%;
     --secondary-foreground: 222 47% 11%;
 
-    --accent: 142 76% 36%;
+    /* Accent — see :root comment. Neutral dark surface for shadcn
+     *  hover / focus states. */
+    --accent: 217 33% 22%;
     --accent-foreground: 210 40% 98%;
 
     --muted: 217 33% 17%;
@@ -230,8 +239,10 @@
     --secondary: 45 93% 47%;
     --secondary-foreground: 222 47% 11%;
 
-    --accent: 142 76% 36%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent — see :root comment. Subtle neutral for shadcn
+     *  hover / focus, not brand. */
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 11%;
 
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
@@ -273,36 +284,36 @@
     --phase-generic: 38 92% 50%;
   }
 
+  /*
+   * Alternative colour themes only override the BRAND tokens
+   * (`--primary` + `--ring`). `--accent` is intentionally left to
+   * inherit from `:root` / `.dark` so shadcn hover / focus states
+   * stay subtle across themes — overriding it here would re-introduce
+   * the vivid-hover anti-pattern across DropdownMenu / Button / etc.
+   */
+
   /* Color Theme: Purple Pastoral */
   [data-theme="purple"] {
     --primary: 271 91% 65%;
     --primary-foreground: 0 0% 100%;
-    --accent: 270 60% 70%;
-    --accent-foreground: 0 0% 100%;
     --ring: 271 91% 65%;
   }
 
   [data-theme="purple"].dark {
     --primary: 271 91% 65%;
     --primary-foreground: 0 0% 100%;
-    --accent: 270 60% 70%;
-    --accent-foreground: 0 0% 100%;
   }
 
   /* Color Theme: Green Hope */
   [data-theme="green"] {
     --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
-    --accent: 158 64% 52%;
-    --accent-foreground: 0 0% 100%;
     --ring: 160 84% 39%;
   }
 
   [data-theme="green"].dark {
     --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
-    --accent: 158 64% 52%;
-    --accent-foreground: 0 0% 100%;
   }
 
   /* Color theme "blue" intentionally has no override block.
@@ -316,16 +327,12 @@
   [data-theme="orange"] {
     --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
-    --accent: 27 96% 61%;
-    --accent-foreground: 0 0% 100%;
     --ring: 24 95% 53%;
   }
 
   [data-theme="orange"].dark {
     --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
-    --accent: 27 96% 61%;
-    --accent-foreground: 0 0% 100%;
   }
 }
 
