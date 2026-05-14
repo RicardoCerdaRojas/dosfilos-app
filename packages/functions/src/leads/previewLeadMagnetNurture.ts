@@ -1,20 +1,21 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { getDay1ErrorTemplate, getDay1ErrorSubject } from '../emails/templates/leadMagnetNurture/day1Error';
-import { getDay3PickBookTemplate, getDay3PickBookSubject } from '../emails/templates/leadMagnetNurture/day3PickBook';
-import { getDay5WorkflowTemplate, getDay5WorkflowSubject } from '../emails/templates/leadMagnetNurture/day5Workflow';
-import { getDay7TrialTemplate, getDay7TrialSubject } from '../emails/templates/leadMagnetNurture/day7Trial';
-import type { Locale } from '../emails/templates/leadMagnetNurture/shell';
+import { render } from '@react-email/render';
+import { Day1ErrorEmail, getDay1ErrorSubject } from '../emails/templates/leadMagnetNurture/Day1ErrorEmail';
+import { Day3PickBookEmail, getDay3PickBookSubject } from '../emails/templates/leadMagnetNurture/Day3PickBookEmail';
+import { Day5WorkflowEmail, getDay5WorkflowSubject } from '../emails/templates/leadMagnetNurture/Day5WorkflowEmail';
+import { Day7TrialEmail, getDay7TrialSubject } from '../emails/templates/leadMagnetNurture/Day7TrialEmail';
 
 type Stage = 'day1' | 'day3' | 'day5' | 'day7';
+type Locale = 'es' | 'en';
 
 const TEMPLATES: Record<Stage, {
-    template: (name: string, locale: Locale) => string;
+    render: (name: string, locale: Locale) => Promise<string>;
     subject: (locale: Locale) => string;
 }> = {
-    day1: { template: getDay1ErrorTemplate, subject: getDay1ErrorSubject },
-    day3: { template: getDay3PickBookTemplate, subject: getDay3PickBookSubject },
-    day5: { template: getDay5WorkflowTemplate, subject: getDay5WorkflowSubject },
-    day7: { template: getDay7TrialTemplate, subject: getDay7TrialSubject },
+    day1: { render: (n, l) => render(Day1ErrorEmail({ name: n, locale: l })), subject: getDay1ErrorSubject },
+    day3: { render: (n, l) => render(Day3PickBookEmail({ name: n, locale: l })), subject: getDay3PickBookSubject },
+    day5: { render: (n, l) => render(Day5WorkflowEmail({ name: n, locale: l })), subject: getDay5WorkflowSubject },
+    day7: { render: (n, l) => render(Day7TrialEmail({ name: n, locale: l })), subject: getDay7TrialSubject },
 };
 
 interface PreviewRequest {
@@ -26,13 +27,12 @@ interface PreviewRequest {
 const SUPER_ADMIN_EMAIL = 'rdocerda@gmail.com';
 
 /**
- * Renders a nurture template with sample inputs and returns the
- * compiled HTML + subject. Used by the super-admin preview page so
- * we can review every email design + copy without having to send
- * real emails or wait for the daily scheduler.
+ * Renders a nurture template via the canonical react-email pipeline
+ * and returns the compiled HTML + subject. Used by the super-admin
+ * preview page so we can review every email design + copy without
+ * sending real emails or waiting for the daily scheduler.
  *
- * Auth: super-admin only (matches the email used by AdminLeadMagnets
- * and the Firestore rules that gate `lead_magnet_submissions/`).
+ * Auth: super-admin only.
  */
 export const previewLeadMagnetNurture = onCall<PreviewRequest>(
     { region: 'us-central1' },
@@ -52,11 +52,12 @@ export const previewLeadMagnetNurture = onCall<PreviewRequest>(
         const resolvedName = (typeof name === 'string' && name.trim()) || (resolvedLocale === 'en' ? 'Preacher' : 'Predicador');
 
         const entry = TEMPLATES[stage];
+        const html = await entry.render(resolvedName, resolvedLocale);
         return {
             stage,
             locale: resolvedLocale,
             subject: entry.subject(resolvedLocale),
-            html: entry.template(resolvedName, resolvedLocale),
+            html,
         };
     },
 );
