@@ -43,6 +43,7 @@ interface FacultyExtractionPanelProps {
     onJumpToOrigin?: (extraction: Extraction) => void;
     onOpenExternal?: (extraction: Extraction) => void;
     onShareByEmail?: (extraction: Extraction) => void;
+    onPublishToWordpress?: (extraction: Extraction) => void;
     extractionsError?: unknown;
     onRefreshExtractions?: () => void;
 }
@@ -71,6 +72,7 @@ export function FacultyExtractionPanel({
     onJumpToOrigin,
     onOpenExternal,
     onShareByEmail,
+    onPublishToWordpress,
     extractionsError,
     onRefreshExtractions,
 }: FacultyExtractionPanelProps) {
@@ -140,6 +142,7 @@ export function FacultyExtractionPanel({
                     onJumpToOrigin={onJumpToOrigin}
                     onOpenExternal={onOpenExternal}
                     onShareByEmail={onShareByEmail}
+                    onPublishToWordpress={onPublishToWordpress}
                     error={extractionsError}
                     onRetry={onRefreshExtractions}
                 />

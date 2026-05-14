@@ -139,6 +139,9 @@
             "sermons": "Sermón",
             "exegeticalPapers": "Paper"
         },
+        "publishedTo": {
+            "wordpress": "Publicado en WordPress"
+        },
         "errorLoading": "No pudimos cargar tus documentos.",
         "errorIndexBuilding": "El índice de Firestore aún se está construyendo (5-10 min post-deploy). Reintenta en un momento.",
         "retry": "Reintentar",
@@ -150,6 +153,7 @@
             "unpin": "Desanclar del proyecto",
             "jumpToOrigin": "Ver origen en la conversación",
             "email": "Enviar por email",
+            "publishWordpress": "Publicar en WordPress",
             "delete": "Eliminar"
         },
         "picker": {
@@ -167,6 +171,29 @@
     "extractionsFilters": {
         "allTypes": "Todos los tipos",
         "allTime": "Cualquier momento"
+    },
+    "publishWordpressDialog": {
+        "title": "Publicar en WordPress",
+        "description": "Publica \"{{title}}\" como post en tu sitio WordPress.",
+        "notConfigured": "Aún no has conectado tu sitio WordPress. Configúralo en Ajustes → Integraciones para publicar.",
+        "configureCta": "Configurar WordPress",
+        "connectedTo": "Conectado a {{url}}",
+        "titleLabel": "Título del post",
+        "excerptLabel": "Extracto (opcional)",
+        "excerptPlaceholder": "Resumen breve para listados y SEO...",
+        "excerptHint": "Si lo dejas vacío, WordPress generará uno desde el cuerpo.",
+        "statusLabel": "Estado",
+        "statusDraft": "Borrador",
+        "statusPublish": "Publicado inmediato",
+        "publishDraft": "Crear borrador",
+        "publishLive": "Publicar ahora",
+        "cancel": "Cancelar",
+        "openInWordpress": "Abrir en WordPress",
+        "success": {
+            "draft": "Borrador creado en WordPress.",
+            "publish": "Post publicado en WordPress."
+        },
+        "error": "No se pudo publicar: {{message}}"
     },
     "emailDialog": {
         "title": "Enviar por email",

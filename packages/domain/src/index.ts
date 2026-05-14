@@ -32,6 +32,7 @@ export * from './entities/AIAgent';
 export * from './entities/AIChatSession';
 export * from './entities/AIProject';
 export * from './entities/Extraction';
+export * from './entities/WordpressIntegration';
 export * from './entities/SermonPersonalization';
 
 // Repositories
@@ -48,6 +49,7 @@ export * from './repositories/IAIAgentRepository'; // 🎓 Multi-Agent Agent Rep
 export * from './repositories/IAIChatRepository'; // 🎓 Multi-Agent Chat Repository
 export * from './repositories/IAIProjectRepository'; // 🎓 Multi-Agent Project Repository
 export * from './repositories/IExtractionRepository'; // 🎓 Multi-Agent Persisted Extractions
+export * from './repositories/IUserIntegrationsRepository'; // 🎓 Per-user 3rd-party integration creds
 export * from './repositories/IAuthRepository';
 export * from './repositories/IVectorRepository';
 

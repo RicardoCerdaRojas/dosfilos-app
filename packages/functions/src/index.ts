@@ -59,6 +59,8 @@ export { previewLeadMagnetNurture } from './leads/previewLeadMagnetNurture';
 export { previewExtractionShareEmail } from './leads/previewExtractionShareEmail';
 // Pastor-initiated email send for any persisted extraction (Fase 3.3).
 export { sendExtractionByEmail } from './leads/sendExtractionByEmail';
+// WordPress draft publish for any persisted extraction (Fase 3.3.b).
+export { publishExtractionToWordpress } from './leads/publishExtractionToWordpress';
 export { onUserLogin } from './analytics/onUserLogin';
 export { aggregateDailyMetrics } from './analytics/aggregateDailyMetrics';
 export { recalculateAnalytics, recalculateAnalyticsHttp, recalculateAnalyticsCallable } from './analytics/recalculateAnalytics';

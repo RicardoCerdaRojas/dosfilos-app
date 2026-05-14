@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react';
-import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin, Mail } from 'lucide-react';
+import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin, Mail, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -70,6 +70,8 @@ interface FacultyExtractionsListProps {
     onOpenExternal?: (extraction: Extraction) => void;
     /** Open the email-share dialog for this artifact. */
     onShareByEmail?: (extraction: Extraction) => void;
+    /** Open the WordPress publish dialog for this artifact. */
+    onPublishToWordpress?: (extraction: Extraction) => void;
     error?: unknown;
     onRetry?: () => void;
 }
@@ -92,6 +94,7 @@ export function FacultyExtractionsList({
     onJumpToOrigin,
     onOpenExternal,
     onShareByEmail,
+    onPublishToWordpress,
     error,
     onRetry,
 }: FacultyExtractionsListProps) {
@@ -290,6 +293,15 @@ export function FacultyExtractionsList({
                                         </span>
                                     </>
                                 )}
+                                {item.publishedRefs && item.publishedRefs.length > 0 && (
+                                    <>
+                                        <span aria-hidden>·</span>
+                                        <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400" title={t('extractionsList.publishedTo.wordpress')}>
+                                            <Globe className="w-3 h-3" />
+                                            WP
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         </div>
                         <div
@@ -351,6 +363,12 @@ export function FacultyExtractionsList({
                                         <DropdownMenuItem onClick={() => onShareByEmail(item)}>
                                             <Mail className="w-3.5 h-3.5 mr-2" />
                                             {t('extractionsList.actions.email')}
+                                        </DropdownMenuItem>
+                                    )}
+                                    {onPublishToWordpress && (item.type === 'BLOG_POST' || item.type === 'SYSTEMATIC_THEOLOGY_PAPER') && (
+                                        <DropdownMenuItem onClick={() => onPublishToWordpress(item)}>
+                                            <Globe className="w-3.5 h-3.5 mr-2" />
+                                            {t('extractionsList.actions.publishWordpress')}
                                         </DropdownMenuItem>
                                     )}
                                     {onJumpToOrigin && !item.sourceSessionDeleted && item.sessionId && (

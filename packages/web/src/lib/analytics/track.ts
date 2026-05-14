@@ -45,7 +45,8 @@ export type FunnelEventName =
     | 'faculty_artifact_opened_from_library'
     | 'faculty_artifact_pinned_to_project'
     | 'faculty_artifact_deleted'
-    | 'faculty_artifact_emailed';
+    | 'faculty_artifact_emailed'
+    | 'faculty_artifact_published_wordpress';
 
 export type EventProps = Record<string, string | number | boolean | undefined>;
 

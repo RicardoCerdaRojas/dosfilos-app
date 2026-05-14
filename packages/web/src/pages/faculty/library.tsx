@@ -7,6 +7,7 @@ import { FacultyExtractionsList } from '@/components/faculty/FacultyExtractionsL
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { ExtractionFilters, filterExtractions, type TypeFilterValue, type TimeFilterValue } from '@/components/faculty/ExtractionFilters';
 import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
+import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpressDialog';
 import { Input } from '@/components/ui/input';
 import { Library, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,6 +32,7 @@ export function FacultyLibraryPage() {
     const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all');
     const [timeFilter, setTimeFilter] = useState<TimeFilterValue>('all');
     const [emailDialogExtraction, setEmailDialogExtraction] = useState<Extraction | null>(null);
+    const [wpDialogExtraction, setWpDialogExtraction] = useState<Extraction | null>(null);
     const [draftMarkdown, setDraftMarkdown] = useState<string>('');
     const [draftFor, setDraftFor] = useState<string | null>(null);
 
@@ -164,6 +166,7 @@ export function FacultyLibraryPage() {
                                 }
                             }}
                             onShareByEmail={setEmailDialogExtraction}
+                            onPublishToWordpress={setWpDialogExtraction}
                         />
                     )}
                 </aside>
@@ -204,6 +207,11 @@ export function FacultyLibraryPage() {
             <EmailExtractionDialog
                 extraction={emailDialogExtraction}
                 onClose={() => setEmailDialogExtraction(null)}
+            />
+
+            <PublishToWordpressDialog
+                extraction={wpDialogExtraction}
+                onClose={() => setWpDialogExtraction(null)}
             />
         </div>
     );

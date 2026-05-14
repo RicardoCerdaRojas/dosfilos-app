@@ -19,6 +19,7 @@ export * from './services/CoreLibraryRAGService'; // 🎯 Phase 2: Vector-search
 export * from './services/LeadsService';
 export * from './services/LeadMagnetSubmissionsService';
 export * from './services/ExtractionShareService';
+export * from './services/UserIntegrationsService';
 export * from './services/CoreLibraryAdminService';
 export * from './services/ProcessingBalanceService';
 export * from './services/exegesisPricingTracker';

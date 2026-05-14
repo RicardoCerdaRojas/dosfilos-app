@@ -61,6 +61,29 @@ class ExtractionShareService {
         const result = await callable(input);
         return result.data;
     }
+
+    /**
+     * Publishes a persisted Extraction to the user's WordPress site
+     * as a post. Requires the user to have configured their WP
+     * integration first. Server-side reads credentials from
+     * `users/{uid}/integrations/wordpress`, calls the WP REST API,
+     * and persists the resulting `publishedRefs` log entry on the
+     * Extraction doc.
+     */
+    async publishToWordpress(input: {
+        extractionId: string;
+        status?: 'draft' | 'publish';
+        title?: string;
+        excerpt?: string;
+    }): Promise<{ postId: number; postUrl: string; status: 'draft' | 'publish' }> {
+        const functions = getFunctions();
+        const callable = httpsCallable<typeof input, { postId: number; postUrl: string; status: 'draft' | 'publish' }>(
+            functions,
+            'publishExtractionToWordpress',
+        );
+        const result = await callable(input);
+        return result.data;
+    }
 }
 
 export const extractionShareService = new ExtractionShareService();
