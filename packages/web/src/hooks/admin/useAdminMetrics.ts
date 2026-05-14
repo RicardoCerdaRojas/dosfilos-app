@@ -28,6 +28,14 @@ export interface DashboardMetrics {
     totalLogins?: number;
     totalGreekSessions?: number; // Greek Tutor study sessions
     totalPreachingPlans?: number; // Preaching Plans
+    // Hito 7 — Faculty engagement + lead-magnet funnel rollup, populated
+    // from `global_metrics(.hito7).last30d` and `global_metrics_daily/{today}.hito7`.
+    // Flat `eventName → count` maps so the UI can pick which events to surface
+    // without the aggregator knowing about them by name.
+    hito7?: {
+        today: Record<string, number>;
+        last30d: Record<string, number>;
+    };
 }
 
 /**
@@ -108,6 +116,11 @@ export function useAdminMetrics() {
 
                 // Growth rate (placeholder - would need historical data)
                 growthRate: 0,
+
+                hito7: {
+                    today: (daily?.hito7 ?? {}) as Record<string, number>,
+                    last30d: (aggregate.hito7?.last30d ?? {}) as Record<string, number>,
+                },
             };
 
             console.log('[useAdminMetrics] Dashboard metrics:', dashboardMetrics);
