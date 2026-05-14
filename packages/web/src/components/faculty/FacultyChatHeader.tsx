@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, AlignLeft, AlignJustify, ChevronDown, Clock, Download, PanelLeftOpen, GraduationCap, HeartHandshake, Lightbulb, Sparkles } from 'lucide-react';
+import { ArrowLeft, AlignLeft, AlignJustify, ChevronDown, GraduationCap, HeartHandshake, Lightbulb, PanelLeft, PanelLeftClose, PanelRight, PanelRightClose, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -77,30 +77,28 @@ export function FacultyChatHeader({
             : (sessionTitle || t('header.sessionActive'));
 
     return (
-        <header className="flex items-center justify-between px-6 py-4 bg-background border-b shrink-0 shadow-sm z-10">
-            <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between px-6 py-3 bg-background border-b shrink-0 shadow-sm z-10">
+            {/*
+             * Left cluster — context-aware:
+             *   - Home: nothing. The hero already owns the title;
+             *     duplicating it here was pure visual redundancy.
+             *   - Session: back arrow + session title. The avatar
+             *     was decorative; dropped to keep the row compact.
+             */}
+            <div className="flex items-center gap-3 min-w-0">
                 {!isHomeState && (
-                    <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
+                    <>
+                        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent shrink-0">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                        <div className="min-w-0">
+                            <h1 className="text-base font-semibold leading-none tracking-tight truncate">{displayTitle}</h1>
+                            {isNewSession && (
+                                <p className="text-[11px] text-muted-foreground mt-1">{t('header.newSession')}</p>
+                            )}
+                        </div>
+                    </>
                 )}
-                <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                        <GraduationCap className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-lg font-bold leading-none tracking-tight">{displayTitle}</h1>
-                        {/*
-                         * Subtitle: only meaningful for the new-session affordance ("type your
-                         * first question"). The previous "Professor ID: N" line was misleading
-                         * because the orchestrated path can route the same session to multiple
-                         * specialists across messages — there's no single "owning" tutor.
-                         */}
-                        {isNewSession && (
-                            <p className="text-[13px] text-muted-foreground mt-0.5 text-xs">{t('header.newSession')}</p>
-                        )}
-                    </div>
-                </div>
             </div>
             <div className="flex items-center gap-2">
                 <DropdownMenu>
@@ -213,25 +211,40 @@ export function FacultyChatHeader({
 
                 <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
 
+                {/*
+                 * Symmetric icon toggles for the two side rails. Same
+                 * visual language (Panel{Left,Right}{,Close} from
+                 * lucide), same behaviour (tap to expand / collapse,
+                 * fully hidden when collapsed). Replaces the
+                 * previous labeled "Sesiones" / "Crear recurso"
+                 * buttons which mixed text + icon and looked
+                 * different from each other in subtle ways.
+                 */}
                 <Button
-                    variant={isLeftSidebarOpen ? "secondary" : "ghost"}
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={onToggleLeftSidebar}
-                    className={cn("hidden md:flex items-center gap-2 transition-colors", isLeftSidebarOpen && "bg-secondary")}
+                    className={cn("hidden md:inline-flex h-9 w-9 transition-colors", isLeftSidebarOpen && "bg-secondary text-foreground")}
                     title={t('header.projectsAndSessions')}
+                    aria-pressed={isLeftSidebarOpen}
                 >
-                    <Clock className="w-4 h-4" />
-                    <span className="text-xs font-semibold">{t('header.sessions')}</span>
+                    {isLeftSidebarOpen
+                        ? <PanelLeftClose className="w-4 h-4" />
+                        : <PanelLeft className="w-4 h-4" />
+                    }
                 </Button>
                 <Button
-                    variant={isRightSidebarOpen ? "secondary" : "ghost"}
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={onToggleRightSidebar}
-                    className={cn("hidden lg:flex items-center gap-2 transition-colors", isRightSidebarOpen && "bg-secondary")}
+                    className={cn("hidden lg:inline-flex h-9 w-9 transition-colors", isRightSidebarOpen && "bg-secondary text-foreground")}
                     title={t('header.contentExtraction')}
+                    aria-pressed={isRightSidebarOpen}
                 >
-                    <Download className="w-4 h-4" />
-                    <span className="text-xs font-semibold">{t('header.extract')}</span>
+                    {isRightSidebarOpen
+                        ? <PanelRightClose className="w-4 h-4" />
+                        : <PanelRight className="w-4 h-4" />
+                    }
                 </Button>
             </div>
         </header>

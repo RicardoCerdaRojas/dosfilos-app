@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, X, SquarePen, FolderPlus, PanelLeftClose, PanelLeftOpen, ChevronRight, Edit3, Trash2, FolderOpen, Loader2, LayoutGrid } from 'lucide-react';
+import { Search, X, SquarePen, FolderPlus, ChevronRight, Edit3, Trash2, FolderOpen, Loader2, LayoutGrid } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -262,7 +262,12 @@ export function FacultySessionSidebar({
 
     return (
         <>
-            {/* Full sidebar */}
+            {/*
+             * Symmetric collapse: rail goes to 0-width when closed
+             * (no sliver). Open/close is driven exclusively by the
+             * page-header `PanelLeft` toggle so the user has one
+             * consistent affordance for both rails.
+             */}
             <aside className={cn(
                 'border-border bg-muted/30 hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out',
                 isOpen ? 'w-64 border-r opacity-100' : 'w-0 border-r-0 opacity-0 overflow-hidden'
@@ -286,13 +291,13 @@ export function FacultySessionSidebar({
                             >
                                 <FolderPlus className="w-3.5 h-3.5" />
                             </button>
-                            <button
-                                onClick={onToggle}
-                                className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                                title={t('sidebar.collapsePanel')}
-                            >
-                                <PanelLeftClose className="w-3.5 h-3.5" />
-                            </button>
+                            {/*
+                             * In-rail close button removed in favour of the
+                             * single source of truth in the page header
+                             * (FacultyChatHeader's PanelLeft toggle). Keeps
+                             * the symmetric collapse model with the right
+                             * extraction panel.
+                             */}
                         </div>
                     </div>
                     {/* Search bar */}
@@ -410,17 +415,6 @@ export function FacultySessionSidebar({
                     </div>
                 </div>
             </aside>
-
-            {/* Collapsed sidebar tab */}
-            {!isOpen && (
-                <button
-                    onClick={onToggle}
-                    className="hidden md:flex flex-col items-center gap-2 pt-3 w-12 shrink-0 border-r border-border bg-card hover:bg-warning/10 text-muted-foreground hover:text-warning transition-colors"
-                    title={t('sidebar.openPanel')}
-                >
-                    <PanelLeftOpen className="w-4 h-4" />
-                </button>
-            )}
         </>
     );
 }
