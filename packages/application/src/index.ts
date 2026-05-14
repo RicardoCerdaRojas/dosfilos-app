@@ -24,6 +24,7 @@ export * from './services/CoreLibraryAdminService';
 export * from './services/ProcessingBalanceService';
 export * from './services/AdminDashboardService';
 export * from './services/AdminUserService';
+export * from './services/AdminUserQueryService';
 export * from './services/ActivityTrackingService';
 export * from './services/exegesisPricingTracker';
 export * from './services/ExegesisCreditReservation';
