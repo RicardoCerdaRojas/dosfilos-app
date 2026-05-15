@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { NotebookPen, Plus, Sparkles, Loader2, AlertCircle, Search, X, Archive, BookOpen, FileText, ListChecks, Languages } from 'lucide-react';
+import { NotebookPen, Plus, Sparkles, Loader2, AlertCircle, Search, X, Archive, BookOpen, FileText, ListChecks, Languages, LayoutGrid, List, PanelRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { seriesService } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
@@ -79,6 +80,34 @@ export function ExegesisPage() {
     const [phaseFilter, setPhaseFilter] = useState<ExegeticalPaperPhase | 'all'>('all');
     const [includeArchived, setIncludeArchived] = useState(false);
 
+    // Layout state. Both persist via localStorage so the user's
+    // preference survives reloads.
+    const VIEW_KEY = 'dosfilos.exegesis.viewMode';
+    const SIDEBAR_KEY = 'dosfilos.exegesis.sidebar';
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+        if (typeof window === 'undefined') return 'grid';
+        try {
+            return window.localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'grid';
+        } catch { return 'grid'; }
+    });
+    const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return window.localStorage.getItem(SIDEBAR_KEY) === 'open';
+        } catch { return false; }
+    });
+    const setViewModePersisted = (v: 'grid' | 'list') => {
+        setViewMode(v);
+        try { window.localStorage.setItem(VIEW_KEY, v); } catch { /* ignore */ }
+    };
+    const toggleSidebar = () => {
+        setSidebarOpen((open) => {
+            const next = !open;
+            try { window.localStorage.setItem(SIDEBAR_KEY, next ? 'open' : 'closed'); } catch { /* ignore */ }
+            return next;
+        });
+    };
+
     const filteredPapers = useMemo(() => {
         const q = search.trim().toLowerCase();
         return papers.filter(p => {
@@ -105,23 +134,33 @@ export function ExegesisPage() {
 
     return (
         <div className="flex flex-col h-full bg-background font-sans overflow-y-auto">
-            {/* Compact hero — brand identity only, no CTA. The
-                "+ Nuevo trabajo" button now lives in the papers
-                section header (and as the empty-state primary
-                action). Decoupling brand from action lets the
-                hero shrink without losing personality. */}
-            <div className="border-b border-border bg-gradient-to-b from-card to-muted/40 dark:from-slate-900 dark:to-slate-950 px-6 sm:px-10 pt-8 pb-10 shrink-0">
-                <div className="max-w-6xl mx-auto flex items-center gap-4">
-                    <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 text-primary dark:bg-primary/15 dark:border-primary/30 flex items-center justify-center">
-                        <NotebookPen className="w-6 h-6" />
+            {/* Compact hero. Description is onboarding copy — only
+                shows when the user hasn't created any paper yet. Once
+                populated, the page is operational and the description
+                becomes noise. Same pattern Projects uses. */}
+            <div className={cn(
+                "border-b border-border bg-gradient-to-b from-card to-muted/40 dark:from-slate-900 dark:to-slate-950 px-6 sm:px-10 shrink-0",
+                papers.length === 0 ? "pt-8 pb-10" : "py-4",
+            )}>
+                <div className="max-w-7xl mx-auto flex items-center gap-3">
+                    <div className={cn(
+                        "shrink-0 rounded-lg bg-primary/10 border border-primary/20 text-primary dark:bg-primary/15 dark:border-primary/30 flex items-center justify-center",
+                        papers.length === 0 ? "w-12 h-12 rounded-xl" : "w-9 h-9",
+                    )}>
+                        <NotebookPen className={papers.length === 0 ? "w-6 h-6" : "w-5 h-5"} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-tight font-serif">
+                        <h1 className={cn(
+                            "font-bold tracking-tight text-foreground leading-tight font-serif",
+                            papers.length === 0 ? "text-2xl md:text-3xl" : "text-lg md:text-xl",
+                        )}>
                             {t('directory.heroTitle')}
                         </h1>
-                        <p className="text-muted-foreground text-sm leading-snug mt-1 max-w-3xl">
-                            {t('directory.heroSubtitle')}
-                        </p>
+                        {papers.length === 0 && (
+                            <p className="text-muted-foreground text-sm leading-snug mt-1 max-w-3xl">
+                                {t('directory.heroSubtitle')}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -131,37 +170,91 @@ export function ExegesisPage() {
                 sidebar so the user always has them in peripheral
                 vision while scrolling through papers. On narrow
                 screens the columns stack. */}
-            <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
-                <div className="mb-6">
+            <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-5">
+                <div className="mb-4">
                     <ExegesisQuotaBadge
                         variant="banner"
                         onBuyPacks={() => setPacksOpen(true)}
                         onUpgradePlan={goToBilling}
                     />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+
+                {/* Single-line sub-header — count + view toggle +
+                    sidebar toggle + new btn. Replaces the previous
+                    H2 + subtitle + button block (50% less vertical). */}
+                <header className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                    <div className="flex items-baseline gap-2">
+                        <h2 className="font-reading text-[20px] font-bold text-foreground">
+                            {t('directory.papersTitle')}
+                        </h2>
+                        {papers.length > 0 && (
+                            <span className="text-[13px] text-muted-foreground tabular-nums">
+                                · {papers.length}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {/* View toggle — only relevant once data exists */}
+                        {papers.length > 0 && (
+                            <div className="hidden sm:flex items-center border border-border/60 rounded-md overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewModePersisted('grid')}
+                                    className={cn(
+                                        'h-8 w-8 inline-flex items-center justify-center transition-colors',
+                                        viewMode === 'grid'
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                                    )}
+                                    aria-label="Vista de cuadrícula"
+                                    title="Vista de cuadrícula"
+                                >
+                                    <LayoutGrid className="h-4 w-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewModePersisted('list')}
+                                    className={cn(
+                                        'h-8 w-8 inline-flex items-center justify-center transition-colors',
+                                        viewMode === 'list'
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                                    )}
+                                    aria-label="Vista de lista"
+                                    title="Vista de lista"
+                                >
+                                    <List className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
+                        {/* Sidebar toggle — defaults closed so cards
+                            get the full canvas. */}
+                        <Button
+                            variant={sidebarOpen ? 'secondary' : 'outline'}
+                            size="sm"
+                            onClick={toggleSidebar}
+                            title="Mis recursos (rúbricas + guías)"
+                        >
+                            <PanelRight className="h-4 w-4 mr-1.5" />
+                            Recursos
+                        </Button>
+                        <Button
+                            onClick={goToSetup}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+                            size="sm"
+                        >
+                            <Plus className="h-4 w-4 mr-1.5" />
+                            {t('directory.newPaperCta')}
+                        </Button>
+                    </div>
+                </header>
+
+                <div className={cn(
+                    "grid gap-6 items-start",
+                    sidebarOpen ? "grid-cols-1 lg:grid-cols-[1fr_320px]" : "grid-cols-1",
+                )}>
                     {/* Main column — papers */}
                     <section>
-                        <header className="flex items-center justify-between gap-3 mb-4">
-                            <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-1 h-5 rounded-full bg-primary" />
-                                    <h2 className="text-xl font-bold text-foreground font-serif">
-                                        {t('directory.papersTitle')}
-                                    </h2>
-                                </div>
-                                <p className="text-sm text-muted-foreground pl-3 mt-0.5">
-                                    {t('directory.papersSubtitle')}
-                                </p>
-                            </div>
-                            <Button
-                                onClick={goToSetup}
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
-                            >
-                                <Plus className="h-4 w-4 mr-1.5" />
-                                {t('directory.newPaperCta')}
-                            </Button>
-                        </header>
 
                         {/* Toolbar: only render once there's data worth filtering.
                             Empty/loading/error states have nothing for the user
@@ -223,8 +316,23 @@ export function ExegesisPage() {
                                     {t('list.filters.clear')}
                                 </Button>
                             </div>
+                        ) : viewMode === 'list' ? (
+                            <ul className="border border-border/60 rounded-lg overflow-hidden divide-y divide-border/60 bg-card">
+                                {filteredPapers.map(p => (
+                                    <PaperListRow
+                                        key={p.id}
+                                        paper={p}
+                                        language={activeLanguage}
+                                        t={t}
+                                        seriesLink={paperToSeries.get(p.id) ?? null}
+                                    />
+                                ))}
+                            </ul>
                         ) : (
-                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <ul className={cn(
+                                "grid gap-3 grid-cols-1",
+                                sidebarOpen ? "sm:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-3",
+                            )}>
                                 {filteredPapers.map(p => (
                                     <PaperCard
                                         key={p.id}
@@ -238,11 +346,16 @@ export function ExegesisPage() {
                         )}
                     </section>
 
-                    {/* Sidebar — resources */}
-                    <aside className="space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
-                        <UserRubricsSection />
-                        <UserStyleGuidesSection />
-                    </aside>
+                    {/* Sidebar — collapsible. Defaults closed; the
+                        "Recursos" button in the page header toggles it.
+                        When closed, the cards grid expands to fill the
+                        full canvas (3 columns at xl). */}
+                    {sidebarOpen && (
+                        <aside className="space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+                            <UserRubricsSection />
+                            <UserStyleGuidesSection />
+                        </aside>
+                    )}
                 </div>
             </main>
             <CreditPacksDialog
@@ -503,18 +616,32 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
                     </div>
                 )}
 
+                {/* Step progress bar — visualizes accepted/total
+                    steps. Only render when there's something to show. */}
+                {showStepProgress && (
+                    <div className="space-y-1">
+                        <div className="h-1 w-full bg-border/40 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-primary rounded-full transition-all"
+                                style={{ width: `${Math.round((acceptedSteps / totalSteps) * 100)}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span className="inline-flex items-center gap-1">
+                                <ListChecks className="h-3 w-3" aria-hidden />
+                                {acceptedSteps}/{totalSteps} pasos
+                            </span>
+                            <span>{Math.round((acceptedSteps / totalSteps) * 100)}%</span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
                     <div className="flex items-center gap-2.5 text-[10.5px] text-muted-foreground min-w-0">
                         {sourceCount > 0 && (
                             <span className="inline-flex items-center gap-1 shrink-0" title={t('list.meta.sourcesTooltip', { count: sourceCount })}>
                                 <FileText className="h-3 w-3" aria-hidden />
                                 {t('list.meta.sources', { count: sourceCount })}
-                            </span>
-                        )}
-                        {showStepProgress && (
-                            <span className="inline-flex items-center gap-1 shrink-0" title={t('list.meta.stepsTooltip', { accepted: acceptedSteps, total: totalSteps })}>
-                                <ListChecks className="h-3 w-3" aria-hidden />
-                                {acceptedSteps}/{totalSteps}
                             </span>
                         )}
                         <span className="truncate" title={paper.updatedAt.toLocaleString()}>
@@ -528,6 +655,79 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
                         {t(`list.phase.${paper.phase}`)}
                     </span>
                 </div>
+            </button>
+        </li>
+    );
+}
+
+// ── List Row (compact alt view) ─────────────────────────────────────────
+
+function PaperListRow({ paper, language, t, seriesLink }: PaperCardProps) {
+    const navigate = useNavigate();
+    const open = () => navigate(`/dashboard/exegesis/${paper.id}`);
+    const isArchived = paper.phase === 'archived' || paper.archivedAt !== null;
+    const formattedPassage = formatPassageReference(paper.passage, language);
+    const hasCustomTitle = !!paper.title && paper.title.trim().length > 0
+        && paper.title.trim() !== formattedPassage;
+    const headline = hasCustomTitle ? paper.title!.trim() : formattedPassage;
+    const totalSteps = paper.steps.length;
+    const acceptedSteps = paper.steps.filter(s => s.accepted !== null).length;
+    const sourceCount = paper.sources.length;
+
+    return (
+        <li>
+            <button
+                type="button"
+                onClick={open}
+                className={cn(
+                    "w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors text-left",
+                    isArchived && "opacity-70",
+                )}
+            >
+                <NotebookPen className="h-4 w-4 text-success shrink-0" />
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                        <span className="font-medium text-[14px] text-foreground truncate">{headline}</span>
+                        {hasCustomTitle && (
+                            <span className="text-[11px] text-muted-foreground truncate hidden md:inline">
+                                {formattedPassage}
+                            </span>
+                        )}
+                    </div>
+                    {seriesLink && (
+                        <div className="text-[11px] text-info-subtle-foreground truncate mt-0.5">
+                            Serie: {seriesLink.title}
+                        </div>
+                    )}
+                </div>
+                {totalSteps > 0 && (
+                    <div className="hidden md:flex items-center gap-2 shrink-0 w-32">
+                        <div className="flex-1 h-1 bg-border/40 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-primary rounded-full"
+                                style={{ width: `${Math.round((acceptedSteps / totalSteps) * 100)}%` }}
+                            />
+                        </div>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                            {acceptedSteps}/{totalSteps}
+                        </span>
+                    </div>
+                )}
+                <div className="hidden lg:flex items-center gap-3 text-[11.5px] text-muted-foreground shrink-0">
+                    {sourceCount > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            {sourceCount}
+                        </span>
+                    )}
+                    <span className="w-20 text-right">{paper.updatedAt.toLocaleDateString()}</span>
+                </div>
+                <span className={cn(
+                    'inline-flex items-center text-[10px] font-semibold rounded-full border px-2 py-0.5 shrink-0',
+                    PHASE_BADGE[paper.phase],
+                )}>
+                    {t(`list.phase.${paper.phase}`)}
+                </span>
             </button>
         </li>
     );
