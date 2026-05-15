@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     Plus,
     FolderKanban,
-    ArrowUpRight,
     MessageSquareQuote,
     FileText,
     Loader2,
@@ -39,6 +38,7 @@ import { useFacultySessions } from '@/hooks/faculty/useFacultySessions';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { ProjectEditDialog } from '@/pages/faculty/ProjectEditDialog';
 import { UpgradeRequiredModal } from '@/components/upgrade';
+import { ProjectsEmptyState } from './components/ProjectsEmptyState';
 import { cn } from '@/lib/utils';
 import type { AIProject, ProjectColor } from '@dosfilos/domain';
 
@@ -158,6 +158,34 @@ export function ProjectsListPage() {
         }
     };
 
+    const isCompletelyEmpty =
+        !isLoadingProjects &&
+        counts.active === 0 &&
+        counts.archived === 0 &&
+        counts.trash === 0;
+
+    if (isCompletelyEmpty) {
+        return (
+            <div className="min-h-full bg-background text-foreground antialiased">
+                <ProjectsEmptyState onCreateProject={handleOpenCreate} />
+
+                {dialogState && (
+                    <ProjectEditDialog
+                        project={dialogState.mode === 'edit' ? dialogState.project : undefined}
+                        onClose={() => setDialogState(null)}
+                    />
+                )}
+
+                <UpgradeRequiredModal
+                    open={upgradeModalOpen}
+                    onOpenChange={setUpgradeModalOpen}
+                    reason="module_restricted"
+                    module="Proyectos"
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-full bg-background text-foreground antialiased">
             <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-8 lg:py-10 space-y-8">
@@ -240,22 +268,18 @@ export function ProjectsListPage() {
                         <Loader2 className="h-6 w-6 text-muted-foreground/70 animate-spin" />
                     </div>
                 ) : filteredProjects.length === 0 ? (
-                    counts.active === 0 && counts.archived === 0 && counts.trash === 0 ? (
-                        <EmptyState onCreate={handleOpenCreate} />
-                    ) : (
-                        <div className="bg-muted/40 border border-border/60 rounded-xl px-6 py-12 text-center">
-                            <FolderKanban className="h-6 w-6 text-muted-foreground/70 mx-auto mb-3" />
-                            <p className="text-[14px] text-muted-foreground">
-                                {searchQuery
-                                    ? `Sin coincidencias para "${searchQuery}" en ${tab === 'archived' ? 'archivados' : tab === 'trash' ? 'papelera' : 'activos'}.`
-                                    : tab === 'archived'
-                                      ? 'No tienes proyectos archivados.'
-                                      : tab === 'trash'
-                                        ? 'La papelera está vacía.'
-                                        : 'No tienes proyectos activos.'}
-                            </p>
-                        </div>
-                    )
+                    <div className="bg-muted/40 border border-border/60 rounded-xl px-6 py-12 text-center">
+                        <FolderKanban className="h-6 w-6 text-muted-foreground/70 mx-auto mb-3" />
+                        <p className="text-[14px] text-muted-foreground">
+                            {searchQuery
+                                ? `Sin coincidencias para "${searchQuery}" en ${tab === 'archived' ? 'archivados' : tab === 'trash' ? 'papelera' : 'activos'}.`
+                                : tab === 'archived'
+                                  ? 'No tienes proyectos archivados.'
+                                  : tab === 'trash'
+                                    ? 'La papelera está vacía.'
+                                    : 'No tienes proyectos activos.'}
+                        </p>
+                    </div>
                 ) : (
                     <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                         {filteredProjects.map((project) => {
@@ -448,33 +472,3 @@ export function ProjectsListPage() {
     );
 }
 
-function EmptyState({ onCreate }: { onCreate: () => void }) {
-    return (
-        <div className="bg-muted/40 border border-border/60 rounded-xl px-6 py-16 text-center max-w-2xl mx-auto">
-            <FolderKanban className="h-7 w-7 text-muted-foreground/70 mx-auto mb-4" />
-            <h3 className="font-reading text-[22px] text-foreground mb-2">
-                Aún no tienes proyectos.
-            </h3>
-            <p className="text-[14px] leading-relaxed text-muted-foreground max-w-md mx-auto mb-6">
-                Comienza creando un workspace para la próxima unidad de tu trabajo —
-                un sermón, una serie, un estudio. Podrás conectar tu biblioteca, conversar
-                con tutores y acumular material en un solo lugar.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-                <Button
-                    onClick={onCreate}
-                    className="bg-foreground hover:bg-foreground/90 text-background font-medium gap-1.5"
-                >
-                    <Plus className="h-4 w-4" />
-                    Crear mi primer proyecto
-                </Button>
-                <Link
-                    to="/dashboard/faculty"
-                    className="text-[13px] text-muted-foreground hover:text-indigo-600"
-                >
-                    O explora la facultad sin proyecto →
-                </Link>
-            </div>
-        </div>
-    );
-}
