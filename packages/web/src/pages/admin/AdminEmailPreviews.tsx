@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFirebase } from '@/context/firebase-context';
-import { leadMagnetSubmissionsService, extractionShareService } from '@dosfilos/application';
+import { leadMagnetSubmissionsService, extractionShareService, welcomeEmailService } from '@dosfilos/application';
 import { ArrowLeft, Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,9 +15,11 @@ const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
 type NurtureStage = 'day1' | 'day3' | 'day5' | 'day7';
 type Locale = 'es' | 'en';
+type WelcomeFlow = 'free' | 'paid';
 /** Discriminated key for the active template card. */
 type ActiveTemplate =
     | { kind: 'nurture'; stage: NurtureStage }
+    | { kind: 'welcome'; flow: WelcomeFlow }
     | { kind: 'share' };
 
 const NURTURE_STAGES: ReadonlyArray<{
@@ -91,18 +93,29 @@ export function AdminEmailPreviews() {
         setLoading(true);
         setError(null);
 
-        const promise = active.kind === 'nurture'
-            ? leadMagnetSubmissionsService.previewNurtureTemplate({
-                stage: active.stage,
-                locale,
-                name: name.trim() || (locale === 'en' ? 'Preacher' : 'Predicador'),
-            }).then(r => ({ subject: r.subject, html: r.html }))
-            : extractionShareService.previewShareEmail({
-                title: shareTitle.trim() || undefined,
-                senderName: shareSenderName.trim() || undefined,
-                senderNote: shareSenderNote.trim() || undefined,
-                markdown: shareMarkdown.trim() || undefined,
-            });
+        const promise: Promise<PreviewResult> =
+            active.kind === 'nurture'
+                ? leadMagnetSubmissionsService
+                      .previewNurtureTemplate({
+                          stage: active.stage,
+                          locale,
+                          name: name.trim() || (locale === 'en' ? 'Preacher' : 'Predicador'),
+                      })
+                      .then((r) => ({ subject: r.subject, html: r.html }))
+                : active.kind === 'welcome'
+                  ? welcomeEmailService
+                        .previewWelcomeEmail({
+                            flow: active.flow,
+                            locale,
+                            name: name.trim() || (locale === 'en' ? 'Preacher' : 'Predicador'),
+                        })
+                        .then((r) => ({ subject: r.subject, html: r.html }))
+                  : extractionShareService.previewShareEmail({
+                        title: shareTitle.trim() || undefined,
+                        senderName: shareSenderName.trim() || undefined,
+                        senderNote: shareSenderNote.trim() || undefined,
+                        markdown: shareMarkdown.trim() || undefined,
+                    });
 
         promise
             .then(result => {
@@ -132,6 +145,7 @@ export function AdminEmailPreviews() {
     }
 
     const isNurtureActive = active.kind === 'nurture';
+    const isWelcomeActive = active.kind === 'welcome';
     const isShareActive = active.kind === 'share';
 
     return (
@@ -186,6 +200,43 @@ export function AdminEmailPreviews() {
                         </div>
                     </div>
 
+                    {/* Onboarding section */}
+                    <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
+                            Onboarding
+                        </div>
+                        <div className="space-y-2">
+                            {(['free', 'paid'] as const).map((flow) => {
+                                const isActive = isWelcomeActive && active.flow === flow;
+                                const meta =
+                                    flow === 'free'
+                                        ? {
+                                              label: 'Welcome — Free flow',
+                                              description: 'Email post-signup gratuito. Incluye gate de verificación.',
+                                          }
+                                        : {
+                                              label: 'Welcome — Paid flow',
+                                              description: 'Email post-checkout Stripe. Incluye link para crear contraseña.',
+                                          };
+                                return (
+                                    <Card
+                                        key={flow}
+                                        onClick={() => setActive({ kind: 'welcome', flow })}
+                                        className={cn(
+                                            'p-3 cursor-pointer transition-colors',
+                                            isActive
+                                                ? 'border-amber-500 bg-amber-50/60 dark:bg-amber-950/30'
+                                                : 'hover:bg-accent/40',
+                                        )}
+                                    >
+                                        <div className="font-semibold text-sm">{meta.label}</div>
+                                        <p className="text-xs text-muted-foreground mt-1">{meta.description}</p>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Share extraction section */}
                     <div>
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
@@ -208,7 +259,7 @@ export function AdminEmailPreviews() {
                     </div>
 
                     {/* Inputs vary per template family */}
-                    {isNurtureActive ? (
+                    {isNurtureActive || isWelcomeActive ? (
                         <Card className="p-4 space-y-3">
                             <div className="space-y-1.5">
                                 <Label className="text-xs">Idioma</Label>
