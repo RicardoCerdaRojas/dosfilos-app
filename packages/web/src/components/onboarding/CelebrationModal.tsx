@@ -24,7 +24,7 @@ export function CelebrationModal({ isOpen, onClose }: CelebrationModalProps) {
 
     const handleCreateAnother = () => {
         onClose();
-        navigate('/dashboard/generate-sermon');
+        navigate('/dashboard/sermons/tutor');
     };
 
     return (

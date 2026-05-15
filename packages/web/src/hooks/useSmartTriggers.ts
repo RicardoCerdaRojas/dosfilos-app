@@ -68,7 +68,7 @@ function checkTriggers(context: TriggerContext, navigate: any) {
                     duration: 8000,
                     action: {
                         label: "Crear Bosquejo",
-                        onClick: () => nav('/dashboard/generate-sermon')
+                        onClick: () => nav('/dashboard/sermons/tutor')
                     }
                 });
             }
@@ -86,7 +86,7 @@ function checkTriggers(context: TriggerContext, navigate: any) {
                     duration: 10000,
                     action: {
                         label: "Comenzar",
-                        onClick: () => nav('/dashboard/generate-sermon')
+                        onClick: () => nav('/dashboard/sermons/tutor')
                     }
                 });
             }

@@ -4,7 +4,6 @@
         "subtitle": "Manage your sermons and pastoral content",
         "newButton": "New Sermon",
         "generateWithTutor": "Generate with Tutor",
-        "useWizard": "Use Classic Wizard",
         "createBlank": "Blank Sermon"
     },
     "sermonCreatedSuccess": "Sermon created successfully",

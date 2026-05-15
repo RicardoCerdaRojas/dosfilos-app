@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Plus, FileText, LayoutGrid, List, Filter, Sparkles, Wand2,
+    Plus, FileText, LayoutGrid, List, Filter, Sparkles,
 } from 'lucide-react';
 import { SermonSeriesEntity } from '@dosfilos/domain';
 import { seriesService } from '@dosfilos/application';
@@ -134,7 +134,7 @@ export function SermonsPage() {
                 <p className="text-muted-foreground text-center max-w-md">
                     {t('empty.description')}
                 </p>
-                <Button onClick={() => navigate('/dashboard/generate-sermon?new=true')} size="lg">
+                <Button onClick={() => navigate('/dashboard/sermons/tutor')} size="lg">
                     <Plus className="mr-2 h-5 w-5" />
                     {t('empty.createButton')}
                 </Button>
@@ -160,10 +160,6 @@ export function SermonsPage() {
                         <DropdownMenuItem onClick={() => navigate('/dashboard/sermons/tutor')} className="cursor-pointer">
                             <Sparkles className="mr-2 h-4 w-4 text-primary" />
                             {t('header.generateWithTutor')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/dashboard/generate-sermon?new=true')} className="cursor-pointer">
-                            <Wand2 className="mr-2 h-4 w-4" />
-                            {t('header.useWizard')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate('/dashboard/sermons/new')} className="cursor-pointer">
