@@ -170,11 +170,11 @@ export function RegisterPage() {
               <div className="text-right">
                 {isFree ? (
                   <div className="text-sm text-slate-900 font-medium">
-                    {t('register.freeBadge', { defaultValue: 'Gratis · sin tarjeta' })}
+                    {t('register.freeBadge')}
                   </div>
                 ) : (
                   <>
-                    <div className="text-sm text-slate-500">{t('register.trialBadge', { defaultValue: '30 días gratis' })}</div>
+                    <div className="text-sm text-slate-500">{t('register.trialBadge')}</div>
                     <div className="text-sm text-slate-900 font-medium">
                       ${selectedPlan.pricing.monthly}
                       <span className="text-slate-500">{t('register.perMonth')}</span>
