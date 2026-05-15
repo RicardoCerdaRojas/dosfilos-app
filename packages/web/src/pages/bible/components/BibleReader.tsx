@@ -1,12 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useBible } from '@/context/BibleContext';
 import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
+import { OriginalLanguageRepositoryBase } from '@/data/repositories/bible/OriginalLanguageRepositoryBase';
 import { BibleVerse } from '@/domain/bible/entities/BibleEntities';
 import { getCanonicalId, getVersionSpecificId } from '@/domain/bible/utils/BibleMetadata';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useInView } from 'react-intersection-observer';
 import { Loader2 } from 'lucide-react';
+
+/**
+ * Type guard for the async original-language repos. Lets us call
+ * `loadChapter` without unsafe casts and check `supportsBook`
+ * before kicking off a fetch.
+ */
+function isOriginalLanguageRepo(repo: unknown): repo is OriginalLanguageRepositoryBase {
+    return repo instanceof OriginalLanguageRepositoryBase;
+}
 
 interface LoadedChapter {
     id: string; // unique key: "GEN-1"
@@ -98,33 +108,90 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
     useEffect(() => {
         // If the update matches our last internal update (scroll spy), ignore it to prevent reset
         if (
-            lastInternalUpdate.current && 
-            lastInternalUpdate.current.bookId === bookId && 
+            lastInternalUpdate.current &&
+            lastInternalUpdate.current.bookId === bookId &&
             lastInternalUpdate.current.chapter === chapter
         ) {
             return;
         }
 
-        const loadInitialChapter = () => {
-             setLoading(true);
-             const data = fetchChapterData(bookId, chapter);
-             if (data) {
-                 setChaptersData([data]);
-                 setTimeout(() => {
-                     // Scroll to top or specific verse logic handled by the separate effect
-                     if (!targetVerse && containerRef.current) {
-                         containerRef.current.scrollTop = 0;
-                     }
-                 }, 0);
-             } else {
-                 setChaptersData([]);
-             }
-             setLoading(false);
-             isInitialLoad.current = false;
+        let cancelled = false;
+
+        const loadInitialChapter = async () => {
+            setLoading(true);
+            const repo = BibleVersionFactory.getByVersion(versionId);
+
+            // Original-language secondary path. Requires an async CDN
+            // fetch — the underlying provider streams the morphgnt /
+            // morphhb files on demand. Cache hits are instant.
+            if (isOriginalLanguageRepo(repo)) {
+                const canonical = isSecondary
+                    ? getCanonicalId(bookId, contextVersionId)
+                    : bookId.toUpperCase();
+                if (!repo.supportsBook(canonical)) {
+                    if (!cancelled) {
+                        setChaptersData([]);
+                        setLoading(false);
+                    }
+                    return;
+                }
+                try {
+                    const verses = await repo.loadChapter(canonical, chapter);
+                    if (cancelled) return;
+                    if (verses && verses.length > 0) {
+                        setChaptersData([{
+                            id: `${canonical}-${chapter}`,
+                            bookId: canonical,
+                            chapter,
+                            verses: verses.map((text, i) => ({
+                                book: canonical,
+                                chapter,
+                                verse: i + 1,
+                                text,
+                            })),
+                        }]);
+                        setTimeout(() => {
+                            if (!targetVerse && containerRef.current) {
+                                containerRef.current.scrollTop = 0;
+                            }
+                        }, 0);
+                    } else {
+                        setChaptersData([]);
+                    }
+                } catch (err) {
+                    console.error('Original-language load failed:', err);
+                    if (!cancelled) setChaptersData([]);
+                } finally {
+                    if (!cancelled) {
+                        setLoading(false);
+                        isInitialLoad.current = false;
+                    }
+                }
+                return;
+            }
+
+            // Standard sync path (translation versions).
+            const data = fetchChapterData(bookId, chapter);
+            if (data) {
+                setChaptersData([data]);
+                setTimeout(() => {
+                    if (!targetVerse && containerRef.current) {
+                        containerRef.current.scrollTop = 0;
+                    }
+                }, 0);
+            } else {
+                setChaptersData([]);
+            }
+            setLoading(false);
+            isInitialLoad.current = false;
         };
 
         loadInitialChapter();
-    }, [bookId, chapter, fetchChapterData, targetVerse]);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [bookId, chapter, versionId, contextVersionId, isSecondary, fetchChapterData, targetVerse]);
 
 
     // Next/Prev Chapter Logic
@@ -332,21 +399,55 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
              </div>
          );
     }
-    
-    // Fallback if no data
-    if (chaptersData.length === 0) return null;
 
+    // Original-language repos can't render every book (Greek = NT only,
+    // Hebrew = OT only). When the user picks Greek and navigates to
+    // Genesis, surface a friendly placeholder instead of an empty
+    // pane — the user understands the constraint and can switch
+    // versions or books.
+    if (chaptersData.length === 0) {
+        const repo = BibleVersionFactory.getByVersion(versionId);
+        if (isOriginalLanguageRepo(repo)) {
+            const lang = repo.getLanguage();
+            const isGreek = lang === 'greek';
+            return (
+                <div className="flex items-center justify-center h-full p-6">
+                    <div className="text-center max-w-xs text-sm text-muted-foreground">
+                        {isGreek
+                            ? 'El griego (SBLGNT) cubre solo el Nuevo Testamento. Cambia a un libro del NT o usa otra versión paralela para libros del AT.'
+                            : 'El hebreo (WLC) cubre solo el Antiguo Testamento. Cambia a un libro del AT o usa otra versión paralela para libros del NT.'}
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    }
+
+
+    const repoForRender = BibleVersionFactory.getByVersion(versionId);
+    const renderLang = repoForRender.getLanguage();
+    const isHebrew = renderLang === 'hebrew';
+    const isGreek = renderLang === 'greek';
+    const originalLangFontFamily = isHebrew
+        ? "'SBL Hebrew', 'Ezra SIL', 'Times New Roman', serif"
+        : isGreek
+            ? "'SBL BibLit', 'Cardo', 'Gentium Plus', 'Times New Roman', serif"
+            : undefined;
 
     return (
-        <div ref={containerRef} className={cn("flex-1 overflow-y-auto bg-[#FDFBF7]", className)}>
+        <div
+            ref={containerRef}
+            className={cn("flex-1 overflow-y-auto bg-[#FDFBF7]", className)}
+            dir={isHebrew ? 'rtl' : 'ltr'}
+        >
             <div className="max-w-3xl mx-auto p-8 pb-32 min-h-full">
                 {/* Top Sentinel */}
                 <div ref={topRef} className="h-10 w-full" />
 
                 <div className="space-y-12">
                     {chaptersData.map((chap) => (
-                        <div 
-                             key={chap.id} 
+                        <div
+                             key={chap.id}
                              data-chapter-id={`${chap.bookId}|${chap.chapter}`}
                              className="chapter-block"
                         >
@@ -371,7 +472,10 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
                                             navigator.clipboard.writeText(`${verse.text} (${verse.book} ${verse.chapter}:${verse.verse})`);
                                             toast.success("Versículo copiado");
                                         }}
-                                        style={{ fontSize: `${fontSize}px` }}
+                                        style={{
+                                            fontSize: `${fontSize}px`,
+                                            ...(originalLangFontFamily ? { fontFamily: originalLangFontFamily } : {}),
+                                        }}
                                     >
                                         <sup className="text-[10px] font-medium text-slate-400 mr-1 select-none opacity-60">
                                             {verse.verse}
