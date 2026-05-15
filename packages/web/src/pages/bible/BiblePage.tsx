@@ -83,18 +83,25 @@ const BibleLayout = () => {
                         </Button>
                     </div>
 
-                    {/* Parallel mode — visible toggle (was hidden in popover) */}
+                    <div className="h-4 w-px bg-slate-200 mx-2" />
+
+                    {/* Version cluster — order mirrors the column layout
+                        below: primary on the LEFT (it owns the left
+                        column), then split toggle, then secondary on
+                        the RIGHT (matches the right column). Reading
+                        the bar left-to-right matches the screen. */}
+                    <VersionSelector />
+
                     <Button
                         variant={isParallelMode ? 'secondary' : 'ghost'}
                         size="icon"
                         onClick={toggleParallelMode}
                         title={isParallelMode ? 'Desactivar modo paralelo' : 'Activar modo paralelo'}
-                        className="ml-1"
+                        className="mx-1"
                     >
                         <Columns2 className="h-5 w-5 text-slate-500" />
                     </Button>
 
-                    {/* Inline secondary version selector — only when parallel is on */}
                     {isParallelMode && (
                         <Select
                             value={effectiveSecondary}
@@ -114,8 +121,6 @@ const BibleLayout = () => {
                     )}
 
                     <div className="h-4 w-px bg-slate-200 mx-2" />
-
-                    <VersionSelector />
 
                     <Button
                         variant={searchOpen ? "secondary" : "ghost"}
