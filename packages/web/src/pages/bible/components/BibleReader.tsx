@@ -16,16 +16,18 @@ interface LoadedChapter {
 }
 
 export const BibleReader: React.FC<{ className?: string, versionId?: string }> = ({ className, versionId: propVersionId }) => {
-    const { 
-        versionId: contextVersionId, 
-        bookId, 
-        chapter, 
-        setBook, 
-        setChapter, 
-        fontSize, 
-        targetVerse, 
+    const {
+        versionId: contextVersionId,
+        bookId,
+        chapter,
+        setBook,
+        setChapter,
+        fontSize,
+        targetVerse,
         setTargetVerse,
-        books 
+        activeVerse,
+        setActiveVerse,
+        books
     } = useBible();
     
     const versionId = propVersionId || contextVersionId;
@@ -233,28 +235,45 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
         const handleScroll = () => {
              if (!containerRef.current) return;
 
-             // Find whichever chapter occupies the middle of the screen
              const containerRect = containerRef.current.getBoundingClientRect();
              const midPoint = containerRect.top + containerRect.height / 2;
 
+             // Find whichever chapter occupies the middle of the screen.
              const chapterElements = containerRef.current.querySelectorAll('[data-chapter-id]');
+             let activeChapterEl: Element | null = null;
 
              for (const el of chapterElements) {
                   const rect = el.getBoundingClientRect();
                   if (rect.top <= midPoint && rect.bottom >= midPoint) {
+                       activeChapterEl = el;
                        const [bId, cNumStr] = (el.getAttribute('data-chapter-id') || '').split('|');
                        const cNum = parseInt(cNumStr);
 
                        if (bId && cNum && (bId !== bookId || cNum !== chapter)) {
-                            // Update Context
                             lastInternalUpdate.current = { bookId: bId, chapter: cNum };
-
-                            // Find book name
                             const bookObj = books.find(b => b.id.toLowerCase() === bId.toLowerCase());
                             setBook(bookObj?.id || bId, bookObj?.name || bId);
                             setChapter(cNum);
                        }
                        break;
+                  }
+             }
+
+             // Within the active chapter, find which VERSE is in the
+             // mid-viewport. This drives parallel-mode verse sync — the
+             // secondary reader watches `activeVerse` and scrolls its
+             // own matching verse element into view.
+             if (activeChapterEl) {
+                  const verseElements = activeChapterEl.querySelectorAll('[data-verse-num]');
+                  for (const vEl of verseElements) {
+                       const rect = vEl.getBoundingClientRect();
+                       if (rect.top <= midPoint && rect.bottom >= midPoint) {
+                            const vNum = parseInt(vEl.getAttribute('data-verse-num') || '0');
+                            if (vNum && vNum !== activeVerse) {
+                                 setActiveVerse(vNum);
+                            }
+                            break;
+                       }
                   }
              }
         };
@@ -264,7 +283,22 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
              container.addEventListener('scroll', handleScroll, { passive: true });
              return () => container.removeEventListener('scroll', handleScroll);
         }
-    }, [isSecondary, bookId, chapter, books, setBook, setChapter]);
+    }, [isSecondary, bookId, chapter, books, setBook, setChapter, activeVerse, setActiveVerse]);
+
+    // Secondary-only: when the primary reports a new active verse,
+    // scroll this column to the matching verse element. The primary
+    // and secondary use different book-id conventions ('gn' vs '1'),
+    // so we look up the secondary's loaded chapter to construct the
+    // correct DOM id.
+    useEffect(() => {
+        if (!isSecondary || activeVerse == null || chaptersData.length === 0) return;
+        const chap = chaptersData[0];
+        const verseId = `${chap.bookId}-${chap.chapter}-${activeVerse}`;
+        const el = containerRef.current?.querySelector(`[id="${verseId}"]`);
+        if (el) {
+            (el as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+    }, [isSecondary, activeVerse, chaptersData]);
 
 
     // Handle scroll to verse (Initial & Navigation)
@@ -327,9 +361,10 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
 
                             <div className="space-y-4">
                                 {chap.verses.map((verse) => (
-                                    <span 
-                                        key={`${verse.book}-${verse.chapter}-${verse.verse}`} 
+                                    <span
+                                        key={`${verse.book}-${verse.chapter}-${verse.verse}`}
                                         id={`${verse.book}-${verse.chapter}-${verse.verse}`}
+                                        data-verse-num={verse.verse}
                                         className="inline leading-relaxed text-[#2D3748] font-bible cursor-pointer hover:bg-yellow-100/50 transition-colors rounded px-0.5 relative group"
                                         title="Click to copy"
                                         onClick={() => {

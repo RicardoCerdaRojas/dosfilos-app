@@ -12,6 +12,12 @@ interface BibleState {
     fontSize: number;
     books: { id: string; name: string; chapters: number }[];
     targetVerse: number | null;
+    /**
+     * Verse number currently visible in the primary reader's mid-viewport.
+     * The secondary reader watches this to scroll its matching verse into
+     * view (verse-level parallel sync). Updates as the user scrolls.
+     */
+    activeVerse: number | null;
 }
 
 interface BibleContextType extends BibleState {
@@ -21,6 +27,7 @@ interface BibleContextType extends BibleState {
     setBook: (bookId: string, bookName: string) => void;
     setChapter: (chapter: number) => void;
     setTargetVerse: (verse: number | null) => void;
+    setActiveVerse: (verse: number | null) => void;
     nextChapter: () => void;
     prevChapter: () => void;
     increaseFontSize: () => void;
@@ -94,6 +101,7 @@ export const BibleProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [chapter, setChapterState] = useState(1);
     const [fontSize, setFontSize] = useState(initialPrefs.fontSize ?? 18);
     const [targetVerse, setTargetVerse] = useState<number | null>(null);
+    const [activeVerse, setActiveVerse] = useState<number | null>(null);
 
     // Books for the current primary version.
     const [books, setBooks] = useState<{ id: string; name: string; chapters: number }[]>([]);
@@ -172,12 +180,14 @@ export const BibleProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         fontSize,
         books,
         targetVerse,
+        activeVerse,
         setVersion,
         setSecondaryVersion,
         toggleParallelMode,
         setBook,
         setChapter,
         setTargetVerse,
+        setActiveVerse,
         nextChapter,
         prevChapter,
         increaseFontSize,
