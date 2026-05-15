@@ -29,6 +29,11 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
     } = useBible();
     
     const versionId = propVersionId || contextVersionId;
+    // True when this reader instance is rendering a parallel-mode
+    // companion (not the primary). Used to gate scroll spy +
+    // infinite scroll so the secondary stays locked to the primary's
+    // active chapter without overwriting context state.
+    const isSecondary = versionId !== contextVersionId;
     const [chaptersData, setChaptersData] = useState<LoadedChapter[]>([]);
     const [loading, setLoading] = useState(false);
     
@@ -223,7 +228,6 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
     // touch the context. Otherwise the secondary's id convention
     // ('1' for ASV's Genesis) would overwrite the primary's ('gn' for
     // RVR's Genesis) on every scroll, breaking the primary's lookup.
-    const isSecondary = versionId !== contextVersionId;
     useEffect(() => {
         if (isSecondary) return;
         const handleScroll = () => {
