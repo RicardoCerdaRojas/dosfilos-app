@@ -154,12 +154,19 @@ export function FacultyDirectoryPage() {
         return q ? `?${q}` : '';
     };
 
-    // Auto-resize textarea
+    // Auto-resize textarea — skip when empty so the input collapses
+    // back to its CSS-driven `rows={1}` height instead of inheriting
+    // a stale scrollHeight from a previous (now cleared) value. This
+    // is what kept the empty input visibly tall in the empty state.
     useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.style.height = 'auto';
-            inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+        const el = inputRef.current;
+        if (!el) return;
+        if (orchestratorInput.length === 0) {
+            el.style.height = '';
+            return;
         }
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
     }, [orchestratorInput]);
 
     // Lazy navigation — no session created until the user sends a first message.
@@ -236,12 +243,9 @@ export function FacultyDirectoryPage() {
                 <div className="absolute -bottom-32 -left-16 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 max-w-2xl mx-auto text-center">
-                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2 leading-tight font-serif">
+                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-6 leading-tight font-serif">
                         {t('directory.heroTitle')}
                     </h1>
-                    <p className="text-muted-foreground mb-6 text-sm md:text-base leading-relaxed">
-                        {t('directory.heroSubtitle')}
-                    </p>
 
                     {/* Orchestrator input — primary CTA. Theme-aware
                         styling: in light mode reads as a normal input

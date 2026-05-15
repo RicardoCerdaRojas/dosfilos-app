@@ -296,7 +296,9 @@
     },
     "freeStarter": {
         "eyebrow": "Empieza por aquí",
-        "intro": "Tu plan Free incluye 50 consultas mensuales sobre la biblioteca especializada. Toca cualquiera para arrancar — los tutores citarán las fuentes que respaldan la respuesta.",
+        "quotaCount": "50",
+        "quotaUnit": "consultas / mes",
+        "intro": "Toca cualquiera para arrancar.",
         "prompts": {
             "expository": {
                 "title": "¿Qué dice la biblioteca especializada sobre el sermón expositivo?",

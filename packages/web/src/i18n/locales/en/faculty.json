@@ -296,7 +296,9 @@
     },
     "freeStarter": {
         "eyebrow": "Start here",
-        "intro": "Your Free plan includes 50 monthly queries against the specialized library. Tap any prompt to get started — the tutors will cite the sources backing their answer.",
+        "quotaCount": "50",
+        "quotaUnit": "queries / month",
+        "intro": "Tap any prompt to get started.",
         "prompts": {
             "expository": {
                 "title": "What does the specialized library say about expository preaching?",

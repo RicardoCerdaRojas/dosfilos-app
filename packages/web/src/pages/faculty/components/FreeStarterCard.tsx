@@ -23,17 +23,23 @@ export function FreeStarterCard({ onPickPrompt, disabled }: FreeStarterCardProps
 
     return (
         <div className="max-w-2xl mx-auto mt-6">
-            {/* Theme-aware container — previously used dark-only
-                slate-100/200 text + white/[0.06] surfaces that
-                vanished against the new bg-card hero. Now everything
-                uses semantic tokens (warning for the eyebrow accent,
-                foreground/muted-foreground for text) so it reads
-                cleanly in both light and dark modes. */}
             <div className="rounded-2xl border border-warning/30 bg-warning-subtle/40 p-5">
-                <div className="flex items-center gap-2 mb-3 text-warning">
-                    <Sparkles className="h-4 w-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">
-                        {t('freeStarter.eyebrow')}
+                {/* Header row: eyebrow on the left, quota badge on
+                    the right. The badge surfaces the most actionable
+                    fact (50/mes) as a visual stat instead of burying
+                    it inside a paragraph. */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 text-warning">
+                        <Sparkles className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">
+                            {t('freeStarter.eyebrow')}
+                        </span>
+                    </div>
+                    <span className="inline-flex items-baseline gap-1 rounded-full border border-warning/40 bg-card px-2.5 py-0.5 text-warning">
+                        <span className="text-sm font-bold tabular-nums">{t('freeStarter.quotaCount')}</span>
+                        <span className="text-[10px] font-medium uppercase tracking-wider opacity-80">
+                            {t('freeStarter.quotaUnit')}
+                        </span>
                     </span>
                 </div>
                 <p className="text-sm text-foreground/90 mb-4">
