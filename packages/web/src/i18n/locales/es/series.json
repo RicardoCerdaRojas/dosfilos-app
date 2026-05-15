@@ -7,10 +7,19 @@
     },
     "loading": "Cargando planes...",
     "empty": {
-        "title": "No tienes planes aún",
-        "description": "Crea planes de predicación para organizar tus sermones.",
-        "aiPlannerButton": "Planificador Asistido",
-        "createButton": "Crear Primer Plan"
+        "title": "¿Qué vas a predicar este año?",
+        "description": "Anticipa temas, balancea pasajes, evita repeticiones. Un buen plan te ahorra horas cada semana.",
+        "recommendedBadge": "Recomendado",
+        "expository": {
+            "label": "Plan Expositivo",
+            "description": "Predica un libro de la Biblia entero, perícopa por perícopa. La IA divide el texto y propone un calendario fiel al original.",
+            "cta": "Comenzar expositivo"
+        },
+        "thematic": {
+            "label": "Plan Temático",
+            "description": "Predica una serie sobre un tema (gracia, oración, identidad). La IA estructura el arco y elige pasajes.",
+            "cta": "Comenzar temático"
+        }
     },
     "sermonCount": "sermones",
     "actions": {

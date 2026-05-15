@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, BookOpen, MoreVertical, Pencil, Trash2, Eye, Wand2, Sparkles } from 'lucide-react';
+import { Plus, Calendar, MoreVertical, Pencil, Trash2, Eye, Wand2, Sparkles } from 'lucide-react';
 import { SermonSeriesEntity } from '@dosfilos/domain';
 import { seriesService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PlansEmptyState } from './components/PlansEmptyState';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,25 +79,7 @@ export function SeriesList() {
   }
 
   if (series.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <BookOpen className="h-16 w-16 text-muted-foreground" />
-        <h2 className="text-2xl font-semibold">{t('empty.title')}</h2>
-        <p className="text-muted-foreground text-center max-w-md">
-          {t('empty.description')}
-        </p>
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={() => navigate('/dashboard/planner')}>
-            <Wand2 className="mr-2 h-5 w-5" />
-            {t('empty.aiPlannerButton')}
-          </Button>
-          <Button onClick={() => navigate('/dashboard/plans/new')} size="lg">
-            <Plus className="mr-2 h-5 w-5" />
-            {t('empty.createButton')}
-          </Button>
-        </div>
-      </div>
-    );
+    return <PlansEmptyState />;
   }
 
   return (
