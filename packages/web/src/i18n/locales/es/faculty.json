@@ -108,6 +108,8 @@
         "description": "Convierte esta conversación en recursos listos para usar.",
         "openPanel": "Abrir panel de recursos",
         "collapsePanel": "Colapsar panel de recursos",
+        "lockedHint": "Inicia una sesión con un tutor y intercambia algunos mensajes — luego podrás extraer estos recursos desde tu conversación.",
+        "lockedTooltip": "Disponible una vez que tengas una conversación activa con un tutor.",
         "sermonOutline": "Bosquejo de Sermón",
         "sermonOutlineDesc": "Estructura expositiva con puntos y aplicación.",
         "bibleStudy": "Guía de Estudio",

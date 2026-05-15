@@ -121,26 +121,45 @@ export function FacultyExtractionPanel({
             </div>
 
             {tab === 'tools' ? (
-                <div className="flex-1 overflow-y-auto sidebar-scrollbar p-4 grid grid-cols-2 gap-2.5 content-start">
-                    {EXTRACTION_BUTTONS.map(({ type, icon: Icon, iconColor, labelKey, descKey }) => (
-                        <Button
-                            key={type}
-                            variant="outline"
-                            onClick={() => onExtract(type)}
-                            disabled={!!extractingType || messageCount < 2}
-                            className="w-full justify-start h-auto p-3 flex flex-col items-start gap-1 hover:border-primary hover:bg-accent"
-                        >
-                            <div className="flex items-center gap-1.5 font-semibold text-foreground text-sm">
-                                {extractingType === type
-                                    ? <Loader2 className={cn("w-4 h-4 animate-spin shrink-0", iconColor)} />
-                                    : <Icon className={cn("w-4 h-4 shrink-0", iconColor)} />
-                                }
-                                <span className="truncate">{t(labelKey)}</span>
+                <>
+                    {/* Pre-session affordance hint. When there are
+                        fewer than 2 messages (i.e. no real conversation
+                        to extract from), the cards below render
+                        disabled. This banner explains WHY so the user
+                        understands they're a preview of what tools
+                        unlock once a session starts — not broken UI. */}
+                    {messageCount < 2 && (
+                        <div className="px-4 pt-3">
+                            <div className="rounded-md border border-warning/30 bg-warning-subtle/40 px-3 py-2 text-[11.5px] text-warning-subtle-foreground leading-snug">
+                                {t('extraction.lockedHint')}
                             </div>
-                            <span className="text-[11px] leading-snug text-muted-foreground font-normal text-left whitespace-normal line-clamp-2">{t(descKey)}</span>
-                        </Button>
-                    ))}
-                </div>
+                        </div>
+                    )}
+                    <div className="flex-1 overflow-y-auto sidebar-scrollbar p-4 grid grid-cols-2 gap-2.5 content-start">
+                        {EXTRACTION_BUTTONS.map(({ type, icon: Icon, iconColor, labelKey, descKey }) => {
+                            const isLocked = messageCount < 2;
+                            return (
+                                <Button
+                                    key={type}
+                                    variant="outline"
+                                    onClick={() => onExtract(type)}
+                                    disabled={!!extractingType || isLocked}
+                                    title={isLocked ? t('extraction.lockedTooltip') : undefined}
+                                    className="w-full justify-start h-auto p-3 flex flex-col items-start gap-1 hover:border-primary hover:bg-accent"
+                                >
+                                    <div className="flex items-center gap-1.5 font-semibold text-foreground text-sm">
+                                        {extractingType === type
+                                            ? <Loader2 className={cn("w-4 h-4 animate-spin shrink-0", iconColor)} />
+                                            : <Icon className={cn("w-4 h-4 shrink-0", iconColor)} />
+                                        }
+                                        <span className="truncate">{t(labelKey)}</span>
+                                    </div>
+                                    <span className="text-[11px] leading-snug text-muted-foreground font-normal text-left whitespace-normal line-clamp-2">{t(descKey)}</span>
+                                </Button>
+                            );
+                        })}
+                    </div>
+                </>
             ) : (
                 <FacultyExtractionsList
                     extractions={extractions}

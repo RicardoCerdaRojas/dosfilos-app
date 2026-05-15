@@ -107,11 +107,14 @@ export function FacultyChatPage() {
         localStorage.setItem('faculty-extraction-panel', String(isRightSidebarOpen));
     }, [isRightSidebarOpen]);
 
-    // Empty-state default: when the user has zero sessions AND has
-    // never expressed a preference for either rail, close them so the
-    // home orchestrator gets the full canvas. Once they have data,
-    // power-user defaults (rails open) take over. Persisted choices
-    // are always respected — we only intervene on the first visit.
+    // Empty-state default: when the user has zero sessions, close
+    // ONLY the left rail (Mis Sesiones) — its content is genuinely
+    // empty so the placeholder there is just noise. The right rail
+    // (Recursos) stays open as an affordance preview: the cards
+    // surface what tools the user will get once they start a
+    // session. They render disabled (already gated by messageCount < 2
+    // in the panel) with a tooltip explaining the precondition.
+    // Persisted choice always wins — we only intervene on first visit.
     const hasAppliedEmptyStateDefault = useRef(false);
     useEffect(() => {
         if (hasAppliedEmptyStateDefault.current) return;
@@ -121,9 +124,6 @@ export function FacultyChatPage() {
 
         if (localStorage.getItem('faculty-sidebar') === null) {
             setIsLeftSidebarOpen(false);
-        }
-        if (localStorage.getItem('faculty-extraction-panel') === null) {
-            setIsRightSidebarOpen(false);
         }
     }, [isLoadingSessions, sessions.length]);
     // Mode preference is shared with the directory landing input via
