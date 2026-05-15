@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useBible } from '@/context/BibleContext';
 import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
 import { BibleVerse } from '@/domain/bible/entities/BibleEntities';
+import { getCanonicalId, getVersionSpecificId } from '@/domain/bible/utils/BibleMetadata';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useInView } from 'react-intersection-observer';
@@ -36,13 +37,37 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
     const containerRef = useRef<HTMLDivElement>(null);
     const isInitialLoad = useRef(true);
 
-    // Helper to fetch a specific chapter
+    // Helper to fetch a specific chapter. The incoming bId is in the
+    // PRIMARY version's id convention (since BibleContext tracks the
+    // primary's bookId). When this reader is rendering a SECONDARY
+    // version (parallel mode), translate primary→canonical→secondary
+    // before asking the secondary repo for content. This is what makes
+    // RVR (uses 'gn') and ASV (uses '1') stay in sync visually.
     const fetchChapterData = useCallback((bId: string, cNum: number): LoadedChapter | null => {
         try {
             const repo = BibleVersionFactory.getByVersion(versionId);
-            const resolvedBookId = repo.resolveBookId(bId) || bId;
+
+            // First try direct resolution (works when the caller already
+            // passed an id this repo understands).
+            let resolvedBookId = repo.resolveBookId(bId);
+
+            // Cross-version: translate the primary's id to the secondary
+            // via the canonical 3-letter id.
+            if (!resolvedBookId && versionId !== contextVersionId) {
+                const canonical = getCanonicalId(bId, contextVersionId);
+                const secondarySpecific = getVersionSpecificId(canonical, versionId);
+                resolvedBookId = repo.resolveBookId(secondarySpecific) || secondarySpecific;
+            }
+
+            // Last-ditch: maybe the id IS canonical (set programmatically
+            // before any nav happened). Translate canonical → version.
+            if (!resolvedBookId) {
+                const asCanonical = bId.toUpperCase();
+                const guess = getVersionSpecificId(asCanonical, versionId);
+                resolvedBookId = repo.resolveBookId(guess) || guess;
+            }
+
             const content = repo.getChapterContent(resolvedBookId, cNum);
-            
             if (!content) return null;
 
             return {
@@ -60,7 +85,7 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
             console.error(`Failed to fetch chapter ${bId} ${cNum}`, error);
             return null;
         }
-    }, [versionId]);
+    }, [versionId, contextVersionId]);
 
     // Initial Load & External Navigation Handler
     useEffect(() => {

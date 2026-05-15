@@ -4,6 +4,7 @@ import { NavigationDrawer } from './components/NavigationDrawer';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Search, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
 
 import { SearchSidebar } from './components/SearchSidebar';
 import {
@@ -13,6 +14,13 @@ import {
 } from "@/components/ui/popover"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { VersionSelector } from './components/VersionSelector';
 import { QuickVerseFinder } from './components/QuickVerseFinder';
 import { BibleReader } from './components/BibleReader';
@@ -21,15 +29,21 @@ const BibleLayout = () => {
     const [navigationOpen, setNavigationOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     
-    const { 
-        isParallelMode, 
-        toggleParallelMode, 
+    const {
+        isParallelMode,
+        toggleParallelMode,
+        versionId,
         secondaryVersionId,
+        setSecondaryVersion,
         increaseFontSize,
         decreaseFontSize,
         bookName,
         chapter
     } = useBible();
+
+    const allVersions = BibleVersionFactory.getAllVersions();
+    const secondaryOptions = allVersions.filter((v) => v.id !== versionId);
+    const effectiveSecondary = secondaryVersionId ?? secondaryOptions[0]?.id ?? '';
 
     const toggleSearchSidebar = () => {
         setSearchOpen(!searchOpen);
@@ -91,6 +105,28 @@ const BibleLayout = () => {
                                             onCheckedChange={toggleParallelMode}
                                         />
                                     </div>
+                                    {isParallelMode && (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="secondary-version" className="text-xs text-muted-foreground">
+                                                Versión paralela
+                                            </Label>
+                                            <Select
+                                                value={effectiveSecondary}
+                                                onValueChange={(v) => setSecondaryVersion(v)}
+                                            >
+                                                <SelectTrigger id="secondary-version" className="h-9">
+                                                    <SelectValue placeholder="Elegir versión" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {secondaryOptions.map((v) => (
+                                                        <SelectItem key={v.id} value={v.id}>
+                                                            {v.id} — {v.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </PopoverContent>
