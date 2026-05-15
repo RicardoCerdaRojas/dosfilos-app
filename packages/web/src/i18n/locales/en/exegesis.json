@@ -1390,7 +1390,7 @@
         },
         "outOfCredits": {
             "title": "Insufficient quota",
-            "noAccessDescription": "This module requires the Pro or Team plan. It runs exegetical analysis, academic composition, sermons, and more with TMS rigor.",
+            "noAccessDescription": "This module requires a Pro or Team plan, or a single study pack. Exegetical analysis, academic composition, and verified citations — step by step.",
             "depletedDescription": "Your monthly study quota is exhausted. Buy an extra pack or wait for the next billing cycle.",
             "loading": "Loading balance…",
             "neededLabel": "Operation required:",
@@ -1400,6 +1400,8 @@
             "balancePack": "${{usd}} pack",
             "upgradeCta": "Upgrade to Pro",
             "buyPackCta": "Buy a study pack",
+            "noAccessPackHint": "Just need one paper? Buy a single pack from $9, no subscription required.",
+            "noAccessSeparator": "— or —",
             "waitForCycleHint": "Or wait for the next billing cycle for your plan quota to renew.",
             "close": "Close"
         },
