@@ -47,6 +47,7 @@ import { useLinkSermonToProject } from './sermons/hooks/useLinkSermonToProject';
 import { LinkToProjectDialog } from './sermons/components/list/LinkToProjectDialog';
 import { SermonGridCard } from './sermons/components/list/SermonGridCard';
 import { SermonsTableRow } from './sermons/components/list/SermonsTableRow';
+import { SermonsEmptyState } from './sermons/components/list/SermonsEmptyState';
 
 export function SermonsPage() {
     const navigate = useNavigate();
@@ -127,19 +128,7 @@ export function SermonsPage() {
     }
 
     if (sermons.length === 0 && statusFilter === 'all' && !searchQuery && planFilter === 'all') {
-        return (
-            <div className="flex flex-col items-center justify-center h-96 space-y-4">
-                <FileText className="h-16 w-16 text-muted-foreground" />
-                <h2 className="text-2xl font-semibold">{t('empty.title')}</h2>
-                <p className="text-muted-foreground text-center max-w-md">
-                    {t('empty.description')}
-                </p>
-                <Button onClick={() => navigate('/dashboard/sermons/tutor')} size="lg">
-                    <Plus className="mr-2 h-5 w-5" />
-                    {t('empty.createButton')}
-                </Button>
-            </div>
-        );
+        return <SermonsEmptyState />;
     }
 
     return (
