@@ -4,7 +4,6 @@
         "subtitle": "Manage your sermons and pastoral content",
         "newButton": "New Sermon",
         "generateWithTutor": "Generate with Tutor",
-        "useWizard": "Use Classic Wizard",
         "createBlank": "Blank Sermon"
     },
     "sermonCreatedSuccess": "Sermon created successfully",
@@ -44,9 +43,27 @@
     },
     "loading": "Loading sermons...",
     "empty": {
-        "title": "You don't have any sermons yet",
-        "description": "Start by creating your first sermon and manage all your pastoral content in one place.",
-        "createButton": "Create First Sermon"
+        "title": "Start your next sermon",
+        "description": "Your sermon is born from study. Choose where to begin:",
+        "footer": "When you're ready, your sermon will emerge from the work you've done.",
+        "paths": {
+            "step": "Step {{n}}",
+            "project": {
+                "title": "Preaching project",
+                "description": "Plan a complete series with pastoral vision, calendar, and passages to cover.",
+                "cta": "Create project"
+            },
+            "exegesis": {
+                "title": "Exegetical study",
+                "description": "Dive into a passage with academic methodology: context, original language, thesis.",
+                "cta": "Start exegesis"
+            },
+            "tutor": {
+                "title": "Tutor conversation",
+                "description": "Discuss the text, theme, or question you're working on with AI experts.",
+                "cta": "Start session"
+            }
+        }
     },
     "filters": {
         "search": "Search sermons...",

@@ -4,7 +4,6 @@
         "subtitle": "Gestiona tus sermones y contenido pastoral",
         "newButton": "Nuevo Sermón",
         "generateWithTutor": "Generar con el tutor",
-        "useWizard": "Usar asistente clásico",
         "createBlank": "Sermón en blanco"
     },
     "sermonCreatedSuccess": "Sermón creado exitosamente",
@@ -44,9 +43,27 @@
     },
     "loading": "Cargando sermones...",
     "empty": {
-        "title": "No tienes sermones aún",
-        "description": "Comienza creando tu primer sermón y gestiona todo tu contenido pastoral en un solo lugar.",
-        "createButton": "Crear Primer Sermón"
+        "title": "Empieza tu próxima predicación",
+        "description": "Tu sermón nace del estudio. Elige por dónde comenzar:",
+        "footer": "Cuando estés listo, tu sermón emergerá del trabajo realizado.",
+        "paths": {
+            "step": "Paso {{n}}",
+            "project": {
+                "title": "Proyecto de predicación",
+                "description": "Planifica una serie completa con visión pastoral, calendario y pasajes a tratar.",
+                "cta": "Crear proyecto"
+            },
+            "exegesis": {
+                "title": "Estudio exegético",
+                "description": "Profundiza en un pasaje con metodología académica: contexto, lengua original, tesis.",
+                "cta": "Empezar exégesis"
+            },
+            "tutor": {
+                "title": "Conversación con tutor",
+                "description": "Dialoga con expertos AI sobre el texto, tema o duda que estás trabajando.",
+                "cta": "Iniciar sesión"
+            }
+        }
     },
     "filters": {
         "search": "Buscar sermones...",

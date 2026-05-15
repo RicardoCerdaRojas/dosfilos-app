@@ -140,7 +140,7 @@ export function ProjectDashboard() {
             case 'newSession': return navigate(`/dashboard/faculty?projectId=${projectId}`);
             case 'greek': return navigate(`/dashboard/greek-tutor?projectId=${projectId}`);
             case 'hebrew': return navigate(`/dashboard/hebrew-tutor?projectId=${projectId}`);
-            case 'sermon': return navigate(`/dashboard/generate-sermon?projectId=${projectId}`);
+            case 'sermon': return navigate(`/dashboard/faculty?projectId=${projectId}`);
             case 'output': return setOutputEditor({ mode: 'create' });
             case 'sources': return setSourcePickerOpen(true);
         }
