@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
+import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { track } from '@/lib/analytics/track';
@@ -126,6 +127,26 @@ export function FacultyChatPage() {
             setIsLeftSidebarOpen(false);
         }
     }, [isLoadingSessions, sessions.length]);
+
+    // Auto-collapse the global app sidebar when the user enters the
+    // Faculty layout, since the page already has its own 3-panel chrome
+    // (Mis Sesiones | center | Recursos) and the global nav competes
+    // for horizontal space. Captures the user's previous state on
+    // mount and restores it on unmount, so leaving Faculty puts the
+    // sidebar back where they had it.
+    const { open: appSidebarOpen, setOpen: setAppSidebarOpen } = useSidebar();
+    const previousAppSidebarOpenRef = useRef<boolean | null>(null);
+    useEffect(() => {
+        previousAppSidebarOpenRef.current = appSidebarOpen;
+        setAppSidebarOpen(false);
+        return () => {
+            if (previousAppSidebarOpenRef.current) {
+                setAppSidebarOpen(true);
+            }
+        };
+        // Mount-once capture; intentional dep-list omission.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     // Mode preference is shared with the directory landing input via
     // localStorage so the choice the user makes in either surface
     // carries to the other (the chat session inherits the home pick
