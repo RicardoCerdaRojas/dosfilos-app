@@ -22,7 +22,11 @@ interface GreekTutorDashboardProps {
     userId: string;
     getUserSessionsUseCase: GetUserSessionsUseCase;
     deleteSessionUseCase: DeleteSessionUseCase;
-    onCreateNew: () => void;
+    /** Optional `passage` is forwarded as `?passage=` deep-link so
+     *  the IntroView pre-fills the selector instead of starting a
+     *  blank session. Used by suggested-passage cards + session
+     *  duplicate. */
+    onCreateNew: (passage?: string) => void;
 }
 
 /**
@@ -186,17 +190,11 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
      * Handle session duplication - creates a new session with the same passage
      */
     const handleDuplicate = (session: typeof sessions[0]) => {
-        // Navigate to create new session with the passage pre-filled
-        // This uses the existing onCreateNew callback but with context
-        // Duplicating session
-        
-        // For now, just trigger onCreateNew
-        // In the future, we could pass the passage to onCreateNew if the API supports it
-        onCreateNew();
-        
-        // TODO: Once backend supports duplicate prevention, 
-        // we should check if a session already exists for this passage
-        alert(`Creando nueva sesión para ${session.passage}. Podrás seleccionar el pasaje en el siguiente paso.`);
+        // Pre-fills the passage in the IntroView via `?passage=` URL
+        // param so the user lands on the selector with their pick
+        // ready, not on a blank slate. Replaces the prior alert()
+        // confirmation.
+        onCreateNew(session.passage);
     };
 
     // Loading state
@@ -269,15 +267,9 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 
             {/* Sessions Grid or Empty State */}
             {hasNoSessions ? (
-                <EmptyState 
+                <EmptyState
                     onCreateNew={onCreateNew}
-                    onQuickStart={(passage) => {
-                        // Quick start with passage
-                        // For now, just trigger onCreateNew
-                        // In the future, we could pre-fill the passage selector
-                        onCreateNew();
-                        alert(`Iniciando nueva sesión con ${passage}. Podrás confirmar el pasaje en el siguiente paso.`);
-                    }}
+                    onQuickStart={(passage) => onCreateNew(passage)}
                 />
             ) : hasNoResults ? (
                 <div className="text-center py-12">

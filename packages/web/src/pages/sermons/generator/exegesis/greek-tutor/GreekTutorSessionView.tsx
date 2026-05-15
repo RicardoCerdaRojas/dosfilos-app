@@ -122,6 +122,22 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
         }
     }, [initialPassage]);
 
+    // Pre-fill passage from `?passage=` URL param on mount. Used by
+    // the sessions dashboard's quick-start cards: clicking a suggested
+    // passage navigates here with the reference in the URL, the input
+    // is pre-populated, and the user can confirm or edit before
+    // launching. Replaces the previous browser `alert()` confirmation
+    // flow with proper deep-linking.
+    useEffect(() => {
+        const fromUrl = searchParams.get('passage');
+        if (fromUrl && !passage) {
+            setPassage(fromUrl);
+        }
+        // Mount-only — we don't want subsequent searchParams changes
+        // to overwrite user edits.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Start session when active and passage set
     useEffect(() => {
         if (isActive && passage && status === 'IDLE') {
