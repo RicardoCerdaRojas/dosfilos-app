@@ -140,3 +140,54 @@ export const getBookMetadata = (id: string, versionId: string): BookMetadata | n
     const canonicalId = getCanonicalId(id, versionId);
     return BOOK_METADATA[canonicalId] || null;
 };
+
+/**
+ * Inverse of getCanonicalId — given a canonical 3-letter id (GEN, MAT…)
+ * and a target version, returns the version-specific id used by that
+ * version's repository. Required for cross-version navigation in
+ * parallel mode: primary uses RVR's 'gn', but ASV needs '1'; secondary
+ * needs to translate the canonical to its own convention before
+ * calling getChapterContent.
+ */
+export const getVersionSpecificId = (canonicalId: string, versionId: string): string => {
+    const upper = canonicalId.toUpperCase();
+    if (versionId === 'RVR1960') {
+        const inverse: Record<string, string> = {
+            GEN: 'gn', EXO: 'ex', LEV: 'lv', NUM: 'nm', DEU: 'dt',
+            JOS: 'js', JDG: 'jud', RUT: 'rt', '1SA': '1sm', '2SA': '2sm',
+            '1KI': '1kgs', '2KI': '2kgs', '1CH': '1ch', '2CH': '2ch', EZR: 'ezr',
+            NEH: 'ne', EST: 'et', JOB: 'job', PSA: 'ps', PRO: 'prv',
+            ECC: 'ec', SON: 'so', ISA: 'is', JER: 'jr', LAM: 'lm',
+            EZE: 'ez', DAN: 'dn', HOS: 'ho', JOE: 'jl', AMO: 'am',
+            OBA: 'ob', JON: 'jn', MIC: 'mi', NAH: 'na', HAB: 'hk',
+            ZEP: 'zp', HAG: 'hg', ZEC: 'zc', MAL: 'ml', MAT: 'mt',
+            MAR: 'mk', LUK: 'lk', JOH: 'jo', ACT: 'act', ROM: 'rm',
+            '1CO': '1co', '2CO': '2co', GAL: 'gl', EPH: 'eph', PHI: 'ph',
+            COL: 'col', '1TH': '1ts', '2TH': '2ts', '1TI': '1ti', '2TI': '2ti',
+            TIT: 'tit', PHM: 'phm', HEB: 'hb', JAM: 'jm', '1PE': '1pe',
+            '2PE': '2pe', '1JO': '1jo', '2JO': '2jo', '3JO': '3jo', JUD: 'jd',
+            REV: 're',
+        };
+        return inverse[upper] || upper.toLowerCase();
+    }
+    if (versionId === 'ASV') {
+        const inverse: Record<string, string> = {
+            GEN: '1', EXO: '2', LEV: '3', NUM: '4', DEU: '5',
+            JOS: '6', JDG: '7', RUT: '8', '1SA': '9', '2SA': '10',
+            '1KI': '11', '2KI': '12', '1CH': '13', '2CH': '14', EZR: '15',
+            NEH: '16', EST: '17', JOB: '18', PSA: '19', PRO: '20',
+            ECC: '21', SON: '22', ISA: '23', JER: '24', LAM: '25',
+            EZE: '26', DAN: '27', HOS: '28', JOE: '29', AMO: '30',
+            OBA: '31', JON: '32', MIC: '33', NAH: '34', HAB: '35',
+            ZEP: '36', HAG: '37', ZEC: '38', MAL: '39', MAT: '40',
+            MAR: '41', LUK: '42', JOH: '43', ACT: '44', ROM: '45',
+            '1CO': '46', '2CO': '47', GAL: '48', EPH: '49', PHI: '50',
+            COL: '51', '1TH': '52', '2TH': '53', '1TI': '54', '2TI': '55',
+            TIT: '56', PHM: '57', HEB: '58', JAM: '59', '1PE': '60',
+            '2PE': '61', '1JO': '62', '2JO': '63', '3JO': '64', JUD: '65',
+            REV: '66',
+        };
+        return inverse[upper] || upper;
+    }
+    return canonicalId;
+};
