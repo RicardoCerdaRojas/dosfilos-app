@@ -40,7 +40,7 @@ import { ProjectEditDialog } from '@/pages/faculty/ProjectEditDialog';
 import { UpgradeRequiredModal } from '@/components/upgrade';
 import { ProjectsEmptyState } from './components/ProjectsEmptyState';
 import { cn } from '@/lib/utils';
-import type { AIProject, ProjectColor } from '@dosfilos/domain';
+import type { AIProject, ProjectColor, ProjectType } from '@dosfilos/domain';
 
 const COLOR_DOT: Record<ProjectColor, string> = {
     amber: 'bg-amber-500',
@@ -62,7 +62,7 @@ export function ProjectsListPage() {
     const { sessions } = useFacultySessions();
     const { checkCanCreateProject } = useUsageLimits();
     const [dialogState, setDialogState] = useState<
-        | { mode: 'create' }
+        | { mode: 'create'; initialType?: ProjectType }
         | { mode: 'edit'; project: AIProject }
         | null
     >(null);
@@ -75,13 +75,13 @@ export function ProjectsListPage() {
      * Pre-checks the plan-level project quota (Hito 5.2). Free tier doesn't
      * include projects → opens the upgrade modal instead of the create dialog.
      */
-    const handleOpenCreate = async () => {
+    const handleOpenCreate = async (initialType?: ProjectType) => {
         const check = await checkCanCreateProject();
         if (!check.allowed) {
             setUpgradeModalOpen(true);
             return;
         }
-        setDialogState({ mode: 'create' });
+        setDialogState({ mode: 'create', initialType });
     };
 
     const filteredProjects = useMemo(() => {
@@ -172,6 +172,7 @@ export function ProjectsListPage() {
                 {dialogState && (
                     <ProjectEditDialog
                         project={dialogState.mode === 'edit' ? dialogState.project : undefined}
+                        initialType={dialogState.mode === 'create' ? dialogState.initialType : undefined}
                         onClose={() => setDialogState(null)}
                     />
                 )}
@@ -431,6 +432,7 @@ export function ProjectsListPage() {
             {dialogState && (
                 <ProjectEditDialog
                     project={dialogState.mode === 'edit' ? dialogState.project : undefined}
+                    initialType={dialogState.mode === 'create' ? dialogState.initialType : undefined}
                     onClose={() => setDialogState(null)}
                 />
             )}

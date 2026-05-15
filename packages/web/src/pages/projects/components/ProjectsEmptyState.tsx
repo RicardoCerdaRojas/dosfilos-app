@@ -1,50 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FolderKanban, MessageSquareQuote, ArrowRight } from 'lucide-react';
+import { ArrowRight, MessageSquareQuote } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PROJECT_TYPES } from '@/pages/projects/projectRoadmaps';
+import type { ProjectType } from '@dosfilos/domain';
 
-interface PathConfig {
-    key: 'project' | 'session';
-    icon: React.ComponentType<{ className?: string }>;
-    title: string;
-    description: string;
-    cta: string;
-}
-
-const PATHS: PathConfig[] = [
-    {
-        key: 'project',
-        icon: FolderKanban,
-        title: 'Proyecto',
-        description:
-            'Cuando vas a sostener varias sesiones sobre el mismo tema — una serie, un libro, un curso. Une biblioteca, conversaciones y material en un solo lugar.',
-        cta: 'Crear proyecto',
-    },
-    {
-        key: 'session',
-        icon: MessageSquareQuote,
-        title: 'Sesión rápida',
-        description:
-            'Para una consulta puntual, una pregunta o un estudio aislado. Sin compromiso de proyecto. Después puedes promover la sesión si lo amerita.',
-        cta: 'Ir a Tutores',
-    },
-];
+const FEATURED_TYPES: ProjectType[] = ['sermon', 'series', 'study', 'counseling'];
 
 interface ProjectsEmptyStateProps {
-    onCreateProject: () => void;
+    /**
+     * Called when the user picks a project type. Caller handles plan-gating
+     * (free tier shows upgrade modal before opening the create dialog).
+     */
+    onCreateProject: (type?: ProjectType) => void;
 }
 
 export const ProjectsEmptyState: React.FC<ProjectsEmptyStateProps> = ({ onCreateProject }) => {
     const navigate = useNavigate();
-
-    const handlePath = (key: PathConfig['key']) => {
-        if (key === 'project') {
-            onCreateProject();
-        } else {
-            navigate('/dashboard/faculty');
-        }
-    };
 
     return (
         <div className="container mx-auto py-16 px-4 space-y-12">
@@ -53,42 +26,58 @@ export const ProjectsEmptyState: React.FC<ProjectsEmptyStateProps> = ({ onCreate
                     ¿Qué vas a estudiar?
                 </h2>
                 <p className="text-[15px] md:text-[16px] leading-relaxed text-muted-foreground">
-                    Un proyecto es el espacio donde vive una unidad de trabajo —
-                    una serie, un libro, un curso. Elige por dónde empezar.
+                    Elige el tipo de proyecto. Cada uno tiene su propio flujo —
+                    sermón, serie, investigación o consejería.
                 </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
-                {PATHS.map(({ key, icon: Icon, title, description, cta }) => (
-                    <Card
-                        key={key}
-                        onClick={() => handlePath(key)}
-                        className="group flex flex-col p-7 gap-5 border-muted hover:border-primary/60 hover:shadow-md transition-all cursor-pointer"
-                    >
-                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <Icon className="h-5 w-5" />
-                        </div>
-                        <div className="space-y-2 flex-1">
-                            <h3 className="font-reading text-[20px] leading-tight text-foreground">
-                                {title}
-                            </h3>
-                            <p className="text-[14px] leading-relaxed text-muted-foreground">
-                                {description}
-                            </p>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            className="justify-between w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handlePath(key);
-                            }}
+                {FEATURED_TYPES.map((type) => {
+                    const meta = PROJECT_TYPES[type];
+                    const Icon = meta.icon;
+                    return (
+                        <Card
+                            key={type}
+                            onClick={() => onCreateProject(type)}
+                            className="group flex flex-col p-7 gap-5 border-muted hover:border-primary/60 hover:shadow-md transition-all cursor-pointer"
                         >
-                            {cta}
-                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    </Card>
-                ))}
+                            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <Icon className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-2 flex-1">
+                                <h3 className="font-reading text-[20px] leading-tight text-foreground">
+                                    {meta.label}
+                                </h3>
+                                <p className="text-[14px] leading-relaxed text-muted-foreground">
+                                    {meta.description}
+                                </p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                className="justify-between w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onCreateProject(type);
+                                }}
+                            >
+                                Comenzar
+                                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                        </Card>
+                    );
+                })}
+            </div>
+
+            <div className="flex flex-col items-center gap-3 pt-4 max-w-4xl mx-auto">
+                <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/faculty')}
+                    className="inline-flex items-center gap-2 text-[14px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <MessageSquareQuote className="h-4 w-4" />
+                    ¿Solo una pregunta puntual? Ve a Tutores sin crear un proyecto
+                    <ArrowRight className="h-4 w-4" />
+                </button>
             </div>
         </div>
     );
