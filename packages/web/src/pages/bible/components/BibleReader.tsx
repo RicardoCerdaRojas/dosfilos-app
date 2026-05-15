@@ -201,12 +201,20 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
     const [topRef, topInView] = useInView({ threshold: 0.1 });
 
     useEffect(() => {
+        // Secondary readers don't infinite-scroll. They render ONLY
+        // the active chapter from context so the parallel columns
+        // stay aligned chapter-by-chapter. Letting the secondary load
+        // its own prev/next chapters caused the columns to drift
+        // (English/Spanish verse density differs, so the vertical
+        // alignment slips after a few chapters).
+        if (isSecondary) return;
         if (bottomInView) loadNextChapter();
-    }, [bottomInView, loadNextChapter]);
+    }, [isSecondary, bottomInView, loadNextChapter]);
 
     useEffect(() => {
+        if (isSecondary) return;
         if (topInView) loadPrevChapter();
-    }, [topInView, loadPrevChapter]);
+    }, [isSecondary, topInView, loadPrevChapter]);
 
 
     // Scroll Spy Logic (Update Context). Only the PRIMARY reader owns
