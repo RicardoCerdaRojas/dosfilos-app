@@ -1,0 +1,97 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Sparkles, BookOpen, GraduationCap } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
+
+interface FeaturedCard {
+    key: 'expository' | 'thematic';
+    icon: React.ComponentType<{ className?: string }>;
+    href: string;
+    recommended: boolean;
+}
+
+const FEATURED_CARDS: FeaturedCard[] = [
+    {
+        key: 'expository',
+        icon: BookOpen,
+        href: '/dashboard/plans/pericope',
+        recommended: true,
+    },
+    {
+        key: 'thematic',
+        icon: GraduationCap,
+        href: '/dashboard/planner',
+        recommended: false,
+    },
+];
+
+export const PlansEmptyState: React.FC = () => {
+    const { t } = useTranslation('series');
+    const navigate = useNavigate();
+
+    return (
+        <div className="container mx-auto py-10 md:py-12 px-4 space-y-8">
+            <div className="text-center space-y-3 max-w-2xl mx-auto">
+                <h2 className="font-reading text-[28px] md:text-[34px] leading-[1.1] tracking-[-0.02em] text-foreground">
+                    {t('empty.title')}
+                </h2>
+                <p className="text-[14px] md:text-[15px] leading-relaxed text-muted-foreground">
+                    {t('empty.description')}
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+                {FEATURED_CARDS.map(({ key, icon: Icon, href, recommended }) => (
+                    <Card
+                        key={key}
+                        onClick={() => navigate(href)}
+                        className={cn(
+                            'group flex flex-col p-6 gap-4 transition-all cursor-pointer',
+                            recommended
+                                ? 'border-primary/40 bg-gradient-to-b from-primary/[0.04] via-card to-card shadow-md hover:shadow-lg'
+                                : 'border-muted hover:border-primary/60 hover:shadow-md',
+                        )}
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <Icon className="h-5 w-5" />
+                            </div>
+                            {recommended && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+                                    <Sparkles className="h-3 w-3" />
+                                    {t('empty.recommendedBadge')}
+                                </span>
+                            )}
+                        </div>
+                        <div className="space-y-1.5 flex-1">
+                            <h3 className="font-reading text-[20px] leading-tight text-foreground">
+                                {t(`empty.${key}.label`)}
+                            </h3>
+                            <p className="text-[13.5px] leading-relaxed text-muted-foreground">
+                                {t(`empty.${key}.description`)}
+                            </p>
+                        </div>
+                        <Button
+                            variant={recommended ? 'default' : 'ghost'}
+                            size="sm"
+                            className={cn(
+                                'justify-between w-full transition-colors',
+                                !recommended && 'group-hover:bg-primary group-hover:text-primary-foreground',
+                            )}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(href);
+                            }}
+                        >
+                            {t(`empty.${key}.cta`)}
+                            <ArrowRight className="h-3.5 w-3.5 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
+};

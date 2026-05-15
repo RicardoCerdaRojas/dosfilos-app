@@ -110,25 +110,16 @@ export function ExegesisPage() {
                 section header (and as the empty-state primary
                 action). Decoupling brand from action lets the
                 hero shrink without losing personality. */}
-            <div
-                className="relative pt-8 pb-10 px-6 sm:px-10 text-white overflow-hidden shrink-0"
-                style={{ background: 'linear-gradient(to bottom, #0f172a, #1e293b)' }}
-            >
-                <div
-                    className="absolute inset-0 opacity-[0.04]"
-                    style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(16,185,129,0.3) 2px, rgba(16,185,129,0.3) 3px)' }}
-                />
-                <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10" />
-
-                <div className="relative z-10 max-w-6xl mx-auto flex items-center gap-4">
-                    <div className="shrink-0 w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 flex items-center justify-center">
+            <div className="border-b border-border bg-gradient-to-b from-card to-muted/40 dark:from-slate-900 dark:to-slate-950 px-6 sm:px-10 pt-8 pb-10 shrink-0">
+                <div className="max-w-6xl mx-auto flex items-center gap-4">
+                    <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 text-primary dark:bg-primary/15 dark:border-primary/30 flex items-center justify-center">
                         <NotebookPen className="w-6 h-6" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-tight font-serif">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-tight font-serif">
                             {t('directory.heroTitle')}
                         </h1>
-                        <p className="text-slate-300/80 text-sm leading-snug mt-1 max-w-3xl">
+                        <p className="text-muted-foreground text-sm leading-snug mt-1 max-w-3xl">
                             {t('directory.heroSubtitle')}
                         </p>
                     </div>
@@ -574,7 +565,7 @@ function ErrorBlock({ error, fallbackMessage }: { error: unknown; fallbackMessag
             ? error
             : fallbackMessage;
     return (
-        <div className="rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 px-6 py-5 text-sm text-rose-700 dark:text-rose-300 inline-flex items-start gap-2">
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-5 text-sm text-destructive inline-flex items-start gap-2">
             <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
                 <p className="font-medium">{fallbackMessage}</p>

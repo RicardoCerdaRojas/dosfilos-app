@@ -44,16 +44,22 @@ export function RegisterPage() {
   const selectedPlanId = searchParams.get('plan');
   const isFree = selectedPlanId === 'free';
 
-  const registerSchema = z.object({
-    displayName: z
-      .string()
-      .min(2, t('register.errors.nameMin'))
-      .max(50, t('register.errors.nameMax')),
-    email: z.string().email(t('register.errors.invalidEmail')),
-    password: isFree
-      ? z.string().min(6, t('register.errors.passwordMin', { defaultValue: 'Mínimo 6 caracteres' }))
-      : z.string().optional(),
-  });
+  const registerSchema = z
+    .object({
+      displayName: z
+        .string()
+        .min(2, t('register.errors.nameMin'))
+        .max(50, t('register.errors.nameMax')),
+      email: z.string().email(t('register.errors.invalidEmail')),
+      password: isFree
+        ? z.string().min(6, t('register.errors.passwordMin'))
+        : z.string().optional(),
+      passwordConfirm: isFree ? z.string() : z.string().optional(),
+    })
+    .refine((data) => !isFree || data.password === data.passwordConfirm, {
+      message: t('register.errors.passwordMismatch'),
+      path: ['passwordConfirm'],
+    });
 
   type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -110,11 +116,11 @@ export function RegisterPage() {
           displayName: data.displayName,
           locale: i18n.language as 'en' | 'es',
         });
-        toast.success(t('register.freeSuccess', { defaultValue: '¡Cuenta creada!' }));
+        toast.success(t('register.freeSuccess'));
         navigate('/auth/verify-email', { replace: true });
       } catch (error: any) {
         console.error('Free signup error:', error);
-        toast.error(error?.message ?? t('register.errors.signupFailed', { defaultValue: 'Error al crear la cuenta' }));
+        toast.error(error?.message ?? t('register.errors.signupFailed'));
         setIsLoading(false);
       }
       return;
@@ -146,7 +152,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
-      eyebrow={selectedPlan ? t('register.eyebrow', { defaultValue: 'Crear cuenta' }) : undefined}
+      eyebrow={selectedPlan ? t('register.eyebrow') : undefined}
       title={t('register.title')}
       subtitle={t('register.subtitle')}
     >
@@ -164,11 +170,11 @@ export function RegisterPage() {
               <div className="text-right">
                 {isFree ? (
                   <div className="text-sm text-slate-900 font-medium">
-                    {t('register.freeBadge', { defaultValue: 'Gratis · sin tarjeta' })}
+                    {t('register.freeBadge')}
                   </div>
                 ) : (
                   <>
-                    <div className="text-sm text-slate-500">{t('register.trialBadge', { defaultValue: '30 días gratis' })}</div>
+                    <div className="text-sm text-slate-500">{t('register.trialBadge')}</div>
                     <div className="text-sm text-slate-900 font-medium">
                       ${selectedPlan.pricing.monthly}
                       <span className="text-slate-500">{t('register.perMonth')}</span>
@@ -219,23 +225,43 @@ export function RegisterPage() {
           </div>
 
           {isFree && (
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-[13px] font-medium text-slate-700">
-                {t('register.password', { defaultValue: 'Contraseña' })}
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={t('register.passwordPlaceholder', { defaultValue: 'Mínimo 6 caracteres' })}
-                autoComplete="new-password"
-                {...register('password')}
-                disabled={isLoading}
-                className="h-11 border-slate-300 focus-visible:ring-indigo-600"
-              />
-              {errors.password && (
-                <p className="text-xs text-red-600">{errors.password.message}</p>
-              )}
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-[13px] font-medium text-slate-700">
+                  {t('register.password')}
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder={t('register.passwordPlaceholder')}
+                  autoComplete="new-password"
+                  {...register('password')}
+                  disabled={isLoading}
+                  className="h-11 border-slate-300 focus-visible:ring-indigo-600"
+                />
+                {errors.password && (
+                  <p className="text-xs text-red-600">{errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirm" className="text-[13px] font-medium text-slate-700">
+                  {t('register.passwordConfirm')}
+                </Label>
+                <Input
+                  id="passwordConfirm"
+                  type="password"
+                  placeholder={t('register.passwordConfirmPlaceholder')}
+                  autoComplete="new-password"
+                  {...register('passwordConfirm')}
+                  disabled={isLoading}
+                  className="h-11 border-slate-300 focus-visible:ring-indigo-600"
+                />
+                {errors.passwordConfirm && (
+                  <p className="text-xs text-red-600">{errors.passwordConfirm.message}</p>
+                )}
+              </div>
+            </>
           )}
 
           <Button
@@ -246,18 +272,14 @@ export function RegisterPage() {
             {isLoading
               ? t('register.submitting')
               : isFree
-                ? t('register.createFreeAccount', { defaultValue: 'Crear cuenta gratis' })
-                : t('register.continueToPayment', { defaultValue: 'Continuar al pago' })}
+                ? t('register.createFreeAccount')
+                : t('register.continueToPayment')}
           </Button>
 
           <p className="text-[12px] leading-relaxed text-slate-500 text-center">
             {isFree
-              ? t('register.freeDisclaimer', {
-                  defaultValue: 'Sin tarjeta de crédito. Puedes hacer upgrade a un plan pagado en cualquier momento.',
-                })
-              : t('register.trialDisclaimer', {
-                  defaultValue: 'Crearás tu contraseña después del pago. Sin cargo durante 30 días; cancela cuando quieras.',
-                })}
+              ? t('register.freeDisclaimer')
+              : t('register.trialDisclaimer')}
           </p>
         </form>
 

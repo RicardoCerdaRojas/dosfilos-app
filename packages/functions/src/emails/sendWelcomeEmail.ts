@@ -1,12 +1,14 @@
 import * as functions from 'firebase-functions';
 import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+import { render } from '@react-email/render';
 import { resend } from './resendClient';
-import {
-    getWelcomeEmailTemplate,
-    getWelcomeEmailSubject,
-    WelcomeEmailOptions,
-} from './templates/welcomeTemplate';
+import { WelcomeEmail, getWelcomeEmailSubject } from './templates/WelcomeEmail';
+
+interface WelcomeEmailOptions {
+    verifyEmailUrl?: string;
+    setPasswordUrl?: string;
+}
 
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
 const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
@@ -94,7 +96,15 @@ export async function sendOnboardingEmail(user: UserRecord): Promise<void> {
     const name = user.displayName || (locale === 'en' ? 'Preacher' : 'Predicador');
     const options = await buildWelcomeOptions(user);
 
-    const htmlContent = getWelcomeEmailTemplate(name, DASHBOARD_URL, options, locale);
+    const htmlContent = await render(
+        WelcomeEmail({
+            name,
+            locale,
+            verifyEmailUrl: options.verifyEmailUrl,
+            setPasswordUrl: options.setPasswordUrl,
+            dashboardUrl: DASHBOARD_URL,
+        }),
+    );
 
     const { data, error } = await resend.emails.send({
         from: SENDER_EMAIL,

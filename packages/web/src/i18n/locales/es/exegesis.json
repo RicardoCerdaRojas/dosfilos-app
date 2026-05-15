@@ -1,8 +1,8 @@
 {
     "directory": {
         "badge": "Trabajo de investigación exegética asistida",
-        "heroTitle": "Exégesis",
-        "heroSubtitle": "Producí trabajos exegéticos rigurosos del NT y AT, con análisis morfológico, sintáctico y léxico, citación verificada y estilo TMS — paso a paso, no de un golpe.",
+        "heroTitle": "Investigación exegética",
+        "heroSubtitle": "Trabajos exegéticos rigurosos del NT y AT con análisis morfológico, sintáctico y léxico, citación verificada y método de obra ancla más interlocutores — paso a paso, no de un golpe.",
         "newPaperCta": "Nuevo trabajo",
         "newPaperHint": "Configura el pasaje, sube los extractos del corpus específicos y la guía de estilo (una vez por cuenta).",
         "papersTitle": "Tus trabajos",
@@ -1390,7 +1390,7 @@
         },
         "outOfCredits": {
             "title": "Cuota insuficiente",
-            "noAccessDescription": "Este módulo requiere plan Pro o Equipo. Hace análisis exegético, composición académica, sermones y más con rigor TMS.",
+            "noAccessDescription": "Este módulo requiere plan Pro o Equipo, o un pack único de estudios. Análisis exegético, composición académica y citación verificada — paso a paso.",
             "depletedDescription": "Tu cuota mensual de estudios se agotó. Compra un pack adicional o espera al próximo ciclo de facturación.",
             "loading": "Cargando saldo…",
             "neededLabel": "Operación requería:",
@@ -1400,6 +1400,8 @@
             "balancePack": "${{usd}} pack",
             "upgradeCta": "Upgrade a Pro",
             "buyPackCta": "Comprar pack de estudios",
+            "noAccessPackHint": "Solo necesitas un trabajo? Compra un pack único desde $9, sin suscripción.",
+            "noAccessSeparator": "— o —",
             "waitForCycleHint": "O espera al próximo ciclo de tu plan para que se renueve la cuota.",
             "close": "Cerrar"
         },

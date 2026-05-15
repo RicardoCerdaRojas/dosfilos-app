@@ -1,180 +1,147 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Lock, Zap, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { Lock, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSubscription } from '@/hooks/useSubscription';
+import { usePlans, getPlanPriceId } from '@/hooks/usePlans';
+import { PlanCard } from '@/components/subscription/PlanCard';
 
 interface UpgradeRequiredModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  reason: 'limit_reached' | 'module_restricted';
-  module?: string;
-  limitType?: 'sermons' | 'plans' | 'greek_sessions';
-  currentLimit?: number;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    reason: 'limit_reached' | 'module_restricted';
+    module?: string;
+    limitType?: 'sermons' | 'plans' | 'greek_sessions';
+    currentLimit?: number;
 }
 
+/**
+ * Plan picker shown when a Free user hits a feature gate or a limit.
+ *
+ * Plans + features are sourced from Firestore via `usePlans()` (same path
+ * landing/pricing use), so any price/feature update propagates without a
+ * code change. PlanCard is the shared brand component — keeps the modal
+ * visually consistent with the public pricing surfaces.
+ */
 export function UpgradeRequiredModal({
-  open,
-  onOpenChange,
-  reason,
-  module,
-  limitType,
-  currentLimit
+    open,
+    onOpenChange,
+    reason,
+    module,
+    limitType,
+    currentLimit,
 }: UpgradeRequiredModalProps) {
-  const navigate = useNavigate();
-  const { subscription } = useSubscription();
+    const navigate = useNavigate();
+    const { subscription } = useSubscription();
+    const { plans, isLoading } = usePlans();
 
-  const getTitle = () => {
-    if (reason === 'limit_reached') {
-      switch (limitType) {
-        case 'sermons':
-          return '📝 Límite de Sermones Alcanzado';
-        case 'plans':
-          return '📅 Límite de Planes Alcanzado';
-        case 'greek_sessions':
-          return '📖 Límite de Estudios Alcanzado';
-        default:
-          return '⚡ Límite Alcanzado';
-      }
-    }
-    return `🔒 ${module || 'Esta función'} requiere actualización`;
-  };
+    const paidPlans = (plans ?? [])
+        .filter((p) => p.isPublic && (p.pricing?.monthly ?? 0) > 0)
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
-  const getDescription = () => {
-    if (reason === 'limit_reached') {
-      const limits = {
-        sermons: `Has creado ${currentLimit} ${currentLimit === 1 ? 'sermón' : 'sermones'} este mes`,
-        plans: subscription?.planId === 'free' 
-          ? `Ya tienes ${currentLimit} plan de predicación (límite total del plan Free)`
-          : `Has creado ${currentLimit} ${currentLimit === 1 ? 'plan' : 'planes'} este mes`,
-        greek_sessions: `Has usado ${currentLimit} ${currentLimit === 1 ? 'sesión' : 'sesiones'} de estudio este mes`
-      };
-      return limits[limitType || 'sermons'];
-    }
-    return `Para acceder a ${module || 'esta función'}, necesitas actualizar tu plan`;
-  };
+    const getTitle = () => {
+        if (reason === 'limit_reached') {
+            switch (limitType) {
+                case 'sermons':
+                    return 'Has alcanzado el límite de sermones';
+                case 'plans':
+                    return 'Has alcanzado el límite de planes';
+                case 'greek_sessions':
+                    return 'Has alcanzado el límite de estudios';
+                default:
+                    return 'Has alcanzado el límite mensual';
+            }
+        }
+        return `${module ?? 'Esta función'} requiere actualizar tu plan`;
+    };
 
-  const benefits = {
-    pro: [
-      { icon: Sparkles, text: '4 sermones por mes', highlight: true },
-      { icon: Check, text: '1 plan de predicación mensual' },
-      { icon: Check, text: '3 estudios de griego por mes' },
-      { icon: Check, text: '200MB de biblioteca personal' },
-      { icon: Check, text: 'Soporte prioritario' }
-    ],
-    team: [
-      { icon: Sparkles, text: '12 sermones por mes', highlight: true },
-      { icon: Check, text: '4 planes de predicación mensuales' },
-      { icon: Check, text: '15 estudios de griego por mes' },
-      { icon: Check, text: '600MB de biblioteca personal' },
-      { icon: Check, text: 'Acceso para equipo pastoral' },
-      { icon: Check, text: 'Soporte premium 24/7' }
-    ]
-  };
+    const getDescription = () => {
+        if (reason === 'limit_reached') {
+            const limits = {
+                sermons: `Llevas ${currentLimit} ${currentLimit === 1 ? 'sermón' : 'sermones'} este mes.`,
+                plans:
+                    subscription?.planId === 'free'
+                        ? `Ya tienes ${currentLimit} plan de predicación (límite total del plan Free).`
+                        : `Llevas ${currentLimit} ${currentLimit === 1 ? 'plan' : 'planes'} este mes.`,
+                greek_sessions: `Llevas ${currentLimit} ${currentLimit === 1 ? 'sesión' : 'sesiones'} de estudio este mes.`,
+            };
+            return `${limits[limitType ?? 'sermons']} Elige el plan que se ajusta a tu trabajo.`;
+        }
+        return `Para acceder a ${module ?? 'esta función'}, elige el plan que se ajusta a tu trabajo.`;
+    };
 
-  const handleUpgrade = (plan: 'pro' | 'team') => {
-    onOpenChange(false);
-    navigate('/dashboard/subscription', { state: { suggestedPlan: plan } });
-  };
+    const handleUpgrade = (planId: string) => {
+        onOpenChange(false);
+        navigate('/dashboard/subscription', { state: { suggestedPlan: planId } });
+    };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="mx-auto mb-4 p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full w-fit">
-            <Lock className="h-12 w-12 text-blue-600" />
-          </div>
-          <DialogTitle className="text-2xl text-center">{getTitle()}</DialogTitle>
-          <DialogDescription className="text-center text-base">
-            {getDescription()}
-          </DialogDescription>
-        </DialogHeader>
+    const isFreeUser = subscription?.planId === 'free' || !subscription?.planId;
 
-        <div className="space-y-4 mt-4">
-          {/* Pro Plan Card */}
-          <Card className="border-2 border-blue-200 hover:border-blue-400 transition-all hover:shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold text-blue-600">Plan Pro</h3>
-                  <p className="text-3xl font-bold mt-1">
-                    $9.99
-                    <span className="text-sm text-muted-foreground font-normal">/mes</span>
-                  </p>
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[960px] lg:max-w-[1080px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                        <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                    <DialogTitle className="text-center font-reading text-[22px] md:text-[26px] leading-tight tracking-[-0.01em]">
+                        {getTitle()}
+                    </DialogTitle>
+                    <DialogDescription className="text-center text-[14px] md:text-[15px] text-muted-foreground max-w-md mx-auto">
+                        {getDescription()}
+                    </DialogDescription>
+                </DialogHeader>
+
+                {isLoading ? (
+                    <div className="py-12 flex justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                ) : paidPlans.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                        No hay planes disponibles en este momento.
+                    </p>
+                ) : (
+                    <div
+                        className={
+                            paidPlans.length >= 3
+                                ? 'grid grid-cols-1 md:grid-cols-3 gap-5 mt-3'
+                                : 'grid grid-cols-1 md:grid-cols-2 gap-5 mt-3 max-w-3xl mx-auto'
+                        }
+                    >
+                        {paidPlans.map((plan) => (
+                            <PlanCard
+                                key={plan.id}
+                                plan={{
+                                    id: plan.id,
+                                    name: plan.name,
+                                    description: plan.description,
+                                    priceMonthly: plan.pricing.monthly,
+                                    stripePriceId: getPlanPriceId(plan),
+                                    features: plan.features,
+                                    sortOrder: plan.sortOrder,
+                                    isPublic: plan.isPublic,
+                                }}
+                                standardPagesPerMonth={plan.limits?.standardPagesPerMonth}
+                                premiumPagesPerMonth={plan.limits?.premiumPagesPerMonth}
+                                exegesisUsdPerMonth={plan.limits?.exegesisUsdPerMonth}
+                                isPopular={plan.highlightText === 'Más Popular'}
+                                ctaLabel={`Actualizar a ${plan.name}`}
+                                onCtaClick={() => handleUpgrade(plan.id)}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                <div className="text-center pt-2">
+                    <Button
+                        variant="ghost"
+                        onClick={() => onOpenChange(false)}
+                        className="text-sm text-muted-foreground"
+                    >
+                        {isFreeUser ? 'Continuar con plan Free' : 'Cerrar'}
+                    </Button>
                 </div>
-                <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                  Popular
-                </div>
-              </div>
-
-              <ul className="space-y-2 mb-4">
-                {benefits.pro.map((benefit, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <benefit.icon className={`h-4 w-4 ${benefit.highlight ? 'text-blue-600' : 'text-green-600'}`} />
-                    <span className={benefit.highlight ? 'font-medium' : ''}>{benefit.text}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button 
-                onClick={() => handleUpgrade('pro')}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                size="lg"
-              >
-                Actualizar a Pro
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Team Plan Card */}
-          <Card className="border-2 border-purple-200 hover:border-purple-400 transition-all hover:shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold text-purple-600">Plan Team</h3>
-                  <p className="text-3xl font-bold mt-1">
-                    $24.99
-                    <span className="text-sm text-muted-foreground font-normal">/mes</span>
-                  </p>
-                </div>
-                <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
-                  Mejor valor
-                </div>
-              </div>
-
-              <ul className="space-y-2 mb-4">
-                {benefits.team.map((benefit, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <benefit.icon className={`h-4 w-4 ${benefit.highlight ? 'text-purple-600' : 'text-green-600'}`} />
-                    <span className={benefit.highlight ? 'font-medium' : ''}>{benefit.text}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button 
-                onClick={() => handleUpgrade('team')}
-                className="w-full bg-purple-600 hover:bg-purple-700"
-                size="lg"
-              >
-                Actualizar a Team
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          <div className="text-center pt-2">
-            <Button 
-              variant="ghost" 
-              onClick={() => onOpenChange(false)}
-              className="text-sm"
-            >
-              Continuar con plan Free
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+            </DialogContent>
+        </Dialog>
+    );
 }

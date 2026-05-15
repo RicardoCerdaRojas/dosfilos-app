@@ -57,6 +57,8 @@ export { sendLeadMagnetNurture } from './leads/sendLeadMagnetNurture';
 export { previewLeadMagnetNurture } from './leads/previewLeadMagnetNurture';
 // Super-admin callable to render the ShareEmail (extraction share) template.
 export { previewExtractionShareEmail } from './leads/previewExtractionShareEmail';
+// Super-admin callable to render the welcome email (free + paid flows).
+export { previewWelcomeEmail } from './auth/previewWelcomeEmail';
 // Pastor-initiated email send for any persisted extraction (Fase 3.3).
 export { sendExtractionByEmail } from './leads/sendExtractionByEmail';
 // WordPress draft publish for any persisted extraction (Fase 3.3.b).

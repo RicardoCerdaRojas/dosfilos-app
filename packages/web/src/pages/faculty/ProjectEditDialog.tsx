@@ -19,13 +19,15 @@ const COLOR_OPTIONS: { value: ProjectColor; label: string; bg: string; ring: str
 interface ProjectEditDialogProps {
     /** If provided, we are editing an existing project. Otherwise creating. */
     project?: AIProject;
+    /** When creating, pre-selects this type instead of the default 'sermon'. */
+    initialType?: ProjectType;
     onClose: () => void;
 }
 
-export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) {
+export function ProjectEditDialog({ project, initialType, onClose }: ProjectEditDialogProps) {
     const [title, setTitle] = useState(project?.title || '');
     const [color, setColor] = useState<ProjectColor>(project?.color || 'amber');
-    const [type, setType] = useState<ProjectType>(project?.type || 'sermon');
+    const [type, setType] = useState<ProjectType>(project?.type || initialType || 'sermon');
     const [contextNote, setContextNote] = useState(project?.contextNote || '');
 
     const { createProject, updateProject, generateContext } = useFacultyProjects();
@@ -38,9 +40,9 @@ export function ProjectEditDialog({ project, onClose }: ProjectEditDialogProps) 
     useEffect(() => {
         setTitle(project?.title || '');
         setColor(project?.color || 'amber');
-        setType(project?.type || 'sermon');
+        setType(project?.type || initialType || 'sermon');
         setContextNote(project?.contextNote || '');
-    }, [project]);
+    }, [project, initialType]);
 
     const [error, setError] = useState<string | null>(null);
 
