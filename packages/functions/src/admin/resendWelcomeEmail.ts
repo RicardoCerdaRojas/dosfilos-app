@@ -1,11 +1,11 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { render } from '@react-email/render';
 import { resend } from '../emails/resendClient';
-import { getWelcomeEmailTemplate } from '../emails/templates/welcomeTemplate';
+import { WelcomeEmail, getWelcomeEmailSubject } from '../emails/templates/WelcomeEmail';
 
-// Reuse constants
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
-const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard/generate-sermon';
+const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
 
 export const resendWelcomeEmail = onCall(async (request) => {
     // 1. Verify Authentication
@@ -48,14 +48,16 @@ export const resendWelcomeEmail = onCall(async (request) => {
             throw new HttpsError('failed-precondition', 'User has no email address');
         }
 
-        // 4. Send Email via Resend
         // Admin resend is a manual nudge — no verify or set-password link.
-        const htmlContent = getWelcomeEmailTemplate(name, DASHBOARD_URL, {});
+        const locale = userData?.preferredLanguage === 'en' ? 'en' : 'es';
+        const htmlContent = await render(
+            WelcomeEmail({ name, locale, dashboardUrl: DASHBOARD_URL }),
+        );
 
         const { data, error } = await resend.emails.send({
             from: SENDER_EMAIL,
             to: email,
-            subject: 'Bienvenido a DosFilos.Preach 🚀',
+            subject: getWelcomeEmailSubject(locale),
             html: htmlContent,
         });
 
