@@ -209,30 +209,37 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
     }, [topInView, loadPrevChapter]);
 
 
-    // Scroll Spy Logic (Update Context)
+    // Scroll Spy Logic (Update Context). Only the PRIMARY reader owns
+    // navigation state — when this instance is rendering a secondary
+    // version (parallel mode), we keep its scroll local and do NOT
+    // touch the context. Otherwise the secondary's id convention
+    // ('1' for ASV's Genesis) would overwrite the primary's ('gn' for
+    // RVR's Genesis) on every scroll, breaking the primary's lookup.
+    const isSecondary = versionId !== contextVersionId;
     useEffect(() => {
+        if (isSecondary) return;
         const handleScroll = () => {
              if (!containerRef.current) return;
-             
+
              // Find whichever chapter occupies the middle of the screen
              const containerRect = containerRef.current.getBoundingClientRect();
              const midPoint = containerRect.top + containerRect.height / 2;
-             
+
              const chapterElements = containerRef.current.querySelectorAll('[data-chapter-id]');
-             
+
              for (const el of chapterElements) {
                   const rect = el.getBoundingClientRect();
                   if (rect.top <= midPoint && rect.bottom >= midPoint) {
                        const [bId, cNumStr] = (el.getAttribute('data-chapter-id') || '').split('|');
                        const cNum = parseInt(cNumStr);
-                       
+
                        if (bId && cNum && (bId !== bookId || cNum !== chapter)) {
                             // Update Context
                             lastInternalUpdate.current = { bookId: bId, chapter: cNum };
-                            
+
                             // Find book name
                             const bookObj = books.find(b => b.id.toLowerCase() === bId.toLowerCase());
-                            setBook(bookObj?.id || bId, bookObj?.name || bId); 
+                            setBook(bookObj?.id || bId, bookObj?.name || bId);
                             setChapter(cNum);
                        }
                        break;
@@ -245,7 +252,7 @@ export const BibleReader: React.FC<{ className?: string, versionId?: string }> =
              container.addEventListener('scroll', handleScroll, { passive: true });
              return () => container.removeEventListener('scroll', handleScroll);
         }
-    }, [bookId, chapter, books, setBook, setChapter]);
+    }, [isSecondary, bookId, chapter, books, setBook, setChapter]);
 
 
     // Handle scroll to verse (Initial & Navigation)
