@@ -20,6 +20,13 @@
         ]
     },
     "description": "El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.",
+    "intro": {
+        "heroSubtitle": "Morfología, sintaxis y léxico — verso por verso en griego original.",
+        "actionTitle": "¿Qué pasaje quieres estudiar?",
+        "actionSubtitle": "Elige un texto del NT para iniciar tu sesión guiada.",
+        "showcaseTitle": "Lo que vas a poder hacer",
+        "showcaseSubtitle": "Cada herramienta abre una capa distinta del análisis. Click para ver el ejemplo en detalle."
+    },
     "startTraining": "Iniciar Entrenamiento",
     "mySessions": "Mis Sesiones",
     "biblicalPassage": "Pasaje Bíblico",
