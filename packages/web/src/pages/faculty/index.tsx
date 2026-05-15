@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-    Search, GraduationCap, Library, ScrollText, HeartHandshake,
+    Search, Library, ScrollText, HeartHandshake,
     Mic, Send, Sparkles, ArrowRight, Loader2, BookOpen, Brain, MessageCircle, Users,
     Paperclip, X, ChevronDown,
 } from 'lucide-react';
@@ -236,12 +236,6 @@ export function FacultyDirectoryPage() {
                 <div className="absolute -bottom-32 -left-16 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 max-w-2xl mx-auto text-center">
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-4">
-                        <GraduationCap className="w-4 h-4" />
-                        <span>{t('directory.badge')}</span>
-                    </div>
-
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2 leading-tight font-serif">
                         {t('directory.heroTitle')}
                     </h1>
@@ -341,6 +335,14 @@ export function FacultyDirectoryPage() {
                                 </button>
                             );
                         })}
+                        {/* Visual separator + label so the user understands
+                            this control is a setting (modifies how every
+                            future answer is shaped) and not another quick
+                            prompt that submits on click. */}
+                        <span className="h-4 w-px bg-border mx-1" aria-hidden />
+                        <span className="text-[11px] text-muted-foreground font-medium">
+                            {t('directory.modeLabel')}
+                        </span>
                         <ModeSelectorButton value={responseMode} onChange={setResponseMode} />
                     </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
@@ -106,6 +106,26 @@ export function FacultyChatPage() {
     useEffect(() => {
         localStorage.setItem('faculty-extraction-panel', String(isRightSidebarOpen));
     }, [isRightSidebarOpen]);
+
+    // Empty-state default: when the user has zero sessions AND has
+    // never expressed a preference for either rail, close them so the
+    // home orchestrator gets the full canvas. Once they have data,
+    // power-user defaults (rails open) take over. Persisted choices
+    // are always respected — we only intervene on the first visit.
+    const hasAppliedEmptyStateDefault = useRef(false);
+    useEffect(() => {
+        if (hasAppliedEmptyStateDefault.current) return;
+        if (isLoadingSessions) return;
+        hasAppliedEmptyStateDefault.current = true;
+        if (sessions.length > 0) return;
+
+        if (localStorage.getItem('faculty-sidebar') === null) {
+            setIsLeftSidebarOpen(false);
+        }
+        if (localStorage.getItem('faculty-extraction-panel') === null) {
+            setIsRightSidebarOpen(false);
+        }
+    }, [isLoadingSessions, sessions.length]);
     // Mode preference is shared with the directory landing input via
     // localStorage so the choice the user makes in either surface
     // carries to the other (the chat session inherits the home pick

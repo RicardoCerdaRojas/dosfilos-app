@@ -253,8 +253,9 @@
     },
     "directory": {
         "badge": "Expert Tutors for Expository Preachers",
-        "heroTitle": "My Tutors",
-        "heroSubtitle": "Ask the faculty a question — the orchestrator will automatically select and coordinate the specialists you need.",
+        "heroTitle": "What do you want to study today?",
+        "heroSubtitle": "Ask your question and the faculty will pick the right specialists — exegesis, theology, preaching, counseling.",
+        "modeLabel": "Mode:",
         "inputPlaceholder": "What do you want to study, prepare, or resolve today?",
         "attachment": {
             "attachLabel": "Attach image",

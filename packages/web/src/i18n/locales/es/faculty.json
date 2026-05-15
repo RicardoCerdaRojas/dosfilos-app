@@ -253,8 +253,9 @@
     },
     "directory": {
         "badge": "Tutores Expertos para Predicadores Expositivos",
-        "heroTitle": "Mis Tutores",
-        "heroSubtitle": "Hazle una pregunta al cuerpo docente — el orquestador seleccionará y coordinará automáticamente los especialistas que tu necesitas.",
+        "heroTitle": "¿Qué quieres estudiar hoy?",
+        "heroSubtitle": "Plantea tu pregunta y la facultad elegirá los especialistas adecuados — exégesis, teología, predicación, consejería.",
+        "modeLabel": "Modo:",
         "inputPlaceholder": "¿Qué quieres estudiar, preparar o resolver hoy?",
         "attachment": {
             "attachLabel": "Adjuntar imagen",
