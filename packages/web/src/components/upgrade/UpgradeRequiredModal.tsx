@@ -79,7 +79,7 @@ export function UpgradeRequiredModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[820px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[960px] lg:max-w-[1080px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
                         <Lock className="h-6 w-6 text-primary" />
@@ -104,8 +104,8 @@ export function UpgradeRequiredModal({
                     <div
                         className={
                             paidPlans.length >= 3
-                                ? 'grid grid-cols-1 md:grid-cols-3 gap-4 mt-2'
-                                : 'grid grid-cols-1 md:grid-cols-2 gap-4 mt-2'
+                                ? 'grid grid-cols-1 md:grid-cols-3 gap-5 mt-3'
+                                : 'grid grid-cols-1 md:grid-cols-2 gap-5 mt-3 max-w-3xl mx-auto'
                         }
                     >
                         {paidPlans.map((plan) => (
