@@ -3,26 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import {
     Plus,
     FolderKanban,
-    MessageSquareQuote,
-    FileText,
     Loader2,
     Search,
-    MoreVertical,
-    Archive,
-    ArchiveRestore,
-    Pencil,
     Trash2,
+    LayoutGrid,
+    List,
+    Calendar,
+    MessageSquareQuote,
+    FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,21 +31,28 @@ import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { ProjectEditDialog } from '@/pages/faculty/ProjectEditDialog';
 import { UpgradeRequiredModal } from '@/components/upgrade';
 import { ProjectsEmptyState } from './components/ProjectsEmptyState';
+import { ProjectCard } from './components/ProjectCard';
+import { PROJECT_TYPES } from '@/pages/projects/projectRoadmaps';
 import { cn } from '@/lib/utils';
-import type { AIProject, ProjectColor, ProjectType } from '@dosfilos/domain';
+import type { AIProject, ProjectType } from '@dosfilos/domain';
 
-const COLOR_DOT: Record<ProjectColor, string> = {
+type FilterTab = 'active' | 'archived' | 'trash';
+type ViewMode = 'grid' | 'list';
+
+const VIEW_STORAGE_KEY = 'dosfilos.projects.viewMode';
+
+/** Static map for the list-view color dot. Tailwind needs literal
+ *  class names at build time, so dynamic interpolation can't work. */
+const COLOR_DOT_BG: Record<string, string> = {
     amber: 'bg-amber-500',
     emerald: 'bg-emerald-500',
     sky: 'bg-sky-500',
     rose: 'bg-rose-500',
     violet: 'bg-violet-500',
-    slate: 'bg-muted/400',
+    slate: 'bg-slate-400',
     orange: 'bg-orange-500',
     teal: 'bg-teal-500',
 };
-
-type FilterTab = 'active' | 'archived' | 'trash';
 
 export function ProjectsListPage() {
     const navigate = useNavigate();
@@ -70,6 +69,24 @@ export function ProjectsListPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [confirmHardDelete, setConfirmHardDelete] = useState<AIProject | null>(null);
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [viewMode, setViewMode] = useState<ViewMode>(() => {
+        if (typeof window === 'undefined') return 'grid';
+        try {
+            const stored = window.localStorage.getItem(VIEW_STORAGE_KEY);
+            return stored === 'list' ? 'list' : 'grid';
+        } catch {
+            return 'grid';
+        }
+    });
+
+    const setViewModePersisted = (mode: ViewMode) => {
+        setViewMode(mode);
+        try {
+            window.localStorage.setItem(VIEW_STORAGE_KEY, mode);
+        } catch {
+            // ignore
+        }
+    };
 
     /**
      * Pre-checks the plan-level project quota (Hito 5.2). Free tier doesn't
@@ -189,33 +206,65 @@ export function ProjectsListPage() {
 
     return (
         <div className="min-h-full bg-background text-foreground antialiased">
-            <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-8 lg:py-10 space-y-8">
-                {/* Header */}
-                <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                    <div className="space-y-2">
-                        <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium">
+            <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-6 space-y-5">
+                {/* Compact header — single line. The descriptive
+                    blurb that explains what a project is lives in the
+                    empty state; once the user has data, the page is
+                    operational, not didactic. */}
+                <header className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-baseline gap-2">
+                        <h1 className="font-reading text-[22px] md:text-[24px] leading-none tracking-[-0.01em] text-foreground">
                             Tus proyectos
-                        </div>
-                        <h1 className="font-reading text-[34px] md:text-[44px] leading-[1.05] tracking-[-0.02em] text-foreground">
-                            Tu trabajo en curso.
                         </h1>
-                        <p className="text-[15px] md:text-[16px] leading-relaxed text-muted-foreground max-w-2xl">
-                            Un proyecto es un espacio dedicado para una unidad de tu trabajo —
-                            un sermón, una serie, un estudio, un curso. Aquí viven sus fuentes,
-                            conversaciones y material producido.
-                        </p>
+                        <span className="text-[13px] text-muted-foreground tabular-nums">
+                            · {counts.active}
+                        </span>
                     </div>
-                    <Button
-                        onClick={handleOpenCreate}
-                        className="bg-foreground hover:bg-foreground/90 text-background font-medium gap-1.5 shrink-0"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Nuevo proyecto
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {/* View toggle */}
+                        <div className="hidden sm:flex items-center border border-border/60 rounded-md overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => setViewModePersisted('grid')}
+                                className={cn(
+                                    'h-8 w-8 inline-flex items-center justify-center transition-colors',
+                                    viewMode === 'grid'
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                                )}
+                                aria-label="Vista de cuadrícula"
+                                title="Vista de cuadrícula"
+                            >
+                                <LayoutGrid className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewModePersisted('list')}
+                                className={cn(
+                                    'h-8 w-8 inline-flex items-center justify-center transition-colors',
+                                    viewMode === 'list'
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                                )}
+                                aria-label="Vista de lista"
+                                title="Vista de lista"
+                            >
+                                <List className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <Button
+                            onClick={handleOpenCreate}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium gap-1.5 shrink-0"
+                            size="sm"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Nuevo proyecto
+                        </Button>
+                    </div>
                 </header>
 
-                {/* Filter bar — tabs + search */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-1">
+                {/* Filter bar — tabs + search compact */}
+                <div className="flex items-center justify-between gap-3 border-b border-border/60">
                     <div className="flex items-center gap-1">
                         {(['active', 'archived', 'trash'] as const).map((t) => {
                             const isActive = tab === t;
@@ -234,7 +283,7 @@ export function ProjectsListPage() {
                                     className={cn(
                                         'inline-flex items-center gap-2 px-3 py-2 text-[13px] font-medium border-b-2 -mb-px transition-colors',
                                         isActive
-                                            ? 'border-foreground text-foreground'
+                                            ? 'border-primary text-foreground'
                                             : 'border-transparent text-muted-foreground hover:text-foreground'
                                     )}
                                 >
@@ -251,19 +300,19 @@ export function ProjectsListPage() {
                             );
                         })}
                     </div>
-                    <div className="relative w-full sm:w-72">
+                    <div className="relative w-48 sm:w-64 mb-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
                         <Input
                             type="text"
-                            placeholder="Buscar por título o contexto…"
+                            placeholder="Buscar…"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 h-9 border-border/60 text-[13px] focus-visible:ring-indigo-600"
+                            className="pl-9 h-8 border-border/60 text-[13px]"
                         />
                     </div>
                 </div>
 
-                {/* Grid */}
+                {/* Content */}
                 {isLoadingProjects ? (
                     <div className="py-20 flex justify-center">
                         <Loader2 className="h-6 w-6 text-muted-foreground/70 animate-spin" />
@@ -281,149 +330,61 @@ export function ProjectsListPage() {
                                     : 'No tienes proyectos activos.'}
                         </p>
                     </div>
-                ) : (
-                    <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                ) : viewMode === 'list' ? (
+                    <section className="border border-border/60 rounded-lg overflow-hidden divide-y divide-border/60 bg-card">
                         {filteredProjects.map((project) => {
                             const sessionCount = sessionsByProject.get(project.id) ?? 0;
                             const sourceCount = project.sourceIds?.length ?? 0;
-                            const isArchived = !!project.archivedAt;
-                            const isTrashed = !!project.deletedAt;
+                            const typeMeta = PROJECT_TYPES[project.type] ?? PROJECT_TYPES.general;
+                            const TypeIcon = typeMeta.icon;
                             return (
-                                <article
+                                <button
                                     key={project.id}
-                                    className={cn(
-                                        'group relative bg-card border rounded-xl p-6 hover:shadow-sm transition-all flex flex-col gap-4 text-left',
-                                        isTrashed
-                                            ? 'border-border/50 bg-muted/40 opacity-80'
-                                            : isArchived
-                                              ? 'border-border/50 bg-muted/30'
-                                              : 'border-border/60 hover:border-border'
-                                    )}
+                                    onClick={() => navigate(`/dashboard/projects/${project.id}`)}
+                                    className="w-full flex items-center gap-4 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
                                 >
-                                    {/* Top row: color dot + dropdown */}
-                                    <div className="flex items-center justify-between">
-                                        <span
-                                            className={cn(
-                                                'h-2.5 w-2.5 rounded-full',
-                                                COLOR_DOT[project.color] ?? 'bg-slate-400'
-                                            )}
-                                        />
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <button
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="text-muted-foreground/70 hover:text-foreground/80 p-1 -mr-1 rounded transition-colors"
-                                                    aria-label="Acciones del proyecto"
-                                                >
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-52">
-                                                {isTrashed ? (
-                                                    <>
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleSoftDelete(project, false)}
-                                                        >
-                                                            <ArchiveRestore className="mr-2 h-4 w-4" />
-                                                            Restaurar
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            onClick={() => setConfirmHardDelete(project)}
-                                                            className="text-destructive focus:text-destructive"
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Eliminar permanentemente
-                                                        </DropdownMenuItem>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <DropdownMenuItem
-                                                            onClick={() =>
-                                                                setDialogState({ mode: 'edit', project })
-                                                            }
-                                                        >
-                                                            <Pencil className="mr-2 h-4 w-4" />
-                                                            Editar
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleArchive(project, !isArchived)}
-                                                        >
-                                                            {isArchived ? (
-                                                                <>
-                                                                    <ArchiveRestore className="mr-2 h-4 w-4" />
-                                                                    Desarchivar
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Archive className="mr-2 h-4 w-4" />
-                                                                    Archivar
-                                                                </>
-                                                            )}
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleSoftDelete(project, true)}
-                                                            className="text-destructive focus:text-destructive"
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Mover a la papelera
-                                                        </DropdownMenuItem>
-                                                    </>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-
-                                    {/* Body — clickable (also for trashed, for review) */}
-                                    <button
-                                        onClick={() => navigate(`/dashboard/projects/${project.id}`)}
-                                        className="text-left flex-1 space-y-1.5"
-                                    >
-                                        <h2 className="font-reading text-[22px] leading-tight text-foreground line-clamp-2">
-                                            {project.title}
-                                        </h2>
-                                        {project.contextNote && (
-                                            <p className="text-[13.5px] leading-relaxed text-muted-foreground line-clamp-3">
-                                                {project.contextNote}
-                                            </p>
-                                        )}
-                                    </button>
-
-                                    {/* Footer: meta + status badge */}
-                                    <div className="flex items-center gap-4 pt-2 border-t border-border/40 text-[12px] text-muted-foreground">
-                                        {isTrashed ? (
-                                            <span className="text-[11px] uppercase tracking-[0.12em] font-medium text-red-600/80 inline-flex items-center gap-1">
-                                                <Trash2 className="h-3 w-3" />
-                                                En papelera
-                                            </span>
-                                        ) : isArchived ? (
-                                            <span className="text-[11px] uppercase tracking-[0.12em] font-medium text-muted-foreground/70 inline-flex items-center gap-1">
-                                                <Archive className="h-3 w-3" />
-                                                Archivado
-                                            </span>
-                                        ) : (
-                                            <>
-                                                <span className="inline-flex items-center gap-1">
-                                                    <MessageSquareQuote className="h-3.5 w-3.5" />
-                                                    {sessionCount}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1">
-                                                    <FileText className="h-3.5 w-3.5" />
-                                                    {sourceCount}
-                                                </span>
-                                            </>
-                                        )}
-                                        <span className="ml-auto">
-                                            {new Date(project.updatedAt).toLocaleDateString(
-                                                undefined,
-                                                { month: 'short', day: 'numeric' }
-                                            )}
+                                    <span className={cn('h-2 w-2 rounded-full shrink-0', COLOR_DOT_BG[project.color] ?? 'bg-slate-400')} />
+                                    <span className="inline-flex items-center gap-1 text-[10.5px] uppercase font-semibold tracking-wider text-muted-foreground w-24 shrink-0">
+                                        <TypeIcon className="h-3 w-3" />
+                                        {typeMeta.label}
+                                    </span>
+                                    <span className="font-reading text-[15px] text-foreground flex-1 truncate">
+                                        {project.title}
+                                    </span>
+                                    <span className="hidden md:flex items-center gap-3 text-[12px] text-muted-foreground shrink-0">
+                                        <span className="inline-flex items-center gap-1" title="Sesiones">
+                                            <MessageSquareQuote className="h-3.5 w-3.5" />
+                                            {sessionCount}
                                         </span>
-                                    </div>
-                                </article>
+                                        <span className="inline-flex items-center gap-1" title="Fuentes">
+                                            <FileText className="h-3.5 w-3.5" />
+                                            {sourceCount}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 w-20 justify-end">
+                                            <Calendar className="h-3 w-3" />
+                                            {new Date(project.updatedAt).toLocaleDateString(undefined, {
+                                                month: 'short',
+                                                day: 'numeric',
+                                            })}
+                                        </span>
+                                    </span>
+                                </button>
                             );
                         })}
+                    </section>
+                ) : (
+                    <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                        {filteredProjects.map((project) => (
+                            <ProjectCard
+                                key={project.id}
+                                project={project}
+                                sessionCount={sessionsByProject.get(project.id) ?? 0}
+                                onEdit={(p) => setDialogState({ mode: 'edit', project: p })}
+                                onArchive={handleArchive}
+                                onSoftDelete={handleSoftDelete}
+                                onHardDeleteRequest={setConfirmHardDelete}
+                            />
+                        ))}
                     </section>
                 )}
             </div>
