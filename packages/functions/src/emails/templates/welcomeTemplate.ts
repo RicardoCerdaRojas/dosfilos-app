@@ -124,50 +124,65 @@ export function getWelcomeEmailTemplate(
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background: #f8fafc; }
-    .container { max-width: 600px; margin: 0 auto; padding: 40px 24px; background: white; }
-    .header { padding-bottom: 24px; border-bottom: 1px solid #e2e8f0; }
-    .brand { color: #0f172a; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-    .content { padding: 32px 0; }
-    h2 { color: #0f172a; font-size: 24px; margin: 0 0 16px 0; }
-    .features { background: #f8fafc; padding: 20px 24px; border-radius: 8px; margin: 24px 0; border: 1px solid #e2e8f0; }
-    .feature-item { margin-bottom: 12px; color: #334155; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background: #f1f5f9; }
+    .outer { width: 100%; background: #f1f5f9; padding: 32px 16px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08); }
+    .accent-bar { height: 4px; background: linear-gradient(90deg, #D97706 0%, #F59E0B 100%); }
+    .masthead { padding: 32px 32px 8px 32px; text-align: center; }
+    .masthead img { max-height: 40px; width: auto; display: inline-block; }
+    .masthead-fallback { color: #0f172a; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    .content { padding: 16px 32px 32px 32px; }
+    h2 { color: #0f172a; font-size: 26px; margin: 16px 0 12px 0; font-weight: 700; letter-spacing: -0.01em; }
+    p { color: #475569; margin: 0 0 16px 0; }
+    .features { background: #fafaf9; padding: 24px 24px; border-radius: 10px; margin: 28px 0; border: 1px solid #e7e5e4; border-left: 4px solid #D97706; }
+    .feature-item { margin-bottom: 14px; color: #292524; font-size: 15px; }
     .feature-item:last-child { margin-bottom: 0; }
-    .button { display: inline-block; background: #0f172a; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; }
-    .button-primary { display: inline-block; background: #0f172a; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; }
-    .button-secondary { display: inline-block; background: #4f46e5; color: white !important; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px; }
-    .action-block { margin: 24px 0; padding: 20px 24px; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .action-block--verify { background: #f1f5f9; border-color: #cbd5e1; }
-    .action-block--password { background: #eef2ff; border-color: #c7d2fe; }
-    .footer { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+    .feature-item strong { color: #0f172a; }
+    .action-block { margin: 28px 0; padding: 24px; border-radius: 10px; }
+    .action-block h3 { margin: 0 0 8px 0; color: #0f172a; font-size: 16px; font-weight: 600; }
+    .action-block p { margin: 0 0 18px 0; color: #475569; font-size: 14px; }
+    .action-block--verify { background: #fef3c7; border: 1px solid #fde68a; }
+    .action-block--password { background: #ede9fe; border: 1px solid #ddd6fe; }
+    .button-primary { display: inline-block; background: #D97706; color: #ffffff !important; padding: 13px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; }
+    .button-secondary { display: inline-block; background: #6d28d9; color: #ffffff !important; padding: 11px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; }
+    .button { display: inline-block; background: #D97706; color: #ffffff !important; padding: 13px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; }
+    .footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 24px 32px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+    .footer p { margin: 4px 0; color: #94a3b8; }
+    .footer a { color: #64748b; text-decoration: none; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1 class="brand">DosFilos.Preach</h1>
-    </div>
-
-    <div class="content">
-      <h2>${copy.greeting(firstName)}</h2>
-      <p>${copy.intro}</p>
-
-      <div class="features">
-        <div class="feature-item">${copy.featureGreek}</div>
-        <div class="feature-item">${copy.featureFaculty}</div>
-        <div class="feature-item">${copy.featureLibrary}</div>
-        <div class="feature-item">${copy.featureSermons}</div>
+  <div class="outer">
+    <div class="container">
+      <div class="accent-bar"></div>
+      <div class="masthead">
+        <img src="https://preach.dosfilos.com/logo_dfp.png" alt="DosFilos.Preach" />
+        <h1 class="masthead-fallback" style="display:none;">DosFilos.Preach</h1>
       </div>
 
-      ${verifyBlock}
-      ${passwordBlock}
-      ${dashboardCta}
-    </div>
+      <div class="content">
+        <h2>${copy.greeting(firstName)}</h2>
+        <p>${copy.intro}</p>
 
-    <div class="footer">
-      <p>© ${new Date().getFullYear()} DosFilos.Preach. ${copy.footerRights}</p>
-      <p>${copy.footerSupport}</p>
+        <div class="features">
+          <div class="feature-item">${copy.featureGreek}</div>
+          <div class="feature-item">${copy.featureFaculty}</div>
+          <div class="feature-item">${copy.featureLibrary}</div>
+          <div class="feature-item">${copy.featureSermons}</div>
+        </div>
+
+        ${verifyBlock}
+        ${passwordBlock}
+        ${dashboardCta}
+      </div>
+
+      <div class="footer">
+        <p>© ${new Date().getFullYear()} DosFilos.Preach. ${copy.footerRights}</p>
+        <p>${copy.footerSupport}</p>
+      </div>
     </div>
   </div>
 </body>

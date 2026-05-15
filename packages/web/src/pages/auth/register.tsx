@@ -44,16 +44,22 @@ export function RegisterPage() {
   const selectedPlanId = searchParams.get('plan');
   const isFree = selectedPlanId === 'free';
 
-  const registerSchema = z.object({
-    displayName: z
-      .string()
-      .min(2, t('register.errors.nameMin'))
-      .max(50, t('register.errors.nameMax')),
-    email: z.string().email(t('register.errors.invalidEmail')),
-    password: isFree
-      ? z.string().min(6, t('register.errors.passwordMin', { defaultValue: 'Mínimo 6 caracteres' }))
-      : z.string().optional(),
-  });
+  const registerSchema = z
+    .object({
+      displayName: z
+        .string()
+        .min(2, t('register.errors.nameMin'))
+        .max(50, t('register.errors.nameMax')),
+      email: z.string().email(t('register.errors.invalidEmail')),
+      password: isFree
+        ? z.string().min(6, t('register.errors.passwordMin'))
+        : z.string().optional(),
+      passwordConfirm: isFree ? z.string() : z.string().optional(),
+    })
+    .refine((data) => !isFree || data.password === data.passwordConfirm, {
+      message: t('register.errors.passwordMismatch'),
+      path: ['passwordConfirm'],
+    });
 
   type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -219,23 +225,43 @@ export function RegisterPage() {
           </div>
 
           {isFree && (
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-[13px] font-medium text-slate-700">
-                {t('register.password', { defaultValue: 'Contraseña' })}
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={t('register.passwordPlaceholder', { defaultValue: 'Mínimo 6 caracteres' })}
-                autoComplete="new-password"
-                {...register('password')}
-                disabled={isLoading}
-                className="h-11 border-slate-300 focus-visible:ring-indigo-600"
-              />
-              {errors.password && (
-                <p className="text-xs text-red-600">{errors.password.message}</p>
-              )}
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-[13px] font-medium text-slate-700">
+                  {t('register.password')}
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder={t('register.passwordPlaceholder')}
+                  autoComplete="new-password"
+                  {...register('password')}
+                  disabled={isLoading}
+                  className="h-11 border-slate-300 focus-visible:ring-indigo-600"
+                />
+                {errors.password && (
+                  <p className="text-xs text-red-600">{errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirm" className="text-[13px] font-medium text-slate-700">
+                  {t('register.passwordConfirm')}
+                </Label>
+                <Input
+                  id="passwordConfirm"
+                  type="password"
+                  placeholder={t('register.passwordConfirmPlaceholder')}
+                  autoComplete="new-password"
+                  {...register('passwordConfirm')}
+                  disabled={isLoading}
+                  className="h-11 border-slate-300 focus-visible:ring-indigo-600"
+                />
+                {errors.passwordConfirm && (
+                  <p className="text-xs text-red-600">{errors.passwordConfirm.message}</p>
+                )}
+              </div>
+            </>
           )}
 
           <Button
