@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { EmailLayout } from '../components/EmailLayout';
 import { CtaButton, H2, H3, P } from '../components/EmailPrimitives';
 
