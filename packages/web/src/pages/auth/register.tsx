@@ -116,11 +116,11 @@ export function RegisterPage() {
           displayName: data.displayName,
           locale: i18n.language as 'en' | 'es',
         });
-        toast.success(t('register.freeSuccess', { defaultValue: '¡Cuenta creada!' }));
+        toast.success(t('register.freeSuccess'));
         navigate('/auth/verify-email', { replace: true });
       } catch (error: any) {
         console.error('Free signup error:', error);
-        toast.error(error?.message ?? t('register.errors.signupFailed', { defaultValue: 'Error al crear la cuenta' }));
+        toast.error(error?.message ?? t('register.errors.signupFailed'));
         setIsLoading(false);
       }
       return;
@@ -152,7 +152,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
-      eyebrow={selectedPlan ? t('register.eyebrow', { defaultValue: 'Crear cuenta' }) : undefined}
+      eyebrow={selectedPlan ? t('register.eyebrow') : undefined}
       title={t('register.title')}
       subtitle={t('register.subtitle')}
     >
@@ -272,18 +272,14 @@ export function RegisterPage() {
             {isLoading
               ? t('register.submitting')
               : isFree
-                ? t('register.createFreeAccount', { defaultValue: 'Crear cuenta gratis' })
-                : t('register.continueToPayment', { defaultValue: 'Continuar al pago' })}
+                ? t('register.createFreeAccount')
+                : t('register.continueToPayment')}
           </Button>
 
           <p className="text-[12px] leading-relaxed text-slate-500 text-center">
             {isFree
-              ? t('register.freeDisclaimer', {
-                  defaultValue: 'Sin tarjeta de crédito. Puedes hacer upgrade a un plan pagado en cualquier momento.',
-                })
-              : t('register.trialDisclaimer', {
-                  defaultValue: 'Crearás tu contraseña después del pago. Sin cargo durante 30 días; cancela cuando quieras.',
-                })}
+              ? t('register.freeDisclaimer')
+              : t('register.trialDisclaimer')}
           </p>
         </form>
 
