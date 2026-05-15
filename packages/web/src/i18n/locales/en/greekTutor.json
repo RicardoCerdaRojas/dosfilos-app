@@ -29,6 +29,13 @@
         "showcaseTitle": "What you'll be able to do",
         "showcaseSubtitle": "Each tool unlocks a different layer of analysis. Click to see the example in detail."
     },
+    "emptyState": {
+        "title": "Start your Greek study",
+        "body": "Pick a passage from the New Testament to start exploring the Greek text with pedagogical guides.",
+        "suggestedPassages": "Suggested passages",
+        "tipTitle": "Tip",
+        "tipBody": "Every session includes morphological analysis, theological context, and recognition exercises to help you go deeper into the original text."
+    },
     "startTraining": "Start Training",
     "mySessions": "My Sessions",
     "biblicalPassage": "Biblical Passage",

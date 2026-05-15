@@ -27,6 +27,13 @@
         "showcaseTitle": "Lo que vas a poder hacer",
         "showcaseSubtitle": "Cada herramienta abre una capa distinta del análisis. Click para ver el ejemplo en detalle."
     },
+    "emptyState": {
+        "title": "Comienza tu estudio del griego",
+        "body": "Elige un pasaje del Nuevo Testamento para empezar a explorar el texto griego con guías pedagógicas.",
+        "suggestedPassages": "Pasajes sugeridos",
+        "tipTitle": "Consejo",
+        "tipBody": "Cada sesión incluye análisis morfológico, contexto teológico y ejercicios de reconocimiento para ayudarte a profundizar en el texto original."
+    },
     "startTraining": "Iniciar Entrenamiento",
     "mySessions": "Mis Sesiones",
     "biblicalPassage": "Pasaje Bíblico",

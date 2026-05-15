@@ -1,99 +1,100 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { BookOpen, Plus, Sparkles } from 'lucide-react';
+import { useTranslation } from '@/i18n';
+import { BookOpen, Sparkles } from 'lucide-react';
 
 interface EmptyStateProps {
-  onCreateNew: () => void;
-  onQuickStart?: (passage: string) => void;
+    onCreateNew: () => void;
+    onQuickStart?: (passage: string) => void;
 }
 
-const suggestedPassages = [
-  { reference: 'Juan 1:1-5', description: 'El Verbo se hizo carne' },
-  { reference: 'Juan 3:16', description: 'Porque de tal manera amó Dios...' },
-  { reference: 'Romanos 8:1-4', description: 'Ninguna condenación' },
-  { reference: '1 Corintios 13:1-3', description: 'El amor es...' },
-  { reference: 'Filipenses 2:5-11', description: 'El himno de Cristo' },
-  { reference: 'Hebreos 1:1-4', description: 'Dios habla por su Hijo' }
+const SUGGESTED_PASSAGES = [
+    { reference: 'Juan 1:1-5', description: 'El Verbo se hizo carne' },
+    { reference: 'Juan 3:16', description: 'Porque de tal manera amó Dios...' },
+    { reference: 'Romanos 8:1-4', description: 'Ninguna condenación' },
+    { reference: '1 Corintios 13:1-3', description: 'El amor es...' },
+    { reference: 'Filipenses 2:5-11', description: 'El himno de Cristo' },
+    { reference: 'Hebreos 1:1-4', description: 'Dios habla por su Hijo' },
 ];
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ onCreateNew, onQuickStart }) => {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      {/* Icon and Title */}
-      <div className="relative mb-6">
-        <div className="absolute inset-0 bg-indigo-100 rounded-full blur-2xl opacity-30" />
-        <div className="relative bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg">
-          <BookOpen className="w-16 h-16 text-white" />
-        </div>
-      </div>
-      
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">
-        Comienza tu estudio del griego
-      </h2>
-      <p className="text-gray-600 text-center max-w-md mb-8">
-        No tienes sesiones de estudio activas. Elige un pasaje del Nuevo Testamento 
-        para comenzar a explorar el texto griego con guías pedagógicas.
-      </p>
+/**
+ * Empty state for the Greek Tutor sessions dashboard
+ * (`/dashboard/greek-tutor-dashboard`). Rendered when the user has
+ * zero active sessions.
+ *
+ * Redesigned 2026-05-15 (fix/ux-iteration-batch-3) to:
+ *  - drop the indigo/purple gradient icon-badge + CTA (not brand,
+ *    not theme-aware)
+ *  - drop the redundant "+ Nueva Sesión" CTA — the page header
+ *    already carries that action; surfacing it twice in the same
+ *    fold added noise without value. The suggested-passages grid
+ *    becomes the primary affordance: each card IS a one-click
+ *    session start
+ *  - drop the bg-blue-50 / text-blue-900 tips block in favor of
+ *    the warning-subtle semantic token pair so it adapts to dark mode
+ *  - use brand primary throughout for icon, hover, and accent
+ *
+ * `onCreateNew` is kept in the props (unused here) to preserve the
+ * upstream component contract — the dashboard parent expects it.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const EmptyState: React.FC<EmptyStateProps> = ({ onCreateNew: _onCreateNew, onQuickStart }) => {
+    const { t } = useTranslation('greekTutor');
 
-      {/* Primary Action */}
-      <Button 
-        onClick={onCreateNew}
-        size="lg"
-        className="mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg"
-      >
-        <Plus className="w-5 h-5 mr-2" />
-        Nueva Sesión
-      </Button>
+    return (
+        <div className="flex flex-col items-center py-12 px-4">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mb-5">
+                <BookOpen className="w-6 h-6" />
+            </div>
 
-      {/* Suggested Passages */}
-      {onQuickStart && (
-        <div className="w-full max-w-2xl">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            <h3 className="text-sm font-semibold text-gray-700">
-              Pasajes sugeridos
-            </h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {suggestedPassages.map((passage) => (
-              <button
-                key={passage.reference}
-                onClick={() => onQuickStart(passage.reference)}
-                className="group relative overflow-hidden bg-white border border-gray-200 rounded-lg p-4 text-left hover:border-indigo-300 hover:shadow-md transition-all duration-200"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                
-                <div className="relative">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">
-                      {passage.reference}
-                    </span>
-                    <BookOpen className="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors flex-shrink-0" />
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {passage.description}
-                  </p>
+            <h2 className="font-serif text-2xl font-bold text-foreground mb-2 text-center">
+                {t('emptyState.title')}
+            </h2>
+            <p className="text-sm text-muted-foreground text-center max-w-md mb-8">
+                {t('emptyState.body')}
+            </p>
+
+            {onQuickStart && (
+                <div className="w-full max-w-2xl">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                        <Sparkles className="w-3.5 h-3.5 text-primary" />
+                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {t('emptyState.suggestedPassages')}
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        {SUGGESTED_PASSAGES.map((passage) => (
+                            <button
+                                key={passage.reference}
+                                onClick={() => onQuickStart(passage.reference)}
+                                className="group p-4 rounded-lg border border-border bg-card hover:border-primary/40 hover:shadow-sm transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                            >
+                                <div className="flex items-center justify-between mb-1 gap-2">
+                                    <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                                        {passage.reference}
+                                    </span>
+                                    <BookOpen className="w-4 h-4 text-muted-foreground/70 group-hover:text-primary transition-colors shrink-0" />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {passage.description}
+                                </p>
+                            </button>
+                        ))}
+                    </div>
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
 
-      {/* Tips */}
-      <div className="mt-12 max-w-lg">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            Consejo
-          </h4>
-          <p className="text-sm text-blue-800">
-            Cada sesión incluye análisis morfológico, contexto teológico, y ejercicios 
-            de reconocimiento para ayudarte a profundizar en el texto original.
-          </p>
+            <div className="mt-10 max-w-lg w-full">
+                <div className="rounded-lg border border-warning/30 bg-warning-subtle/40 p-4">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-warning-subtle-foreground mb-1.5 inline-flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-warning" />
+                        {t('emptyState.tipTitle')}
+                    </h4>
+                    <p className="text-sm text-foreground/90 leading-relaxed">
+                        {t('emptyState.tipBody')}
+                    </p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
