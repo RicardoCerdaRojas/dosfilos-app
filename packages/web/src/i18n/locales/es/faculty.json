@@ -224,6 +224,11 @@
         "searchPlaceholder": "Buscar por título, tipo o contenido...",
         "loading": "Cargando recursos...",
         "emptyState": "Selecciona un recurso de la lista para verlo.",
+        "empty": {
+            "title": "Aún no tienes recursos guardados",
+            "body": "Cuando converses con un tutor podrás extraer bosquejos, guías de estudio, devocionales y más. Todos quedan acá organizados por sesión.",
+            "cta": "Iniciar una sesión"
+        },
         "projectLibraryFallbackTitle": "Recursos del proyecto",
         "projectSubtitle": "Recursos anclados a este proyecto.",
         "count_one": "{{count}} recurso",

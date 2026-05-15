@@ -140,7 +140,7 @@ export function AppSidebar() {
         // arquitectónica (ambos consumen el mismo store de chunks RAG),
         // pero el usuario ve estudio, no plumbing.
         { name: t('menu.faculty'), href: '/dashboard/faculty', icon: MessageSquareQuote },
-        { name: t('menu.facultyLibrary'), href: '/dashboard/faculty/library', icon: NotebookPen },
+        { name: t('menu.facultyLibrary'), href: '/dashboard/faculty/library', icon: Sparkles },
         { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
         { name: t('menu.hebrewTutor'), href: '/dashboard/hebrew-tutor', icon: BookOpen },
       ],
@@ -220,7 +220,25 @@ export function AppSidebar() {
     if (href === '/dashboard') {
       return location.pathname === href || location.pathname === `${href}/`;
     }
-    return location.pathname.startsWith(href);
+    if (location.pathname === href) return true;
+    if (!location.pathname.startsWith(href + '/')) return false;
+    // Pathname extends past `href`. Only mark active if no more
+    // specific registered route ALSO matches — otherwise the parent
+    // and child both light up (e.g. on `/dashboard/faculty/library`,
+    // both `Tutores` (`/dashboard/faculty`) and `Mis Recursos`
+    // (`/dashboard/faculty/library`) used to highlight). Most-specific
+    // route wins.
+    const allHrefs = [
+      ...navigationGroups.flatMap((g) => g.items.map((i) => i.href)),
+      ...adminNavigation.map((i) => i.href),
+    ];
+    const moreSpecific = allHrefs.some(
+      (other) =>
+        other !== href &&
+        other.startsWith(href + '/') &&
+        (location.pathname === other || location.pathname.startsWith(other + '/')),
+    );
+    return !moreSpecific;
   };
 
   return (

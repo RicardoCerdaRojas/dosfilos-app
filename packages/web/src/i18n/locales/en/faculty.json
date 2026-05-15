@@ -224,6 +224,11 @@
         "searchPlaceholder": "Search by title, type, or content...",
         "loading": "Loading resources...",
         "emptyState": "Select a resource from the list to view it.",
+        "empty": {
+            "title": "You don't have any saved resources yet",
+            "body": "Once you have conversations with a tutor, you'll be able to extract sermon outlines, study guides, devotionals, and more. They all live here, organized by session.",
+            "cta": "Start a session"
+        },
         "projectLibraryFallbackTitle": "Project resources",
         "projectSubtitle": "Resources pinned to this project.",
         "count_one": "{{count}} resource",
