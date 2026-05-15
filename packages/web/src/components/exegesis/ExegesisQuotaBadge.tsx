@@ -126,18 +126,18 @@ const TONE_BY_STATE: Record<'ok' | 'soft-warn' | 'hard-cap', {
     bannerClass: string;
 }> = {
     ok: {
-        iconClass: 'text-emerald-600',
-        compactClass: 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/60',
-        bannerClass: 'border-emerald-300 bg-emerald-50/60 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100 hover:bg-emerald-100/80',
+        iconClass: 'text-success',
+        compactClass: 'border-success/30 bg-success-subtle text-success-subtle-foreground hover:bg-success-subtle/80',
+        bannerClass: 'border-success/30 bg-success-subtle text-success-subtle-foreground hover:bg-success-subtle/80',
     },
     'soft-warn': {
-        iconClass: 'text-amber-600',
-        compactClass: 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200 hover:bg-amber-100',
-        bannerClass: 'border-amber-300 bg-amber-50/70 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100 hover:bg-amber-100',
+        iconClass: 'text-warning',
+        compactClass: 'border-warning/30 bg-warning-subtle text-warning-subtle-foreground hover:bg-warning-subtle/80',
+        bannerClass: 'border-warning/30 bg-warning-subtle text-warning-subtle-foreground hover:bg-warning-subtle/80',
     },
     'hard-cap': {
-        iconClass: 'text-rose-600',
-        compactClass: 'border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200 hover:bg-rose-100',
-        bannerClass: 'border-rose-300 bg-rose-50/70 text-rose-900 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-100 hover:bg-rose-100',
+        iconClass: 'text-destructive',
+        compactClass: 'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15',
+        bannerClass: 'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15',
     },
 };
