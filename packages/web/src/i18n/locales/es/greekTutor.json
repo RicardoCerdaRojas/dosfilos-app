@@ -28,11 +28,14 @@
         "showcaseSubtitle": "Cada herramienta abre una capa distinta del análisis. Click para ver el ejemplo en detalle."
     },
     "emptyState": {
+        "eyebrow": "Estudio · Griego bíblico",
         "title": "Comienza tu estudio del griego",
-        "body": "Elige un pasaje del Nuevo Testamento para empezar a explorar el texto griego con guías pedagógicas.",
+        "body": "Cada sesión disecciona el texto del Nuevo Testamento — verso por verso — con análisis morfológico, contexto teológico y ejercicios pedagógicos.",
+        "methodologyLabel": "Metodología",
         "suggestedPassages": "Pasajes sugeridos",
+        "featuredBadge": "Más estudiado",
         "tipTitle": "Consejo",
-        "tipBody": "Cada sesión incluye análisis morfológico, contexto teológico y ejercicios de reconocimiento para ayudarte a profundizar en el texto original."
+        "tipBody": "Elige cualquier pasaje sugerido o crea uno nuevo. El tutor te guía paso a paso desde el texto original hasta su aplicación."
     },
     "startTraining": "Iniciar Entrenamiento",
     "mySessions": "Mis Sesiones",

@@ -30,11 +30,14 @@
         "showcaseSubtitle": "Each tool unlocks a different layer of analysis. Click to see the example in detail."
     },
     "emptyState": {
+        "eyebrow": "Study · Biblical Greek",
         "title": "Start your Greek study",
-        "body": "Pick a passage from the New Testament to start exploring the Greek text with pedagogical guides.",
+        "body": "Each session dissects the New Testament — verse by verse — with morphological analysis, theological context, and pedagogical exercises.",
+        "methodologyLabel": "Methodology",
         "suggestedPassages": "Suggested passages",
+        "featuredBadge": "Most studied",
         "tipTitle": "Tip",
-        "tipBody": "Every session includes morphological analysis, theological context, and recognition exercises to help you go deeper into the original text."
+        "tipBody": "Pick any suggested passage or create a new one. The tutor walks you step by step from original text to application."
     },
     "startTraining": "Start Training",
     "mySessions": "My Sessions",
