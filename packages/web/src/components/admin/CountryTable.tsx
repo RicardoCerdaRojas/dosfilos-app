@@ -27,16 +27,16 @@ export function CountryTable({ countries, limit = 10 }: Props) {
     return (
         <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
-                <Globe className="h-5 w-5 text-slate-600" />
-                <h3 className="text-lg font-semibold text-slate-900">
+                <Globe className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">
                     Top {limit} Países
                 </h3>
             </div>
 
             {displayedCountries.length === 0 ? (
                 <div className="text-center py-12">
-                    <Globe className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500">No hay datos disponibles</p>
+                    <Globe className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="text-muted-foreground">No hay datos disponibles</p>
                 </div>
             ) : (
                 <div className="overflow-x-auto">
@@ -86,17 +86,16 @@ export function CountryTable({ countries, limit = 10 }: Props) {
 }
 
 /**
- * Conversion Badge - color-coded percentage
+ * Conversion Badge - semantic-token percentage chip.
  */
 function ConversionBadge({ value }: { value: number }) {
-    const getColorClass = () => {
-        if (value >= 50) return 'bg-green-100 text-green-700';
-        if (value >= 25) return 'bg-yellow-100 text-yellow-700';
-        return 'bg-red-100 text-red-700';
-    };
+    const tone =
+        value >= 50 ? 'bg-success-subtle text-success-subtle-foreground' :
+        value >= 25 ? 'bg-warning-subtle text-warning-subtle-foreground' :
+        'bg-destructive/10 text-destructive';
 
     return (
-        <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${getColorClass()}`}>
+        <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium tabular-nums ${tone}`}>
             {value.toFixed(1)}%
         </span>
     );

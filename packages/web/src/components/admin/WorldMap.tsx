@@ -26,47 +26,55 @@ export function WorldMap({ countries }: Props) {
     // Find max visits for color scaling
     const maxVisits = Math.max(...countries.map((c) => c.landingVisits), 1);
 
-    // Color scale: light blue to dark blue
+    // Read brand primary HSL at runtime so the map heat follows the active color
+    // theme (blue/purple/green/orange) instead of being locked to a sky palette.
+    const primaryHsl = typeof window !== 'undefined'
+        ? getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()
+        : '244 76% 59%';
+    const primaryDark = `hsl(${primaryHsl})`;
+    const primaryFaint = `hsl(${primaryHsl} / 0.15)`;
+    const mutedFill = typeof window !== 'undefined'
+        ? `hsl(${getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()})`
+        : 'hsl(210 40% 96%)';
+    const borderColor = typeof window !== 'undefined'
+        ? `hsl(${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()})`
+        : 'hsl(214 32% 91%)';
+
     const colorScale = scaleLinear<string>()
         .domain([0, maxVisits])
-        .range(['#e0f2fe', '#0369a1']); // sky-100 to sky-700
+        .range([primaryFaint, primaryDark]);
 
     return (
         <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
-                <Globe className="h-5 w-5 text-slate-600" />
-                <h3 className="text-lg font-semibold text-slate-900">Distribución Global</h3>
+                <Globe className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">Distribución Global</h3>
             </div>
 
             <div className="relative w-full" style={{ paddingBottom: '50%' }}>
                 <div className="absolute inset-0">
                     <ComposableMap
-                        projectionConfig={{
-                            scale: 147,
-                        }}
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                        }}
+                        projectionConfig={{ scale: 147 }}
+                        style={{ width: '100%', height: '100%' }}
                     >
                         <Geographies geography={geoUrl}>
                             {({ geographies }) =>
                                 geographies.map((geo) => {
                                     const countryCode = geo.properties.ISO_A2;
                                     const visits = countryDataMap.get(countryCode) || 0;
-                                    const fillColor = visits > 0 ? colorScale(visits) : '#f1f5f9'; // slate-100
+                                    const fillColor = visits > 0 ? colorScale(visits) : mutedFill;
 
                                     return (
                                         <Geography
                                             key={geo.rsmKey}
                                             geography={geo}
                                             fill={fillColor}
-                                            stroke="#cbd5e1" // slate-300
+                                            stroke={borderColor}
                                             strokeWidth={0.5}
                                             style={{
                                                 default: { outline: 'none' },
                                                 hover: {
-                                                    fill: '#0284c7', // sky-600
+                                                    fill: primaryDark,
                                                     outline: 'none',
                                                     cursor: 'pointer',
                                                 },
@@ -81,8 +89,7 @@ export function WorldMap({ countries }: Props) {
                 </div>
             </div>
 
-            {/* Legend */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-600">
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                 <span>Menos visitas</span>
                 <div className="flex gap-1">
                     {[0, 0.25, 0.5, 0.75, 1].map((value) => (
