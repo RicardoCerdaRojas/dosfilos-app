@@ -264,7 +264,9 @@ function App() {
             </Route>
             <Route path="planner" element={<PlannerWizard />} />
             <Route path="library" element={<LibraryManager />} />
-            <Route path="subscription" element={<SubscriptionPage />} />
+            {/* Legacy subscription route — folded into Settings tabs. Kept as a
+                redirect so Stripe success/cancel callbacks and external links keep working. */}
+            <Route path="subscription" element={<Navigate to="/dashboard/settings?tab=subscription" replace />} />
 
             {/* Bible Module */}
             <Route path="bible" element={
@@ -318,9 +320,9 @@ function App() {
             {/* Hebrew Tutor - Verse Analyzer */}
             <Route path="hebrew-tutor" element={<HebrewTutorPage />} />
 
-            {/* Settings */}
+            {/* Settings — unified hub: Asistentes / Biblioteca / Integraciones / Suscripción / Avanzado as tabs */}
             <Route path="settings" element={<GeneratorSettings />} />
-            <Route path="settings/integrations" element={<IntegrationsSettings />} />
+            <Route path="settings/integrations" element={<Navigate to="/dashboard/settings?tab=integrations" replace />} />
 
             {/* 🎯 Admin Routes - Inside Dashboard Layout */}
             <Route path="admin/core-library" element={<CoreLibraryAdmin />} />

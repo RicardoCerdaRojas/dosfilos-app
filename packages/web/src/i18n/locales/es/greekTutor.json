@@ -20,6 +20,23 @@
         ]
     },
     "description": "El ecosistema de herramientas para el estudio bíblico y la preparación de sermones.",
+    "intro": {
+        "heroSubtitle": "Morfología, sintaxis y léxico — verso por verso en griego original.",
+        "actionTitle": "¿Qué pasaje quieres estudiar?",
+        "actionSubtitle": "Elige un texto del NT para iniciar tu sesión guiada.",
+        "showcaseTitle": "Lo que vas a poder hacer",
+        "showcaseSubtitle": "Cada herramienta abre una capa distinta del análisis. Click para ver el ejemplo en detalle."
+    },
+    "emptyState": {
+        "eyebrow": "Estudio · Griego bíblico",
+        "title": "Comienza tu estudio del griego",
+        "body": "Cada sesión disecciona el texto del Nuevo Testamento — verso por verso — con análisis morfológico, contexto teológico y ejercicios pedagógicos.",
+        "methodologyLabel": "Metodología",
+        "suggestedPassages": "Pasajes sugeridos",
+        "featuredBadge": "Más estudiado",
+        "tipTitle": "Consejo",
+        "tipBody": "Elige cualquier pasaje sugerido o crea uno nuevo. El tutor te guía paso a paso desde el texto original hasta su aplicación."
+    },
     "startTraining": "Iniciar Entrenamiento",
     "mySessions": "Mis Sesiones",
     "biblicalPassage": "Pasaje Bíblico",
@@ -229,7 +246,8 @@
             "progress": "Progreso",
             "wordsLearned": "{{completed}} de {{total}} palabras aprendidas",
             "continue": "Continuar",
-            "viewDetails": "Ver Detalles"
+            "viewDetails": "Ver Detalles",
+            "nextWord": "Continúa con"
         },
         "status": {
             "new": "Nueva",
@@ -407,6 +425,7 @@
             "step3Title": "3. Aplicación",
             "step3Desc": "Proclama con fidelidad y relevancia pastoral",
             "preachingPoints": "Puntos de Predicación",
+            "reflectiveQuestionsTitle": "Preguntas Reflexivas",
             "reflectiveQuestions": [
                 "¿Cómo cambia este detalle gramatical tu comprensión del pasaje?",
                 "¿Qué verdad teológica resalta esta construcción griega?",
@@ -478,6 +497,8 @@
         "synthesis": "Síntesis",
         "pedagogicalTip": "Tip Pedagógico",
         "tipContent": "Al identificar morfemas, empieza siempre por la raíz (el significado principal), luego analiza los prefijos que modifican el sentido, y finalmente las terminaciones que indican función gramatical. Este orden te ayudará a comprender tanto el significado como la función de la palabra en el texto.",
+        "tipDismiss": "Ocultar tip",
+        "tipShow": "Mostrar tip pedagógico",
         "componentTypes": {
             "prefix": "Prefijo",
             "root": "Raíz",
@@ -590,6 +611,12 @@
     },
     "common": {
         "of": "de"
+    },
+    "headers": {
+        "readPassage": "Leer Pasaje Completo",
+        "syntacticStructure": "Estructura Sintáctica",
+        "morphologicalDecomposition": "Descomposición Morfológica",
+        "comprehensionQuiz": "Quiz de Comprensión"
     },
     "modal": {
         "characteristics": "Características:"

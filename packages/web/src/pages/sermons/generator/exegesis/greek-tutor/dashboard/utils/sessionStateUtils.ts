@@ -11,9 +11,6 @@ export interface SessionStateInfo {
     bgColor: string;
 }
 
-/**
- * Determine the state of a session based on progress and activity
- */
 export const getSessionState = (session: StudySession, t: TFunction): SessionStateInfo => {
     const progress = calculateSessionProgress(session);
     const lastActivity = getSessionLastActivity(session);
@@ -23,8 +20,8 @@ export const getSessionState = (session: StudySession, t: TFunction): SessionSta
         return {
             type: 'complete',
             label: t('dashboard.status.complete'),
-            color: 'text-purple-700',
-            bgColor: 'bg-purple-100'
+            color: 'text-success-subtle-foreground',
+            bgColor: 'bg-success-subtle',
         };
     }
 
@@ -32,8 +29,8 @@ export const getSessionState = (session: StudySession, t: TFunction): SessionSta
         return {
             type: 'paused',
             label: t('dashboard.status.paused'),
-            color: 'text-amber-600',
-            bgColor: 'bg-amber-50'
+            color: 'text-warning-subtle-foreground',
+            bgColor: 'bg-warning-subtle',
         };
     }
 
@@ -41,15 +38,15 @@ export const getSessionState = (session: StudySession, t: TFunction): SessionSta
         return {
             type: 'new',
             label: t('dashboard.status.new'),
-            color: 'text-blue-700',
-            bgColor: 'bg-blue-100'
+            color: 'text-info-subtle-foreground',
+            bgColor: 'bg-info-subtle',
         };
     }
 
     return {
         type: 'progress',
         label: t('dashboard.status.progress'),
-        color: 'text-green-700',
-        bgColor: 'bg-green-100'
+        color: 'text-primary',
+        bgColor: 'bg-primary/10',
     };
 };

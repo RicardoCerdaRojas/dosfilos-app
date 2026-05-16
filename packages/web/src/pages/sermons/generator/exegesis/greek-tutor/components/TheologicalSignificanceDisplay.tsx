@@ -9,21 +9,15 @@ import { TrainingUnit } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 
 export interface TheologicalSignificanceDisplayProps {
-    content: string; // Markdown content from backend
+    content: string;
     greekWord: string;
     passage: string;
-    // Phase 3A: Quiz integration
     unit?: TrainingUnit;
     sessionId?: string;
     fileSearchStoreId?: string;
 }
 
-/**
- * Visual component for displaying theological significance.
- * Presents the pastoral and homiletical implications of the Greek form.
- * Following Single Responsibility - handles theological display only.
- */
-export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisplayProps> = ({
+export const TheologicalSignificanceDisplay: React.FC<TheologicalSignificanceDisplayProps> = ({
     content,
     greekWord,
     passage,
@@ -35,46 +29,38 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
     const { generateQuiz, submitQuizAnswer } = useGreekTutor();
     const { t } = useTranslation('greekTutor');
 
-    // Parse content to extract preaching points if formatted
     const extractPreachingPoints = (markdown: string): string[] => {
         const points: string[] = [];
         const lines = markdown.split('\n');
-
         for (const line of lines) {
-            // Look for bullet points or numbered lists
             const bulletMatch = line.match(/^[\s]*[-*]\s+(.+)/);
             const numberMatch = line.match(/^[\s]*\d+[\.\)]\s+(.+)/);
-            
             if (bulletMatch && bulletMatch[1]) {
                 points.push(bulletMatch[1].trim());
             } else if (numberMatch && numberMatch[1]) {
                 points.push(numberMatch[1].trim());
             }
         }
-
-        return points.slice(0, 5); // Limit to first 5 points
+        return points.slice(0, 5);
     };
 
     const preachingPoints = extractPreachingPoints(content);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header */}
             <div>
                 <h5 className="text-sm text-muted-foreground">
                     {t('studyUnit.theology.pastoralImplications', { word: greekWord, passage })}
                 </h5>
             </div>
 
-            {/* Del Texto al Púlpito - Flow Cards */}
             <div>
                 <h3 className="text-lg font-bold mb-4">{t('studyUnit.theology.textToPulpit')}</h3>
                 <div className="grid gap-4 md:grid-cols-3">
-                    {/* Step 1: Exégesis */}
-                    <Card className="p-4 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-500/10 to-blue-500/5 hover:shadow-md transition-all">
+                    <Card className="p-4 border-l-4 border-l-info bg-info-subtle/40 hover:shadow-md transition-all">
                         <div className="space-y-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                                <Book className="w-5 h-5 text-blue-600" />
+                            <div className="w-10 h-10 rounded-lg bg-info/15 flex items-center justify-center">
+                                <Book className="w-5 h-5 text-info" />
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm mb-1">{t('studyUnit.theology.step1Title')}</h4>
@@ -85,11 +71,10 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
                         </div>
                     </Card>
 
-                    {/* Step 2: Teología */}
-                    <Card className="p-4 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-500/10 to-purple-500/5 hover:shadow-md transition-all">
+                    <Card className="p-4 border-l-4 border-l-primary bg-primary/5 hover:shadow-md transition-all">
                         <div className="space-y-3">
-                            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                                <Lightbulb className="w-5 h-5 text-purple-600" />
+                            <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                                <Lightbulb className="w-5 h-5 text-primary" />
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm mb-1">{t('studyUnit.theology.step2Title')}</h4>
@@ -100,11 +85,10 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
                         </div>
                     </Card>
 
-                    {/* Step 3: Aplicación */}
-                    <Card className="p-4 border-l-4 border-l-green-500 bg-gradient-to-br from-green-500/10 to-green-500/5 hover:shadow-md transition-all">
+                    <Card className="p-4 border-l-4 border-l-success bg-success-subtle/40 hover:shadow-md transition-all">
                         <div className="space-y-3">
-                            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                                <MessageSquare className="w-5 h-5 text-green-600" />
+                            <div className="w-10 h-10 rounded-lg bg-success/15 flex items-center justify-center">
+                                <MessageSquare className="w-5 h-5 text-success" />
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm mb-1">{t('studyUnit.theology.step3Title')}</h4>
@@ -119,7 +103,6 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
 
             <div className="border-t border-border" />
 
-            {/* Main Content */}
             <Card className="p-6 md:p-8">
                 <div className="prose prose-slate dark:prose-invert max-w-none
                               prose-headings:font-bold prose-headings:tracking-tight
@@ -138,22 +121,21 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
                 </div>
             </Card>
 
-            {/* Preaching Points - if detected */}
             {preachingPoints.length > 0 && (
-                <Card className="border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5">
+                <Card className="border-2 border-warning/30 bg-warning-subtle/40">
                     <div className="p-4 space-y-3">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                                <MessageSquare className="w-4 h-4 text-amber-600" />
+                            <div className="w-8 h-8 rounded-lg bg-warning/15 flex items-center justify-center">
+                                <MessageSquare className="w-4 h-4 text-warning" />
                             </div>
-                            <h4 className="text-sm font-bold text-amber-900 dark:text-amber-100 uppercase tracking-wide">
+                            <h4 className="text-sm font-bold text-warning-subtle-foreground uppercase tracking-wide">
                                 {t('studyUnit.theology.preachingPoints')}
                             </h4>
                         </div>
                         <ul className="space-y-2">
                             {preachingPoints.map((point, idx) => (
                                 <li key={idx} className="flex items-start gap-2 text-sm">
-                                    <span className="text-amber-600 mt-0.5">→</span>
+                                    <span className="text-warning mt-0.5">→</span>
                                     <span className="text-foreground/90 leading-relaxed">{point}</span>
                                 </li>
                             ))}
@@ -162,30 +144,29 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
                 </Card>
             )}
 
-            {/* Reflective Questions - Accordion */}
-            <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/5">
+            <Card className="border-2 border-primary/30 bg-primary/5">
                 <button
                     onClick={() => setQuestionsExpanded(!questionsExpanded)}
-                    className="w-full p-4 flex items-center justify-between text-left hover:bg-purple-500/5 transition-colors"
+                    className="w-full p-4 flex items-center justify-between text-left hover:bg-primary/10 transition-colors"
                 >
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                            <Lightbulb className="w-4 h-4 text-purple-600" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+                            <Lightbulb className="w-4 h-4 text-primary" />
                         </div>
-                        <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100 uppercase tracking-wide">
-                            {t('studyUnit.theology.reflectiveQuestions')}
+                        <h4 className="text-sm font-bold text-primary uppercase tracking-wide">
+                            {t('studyUnit.theology.reflectiveQuestionsTitle')}
                         </h4>
                     </div>
                     {questionsExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-purple-600" />
+                        <ChevronDown className="w-5 h-5 text-primary" />
                     ) : (
-                        <ChevronRight className="w-5 h-5 text-purple-600" />
+                        <ChevronRight className="w-5 h-5 text-primary" />
                     )}
                 </button>
-                
+
                 {questionsExpanded && (
                     <div className="px-4 pb-4 space-y-3 animate-in slide-in-from-top duration-300">
-                        <div className="border-t border-purple-500/20 pt-3 space-y-2">
+                        <div className="border-t border-primary/20 pt-3 space-y-2">
                             {(t('studyUnit.theology.reflectiveQuestions', { returnObjects: true }) as string[]).map((question, idx) => (
                                 <p key={idx} className="text-sm text-foreground/90 leading-relaxed">
                                     • {question}
@@ -196,14 +177,13 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
                 )}
             </Card>
 
-            {/* Pastoral Application Tip */}
-            <Card className="border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-green-500/5">
+            <Card className="border-2 border-success/30 bg-success-subtle/40">
                 <div className="p-4 space-y-3">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                            <Book className="w-4 h-4 text-emerald-600" />
+                        <div className="w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center">
+                            <Book className="w-4 h-4 text-success" />
                         </div>
-                        <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-100 uppercase tracking-wide">
+                        <h4 className="text-sm font-bold text-success-subtle-foreground uppercase tracking-wide">
                             {t('studyUnit.theology.pastoralAdvice')}
                         </h4>
                     </div>
@@ -212,8 +192,7 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
                     </p>
                 </div>
             </Card>
-            
-            {/* Phase 3A: Interactive Quiz Section */}
+
             {unit && sessionId && (
                 <div className="border-t border-border pt-6">
                     <QuizSection

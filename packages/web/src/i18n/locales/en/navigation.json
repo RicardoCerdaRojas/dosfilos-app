@@ -37,7 +37,9 @@
         "profile": "Profile",
         "notifications": "Notifications",
         "logout": "Log Out",
-        "sessionClosed": "Session closed"
+        "sessionClosed": "Session closed",
+        "upgrade": "Upgrade",
+        "manage": "Manage"
     },
     "errors": {
         "logoutError": "Error logging out"

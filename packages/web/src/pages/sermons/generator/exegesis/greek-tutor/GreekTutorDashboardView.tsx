@@ -24,10 +24,10 @@ export const GreekTutorDashboardView: React.FC = () => {
         currentLimit: 1
     });
 
-    const handleCreateNew = async () => {
+    const handleCreateNew = async (passage?: string) => {
         // Check usage limits before creating session
         const check = await checkCanStartGreekSession();
-        
+
         if (!check.allowed) {
             setUpgradeReason({
                 reason: 'limit_reached',
@@ -37,9 +37,15 @@ export const GreekTutorDashboardView: React.FC = () => {
             setShowUpgradeModal(true);
             return;
         }
-        
-        // Navigate to greek-tutor session creation
-        navigate('/dashboard/greek-tutor');
+
+        // Navigate to greek-tutor session creation; deep-link the
+        // passage when the caller already picked one (suggested-passage
+        // card or session duplicate). The IntroView reads `?passage=`
+        // on mount and pre-fills the selector.
+        const url = passage
+            ? `/dashboard/greek-tutor?passage=${encodeURIComponent(passage)}`
+            : '/dashboard/greek-tutor';
+        navigate(url);
     };
 
     if (!user) {

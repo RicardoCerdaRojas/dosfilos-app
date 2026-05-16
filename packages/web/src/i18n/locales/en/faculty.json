@@ -108,6 +108,8 @@
         "description": "Turn this conversation into ready-to-use resources.",
         "openPanel": "Open resources panel",
         "collapsePanel": "Collapse resources panel",
+        "lockedHint": "Start a session with a tutor and exchange a few messages — you'll then be able to extract these resources from your conversation.",
+        "lockedTooltip": "Available once you have an active conversation with a tutor.",
         "sermonOutline": "Sermon Outline",
         "sermonOutlineDesc": "Expository structure with points and application.",
         "bibleStudy": "Study Guide",
@@ -222,6 +224,11 @@
         "searchPlaceholder": "Search by title, type, or content...",
         "loading": "Loading resources...",
         "emptyState": "Select a resource from the list to view it.",
+        "empty": {
+            "title": "You don't have any saved resources yet",
+            "body": "Once you have conversations with a tutor, you'll be able to extract sermon outlines, study guides, devotionals, and more. They all live here, organized by session.",
+            "cta": "Start a session"
+        },
         "projectLibraryFallbackTitle": "Project resources",
         "projectSubtitle": "Resources pinned to this project.",
         "count_one": "{{count}} resource",
@@ -253,8 +260,9 @@
     },
     "directory": {
         "badge": "Expert Tutors for Expository Preachers",
-        "heroTitle": "My Tutors",
-        "heroSubtitle": "Ask the faculty a question — the orchestrator will automatically select and coordinate the specialists you need.",
+        "heroTitle": "What do you want to study today?",
+        "heroSubtitle": "You ask the question. The faculty coordinates the specialists.",
+        "modeLabel": "Mode:",
         "inputPlaceholder": "What do you want to study, prepare, or resolve today?",
         "attachment": {
             "attachLabel": "Attach image",
@@ -293,7 +301,9 @@
     },
     "freeStarter": {
         "eyebrow": "Start here",
-        "intro": "Your Free plan includes 50 monthly queries against the specialized library. Tap any prompt to get started — the tutors will cite the sources backing their answer.",
+        "quotaCount": "50",
+        "quotaUnit": "queries / month",
+        "intro": "Tap any prompt to get started.",
         "prompts": {
             "expository": {
                 "title": "What does the specialized library say about expository preaching?",

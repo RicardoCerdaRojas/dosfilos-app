@@ -1,7 +1,6 @@
 import React from 'react';
 import { BarChart3, BookOpen, TrendingUp, Clock, Flame, Info } from 'lucide-react';
 import { StudySession } from '@dosfilos/domain';
-import { formatDistanceToNow } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import {
     Popover,
@@ -10,131 +9,99 @@ import {
 } from '@/components/ui/popover';
 import { calculateSessionProgress, getSessionLastActivity } from '../utils/sessionUtils';
 import { calculateStudyStreak } from '../utils/progressUtils';
+import { shortRelativeTime } from '../utils/relativeTimeUtils';
 import { useTranslation } from '@/i18n';
 import { Trans } from 'react-i18next';
-
 
 interface StatisticsPanelProps {
     sessions: StudySession[];
 }
 
-/**
- * StatisticsPanel - Overview metrics for user's Greek Tutor study sessions
- * 
- * Displays:
- * - Total active sessions
- * - Total words studied
- * - Average progress
- * - Last activity timestamp
- */
 export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) => {
     const { i18n } = useTranslation();
-    
-    // Get date-fns locale based on current language
     const dateLocale = i18n.language.startsWith('en') ? enUS : es;
     const { t } = useTranslation('greekTutor');
-    // Calculate metrics
+
     const activeSessions = sessions.filter(s => s.status === 'ACTIVE').length;
-    
-    const totalWords = sessions.reduce((sum, session) => {
-        return sum + (session.units?.length || 0);
-    }, 0);
-    
-    // Calculate average from sessionProgress
+    const totalWords = sessions.reduce((sum, session) => sum + (session.units?.length || 0), 0);
     const averageProgress = sessions.length > 0
         ? Math.round(sessions.reduce((sum, s) => sum + calculateSessionProgress(s), 0) / sessions.length)
         : 0;
-    
+
     const lastActivity = sessions.length > 0
         ? sessions.reduce((latest, session) => {
             const sessionLastActivity = getSessionLastActivity(session);
             return sessionLastActivity > latest ? sessionLastActivity : latest;
         }, getSessionLastActivity(sessions[0]!))
         : null;
-    
-    // Shorter format: "2h ago" / "hace 2h"
-    const lastActivityText = lastActivity
-        ? formatDistanceToNow(lastActivity, { addSuffix: true, locale: dateLocale })
-            // Spanish replacements
-            .replace('alrededor de ', '')
-            .replace(' horas', 'h')
-            .replace(' hora', 'h')
-            .replace(' minutos', 'min')
-            .replace(' minuto', 'min')
-            .replace(' días', 'd')
-            .replace(' día', 'd')
-            // English replacements
-            .replace(' hours', 'h')
-            .replace(' hour', 'h')
-            .replace(' minutes', 'min')
-            .replace(' minute', 'min')
-            .replace(' days', 'd')
-            .replace(' day', 'd')
-            .replace('about ', '')
-        : 'N/A';
 
+    const lastActivityText = lastActivity ? shortRelativeTime(lastActivity, dateLocale) : 'N/A';
     const streak = calculateStudyStreak(sessions);
 
     const stats = [
         {
-            icon: BarChart3,
-            label: t('dashboard.statistics.activeSessions'),
-            value: activeSessions,
-            color: 'text-blue-600'
-        },
-        {
-            icon: BookOpen,
-            label: t('dashboard.statistics.wordsStudied'),
-            value: totalWords,
-            color: 'text-green-600'
-        },
-        ...(streak > 0 ? [{
-            icon: Flame,
-            label: t('dashboard.statistics.studyStreak'),
-            value: t(`dashboard.statistics.streakDays`, { count: streak }),
-            color: 'text-orange-600'
-        }] : []),
-        {
-            icon: TrendingUp,
-            label: t('dashboard.statistics.averageProgress'),
-            value: `${averageProgress}%`,
-            color: 'text-purple-600'
-        },
-        {
+            key: 'activity',
             icon: Clock,
             label: t('dashboard.statistics.lastActivity'),
             value: lastActivityText,
-            color: 'text-amber-600'
-        }
+            color: 'text-primary',
+        },
+        {
+            key: 'active',
+            icon: BarChart3,
+            label: t('dashboard.statistics.activeSessions'),
+            value: activeSessions,
+            color: 'text-info',
+        },
+        {
+            key: 'words',
+            icon: BookOpen,
+            label: t('dashboard.statistics.wordsStudied'),
+            value: totalWords,
+            color: 'text-success',
+        },
+        ...(streak > 0 ? [{
+            key: 'streak',
+            icon: Flame,
+            label: t('dashboard.statistics.studyStreak'),
+            value: t(`dashboard.statistics.streakDays`, { count: streak }),
+            color: 'text-warning',
+        }] : []),
+        {
+            key: 'progress',
+            icon: TrendingUp,
+            label: t('dashboard.statistics.averageProgress'),
+            value: `${averageProgress}%`,
+            color: 'text-primary',
+        },
     ];
 
-
     return (
-        <div className="bg-card border rounded-lg p-3">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                {stats.map((stat, index) => {
-                    // Determine if this stat needs a tooltip
-                    const needsTooltip = stat.label === t('dashboard.statistics.averageProgress') || stat.label === t('dashboard.statistics.studyStreak');
-                    
+        <div className="bg-card border rounded-lg overflow-hidden">
+            {/* `divide-x` paints a hairline between cells so the row reads as a structured strip
+                rather than free-floating numbers. Vertical dividers collapse on mobile via flex-wrap. */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-border">
+                {stats.map((stat) => {
+                    const needsTooltip = stat.key === 'progress' || stat.key === 'streak';
+
                     const statContent = (
-                        <div className="space-y-0.5">
+                        <div className="px-4 py-3 space-y-1">
                             <div className="flex items-center gap-1.5">
-                                <stat.icon className={`h-3 w-3 ${stat.color}`} />
-                                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">{stat.label}</p>
                                 {needsTooltip && (
                                     <Info className="h-3 w-3 text-muted-foreground/50 hover:text-primary transition-colors cursor-help" />
                                 )}
                             </div>
-                            <p className="text-xl font-bold">{stat.value}</p>
+                            <p className="text-lg font-semibold text-foreground">{stat.value}</p>
                         </div>
                     );
 
                     if (!needsTooltip) {
-                        return <div key={index}>{statContent}</div>;
+                        return <div key={stat.key}>{statContent}</div>;
                     }
 
-                    // Tooltip content based on metric
-                    const tooltipContent = stat.label === t('dashboard.statistics.averageProgress') ? (
+                    const tooltipContent = stat.key === 'progress' ? (
                         <div className="space-y-2 max-w-xs">
                             <p className="font-semibold text-sm">{t('dashboard.statistics.tooltips.masteryTitle')}</p>
                             <p className="text-sm">
@@ -146,21 +113,21 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
                             </p>
                             <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
                                 <p className="font-medium">{t('dashboard.statistics.tooltips.calcTitle')}</p>
-                                <p><Trans i18nKey="dashboard.statistics.tooltips.calcMastered" t={t} components={[<span className="text-green-600 font-medium" key="0">dominada</span>]} /></p>
+                                <p><Trans i18nKey="dashboard.statistics.tooltips.calcMastered" t={t} components={[<span className="text-success font-medium" key="0">dominada</span>]} /></p>
                                 <p>{t('dashboard.statistics.tooltips.calcAverage')}</p>
                             </div>
                             <p className="text-xs text-muted-foreground italic">
                                 {t('dashboard.statistics.tooltips.masteryTip')}
                             </p>
                         </div>
-                    ) : ( // Racha de Estudio
+                    ) : (
                         <div className="space-y-2 max-w-xs">
                             <p className="font-semibold text-sm">{t('dashboard.statistics.tooltips.streakTitle')}</p>
                             <p className="text-sm">
-                                <Trans 
-                                    i18nKey="dashboard.statistics.tooltips.streakDesc" 
-                                    t={t} 
-                                    components={[<span className="font-semibold text-orange-600" key="0">consistencia</span>]} 
+                                <Trans
+                                    i18nKey="dashboard.statistics.tooltips.streakDesc"
+                                    t={t}
+                                    components={[<span className="font-semibold text-warning" key="0">consistencia</span>]}
                                 />
                             </p>
                             <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
@@ -176,9 +143,11 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
                     );
 
                     return (
-                        <Popover key={index}>
+                        <Popover key={stat.key}>
                             <PopoverTrigger asChild>
-                                {statContent}
+                                <button className="text-left hover:bg-muted/30 transition-colors">
+                                    {statContent}
+                                </button>
                             </PopoverTrigger>
                             <PopoverContent side="top" className="w-80">
                                 {tooltipContent}

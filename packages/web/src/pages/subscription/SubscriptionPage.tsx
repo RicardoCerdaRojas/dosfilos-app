@@ -54,8 +54,8 @@ export default function SubscriptionPage() {
       setLoading(true);
       const { url } = await authService.createCheckoutSession({
         priceId,
-        successUrl: `${window.location.origin}/dashboard/subscription?success=true`,
-        cancelUrl: `${window.location.origin}/dashboard/subscription?canceled=true`,
+        successUrl: `${window.location.origin}/dashboard/settings?tab=subscription&success=true`,
+        cancelUrl: `${window.location.origin}/dashboard/settings?tab=subscription&canceled=true`,
       });
       if (url) window.location.href = url;
     } catch (error: any) {

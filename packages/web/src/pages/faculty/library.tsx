@@ -9,7 +9,8 @@ import { ExtractionFilters, filterExtractions, type TypeFilterValue, type TimeFi
 import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
 import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpressDialog';
 import { Input } from '@/components/ui/input';
-import { Library, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles, Search, MessageSquareQuote, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Extraction } from '@dosfilos/domain';
 
@@ -118,10 +119,52 @@ export function FacultyLibraryPage() {
         navigate(`/dashboard/faculty/${extraction.sessionId}${hash}`);
     };
 
+    // True empty state — user has zero extractions. Render a full-page
+    // invitational state instead of the dual-panel layout (which would
+    // show two generic placeholders that read like broken UI).
+    const isCompletelyEmpty = !isLoading && extractions.length === 0;
+
+    if (isCompletelyEmpty) {
+        return (
+            <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
+                <header className="border-b px-6 py-4 flex items-center gap-3 shrink-0">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <div className="flex-1">
+                        <h1 className="font-semibold text-lg">{t('library.title')}</h1>
+                        <p className="text-xs text-muted-foreground">{t('library.subtitle')}</p>
+                    </div>
+                </header>
+                <div className="flex-1 flex items-center justify-center p-8">
+                    <div className="max-w-md text-center space-y-5">
+                        <div className="mx-auto h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
+                            <Sparkles className="h-6 w-6" />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="font-reading text-[24px] leading-tight text-foreground">
+                                {t('library.empty.title')}
+                            </h2>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                {t('library.empty.body')}
+                            </p>
+                        </div>
+                        <Button
+                            onClick={() => navigate('/dashboard/faculty')}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+                        >
+                            <MessageSquareQuote className="h-4 w-4" />
+                            {t('library.empty.cta')}
+                            <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
             <header className="border-b px-6 py-4 flex items-center gap-3 shrink-0">
-                <Library className="w-5 h-5 text-indigo-500" />
+                <Sparkles className="w-5 h-5 text-primary" />
                 <div className="flex-1">
                     <h1 className="font-semibold text-lg">{t('library.title')}</h1>
                     <p className="text-xs text-muted-foreground">{t('library.subtitle')}</p>

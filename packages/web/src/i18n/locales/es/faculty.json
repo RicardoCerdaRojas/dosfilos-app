@@ -108,6 +108,8 @@
         "description": "Convierte esta conversación en recursos listos para usar.",
         "openPanel": "Abrir panel de recursos",
         "collapsePanel": "Colapsar panel de recursos",
+        "lockedHint": "Inicia una sesión con un tutor y intercambia algunos mensajes — luego podrás extraer estos recursos desde tu conversación.",
+        "lockedTooltip": "Disponible una vez que tengas una conversación activa con un tutor.",
         "sermonOutline": "Bosquejo de Sermón",
         "sermonOutlineDesc": "Estructura expositiva con puntos y aplicación.",
         "bibleStudy": "Guía de Estudio",
@@ -222,6 +224,11 @@
         "searchPlaceholder": "Buscar por título, tipo o contenido...",
         "loading": "Cargando recursos...",
         "emptyState": "Selecciona un recurso de la lista para verlo.",
+        "empty": {
+            "title": "Aún no tienes recursos guardados",
+            "body": "Cuando converses con un tutor podrás extraer bosquejos, guías de estudio, devocionales y más. Todos quedan acá organizados por sesión.",
+            "cta": "Iniciar una sesión"
+        },
         "projectLibraryFallbackTitle": "Recursos del proyecto",
         "projectSubtitle": "Recursos anclados a este proyecto.",
         "count_one": "{{count}} recurso",
@@ -253,8 +260,9 @@
     },
     "directory": {
         "badge": "Tutores Expertos para Predicadores Expositivos",
-        "heroTitle": "Mis Tutores",
-        "heroSubtitle": "Hazle una pregunta al cuerpo docente — el orquestador seleccionará y coordinará automáticamente los especialistas que tu necesitas.",
+        "heroTitle": "¿Qué quieres estudiar hoy?",
+        "heroSubtitle": "Tú haces la pregunta. La facultad coordina a los especialistas.",
+        "modeLabel": "Modo:",
         "inputPlaceholder": "¿Qué quieres estudiar, preparar o resolver hoy?",
         "attachment": {
             "attachLabel": "Adjuntar imagen",
@@ -293,7 +301,9 @@
     },
     "freeStarter": {
         "eyebrow": "Empieza por aquí",
-        "intro": "Tu plan Free incluye 50 consultas mensuales sobre la biblioteca especializada. Toca cualquiera para arrancar — los tutores citarán las fuentes que respaldan la respuesta.",
+        "quotaCount": "50",
+        "quotaUnit": "consultas / mes",
+        "intro": "Toca cualquiera para arrancar.",
         "prompts": {
             "expository": {
                 "title": "¿Qué dice la biblioteca especializada sobre el sermón expositivo?",

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { MorphologyBreakdown } from '@dosfilos/domain';
 import { ComponentBadge } from './ComponentBadge';
 import { InsightCard } from './InsightCard';
-import { ArrowRight, GraduationCap } from 'lucide-react';
+import { ArrowRight, GraduationCap, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from '@/i18n';
@@ -12,13 +12,32 @@ export interface MorphologyDisplayProps {
     breakdown: MorphologyBreakdown;
 }
 
-/**
- * Visual component for displaying morphology breakdowns in an educational,
- * didactic format with clear visual hierarchy.
- */
+const COMPONENT_BORDER_CLASS: Record<string, string> = {
+    prefix: 'border-l-info',
+    root: 'border-l-success',
+    formative: 'border-l-warning',
+    ending: 'border-l-primary',
+};
+
+const TIP_DISMISSED_KEY = 'greek-tutor-morphology-tip-dismissed';
+
 export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown }) => {
     const { t } = useTranslation('greekTutor');
-    
+    const [tipDismissed, setTipDismissed] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        return localStorage.getItem(TIP_DISMISSED_KEY) === 'true';
+    });
+
+    const dismissTip = () => {
+        localStorage.setItem(TIP_DISMISSED_KEY, 'true');
+        setTipDismissed(true);
+    };
+
+    const restoreTip = () => {
+        localStorage.removeItem(TIP_DISMISSED_KEY);
+        setTipDismissed(false);
+    };
+
     const getComponentLabel = (type: string): string => {
         switch (type) {
             case 'prefix': return t('morphology.componentTypes.prefix');
@@ -28,16 +47,53 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
             default: return t('morphology.componentTypes.other');
         }
     };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Title */}
+            {/* Pedagogical Tip — surfaced at top so users read the guidance before working through
+                components. Dismiss persists in localStorage so repeat users aren't re-shown the same tip;
+                a compact pill restores it on demand. */}
+            {tipDismissed ? (
+                <button
+                    type="button"
+                    onClick={restoreTip}
+                    className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/50"
+                >
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    {t('morphology.tipShow')}
+                </button>
+            ) : (
+                <Card className="border-warning/30 bg-warning-subtle/40">
+                    <div className="p-3 flex items-start gap-3">
+                        <div className="w-8 h-8 shrink-0 rounded-lg bg-warning/15 flex items-center justify-center">
+                            <GraduationCap className="w-4 h-4 text-warning" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            <h4 className="text-xs font-bold text-warning-subtle-foreground uppercase tracking-wide">
+                                {t('morphology.pedagogicalTip')}
+                            </h4>
+                            <p className="text-sm text-foreground/90 leading-relaxed">
+                                {t('morphology.tipContent')}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={dismissTip}
+                            aria-label={t('morphology.tipDismiss')}
+                            className="shrink-0 -mt-1 -mr-1 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-warning/10 transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </Card>
+            )}
+
             <div>
                 <h5 className="text-sm text-muted-foreground">
                     {t('morphology.analysisTitle')}
                 </h5>
             </div>
 
-            {/* Structure Section - Visual Timeline */}
             <div className="space-y-3">
                 <h3 className="text-lg font-bold text-foreground">{t('morphology.structure')}</h3>
                 <Card className="p-6 bg-gradient-to-br from-muted/50 to-background border-2">
@@ -50,7 +106,7 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
                                             {component.part}
                                         </span>
                                     </div>
-                                    <ComponentBadge 
+                                    <ComponentBadge
                                         type={component.type}
                                         label={getComponentLabel(component.type)}
                                     />
@@ -66,37 +122,25 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
 
             <div className="border-t border-border" />
 
-            {/* Components Section - Individual Cards */}
             <div className="space-y-4">
                 <h3 className="text-lg font-bold text-foreground">{t('morphology.components')}</h3>
                 <div className="grid gap-4 sm:grid-cols-1">
                     {breakdown.components.map((component, idx) => (
-                        <Card 
+                        <Card
                             key={idx}
-                            className="p-5 border-l-4 hover:shadow-md transition-all duration-300 animate-in slide-in-from-left"
-                            style={{
-                                borderLeftColor: 
-                                    component.type === 'prefix' ? 'rgb(59, 130, 246)' :
-                                    component.type === 'root' ? 'rgb(34, 197, 94)' :
-                                    component.type === 'formative' ? 'rgb(249, 115, 22)' :
-                                    component.type === 'ending' ? 'rgb(168, 85, 247)' :
-                                    'rgb(107, 114, 128)',
-                                animationDelay: `${idx * 150}ms`
-                            }}
+                            className={`p-5 border-l-4 hover:shadow-md transition-all duration-300 animate-in slide-in-from-left ${COMPONENT_BORDER_CLASS[component.type] ?? 'border-l-muted-foreground'}`}
+                            style={{ animationDelay: `${idx * 150}ms` }}
                         >
                             <div className="space-y-3">
-                                {/* Component header */}
                                 <div className="flex items-center gap-3 flex-wrap">
                                     <span className="text-3xl font-mono font-bold text-foreground">
                                         {component.part}
                                     </span>
-                                    <ComponentBadge 
+                                    <ComponentBadge
                                         type={component.type}
                                         label={getComponentLabel(component.type)}
                                     />
                                 </div>
-                                
-                                {/* Component meaning */}
                                 <p className="text-base text-foreground/90 leading-relaxed pl-1">
                                     {component.meaning}
                                 </p>
@@ -106,7 +150,6 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
                 </div>
             </div>
 
-            {/* Summary Section */}
             {breakdown.summary && (
                 <>
                     <div className="border-t border-border" />
@@ -121,23 +164,6 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
                     </InsightCard>
                 </>
             )}
-
-            {/* Pedagogical Tip */}
-            <Card className="border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5">
-                <div className="p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                            <GraduationCap className="w-4 h-4 text-amber-600" />
-                        </div>
-                        <h4 className="text-sm font-bold text-amber-900 dark:text-amber-100 uppercase tracking-wide">
-                            {t('morphology.pedagogicalTip')}
-                        </h4>
-                    </div>
-                    <p className="text-sm text-foreground/90 leading-relaxed">
-                        {t('morphology.tipContent')}
-                    </p>
-                </div>
-            </Card>
         </div>
     );
 };

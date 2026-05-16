@@ -22,7 +22,11 @@ interface GreekTutorDashboardProps {
     userId: string;
     getUserSessionsUseCase: GetUserSessionsUseCase;
     deleteSessionUseCase: DeleteSessionUseCase;
-    onCreateNew: () => void;
+    /** Optional `passage` is forwarded as `?passage=` deep-link so
+     *  the IntroView pre-fills the selector instead of starting a
+     *  blank session. Used by suggested-passage cards + session
+     *  duplicate. */
+    onCreateNew: (passage?: string) => void;
 }
 
 /**
@@ -186,17 +190,11 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
      * Handle session duplication - creates a new session with the same passage
      */
     const handleDuplicate = (session: typeof sessions[0]) => {
-        // Navigate to create new session with the passage pre-filled
-        // This uses the existing onCreateNew callback but with context
-        // Duplicating session
-        
-        // For now, just trigger onCreateNew
-        // In the future, we could pass the passage to onCreateNew if the API supports it
-        onCreateNew();
-        
-        // TODO: Once backend supports duplicate prevention, 
-        // we should check if a session already exists for this passage
-        alert(`Creando nueva sesión para ${session.passage}. Podrás seleccionar el pasaje en el siguiente paso.`);
+        // Pre-fills the passage in the IntroView via `?passage=` URL
+        // param so the user lands on the selector with their pick
+        // ready, not on a blank slate. Replaces the prior alert()
+        // confirmation.
+        onCreateNew(session.passage);
     };
 
     // Loading state
@@ -223,6 +221,10 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 
     const hasNoSessions = sessions.length === 0;
     const hasNoResults = !hasNoSessions && filteredAndSortedSessions.length === 0;
+    // Hide search/filters/cleanup chrome under 3 sessions — pure overhead when the list fits in one glance.
+    const showFilterChrome = sessions.length >= 3;
+    // Suppress redundant "Mostrando X de Y" when nothing is filtered out and the count is trivial.
+    const showCount = sessions.length >= 3 && filteredAndSortedSessions.length !== sessions.length;
 
     return (
         <div className="space-y-6">
@@ -240,8 +242,8 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                 <StatisticsPanel sessions={sessions} />
             )}
 
-            {/* Search and Filters - only show if there are sessions */}
-            {!hasNoSessions && (
+            {/* Search and Filters - only show when the list grows enough to need them */}
+            {showFilterChrome && (
                 <div className="flex flex-col lg:flex-row gap-4">
                     <div className="flex-1">
                         <SearchBar
@@ -269,15 +271,9 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 
             {/* Sessions Grid or Empty State */}
             {hasNoSessions ? (
-                <EmptyState 
+                <EmptyState
                     onCreateNew={onCreateNew}
-                    onQuickStart={(passage) => {
-                        // Quick start with passage
-                        // For now, just trigger onCreateNew
-                        // In the future, we could pre-fill the passage selector
-                        onCreateNew();
-                        alert(`Iniciando nueva sesión con ${passage}. Podrás confirmar el pasaje en el siguiente paso.`);
-                    }}
+                    onQuickStart={(passage) => onCreateNew(passage)}
                 />
             ) : hasNoResults ? (
                 <div className="text-center py-12">
@@ -301,9 +297,11 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                 </div>
             ) : (
                 <>
-                    <div className="text-sm text-muted-foreground">
-                        {t('dashboard.showingCount', { filtered: filteredAndSortedSessions.length, total: sessions.length })}
-                    </div>
+                    {showCount && (
+                        <div className="text-sm text-muted-foreground">
+                            {t('dashboard.showingCount', { filtered: filteredAndSortedSessions.length, total: sessions.length })}
+                        </div>
+                    )}
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {filteredAndSortedSessions.map((session) => (
                             <SessionCard

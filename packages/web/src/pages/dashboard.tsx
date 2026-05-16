@@ -307,7 +307,7 @@ function DashboardHero({
     return (
         <header className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4 pb-3 border-b border-border/60">
             <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400 font-medium mb-1">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-medium mb-1">
                     {eyebrow}
                 </div>
                 <h1 className="font-reading text-[24px] md:text-[28px] leading-tight tracking-[-0.01em] text-foreground">
@@ -323,7 +323,7 @@ function DashboardHero({
                 <PlanBalanceChip />
                 <Button
                     onClick={onNewProject}
-                    className="bg-foreground hover:bg-foreground/90 text-background font-medium gap-1.5 shrink-0"
+                    className="font-medium gap-1.5 shrink-0"
                 >
                     <Plus className="h-4 w-4" />
                     {newProjectLabel}
@@ -365,7 +365,7 @@ function PlanBalanceChip() {
 
     return (
         <Link
-            to="/dashboard/subscription"
+            to="/dashboard/settings?tab=subscription"
             className={cn(
                 'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:border-foreground/40',
                 tone,
@@ -399,7 +399,7 @@ function SectionHeader({
 }) {
     return (
         <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400 font-medium inline-flex items-center gap-2">
+            <div className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium inline-flex items-center gap-2">
                 <span>{eyebrow}</span>
                 {count !== undefined && count > 0 && (
                     <>
@@ -413,7 +413,7 @@ function SectionHeader({
             {actionHref && actionLabel && (
                 <Link
                     to={actionHref}
-                    className="text-[12px] text-muted-foreground hover:text-indigo-600 inline-flex items-center gap-1 shrink-0"
+                    className="text-[12px] text-muted-foreground hover:text-primary inline-flex items-center gap-1 shrink-0"
                 >
                     {actionLabel}
                     <ArrowUpRight className="h-3 w-3" />
@@ -458,7 +458,7 @@ function ProjectsSection({
                     </p>
                     <Button
                         onClick={onNewProject}
-                        className="bg-foreground hover:bg-foreground/90 text-background font-medium gap-1.5"
+                        className="font-medium gap-1.5"
                     >
                         <Plus className="h-4 w-4" />
                         {t('activeProjects.empty.create')}
@@ -482,7 +482,7 @@ function ProjectsSection({
                                             COLOR_DOT[project.color] ?? 'bg-slate-400'
                                         )}
                                     />
-                                    <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-indigo-600 transition-colors" />
+                                    <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                                 </div>
                                 <div className="space-y-1 flex-1 min-w-0">
                                     <h3 className="font-reading text-[16px] leading-tight text-foreground line-clamp-2">
@@ -586,7 +586,7 @@ function WeeklyAgenda({
                                         </span>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-indigo-600 transition-colors">
+                                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors">
                                             {sermon.title}
                                         </p>
                                         {sermon.bibleReferences?.[0] && (
@@ -635,7 +635,7 @@ function ExegesisInProgressSection({
                     </p>
                     <Link
                         to="/dashboard/exegesis"
-                        className="text-[12px] text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1"
+                        className="text-[12px] text-primary hover:text-primary/80 inline-flex items-center gap-1"
                     >
                         {t('exegesis.emptyCta')}
                         <ArrowUpRight className="h-3 w-3" />
@@ -657,9 +657,9 @@ function ExegesisInProgressSection({
                                     onClick={() => navigate(`/dashboard/exegesis/${paper.id}`)}
                                     className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/40 transition-colors group"
                                 >
-                                    <NotebookPen className="h-4 w-4 text-muted-foreground/70 shrink-0 group-hover:text-indigo-600 transition-colors" />
+                                    <NotebookPen className="h-4 w-4 text-muted-foreground/70 shrink-0 group-hover:text-primary transition-colors" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-indigo-600 transition-colors">
+                                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors">
                                             {paper.title || passage}
                                         </p>
                                         <p className="text-[11px] text-muted-foreground tabular-nums">
@@ -725,9 +725,9 @@ function RecentMaterialSection({
                                     onClick={() => navigate(`/dashboard/sermons/${primary.id}`)}
                                     className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/40 transition-colors group"
                                 >
-                                    <FileText className="h-4 w-4 text-muted-foreground/70 shrink-0 group-hover:text-indigo-600 transition-colors" />
+                                    <FileText className="h-4 w-4 text-muted-foreground/70 shrink-0 group-hover:text-primary transition-colors" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-indigo-600 transition-colors">
+                                        <p className="text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors">
                                             {primary.title}
                                             {versions > 1 && (
                                                 <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">
@@ -786,7 +786,7 @@ function EcosystemStrip({
                         className="group bg-card border border-border/60 rounded-lg px-4 py-2.5 flex items-center gap-3 hover:border-border hover:shadow-sm transition-all"
                     >
                         <div className="h-8 w-8 rounded-md bg-muted/40 flex items-center justify-center shrink-0">
-                            <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                            <Icon className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
@@ -804,7 +804,7 @@ function EcosystemStrip({
                                       : t(`pillars.${key}.empty`)}
                             </div>
                         </div>
-                        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-indigo-600 transition-colors" />
+                        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                     </Link>
                 ))}
             </div>

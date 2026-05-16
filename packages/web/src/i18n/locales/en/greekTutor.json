@@ -22,6 +22,23 @@
         ]
     },
     "description": "The ecosystem of tools for biblical study and sermon preparation.",
+    "intro": {
+        "heroSubtitle": "Morphology, syntax, and lexicon — verse by verse in original Greek.",
+        "actionTitle": "What passage do you want to study?",
+        "actionSubtitle": "Choose a NT text to start your guided session.",
+        "showcaseTitle": "What you'll be able to do",
+        "showcaseSubtitle": "Each tool unlocks a different layer of analysis. Click to see the example in detail."
+    },
+    "emptyState": {
+        "eyebrow": "Study · Biblical Greek",
+        "title": "Start your Greek study",
+        "body": "Each session dissects the New Testament — verse by verse — with morphological analysis, theological context, and pedagogical exercises.",
+        "methodologyLabel": "Methodology",
+        "suggestedPassages": "Suggested passages",
+        "featuredBadge": "Most studied",
+        "tipTitle": "Tip",
+        "tipBody": "Pick any suggested passage or create a new one. The tutor walks you step by step from original text to application."
+    },
     "startTraining": "Start Training",
     "mySessions": "My Sessions",
     "biblicalPassage": "Biblical Passage",
@@ -206,6 +223,7 @@
             "step3Title": "3. Application",
             "step3Desc": "Proclaim with fidelity and pastoral relevance",
             "preachingPoints": "Preaching Points",
+            "reflectiveQuestionsTitle": "Reflective Questions",
             "reflectiveQuestions": [
                 "How does this grammatical detail change your understanding of the passage?",
                 "What theological truth does this Greek construction highlight?",
@@ -261,7 +279,8 @@
             "progress": "Progress",
             "wordsLearned": "{{completed}} of {{total}} words learned",
             "continue": "Continue",
-            "viewDetails": "View Details"
+            "viewDetails": "View Details",
+            "nextWord": "Resume with"
         },
         "status": {
             "new": "New",
@@ -532,6 +551,8 @@
         "synthesis": "Synthesis",
         "pedagogicalTip": "Pedagogical Tip",
         "tipContent": "Observe how the prefix changes the nuances of the root verb.",
+        "tipDismiss": "Hide tip",
+        "tipShow": "Show pedagogical tip",
         "componentTypes": {
             "prefix": "Prefix",
             "root": "Root",
