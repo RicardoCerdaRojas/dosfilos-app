@@ -377,11 +377,11 @@ export function AppSidebar() {
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col items-start overflow-hidden flex-1 group-data-[collapsible=icon]:hidden">
-                    <span className="text-sm font-medium truncate w-full leading-tight">
+                  <div className="flex flex-col items-start text-left overflow-hidden flex-1 group-data-[collapsible=icon]:hidden">
+                    <span className="text-sm font-medium truncate w-full leading-tight text-left">
                       {user?.displayName || t('user.defaultName')}
                     </span>
-                    <span className="flex items-center gap-2 text-xs leading-tight mt-1.5">
+                    <span className="flex items-center justify-start gap-2 text-xs leading-tight mt-1.5">
                       <span className={`inline-flex items-center px-1.5 py-0 rounded-sm font-medium ${planInfo.className} border`}>
                         {planInfo.name}
                       </span>
