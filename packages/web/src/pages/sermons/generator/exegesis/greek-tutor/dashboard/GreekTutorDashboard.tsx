@@ -221,6 +221,10 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
 
     const hasNoSessions = sessions.length === 0;
     const hasNoResults = !hasNoSessions && filteredAndSortedSessions.length === 0;
+    // Hide search/filters/cleanup chrome under 3 sessions — pure overhead when the list fits in one glance.
+    const showFilterChrome = sessions.length >= 3;
+    // Suppress redundant "Mostrando X de Y" when nothing is filtered out and the count is trivial.
+    const showCount = sessions.length >= 3 && filteredAndSortedSessions.length !== sessions.length;
 
     return (
         <div className="space-y-6">
@@ -238,8 +242,8 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                 <StatisticsPanel sessions={sessions} />
             )}
 
-            {/* Search and Filters - only show if there are sessions */}
-            {!hasNoSessions && (
+            {/* Search and Filters - only show when the list grows enough to need them */}
+            {showFilterChrome && (
                 <div className="flex flex-col lg:flex-row gap-4">
                     <div className="flex-1">
                         <SearchBar
@@ -293,9 +297,11 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                 </div>
             ) : (
                 <>
-                    <div className="text-sm text-muted-foreground">
-                        {t('dashboard.showingCount', { filtered: filteredAndSortedSessions.length, total: sessions.length })}
-                    </div>
+                    {showCount && (
+                        <div className="text-sm text-muted-foreground">
+                            {t('dashboard.showingCount', { filtered: filteredAndSortedSessions.length, total: sessions.length })}
+                        </div>
+                    )}
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {filteredAndSortedSessions.map((session) => (
                             <SessionCard

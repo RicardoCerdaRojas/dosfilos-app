@@ -279,7 +279,8 @@
             "progress": "Progress",
             "wordsLearned": "{{completed}} of {{total}} words learned",
             "continue": "Continue",
-            "viewDetails": "View Details"
+            "viewDetails": "View Details",
+            "nextWord": "Resume with"
         },
         "status": {
             "new": "New",
