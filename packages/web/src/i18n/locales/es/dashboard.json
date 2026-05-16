@@ -1,6 +1,6 @@
 {
     "header": {
-        "eyebrow": "Tu taller",
+        "eyebrow": "Tu escritorio",
         "greeting": "Hola, {{name}}.",
         "subtitle": "Esto es lo que tienes hoy en tu espacio de estudio."
     },
@@ -107,9 +107,9 @@
         "viewAll": "Ver todos los sermones"
     },
     "welcomeModal": {
-        "eyebrow": "Tu taller está listo",
-        "title": "Bienvenido al taller.",
-        "subtitle": "Un espacio único para tu estudio, tus lenguas originales, tus tutores teológicos y la producción de tu material para el ministerio.",
+        "eyebrow": "Tu escritorio está listo",
+        "title": "Bienvenido a tu escritorio.",
+        "subtitle": "Un escritorio preparado con todo lo necesario para el trabajo ministerial: tus libros, tus tutores teológicos, las lenguas originales y las herramientas para producir tu material.",
         "features": {
             "library": {
                 "title": "Biblioteca",

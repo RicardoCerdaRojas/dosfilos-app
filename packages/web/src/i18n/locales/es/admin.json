@@ -61,12 +61,54 @@
             "sermonsCount_other": "{{count}} sermones",
             "tutorAndDrafts": "{{greek}} Greek · {{drafts}} borradores",
             "neverLogged": "Nunca",
-            "defaultStatus": "activo",
+            "defaultStatus": "Activo",
             "selectAria": "Seleccionar usuario {{email}}",
             "selectAllAria": "Seleccionar todos los usuarios visibles",
             "trialEndsIn": "Trial termina {{when}}",
             "trialEnded": "Trial expirado",
-            "disabledBadge": "Deshabilitado"
+            "disabledBadge": "Deshabilitado",
+            "status": {
+                "active": "Activo",
+                "trialing": "Trial",
+                "cancelled": "Cancelado",
+                "past_due": "Pago vencido",
+                "incomplete": "Incompleto",
+                "incomplete_expired": "Expirado",
+                "unpaid": "Sin pago",
+                "paused": "Pausado",
+                "disabled": "Deshabilitado"
+            }
+        },
+        "planLabels": {
+            "free": "Free",
+            "basic": "Personal",
+            "pro": "Pro",
+            "team": "Equipo",
+            "enterprise": "Enterprise"
+        },
+        "engagement": {
+            "low": "Bajo",
+            "medium": "Medio",
+            "high": "Alto",
+            "tooltip": "Engagement score: combina logins, actividad reciente y uso de features. 0-32 Bajo, 33-65 Medio, 66-100 Alto."
+        },
+        "resetQuotaDialog": {
+            "title": "Resetear cuotas mensuales de {{name}}",
+            "description": "Restablece las cuotas de plan al estándar del plan actual del usuario. Los packs prepagados no se tocan.",
+            "currentPlan": "Plan actual",
+            "willApply": "Se aplicarán estos valores",
+            "standardPages": "Estándar",
+            "premiumPages": "Premium",
+            "exegesisUsd": "Exégesis",
+            "pagesUnit": "páginas/mes",
+            "packNote": "Los packs prepagados se conservan intactos. Solo se restablece el bucket del plan mensual.",
+            "freePlanWarning": "Este usuario está en plan Free, cuyas cuotas son 0. El reset se ejecutará pero no añade saldo. Si necesitas darle créditos manualmente, usa la acción Acreditar créditos.",
+            "reasonLabel": "Motivo",
+            "reasonPlaceholder": "Ej. Webhook Stripe falló el 16/05, renovación manual · Comp account post-upgrade · Bug ticket #523",
+            "reasonHint": "Queda en el audit log junto al actorUid + fecha.",
+            "cancel": "Cancelar",
+            "confirm": "Resetear cuotas",
+            "loading": "Reseteando..."
         },
         "sort": {
             "name": "Nombre",
@@ -78,14 +120,16 @@
             "clickToSort": "Click para ordenar"
         },
         "rowActions": {
-            "activity": "Actividad",
+            "activity": "Ver actividad",
             "view": "Ver",
             "viewActivity": "Ver actividad detallada",
             "changePlan": "Cambiar plan",
-            "resendEmail": "Reenviar correo de bienvenida",
-            "enable": "Habilitar usuario",
-            "disable": "Deshabilitar usuario",
-            "delete": "Eliminar permanentemente"
+            "resetQuota": "Resetear cuotas mensuales",
+            "resendEmail": "Reenviar bienvenida",
+            "enable": "Habilitar",
+            "disable": "Deshabilitar",
+            "delete": "Eliminar",
+            "more": "Más acciones"
         },
         "bulkActions": {
             "selectedCount_one": "1 seleccionado",
@@ -136,7 +180,9 @@
             "noChange": "Selecciona un plan distinto al actual.",
             "cancel": "Cancelar",
             "confirm": "Aplicar cambio",
-            "loading": "Aplicando..."
+            "loading": "Aplicando...",
+            "compAccountTitle": "Cuenta cortesía — Stripe no facturará",
+            "compAccountBody": "Este usuario nunca completó checkout (no tiene método de pago en Stripe). El cambio se aplica sólo en nuestra plataforma: tendrá las features del plan pero no habrá cobro mensual. Para activar billing real, el usuario debe pasar checkout con tarjeta."
         },
         "details": {
             "title": "Detalles del usuario",
@@ -306,7 +352,9 @@
             "grantSuccess": "Créditos acreditados correctamente",
             "grantError": "Error al acreditar páginas",
             "extendTrialSuccess": "Trial extendido correctamente",
-            "extendTrialError": "Error al extender el trial"
+            "extendTrialError": "Error al extender el trial",
+            "resetQuotaSuccess": "Cuotas reseteadas: {{standard}} estándar · {{premium}} premium",
+            "resetQuotaError": "Error al resetear cuotas"
         },
         "grantCreditsDialog": {
             "title": "Acreditar páginas a {{name}}",

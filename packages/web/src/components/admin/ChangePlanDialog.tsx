@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, ArrowRight, CreditCard } from 'lucide-react';
+import { Loader2, ArrowRight, CreditCard, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { usePlans } from '@/hooks/usePlans';
 import { useChangePlanForUser } from '@/hooks/admin/useChangePlanForUser';
@@ -63,6 +63,17 @@ export function ChangePlanDialog({ user, isOpen, onClose, onSuccess }: ChangePla
     };
 
     const noChange = !selectedPlanId || selectedPlanId === currentPlanId;
+
+    // Warn when assigning a paid plan to a user without a Stripe customer (never
+    // completed checkout). The cloud function `changePlanForUser` writes to
+    // Firestore only — Stripe is not touched, so the user effectively gets a
+    // comp account with no recurring billing. Admin needs to know this.
+    const isCompAccountUpgrade = Boolean(
+        selectedPlanId &&
+        selectedPlanId !== 'free' &&
+        selectedPlanId !== currentPlanId &&
+        !user.stripeCustomerId,
+    );
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -150,6 +161,20 @@ export function ChangePlanDialog({ user, isOpen, onClose, onSuccess }: ChangePla
                                 {t('users.changePlanDialog.proration')}
                             </p>
                         </Card>
+                    )}
+
+                    {isCompAccountUpgrade && (
+                        <div className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-subtle p-3">
+                            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                            <div className="text-xs space-y-1">
+                                <p className="font-semibold text-warning-subtle-foreground">
+                                    {t('users.changePlanDialog.compAccountTitle')}
+                                </p>
+                                <p className="text-warning-subtle-foreground/90">
+                                    {t('users.changePlanDialog.compAccountBody')}
+                                </p>
+                            </div>
+                        </div>
                     )}
 
                     {/* Summary */}

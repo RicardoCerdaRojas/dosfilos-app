@@ -61,12 +61,54 @@
             "sermonsCount_other": "{{count}} sermons",
             "tutorAndDrafts": "{{greek}} Greek · {{drafts}} drafts",
             "neverLogged": "Never",
-            "defaultStatus": "active",
+            "defaultStatus": "Active",
             "selectAria": "Select user {{email}}",
             "selectAllAria": "Select all visible users",
             "trialEndsIn": "Trial ends {{when}}",
             "trialEnded": "Trial expired",
-            "disabledBadge": "Disabled"
+            "disabledBadge": "Disabled",
+            "status": {
+                "active": "Active",
+                "trialing": "Trial",
+                "cancelled": "Cancelled",
+                "past_due": "Past due",
+                "incomplete": "Incomplete",
+                "incomplete_expired": "Expired",
+                "unpaid": "Unpaid",
+                "paused": "Paused",
+                "disabled": "Disabled"
+            }
+        },
+        "planLabels": {
+            "free": "Free",
+            "basic": "Personal",
+            "pro": "Pro",
+            "team": "Team",
+            "enterprise": "Enterprise"
+        },
+        "engagement": {
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High",
+            "tooltip": "Engagement score: combines logins, recent activity, and feature usage. 0-32 Low, 33-65 Medium, 66-100 High."
+        },
+        "resetQuotaDialog": {
+            "title": "Reset monthly quotas for {{name}}",
+            "description": "Restore the plan buckets to the standard monthly allowance of the user's current plan. Prepaid packs are untouched.",
+            "currentPlan": "Current plan",
+            "willApply": "These values will be applied",
+            "standardPages": "Standard",
+            "premiumPages": "Premium",
+            "exegesisUsd": "Exegesis",
+            "pagesUnit": "pages/mo",
+            "packNote": "Prepaid packs are preserved. Only the monthly plan bucket is reset.",
+            "freePlanWarning": "This user is on the Free plan, whose quotas are 0. The reset will run but won't add balance. If you need to grant credits manually, use the Grant credits action.",
+            "reasonLabel": "Reason",
+            "reasonPlaceholder": "E.g. Stripe webhook missed on 5/16, manual renewal · Comp account post-upgrade · Bug ticket #523",
+            "reasonHint": "Logged in the audit trail with actorUid + timestamp.",
+            "cancel": "Cancel",
+            "confirm": "Reset quotas",
+            "loading": "Resetting..."
         },
         "sort": {
             "name": "Name",
@@ -78,14 +120,16 @@
             "clickToSort": "Click to sort"
         },
         "rowActions": {
-            "activity": "Activity",
+            "activity": "View activity",
             "view": "View",
             "viewActivity": "View detailed activity",
             "changePlan": "Change plan",
-            "resendEmail": "Resend welcome email",
-            "enable": "Enable user",
-            "disable": "Disable user",
-            "delete": "Delete permanently"
+            "resetQuota": "Reset monthly quotas",
+            "resendEmail": "Resend welcome",
+            "enable": "Enable",
+            "disable": "Disable",
+            "delete": "Delete",
+            "more": "More actions"
         },
         "bulkActions": {
             "selectedCount_one": "1 selected",
@@ -136,7 +180,9 @@
             "noChange": "Pick a plan different from the current one.",
             "cancel": "Cancel",
             "confirm": "Apply change",
-            "loading": "Applying..."
+            "loading": "Applying...",
+            "compAccountTitle": "Comp account — Stripe will not bill",
+            "compAccountBody": "This user never completed checkout (no Stripe payment method on file). The change applies only on our platform: they'll get the plan's features but no monthly charge. To enable real billing, the user must complete checkout with a card."
         },
         "details": {
             "title": "User details",
@@ -306,7 +352,9 @@
             "grantSuccess": "Credits granted successfully",
             "grantError": "Error granting pages",
             "extendTrialSuccess": "Trial extended successfully",
-            "extendTrialError": "Error extending trial"
+            "extendTrialError": "Error extending trial",
+            "resetQuotaSuccess": "Quotas reset: {{standard}} standard · {{premium}} premium",
+            "resetQuotaError": "Error resetting quotas"
         },
         "grantCreditsDialog": {
             "title": "Grant pages to {{name}}",

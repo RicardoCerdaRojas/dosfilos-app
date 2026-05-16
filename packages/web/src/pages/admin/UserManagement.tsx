@@ -9,6 +9,7 @@ import { useResendWelcomeEmail } from '@/hooks/admin/useResendWelcomeEmail';
 import { useBulkUserAction } from '@/hooks/admin/useBulkUserAction';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { ChangePlanDialog } from '@/components/admin/ChangePlanDialog';
+import { ResetQuotasDialog } from '@/components/admin/ResetQuotasDialog';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,6 +132,7 @@ export function UserManagement() {
     const { resendEmail, isLoading: isResending } = useResendWelcomeEmail();
 
     const [planChangeUser, setPlanChangeUser] = useState<User | null>(null);
+    const [resetQuotaUser, setResetQuotaUser] = useState<User | null>(null);
     const [grantCreditsUser, setGrantCreditsUser] = useState<User | null>(null);
     const [extendTrialUser, setExtendTrialUser] = useState<User | null>(null);
 
@@ -271,6 +273,7 @@ export function UserManagement() {
     };
 
     const handleChangePlanClick = (user: User) => setPlanChangeUser(user);
+    const handleResetQuotaClick = (user: User) => setResetQuotaUser(user);
 
     const handleChangePlanFromModal = (userId: string) => {
         const user = allUsers.find(u => u.id === userId);
@@ -293,20 +296,20 @@ export function UserManagement() {
         : { count: totalCount, total: totalCount };
 
     return (
-        <div className="p-6 max-w-[95%] mx-auto">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" onClick={() => navigate('/dashboard/admin/analytics')}>
+        <div className="px-8 py-10 max-w-[1500px] mx-auto space-y-8">
+            <div className="flex items-start justify-between gap-6">
+                <div className="flex items-start gap-4 min-w-0">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/admin/analytics')} className="mt-1 shrink-0">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         {t('users.backToAnalytics')}
                     </Button>
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground">{t('users.title')}</h1>
-                        <p className="text-muted-foreground mt-1">{t(subtitleKey, subtitleParams)}</p>
+                    <div className="min-w-0">
+                        <h1 className="text-3xl font-bold text-foreground tracking-tight">{t('users.title')}</h1>
+                        <p className="text-sm text-muted-foreground mt-2">{t(subtitleKey, subtitleParams)}</p>
                     </div>
                 </div>
 
-                <Button onClick={handleExportCSV} disabled={!users.length}>
+                <Button onClick={handleExportCSV} disabled={!users.length} className="shrink-0">
                     <Download className="h-4 w-4 mr-2" />
                     {filtersActive
                         ? t('users.exportCsvFiltered', { count: visibleCount })
@@ -318,8 +321,8 @@ export function UserManagement() {
                 ? <UserStatsSkeleton />
                 : <UserStatsHeader users={allUsers} />}
 
-            <Card className="p-4 mb-6">
-                <div className="flex flex-col md:flex-row gap-4">
+            <Card className="p-5">
+                <div className="flex flex-col md:flex-row md:items-center gap-3">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -330,33 +333,38 @@ export function UserManagement() {
                         />
                     </div>
 
-                    <Select value={planFilter} onValueChange={(v) => setPlanFilter(v as PlanFilterValue)}>
-                        <SelectTrigger className="w-full md:w-40">
-                            <Filter className="h-4 w-4 mr-2" />
-                            <SelectValue placeholder={t('users.filters.plan')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{t('users.filters.allPlans')}</SelectItem>
-                            <SelectItem value="free">Free</SelectItem>
-                            <SelectItem value="basic">Personal</SelectItem>
-                            <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="team">Equipo</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {/* Filter cluster lives in its own flex row so the two selects always sit side-by-side
+                        with a fixed gap. Previously each was a direct child of the parent flex which made
+                        them overflow into each other at certain widths. */}
+                    <div className="flex items-center gap-3 shrink-0">
+                        <Select value={planFilter} onValueChange={(v) => setPlanFilter(v as PlanFilterValue)}>
+                            <SelectTrigger className="w-full md:w-44">
+                                <Filter className="h-4 w-4 mr-2" />
+                                <SelectValue placeholder={t('users.filters.plan')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t('users.filters.allPlans')}</SelectItem>
+                                <SelectItem value="free">{t('users.planLabels.free')}</SelectItem>
+                                <SelectItem value="basic">{t('users.planLabels.basic')}</SelectItem>
+                                <SelectItem value="pro">{t('users.planLabels.pro')}</SelectItem>
+                                <SelectItem value="team">{t('users.planLabels.team')}</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilterValue)}>
-                        <SelectTrigger className="w-full md:w-40">
-                            <SelectValue placeholder={t('users.filters.status')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{t('users.filters.allStatuses')}</SelectItem>
-                            <SelectItem value="active">{t('users.filters.active')}</SelectItem>
-                            <SelectItem value="trialing">{t('users.filters.trialing')}</SelectItem>
-                            <SelectItem value="past_due">{t('users.filters.pastDue')}</SelectItem>
-                            <SelectItem value="cancelled">{t('users.filters.cancelled')}</SelectItem>
-                            <SelectItem value="disabled">{t('users.filters.disabled')}</SelectItem>
-                        </SelectContent>
-                    </Select>
+                        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilterValue)}>
+                            <SelectTrigger className="w-full md:w-44">
+                                <SelectValue placeholder={t('users.filters.status')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t('users.filters.allStatuses')}</SelectItem>
+                                <SelectItem value="active">{t('users.filters.active')}</SelectItem>
+                                <SelectItem value="trialing">{t('users.filters.trialing')}</SelectItem>
+                                <SelectItem value="past_due">{t('users.filters.pastDue')}</SelectItem>
+                                <SelectItem value="cancelled">{t('users.filters.cancelled')}</SelectItem>
+                                <SelectItem value="disabled">{t('users.filters.disabled')}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </Card>
 
@@ -375,12 +383,9 @@ export function UserManagement() {
                             <TableRow>
                                 <TableHead className="w-10" />
                                 <TableHead>{t('users.table.user')}</TableHead>
-                                <TableHead>{t('users.table.plan')}</TableHead>
-                                <TableHead>{t('users.table.status')}</TableHead>
                                 <TableHead>{t('users.table.activity')}</TableHead>
                                 <TableHead>{t('users.table.engagement')}</TableHead>
                                 <TableHead>{t('users.table.lastLogin')}</TableHead>
-                                <TableHead>{t('users.table.registered')}</TableHead>
                                 <TableHead className="text-right">{t('users.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -400,13 +405,15 @@ export function UserManagement() {
             ) : (
                 <Card>
                     <Table>
-                        <TableHeader>
+                        {/* `[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:font-semibold [&_th]:text-muted-foreground`
+                            on the header gives table column titles a clear caption tier — distinct from row content
+                            and from page H1. Was inheriting the default font-medium foreground, which read as "another
+                            row" rather than a section label. */}
+                        <TableHeader className="[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:font-semibold [&_th]:text-muted-foreground [&_th]:h-12">
                             <TableRow>
                                 <TableHead className="w-10">
                                     <Checkbox
                                         checked={allVisibleSelected}
-                                        // Indeterminate state when only some are selected — visual cue
-                                        // using the data-* attribute (Radix renders accordingly).
                                         data-state={someVisibleSelected && !allVisibleSelected ? 'indeterminate' : undefined}
                                         onCheckedChange={(c) => toggleAllVisible(c === true)}
                                         aria-label={t('users.table.selectAllAria')}
@@ -418,8 +425,6 @@ export function UserManagement() {
                                     currentSort={sort}
                                     onSort={handleSort}
                                 />
-                                <TableHead>{t('users.table.plan')}</TableHead>
-                                <TableHead>{t('users.table.status')}</TableHead>
                                 <TableHead>{t('users.table.activity')}</TableHead>
                                 <SortableHeader
                                     label={t('users.table.engagement')}
@@ -433,13 +438,7 @@ export function UserManagement() {
                                     currentSort={sort}
                                     onSort={handleSort}
                                 />
-                                <SortableHeader
-                                    label={t('users.table.registered')}
-                                    field="createdAt"
-                                    currentSort={sort}
-                                    onSort={handleSort}
-                                />
-                                <TableHead className="text-right">{t('users.table.actions')}</TableHead>
+                                <TableHead className="text-right pr-4">{t('users.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -455,6 +454,7 @@ export function UserManagement() {
                                     onViewActivity={handleViewActivity}
                                     onViewDetails={handleViewDetails}
                                     onChangePlan={handleChangePlanClick}
+                                    onResetQuota={handleResetQuotaClick}
                                     onResendEmail={resendEmail}
                                     onEnable={handleEnableUser}
                                     onDisable={(u) => setUserToDisable(u)}
@@ -501,6 +501,19 @@ export function UserManagement() {
                 user={planChangeUser}
                 isOpen={!!planChangeUser}
                 onClose={() => setPlanChangeUser(null)}
+                // `useAllUsers` uses an onSnapshot listener so the row auto-updates
+                // when the cloud function writes. The empty onSuccess just guarantees
+                // the dialog closes and the success toast fires consistently — a
+                // future hook can attach an explicit refetch here if we ever drop the
+                // real-time listener.
+                onSuccess={() => setPlanChangeUser(null)}
+            />
+
+            <ResetQuotasDialog
+                user={resetQuotaUser}
+                isOpen={!!resetQuotaUser}
+                onClose={() => setResetQuotaUser(null)}
+                onSuccess={() => setResetQuotaUser(null)}
             />
 
             <GrantCreditsDialog

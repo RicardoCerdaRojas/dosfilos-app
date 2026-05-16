@@ -36,6 +36,7 @@ import { useTranslation } from '@/i18n';
 import { doc, getDoc } from 'firebase/firestore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Badge } from '@/components/ui/badge';
+import { getPlanLabel } from '@/utils/planLabels';
 import packageJson from '../../../package.json';
 
 export function AppSidebar() {
@@ -63,15 +64,16 @@ export function AppSidebar() {
   // paid tiers show a colored chip without CTA (status, not pitch).
   const planInfo = (() => {
     const planId = subscription?.planId || 'free';
-    const planNames: Record<string, string> = { free: 'Free', pro: 'Pro', team: 'Team' };
     const planClasses: Record<string, string> = {
       free: 'bg-muted text-muted-foreground border-border',
+      basic: 'bg-info-subtle text-info-subtle-foreground border-info/30',
       pro: 'bg-primary/10 text-primary border-primary/30',
       team: 'bg-warning-subtle text-warning-subtle-foreground border-warning/30',
+      enterprise: 'bg-warning-subtle text-warning-subtle-foreground border-warning/30',
     };
     return {
       id: planId,
-      name: planNames[planId] ?? 'Free',
+      name: getPlanLabel(planId),
       className: planClasses[planId] ?? planClasses.free,
       isFree: planId === 'free',
     };
@@ -100,11 +102,13 @@ export function AppSidebar() {
     checkAdminRole();
   }, [user]);
 
-  // Sidebar groups follow the user's mental model, not the feature taxonomy:
-  //   Tu trabajo  — what you produce (projects, sermons, planning)
-  //   Tu estudio  — ongoing disciplines (Bible, Greek, Hebrew)
-  //   Tu entorno  — tools always available (library, faculty)
-  //   Cuenta      — settings, subscription
+  // Sidebar groups follow the user's mental model — three jobs (learn / build /
+  // store) plus account. Within each group items are ordered by expected use
+  // frequency (Bible most-read first, Projects most-used workspace first, etc).
+  //   Mis Estudios   — input/exploration: Biblia, Tutores, Griego, Hebreo
+  //   Mis Trabajos   — output/production: Proyectos, Exégesis, Planificador
+  //   Mis Recursos   — owned assets:      Mis Recursos (Faculty saves), Sermones, Biblioteca
+  //   Cuenta         — settings
   const navigationGroups: Array<{ label?: string; items: Array<{ name: string; href: string; icon: any }> }> = [
     {
       // Dashboard — no label, sits at the very top
@@ -113,44 +117,39 @@ export function AppSidebar() {
       ],
     },
     {
-      label: t('groups.work'),
-      items: [
-        { name: t('menu.projects'), href: '/dashboard/projects', icon: FolderKanban },
-        { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
-        { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
-        { name: t('menu.exegesis'), href: '/dashboard/exegesis', icon: NotebookPen },
-        ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
-      ],
-    },
-    {
       label: t('groups.study'),
       items: [
         { name: t('menu.bible'), href: '/dashboard/bible', icon: Book },
-        // Faculty conversacional vive bajo "Tu estudio" porque el modo
-        // de uso es estudiar pasajes con tutores AI (chat con expertos),
-        // no curar el entorno como hace la biblioteca personal. Antes
-        // estaba en "Tu entorno" junto a la biblioteca por proximidad
-        // arquitectónica (ambos consumen el mismo store de chunks RAG),
-        // pero el usuario ve estudio, no plumbing.
         { name: t('menu.faculty'), href: '/dashboard/faculty', icon: MessageSquareQuote },
-        { name: t('menu.facultyLibrary'), href: '/dashboard/faculty/library', icon: Sparkles },
         { name: t('menu.greekTutor'), href: '/dashboard/greek-tutor', icon: GraduationCap },
         { name: t('menu.hebrewTutor'), href: '/dashboard/hebrew-tutor', icon: BookOpen },
       ],
     },
     {
-      label: t('groups.environment'),
+      label: t('groups.work'),
       items: [
-        // Biblioteca personal — cada usuario tiene la suya (tenant isolation por userId).
-        // El material subido es responsabilidad del usuario (ver TOS); la plataforma
-        // actúa como herramienta de procesamiento, no como distribuidor.
+        { name: t('menu.projects'), href: '/dashboard/projects', icon: FolderKanban },
+        { name: t('menu.exegesis'), href: '/dashboard/exegesis', icon: NotebookPen },
+        { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
+        ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
+      ],
+    },
+    {
+      label: t('groups.resources'),
+      items: [
+        // Faculty extractions library — saved chat responses, cross-session.
+        { name: t('menu.facultyLibrary'), href: '/dashboard/faculty/library', icon: Sparkles },
+        // Sermones lives here (not in Trabajos) — surface is mostly read/archive
+        // browsing; new sermons are born inside Proyectos or Planificador.
+        { name: t('menu.sermons'), href: '/dashboard/sermons', icon: FileText },
+        // Biblioteca personal — tenant-isolated per userId. Material upload is
+        // the user's responsibility per TOS.
         { name: t('menu.library'), href: '/dashboard/library', icon: Library },
       ],
     },
     {
-      // "Cuenta" used to list Configuración + Integraciones + Mi Suscripción as
-      // three separate destinations. Integrations and Subscription are now tabs
-      // inside Configuración to cut menu noise.
+      // Account: Configuración hosts Integraciones + Suscripción as tabs to
+      // keep this group at one entry.
       label: t('groups.account'),
       items: [
         { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },

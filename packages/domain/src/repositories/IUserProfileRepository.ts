@@ -4,6 +4,16 @@ import type { SupportedLanguage } from '../types/i18n';
 
 export interface IUserProfileRepository {
     getProfile(userId: string): Promise<User | null>;
+    /**
+     * Real-time subscription to the profile doc. Returns the unsubscribe
+     * function. Used by hooks that need to reflect plan changes (admin-driven
+     * or Stripe-webhook-driven) without requiring a manual refresh.
+     */
+    subscribeProfile(
+        userId: string,
+        onChange: (profile: User | null) => void,
+        onError?: (err: Error) => void,
+    ): () => void;
     updateSubscription(userId: string, subscription: Subscription): Promise<void>;
     updateStripeCustomerId(userId: string, customerId: string): Promise<void>;
     /**

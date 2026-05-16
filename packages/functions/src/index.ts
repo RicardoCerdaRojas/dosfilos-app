@@ -110,6 +110,7 @@ export { migrateLegacySermons } from './admin/migrateLegacySermons';
 export { changePlanForUser } from './admin/changePlanForUser';
 export { bulkUserAction } from './admin/bulkUserAction';
 export { grantUserCredits } from './admin/grantUserCredits';
+export { resetUserPlanQuota } from './admin/resetUserPlanQuota';
 export { extendUserTrialAdmin } from './admin/extendUserTrialAdmin';
 
 
