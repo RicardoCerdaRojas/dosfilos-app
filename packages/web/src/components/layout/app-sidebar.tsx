@@ -109,7 +109,7 @@ export function AppSidebar() {
   //   Mis Trabajos   — output/production: Proyectos, Exégesis, Planificador
   //   Mis Recursos   — owned assets:      Mis Recursos (Faculty saves), Sermones, Biblioteca
   //   Cuenta         — settings
-  const navigationGroups: Array<{ label?: string; items: Array<{ name: string; href: string; icon: any }> }> = [
+  const navigationGroups: Array<{ label?: string; tourClass?: string; items: Array<{ name: string; href: string; icon: any }> }> = [
     {
       // Dashboard — no label, sits at the very top
       items: [
@@ -118,6 +118,7 @@ export function AppSidebar() {
     },
     {
       label: t('groups.study'),
+      tourClass: 'tour-target-study',
       items: [
         { name: t('menu.bible'), href: '/dashboard/bible', icon: Book },
         { name: t('menu.faculty'), href: '/dashboard/faculty', icon: MessageSquareQuote },
@@ -127,6 +128,7 @@ export function AppSidebar() {
     },
     {
       label: t('groups.work'),
+      tourClass: 'tour-target-work',
       items: [
         { name: t('menu.projects'), href: '/dashboard/projects', icon: FolderKanban },
         { name: t('menu.exegesis'), href: '/dashboard/exegesis', icon: NotebookPen },
@@ -136,6 +138,7 @@ export function AppSidebar() {
     },
     {
       label: t('groups.resources'),
+      tourClass: 'tour-target-resources',
       items: [
         // Faculty extractions library — saved chat responses, cross-session.
         { name: t('menu.facultyLibrary'), href: '/dashboard/faculty/library', icon: Sparkles },
@@ -266,7 +269,7 @@ export function AppSidebar() {
       {/* Navigation */}
       <SidebarContent className="sidebar-scrollbar">
         {navigationGroups.map((group, groupIndex) => (
-          <div key={groupIndex}>
+          <div key={groupIndex} className={group.tourClass}>
             <SidebarGroup>
               {group.label && (
                 <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">

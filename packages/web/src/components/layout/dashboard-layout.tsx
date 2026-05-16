@@ -9,6 +9,7 @@ import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
 import { useSmartTriggers } from '@/hooks/useSmartTriggers';
 import { useLibrarySync } from '@/hooks/library';
 import { FloatingHelpButton } from '@/components/onboarding';
+import { DashboardTour, useDashboardTourTrigger } from '@/components/onboarding/DashboardTour';
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -20,6 +21,11 @@ export function DashboardLayout() {
 
   // Single Firestore listener for the user's library — every consumer reads from the cache this hook keeps fresh.
   useLibrarySync();
+
+  // Spotlight tour fires once after the onboarding wizard completes — runs
+  // here at the layout level (not the dashboard page) so the sidebar is
+  // always mounted as the Joyride target.
+  const tour = useDashboardTourTrigger();
 
   // Track dashboard visits for "Stuck User" trigger
   useEffect(() => {
@@ -62,6 +68,7 @@ export function DashboardLayout() {
         </main>
       </SidebarInset>
       <FloatingHelpButton />
+      <DashboardTour run={tour.run} onComplete={tour.markComplete} />
     </SidebarProvider>
   );
 }

@@ -42,6 +42,35 @@
             }
         }
     },
+    "tour": {
+        "welcome": {
+            "title": "Recorrido rápido",
+            "body": "Te muestro en 30 segundos cómo está organizado tu escritorio. Puedes saltarlo cuando quieras."
+        },
+        "study": {
+            "title": "Mis Estudios",
+            "body": "Aquí lees la Biblia, conversas con tus tutores teológicos y practicas griego y hebreo."
+        },
+        "work": {
+            "title": "Mis Trabajos",
+            "body": "Aquí produces lo que entregarás: proyectos, papers exegéticos y planificación de sermones."
+        },
+        "resources": {
+            "title": "Mis Recursos",
+            "body": "Aquí guardas todo lo que generas o subes: extractos de tutores, sermones y tu biblioteca personal."
+        },
+        "help": {
+            "title": "Ayuda siempre a mano",
+            "body": "Este botón está disponible en todo momento. Click aquí para volver al manual o reabrir la bienvenida."
+        },
+        "nav": {
+            "back": "Atrás",
+            "close": "Cerrar",
+            "finish": "Listo",
+            "next": "Siguiente",
+            "skip": "Saltar recorrido"
+        }
+    },
     "agenda": {
         "eyebrow": "Agenda próxima",
         "viewAll": "Ver planificador",
