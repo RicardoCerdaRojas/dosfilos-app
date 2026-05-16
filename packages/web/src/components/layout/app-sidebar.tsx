@@ -59,30 +59,23 @@ export function AppSidebar() {
     window.localStorage.setItem('sidebar.adminOpen', adminOpen ? '1' : '0');
   }, [adminOpen]);
 
-  // Get plan display info
-  const getPlanBadge = () => {
-    if (!subscription) return null;
-    
-    const planColors = {
-      free: 'bg-gray-100 text-gray-700 border-gray-200',
-      pro: 'bg-blue-100 text-blue-700 border-blue-200',
-      team: 'bg-purple-100 text-purple-700 border-purple-200'
+  // Plan info for the footer row. Free shows a muted chip with an Upgrade CTA;
+  // paid tiers show a colored chip without CTA (status, not pitch).
+  const planInfo = (() => {
+    const planId = subscription?.planId || 'free';
+    const planNames: Record<string, string> = { free: 'Free', pro: 'Pro', team: 'Team' };
+    const planClasses: Record<string, string> = {
+      free: 'bg-muted text-muted-foreground border-border',
+      pro: 'bg-primary/10 text-primary border-primary/30',
+      team: 'bg-warning-subtle text-warning-subtle-foreground border-warning/30',
     };
-    
-    const planNames = {
-      free: 'Free',
-      pro: 'Pro',
-      team: 'Team'
+    return {
+      id: planId,
+      name: planNames[planId] ?? 'Free',
+      className: planClasses[planId] ?? planClasses.free,
+      isFree: planId === 'free',
     };
-    
-    const planId = subscription.planId || 'free';
-    const colorClass = planColors[planId as keyof typeof planColors] || planColors.free;
-    const planName = planNames[planId as keyof typeof planNames] || 'Free';
-    
-    return { colorClass, planName };
-  };
-
-  const planBadge = getPlanBadge();
+  })();
 
   // Check if user is super admin
   useEffect(() => {
@@ -267,15 +260,6 @@ export function AppSidebar() {
             />
           </div>
 
-          {/* Badge - Floating on top right */}
-          {planBadge && (
-            <Badge 
-              variant="outline" 
-              className={`absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0 h-4 shadow-sm border bg-background/90 backdrop-blur-sm z-10 ${planBadge.colorClass}`}
-            >
-              {planBadge.planName}
-            </Badge>
-          )}
         </div>
       </SidebarHeader>
 
@@ -383,6 +367,24 @@ export function AppSidebar() {
 
       {/* Footer with User Menu */}
       <SidebarFooter className="border-t">
+        {/* Plan row — sits above the account button so the chip groups with identity.
+            Free shows an Upgrade affordance; paid tiers are status-only. Hidden when
+            the sidebar is collapsed to its icon rail. */}
+        <Link
+          to="/dashboard/subscription"
+          className="group-data-[collapsible=icon]:hidden flex items-center justify-between gap-2 px-2 py-1.5 text-xs rounded-md hover:bg-sidebar-accent transition-colors"
+        >
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border font-semibold ${planInfo.className}`}>
+            <Sparkles className="h-3 w-3" />
+            {planInfo.name}
+          </span>
+          {planInfo.isFree && (
+            <span className="text-primary font-medium">
+              {t('user.upgrade')} →
+            </span>
+          )}
+        </Link>
+
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

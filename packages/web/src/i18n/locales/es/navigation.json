@@ -37,7 +37,8 @@
         "profile": "Perfil",
         "notifications": "Notificaciones",
         "logout": "Cerrar Sesión",
-        "sessionClosed": "Sesión cerrada"
+        "sessionClosed": "Sesión cerrada",
+        "upgrade": "Mejorar"
     },
     "errors": {
         "logoutError": "Error al cerrar sesión"
