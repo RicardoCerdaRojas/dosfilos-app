@@ -35,7 +35,7 @@ import {
     type SermonEntity,
     type FacultyProject,
 } from '@dosfilos/domain';
-import { OnboardingWelcomeModal, ActivationBanner, CelebrationModal } from '@/components/onboarding';
+import { OnboardingWizard, ActivationBanner, CelebrationModal } from '@/components/onboarding';
 import { ProjectEditDialog } from '@/pages/faculty/ProjectEditDialog';
 import { cn } from '@/lib/utils';
 import { getPlanLabel } from '@/utils/planLabels';
@@ -262,7 +262,7 @@ export function DashboardPage() {
                 <EcosystemStrip metrics={ecosystemMetrics} t={t} />
             </div>
 
-            <OnboardingWelcomeModal
+            <OnboardingWizard
                 isOpen={showWelcome}
                 onClose={() => setShowWelcome(false)}
             />

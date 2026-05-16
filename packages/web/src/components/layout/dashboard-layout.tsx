@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { LanguageSwitcher } from '@/i18n/components/LanguageSwitcher';
 import { useSmartTriggers } from '@/hooks/useSmartTriggers';
 import { useLibrarySync } from '@/hooks/library';
+import { FloatingHelpButton } from '@/components/onboarding';
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -60,6 +61,7 @@ export function DashboardLayout() {
           <Outlet />
         </main>
       </SidebarInset>
+      <FloatingHelpButton />
     </SidebarProvider>
   );
 }

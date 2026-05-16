@@ -137,5 +137,177 @@
         "title": "¡Crea tu primer sermón!",
         "subtitle": "Comienza tu jornada con tu asistente para preparación homilética",
         "cta": "Generar sermón"
+    },
+    "onboarding": {
+        "skip": "Saltar por ahora",
+        "nav": {
+            "back": "Atrás",
+            "continue": "Continuar"
+        },
+        "welcome": {
+            "eyebrow": "Tu escritorio te espera",
+            "greeting": "Bienvenido al escritorio.",
+            "greetingNamed": "Bienvenido, {{name}}.",
+            "subtitle": "Tu escritorio está preparado con libros, tutores teológicos, lenguas originales y las herramientas para producir tu material. Antes de entrar, ¿qué te trae hoy?",
+            "cta": "Empezar",
+            "skipCta": "Explorar por mi cuenta"
+        },
+        "intent": {
+            "eyebrow": "Personaliza tu inicio",
+            "title": "¿Qué te trae hoy?",
+            "subtitle": "Elige el camino que mejor describe tu objetivo. Te llevamos directo allá y guardamos tu interés para sugerirte mejor después.",
+            "comingSoonBadge": "Próximamente"
+        },
+        "intents": {
+            "exegesis-paper": {
+                "title": "Estudio exegético académico",
+                "description": "Análisis profundo de un pasaje con rúbrica académica, citas verificadas y export .docx.",
+                "workflowTitle": "Así trabajarás tu estudio exegético",
+                "workflowSubtitle": "Cuatro etapas guiadas que terminan en un paper listo para entregar.",
+                "workflow": {
+                    "pickPassage": {
+                        "title": "Eliges el pasaje",
+                        "description": "Selector que entiende referencias bíblicas y carga el griego base (SBL GNT)."
+                    },
+                    "configureRubric": {
+                        "title": "Configuras la rúbrica",
+                        "description": "Define los requisitos del trabajo: extensión, bibliografía mínima, secciones obligatorias."
+                    },
+                    "studyWithTutors": {
+                        "title": "Estudias con tutores",
+                        "description": "Chat con la facultad teológica para discutir traducciones, autores y conclusiones."
+                    },
+                    "exportDocx": {
+                        "title": "Exportas .docx",
+                        "description": "Documento académico con citas verificadas, listo para entregar al seminario."
+                    }
+                },
+                "confirmTitle": "Vamos a abrir el módulo de Exégesis",
+                "confirmBody": "Te llevamos al wizard académico. Empezarás eligiendo tu pasaje (ej. Hebreos 1:1-4) y la rúbrica que tu profesor pide.",
+                "cta": "Abrir Exégesis",
+                "comingSoon": ""
+            },
+            "devotional-content": {
+                "title": "Devocional o entrada de blog",
+                "description": "Genera devocionales, reflexiones o artículos cortos con tus tutores teológicos.",
+                "workflowTitle": "Así produces tu devocional",
+                "workflowSubtitle": "De la idea a un recurso guardado en minutos, sin perder el rigor pastoral.",
+                "workflow": {
+                    "pickTopic": {
+                        "title": "Eliges tema o pasaje",
+                        "description": "Parte de un versículo, una temática o una pregunta pastoral."
+                    },
+                    "chatFaculty": {
+                        "title": "Conversas con la facultad",
+                        "description": "Tus tutores discuten contigo el ángulo, el público y el tono."
+                    },
+                    "generateDevotional": {
+                        "title": "Generas el devocional",
+                        "description": "Salida estructurada — introducción, exposición, aplicación, llamado."
+                    },
+                    "saveResource": {
+                        "title": "Guardas y publicas",
+                        "description": "Queda en Mis Recursos, listo para reusar, exportar o enviar a WordPress."
+                    }
+                },
+                "confirmTitle": "Vamos a la facultad para crear tu devocional",
+                "confirmBody": "Te llevamos al chat con tus tutores. Pídeles un devocional sobre un pasaje y lo guardamos en Mis Recursos para reusar o publicar.",
+                "cta": "Abrir Facultad",
+                "comingSoon": ""
+            },
+            "expository-series": {
+                "title": "Planificar predicaciones expositivas",
+                "description": "Predicar un libro completo perícopa por perícopa con plan semanal y estudio integrado.",
+                "workflowTitle": "Así planificarás tu serie expositiva",
+                "workflowSubtitle": "Del libro completo al sermón semanal, sin perder el hilo del autor inspirado.",
+                "workflow": {
+                    "pickBook": {
+                        "title": "Eliges el libro",
+                        "description": "Define tu serie: Romanos, Mateo, Hebreos — y cuántas semanas tienes."
+                    },
+                    "dividePericopes": {
+                        "title": "Dividimos en perícopas",
+                        "description": "La plataforma propone una división sintáctica + temática para tu serie."
+                    },
+                    "weeklyStudy": {
+                        "title": "Estudio semanal",
+                        "description": "Cada perícopa abre con exégesis + tutores especializados en expository preaching."
+                    },
+                    "sermonReady": {
+                        "title": "Sermón listo",
+                        "description": "El estudio fluye al sermón. Llegas al púlpito con todo encadenado."
+                    }
+                },
+                "confirmTitle": "Anotado — pronto lo activamos",
+                "confirmBody": "El pipeline expositivo (división de libro → perícopas → sermones) está en construcción. Te llevamos al dashboard mientras tanto.",
+                "cta": "Ir al escritorio",
+                "comingSoon": "Anotamos tu interés en planificación expositiva. Estamos construyendo el pipeline completo."
+            },
+            "counseling-course": {
+                "title": "Crear un curso o material didáctico",
+                "description": "Consejería prematrimonial, discipulado, clases — con plan de sesiones y artefactos.",
+                "workflowTitle": "Así construirás tu curso",
+                "workflowSubtitle": "Plan, sesiones, materiales y tareas — todo desde un solo lugar.",
+                "workflow": {
+                    "defineTopic": {
+                        "title": "Defines el tema",
+                        "description": "Consejería prematrimonial, discipulado, clase de teología — tú eliges."
+                    },
+                    "generateSessions": {
+                        "title": "Generamos el plan",
+                        "description": "Plan estructurado de sesiones con objetivos, escrituras clave y dinámicas."
+                    },
+                    "createArtifacts": {
+                        "title": "Creamos artefactos",
+                        "description": "Slides, hojas de trabajo, preguntas y tareas para cada sesión."
+                    },
+                    "shareWithCouple": {
+                        "title": "Compartes",
+                        "description": "Material listo para imprimir, proyectar o enviar a los aconsejados."
+                    }
+                },
+                "confirmTitle": "Anotado — pronto lo activamos",
+                "confirmBody": "El generador de cursos (sesiones + slides + tareas) está en construcción. Te llevamos al dashboard mientras tanto.",
+                "cta": "Ir al escritorio",
+                "comingSoon": "Anotamos tu interés en cursos. Estamos diseñando el generador de sesiones + artefactos."
+            },
+            "explore": {
+                "title": "Solo explorar",
+                "description": "Mira la plataforma a tu ritmo. Puedes empezar cualquier flujo cuando quieras desde el sidebar.",
+                "workflowTitle": "Las tres áreas de tu escritorio",
+                "workflowSubtitle": "Tu sidebar agrupa todo en tres jobs: aprender, construir y guardar.",
+                "workflow": {
+                    "studies": {
+                        "title": "Mis Estudios",
+                        "description": "Biblia, tutores teológicos, entrenadores de griego y hebreo."
+                    },
+                    "work": {
+                        "title": "Mis Trabajos",
+                        "description": "Proyectos, exégesis y planificador — donde produces tu material."
+                    },
+                    "resources": {
+                        "title": "Mis Recursos",
+                        "description": "Tus recursos guardados, sermones y biblioteca personal."
+                    }
+                },
+                "confirmTitle": "Tu escritorio está listo",
+                "confirmBody": "Sin presión. Cuando quieras empezar, todo está en el sidebar — Estudios, Trabajos y Recursos.",
+                "cta": "Entrar al escritorio",
+                "comingSoon": ""
+            }
+        },
+        "workflow": {
+            "eyebrow": "Así funciona"
+        },
+        "confirm": {
+            "eyebrow": "Listo para empezar"
+        },
+        "help": {
+            "title": "Centro de ayuda",
+            "subtitle": "Revisa el flujo de cada herramienta o vuelve a ver la bienvenida.",
+            "backToList": "Volver al listado",
+            "relaunchWizard": "Volver a ver la bienvenida",
+            "fabAria": "Abrir centro de ayuda"
+        }
     }
 }
