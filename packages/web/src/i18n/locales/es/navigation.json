@@ -26,9 +26,9 @@
         "contactLeads": "Leads de Contacto"
     },
     "groups": {
-        "work": "Tu trabajo",
-        "study": "Tu estudio",
-        "environment": "Tu entorno",
+        "study": "Mis Estudios",
+        "work": "Mis Trabajos",
+        "resources": "Mis Recursos",
         "account": "Cuenta"
     },
     "user": {

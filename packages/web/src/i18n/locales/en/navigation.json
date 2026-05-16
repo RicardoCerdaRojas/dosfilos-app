@@ -26,9 +26,9 @@
         "contactLeads": "Contact Leads"
     },
     "groups": {
-        "work": "Your Work",
-        "study": "Your Study",
-        "environment": "Your Environment",
+        "study": "My Studies",
+        "work": "My Work",
+        "resources": "My Resources",
         "account": "Account"
     },
     "user": {
