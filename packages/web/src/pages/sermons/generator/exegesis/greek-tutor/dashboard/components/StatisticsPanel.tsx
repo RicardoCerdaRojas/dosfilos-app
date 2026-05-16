@@ -1,7 +1,6 @@
 import React from 'react';
 import { BarChart3, BookOpen, TrendingUp, Clock, Flame, Info } from 'lucide-react';
 import { StudySession } from '@dosfilos/domain';
-import { formatDistanceToNow } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import {
     Popover,
@@ -10,33 +9,13 @@ import {
 } from '@/components/ui/popover';
 import { calculateSessionProgress, getSessionLastActivity } from '../utils/sessionUtils';
 import { calculateStudyStreak } from '../utils/progressUtils';
+import { shortRelativeTime } from '../utils/relativeTimeUtils';
 import { useTranslation } from '@/i18n';
 import { Trans } from 'react-i18next';
 
 interface StatisticsPanelProps {
     sessions: StudySession[];
 }
-
-/**
- * Compact short-form for date-fns relative time. Uses word boundaries so
- * "menos de un minuto" doesn't collapse to "unmin".
- */
-const shortenRelativeTime = (input: string): string =>
-    input
-        .replace('alrededor de ', '')
-        .replace(/\bhoras\b/g, 'h')
-        .replace(/\bhora\b/g, 'h')
-        .replace(/\bminutos\b/g, 'min')
-        .replace(/\bminuto\b/g, 'min')
-        .replace(/\bdías\b/g, 'd')
-        .replace(/\bdía\b/g, 'd')
-        .replace(/\bhours\b/g, 'h')
-        .replace(/\bhour\b/g, 'h')
-        .replace(/\bminutes\b/g, 'min')
-        .replace(/\bminute\b/g, 'min')
-        .replace(/\bdays\b/g, 'd')
-        .replace(/\bday\b/g, 'd')
-        .replace('about ', '');
 
 export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) => {
     const { i18n } = useTranslation();
@@ -56,10 +35,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
         }, getSessionLastActivity(sessions[0]!))
         : null;
 
-    const lastActivityText = lastActivity
-        ? shortenRelativeTime(formatDistanceToNow(lastActivity, { addSuffix: true, locale: dateLocale }))
-        : 'N/A';
-
+    const lastActivityText = lastActivity ? shortRelativeTime(lastActivity, dateLocale) : 'N/A';
     const streak = calculateStudyStreak(sessions);
 
     const stats = [
@@ -69,7 +45,6 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
             label: t('dashboard.statistics.lastActivity'),
             value: lastActivityText,
             color: 'text-primary',
-            hero: true,
         },
         {
             key: 'active',
@@ -77,7 +52,6 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
             label: t('dashboard.statistics.activeSessions'),
             value: activeSessions,
             color: 'text-info',
-            hero: true,
         },
         {
             key: 'words',
@@ -103,21 +77,23 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
     ];
 
     return (
-        <div className="bg-card border rounded-lg p-3">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="bg-card border rounded-lg overflow-hidden">
+            {/* `divide-x` paints a hairline between cells so the row reads as a structured strip
+                rather than free-floating numbers. Vertical dividers collapse on mobile via flex-wrap. */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-border">
                 {stats.map((stat) => {
                     const needsTooltip = stat.key === 'progress' || stat.key === 'streak';
 
                     const statContent = (
-                        <div className="space-y-0.5">
+                        <div className="px-4 py-3 space-y-1">
                             <div className="flex items-center gap-1.5">
-                                <stat.icon className={`h-3 w-3 ${stat.color}`} />
-                                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">{stat.label}</p>
                                 {needsTooltip && (
                                     <Info className="h-3 w-3 text-muted-foreground/50 hover:text-primary transition-colors cursor-help" />
                                 )}
                             </div>
-                            <p className={`font-bold ${stat.hero ? 'text-xl' : 'text-base'}`}>{stat.value}</p>
+                            <p className="text-lg font-semibold text-foreground">{stat.value}</p>
                         </div>
                     );
 
@@ -169,7 +145,9 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ sessions }) =>
                     return (
                         <Popover key={stat.key}>
                             <PopoverTrigger asChild>
-                                {statContent}
+                                <button className="text-left hover:bg-muted/30 transition-colors">
+                                    {statContent}
+                                </button>
                             </PopoverTrigger>
                             <PopoverContent side="top" className="w-80">
                                 {tooltipContent}

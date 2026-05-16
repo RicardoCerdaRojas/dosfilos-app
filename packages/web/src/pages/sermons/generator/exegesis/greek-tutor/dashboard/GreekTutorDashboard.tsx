@@ -302,7 +302,17 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                             {t('dashboard.showingCount', { filtered: filteredAndSortedSessions.length, total: sessions.length })}
                         </div>
                     )}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {/* Adapt grid density to count: a single session shouldn't stretch across
+                        a 3-col grid and look orphaned. Two cards fit side-by-side with breathing room. */}
+                    <div
+                        className={
+                            filteredAndSortedSessions.length === 1
+                                ? 'grid gap-4 max-w-2xl'
+                                : filteredAndSortedSessions.length === 2
+                                    ? 'grid gap-4 md:grid-cols-2'
+                                    : 'grid gap-4 md:grid-cols-2 lg:grid-cols-3'
+                        }
+                    >
                         {filteredAndSortedSessions.map((session) => (
                             <SessionCard
                                 key={session.id}
