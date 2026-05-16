@@ -154,7 +154,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
                     : t('users.table.neverLogged')}
             </TableCell>
 
-            <TableCell className="text-right">
+            <TableCell className="text-right pr-4">
                 <div className="flex items-center justify-end gap-1">
                     <Button
                         size="sm"

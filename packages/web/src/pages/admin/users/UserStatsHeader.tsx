@@ -135,6 +135,16 @@ interface StatProps {
     hint?: string;
 }
 
+/**
+ * Type hierarchy on this page (top → bottom in visual weight):
+ *   1. Page H1 ("Gestión de Usuarios") — text-3xl bold
+ *   2. KPI hero value (Total, Subscribers, MRR) — text-2xl bold
+ *   3. KPI secondary value (Trial, New, Conversion) — text-lg semibold
+ *   4. Table headers — text-xs uppercase tracking-wider semibold
+ *   5. Row content — text-sm / font-medium for primary, muted for hints
+ * Hero stays smaller than H1 so the page identity wins the eye first; secondaries
+ * stay clearly below hero so the strip reads as 3+3 rather than 6 flat numbers.
+ */
 function HeroStat({ icon: Icon, label, value, tone, hint }: StatProps) {
     return (
         <div className="px-6 py-5 space-y-2">
@@ -142,7 +152,7 @@ function HeroStat({ icon: Icon, label, value, tone, hint }: StatProps) {
                 <Icon className={`h-4 w-4 ${tone}`} />
                 <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</p>
             </div>
-            <p className={`text-3xl font-bold tabular-nums leading-none ${tone}`}>{value}</p>
+            <p className={`text-2xl font-bold tabular-nums leading-none ${tone}`}>{value}</p>
             {hint && (
                 <p className="text-xs text-muted-foreground truncate" title={hint}>{hint}</p>
             )}
@@ -157,7 +167,7 @@ function SecondaryStat({ icon: Icon, label, value, tone, delta, hint }: StatProp
                 <Icon className={`h-3.5 w-3.5 ${tone}`} />
                 <p className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">{label}</p>
             </div>
-            <p className={`text-xl font-semibold tabular-nums leading-none ${tone}`}>{value}</p>
+            <p className={`text-lg font-semibold tabular-nums leading-none ${tone}`}>{value}</p>
             {typeof delta === 'number' && delta !== 0 && (
                 <p className={`text-xs tabular-nums ${delta > 0 ? 'text-success' : 'text-destructive'}`}>
                     {delta > 0 ? '+' : ''}{delta} vs last month

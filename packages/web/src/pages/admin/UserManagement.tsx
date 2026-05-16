@@ -319,7 +319,7 @@ export function UserManagement() {
                 : <UserStatsHeader users={allUsers} />}
 
             <Card className="p-5">
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row md:items-center gap-3">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -330,33 +330,38 @@ export function UserManagement() {
                         />
                     </div>
 
-                    <Select value={planFilter} onValueChange={(v) => setPlanFilter(v as PlanFilterValue)}>
-                        <SelectTrigger className="w-full md:w-40">
-                            <Filter className="h-4 w-4 mr-2" />
-                            <SelectValue placeholder={t('users.filters.plan')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{t('users.filters.allPlans')}</SelectItem>
-                            <SelectItem value="free">Free</SelectItem>
-                            <SelectItem value="basic">Personal</SelectItem>
-                            <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="team">Equipo</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {/* Filter cluster lives in its own flex row so the two selects always sit side-by-side
+                        with a fixed gap. Previously each was a direct child of the parent flex which made
+                        them overflow into each other at certain widths. */}
+                    <div className="flex items-center gap-3 shrink-0">
+                        <Select value={planFilter} onValueChange={(v) => setPlanFilter(v as PlanFilterValue)}>
+                            <SelectTrigger className="w-full md:w-44">
+                                <Filter className="h-4 w-4 mr-2" />
+                                <SelectValue placeholder={t('users.filters.plan')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t('users.filters.allPlans')}</SelectItem>
+                                <SelectItem value="free">Free</SelectItem>
+                                <SelectItem value="basic">Personal</SelectItem>
+                                <SelectItem value="pro">Pro</SelectItem>
+                                <SelectItem value="team">Equipo</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilterValue)}>
-                        <SelectTrigger className="w-full md:w-40">
-                            <SelectValue placeholder={t('users.filters.status')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{t('users.filters.allStatuses')}</SelectItem>
-                            <SelectItem value="active">{t('users.filters.active')}</SelectItem>
-                            <SelectItem value="trialing">{t('users.filters.trialing')}</SelectItem>
-                            <SelectItem value="past_due">{t('users.filters.pastDue')}</SelectItem>
-                            <SelectItem value="cancelled">{t('users.filters.cancelled')}</SelectItem>
-                            <SelectItem value="disabled">{t('users.filters.disabled')}</SelectItem>
-                        </SelectContent>
-                    </Select>
+                        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilterValue)}>
+                            <SelectTrigger className="w-full md:w-44">
+                                <SelectValue placeholder={t('users.filters.status')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t('users.filters.allStatuses')}</SelectItem>
+                                <SelectItem value="active">{t('users.filters.active')}</SelectItem>
+                                <SelectItem value="trialing">{t('users.filters.trialing')}</SelectItem>
+                                <SelectItem value="past_due">{t('users.filters.pastDue')}</SelectItem>
+                                <SelectItem value="cancelled">{t('users.filters.cancelled')}</SelectItem>
+                                <SelectItem value="disabled">{t('users.filters.disabled')}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </Card>
 
@@ -397,21 +402,20 @@ export function UserManagement() {
             ) : (
                 <Card>
                     <Table>
-                        <TableHeader>
+                        {/* `[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:font-semibold [&_th]:text-muted-foreground`
+                            on the header gives table column titles a clear caption tier — distinct from row content
+                            and from page H1. Was inheriting the default font-medium foreground, which read as "another
+                            row" rather than a section label. */}
+                        <TableHeader className="[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:font-semibold [&_th]:text-muted-foreground [&_th]:h-12">
                             <TableRow>
                                 <TableHead className="w-10">
                                     <Checkbox
                                         checked={allVisibleSelected}
-                                        // Indeterminate state when only some are selected — visual cue
-                                        // using the data-* attribute (Radix renders accordingly).
                                         data-state={someVisibleSelected && !allVisibleSelected ? 'indeterminate' : undefined}
                                         onCheckedChange={(c) => toggleAllVisible(c === true)}
                                         aria-label={t('users.table.selectAllAria')}
                                     />
                                 </TableHead>
-                                {/* Identity column merges user + plan + status. Registered date
-                                    is gone from the table (still surfaced in UserDetailsModal)
-                                    so the row fits without horizontal scroll. */}
                                 <SortableHeader
                                     label={t('users.table.user')}
                                     field="displayName"
@@ -431,7 +435,7 @@ export function UserManagement() {
                                     currentSort={sort}
                                     onSort={handleSort}
                                 />
-                                <TableHead className="text-right">{t('users.table.actions')}</TableHead>
+                                <TableHead className="text-right pr-4">{t('users.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
