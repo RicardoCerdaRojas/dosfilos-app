@@ -60,18 +60,28 @@ export function AppSidebar() {
   }, [adminOpen]);
 
   // Plan info for the footer row. Free shows a muted chip with an Upgrade CTA;
-  // paid tiers show a colored chip without CTA (status, not pitch).
+  // paid tiers show a colored chip without CTA (status, not pitch). Maps cover
+  // every backend plan id (free / basic / pro / team / enterprise) — previously
+  // missing `basic` meant Personal-plan users rendered as "Free".
   const planInfo = (() => {
     const planId = subscription?.planId || 'free';
-    const planNames: Record<string, string> = { free: 'Free', pro: 'Pro', team: 'Team' };
+    const planNames: Record<string, string> = {
+      free: 'Free',
+      basic: 'Personal',
+      pro: 'Pro',
+      team: 'Team',
+      enterprise: 'Enterprise',
+    };
     const planClasses: Record<string, string> = {
       free: 'bg-muted text-muted-foreground border-border',
+      basic: 'bg-info-subtle text-info-subtle-foreground border-info/30',
       pro: 'bg-primary/10 text-primary border-primary/30',
       team: 'bg-warning-subtle text-warning-subtle-foreground border-warning/30',
+      enterprise: 'bg-warning-subtle text-warning-subtle-foreground border-warning/30',
     };
     return {
       id: planId,
-      name: planNames[planId] ?? 'Free',
+      name: planNames[planId] ?? planNames.free,
       className: planClasses[planId] ?? planClasses.free,
       isFree: planId === 'free',
     };
