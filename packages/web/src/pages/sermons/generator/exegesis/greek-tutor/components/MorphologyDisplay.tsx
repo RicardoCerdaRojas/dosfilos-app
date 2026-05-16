@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { MorphologyBreakdown } from '@dosfilos/domain';
 import { ComponentBadge } from './ComponentBadge';
 import { InsightCard } from './InsightCard';
-import { ArrowRight, GraduationCap } from 'lucide-react';
+import { ArrowRight, GraduationCap, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from '@/i18n';
@@ -19,8 +19,24 @@ const COMPONENT_BORDER_CLASS: Record<string, string> = {
     ending: 'border-l-primary',
 };
 
+const TIP_DISMISSED_KEY = 'greek-tutor-morphology-tip-dismissed';
+
 export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown }) => {
     const { t } = useTranslation('greekTutor');
+    const [tipDismissed, setTipDismissed] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        return localStorage.getItem(TIP_DISMISSED_KEY) === 'true';
+    });
+
+    const dismissTip = () => {
+        localStorage.setItem(TIP_DISMISSED_KEY, 'true');
+        setTipDismissed(true);
+    };
+
+    const restoreTip = () => {
+        localStorage.removeItem(TIP_DISMISSED_KEY);
+        setTipDismissed(false);
+    };
 
     const getComponentLabel = (type: string): string => {
         switch (type) {
@@ -34,22 +50,43 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Pedagogical Tip — surfaced at top so users read the guidance before working through components */}
-            <Card className="border-warning/30 bg-warning-subtle/40">
-                <div className="p-3 flex items-start gap-3">
-                    <div className="w-8 h-8 shrink-0 rounded-lg bg-warning/15 flex items-center justify-center">
-                        <GraduationCap className="w-4 h-4 text-warning" />
+            {/* Pedagogical Tip — surfaced at top so users read the guidance before working through
+                components. Dismiss persists in localStorage so repeat users aren't re-shown the same tip;
+                a compact pill restores it on demand. */}
+            {tipDismissed ? (
+                <button
+                    type="button"
+                    onClick={restoreTip}
+                    className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/50"
+                >
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    {t('morphology.tipShow')}
+                </button>
+            ) : (
+                <Card className="border-warning/30 bg-warning-subtle/40">
+                    <div className="p-3 flex items-start gap-3">
+                        <div className="w-8 h-8 shrink-0 rounded-lg bg-warning/15 flex items-center justify-center">
+                            <GraduationCap className="w-4 h-4 text-warning" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            <h4 className="text-xs font-bold text-warning-subtle-foreground uppercase tracking-wide">
+                                {t('morphology.pedagogicalTip')}
+                            </h4>
+                            <p className="text-sm text-foreground/90 leading-relaxed">
+                                {t('morphology.tipContent')}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={dismissTip}
+                            aria-label={t('morphology.tipDismiss')}
+                            className="shrink-0 -mt-1 -mr-1 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-warning/10 transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
                     </div>
-                    <div className="space-y-1">
-                        <h4 className="text-xs font-bold text-warning-subtle-foreground uppercase tracking-wide">
-                            {t('morphology.pedagogicalTip')}
-                        </h4>
-                        <p className="text-sm text-foreground/90 leading-relaxed">
-                            {t('morphology.tipContent')}
-                        </p>
-                    </div>
-                </div>
-            </Card>
+                </Card>
+            )}
 
             <div>
                 <h5 className="text-sm text-muted-foreground">

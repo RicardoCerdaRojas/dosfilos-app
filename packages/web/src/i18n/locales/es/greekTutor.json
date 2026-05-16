@@ -496,6 +496,8 @@
         "synthesis": "Síntesis",
         "pedagogicalTip": "Tip Pedagógico",
         "tipContent": "Al identificar morfemas, empieza siempre por la raíz (el significado principal), luego analiza los prefijos que modifican el sentido, y finalmente las terminaciones que indican función gramatical. Este orden te ayudará a comprender tanto el significado como la función de la palabra en el texto.",
+        "tipDismiss": "Ocultar tip",
+        "tipShow": "Mostrar tip pedagógico",
         "componentTypes": {
             "prefix": "Prefijo",
             "root": "Raíz",

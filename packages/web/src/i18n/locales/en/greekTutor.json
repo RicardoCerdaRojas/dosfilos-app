@@ -550,6 +550,8 @@
         "synthesis": "Synthesis",
         "pedagogicalTip": "Pedagogical Tip",
         "tipContent": "Observe how the prefix changes the nuances of the root verb.",
+        "tipDismiss": "Hide tip",
+        "tipShow": "Show pedagogical tip",
         "componentTypes": {
             "prefix": "Prefix",
             "root": "Root",
