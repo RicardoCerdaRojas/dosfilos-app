@@ -11,46 +11,20 @@ import { toast } from 'sonner';
 import {
     ONBOARDING_INTENTS,
     persistIntent,
-    type OnboardingIntent,
+    ACCENT_TONE,
     type OnboardingIntentId,
 } from './onboardingIntents';
 import { WelcomeIllustration } from './WelcomeIllustration';
+import { WorkflowStoryboard } from './WorkflowStoryboard';
 
 interface OnboardingWizardProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-type Step = 'welcome' | 'intent' | 'confirm';
+type Step = 'welcome' | 'intent' | 'workflow' | 'confirm';
 
-const STEP_ORDER: Step[] = ['welcome', 'intent', 'confirm'];
-
-const ACCENT_TONE: Record<OnboardingIntent['accent'], { iconBg: string; iconText: string; selectedBorder: string; selectedBg: string }> = {
-    primary: {
-        iconBg: 'bg-primary/10',
-        iconText: 'text-primary',
-        selectedBorder: 'border-primary',
-        selectedBg: 'bg-primary/5',
-    },
-    info: {
-        iconBg: 'bg-info-subtle',
-        iconText: 'text-info',
-        selectedBorder: 'border-info',
-        selectedBg: 'bg-info-subtle/40',
-    },
-    success: {
-        iconBg: 'bg-success-subtle',
-        iconText: 'text-success',
-        selectedBorder: 'border-success',
-        selectedBg: 'bg-success-subtle/40',
-    },
-    warning: {
-        iconBg: 'bg-warning-subtle',
-        iconText: 'text-warning',
-        selectedBorder: 'border-warning',
-        selectedBg: 'bg-warning-subtle/40',
-    },
-};
+const STEP_ORDER: Step[] = ['welcome', 'intent', 'workflow', 'confirm'];
 
 /**
  * Full-screen onboarding takeover. Replaces the old `OnboardingWelcomeModal`
@@ -118,13 +92,15 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
 
     const goNext = () => {
         if (step === 'welcome') setStep('intent');
-        else if (step === 'intent' && selectedIntent) setStep('confirm');
+        else if (step === 'intent' && selectedIntent) setStep('workflow');
+        else if (step === 'workflow') setStep('confirm');
         else if (step === 'confirm') handleComplete();
     };
 
     const goPrev = () => {
         if (step === 'intent') setStep('welcome');
-        else if (step === 'confirm') setStep('intent');
+        else if (step === 'workflow') setStep('intent');
+        else if (step === 'confirm') setStep('workflow');
     };
 
     if (!isOpen) return null;
@@ -291,6 +267,42 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                                         disabled={!selectedIntent}
                                         className="gap-2"
                                     >
+                                        {t('onboarding.nav.continue')}
+                                        <ArrowRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {step === 'workflow' && intent && (
+                            <motion.div
+                                key="workflow"
+                                initial={{ opacity: 0, x: 30 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -30 }}
+                                transition={{ duration: 0.35, ease: 'easeOut' }}
+                                className="w-full max-w-5xl space-y-10"
+                            >
+                                <div className="text-center space-y-3 max-w-2xl mx-auto">
+                                    <div className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
+                                        {t('onboarding.workflow.eyebrow')}
+                                    </div>
+                                    <h2 className="font-reading text-3xl md:text-4xl leading-tight tracking-[-0.01em] text-foreground">
+                                        {t(`onboarding.intents.${intent.id}.workflowTitle`)}
+                                    </h2>
+                                    <p className="text-sm md:text-base text-muted-foreground">
+                                        {t(`onboarding.intents.${intent.id}.workflowSubtitle`)}
+                                    </p>
+                                </div>
+
+                                <WorkflowStoryboard intent={intent} />
+
+                                <div className="flex items-center justify-between pt-4 max-w-3xl mx-auto w-full">
+                                    <Button variant="ghost" onClick={goPrev} className="gap-2">
+                                        <ArrowLeft className="h-4 w-4" />
+                                        {t('onboarding.nav.back')}
+                                    </Button>
+                                    <Button size="lg" onClick={goNext} className="gap-2">
                                         {t('onboarding.nav.continue')}
                                         <ArrowRight className="h-4 w-4" />
                                     </Button>
