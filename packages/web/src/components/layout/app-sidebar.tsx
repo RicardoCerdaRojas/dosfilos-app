@@ -367,90 +367,103 @@ export function AppSidebar() {
 
       {/* Footer with User Menu */}
       <SidebarFooter className="border-t">
-        {/* Plan row — sits above the account button so the chip groups with identity.
-            Free shows an Upgrade affordance; paid tiers are status-only. Hidden when
-            the sidebar is collapsed to its icon rail. */}
-        <Link
-          to="/dashboard/subscription"
-          className="group-data-[collapsible=icon]:hidden flex items-center justify-between gap-2 px-2 py-1.5 text-xs rounded-md hover:bg-sidebar-accent transition-colors"
-        >
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border font-semibold ${planInfo.className}`}>
-            <Sparkles className="h-3 w-3" />
-            {planInfo.name}
-          </span>
-          {planInfo.isFree && (
-            <span className="text-primary font-medium">
-              {t('user.upgrade')} →
-            </span>
-          )}
-        </Link>
-
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 w-full h-12 px-2 hover:bg-sidebar-accent rounded-md transition-colors cursor-pointer">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                <button className="flex items-center gap-2.5 w-full px-2 py-2 hover:bg-sidebar-accent rounded-md transition-colors cursor-pointer">
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col items-start overflow-hidden flex-1">
-                    <span className="text-sm font-medium truncate w-full">
+                  <div className="flex flex-col items-start overflow-hidden flex-1 group-data-[collapsible=icon]:hidden">
+                    <span className="text-sm font-medium truncate w-full leading-tight">
                       {user?.displayName || t('user.defaultName')}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate w-full">
-                      {user?.email}
+                    <span className="flex items-center gap-1.5 text-xs leading-tight mt-0.5">
+                      <span className={`inline-flex items-center px-1.5 py-0 rounded-sm font-medium ${planInfo.className} border`}>
+                        {planInfo.name}
+                      </span>
+                      {planInfo.isFree && (
+                        <span className="text-primary font-medium">
+                          {t('user.upgrade')} →
+                        </span>
+                      )}
                     </span>
                   </div>
-                  <ChevronUp className="ml-auto h-4 w-4" />
+                  <ChevronUp className="ml-auto h-4 w-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="end" className="w-56">
-                <DropdownMenuLabel>
+              <DropdownMenuContent side="top" align="end" className="w-64">
+                {/* Identity header — full email lives here, not in the main button */}
+                <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
                       {user?.displayName || t('user.defaultName')}
                     </p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-xs leading-none text-muted-foreground truncate">
                       {user?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                
-                {/* Theme Submenu */}
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
+
+                {/* Plan summary row inside the dropdown for paid users + quick Manage link */}
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/subscription" className="flex items-center justify-between cursor-pointer">
+                    <span className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      <span className={`inline-flex items-center px-1.5 py-0 rounded-sm text-xs font-medium border ${planInfo.className}`}>
+                        {planInfo.name}
+                      </span>
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {planInfo.isFree ? t('user.upgrade') : t('user.manage')} →
+                    </span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
                   {t('user.appearance')}
                 </DropdownMenuLabel>
                 <ThemeToggleMenu />
-                
+
                 <DropdownMenuSeparator />
-                
-                <DropdownMenuItem>
-                  <User2 className="mr-2 h-4 w-4" />
-                  {t('user.profile')}
+
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/settings" className="cursor-pointer">
+                    <User2 className="mr-2 h-4 w-4" />
+                    {t('user.profile')}
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Bell className="mr-2 h-4 w-4" />
                   {t('user.notifications')}
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
+                  className="text-destructive focus:text-destructive cursor-pointer"
                   onClick={handleLogout}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   {t('user.logout')}
                 </DropdownMenuItem>
+
+                {/* Build version is support-only metadata — kept available for screenshots
+                    but out of the main UI where it carried no user value */}
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-[10px] text-muted-foreground/60 text-center">
+                  v{packageJson.version}
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
-        
-        <div className="text-xs text-muted-foreground text-center py-2 group-data-[collapsible=icon]:hidden">
-          DosFilos.Preach v{packageJson.version}
-        </div>
       </SidebarFooter>
     </Sidebar>
   );

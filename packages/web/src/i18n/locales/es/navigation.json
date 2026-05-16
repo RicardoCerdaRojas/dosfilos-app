@@ -38,7 +38,8 @@
         "notifications": "Notificaciones",
         "logout": "Cerrar Sesión",
         "sessionClosed": "Sesión cerrada",
-        "upgrade": "Mejorar"
+        "upgrade": "Mejorar",
+        "manage": "Gestionar"
     },
     "errors": {
         "logoutError": "Error al cerrar sesión"
