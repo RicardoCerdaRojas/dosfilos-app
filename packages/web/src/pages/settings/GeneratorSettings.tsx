@@ -292,10 +292,14 @@ export function SettingsPage() {
         }));
     };
 
-    // Render phase settings as an accordion item
-    const renderPhaseSettings = (phase: Exclude<WorkflowPhase, WorkflowPhase.COMPLETED>, label: string, icon: React.ReactNode, color: string) => (
-        <AccordionItem value={phase} className={`border-${color}-200`}>
-            <AccordionTrigger className={`hover:bg-${color}-50/50 px-4`}>
+    // Render phase settings as an accordion item.
+    // Note: `color` is decorative metadata for the icon passed in `icon`; the
+    // accordion border + hover stay neutral. Previous code interpolated it into
+    // Tailwind class strings (border-${color}-200) which never compiled anyway —
+    // Tailwind's JIT doesn't extract dynamic class fragments.
+    const renderPhaseSettings = (phase: Exclude<WorkflowPhase, WorkflowPhase.COMPLETED>, label: string, icon: React.ReactNode, _color: string) => (
+        <AccordionItem value={phase}>
+            <AccordionTrigger className="hover:bg-muted/50 px-4">
                 <div className="flex items-center gap-2">
                     {icon}
                     <span>{label}</span>
@@ -309,7 +313,7 @@ export function SettingsPage() {
                     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
                         <div className="space-y-3">
                             <div className="flex items-center gap-2">
-                                <Layers className="h-4 w-4 text-blue-600" />
+                                <Layers className="h-4 w-4 text-primary" />
                                 <Label>Base de Conocimiento (Store)</Label>
                             </div>
                             <Select
@@ -340,15 +344,15 @@ export function SettingsPage() {
                         <Label className="text-muted-foreground">Documentos Legacy (migrar a Biblioteca)</Label>
                         <div className="space-y-2">
                             {(config as any)[phase].documents.map((doc: any) => (
-                                <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm border border-dashed border-amber-300">
+                                <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm border border-dashed border-warning/40">
                                     <div className="flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-amber-500" />
+                                        <FileText className="h-4 w-4 text-warning" />
                                         <span className="truncate max-w-[200px]">{doc.name}</span>
                                     </div>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="h-6 w-6 p-0 hover:text-red-500"
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0 hover:text-destructive"
                                         onClick={() => removeDocument(phase, doc.id)}
                                     >
                                         <X className="h-4 w-4" />
@@ -526,22 +530,22 @@ export function SettingsPage() {
                         <CardContent>
                             <Accordion type="single" collapsible className="w-full">
                                 {renderPhaseSettings(
-                                    WorkflowPhase.EXEGESIS, 
-                                    'Experto en Exégesis', 
-                                    <BookOpen className="h-4 w-4 text-blue-600" />,
-                                    'blue'
+                                    WorkflowPhase.EXEGESIS,
+                                    'Experto en Exégesis',
+                                    <BookOpen className="h-4 w-4 text-info" />,
+                                    'info'
                                 )}
                                 {renderPhaseSettings(
-                                    WorkflowPhase.HOMILETICS, 
-                                    'Experto en Homilética', 
-                                    <Mic className="h-4 w-4 text-purple-600" />,
-                                    'purple'
+                                    WorkflowPhase.HOMILETICS,
+                                    'Experto en Homilética',
+                                    <Mic className="h-4 w-4 text-primary" />,
+                                    'primary'
                                 )}
                                 {renderPhaseSettings(
-                                    WorkflowPhase.DRAFTING, 
-                                    'Experto en Redacción', 
-                                    <PenTool className="h-4 w-4 text-green-600" />,
-                                    'green'
+                                    WorkflowPhase.DRAFTING,
+                                    'Experto en Redacción',
+                                    <PenTool className="h-4 w-4 text-success" />,
+                                    'success'
                                 )}
                             </Accordion>
                         </CardContent>
@@ -551,9 +555,9 @@ export function SettingsPage() {
                 {/* ==================== SERIES TAB ==================== */}
                 {/* ==================== SERIES TAB ==================== */}
                 <TabsContent value="series" className="space-y-6">
-                    <Card className="border-purple-100">
-                        <CardHeader className="bg-purple-50/50">
-                            <CardTitle className="text-purple-900">Planificador de Predicaciones</CardTitle>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Planificador de Predicaciones</CardTitle>
                             <CardDescription>Configura el asistente para planificación de series de sermones.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-6">
@@ -563,7 +567,7 @@ export function SettingsPage() {
                                 <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-2">
-                                            <Layers className="h-4 w-4 text-purple-600" />
+                                            <Layers className="h-4 w-4 text-primary" />
                                             <Label>Base de Conocimiento (Store)</Label>
                                         </div>
                                         <Select
@@ -678,9 +682,9 @@ export function SettingsPage() {
 
                 {/* ==================== GREEK TUTOR TAB ==================== */}
                 <TabsContent value="greek" className="space-y-6">
-                    <Card className="border-indigo-100">
-                        <CardHeader className="bg-indigo-50/50">
-                            <CardTitle className="text-indigo-900">Entrenador de Exégesis Griega</CardTitle>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Entrenador de Exégesis Griega</CardTitle>
                             <CardDescription>Configura el tutor interactivo de griego.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-6">
@@ -690,7 +694,7 @@ export function SettingsPage() {
                                 <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 text-left">
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-2">
-                                            <Layers className="h-4 w-4 text-indigo-600" />
+                                            <Layers className="h-4 w-4 text-primary" />
                                             <Label>Base de Conocimiento (Store)</Label>
                                         </div>
                                         <Select
