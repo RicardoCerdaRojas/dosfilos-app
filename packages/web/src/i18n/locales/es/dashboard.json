@@ -137,5 +137,71 @@
         "title": "¡Crea tu primer sermón!",
         "subtitle": "Comienza tu jornada con tu asistente para preparación homilética",
         "cta": "Generar sermón"
+    },
+    "onboarding": {
+        "skip": "Saltar por ahora",
+        "nav": {
+            "back": "Atrás",
+            "continue": "Continuar"
+        },
+        "welcome": {
+            "eyebrow": "Tu escritorio te espera",
+            "greeting": "Bienvenido al escritorio.",
+            "greetingNamed": "Bienvenido, {{name}}.",
+            "subtitle": "Tu escritorio está preparado con libros, tutores teológicos, lenguas originales y las herramientas para producir tu material. Antes de entrar, ¿qué te trae hoy?",
+            "cta": "Empezar",
+            "skipCta": "Explorar por mi cuenta"
+        },
+        "intent": {
+            "eyebrow": "Personaliza tu inicio",
+            "title": "¿Qué te trae hoy?",
+            "subtitle": "Elige el camino que mejor describe tu objetivo. Te llevamos directo allá y guardamos tu interés para sugerirte mejor después.",
+            "comingSoonBadge": "Próximamente"
+        },
+        "intents": {
+            "exegesis-paper": {
+                "title": "Estudio exegético académico",
+                "description": "Análisis profundo de un pasaje con rúbrica académica, citas verificadas y export .docx.",
+                "confirmTitle": "Vamos a abrir el módulo de Exégesis",
+                "confirmBody": "Te llevamos al wizard académico. Empezarás eligiendo tu pasaje (ej. Hebreos 1:1-4) y la rúbrica que tu profesor pide.",
+                "cta": "Abrir Exégesis",
+                "comingSoon": ""
+            },
+            "devotional-content": {
+                "title": "Devocional o entrada de blog",
+                "description": "Genera devocionales, reflexiones o artículos cortos con tus tutores teológicos.",
+                "confirmTitle": "Vamos a la facultad para crear tu devocional",
+                "confirmBody": "Te llevamos al chat con tus tutores. Pídeles un devocional sobre un pasaje y lo guardamos en Mis Recursos para reusar o publicar.",
+                "cta": "Abrir Facultad",
+                "comingSoon": ""
+            },
+            "expository-series": {
+                "title": "Planificar predicaciones expositivas",
+                "description": "Predicar un libro completo perícopa por perícopa con plan semanal y estudio integrado.",
+                "confirmTitle": "Anotado — pronto lo activamos",
+                "confirmBody": "El pipeline expositivo (división de libro → perícopas → sermones) está en construcción. Te llevamos al dashboard mientras tanto.",
+                "cta": "Ir al escritorio",
+                "comingSoon": "Anotamos tu interés en planificación expositiva. Estamos construyendo el pipeline completo."
+            },
+            "counseling-course": {
+                "title": "Crear un curso o material didáctico",
+                "description": "Consejería prematrimonial, discipulado, clases — con plan de sesiones y artefactos.",
+                "confirmTitle": "Anotado — pronto lo activamos",
+                "confirmBody": "El generador de cursos (sesiones + slides + tareas) está en construcción. Te llevamos al dashboard mientras tanto.",
+                "cta": "Ir al escritorio",
+                "comingSoon": "Anotamos tu interés en cursos. Estamos diseñando el generador de sesiones + artefactos."
+            },
+            "explore": {
+                "title": "Solo explorar",
+                "description": "Mira la plataforma a tu ritmo. Puedes empezar cualquier flujo cuando quieras desde el sidebar.",
+                "confirmTitle": "Tu escritorio está listo",
+                "confirmBody": "Sin presión. Cuando quieras empezar, todo está en el sidebar — Estudios, Trabajos y Recursos.",
+                "cta": "Entrar al escritorio",
+                "comingSoon": ""
+            }
+        },
+        "confirm": {
+            "eyebrow": "Listo para empezar"
+        }
     }
 }

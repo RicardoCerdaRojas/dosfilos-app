@@ -137,5 +137,71 @@
         "title": "Create your first sermon!",
         "subtitle": "Start your journey with your assistant for homiletic preparation",
         "cta": "Generate sermon"
+    },
+    "onboarding": {
+        "skip": "Skip for now",
+        "nav": {
+            "back": "Back",
+            "continue": "Continue"
+        },
+        "welcome": {
+            "eyebrow": "Your desk is waiting",
+            "greeting": "Welcome to your desk.",
+            "greetingNamed": "Welcome, {{name}}.",
+            "subtitle": "Your desk is set with books, theological tutors, original languages and the tools to produce your material. Before you walk in — what brings you here today?",
+            "cta": "Get started",
+            "skipCta": "I'll explore on my own"
+        },
+        "intent": {
+            "eyebrow": "Personalize your start",
+            "title": "What brings you here today?",
+            "subtitle": "Pick the path that best matches your goal. We'll take you straight there and remember your choice to make better suggestions later.",
+            "comingSoonBadge": "Coming soon"
+        },
+        "intents": {
+            "exegesis-paper": {
+                "title": "Academic exegetical study",
+                "description": "Deep analysis of a passage with academic rubric, verified citations and .docx export.",
+                "confirmTitle": "Opening the Exegesis module",
+                "confirmBody": "Taking you to the academic wizard. You'll start by picking your passage (e.g. Hebrews 1:1-4) and the rubric your professor requires.",
+                "cta": "Open Exegesis",
+                "comingSoon": ""
+            },
+            "devotional-content": {
+                "title": "Devotional or blog post",
+                "description": "Generate devotionals, reflections or short articles with your theological tutors.",
+                "confirmTitle": "Heading to the faculty to create your devotional",
+                "confirmBody": "Taking you to chat with your tutors. Ask them for a devotional on a passage and we'll save it in My Resources to reuse or publish.",
+                "cta": "Open Faculty",
+                "comingSoon": ""
+            },
+            "expository-series": {
+                "title": "Plan expository preaching",
+                "description": "Preach a whole book pericope by pericope with weekly plan and integrated study.",
+                "confirmTitle": "Noted — we'll activate this soon",
+                "confirmBody": "The expository pipeline (book division → pericopes → sermons) is in build. We'll take you to the dashboard meanwhile.",
+                "cta": "Go to desk",
+                "comingSoon": "Noted your interest in expository planning. We're building the full pipeline."
+            },
+            "counseling-course": {
+                "title": "Create a course or teaching material",
+                "description": "Premarital counseling, discipleship, classes — with session plan and artifacts.",
+                "confirmTitle": "Noted — we'll activate this soon",
+                "confirmBody": "The course generator (sessions + slides + assignments) is in build. We'll take you to the dashboard meanwhile.",
+                "cta": "Go to desk",
+                "comingSoon": "Noted your interest in courses. We're designing the session + artifact generator."
+            },
+            "explore": {
+                "title": "Just exploring",
+                "description": "Look around at your own pace. Start any flow from the sidebar whenever you're ready.",
+                "confirmTitle": "Your desk is ready",
+                "confirmBody": "No pressure. When you want to begin, everything is in the sidebar — Studies, Work and Resources.",
+                "cta": "Enter desk",
+                "comingSoon": ""
+            }
+        },
+        "confirm": {
+            "eyebrow": "Ready to start"
+        }
     }
 }
