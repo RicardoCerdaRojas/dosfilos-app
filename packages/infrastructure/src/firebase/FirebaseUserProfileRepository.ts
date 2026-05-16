@@ -1,6 +1,6 @@
 import { IUserProfileRepository, User, Subscription } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 export class FirebaseUserProfileRepository implements IUserProfileRepository {
@@ -14,9 +14,36 @@ export class FirebaseUserProfileRepository implements IUserProfileRepository {
             return null;
         }
 
-        const data = docSnap.data();
+        return this.mapProfile(docSnap.id, docSnap.data());
+    }
+
+    /**
+     * Real-time subscription to the user's profile doc. Used by hooks (sidebar
+     * plan chip, subscription badge) that need to reflect admin-driven plan
+     * changes + Stripe webhook updates without a manual refresh.
+     */
+    subscribeProfile(
+        userId: string,
+        onChange: (profile: User | null) => void,
+        onError?: (err: Error) => void,
+    ): () => void {
+        const docRef = doc(db, this.collection, userId);
+        return onSnapshot(
+            docRef,
+            (snap) => {
+                if (!snap.exists()) {
+                    onChange(null);
+                    return;
+                }
+                onChange(this.mapProfile(snap.id, snap.data()));
+            },
+            (err) => onError?.(err),
+        );
+    }
+
+    private mapProfile(id: string, data: any): User {
         return {
-            id: docSnap.id,
+            id,
             email: data.email,
             displayName: data.displayName ?? null,
             photoURL: data.photoURL ?? null,
