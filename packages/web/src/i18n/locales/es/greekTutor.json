@@ -424,6 +424,7 @@
             "step3Title": "3. Aplicación",
             "step3Desc": "Proclama con fidelidad y relevancia pastoral",
             "preachingPoints": "Puntos de Predicación",
+            "reflectiveQuestionsTitle": "Preguntas Reflexivas",
             "reflectiveQuestions": [
                 "¿Cómo cambia este detalle gramatical tu comprensión del pasaje?",
                 "¿Qué verdad teológica resalta esta construcción griega?",
@@ -607,6 +608,12 @@
     },
     "common": {
         "of": "de"
+    },
+    "headers": {
+        "readPassage": "Leer Pasaje Completo",
+        "syntacticStructure": "Estructura Sintáctica",
+        "morphologicalDecomposition": "Descomposición Morfológica",
+        "comprehensionQuiz": "Quiz de Comprensión"
     },
     "modal": {
         "characteristics": "Características:"

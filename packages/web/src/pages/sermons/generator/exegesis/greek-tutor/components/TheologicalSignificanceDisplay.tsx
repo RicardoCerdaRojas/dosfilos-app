@@ -173,7 +173,7 @@ export const TheologicalSignificanceDisplay:React.FC<TheologicalSignificanceDisp
                             <Lightbulb className="w-4 h-4 text-purple-600" />
                         </div>
                         <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100 uppercase tracking-wide">
-                            {t('studyUnit.theology.reflectiveQuestions')}
+                            {t('studyUnit.theology.reflectiveQuestionsTitle')}
                         </h4>
                     </div>
                     {questionsExpanded ? (
