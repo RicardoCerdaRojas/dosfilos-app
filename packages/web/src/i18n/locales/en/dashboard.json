@@ -12,6 +12,36 @@
         "contextEmpty": "No active projects right now.",
         "planChipTooltip": "Available balance this month — click to view your plan"
     },
+    "nextStep": {
+        "agendaUrgent": {
+            "title": "{{title}}",
+            "subtitle_one": "{{day}} · {{count}} day to go",
+            "subtitle_other": "{{day}} · {{count}} days to go",
+            "cta": "Open sermon"
+        },
+        "paperInProgress": {
+            "title": "Resume: {{title}}",
+            "subtitle": "Current phase: {{phase}}",
+            "cta": "Keep working",
+            "untitled": "Untitled study"
+        },
+        "sermonInProgress": {
+            "title": "Resume: {{title}}",
+            "subtitle": "Draft, no schedule yet",
+            "cta": "Open sermon"
+        },
+        "intentNudge": {
+            "subtitle": "Take your first step — the flow is ready",
+            "exegesis-paper": {
+                "title": "Kick off your first exegetical study",
+                "cta": "Open Exegesis"
+            },
+            "devotional-content": {
+                "title": "Create your first devotional with the faculty",
+                "cta": "Open Faculty"
+            }
+        }
+    },
     "agenda": {
         "eyebrow": "Upcoming agenda",
         "viewAll": "View planner",
