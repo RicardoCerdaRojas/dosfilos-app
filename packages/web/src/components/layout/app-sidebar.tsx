@@ -148,11 +148,12 @@ export function AppSidebar() {
       ],
     },
     {
+      // "Cuenta" used to list Configuración + Integraciones + Mi Suscripción as
+      // three separate destinations. Integrations and Subscription are now tabs
+      // inside Configuración to cut menu noise.
       label: t('groups.account'),
       items: [
         { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
-        { name: t('menu.integrations'), href: '/dashboard/settings/integrations', icon: Globe },
-        { name: t('menu.subscription'), href: '/dashboard/subscription', icon: CreditCard },
       ],
     },
   ];
@@ -411,7 +412,7 @@ export function AppSidebar() {
 
                 {/* Plan summary row inside the dropdown for paid users + quick Manage link */}
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard/subscription" className="flex items-center justify-between cursor-pointer">
+                  <Link to="/dashboard/settings?tab=subscription" className="flex items-center justify-between cursor-pointer">
                     <span className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />
                       <span className={`inline-flex items-center px-1.5 py-0 rounded-sm text-xs font-medium border ${planInfo.className}`}>

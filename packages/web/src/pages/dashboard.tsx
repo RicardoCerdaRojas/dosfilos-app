@@ -365,7 +365,7 @@ function PlanBalanceChip() {
 
     return (
         <Link
-            to="/dashboard/subscription"
+            to="/dashboard/settings?tab=subscription"
             className={cn(
                 'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:border-foreground/40',
                 tone,

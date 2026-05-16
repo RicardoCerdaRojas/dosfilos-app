@@ -1,19 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ExpandableTextarea } from '@/components/ui/expandable-textarea';
 
-// ... imports
-
-
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { WorkflowPhase } from '@dosfilos/domain';
-import { BookOpen, Mic, PenTool, Settings, Library, Layers, Cog, Calendar, GraduationCap } from 'lucide-react';
+import { BookOpen, Mic, PenTool, Settings, Library, Layers, Cog, Calendar, GraduationCap, Globe, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
 import { ConfigService } from '@dosfilos/application';
@@ -28,9 +25,15 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLi
 
 import { useSearchParams } from 'react-router-dom';
 import { LibrarySettings } from './LibrarySettings';
-import { useAuthorization } from '@/hooks/useAuthorization'; // 🎯 NEW
-// Legacy selector removed
-// import { LibraryDocumentSelector } from '@/components/settings/LibraryDocumentSelector';
+import { IntegrationsSettings } from './IntegrationsSettings';
+import { useAuthorization } from '@/hooks/useAuthorization';
+
+// Subscription page is heavy (Stripe + plan grid). Lazy-load so users who never
+// open the Suscripción tab don't pay the cost.
+const SubscriptionPage = lazy(() => import('@/pages/subscription/SubscriptionPage'));
+
+/** Tabs that share the asistente `config` state and use the global Save bar. */
+const ASSISTANT_TABS = new Set(['sermons', 'series', 'greek', 'library', 'advanced']);
 
 export function SettingsPage() {
     const { user } = useFirebase();
@@ -444,24 +447,30 @@ export function SettingsPage() {
             </div>
 
             <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-                <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} h-14 p-1 bg-muted/50`}>
-                    <TabsTrigger value="sermons" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 h-12 gap-2">
+                {/* Single unified tab strip. Drops per-tab color tints (blue/purple/indigo/amber/gray) —
+                    they produced an inconsistent palette and bled the active color into card headers.
+                    `flex-wrap` so the row reflows on narrow viewports instead of squishing. */}
+                <TabsList className="flex flex-wrap w-full h-auto p-1 bg-muted/50 justify-start gap-1">
+                    <TabsTrigger value="sermons" className="h-10 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                         <Layers className="h-4 w-4" /> Sermones
                     </TabsTrigger>
-                    <TabsTrigger value="series" className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 h-12 gap-2">
-                        <Calendar className="h-4 w-4" /> Planificador Predicaciones
+                    <TabsTrigger value="series" className="h-10 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+                        <Calendar className="h-4 w-4" /> Planificador
                     </TabsTrigger>
-                     <TabsTrigger value="greek" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 h-12 gap-2">
-                        <GraduationCap className="h-4 w-4" /> Entrenador Griego
+                    <TabsTrigger value="greek" className="h-10 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+                        <GraduationCap className="h-4 w-4" /> Griego
                     </TabsTrigger>
-                    {/* Biblioteca: accesible a todos desde el lanzamiento de biblioteca personal.
-                        Los usuarios regulares gestionan sus propias categorías; admin además
-                        configura la Core Library (en /dashboard/admin/core-library). */}
-                    <TabsTrigger value="library" className="data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 h-12 gap-2">
+                    <TabsTrigger value="library" className="h-10 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                         <Library className="h-4 w-4" /> Biblioteca
                     </TabsTrigger>
+                    <TabsTrigger value="integrations" className="h-10 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+                        <Globe className="h-4 w-4" /> Integraciones
+                    </TabsTrigger>
+                    <TabsTrigger value="subscription" className="h-10 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+                        <CreditCard className="h-4 w-4" /> Suscripción
+                    </TabsTrigger>
                     {isAdmin && (
-                        <TabsTrigger value="advanced" className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700 h-12 gap-2">
+                        <TabsTrigger value="advanced" className="h-10 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Cog className="h-4 w-4" /> Avanzado
                         </TabsTrigger>
                     )}
@@ -775,6 +784,22 @@ export function SettingsPage() {
                     <LibrarySettings />
                 </TabsContent>
 
+                {/* ==================== INTEGRATIONS TAB ==================== */}
+                <TabsContent value="integrations">
+                    <IntegrationsSettings />
+                </TabsContent>
+
+                {/* ==================== SUBSCRIPTION TAB ==================== */}
+                <TabsContent value="subscription">
+                    <Suspense fallback={
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                    }>
+                        <SubscriptionPage />
+                    </Suspense>
+                </TabsContent>
+
                 {/* ==================== ADVANCED TAB ==================== */}
                 <TabsContent value="advanced" className="space-y-6">
                     <Card>
@@ -827,20 +852,23 @@ export function SettingsPage() {
                 </TabsContent>
             </Tabs>
 
-            {/* Save Button */}
-            <div className="flex justify-end gap-4">
-                <Button variant="outline" disabled={isSaving}>Cancelar</Button>
-                <Button onClick={handleSave} className="min-w-[150px]" disabled={isSaving}>
-                    {isSaving ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Guardando...
-                        </>
-                    ) : (
-                        'Guardar Cambios'
-                    )}
-                </Button>
-            </div>
+            {/* Save bar — only for tabs that share the asistente config state.
+                Integraciones + Suscripción manage their own state and have their own save flows. */}
+            {ASSISTANT_TABS.has(currentTab) && (
+                <div className="flex justify-end gap-4">
+                    <Button variant="outline" disabled={isSaving}>Cancelar</Button>
+                    <Button onClick={handleSave} className="min-w-[150px]" disabled={isSaving}>
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Guardando...
+                            </>
+                        ) : (
+                            'Guardar Cambios'
+                        )}
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
