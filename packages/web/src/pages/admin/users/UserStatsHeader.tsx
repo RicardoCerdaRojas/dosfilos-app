@@ -80,7 +80,7 @@ export function UserStatsHeader({ users }: Props) {
     }, [users]);
 
     return (
-        <div className="bg-card border rounded-lg overflow-hidden mb-6">
+        <div className="bg-card border rounded-lg overflow-hidden">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-border">
                 <HeroStat
                     icon={Users}
@@ -137,14 +137,14 @@ interface StatProps {
 
 function HeroStat({ icon: Icon, label, value, tone, hint }: StatProps) {
     return (
-        <div className="px-4 py-3 space-y-1">
-            <div className="flex items-center gap-1.5">
-                <Icon className={`h-3.5 w-3.5 ${tone}`} />
-                <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">{label}</p>
+        <div className="px-6 py-5 space-y-2">
+            <div className="flex items-center gap-2">
+                <Icon className={`h-4 w-4 ${tone}`} />
+                <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</p>
             </div>
-            <p className={`text-2xl font-bold tabular-nums ${tone}`}>{value}</p>
+            <p className={`text-3xl font-bold tabular-nums leading-none ${tone}`}>{value}</p>
             {hint && (
-                <p className="text-[11px] text-muted-foreground truncate" title={hint}>{hint}</p>
+                <p className="text-xs text-muted-foreground truncate" title={hint}>{hint}</p>
             )}
         </div>
     );
@@ -152,19 +152,19 @@ function HeroStat({ icon: Icon, label, value, tone, hint }: StatProps) {
 
 function SecondaryStat({ icon: Icon, label, value, tone, delta, hint }: StatProps) {
     return (
-        <div className="px-4 py-3 space-y-1">
-            <div className="flex items-center gap-1.5">
-                <Icon className={`h-3 w-3 ${tone}`} />
-                <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">{label}</p>
+        <div className="px-6 py-5 space-y-2">
+            <div className="flex items-center gap-2">
+                <Icon className={`h-3.5 w-3.5 ${tone}`} />
+                <p className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">{label}</p>
             </div>
-            <p className={`text-base font-semibold tabular-nums ${tone}`}>{value}</p>
+            <p className={`text-xl font-semibold tabular-nums leading-none ${tone}`}>{value}</p>
             {typeof delta === 'number' && delta !== 0 && (
-                <p className={`text-[11px] tabular-nums ${delta > 0 ? 'text-success' : 'text-destructive'}`}>
+                <p className={`text-xs tabular-nums ${delta > 0 ? 'text-success' : 'text-destructive'}`}>
                     {delta > 0 ? '+' : ''}{delta} vs last month
                 </p>
             )}
             {hint && typeof delta !== 'number' && (
-                <p className="text-[11px] text-muted-foreground truncate" title={hint}>{hint}</p>
+                <p className="text-xs text-muted-foreground truncate" title={hint}>{hint}</p>
             )}
         </div>
     );

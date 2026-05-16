@@ -293,20 +293,20 @@ export function UserManagement() {
         : { count: totalCount, total: totalCount };
 
     return (
-        <div className="p-6 max-w-[95%] mx-auto">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" onClick={() => navigate('/dashboard/admin/analytics')}>
+        <div className="px-8 py-10 max-w-[1500px] mx-auto space-y-8">
+            <div className="flex items-start justify-between gap-6">
+                <div className="flex items-start gap-4 min-w-0">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/admin/analytics')} className="mt-1 shrink-0">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         {t('users.backToAnalytics')}
                     </Button>
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground">{t('users.title')}</h1>
-                        <p className="text-muted-foreground mt-1">{t(subtitleKey, subtitleParams)}</p>
+                    <div className="min-w-0">
+                        <h1 className="text-3xl font-bold text-foreground tracking-tight">{t('users.title')}</h1>
+                        <p className="text-sm text-muted-foreground mt-2">{t(subtitleKey, subtitleParams)}</p>
                     </div>
                 </div>
 
-                <Button onClick={handleExportCSV} disabled={!users.length}>
+                <Button onClick={handleExportCSV} disabled={!users.length} className="shrink-0">
                     <Download className="h-4 w-4 mr-2" />
                     {filtersActive
                         ? t('users.exportCsvFiltered', { count: visibleCount })
@@ -318,7 +318,7 @@ export function UserManagement() {
                 ? <UserStatsSkeleton />
                 : <UserStatsHeader users={allUsers} />}
 
-            <Card className="p-4 mb-6">
+            <Card className="p-5">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

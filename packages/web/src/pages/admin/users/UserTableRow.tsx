@@ -76,7 +76,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
     const lastLogin = asDate(user.analytics?.lastLoginAt);
 
     return (
-        <TableRow className={isSelected ? 'bg-muted/40' : 'hover:bg-muted/50'}>
+        <TableRow className={`[&_td]:py-4 ${isSelected ? 'bg-muted/40' : 'hover:bg-muted/50'}`}>
             <TableCell className="w-10">
                 <Checkbox
                     checked={isSelected}
@@ -101,7 +101,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
                             <UserIcon className="h-5 w-5 text-primary" />
                         )}
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-foreground truncate">
                                 {user.displayName || t('users.table.noName')}
@@ -118,7 +118,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
                         </div>
                         <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                         {trialEnd && (
-                            <p className={`text-[11px] mt-0.5 ${trialActive ? 'text-warning' : 'text-muted-foreground'}`}>
+                            <p className={`text-[11px] ${trialActive ? 'text-warning' : 'text-muted-foreground'}`}>
                                 {trialActive
                                     ? t('users.table.trialEndsIn', {
                                         when: formatDistanceToNow(trialEnd, { addSuffix: true, locale: dateLocale }),

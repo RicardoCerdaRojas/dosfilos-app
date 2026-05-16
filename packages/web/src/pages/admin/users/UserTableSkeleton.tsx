@@ -45,7 +45,7 @@ interface SkeletonStatProps {
 
 export function UserStatsSkeleton({ count = 6 }: SkeletonStatProps) {
     return (
-        <div className="bg-card border rounded-lg overflow-hidden mb-6">
+        <div className="bg-card border rounded-lg overflow-hidden">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-border">
                 {Array.from({ length: count }).map((_, i) => (
                     <div key={i} className="px-4 py-3 space-y-1">
