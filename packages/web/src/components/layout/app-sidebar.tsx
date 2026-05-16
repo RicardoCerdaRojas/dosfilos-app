@@ -36,6 +36,7 @@ import { useTranslation } from '@/i18n';
 import { doc, getDoc } from 'firebase/firestore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Badge } from '@/components/ui/badge';
+import { getPlanLabel } from '@/utils/planLabels';
 import packageJson from '../../../package.json';
 
 export function AppSidebar() {
@@ -60,18 +61,9 @@ export function AppSidebar() {
   }, [adminOpen]);
 
   // Plan info for the footer row. Free shows a muted chip with an Upgrade CTA;
-  // paid tiers show a colored chip without CTA (status, not pitch). Maps cover
-  // every backend plan id (free / basic / pro / team / enterprise) — previously
-  // missing `basic` meant Personal-plan users rendered as "Free".
+  // paid tiers show a colored chip without CTA (status, not pitch).
   const planInfo = (() => {
     const planId = subscription?.planId || 'free';
-    const planNames: Record<string, string> = {
-      free: 'Free',
-      basic: 'Personal',
-      pro: 'Pro',
-      team: 'Team',
-      enterprise: 'Enterprise',
-    };
     const planClasses: Record<string, string> = {
       free: 'bg-muted text-muted-foreground border-border',
       basic: 'bg-info-subtle text-info-subtle-foreground border-info/30',
@@ -81,7 +73,7 @@ export function AppSidebar() {
     };
     return {
       id: planId,
-      name: planNames[planId] ?? planNames.free,
+      name: getPlanLabel(planId),
       className: planClasses[planId] ?? planClasses.free,
       isFree: planId === 'free',
     };

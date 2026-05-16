@@ -38,6 +38,7 @@ import {
 import { OnboardingWelcomeModal, ActivationBanner, CelebrationModal } from '@/components/onboarding';
 import { ProjectEditDialog } from '@/pages/faculty/ProjectEditDialog';
 import { cn } from '@/lib/utils';
+import { getPlanLabel } from '@/utils/planLabels';
 
 const COLOR_DOT: Record<ProjectColor, string> = {
     amber: 'bg-amber-500',
@@ -373,7 +374,7 @@ function PlanBalanceChip() {
             title={t('hero.planChipTooltip')}
         >
             <Crown className="h-3 w-3" />
-            <span className="capitalize">{planId}</span>
+            <span>{getPlanLabel(planId)}</span>
             <span className="text-border">·</span>
             <Wand2 className="h-3 w-3" />
             <span className="tabular-nums">{std.toLocaleString()}</span>
