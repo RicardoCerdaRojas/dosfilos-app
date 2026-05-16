@@ -42,6 +42,35 @@
             }
         }
     },
+    "tour": {
+        "welcome": {
+            "title": "Quick tour",
+            "body": "30-second walkthrough of how your desk is organized. Skip any time."
+        },
+        "study": {
+            "title": "My Studies",
+            "body": "Read scripture, chat with your theological tutors, practice Greek and Hebrew."
+        },
+        "work": {
+            "title": "My Work",
+            "body": "Where you produce what you'll ship: projects, exegetical papers, sermon planning."
+        },
+        "resources": {
+            "title": "My Resources",
+            "body": "Where everything you generate or upload lives: tutor extracts, sermons, your personal library."
+        },
+        "help": {
+            "title": "Help always at hand",
+            "body": "This button is always available. Click here to revisit the manual or replay the welcome."
+        },
+        "nav": {
+            "back": "Back",
+            "close": "Close",
+            "finish": "Done",
+            "next": "Next",
+            "skip": "Skip tour"
+        }
+    },
     "agenda": {
         "eyebrow": "Upcoming agenda",
         "viewAll": "View planner",
