@@ -136,8 +136,16 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="fixed inset-0 z-[60] overflow-y-auto bg-gradient-to-br from-primary/5 via-background to-info-subtle/30"
+                className="fixed inset-0 z-[60] overflow-y-auto bg-background"
             >
+                {/* Gradient overlay sits on top of the opaque base so the dashboard
+                    behind doesn't bleed through. Translucent stops were leaving the
+                    underlying page visible at the edges. */}
+                <div
+                    aria-hidden
+                    className="absolute inset-0 pointer-events-none bg-gradient-to-br from-primary/10 via-transparent to-info-subtle/30"
+                />
+
                 {/* Top bar: progress + skip */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-muted/50">
                     <motion.div
