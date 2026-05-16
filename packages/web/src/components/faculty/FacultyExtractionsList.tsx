@@ -365,7 +365,17 @@ export function FacultyExtractionsList({
                                             {t('extractionsList.actions.email')}
                                         </DropdownMenuItem>
                                     )}
-                                    {onPublishToWordpress && (item.type === 'BLOG_POST' || item.type === 'SYSTEMATIC_THEOLOGY_PAPER') && (
+                                    {/* Anything publishable as narrative — devotionals, blog posts, newsletters,
+                                        sermon outlines, bible studies, theology papers. Counseling tasks stay out
+                                        (they're worksheets, not articles). */}
+                                    {onPublishToWordpress && (
+                                        item.type === 'BLOG_POST' ||
+                                        item.type === 'DEVOTIONAL' ||
+                                        item.type === 'NEWSLETTER' ||
+                                        item.type === 'SERMON_OUTLINE' ||
+                                        item.type === 'BIBLE_STUDY' ||
+                                        item.type === 'SYSTEMATIC_THEOLOGY_PAPER'
+                                    ) && (
                                         <DropdownMenuItem onClick={() => onPublishToWordpress(item)}>
                                             <Globe className="w-3.5 h-3.5 mr-2" />
                                             {t('extractionsList.actions.publishWordpress')}

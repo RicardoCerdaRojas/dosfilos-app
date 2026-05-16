@@ -272,6 +272,10 @@
             "pastedToast": "Imagen pegada — lista para enviar al tutor.",
             "encodeFailed": "No se pudo codificar la imagen. Intenta de nuevo."
         },
+        "intentPrepop": {
+            "devotionalPrompt": "Crea un devocional pastoral sobre ",
+            "devotionalToast": "Termina la frase con el pasaje o tema. Tus tutores generan el devocional listo para publicar."
+        },
         "quickPrompts": {
             "outline": {
                 "label": "Bosquejo de Sermón",

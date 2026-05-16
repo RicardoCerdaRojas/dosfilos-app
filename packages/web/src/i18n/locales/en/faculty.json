@@ -272,6 +272,10 @@
             "pastedToast": "Image pasted — ready to send to the tutor.",
             "encodeFailed": "Could not encode the image. Try again."
         },
+        "intentPrepop": {
+            "devotionalPrompt": "Write a pastoral devotional about ",
+            "devotionalToast": "Finish the sentence with the passage or theme. Your tutors will generate the devotional ready to publish."
+        },
         "quickPrompts": {
             "outline": {
                 "label": "Sermon Outline",
