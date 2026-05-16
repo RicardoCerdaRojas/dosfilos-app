@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Activity, CreditCard, Eye, Loader2, Mail, Trash2, User as UserIcon,
-    UserCheck, UserX, MoreHorizontal,
+    UserCheck, UserX, MoreHorizontal, RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,7 @@ interface UserTableRowProps {
     onViewActivity: (id: string) => void;
     onViewDetails: (user: User) => void;
     onChangePlan: (user: User) => void;
+    onResetQuota: (user: User) => void;
     onResendEmail: (id: string, email: string) => void;
     onEnable: (user: User) => void;
     onDisable: (user: User) => void;
@@ -55,6 +56,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
     onViewActivity,
     onViewDetails,
     onChangePlan,
+    onResetQuota,
     onResendEmail,
     onEnable,
     onDisable,
@@ -183,6 +185,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
                             <DropdownMenuItem onSelect={() => onChangePlan(user)}>
                                 <CreditCard className="h-4 w-4 mr-2" />
                                 {t('users.rowActions.changePlan')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onResetQuota(user)}>
+                                <RotateCcw className="h-4 w-4 mr-2" />
+                                {t('users.rowActions.resetQuota')}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onSelect={() => onResendEmail(user.id, user.email)}

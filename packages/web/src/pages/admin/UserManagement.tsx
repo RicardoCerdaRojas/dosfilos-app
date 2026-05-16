@@ -9,6 +9,7 @@ import { useResendWelcomeEmail } from '@/hooks/admin/useResendWelcomeEmail';
 import { useBulkUserAction } from '@/hooks/admin/useBulkUserAction';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { ChangePlanDialog } from '@/components/admin/ChangePlanDialog';
+import { ResetQuotasDialog } from '@/components/admin/ResetQuotasDialog';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,6 +132,7 @@ export function UserManagement() {
     const { resendEmail, isLoading: isResending } = useResendWelcomeEmail();
 
     const [planChangeUser, setPlanChangeUser] = useState<User | null>(null);
+    const [resetQuotaUser, setResetQuotaUser] = useState<User | null>(null);
     const [grantCreditsUser, setGrantCreditsUser] = useState<User | null>(null);
     const [extendTrialUser, setExtendTrialUser] = useState<User | null>(null);
 
@@ -271,6 +273,7 @@ export function UserManagement() {
     };
 
     const handleChangePlanClick = (user: User) => setPlanChangeUser(user);
+    const handleResetQuotaClick = (user: User) => setResetQuotaUser(user);
 
     const handleChangePlanFromModal = (userId: string) => {
         const user = allUsers.find(u => u.id === userId);
@@ -451,6 +454,7 @@ export function UserManagement() {
                                     onViewActivity={handleViewActivity}
                                     onViewDetails={handleViewDetails}
                                     onChangePlan={handleChangePlanClick}
+                                    onResetQuota={handleResetQuotaClick}
                                     onResendEmail={resendEmail}
                                     onEnable={handleEnableUser}
                                     onDisable={(u) => setUserToDisable(u)}
@@ -503,6 +507,13 @@ export function UserManagement() {
                 // future hook can attach an explicit refetch here if we ever drop the
                 // real-time listener.
                 onSuccess={() => setPlanChangeUser(null)}
+            />
+
+            <ResetQuotasDialog
+                user={resetQuotaUser}
+                isOpen={!!resetQuotaUser}
+                onClose={() => setResetQuotaUser(null)}
+                onSuccess={() => setResetQuotaUser(null)}
             />
 
             <GrantCreditsDialog

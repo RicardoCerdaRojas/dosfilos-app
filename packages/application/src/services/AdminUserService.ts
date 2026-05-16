@@ -34,6 +34,21 @@ export interface ExtendTrialArgs {
     reason: string;
 }
 
+export interface ResetUserPlanQuotaArgs {
+    userId: string;
+    reason: string;
+}
+
+export interface ResetUserPlanQuotaResponse {
+    success: boolean;
+    planId: string;
+    appliedQuotas: {
+        standardPages: number;
+        premiumPages: number;
+        exegesisUsd: number;
+    };
+}
+
 export interface GrantUserCreditsArgs {
     userId: string;
     standardPages?: number;
@@ -90,6 +105,15 @@ export class AdminUserService {
     async grantUserCredits(args: GrantUserCreditsArgs): Promise<void> {
         const fn = httpsCallable(getFunctions(), 'grantUserCredits');
         await fn(args);
+    }
+
+    async resetUserPlanQuota(args: ResetUserPlanQuotaArgs): Promise<ResetUserPlanQuotaResponse> {
+        const fn = httpsCallable<ResetUserPlanQuotaArgs, ResetUserPlanQuotaResponse>(
+            getFunctions(),
+            'resetUserPlanQuota',
+        );
+        const { data } = await fn(args);
+        return data;
     }
 
     async changePlanForUser(args: ChangePlanForUserArgs): Promise<ChangePlanForUserResponse> {

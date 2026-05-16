@@ -92,6 +92,24 @@
             "high": "Alto",
             "tooltip": "Engagement score: combina logins, actividad reciente y uso de features. 0-32 Bajo, 33-65 Medio, 66-100 Alto."
         },
+        "resetQuotaDialog": {
+            "title": "Resetear cuotas mensuales de {{name}}",
+            "description": "Restablece las cuotas de plan al estándar del plan actual del usuario. Los packs prepagados no se tocan.",
+            "currentPlan": "Plan actual",
+            "willApply": "Se aplicarán estos valores",
+            "standardPages": "Estándar",
+            "premiumPages": "Premium",
+            "exegesisUsd": "Exégesis",
+            "pagesUnit": "páginas/mes",
+            "packNote": "Los packs prepagados se conservan intactos. Solo se restablece el bucket del plan mensual.",
+            "freePlanWarning": "Este usuario está en plan Free, cuyas cuotas son 0. El reset se ejecutará pero no añade saldo. Si necesitas darle créditos manualmente, usa la acción Acreditar créditos.",
+            "reasonLabel": "Motivo",
+            "reasonPlaceholder": "Ej. Webhook Stripe falló el 16/05, renovación manual · Comp account post-upgrade · Bug ticket #523",
+            "reasonHint": "Queda en el audit log junto al actorUid + fecha.",
+            "cancel": "Cancelar",
+            "confirm": "Resetear cuotas",
+            "loading": "Reseteando..."
+        },
         "sort": {
             "name": "Nombre",
             "registered": "Registro",
@@ -106,6 +124,7 @@
             "view": "Ver",
             "viewActivity": "Ver actividad detallada",
             "changePlan": "Cambiar plan",
+            "resetQuota": "Resetear cuotas mensuales",
             "resendEmail": "Reenviar bienvenida",
             "enable": "Habilitar",
             "disable": "Deshabilitar",
@@ -333,7 +352,9 @@
             "grantSuccess": "Créditos acreditados correctamente",
             "grantError": "Error al acreditar páginas",
             "extendTrialSuccess": "Trial extendido correctamente",
-            "extendTrialError": "Error al extender el trial"
+            "extendTrialError": "Error al extender el trial",
+            "resetQuotaSuccess": "Cuotas reseteadas: {{standard}} estándar · {{premium}} premium",
+            "resetQuotaError": "Error al resetear cuotas"
         },
         "grantCreditsDialog": {
             "title": "Acreditar páginas a {{name}}",

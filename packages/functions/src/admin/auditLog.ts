@@ -14,6 +14,7 @@ export type AdminAuditAction =
     | 'user.bulk_disable'
     | 'user.bulk_enable'
     | 'user.grant_credits'
+    | 'user.reset_quota'
     | 'user.extend_trial';
 
 interface WriteAuditLogParams {
