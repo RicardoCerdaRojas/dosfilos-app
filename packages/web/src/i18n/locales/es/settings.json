@@ -26,6 +26,11 @@
             "connected": "Conectado",
             "connectedNoPublishYet": "Conectado · sin publicaciones aún",
             "lastError": "Último envío falló"
+        },
+        "comingSoon": {
+            "badge": "Próximamente",
+            "mailchimp": "Envía tus devocionales o sermones como newsletter.",
+            "substack": "Publica tus reflexiones en tu boletín semanal."
         }
     }
 }

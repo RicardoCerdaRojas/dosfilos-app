@@ -26,6 +26,11 @@
             "connected": "Connected",
             "connectedNoPublishYet": "Connected · no publishes yet",
             "lastError": "Last send failed"
+        },
+        "comingSoon": {
+            "badge": "Coming soon",
+            "mailchimp": "Send your devotionals or sermons as a newsletter.",
+            "substack": "Publish your reflections in your weekly bulletin."
         }
     }
 }
