@@ -1,6 +1,6 @@
 {
     "header": {
-        "eyebrow": "Your workshop",
+        "eyebrow": "Your desk",
         "greeting": "Hello, {{name}}.",
         "subtitle": "Here's what you have today in your study space."
     },
@@ -107,9 +107,9 @@
         "viewAll": "View all sermons"
     },
     "welcomeModal": {
-        "eyebrow": "Your workshop is ready",
-        "title": "Welcome to the workshop.",
-        "subtitle": "A single space for your study, your original languages, your theological tutors, and the production of your ministry material.",
+        "eyebrow": "Your desk is ready",
+        "title": "Welcome to your desk.",
+        "subtitle": "A desk prepared with everything you need for ministry work: your books, your theological tutors, the original languages, and the tools to produce your material.",
         "features": {
             "library": {
                 "title": "Library",
