@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
@@ -17,12 +17,16 @@ import {
 import { WelcomeIllustration } from './WelcomeIllustration';
 import { WorkflowStoryboard } from './WorkflowStoryboard';
 
+type Step = 'welcome' | 'intent' | 'workflow' | 'confirm';
+
 interface OnboardingWizardProps {
     isOpen: boolean;
     onClose: () => void;
+    /** Starting step. Default `'welcome'` for first-time users; `'intent'` when
+     *  re-launched from the help FAB so the user skips the welcome step they've
+     *  already seen and lands directly on the intent picker (tutorials list). */
+    startStep?: Step;
 }
-
-type Step = 'welcome' | 'intent' | 'workflow' | 'confirm';
 
 const STEP_ORDER: Step[] = ['welcome', 'intent', 'workflow', 'confirm'];
 
@@ -42,13 +46,22 @@ const STEP_ORDER: Step[] = ['welcome', 'intent', 'workflow', 'confirm'];
  * the signal but route to /dashboard with a toast — feature wiring lands in
  * Sprints B/C from the roadmap.
  */
-export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
+export function OnboardingWizard({ isOpen, onClose, startStep = 'welcome' }: OnboardingWizardProps) {
     const navigate = useNavigate();
     const { user } = useFirebase();
     const { t } = useTranslation('dashboard');
 
-    const [step, setStep] = useState<Step>('welcome');
+    const [step, setStep] = useState<Step>(startStep);
     const [selectedIntent, setSelectedIntent] = useState<OnboardingIntentId | null>(null);
+
+    // Sync internal state with the requested start step every time the wizard
+    // opens. FAB re-launches set `startStep="intent"` to skip welcome.
+    useEffect(() => {
+        if (isOpen) {
+            setStep(startStep);
+            setSelectedIntent(null);
+        }
+    }, [isOpen, startStep]);
 
     const stepIndex = STEP_ORDER.indexOf(step);
     const progress = ((stepIndex + 1) / STEP_ORDER.length) * 100;

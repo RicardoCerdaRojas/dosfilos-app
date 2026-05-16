@@ -3,23 +3,21 @@ import { motion } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
-import { HelpCenter } from './HelpCenter';
 import { OnboardingWizard } from './OnboardingWizard';
 
 /**
  * Floating help button (bottom-right FAB). Always-available re-entry to the
- * platform's tutorials. Click → opens HelpCenter with the list of storyboards
- * and a "Re-launch welcome wizard" affordance.
+ * onboarding takeover. Click → opens `OnboardingWizard` starting at the intent
+ * picker (skips the welcome step the user has already seen). User can browse
+ * each flow's storyboard, then either jump into the flow or close out.
  *
  * Mounted once in DashboardLayout so it's available across the entire
- * authenticated surface. Owns the state for both HelpCenter and the
- * relaunched OnboardingWizard so the user can chain them seamlessly.
+ * authenticated surface.
  */
 export function FloatingHelpButton() {
     const { t } = useTranslation('dashboard');
     const { user } = useFirebase();
-    const [helpOpen, setHelpOpen] = useState(false);
-    const [wizardOpen, setWizardOpen] = useState(false);
+    const [open, setOpen] = useState(false);
 
     if (!user) return null;
 
@@ -27,7 +25,7 @@ export function FloatingHelpButton() {
         <>
             <motion.button
                 type="button"
-                onClick={() => setHelpOpen(true)}
+                onClick={() => setOpen(true)}
                 aria-label={t('onboarding.help.fabAria')}
                 title={t('onboarding.help.fabAria')}
                 initial={{ scale: 0, opacity: 0 }}
@@ -40,15 +38,10 @@ export function FloatingHelpButton() {
                 <HelpCircle className="h-5 w-5" />
             </motion.button>
 
-            <HelpCenter
-                isOpen={helpOpen}
-                onClose={() => setHelpOpen(false)}
-                onRelaunchWizard={() => setWizardOpen(true)}
-            />
-
             <OnboardingWizard
-                isOpen={wizardOpen}
-                onClose={() => setWizardOpen(false)}
+                isOpen={open}
+                onClose={() => setOpen(false)}
+                startStep="intent"
             />
         </>
     );
