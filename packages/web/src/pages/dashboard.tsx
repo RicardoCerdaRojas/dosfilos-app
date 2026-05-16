@@ -39,6 +39,8 @@ import { OnboardingWizard, ActivationBanner, CelebrationModal } from '@/componen
 import { ProjectEditDialog } from '@/pages/faculty/ProjectEditDialog';
 import { cn } from '@/lib/utils';
 import { getPlanLabel } from '@/utils/planLabels';
+import { NextStepHint } from '@/components/dashboard/NextStepHint';
+import { useNextStepHint } from '@/hooks/dashboard/useNextStepHint';
 
 const COLOR_DOT: Record<ProjectColor, string> = {
     amber: 'bg-amber-500',
@@ -305,22 +307,30 @@ function DashboardHero({
     newProjectLabel,
 }: DashboardHeroProps) {
     const { t } = useTranslation('dashboard');
+    // When the hint hook returns a payload we surface it inline below the
+    // greeting; otherwise the static context line ("X proyectos activos · Y
+    // agendados") keeps the row populated so the hero never looks empty.
+    const hint = useNextStepHint();
     return (
-        <header className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4 pb-3 border-b border-border/60">
-            <div className="min-w-0">
+        <header className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4 pb-3 border-b border-border/60">
+            <div className="min-w-0 flex-1">
                 <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-medium mb-1">
                     {eyebrow}
                 </div>
                 <h1 className="font-reading text-[24px] md:text-[28px] leading-tight tracking-[-0.01em] text-foreground">
                     {t('header.greeting', { name })}
                 </h1>
-                <p className="text-[13px] text-muted-foreground mt-1">
-                    {activeProjectsCount === 0
-                        ? t('hero.contextEmpty')
-                        : `${t('hero.contextProjects', { count: activeProjectsCount })} · ${t('hero.contextUpcoming', { count: upcomingCount })}`}
-                </p>
+                {hint ? (
+                    <NextStepHint hint={hint} />
+                ) : (
+                    <p className="text-[13px] text-muted-foreground mt-1">
+                        {activeProjectsCount === 0
+                            ? t('hero.contextEmpty')
+                            : `${t('hero.contextProjects', { count: activeProjectsCount })} · ${t('hero.contextUpcoming', { count: upcomingCount })}`}
+                    </p>
+                )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
                 <PlanBalanceChip />
                 <Button
                     onClick={onNewProject}

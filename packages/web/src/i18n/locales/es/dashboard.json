@@ -12,6 +12,36 @@
         "contextEmpty": "Sin proyectos activos por ahora.",
         "planChipTooltip": "Saldo disponible este mes — click para ver tu plan"
     },
+    "nextStep": {
+        "agendaUrgent": {
+            "title": "{{title}}",
+            "subtitle_one": "{{day}} · faltan {{count}} día",
+            "subtitle_other": "{{day}} · faltan {{count}} días",
+            "cta": "Abrir sermón"
+        },
+        "paperInProgress": {
+            "title": "Continúa: {{title}}",
+            "subtitle": "Fase actual: {{phase}}",
+            "cta": "Seguir trabajando",
+            "untitled": "Estudio sin título"
+        },
+        "sermonInProgress": {
+            "title": "Continúa: {{title}}",
+            "subtitle": "Borrador sin agendar",
+            "cta": "Abrir sermón"
+        },
+        "intentNudge": {
+            "subtitle": "Comienza por tu primer paso — el flujo está esperándote",
+            "exegesis-paper": {
+                "title": "Lánzate con tu primer estudio exegético",
+                "cta": "Abrir Exégesis"
+            },
+            "devotional-content": {
+                "title": "Crea tu primer devocional con la facultad",
+                "cta": "Abrir Facultad"
+            }
+        }
+    },
     "agenda": {
         "eyebrow": "Agenda próxima",
         "viewAll": "Ver planificador",
