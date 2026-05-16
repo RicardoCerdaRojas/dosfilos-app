@@ -4,6 +4,10 @@ import { ACCENT_TONE, type OnboardingIntent } from './onboardingIntents';
 
 interface WorkflowStoryboardProps {
     intent: OnboardingIntent;
+    /** Force the vertical stack layout regardless of viewport. Use this inside
+     *  dialogs / narrow containers where the 4-tile horizontal row gets cramped
+     *  and text wraps one word per line. Wizard keeps the responsive default. */
+    forceVertical?: boolean;
 }
 
 /**
@@ -11,19 +15,18 @@ interface WorkflowStoryboardProps {
  * OnboardingWizard (as step 3) and standalone inside HelpCenter when the user
  * wants to re-watch a flow later.
  *
- * Layout: horizontal row of step tiles on desktop with animated connector
- * lines drawn between them; vertical stack on mobile. Each tile staggers in
- * with a fade + slide from below.
+ * Default layout: horizontal row of step tiles on `md+`, vertical stack on
+ * mobile. `forceVertical` overrides for cramped contexts.
  */
-export function WorkflowStoryboard({ intent }: WorkflowStoryboardProps) {
+export function WorkflowStoryboard({ intent, forceVertical = false }: WorkflowStoryboardProps) {
     const { t } = useTranslation('dashboard');
     const tone = ACCENT_TONE[intent.accent];
     const steps = intent.workflow;
 
     return (
         <div className="w-full">
-            {/* Desktop: horizontal flow with connectors */}
-            <div className="hidden md:flex items-start gap-2">
+            {/* Desktop: horizontal flow with connectors (hidden when forceVertical) */}
+            <div className={`${forceVertical ? 'hidden' : 'hidden md:flex'} items-start gap-2`}>
                 {steps.map((step, index) => {
                     const Icon = step.icon;
                     const isLast = index === steps.length - 1;
@@ -73,8 +76,8 @@ export function WorkflowStoryboard({ intent }: WorkflowStoryboardProps) {
                 })}
             </div>
 
-            {/* Mobile: vertical stack with left rail */}
-            <div className="md:hidden space-y-3">
+            {/* Vertical stack with left rail — used on mobile + forced contexts */}
+            <div className={`${forceVertical ? 'block' : 'md:hidden'} space-y-3`}>
                 {steps.map((step, index) => {
                     const Icon = step.icon;
                     const isLast = index === steps.length - 1;

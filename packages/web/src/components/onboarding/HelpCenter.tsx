@@ -53,7 +53,7 @@ export function HelpCenter({ isOpen, onClose, onRelaunchWizard }: HelpCenterProp
 
     return (
         <Dialog open={isOpen} onOpenChange={(next) => { if (!next) handleClose(); }}>
-            <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <HelpCircle className="h-5 w-5 text-primary" />
@@ -163,7 +163,7 @@ export function HelpCenter({ isOpen, onClose, onRelaunchWizard }: HelpCenterProp
                                 </p>
                             </div>
 
-                            <WorkflowStoryboard intent={selectedIntent} />
+                            <WorkflowStoryboard intent={selectedIntent} forceVertical />
                         </motion.div>
                     )}
                 </AnimatePresence>
