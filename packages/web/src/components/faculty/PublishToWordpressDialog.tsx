@@ -123,7 +123,10 @@ export function PublishToWordpressDialog({ extraction, onClose }: PublishToWordp
                         <Button
                             onClick={() => {
                                 onClose();
-                                navigate('/dashboard/settings/integrations');
+                                // Legacy /dashboard/settings/integrations route still redirects (per
+                                // the settings consolidation), but link directly to the consolidated
+                                // tab to skip the redirect hop.
+                                navigate('/dashboard/settings?tab=integrations');
                             }}
                             className="w-full"
                         >

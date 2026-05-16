@@ -92,6 +92,25 @@ export function FacultyDirectoryPage() {
         return () => URL.revokeObjectURL(url);
     }, [pendingAttachment]);
 
+    // Onboarding intent prepop — when the user landed here from the wizard
+    // with `?intent=devotional`, seed the orchestrator with a starter prompt
+    // and surface a toast so they know we read their selection. Fires once
+    // per arrival; the URL param then gets stripped via history.replaceState
+    // so a refresh doesn't re-fire the toast.
+    useEffect(() => {
+        const intent = searchParams.get('intent');
+        if (intent !== 'devotional') return;
+        if (orchestratorInput) return;
+        setOrchestratorInput(t('directory.intentPrepop.devotionalPrompt'));
+        toast.info(t('directory.intentPrepop.devotionalToast'));
+        const url = new URL(window.location.href);
+        url.searchParams.delete('intent');
+        window.history.replaceState({}, '', url.toString());
+        // intentionally not depending on orchestratorInput — we only want the
+        // effect to run on mount when the intent param is present.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Clipboard paste — anywhere on the directory page, an image
     // pasted into the OS clipboard lands in the orchestrator input
     // slot. Mirrors the FacultyChatInput behavior so the entry point
