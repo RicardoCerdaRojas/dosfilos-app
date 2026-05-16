@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Languages, MessageSquareQuote, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -47,12 +47,14 @@ export function OnboardingWelcomeModal({ isOpen, onClose }: OnboardingWelcomeMod
                     <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-3">
                         {t('welcomeModal.eyebrow')}
                     </div>
-                    <h2 className="font-reading text-[28px] md:text-[32px] leading-[1.1] tracking-[-0.02em] text-slate-900 mb-3">
+                    {/* DialogTitle + DialogDescription satisfy Radix's a11y contract.
+                        Visual treatment kept identical to the prior `<h2>` + `<p>`. */}
+                    <DialogTitle className="font-reading text-[28px] md:text-[32px] leading-[1.1] tracking-[-0.02em] text-slate-900 mb-3">
                         {t('welcomeModal.title')}
-                    </h2>
-                    <p className="text-[15px] leading-relaxed text-slate-500 max-w-xl">
+                    </DialogTitle>
+                    <DialogDescription className="text-[15px] leading-relaxed text-slate-500 max-w-xl">
                         {t('welcomeModal.subtitle')}
-                    </p>
+                    </DialogDescription>
                 </div>
 
                 {/* Pillars grid */}
