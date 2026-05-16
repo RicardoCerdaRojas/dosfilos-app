@@ -341,10 +341,10 @@ export function UserManagement() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">{t('users.filters.allPlans')}</SelectItem>
-                                <SelectItem value="free">Free</SelectItem>
-                                <SelectItem value="basic">Personal</SelectItem>
-                                <SelectItem value="pro">Pro</SelectItem>
-                                <SelectItem value="team">Equipo</SelectItem>
+                                <SelectItem value="free">{t('users.planLabels.free')}</SelectItem>
+                                <SelectItem value="basic">{t('users.planLabels.basic')}</SelectItem>
+                                <SelectItem value="pro">{t('users.planLabels.pro')}</SelectItem>
+                                <SelectItem value="team">{t('users.planLabels.team')}</SelectItem>
                             </SelectContent>
                         </Select>
 

@@ -61,12 +61,36 @@
             "sermonsCount_other": "{{count}} sermons",
             "tutorAndDrafts": "{{greek}} Greek · {{drafts}} drafts",
             "neverLogged": "Never",
-            "defaultStatus": "active",
+            "defaultStatus": "Active",
             "selectAria": "Select user {{email}}",
             "selectAllAria": "Select all visible users",
             "trialEndsIn": "Trial ends {{when}}",
             "trialEnded": "Trial expired",
-            "disabledBadge": "Disabled"
+            "disabledBadge": "Disabled",
+            "status": {
+                "active": "Active",
+                "trialing": "Trial",
+                "cancelled": "Cancelled",
+                "past_due": "Past due",
+                "incomplete": "Incomplete",
+                "incomplete_expired": "Expired",
+                "unpaid": "Unpaid",
+                "paused": "Paused",
+                "disabled": "Disabled"
+            }
+        },
+        "planLabels": {
+            "free": "Free",
+            "basic": "Personal",
+            "pro": "Pro",
+            "team": "Team",
+            "enterprise": "Enterprise"
+        },
+        "engagement": {
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High",
+            "tooltip": "Engagement score: combines logins, recent activity, and feature usage. 0-32 Low, 33-65 Medium, 66-100 High."
         },
         "sort": {
             "name": "Name",

@@ -33,11 +33,15 @@ export function SortableHeader({
 
     return (
         <TableHead className={cn(align === 'right' && 'text-right', className)}>
+            {/* Style baked in here (not inherited) so the button matches the surrounding
+                non-sortable TableHead caption tier — uppercase + tracking-wider + semibold +
+                muted color. Without these the button rendered as sentence-case font-medium
+                while sibling plain `<TableHead>` text picked up the parent uppercase cascade. */}
             <button
                 type="button"
                 onClick={() => onSort(field)}
                 className={cn(
-                    'inline-flex items-center gap-1 font-medium select-none transition-colors',
+                    'inline-flex items-center gap-1 select-none transition-colors text-xs uppercase tracking-wider font-semibold',
                     align === 'right' && 'flex-row-reverse',
                     isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                 )}

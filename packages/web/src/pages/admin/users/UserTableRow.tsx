@@ -62,13 +62,18 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
 }) => {
     const { t, i18n } = useTranslation('admin');
     const dateLocale = i18n.language.startsWith('es') ? esLocale : enLocale;
-    const status = user.subscription?.status || t('users.table.defaultStatus');
+    const rawStatus = user.subscription?.status;
     const isDisabled = user.status === 'disabled';
+    // Translate Stripe's English enum (active/trialing/cancelled/past_due/...) to
+    // the current locale via the `users.table.status.*` block. Previously the raw
+    // enum was rendered, producing the ACTIVE/ACTIVO mix in the table.
+    const statusKey = isDisabled ? 'disabled' : (rawStatus ?? 'active');
+    const status = t(`users.table.status.${statusKey}`);
     const statusTone =
         isDisabled ? 'bg-destructive/10 text-destructive border-destructive/30' :
-        status === 'active' ? 'bg-success-subtle text-success-subtle-foreground border-success/30' :
-        status === 'cancelled' ? 'bg-destructive/10 text-destructive border-destructive/30' :
-        status === 'trialing' ? 'bg-warning-subtle text-warning-subtle-foreground border-warning/30' :
+        rawStatus === 'active' ? 'bg-success-subtle text-success-subtle-foreground border-success/30' :
+        rawStatus === 'cancelled' ? 'bg-destructive/10 text-destructive border-destructive/30' :
+        rawStatus === 'trialing' ? 'bg-warning-subtle text-warning-subtle-foreground border-warning/30' :
         'bg-warning-subtle text-warning-subtle-foreground border-warning/30';
 
     const trialEnd = asDate(user.subscription?.trialEnd);
