@@ -78,14 +78,15 @@
             "clickToSort": "Click to sort"
         },
         "rowActions": {
-            "activity": "Activity",
+            "activity": "View activity",
             "view": "View",
             "viewActivity": "View detailed activity",
             "changePlan": "Change plan",
-            "resendEmail": "Resend welcome email",
-            "enable": "Enable user",
-            "disable": "Disable user",
-            "delete": "Delete permanently"
+            "resendEmail": "Resend welcome",
+            "enable": "Enable",
+            "disable": "Disable",
+            "delete": "Delete",
+            "more": "More actions"
         },
         "bulkActions": {
             "selectedCount_one": "1 selected",
@@ -136,7 +137,9 @@
             "noChange": "Pick a plan different from the current one.",
             "cancel": "Cancel",
             "confirm": "Apply change",
-            "loading": "Applying..."
+            "loading": "Applying...",
+            "compAccountTitle": "Comp account — Stripe will not bill",
+            "compAccountBody": "This user never completed checkout (no Stripe payment method on file). The change applies only on our platform: they'll get the plan's features but no monthly charge. To enable real billing, the user must complete checkout with a card."
         },
         "details": {
             "title": "User details",

@@ -78,14 +78,15 @@
             "clickToSort": "Click para ordenar"
         },
         "rowActions": {
-            "activity": "Actividad",
+            "activity": "Ver actividad",
             "view": "Ver",
             "viewActivity": "Ver actividad detallada",
             "changePlan": "Cambiar plan",
-            "resendEmail": "Reenviar correo de bienvenida",
-            "enable": "Habilitar usuario",
-            "disable": "Deshabilitar usuario",
-            "delete": "Eliminar permanentemente"
+            "resendEmail": "Reenviar bienvenida",
+            "enable": "Habilitar",
+            "disable": "Deshabilitar",
+            "delete": "Eliminar",
+            "more": "Más acciones"
         },
         "bulkActions": {
             "selectedCount_one": "1 seleccionado",
@@ -136,7 +137,9 @@
             "noChange": "Selecciona un plan distinto al actual.",
             "cancel": "Cancelar",
             "confirm": "Aplicar cambio",
-            "loading": "Aplicando..."
+            "loading": "Aplicando...",
+            "compAccountTitle": "Cuenta cortesía — Stripe no facturará",
+            "compAccountBody": "Este usuario nunca completó checkout (no tiene método de pago en Stripe). El cambio se aplica sólo en nuestra plataforma: tendrá las features del plan pero no habrá cobro mensual. Para activar billing real, el usuario debe pasar checkout con tarjeta."
         },
         "details": {
             "title": "Detalles del usuario",

@@ -375,12 +375,9 @@ export function UserManagement() {
                             <TableRow>
                                 <TableHead className="w-10" />
                                 <TableHead>{t('users.table.user')}</TableHead>
-                                <TableHead>{t('users.table.plan')}</TableHead>
-                                <TableHead>{t('users.table.status')}</TableHead>
                                 <TableHead>{t('users.table.activity')}</TableHead>
                                 <TableHead>{t('users.table.engagement')}</TableHead>
                                 <TableHead>{t('users.table.lastLogin')}</TableHead>
-                                <TableHead>{t('users.table.registered')}</TableHead>
                                 <TableHead className="text-right">{t('users.table.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -412,14 +409,15 @@ export function UserManagement() {
                                         aria-label={t('users.table.selectAllAria')}
                                     />
                                 </TableHead>
+                                {/* Identity column merges user + plan + status. Registered date
+                                    is gone from the table (still surfaced in UserDetailsModal)
+                                    so the row fits without horizontal scroll. */}
                                 <SortableHeader
                                     label={t('users.table.user')}
                                     field="displayName"
                                     currentSort={sort}
                                     onSort={handleSort}
                                 />
-                                <TableHead>{t('users.table.plan')}</TableHead>
-                                <TableHead>{t('users.table.status')}</TableHead>
                                 <TableHead>{t('users.table.activity')}</TableHead>
                                 <SortableHeader
                                     label={t('users.table.engagement')}
@@ -430,12 +428,6 @@ export function UserManagement() {
                                 <SortableHeader
                                     label={t('users.table.lastLogin')}
                                     field="lastLoginAt"
-                                    currentSort={sort}
-                                    onSort={handleSort}
-                                />
-                                <SortableHeader
-                                    label={t('users.table.registered')}
-                                    field="createdAt"
                                     currentSort={sort}
                                     onSort={handleSort}
                                 />
@@ -501,6 +493,12 @@ export function UserManagement() {
                 user={planChangeUser}
                 isOpen={!!planChangeUser}
                 onClose={() => setPlanChangeUser(null)}
+                // `useAllUsers` uses an onSnapshot listener so the row auto-updates
+                // when the cloud function writes. The empty onSuccess just guarantees
+                // the dialog closes and the success toast fires consistently — a
+                // future hook can attach an explicit refetch here if we ever drop the
+                // real-time listener.
+                onSuccess={() => setPlanChangeUser(null)}
             />
 
             <GrantCreditsDialog
