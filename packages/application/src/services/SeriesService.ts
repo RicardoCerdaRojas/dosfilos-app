@@ -18,12 +18,14 @@ import {
     type IBibleVersionRepository,
     type IOriginalLanguageBibleProvider,
     type PassageReference,
+    type PlannedSermon,
     type PlannedSermonExpositoryEnrichment,
     type PlannedSermonStatus,
     type SyntacticUnit,
 } from '@dosfilos/domain';
 import { DetectPericopesUseCase } from '../use-cases/exegesis/DetectPericopesUseCase';
 import { exegesisService } from './ExegesisService';
+import { sermonService } from './SermonService';
 import {
     loadBookVerses,
     type LoadBookVersesResult,
@@ -374,7 +376,7 @@ export class SeriesService {
             const frequency = plan.frequency || 'weekly';
 
             // Create planned sermons with calculated dates (stored as metadata, NOT actual sermons)
-            const plannedSermonsInitial = plan.sermons.map((sermonData) => {
+            const plannedSermonsInitial: PlannedSermon[] = plan.sermons.map((sermonData) => {
                 let scheduledDate: Date | undefined;
 
                 if (startDate && frequency !== 'flexible') {
@@ -444,11 +446,44 @@ export class SeriesService {
                 },
                 resourceIds: plan.series.resourceIds || [],
                 sermonIds: [],
-                draftIds: []  // Empty - drafts will be created on-demand
+                draftIds: []
             });
 
-            // 2. Save Series (no sermons created!)
-            return await this.retry(() => this.seriesRepository.create(series));
+            // 2. Save Series first to obtain series.id (sermon placeholders
+            //    need it as foreign key + the series must exist before any
+            //    sermon points to it).
+            const persistedSeries = await this.retry(() => this.seriesRepository.create(series));
+
+            // 3. Spawn one SermonEntity placeholder (status='draft') per
+            //    planned sermon. Closes the "Continuar sermón" loop:
+            //    SeriesDetail surfaces a button that opens the draft wizard
+            //    on a real Sermon doc instead of an empty shell. Best-effort
+            //    — a failed placeholder keeps `draftId` undefined and falls
+            //    back to the existing on-demand creation path.
+            const plannedWithDrafts = await this.autoCreateSermonPlaceholders(
+                userId,
+                persistedSeries.id,
+                plannedSermons,
+            );
+
+            const newDraftIds = plannedWithDrafts
+                .map((p) => p.draftId)
+                .filter((id): id is string => Boolean(id));
+
+            if (newDraftIds.length === 0) {
+                return persistedSeries;
+            }
+
+            // 4. Patch series with enriched planned sermons + draftIds.
+            const enrichedSeries = persistedSeries.update({
+                metadata: {
+                    ...persistedSeries.metadata,
+                    plannedSermons: plannedWithDrafts,
+                },
+                draftIds: [...(persistedSeries.draftIds ?? []), ...newDraftIds],
+            });
+
+            return await this.retry(() => this.seriesRepository.update(enrichedSeries));
         } catch (error: any) {
             throw new Error(error.message || 'Error al guardar el plan');
         }
@@ -515,6 +550,84 @@ export class SeriesService {
             }),
         );
         return enriched;
+    }
+
+    /**
+     * For each PlannedSermon that doesn't already carry a `draftId`, create
+     * a minimal SermonEntity (status='draft', empty content) so SeriesDetail
+     * can route "Continuar sermón" directly to the draft wizard on a real
+     * Firestore doc. Stamps `draftId` + `status: 'sermon-in-progress'` on
+     * the planned sermon when successful.
+     *
+     * Best-effort: failures are logged + the planned sermon keeps `draftId`
+     * undefined. The existing on-demand path (`createSermonFromPlanned`)
+     * still works as a retry from SeriesDetail.
+     *
+     * Parallel via Promise.all — sermon creation is independent per pericope.
+     */
+    private async autoCreateSermonPlaceholders<T extends {
+        id: string;
+        title: string;
+        passage: string;
+        scheduledDate?: Date;
+        paperId?: string;
+        draftId?: string;
+        status?: PlannedSermonStatus;
+    }>(
+        userId: string,
+        seriesId: string,
+        plannedSermons: T[],
+    ): Promise<T[]> {
+        return Promise.all(
+            plannedSermons.map(async (planned) => {
+                if (planned.draftId) return planned;
+                // SermonEntity validates title >= 5 chars. Pad short pericope
+                // titles with the passage so we never throw on tiny labels
+                // like "Salmo 1".
+                const safeTitle =
+                    planned.title.trim().length >= 5
+                        ? planned.title
+                        : `${planned.title} — ${planned.passage}`.trim();
+                try {
+                    const sermon = await sermonService.createSermon({
+                        userId,
+                        title: safeTitle,
+                        content: '',
+                        bibleReferences: planned.passage ? [planned.passage] : [],
+                        status: 'draft',
+                        seriesId,
+                        scheduledDate: planned.scheduledDate,
+                        sourcePaperId: planned.paperId,
+                        // Seed wizardProgress so SermonWizard's resume path
+                        // recognizes the draft and lands the pastor on step 0
+                        // with the passage pre-filled instead of the
+                        // "no progress" fallback.
+                        wizardProgress: {
+                            currentStep: 0,
+                            passage: planned.passage,
+                            lastSaved: new Date(),
+                            planId: seriesId,
+                        },
+                    });
+                    return {
+                        ...planned,
+                        draftId: sermon.id,
+                        // Only advance status if the pericope hasn't reached
+                        // a later stage already (paper-done > paper-in-progress).
+                        status:
+                            planned.status === 'sermon-done'
+                                ? planned.status
+                                : ('sermon-in-progress' as PlannedSermonStatus),
+                    };
+                } catch (err) {
+                    console.error(
+                        `[SeriesService] auto sermon placeholder failed for pericope ${planned.id}:`,
+                        err,
+                    );
+                    return planned;
+                }
+            }),
+        );
     }
 
     /**

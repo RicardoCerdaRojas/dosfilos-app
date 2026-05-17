@@ -706,15 +706,22 @@ export function ExpositoryAssistantPage() {
             });
 
             clearExpositoryDraft();
-            // Count papers actually created so the toast reflects reality
-            // (some may have failed silently; user retries from SeriesDetail).
-            const paperCount = (series.metadata?.plannedSermons ?? [])
-                .filter((p) => Boolean(p.paperId)).length;
-            toast.success(
-                paperCount > 0
-                    ? (t('expository.toast.seriesCreatedWithPapers', { count: paperCount }) as string)
-                    : (t('expository.toast.seriesCreated') as string),
-            );
+            // Count papers + sermon drafts actually created so the toast
+            // reflects reality (some may have failed silently; user retries
+            // from SeriesDetail).
+            const plannedFinal = series.metadata?.plannedSermons ?? [];
+            const paperCount = plannedFinal.filter((p) => Boolean(p.paperId)).length;
+            const draftCount = plannedFinal.filter((p) => Boolean(p.draftId)).length;
+            const toastMsg =
+                paperCount > 0 && draftCount > 0
+                    ? (t('expository.toast.seriesCreatedWithPapersAndDrafts', {
+                          paperCount,
+                          draftCount,
+                      }) as string)
+                    : paperCount > 0
+                        ? (t('expository.toast.seriesCreatedWithPapers', { count: paperCount }) as string)
+                        : (t('expository.toast.seriesCreated') as string);
+            toast.success(toastMsg);
             navigate(`/dashboard/plans/${series.id}`);
         } catch (err: any) {
             console.error('[expository] createSeries failed:', err);
