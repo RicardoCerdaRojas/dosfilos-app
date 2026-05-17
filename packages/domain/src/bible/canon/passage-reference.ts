@@ -316,6 +316,32 @@ export function formatPassageReference(ref: PassageReference, language: 'es' | '
     return `${name} ${ref.chapterStart}:${ref.verseStart}-${ref.chapterEnd}:${ref.verseEnd}`;
 }
 
+/**
+ * Materializes the canonical "whole book" passage reference for the given
+ * book — useful when callers want to pass an entire book as a
+ * `PassageReference` rather than a bare `BibleBookId` (e.g. expository
+ * pipelines whose scope picker can be either "whole book" or a specific
+ * sub-range, and both modes need to feed downstream a single uniform type).
+ *
+ * Returns chapter-level reference (`verseStart` / `verseEnd` = null) spanning
+ * chapter 1 through the book's last chapter. Parser intentionally rejects
+ * bare book names ("Hebreos" → `missing-chapter`) so the picker UX flows
+ * stay opinionated; this helper is the explicit, structural escape hatch.
+ */
+export function wholeBookPassage(bookId: BibleBookId): PassageReference {
+    const book = getBookById(bookId);
+    if (!book) {
+        throw new Error(`Unknown book id: ${bookId}`);
+    }
+    return {
+        bookId,
+        chapterStart: 1,
+        chapterEnd: book.chapterCount,
+        verseStart: null,
+        verseEnd: null,
+    };
+}
+
 // ── helpers ─────────────────────────────────────────────────────────────
 
 function fail(error: ParseError, hint: string): ParseFailure {

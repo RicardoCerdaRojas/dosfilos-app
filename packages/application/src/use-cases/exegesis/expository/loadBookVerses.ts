@@ -4,6 +4,7 @@ import {
     type BibleBookId,
     type IBibleVersionRepository,
     type IOriginalLanguageBibleProvider,
+    type PassageReference,
 } from '@dosfilos/domain';
 
 /**
@@ -45,6 +46,18 @@ export interface LoadBookVersesInput {
      * force translation-only behaviour (legacy v1.5 mode).
      */
     originalLanguageProvider?: IOriginalLanguageBibleProvider;
+    /**
+     * Optional scope to narrow the load to a sub-book range (single
+     * chapter, chapter range, or verse range — including cross-chapter).
+     * Defaults to "whole book" when omitted, preserving legacy callers.
+     * Must reference the same `bookId` as the input — mismatch throws.
+     *
+     * Filtering happens at fetch time when possible (skip chapters
+     * outside the range) and verse-level at the boundary chapters.
+     * `verseStart` / `verseEnd` of `null` mean "whole chapter" (so
+     * "Mateo 5-7" loads all verses of chapters 5, 6, 7).
+     */
+    scope?: PassageReference;
 }
 
 export interface LoadBookVersesResult {
@@ -75,6 +88,28 @@ export async function loadBookVerses(
     const displayName =
         input.displayLanguage === 'en' ? book.nameEn : book.nameEs;
 
+    // Resolve scope. Default = whole book. Validate scope matches the
+    // requested bookId so we don't silently load Hebrews when caller
+    // passed a Romans scope.
+    const scope = input.scope;
+    if (scope && scope.bookId !== input.bookId) {
+        throw new Error(
+            `Scope bookId (${scope.bookId}) does not match input bookId (${input.bookId})`,
+        );
+    }
+    const chapterStart = scope?.chapterStart ?? 1;
+    const chapterEnd = scope?.chapterEnd ?? book.chapterCount;
+    const verseStart = scope?.verseStart ?? null;
+    const verseEnd = scope?.verseEnd ?? null;
+
+    const filter = (verses: AssistantVerseInput[]): AssistantVerseInput[] =>
+        verses.filter((v) => {
+            if (v.chapter < chapterStart || v.chapter > chapterEnd) return false;
+            if (v.chapter === chapterStart && verseStart !== null && v.verse < verseStart) return false;
+            if (v.chapter === chapterEnd && verseEnd !== null && v.verse > verseEnd) return false;
+            return true;
+        });
+
     // Try original-language source first when applicable. The
     // provider's `supports()` is cheap; the actual fetch is async
     // and may throw on network/parse errors — both treated as
@@ -84,11 +119,12 @@ export async function loadBookVerses(
         input.originalLanguageProvider.supports(input.bookId)
     ) {
         try {
-            const verses = await loadFromOriginal(
-                book.chapterCount,
+            const verses = filter(await loadFromOriginal(
+                chapterStart,
+                chapterEnd,
                 input.bookId,
                 input.originalLanguageProvider,
-            );
+            ));
             if (verses.length === 0) {
                 throw new Error('Original-language source returned no verses');
             }
@@ -102,11 +138,12 @@ export async function loadBookVerses(
                 '[loadBookVerses] original-language load failed, falling back to translation:',
                 err,
             );
-            const verses = loadFromTranslation(
-                book.chapterCount,
+            const verses = filter(loadFromTranslation(
+                chapterStart,
+                chapterEnd,
                 displayName,
                 input.bibleRepository,
-            );
+            ));
             if (verses.length === 0) {
                 throw new Error(
                     `No se pudo cargar el texto del libro ${input.bookId}. Verifica que la versión bíblica esté disponible.`,
@@ -124,11 +161,12 @@ export async function loadBookVerses(
 
     // No original-language provider OR it doesn't support this book
     // (e.g. a 'mixed' genre book the user picked). Translation only.
-    const verses = loadFromTranslation(
-        book.chapterCount,
+    const verses = filter(loadFromTranslation(
+        chapterStart,
+        chapterEnd,
         displayName,
         input.bibleRepository,
-    );
+    ));
     if (verses.length === 0) {
         throw new Error(
             `No se pudo cargar el texto del libro ${input.bookId}. Verifica que la versión bíblica esté disponible.`,
@@ -138,12 +176,13 @@ export async function loadBookVerses(
 }
 
 async function loadFromOriginal(
-    chapterCount: number,
+    chapterStart: number,
+    chapterEnd: number,
     bookId: BibleBookId,
     provider: IOriginalLanguageBibleProvider,
 ): Promise<AssistantVerseInput[]> {
     const out: AssistantVerseInput[] = [];
-    for (let chapter = 1; chapter <= chapterCount; chapter++) {
+    for (let chapter = chapterStart; chapter <= chapterEnd; chapter++) {
         const lines = await provider.getChapterContent(bookId, chapter);
         lines.forEach((text, idx) => {
             if (typeof text !== 'string' || text.trim().length === 0) return;
@@ -158,12 +197,13 @@ async function loadFromOriginal(
 }
 
 function loadFromTranslation(
-    chapterCount: number,
+    chapterStart: number,
+    chapterEnd: number,
     bookDisplayName: string,
     repo: IBibleVersionRepository,
 ): AssistantVerseInput[] {
     const out: AssistantVerseInput[] = [];
-    for (let chapter = 1; chapter <= chapterCount; chapter++) {
+    for (let chapter = chapterStart; chapter <= chapterEnd; chapter++) {
         // Bible repos are keyed by display name, NOT SBL canonical
         // id (see commit 2889c29 post-mortem).
         const lines = repo.getChapterContent(bookDisplayName, chapter);

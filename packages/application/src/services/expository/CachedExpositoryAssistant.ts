@@ -64,6 +64,11 @@ export class CachedExpositoryAssistant implements IExpositoryAssistant {
     }
 
     async runPanorama(input: PanoramaInput): Promise<PassResult<BookPanorama>> {
+        // Sub-book scope: bypass the cache entirely. The cache key only
+        // tracks bookId/language/version, so a Mateo 10 run would
+        // otherwise return whole-book Mateo cached results.
+        if (input.scopeKey) return this.wrapped.runPanorama(input);
+
         const bookId = this.resolveBookId(input.book);
         if (!bookId) return this.wrapped.runPanorama(input);
 
@@ -93,6 +98,8 @@ export class CachedExpositoryAssistant implements IExpositoryAssistant {
     }
 
     async runMacroStructure(input: MacroInput): Promise<PassResult<MacroSection[]>> {
+        if (input.scopeKey) return this.wrapped.runMacroStructure(input);
+
         const bookId = this.resolveBookId(input.book);
         if (!bookId) return this.wrapped.runMacroStructure(input);
 
@@ -120,6 +127,8 @@ export class CachedExpositoryAssistant implements IExpositoryAssistant {
     }
 
     async runMicroStructure(input: MicroInput): Promise<PassResult<ExegeticalUnit[]>> {
+        if (input.scopeKey) return this.wrapped.runMicroStructure(input);
+
         const bookId = this.resolveBookId(input.book);
         if (!bookId) return this.wrapped.runMicroStructure(input);
 

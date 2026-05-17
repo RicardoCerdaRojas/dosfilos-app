@@ -183,7 +183,19 @@
                 "level3": "Texto grande"
             },
             "methodologyButton": "Metodología",
-            "methodologyButtonHint": "Conoce la metodología homilética detrás de este asistente"
+            "methodologyButtonHint": "Conoce la metodología homilética detrás de este asistente",
+            "scope": {
+                "label": "Alcance",
+                "modeWholeBook": "Libro completo",
+                "modeWholeBookHint": "{{count}} capítulos",
+                "modePassage": "Pasaje específico",
+                "modePassageHint": "Capítulo, rango de capítulos o rango de versículos (también entre capítulos)",
+                "passagePlaceholder": "Ej. Mateo 10, Mateo 5-7, Romanos 1:18-3:20",
+                "passageHelper": "Sigue divisiones del texto original, no las de las traducciones modernas.",
+                "minVersesError": "El pasaje debe tener al menos {{min}} versículos para justificar el análisis.",
+                "titleAutoSuggest": "Título sugerido",
+                "titleAutoSuggestHint": "Editable: ajústalo si prefieres otra forma."
+            }
         },
         "methodology": {
             "dialogTitle": "Metodología del asistente expositivo",

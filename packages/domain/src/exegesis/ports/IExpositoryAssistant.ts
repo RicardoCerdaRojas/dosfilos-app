@@ -111,6 +111,16 @@ export interface AssistantBookContext {
      * about the source.
      */
     sourceLanguage?: 'greek' | 'hebrew' | 'translation';
+    /**
+     * v1.7 sub-book scope marker. When present, signals that `verses`
+     * is a sub-book fragment (single chapter, chapter range, or verse
+     * range) — used by the cached assistant wrapper to bypass the
+     * whole-book cache (otherwise a Mateo 10 run would return the
+     * Mateo 1-28 panorama cached previously). Omit for whole-book
+     * runs to keep cache hits. Recommended value: the formatted
+     * passage reference ("Mateo 10", "Romanos 1:18-3:20").
+     */
+    scopeKey?: string;
 }
 
 export interface AssistantVerseInput {

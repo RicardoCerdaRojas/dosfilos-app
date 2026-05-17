@@ -183,7 +183,19 @@
                 "level3": "Large text"
             },
             "methodologyButton": "Methodology",
-            "methodologyButtonHint": "Learn the homiletical methodology behind this assistant"
+            "methodologyButtonHint": "Learn the homiletical methodology behind this assistant",
+            "scope": {
+                "label": "Scope",
+                "modeWholeBook": "Whole book",
+                "modeWholeBookHint": "{{count}} chapters",
+                "modePassage": "Specific passage",
+                "modePassageHint": "Chapter, chapter range, or verse range (including cross-chapter)",
+                "passagePlaceholder": "e.g. Matthew 10, Matthew 5-7, Romans 1:18-3:20",
+                "passageHelper": "Follows the divisions of the original text, not those of modern translations.",
+                "minVersesError": "The passage must contain at least {{min}} verses to justify the analysis.",
+                "titleAutoSuggest": "Suggested title",
+                "titleAutoSuggestHint": "Editable: adjust it if you prefer another form."
+            }
         },
         "methodology": {
             "dialogTitle": "Expository assistant methodology",

@@ -101,6 +101,7 @@ export class SeriesService {
     async loadBookVersesForExpository(input: {
         bookId: BibleBookId;
         displayLanguage: 'es' | 'en';
+        scope?: PassageReference;
     }): Promise<LoadBookVersesResult> {
         // Dispatch original-language source by testament. NT goes
         // to SBLGNT (Greek), OT goes to morphhb/WLC (Hebrew). Books
@@ -119,6 +120,7 @@ export class SeriesService {
             displayLanguage: input.displayLanguage,
             bibleRepository: input.displayLanguage === 'en' ? this.bibleRepoEn : this.bibleRepoEs,
             ...(originalProvider ? { originalLanguageProvider: originalProvider } : {}),
+            ...(input.scope ? { scope: input.scope } : {}),
         });
     }
 

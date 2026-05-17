@@ -36,7 +36,9 @@ import {
 } from '@/hooks/series/expositoryDraftStorage';
 import { seriesService } from '@dosfilos/application';
 import {
+    formatPassageReference,
     getAllBooks,
+    wholeBookPassage,
     type AssistantVerseInput,
     type BibleBookId,
     type BookPanorama,
@@ -45,12 +47,14 @@ import {
     type FidelityReview,
     type MacroSection,
     type PassResult,
+    type PassageReference,
     type PlannedSermon,
     type PlannedSermonExpositoryEnrichment,
     type PreachableUnit,
     type SuperMacroSection,
     type SyntacticUnit,
 } from '@dosfilos/domain';
+import { PassagePicker } from '@/components/exegesis/PassagePicker';
 
 /**
  * v1.5 expository assistant wizard.
@@ -80,6 +84,33 @@ export function ExpositoryAssistantPage() {
     const allBooks = useMemo(() => getAllBooks(), []);
     const [bookId, setBookId] = useState<BibleBookId>('2PE');
     const [targetCount, setTargetCount] = useState<number | ''>('');
+
+    // v1.7 scope picker. Default = "whole book" (preserves legacy UX —
+    // a fresh visit lands on a working configuration). Switching to
+    // "passage" reveals a PassagePicker that captures cap único / rango
+    // caps / verse range / cross-chapter ranges. The effective scope
+    // threads into loadBookVerses (verse filter) + every pass via
+    // scopeKey (cache bypass — sub-book runs shouldn't collide with
+    // whole-book cache).
+    const [scopeMode, setScopeMode] = useState<'whole-book' | 'passage'>('whole-book');
+    const [passageScope, setPassageScope] = useState<PassageReference | null>(null);
+    const [scopeError, setScopeError] = useState<string | null>(null);
+    const effectiveScope: PassageReference | null = useMemo(() => {
+        if (scopeMode === 'whole-book') return wholeBookPassage(bookId);
+        return passageScope;
+    }, [scopeMode, bookId, passageScope]);
+    const isWholeBook = scopeMode === 'whole-book';
+    const scopeKey = useMemo(() => {
+        if (!effectiveScope || isWholeBook) return undefined;
+        return formatPassageReference(effectiveScope, lang);
+    }, [effectiveScope, isWholeBook, lang]);
+    // When the user picks a passage with a different book, sync bookId
+    // so downstream prompts agree (book pickers + scope agree on the
+    // source). Silent — no toast, no warning.
+    useEffect(() => {
+        if (scopeMode !== 'passage' || !passageScope) return;
+        if (passageScope.bookId !== bookId) setBookId(passageScope.bookId);
+    }, [scopeMode, passageScope, bookId]);
 
     // Run state — accumulates as each pass completes.
     const [verses, setVerses] = useState<AssistantVerseInput[] | null>(null);
@@ -261,14 +292,26 @@ export function ExpositoryAssistantPage() {
 
     // Pre-fill the series-creation form once preachable units are
     // available — saves the pastor a manual title entry in the
-    // common case.
+    // common case. Sub-book scope = use the formatted passage
+    // (e.g. "Mateo 10", "Romanos 1:18-3:20") so the title reflects
+    // the actual fragment, not the whole book.
     useEffect(() => {
-        if (preachableUnits && bookDisplay && !seriesTitle) {
-            setSeriesTitle(t('expository.create.defaultTitle', { book: bookDisplay }) as string);
-        }
-    }, [preachableUnits, bookDisplay, seriesTitle, t]);
+        if (!preachableUnits || !bookDisplay || seriesTitle) return;
+        const subjectLabel = effectiveScope && !isWholeBook
+            ? formatPassageReference(effectiveScope, lang)
+            : bookDisplay;
+        setSeriesTitle(t('expository.create.defaultTitle', { book: subjectLabel }) as string);
+    }, [preachableUnits, bookDisplay, seriesTitle, effectiveScope, isWholeBook, lang, t]);
 
     const handleStart = async () => {
+        // Gate the run on a valid scope. Whole-book always passes;
+        // passage mode needs a parsed PassageReference.
+        if (!effectiveScope) {
+            setScopeError(t('expository.setup.scope.passageHelper') as string);
+            return;
+        }
+        setScopeError(null);
+
         // Reset prior run state if the pastor restarts.
         setPanorama(null);
         setSuperMacroSections(null);
@@ -284,12 +327,28 @@ export function ExpositoryAssistantPage() {
 
         let loaded;
         try {
-            loaded = await assistant.loadVerses({ bookId, displayLanguage: lang });
+            loaded = await assistant.loadVerses({
+                bookId,
+                displayLanguage: lang,
+                ...(isWholeBook ? {} : { scope: effectiveScope }),
+            });
         } catch (err: any) {
             console.error('[expository] loadVerses failed:', err);
             toast.error(err?.message ?? (t('expository.toast.loadFailed') as string));
             return;
         }
+
+        // Min-verses guard — analysis on a 1-2 verse fragment produces
+        // garbage. 5 is the floor for syntactic chunking to be
+        // meaningful.
+        const MIN_VERSES = 5;
+        if (loaded.verses.length < MIN_VERSES) {
+            const msg = t('expository.setup.scope.minVersesError', { min: MIN_VERSES }) as string;
+            setScopeError(msg);
+            toast.error(msg);
+            return;
+        }
+
         setVerses(loaded.verses);
         setBookDisplay(loaded.book);
 
@@ -327,6 +386,7 @@ export function ExpositoryAssistantPage() {
             displayLanguage: lang,
             verses: loaded.verses,
             sourceLanguage,
+            ...(scopeKey ? { scopeKey } : {}),
         };
         const targetOpt = typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {};
 
@@ -784,6 +844,21 @@ export function ExpositoryAssistantPage() {
                     textZoom={textZoom}
                     onTextZoomChange={setTextZoom}
                     onOpenMethodology={() => setMethodologyOpen(true)}
+                    scopeMode={scopeMode}
+                    onScopeModeChange={(next) => {
+                        setScopeMode(next);
+                        setScopeError(null);
+                        // Reset autosuggested title so the next run picks up
+                        // the new scope.
+                        setSeriesTitle('');
+                    }}
+                    passageScope={passageScope}
+                    onPassageScopeChange={(ref) => {
+                        setPassageScope(ref);
+                        setScopeError(null);
+                        setSeriesTitle('');
+                    }}
+                    scopeError={scopeError}
                     t={t}
                 />
 
@@ -1129,6 +1204,11 @@ function SetupCard({
     textZoom,
     onTextZoomChange,
     onOpenMethodology,
+    scopeMode,
+    onScopeModeChange,
+    passageScope,
+    onPassageScopeChange,
+    scopeError,
     t,
 }: {
     bookId: BibleBookId;
@@ -1140,14 +1220,21 @@ function SetupCard({
     strictMode: boolean;
     onStrictModeChange: (next: boolean) => void;
     lang: 'es' | 'en';
-    allBooks: ReadonlyArray<{ id: BibleBookId; nameEs: string; nameEn: string; testament: 'OT' | 'NT' }>;
+    allBooks: ReadonlyArray<{ id: BibleBookId; nameEs: string; nameEn: string; testament: 'OT' | 'NT'; chapterCount: number }>;
     isRunning: boolean;
     onStart: () => void;
     textZoom: 1 | 2 | 3;
     onTextZoomChange: (z: 1 | 2 | 3) => void;
     onOpenMethodology: () => void;
-    t: (key: string) => string;
+    scopeMode: 'whole-book' | 'passage';
+    onScopeModeChange: (next: 'whole-book' | 'passage') => void;
+    passageScope: PassageReference | null;
+    onPassageScopeChange: (ref: PassageReference | null) => void;
+    scopeError: string | null;
+    t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
+    const selectedBook = allBooks.find((b) => b.id === bookId);
+    const chapterCount = selectedBook?.chapterCount ?? 0;
     return (
         <section className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
             <header className="mb-4 flex items-start justify-between gap-3">
@@ -1219,6 +1306,79 @@ function SetupCard({
                         className="mt-1.5"
                     />
                 </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+                <Label className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">
+                    {t('expository.setup.scope.label')}
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label
+                        className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${
+                            scopeMode === 'whole-book'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-input hover:border-primary/40'
+                        } ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name="scopeMode"
+                            value="whole-book"
+                            checked={scopeMode === 'whole-book'}
+                            onChange={() => onScopeModeChange('whole-book')}
+                            disabled={isRunning}
+                            className="mt-1 h-3.5 w-3.5 text-primary focus:ring-primary/40"
+                        />
+                        <span className="flex flex-col text-[12px]">
+                            <span className="font-medium text-slate-800 dark:text-slate-100">
+                                {t('expository.setup.scope.modeWholeBook')}
+                            </span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {t('expository.setup.scope.modeWholeBookHint', { count: chapterCount }) as string}
+                            </span>
+                        </span>
+                    </label>
+                    <label
+                        className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${
+                            scopeMode === 'passage'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-input hover:border-primary/40'
+                        } ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name="scopeMode"
+                            value="passage"
+                            checked={scopeMode === 'passage'}
+                            onChange={() => onScopeModeChange('passage')}
+                            disabled={isRunning}
+                            className="mt-1 h-3.5 w-3.5 text-primary focus:ring-primary/40"
+                        />
+                        <span className="flex flex-col text-[12px]">
+                            <span className="font-medium text-slate-800 dark:text-slate-100">
+                                {t('expository.setup.scope.modePassage')}
+                            </span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {t('expository.setup.scope.modePassageHint')}
+                            </span>
+                        </span>
+                    </label>
+                </div>
+                {scopeMode === 'passage' && (
+                    <div className="space-y-1.5">
+                        <PassagePicker
+                            value={passageScope}
+                            onChange={(ref) => onPassageScopeChange(ref)}
+                            displayLanguage={lang}
+                        />
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {t('expository.setup.scope.passageHelper')}
+                        </p>
+                    </div>
+                )}
+                {scopeError && (
+                    <p className="text-[12px] font-medium text-destructive">{scopeError}</p>
+                )}
             </div>
 
             <label className="mt-4 flex items-start gap-2 text-[12px] text-slate-700 dark:text-slate-200 cursor-pointer">
