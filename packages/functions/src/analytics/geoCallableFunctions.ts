@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import { trackGeoEvent } from './geoTracking';
+import { appCheckV1Options } from '../config/appCheckOptions';
 
 // const db = admin.firestore(); // Not needed for callable functions
 
@@ -7,7 +8,7 @@ import { trackGeoEvent } from './geoTracking';
  * Callable function to track user registration with geographic data
  * Called from frontend after successful user creation
  */
-export const trackUserRegistration = functions.https.onCall(async (data, context) => {
+export const trackUserRegistration = functions.runWith(appCheckV1Options()).https.onCall(async (data, context) => {
     try {
         const userId = data.userId || context.auth?.uid;
 
@@ -39,7 +40,7 @@ export const trackUserRegistration = functions.https.onCall(async (data, context
  * Callable function to track user login with geographic data
  * Called from frontend after successful login
  */
-export const trackUserLogin = functions.https.onCall(async (_data, context) => {
+export const trackUserLogin = functions.runWith(appCheckV1Options()).https.onCall(async (_data, context) => {
     try {
         const userId = context.auth?.uid;
 
@@ -71,7 +72,7 @@ export const trackUserLogin = functions.https.onCall(async (_data, context) => {
  * Callable function to track landing page visit (anonymous)
  * Called from frontend when user visits landing page
  */
-export const trackLandingVisit = functions.https.onCall(async (_data, context) => {
+export const trackLandingVisit = functions.runWith(appCheckV1Options()).https.onCall(async (_data, context) => {
     try {
         // Get IP from request context
         const ip = context.rawRequest.ip || '127.0.0.1';

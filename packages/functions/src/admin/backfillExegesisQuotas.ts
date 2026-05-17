@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { setExegesisPlanQuotaAdmin } from '../library/processingBalance';
 
 /**
@@ -28,6 +29,7 @@ import { setExegesisPlanQuotaAdmin } from '../library/processingBalance';
  */
 export const backfillExegesisQuotas = onCall<{ dryRun?: boolean }>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '512MiB',
         timeoutSeconds: 300,

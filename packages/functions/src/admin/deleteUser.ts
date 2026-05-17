@@ -2,9 +2,10 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { stripe } from '../config/stripe';
 import { writeAuditLog } from './auditLog';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 export const deleteUser = onCall(
-    { secrets: ['STRIPE_SECRET_KEY'] },
+    { ...appCheckCallableOptions(), secrets: ['STRIPE_SECRET_KEY'] },
     async (request) => {
     // 1. Verify Authentication
     if (!request.auth) {

@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface IncrementUsageRequest {
     kind: 'query';  // Only 'query' is client-initiated; page counts are incremented
@@ -19,6 +20,7 @@ interface IncrementUsageRequest {
  */
 export const incrementUsage = onCall<IncrementUsageRequest>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '256MiB',
         timeoutSeconds: 30,

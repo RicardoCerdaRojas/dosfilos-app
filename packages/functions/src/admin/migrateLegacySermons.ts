@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
  * One-shot migration: assigns every orphan sermon (no `projectId`) to a
@@ -29,6 +30,7 @@ const LEGACY_PROJECT_CONTEXT_NOTE =
 
 export const migrateLegacySermons = onCall(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '512MiB',
         timeoutSeconds: 300,

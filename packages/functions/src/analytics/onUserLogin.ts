@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
  * Cloud Function: On User Login
@@ -8,7 +9,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
  * - Increments loginCount and updates lastLoginAt.
  * - Recalculates and persists engagementScore on every login.
  */
-export const onUserLogin = onCall(async (request) => {
+export const onUserLogin = onCall(appCheckCallableOptions(), async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }

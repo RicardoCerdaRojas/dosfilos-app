@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { stripe } from '../config/stripe';
 import { writeAuditLog } from './auditLog';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 type BulkAction = 'disable' | 'enable';
 
@@ -35,7 +36,7 @@ const MAX_BATCH = 50;
  *   - Single audit log entry summarises the batch
  */
 export const bulkUserAction = onCall<BulkUserActionRequest>(
-    { secrets: ['STRIPE_SECRET_KEY'], timeoutSeconds: 540 },
+    { ...appCheckCallableOptions(), secrets: ['STRIPE_SECRET_KEY'], timeoutSeconds: 540 },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'User must be authenticated');

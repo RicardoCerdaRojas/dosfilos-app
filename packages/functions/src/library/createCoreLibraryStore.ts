@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface CreateCoreLibraryStoreRequest {
     key: string;
@@ -21,6 +22,7 @@ interface CreateCoreLibraryStoreRequest {
  */
 export const createCoreLibraryStore = onCall<CreateCoreLibraryStoreRequest>(
     {
+        ...appCheckCallableOptions(),
         cors: true,
         memory: '256MiB',
         timeoutSeconds: 30,

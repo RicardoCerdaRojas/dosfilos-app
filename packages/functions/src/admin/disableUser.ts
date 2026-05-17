@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { stripe } from '../config/stripe';
 import { writeAuditLog } from './auditLog';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
  * Cloud Function: Disable User (Soft)
@@ -15,7 +16,7 @@ import { writeAuditLog } from './auditLog';
  * without permanently cancelling the customer record.
  */
 export const disableUser = onCall(
-    { secrets: ['STRIPE_SECRET_KEY'] },
+    { ...appCheckCallableOptions(), secrets: ['STRIPE_SECRET_KEY'] },
     async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');

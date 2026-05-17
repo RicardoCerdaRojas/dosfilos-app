@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const CHUNK_COLLECTION = 'document_chunks';
 const LIBRARY_COLLECTION = 'library_resources';
@@ -62,6 +63,7 @@ export interface AuditResponse {
  */
 export const auditIndexing = onCall<Record<string, never>>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '512MiB',
         timeoutSeconds: 300,

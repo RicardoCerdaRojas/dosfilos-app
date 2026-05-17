@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface DeleteCoreLibraryStoreRequest {
     key: string;
@@ -7,6 +8,7 @@ interface DeleteCoreLibraryStoreRequest {
 
 export const deleteCoreLibraryStore = onCall<DeleteCoreLibraryStoreRequest>(
     {
+        ...appCheckCallableOptions(),
         cors: true,
         memory: '1GiB',
         timeoutSeconds: 300,

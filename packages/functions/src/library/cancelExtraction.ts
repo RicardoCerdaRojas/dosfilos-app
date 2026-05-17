@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface CancelRequest {
     resourceId: string;
@@ -33,6 +34,7 @@ const ADMIN_EMAIL = 'rdocerda@gmail.com';
  */
 export const cancelExtraction = onCall<CancelRequest>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '512MiB',
         timeoutSeconds: 60,

@@ -1,6 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onRequest, onCall } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const PLAN_PRICES: Record<string, number> = {
     pro: 9.99,
@@ -262,6 +263,7 @@ export const recalculateAnalytics = onSchedule({
  * Requires the caller to be authenticated with Firebase Auth.
  */
 export const recalculateAnalyticsCallable = onCall({
+    ...appCheckCallableOptions(),
     memory: '512MiB',
     timeoutSeconds: 120,
 }, async (request) => {

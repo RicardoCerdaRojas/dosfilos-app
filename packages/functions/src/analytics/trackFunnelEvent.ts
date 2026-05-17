@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { dispatchToMetaCapi } from './metaCapi';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface TrackFunnelEventRequest {
     /** Deterministic event id used to dedup against Meta CAPI later. */
@@ -41,7 +42,7 @@ interface TrackFunnelEventRequest {
  * with their browser counterparts.
  */
 export const trackFunnelEvent = onCall<TrackFunnelEventRequest>(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         const { eventId, eventName, props, timestamp, url, referrer, userAgent, sessionId } = request.data;
 
