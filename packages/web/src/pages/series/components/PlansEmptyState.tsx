@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, BookOpen, GraduationCap } from 'lucide-react';
+import { ArrowRight, BookOpen, GraduationCap, Pencil, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 interface FeaturedCard {
-    key: 'expository' | 'thematic';
+    key: 'expository' | 'thematic' | 'manual';
     icon: React.ComponentType<{ className?: string }>;
     href: string;
     recommended: boolean;
@@ -24,6 +24,12 @@ const FEATURED_CARDS: FeaturedCard[] = [
         key: 'thematic',
         icon: GraduationCap,
         href: '/dashboard/planner',
+        recommended: false,
+    },
+    {
+        key: 'manual',
+        icon: Pencil,
+        href: '/dashboard/plans/new',
         recommended: false,
     },
 ];
@@ -43,7 +49,7 @@ export const PlansEmptyState: React.FC = () => {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
                 {FEATURED_CARDS.map(({ key, icon: Icon, href, recommended }) => (
                     <Card
                         key={key}
