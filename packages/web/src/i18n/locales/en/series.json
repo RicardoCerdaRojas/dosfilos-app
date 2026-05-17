@@ -2,8 +2,29 @@
     "header": {
         "title": "Preaching Plans",
         "subtitle": "Organize and plan your sermons",
-        "aiPlannerButton": "Assisted Planner",
         "newPlanButton": "New Plan"
+    },
+    "newPlanDialog": {
+        "title": "What kind of plan do you want to create?",
+        "description": "Pick the path that best fits what you'll preach.",
+        "recommendedBadge": "Recommended",
+        "options": {
+            "expository": {
+                "label": "Expository Plan",
+                "description": "Preach an entire book or a passage following the syntax of the original text, pericope by pericope.",
+                "cta": "Start expository"
+            },
+            "thematic": {
+                "label": "Thematic Plan",
+                "description": "Preach a series on a pastoral theme (grace, prayer, identity) with its arc and suggested passages.",
+                "cta": "Start thematic"
+            },
+            "manual": {
+                "label": "Manual Plan",
+                "description": "Build your plan by hand: title, dates, and a sermon list you define yourself, without assistance.",
+                "cta": "Create manual"
+            }
+        }
     },
     "loading": "Loading plans...",
     "empty": {
@@ -12,13 +33,18 @@
         "recommendedBadge": "Recommended",
         "expository": {
             "label": "Expository Plan",
-            "description": "Preach an entire book of the Bible, pericope by pericope. AI divides the text and proposes a calendar faithful to the original.",
+            "description": "Preach an entire book or a passage following the syntax of the original text, pericope by pericope.",
             "cta": "Start expository"
         },
         "thematic": {
             "label": "Thematic Plan",
-            "description": "Preach a series on a theme (grace, prayer, identity). AI structures the arc and selects passages.",
+            "description": "Preach a series on a pastoral theme (grace, prayer, identity) with its arc and suggested passages.",
             "cta": "Start thematic"
+        },
+        "manual": {
+            "label": "Manual Plan",
+            "description": "Build your plan by hand: title, dates, and a sermon list you define yourself, without assistance.",
+            "cta": "Create manual"
         }
     },
     "sermonCount": "sermons",

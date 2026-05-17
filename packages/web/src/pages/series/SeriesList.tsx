@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, MoreVertical, Pencil, Trash2, Eye, Wand2, Sparkles } from 'lucide-react';
+import { Plus, Calendar, MoreVertical, Pencil, Trash2, Eye } from 'lucide-react';
 import { SermonSeriesEntity } from '@dosfilos/domain';
 import { seriesService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PlansEmptyState } from './components/PlansEmptyState';
+import { NewPlanDialog } from './components/NewPlanDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,7 @@ export function SeriesList() {
   const [loading, setLoading] = useState(true);
   const [seriesToDelete, setSeriesToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [newPlanDialogOpen, setNewPlanDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -82,6 +84,8 @@ export function SeriesList() {
     return <PlansEmptyState />;
   }
 
+
+
   return (
     <div className="space-y-6 p-5">
       {/* Header */}
@@ -91,19 +95,7 @@ export function SeriesList() {
           <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/dashboard/plans/pericope')}
-            className="hidden md:flex border-emerald-300 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            {t('expository.title')}
-          </Button>
-          <Button variant="outline" onClick={() => navigate('/dashboard/planner')} className="hidden sm:flex">
-            <Wand2 className="mr-2 h-4 w-4" />
-            {t('header.aiPlannerButton')}
-          </Button>
-          <Button onClick={() => navigate('/dashboard/plans/new')}>
+          <Button onClick={() => setNewPlanDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             {t('header.newPlanButton')}
           </Button>
@@ -218,6 +210,8 @@ export function SeriesList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <NewPlanDialog open={newPlanDialogOpen} onOpenChange={setNewPlanDialogOpen} />
     </div>
   );
 }

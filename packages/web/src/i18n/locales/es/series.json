@@ -2,8 +2,29 @@
     "header": {
         "title": "Planificador",
         "subtitle": "Organiza y planifica tus sermones",
-        "aiPlannerButton": "Planificador Asistido",
         "newPlanButton": "Nuevo Plan"
+    },
+    "newPlanDialog": {
+        "title": "¿Qué tipo de plan quieres crear?",
+        "description": "Elige el camino que mejor se ajusta a lo que vas a predicar.",
+        "recommendedBadge": "Recomendado",
+        "options": {
+            "expository": {
+                "label": "Plan Expositivo",
+                "description": "Predica un libro entero o un pasaje siguiendo la sintaxis del texto original, perícopa por perícopa.",
+                "cta": "Comenzar expositivo"
+            },
+            "thematic": {
+                "label": "Plan Temático",
+                "description": "Predica una serie sobre un tema pastoral (gracia, oración, identidad) con su arco y pasajes propuestos.",
+                "cta": "Comenzar temático"
+            },
+            "manual": {
+                "label": "Plan Manual",
+                "description": "Arma tu plan a mano: título, fechas y lista de sermones definidos por ti, sin asistencia.",
+                "cta": "Crear manual"
+            }
+        }
     },
     "loading": "Cargando planes...",
     "empty": {
@@ -12,13 +33,18 @@
         "recommendedBadge": "Recomendado",
         "expository": {
             "label": "Plan Expositivo",
-            "description": "Predica un libro de la Biblia entero, perícopa por perícopa. La IA divide el texto y propone un calendario fiel al original.",
+            "description": "Predica un libro entero o un pasaje siguiendo la sintaxis del texto original, perícopa por perícopa.",
             "cta": "Comenzar expositivo"
         },
         "thematic": {
             "label": "Plan Temático",
-            "description": "Predica una serie sobre un tema (gracia, oración, identidad). La IA estructura el arco y elige pasajes.",
+            "description": "Predica una serie sobre un tema pastoral (gracia, oración, identidad) con su arco y pasajes propuestos.",
             "cta": "Comenzar temático"
+        },
+        "manual": {
+            "label": "Plan Manual",
+            "description": "Arma tu plan a mano: título, fechas y lista de sermones definidos por ti, sin asistencia.",
+            "cta": "Crear manual"
         }
     },
     "sermonCount": "sermones",
