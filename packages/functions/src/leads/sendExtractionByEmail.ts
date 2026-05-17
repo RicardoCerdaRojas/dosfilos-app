@@ -4,6 +4,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { render } from '@react-email/render';
 import { resend } from '../emails/resendClient';
 import { ShareEmail } from '../emails/templates/extractionShare/ShareEmail';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const db = admin.firestore();
 
@@ -36,7 +37,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * can show "Enviado a 12 personas hace 2 horas" without re-querying.
  */
 export const sendExtractionByEmail = onCall<SendExtractionByEmailRequest>(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Sign-in required');

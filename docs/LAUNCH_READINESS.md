@@ -220,6 +220,66 @@ Sin esto, suscriptores Pro/Equipo existentes ven "0 estudios" hasta que su próx
 
 ## 4. Validación de seguridad y citas (Hito 1)
 
+### 4.0 Firebase App Check — bot protection ⚠️ BLOQUEADOR PRE-LAUNCH
+
+Sin App Check el formulario de registro y la captura de leads están expuestos a abuso (bot crea cuentas masivas, agota cuota Gemini/LlamaParse, ensucia analytics, dispara emails Resend, contamina dashboard Stripe). App Check es invisible para el usuario (modo reCAPTCHA Enterprise V3) y protege callables + Firestore + Storage transparente.
+
+#### 4.0.a Google Cloud setup (1-2 horas)
+
+- [ ] Console: https://console.cloud.google.com/security/recaptcha → proyecto `dosfilosapp`
+- [ ] Habilita **reCAPTCHA Enterprise API** (Enable)
+- [ ] Crea key: **+ CREATE KEY**
+  - Display name: `dosfilos-web-appcheck`
+  - Platform: **Website**
+  - Domain list: `preach.dosfilos.com`, `dosfilos.com`, `localhost`
+  - Usage: deja default (no reCAPTCHA WAF needed)
+- [ ] Copia el **Site Key** (formato `6L...`). Es público — va en frontend env var.
+
+#### 4.0.b Firebase Console — registrar App Check provider
+
+- [ ] Console: https://console.firebase.google.com/project/dosfilosapp/appcheck
+- [ ] Sección **Apps** → tu Web App (debiera mostrar el `appId` de `VITE_FIREBASE_APP_ID`)
+- [ ] **Register** → provider: **reCAPTCHA Enterprise**
+- [ ] Paste el Site Key copiado en paso 4.0.a → Save
+- [ ] **APIs** tab → para cada API listada (Cloud Functions, Cloud Firestore, Cloud Storage), set **Enforcement** a:
+  - **Unenforced** durante pruebas iniciales (monitorea metrics)
+  - **Enforced** una vez confirmado que el tráfico real pasa con tokens válidos
+  - **Si enforced antes de tiempo, todo tráfico sin token = rechazado.** Setea Unenforced primero para evitar caer producción.
+
+#### 4.0.c Local dev — debug token (opcional)
+
+Si quieres testear contra Cloud Functions desplegadas desde localhost sin emulator:
+
+- [ ] Firebase Console → App Check → Apps → tu Web App → **⋮ Manage debug tokens**
+- [ ] **Add debug token** → copia el UUID
+- [ ] Añade en `packages/web/.env.local`: `VITE_APP_CHECK_DEBUG_TOKEN=<uuid>`
+- [ ] Reinicia dev server
+
+Con `firebase emulators:start` el debug token NO es necesario — el código detecta `FUNCTIONS_EMULATOR=true` y omite enforcement.
+
+#### 4.0.d Frontend env var
+
+- [ ] Production env (Firebase Hosting / build pipeline): set `VITE_RECAPTCHA_SITE_KEY=<site key del paso 4.0.a>`
+- [ ] **Sin esta env var el cliente NO inicializa App Check** y los callables enforced van a fallar `unauthenticated`. El init loggea un warning si falta.
+
+#### 4.0.e Smoke test
+
+- [ ] Deploy con `VITE_RECAPTCHA_SITE_KEY` set
+- [ ] Abre prod, abre DevTools Network tab
+- [ ] Submit landing form (captureLead) → debiera devolver `200 ok`
+- [ ] DevTools: busca request a `recaptchaenterprise.googleapis.com` previo al callable → token generado
+- [ ] Curl directo contra el callable sin token: `curl -X POST https://us-central1-dosfilosapp.cloudfunctions.net/captureLead -d '{}'` → debe responder `unauthenticated` (App Check rechazó)
+- [ ] Si todo OK, sube enforcement de **Unenforced → Enforced** en Firebase Console (paso 4.0.b)
+
+#### Callables protegidos en Phase 1 (PR #198)
+
+- `captureLead`, `completeRegistration`, `createCheckoutSession`
+- `sendVerificationEmail`, `resendVerificationEmail`
+- `resendLeadMagnet`, `sendExtractionByEmail`, `publishExtractionToWordpress`, `testWordpressConnection`
+- `previewWelcomeEmail`, `previewLeadMagnetNurture`, `previewExtractionShareEmail`
+
+Phase 2 (admin/stripe/library callables) queda para PR siguiente después de validar Phase 1 en producción.
+
 ### 4.1 Marcar core library docs como restricted
 
 - [ ] Ve a `/dashboard/admin/core-library`

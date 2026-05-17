@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { render } from '@react-email/render';
 import { WelcomeEmail, getWelcomeEmailSubject } from '../emails/templates/WelcomeEmail';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 type Flow = 'free' | 'paid';
 type Locale = 'es' | 'en';
@@ -28,7 +29,7 @@ const SAMPLE_SET_PASSWORD_URL = 'https://preach.dosfilos.com/__sample__/set-pass
  * Auth: super-admin only.
  */
 export const previewWelcomeEmail = onCall<PreviewRequest>(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Sign-in required');

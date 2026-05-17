@@ -20,6 +20,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { SupportedLocale } from '../services/EmailService';
 import { logger } from 'firebase-functions/v2';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { trackGeoEvent, getClientIP } from '../analytics/geoTracking';
 
 // ============================================================================
@@ -251,6 +252,7 @@ async function markRegistrationCompleted(sessionId: string): Promise<void> {
 // ============================================================================
 
 export const completeRegistration = onCall<CompleteRegistrationRequest>(
+    appCheckCallableOptions(),
     async (request): Promise<CompleteRegistrationResponse> => {
         const { sessionId, locale = 'es' } = request.data;
 
