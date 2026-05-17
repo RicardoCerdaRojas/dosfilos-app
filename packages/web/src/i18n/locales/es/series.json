@@ -450,6 +450,8 @@
             "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto.",
             "titleRequired": "Ponle un título a la serie antes de crear.",
             "seriesCreated": "Serie creada. Te llevamos al detalle.",
+            "seriesCreatedWithPapers_one": "Serie creada con 1 paper listo para estudiar.",
+            "seriesCreatedWithPapers_other": "Serie creada con {{count}} papers listos para estudiar.",
             "createFailed": "No se pudo crear la serie."
         }
     }

@@ -698,10 +698,23 @@ export function ExpositoryAssistantPage() {
                     version: panorama ? `expository-v15:${panorama.genre}` : 'expository-v15',
                     status: 'reviewed',
                 },
+                // Tells createSeriesFromPlan to auto-spawn one ExegeticalPaper
+                // per pericope in the user's display language. Without this
+                // the pastor would land in SeriesDetail with N "Crear paper"
+                // buttons to click manually.
+                displayLanguage: lang,
             });
 
             clearExpositoryDraft();
-            toast.success(t('expository.toast.seriesCreated') as string);
+            // Count papers actually created so the toast reflects reality
+            // (some may have failed silently; user retries from SeriesDetail).
+            const paperCount = (series.metadata?.plannedSermons ?? [])
+                .filter((p) => Boolean(p.paperId)).length;
+            toast.success(
+                paperCount > 0
+                    ? (t('expository.toast.seriesCreatedWithPapers', { count: paperCount }) as string)
+                    : (t('expository.toast.seriesCreated') as string),
+            );
             navigate(`/dashboard/plans/${series.id}`);
         } catch (err: any) {
             console.error('[expository] createSeries failed:', err);
