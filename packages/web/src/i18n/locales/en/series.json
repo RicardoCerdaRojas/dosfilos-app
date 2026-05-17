@@ -398,6 +398,7 @@
             "subtitle": "Each pericope can become a full exegetical paper. The paper stays linked to the pericope so traceability is preserved.",
             "createPaper": "Create paper",
             "openPaper": "Open paper",
+            "openSermon": "Open draft",
             "paperBadge": "Paper started",
             "remove": "Remove pericope",
             "askFaculty": "Ask Faculty with this pericope loaded",
@@ -452,6 +453,7 @@
             "seriesCreated": "Series created. Taking you to the detail view.",
             "seriesCreatedWithPapers_one": "Series created with 1 paper ready to study.",
             "seriesCreatedWithPapers_other": "Series created with {{count}} papers ready to study.",
+            "seriesCreatedWithPapersAndDrafts": "Series created with {{paperCount}} papers and {{draftCount}} sermon drafts ready to develop.",
             "createFailed": "Couldn't create the series."
         }
     }

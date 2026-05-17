@@ -9,6 +9,7 @@ import {
     NotebookPen,
     ExternalLink,
     MessageCircle,
+    Mic,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -384,6 +385,17 @@ function PericopeSection({
                         <NotebookPen className="h-3.5 w-3.5 mr-1.5" />
                       )}
                       {t('pericope.panel.createPaper')}
+                    </Button>
+                  )}
+                  {p.draftId && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate(`/dashboard/sermons/generate?id=${p.draftId}`)}
+                      title={t('pericope.panel.openSermon') as string}
+                    >
+                      <Mic className="h-3.5 w-3.5 mr-1.5" />
+                      {t('pericope.panel.openSermon')}
                     </Button>
                   )}
                 </div>

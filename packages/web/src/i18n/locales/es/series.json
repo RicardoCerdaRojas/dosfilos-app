@@ -398,6 +398,7 @@
             "subtitle": "Cada perícopa puede convertirse en un paper exegético detallado. El paper queda enlazado a la perícopa para mantener trazabilidad.",
             "createPaper": "Crear paper",
             "openPaper": "Abrir paper",
+            "openSermon": "Abrir borrador",
             "paperBadge": "Paper iniciado",
             "remove": "Quitar perícopa",
             "askFaculty": "Consultar a la Facultad con esta perícopa cargada",
@@ -452,6 +453,7 @@
             "seriesCreated": "Serie creada. Te llevamos al detalle.",
             "seriesCreatedWithPapers_one": "Serie creada con 1 paper listo para estudiar.",
             "seriesCreatedWithPapers_other": "Serie creada con {{count}} papers listos para estudiar.",
+            "seriesCreatedWithPapersAndDrafts": "Serie creada con {{paperCount}} papers y {{draftCount}} borradores de sermón listos para desarrollar.",
             "createFailed": "No se pudo crear la serie."
         }
     }
