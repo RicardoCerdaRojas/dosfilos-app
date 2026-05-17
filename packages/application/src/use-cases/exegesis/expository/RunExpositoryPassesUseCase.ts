@@ -38,6 +38,7 @@ export class RunExpositoryPassesUseCase {
             verses: input.verses,
             ...(input.targetPreachableCount !== undefined ? { targetPreachableCount: input.targetPreachableCount } : {}),
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+            ...(input.scopeKey ? { scopeKey: input.scopeKey } : {}),
         });
     }
 
@@ -48,6 +49,7 @@ export class RunExpositoryPassesUseCase {
             verses: input.verses,
             panorama: input.panorama,
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+            ...(input.scopeKey ? { scopeKey: input.scopeKey } : {}),
         });
     }
 
@@ -59,6 +61,7 @@ export class RunExpositoryPassesUseCase {
             panorama: input.panorama,
             ...(input.superMacroSections ? { superMacroSections: input.superMacroSections } : {}),
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+            ...(input.scopeKey ? { scopeKey: input.scopeKey } : {}),
         });
     }
 
@@ -70,6 +73,7 @@ export class RunExpositoryPassesUseCase {
             panorama: input.panorama,
             macroSections: input.macroSections,
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+            ...(input.scopeKey ? { scopeKey: input.scopeKey } : {}),
         });
     }
 
@@ -83,6 +87,7 @@ export class RunExpositoryPassesUseCase {
             exegeticalUnits: input.exegeticalUnits,
             ...(input.targetPreachableCount !== undefined ? { targetPreachableCount: input.targetPreachableCount } : {}),
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+            ...(input.scopeKey ? { scopeKey: input.scopeKey } : {}),
             ...(input.strictMode === true ? { strictMode: true } : {}),
         });
     }
@@ -97,6 +102,7 @@ export class RunExpositoryPassesUseCase {
             exegeticalUnits: input.exegeticalUnits,
             preachableUnits: input.preachableUnits,
             ...(input.sourceLanguage !== undefined ? { sourceLanguage: input.sourceLanguage } : {}),
+            ...(input.scopeKey ? { scopeKey: input.scopeKey } : {}),
         });
     }
 }
@@ -109,6 +115,8 @@ interface BaseCallInput {
     verses: AssistantVerseInput[];
     /** v1.6: original-language source tag forwarded into prompts. */
     sourceLanguage?: 'greek' | 'hebrew' | 'translation';
+    /** v1.7 sub-book scope marker — bypasses whole-book cache when present. */
+    scopeKey?: string;
 }
 
 export interface PanoramaCallInput extends BaseCallInput {

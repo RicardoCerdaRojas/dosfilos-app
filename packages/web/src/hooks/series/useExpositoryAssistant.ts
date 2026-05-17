@@ -7,6 +7,7 @@ import type {
     FidelityReview,
     MacroSection,
     PassResult,
+    PassageReference,
     PreachableUnit,
     AssistantVerseInput,
     SuperMacroSection,
@@ -24,8 +25,11 @@ import type {
  * in useMutation would just add a render cycle for no benefit.
  */
 export function useExpositoryAssistant() {
-    const loadVerses = (input: { bookId: BibleBookId; displayLanguage: 'es' | 'en' }) =>
-        seriesService.loadBookVersesForExpository(input);
+    const loadVerses = (input: {
+        bookId: BibleBookId;
+        displayLanguage: 'es' | 'en';
+        scope?: PassageReference;
+    }) => seriesService.loadBookVersesForExpository(input);
 
     const runPanorama = useMutation({
         mutationFn: async (input: PanoramaInput): Promise<PassResult<BookPanorama>> => {
@@ -36,6 +40,7 @@ export function useExpositoryAssistant() {
             };
             if (input.targetPreachableCount !== undefined) payload.targetPreachableCount = input.targetPreachableCount;
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            if (input.scopeKey) payload.scopeKey = input.scopeKey;
             return seriesService.expositoryPasses.runPanorama(payload);
         },
     });
@@ -49,6 +54,7 @@ export function useExpositoryAssistant() {
                 panorama: input.panorama,
             };
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            if (input.scopeKey) payload.scopeKey = input.scopeKey;
             return seriesService.expositoryPasses.runSuperMacroStructure(payload);
         },
     });
@@ -63,6 +69,7 @@ export function useExpositoryAssistant() {
             };
             if (input.superMacroSections) payload.superMacroSections = input.superMacroSections;
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            if (input.scopeKey) payload.scopeKey = input.scopeKey;
             return seriesService.expositoryPasses.runMacroStructure(payload);
         },
     });
@@ -77,6 +84,7 @@ export function useExpositoryAssistant() {
                 macroSections: input.macroSections,
             };
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            if (input.scopeKey) payload.scopeKey = input.scopeKey;
             return seriesService.expositoryPasses.runMicroStructure(payload);
         },
     });
@@ -93,6 +101,7 @@ export function useExpositoryAssistant() {
             };
             if (input.targetPreachableCount !== undefined) payload.targetPreachableCount = input.targetPreachableCount;
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            if (input.scopeKey) payload.scopeKey = input.scopeKey;
             if (input.strictMode === true) payload.strictMode = true;
             return seriesService.expositoryPasses.runPreachableConversion(payload);
         },
@@ -110,6 +119,7 @@ export function useExpositoryAssistant() {
                 preachableUnits: input.preachableUnits,
             };
             if (input.sourceLanguage !== undefined) payload.sourceLanguage = input.sourceLanguage;
+            if (input.scopeKey) payload.scopeKey = input.scopeKey;
             return seriesService.expositoryPasses.runFidelityReview(payload);
         },
     });
@@ -133,6 +143,9 @@ interface BaseInput {
      * through to the prompt builders so the model knows what it's
      * reading (real Greek/Hebrew vs translation surrogate). */
     sourceLanguage?: 'greek' | 'hebrew' | 'translation';
+    /** v1.7 sub-book scope marker — when set, cache wrapper bypasses
+     * the whole-book cache. */
+    scopeKey?: string;
 }
 
 interface PanoramaInput extends BaseInput {

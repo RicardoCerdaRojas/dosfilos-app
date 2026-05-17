@@ -4,6 +4,7 @@ import {
     buildPassageReference,
     formatPassageReference,
     normalizeAlias,
+    wholeBookPassage,
 } from '../passage-reference';
 import { findBooksByAlias, getBookById, BIBLE_CANON } from '../BibleCanon';
 
@@ -362,5 +363,33 @@ describe('getBookById', () => {
     it('returns null for unknown id', () => {
         // @ts-expect-error — purposely passing an invalid id
         expect(getBookById('XXX')).toBeNull();
+    });
+});
+
+describe('wholeBookPassage', () => {
+    it('returns chapter-level reference spanning the whole book', () => {
+        const ref = wholeBookPassage('HEB');
+        expect(ref).toEqual({
+            bookId: 'HEB',
+            chapterStart: 1,
+            chapterEnd: 13,
+            verseStart: null,
+            verseEnd: null,
+        });
+    });
+
+    it('handles single-chapter books (Philemon, 2 John, 3 John, Jude, Obadiah)', () => {
+        expect(wholeBookPassage('PHM')).toEqual({
+            bookId: 'PHM',
+            chapterStart: 1,
+            chapterEnd: 1,
+            verseStart: null,
+            verseEnd: null,
+        });
+    });
+
+    it('throws for unknown book id', () => {
+        // @ts-expect-error — invalid id on purpose
+        expect(() => wholeBookPassage('XXX')).toThrow();
     });
 });
