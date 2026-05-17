@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { render } from '@react-email/render';
 import { ShareEmail } from '../emails/templates/extractionShare/ShareEmail';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const SUPER_ADMIN_EMAIL = 'rdocerda@gmail.com';
 
@@ -47,7 +48,7 @@ interface PreviewShareRequest {
  * Auth: super-admin only.
  */
 export const previewExtractionShareEmail = onCall<PreviewShareRequest>(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Sign-in required');

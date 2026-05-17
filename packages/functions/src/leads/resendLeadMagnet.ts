@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { sendDeliveryEmail } from './leadMagnetMailer';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
@@ -31,7 +32,7 @@ interface ResendLeadMagnetResponse {
  * is preserved — operators can still see when the lead first arrived.
  */
 export const resendLeadMagnet = onCall<ResendLeadMagnetRequest, Promise<ResendLeadMagnetResponse>>(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         // Auth gate — both must be present.
         if (!request.auth || request.auth.token?.email !== ADMIN_EMAIL) {

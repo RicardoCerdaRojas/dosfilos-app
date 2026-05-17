@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { stripe } from '../config/stripe';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getPackById, resolveStripePriceId } from './creditPackCatalog';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface CheckoutSessionData {
     /** When `packId` is set, `priceId` is ignored — the catalog resolves the
@@ -20,6 +21,7 @@ interface CheckoutSessionData {
 
 export const createCheckoutSession = onCall<CheckoutSessionData>(
     {
+        ...appCheckCallableOptions(),
         secrets: [
             'STRIPE_SECRET_KEY',
             // Credit pack price IDs are read at request time; declaring them here

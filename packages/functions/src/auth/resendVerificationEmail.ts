@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getAuth } from 'firebase-admin/auth';
 import { sendOnboardingEmail } from '../emails/sendWelcomeEmail';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
  * Resends the branded verification email to the calling user.
@@ -14,7 +15,7 @@ import { sendOnboardingEmail } from '../emails/sendWelcomeEmail';
  * should be hidden in that case, but a defensive check keeps us from
  * spamming verified users if state gets stale on the client.
  */
-export const resendVerificationEmail = onCall(async (request) => {
+export const resendVerificationEmail = onCall(appCheckCallableOptions(), async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'Sign in required');
     }

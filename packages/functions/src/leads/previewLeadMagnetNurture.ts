@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { render } from '@react-email/render';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { Day1ErrorEmail, getDay1ErrorSubject } from '../emails/templates/leadMagnetNurture/Day1ErrorEmail';
 import { Day3PickBookEmail, getDay3PickBookSubject } from '../emails/templates/leadMagnetNurture/Day3PickBookEmail';
 import { Day5WorkflowEmail, getDay5WorkflowSubject } from '../emails/templates/leadMagnetNurture/Day5WorkflowEmail';
@@ -35,7 +36,7 @@ const SUPER_ADMIN_EMAIL = 'rdocerda@gmail.com';
  * Auth: super-admin only.
  */
 export const previewLeadMagnetNurture = onCall<PreviewRequest>(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Sign-in required');

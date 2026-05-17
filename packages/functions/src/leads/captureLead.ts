@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { sendDeliveryEmail } from './leadMagnetMailer';
 import { dispatchToMetaCapi, hashEmail } from '../analytics/metaCapi';
@@ -64,6 +65,7 @@ interface CaptureLeadResponse {
  */
 export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadResponse>>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         // RESEND_API_KEY is read from process.env to match the rest
         // of the email stack (sendVerificationEmail / EmailService /

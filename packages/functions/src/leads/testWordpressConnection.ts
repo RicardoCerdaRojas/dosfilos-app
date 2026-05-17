@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const db = admin.firestore();
 
@@ -14,7 +15,7 @@ const db = admin.firestore();
  * `view` context omits them for privacy reasons.
  */
 export const testWordpressConnection = onCall(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Sign-in required');

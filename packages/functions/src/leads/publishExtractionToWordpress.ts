@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { Marked } from 'marked';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const db = admin.firestore();
 
@@ -35,7 +36,7 @@ const MAX_PUBLISHES_PER_HOUR_PER_USER = 20;
  * through to the WP edit URL.
  */
 export const publishExtractionToWordpress = onCall<PublishRequest>(
-    { region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Sign-in required');

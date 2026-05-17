@@ -5,6 +5,7 @@ import {
     getEmailVerificationTemplate,
     getEmailVerificationSubject,
 } from '../emails/templates/emailVerification';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
 const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
@@ -37,7 +38,7 @@ const CONTINUE_URL = 'https://preach.dosfilos.com/auth/verify-email';
  * the email stack to Secret Manager, add `{ secrets: ['RESEND_API_KEY'] }`
  * here and to the other senders.
  */
-export const sendVerificationEmail = onCall(async (request) => {
+export const sendVerificationEmail = onCall(appCheckCallableOptions(), async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in to request verification.');
         }
