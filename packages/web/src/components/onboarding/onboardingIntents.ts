@@ -67,9 +67,18 @@ export const ONBOARDING_INTENTS: OnboardingIntent[] = [
         ],
     },
     {
+        // Expository-series flips to `available: true` because the pipeline
+        // (`ExpositoryAssistantPage` 5-pass wizard + Series CRUD + pericope
+        // detection) is already built and reachable at /dashboard/plans/pericope.
+        // Series ↔ paper ↔ sermon ↔ Faculty wiring is still partial (see
+        // memory: feature_sermon_series_pericope_pipeline §audit-2026-05-16)
+        // but the user-facing flow lands the pastor in the wizard, which is
+        // the whole reason the wizard route exists. Closing the remaining
+        // automation gaps lands in subsequent commits.
         id: 'expository-series',
         icon: BookMarked,
-        available: false,
+        available: true,
+        route: '/dashboard/plans/pericope',
         accent: 'info',
         workflow: [
             { icon: BookMarked, stepKey: 'pickBook' },

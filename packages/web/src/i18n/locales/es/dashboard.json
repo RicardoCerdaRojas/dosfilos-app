@@ -297,10 +297,10 @@
                         "description": "El estudio fluye al sermón. Llegas al púlpito con todo encadenado."
                     }
                 },
-                "confirmTitle": "Anotado — pronto lo activamos",
-                "confirmBody": "El pipeline expositivo (división de libro → perícopas → sermones) está en construcción. Te llevamos al dashboard mientras tanto.",
-                "cta": "Ir al escritorio",
-                "comingSoon": "Anotamos tu interés en planificación expositiva. Estamos construyendo el pipeline completo."
+                "confirmTitle": "Vamos al Asistente Expositivo",
+                "confirmBody": "Te llevamos al wizard de 5 pases: panorama del libro → división estructural → perícopas predicables → revisión de fidelidad. Al terminar generamos tu plan semanal de sermones.",
+                "cta": "Abrir Asistente",
+                "comingSoon": ""
             },
             "counseling-course": {
                 "title": "Crear un curso o material didáctico",
