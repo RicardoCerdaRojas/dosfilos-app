@@ -297,10 +297,10 @@
                         "description": "The study flows into the sermon. You arrive at the pulpit with everything linked."
                     }
                 },
-                "confirmTitle": "Noted — we'll activate this soon",
-                "confirmBody": "The expository pipeline (book division → pericopes → sermons) is in build. We'll take you to the dashboard meanwhile.",
-                "cta": "Go to desk",
-                "comingSoon": "Noted your interest in expository planning. We're building the full pipeline."
+                "confirmTitle": "Opening the Expository Assistant",
+                "confirmBody": "Taking you to the 5-pass wizard: book panorama → structural division → preachable pericopes → fidelity review. At the end we generate your weekly sermon plan.",
+                "cta": "Open Assistant",
+                "comingSoon": ""
             },
             "counseling-course": {
                 "title": "Create a course or teaching material",
