@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface RemoveFileFromStoreRequest {
     documentId: string;
@@ -8,6 +9,7 @@ interface RemoveFileFromStoreRequest {
 
 export const removeFileFromStore = onCall<RemoveFileFromStoreRequest>(
     {
+        ...appCheckCallableOptions(),
         cors: true,
         memory: '1GiB',
         timeoutSeconds: 180,

@@ -8,6 +8,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface CancellationFeedbackRequest {
     reason: string;
@@ -21,6 +22,7 @@ interface CancellationFeedbackResponse {
 }
 
 export const submitCancellationFeedback = onCall<CancellationFeedbackRequest>(
+    appCheckCallableOptions(),
     async (request): Promise<CancellationFeedbackResponse> => {
         // Verify authentication
         if (!request.auth) {

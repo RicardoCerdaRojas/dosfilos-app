@@ -1,13 +1,14 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { stripe } from '../config/stripe';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface ChangePlanData {
     newPriceId: string;
 }
 
 export const changePlan = onCall<ChangePlanData>(
-    { secrets: ['STRIPE_SECRET_KEY'] },
+    { ...appCheckCallableOptions(), secrets: ['STRIPE_SECRET_KEY'] },
     async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');

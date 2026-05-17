@@ -12,6 +12,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { stripe } from '../config/stripe';
 import { logger } from 'firebase-functions/v2';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface ExtendTrialRequest {
     // No params needed - uses authenticated user
@@ -24,7 +25,7 @@ interface ExtendTrialResponse {
 }
 
 export const extendTrial = onCall<ExtendTrialRequest>(
-    { secrets: ['STRIPE_SECRET_KEY'] },
+    { ...appCheckCallableOptions(), secrets: ['STRIPE_SECRET_KEY'] },
     async (request): Promise<ExtendTrialResponse> => {
         // Verify authentication
         if (!request.auth) {

@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldPath } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface RetrieveRequest {
     query: string;
@@ -49,6 +50,7 @@ const CHUNK_COLLECTION = 'document_chunks';
  */
 export const retrieveChunks = onCall<RetrieveRequest>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '1GiB',
         timeoutSeconds: 60,

@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { stripe } from '../config/stripe';
 import { writeAuditLog } from './auditLog';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface ExtendUserTrialAdminRequest {
     userId: string;
@@ -23,7 +24,7 @@ interface ExtendUserTrialAdminRequest {
  * that would create a permanent free-rider account.
  */
 export const extendUserTrialAdmin = onCall<ExtendUserTrialAdminRequest>(
-    { secrets: ['STRIPE_SECRET_KEY'] },
+    { ...appCheckCallableOptions(), secrets: ['STRIPE_SECRET_KEY'] },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'User must be authenticated');

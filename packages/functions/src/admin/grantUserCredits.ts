@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { writeAuditLog } from './auditLog';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface GrantUserCreditsRequest {
     userId: string;
@@ -25,7 +26,7 @@ interface GrantUserCreditsRequest {
  * Negative values (deductions) are NOT allowed via this function — that's
  * disable + manual cleanup territory.
  */
-export const grantUserCredits = onCall<GrantUserCreditsRequest>(async (request) => {
+export const grantUserCredits = onCall<GrantUserCreditsRequest>(appCheckCallableOptions(), async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }

@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { stripe } from '../config/stripe';
 import { getFirestore } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface Invoice {
     id: string;
@@ -12,7 +13,7 @@ interface Invoice {
 }
 
 export const getInvoices = onCall(
-    { secrets: ['STRIPE_SECRET_KEY'] },
+    { ...appCheckCallableOptions(), secrets: ['STRIPE_SECRET_KEY'] },
     async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');

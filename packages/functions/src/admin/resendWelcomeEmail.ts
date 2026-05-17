@@ -3,11 +3,12 @@ import * as admin from 'firebase-admin';
 import { render } from '@react-email/render';
 import { resend } from '../emails/resendClient';
 import { WelcomeEmail, getWelcomeEmailSubject } from '../emails/templates/WelcomeEmail';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
 const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
 
-export const resendWelcomeEmail = onCall(async (request) => {
+export const resendWelcomeEmail = onCall(appCheckCallableOptions(), async (request) => {
     // 1. Verify Authentication
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');

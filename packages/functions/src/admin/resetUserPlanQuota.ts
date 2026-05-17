@@ -5,6 +5,7 @@ import {
     setPlanQuotaAdmin,
     setExegesisPlanQuotaAdmin,
 } from '../library/processingBalance';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface ResetUserPlanQuotaRequest {
     userId: string;
@@ -43,7 +44,7 @@ interface ResetUserPlanQuotaResponse {
  * Stripe billing is NOT touched. Subscription doc is NOT touched. Pack
  * balances are NOT touched. Only plan buckets + their `updatedAt`.
  */
-export const resetUserPlanQuota = onCall<ResetUserPlanQuotaRequest>(async (request) => {
+export const resetUserPlanQuota = onCall<ResetUserPlanQuotaRequest>(appCheckCallableOptions(), async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }

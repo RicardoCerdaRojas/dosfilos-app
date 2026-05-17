@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -34,6 +35,7 @@ interface ReprocessRequest {
  */
 export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '2GiB',
         timeoutSeconds: 900,  // 15 minutes — enough for 700+ page documents in fast mode

@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { chunkStructuredMarkdown } from './markdownChunker';
 import { isStructuredExtractionVersion } from './extractionVersions';
 
@@ -29,6 +30,7 @@ const EMBEDDING_BATCH_SIZE = 20;  // Gemini batch embedding limit
  */
 export const indexStructuredDocument = onCall<IndexRequest>(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '2GiB',
         timeoutSeconds: 900,

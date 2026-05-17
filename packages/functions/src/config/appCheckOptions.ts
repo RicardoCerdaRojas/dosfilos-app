@@ -16,9 +16,20 @@
  */
 
 import type { CallableOptions } from 'firebase-functions/v2/https';
+import type { RuntimeOptions } from 'firebase-functions/v1';
 
 const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
 
+/** v2 callable options spread. */
 export function appCheckCallableOptions(): CallableOptions {
+    return { enforceAppCheck: !isEmulator };
+}
+
+/**
+ * v1 `runWith()` options spread. Use for legacy `functions.https.onCall`
+ * sites that haven't been migrated to v2 yet:
+ *   functions.runWith(appCheckV1Options()).https.onCall(handler)
+ */
+export function appCheckV1Options(): RuntimeOptions {
     return { enforceAppCheck: !isEmulator };
 }

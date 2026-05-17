@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 interface TrackActivityData {
     eventType: 'page_view' | 'sermon_created' | 'sermon_edited' | 'feature_used' | 'export' | 'share';
@@ -13,7 +14,7 @@ interface TrackActivityData {
  * Callable function to track user activity events from the frontend.
  * Updates user analytics and creates activity records.
  */
-export const trackUserActivity = onCall<TrackActivityData>(async (request) => {
+export const trackUserActivity = onCall<TrackActivityData>(appCheckCallableOptions(), async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
     }

@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
  * One-shot migration: upserts plan quota fields into Firestore plan docs.
@@ -19,6 +20,7 @@ import { getFirestore } from 'firebase-admin/firestore';
  */
 export const migratePlanQuotas = onCall(
     {
+        ...appCheckCallableOptions(),
         region: 'us-central1',
         memory: '256MiB',
         timeoutSeconds: 60,
