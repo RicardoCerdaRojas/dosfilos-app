@@ -450,6 +450,8 @@
             "overloaded": "Our analysis engine is overloaded. Try again in a minute.",
             "titleRequired": "Give the series a title before creating.",
             "seriesCreated": "Series created. Taking you to the detail view.",
+            "seriesCreatedWithPapers_one": "Series created with 1 paper ready to study.",
+            "seriesCreatedWithPapers_other": "Series created with {{count}} papers ready to study.",
             "createFailed": "Couldn't create the series."
         }
     }

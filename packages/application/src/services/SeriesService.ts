@@ -12,15 +12,18 @@ import {
 } from '@dosfilos/infrastructure';
 import {
     SermonSeriesEntity,
+    findBooksByAlias,
     getBookById,
     type BibleBookId,
     type IBibleVersionRepository,
     type IOriginalLanguageBibleProvider,
+    type PassageReference,
     type PlannedSermonExpositoryEnrichment,
     type PlannedSermonStatus,
     type SyntacticUnit,
 } from '@dosfilos/domain';
 import { DetectPericopesUseCase } from '../use-cases/exegesis/DetectPericopesUseCase';
+import { exegesisService } from './ExegesisService';
 import {
     loadBookVerses,
     type LoadBookVersesResult,
@@ -355,6 +358,15 @@ export class SeriesService {
                 version?: string;
                 status?: 'pending' | 'running' | 'reviewed';
             };
+            /**
+             * Display language for any ExegeticalPaper auto-created from a
+             * pericope. Pass `'es'` or `'en'` from the wizard caller so
+             * paper UIs render in the correct locale. Defaults to 'es' if
+             * omitted — falls back rather than throwing because legacy
+             * callers (manual SeriesForm) don't pass this field and don't
+             * trigger auto-creation either (no syntacticUnit).
+             */
+            displayLanguage?: 'es' | 'en';
         }
     ): Promise<SermonSeriesEntity> {
         try {
@@ -362,7 +374,7 @@ export class SeriesService {
             const frequency = plan.frequency || 'weekly';
 
             // Create planned sermons with calculated dates (stored as metadata, NOT actual sermons)
-            const plannedSermons = plan.sermons.map((sermonData) => {
+            const plannedSermonsInitial = plan.sermons.map((sermonData) => {
                 let scheduledDate: Date | undefined;
 
                 if (startDate && frequency !== 'flexible') {
@@ -392,6 +404,19 @@ export class SeriesService {
                     // draftId is omitted until user starts developing
                 };
             });
+
+            // Auto-create one ExegeticalPaper per pericope that has a
+            // syntacticUnit and doesn't already carry a paperId. Eliminates
+            // the manual "Crear paper" loop in SeriesDetail.PericopeSection —
+            // the pastor finalizes the series and lands with N paper drafts
+            // ready to refine. Best-effort: a failed paper per pericope is
+            // logged + the pericope keeps `paperId` undefined so the manual
+            // "Crear paper" button in SeriesDetail still works as a retry.
+            const plannedSermons = await this.autoCreatePapersForPericopes(
+                userId,
+                plannedSermonsInitial,
+                plan.displayLanguage ?? 'es',
+            );
 
             // Merge pericope-assistant metadata into expository without
             // clobbering pre-existing fields (book, chapterRange) the
@@ -427,6 +452,91 @@ export class SeriesService {
         } catch (error: any) {
             throw new Error(error.message || 'Error al guardar el plan');
         }
+    }
+
+    /**
+     * For each PlannedSermon that has a `syntacticUnit` and no `paperId` yet,
+     * create an ExegeticalPaper seeded with the pericope's passage + title +
+     * the assistant's justification as the assignmentBrief. Returns the
+     * planned sermons with `paperId` + `status: 'paper-in-progress'` stamped
+     * on the ones that succeeded.
+     *
+     * Best-effort semantics: a failed paper for one pericope is logged but
+     * does NOT abort the series finalization. The pericope keeps `paperId`
+     * undefined and the user retries via the existing manual "Crear paper"
+     * button in SeriesDetail.PericopeSection.
+     *
+     * Parallel via Promise.all — paper creation is independent per pericope.
+     * Romanos at 30+ pericopes is the practical upper bound; if that pressures
+     * Firestore rate limits, batch it. v1 keeps it simple.
+     */
+    private async autoCreatePapersForPericopes<T extends {
+        id: string;
+        title: string;
+        syntacticUnit?: SyntacticUnit;
+        paperId?: string;
+        status?: PlannedSermonStatus;
+    }>(
+        userId: string,
+        plannedSermons: T[],
+        displayLanguage: 'es' | 'en',
+    ): Promise<T[]> {
+        const enriched = await Promise.all(
+            plannedSermons.map(async (planned) => {
+                if (!planned.syntacticUnit || planned.paperId) return planned;
+                const passage = this.syntacticUnitToPassage(planned.syntacticUnit);
+                if (!passage) {
+                    console.warn(
+                        `[SeriesService] Cannot resolve book for pericope ${planned.id}; skipping auto paper creation`,
+                    );
+                    return planned;
+                }
+                try {
+                    const paper = await exegesisService.createPaper.execute({
+                        ownerId: userId,
+                        passage,
+                        displayLanguage,
+                        title: planned.title,
+                        assignmentBrief: planned.syntacticUnit.justification ?? null,
+                        styleGuideId: null,
+                    });
+                    return {
+                        ...planned,
+                        paperId: paper.id,
+                        status: 'paper-in-progress' as PlannedSermonStatus,
+                    };
+                } catch (err) {
+                    console.error(
+                        `[SeriesService] auto paper creation failed for pericope ${planned.id}:`,
+                        err,
+                    );
+                    return planned;
+                }
+            }),
+        );
+        return enriched;
+    }
+
+    /**
+     * Resolves a `SyntacticUnit` into the canonical `PassageReference` shape
+     * the exegesis use cases expect. Mirrors the converter in
+     * `SeriesDetail.syntacticUnitToPassage` — kept duplicated here (service
+     * side, no domain coupling on the web util) until the next refactor lifts
+     * it into a shared domain helper. Returns null when the book alias can't
+     * be resolved (shouldn't happen for assistant-produced units, defensive
+     * against manual edits).
+     */
+    private syntacticUnitToPassage(unit: SyntacticUnit): PassageReference | null {
+        const matches = findBooksByAlias(unit.book.toLowerCase().trim());
+        if (matches.length === 0) return null;
+        const book = matches[0]!;
+        return {
+            bookId: book.id,
+            chapterStart: unit.chapterStart,
+            verseStart: unit.verseStart,
+            chapterEnd: unit.chapterEnd,
+            verseEnd: unit.verseEnd,
+        };
     }
 
     // Legacy method kept for compatibility or full-auto mode if needed
