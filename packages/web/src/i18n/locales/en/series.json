@@ -664,6 +664,8 @@
             "cancel": "Cancel",
             "save": "Save configuration",
             "savedToast": "Exegesis defaults saved. New pericopes will inherit them.",
+            "cascadedToast_one": "Also applied to 1 existing pericope (paper not yet started).",
+            "cascadedToast_other": "Also applied to {{count}} existing pericopes (papers not yet started).",
             "saveFailed": "Couldn't save the configuration."
         }
     }

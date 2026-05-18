@@ -258,8 +258,11 @@ function ExegesisDefaultsModal({
                 ...(styleGuideId !== undefined ? { styleGuideId } : {}),
                 sourceRefs,
             };
-            await seriesService.updateExegesisDefaults(seriesId, next);
+            const { cascaded } = await seriesService.updateExegesisDefaults(seriesId, next);
             toast.success(t('detail.exegesisDefaults.savedToast') as string);
+            if (cascaded > 0) {
+                toast.success(t('detail.exegesisDefaults.cascadedToast', { count: cascaded }) as string);
+            }
             onSaved();
         } catch (err: any) {
             console.error('[ExegesisDefaultsModal] save failed', err);

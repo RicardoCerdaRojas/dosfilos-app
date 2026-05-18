@@ -214,15 +214,17 @@ export class SeriesService {
     /**
      * Set the series-level exegesis defaults (rubric template, style
      * guide, initial corpus) that NEW auto-created papers will
-     * inherit. Existing papers are NOT mutated by this call —
-     * snapshot semantics mean the pastor owns each paper's copy
-     * after creation. A separate mass-update affordance is offered
-     * from the UI when defaults change and uncustomized papers exist.
+     * inherit. Existing papers that haven't been touched by the
+     * pastor (phase === 'configuring') get the defaults cascaded
+     * automatically — those are still empty shells from the
+     * auto-create step. Papers in 'in-progress' or 'assembled' are
+     * left alone (snapshot semantics: pastor owns each paper's copy
+     * after they engage with it).
      */
     async updateExegesisDefaults(
         seriesId: string,
         defaults: SeriesExegesisDefaults,
-    ): Promise<SermonSeriesEntity> {
+    ): Promise<{ series: SermonSeriesEntity; cascaded: number }> {
         try {
             const series = await this.retry(() => this.seriesRepository.findById(seriesId));
             if (!series) {
@@ -234,10 +236,91 @@ export class SeriesService {
                     exegesisDefaults: defaults,
                 },
             });
-            return await this.retry(() => this.seriesRepository.update(next));
+            const saved = await this.retry(() => this.seriesRepository.update(next));
+
+            // Best-effort cascade: apply defaults to existing papers
+            // that haven't moved past 'configuring'. Failures per
+            // paper are logged; the function returns the count of
+            // papers actually updated so the UI can surface "Aplicado
+            // a N perícopas".
+            const cascaded = await this.cascadeDefaultsToConfiguringPapers(
+                series.userId,
+                saved.metadata?.plannedSermons ?? [],
+                defaults,
+            );
+            return { series: saved, cascaded };
         } catch (error: any) {
             throw new Error(error.message || 'Error al guardar la configuración exegética');
         }
+    }
+
+    private async cascadeDefaultsToConfiguringPapers(
+        ownerId: string,
+        plannedSermons: ReadonlyArray<PlannedSermon>,
+        defaults: SeriesExegesisDefaults,
+    ): Promise<number> {
+        const targets = plannedSermons.filter((p): p is PlannedSermon & { paperId: string } =>
+            Boolean(p.paperId),
+        );
+        if (targets.length === 0) return 0;
+
+        let updated = 0;
+        await Promise.all(
+            targets.map(async (planned) => {
+                try {
+                    const paper = await exegesisService.getPaper.execute(ownerId, planned.paperId);
+                    if (!paper) return;
+                    if (paper.phase !== 'configuring') return;
+
+                    let touched = false;
+
+                    if (defaults.rubricTemplateId) {
+                        try {
+                            await exegesisService.applyRubricTemplateToPaper.execute({
+                                ownerId,
+                                paperId: paper.id,
+                                rubricTemplateId: defaults.rubricTemplateId,
+                            });
+                            touched = true;
+                        } catch (err) {
+                            console.warn(
+                                `[SeriesService] cascade rubric failed for paper ${paper.id}:`,
+                                err,
+                            );
+                        }
+                    }
+
+                    const existingCorpusIds = new Set(paper.sources.map((s) => s.corpusId));
+                    for (const ref of defaults.sourceRefs ?? []) {
+                        if (existingCorpusIds.has(ref.corpusId)) continue;
+                        try {
+                            await exegesisService.addSource.execute({
+                                ownerId,
+                                paperId: paper.id,
+                                corpusId: ref.corpusId,
+                                sourceType: ref.sourceType as AddProjectSourceInput['sourceType'],
+                                displayLabel: ref.displayLabel,
+                                mode: ref.mode,
+                                sourceLibraryResourceId: ref.libraryResourceId,
+                            });
+                            touched = true;
+                        } catch (err) {
+                            console.warn(
+                                `[SeriesService] cascade source ${ref.libraryResourceId} → paper ${paper.id} failed:`,
+                                err,
+                            );
+                        }
+                    }
+                    if (touched) updated += 1;
+                } catch (err) {
+                    console.warn(
+                        `[SeriesService] cascade failed for paper ${planned.paperId}:`,
+                        err,
+                    );
+                }
+            }),
+        );
+        return updated;
     }
 
     async getSeries(id: string): Promise<SermonSeriesEntity | null> {

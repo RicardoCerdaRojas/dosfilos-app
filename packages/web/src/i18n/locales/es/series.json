@@ -664,6 +664,8 @@
             "cancel": "Cancelar",
             "save": "Guardar configuración",
             "savedToast": "Configuración exegética guardada. Las nuevas perícopas la heredarán.",
+            "cascadedToast_one": "Aplicado también a 1 perícopa existente (paper aún sin trabajar).",
+            "cascadedToast_other": "Aplicado también a {{count}} perícopas existentes (papers aún sin trabajar).",
             "saveFailed": "No se pudo guardar la configuración."
         }
     }
