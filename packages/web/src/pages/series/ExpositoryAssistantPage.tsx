@@ -55,6 +55,7 @@ import {
     type SyntacticUnit,
 } from '@dosfilos/domain';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
+import { BookPicker } from '@/components/exegesis/BookPicker';
 
 /**
  * v1.5 expository assistant wizard.
@@ -1266,28 +1267,14 @@ function SetupCard({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
                     <Label htmlFor="book">{t('expository.setup.book')}</Label>
-                    <select
-                        id="book"
-                        value={bookId}
-                        onChange={(e) => onBookIdChange(e.target.value as BibleBookId)}
-                        disabled={isRunning}
-                        className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
-                    >
-                        <optgroup label={t('expository.setup.testamentNT') as string}>
-                            {allBooks.filter((b) => b.testament === 'NT').map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {lang === 'en' ? b.nameEn : b.nameEs}
-                                </option>
-                            ))}
-                        </optgroup>
-                        <optgroup label={t('expository.setup.testamentOT') as string}>
-                            {allBooks.filter((b) => b.testament === 'OT').map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {lang === 'en' ? b.nameEn : b.nameEs}
-                                </option>
-                            ))}
-                        </optgroup>
-                    </select>
+                    <div className="mt-1.5">
+                        <BookPicker
+                            value={bookId}
+                            onChange={onBookIdChange}
+                            displayLanguage={lang}
+                            disabled={isRunning}
+                        />
+                    </div>
                 </div>
                 <div>
                     <Label htmlFor="target">{t('expository.setup.targetCount')}</Label>
