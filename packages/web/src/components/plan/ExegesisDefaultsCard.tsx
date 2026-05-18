@@ -558,11 +558,9 @@ function LibrarySourcePicker({
                                     {t('detail.exegesisDefaults.add')}
                                 </Button>
                             </li>
-                                );
-                            })}
-                        </ul>
-                    )}
-                </div>
+                        );
+                    })}
+                </ul>
             )}
         </div>
     );
