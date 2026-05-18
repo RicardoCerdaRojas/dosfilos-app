@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AddSermonDialog } from '@/components/plan/AddSermonDialog';
 import { EditSermonDialog } from '@/components/plan/EditSermonDialog';
+import { ExegesisDefaultsCard } from '@/components/plan/ExegesisDefaultsCard';
 import { InlineDateEditor } from '@/components/plan/InlineDateEditor';
 import { SeriesTimelineModal } from '@/components/plan/SeriesTimelineModal';
 import { useSeriesData, type SermonItem } from '@/hooks/useSeriesData';
@@ -258,6 +259,19 @@ export function SeriesDetail() {
                     icon={<CheckCircle2 className="h-4 w-4" />}
                 />
             </div>
+
+            {/* Series-level exegesis defaults — Rubric / Style / Corpus
+                seeded into every auto-created paper at creation. Only
+                visible when the series has pericope-driven planned
+                sermons (the only place auto paper creation runs). */}
+            {user?.uid && (series.metadata?.plannedSermons?.some((p) => p.syntacticUnit) ?? false) && (
+                <ExegesisDefaultsCard
+                    seriesId={series.id}
+                    ownerId={user.uid}
+                    defaults={series.metadata?.exegesisDefaults}
+                    onChanged={reloadData}
+                />
+            )}
 
             {/* Unified table — pericope + sermon fused */}
             <section className="space-y-3">
