@@ -99,7 +99,7 @@ export function AuthLayout({ children, title, subtitle, eyebrow }: AuthLayoutPro
         </div>
 
         {/* Centered form */}
-        <div className="flex-1 flex items-center justify-center px-6 lg:px-10 pb-12">
+        <div className="flex-1 flex items-center justify-center px-6 lg:px-10 pb-4">
           <div className={cn('w-full max-w-[400px] space-y-8')}>
             <div className="space-y-2">
               {eyebrow && (
@@ -118,6 +118,29 @@ export function AuthLayout({ children, title, subtitle, eyebrow }: AuthLayoutPro
             {children}
           </div>
         </div>
+
+        {/* reCAPTCHA legal notice — covers all auth pages with one line. */}
+        <p className="px-6 lg:px-10 pb-6 text-center text-[10.5px] leading-relaxed text-slate-400">
+          {t('layout.recaptchaNotice.prefix')}{' '}
+          <a
+            href="https://policies.google.com/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-slate-600 transition-colors"
+          >
+            {t('layout.recaptchaNotice.privacy')}
+          </a>{' '}
+          {t('layout.recaptchaNotice.and')}{' '}
+          <a
+            href="https://policies.google.com/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-slate-600 transition-colors"
+          >
+            {t('layout.recaptchaNotice.terms')}
+          </a>{' '}
+          {t('layout.recaptchaNotice.suffix')}
+        </p>
       </main>
     </div>
   );

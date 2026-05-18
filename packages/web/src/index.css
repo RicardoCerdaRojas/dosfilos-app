@@ -567,9 +567,20 @@
 }
 
 @media print {
-  .verb-table th, 
+  .verb-table th,
   .verb-table td {
     padding: 0.25rem 0.35rem !important;
     font-size: 10px !important;
   }
+}
+
+/* ── reCAPTCHA Enterprise badge ──────────────────────────────────────────────
+   Firebase App Check (PR #198/#199) initializes reCAPTCHA Enterprise on every
+   page. Google's TOS allow hiding the badge if the legally-required text is
+   shown elsewhere — see footer copy ("Este sitio está protegido por
+   reCAPTCHA y aplican la Política de privacidad y los Términos de servicio
+   de Google"). Without the text the badge MUST be visible.
+   ──────────────────────────────────────────────────────────────────────────── */
+.grecaptcha-badge {
+  visibility: hidden !important;
 }
