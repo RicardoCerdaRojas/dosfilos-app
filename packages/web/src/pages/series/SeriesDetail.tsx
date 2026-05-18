@@ -269,6 +269,8 @@ export function SeriesDetail() {
                     seriesId={series.id}
                     ownerId={user.uid}
                     defaults={series.metadata?.exegesisDefaults}
+                    book={series.metadata?.expository?.book}
+                    language={lang}
                     onChanged={reloadData}
                 />
             )}
