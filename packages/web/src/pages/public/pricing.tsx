@@ -129,6 +129,27 @@ export function PricingPage() {
             <a href="/privacy" className="underline hover:text-slate-900">Privacidad</a>
           </p>
         </div>
+        <p className="max-w-[1100px] mx-auto mt-2 text-center md:text-right text-[10.5px] text-slate-400 leading-relaxed">
+          Este sitio está protegido por reCAPTCHA y aplican la{' '}
+          <a
+            href="https://policies.google.com/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-slate-700 transition-colors"
+          >
+            Política de privacidad
+          </a>{' '}
+          y los{' '}
+          <a
+            href="https://policies.google.com/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-slate-700 transition-colors"
+          >
+            Términos de servicio
+          </a>{' '}
+          de Google.
+        </p>
       </footer>
     </div>
   );

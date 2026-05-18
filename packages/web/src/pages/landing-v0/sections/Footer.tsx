@@ -84,6 +84,27 @@ export function Footer() {
                         "Enteramente preparados para toda buena obra" · 2 Timoteo 3:17
                     </div>
                 </div>
+                <div className="mt-4 text-[11px] text-slate-500 leading-relaxed">
+                    Este sitio está protegido por reCAPTCHA y aplican la{' '}
+                    <a
+                        href="https://policies.google.com/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-slate-300 transition-colors"
+                    >
+                        Política de privacidad
+                    </a>{' '}
+                    y los{' '}
+                    <a
+                        href="https://policies.google.com/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-slate-300 transition-colors"
+                    >
+                        Términos de servicio
+                    </a>{' '}
+                    de Google.
+                </div>
             </div>
         </footer>
     );
