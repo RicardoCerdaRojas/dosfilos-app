@@ -565,6 +565,19 @@
                 "planned": "Planificado",
                 "inProgress": "En desarrollo",
                 "complete": "Predicado"
+            },
+            "stepper": {
+                "paper": "Paper",
+                "draft": "Borrador",
+                "preached": "Predicado"
+            },
+            "nextStep": {
+                "createPaper": "Próximo: crear el paper exegético.",
+                "refinePaperStartDraft": "Próximo: refinar el paper y empezar el borrador del sermón.",
+                "continueDraft": "Próximo: continuar editando el borrador.",
+                "startDraft": "Próximo: iniciar el borrador del sermón.",
+                "markPreached": "Próximo: marcar como predicado cuando termines.",
+                "preached": "Predicado ✓"
             }
         },
         "timeline": {

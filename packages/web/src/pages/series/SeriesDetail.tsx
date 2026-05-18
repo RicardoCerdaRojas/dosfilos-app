@@ -5,7 +5,6 @@ import {
     BookOpenText,
     CalendarDays,
     CheckCircle2,
-    CircleDot,
     Clock,
     ExternalLink,
     Loader2,
@@ -14,7 +13,6 @@ import {
     MoreHorizontal,
     NotebookPen,
     Pencil,
-    Plus,
     Sparkles,
     Trash2,
 } from 'lucide-react';
@@ -404,27 +402,25 @@ function SermonRow({
                             </span>
                         )}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-muted-foreground flex-wrap">
-                        <StatusLabel status={item.status} t={t} />
-                        {hasPaper && (
-                            <>
-                                <span>·</span>
-                                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
-                                    <CheckCircle2 className="h-3 w-3" />
-                                    {t('detail.table.paperReady')}
-                                </span>
-                            </>
-                        )}
-                        {item.draftId && (
-                            <>
-                                <span>·</span>
-                                <span className="inline-flex items-center gap-1 text-sky-700 dark:text-sky-300">
-                                    <NotebookPen className="h-3 w-3" />
-                                    {t('detail.table.draftReady')}
-                                </span>
-                            </>
-                        )}
-                    </div>
+                    {/* Pipeline stepper — paper → borrador → predicado.
+                        The pericope stage is implicit (every row in this
+                        table has one). Filled = stage started/done; ring =
+                        current active stage; empty = pending. */}
+                    <PipelineStepper
+                        hasPaper={hasPaper}
+                        hasDraft={Boolean(item.draftId)}
+                        complete={item.status === 'complete'}
+                        t={t}
+                    />
+                    <p className="mt-1 text-[11.5px] text-muted-foreground">
+                        <NextStepHint
+                            hasSyntacticUnit={hasSyntacticUnit}
+                            hasPaper={hasPaper}
+                            hasDraft={Boolean(item.draftId)}
+                            status={item.status}
+                            t={t}
+                        />
+                    </p>
                 </div>
 
                 {/* Date editor */}
@@ -546,33 +542,108 @@ function StatusDot({ status }: { status: SermonItem['status'] }) {
     return <div className={cn('w-1.5 h-1.5 rounded-full', tone)} />;
 }
 
-function StatusLabel({
+/**
+ * Three-stage horizontal stepper inline in each row. Stages:
+ *   ① Paper exegético  ② Borrador del sermón  ③ Predicado
+ *
+ * Visual states per stage:
+ *   - filled circle + solid connector  = stage started or finished
+ *   - hollow circle + dashed connector = stage pending
+ *   - ring around current active stage = "you're working here"
+ *
+ * The pericope stage itself is implicit (the row exists ⇒ pericope
+ * exists), so it's not drawn — keeps the stepper compact.
+ */
+function PipelineStepper({
+    hasPaper,
+    hasDraft,
+    complete,
+    t,
+}: {
+    hasPaper: boolean;
+    hasDraft: boolean;
+    complete: boolean;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    const stages = [
+        { key: 'paper', label: t('detail.table.stepper.paper'), done: hasPaper, active: hasPaper && !hasDraft },
+        { key: 'draft', label: t('detail.table.stepper.draft'), done: hasDraft, active: hasDraft && !complete },
+        { key: 'preached', label: t('detail.table.stepper.preached'), done: complete, active: false },
+    ];
+    return (
+        <div className="mt-1.5 flex items-center gap-1 text-[10.5px] uppercase tracking-wider font-medium text-muted-foreground">
+            {stages.map((stage, idx) => (
+                <span key={stage.key} className="inline-flex items-center gap-1">
+                    <span
+                        className={cn(
+                            'inline-block h-2.5 w-2.5 rounded-full border',
+                            stage.done
+                                ? stage.key === 'preached'
+                                    ? 'bg-emerald-500 border-emerald-500'
+                                    : stage.active
+                                      ? 'bg-amber-400 border-amber-500 ring-2 ring-amber-200 dark:ring-amber-900/40'
+                                      : 'bg-amber-400 border-amber-500'
+                                : 'bg-background border-slate-300 dark:border-zinc-700',
+                        )}
+                    />
+                    <span
+                        className={cn(
+                            stage.done && !stage.active && 'text-foreground/80',
+                            stage.active && 'text-amber-700 dark:text-amber-300',
+                            stage.key === 'preached' && stage.done && 'text-emerald-700 dark:text-emerald-300',
+                        )}
+                    >
+                        {stage.label}
+                    </span>
+                    {idx < stages.length - 1 && (
+                        <span
+                            className={cn(
+                                'block w-4 h-px mx-0.5',
+                                stage.done ? 'bg-slate-300 dark:bg-zinc-700' : 'border-t border-dashed border-slate-300 dark:border-zinc-700',
+                            )}
+                        />
+                    )}
+                </span>
+            ))}
+        </div>
+    );
+}
+
+/**
+ * One-line hint that answers "what's the next thing I should do for
+ * this pericope?". Resolved from the pipeline state so the pastor
+ * doesn't have to decode three independent chips and reason about
+ * sequence.
+ */
+function NextStepHint({
+    hasSyntacticUnit,
+    hasPaper,
+    hasDraft,
     status,
     t,
 }: {
+    hasSyntacticUnit: boolean;
+    hasPaper: boolean;
+    hasDraft: boolean;
     status: SermonItem['status'];
-    t: (key: string) => string;
+    t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-    if (status === 'complete')
-        return (
-            <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
-                <CheckCircle2 className="h-3 w-3" />
-                {t('detail.table.status.complete')}
-            </span>
-        );
-    if (status === 'in_progress')
-        return (
-            <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300">
-                <Clock className="h-3 w-3" />
-                {t('detail.table.status.inProgress')}
-            </span>
-        );
-    return (
-        <span className="inline-flex items-center gap-1">
-            <CircleDot className="h-3 w-3" />
-            {t('detail.table.status.planned')}
-        </span>
-    );
+    if (status === 'complete') {
+        return <>{t('detail.table.nextStep.preached')}</>;
+    }
+    if (!hasPaper && hasSyntacticUnit) {
+        return <>{t('detail.table.nextStep.createPaper')}</>;
+    }
+    if (hasPaper && !hasDraft) {
+        return <>{t('detail.table.nextStep.refinePaperStartDraft')}</>;
+    }
+    if (hasDraft && status === 'in_progress') {
+        return <>{t('detail.table.nextStep.continueDraft')}</>;
+    }
+    if (!hasPaper && !hasSyntacticUnit && !hasDraft) {
+        return <>{t('detail.table.nextStep.startDraft')}</>;
+    }
+    return <>{t('detail.table.nextStep.markPreached')}</>;
 }
 
 function syntacticUnitToPassage(unit: SyntacticUnit) {

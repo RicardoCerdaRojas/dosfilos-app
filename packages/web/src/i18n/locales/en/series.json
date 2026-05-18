@@ -565,6 +565,19 @@
                 "planned": "Planned",
                 "inProgress": "In progress",
                 "complete": "Preached"
+            },
+            "stepper": {
+                "paper": "Paper",
+                "draft": "Draft",
+                "preached": "Preached"
+            },
+            "nextStep": {
+                "createPaper": "Next: create the exegetical paper.",
+                "refinePaperStartDraft": "Next: refine the paper and start the sermon draft.",
+                "continueDraft": "Next: continue editing the draft.",
+                "startDraft": "Next: start the sermon draft.",
+                "markPreached": "Next: mark as preached when you're done.",
+                "preached": "Preached ✓"
             }
         },
         "timeline": {
