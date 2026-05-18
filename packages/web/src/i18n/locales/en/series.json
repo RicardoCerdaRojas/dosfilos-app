@@ -334,6 +334,24 @@
                     "positive": "Chapters and verses must be ≥ 1.",
                     "chapterOrder": "Start chapter cannot be greater than end chapter.",
                     "verseOrder": "Within the same chapter, start verse cannot be greater than end verse."
+                },
+                "modifiedChip": "Modified by you",
+                "refineMarker": "Refine",
+                "noChanges": "No manual changes. You can still re-validate to confirm the fidelity of the analysis.",
+                "modifiedCount_one": "1 unit modified by you. Re-validate to confirm the regroup respects the methodology.",
+                "modifiedCount_other": "{{count}} units modified by you. Re-validate to confirm the regroup respects the methodology.",
+                "revalidate": "Re-validate fidelity",
+                "regroup": {
+                    "merge": "Merge",
+                    "mergeHint": "Merge this unit with the next one",
+                    "split": "Split",
+                    "splitHint": "Split this unit into two sermons",
+                    "splitCrossChapterHint": "For now, you can only split units within a single chapter",
+                    "splitTitle": "At which verse do you split?",
+                    "splitRangeHint": "Verse between {{min}} and {{max}}",
+                    "splitWarnTiny": "Each half should have at least 5 verses to sustain a sermon.",
+                    "cancel": "Cancel",
+                    "confirmSplit": "Split here"
                 }
             },
             "fidelity": {
@@ -377,6 +395,11 @@
             "pipelineDone": "Pipeline complete. Review the preachable units and issues before creating the series.",
             "refineDone": "Pass 4 refined with Pass 5 feedback. Review the new proposal.",
             "noOpenIssues": "All issues are addressed or ignored. Nothing to refine.",
+            "mergeDone": "Units merged. Review the propositions and re-validate fidelity when done.",
+            "splitDone": "Unit split. Review the propositions of both halves and re-validate fidelity when done.",
+            "splitCrossChapter": "For now, you can only split units within a single chapter.",
+            "splitOutOfRange": "The split verse must lie within the unit's current range.",
+            "revalidateDone": "Fidelity re-validated with your manual changes.",
             "overloaded": "Our analysis engine is overloaded. Try again in a minute.",
             "draftRestored": "Continuing where you left off. (Draft restored).",
             "titleRequired": "Give the series a title before creating.",
