@@ -406,6 +406,9 @@
             "draftRestored": "Continuing where you left off. (Draft restored).",
             "titleRequired": "Give the series a title before creating.",
             "seriesCreated": "Series created. Taking you to the detail view.",
+            "seriesCreatedWithPapers_one": "Series created with 1 paper ready to study.",
+            "seriesCreatedWithPapers_other": "Series created with {{count}} papers ready to study.",
+            "seriesCreatedWithPapersAndDrafts": "Series created with {{paperCount}} papers and {{draftCount}} sermon drafts ready to develop.",
             "createFailed": "Couldn't create the series."
         },
         "create": {
