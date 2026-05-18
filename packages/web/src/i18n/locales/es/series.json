@@ -406,6 +406,9 @@
             "draftRestored": "Continuamos donde quedaste. (Borrador restaurado).",
             "titleRequired": "Ponle un título a la serie antes de crear.",
             "seriesCreated": "Serie creada. Te llevamos al detalle.",
+            "seriesCreatedWithPapers_one": "Serie creada con 1 paper listo para estudiar.",
+            "seriesCreatedWithPapers_other": "Serie creada con {{count}} papers listos para estudiar.",
+            "seriesCreatedWithPapersAndDrafts": "Serie creada con {{paperCount}} papers y {{draftCount}} borradores de sermón listos para desarrollar.",
             "createFailed": "No se pudo crear la serie."
         },
         "create": {
