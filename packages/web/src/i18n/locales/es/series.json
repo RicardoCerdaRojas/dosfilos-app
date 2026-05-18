@@ -360,6 +360,7 @@
                 "noIssues": "Sin issues. La propuesta es sólida.",
                 "global": "Toda la serie",
                 "recommendation": "Recomendación",
+                "revalidating": "Re-validando fidelidad con tus cambios manuales…",
                 "triagedSummary": "{{triaged}} de {{total}} atendidos o ignorados",
                 "addressed": "Atendido",
                 "ignored": "Ignorado",

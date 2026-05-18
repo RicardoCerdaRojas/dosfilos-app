@@ -755,6 +755,24 @@ export function ExpositoryAssistantPage() {
         setAddressedIssues(new Set());
         setIgnoredIssues(new Set());
 
+        // Make sure Phase 5 is expanded so the loading spinner + new
+        // result are visible without the pastor having to hunt for them.
+        setCollapsedPasses((prev) => {
+            if (!prev.has(5)) return prev;
+            const next = new Set(prev);
+            next.delete(5);
+            return next;
+        });
+
+        // Scroll into view immediately (after the expand state has
+        // rendered). The mutation runs in parallel — pastor sees the
+        // card with a "Re-validando…" spinner from the moment they
+        // pressed the button, not at the end.
+        requestAnimationFrame(() => {
+            const el = document.getElementById('expository-pass-5');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
         // Note: the fidelity reviewer sees the manually-regrouped units
         // directly via `preachableUnits`. Boundary changes + merged
         // propositions are visible in the prompt input, so the model
@@ -1138,6 +1156,7 @@ export function ExpositoryAssistantPage() {
                 )}
 
                 {!collapsedPasses.has(5) && (
+                    <div id="expository-pass-5">
                     <PassCard
                         index={5}
                         title={t('expository.passes.fidelity.title') as string}
@@ -1146,6 +1165,12 @@ export function ExpositoryAssistantPage() {
                         onCollapse={() => togglePass(5)}
                         t={t}
                     >
+                        {assistant.runFidelity.isPending && (
+                            <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-3 py-2.5 text-[12px] text-slate-700 dark:text-slate-200">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>{t('expository.results.fidelity.revalidating')}</span>
+                            </div>
+                        )}
                         {fidelityReview && (
                             <>
                                 <FidelityResult
@@ -1168,6 +1193,7 @@ export function ExpositoryAssistantPage() {
                             </>
                         )}
                     </PassCard>
+                    </div>
                 )}
 
                 {/* Create-series card — appears once preachable units are ready.

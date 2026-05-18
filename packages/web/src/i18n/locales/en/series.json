@@ -360,6 +360,7 @@
                 "noIssues": "No issues. The proposal is solid.",
                 "global": "Whole series",
                 "recommendation": "Recommendation",
+                "revalidating": "Re-validating fidelity with your manual changes…",
                 "triagedSummary": "{{triaged}} of {{total}} addressed or ignored",
                 "addressed": "Addressed",
                 "ignored": "Ignored",
