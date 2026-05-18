@@ -14,6 +14,7 @@ import {
     SermonSeriesEntity,
     findBooksByAlias,
     getBookById,
+    type AddProjectSourceInput,
     type BibleBookId,
     type IBibleVersionRepository,
     type IOriginalLanguageBibleProvider,
@@ -21,6 +22,7 @@ import {
     type PlannedSermon,
     type PlannedSermonExpositoryEnrichment,
     type PlannedSermonStatus,
+    type SeriesExegesisDefaults,
     type SyntacticUnit,
 } from '@dosfilos/domain';
 import { DetectPericopesUseCase } from '../use-cases/exegesis/DetectPericopesUseCase';
@@ -206,6 +208,35 @@ export class SeriesService {
             await this.retry(() => this.seriesRepository.delete(id));
         } catch (error: any) {
             throw new Error(error.message || 'Error al eliminar la serie');
+        }
+    }
+
+    /**
+     * Set the series-level exegesis defaults (rubric template, style
+     * guide, initial corpus) that NEW auto-created papers will
+     * inherit. Existing papers are NOT mutated by this call —
+     * snapshot semantics mean the pastor owns each paper's copy
+     * after creation. A separate mass-update affordance is offered
+     * from the UI when defaults change and uncustomized papers exist.
+     */
+    async updateExegesisDefaults(
+        seriesId: string,
+        defaults: SeriesExegesisDefaults,
+    ): Promise<SermonSeriesEntity> {
+        try {
+            const series = await this.retry(() => this.seriesRepository.findById(seriesId));
+            if (!series) {
+                throw new Error('Serie no encontrada');
+            }
+            const next = series.update({
+                metadata: {
+                    ...series.metadata,
+                    exegesisDefaults: defaults,
+                },
+            });
+            return await this.retry(() => this.seriesRepository.update(next));
+        } catch (error: any) {
+            throw new Error(error.message || 'Error al guardar la configuración exegética');
         }
     }
 
@@ -420,6 +451,7 @@ export class SeriesService {
                 userId,
                 plannedSermonsInitial,
                 plan.displayLanguage ?? 'es',
+                plan.series.metadata?.exegesisDefaults,
             );
 
             // Merge pericope-assistant metadata into expository without
@@ -517,7 +549,19 @@ export class SeriesService {
         userId: string,
         plannedSermons: T[],
         displayLanguage: 'es' | 'en',
+        exegesisDefaults?: SeriesExegesisDefaults,
     ): Promise<T[]> {
+        // Series-level defaults seed each auto-created paper so the
+        // pastor doesn't reconfigure rubric/style/corpus per pericope.
+        // Snapshot semantics: paper inherits and then owns its copy —
+        // editing series defaults later doesn't touch existing papers.
+        const initialSources = (exegesisDefaults?.sourceRefs ?? []).map((ref) => ({
+            corpusId: ref.corpusId,
+            sourceType: ref.sourceType as AddProjectSourceInput['sourceType'],
+            displayLabel: ref.displayLabel,
+            mode: ref.mode,
+            sourceLibraryResourceId: ref.libraryResourceId,
+        }));
         const enriched = await Promise.all(
             plannedSermons.map(async (planned) => {
                 if (!planned.syntacticUnit || planned.paperId) return planned;
@@ -535,7 +579,11 @@ export class SeriesService {
                         displayLanguage,
                         title: planned.title,
                         assignmentBrief: planned.syntacticUnit.justification ?? null,
-                        styleGuideId: null,
+                        styleGuideId: exegesisDefaults?.styleGuideId ?? null,
+                        ...(exegesisDefaults?.rubricTemplateId !== undefined
+                            ? { rubricTemplateId: exegesisDefaults.rubricTemplateId }
+                            : {}),
+                        ...(initialSources.length > 0 ? { initialSources } : {}),
                     });
                     return {
                         ...planned,

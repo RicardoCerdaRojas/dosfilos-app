@@ -90,6 +90,82 @@ export interface SeriesMetadata {
         pericopeAssistantStatus?: 'pending' | 'running' | 'reviewed';
     };
     plannedSermons?: PlannedSermon[];  // Sermons planned but not yet developed
+    /**
+     * Series-level defaults for the exegetical paper of each pericope.
+     * Auto-created papers (`SeriesService.autoCreatePapersForPericopes`)
+     * snapshot these values at creation time: rubric template is copied
+     * into `paper.rubric`; styleGuideId is stored as a live reference;
+     * sources are embedded as `ProjectSource[]`. Pastors override any
+     * of these per paper after creation — the series defaults stay as
+     * the seed, not as a live binding.
+     *
+     * Optional + additive: pre-existing series have `exegesisDefaults`
+     * undefined and behave exactly like before (papers fall back to
+     * the user's active rubric / no style guide / empty corpus).
+     */
+    exegesisDefaults?: SeriesExegesisDefaults;
+}
+
+/**
+ * Per-source seed used to populate a freshly auto-created paper's
+ * `sources[]` array. Stores enough denormalized info (corpusId,
+ * displayLabel) so the paper-creation use case doesn't need a fresh
+ * LibraryResource lookup per pericope — series-creation already had
+ * the data when the pastor picked the source.
+ */
+export interface SeriesExegesisSourceRef {
+    /** LibraryResource id from the user's library — used by the UI
+     *  to match against the user's library state and surface
+     *  "in your library" affordances. */
+    libraryResourceId: string;
+    /** Ingestion corpus id. Required by AddProjectSourceInput. */
+    corpusId: string;
+    /** Human-readable label shown in the paper's corpus list. */
+    displayLabel: string;
+    /**
+     * Editorial source-type classification (commentary-technical,
+     * commentary-pastoral, lexicon-greek, etc). Mirrors the
+     * `SourceType` enum from the exegesis domain — duplicated as a
+     * string here to keep the series entity independent of the
+     * exegesis module's internal types.
+     */
+    sourceType: string;
+    /** Inclusion mode passed through to ProjectSource. */
+    mode: 'full-document' | 'extracted-excerpts';
+}
+
+export interface SeriesExegesisDefaults {
+    /**
+     * UserRubric template id to apply when creating a pericope's
+     * paper. The paper use case COPIES the rubric content into
+     * `paper.rubric` (snapshot semantics) and records `rubricTemplateId`
+     * on the snapshot for provenance. Pastor can edit the rubric on
+     * the paper afterwards without touching the series default.
+     *
+     * `null` = explicitly opt out of defaults; use the system rubric.
+     * `undefined` = no preference set yet (falls back to the user's
+     * default rubric, matching today's behaviour).
+     */
+    rubricTemplateId?: string | null;
+    /**
+     * UserStyleGuide id. Stored as live reference on the paper, not
+     * snapshotted — style guides are formatting rules that benefit
+     * from staying up-to-date with the seminary's evolving manual.
+     */
+    styleGuideId?: string | null;
+    /**
+     * Initial corpus to seed every auto-created paper with. The
+     * Recommendations widget (PR #93) populates these via the
+     * "Aplicar set recomendado" CTA, and the pastor can add/remove
+     * sources manually from the same card.
+     */
+    sourceRefs?: SeriesExegesisSourceRef[];
+    /**
+     * When set, the pastor explicitly applied (or accepted) the
+     * recommended corpus set for this series' primary book. Used
+     * to skip re-prompting on subsequent visits.
+     */
+    appliedRecommendationsAt?: Date;
 }
 
 export interface SermonSeries {
