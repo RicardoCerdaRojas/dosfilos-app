@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpenCheck, FileText, Library, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+    BookOpenCheck,
+    Check,
+    ChevronDown,
+    ChevronRight,
+    ExternalLink,
+    FileText,
+    Library,
+    Loader2,
+    Pencil,
+    Plus,
+    Sparkles,
+    Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -12,19 +25,32 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { exegesisService, seriesService } from '@dosfilos/application';
-import type {
-    SeriesExegesisDefaults,
-    SeriesExegesisSourceRef,
-    UserRubric,
-    UserStyleGuide,
+import { exegesisService, libraryService, seriesService } from '@dosfilos/application';
+import {
+    findBooksByAlias,
+    getSourceRecommendations,
+    type BibleBookId,
+    type LibraryResource,
+    type SeriesExegesisDefaults,
+    type SeriesExegesisSourceRef,
+    type SourceRecommendation,
+    type SourceType,
+    type UserRubric,
+    type UserStyleGuide,
 } from '@dosfilos/domain';
 
 interface ExegesisDefaultsCardProps {
     seriesId: string;
     ownerId: string;
     defaults: SeriesExegesisDefaults | undefined;
+    /** Display name of the series' primary book (e.g. "Mateo"). Used
+     *  to resolve the recommendation catalog. Undefined for thematic
+     *  series; widget skips recommendations gracefully. */
+    book?: string;
+    /** UI language passed to recommendations + label localization. */
+    language: 'es' | 'en';
     onChanged: () => void;
 }
 
@@ -42,7 +68,7 @@ interface ExegesisDefaultsCardProps {
  * section of the edit modal, surfacing the existing PR #93 catalog
  * keyed to the series' primary book.
  */
-export function ExegesisDefaultsCard({ seriesId, ownerId, defaults, onChanged }: ExegesisDefaultsCardProps) {
+export function ExegesisDefaultsCard({ seriesId, ownerId, defaults, book, language, onChanged }: ExegesisDefaultsCardProps) {
     const { t } = useTranslation('series');
     const [editing, setEditing] = useState(false);
     const [rubrics, setRubrics] = useState<UserRubric[] | null>(null);
@@ -124,10 +150,13 @@ export function ExegesisDefaultsCard({ seriesId, ownerId, defaults, onChanged }:
                 open={editing}
                 onOpenChange={setEditing}
                 seriesId={seriesId}
+                ownerId={ownerId}
                 initial={defaults}
                 rubrics={rubrics ?? []}
                 styleGuides={styleGuides ?? []}
                 isLoadingOptions={rubrics === null || styleGuides === null}
+                book={book}
+                language={language}
                 onSaved={() => {
                     setEditing(false);
                     onChanged();
@@ -153,10 +182,13 @@ interface ExegesisDefaultsModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     seriesId: string;
+    ownerId: string;
     initial: SeriesExegesisDefaults | undefined;
     rubrics: ReadonlyArray<UserRubric>;
     styleGuides: ReadonlyArray<UserStyleGuide>;
     isLoadingOptions: boolean;
+    book?: string;
+    language: 'es' | 'en';
     onSaved: () => void;
 }
 
@@ -164,10 +196,13 @@ function ExegesisDefaultsModal({
     open,
     onOpenChange,
     seriesId,
+    ownerId,
     initial,
     rubrics,
     styleGuides,
     isLoadingOptions,
+    book,
+    language,
     onSaved,
 }: ExegesisDefaultsModalProps) {
     const { t } = useTranslation('series');
@@ -175,6 +210,37 @@ function ExegesisDefaultsModal({
     const [styleGuideId, setStyleGuideId] = useState<string | null | undefined>(initial?.styleGuideId);
     const [sourceRefs, setSourceRefs] = useState<SeriesExegesisSourceRef[]>(initial?.sourceRefs ?? []);
     const [saving, setSaving] = useState(false);
+
+    // Resolve series book → BibleBookId so we can query the curated
+    // recommendation catalog. Returns null for thematic series or for
+    // books the alias resolver doesn't recognize — in that case the
+    // recommendations widget hides itself gracefully.
+    const bookId: BibleBookId | null = useMemo(() => {
+        if (!book) return null;
+        const matches = findBooksByAlias(book.toLowerCase().trim());
+        return matches[0]?.id ?? null;
+    }, [book]);
+
+    // User's library — fetched lazily when the modal opens so the
+    // "Desde tu biblioteca" picker has something to list and the
+    // recommendations widget can auto-match recs against existing
+    // uploads.
+    const [libraryResources, setLibraryResources] = useState<LibraryResource[] | null>(null);
+    useEffect(() => {
+        if (!open || !ownerId) return;
+        let cancelled = false;
+        libraryService
+            .getUserResources(ownerId)
+            .then((resources) => {
+                if (!cancelled) setLibraryResources(resources);
+            })
+            .catch((err) => {
+                console.error('[ExegesisDefaultsModal] library load failed', err);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [open, ownerId]);
 
     useEffect(() => {
         if (!open) return;
@@ -312,15 +378,30 @@ function ExegesisDefaultsModal({
                                 ))}
                             </ul>
                         )}
-                        {/* Source-add UX deferred to Fase 2a (library picker
-                            + recommendations widget). The MVP card lets the
-                            pastor REMOVE seeded sources but doesn't yet
-                            offer the picker — Fase 2a wires it. */}
-                        <Badge variant="outline" className="text-[10.5px] gap-1 inline-flex items-center">
-                            <Plus className="h-3 w-3" />
-                            {t('detail.exegesisDefaults.addSourceSoon')}
-                        </Badge>
+                        {/* Library picker — add sources from the user's
+                            existing library to the series defaults. */}
+                        <LibrarySourcePicker
+                            libraryResources={libraryResources}
+                            existingRefs={sourceRefs}
+                            onAdd={(ref) => setSourceRefs([...sourceRefs, ref])}
+                            t={t}
+                        />
                     </div>
+
+                    {/* Recommendations widget — curated catalog (PR #93)
+                        for the series' primary book. Auto-matches with
+                        the user's library and offers "Agregar al corpus"
+                        when a match exists. */}
+                    {bookId && (
+                        <RecommendationsForSeries
+                            bookId={bookId}
+                            language={language}
+                            libraryResources={libraryResources}
+                            existingRefs={sourceRefs}
+                            onAdd={(ref) => setSourceRefs([...sourceRefs, ref])}
+                            t={t}
+                        />
+                    )}
                 </div>
 
                 <DialogFooter>
@@ -334,5 +415,325 @@ function ExegesisDefaultsModal({
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+// ── Library picker (subcomponent) ───────────────────────────────────────
+
+const SOURCE_TYPE_OPTIONS: ReadonlyArray<{ value: SourceType; labelKey: string }> = [
+    { value: 'commentary-expository', labelKey: 'commentaryExpository' },
+    { value: 'commentary-critical', labelKey: 'commentaryCritical' },
+    { value: 'lexicon-technical', labelKey: 'lexiconTechnical' },
+    { value: 'theological-dictionary', labelKey: 'theologicalDictionary' },
+    { value: 'grammar-syntax', labelKey: 'grammarSyntax' },
+    { value: 'biblical-text-edition', labelKey: 'biblicalTextEdition' },
+    { value: 'historical-background', labelKey: 'historicalBackground' },
+    { value: 'theological-monograph', labelKey: 'theologicalMonograph' },
+    { value: 'primary-source-ancient', labelKey: 'primarySourceAncient' },
+    { value: 'other', labelKey: 'other' },
+];
+
+function LibrarySourcePicker({
+    libraryResources,
+    existingRefs,
+    onAdd,
+    t,
+}: {
+    libraryResources: LibraryResource[] | null;
+    existingRefs: ReadonlyArray<SeriesExegesisSourceRef>;
+    onAdd: (ref: SeriesExegesisSourceRef) => void;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const [pendingType, setPendingType] = useState<Record<string, SourceType>>({});
+
+    const alreadyAdded = useMemo(() => new Set(existingRefs.map((r) => r.libraryResourceId)), [existingRefs]);
+    const available = useMemo(() => {
+        if (!libraryResources) return [];
+        const q = query.trim().toLowerCase();
+        return libraryResources
+            .filter((r) => !alreadyAdded.has(r.id))
+            .filter((r) => !q || r.title.toLowerCase().includes(q) || r.author.toLowerCase().includes(q));
+    }, [libraryResources, alreadyAdded, query]);
+
+    if (libraryResources === null) {
+        return (
+            <p className="text-[11.5px] text-muted-foreground inline-flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {t('detail.exegesisDefaults.loadingLibrary')}
+            </p>
+        );
+    }
+    if (libraryResources.length === 0) {
+        return (
+            <p className="text-[11.5px] text-muted-foreground italic">
+                {t('detail.exegesisDefaults.emptyLibrary')}
+            </p>
+        );
+    }
+
+    return (
+        <div className="rounded-md border border-border bg-muted/20">
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-2.5 py-2 text-[12px] font-medium text-foreground hover:bg-accent/40 transition-colors"
+            >
+                <span className="inline-flex items-center gap-1.5">
+                    {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    <Plus className="h-3.5 w-3.5" />
+                    {t('detail.exegesisDefaults.addFromLibrary')}
+                </span>
+                <span className="text-[10.5px] text-muted-foreground font-normal">
+                    {t('detail.exegesisDefaults.libraryAvailable', { count: available.length }) as string}
+                </span>
+            </button>
+            {open && (
+                <div className="border-t border-border px-2.5 py-2 space-y-2">
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder={t('detail.exegesisDefaults.searchLibraryPlaceholder') as string}
+                        className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                    {available.length === 0 ? (
+                        <p className="text-[11.5px] text-muted-foreground italic py-3 text-center">
+                            {query
+                                ? t('detail.exegesisDefaults.libraryNoMatches')
+                                : t('detail.exegesisDefaults.libraryAllAdded')}
+                        </p>
+                    ) : (
+                        <ul className="space-y-1 max-h-64 overflow-y-auto">
+                            {available.map((r) => {
+                                const selectedType = pendingType[r.id] ?? 'commentary-expository';
+                                return (
+                                    <li
+                                        key={r.id}
+                                        className="flex items-center gap-2 rounded border border-border bg-background px-2 py-1.5"
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[12px] font-medium text-foreground truncate">{r.title}</p>
+                                            <p className="text-[10.5px] text-muted-foreground truncate">{r.author}</p>
+                                        </div>
+                                        <select
+                                            value={selectedType}
+                                            onChange={(e) =>
+                                                setPendingType({ ...pendingType, [r.id]: e.target.value as SourceType })
+                                            }
+                                            className="h-7 text-[11px] rounded border border-input bg-background px-1"
+                                        >
+                                            {SOURCE_TYPE_OPTIONS.map((opt) => (
+                                                <option key={opt.value} value={opt.value}>
+                                                    {t(`detail.exegesisDefaults.sourceTypes.${opt.labelKey}`) as string}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <Button
+                                            size="sm"
+                                            onClick={() =>
+                                                onAdd({
+                                                    libraryResourceId: r.id,
+                                                    corpusId: r.id,
+                                                    displayLabel: r.title,
+                                                    sourceType: selectedType,
+                                                    mode: 'full-document',
+                                                })
+                                            }
+                                            className="h-7 text-[11px]"
+                                        >
+                                            <Plus className="h-3 w-3 mr-1" />
+                                            {t('detail.exegesisDefaults.add')}
+                                        </Button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Recommendations widget (subcomponent) ───────────────────────────────
+
+const RECOMMENDED_SOURCE_TYPES: ReadonlyArray<SourceType> = [
+    'commentary-expository',
+    'commentary-critical',
+    'lexicon-technical',
+    'theological-dictionary',
+    'grammar-syntax',
+    'biblical-text-edition',
+    'historical-background',
+];
+
+interface RecCategory {
+    type: SourceType;
+    labelKey: string;
+    items: ReadonlyArray<SourceRecommendation>;
+}
+
+function RecommendationsForSeries({
+    bookId,
+    language,
+    libraryResources,
+    existingRefs,
+    onAdd,
+    t,
+}: {
+    bookId: BibleBookId;
+    language: 'es' | 'en';
+    libraryResources: LibraryResource[] | null;
+    existingRefs: ReadonlyArray<SeriesExegesisSourceRef>;
+    onAdd: (ref: SeriesExegesisSourceRef) => void;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    const hasAnySources = existingRefs.length > 0;
+    const [expanded, setExpanded] = useState(!hasAnySources);
+
+    const categories: RecCategory[] = useMemo(() => {
+        return RECOMMENDED_SOURCE_TYPES.map((type) => {
+            const labelOption = SOURCE_TYPE_OPTIONS.find((o) => o.value === type);
+            return {
+                type,
+                labelKey: labelOption?.labelKey ?? 'other',
+                items: getSourceRecommendations(bookId, type, language),
+            };
+        }).filter((c) => c.items.length > 0);
+    }, [bookId, language]);
+
+    if (categories.length === 0) return null;
+
+    /**
+     * Best-effort library auto-match: find a LibraryResource whose
+     * title contains the recommendation's title (case-insensitive).
+     * Mirrors the lighter version used in the paper setup page. When
+     * a match exists the card surfaces an "Agregar al corpus" button
+     * that wires the corpusId directly; otherwise it falls back to a
+     * "Buscar en mi biblioteca" hint (same UX as the existing
+     * recommendation cards in the paper setup).
+     */
+    const findMatch = (rec: SourceRecommendation): LibraryResource | null => {
+        if (!libraryResources) return null;
+        const recTitle = rec.title.toLowerCase();
+        return libraryResources.find((r) => r.title.toLowerCase().includes(recTitle.slice(0, 20))) ?? null;
+    };
+
+    const alreadyAdded = new Set(existingRefs.map((r) => r.libraryResourceId));
+
+    return (
+        <div className="rounded-md border border-border bg-muted/20">
+            <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="w-full flex items-center justify-between px-2.5 py-2 text-[12px] font-medium text-foreground hover:bg-accent/40 transition-colors"
+            >
+                <span className="inline-flex items-center gap-1.5">
+                    {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    {t('detail.exegesisDefaults.recommendationsTitle')}
+                </span>
+                <span className="text-[10.5px] text-muted-foreground font-normal">
+                    {t('detail.exegesisDefaults.recommendationsCount', { count: categories.length }) as string}
+                </span>
+            </button>
+            {expanded && (
+                <div className="border-t border-border px-2.5 py-2 space-y-3">
+                    <p className="text-[11px] text-muted-foreground">
+                        {t('detail.exegesisDefaults.recommendationsHelp')}
+                    </p>
+                    {categories.map((cat) => (
+                        <div key={cat.type} className="space-y-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                                    {t(`detail.exegesisDefaults.sourceTypes.${cat.labelKey}`)}
+                                </span>
+                                <Badge variant="outline" className="text-[10px]">
+                                    {cat.items.length}
+                                </Badge>
+                            </div>
+                            <ul className="space-y-1">
+                                {cat.items.slice(0, 5).map((rec, idx) => {
+                                    const match = findMatch(rec);
+                                    const owned = match && alreadyAdded.has(match.id);
+                                    return (
+                                        <li
+                                            key={`${cat.type}-${idx}`}
+                                            className={cn(
+                                                'rounded border bg-background px-2 py-1.5',
+                                                rec.tier === 'essential'
+                                                    ? 'border-primary/40'
+                                                    : 'border-border',
+                                            )}
+                                        >
+                                            <div className="flex items-start gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[12px] font-medium text-foreground leading-tight">
+                                                        {rec.title}
+                                                    </p>
+                                                    <p className="text-[10.5px] text-muted-foreground">
+                                                        {rec.author} · {rec.publisher} · {rec.year}
+                                                        {rec.series ? ` · ${rec.series}` : ''}
+                                                    </p>
+                                                    {rec.rationale && (
+                                                        <p className="text-[10.5px] text-muted-foreground italic mt-0.5">
+                                                            {rec.rationale}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="shrink-0 flex items-center gap-1">
+                                                    {rec.tier === 'essential' && (
+                                                        <Badge variant="outline" className="text-[9.5px] border-primary text-primary">
+                                                            {t('detail.exegesisDefaults.tierEssential')}
+                                                        </Badge>
+                                                    )}
+                                                    {owned ? (
+                                                        <Badge variant="outline" className="text-[9.5px] border-emerald-400 text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-0.5">
+                                                            <Check className="h-2.5 w-2.5" />
+                                                            {t('detail.exegesisDefaults.alreadyAdded')}
+                                                        </Badge>
+                                                    ) : match ? (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                onAdd({
+                                                                    libraryResourceId: match.id,
+                                                                    corpusId: match.id,
+                                                                    displayLabel: match.title,
+                                                                    sourceType: cat.type,
+                                                                    mode: 'full-document',
+                                                                })
+                                                            }
+                                                            className="h-6 text-[10.5px]"
+                                                        >
+                                                            <Plus className="h-2.5 w-2.5 mr-0.5" />
+                                                            {t('detail.exegesisDefaults.addFromMatch')}
+                                                        </Button>
+                                                    ) : (
+                                                        <a
+                                                            href={`/dashboard/library?q=${encodeURIComponent(rec.title)}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-0.5 text-[10.5px] text-muted-foreground hover:text-foreground transition-colors"
+                                                            title={t('detail.exegesisDefaults.searchInLibraryHint') as string}
+                                                        >
+                                                            <ExternalLink className="h-2.5 w-2.5" />
+                                                            {t('detail.exegesisDefaults.searchInLibrary')}
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 }
