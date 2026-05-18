@@ -2,6 +2,7 @@ import { getBookById, type BibleBookId } from '../../bible/canon/BibleCanon';
 import type { SourceType } from '../entities/SourceType';
 import { INVARIANT_RECOMMENDATIONS } from './invariant';
 import { HEBREWS_RECOMMENDATIONS } from './nt/hebrews';
+import { MATTHEW_RECOMMENDATIONS } from './nt/matthew';
 import { ROMANS_RECOMMENDATIONS } from './nt/romans';
 import { GENESIS_RECOMMENDATIONS } from './ot/genesis';
 import { GROUP_CATALOG } from './groups/catalog';
@@ -36,6 +37,7 @@ const RECOMMENDATIONS_BY_BOOK: Partial<Record<BibleBookId, BookRecommendations>>
     HEB: HEBREWS_RECOMMENDATIONS,
     ROM: ROMANS_RECOMMENDATIONS,
     GEN: GENESIS_RECOMMENDATIONS,
+    MAT: MATTHEW_RECOMMENDATIONS,
 };
 
 /**
