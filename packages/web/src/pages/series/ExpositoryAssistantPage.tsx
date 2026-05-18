@@ -668,9 +668,13 @@ export function ExpositoryAssistantPage() {
                     ...a.sourcedExegeticalUnitIds,
                     ...b.sourcedExegeticalUnitIds,
                 ],
-                exegeticalProposition: `[${t('expository.results.preachable.refineMarker')}] ${a.exegeticalProposition}\n\n${b.exegeticalProposition}`,
-                homileticalProposition: `[${t('expository.results.preachable.refineMarker')}] ${a.homileticalProposition}\n\n${b.homileticalProposition}`,
-                pastoralObjective: `[${t('expository.results.preachable.refineMarker')}] ${a.pastoralObjective}\n\n${b.pastoralObjective}`,
+                // Concatenate text cleanly — no inline markers in content.
+                // The "needs refinement" signal lives in the per-card
+                // banner driven by `modifiedByPastor`, not in the body
+                // text (which would leak to exports / planned sermons).
+                exegeticalProposition: `${a.exegeticalProposition}\n\n${b.exegeticalProposition}`,
+                homileticalProposition: `${a.homileticalProposition}\n\n${b.homileticalProposition}`,
+                pastoralObjective: `${a.pastoralObjective}\n\n${b.pastoralObjective}`,
                 order: a.order,
                 modifiedByPastor: true,
             };
@@ -702,7 +706,9 @@ export function ExpositoryAssistantPage() {
                 toast.error(t('expository.toast.splitOutOfRange') as string);
                 return prev;
             }
-            const refine = t('expository.results.preachable.refineMarker');
+            // Both halves inherit the original propositions verbatim —
+            // pastor refines them. Clean text (no inline markers); the
+            // refinement signal lives in the per-card banner.
             const firstHalf: PreachableUnit = {
                 ...u,
                 id: crypto.randomUUID(),
@@ -715,9 +721,6 @@ export function ExpositoryAssistantPage() {
                 })}`.trim(),
                 verseEnd: atVerse,
                 chapterEnd: u.chapterStart,
-                exegeticalProposition: `[${refine}] ${u.exegeticalProposition}`,
-                homileticalProposition: `[${refine}] ${u.homileticalProposition}`,
-                pastoralObjective: `[${refine}] ${u.pastoralObjective}`,
                 modifiedByPastor: true,
             };
             const secondHalf: PreachableUnit = {
@@ -731,9 +734,6 @@ export function ExpositoryAssistantPage() {
                     verseEnd: u.verseEnd,
                 })}`.trim(),
                 verseStart: atVerse + 1,
-                exegeticalProposition: `[${refine}] ${u.exegeticalProposition}`,
-                homileticalProposition: `[${refine}] ${u.homileticalProposition}`,
-                pastoralObjective: `[${refine}] ${u.pastoralObjective}`,
                 modifiedByPastor: true,
             };
             const next = [
@@ -754,6 +754,24 @@ export function ExpositoryAssistantPage() {
         setFidelityReview(null);
         setAddressedIssues(new Set());
         setIgnoredIssues(new Set());
+
+        // Make sure Phase 5 is expanded so the loading spinner + new
+        // result are visible without the pastor having to hunt for them.
+        setCollapsedPasses((prev) => {
+            if (!prev.has(5)) return prev;
+            const next = new Set(prev);
+            next.delete(5);
+            return next;
+        });
+
+        // Scroll into view immediately (after the expand state has
+        // rendered). The mutation runs in parallel — pastor sees the
+        // card with a "Re-validando…" spinner from the moment they
+        // pressed the button, not at the end.
+        requestAnimationFrame(() => {
+            const el = document.getElementById('expository-pass-5');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
 
         // Note: the fidelity reviewer sees the manually-regrouped units
         // directly via `preachableUnits`. Boundary changes + merged
@@ -1138,6 +1156,7 @@ export function ExpositoryAssistantPage() {
                 )}
 
                 {!collapsedPasses.has(5) && (
+                    <div id="expository-pass-5">
                     <PassCard
                         index={5}
                         title={t('expository.passes.fidelity.title') as string}
@@ -1146,6 +1165,12 @@ export function ExpositoryAssistantPage() {
                         onCollapse={() => togglePass(5)}
                         t={t}
                     >
+                        {assistant.runFidelity.isPending && (
+                            <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/40 px-3 py-2.5 text-[12px] text-slate-700 dark:text-slate-200">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>{t('expository.results.fidelity.revalidating')}</span>
+                            </div>
+                        )}
                         {fidelityReview && (
                             <>
                                 <FidelityResult
@@ -1168,6 +1193,7 @@ export function ExpositoryAssistantPage() {
                             </>
                         )}
                     </PassCard>
+                    </div>
                 )}
 
                 {/* Create-series card — appears once preachable units are ready.
@@ -2274,7 +2300,7 @@ function PreachableResult({
                                         </span>
                                     )}
                                     {u.modifiedByPastor && (
-                                        <span className="text-[10px] uppercase tracking-wide font-medium text-info-foreground bg-info-subtle px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                        <span className="text-[10px] uppercase tracking-wide font-semibold text-sky-800 dark:text-sky-200 bg-sky-100 dark:bg-sky-900/40 border border-sky-300/70 dark:border-sky-700/50 px-2 py-0.5 rounded inline-flex items-center gap-1">
                                             {t('expository.results.preachable.modifiedChip')}
                                         </span>
                                     )}
@@ -2285,6 +2311,11 @@ function PreachableResult({
                                         </span>
                                     )}
                                 </div>
+                                {u.modifiedByPastor && (
+                                    <div className="mb-2 rounded-md border border-sky-300/70 dark:border-sky-700/50 bg-sky-50 dark:bg-sky-950/30 px-2.5 py-1.5 text-[11.5px] text-sky-900 dark:text-sky-100 leading-snug">
+                                        {t('expository.results.preachable.refineBanner')}
+                                    </div>
+                                )}
                                 <EditablePropositionRow
                                     label={t('expository.results.preachable.exegeticalProp') as string}
                                     value={u.exegeticalProposition}
