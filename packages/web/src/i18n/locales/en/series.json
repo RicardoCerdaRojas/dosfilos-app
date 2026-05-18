@@ -337,6 +337,7 @@
                 },
                 "modifiedChip": "Modified by you",
                 "refineMarker": "Refine",
+                "refineBanner": "You changed the structure of this unit. Review and rewrite the propositions so they reflect the merged/split content before creating the series.",
                 "noChanges": "No manual changes. You can still re-validate to confirm the fidelity of the analysis.",
                 "modifiedCount_one": "1 unit modified by you. Re-validate to confirm the regroup respects the methodology.",
                 "modifiedCount_other": "{{count}} units modified by you. Re-validate to confirm the regroup respects the methodology.",

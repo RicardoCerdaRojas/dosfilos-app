@@ -668,9 +668,13 @@ export function ExpositoryAssistantPage() {
                     ...a.sourcedExegeticalUnitIds,
                     ...b.sourcedExegeticalUnitIds,
                 ],
-                exegeticalProposition: `[${t('expository.results.preachable.refineMarker')}] ${a.exegeticalProposition}\n\n${b.exegeticalProposition}`,
-                homileticalProposition: `[${t('expository.results.preachable.refineMarker')}] ${a.homileticalProposition}\n\n${b.homileticalProposition}`,
-                pastoralObjective: `[${t('expository.results.preachable.refineMarker')}] ${a.pastoralObjective}\n\n${b.pastoralObjective}`,
+                // Concatenate text cleanly — no inline markers in content.
+                // The "needs refinement" signal lives in the per-card
+                // banner driven by `modifiedByPastor`, not in the body
+                // text (which would leak to exports / planned sermons).
+                exegeticalProposition: `${a.exegeticalProposition}\n\n${b.exegeticalProposition}`,
+                homileticalProposition: `${a.homileticalProposition}\n\n${b.homileticalProposition}`,
+                pastoralObjective: `${a.pastoralObjective}\n\n${b.pastoralObjective}`,
                 order: a.order,
                 modifiedByPastor: true,
             };
@@ -702,7 +706,9 @@ export function ExpositoryAssistantPage() {
                 toast.error(t('expository.toast.splitOutOfRange') as string);
                 return prev;
             }
-            const refine = t('expository.results.preachable.refineMarker');
+            // Both halves inherit the original propositions verbatim —
+            // pastor refines them. Clean text (no inline markers); the
+            // refinement signal lives in the per-card banner.
             const firstHalf: PreachableUnit = {
                 ...u,
                 id: crypto.randomUUID(),
@@ -715,9 +721,6 @@ export function ExpositoryAssistantPage() {
                 })}`.trim(),
                 verseEnd: atVerse,
                 chapterEnd: u.chapterStart,
-                exegeticalProposition: `[${refine}] ${u.exegeticalProposition}`,
-                homileticalProposition: `[${refine}] ${u.homileticalProposition}`,
-                pastoralObjective: `[${refine}] ${u.pastoralObjective}`,
                 modifiedByPastor: true,
             };
             const secondHalf: PreachableUnit = {
@@ -731,9 +734,6 @@ export function ExpositoryAssistantPage() {
                     verseEnd: u.verseEnd,
                 })}`.trim(),
                 verseStart: atVerse + 1,
-                exegeticalProposition: `[${refine}] ${u.exegeticalProposition}`,
-                homileticalProposition: `[${refine}] ${u.homileticalProposition}`,
-                pastoralObjective: `[${refine}] ${u.pastoralObjective}`,
                 modifiedByPastor: true,
             };
             const next = [
@@ -2274,7 +2274,7 @@ function PreachableResult({
                                         </span>
                                     )}
                                     {u.modifiedByPastor && (
-                                        <span className="text-[10px] uppercase tracking-wide font-medium text-info-foreground bg-info-subtle px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                        <span className="text-[10px] uppercase tracking-wide font-semibold text-sky-800 dark:text-sky-200 bg-sky-100 dark:bg-sky-900/40 border border-sky-300/70 dark:border-sky-700/50 px-2 py-0.5 rounded inline-flex items-center gap-1">
                                             {t('expository.results.preachable.modifiedChip')}
                                         </span>
                                     )}
@@ -2285,6 +2285,11 @@ function PreachableResult({
                                         </span>
                                     )}
                                 </div>
+                                {u.modifiedByPastor && (
+                                    <div className="mb-2 rounded-md border border-sky-300/70 dark:border-sky-700/50 bg-sky-50 dark:bg-sky-950/30 px-2.5 py-1.5 text-[11.5px] text-sky-900 dark:text-sky-100 leading-snug">
+                                        {t('expository.results.preachable.refineBanner')}
+                                    </div>
+                                )}
                                 <EditablePropositionRow
                                     label={t('expository.results.preachable.exegeticalProp') as string}
                                     value={u.exegeticalProposition}
