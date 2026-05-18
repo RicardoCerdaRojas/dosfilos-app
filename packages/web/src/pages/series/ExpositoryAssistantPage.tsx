@@ -55,6 +55,7 @@ import {
     type SyntacticUnit,
 } from '@dosfilos/domain';
 import { PassagePicker } from '@/components/exegesis/PassagePicker';
+import { BookPicker } from '@/components/exegesis/BookPicker';
 
 /**
  * v1.5 expository assistant wizard.
@@ -1263,52 +1264,9 @@ function SetupCard({
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                    <Label htmlFor="book">{t('expository.setup.book')}</Label>
-                    <select
-                        id="book"
-                        value={bookId}
-                        onChange={(e) => onBookIdChange(e.target.value as BibleBookId)}
-                        disabled={isRunning}
-                        className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
-                    >
-                        <optgroup label={t('expository.setup.testamentNT') as string}>
-                            {allBooks.filter((b) => b.testament === 'NT').map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {lang === 'en' ? b.nameEn : b.nameEs}
-                                </option>
-                            ))}
-                        </optgroup>
-                        <optgroup label={t('expository.setup.testamentOT') as string}>
-                            {allBooks.filter((b) => b.testament === 'OT').map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {lang === 'en' ? b.nameEn : b.nameEs}
-                                </option>
-                            ))}
-                        </optgroup>
-                    </select>
-                </div>
-                <div>
-                    <Label htmlFor="target">{t('expository.setup.targetCount')}</Label>
-                    <Input
-                        id="target"
-                        type="number"
-                        min={3}
-                        max={60}
-                        value={targetCount}
-                        disabled={isRunning}
-                        onChange={(e) => {
-                            const v = e.target.value;
-                            onTargetCountChange(v === '' ? '' : Math.max(1, Number(v)));
-                        }}
-                        placeholder={t('expository.setup.targetCountPlaceholder') as string}
-                        className="mt-1.5"
-                    />
-                </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
+            {/* 1. Alcance — define mode FIRST so the picker below
+                matches the chosen idiom (book vs passage). */}
+            <div className="space-y-3">
                 <Label className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">
                     {t('expository.setup.scope.label')}
                 </Label>
@@ -1364,22 +1322,58 @@ function SetupCard({
                         </span>
                     </label>
                 </div>
-                {scopeMode === 'passage' && (
-                    <div className="space-y-1.5">
-                        <PassagePicker
-                            value={passageScope}
-                            onChange={(ref) => onPassageScopeChange(ref)}
-                            displayLanguage={lang}
-                        />
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {t('expository.setup.scope.passageHelper')}
-                        </p>
-                    </div>
-                )}
-                {scopeError && (
-                    <p className="text-[12px] font-medium text-destructive">{scopeError}</p>
-                )}
             </div>
+
+            {/* 2. Selector (book OR passage, never both) + Cantidad. */}
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                    <Label>
+                        {scopeMode === 'whole-book'
+                            ? t('expository.setup.book')
+                            : t('expository.setup.scope.modePassage')}
+                    </Label>
+                    <div className="mt-1.5">
+                        {scopeMode === 'whole-book' ? (
+                            <BookPicker
+                                value={bookId}
+                                onChange={onBookIdChange}
+                                displayLanguage={lang}
+                                disabled={isRunning}
+                            />
+                        ) : (
+                            <PassagePicker
+                                value={passageScope}
+                                onChange={(ref) => onPassageScopeChange(ref)}
+                                displayLanguage={lang}
+                            />
+                        )}
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('expository.setup.scope.passageHelper')}
+                    </p>
+                </div>
+                <div>
+                    <Label htmlFor="target">{t('expository.setup.targetCount')}</Label>
+                    <Input
+                        id="target"
+                        type="number"
+                        min={3}
+                        max={60}
+                        value={targetCount}
+                        disabled={isRunning}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            onTargetCountChange(v === '' ? '' : Math.max(1, Number(v)));
+                        }}
+                        placeholder={t('expository.setup.targetCountPlaceholder') as string}
+                        className="mt-1.5"
+                    />
+                </div>
+            </div>
+
+            {scopeError && (
+                <p className="mt-3 text-[12px] font-medium text-destructive">{scopeError}</p>
+            )}
 
             <label className="mt-4 flex items-start gap-2 text-[12px] text-slate-700 dark:text-slate-200 cursor-pointer">
                 <input
