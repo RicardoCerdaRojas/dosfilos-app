@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -37,6 +37,7 @@ import { toast } from 'sonner';
 import { exegesisService, seriesService } from '@dosfilos/application';
 import {
     findBooksByAlias,
+    type ExegeticalPaperPhase,
     type PlannedSermon,
     type SermonSeriesEntity,
     type SyntacticUnit,
@@ -77,6 +78,31 @@ export function SeriesDetail() {
         }
         return map;
     }, [series]);
+
+    // Paper phase per pericope. The pipeline stepper needs the actual
+    // ExegeticalPaper phase (configuring / in-progress / assembled),
+    // not just whether `paperId` exists — auto-created papers (PR #194)
+    // start in 'configuring' with no real work yet, and showing them as
+    // "iniciado" misleads pastors into thinking exegesis is done.
+    const [paperPhases, setPaperPhases] = useState<Map<string, ExegeticalPaperPhase>>(new Map());
+    useEffect(() => {
+        if (!user?.uid || !series) return;
+        let cancelled = false;
+        exegesisService.listPapers
+            .execute(user.uid)
+            .then((papers) => {
+                if (cancelled) return;
+                const map = new Map<string, ExegeticalPaperPhase>();
+                for (const p of papers) map.set(p.id, p.phase);
+                setPaperPhases(map);
+            })
+            .catch((err) => {
+                console.warn('[seriesDetail] paper phases fetch failed:', err);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [user?.uid, series]);
 
     if (loading) {
         return (
@@ -255,6 +281,7 @@ export function SeriesDetail() {
                             const hasPaper = Boolean(planned?.paperId);
                             const hasSyntacticUnit = Boolean(planned?.syntacticUnit);
                             const isCreatingPaper = creatingPaperFor === planned?.id;
+                            const paperPhase = planned?.paperId ? paperPhases.get(planned.paperId) : undefined;
                             return (
                                 <SermonRow
                                     key={item.id}
@@ -264,6 +291,7 @@ export function SeriesDetail() {
                                     hasPaper={hasPaper}
                                     hasSyntacticUnit={hasSyntacticUnit}
                                     isCreatingPaper={isCreatingPaper}
+                                    paperPhase={paperPhase}
                                     seriesId={series.id}
                                     onUpdateDate={(d) => handleUpdateSermonDate(item.id, d)}
                                     onStartDraft={() => handleStartDraft(item)}
@@ -339,6 +367,7 @@ interface SermonRowProps {
     hasPaper: boolean;
     hasSyntacticUnit: boolean;
     isCreatingPaper: boolean;
+    paperPhase: ExegeticalPaperPhase | undefined;
     seriesId: string;
     onUpdateDate: (d: Date | null) => Promise<void>;
     onStartDraft: () => Promise<void>;
@@ -360,6 +389,7 @@ function SermonRow({
     hasPaper,
     hasSyntacticUnit,
     isCreatingPaper,
+    paperPhase,
     onUpdateDate,
     onStartDraft,
     onContinueEditing,
@@ -403,20 +433,20 @@ function SermonRow({
                         )}
                     </div>
                     {/* Pipeline stepper — paper → borrador → predicado.
-                        The pericope stage is implicit (every row in this
-                        table has one). Filled = stage started/done; ring =
-                        current active stage; empty = pending. */}
+                        Stage state distinguishes "doc exists" (auto-created
+                        empty shell) from "work actually started" via paper
+                        phase + draft wizardProgress.currentStep. */}
                     <PipelineStepper
-                        hasPaper={hasPaper}
-                        hasDraft={Boolean(item.draftId)}
+                        paperState={derivePaperState(hasPaper, paperPhase)}
+                        draftState={deriveDraftState(item)}
                         complete={item.status === 'complete'}
                         t={t}
                     />
                     <p className="mt-1 text-[11.5px] text-muted-foreground">
                         <NextStepHint
                             hasSyntacticUnit={hasSyntacticUnit}
-                            hasPaper={hasPaper}
-                            hasDraft={Boolean(item.draftId)}
+                            paperState={derivePaperState(hasPaper, paperPhase)}
+                            draftState={deriveDraftState(item)}
                             status={item.status}
                             t={t}
                         />
@@ -542,64 +572,82 @@ function StatusDot({ status }: { status: SermonItem['status'] }) {
     return <div className={cn('w-1.5 h-1.5 rounded-full', tone)} />;
 }
 
+type StageState = 'missing' | 'configuring' | 'in_progress' | 'done';
+
+/**
+ * Derive paper stage state from the actual ExegeticalPaper phase, not
+ * just "doc exists". A paper auto-spawned for a pericope sits in
+ * 'configuring' until the pastor opens it and runs any step — at that
+ * point Firestore writes flip the phase to 'in-progress'.
+ */
+function derivePaperState(hasPaper: boolean, phase: ExegeticalPaperPhase | undefined): StageState {
+    if (!hasPaper) return 'missing';
+    if (phase === 'assembled') return 'done';
+    if (phase === 'in-progress') return 'in_progress';
+    // phase === 'configuring' OR phase undefined (still loading) → treat
+    // as configuring: doc exists but no actual exegetical work done.
+    return 'configuring';
+}
+
+/**
+ * Derive draft stage state from the SermonItem's wizardProgress. PR
+ * #195 auto-spawns drafts with `currentStep: 0` and `passage` only —
+ * those are still "configuring" from the pastor's POV. Movement past
+ * step 0 means the wizard actually advanced.
+ */
+function deriveDraftState(item: SermonItem): StageState {
+    if (!item.draftId) return 'missing';
+    if (item.status === 'complete') return 'done';
+    const step = item.wizardProgress?.currentStep ?? 0;
+    if (step > 0) return 'in_progress';
+    return 'configuring';
+}
+
 /**
  * Three-stage horizontal stepper inline in each row. Stages:
  *   ① Paper exegético  ② Borrador del sermón  ③ Predicado
  *
  * Visual states per stage:
- *   - filled circle + solid connector  = stage started or finished
- *   - hollow circle + dashed connector = stage pending
- *   - ring around current active stage = "you're working here"
+ *   - missing       → hollow dot, dashed connector
+ *   - configuring   → hollow dot with amber border (started but empty)
+ *   - in_progress   → filled amber dot with ring (actively working)
+ *   - done          → filled emerald dot
  *
  * The pericope stage itself is implicit (the row exists ⇒ pericope
  * exists), so it's not drawn — keeps the stepper compact.
  */
 function PipelineStepper({
-    hasPaper,
-    hasDraft,
+    paperState,
+    draftState,
     complete,
     t,
 }: {
-    hasPaper: boolean;
-    hasDraft: boolean;
+    paperState: StageState;
+    draftState: StageState;
     complete: boolean;
     t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-    const stages = [
-        { key: 'paper', label: t('detail.table.stepper.paper'), done: hasPaper, active: hasPaper && !hasDraft },
-        { key: 'draft', label: t('detail.table.stepper.draft'), done: hasDraft, active: hasDraft && !complete },
-        { key: 'preached', label: t('detail.table.stepper.preached'), done: complete, active: false },
+    const preachedState: StageState = complete ? 'done' : 'missing';
+    const stages: Array<{ key: string; label: string; state: StageState }> = [
+        { key: 'paper', label: t('detail.table.stepper.paper'), state: paperState },
+        { key: 'draft', label: t('detail.table.stepper.draft'), state: draftState },
+        { key: 'preached', label: t('detail.table.stepper.preached'), state: preachedState },
     ];
     return (
         <div className="mt-1.5 flex items-center gap-1 text-[10.5px] uppercase tracking-wider font-medium text-muted-foreground">
             {stages.map((stage, idx) => (
                 <span key={stage.key} className="inline-flex items-center gap-1">
-                    <span
-                        className={cn(
-                            'inline-block h-2.5 w-2.5 rounded-full border',
-                            stage.done
-                                ? stage.key === 'preached'
-                                    ? 'bg-emerald-500 border-emerald-500'
-                                    : stage.active
-                                      ? 'bg-amber-400 border-amber-500 ring-2 ring-amber-200 dark:ring-amber-900/40'
-                                      : 'bg-amber-400 border-amber-500'
-                                : 'bg-background border-slate-300 dark:border-zinc-700',
-                        )}
-                    />
-                    <span
-                        className={cn(
-                            stage.done && !stage.active && 'text-foreground/80',
-                            stage.active && 'text-amber-700 dark:text-amber-300',
-                            stage.key === 'preached' && stage.done && 'text-emerald-700 dark:text-emerald-300',
-                        )}
-                    >
+                    <StageDot state={stage.state} isPreached={stage.key === 'preached'} />
+                    <span className={cn(stageTextClass(stage.state, stage.key === 'preached'))}>
                         {stage.label}
                     </span>
                     {idx < stages.length - 1 && (
                         <span
                             className={cn(
                                 'block w-4 h-px mx-0.5',
-                                stage.done ? 'bg-slate-300 dark:bg-zinc-700' : 'border-t border-dashed border-slate-300 dark:border-zinc-700',
+                                stage.state === 'done' || stage.state === 'in_progress'
+                                    ? 'bg-slate-300 dark:bg-zinc-700'
+                                    : 'border-t border-dashed border-slate-300 dark:border-zinc-700',
                             )}
                         />
                     )}
@@ -609,41 +657,86 @@ function PipelineStepper({
     );
 }
 
+function StageDot({ state, isPreached }: { state: StageState; isPreached: boolean }) {
+    if (state === 'done') {
+        return (
+            <span
+                className={cn(
+                    'inline-block h-2.5 w-2.5 rounded-full border',
+                    isPreached
+                        ? 'bg-emerald-500 border-emerald-500'
+                        : 'bg-emerald-500 border-emerald-500',
+                )}
+            />
+        );
+    }
+    if (state === 'in_progress') {
+        return (
+            <span className="inline-block h-2.5 w-2.5 rounded-full border bg-amber-400 border-amber-500 ring-2 ring-amber-200 dark:ring-amber-900/40" />
+        );
+    }
+    if (state === 'configuring') {
+        return (
+            <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-amber-400 bg-background" />
+        );
+    }
+    // missing
+    return (
+        <span className="inline-block h-2.5 w-2.5 rounded-full border border-slate-300 dark:border-zinc-700 bg-background" />
+    );
+}
+
+function stageTextClass(state: StageState, isPreached: boolean): string {
+    if (state === 'done')
+        return isPreached
+            ? 'text-emerald-700 dark:text-emerald-300'
+            : 'text-emerald-700 dark:text-emerald-300';
+    if (state === 'in_progress') return 'text-amber-700 dark:text-amber-300';
+    if (state === 'configuring') return 'text-amber-700/70 dark:text-amber-300/70';
+    return '';
+}
+
 /**
  * One-line hint that answers "what's the next thing I should do for
- * this pericope?". Resolved from the pipeline state so the pastor
- * doesn't have to decode three independent chips and reason about
- * sequence.
+ * this pericope?". Reads from the same derived stage states the
+ * stepper uses so visual + copy stay in sync.
  */
 function NextStepHint({
     hasSyntacticUnit,
-    hasPaper,
-    hasDraft,
+    paperState,
+    draftState,
     status,
     t,
 }: {
     hasSyntacticUnit: boolean;
-    hasPaper: boolean;
-    hasDraft: boolean;
+    paperState: StageState;
+    draftState: StageState;
     status: SermonItem['status'];
     t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-    if (status === 'complete') {
-        return <>{t('detail.table.nextStep.preached')}</>;
-    }
-    if (!hasPaper && hasSyntacticUnit) {
+    if (status === 'complete') return <>{t('detail.table.nextStep.preached')}</>;
+    if (paperState === 'missing' && hasSyntacticUnit) {
         return <>{t('detail.table.nextStep.createPaper')}</>;
     }
-    if (hasPaper && !hasDraft) {
+    if (paperState === 'configuring') {
+        return <>{t('detail.table.nextStep.startPaper')}</>;
+    }
+    if (paperState === 'in_progress' && draftState === 'missing') {
         return <>{t('detail.table.nextStep.refinePaperStartDraft')}</>;
     }
-    if (hasDraft && status === 'in_progress') {
-        return <>{t('detail.table.nextStep.continueDraft')}</>;
+    if (paperState === 'done' && draftState === 'missing') {
+        return <>{t('detail.table.nextStep.startDraftPaperDone')}</>;
     }
-    if (!hasPaper && !hasSyntacticUnit && !hasDraft) {
+    if (draftState === 'configuring') {
         return <>{t('detail.table.nextStep.startDraft')}</>;
     }
-    return <>{t('detail.table.nextStep.markPreached')}</>;
+    if (draftState === 'in_progress') {
+        return <>{t('detail.table.nextStep.continueDraft')}</>;
+    }
+    if (draftState === 'done' && status !== 'complete') {
+        return <>{t('detail.table.nextStep.markPreached')}</>;
+    }
+    return <>{t('detail.table.nextStep.startDraft')}</>;
 }
 
 function syntacticUnitToPassage(unit: SyntacticUnit) {

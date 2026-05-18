@@ -573,7 +573,9 @@
             },
             "nextStep": {
                 "createPaper": "Próximo: crear el paper exegético.",
-                "refinePaperStartDraft": "Próximo: refinar el paper y empezar el borrador del sermón.",
+                "startPaper": "Próximo: abrir el paper y trabajar en la exégesis.",
+                "refinePaperStartDraft": "Próximo: continuar la exégesis y empezar el borrador del sermón.",
+                "startDraftPaperDone": "Próximo: empezar el borrador del sermón (paper listo).",
                 "continueDraft": "Próximo: continuar editando el borrador.",
                 "startDraft": "Próximo: iniciar el borrador del sermón.",
                 "markPreached": "Próximo: marcar como predicado cuando termines.",

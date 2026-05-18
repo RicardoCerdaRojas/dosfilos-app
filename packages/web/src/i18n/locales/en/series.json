@@ -573,7 +573,9 @@
             },
             "nextStep": {
                 "createPaper": "Next: create the exegetical paper.",
-                "refinePaperStartDraft": "Next: refine the paper and start the sermon draft.",
+                "startPaper": "Next: open the paper and work on the exegesis.",
+                "refinePaperStartDraft": "Next: continue the exegesis and start the sermon draft.",
+                "startDraftPaperDone": "Next: start the sermon draft (paper is ready).",
                 "continueDraft": "Next: continue editing the draft.",
                 "startDraft": "Next: start the sermon draft.",
                 "markPreached": "Next: mark as preached when you're done.",
