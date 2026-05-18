@@ -522,5 +522,77 @@
             "seriesCreatedWithPapersAndDrafts": "Serie creada con {{paperCount}} papers y {{draftCount}} borradores de sermón listos para desarrollar.",
             "createFailed": "No se pudo crear la serie."
         }
+    },
+    "detail": {
+        "header": {
+            "back": "Volver a Planes",
+            "edit": "Editar plan",
+            "viewTimeline": "Ver timeline",
+            "noStart": "Sin fecha de inicio",
+            "sermonCount_one": "{{count}} sermón",
+            "sermonCount_other": "{{count}} sermones",
+            "inProgressBadge_one": "{{count}} en desarrollo",
+            "inProgressBadge_other": "{{count}} en desarrollo"
+        },
+        "kpi": {
+            "progress": "Progreso",
+            "next": "Próximo",
+            "noNext": "Sin próximo programado",
+            "inDev": "En desarrollo",
+            "inDevHint": "Sermones con borrador iniciado",
+            "done": "Completados",
+            "doneHint": "Sermones predicados o listos"
+        },
+        "table": {
+            "title": "Perícopas y sermones",
+            "empty": "Aún no hay sermones en esta serie. Usa \"Agregar Sermón\" para empezar.",
+            "dateMissing": "Sin fecha",
+            "editDate": "Cambiar fecha",
+            "clearDate": "Quitar fecha",
+            "cancel": "Cancelar",
+            "apply": "Aplicar",
+            "paperReady": "Paper listo",
+            "draftReady": "Borrador iniciado",
+            "createPaper": "Crear paper",
+            "openPaper": "Abrir paper",
+            "openDraft": "Abrir borrador",
+            "startDraft": "Iniciar sermón",
+            "moreActions": "Más acciones",
+            "actionsLabel": "Acciones",
+            "editFull": "Editar detalles",
+            "askFaculty": "Consultar a la Facultad",
+            "continueDraft": "Continuar editando",
+            "markComplete": "Marcar como predicado",
+            "delete": "Eliminar",
+            "status": {
+                "planned": "Planificado",
+                "inProgress": "En desarrollo",
+                "complete": "Predicado"
+            },
+            "stepper": {
+                "paper": "Paper",
+                "draft": "Borrador",
+                "preached": "Predicado"
+            },
+            "nextStep": {
+                "createPaper": "Próximo: crear el paper exegético.",
+                "startPaper": "Próximo: abrir el paper y trabajar en la exégesis.",
+                "refinePaperStartDraft": "Próximo: continuar la exégesis y empezar el borrador del sermón.",
+                "startDraftPaperDone": "Próximo: empezar el borrador del sermón (paper listo).",
+                "continueDraft": "Próximo: continuar editando el borrador.",
+                "startDraft": "Próximo: iniciar el borrador del sermón.",
+                "markPreached": "Próximo: marcar como predicado cuando termines.",
+                "preached": "Predicado ✓"
+            }
+        },
+        "timeline": {
+            "title": "Timeline de la serie",
+            "description": "Vista cronológica de tus sermones programados. Cambia fechas directamente en la tabla de sermones.",
+            "empty": "Aún no hay sermones con fecha programada para mostrar en el timeline.",
+            "unscheduled_one": "{{count}} sermón sin fecha",
+            "unscheduled_other": "{{count}} sermones sin fecha",
+            "daysGap_one": "{{count}} día después",
+            "daysGap_other": "{{count}} días después"
+        }
     }
 }

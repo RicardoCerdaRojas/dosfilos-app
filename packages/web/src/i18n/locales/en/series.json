@@ -522,5 +522,77 @@
             "seriesCreatedWithPapersAndDrafts": "Series created with {{paperCount}} papers and {{draftCount}} sermon drafts ready to develop.",
             "createFailed": "Couldn't create the series."
         }
+    },
+    "detail": {
+        "header": {
+            "back": "Back to plans",
+            "edit": "Edit plan",
+            "viewTimeline": "View timeline",
+            "noStart": "No start date",
+            "sermonCount_one": "{{count}} sermon",
+            "sermonCount_other": "{{count}} sermons",
+            "inProgressBadge_one": "{{count}} in progress",
+            "inProgressBadge_other": "{{count}} in progress"
+        },
+        "kpi": {
+            "progress": "Progress",
+            "next": "Next",
+            "noNext": "No upcoming scheduled",
+            "inDev": "In progress",
+            "inDevHint": "Sermons with a draft started",
+            "done": "Completed",
+            "doneHint": "Preached or finished sermons"
+        },
+        "table": {
+            "title": "Pericopes & sermons",
+            "empty": "No sermons in this series yet. Use \"Add Sermon\" to start.",
+            "dateMissing": "No date",
+            "editDate": "Change date",
+            "clearDate": "Clear date",
+            "cancel": "Cancel",
+            "apply": "Apply",
+            "paperReady": "Paper ready",
+            "draftReady": "Draft started",
+            "createPaper": "Create paper",
+            "openPaper": "Open paper",
+            "openDraft": "Open draft",
+            "startDraft": "Start sermon",
+            "moreActions": "More actions",
+            "actionsLabel": "Actions",
+            "editFull": "Edit details",
+            "askFaculty": "Ask Faculty",
+            "continueDraft": "Continue editing",
+            "markComplete": "Mark as preached",
+            "delete": "Delete",
+            "status": {
+                "planned": "Planned",
+                "inProgress": "In progress",
+                "complete": "Preached"
+            },
+            "stepper": {
+                "paper": "Paper",
+                "draft": "Draft",
+                "preached": "Preached"
+            },
+            "nextStep": {
+                "createPaper": "Next: create the exegetical paper.",
+                "startPaper": "Next: open the paper and work on the exegesis.",
+                "refinePaperStartDraft": "Next: continue the exegesis and start the sermon draft.",
+                "startDraftPaperDone": "Next: start the sermon draft (paper is ready).",
+                "continueDraft": "Next: continue editing the draft.",
+                "startDraft": "Next: start the sermon draft.",
+                "markPreached": "Next: mark as preached when you're done.",
+                "preached": "Preached ✓"
+            }
+        },
+        "timeline": {
+            "title": "Series timeline",
+            "description": "Chronological view of your scheduled sermons. Change dates directly from the sermons table.",
+            "empty": "No scheduled sermons yet to display on the timeline.",
+            "unscheduled_one": "{{count}} sermon without a date",
+            "unscheduled_other": "{{count}} sermons without a date",
+            "daysGap_one": "{{count}} day later",
+            "daysGap_other": "{{count}} days later"
+        }
     }
 }
