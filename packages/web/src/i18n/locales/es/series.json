@@ -572,7 +572,9 @@
             "description": "Vista cronológica de tus sermones programados. Cambia fechas directamente en la tabla de sermones.",
             "empty": "Aún no hay sermones con fecha programada para mostrar en el timeline.",
             "unscheduled_one": "{{count}} sermón sin fecha",
-            "unscheduled_other": "{{count}} sermones sin fecha"
+            "unscheduled_other": "{{count}} sermones sin fecha",
+            "daysGap_one": "{{count}} día después",
+            "daysGap_other": "{{count}} días después"
         }
     }
 }

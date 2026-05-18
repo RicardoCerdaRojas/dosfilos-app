@@ -572,7 +572,9 @@
             "description": "Chronological view of your scheduled sermons. Change dates directly from the sermons table.",
             "empty": "No scheduled sermons yet to display on the timeline.",
             "unscheduled_one": "{{count}} sermon without a date",
-            "unscheduled_other": "{{count}} sermons without a date"
+            "unscheduled_other": "{{count}} sermons without a date",
+            "daysGap_one": "{{count}} day later",
+            "daysGap_other": "{{count}} days later"
         }
     }
 }

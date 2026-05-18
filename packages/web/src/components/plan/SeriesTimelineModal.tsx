@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock, CircleDot } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -18,15 +18,24 @@ interface SeriesTimelineModalProps {
     sermons: ReadonlyArray<SermonItem>;
 }
 
+interface TimelineRow {
+    sermon: SermonItem & { scheduledDate: Date };
+    daysFromPrev: number | null;
+    monthHeader: string | null;
+}
+
 /**
- * Horizontal scrollable timeline of all sermons in a series. Plotted
- * by `scheduledDate` (sermons without a date appear in a dedicated
- * "Sin fecha" tray below). MVP v1 is visualization-only — no drag to
- * reschedule yet. Date editing happens inline on the series detail
- * table (popover on the date cell); the timeline is a glance-view.
+ * Vertical chronological list of all sermons in a series. Sermons
+ * with `scheduledDate` are grouped by month header and ordered
+ * ascending; sermons without a date appear in a separate tray at the
+ * bottom. MVP visualization-only — date changes happen on the main
+ * table via `InlineDateEditor`.
  *
- * Replaces the previous full-page CalendarView tab — empty months
- * dominated the screen for typical 3-12 sermon series.
+ * Vertical layout chosen over horizontal-spine after real testing:
+ * 3-12 sermons fit better as a scrollable list than a wide canvas,
+ * cards never overlap regardless of date spacing, and gaps between
+ * dates are shown explicitly (e.g. "8 días después") instead of
+ * being inferred from pixel distance.
  */
 export function SeriesTimelineModal({ open, onOpenChange, sermons }: SeriesTimelineModalProps) {
     const { t, i18n } = useTranslation('series');
@@ -44,54 +53,28 @@ export function SeriesTimelineModal({ open, onOpenChange, sermons }: SeriesTimel
         [sermons],
     );
 
-    const range = useMemo(() => {
-        if (scheduled.length === 0) return null;
-        const first = scheduled[0]!.scheduledDate;
-        const last = scheduled[scheduled.length - 1]!.scheduledDate;
-        return { first, last };
-    }, [scheduled]);
-
-    // Pixels per day — keeps the timeline readable for series spanning
-    // anywhere from 2 weeks to 18 months.
-    const PX_PER_DAY = 32;
-    const TIMELINE_PADDING = 24;
-
-    const positions = useMemo(() => {
-        if (!range) return [];
-        const firstMs = range.first.getTime();
-        return scheduled.map((s) => {
-            const days = Math.round((s.scheduledDate.getTime() - firstMs) / 86_400_000);
-            return { sermon: s, x: TIMELINE_PADDING + days * PX_PER_DAY };
-        });
-    }, [scheduled, range]);
-
-    const widthPx = useMemo(() => {
-        if (!range) return 0;
-        const totalDays = Math.round((range.last.getTime() - range.first.getTime()) / 86_400_000);
-        return TIMELINE_PADDING * 2 + Math.max(totalDays, 7) * PX_PER_DAY;
-    }, [range]);
-
-    const monthMarkers = useMemo(() => {
-        if (!range) return [];
-        const markers: Array<{ x: number; label: string }> = [];
-        const cursor = new Date(range.first.getFullYear(), range.first.getMonth(), 1);
-        const end = range.last;
-        const firstMs = range.first.getTime();
-        while (cursor.getTime() <= end.getTime()) {
-            const days = Math.round((cursor.getTime() - firstMs) / 86_400_000);
-            const x = TIMELINE_PADDING + days * PX_PER_DAY;
-            markers.push({
-                x,
-                label: cursor.toLocaleDateString(locale, { month: 'short', year: 'numeric' }),
+    const rows: TimelineRow[] = useMemo(() => {
+        let prevMonth: string | null = null;
+        return scheduled.map((sermon, idx) => {
+            const monthKey = sermon.scheduledDate.toLocaleDateString(locale, {
+                month: 'long',
+                year: 'numeric',
             });
-            cursor.setMonth(cursor.getMonth() + 1);
-        }
-        return markers;
-    }, [range, locale]);
+            const monthHeader = monthKey !== prevMonth ? monthKey : null;
+            prevMonth = monthKey;
+            const daysFromPrev = idx === 0
+                ? null
+                : Math.round(
+                      (sermon.scheduledDate.getTime() - scheduled[idx - 1]!.scheduledDate.getTime())
+                          / 86_400_000,
+                  );
+            return { sermon, daysFromPrev, monthHeader };
+        });
+    }, [scheduled, locale]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+            <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <CalendarDays className="h-4 w-4" />
@@ -107,78 +90,86 @@ export function SeriesTimelineModal({ open, onOpenChange, sermons }: SeriesTimel
                 )}
 
                 {scheduled.length > 0 && (
-                    <div className="flex-1 overflow-auto rounded-lg border border-border bg-muted/30">
-                        <div
-                            className="relative"
-                            style={{ width: `${widthPx}px`, minHeight: '180px' }}
-                        >
-                            {/* Month grid lines + labels */}
-                            {monthMarkers.map((m, i) => (
-                                <div
-                                    key={i}
-                                    className="absolute top-0 bottom-0 border-l border-dashed border-border"
-                                    style={{ left: `${m.x}px` }}
-                                >
-                                    <span className="absolute -top-0.5 left-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                                        {m.label}
-                                    </span>
-                                </div>
-                            ))}
-                            {/* Spine */}
+                    <div className="flex-1 overflow-y-auto pr-1 -mr-1">
+                        <ol className="relative">
+                            {/* Vertical spine */}
                             <div
-                                className="absolute left-0 right-0 h-px bg-border"
-                                style={{ top: '88px' }}
+                                className="absolute left-[88px] top-1.5 bottom-1.5 w-px bg-border"
+                                aria-hidden
                             />
-                            {/* Sermon cards */}
-                            {positions.map(({ sermon, x }, idx) => (
-                                <div
-                                    key={sermon.id}
-                                    className="absolute"
-                                    style={{ left: `${x - 80}px`, top: '32px', width: '160px' }}
-                                >
-                                    <div
-                                        className={cn(
-                                            'rounded-md border bg-card shadow-sm px-2 py-1.5 text-[11px] leading-tight',
-                                            sermon.status === 'complete'
-                                                ? 'border-emerald-300'
-                                                : sermon.status === 'in_progress'
-                                                  ? 'border-amber-300'
-                                                  : 'border-border',
-                                        )}
-                                    >
-                                        <div className="font-semibold text-[10px] uppercase tracking-wide text-muted-foreground">
-                                            {idx + 1}
+                            {rows.map(({ sermon, daysFromPrev, monthHeader }, idx) => (
+                                <li key={sermon.id} className="relative">
+                                    {monthHeader && (
+                                        <div className="flex items-center gap-2 py-1.5 pl-[104px] pr-2 mt-2 first:mt-0">
+                                            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                                                {monthHeader}
+                                            </span>
+                                            <div className="flex-1 h-px bg-border/60" />
                                         </div>
-                                        <div className="font-medium text-foreground line-clamp-2">
-                                            {sermon.title}
+                                    )}
+                                    {daysFromPrev !== null && daysFromPrev > 0 && !monthHeader && (
+                                        <div className="pl-[104px] py-1">
+                                            <span className="text-[10.5px] text-muted-foreground/70">
+                                                {t('detail.timeline.daysGap', { count: daysFromPrev }) as string}
+                                            </span>
                                         </div>
-                                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                                            {sermon.scheduledDate.toLocaleDateString(locale, {
-                                                day: 'numeric',
-                                                month: 'short',
-                                            })}
+                                    )}
+                                    <div className="flex items-start gap-3 py-2.5">
+                                        {/* Date column */}
+                                        <div className="w-[80px] shrink-0 text-right">
+                                            <div className="text-[15px] font-semibold text-foreground leading-none">
+                                                {sermon.scheduledDate.toLocaleDateString(locale, {
+                                                    day: 'numeric',
+                                                })}
+                                            </div>
+                                            <div className="text-[10.5px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                                                {sermon.scheduledDate.toLocaleDateString(locale, {
+                                                    month: 'short',
+                                                })}
+                                            </div>
+                                        </div>
+                                        {/* Dot on spine */}
+                                        <div className="shrink-0 relative w-3 flex justify-center pt-1">
+                                            <span
+                                                className={cn(
+                                                    'block h-3 w-3 rounded-full border-2 bg-background',
+                                                    sermon.status === 'complete'
+                                                        ? 'border-emerald-500'
+                                                        : sermon.status === 'in_progress'
+                                                          ? 'border-amber-500'
+                                                          : 'border-primary',
+                                                )}
+                                            />
+                                        </div>
+                                        {/* Body */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-baseline gap-2 flex-wrap">
+                                                <span className="text-[11px] font-mono text-muted-foreground">
+                                                    #{idx + 1}
+                                                </span>
+                                                <span className="text-[14px] font-medium text-foreground">
+                                                    {sermon.title}
+                                                </span>
+                                            </div>
+                                            <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-muted-foreground flex-wrap">
+                                                {sermon.passage && (
+                                                    <>
+                                                        <span className="font-mono">{sermon.passage}</span>
+                                                        <span>·</span>
+                                                    </>
+                                                )}
+                                                <StatusLabel status={sermon.status} t={t} />
+                                            </div>
                                         </div>
                                     </div>
-                                    {/* Dot on spine */}
-                                    <div
-                                        className={cn(
-                                            'absolute h-2.5 w-2.5 rounded-full border-2 bg-background',
-                                            sermon.status === 'complete'
-                                                ? 'border-emerald-500'
-                                                : sermon.status === 'in_progress'
-                                                  ? 'border-amber-500'
-                                                  : 'border-primary',
-                                        )}
-                                        style={{ left: '74px', top: '60px' }}
-                                    />
-                                </div>
+                                </li>
                             ))}
-                        </div>
+                        </ol>
                     </div>
                 )}
 
                 {unscheduled.length > 0 && (
-                    <div className="mt-3 rounded-lg border border-dashed border-border bg-muted/20 px-3 py-2.5">
+                    <div className="mt-3 rounded-lg border border-dashed border-border bg-muted/20 px-3 py-2.5 shrink-0">
                         <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
                             {t('detail.timeline.unscheduled', { count: unscheduled.length }) as string}
                         </p>
@@ -193,5 +184,34 @@ export function SeriesTimelineModal({ open, onOpenChange, sermons }: SeriesTimel
                 )}
             </DialogContent>
         </Dialog>
+    );
+}
+
+function StatusLabel({
+    status,
+    t,
+}: {
+    status: SermonItem['status'];
+    t: (key: string) => string;
+}) {
+    if (status === 'complete')
+        return (
+            <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="h-3 w-3" />
+                {t('detail.table.status.complete')}
+            </span>
+        );
+    if (status === 'in_progress')
+        return (
+            <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300">
+                <Clock className="h-3 w-3" />
+                {t('detail.table.status.inProgress')}
+            </span>
+        );
+    return (
+        <span className="inline-flex items-center gap-1">
+            <CircleDot className="h-3 w-3" />
+            {t('detail.table.status.planned')}
+        </span>
     );
 }
