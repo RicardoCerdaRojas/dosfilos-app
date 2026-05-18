@@ -24,6 +24,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -270,151 +271,178 @@ function ExegesisDefaultsModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
+            <DialogContent className="sm:max-w-4xl max-h-[88vh] flex flex-col p-0 gap-0">
+                {/* Header */}
+                <DialogHeader className="px-6 pt-5 pb-4 border-b border-border space-y-1">
+                    <DialogTitle className="flex items-center gap-2 text-[16px]">
                         <BookOpenCheck className="h-4 w-4" />
                         {t('detail.exegesisDefaults.modalTitle')}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-[13.5px]">
                         {t('detail.exegesisDefaults.modalDescription')}
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-5 pt-2">
-                    {/* Rubric */}
-                    <div className="space-y-2">
-                        <Label className="text-[13px] font-semibold">
-                            {t('detail.exegesisDefaults.rubricLabel')}
-                        </Label>
-                        <p className="text-[12px] text-muted-foreground">
-                            {t('detail.exegesisDefaults.rubricHelp')}
-                        </p>
-                        <select
-                            value={rubricId === null ? '__none' : rubricId ?? '__auto'}
-                            onChange={(e) => {
-                                const v = e.target.value;
-                                if (v === '__none') setRubricId(null);
-                                else if (v === '__auto') setRubricId(undefined);
-                                else setRubricId(v);
-                            }}
-                            disabled={isLoadingOptions || saving}
-                            className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm disabled:opacity-50"
-                        >
-                            <option value="__auto">{t('detail.exegesisDefaults.autoRubricOption')}</option>
-                            <option value="__none">{t('detail.exegesisDefaults.systemRubricOption')}</option>
-                            {rubrics.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                    {r.displayName}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+                    {/* Section: Formato (Rúbrica + Guía side-by-side) */}
+                    <section className="space-y-3">
+                        <SectionHeader>{t('detail.exegesisDefaults.sectionFormat')}</SectionHeader>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-[13.5px] font-medium">
+                                    {t('detail.exegesisDefaults.rubricLabel')}
+                                </Label>
+                                <select
+                                    value={rubricId === null ? '__none' : rubricId ?? '__auto'}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v === '__none') setRubricId(null);
+                                        else if (v === '__auto') setRubricId(undefined);
+                                        else setRubricId(v);
+                                    }}
+                                    disabled={isLoadingOptions || saving}
+                                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-[13.5px] disabled:opacity-50"
+                                >
+                                    <option value="__auto">{t('detail.exegesisDefaults.autoRubricOption')}</option>
+                                    <option value="__none">{t('detail.exegesisDefaults.systemRubricOption')}</option>
+                                    {rubrics.map((r) => (
+                                        <option key={r.id} value={r.id}>
+                                            {r.displayName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-[13.5px] font-medium">
+                                    {t('detail.exegesisDefaults.styleLabel')}
+                                </Label>
+                                <select
+                                    value={styleGuideId ?? '__none'}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setStyleGuideId(v === '__none' ? null : v);
+                                    }}
+                                    disabled={isLoadingOptions || saving}
+                                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-[13.5px] disabled:opacity-50"
+                                >
+                                    <option value="__none">{t('detail.exegesisDefaults.noStyleOption')}</option>
+                                    {styleGuides.map((g) => (
+                                        <option key={g.id} value={g.id}>
+                                            {g.displayName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </section>
 
-                    {/* Style guide */}
-                    <div className="space-y-2">
-                        <Label className="text-[13px] font-semibold">
-                            {t('detail.exegesisDefaults.styleLabel')}
-                        </Label>
-                        <p className="text-[12px] text-muted-foreground">
-                            {t('detail.exegesisDefaults.styleHelp')}
-                        </p>
-                        <select
-                            value={styleGuideId ?? '__none'}
-                            onChange={(e) => {
-                                const v = e.target.value;
-                                setStyleGuideId(v === '__none' ? null : v);
-                            }}
-                            disabled={isLoadingOptions || saving}
-                            className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm disabled:opacity-50"
-                        >
-                            <option value="__none">{t('detail.exegesisDefaults.noStyleOption')}</option>
-                            {styleGuides.map((g) => (
-                                <option key={g.id} value={g.id}>
-                                    {g.displayName}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {/* Section: Corpus base */}
+                    <section className="space-y-3">
+                        <div className="flex items-baseline justify-between gap-3">
+                            <SectionHeader>{t('detail.exegesisDefaults.sectionCorpus')}</SectionHeader>
+                            <span className="text-[12.5px] text-muted-foreground">
+                                {t('detail.exegesisDefaults.corpusCount', { count: sourceRefs.length }) as string}
+                            </span>
+                        </div>
 
-                    {/* Sources */}
-                    <div className="space-y-2">
-                        <Label className="text-[13px] font-semibold">
-                            {t('detail.exegesisDefaults.sourcesLabel')}
-                        </Label>
-                        <p className="text-[12px] text-muted-foreground">
-                            {t('detail.exegesisDefaults.sourcesHelp')}
-                        </p>
-                        {sourceRefs.length === 0 ? (
-                            <p className="text-[12px] text-muted-foreground italic py-3 text-center border border-dashed border-border rounded-md">
-                                {t('detail.exegesisDefaults.sourcesEmpty')}
-                            </p>
-                        ) : (
-                            <ul className="space-y-1.5">
-                                {sourceRefs.map((s, i) => (
-                                    <li
-                                        key={`${s.libraryResourceId}-${i}`}
-                                        className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-2.5 py-1.5"
-                                    >
-                                        <Library className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[12.5px] font-medium text-foreground truncate">
-                                                {s.displayLabel}
-                                            </p>
-                                            <p className="text-[10.5px] text-muted-foreground">
-                                                {s.sourceType} · {s.mode === 'full-document' ? t('detail.exegesisDefaults.modeFull') : t('detail.exegesisDefaults.modeExcerpts')}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => setSourceRefs(sourceRefs.filter((_, idx) => idx !== i))}
-                                            className="h-6 w-6 p-0 shrink-0"
-                                            aria-label={t('detail.exegesisDefaults.removeSource') as string}
+                        {/* Selected chips */}
+                        {sourceRefs.length > 0 && (
+                            <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 space-y-1.5">
+                                <p className="text-[11.5px] uppercase tracking-wider font-semibold text-muted-foreground">
+                                    {t('detail.exegesisDefaults.selectedLabel')}
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {sourceRefs.map((s, i) => (
+                                        <span
+                                            key={`${s.libraryResourceId}-${i}`}
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-[12.5px]"
                                         >
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                    </li>
-                                ))}
-                            </ul>
+                                            <span className="font-medium text-foreground line-clamp-1 max-w-[280px]">
+                                                {s.displayLabel}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setSourceRefs(sourceRefs.filter((_, idx) => idx !== i))
+                                                }
+                                                aria-label={t('detail.exegesisDefaults.removeSource') as string}
+                                                className="text-muted-foreground hover:text-destructive transition-colors"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         )}
-                        {/* Library picker — add sources from the user's
-                            existing library to the series defaults. */}
-                        <LibrarySourcePicker
-                            libraryResources={libraryResources}
-                            existingRefs={sourceRefs}
-                            onAdd={(ref) => setSourceRefs([...sourceRefs, ref])}
-                            t={t}
-                        />
-                    </div>
 
-                    {/* Recommendations widget — curated catalog (PR #93)
-                        for the series' primary book. Auto-matches with
-                        the user's library and offers "Agregar al corpus"
-                        when a match exists. */}
-                    {bookId && (
-                        <RecommendationsForSeries
-                            bookId={bookId}
-                            language={language}
-                            libraryResources={libraryResources}
-                            existingRefs={sourceRefs}
-                            onAdd={(ref) => setSourceRefs([...sourceRefs, ref])}
-                            t={t}
-                        />
-                    )}
+                        {/* Tabs: Tu biblioteca / Recomendados */}
+                        <Tabs defaultValue={bookId ? 'recommendations' : 'library'} className="w-full">
+                            <TabsList className="h-10">
+                                <TabsTrigger value="library" className="text-[13.5px]">
+                                    {t('detail.exegesisDefaults.tabLibrary')}
+                                </TabsTrigger>
+                                {bookId && (
+                                    <TabsTrigger value="recommendations" className="text-[13.5px]">
+                                        <Sparkles className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                                        {t('detail.exegesisDefaults.tabRecommendations')}
+                                    </TabsTrigger>
+                                )}
+                            </TabsList>
+                            <TabsContent value="library" className="mt-3">
+                                <LibrarySourcePicker
+                                    libraryResources={libraryResources}
+                                    existingRefs={sourceRefs}
+                                    onAdd={(ref) => setSourceRefs([...sourceRefs, ref])}
+                                    t={t}
+                                />
+                            </TabsContent>
+                            {bookId && (
+                                <TabsContent value="recommendations" className="mt-3">
+                                    <RecommendationsForSeries
+                                        bookId={bookId}
+                                        language={language}
+                                        libraryResources={libraryResources}
+                                        existingRefs={sourceRefs}
+                                        onAdd={(ref) => setSourceRefs([...sourceRefs, ref])}
+                                        t={t}
+                                    />
+                                </TabsContent>
+                            )}
+                        </Tabs>
+                    </section>
                 </div>
 
-                <DialogFooter>
-                    <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+                {/* Sticky footer */}
+                <DialogFooter className="px-6 py-4 border-t border-border bg-background">
+                    <Button
+                        variant="ghost"
+                        onClick={() => onOpenChange(false)}
+                        disabled={saving}
+                        className="h-9 text-[13px]"
+                    >
                         {t('detail.exegesisDefaults.cancel')}
                     </Button>
-                    <Button onClick={handleSave} disabled={saving || isLoadingOptions}>
+                    <Button
+                        onClick={handleSave}
+                        disabled={saving || isLoadingOptions}
+                        className="h-9 text-[13px]"
+                    >
                         {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
                         {t('detail.exegesisDefaults.save')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+    return (
+        <h3 className="text-[11.5px] uppercase tracking-[0.12em] font-semibold text-muted-foreground">
+            {children}
+        </h3>
     );
 }
 
@@ -444,7 +472,6 @@ function LibrarySourcePicker({
     onAdd: (ref: SeriesExegesisSourceRef) => void;
     t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-    const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [pendingType, setPendingType] = useState<Record<string, SourceType>>({});
 
@@ -459,94 +486,78 @@ function LibrarySourcePicker({
 
     if (libraryResources === null) {
         return (
-            <p className="text-[11.5px] text-muted-foreground inline-flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin" />
+            <p className="text-[13px] text-muted-foreground inline-flex items-center gap-1.5 py-4">
+                <Loader2 className="h-4 w-4 animate-spin" />
                 {t('detail.exegesisDefaults.loadingLibrary')}
             </p>
         );
     }
     if (libraryResources.length === 0) {
         return (
-            <p className="text-[11.5px] text-muted-foreground italic">
+            <p className="text-[13px] text-muted-foreground italic py-6 text-center border border-dashed border-border rounded-md">
                 {t('detail.exegesisDefaults.emptyLibrary')}
             </p>
         );
     }
 
     return (
-        <div className="rounded-md border border-border bg-muted/20">
-            <button
-                type="button"
-                onClick={() => setOpen((v) => !v)}
-                className="w-full flex items-center justify-between px-2.5 py-2 text-[12px] font-medium text-foreground hover:bg-accent/40 transition-colors"
-            >
-                <span className="inline-flex items-center gap-1.5">
-                    {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                    <Plus className="h-3.5 w-3.5" />
-                    {t('detail.exegesisDefaults.addFromLibrary')}
-                </span>
-                <span className="text-[10.5px] text-muted-foreground font-normal">
-                    {t('detail.exegesisDefaults.libraryAvailable', { count: available.length }) as string}
-                </span>
-            </button>
-            {open && (
-                <div className="border-t border-border px-2.5 py-2 space-y-2">
-                    <input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={t('detail.exegesisDefaults.searchLibraryPlaceholder') as string}
-                        className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                    {available.length === 0 ? (
-                        <p className="text-[11.5px] text-muted-foreground italic py-3 text-center">
-                            {query
-                                ? t('detail.exegesisDefaults.libraryNoMatches')
-                                : t('detail.exegesisDefaults.libraryAllAdded')}
-                        </p>
-                    ) : (
-                        <ul className="space-y-1 max-h-64 overflow-y-auto">
-                            {available.map((r) => {
-                                const selectedType = pendingType[r.id] ?? 'commentary-expository';
-                                return (
-                                    <li
-                                        key={r.id}
-                                        className="flex items-center gap-2 rounded border border-border bg-background px-2 py-1.5"
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[12px] font-medium text-foreground truncate">{r.title}</p>
-                                            <p className="text-[10.5px] text-muted-foreground truncate">{r.author}</p>
-                                        </div>
-                                        <select
-                                            value={selectedType}
-                                            onChange={(e) =>
-                                                setPendingType({ ...pendingType, [r.id]: e.target.value as SourceType })
-                                            }
-                                            className="h-7 text-[11px] rounded border border-input bg-background px-1"
-                                        >
-                                            {SOURCE_TYPE_OPTIONS.map((opt) => (
-                                                <option key={opt.value} value={opt.value}>
-                                                    {t(`detail.exegesisDefaults.sourceTypes.${opt.labelKey}`) as string}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <Button
-                                            size="sm"
-                                            onClick={() =>
-                                                onAdd({
-                                                    libraryResourceId: r.id,
-                                                    corpusId: r.id,
-                                                    displayLabel: r.title,
-                                                    sourceType: selectedType,
-                                                    mode: 'full-document',
-                                                })
-                                            }
-                                            className="h-7 text-[11px]"
-                                        >
-                                            <Plus className="h-3 w-3 mr-1" />
-                                            {t('detail.exegesisDefaults.add')}
-                                        </Button>
-                                    </li>
+        <div className="space-y-3">
+            <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('detail.exegesisDefaults.searchLibraryPlaceholder') as string}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-[13.5px] focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            {available.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground italic py-6 text-center border border-dashed border-border rounded-md">
+                    {query
+                        ? t('detail.exegesisDefaults.libraryNoMatches')
+                        : t('detail.exegesisDefaults.libraryAllAdded')}
+                </p>
+            ) : (
+                <ul className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1 -mr-1">
+                    {available.map((r) => {
+                        const selectedType = pendingType[r.id] ?? 'commentary-expository';
+                        return (
+                            <li
+                                key={r.id}
+                                className="flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2.5 hover:bg-accent/30 transition-colors"
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[14.5px] font-medium text-foreground truncate">{r.title}</p>
+                                    <p className="text-[12.5px] text-muted-foreground truncate">{r.author}</p>
+                                </div>
+                                <select
+                                    value={selectedType}
+                                    onChange={(e) =>
+                                        setPendingType({ ...pendingType, [r.id]: e.target.value as SourceType })
+                                    }
+                                    className="h-8 text-[12.5px] rounded border border-input bg-background px-2"
+                                >
+                                    {SOURCE_TYPE_OPTIONS.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {t(`detail.exegesisDefaults.sourceTypes.${opt.labelKey}`) as string}
+                                        </option>
+                                    ))}
+                                </select>
+                                <Button
+                                    size="sm"
+                                    onClick={() =>
+                                        onAdd({
+                                            libraryResourceId: r.id,
+                                            corpusId: r.id,
+                                            displayLabel: r.title,
+                                            sourceType: selectedType,
+                                            mode: 'full-document',
+                                        })
+                                    }
+                                    className="h-8 text-[12.5px]"
+                                >
+                                    <Plus className="h-3.5 w-3.5 mr-1" />
+                                    {t('detail.exegesisDefaults.add')}
+                                </Button>
+                            </li>
                                 );
                             })}
                         </ul>
@@ -590,8 +601,10 @@ function RecommendationsForSeries({
     onAdd: (ref: SeriesExegesisSourceRef) => void;
     t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-    const hasAnySources = existingRefs.length > 0;
-    const [expanded, setExpanded] = useState(!hasAnySources);
+    // Per-category collapse state. Default: expand the first two
+    // categories (commentary-expository + commentary-critical typically),
+    // collapse the rest to reduce initial visual load.
+    const [collapsedCats, setCollapsedCats] = useState<Set<SourceType>>(new Set());
 
     const categories: RecCategory[] = useMemo(() => {
         return RECOMMENDED_SOURCE_TYPES.map((type) => {
@@ -622,118 +635,124 @@ function RecommendationsForSeries({
     };
 
     const alreadyAdded = new Set(existingRefs.map((r) => r.libraryResourceId));
+    const toggleCategory = (type: SourceType) => {
+        setCollapsedCats((prev) => {
+            const next = new Set(prev);
+            if (next.has(type)) next.delete(type);
+            else next.add(type);
+            return next;
+        });
+    };
 
     return (
-        <div className="rounded-md border border-border bg-muted/20">
-            <button
-                type="button"
-                onClick={() => setExpanded((v) => !v)}
-                className="w-full flex items-center justify-between px-2.5 py-2 text-[12px] font-medium text-foreground hover:bg-accent/40 transition-colors"
-            >
-                <span className="inline-flex items-center gap-1.5">
-                    {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    {t('detail.exegesisDefaults.recommendationsTitle')}
-                </span>
-                <span className="text-[10.5px] text-muted-foreground font-normal">
-                    {t('detail.exegesisDefaults.recommendationsCount', { count: categories.length }) as string}
-                </span>
-            </button>
-            {expanded && (
-                <div className="border-t border-border px-2.5 py-2 space-y-3">
-                    <p className="text-[11px] text-muted-foreground">
-                        {t('detail.exegesisDefaults.recommendationsHelp')}
-                    </p>
-                    {categories.map((cat) => (
-                        <div key={cat.type} className="space-y-1.5">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+        <div className="space-y-4">
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
+                {t('detail.exegesisDefaults.recommendationsHelp')}
+            </p>
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1 -mr-1">
+                {categories.map((cat) => {
+                    const isCollapsed = collapsedCats.has(cat.type);
+                    return (
+                        <div key={cat.type} className="space-y-2">
+                            <button
+                                type="button"
+                                onClick={() => toggleCategory(cat.type)}
+                                className="w-full flex items-center gap-2 hover:bg-accent/30 rounded px-1 -mx-1 py-0.5 transition-colors text-left"
+                            >
+                                {isCollapsed ? (
+                                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                ) : (
+                                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                )}
+                                <span className="text-[12.5px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">
                                     {t(`detail.exegesisDefaults.sourceTypes.${cat.labelKey}`)}
                                 </span>
-                                <Badge variant="outline" className="text-[10px]">
+                                <Badge variant="outline" className="text-[11px]">
                                     {cat.items.length}
                                 </Badge>
-                            </div>
-                            <ul className="space-y-1">
-                                {cat.items.slice(0, 5).map((rec, idx) => {
-                                    const match = findMatch(rec);
-                                    const owned = match && alreadyAdded.has(match.id);
-                                    return (
-                                        <li
-                                            key={`${cat.type}-${idx}`}
-                                            className={cn(
-                                                'rounded border bg-background px-2 py-1.5',
-                                                rec.tier === 'essential'
-                                                    ? 'border-primary/40'
-                                                    : 'border-border',
-                                            )}
-                                        >
-                                            <div className="flex items-start gap-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-[12px] font-medium text-foreground leading-tight">
-                                                        {rec.title}
-                                                    </p>
-                                                    <p className="text-[10.5px] text-muted-foreground">
-                                                        {rec.author} · {rec.publisher} · {rec.year}
-                                                        {rec.series ? ` · ${rec.series}` : ''}
-                                                    </p>
-                                                    {rec.rationale && (
-                                                        <p className="text-[10.5px] text-muted-foreground italic mt-0.5">
-                                                            {rec.rationale}
+                            </button>
+                            {!isCollapsed && (
+                                <ul className="space-y-1.5">
+                                    {cat.items.slice(0, 5).map((rec, idx) => {
+                                        const match = findMatch(rec);
+                                        const owned = match && alreadyAdded.has(match.id);
+                                        return (
+                                            <li
+                                                key={`${cat.type}-${idx}`}
+                                                className={cn(
+                                                    'rounded-md border bg-card px-3 py-2.5 hover:bg-accent/30 transition-colors',
+                                                    rec.tier === 'essential'
+                                                        ? 'border-primary/40'
+                                                        : 'border-border',
+                                                )}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[14.5px] font-medium text-foreground leading-tight">
+                                                            {rec.title}
                                                         </p>
-                                                    )}
+                                                        <p className="text-[12.5px] text-muted-foreground mt-0.5">
+                                                            {rec.author} · {rec.publisher} · {rec.year}
+                                                            {rec.series ? ` · ${rec.series}` : ''}
+                                                        </p>
+                                                        {rec.rationale && (
+                                                            <p className="text-[12.5px] text-muted-foreground/90 italic mt-1 leading-snug">
+                                                                {rec.rationale}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="shrink-0 flex flex-col items-end gap-1.5">
+                                                        {rec.tier === 'essential' && (
+                                                            <Badge variant="outline" className="text-[10.5px] border-primary text-primary">
+                                                                {t('detail.exegesisDefaults.tierEssential')}
+                                                            </Badge>
+                                                        )}
+                                                        {owned ? (
+                                                            <Badge variant="outline" className="text-[11px] border-emerald-400 text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1">
+                                                                <Check className="h-3 w-3" />
+                                                                {t('detail.exegesisDefaults.alreadyAdded')}
+                                                            </Badge>
+                                                        ) : match ? (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    onAdd({
+                                                                        libraryResourceId: match.id,
+                                                                        corpusId: match.id,
+                                                                        displayLabel: match.title,
+                                                                        sourceType: cat.type,
+                                                                        mode: 'full-document',
+                                                                    })
+                                                                }
+                                                                className="h-8 text-[12.5px]"
+                                                            >
+                                                                <Plus className="h-3.5 w-3.5 mr-1" />
+                                                                {t('detail.exegesisDefaults.addFromMatch')}
+                                                            </Button>
+                                                        ) : (
+                                                            <a
+                                                                href={`/dashboard/library?q=${encodeURIComponent(rec.title)}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 text-[12.5px] text-muted-foreground hover:text-foreground transition-colors"
+                                                                title={t('detail.exegesisDefaults.searchInLibraryHint') as string}
+                                                            >
+                                                                <ExternalLink className="h-3.5 w-3.5" />
+                                                                {t('detail.exegesisDefaults.searchInLibrary')}
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="shrink-0 flex items-center gap-1">
-                                                    {rec.tier === 'essential' && (
-                                                        <Badge variant="outline" className="text-[9.5px] border-primary text-primary">
-                                                            {t('detail.exegesisDefaults.tierEssential')}
-                                                        </Badge>
-                                                    )}
-                                                    {owned ? (
-                                                        <Badge variant="outline" className="text-[9.5px] border-emerald-400 text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-0.5">
-                                                            <Check className="h-2.5 w-2.5" />
-                                                            {t('detail.exegesisDefaults.alreadyAdded')}
-                                                        </Badge>
-                                                    ) : match ? (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                onAdd({
-                                                                    libraryResourceId: match.id,
-                                                                    corpusId: match.id,
-                                                                    displayLabel: match.title,
-                                                                    sourceType: cat.type,
-                                                                    mode: 'full-document',
-                                                                })
-                                                            }
-                                                            className="h-6 text-[10.5px]"
-                                                        >
-                                                            <Plus className="h-2.5 w-2.5 mr-0.5" />
-                                                            {t('detail.exegesisDefaults.addFromMatch')}
-                                                        </Button>
-                                                    ) : (
-                                                        <a
-                                                            href={`/dashboard/library?q=${encodeURIComponent(rec.title)}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex items-center gap-0.5 text-[10.5px] text-muted-foreground hover:text-foreground transition-colors"
-                                                            title={t('detail.exegesisDefaults.searchInLibraryHint') as string}
-                                                        >
-                                                            <ExternalLink className="h-2.5 w-2.5" />
-                                                            {t('detail.exegesisDefaults.searchInLibrary')}
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
                         </div>
-                    ))}
-                </div>
-            )}
+                    );
+                })}
+            </div>
         </div>
     );
 }
