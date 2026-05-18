@@ -76,6 +76,15 @@ export interface PreachableUnit {
     fidelityNotes?: string;
     /** Stable order across the book. */
     order: number;
+    /**
+     * True when the pastor manually edited the structure of this unit
+     * (merged with a neighbor, split off from a larger unit). Plain
+     * text edits to title/propositions/objective do NOT flip this flag —
+     * those are expected refinements. Used by the wizard to surface
+     * "N unidades modificadas" badge and prompt the pastor to re-run
+     * the fidelity review with a hint that the regroup was manual.
+     */
+    modifiedByPastor?: boolean;
 }
 
 /**

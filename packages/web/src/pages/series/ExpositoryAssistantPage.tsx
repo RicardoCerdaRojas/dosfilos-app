@@ -632,6 +632,162 @@ export function ExpositoryAssistantPage() {
     };
 
     /**
+     * Approach A — pastor-driven regroup. Three structural actions
+     * (merge with next, split at verse, revalidate fidelity) let the
+     * pastor restructure the preachable units without re-running the
+     * whole pipeline. The methodology guard is post-hoc: Phase 5 audits
+     * the manual regroup when the pastor clicks "Re-validar fidelidad".
+     *
+     * Propositions on merged/split units are seeded with a placeholder
+     * "Refinar" prefix so the pastor knows they need an edit pass — we
+     * deliberately don't call the LLM here to keep merge/split cheap
+     * and instant. v1.5 / Approach B can add focused proposition
+     * regeneration if real usage proves the seed text inadequate.
+     */
+    const handleMergePreachable = (idA: string) => {
+        setPreachableUnits((prev) => {
+            if (!prev) return prev;
+            const idx = prev.findIndex((u) => u.id === idA);
+            if (idx < 0 || idx >= prev.length - 1) return prev;
+            const a = prev[idx]!;
+            const b = prev[idx + 1]!;
+            const merged: PreachableUnit = {
+                id: crypto.randomUUID(),
+                title: `${a.title} + ${b.title}`,
+                passage: `${bookDisplay ?? ''} ${formatRange({
+                    chapterStart: a.chapterStart,
+                    verseStart: a.verseStart,
+                    chapterEnd: b.chapterEnd,
+                    verseEnd: b.verseEnd,
+                })}`.trim(),
+                chapterStart: a.chapterStart,
+                verseStart: a.verseStart,
+                chapterEnd: b.chapterEnd,
+                verseEnd: b.verseEnd,
+                sourcedExegeticalUnitIds: [
+                    ...a.sourcedExegeticalUnitIds,
+                    ...b.sourcedExegeticalUnitIds,
+                ],
+                exegeticalProposition: `[${t('expository.results.preachable.refineMarker')}] ${a.exegeticalProposition}\n\n${b.exegeticalProposition}`,
+                homileticalProposition: `[${t('expository.results.preachable.refineMarker')}] ${a.homileticalProposition}\n\n${b.homileticalProposition}`,
+                pastoralObjective: `[${t('expository.results.preachable.refineMarker')}] ${a.pastoralObjective}\n\n${b.pastoralObjective}`,
+                order: a.order,
+                modifiedByPastor: true,
+            };
+            const next = [
+                ...prev.slice(0, idx),
+                merged,
+                ...prev.slice(idx + 2),
+            ].map((u, i) => ({ ...u, order: i }));
+            return next;
+        });
+        toast.success(t('expository.toast.mergeDone') as string);
+    };
+
+    const handleSplitPreachable = (id: string, atVerse: number) => {
+        setPreachableUnits((prev) => {
+            if (!prev) return prev;
+            const idx = prev.findIndex((u) => u.id === id);
+            if (idx < 0) return prev;
+            const u = prev[idx]!;
+            // v1 constraint: split point must land inside a single
+            // chapter and produce two valid halves. Cross-chapter splits
+            // (e.g. ch1:5 → ch1:7 + ch1:8..ch2:end) are deferred to
+            // Approach B together with smarter UI affordances.
+            if (u.chapterStart !== u.chapterEnd) {
+                toast.error(t('expository.toast.splitCrossChapter') as string);
+                return prev;
+            }
+            if (atVerse <= u.verseStart || atVerse >= u.verseEnd) {
+                toast.error(t('expository.toast.splitOutOfRange') as string);
+                return prev;
+            }
+            const refine = t('expository.results.preachable.refineMarker');
+            const firstHalf: PreachableUnit = {
+                ...u,
+                id: crypto.randomUUID(),
+                title: `${u.title} (1)`,
+                passage: `${bookDisplay ?? ''} ${formatRange({
+                    chapterStart: u.chapterStart,
+                    verseStart: u.verseStart,
+                    chapterEnd: u.chapterStart,
+                    verseEnd: atVerse,
+                })}`.trim(),
+                verseEnd: atVerse,
+                chapterEnd: u.chapterStart,
+                exegeticalProposition: `[${refine}] ${u.exegeticalProposition}`,
+                homileticalProposition: `[${refine}] ${u.homileticalProposition}`,
+                pastoralObjective: `[${refine}] ${u.pastoralObjective}`,
+                modifiedByPastor: true,
+            };
+            const secondHalf: PreachableUnit = {
+                ...u,
+                id: crypto.randomUUID(),
+                title: `${u.title} (2)`,
+                passage: `${bookDisplay ?? ''} ${formatRange({
+                    chapterStart: u.chapterStart,
+                    verseStart: atVerse + 1,
+                    chapterEnd: u.chapterEnd,
+                    verseEnd: u.verseEnd,
+                })}`.trim(),
+                verseStart: atVerse + 1,
+                exegeticalProposition: `[${refine}] ${u.exegeticalProposition}`,
+                homileticalProposition: `[${refine}] ${u.homileticalProposition}`,
+                pastoralObjective: `[${refine}] ${u.pastoralObjective}`,
+                modifiedByPastor: true,
+            };
+            const next = [
+                ...prev.slice(0, idx),
+                firstHalf,
+                secondHalf,
+                ...prev.slice(idx + 1),
+            ].map((p, i) => ({ ...p, order: i }));
+            return next;
+        });
+        toast.success(t('expository.toast.splitDone') as string);
+    };
+
+    const handleRevalidateFidelity = () => {
+        if (!panorama || !macroSections || !exegeticalUnits || !preachableUnits) return;
+        if (!bookId || !bookDisplay) return;
+
+        setFidelityReview(null);
+        setAddressedIssues(new Set());
+        setIgnoredIssues(new Set());
+
+        // Note: the fidelity reviewer sees the manually-regrouped units
+        // directly via `preachableUnits`. Boundary changes + merged
+        // propositions are visible in the prompt input, so the model
+        // will naturally flag a regroup that breaks the methodology
+        // (separated exhortation/fundamento, broken parallelism, etc.).
+        // FidelityInput doesn't expose a `regenerationHint` slot yet;
+        // adding one is a follow-up if natural detection proves weak.
+        assistant.runFidelity.mutate(
+            {
+                book: bookDisplay,
+                displayLanguage: lang,
+                verses,
+                ...(sourceLanguageInState ? { sourceLanguage: sourceLanguageInState } : {}),
+                ...(scopeKey ? { scopeKey } : {}),
+                panorama,
+                macroSections,
+                exegeticalUnits,
+                preachableUnits,
+            },
+            {
+                onSuccess: (fidelityResult) => {
+                    setFidelityReview(fidelityResult.payload);
+                    toast.success(t('expository.toast.revalidateDone') as string);
+                },
+                onError: (err: any) => {
+                    console.error('[expository] revalidate fidelity failed:', err);
+                    toast.error(toastErrorMessage(err, t, 'expository.toast.fidelityFailed'));
+                },
+            },
+        );
+    };
+
+    /**
      * v1.6 strict mode: manual trigger for Pase 4 + 5 after the pastor
      * has confirmed an exegetical paper exists for every unit. Fires
      * runPreachable with `strictMode: true` so the prompt drops the
@@ -971,6 +1127,10 @@ export function ExpositoryAssistantPage() {
                                             : prev,
                                     );
                                 }}
+                                onMerge={handleMergePreachable}
+                                onSplit={handleSplitPreachable}
+                                onRevalidate={handleRevalidateFidelity}
+                                isRevalidating={assistant.runFidelity.isPending}
                                 t={t}
                             />
                         )}
@@ -2037,14 +2197,23 @@ function PreachableResult({
     bookDisplay,
     strictMode,
     onUnitChange,
+    onMerge,
+    onSplit,
+    onRevalidate,
+    isRevalidating,
     t,
 }: {
     units: ReadonlyArray<PreachableUnit>;
     bookDisplay: string;
     strictMode?: boolean;
     onUnitChange: (id: string, patch: Partial<PreachableUnit>) => void;
-    t: (key: string) => string;
+    onMerge: (idA: string) => void;
+    onSplit: (id: string, atVerse: number) => void;
+    onRevalidate: () => void;
+    isRevalidating: boolean;
+    t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
+    const modifiedCount = units.filter((u) => u.modifiedByPastor).length;
     return (
         <div className="space-y-3">
             {/* Banner: panoramic disclaimer in draft mode; validated
@@ -2079,10 +2248,6 @@ function PreachableResult({
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    {/* Title is editable inline. Auto-saves
-                                        to component state on every keystroke;
-                                        the existing localStorage draft useEffect
-                                        debounces the persistence. */}
                                     <input
                                         type="text"
                                         value={u.title}
@@ -2096,9 +2261,21 @@ function PreachableResult({
                                         onCommit={(patch) => onUnitChange(u.id, patch)}
                                         t={t}
                                     />
+                                    <RegroupMenu
+                                        unit={u}
+                                        canMerge={idx < units.length - 1}
+                                        onMerge={() => onMerge(u.id)}
+                                        onSplit={(atVerse) => onSplit(u.id, atVerse)}
+                                        t={t}
+                                    />
                                     {u.caseTreatment && (
                                         <span className="text-[10px] uppercase tracking-wide font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded">
                                             {t(`expository.results.preachable.case.${u.caseTreatment}`)}
+                                        </span>
+                                    )}
+                                    {u.modifiedByPastor && (
+                                        <span className="text-[10px] uppercase tracking-wide font-medium text-info-foreground bg-info-subtle px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                            {t('expository.results.preachable.modifiedChip')}
                                         </span>
                                     )}
                                     {!strictMode && (
@@ -2128,6 +2305,138 @@ function PreachableResult({
                     </li>
                 ))}
             </ol>
+
+            {/* Always-visible footer: lets the pastor re-run Phase 5
+                whenever (after a merge/split, or just to double-check).
+                Modified count is informative — not gating. */}
+            <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 px-3 py-2">
+                <p className="text-[12px] text-slate-600 dark:text-slate-300">
+                    {modifiedCount > 0
+                        ? (t('expository.results.preachable.modifiedCount', { count: modifiedCount }) as string)
+                        : (t('expository.results.preachable.noChanges') as string)}
+                </p>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onRevalidate}
+                    disabled={isRevalidating}
+                    className="shrink-0"
+                >
+                    {isRevalidating ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    )}
+                    {t('expository.results.preachable.revalidate')}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Compact menu on each preachable unit card with two structural actions:
+ *   - Merge with next (disabled on the last card)
+ *   - Split at verse (popover with verse number input)
+ * Heuristics fire client-side as soft warnings before the parent commits.
+ */
+function RegroupMenu({
+    unit,
+    canMerge,
+    onMerge,
+    onSplit,
+    t,
+}: {
+    unit: PreachableUnit;
+    canMerge: boolean;
+    onMerge: () => void;
+    onSplit: (atVerse: number) => void;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    const isSingleChapter = unit.chapterStart === unit.chapterEnd;
+    const verseSpan = isSingleChapter ? unit.verseEnd - unit.verseStart : 0;
+    const [splitOpen, setSplitOpen] = useState(false);
+    const [splitVerse, setSplitVerse] = useState<number | ''>('');
+    const minSplit = unit.verseStart + 1;
+    const maxSplit = unit.verseEnd - 1;
+    const splitNumber = typeof splitVerse === 'number' ? splitVerse : NaN;
+    const splitTooSmall =
+        Number.isFinite(splitNumber) &&
+        (splitNumber - unit.verseStart < 5 || unit.verseEnd - splitNumber < 5);
+
+    return (
+        <div className="inline-flex items-center gap-1 shrink-0">
+            <Button
+                size="sm"
+                variant="ghost"
+                onClick={onMerge}
+                disabled={!canMerge}
+                title={t('expository.results.preachable.regroup.mergeHint') as string}
+                className="h-7 px-2 text-[11px] gap-1"
+            >
+                {t('expository.results.preachable.regroup.merge')}
+            </Button>
+            <Popover open={splitOpen} onOpenChange={setSplitOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={!isSingleChapter || verseSpan < 2}
+                        title={
+                            isSingleChapter
+                                ? (t('expository.results.preachable.regroup.splitHint') as string)
+                                : (t('expository.results.preachable.regroup.splitCrossChapterHint') as string)
+                        }
+                        className="h-7 px-2 text-[11px] gap-1"
+                    >
+                        {t('expository.results.preachable.regroup.split')}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3 space-y-2">
+                    <p className="text-[12px] font-medium text-slate-800 dark:text-slate-100">
+                        {t('expository.results.preachable.regroup.splitTitle')}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('expository.results.preachable.regroup.splitRangeHint', { min: minSplit, max: maxSplit }) as string}
+                    </p>
+                    <Input
+                        type="number"
+                        min={minSplit}
+                        max={maxSplit}
+                        value={splitVerse}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            setSplitVerse(v === '' ? '' : Number(v));
+                        }}
+                        placeholder={String(Math.floor((unit.verseStart + unit.verseEnd) / 2))}
+                        className="h-8 text-sm"
+                    />
+                    {splitTooSmall && (
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                            {t('expository.results.preachable.regroup.splitWarnTiny')}
+                        </p>
+                    )}
+                    <div className="flex justify-end gap-1.5 pt-1">
+                        <Button size="sm" variant="ghost" onClick={() => setSplitOpen(false)} className="h-7 text-[11px]">
+                            {t('expository.results.preachable.regroup.cancel')}
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => {
+                                if (typeof splitVerse !== 'number') return;
+                                if (splitVerse < minSplit || splitVerse > maxSplit) return;
+                                onSplit(splitVerse);
+                                setSplitOpen(false);
+                                setSplitVerse('');
+                            }}
+                            disabled={typeof splitVerse !== 'number' || splitVerse < minSplit || splitVerse > maxSplit}
+                            className="h-7 text-[11px]"
+                        >
+                            {t('expository.results.preachable.regroup.confirmSplit')}
+                        </Button>
+                    </div>
+                </PopoverContent>
+            </Popover>
         </div>
     );
 }
