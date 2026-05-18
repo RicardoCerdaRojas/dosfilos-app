@@ -148,7 +148,7 @@
     "expository": {
         "back": "Volver al planificador",
         "title": "Asistente expositivo",
-        "subtitle": "Pipeline de 5 pases (panorama → macro → micro → predicable → fidelidad) que distingue la división exegética de la división predicable.",
+        "subtitle": "Análisis en 5 fases (panorama → macro → micro → predicable → fidelidad) que distingue la división exegética de la división predicable.",
         "pass": "Fase",
         "collapse": "Contraer sección",
         "collapsedStrip": {
@@ -366,9 +366,9 @@
                 "ignored": "Ignorado",
                 "toggleAddressed": "Marcar como atendido (lo edité o lo tendré en cuenta)",
                 "toggleIgnored": "Ignorar (lo leí pero mantendré la división original)",
-                "refine": "Refinar Pase 4",
+                "refine": "Refinar Fase 4",
                 "refining": "Refinando…",
-                "refineCtaTitle": "Aplicar feedback al Pase 4",
+                "refineCtaTitle": "Aplicar feedback a la Fase 4",
                 "refineCtaBody_one": "Quedan {{count}} issue sin atender ni ignorar. Re-corremos la conversión predicable pidiéndole al modelo que los aborde, y refrescamos esta revisión.",
                 "refineCtaBody_other": "Quedan {{count}} issues sin atender ni ignorar. Re-corremos la conversión predicable pidiéndole al modelo que los aborde, y refrescamos esta revisión.",
                 "severity": {
@@ -390,12 +390,12 @@
             "macroFailed": "No se pudo generar la macroestructura. Intenta de nuevo.",
             "microFailed": "No se pudo generar la microestructura. Intenta de nuevo.",
             "superMacroFailed": "No se pudieron generar los super-macros. Intenta de nuevo.",
-            "strictAwaitingPapers": "Pase 3 listo. Confirma por unidad que tienes paper exegético aceptado, luego presiona \"Continuar Pase 4\".",
-            "strictAllUnitsRequired": "Confirma TODAS las unidades antes de continuar al Pase 4 estricto.",
+            "strictAwaitingPapers": "Fase 3 lista. Confirma por unidad que tienes paper exegético aceptado, luego presiona \"Continuar Fase 4\".",
+            "strictAllUnitsRequired": "Confirma TODAS las unidades antes de continuar a la Fase 4 estricta.",
             "preachableFailed": "No se pudieron generar las unidades predicables. Intenta de nuevo.",
             "fidelityFailed": "No se pudo completar la evaluación de fidelidad. Intenta de nuevo.",
             "pipelineDone": "Pipeline completo. Revisa las unidades predicables y los issues antes de crear la serie.",
-            "refineDone": "Pase 4 refinado con el feedback del Pase 5. Revisa la nueva propuesta.",
+            "refineDone": "Fase 4 refinada con el feedback de la Fase 5. Revisa la nueva propuesta.",
             "noOpenIssues": "Todos los issues están atendidos o ignorados. No hay nada que refinar.",
             "mergeDone": "Unidades combinadas. Revisa las proposiciones y re-valida la fidelidad cuando termines.",
             "splitDone": "Unidad dividida. Revisa las proposiciones de ambas mitades y re-valida la fidelidad cuando termines.",
@@ -438,8 +438,8 @@
                 "title": "Microestructura",
                 "subtitle": "Identifica unidades exegéticas dentro de cada macro-sección, con criterios específicos por género.",
                 "strictCtaTitle": "Confirmar exégesis por unidad",
-                "strictCtaBody": "{{confirmed}} de {{total}} unidades confirmadas con paper aceptado. Cuando estén todas, el Pase 4 puede correr en modo estricto.",
-                "strictContinue": "Continuar Pase 4",
+                "strictCtaBody": "{{confirmed}} de {{total}} unidades confirmadas con paper aceptado. Cuando estén todas, la Fase 4 puede correr en modo estricto.",
+                "strictContinue": "Continuar Fase 4",
                 "strictBlocked": "Confirma todas las unidades antes de continuar."
             },
             "preachable": {
