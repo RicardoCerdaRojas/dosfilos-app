@@ -1252,10 +1252,10 @@ function RefinePreachableCta({
         <div className="mt-4 pt-4 border-t border-border/60 flex items-start gap-3">
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">
-                    {t('expository.passes.fidelity.refineCtaTitle')}
+                    {t('expository.results.fidelity.refineCtaTitle')}
                 </p>
                 <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
-                    {t('expository.passes.fidelity.refineCtaBody', { count: openCount })}
+                    {t('expository.results.fidelity.refineCtaBody', { count: openCount })}
                 </p>
             </div>
             <Button
@@ -1269,8 +1269,8 @@ function RefinePreachableCta({
                     ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                     : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
                 {isRefining
-                    ? t('expository.passes.fidelity.refining')
-                    : t('expository.passes.fidelity.refine')}
+                    ? t('expository.results.fidelity.refining')
+                    : t('expository.results.fidelity.refine')}
             </Button>
         </div>
     );
