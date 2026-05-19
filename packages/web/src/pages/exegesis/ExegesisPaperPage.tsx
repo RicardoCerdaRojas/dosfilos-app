@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -17,8 +17,11 @@ import {
     X,
     BookOpenText,
     BookOpen,
+    BookText,
     Mic,
     MessageCircle,
+    PanelRightClose,
+    PanelRightOpen,
     ShieldAlert,
     Sparkles,
 } from 'lucide-react';
@@ -51,6 +54,8 @@ import { AcademicCompositionDialog } from '@/components/exegesis/canonical/Acade
 import { MinistryCompositionDialog } from '@/components/exegesis/canonical/MinistryCompositionDialog';
 import { CoherencePassDialog } from '@/components/exegesis/CoherencePassDialog';
 import { ExegesisQuotaBadge } from '@/components/exegesis/ExegesisQuotaBadge';
+import { TextZoomControl } from '@/components/ui/text-zoom-control';
+import { getTextZoomClass, type TextZoomLevel } from '@/lib/textZoom';
 import { exportPaperToDocx } from '@/lib/exegesis/exportPaperToDocx';
 import {
     exportPaperToMarkdown,
@@ -93,6 +98,35 @@ export function ExegesisPaperPage() {
     const [composeDialogOpen, setComposeDialogOpen] = useState(false);
     const [ministryDialogOpen, setMinistryDialogOpen] = useState(false);
     const [coherenceDialogOpen, setCoherenceDialogOpen] = useState(false);
+
+    // Reading layout preferences — persisted so the user's last choice
+    // sticks across navigations. Sidebar visibility, reading mode (forces
+    // 800px centered + larger zoom), and a 3-level text zoom.
+    const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => readLayoutPref('sidebarCollapsed', false));
+    const [readingMode, setReadingMode] = useState<boolean>(() => readLayoutPref('readingMode', false));
+    const [textZoom, setTextZoom] = useState<TextZoomLevel>(() => readZoomPref());
+    useEffect(() => {
+        writeLayoutPref('sidebarCollapsed', sidebarCollapsed);
+    }, [sidebarCollapsed]);
+    useEffect(() => {
+        writeLayoutPref('readingMode', readingMode);
+    }, [readingMode]);
+    useEffect(() => {
+        writeZoomPref(textZoom);
+    }, [textZoom]);
+    // Reading mode implies sidebar hidden and at least zoom level 2 — a
+    // narrow centered column with tiny text would defeat the purpose.
+    const effectiveSidebarHidden = readingMode || sidebarCollapsed;
+    const effectiveZoom: TextZoomLevel = readingMode && textZoom < 2 ? 2 : textZoom;
+
+    const containerMaxWidthClass = readingMode
+        ? 'max-w-[820px]'
+        : effectiveSidebarHidden
+            ? 'max-w-[1400px]'
+            : 'max-w-7xl';
+    const gridTemplateClass = effectiveSidebarHidden
+        ? 'grid-cols-1'
+        : 'grid-cols-1 lg:grid-cols-[1fr_320px]';
 
     if (isLoading) {
         return <CenteredMessage icon={<Loader2 className="h-5 w-5 animate-spin" />} text={t('detail.loading')} />;
@@ -219,6 +253,52 @@ export function ExegesisPaperPage() {
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                             {passageDisplay} · {t(`list.phase.${paper.phase}`)}
                         </p>
+                    </div>
+
+                    {/* Reading layout toggles — sidebar collapse + reading
+                        mode + text zoom. Persisted via localStorage so the
+                        user's choice survives navigations. */}
+                    <div className="hidden md:inline-flex items-center gap-1.5 mr-1">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (readingMode) setReadingMode(false);
+                                setSidebarCollapsed(c => !c);
+                            }}
+                            aria-pressed={effectiveSidebarHidden}
+                            disabled={readingMode}
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            title={t(effectiveSidebarHidden ? 'detail.layout.sidebarShow' : 'detail.layout.sidebarHide') as string}
+                            aria-label={t(effectiveSidebarHidden ? 'detail.layout.sidebarShow' : 'detail.layout.sidebarHide') as string}
+                        >
+                            {effectiveSidebarHidden
+                                ? <PanelRightOpen className="h-3.5 w-3.5" />
+                                : <PanelRightClose className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setReadingMode(r => !r)}
+                            aria-pressed={readingMode}
+                            className={`inline-flex items-center justify-center h-8 w-8 rounded-md border transition-colors ${
+                                readingMode
+                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
+                                    : 'border-border text-foreground hover:bg-accent'
+                            }`}
+                            title={t(readingMode ? 'detail.layout.readingExit' : 'detail.layout.readingEnter') as string}
+                            aria-label={t(readingMode ? 'detail.layout.readingExit' : 'detail.layout.readingEnter') as string}
+                        >
+                            <BookText className="h-3.5 w-3.5" />
+                        </button>
+                        <TextZoomControl
+                            value={textZoom}
+                            onChange={setTextZoom}
+                            label={t('detail.layout.textZoomLabel') as string}
+                            levelLabels={[
+                                t('detail.layout.textZoomLevel1') as string,
+                                t('detail.layout.textZoomLevel2') as string,
+                                t('detail.layout.textZoomLevel3') as string,
+                            ]}
+                        />
                     </div>
 
                     {/* Persistent exégesis quota badge — visible from
@@ -387,8 +467,8 @@ export function ExegesisPaperPage() {
             </div>
 
             {/* Body */}
-            <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+            <main className={`flex-1 ${containerMaxWidthClass} w-full mx-auto px-6 py-8 ${getTextZoomClass(effectiveZoom)}`}>
+                <div className={`grid ${gridTemplateClass} gap-6`}>
                     <StepsPanel
                         paper={paper}
                         language={activeLanguage}
@@ -398,16 +478,18 @@ export function ExegesisPaperPage() {
                         starting={seedSteps.isPending}
                         t={t}
                     />
-                    <aside className="space-y-4">
-                        <RubricCard paper={paper} t={t} />
-                        <StyleGuideCard paper={paper} t={t} />
-                        <SourcesCard
-                            paper={paper}
-                            onRemove={handleRemoveSource}
-                            isRemoving={removeSource.isPending}
-                            t={t}
-                        />
-                    </aside>
+                    {!effectiveSidebarHidden && (
+                        <aside className="space-y-4">
+                            <RubricCard paper={paper} t={t} />
+                            <StyleGuideCard paper={paper} t={t} />
+                            <SourcesCard
+                                paper={paper}
+                                onRemove={handleRemoveSource}
+                                isRemoving={removeSource.isPending}
+                                t={t}
+                            />
+                        </aside>
+                    )}
                 </div>
             </main>
 
@@ -918,4 +1000,51 @@ function passageEligibleForGeneration(paper: ExegeticalPaper): {
         return { eligible: false, hint: (t) => t('detail.steps.gate.noVerses') };
     }
     return { eligible: true, hint: () => null };
+}
+
+// ── Layout preference persistence ───────────────────────────────────────
+
+const LAYOUT_PREF_STORAGE_KEY = 'exegesisPaperLayoutPrefs';
+const TEXT_ZOOM_STORAGE_KEY = 'exegesisPaperTextZoom';
+
+type LayoutPrefKey = 'sidebarCollapsed' | 'readingMode';
+
+function readLayoutPref(key: LayoutPrefKey, fallback: boolean): boolean {
+    if (typeof window === 'undefined') return fallback;
+    try {
+        const raw = window.localStorage.getItem(LAYOUT_PREF_STORAGE_KEY);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw) as Partial<Record<LayoutPrefKey, boolean>>;
+        return typeof parsed[key] === 'boolean' ? parsed[key]! : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function writeLayoutPref(key: LayoutPrefKey, value: boolean): void {
+    if (typeof window === 'undefined') return;
+    try {
+        const raw = window.localStorage.getItem(LAYOUT_PREF_STORAGE_KEY);
+        const parsed = raw ? (JSON.parse(raw) as Partial<Record<LayoutPrefKey, boolean>>) : {};
+        parsed[key] = value;
+        window.localStorage.setItem(LAYOUT_PREF_STORAGE_KEY, JSON.stringify(parsed));
+    } catch {
+        // localStorage may be unavailable (private mode, quota) — silent fail.
+    }
+}
+
+function readZoomPref(): TextZoomLevel {
+    if (typeof window === 'undefined') return 1;
+    const stored = window.localStorage.getItem(TEXT_ZOOM_STORAGE_KEY);
+    const parsed = stored ? Number(stored) : 1;
+    return parsed === 2 || parsed === 3 ? (parsed as 2 | 3) : 1;
+}
+
+function writeZoomPref(level: TextZoomLevel): void {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(TEXT_ZOOM_STORAGE_KEY, String(level));
+    } catch {
+        // ignore
+    }
 }

@@ -1446,6 +1446,16 @@
         "archiveConfirm": "Archivar el trabajo",
         "archiveConfirmTitle": "¿Archivar este trabajo?",
         "archiveConfirmBody": "El trabajo desaparecerá del listado pero podrás recuperarlo desde papelera. Los pasos generados y aceptados se mantienen.",
+        "layout": {
+            "sidebarHide": "Ocultar panel lateral",
+            "sidebarShow": "Mostrar panel lateral",
+            "readingEnter": "Modo lectura (columna centrada)",
+            "readingExit": "Salir del modo lectura",
+            "textZoomLabel": "Tamaño de texto",
+            "textZoomLevel1": "Tamaño normal",
+            "textZoomLevel2": "Texto grande",
+            "textZoomLevel3": "Texto más grande"
+        },
         "stepsTitle": "Pasos del trabajo",
         "stepsSubtitle": "Verso por verso, conclusión, introducción y ensamble. Aceptás o regenerás cada paso antes de avanzar.",
         "generateCta": "Generar primer paso",

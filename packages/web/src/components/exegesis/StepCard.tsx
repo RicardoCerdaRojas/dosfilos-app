@@ -572,7 +572,7 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                         {supportsStudyView && viewMode === 'study' ? (
                             <CanonicalAnalysisStudyView analysis={canonicalAnalysis!} />
                         ) : previewMarkdown ? (
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <div className="prose prose-base dark:prose-invert max-w-none leading-relaxed">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {previewMarkdown}
                                 </ReactMarkdown>

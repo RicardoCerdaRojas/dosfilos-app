@@ -1446,6 +1446,16 @@
         "archiveConfirm": "Archive paper",
         "archiveConfirmTitle": "Archive this paper?",
         "archiveConfirmBody": "The paper will disappear from the list but you can restore it from trash. Generated and accepted steps are preserved.",
+        "layout": {
+            "sidebarHide": "Hide side panel",
+            "sidebarShow": "Show side panel",
+            "readingEnter": "Reading mode (centered column)",
+            "readingExit": "Exit reading mode",
+            "textZoomLabel": "Text size",
+            "textZoomLevel1": "Normal size",
+            "textZoomLevel2": "Large text",
+            "textZoomLevel3": "Larger text"
+        },
         "stepsTitle": "Paper steps",
         "stepsSubtitle": "Verse by verse, conclusion, introduction, and assembly. You accept or regenerate each step before moving on.",
         "generateCta": "Generate first step",
