@@ -151,6 +151,75 @@ describe('GenerateSermonFromPaperUseCase', () => {
         expect(result.sermonId).toBe(created[0]!.id);
     });
 
+    describe('wizard pre-population (Pipeline convergence)', () => {
+        it('writes wizardProgress so the wizard resumes at Step 3 with paper context', async () => {
+            const sermonRepo = stubSermonRepo();
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makePaper({ title: 'Llamados firmes' })),
+                sermonRepo,
+                stubTransformer({
+                    title: 'Una vocación que perdura',
+                    content: 'Apertura introductoria.\n\n## Primer punto\n\nDesarrollo.\n\n## Conclusión\n\nCierre.',
+                    bibleReferences: ['2 Pedro 1:1-11'],
+                    modelId: 'gemini-2.5-pro',
+                    tokensUsed: 5000,
+                }),
+            );
+
+            await useCase.execute({ paperId: 'paper-1', actorUserId: 'user-1', tone: 'pastoral' });
+
+            const created = (sermonRepo as any).__created[0] as SermonEntity;
+            const progress = created.wizardProgress!;
+            expect(progress.currentStep).toBe(3);
+            // Passage is whatever `formatPassageReference` returns for
+            // the stubbed paper; just confirm it's a non-empty string.
+            expect(typeof progress.passage).toBe('string');
+            expect(progress.passage.length).toBeGreaterThan(0);
+            expect(progress.draft?.title).toBe('Una vocación que perdura');
+            expect(progress.draft?.body.length).toBeGreaterThan(0);
+            expect(progress.draft?.conclusion).toContain('Cierre');
+            expect(progress.exegesis).toBeDefined();
+            expect(progress.homiletics?.homileticalProposition).toBe('Una vocación que perdura');
+            expect(progress.paperContext?.paperId).toBe('paper-1');
+            expect(progress.paperContext?.paperTitle).toBe('Llamados firmes');
+            expect(progress.paperContext?.tone).toBe('pastoral');
+            expect(progress.paperContext?.transformerModelId).toBe('gemini-2.5-pro');
+        });
+
+        it('keeps sermon.content populated for legacy sermon-detail surface back-compat', async () => {
+            const sermonRepo = stubSermonRepo();
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makePaper()),
+                sermonRepo,
+                stubTransformer({ content: '## Punto\n\nCuerpo del sermón.' }),
+            );
+
+            await useCase.execute({ paperId: 'paper-1', actorUserId: 'user-1', tone: 'expositivo' });
+
+            const created = (sermonRepo as any).__created[0] as SermonEntity;
+            expect(created.content).toContain('Cuerpo del sermón');
+        });
+
+        it('maps tone to a homiletical approach in the homiletics stub', async () => {
+            const cases: Array<{ tone: 'pastoral' | 'expositivo' | 'narrativo'; expected: string }> = [
+                { tone: 'pastoral', expected: 'thematic' },
+                { tone: 'expositivo', expected: 'expository' },
+                { tone: 'narrativo', expected: 'narrative' },
+            ];
+            for (const c of cases) {
+                const sermonRepo = stubSermonRepo();
+                const useCase = new GenerateSermonFromPaperUseCase(
+                    stubPaperRepo(makePaper()),
+                    sermonRepo,
+                    stubTransformer(),
+                );
+                await useCase.execute({ paperId: 'paper-1', actorUserId: 'user-1', tone: c.tone });
+                const created = (sermonRepo as any).__created[0] as SermonEntity;
+                expect(created.wizardProgress?.homiletics?.homileticalApproach).toBe(c.expected);
+            }
+        });
+    });
+
     describe('series coherence patch', () => {
         const makePlanned = (id: string, overrides: Partial<PlannedSermon> = {}): PlannedSermon => ({
             id,

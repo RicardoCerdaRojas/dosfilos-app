@@ -8,6 +8,7 @@ import {
     type PaperToSermonTone,
 } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
+import { buildWizardProgressFromPaper } from './paperToWizardProgress';
 
 /**
  * Generates a sermon draft from an assembled exegetical paper.
@@ -27,6 +28,15 @@ import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservat
  * The created sermon starts in 'draft' status (not 'working') because
  * the user already has a fully-articulated body — they can edit before
  * publishing, but they're past the wizard-style scratch stage.
+ *
+ * Pipeline convergence (2026-05-19): in addition to writing
+ * `sermon.content` for the legacy sermon-detail surface, this use case
+ * now populates `sermon.wizardProgress` so the wizard (Pipeline B) can
+ * resume the just-generated sermon at Step 3 (Redacción) with all
+ * upstream steps pre-loaded from the paper. The caller navigates to
+ * `/dashboard/sermons/generate?id={sermonId}` instead of the static
+ * sermon detail page, giving the user one unified refinement surface
+ * that respects the paper's exegetical work.
  *
  * When the paper carries `seriesId` + `pericopeId` (denormalized at
  * paper-creation time by the planner), this use case ALSO patches
@@ -95,9 +105,26 @@ export class GenerateSermonFromPaperUseCase {
                 language: paper.displayLanguage,
             });
 
+            // Pre-populate the wizard state so the user lands in the
+            // refinement surface (Step 3 / Redacción) with the paper's
+            // exegesis + the transformer output ready to publish or
+            // refine. Each Step in the wizard inspects
+            // `wizardProgress.paperContext` to render a "Pre-cargado
+            // desde paper {X}" banner.
+            const wizardProgress = buildWizardProgressFromPaper({
+                paper,
+                transformerOutput: result,
+                tone: input.tone,
+            });
+
             const sermon = SermonEntity.create({
                 userId: paper.ownerId,
                 title: result.title,
+                // `content` stays populated for back-compat: legacy
+                // sermon-detail page reads this field, and the
+                // unified artifacts panel surfaces it as a quick
+                // preview. The wizard reads `wizardProgress.draft`
+                // instead.
                 content: result.content,
                 bibleReferences: result.bibleReferences,
                 sourcePaperId: paper.id,
@@ -106,6 +133,7 @@ export class GenerateSermonFromPaperUseCase {
                 // can resolve the relationship from either side.
                 seriesId: paper.seriesId ?? undefined,
                 status: 'draft',
+                wizardProgress,
             });
 
             await this.sermonRepository.create(sermon);
