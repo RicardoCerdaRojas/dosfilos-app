@@ -60,7 +60,8 @@ export function buildWizardProgressFromPaper(
         homiletics,
         draft,
         lastSaved: new Date(),
-        paperContext: {
+        derivedContext: {
+            kind: 'paper',
             paperId: paper.id,
             paperTitle: paper.title ?? passageLabel,
             tone,

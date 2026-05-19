@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from '@/i18n';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
-import { PaperContextBanner } from './PaperContextBanner';
+import { DerivedContextBanner } from './DerivedContextBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, ArrowRight, ArrowLeft, Mic2, Sparkles, BookOpen, RefreshCw } from 'lucide-react';
@@ -472,7 +472,7 @@ export function StepHomiletics() {
             <HomileticsSavedIndicator visible={saving} />
 
             <div className="px-2 pt-2">
-                <PaperContextBanner stepHintKey="paperContext.banner.homileticsHint" />
+                <DerivedContextBanner stepHintKey="homileticsHint" />
             </div>
 
             {!homiletics ? (

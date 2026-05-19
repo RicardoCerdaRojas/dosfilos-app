@@ -180,10 +180,15 @@ describe('GenerateSermonFromPaperUseCase', () => {
             expect(progress.draft?.conclusion).toContain('Cierre');
             expect(progress.exegesis).toBeDefined();
             expect(progress.homiletics?.homileticalProposition).toBe('Una vocación que perdura');
-            expect(progress.paperContext?.paperId).toBe('paper-1');
-            expect(progress.paperContext?.paperTitle).toBe('Llamados firmes');
-            expect(progress.paperContext?.tone).toBe('pastoral');
-            expect(progress.paperContext?.transformerModelId).toBe('gemini-2.5-pro');
+            // Post Faculty→wizard convergence (2026-05-19): paperContext
+            // generalized into derivedContext with kind discriminator.
+            expect(progress.derivedContext?.kind).toBe('paper');
+            if (progress.derivedContext?.kind === 'paper') {
+                expect(progress.derivedContext.paperId).toBe('paper-1');
+                expect(progress.derivedContext.paperTitle).toBe('Llamados firmes');
+                expect(progress.derivedContext.tone).toBe('pastoral');
+                expect(progress.derivedContext.transformerModelId).toBe('gemini-2.5-pro');
+            }
         });
 
         it('keeps sermon.content populated for legacy sermon-detail surface back-compat', async () => {

@@ -4,7 +4,7 @@ import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { WizardLayout } from './WizardLayout';
-import { PaperContextBanner } from './PaperContextBanner';
+import { DerivedContextBanner } from './DerivedContextBanner';
 import { GenerationProgress } from '@/components/sermons/GenerationProgress';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -712,7 +712,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             )}
 
             <div className="px-2">
-                <PaperContextBanner stepHintKey="paperContext.banner.exegesisHint" />
+                <DerivedContextBanner stepHintKey="exegesisHint" />
             </div>
 
             {/* Render layout based on whether exegesis exists */}

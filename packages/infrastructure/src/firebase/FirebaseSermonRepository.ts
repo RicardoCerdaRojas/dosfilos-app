@@ -192,13 +192,16 @@ export class FirebaseSermonRepository implements ISermonRepository {
             wizardProgress: sermon.wizardProgress ? {
                 ...sermon.wizardProgress,
                 lastSaved: Timestamp.fromDate(sermon.wizardProgress.lastSaved),
-                // Convert nested Date inside paperContext so Firestore
-                // stores it as a Timestamp and the deserializer can
-                // restore it consistently with all other Date fields.
-                ...(sermon.wizardProgress.paperContext ? {
-                    paperContext: {
-                        ...sermon.wizardProgress.paperContext,
-                        generatedAt: Timestamp.fromDate(sermon.wizardProgress.paperContext.generatedAt),
+                // Convert nested Date inside derivedContext so
+                // Firestore stores it as a Timestamp and the
+                // deserializer can restore it consistently with all
+                // other Date fields. The discriminated union shape is
+                // shallow-copied — only `generatedAt` needs Timestamp
+                // coercion regardless of kind.
+                ...(sermon.wizardProgress.derivedContext ? {
+                    derivedContext: {
+                        ...sermon.wizardProgress.derivedContext,
+                        generatedAt: Timestamp.fromDate(sermon.wizardProgress.derivedContext.generatedAt),
                     },
                 } : {}),
             } : null,
@@ -240,8 +243,20 @@ export class FirebaseSermonRepository implements ISermonRepository {
             wizardProgress: d.wizardProgress ? {
                 ...d.wizardProgress,
                 lastSaved: d.wizardProgress.lastSaved?.toDate() || new Date(),
-                ...(d.wizardProgress.paperContext ? {
-                    paperContext: {
+                ...(d.wizardProgress.derivedContext ? {
+                    derivedContext: {
+                        ...d.wizardProgress.derivedContext,
+                        generatedAt: d.wizardProgress.derivedContext.generatedAt?.toDate?.()
+                            ?? d.wizardProgress.derivedContext.generatedAt
+                            ?? new Date(),
+                    },
+                } : d.wizardProgress.paperContext ? {
+                    // Legacy back-compat (#213 used `paperContext`
+                    // directly). Migrate transparently on read so
+                    // pre-this-PR sermons keep working without a
+                    // backfill job. Writers always use derivedContext.
+                    derivedContext: {
+                        kind: 'paper' as const,
                         ...d.wizardProgress.paperContext,
                         generatedAt: d.wizardProgress.paperContext.generatedAt?.toDate?.()
                             ?? d.wizardProgress.paperContext.generatedAt

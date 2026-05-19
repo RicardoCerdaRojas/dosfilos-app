@@ -5,6 +5,7 @@ import {
     FirestoreExtractionRepository,
     FirestoreExegeticalPaperRepository,
     FirebaseSeriesRepository,
+    FirebaseSermonRepository,
     GeminiMultiAgentService,
 } from '@dosfilos/infrastructure';
 
@@ -47,6 +48,7 @@ import {
     RemoveExtractionFromProjectUseCase,
     SaveSermonExtractionUseCase,
     OrphanExtractionsBySermonUseCase,
+    BuildSermonFromFacultyOutlineUseCase,
 } from '../use-cases/faculty';
 
 class FacultyService {
@@ -88,6 +90,11 @@ class FacultyService {
     public removeExtractionFromProject: RemoveExtractionFromProjectUseCase;
     public saveSermonExtraction: SaveSermonExtractionUseCase;
     public orphanExtractionsBySermon: OrphanExtractionsBySermonUseCase;
+    // Faculty → Wizard convergence: produces a Sermon with
+    // wizardProgress pre-populated from a Faculty outline + optional
+    // pastoral personalization, replacing the legacy Faculty editor
+    // landing surface with the sermon wizard at Step 3.
+    public buildSermonFromFacultyOutline: BuildSermonFromFacultyOutlineUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -138,6 +145,16 @@ class FacultyService {
         this.removeExtractionFromProject = new RemoveExtractionFromProjectUseCase(extractionRepository);
         this.saveSermonExtraction = new SaveSermonExtractionUseCase(extractionRepository);
         this.orphanExtractionsBySermon = new OrphanExtractionsBySermonUseCase(extractionRepository);
+        // Sermon repo is wired here so Faculty can persist full Sermon
+        // docs with wizardProgress. Same singleton FirebaseSermonRepository
+        // used elsewhere — sermons are global per user, not faculty-scoped.
+        const sermonRepository = new FirebaseSermonRepository();
+        this.buildSermonFromFacultyOutline = new BuildSermonFromFacultyOutlineUseCase(
+            this.extractContent,
+            sermonRepository,
+            this.saveSermonExtraction,
+            extractionRepository,
+        );
         this.processMicroAction = new ProcessMicroActionUseCase(chatRepository, generatorService);
         this.getAgents = new GetFacultyAgentsUseCase(agentRepository);
         // Projects

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { sermonService } from '@dosfilos/application';
 import { ExegeticalStudy, HomileticalAnalysis, Sermon, SermonContent } from '@dosfilos/domain';
 
-type PaperContext = NonNullable<NonNullable<Sermon['wizardProgress']>['paperContext']>;
+type DerivedContext = NonNullable<NonNullable<Sermon['wizardProgress']>['derivedContext']>;
 
 interface WizardState {
     step: number;
@@ -10,7 +10,7 @@ interface WizardState {
     exegesis: ExegeticalStudy | null;
     homiletics: HomileticalAnalysis | null;
     draft: SermonContent | null;
-    paperContext?: PaperContext | null;
+    derivedContext?: DerivedContext | null;
 }
 
 export function useAutoSave(
@@ -45,12 +45,12 @@ export function useAutoSave(
             if (wizardState.exegesis) progress.exegesis = wizardState.exegesis;
             if (wizardState.homiletics) progress.homiletics = wizardState.homiletics;
             if (wizardState.draft) progress.draft = wizardState.draft;
-            // paperContext must persist across auto-saves —
+            // derivedContext must persist across auto-saves —
             // updateWizardProgress replaces the whole object, so we
-            // re-include it on every save when present. Sermons not
-            // derived from a paper carry no paperContext and this
-            // branch is skipped.
-            if (wizardState.paperContext) progress.paperContext = wizardState.paperContext;
+            // re-include it on every save when present. Wizard-native
+            // sermons (no paper, no Faculty origin) carry no
+            // derivedContext and this branch is skipped.
+            if (wizardState.derivedContext) progress.derivedContext = wizardState.derivedContext;
 
             await sermonService.updateWizardProgress(sermonId, progress);
 

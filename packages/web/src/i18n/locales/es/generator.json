@@ -1,19 +1,29 @@
 {
     "title": "Generador de Sermones",
     "subtitle": "Tienes sermones en progreso. ¿Deseas continuar con alguno?",
-    "paperContext": {
-        "banner": {
-            "headline": "Pre-cargado desde el paper exegético: {{title}}",
-            "openPaper": "Ver paper origen",
-            "passageHint": "El pasaje viene del paper. Puedes cambiarlo si quieres reorientar el sermón.",
-            "exegesisHint": "Esta exégesis es un resumen del paper. Regenera con el wizard si necesitas más profundidad o usar el Tutor Griego.",
-            "homileticsHint": "El enfoque se derivó del tono '{{tone}}' que elegiste al generar. Puedes elegir otro approach o regenerar opciones.",
-            "draftHint": "Borrador pre-cargado desde el paper. Refina via chat, edita en el canvas, o publica directamente."
-        },
+    "derivedContext": {
         "tone": {
             "pastoral": "pastoral",
             "expositivo": "expositivo",
             "narrativo": "narrativo"
+        },
+        "banner": {
+            "paper": {
+                "headline": "Pre-cargado desde el paper exegético: {{title}}",
+                "openLink": "Ver paper origen",
+                "passageHint": "El pasaje viene del paper. Puedes cambiarlo si quieres reorientar el sermón.",
+                "exegesisHint": "Esta exégesis es un resumen del paper. Regenera con el wizard si necesitas más profundidad o usar el Tutor Griego.",
+                "homileticsHint": "El enfoque se derivó del tono '{{tone}}' que elegiste al generar. Puedes elegir otro approach o regenerar opciones.",
+                "draftHint": "Borrador pre-cargado desde el paper. Refina via chat, edita en el canvas, o publica directamente."
+            },
+            "faculty": {
+                "headline": "Pre-cargado desde sesión Faculty: {{title}}",
+                "openLink": "Volver a la conversación",
+                "passageHint": "El pasaje viene del bosquejo que aprobaste en Faculty. Edítalo si quieres reorientar el sermón.",
+                "exegesisHint": "La exégesis es un stub desde el bosquejo Faculty. Regenera con el wizard si quieres análisis canónico con Tutor Griego y RAG.",
+                "homileticsHint": "Los puntos vienen del bosquejo aprobado y la personalización pastoral que añadiste. Puedes regenerar opciones de approach.",
+                "draftHint": "Borrador generado desde tu sesión Faculty. Refina via chat, edita inline, o publica directamente."
+            }
         }
     },
     "phases": {

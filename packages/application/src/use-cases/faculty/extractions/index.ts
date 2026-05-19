@@ -8,3 +8,4 @@ export * from './RenameExtractionUseCase';
 export * from './DeleteExtractionUseCase';
 export * from './PinExtractionToProjectUseCase';
 export * from './SaveSermonExtractionUseCase';
+export * from './BuildSermonFromFacultyOutlineUseCase';

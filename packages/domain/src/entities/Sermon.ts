@@ -44,22 +44,52 @@ export interface Sermon {
         publishCount?: number;      // How many times it's been published
         planId?: string; // ID of the preaching plan this sermon belongs to
         /**
-         * Set when the wizard state was pre-populated by the paper →
-         * sermon transformer (Pipeline A). Each Step inspects this
-         * field to surface a "Pre-cargado desde paper {X}" banner so
-         * the user knows the source + can opt into regenerating with
-         * the wizard's native generators if they want deeper detail.
+         * Provenance of any pre-population that happened at creation
+         * time. Each wizard Step inspects this field to render a
+         * "Pre-cargado desde {origen}" banner so the user knows the
+         * source + can opt into regenerating with the wizard's native
+         * generators if they want deeper detail.
          *
-         * Absent for sermons created from scratch via the legacy
-         * standalone wizard flow.
+         * Absent for sermons created from scratch via the standalone
+         * wizard flow. Discriminated union by `kind`:
+         *   - 'paper'   → generated from an `ExegeticalPaper`.
+         *   - 'faculty' → generated from a Faculty conversation
+         *                 (outline + optional pastoral personalization).
          */
-        paperContext?: {
-            paperId: string;
-            paperTitle: string;
-            tone: 'pastoral' | 'expositivo' | 'narrativo';
-            generatedAt: Date;
-            transformerModelId: string;
-        };
+        derivedContext?:
+            | {
+                  kind: 'paper';
+                  paperId: string;
+                  paperTitle: string;
+                  tone: 'pastoral' | 'expositivo' | 'narrativo';
+                  generatedAt: Date;
+                  transformerModelId: string;
+              }
+            | {
+                  kind: 'faculty';
+                  sessionId: string;
+                  sessionTitle: string;
+                  /**
+                   * The outline the user approved in
+                   * `SermonOutlinePreviewModal` before generation. Kept
+                   * so a wizard regenerate can re-run with the same
+                   * structure without forcing the user to re-edit.
+                   */
+                  outline: {
+                      title: string;
+                      passage: string;
+                      proposition: string;
+                      points: { title: string; verses: string }[];
+                  };
+                  /**
+                   * Optional personalization (tone, illustrations,
+                   * notes) the user attached. Persisted so wizard
+                   * refinement calls can keep injecting it without
+                   * losing the pastoral framing.
+                   */
+                  personalization?: Record<string, unknown>;
+                  generatedAt: Date;
+              };
     } | undefined;
 
     // If this is a published copy, references the original draft sermon
