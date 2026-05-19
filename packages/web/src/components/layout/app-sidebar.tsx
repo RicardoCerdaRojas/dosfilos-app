@@ -133,7 +133,6 @@ export function AppSidebar() {
         { name: t('menu.projects'), href: '/dashboard/projects', icon: FolderKanban },
         { name: t('menu.exegesis'), href: '/dashboard/exegesis', icon: NotebookPen },
         { name: t('menu.plans'), href: '/dashboard/plans', icon: BookMarked },
-        ...(isAdmin ? [{ name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles }] : []),
       ],
     },
     {
@@ -161,6 +160,7 @@ export function AppSidebar() {
   ];
 
   const adminNavigation = [
+    { name: t('menu.generateSermon'), href: '/dashboard/generate-sermon', icon: Sparkles },
     { name: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
     { name: 'Gestión de Usuarios', href: '/dashboard/admin/users', icon: Users },
     { name: 'Tutores', href: '/dashboard/admin/tutors', icon: Bot },
