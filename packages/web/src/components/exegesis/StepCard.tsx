@@ -16,6 +16,7 @@ import {
     ChevronRight,
     NotebookPen,
     ShieldCheck,
+    MoreVertical,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -28,6 +29,16 @@ import { CanonicalAnalysisStudyView } from '@/components/exegesis/canonical/Cano
 import { CitationVerificationDialog } from '@/components/exegesis/CitationVerificationDialog';
 import { ExegesisOutOfCreditsDialog } from '@/components/exegesis/ExegesisOutOfCreditsDialog';
 import { ExegesisPreConfirmDialog } from '@/components/exegesis/ExegesisPreConfirmDialog';
+import {
+    ComposeSectionPrecheckDialog,
+    type ComposeSectionPrecheckMissing,
+} from '@/components/exegesis/ComposeSectionPrecheckDialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CreditPacksDialog } from '@/pages/library/components/CreditPacksDialog';
 import {
     formatPassageReference,
@@ -43,6 +54,13 @@ interface StepCardProps {
     step: ExegeticalStep;
     paperId: string;
     language: SupportedLanguage;
+    /**
+     * Sibling steps in the paper. Needed by section composers
+     * (conclusion / introduction) to pre-check verse acceptance
+     * before dispatching the mutation. Optional for backwards
+     * compatibility with callers that only render verse cards.
+     */
+    allSteps?: ReadonlyArray<ExegeticalStep>;
 }
 
 /**
@@ -62,7 +80,7 @@ interface StepCardProps {
  * version count or other heuristics. This keeps the component dumb and
  * the state machine debuggable from inspecting the Firestore doc alone.
  */
-export function StepCard({ step, paperId, language }: StepCardProps) {
+export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
     const { t } = useTranslation('exegesis');
     const {
         generateStep,
@@ -91,6 +109,11 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     const [pendingConfirm, setPendingConfirm] = useState<
         { operation: ExegesisOperationKey; run: () => void } | null
     >(null);
+    // Pre-check modal for section composers — opens with a list of
+    // missing verses when the user clicks "Componer desde análisis"
+    // before having any accepted verse analyses.
+    const [precheckOpen, setPrecheckOpen] = useState(false);
+    const [precheckMissing, setPrecheckMissing] = useState<ComposeSectionPrecheckMissing | null>(null);
     // Collapse behavior:
     //   - Accepted steps default to COLLAPSED (the user already
     //     approved; detail is rarely re-read in the same session).
@@ -233,7 +256,38 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
     // analyses; introduction runs over verse analyses + accepted
     // conclusion. Use cases enforce ordering — UI just exposes the
     // CTA when the kind matches.
+    //
+    // Pre-check: when allSteps is available, compute the missing
+    // verses before mutating. If the composer would fail because no
+    // verse is accepted yet, open the precheck dialog instead so the
+    // user gets an actionable jump-to list rather than the raw error
+    // toast.
+    const buildPrecheckMissing = (
+        section: 'conclusion' | 'introduction',
+    ): ComposeSectionPrecheckMissing | null => {
+        if (!allSteps) return null;
+        const verses = allSteps.filter(s => s.kind === 'verse');
+        const acceptedCount = verses.filter(s => s.accepted?.canonicalAnalysis).length;
+        const conclusionMissing = section === 'introduction'
+            && !(allSteps.find(s => s.kind === 'conclusion')?.accepted?.markdown?.trim());
+        if (acceptedCount > 0 && !conclusionMissing) return null;
+        const awaitingReview = verses.filter(
+            s => s.state === 'awaiting-review' && s.current?.canonicalAnalysis,
+        );
+        const awaitingReviewIds = new Set(awaitingReview.map(s => s.id));
+        const noAnalysis = verses.filter(
+            s => !s.accepted?.canonicalAnalysis && !awaitingReviewIds.has(s.id),
+        );
+        return { awaitingReview, noAnalysis, conclusionMissing };
+    };
+
     const handleComposeConclusion = async () => {
+        const missing = buildPrecheckMissing('conclusion');
+        if (missing) {
+            setPrecheckMissing(missing);
+            setPrecheckOpen(true);
+            return;
+        }
         try {
             await composeConclusionFromAnalyses.mutateAsync({ paperId });
         } catch (err) {
@@ -245,6 +299,12 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
         }
     };
     const handleComposeIntroduction = async () => {
+        const missing = buildPrecheckMissing('introduction');
+        if (missing) {
+            setPrecheckMissing(missing);
+            setPrecheckOpen(true);
+            return;
+        }
         try {
             await composeIntroductionFromAnalyses.mutateAsync({ paperId });
         } catch (err) {
@@ -373,8 +433,9 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
 
     return (
         <article
+            id={`exegesis-step-${step.id}`}
             className={cn(
-                'rounded-2xl border bg-white dark:bg-zinc-900 transition-colors',
+                'rounded-2xl border bg-white dark:bg-zinc-900 transition-all duration-300',
                 isAccepted ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-slate-200 dark:border-zinc-800'
             )}
         >
@@ -426,75 +487,183 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                 </div>
                 {isPending && (
                     <div className="flex items-center gap-1.5">
+                        {/* Recommended-path primary CTA per kind. The
+                            legacy Generar path lives in the overflow
+                            menu for sections (it bypasses the pinned-
+                            source contract) and as a downgraded
+                            secondary for verses (it skips canonical
+                            analysis → can't feed downstream composers). */}
                         {isVerse && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleAnalyzeCanonically()}
-                                disabled={anyPipelinePending}
-                                title={t('canonical.actions.analyzeTooltip')}
-                            >
-                                {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.analyze')}
-                            </Button>
+                            <>
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleAnalyzeCanonically()}
+                                    disabled={anyPipelinePending}
+                                    title={t('canonical.actions.analyzeTooltip')}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                                >
+                                    {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('canonical.actions.analyze')}
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleGenerate()}
+                                    disabled={anyPipelinePending}
+                                    title={t('detail.steps.action.generateLegacyVerseTooltip')}
+                                >
+                                    {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('detail.steps.action.generateLegacyVerse')}
+                                </Button>
+                            </>
                         )}
                         {isConclusion && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={handleComposeConclusion}
-                                disabled={anyPipelinePending}
-                                title={t('canonical.actions.composeConclusionTooltip')}
-                            >
-                                {composeConclusionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.composeFromAnalyses')}
-                            </Button>
+                            <>
+                                <Button
+                                    size="sm"
+                                    onClick={handleComposeConclusion}
+                                    disabled={anyPipelinePending}
+                                    title={t('canonical.actions.composeConclusionTooltip')}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                                >
+                                    {composeConclusionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('canonical.actions.composeFromAnalyses')}
+                                </Button>
+                                <SectionOverflowMenu
+                                    onLegacyGenerate={() => handleGenerate()}
+                                    isPending={generateStep.isPending}
+                                    disabled={anyPipelinePending}
+                                />
+                            </>
                         )}
                         {isIntroduction && (
+                            <>
+                                <Button
+                                    size="sm"
+                                    onClick={handleComposeIntroduction}
+                                    disabled={anyPipelinePending}
+                                    title={t('canonical.actions.composeIntroductionTooltip')}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                                >
+                                    {composeIntroductionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('canonical.actions.composeFromAnalyses')}
+                                </Button>
+                                <SectionOverflowMenu
+                                    onLegacyGenerate={() => handleGenerate()}
+                                    isPending={generateStep.isPending}
+                                    disabled={anyPipelinePending}
+                                />
+                            </>
+                        )}
+                        {/* assembly + any other non-verse/section kinds
+                            keep the legacy Generate as the only path. */}
+                        {!isVerse && !isConclusion && !isIntroduction && (
                             <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={handleComposeIntroduction}
+                                onClick={() => handleGenerate()}
                                 disabled={anyPipelinePending}
-                                title={t('canonical.actions.composeIntroductionTooltip')}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
                             >
-                                {composeIntroductionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.composeFromAnalyses')}
+                                {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
+                                {t('detail.steps.action.generate')}
                             </Button>
                         )}
-                        <Button
-                            size="sm"
-                            onClick={() => handleGenerate()}
-                            disabled={anyPipelinePending}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
-                        >
-                            {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
-                            {t('detail.steps.action.generate')}
-                        </Button>
                     </div>
                 )}
                 {isFailed && (
                     <div className="flex items-center gap-1.5">
                         {isVerse && (
+                            <>
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleAnalyzeCanonically()}
+                                    disabled={anyPipelinePending}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                                >
+                                    {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('canonical.actions.analyzeRetry')}
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleGenerate()}
+                                    disabled={anyPipelinePending}
+                                    title={t('detail.steps.action.generateLegacyVerseTooltip')}
+                                >
+                                    {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('detail.steps.action.generateLegacyVerse')}
+                                </Button>
+                            </>
+                        )}
+                        {isConclusion && (
+                            <>
+                                <Button
+                                    size="sm"
+                                    onClick={handleComposeConclusion}
+                                    disabled={anyPipelinePending}
+                                    title={t('canonical.actions.composeConclusionTooltip')}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                                >
+                                    {composeConclusionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('canonical.actions.composeRetry')}
+                                </Button>
+                                <SectionOverflowMenu
+                                    onLegacyGenerate={() => handleGenerate()}
+                                    isPending={generateStep.isPending}
+                                    disabled={anyPipelinePending}
+                                />
+                            </>
+                        )}
+                        {isIntroduction && (
+                            <>
+                                <Button
+                                    size="sm"
+                                    onClick={handleComposeIntroduction}
+                                    disabled={anyPipelinePending}
+                                    title={t('canonical.actions.composeIntroductionTooltip')}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                                >
+                                    {composeIntroductionFromAnalyses.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                                    {t('canonical.actions.composeRetry')}
+                                </Button>
+                                <SectionOverflowMenu
+                                    onLegacyGenerate={() => handleGenerate()}
+                                    isPending={generateStep.isPending}
+                                    disabled={anyPipelinePending}
+                                />
+                            </>
+                        )}
+                        {!isVerse && !isConclusion && !isIntroduction && (
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleAnalyzeCanonically()}
+                                onClick={() => handleGenerate()}
                                 disabled={anyPipelinePending}
+                                className="border-rose-300 text-rose-700 dark:border-rose-700 dark:text-rose-300"
                             >
-                                {analyzeVerseCanonically.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5 mr-1.5" />}
-                                {t('canonical.actions.analyzeRetry')}
+                                {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+                                {t('detail.steps.action.retry')}
                             </Button>
                         )}
+                    </div>
+                )}
+                {/* Awaiting-review + collapsed → expose Accept in the
+                    header so the user can move the queue forward
+                    without expanding each card. Stop propagation so the
+                    button doesn't toggle the collapse. Tooltip warns to
+                    review first — accepting closes the canonical
+                    analysis into the composer's input set. */}
+                {isReview && !isExpanded && (
+                    <div className="flex items-center gap-1.5">
                         <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleGenerate()}
-                            disabled={anyPipelinePending}
-                            className="border-rose-300 text-rose-700 dark:border-rose-700 dark:text-rose-300"
+                            onClick={(e) => { e.stopPropagation(); void handleAccept(); }}
+                            disabled={acceptStep.isPending || !step.current}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                            title={t('detail.steps.action.acceptCollapsedTooltip')}
                         >
-                            {generateStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
-                            {t('detail.steps.action.retry')}
+                            {acceptStep.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
+                            {t('detail.steps.action.accept')}
                         </Button>
                     </div>
                 )}
@@ -904,7 +1073,71 @@ export function StepCard({ step, paperId, language }: StepCardProps) {
                     }}
                 />
             )}
+            {precheckMissing && (isConclusion || isIntroduction) && (
+                <ComposeSectionPrecheckDialog
+                    open={precheckOpen}
+                    onOpenChange={(open) => {
+                        setPrecheckOpen(open);
+                        if (!open) setPrecheckMissing(null);
+                    }}
+                    section={isConclusion ? 'conclusion' : 'introduction'}
+                    missing={precheckMissing}
+                    language={language}
+                />
+            )}
         </article>
+    );
+}
+
+/**
+ * Overflow menu for conclusion / introduction section steps. Hosts
+ * the legacy GenerateStepUseCase path, which bypasses the pinned-
+ * source contract (issue #126) and produces inferior output. Kept
+ * available behind the kebab so power users can still reach it
+ * without it being a foot-gun in the primary action area.
+ */
+function SectionOverflowMenu({
+    onLegacyGenerate,
+    isPending,
+    disabled,
+}: {
+    onLegacyGenerate: () => void;
+    isPending: boolean;
+    disabled: boolean;
+}) {
+    const { t } = useTranslation('exegesis');
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={disabled}
+                    onClick={(e) => e.stopPropagation()}
+                    title={t('detail.steps.action.overflowMenuLabel')}
+                    aria-label={t('detail.steps.action.overflowMenuLabel')}
+                    className="px-2"
+                >
+                    {isPending
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <MoreVertical className="h-4 w-4" />}
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem
+                    onSelect={() => onLegacyGenerate()}
+                    disabled={disabled}
+                    className="flex flex-col items-start gap-0.5 py-2"
+                >
+                    <span className="text-xs font-medium">
+                        {t('detail.steps.action.generateLegacySection')}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground max-w-[280px] whitespace-normal leading-tight">
+                        {t('detail.steps.action.generateLegacySectionTooltip')}
+                    </span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 
