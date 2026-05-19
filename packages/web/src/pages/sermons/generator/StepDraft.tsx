@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
+import { PaperContextBanner } from './PaperContextBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
@@ -448,6 +449,10 @@ export function StepDraft() {
     return (
         <>
             <HomileticsSavedIndicator visible={saving} />
+
+            <div className="px-2 pt-2">
+                <PaperContextBanner stepHintKey="paperContext.banner.draftHint" />
+            </div>
 
             {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
 

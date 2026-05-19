@@ -154,7 +154,11 @@ export function SeriesDetail() {
             });
             toast.success(t('detail.table.toast.sermonGenerated') as string);
             await reloadData();
-            navigate(`/dashboard/sermons/${result.sermonId}`);
+            // Land in the wizard's Draft step so the user can refine
+            // via chat / publish from the same surface as wizard-native
+            // sermons. Pre-population happens server-side via
+            // wizardProgress (see GenerateSermonFromPaperUseCase).
+            navigate(`/dashboard/sermons/generate?id=${result.sermonId}`);
         } catch (err: any) {
             console.error('[seriesDetail] generateSermonFromPaper failed:', err);
             const msg = err?.isExegesisOverload

@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent, WorkflowConfiguration } from '@dosfilos/domain';
+import { ExegeticalStudy, HomileticalAnalysis, GenerationRules, Sermon, SermonContent, WorkflowConfiguration } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { ConfigService } from '@dosfilos/application';
 import { FirebaseConfigRepository } from '@dosfilos/infrastructure';
 import { sermonService } from '@dosfilos/application';
 import { useAutoSave } from '@/hooks/useAutoSave';
+
+type PaperContext = NonNullable<NonNullable<Sermon['wizardProgress']>['paperContext']>;
 
 interface WizardState {
     step: number;
@@ -15,6 +17,13 @@ interface WizardState {
     homiletics: HomileticalAnalysis | null;
     draft: SermonContent | null;
     config: WorkflowConfiguration | null;
+    /**
+     * Set when the wizard's state was pre-populated by the paper →
+     * sermon transformer (Pipeline A). Each Step component reads this
+     * field to render the "Pre-cargado desde paper {X}" banner so the
+     * user understands the data's provenance.
+     */
+    paperContext: PaperContext | null;
 }
 
 interface WizardContextType extends WizardState {
@@ -25,6 +34,7 @@ interface WizardContextType extends WizardState {
     setHomiletics: (homiletics: HomileticalAnalysis) => void;
     setDraft: (draft: SermonContent) => void;
     setSermonId: (id: string | null) => void;
+    setPaperContext: (ctx: PaperContext | null) => void;
     selectHomileticalApproach: (approachId: string) => void;  // 🎯 NEW
     reset: () => void;
     saving: boolean;
@@ -52,11 +62,12 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [draft, setDraft] = useState<SermonContent | null>(null);
     const [config, setConfig] = useState<WorkflowConfiguration | null>(null);
     const [sermonId, setSermonId] = useState<string | null>(null);
+    const [paperContext, setPaperContext] = useState<PaperContext | null>(null);
 
     // Auto-save hook
     const { saving, lastSaved } = useAutoSave(
         sermonId,
-        { step, passage, exegesis, homiletics, draft },
+        { step, passage, exegesis, homiletics, draft, paperContext },
         user?.uid || ''
     );
 
@@ -118,6 +129,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics(null);
         setDraft(null);
         setSermonId(null);
+        setPaperContext(null);
     };
 
     // 🎯 NEW: Select homiletical approach and update derived fields
@@ -159,6 +171,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         homiletics,
         draft,
         config,
+        paperContext,
         sermonId, // 🎯 Expose to allow publishing
         setStep,
         setPassage,
@@ -167,11 +180,12 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics,
         setDraft,
         setSermonId,
+        setPaperContext,
         selectHomileticalApproach,  // 🎯 NEW
         reset,
         saving,
         lastSaved
-    }), [step, passage, rules, exegesis, homiletics, draft, config, saving, lastSaved, sermonId]);
+    }), [step, passage, rules, exegesis, homiletics, draft, config, paperContext, saving, lastSaved, sermonId]);
 
     return (
         <WizardContext.Provider value={contextValue}>

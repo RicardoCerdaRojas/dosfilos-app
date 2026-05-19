@@ -43,6 +43,23 @@ export interface Sermon {
         lastPublishedAt?: Date;    // When it was last published
         publishCount?: number;      // How many times it's been published
         planId?: string; // ID of the preaching plan this sermon belongs to
+        /**
+         * Set when the wizard state was pre-populated by the paper →
+         * sermon transformer (Pipeline A). Each Step inspects this
+         * field to surface a "Pre-cargado desde paper {X}" banner so
+         * the user knows the source + can opt into regenerating with
+         * the wizard's native generators if they want deeper detail.
+         *
+         * Absent for sermons created from scratch via the legacy
+         * standalone wizard flow.
+         */
+        paperContext?: {
+            paperId: string;
+            paperTitle: string;
+            tone: 'pastoral' | 'expositivo' | 'narrativo';
+            generatedAt: Date;
+            transformerModelId: string;
+        };
     } | undefined;
 
     // If this is a published copy, references the original draft sermon

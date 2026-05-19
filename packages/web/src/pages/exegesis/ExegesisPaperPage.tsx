@@ -176,7 +176,13 @@ export function ExegesisPaperPage() {
                 tone,
             });
             toast.success(t('detail.generateSermon.toast.success'));
-            navigate(`/dashboard/sermons/${result.sermonId}`);
+            // Land the user in the wizard's Draft step with all paper-
+            // derived content pre-loaded (see paperToWizardProgress.ts
+            // for the mapping). The legacy `/dashboard/sermons/{id}`
+            // surface still works and is reachable from "Mis sermones",
+            // but the wizard is now the canonical refinement surface
+            // for paper-derived sermons.
+            navigate(`/dashboard/sermons/generate?id=${result.sermonId}`);
         } catch (err: any) {
             console.error('[exegesis] generateSermonFromPaper failed:', err);
             const msg = err?.isExegesisOverload

@@ -1,6 +1,21 @@
 {
     "title": "Sermon Generator",
     "subtitle": "You have sermons in progress. Do you want to continue with any?",
+    "paperContext": {
+        "banner": {
+            "headline": "Pre-populated from exegetical paper: {{title}}",
+            "openPaper": "Open source paper",
+            "passageHint": "Passage comes from the paper. Change it if you want to reorient the sermon.",
+            "exegesisHint": "This exegesis is a summary of the paper. Regenerate with the wizard for deeper analysis or to use the Greek Tutor.",
+            "homileticsHint": "Approach derived from the '{{tone}}' tone you chose when generating. Pick another approach or regenerate options.",
+            "draftHint": "Draft pre-loaded from the paper. Refine via chat, edit in the canvas, or publish directly."
+        },
+        "tone": {
+            "pastoral": "pastoral",
+            "expositivo": "expository",
+            "narrativo": "narrative"
+        }
+    },
     "phases": {
         "published": "Published",
         "exegesis": "Exegesis",

@@ -7,6 +7,7 @@ import { ArrowRight, Book, Lightbulb, Sparkles } from 'lucide-react';
 import { sermonService } from '@dosfilos/application';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
+import { PaperContextBanner } from './PaperContextBanner';
 
 export function StepPassage() {
   const { t } = useTranslation('generator');
@@ -63,6 +64,7 @@ export function StepPassage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 py-8">
+      <PaperContextBanner stepHintKey="paperContext.banner.passageHint" />
       {/* Header with sermon context if available */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">

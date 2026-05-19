@@ -191,7 +191,16 @@ export class FirebaseSermonRepository implements ISermonRepository {
             })),
             wizardProgress: sermon.wizardProgress ? {
                 ...sermon.wizardProgress,
-                lastSaved: Timestamp.fromDate(sermon.wizardProgress.lastSaved)
+                lastSaved: Timestamp.fromDate(sermon.wizardProgress.lastSaved),
+                // Convert nested Date inside paperContext so Firestore
+                // stores it as a Timestamp and the deserializer can
+                // restore it consistently with all other Date fields.
+                ...(sermon.wizardProgress.paperContext ? {
+                    paperContext: {
+                        ...sermon.wizardProgress.paperContext,
+                        generatedAt: Timestamp.fromDate(sermon.wizardProgress.paperContext.generatedAt),
+                    },
+                } : {}),
             } : null,
             sourceSermonId: sermon.sourceSermonId ?? null,
             sourceFacultySessionId: sermon.sourceFacultySessionId ?? null,
@@ -230,7 +239,15 @@ export class FirebaseSermonRepository implements ISermonRepository {
             })),
             wizardProgress: d.wizardProgress ? {
                 ...d.wizardProgress,
-                lastSaved: d.wizardProgress.lastSaved?.toDate() || new Date()
+                lastSaved: d.wizardProgress.lastSaved?.toDate() || new Date(),
+                ...(d.wizardProgress.paperContext ? {
+                    paperContext: {
+                        ...d.wizardProgress.paperContext,
+                        generatedAt: d.wizardProgress.paperContext.generatedAt?.toDate?.()
+                            ?? d.wizardProgress.paperContext.generatedAt
+                            ?? new Date(),
+                    },
+                } : {}),
             } : undefined,
             sourceSermonId: d.sourceSermonId,
             sourceFacultySessionId: d.sourceFacultySessionId ?? undefined,
