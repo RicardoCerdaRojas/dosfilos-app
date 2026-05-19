@@ -19,6 +19,8 @@ export interface NextStepHint {
     subtitle: string;
     /** Primary action target. */
     href: string;
+    /** Optional react-router state for context-aware back navigation. */
+    state?: { from: string; fromLabel?: string };
     /** Action label ("Abrir sermón"). */
     ctaLabel: string;
     icon: LucideIcon;
@@ -91,6 +93,10 @@ function computeHint(input: HintInput): NextStepHint | null {
             title: t('nextStep.paperInProgress.title', { title: paper.title || t('nextStep.paperInProgress.untitled') }),
             subtitle: t('nextStep.paperInProgress.subtitle', { phase: t(`exegesis.phase.${paper.phase}`) }),
             href: `/dashboard/exegesis/${paper.id}`,
+            state: {
+                from: '/dashboard',
+                fromLabel: t('exegesis.backToDashboard'),
+            },
             ctaLabel: t('nextStep.paperInProgress.cta'),
             icon: NotebookPen,
             tone: 'primary',

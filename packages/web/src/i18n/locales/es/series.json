@@ -524,6 +524,7 @@
         }
     },
     "detail": {
+        "backToSeries": "Volver a la serie",
         "header": {
             "back": "Volver a Planes",
             "edit": "Editar plan",

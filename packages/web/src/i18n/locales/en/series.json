@@ -524,6 +524,7 @@
         }
     },
     "detail": {
+        "backToSeries": "Back to series",
         "header": {
             "back": "Back to plans",
             "edit": "Edit plan",

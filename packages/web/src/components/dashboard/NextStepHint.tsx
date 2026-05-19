@@ -56,6 +56,7 @@ export function NextStepHint({ hint }: Props) {
         >
             <Link
                 to={hint.href}
+                state={hint.state}
                 className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all hover:shadow-sm ${tone.wrap}`}
             >
                 <div className={`shrink-0 w-9 h-9 rounded-md ${tone.iconBg} flex items-center justify-center`}>

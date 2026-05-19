@@ -532,6 +532,28 @@
   .expository-zoom-larger .text-base     { font-size: 1.25rem; }
   .expository-zoom-larger .text-lg       { font-size: 1.375rem; }
 
+  /*
+   * Generic text-zoom scopes (shared between exegesis paper detail,
+   * future reading surfaces). Same scale as the expository wizard but
+   * also bumps `.prose` font-size since Tailwind Typography hard-codes
+   * its own root size (not via Tailwind utilities).
+   */
+  .text-zoom-large .text-\[10px\],
+  .text-zoom-large .text-\[11px\] { font-size: 0.8125rem; }
+  .text-zoom-large .text-xs       { font-size: 0.875rem; }
+  .text-zoom-large .text-sm       { font-size: 1rem; }
+  .text-zoom-large .text-base     { font-size: 1.125rem; }
+  .text-zoom-large .text-lg       { font-size: 1.25rem; }
+  .text-zoom-large .prose         { font-size: 1.0625rem; line-height: 1.75; }
+
+  .text-zoom-larger .text-\[10px\],
+  .text-zoom-larger .text-\[11px\] { font-size: 0.9375rem; }
+  .text-zoom-larger .text-xs       { font-size: 1rem; }
+  .text-zoom-larger .text-sm       { font-size: 1.125rem; }
+  .text-zoom-larger .text-base     { font-size: 1.25rem; }
+  .text-zoom-larger .text-lg       { font-size: 1.375rem; }
+  .text-zoom-larger .prose         { font-size: 1.1875rem; line-height: 1.8; }
+
   /* Animated gradient for loading border */
   @keyframes gradient {
     0% {

@@ -665,7 +665,12 @@ function ExegesisInProgressSection({
                             <li key={paper.id}>
                                 <button
                                     type="button"
-                                    onClick={() => navigate(`/dashboard/exegesis/${paper.id}`)}
+                                    onClick={() => navigate(`/dashboard/exegesis/${paper.id}`, {
+                                        state: {
+                                            from: '/dashboard',
+                                            fromLabel: t('exegesis.backToDashboard') as string,
+                                        },
+                                    })}
                                     className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/40 transition-colors group"
                                 >
                                     <NotebookPen className="h-4 w-4 text-muted-foreground/70 shrink-0 group-hover:text-primary transition-colors" />
