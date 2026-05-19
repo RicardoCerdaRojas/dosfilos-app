@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     Loader2, Plus, Trash2, BookOpen, Sparkles,
     FileText, ChevronRight, ChevronLeft, Mic
@@ -10,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/context/firebase-context';
-import { useCreateSermon } from '@/hooks/use-sermons';
 import {
     type SermonPersonalization,
     type SermonTone,
@@ -25,32 +23,35 @@ export interface SermonOutline {
 }
 
 /**
- * The SERMON prompt always generates a header block at the top:
- *   # Título
- *   **Pasaje:** ...
- *   **Proposición Homilética:** ...
- *   ---
+ * Post-convergence (2026-05-19) the modal no longer creates the sermon
+ * doc directly + writes raw markdown to the Faculty editor. It hands
+ * the approved outline + personalization to `buildSermonFromFacultyOutline`
+ * (Application layer), which generates the full sermon, builds a
+ * `wizardProgress` snapshot, and persists a `Sermon` ready for the
+ * wizard at Step 3 (Redacción).
  *
- * We strip everything up to (and including) the first `---` divider so the stored
- * content begins at the first H2 section (e.g., ## Introducción).
- * The title is already stored in the sermon's title field.
+ * The legacy header-stripping + `createSermon` logic moved into the
+ * use case so the modal stays a pure UX shell.
  */
-function stripSermonHeader(markdown: string): string {
-    // Find the first horizontal rule (---) that follows the title block
-    const dividerIndex = markdown.indexOf('\n---\n');
-    if (dividerIndex !== -1) {
-        return markdown.slice(dividerIndex + 5).trimStart(); // skip '\n---\n'
-    }
-    // Fallback: remove any leading # H1 line
-    return markdown.replace(/^#[^\n]*\n/, '').trimStart();
-}
 
 interface SermonOutlinePreviewModalProps {
     outline: SermonOutline | null;
     sessionId?: string;  // ID of the faculty session that originated this sermon
     onClose: () => void;
-    onGenerateFullSermon: (approvedOutline: SermonOutline, personalization?: SermonPersonalization) => Promise<string>;
-    onSuccess?: (sermonId: string, content: string, title: string) => void;
+    /**
+     * Generates the full sermon + persists everything (Sermon doc +
+     * extraction mirror + wizardProgress). Returns the new sermon id
+     * so the parent can navigate to the wizard.
+     */
+    onGenerateFullSermon: (
+        approvedOutline: SermonOutline,
+        personalization?: SermonPersonalization,
+    ) => Promise<{ sermonId: string }>;
+    /**
+     * Optional post-success hook. Receives the new sermon id so the
+     * parent can navigate, refresh extraction list, fire telemetry, etc.
+     */
+    onSuccess?: (sermonId: string) => void;
 }
 
 type Phase = 'preview' | 'personalize' | 'generating';
@@ -65,14 +66,11 @@ const TONE_OPTIONS: { value: SermonTone; emoji: string }[] = [
 
 export function SermonOutlinePreviewModal({
     outline,
-    sessionId,
     onClose,
     onGenerateFullSermon,
     onSuccess,
 }: SermonOutlinePreviewModalProps) {
-    // Removed useNavigate since we use onSuccess now
     const { user } = useFirebase();
-    const { createSermon } = useCreateSermon();
 
     const [phase, setPhase] = useState<Phase>('preview');
     const [edited, setEdited] = useState<SermonOutline>({
@@ -124,29 +122,17 @@ export function SermonOutlinePreviewModal({
         if (!user) return;
         setPhase('generating');
         try {
-            // Only pass personalization if at least one field is populated
+            // Only pass personalization if at least one field is populated.
             const hasPersonalization = Object.values(personalization).some(
                 v => v !== undefined && v !== ''
             );
-            const fullMarkdown = await onGenerateFullSermon(
+            const result = await onGenerateFullSermon(
                 edited,
-                hasPersonalization ? personalization : undefined
+                hasPersonalization ? personalization : undefined,
             );
 
-            // Strip the AI-generated header block (# Title, **Pasaje:**, **Proposición:**, ---)
-            // so the content starts from the first ## section (Introducción)
-            const cleanContent = stripSermonHeader(fullMarkdown);
-
-            const sermon = await createSermon({
-                title: edited.title || 'Sermón sin título',
-                content: cleanContent,
-                bibleReferences: edited.passage ? [edited.passage] : [],
-                status: 'draft',
-                sourceFacultySessionId: sessionId,
-            });
-            
             if (onSuccess) {
-                onSuccess(sermon.id, cleanContent, edited.title || 'Sermón sin título');
+                onSuccess(result.sermonId);
             }
             onClose();
         } catch (error) {

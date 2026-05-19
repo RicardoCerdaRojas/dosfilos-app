@@ -538,38 +538,36 @@ export function FacultyChatPage() {
                 />
             </div>
 
-            {/* Sermon Outline Preview Modal */}
+            {/* Sermon Outline Preview Modal — post-convergence flow:
+                approved outline + personalization → buildSermonFromFacultyOutline
+                → wizard-ready Sermon → navigate to /dashboard/sermons/generate.
+                The legacy createSermon + saveSermonExtraction + inline preview
+                path collapsed into the Application use case. */}
             <SermonOutlinePreviewModal
                 outline={sermonOutline}
                 sessionId={effectiveSessionId || undefined}
                 onClose={() => setSermonOutline(null)}
-                onGenerateFullSermon={(outline, personalization) =>
-                    extractContent({ type: 'SERMON', approvedOutline: outline, personalization })
-                }
-                onSuccess={(sermonId, content, title) => {
-                    // Sermon doc is canonical (sermons/{id}); persist a
-                    // companion Extraction so the artifact also surfaces
-                    // in the user's resource library with a back-link
-                    // to the sermons module via externalRef.
-                    if (user?.uid && effectiveSessionId) {
-                        const messageIds = session?.messages?.map(m => m.id) ?? [];
-                        facultyService.saveSermonExtraction.execute({
-                            userId: user.uid,
-                            sessionId: effectiveSessionId,
-                            sermonId,
-                            title,
-                            markdown: content,
-                            derivedFromMessageIds: messageIds,
-                        }).catch(err => {
-                            console.error('[chat] saveSermonExtraction failed', err);
-                        });
+                onGenerateFullSermon={async (outline, personalization) => {
+                    if (!user?.uid || !effectiveSessionId) {
+                        throw new Error('Faculty session missing for sermon generation');
                     }
-                    // Inline preview keeps working for visual continuity —
-                    // the user sees the sermon body in the doc panel
-                    // immediately, even before the Extraction listener
-                    // refreshes the Generados tab. The hook's `onOpen`
-                    // collapses both rails.
-                    openSermonPreview(title, content);
+                    const messageIds = session?.messages?.map(m => m.id) ?? [];
+                    const result = await facultyService.buildSermonFromFacultyOutline.execute({
+                        ownerId: user.uid,
+                        sessionId: effectiveSessionId,
+                        sessionTitle: session?.title || outline.title,
+                        approvedOutline: outline,
+                        personalization,
+                        derivedFromMessageIds: messageIds,
+                    });
+                    return { sermonId: result.sermonId };
+                }}
+                onSuccess={(sermonId) => {
+                    // Land in the sermon wizard at Step 3 with paper-
+                    // derived content pre-loaded. Wizard reads
+                    // wizardProgress.derivedContext.kind === 'faculty'
+                    // and renders the provenance banner.
+                    navigate(`/dashboard/sermons/generate?id=${sermonId}`);
                 }}
             />
 

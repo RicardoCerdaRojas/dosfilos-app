@@ -12,7 +12,7 @@ import { useFirebase } from '@/context/firebase-context';
 import { SermonEntity } from '@dosfilos/domain';
 
 function WizardContent() {
-    const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, setPaperContext, reset } = useWizard();
+    const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, setDerivedContext, reset } = useWizard();
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
@@ -60,7 +60,7 @@ function WizardContent() {
                         if (progress.draft) setDraft(progress.draft);
                         // Restore paperContext so per-step banners can
                         // surface the paper provenance.
-                        if (progress.paperContext) setPaperContext(progress.paperContext);
+                        if (progress.derivedContext) setDerivedContext(progress.derivedContext);
 
                         // If no passage, go to step 0 (passage selection)
                         if (!progress.passage) {
@@ -122,7 +122,7 @@ function WizardContent() {
         if (progress.exegesis) setExegesis(progress.exegesis);
         if (progress.homiletics) setHomiletics(progress.homiletics);
         if (progress.draft) setDraft(progress.draft);
-        if (progress.paperContext) setPaperContext(progress.paperContext);
+        if (progress.derivedContext) setDerivedContext(progress.derivedContext);
 
         // Restore step if available, otherwise infer from content
         // IMPORTANT: Validate step is in range 0-3 (max step is 3 for draft)
