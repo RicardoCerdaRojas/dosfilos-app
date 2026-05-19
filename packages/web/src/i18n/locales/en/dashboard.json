@@ -81,6 +81,7 @@
         "viewAll": "View all",
         "empty": "No exegetical papers in progress yet.",
         "emptyCta": "Start a paper",
+        "backToDashboard": "Back to dashboard",
         "phase": {
             "configuring": "Configuring",
             "in-progress": "In progress",

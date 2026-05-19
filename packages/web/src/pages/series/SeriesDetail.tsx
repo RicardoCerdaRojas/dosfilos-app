@@ -157,7 +157,12 @@ export function SeriesDetail() {
             } as any);
             toast.success(t('pericope.panel.toast.paperCreated') as string);
             await reloadData();
-            navigate(`/dashboard/exegesis/${paper.id}`);
+            navigate(`/dashboard/exegesis/${paper.id}`, {
+                state: {
+                    from: `/dashboard/plans/${series.id}`,
+                    fromLabel: t('detail.backToSeries') as string,
+                },
+            });
         } catch (err: any) {
             console.error('[seriesDetail] createPaper failed:', err);
             toast.error(err?.message ?? (t('pericope.panel.toast.paperFailed') as string));
@@ -315,7 +320,12 @@ export function SeriesDetail() {
                                     onEdit={() => setEditingSermon(item)}
                                     onDelete={() => handleDeleteSermon(item.id)}
                                     onMarkComplete={() => handleMarkComplete(item.id)}
-                                    onOpenPaper={() => planned?.paperId && navigate(`/dashboard/exegesis/${planned.paperId}`)}
+                                    onOpenPaper={() => planned?.paperId && navigate(`/dashboard/exegesis/${planned.paperId}`, {
+                                        state: {
+                                            from: `/dashboard/plans/${series.id}`,
+                                            fromLabel: t('detail.backToSeries') as string,
+                                        },
+                                    })}
                                     onCreatePaper={() => planned?.syntacticUnit && handleCreatePaperForPlanned(planned as PlannedSermon & { syntacticUnit: SyntacticUnit })}
                                     onOpenFaculty={() => navigate(`/dashboard/faculty/new?seriesId=${series.id}&pericopeId=${planned?.id ?? ''}`)}
                                     onOpenDraft={() => item.draftId && navigate(`/dashboard/sermons/generate?id=${item.draftId}`)}

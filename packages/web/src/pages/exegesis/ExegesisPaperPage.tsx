@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
     ArrowLeft,
@@ -79,8 +79,17 @@ import {
 export function ExegesisPaperPage() {
     const { paperId } = useParams<{ paperId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { t, i18n } = useTranslation('exegesis');
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+
+    // Context-aware back: when the user came from a planner / series /
+    // dashboard surface, return them there instead of the global paper
+    // list. The originating page passes `{ from, fromLabel }` via
+    // react-router state when navigating in.
+    const navState = (location.state ?? null) as { from?: string; fromLabel?: string } | null;
+    const backTo = navState?.from && navState.from.startsWith('/') ? navState.from : '/dashboard/exegesis';
+    const backLabel = navState?.fromLabel ?? (t('detail.back') as string);
 
     const {
         papers,
@@ -240,9 +249,10 @@ export function ExegesisPaperPage() {
             <div className="border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center gap-3">
                     <Link
-                        to="/dashboard/exegesis"
+                        to={backTo}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                        aria-label={t('detail.back')}
+                        aria-label={backLabel}
+                        title={backLabel}
                     >
                         <ArrowLeft className="h-4 w-4" />
                     </Link>

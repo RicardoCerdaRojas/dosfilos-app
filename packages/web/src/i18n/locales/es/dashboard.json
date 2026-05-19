@@ -81,6 +81,7 @@
         "viewAll": "Ver todos",
         "empty": "Aún no tienes trabajos exegéticos en curso.",
         "emptyCta": "Iniciar un trabajo",
+        "backToDashboard": "Volver al dashboard",
         "phase": {
             "configuring": "En configuración",
             "in-progress": "En curso",
