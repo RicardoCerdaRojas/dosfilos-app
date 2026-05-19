@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Download, Loader2, Mic, NotebookPen, Sparkles, Users } from 'lucide-react';
+import { BookmarkPlus, Copy, Download, Loader2, Mic, NotebookPen, Sparkles, Users } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
@@ -46,6 +46,7 @@ export function MinistryCompositionDialog({
         composeSermonFromAnalyses,
         composeDevotionalFromAnalyses,
         composeStudyGuideFromAnalyses,
+        saveExegesisArtifact,
     } = useExegesisPapers();
 
     const [format, setFormat] = useState<Format>('sermon');
@@ -55,6 +56,7 @@ export function MinistryCompositionDialog({
     const [result, setResult] = useState<{ markdown: string; modelId: string; tokensUsed: number | null } | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [view, setView] = useState<'rendered' | 'raw'>('rendered');
+    const [saved, setSaved] = useState(false);
 
     const isPending =
         composeSermonFromAnalyses.isPending
@@ -64,6 +66,7 @@ export function MinistryCompositionDialog({
     const handleCompose = async () => {
         setErrorMessage(null);
         setResult(null);
+        setSaved(false);
         try {
             let output;
             if (format === 'sermon') {
@@ -78,6 +81,34 @@ export function MinistryCompositionDialog({
         } catch (err) {
             console.error('[exegesis] ministry composition failed:', err);
             setErrorMessage((err as Error).message ?? t('canonical.ministry.errorGeneric'));
+        }
+    };
+
+    // Maps the dialog's local format ('sermon'/'devotional'/'studyGuide')
+    // to the persistence artifactType taxonomy. The sermon format here
+    // is the outline-style ministry doc, not a `sermons/{id}` entity
+    // (which has its own dedicated "Generar sermón" path with wizard
+    // metadata) — so it persists as SERMON_OUTLINE.
+    const persistArtifactType = (): 'sermon-outline' | 'devotional' | 'study-guide' => {
+        if (format === 'sermon') return 'sermon-outline';
+        if (format === 'devotional') return 'devotional';
+        return 'study-guide';
+    };
+
+    const handleSaveToResources = async () => {
+        if (!result) return;
+        try {
+            await saveExegesisArtifact.mutateAsync({
+                paperId,
+                artifactType: persistArtifactType(),
+                title: `${suggestedFilename} — ${t(`canonical.ministry.format.${format}`)}`,
+                markdown: result.markdown,
+            });
+            setSaved(true);
+            toast.success(t('canonical.ministry.savedToast'));
+        } catch (err) {
+            console.error('[exegesis] saveExegesisArtifact failed:', err);
+            toast.error(t('canonical.ministry.saveFailed'));
         }
     };
 
@@ -110,6 +141,7 @@ export function MinistryCompositionDialog({
             setResult(null);
             setErrorMessage(null);
             setView('rendered');
+            setSaved(false);
         }
         onOpenChange(next);
     };
@@ -247,6 +279,21 @@ export function MinistryCompositionDialog({
                                     </button>
                                 </div>
                                 <div className="flex items-center gap-1.5">
+                                    <Button
+                                        size="sm"
+                                        variant={saved ? 'ghost' : 'default'}
+                                        onClick={handleSaveToResources}
+                                        disabled={saveExegesisArtifact.isPending || saved}
+                                    >
+                                        {saveExegesisArtifact.isPending ? (
+                                            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                                        ) : (
+                                            <BookmarkPlus className="h-3.5 w-3.5 mr-1" />
+                                        )}
+                                        {saved
+                                            ? t('canonical.ministry.savedCta')
+                                            : t('canonical.ministry.saveCta')}
+                                    </Button>
                                     <Button size="sm" variant="outline" onClick={handleCopy}>
                                         <Copy className="h-3.5 w-3.5 mr-1" />
                                         {t('canonical.compose.copy')}

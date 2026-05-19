@@ -522,6 +522,38 @@ export function useExegesisPapers() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sermons', user?.uid] });
+            // Series planner row flips from "Generar desde paper" to
+            // "Abrir borrador" once the use case patches
+            // plannedSermons[].draftId — refresh series cache.
+            queryClient.invalidateQueries({ queryKey: ['series'] });
+        },
+    });
+
+    // Persist a composition output (academic paper or ministry
+    // sermon/devotional/study-guide markdown) as an Extraction so it
+    // survives dialog close + shows up in Mis Recursos and the
+    // per-paper "Artefactos derivados" panel.
+    const saveExegesisArtifact = useMutation({
+        mutationFn: async (input: {
+            paperId: string;
+            artifactType: 'academic-paper' | 'sermon-outline' | 'devotional' | 'study-guide';
+            title: string;
+            markdown: string;
+        }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.saveExegesisArtifactExtraction.execute({
+                ownerId: user.uid,
+                paperId: input.paperId,
+                artifactType: input.artifactType,
+                title: input.title,
+                markdown: input.markdown,
+            });
+        },
+        onSuccess: () => {
+            // Mis Recursos (extractions list) + per-paper artifacts
+            // hook (Phase C). Both keys are namespaced by user.
+            queryClient.invalidateQueries({ queryKey: ['extractions', user?.uid] });
+            queryClient.invalidateQueries({ queryKey: ['paper-artifacts'] });
         },
     });
 
@@ -558,6 +590,7 @@ export function useExegesisPapers() {
         composeSermonFromAnalyses,
         composeDevotionalFromAnalyses,
         composeStudyGuideFromAnalyses,
+        saveExegesisArtifact,
     };
 }
 

@@ -141,6 +141,8 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             currentStepId: null,
             assembledMarkdown: null,
             archivedAt: null,
+            seriesId: draft.seriesId ?? null,
+            pericopeId: draft.pericopeId ?? null,
         };
         await setDoc(ref, serialize(paper));
         return paper;
@@ -696,6 +698,8 @@ function serialize(paper: ExegeticalPaper): DocumentData {
     if (paper.structuralExpectations !== undefined) {
         data.structuralExpectations = paper.structuralExpectations;
     }
+    if (paper.seriesId !== undefined) data.seriesId = paper.seriesId;
+    if (paper.pericopeId !== undefined) data.pericopeId = paper.pericopeId;
     return data;
 }
 
@@ -729,6 +733,8 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
         currentStepId: data.currentStepId ?? null,
         assembledMarkdown: data.assembledMarkdown ?? null,
         archivedAt: data.archivedAt?.toDate?.() ?? data.archivedAt ?? null,
+        seriesId: typeof data.seriesId === 'string' ? data.seriesId : null,
+        pericopeId: typeof data.pericopeId === 'string' ? data.pericopeId : null,
     };
 }
 

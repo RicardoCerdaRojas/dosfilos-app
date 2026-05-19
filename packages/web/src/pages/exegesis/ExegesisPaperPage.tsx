@@ -54,6 +54,7 @@ import { AcademicCompositionDialog } from '@/components/exegesis/canonical/Acade
 import { MinistryCompositionDialog } from '@/components/exegesis/canonical/MinistryCompositionDialog';
 import { CoherencePassDialog } from '@/components/exegesis/CoherencePassDialog';
 import { ExegesisQuotaBadge } from '@/components/exegesis/ExegesisQuotaBadge';
+import { PaperDerivedArtifactsPanel } from '@/components/exegesis/PaperDerivedArtifactsPanel';
 import { TextZoomControl } from '@/components/ui/text-zoom-control';
 import { getTextZoomClass, type TextZoomLevel } from '@/lib/textZoom';
 import { exportPaperToDocx } from '@/lib/exegesis/exportPaperToDocx';
@@ -498,6 +499,7 @@ export function ExegesisPaperPage() {
                                 isRemoving={removeSource.isPending}
                                 t={t}
                             />
+                            <PaperDerivedArtifactsPanel paperId={paper.id} />
                         </aside>
                     )}
                 </div>
@@ -662,7 +664,13 @@ function StepsPanel({
             ) : (
                 <div className="space-y-3">
                     {sortedSteps.map(step => (
-                        <StepCard key={step.id} step={step} paperId={paper.id} language={language} />
+                        <StepCard
+                            key={step.id}
+                            step={step}
+                            paperId={paper.id}
+                            language={language}
+                            allSteps={paper.steps}
+                        />
                     ))}
                     {/* v1.7 corpus-usage planning — coverage report
                         once the user starts accepting steps. Self-hides

@@ -408,6 +408,13 @@ export class SeriesService {
             const startDate = plan.series.startDate ? new Date(plan.series.startDate) : undefined;
             const frequency = plan.frequency || 'weekly';
 
+            // Pre-generate the series id so we can stamp it on each auto-
+            // created paper (denormalized back-reference). Auto paper
+            // creation happens BEFORE the series doc is persisted, so the
+            // id has to be known upfront. We then pass the same id into
+            // `SermonSeriesEntity.create` so the saved series matches.
+            const seriesId = crypto.randomUUID();
+
             // Create planned sermons with calculated dates (stored as metadata, NOT actual sermons)
             const plannedSermonsInitial: PlannedSermon[] = plan.sermons.map((sermonData) => {
                 let scheduledDate: Date | undefined;
@@ -449,6 +456,7 @@ export class SeriesService {
             // "Crear paper" button in SeriesDetail still works as a retry.
             const plannedSermons = await this.autoCreatePapersForPericopes(
                 userId,
+                seriesId,
                 plannedSermonsInitial,
                 plan.displayLanguage ?? 'es',
                 plan.series.metadata?.exegesisDefaults,
@@ -466,8 +474,11 @@ export class SeriesService {
                   }
                 : incomingMetadata.expository;
 
-            // 1. Create Series Entity with planned sermons in metadata
+            // 1. Create Series Entity with planned sermons in metadata.
+            //    Use the pre-generated `seriesId` so it matches the back-
+            //    references already stamped on auto-created papers.
             const series = SermonSeriesEntity.create({
+                id: seriesId,
                 userId,
                 title: plan.series.title!,
                 description: plan.series.description!,
@@ -547,6 +558,7 @@ export class SeriesService {
         status?: PlannedSermonStatus;
     }>(
         userId: string,
+        seriesId: string,
         plannedSermons: T[],
         displayLanguage: 'es' | 'en',
         exegesisDefaults?: SeriesExegesisDefaults,
@@ -580,6 +592,11 @@ export class SeriesService {
                         title: planned.title,
                         assignmentBrief: planned.syntacticUnit.justification ?? null,
                         styleGuideId: exegesisDefaults?.styleGuideId ?? null,
+                        // Denormalized back-reference so the sermon-
+                        // generation use case can patch this series'
+                        // planned-sermon entry without an O(N) scan.
+                        seriesId,
+                        pericopeId: planned.id,
                         ...(exegesisDefaults?.rubricTemplateId !== undefined
                             ? { rubricTemplateId: exegesisDefaults.rubricTemplateId }
                             : {}),

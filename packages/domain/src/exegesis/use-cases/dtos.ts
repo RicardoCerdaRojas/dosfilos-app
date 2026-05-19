@@ -72,6 +72,15 @@ export interface CreateExegeticalPaperInput {
      * want to skip the role scaffolding.
      */
     exegeticalStrategy?: 'free' | 'dialectical';
+    /**
+     * Denormalized back-reference when this paper is being auto-created
+     * by a SermonSeries pericope. Stored on the paper so downstream use
+     * cases (notably sermon generation) can patch the originating
+     * series without an O(N) scan. Standalone paper creation leaves
+     * both omitted/null.
+     */
+    seriesId?: string | null;
+    pericopeId?: string | null;
 }
 
 // ── UpdatePaperBrief ────────────────────────────────────────────────────

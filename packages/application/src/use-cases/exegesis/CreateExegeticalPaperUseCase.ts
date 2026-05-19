@@ -80,6 +80,8 @@ export class CreateExegeticalPaperUseCase {
             assignmentBrief: normalizeBrief(input.assignmentBrief),
             styleGuideId: input.styleGuideId,
             sources: [],
+            seriesId: input.seriesId ?? null,
+            pericopeId: input.pericopeId ?? null,
         });
 
         // Strategy-only preset short-circuits template resolution.

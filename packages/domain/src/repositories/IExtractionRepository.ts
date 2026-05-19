@@ -6,7 +6,14 @@ import { Extraction, ExtractionExternalRef, ExtractionType } from '../entities/E
  */
 export interface CreateExtractionInput {
     userId: string;
-    sessionId: string;
+    /**
+     * Originating Faculty session id. Pass `null` for artifacts that
+     * are not produced from a chat session — e.g. compositions
+     * launched from an exegetical paper detail page, where the source
+     * is `externalRef.collection === 'exegeticalPapers'` instead of a
+     * conversational session.
+     */
+    sessionId: string | null;
     type: ExtractionType;
     title: string;
     markdown: string;
@@ -36,6 +43,18 @@ export interface IExtractionRepository {
 
     /** All extractions owned by the user across sessions, newest first. */
     listByUser(userId: string): Promise<Extraction[]>;
+
+    /**
+     * All extractions whose `externalRef` matches the given collection
+     * + id. Used by the per-paper "Artefactos derivados" panel to
+     * surface every composition that was saved from this paper.
+     * Newest first.
+     */
+    listByExternalRef(
+        userId: string,
+        collection: 'sermons' | 'exegeticalPapers',
+        id: string,
+    ): Promise<Extraction[]>;
 
     /** Replaces the markdown body, bumps version, updates updatedAt. */
     updateMarkdown(userId: string, extractionId: string, markdown: string): Promise<void>;

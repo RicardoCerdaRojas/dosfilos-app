@@ -5,6 +5,8 @@ import {
     FirestoreUserAssignmentBriefRepository,
     FirebaseLibraryRepository,
     FirebaseSermonRepository,
+    FirebaseSeriesRepository,
+    FirestoreExtractionRepository,
     GeminiAcademicComposer,
     GeminiCanonicalVerseAnalyzer,
     GeminiConclusionComposer,
@@ -95,6 +97,8 @@ import {
     RunCoherencePassUseCase,
     ClassifySourceTypeUseCase,
     GenerateSermonFromPaperUseCase,
+    SaveExegesisArtifactExtractionUseCase,
+    ListPaperDerivedArtifactsUseCase,
 } from '../use-cases/exegesis';
 
 /**
@@ -217,6 +221,16 @@ class ExegesisService {
 
     // Bridge: paper → sermon
     public generateSermonFromPaper: GenerateSermonFromPaperUseCase;
+
+    // Persist composition outputs (academic / ministry) as Extractions
+    // so they show up in Mis Recursos and the per-paper "Artefactos
+    // derivados" panel. See `SaveExegesisArtifactExtractionUseCase`.
+    public saveExegesisArtifactExtraction: SaveExegesisArtifactExtractionUseCase;
+
+    // Unified read for the paper detail "Artefactos derivados" panel —
+    // sermons (sourcePaperId) + extractions (externalRef → paper)
+    // merged into one sorted list.
+    public listPaperDerivedArtifacts: ListPaperDerivedArtifactsUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -521,10 +535,29 @@ class ExegesisService {
             apiKey || '',
             exegesisModelId,
         );
+        // Series repo is wired so the use case can patch the
+        // originating series' planned-sermon entry (draftId + status)
+        // when the paper came from a pericope. Without this the
+        // planner shows "Iniciar borrador" indefinitely and clicking
+        // creates a duplicate empty sermon — the bug Phase A fixes.
+        const seriesRepository = new FirebaseSeriesRepository();
         this.generateSermonFromPaper = new GenerateSermonFromPaperUseCase(
             paperRepository,
             sermonRepository,
             paperToSermonTransformer,
+            seriesRepository,
+        );
+
+        const extractionRepository = new FirestoreExtractionRepository();
+        this.saveExegesisArtifactExtraction = new SaveExegesisArtifactExtractionUseCase(
+            paperRepository,
+            extractionRepository,
+        );
+
+        this.listPaperDerivedArtifacts = new ListPaperDerivedArtifactsUseCase(
+            paperRepository,
+            extractionRepository,
+            sermonRepository,
         );
     }
 }

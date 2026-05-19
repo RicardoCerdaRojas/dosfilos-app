@@ -153,6 +153,21 @@ export class FirebaseSermonRepository implements ISermonRepository {
         return snapshot.docs.map((doc) => this.firestoreToSermon(doc.id, doc.data()));
     }
 
+    async findBySourcePaperId(userId: string, paperId: string): Promise<SermonEntity[]> {
+        // Composite index requirement: (userId asc, sourcePaperId asc,
+        // createdAt desc). Firestore prompts to auto-create on first
+        // query if missing. See `firestore.indexes.json` in the
+        // infrastructure package for the declarative definition.
+        const q = query(
+            collection(db, this.collectionName),
+            where('userId', '==', userId),
+            where('sourcePaperId', '==', paperId),
+            orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map((doc) => this.firestoreToSermon(doc.id, doc.data()));
+    }
+
     private sermonToFirestore(sermon: SermonEntity): any {
         return {
             userId: sermon.userId,

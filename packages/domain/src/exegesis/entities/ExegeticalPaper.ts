@@ -178,6 +178,25 @@ export interface ExegeticalPaper {
 
     /** Soft-delete marker. */
     archivedAt: Date | null;
+
+    /**
+     * Denormalized back-reference when the paper was auto-created by a
+     * `SermonSeries` pericope (planner pipeline). Lets downstream use
+     * cases — notably `GenerateSermonFromPaperUseCase` — patch the
+     * originating series so the planner's `plannedSermons[].draftId`
+     * stays in sync after a sermon is generated from the paper.
+     *
+     * Source of truth remains `PlannedSermon.paperId` on the series;
+     * this is a denormalized lookup index, intentionally optional so
+     * standalone (non-series) papers and pre-existing papers stay
+     * valid. A future backfill callable can populate it for legacy
+     * papers.
+     *
+     * Both fields are populated together (or both null) — a partial
+     * link makes no semantic sense.
+     */
+    seriesId?: string | null;
+    pericopeId?: string | null;
 }
 
 export type ExegeticalPaperPhase =

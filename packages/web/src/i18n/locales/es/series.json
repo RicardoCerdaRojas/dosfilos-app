@@ -558,6 +558,12 @@
             "openPaper": "Abrir paper",
             "openDraft": "Abrir borrador",
             "startDraft": "Iniciar sermón",
+            "generateFromPaper": "Generar desde paper",
+            "toast": {
+                "sermonGenerated": "Sermón generado desde el paper.",
+                "sermonOverloaded": "El servicio está saturado. Intenta de nuevo en unos minutos.",
+                "sermonFailed": "No se pudo generar el sermón. Intenta de nuevo."
+            },
             "moreActions": "Más acciones",
             "actionsLabel": "Acciones",
             "editFull": "Editar detalles",
