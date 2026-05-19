@@ -131,6 +131,17 @@ export {
     type GenerateSermonFromPaperInput,
     type GenerateSermonFromPaperOutput,
 } from './GenerateSermonFromPaperUseCase';
+export {
+    SaveExegesisArtifactExtractionUseCase,
+    type SaveExegesisArtifactExtractionInput,
+    type ExegesisArtifactType,
+} from './SaveExegesisArtifactExtractionUseCase';
+export {
+    ListPaperDerivedArtifactsUseCase,
+    type ListPaperDerivedArtifactsInput,
+    type DerivedArtifact,
+    type DerivedArtifactKind,
+} from './ListPaperDerivedArtifactsUseCase';
 
 // Pericope assistant (Phase 3 of the sermon-series pipeline)
 export {

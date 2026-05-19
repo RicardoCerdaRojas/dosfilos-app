@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Download, Loader2, Sparkles } from 'lucide-react';
+import { BookmarkPlus, Copy, Download, Loader2, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
@@ -57,10 +57,11 @@ export function AcademicCompositionDialog({
     savedAssembledMarkdown,
 }: AcademicCompositionDialogProps) {
     const { t } = useTranslation('exegesis');
-    const { composeAcademicPaper } = useExegesisPapers();
+    const { composeAcademicPaper, saveExegesisArtifact } = useExegesisPapers();
     const [result, setResult] = useState<ComposeAcademicPaperOutput | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [view, setView] = useState<'rendered' | 'raw'>('rendered');
+    const [savedAsArtifact, setSavedAsArtifact] = useState(false);
 
     const handleCompose = async (persist = false) => {
         setErrorMessage(null);
@@ -91,6 +92,23 @@ export function AcademicCompositionDialog({
     const handleSaveToPaper = async () => {
         if (!result) return;
         await handleCompose(true);
+    };
+
+    const handleSaveToResources = async () => {
+        if (!result) return;
+        try {
+            await saveExegesisArtifact.mutateAsync({
+                paperId,
+                artifactType: 'academic-paper',
+                title: `${suggestedFilename} — ${t('canonical.compose.title')}`,
+                markdown: result.markdown,
+            });
+            setSavedAsArtifact(true);
+            toast.success(t('canonical.compose.savedToResourcesToast'));
+        } catch (err) {
+            console.error('[exegesis] saveExegesisArtifact failed:', err);
+            toast.error(t('canonical.compose.saveToResourcesFailed'));
+        }
     };
 
     const handleCopy = async () => {
@@ -125,6 +143,7 @@ export function AcademicCompositionDialog({
             setResult(null);
             setErrorMessage(null);
             setView('rendered');
+            setSavedAsArtifact(false);
         }
         onOpenChange(next);
     };
@@ -165,6 +184,9 @@ export function AcademicCompositionDialog({
                             onDownload={handleDownload}
                             onRecompose={() => handleCompose(false)}
                             onSaveToPaper={handleSaveToPaper}
+                            onSaveToResources={handleSaveToResources}
+                            savingToResources={saveExegesisArtifact.isPending}
+                            savedToResources={savedAsArtifact}
                         />
                     )}
                 </div>
@@ -325,6 +347,9 @@ function SuccessView({
     onDownload,
     onRecompose,
     onSaveToPaper,
+    onSaveToResources,
+    savingToResources,
+    savedToResources,
 }: {
     result: ComposeAcademicPaperOutput;
     view: 'rendered' | 'raw';
@@ -333,6 +358,9 @@ function SuccessView({
     onDownload: () => void;
     onRecompose: () => void;
     onSaveToPaper: () => void;
+    onSaveToResources: () => void;
+    savingToResources: boolean;
+    savedToResources: boolean;
 }) {
     const { t } = useTranslation('exegesis');
     return (
@@ -367,6 +395,22 @@ function SuccessView({
                     </button>
                 </div>
                 <div className="flex items-center gap-1.5">
+                    <Button
+                        size="sm"
+                        variant={savedToResources ? 'ghost' : 'outline'}
+                        onClick={onSaveToResources}
+                        disabled={savingToResources || savedToResources}
+                        title={t('canonical.compose.saveToResourcesTooltip')}
+                    >
+                        {savingToResources ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        ) : (
+                            <BookmarkPlus className="h-3.5 w-3.5 mr-1" />
+                        )}
+                        {savedToResources
+                            ? t('canonical.compose.savedToResources')
+                            : t('canonical.compose.saveToResources')}
+                    </Button>
                     <Button size="sm" variant="outline" onClick={onCopy}>
                         <Copy className="h-3.5 w-3.5 mr-1" />
                         {t('canonical.compose.copy')}

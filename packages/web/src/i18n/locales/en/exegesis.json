@@ -1175,7 +1175,8 @@
             "composeConclusionTooltip": "Compose the conclusion from the accepted canonical analyses",
             "composeIntroductionTooltip": "Compose the introduction LAST, using the accepted analyses + accepted conclusion",
             "composeFromAnalyses": "Compose from analyses",
-            "recomposeFromAnalyses": "Recompose from analyses"
+            "recomposeFromAnalyses": "Recompose from analyses",
+            "composeRetry": "Retry composition"
         },
         "verseProse": {
             "button": {
@@ -1190,6 +1191,27 @@
         "toast": {
             "analyzeFailed": "Could not generate the canonical analysis.",
             "composeSectionFailed": "Could not compose this section. {{message}}"
+        },
+        "precheck": {
+            "conclusion": {
+                "title": "Conclusion not ready to compose",
+                "subtitle": "The conclusion is composed from the accepted canonical analyses of each verse.",
+                "hint": "Tip: click \"Accept\" on each verse to lock in the version you want. Then you can compose the conclusion."
+            },
+            "introduction": {
+                "title": "Introduction not ready to compose",
+                "subtitle": "The introduction comes last: it needs the accepted analyses plus the accepted conclusion.",
+                "hint": "Tip: accept the pending verses first, then compose and accept the conclusion, and finally compose the introduction."
+            },
+            "awaitingReviewTitle_one": "{{count}} verse ready to accept",
+            "awaitingReviewTitle_other": "{{count}} verses ready to accept",
+            "noAnalysisTitle_one": "{{count}} verse still without analysis",
+            "noAnalysisTitle_other": "{{count}} verses still without analysis",
+            "conclusionMissingTitle": "Conclusion not accepted yet",
+            "conclusionMissingBody": "Before composing the introduction, compose and accept the conclusion.",
+            "acceptCta": "Go accept",
+            "analyzeCta": "Go analyze",
+            "close": "Got it"
         },
         "view": {
             "prose": "Prose view",
@@ -1271,6 +1293,11 @@
             "persistWarning": "Composition succeeded but could not be saved to the paper. Copy or download the markdown before closing.",
             "saveToPaper": "Save to paper",
             "saveToPaperTooltip": "Saves this composition as the paper's assembledMarkdown. You can recompose at any time.",
+            "saveToResources": "Save to My Resources",
+            "savedToResources": "Saved to My Resources",
+            "saveToResourcesTooltip": "Stores an immutable copy in My Resources. Survives dialog close and appears in the paper's artifacts panel.",
+            "savedToResourcesToast": "Saved to My Resources.",
+            "saveToResourcesFailed": "Could not save to My Resources. Please try again.",
             "savedExists": "A saved composition exists for this paper.",
             "savedHint": "If the verse analyses changed since last time, recompose so the output reflects the current state."
         },
@@ -1283,11 +1310,15 @@
                 "devotional": "Devotional",
                 "studyGuide": "Study guide"
             },
-            "idleHint": "Each composition consumes a Gemini Pro 2.5 call. Output is NOT auto-persisted — copy or download the markdown.",
+            "idleHint": "Each composition consumes a Gemini Pro 2.5 call. Save to My Resources to keep the output beyond the dialog.",
             "cta": "Compose",
             "composing": "Composing ministry material…",
             "errorTitle": "Could not compose the material",
             "errorGeneric": "Unexpected error during composition.",
+            "saveCta": "Save to My Resources",
+            "savedCta": "Saved",
+            "savedToast": "Saved to My Resources.",
+            "saveFailed": "Could not save to My Resources. Please try again.",
             "sermon": {
                 "toneLabel": "Sermon tone",
                 "tone": {
@@ -1509,6 +1540,12 @@
                 "generate": "Generate",
                 "retry": "Retry",
                 "accept": "Accept",
+                "acceptCollapsedTooltip": "Accepts without expanding. Make sure you've reviewed the analysis first — accepting feeds it into the conclusion composer.",
+                "generateLegacyVerse": "Quick prose",
+                "generateLegacyVerseTooltip": "Generates free markdown without structured canonical analysis. CANNOT be used to compose the conclusion or introduction. Recommended: use \"Analyze\".",
+                "generateLegacySection": "Generate (legacy mode)",
+                "generateLegacySectionTooltip": "Bypasses the pinned-source contract (issue #126) and ignores accepted analyses. Recommended: use \"Compose from analyses\".",
+                "overflowMenuLabel": "More actions",
                 "regenerate": "Regenerate",
                 "regenerating": "Regenerating…",
                 "regenerateWithHint": "Hint & regenerate",
@@ -1556,6 +1593,20 @@
             "none": "No sources yet. Add them so the orchestrator can interact with them.",
             "addCta": "Edit in setup",
             "remove": "Remove source"
+        },
+        "derived": {
+            "title": "Derived artifacts",
+            "loading": "Loading artifacts…",
+            "empty": "No sermon generated yet, and no ministry material saved from this paper.",
+            "draftBadge": "draft",
+            "kind": {
+                "sermon": "Sermon",
+                "academic-paper": "Academic paper",
+                "sermon-outline": "Sermon outline",
+                "devotional": "Devotional",
+                "study-guide": "Study guide",
+                "other-extraction": "Resource"
+            }
         },
         "notFound": {
             "title": "Paper not found",

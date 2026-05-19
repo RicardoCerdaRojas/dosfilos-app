@@ -160,6 +160,25 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
         return snap.docs.map(d => this.fromFirestore(d));
     }
 
+    async listByExternalRef(
+        userId: string,
+        collection: 'sermons' | 'exegeticalPapers',
+        id: string,
+    ): Promise<Extraction[]> {
+        // Composite index requirement: (userId asc, externalRef.collection asc,
+        // externalRef.id asc, createdAt desc). Firestore returns a console
+        // link to auto-create if missing.
+        const q = query(
+            this.getCollectionRef(),
+            where('userId', '==', userId),
+            where('externalRef.collection', '==', collection),
+            where('externalRef.id', '==', id),
+            orderBy('createdAt', 'desc'),
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(d => this.fromFirestore(d));
+    }
+
     async updateMarkdown(userId: string, extractionId: string, markdown: string): Promise<void> {
         const docRef = this.getDocRef(extractionId);
         const snap = await getDoc(docRef);

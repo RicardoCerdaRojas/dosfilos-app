@@ -1175,7 +1175,8 @@
             "composeConclusionTooltip": "Compone la conclusión a partir de los análisis canónicos aceptados",
             "composeIntroductionTooltip": "Compone la introducción al final, usando los análisis aceptados + la conclusión aceptada",
             "composeFromAnalyses": "Componer desde análisis",
-            "recomposeFromAnalyses": "Recomponer desde análisis"
+            "recomposeFromAnalyses": "Recomponer desde análisis",
+            "composeRetry": "Reintentar composición"
         },
         "verseProse": {
             "button": {
@@ -1190,6 +1191,27 @@
         "toast": {
             "analyzeFailed": "No se pudo generar el análisis canónico.",
             "composeSectionFailed": "No se pudo componer esta sección. {{message}}"
+        },
+        "precheck": {
+            "conclusion": {
+                "title": "Aún no puedes componer la conclusión",
+                "subtitle": "La conclusión se redacta a partir de los análisis canónicos aceptados de cada versículo.",
+                "hint": "Tip: usa el botón \"Aceptar\" en cada versículo para guardar la versión que prefieras. Recién entonces se podrá componer la conclusión."
+            },
+            "introduction": {
+                "title": "Aún no puedes componer la introducción",
+                "subtitle": "La introducción va al final: necesita los análisis aceptados y la conclusión aceptada.",
+                "hint": "Tip: primero acepta los versículos pendientes, luego compón y acepta la conclusión, y al final compón la introducción."
+            },
+            "awaitingReviewTitle_one": "{{count}} versículo listo para aceptar",
+            "awaitingReviewTitle_other": "{{count}} versículos listos para aceptar",
+            "noAnalysisTitle_one": "{{count}} versículo aún sin análisis",
+            "noAnalysisTitle_other": "{{count}} versículos aún sin análisis",
+            "conclusionMissingTitle": "Falta aceptar la conclusión",
+            "conclusionMissingBody": "Antes de componer la introducción, compón la conclusión y acéptala.",
+            "acceptCta": "Ir a aceptar",
+            "analyzeCta": "Ir a analizar",
+            "close": "Entendido"
         },
         "view": {
             "prose": "Vista de prosa",
@@ -1271,6 +1293,11 @@
             "persistWarning": "La composición se generó pero no se pudo guardar en el paper. Copiá o descargá el markdown antes de cerrar.",
             "saveToPaper": "Guardar al paper",
             "saveToPaperTooltip": "Guarda esta composición como assembledMarkdown del paper. Puedes recomponer en cualquier momento.",
+            "saveToResources": "Guardar en Mis Recursos",
+            "savedToResources": "Guardado en Mis Recursos",
+            "saveToResourcesTooltip": "Guarda una copia inmutable en Mis Recursos. Sobrevive al cierre del diálogo y aparece en el panel de artefactos del paper.",
+            "savedToResourcesToast": "Guardado en Mis Recursos.",
+            "saveToResourcesFailed": "No se pudo guardar en Mis Recursos. Intenta de nuevo.",
             "savedExists": "Hay una composición guardada en este paper.",
             "savedHint": "Si los análisis de los versos cambiaron desde la última vez, reompone para que la salida refleje el estado actual."
         },
@@ -1283,11 +1310,15 @@
                 "devotional": "Devocional",
                 "studyGuide": "Guía de estudio"
             },
-            "idleHint": "Cada composición consume una llamada de Gemini Pro 2.5. La salida no se persiste — copiá o descargá el markdown.",
+            "idleHint": "Cada composición consume una llamada de Gemini Pro 2.5. Guarda en Mis Recursos para conservarla más allá del diálogo.",
             "cta": "Componer",
             "composing": "Componiendo material ministerial…",
             "errorTitle": "No se pudo componer el material",
             "errorGeneric": "Error inesperado durante la composición.",
+            "saveCta": "Guardar en Mis Recursos",
+            "savedCta": "Guardado",
+            "savedToast": "Guardado en Mis Recursos.",
+            "saveFailed": "No se pudo guardar en Mis Recursos. Intenta de nuevo.",
             "sermon": {
                 "toneLabel": "Tono del sermón",
                 "tone": {
@@ -1509,6 +1540,12 @@
                 "generate": "Generar",
                 "retry": "Reintentar",
                 "accept": "Aceptar",
+                "acceptCollapsedTooltip": "Acepta sin expandir. Asegúrate de haber revisado el análisis antes — al aceptar entra como insumo de la conclusión.",
+                "generateLegacyVerse": "Prosa rápida",
+                "generateLegacyVerseTooltip": "Genera markdown libre sin análisis canónico estructurado. NO se podrá usar como insumo para componer la conclusión o introducción. Recomendado: usa \"Analizar\".",
+                "generateLegacySection": "Generar (modo legacy)",
+                "generateLegacySectionTooltip": "Bypassa el contrato de fuentes pinned (issue #126) y no usa los análisis aceptados. Recomendado: usa \"Componer desde análisis\".",
+                "overflowMenuLabel": "Más acciones",
                 "regenerate": "Regenerar",
                 "regenerating": "Regenerando…",
                 "regenerateWithHint": "Hint y regenerar",
@@ -1556,6 +1593,20 @@
             "none": "Sin fuentes todavía. Agrégalas para que el orquestador pueda interactuar con ellas.",
             "addCta": "Editar en configuración",
             "remove": "Quitar fuente"
+        },
+        "derived": {
+            "title": "Artefactos derivados",
+            "loading": "Cargando artefactos…",
+            "empty": "Aún no se ha generado sermón ni se ha guardado material ministerial desde este paper.",
+            "draftBadge": "borrador",
+            "kind": {
+                "sermon": "Sermón",
+                "academic-paper": "Paper académico",
+                "sermon-outline": "Bosquejo de sermón",
+                "devotional": "Devocional",
+                "study-guide": "Guía de estudio",
+                "other-extraction": "Recurso"
+            }
         },
         "notFound": {
             "title": "Trabajo no encontrado",

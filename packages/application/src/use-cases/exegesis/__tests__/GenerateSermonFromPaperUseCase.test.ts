@@ -1,12 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
     SermonEntity,
+    SermonSeriesEntity,
     type ExegeticalPaper,
     type IExegeticalPaperRepository,
     type IPaperToSermonTransformer,
     type ISermonRepository,
+    type ISeriesRepository,
     type PaperToSermonInput,
     type PaperToSermonOutput,
+    type PlannedSermon,
 } from '@dosfilos/domain';
 
 // Mock the credit reservation singleton so the test doesn't need to
@@ -146,5 +149,150 @@ describe('GenerateSermonFromPaperUseCase', () => {
         expect(created[0]!.status).toBe('draft');
         expect(created[0]!.bibleReferences).toContain('2 Pedro 1:1-11');
         expect(result.sermonId).toBe(created[0]!.id);
+    });
+
+    describe('series coherence patch', () => {
+        const makePlanned = (id: string, overrides: Partial<PlannedSermon> = {}): PlannedSermon => ({
+            id,
+            week: 1,
+            title: 'Pericope title',
+            description: '',
+            passage: '2 Pedro 1:1-11',
+            ...overrides,
+        });
+
+        const stubSeriesRepo = (series: SermonSeriesEntity | null): ISeriesRepository => {
+            const updates: SermonSeriesEntity[] = [];
+            return {
+                create: vi.fn(),
+                update: vi.fn(async (s: SermonSeriesEntity) => {
+                    updates.push(s);
+                    return s;
+                }),
+                delete: vi.fn(),
+                findById: vi.fn(async () => series),
+                findByUserId: vi.fn(),
+                __updates: updates,
+            } as any;
+        };
+
+        const makeLinkedPaper = () =>
+            makePaper({ seriesId: 'series-1', pericopeId: 'pericope-A' });
+
+        it('stamps draftId + sermon-in-progress on the matching pericope when paper is linked to a series', async () => {
+            const series = SermonSeriesEntity.create({
+                id: 'series-1',
+                userId: 'user-1',
+                title: 'Serie 2 Pedro',
+                description: 'Serie expositiva',
+                type: 'expository',
+                metadata: {
+                    plannedSermons: [
+                        makePlanned('pericope-A'),
+                        makePlanned('pericope-B'),
+                    ],
+                },
+                resourceIds: [],
+                sermonIds: [],
+                draftIds: [],
+            });
+            const seriesRepo = stubSeriesRepo(series);
+            const sermonRepo = stubSermonRepo();
+
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makeLinkedPaper()),
+                sermonRepo,
+                stubTransformer(),
+                seriesRepo,
+            );
+
+            await useCase.execute({ paperId: 'paper-1', actorUserId: 'user-1', tone: 'pastoral' });
+
+            const updates = (seriesRepo as any).__updates as SermonSeriesEntity[];
+            expect(updates).toHaveLength(1);
+            const patched = updates[0]!.metadata?.plannedSermons ?? [];
+            const patchedA = patched.find(p => p.id === 'pericope-A');
+            const patchedB = patched.find(p => p.id === 'pericope-B');
+            const createdSermon = (sermonRepo as any).__created[0] as SermonEntity;
+            expect(patchedA?.draftId).toBe(createdSermon.id);
+            expect(patchedA?.status).toBe('sermon-in-progress');
+            expect(patchedB?.draftId).toBeUndefined();
+            expect(updates[0]!.draftIds).toContain(createdSermon.id);
+        });
+
+        it('does not clobber an existing draftId on the same pericope', async () => {
+            const series = SermonSeriesEntity.create({
+                id: 'series-1',
+                userId: 'user-1',
+                title: 'Serie 2 Pedro',
+                description: '',
+                type: 'expository',
+                metadata: {
+                    plannedSermons: [
+                        makePlanned('pericope-A', { draftId: 'sermon-existing', status: 'sermon-in-progress' }),
+                    ],
+                },
+                resourceIds: [],
+                sermonIds: [],
+                draftIds: ['sermon-existing'],
+            });
+            const seriesRepo = stubSeriesRepo(series);
+
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makeLinkedPaper()),
+                stubSermonRepo(),
+                stubTransformer(),
+                seriesRepo,
+            );
+
+            await useCase.execute({ paperId: 'paper-1', actorUserId: 'user-1', tone: 'pastoral' });
+
+            const updates = (seriesRepo as any).__updates as SermonSeriesEntity[];
+            expect(updates).toHaveLength(0);
+        });
+
+        it('is a no-op when paper has no series back-reference', async () => {
+            const seriesRepo = stubSeriesRepo(null);
+
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makePaper()),
+                stubSermonRepo(),
+                stubTransformer(),
+                seriesRepo,
+            );
+
+            await useCase.execute({ paperId: 'paper-1', actorUserId: 'user-1', tone: 'pastoral' });
+
+            expect(seriesRepo.findById).not.toHaveBeenCalled();
+            const updates = (seriesRepo as any).__updates as SermonSeriesEntity[];
+            expect(updates).toHaveLength(0);
+        });
+
+        it('swallows series-repo failures without failing sermon creation', async () => {
+            const seriesRepo: ISeriesRepository = {
+                create: vi.fn(),
+                update: vi.fn(),
+                delete: vi.fn(),
+                findById: vi.fn(async () => { throw new Error('firestore down'); }),
+                findByUserId: vi.fn(),
+            };
+            const sermonRepo = stubSermonRepo();
+
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makeLinkedPaper()),
+                sermonRepo,
+                stubTransformer(),
+                seriesRepo,
+            );
+
+            const result = await useCase.execute({
+                paperId: 'paper-1',
+                actorUserId: 'user-1',
+                tone: 'pastoral',
+            });
+
+            expect(result.sermonId).toBeTruthy();
+            expect((sermonRepo as any).__created).toHaveLength(1);
+        });
     });
 });

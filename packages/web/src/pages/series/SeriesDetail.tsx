@@ -56,6 +56,7 @@ export function SeriesDetail() {
     const [editingSermon, setEditingSermon] = useState<SermonItem | null>(null);
     const [timelineOpen, setTimelineOpen] = useState(false);
     const [creatingPaperFor, setCreatingPaperFor] = useState<string | null>(null);
+    const [generatingSermonFor, setGeneratingSermonFor] = useState<string | null>(null);
 
     const {
         series,
@@ -128,6 +129,43 @@ export function SeriesDetail() {
         ? new Date(series.startDate).toLocaleDateString(locale, { month: 'long', year: 'numeric' })
         : (t('detail.header.noStart') as string);
 
+    /**
+     * Generate a sermon draft from an already-assembled paper. Used when
+     * the pipeline shows paper=done / draft=missing — instead of the
+     * legacy "Iniciar borrador" wizard (empty shell), we kick the
+     * paper-to-sermon transformer and land the user on the populated
+     * draft. The use case patches `plannedSermons[].draftId` server-side
+     * so the planner row flips to "Abrir borrador" on reload.
+     */
+    const handleGenerateFromPaper = async (
+        planned: PlannedSermon & { paperId: string },
+    ) => {
+        if (!user?.uid || !series) return;
+        setGeneratingSermonFor(planned.id);
+        try {
+            const result = await exegesisService.generateSermonFromPaper.execute({
+                paperId: planned.paperId,
+                actorUserId: user.uid,
+                // Pastoral is the safe default for the planner — series
+                // are typically expository pastoral preaching. The paper
+                // detail page exposes the full tone selector for users
+                // who want to override.
+                tone: 'pastoral',
+            });
+            toast.success(t('detail.table.toast.sermonGenerated') as string);
+            await reloadData();
+            navigate(`/dashboard/sermons/${result.sermonId}`);
+        } catch (err: any) {
+            console.error('[seriesDetail] generateSermonFromPaper failed:', err);
+            const msg = err?.isExegesisOverload
+                ? (t('detail.table.toast.sermonOverloaded') as string)
+                : (t('detail.table.toast.sermonFailed') as string);
+            toast.error(msg);
+        } finally {
+            setGeneratingSermonFor(null);
+        }
+    };
+
     const handleCreatePaperForPlanned = async (
         planned: PlannedSermon & { syntacticUnit: SyntacticUnit },
     ) => {
@@ -145,6 +183,10 @@ export function SeriesDetail() {
                 title: planned.title,
                 assignmentBrief: planned.syntacticUnit.justification ?? null,
                 styleGuideId: null,
+                // Stamp back-reference so sermon generation can patch
+                // this pericope's draftId without scanning all series.
+                seriesId: series.id,
+                pericopeId: planned.id,
             });
 
             const updated = (series.metadata?.plannedSermons ?? []).map((p) =>
@@ -302,6 +344,7 @@ export function SeriesDetail() {
                             const hasPaper = Boolean(planned?.paperId);
                             const hasSyntacticUnit = Boolean(planned?.syntacticUnit);
                             const isCreatingPaper = creatingPaperFor === planned?.id;
+                            const isGeneratingSermon = generatingSermonFor === planned?.id;
                             const paperPhase = planned?.paperId ? paperPhases.get(planned.paperId) : undefined;
                             return (
                                 <SermonRow
@@ -312,10 +355,12 @@ export function SeriesDetail() {
                                     hasPaper={hasPaper}
                                     hasSyntacticUnit={hasSyntacticUnit}
                                     isCreatingPaper={isCreatingPaper}
+                                    isGeneratingSermon={isGeneratingSermon}
                                     paperPhase={paperPhase}
                                     seriesId={series.id}
                                     onUpdateDate={(d) => handleUpdateSermonDate(item.id, d)}
                                     onStartDraft={() => handleStartDraft(item)}
+                                    onGenerateFromPaper={() => planned?.paperId && handleGenerateFromPaper(planned as PlannedSermon & { paperId: string })}
                                     onContinueEditing={() => item.draftId && handleContinueEditing(item.draftId)}
                                     onEdit={() => setEditingSermon(item)}
                                     onDelete={() => handleDeleteSermon(item.id)}
@@ -393,10 +438,12 @@ interface SermonRowProps {
     hasPaper: boolean;
     hasSyntacticUnit: boolean;
     isCreatingPaper: boolean;
+    isGeneratingSermon: boolean;
     paperPhase: ExegeticalPaperPhase | undefined;
     seriesId: string;
     onUpdateDate: (d: Date | null) => Promise<void>;
     onStartDraft: () => Promise<void>;
+    onGenerateFromPaper: () => Promise<void> | void;
     onContinueEditing: () => void;
     onEdit: () => void;
     onDelete: () => Promise<void>;
@@ -415,9 +462,11 @@ function SermonRow({
     hasPaper,
     hasSyntacticUnit,
     isCreatingPaper,
+    isGeneratingSermon,
     paperPhase,
     onUpdateDate,
     onStartDraft,
+    onGenerateFromPaper,
     onContinueEditing,
     onEdit,
     onDelete,
@@ -524,6 +573,25 @@ function SermonRow({
                         >
                             <Mic className="h-3 w-3 mr-1" />
                             {t('detail.table.openDraft')}
+                        </Button>
+                    ) : item.status === 'planned' && hasPaper && paperPhase === 'assembled' ? (
+                        // Paper is ready — prefer generating the sermon
+                        // from the assembled exegesis instead of opening
+                        // an empty wizard. Backend use case patches the
+                        // pericope's draftId on success so reload flips
+                        // this row to "Abrir borrador" automatically.
+                        <Button
+                            size="sm"
+                            onClick={onGenerateFromPaper}
+                            disabled={isGeneratingSermon}
+                            className="h-7 text-[11.5px]"
+                        >
+                            {isGeneratingSermon ? (
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            ) : (
+                                <Mic className="h-3 w-3 mr-1" />
+                            )}
+                            {t('detail.table.generateFromPaper')}
                         </Button>
                     ) : item.status === 'planned' && (
                         <Button
