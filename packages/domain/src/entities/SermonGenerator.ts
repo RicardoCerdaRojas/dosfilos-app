@@ -95,7 +95,14 @@ export interface SermonContent {
         scriptureReferences?: string[]; // Referencias cruzadas
         illustration?: string;
         implications?: string[]; // Implicaciones (al menos 2)
-        authorityQuote?: string; // Cita de autoridad
+        /**
+         * Cita de autoridad. OPCIONAL. Null when no verifiable quote
+         * exists in the source material. PR #217 hardened the prompt
+         * to refuse invention of attributed quotes — when the LLM has
+         * no verified source, it returns null and the renderer skips
+         * the block. Never accept a fabricated quote here.
+         */
+        authorityQuote?: string | null;
         transition?: string; // Transición al siguiente punto
     }[];
     conclusion: string;

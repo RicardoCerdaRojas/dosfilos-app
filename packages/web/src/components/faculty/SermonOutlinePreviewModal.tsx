@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/context/firebase-context';
+import { useTranslation } from '@/i18n';
 import {
     type SermonPersonalization,
     type SermonTone,
@@ -71,6 +72,7 @@ export function SermonOutlinePreviewModal({
     onSuccess,
 }: SermonOutlinePreviewModalProps) {
     const { user } = useFirebase();
+    const { t } = useTranslation('faculty');
 
     const [phase, setPhase] = useState<Phase>('preview');
     const [edited, setEdited] = useState<SermonOutline>({
@@ -150,32 +152,32 @@ export function SermonOutlinePreviewModal({
                 <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 shrink-0">
                     <DialogTitle className="flex items-center gap-2 text-base font-bold text-emerald-900 dark:text-emerald-100">
                         {phase === 'preview' && (
-                            <><FileText className="h-4 w-4" /> Revisa tu Bosquejo</>
+                            <><FileText className="h-4 w-4" /> {t('sermonOutlineModal.phases.previewTitle')}</>
                         )}
                         {phase === 'personalize' && (
-                            <><Mic className="h-4 w-4" /> Tu Voz Pastoral</>
+                            <><Mic className="h-4 w-4" /> {t('sermonOutlineModal.phases.personalizeTitle')}</>
                         )}
                         {phase === 'generating' && (
-                            <><Sparkles className="h-4 w-4 animate-pulse" /> Generando Sermón...</>
+                            <><Sparkles className="h-4 w-4 animate-pulse" /> {t('sermonOutlineModal.phases.generatingTitle')}</>
                         )}
                     </DialogTitle>
                     {phase === 'preview' && (
                         <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                            Edita la proposición y los puntos antes de continuar.
+                            {t('sermonOutlineModal.phases.previewHint')}
                         </p>
                     )}
                     {phase === 'personalize' && (
                         <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                            Opcional: imprime tu estilo y contexto en el sermón.
+                            {t('sermonOutlineModal.phases.personalizeHint')}
                         </p>
                     )}
 
                     {/* Step indicator for preview & personalize */}
                     {phase !== 'generating' && (
                         <div className="flex items-center gap-2 mt-2">
-                            <StepIndicator step={1} label="Bosquejo" active={phase === 'preview'} completed={phase === 'personalize'} />
+                            <StepIndicator step={1} label={t('sermonOutlineModal.stepIndicator.outline') as string} active={phase === 'preview'} completed={phase === 'personalize'} />
                             <div className="h-px flex-1 bg-emerald-200 dark:bg-emerald-800" />
-                            <StepIndicator step={2} label="Tu Voz" active={phase === 'personalize'} completed={false} />
+                            <StepIndicator step={2} label={t('sermonOutlineModal.stepIndicator.voice') as string} active={phase === 'personalize'} completed={false} />
                         </div>
                     )}
                 </DialogHeader>
@@ -185,11 +187,11 @@ export function SermonOutlinePreviewModal({
                     <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
                         {/* Title */}
                         <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Título</Label>
+                            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t('sermonOutlineModal.fields.title')}</Label>
                             <Input
                                 value={edited.title}
                                 onChange={e => setEdited(p => ({ ...p, title: e.target.value }))}
-                                placeholder="Título del sermón"
+                                placeholder={t('sermonOutlineModal.fields.titlePlaceholder') as string}
                                 className="font-semibold text-foreground"
                             />
                         </div>
@@ -197,22 +199,22 @@ export function SermonOutlinePreviewModal({
                         {/* Passage */}
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-1">
-                                <BookOpen className="h-3 w-3" /> Pasaje
+                                <BookOpen className="h-3 w-3" /> {t('sermonOutlineModal.fields.passage')}
                             </Label>
                             <Input
                                 value={edited.passage}
                                 onChange={e => setEdited(p => ({ ...p, passage: e.target.value }))}
-                                placeholder="ej: 1 Pedro 2:11-17"
+                                placeholder={t('sermonOutlineModal.fields.passagePlaceholder') as string}
                             />
                         </div>
 
                         {/* Proposition */}
                         <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Proposición Homilética</Label>
+                            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t('sermonOutlineModal.fields.proposition')}</Label>
                             <Textarea
                                 value={edited.proposition}
                                 onChange={e => setEdited(p => ({ ...p, proposition: e.target.value }))}
-                                placeholder="En 📖 Pasaje, aprenderás..."
+                                placeholder={t('sermonOutlineModal.fields.propositionPlaceholder') as string}
                                 className="resize-none text-sm leading-relaxed"
                                 rows={3}
                             />
@@ -221,10 +223,10 @@ export function SermonOutlinePreviewModal({
                         {/* Points */}
                         <div className="space-y-3">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Puntos del Sermón ({edited.points.length})
+                                {t('sermonOutlineModal.fields.points', { count: edited.points.length })}
                             </Label>
                             {edited.points.length === 0 && (
-                                <p className="text-sm text-muted-foreground italic py-2">No hay puntos aún. Agrega uno.</p>
+                                <p className="text-sm text-muted-foreground italic py-2">{t('sermonOutlineModal.fields.pointsEmpty')}</p>
                             )}
                             {edited.points.map((point, idx) => (
                                 <div key={idx} className="flex gap-2.5 items-start p-3.5 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition-colors">
@@ -237,13 +239,13 @@ export function SermonOutlinePreviewModal({
                                         <Input
                                             value={point.title}
                                             onChange={e => updatePoint(idx, 'title', e.target.value)}
-                                            placeholder="Título del punto (verbo imperativo)"
+                                            placeholder={t('sermonOutlineModal.fields.pointTitlePlaceholder') as string}
                                             className="text-sm flex-1 min-w-0"
                                         />
                                         <Input
                                             value={point.verses}
                                             onChange={e => updatePoint(idx, 'verses', e.target.value)}
-                                            placeholder="vv. XX-XX"
+                                            placeholder={t('sermonOutlineModal.fields.pointVersesPlaceholder') as string}
                                             className="text-sm text-muted-foreground shrink-0"
                                             style={{ width: '100px' }}
                                         />
@@ -253,6 +255,7 @@ export function SermonOutlinePreviewModal({
                                         size="icon"
                                         className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 mt-0.5 shrink-0"
                                         onClick={() => removePoint(idx)}
+                                        aria-label={t('sermonOutlineModal.fields.removePoint') as string}
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
@@ -262,7 +265,7 @@ export function SermonOutlinePreviewModal({
                                 onClick={addPoint}
                                 className="w-full py-2 rounded-xl border border-dashed border-emerald-300 dark:border-emerald-700 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors flex items-center justify-center gap-1.5"
                             >
-                                <Plus className="h-3.5 w-3.5" /> Agregar punto
+                                <Plus className="h-3.5 w-3.5" /> {t('sermonOutlineModal.fields.addPoint')}
                             </button>
                         </div>
                     </div>
@@ -274,7 +277,7 @@ export function SermonOutlinePreviewModal({
                         {/* Tone selector */}
                         <div className="space-y-2">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Tono del Sermón
+                                {t('sermonOutlineModal.fields.tone')}
                             </Label>
                             <div className="flex flex-wrap gap-2">
                                 {TONE_OPTIONS.map(({ value, emoji }) => {
@@ -306,12 +309,12 @@ export function SermonOutlinePreviewModal({
                         {/* Situational context */}
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Contexto Situacional
+                                {t('sermonOutlineModal.fields.situationalContext')}
                             </Label>
                             <Textarea
                                 value={personalization.situationalContext ?? ''}
                                 onChange={e => updatePersonalization('situationalContext', e.target.value)}
-                                placeholder="Ej: Será predicado en un culto de funeral, o después de una crisis en la comunidad..."
+                                placeholder={t('sermonOutlineModal.fields.situationalContextPlaceholder') as string}
                                 className="resize-none text-sm"
                                 rows={2}
                             />
@@ -320,12 +323,12 @@ export function SermonOutlinePreviewModal({
                         {/* Congregation description */}
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Congregación
+                                {t('sermonOutlineModal.fields.congregation')}
                             </Label>
                             <Input
                                 value={personalization.congregationDescription ?? ''}
                                 onChange={e => updatePersonalization('congregationDescription', e.target.value)}
-                                placeholder="Ej: 80 personas, reformados, nivel teológico medio-alto"
+                                placeholder={t('sermonOutlineModal.fields.congregationPlaceholder') as string}
                                 className="text-sm"
                             />
                         </div>
@@ -333,12 +336,12 @@ export function SermonOutlinePreviewModal({
                         {/* Pastoral emphasis */}
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Énfasis Pastoral
+                                {t('sermonOutlineModal.fields.pastoralEmphasis')}
                             </Label>
                             <Textarea
                                 value={personalization.pastoralEmphasis ?? ''}
                                 onChange={e => updatePersonalization('pastoralEmphasis', e.target.value)}
-                                placeholder="¿Qué quieres que la congregación sienta, entienda o haga al terminar el sermón?"
+                                placeholder={t('sermonOutlineModal.fields.pastoralEmphasisPlaceholder') as string}
                                 className="resize-none text-sm"
                                 rows={2}
                             />
@@ -347,12 +350,12 @@ export function SermonOutlinePreviewModal({
                         {/* Illustrations */}
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Ilustraciones y Testimonios
+                                {t('sermonOutlineModal.fields.illustrations')}
                             </Label>
                             <Textarea
                                 value={personalization.illustrations ?? ''}
                                 onChange={e => updatePersonalization('illustrations', e.target.value)}
-                                placeholder="Anécdotas personales, historias de la congregación, o testimonios que quieras incluir..."
+                                placeholder={t('sermonOutlineModal.fields.illustrationsPlaceholder') as string}
                                 className="resize-none text-sm"
                                 rows={3}
                             />
@@ -361,12 +364,12 @@ export function SermonOutlinePreviewModal({
                         {/* Preacher notes */}
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Notas del Predicador
+                                {t('sermonOutlineModal.fields.preacherNotes')}
                             </Label>
                             <Textarea
                                 value={personalization.preacherNotes ?? ''}
                                 onChange={e => updatePersonalization('preacherNotes', e.target.value)}
-                                placeholder="Ideas sueltas, argumentos que quieras desarrollar, énfasis particulares..."
+                                placeholder={t('sermonOutlineModal.fields.preacherNotesPlaceholder') as string}
                                 className="resize-none text-sm"
                                 rows={3}
                             />
@@ -374,7 +377,7 @@ export function SermonOutlinePreviewModal({
 
                         {/* Skip hint */}
                         <p className="text-xs text-muted-foreground text-center italic">
-                            Todos los campos son opcionales. Puedes generar el sermón directamente.
+                            {t('sermonOutlineModal.fields.personalizeOptional')}
                         </p>
                     </div>
                 )}
@@ -389,14 +392,13 @@ export function SermonOutlinePreviewModal({
                             <Sparkles className="h-5 w-5 text-emerald-400 absolute -top-1 -right-1" />
                         </div>
                         <div className="space-y-1">
-                            <p className="font-semibold text-foreground">Generando el sermón completo</p>
-                            <p className="text-sm text-muted-foreground">
-                                Esto tomará unos 20–30 segundos.<br />
-                                Serás redirigido al editor automáticamente.
+                            <p className="font-semibold text-foreground">{t('sermonOutlineModal.generating.headline')}</p>
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                {t('sermonOutlineModal.generating.subhead')}
                             </p>
                         </div>
                         <div className="w-full p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-900 text-left">
-                            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-2 uppercase tracking-wide">Proposición</p>
+                            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-2 uppercase tracking-wide">{t('sermonOutlineModal.generating.propositionLabel')}</p>
                             <p className="text-sm text-emerald-900 dark:text-emerald-200 italic leading-relaxed">&ldquo;{edited.proposition}&rdquo;</p>
                             <ul className="mt-3 space-y-1">
                                 {edited.points.map((p, i) => (
@@ -414,14 +416,14 @@ export function SermonOutlinePreviewModal({
                 {phase === 'preview' && (
                     <DialogFooter className="px-6 py-4 border-t bg-muted/20 shrink-0 flex gap-2">
                         <Button variant="ghost" onClick={onClose} className="text-muted-foreground">
-                            Cancelar
+                            {t('sermonOutlineModal.actions.cancel')}
                         </Button>
                         <Button
                             className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                             onClick={() => setPhase('personalize')}
                             disabled={!canGenerate}
                         >
-                            Continuar
+                            {t('sermonOutlineModal.actions.continue')}
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </DialogFooter>
@@ -435,7 +437,7 @@ export function SermonOutlinePreviewModal({
                             className="text-muted-foreground gap-1"
                         >
                             <ChevronLeft className="h-4 w-4" />
-                            Volver
+                            {t('sermonOutlineModal.actions.back')}
                         </Button>
                         <Button
                             className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
@@ -443,7 +445,7 @@ export function SermonOutlinePreviewModal({
                             disabled={!canGenerate}
                         >
                             <Sparkles className="h-4 w-4" />
-                            Generar Sermón Completo
+                            {t('sermonOutlineModal.actions.generateFull')}
                         </Button>
                     </DialogFooter>
                 )}

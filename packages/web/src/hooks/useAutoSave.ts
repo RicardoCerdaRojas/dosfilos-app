@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { sermonService } from '@dosfilos/application';
 import { ExegeticalStudy, HomileticalAnalysis, Sermon, SermonContent } from '@dosfilos/domain';
 
@@ -21,6 +22,10 @@ export function useAutoSave(
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const previousStateRef = useRef<WizardState | null>(null);
+    // Surface a toast only once per failure burst so a flaky connection
+    // doesn't spam the user with identical toasts on every keystroke.
+    // Reset on first success so the next failure burst surfaces again.
+    const failureToastShownRef = useRef(false);
 
     const save = useCallback(async () => {
         if (!sermonId || !userId) {
@@ -56,8 +61,19 @@ export function useAutoSave(
 
             setLastSaved(new Date());
             previousStateRef.current = wizardState; // Update previous state after successful save
+            failureToastShownRef.current = false; // Reset so next burst surfaces
         } catch (error) {
             console.error('Error auto-saving sermon:', error);
+            // Surface persistence failure to the user — they cannot
+            // detect it otherwise and lose work assuming auto-save
+            // worked. One toast per failure burst to avoid spam.
+            if (!failureToastShownRef.current) {
+                failureToastShownRef.current = true;
+                toast.error(
+                    'No se pudo guardar tu progreso. Reintentaremos en el próximo cambio. Si el problema persiste, copia tu contenido antes de cerrar.',
+                    { duration: 8000 },
+                );
+            }
         } finally {
             setSaving(false);
         }

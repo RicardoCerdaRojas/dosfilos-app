@@ -91,7 +91,13 @@ export function WizardHeader({ currentStep, onExit }: WizardHeaderProps) {
           {/* Exit Action */}
           <div className="flex items-center gap-4">
             <div className="text-sm font-medium text-muted-foreground hidden md:block">
-              Paso {currentStep} de 3
+              {/* Clamp display to [1,3] — internal step state can be 0
+                  (StepPassage for standalone wizard) but a "Paso 0 de 3"
+                  label reads negative. Treat Step 0 as "preparing"
+                  rather than progress-zero. */}
+              {currentStep <= 0
+                ? 'Preparando…'
+                : `Paso ${Math.min(currentStep, 3)} de 3`}
             </div>
             <LibraryStatusBadge />
             {onExit && (
