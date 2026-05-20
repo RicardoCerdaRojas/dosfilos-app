@@ -33,7 +33,7 @@ export function SermonTutorPage() {
     const { messages, setMessages, isLoading: isChatLoading, handleSendMessage } = useGeneratorChat({
         phase: 'brainstorming' as any,
         content: null,
-        config: { passage: analysisResult?.passage || 'General', rules: { targetAudience: 'general', tone: 'casual' } },
+        config: { passage: analysisResult?.passage || 'General', rules: { targetAudience: 'general', tone: 'pastoral' } },
         user: { id: user?.uid || 'temp-user' }
     });
 
@@ -118,7 +118,7 @@ export function SermonTutorPage() {
             setGenerationStep(t('tutor.steps.exegesis'));
             const { exegesis } = await sermonGeneratorService.generateExegesis(
                 analysisResult.passage,
-                { targetAudience: 'general', tone: 'inspirational', customInstructions: `Enfoque: ${analysisResult.idea}` },
+                { targetAudience: 'general', tone: 'pastoral', customInstructions: `Enfoque: ${analysisResult.idea}` },
                 undefined,
                 undefined,
                 activeLanguage,
@@ -128,7 +128,7 @@ export function SermonTutorPage() {
             setGenerationStep(t('tutor.steps.homiletics'));
             const { homiletics } = await sermonGeneratorService.generateHomiletics(
                 exegesis,
-                { targetAudience: 'general', tone: 'inspirational', customInstructions: `Idea central: ${analysisResult.idea}` },
+                { targetAudience: 'general', tone: 'pastoral', customInstructions: `Idea central: ${analysisResult.idea}` },
                 undefined,
                 undefined,
                 activeLanguage,
@@ -138,7 +138,7 @@ export function SermonTutorPage() {
             setGenerationStep(t('tutor.steps.drafting'));
             const { draft } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,
-                { targetAudience: 'general', tone: 'inspirational' },
+                { targetAudience: 'general', tone: 'pastoral' },
                 undefined,
                 undefined,
                 activeLanguage,

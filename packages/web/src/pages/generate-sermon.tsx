@@ -24,7 +24,7 @@ export function GenerateSermonPage() {
   const [topic, setTopic] = useState('');
   const [bibleReferences, setBibleReferences] = useState<string[]>([]);
   const [targetAudience, setTargetAudience] = useState<string>('general');
-  const [tone, setTone] = useState<string>('inspirational');
+  const [tone, setTone] = useState<string>('pastoral');
   const [length, setLength] = useState<string>('medium');
   const [generatedSermon, setGeneratedSermon] = useState<any>(null);
 
@@ -170,10 +170,9 @@ ${generatedSermon.callToAction ? `\n**Llamado a la acción:** ${generatedSermon.
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="inspirational">Inspirador</SelectItem>
-                  <SelectItem value="educational">Educativo</SelectItem>
-                  <SelectItem value="casual">Cercano y conversacional</SelectItem>
-                  <SelectItem value="formal">Formal y académico</SelectItem>
+                  <SelectItem value="pastoral">Pastoral</SelectItem>
+                  <SelectItem value="expositivo">Expositivo</SelectItem>
+                  <SelectItem value="narrativo">Narrativo</SelectItem>
                 </SelectContent>
               </Select>
             </div>

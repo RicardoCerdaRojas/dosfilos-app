@@ -243,7 +243,7 @@ export class GeneratorChatService {
         const regeneratedPoint = await this.generator.regenerateSermonPoint(
             point,
             {
-                tone: (context.tone as any) || 'inspirational',
+                tone: (context.tone as any) || 'pastoral',
                 customInstructions: context.customInstructions
             },
             regenerateContext,

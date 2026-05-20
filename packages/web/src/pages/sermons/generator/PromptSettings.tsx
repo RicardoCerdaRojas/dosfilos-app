@@ -29,10 +29,15 @@ export function PromptSettings({ phase }: PromptSettingsProps) {
     const [isOpen, setIsOpen] = useState(false);
     
     // Configuración de visualización del resumen
+    const toneLabel = rules.tone
+        ? (rules.tone === 'pastoral' ? 'Pastoral'
+            : rules.tone === 'expositivo' ? 'Expositivo'
+            : rules.tone === 'narrativo' ? 'Narrativo' : rules.tone)
+        : '';
     const summary = [
         rules.preferredBibleVersion,
         rules.theologicalBias,
-        rules.tone === 'inspirational' ? 'Inspirador' : rules.tone,
+        toneLabel,
         rules.targetAudience === 'general' ? 'General' : rules.targetAudience
     ].filter(Boolean).join(' • ');
 
@@ -125,11 +130,9 @@ export function PromptSettings({ phase }: PromptSettingsProps) {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="inspirational">Inspirador</SelectItem>
-                                <SelectItem value="educational">Educativo</SelectItem>
-                                <SelectItem value="casual">Cercano</SelectItem>
-                                <SelectItem value="formal">Formal</SelectItem>
-                                <SelectItem value="evangelistic">Evangelístico</SelectItem>
+                                <SelectItem value="pastoral">Pastoral</SelectItem>
+                                <SelectItem value="expositivo">Expositivo</SelectItem>
+                                <SelectItem value="narrativo">Narrativo</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

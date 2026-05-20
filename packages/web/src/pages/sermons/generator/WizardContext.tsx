@@ -55,7 +55,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [passage, setPassage] = useState('');
     const [rules, setRules] = useState<GenerationRules>({
         targetAudience: 'general',
-        tone: 'inspirational',
+        tone: 'pastoral',
     });
     const [exegesis, setExegesis] = useState<ExegeticalStudy | null>(null);
     const [homiletics, setHomiletics] = useState<HomileticalAnalysis | null>(null);
@@ -124,7 +124,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const reset = () => {
         setStep(1);
         setPassage('');
-        setRules({ targetAudience: 'general', tone: 'inspirational' });
+        setRules({ targetAudience: 'general', tone: 'pastoral' });
         setExegesis(null);
         setHomiletics(null);
         setDraft(null);
