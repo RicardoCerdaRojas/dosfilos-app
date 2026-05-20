@@ -53,6 +53,13 @@ export interface Sermon {
          * and stays out of the wizard form to avoid two tone selectors.
          */
         personalization?: SermonPersonalization;
+        /**
+         * Audience rigor tier (T3 #19). Mirrors `GenerationRules.audienceRigor`
+         * so the wizard's pre-gen choice survives a refresh. 'beginner' is
+         * the default and is left implicit (undefined) to keep legacy
+         * sermons untouched.
+         */
+        audienceRigor?: 'beginner' | 'seminary';
         // Track if this draft has been published
         publishedCopyId?: string;  // ID of the most recent published copy
         lastPublishedAt?: Date;    // When it was last published

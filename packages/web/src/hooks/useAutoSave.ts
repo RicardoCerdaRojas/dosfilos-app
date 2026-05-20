@@ -13,6 +13,7 @@ interface WizardState {
     draft: SermonContent | null;
     derivedContext?: DerivedContext | null;
     personalization?: SermonPersonalization | null;
+    audienceRigor?: 'beginner' | 'seminary' | null;
 }
 
 export function useAutoSave(
@@ -64,6 +65,12 @@ export function useAutoSave(
             if (wizardState.personalization && hasAnyField(wizardState.personalization)) {
                 progress.personalization = wizardState.personalization;
             }
+            // Only persist non-default rigor (seminary). Beginner is the
+            // implicit default; persisting it would write to every legacy
+            // sermon unnecessarily.
+            if (wizardState.audienceRigor === 'seminary') {
+                progress.audienceRigor = 'seminary';
+            }
 
             await sermonService.updateWizardProgress(sermonId, progress);
 
@@ -105,12 +112,13 @@ export function useAutoSave(
         const draftChanged = prev.draft !== wizardState.draft;
         const stepChanged = prev.step !== wizardState.step;
         const personalizationChanged = prev.personalization !== wizardState.personalization;
+        const audienceRigorChanged = prev.audienceRigor !== wizardState.audienceRigor;
 
         // Only save if there's a real change
-        if (exegesisChanged || homileticsChanged || draftChanged || stepChanged || personalizationChanged) {
+        if (exegesisChanged || homileticsChanged || draftChanged || stepChanged || personalizationChanged || audienceRigorChanged) {
             save();
         }
-    }, [wizardState.exegesis, wizardState.homiletics, wizardState.draft, wizardState.step, wizardState.personalization, sermonId, save]);
+    }, [wizardState.exegesis, wizardState.homiletics, wizardState.draft, wizardState.step, wizardState.personalization, wizardState.audienceRigor, sermonId, save]);
 
     return { saving, lastSaved, save };
 }
