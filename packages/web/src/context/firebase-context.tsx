@@ -52,7 +52,15 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
           
           // 🎯 NEW: Inject Core Library Service into Generator Chat Service
           generatorChatService.setCoreLibraryService(coreLibraryService);
-          
+
+          // PR #219: Wire the Firestore wizard chat repo so chat
+          // history survives refresh / cross-device. Dual-write
+          // localStorage (immediate, sync) + Firestore (durable).
+          // Load order: localStorage first (sync), then Firestore
+          // hydrates on top if remote is newer.
+          const { FirestoreSermonWizardChatRepository } = await import('@dosfilos/infrastructure');
+          generatorChatService.setWizardChatRepository(new FirestoreSermonWizardChatRepository());
+
           // Initialize service state so getStoreId() works
           await coreLibraryService.initializeFromConfig();
         } catch (error) {

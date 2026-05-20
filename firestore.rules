@@ -59,6 +59,13 @@ service cloud.firestore {
       match /annotations/{annotationId} {
         allow read, write: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
       }
+
+      // PR #219: Sermon wizard chat history per phase. One doc per
+      // phase (exegesis / homiletics / sermon). Owner-only access —
+      // matches the parent sermon document's userId.
+      match /wizard_chats/{phase} {
+        allow read, write: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
+      }
     }
 
     // Greek Sessions (correct collection name)

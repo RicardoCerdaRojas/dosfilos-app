@@ -1,6 +1,11 @@
 import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySelector, GeminiFileSearchService } from '@dosfilos/infrastructure';
 import { LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext, DEFAULT_LANGUAGE } from '@dosfilos/domain';
-import type { SupportedLanguage } from '@dosfilos/domain';
+import type {
+    SupportedLanguage,
+    ISermonWizardChatRepository,
+    SermonWizardChatHistory,
+    SermonWizardChatPhase,
+} from '@dosfilos/domain';
 import { ChatMessage, WorkflowPhase } from '@dosfilos/domain/src/entities/SermonWorkflow';
 import { SourceReference, ChatResponseWithSources } from './PlannerChatService';
 
@@ -37,6 +42,13 @@ export class GeneratorChatService {
     private currentPhase: ContentType = 'exegesis';
     private listeners: (() => void)[] = [];
     private coreLibraryService: ICoreLibraryService | null = null; // 🎯 NEW
+    // PR #219: Firestore persistence layer. When wired the service
+    // dual-writes (localStorage first for sync fallback, Firestore for
+    // cross-device durability). When unset, only localStorage is used.
+    // Setter pattern mirrors `setCoreLibraryService` so app boot stays
+    // backward-compatible.
+    private wizardChatRepository: ISermonWizardChatRepository | null = null;
+    private firestoreLoadedFor: string | null = null;
 
     constructor() {
         const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
@@ -59,6 +71,20 @@ export class GeneratorChatService {
 
     }
 
+    /**
+     * PR #219: Injects Firestore-backed persistence for wizard chat
+     * history. Once set, `saveHistory()` dual-writes (localStorage +
+     * Firestore) and `initializeForSermon()` hydrates from Firestore
+     * when localStorage is missing or stale (cross-device support).
+     *
+     * Without this setter the service falls back to localStorage-only
+     * behavior (pre-PR #219). Tests + standalone consumers don't need
+     * to wire it.
+     */
+    setWizardChatRepository(repo: ISermonWizardChatRepository) {
+        this.wizardChatRepository = repo;
+    }
+
     async testGeminiSearch(message: string, storeName: string): Promise<string> {
         // Lazy load fileSearch only when needed (POC method)
         if (!this.fileSearch) {
@@ -74,20 +100,65 @@ export class GeneratorChatService {
     initializeForSermon(sermonId: string, phase: ContentType): void {
         this.currentSermonId = sermonId;
         this.currentPhase = phase;
+        this.firestoreLoadedFor = null;
 
-        // Try to load existing history
+        // Try localStorage first (sync, no I/O). Synchronous so the
+        // UI can render the cached conversation immediately on mount.
         const stored = this.loadHistory(sermonId, phase);
         if (stored) {
             this.history = stored.messages;
             this.sourcesPerMessage = new Map(Object.entries(stored.sourcesPerMessage));
-
         } else {
             this.history = [];
             this.sourcesPerMessage.clear();
-
         }
 
         this.notifyListeners();
+
+        // Then, if a Firestore repo is wired, hydrate from there in
+        // the background. Cross-device case: user worked on the
+        // sermon on desktop, then opens it on tablet — desktop chat
+        // is in Firestore but absent from tablet localStorage.
+        // Compare timestamps to keep the newer snapshot.
+        if (this.wizardChatRepository) {
+            const phaseKey = phase as SermonWizardChatPhase;
+            this.wizardChatRepository
+                .load(sermonId, phaseKey)
+                .then((remote) => {
+                    // Skip if user has navigated away to another sermon/phase.
+                    if (this.currentSermonId !== sermonId || this.currentPhase !== phase) return;
+                    if (!remote) return;
+                    const localUpdatedAt = stored?.updatedAt ?? 0;
+                    const remoteUpdatedAt = remote.updatedAt instanceof Date
+                        ? remote.updatedAt.getTime()
+                        : Number(remote.updatedAt ?? 0);
+                    // Only swap if remote is strictly newer than the
+                    // local snapshot the UI already showed. Avoids
+                    // visible reset when local was fresher.
+                    if (remoteUpdatedAt > localUpdatedAt && remote.messages.length > 0) {
+                        this.history = remote.messages;
+                        // Normalize SermonWizardChatSource (optional fields) to
+                        // SourceReference (required author/title/snippet) — fields
+                        // are always written from SourceReference in saveHistory,
+                        // so empty-string fallback is just type-safety belt.
+                        const normalized = new Map<string, SourceReference[]>();
+                        for (const [k, arr] of Object.entries(remote.sourcesPerMessage)) {
+                            normalized.set(k, (arr ?? []).map((s) => ({
+                                author: s.author ?? '',
+                                title: s.title ?? '',
+                                page: typeof s.page === 'string' ? Number(s.page) || undefined : s.page,
+                                snippet: s.snippet ?? '',
+                            })));
+                        }
+                        this.sourcesPerMessage = normalized;
+                        this.notifyListeners();
+                    }
+                    this.firestoreLoadedFor = `${sermonId}:${phase}`;
+                })
+                .catch((err) => {
+                    console.warn('[GeneratorChat] Firestore hydration failed; using localStorage state', err);
+                });
+        }
     }
 
     /**
@@ -661,6 +732,15 @@ export class GeneratorChatService {
         this.sourcesPerMessage.clear();
         if (this.currentSermonId && this.currentPhase) {
             this.removeStoredHistory(this.currentSermonId, this.currentPhase);
+            // Clear Firestore copy too. Without this, the next mount
+            // would re-hydrate the conversation we just cleared.
+            if (this.wizardChatRepository) {
+                this.wizardChatRepository
+                    .clear(this.currentSermonId, this.currentPhase as SermonWizardChatPhase)
+                    .catch((err) => {
+                        console.warn('[GeneratorChat] Firestore clear failed', err);
+                    });
+            }
         }
         this.notifyListeners();
     }
@@ -744,14 +824,39 @@ export class GeneratorChatService {
             updatedAt: Date.now()
         };
 
+        // Always write to localStorage first — sync, fast, fallback if
+        // Firestore is offline. UI sees the persisted snapshot
+        // immediately on the next mount even before remote hydration.
         const storage = this.getStorage();
-        if (!storage) return;
+        if (storage) {
+            try {
+                const key = this.getStorageKey(this.currentSermonId, this.currentPhase);
+                storage.setItem(key, JSON.stringify(stored));
+            } catch (error) {
+                console.warn('⚠️ [GeneratorChat] Failed to save history:', error);
+            }
+        }
 
-        try {
-            const key = this.getStorageKey(this.currentSermonId, this.currentPhase);
-            storage.setItem(key, JSON.stringify(stored));
-        } catch (error) {
-            console.warn('⚠️ [GeneratorChat] Failed to save history:', error);
+        // Dual-write to Firestore (when wired) for cross-device
+        // durability. Fire-and-forget — failure logs but does not
+        // block the user's next turn. Next successful save reconciles.
+        if (this.wizardChatRepository) {
+            const sermonId = this.currentSermonId;
+            const phase = this.currentPhase as SermonWizardChatPhase;
+            const history: SermonWizardChatHistory = {
+                sermonId,
+                phase,
+                messages: stored.messages.map((m) => ({
+                    ...m,
+                    timestamp: m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp),
+                })),
+                sourcesPerMessage: stored.sourcesPerMessage as any,
+                createdAt: new Date(stored.createdAt),
+                updatedAt: new Date(stored.updatedAt),
+            };
+            this.wizardChatRepository.save(history).catch((err) => {
+                console.warn('[GeneratorChat] Firestore save failed; localStorage still has snapshot', err);
+            });
         }
     }
 

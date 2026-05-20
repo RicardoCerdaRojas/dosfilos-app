@@ -37,6 +37,7 @@ export * from './entities/SermonPersonalization';
 
 // Repositories
 export * from './repositories/ISermonRepository';
+export * from './repositories/ISermonWizardChatRepository';
 export * from './repositories/ISeriesRepository';
 export * from './repositories/IUserProfileRepository';
 export * from './repositories/IPlanRepository';
