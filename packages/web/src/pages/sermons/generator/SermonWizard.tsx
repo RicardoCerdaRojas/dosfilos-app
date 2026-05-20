@@ -7,7 +7,7 @@ import { StepExegesis } from './StepExegesis';
 import { StepHomiletics } from './StepHomiletics';
 import { StepDraft } from './StepDraft';
 import { SermonsInProgress } from './SermonInProgress';
-import { sermonService } from '@dosfilos/application';
+import { sermonService, exegesisService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { SermonEntity, type Sermon } from '@dosfilos/domain';
 import { migrateLegacyWizardProgress } from './migrateLegacyWizardProgress';
@@ -19,6 +19,7 @@ function WizardContent() {
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
     const [showResumePrompt, setShowResumePrompt] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [autoPopulating, setAutoPopulating] = useState(false);
     const [publishingSermonId, setPublishingSermonId] = useState<string | null>(null);
     const location = useLocation();
 
@@ -46,10 +47,18 @@ function WizardContent() {
             if (sermonIdParam) {
                 console.log('[SermonWizard] Loading sermon from URL param:', sermonIdParam);
                 try {
-                    const sermon = await sermonService.getSermon(sermonIdParam);
+                    let sermon = await sermonService.getSermon(sermonIdParam);
                     console.log('[SermonWizard] ✅ Sermon loaded:', { id: sermon?.id, title: sermon?.title, hasProgress: !!sermon?.wizardProgress });
 
                     if (sermon) {
+                        // Paper-linked empty placeholder recovery
+                        // (PR #216). If the sermon is empty + linked
+                        // to a paper, fire `generateSermonFromPaper`
+                        // against the existing sermonId so the
+                        // wizard's resume path sees populated state.
+                        const repopulated = await applyPaperAutoPopulationIfNeeded(sermon);
+                        if (repopulated) sermon = repopulated;
+
                         // Runtime migration for legacy sermons (pre PRs
                         // #213/#214). When `sermon.content` exists but
                         // `wizardProgress.draft` is missing, synthesize
@@ -117,10 +126,17 @@ function WizardContent() {
     const handleContinue = async (sermon: SermonEntity) => {
         console.log('[SermonWizard] 🎯 handleContinue called for sermon:', { id: sermon.id, title: sermon.title || sermon.wizardProgress?.passage });
 
+        // Paper-linked empty placeholder recovery (PR #216) — same as
+        // URL-param load so resumed sermons get the same auto-populate
+        // behavior. Use the freshly-loaded sermon when generation
+        // succeeded.
+        const repopulated = await applyPaperAutoPopulationIfNeeded(sermon as Sermon);
+        const effective = repopulated ?? sermon;
+
         // Apply legacy migration (same path as URL-param load) so the
         // "Sermones en progreso" list can also resume pre-convergence
         // sermons cleanly.
-        const progress = await applyLegacyMigrationIfNeeded(sermon);
+        const progress = await applyLegacyMigrationIfNeeded(effective as Sermon);
         if (!progress) {
             console.warn('[SermonWizard] ⚠️ Sermon has neither wizardProgress nor migratable content');
             return;
@@ -180,6 +196,63 @@ function WizardContent() {
             return migration.wizardProgress;
         }
         return sermon.wizardProgress ?? null;
+    }
+
+    /**
+     * Handles the "empty paper-linked placeholder" UX gap from PR #211:
+     * `autoCreateSermonPlaceholders` (pre PR #216) inserted empty
+     * sermons with `sourcePaperId` set, which made the planner show
+     * "Abrir borrador" while the wizard opened blank. Detect that
+     * state and auto-run `generateSermonFromPaper` against the
+     * existing sermon (via the new `targetSermonId` parameter) so the
+     * user lands in Step 3 with the paper-derived content instead of
+     * a blank Step 0.
+     *
+     * Returns the freshly-loaded sermon when auto-population happened
+     * (caller restores wizard state from it). Returns null when no
+     * auto-population was needed.
+     *
+     * One-shot: PR #216 also fixed `autoCreateSermonPlaceholders` to
+     * skip pericopes with linked papers, so future series won't
+     * produce these placeholders. This handler exists to recover
+     * sermons created before that fix landed.
+     */
+    async function applyPaperAutoPopulationIfNeeded(sermon: Sermon): Promise<Sermon | null> {
+        const eligible =
+            !sermon.content?.trim()
+            && !sermon.wizardProgress?.draft
+            && !sermon.wizardProgress?.derivedContext
+            && Boolean(sermon.sourcePaperId)
+            && Boolean(user?.uid);
+        if (!eligible) return null;
+
+        console.info('[SermonWizard] Auto-populating empty paper-linked placeholder', {
+            sermonId: sermon.id,
+            paperId: sermon.sourcePaperId,
+        });
+        setAutoPopulating(true);
+        try {
+            await exegesisService.generateSermonFromPaper.execute({
+                paperId: sermon.sourcePaperId!,
+                actorUserId: user!.uid,
+                tone: 'pastoral',
+                targetSermonId: sermon.id,
+            });
+            // Re-fetch the sermon so the caller restores wizardProgress
+            // from the freshly-populated doc instead of the stale
+            // in-memory copy.
+            const refreshed = await sermonService.getSermon(sermon.id);
+            return refreshed ?? null;
+        } catch (err) {
+            // Auto-populate is best-effort — if generation fails
+            // (overload, no paper, etc.), fall back to the empty
+            // wizard so the user can still work manually. Surface the
+            // failure in the console for debugging.
+            console.warn('[SermonWizard] Auto-populate from paper failed; continuing with empty wizard', err);
+            return null;
+        } finally {
+            setAutoPopulating(false);
+        }
     }
 
     const handleDiscard = async (sermon: SermonEntity) => {
@@ -262,12 +335,27 @@ function WizardContent() {
         }
     };
 
-    if (loading) {
+    if (loading || autoPopulating) {
+        // `autoPopulating` is the longer wait — we're running the
+        // paper→sermon transformer (~30-45s) to fill a previously
+        // empty placeholder. Surface that explicitly so the user
+        // doesn't think the page is stuck on a generic spinner.
         return (
             <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
+                <div className="text-center max-w-md px-6">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Cargando...</p>
+                    {autoPopulating ? (
+                        <>
+                            <p className="text-foreground font-medium mb-1">
+                                Generando sermón desde el paper…
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Estamos transformando tu paper exegético en un borrador de sermón. Esto puede tomar ~30 segundos.
+                            </p>
+                        </>
+                    ) : (
+                        <p className="text-muted-foreground">Cargando...</p>
+                    )}
                 </div>
             </div>
         );

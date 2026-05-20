@@ -54,6 +54,22 @@ export interface GenerateSermonFromPaperInput {
     paperId: string;
     actorUserId: string;
     tone: PaperToSermonTone;
+    /**
+     * Optional id of an existing sermon to populate instead of
+     * creating a new one. Used by the wizard's auto-population path
+     * for paper-linked empty placeholders (sermons created by
+     * `autoCreateSermonPlaceholders` with `sourcePaperId` set but
+     * empty content). When provided:
+     *   - The use case patches the existing sermon doc with the
+     *     generated content + wizardProgress instead of inserting a
+     *     new one.
+     *   - The series planner-coherence patch is skipped because the
+     *     pericope's `draftId` already points to this sermon — the
+     *     update doesn't change the linkage.
+     *   - Ownership of the existing sermon is verified against
+     *     `actorUserId`.
+     */
+    targetSermonId?: string;
 }
 
 export interface GenerateSermonFromPaperOutput {
@@ -117,28 +133,23 @@ export class GenerateSermonFromPaperUseCase {
                 tone: input.tone,
             });
 
-            const sermon = SermonEntity.create({
-                userId: paper.ownerId,
-                title: result.title,
-                // `content` stays populated for back-compat: legacy
-                // sermon-detail page reads this field, and the
-                // unified artifacts panel surfaces it as a quick
-                // preview. The wizard reads `wizardProgress.draft`
-                // instead.
-                content: result.content,
-                bibleReferences: result.bibleReferences,
-                sourcePaperId: paper.id,
-                // Mirror the paper's series back-reference onto the
-                // sermon so cross-collection queries (and the planner)
-                // can resolve the relationship from either side.
-                seriesId: paper.seriesId ?? undefined,
-                status: 'draft',
+            const sermon = await this.persistSermon({
+                paper,
+                transformerResult: result,
                 wizardProgress,
+                targetSermonId: input.targetSermonId,
+                actorUserId: input.actorUserId,
             });
 
-            await this.sermonRepository.create(sermon);
-
-            await this.patchSeriesPlannedSermon(paper.seriesId, paper.pericopeId, sermon.id);
+            // Series patch only when creating a new sermon. When
+            // updating an existing placeholder, the pericope's
+            // `draftId` already points to it — re-patching would be a
+            // no-op (the `if (target.draftId) return;` guard inside
+            // patchSeriesPlannedSermon already protects against
+            // clobbering, but skipping the read entirely is cleaner).
+            if (!input.targetSermonId) {
+                await this.patchSeriesPlannedSermon(paper.seriesId, paper.pericopeId, sermon.id);
+            }
 
             return {
                 sermonId: sermon.id,
@@ -149,6 +160,58 @@ export class GenerateSermonFromPaperUseCase {
             await reservation.refundIfPreLlm();
             throw err;
         }
+    }
+
+    /**
+     * Either creates a new sermon doc or updates an existing one
+     * (placeholder previously inserted by `autoCreateSermonPlaceholders`).
+     * The update path is what makes the wizard's "auto-populate empty
+     * paper-linked sermon" UX work without producing a duplicate
+     * sermon for the same pericope.
+     */
+    private async persistSermon(args: {
+        paper: { id: string; ownerId: string; seriesId?: string | null };
+        transformerResult: { title: string; content: string; bibleReferences: string[] };
+        wizardProgress: ReturnType<typeof buildWizardProgressFromPaper>;
+        targetSermonId: string | undefined;
+        actorUserId: string;
+    }): Promise<SermonEntity> {
+        if (args.targetSermonId) {
+            const existing = await this.sermonRepository.findById(args.targetSermonId);
+            if (!existing) {
+                throw new Error(`Sermón objetivo no encontrado: ${args.targetSermonId}`);
+            }
+            if (existing.userId !== args.actorUserId) {
+                throw new Error('Sermón objetivo no pertenece al actor');
+            }
+            const updated = existing.update({
+                title: args.transformerResult.title,
+                content: args.transformerResult.content,
+                bibleReferences: args.transformerResult.bibleReferences,
+                wizardProgress: args.wizardProgress,
+            });
+            return this.sermonRepository.update(updated);
+        }
+
+        const sermon = SermonEntity.create({
+            userId: args.paper.ownerId,
+            title: args.transformerResult.title,
+            // `content` stays populated for back-compat: legacy
+            // sermon-detail page reads this field, and the unified
+            // artifacts panel surfaces it as a quick preview. The
+            // wizard reads `wizardProgress.draft` instead.
+            content: args.transformerResult.content,
+            bibleReferences: args.transformerResult.bibleReferences,
+            sourcePaperId: args.paper.id,
+            // Mirror the paper's series back-reference onto the
+            // sermon so cross-collection queries (and the planner)
+            // can resolve the relationship from either side.
+            seriesId: args.paper.seriesId ?? undefined,
+            status: 'draft',
+            wizardProgress: args.wizardProgress,
+        });
+        await this.sermonRepository.create(sermon);
+        return sermon;
     }
 
     /**

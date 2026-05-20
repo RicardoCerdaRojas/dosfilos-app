@@ -369,4 +369,146 @@ describe('GenerateSermonFromPaperUseCase', () => {
             expect((sermonRepo as any).__created).toHaveLength(1);
         });
     });
+
+    describe('targetSermonId (paper-linked placeholder population, PR #216)', () => {
+        const makePlaceholder = (overrides: Partial<SermonEntity> = {}): SermonEntity =>
+            SermonEntity.create({
+                id: 'sermon-placeholder',
+                userId: 'user-1',
+                title: 'Pericope placeholder',
+                content: '',
+                bibleReferences: ['2 Pedro 1:1-11'],
+                status: 'draft',
+                sourcePaperId: 'paper-1',
+                wizardProgress: {
+                    currentStep: 0,
+                    passage: '2 Pedro 1:1-11',
+                    lastSaved: new Date(),
+                    planId: 'series-1',
+                },
+                ...overrides,
+            });
+
+        const stubSermonRepoWithExisting = (existing: SermonEntity) => {
+            const updated: SermonEntity[] = [];
+            return {
+                create: vi.fn(),
+                update: vi.fn(async (s: SermonEntity) => {
+                    updated.push(s);
+                    return s;
+                }),
+                delete: vi.fn(),
+                findById: vi.fn(async (id: string) => (id === existing.id ? existing : null)),
+                findByShareToken: vi.fn(),
+                findByUserId: vi.fn(),
+                findAll: vi.fn(),
+                findByDraftId: vi.fn(),
+                findBySourcePaperId: vi.fn(),
+                __updated: updated,
+            } as any;
+        };
+
+        it('updates the existing placeholder sermon instead of creating a new one', async () => {
+            const placeholder = makePlaceholder();
+            const sermonRepo = stubSermonRepoWithExisting(placeholder);
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makePaper()),
+                sermonRepo,
+                stubTransformer({ title: 'New title', content: '## Punto\n\nCuerpo nuevo.' }),
+            );
+
+            const result = await useCase.execute({
+                paperId: 'paper-1',
+                actorUserId: 'user-1',
+                tone: 'pastoral',
+                targetSermonId: 'sermon-placeholder',
+            });
+
+            expect(sermonRepo.create).not.toHaveBeenCalled();
+            expect(sermonRepo.update).toHaveBeenCalledTimes(1);
+            expect(result.sermonId).toBe('sermon-placeholder');
+            const updated = sermonRepo.__updated[0] as SermonEntity;
+            expect(updated.title).toBe('New title');
+            expect(updated.content).toContain('Cuerpo nuevo');
+            expect(updated.wizardProgress?.draft?.title).toBe('New title');
+            expect(updated.wizardProgress?.currentStep).toBe(3);
+            expect(updated.wizardProgress?.derivedContext?.kind).toBe('paper');
+        });
+
+        it('skips the series patch when targetSermonId is provided (pericope already linked)', async () => {
+            const placeholder = makePlaceholder();
+            const sermonRepo = stubSermonRepoWithExisting(placeholder);
+            const seriesRepo: ISeriesRepository = {
+                create: vi.fn(),
+                update: vi.fn(),
+                delete: vi.fn(),
+                findById: vi.fn(),
+                findByUserId: vi.fn(),
+            };
+
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makePaper({ seriesId: 'series-1', pericopeId: 'pericope-A' })),
+                sermonRepo,
+                stubTransformer(),
+                seriesRepo,
+            );
+
+            await useCase.execute({
+                paperId: 'paper-1',
+                actorUserId: 'user-1',
+                tone: 'pastoral',
+                targetSermonId: 'sermon-placeholder',
+            });
+
+            expect(seriesRepo.findById).not.toHaveBeenCalled();
+            expect(seriesRepo.update).not.toHaveBeenCalled();
+        });
+
+        it('throws when targetSermonId points to a sermon not owned by the actor', async () => {
+            const placeholder = makePlaceholder({ userId: 'other-user' });
+            const sermonRepo = stubSermonRepoWithExisting(placeholder);
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makePaper()),
+                sermonRepo,
+                stubTransformer(),
+            );
+
+            await expect(
+                useCase.execute({
+                    paperId: 'paper-1',
+                    actorUserId: 'user-1',
+                    tone: 'pastoral',
+                    targetSermonId: 'sermon-placeholder',
+                }),
+            ).rejects.toThrow(/no pertenece al actor/);
+        });
+
+        it('throws when targetSermonId does not exist', async () => {
+            const sermonRepo = {
+                create: vi.fn(),
+                update: vi.fn(),
+                delete: vi.fn(),
+                findById: vi.fn(async () => null),
+                findByShareToken: vi.fn(),
+                findByUserId: vi.fn(),
+                findAll: vi.fn(),
+                findByDraftId: vi.fn(),
+                findBySourcePaperId: vi.fn(),
+            } as any;
+            const useCase = new GenerateSermonFromPaperUseCase(
+                stubPaperRepo(makePaper()),
+                sermonRepo,
+                stubTransformer(),
+            );
+
+            await expect(
+                useCase.execute({
+                    paperId: 'paper-1',
+                    actorUserId: 'user-1',
+                    tone: 'pastoral',
+                    targetSermonId: 'missing-sermon',
+                }),
+            ).rejects.toThrow(/no encontrado/);
+        });
+    });
 });

@@ -648,6 +648,16 @@ export class SeriesService {
         return Promise.all(
             plannedSermons.map(async (planned) => {
                 if (planned.draftId) return planned;
+                // Pericopes with a linked paper get their sermon via
+                // the on-demand "Generar desde paper" CTA in the
+                // planner (or wizard auto-populate when opened). An
+                // empty placeholder here would make the planner row
+                // show "Abrir borrador" (because draftId exists) but
+                // open into an empty wizard — confusing UX. Skip the
+                // placeholder so the planner correctly offers
+                // "Generar desde paper" until the user triggers
+                // generation.
+                if (planned.paperId) return planned;
                 // SermonEntity validates title >= 5 chars. Pad short pericope
                 // titles with the passage so we never throw on tiny labels
                 // like "Salmo 1".
