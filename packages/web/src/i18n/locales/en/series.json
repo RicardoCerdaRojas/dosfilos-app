@@ -384,7 +384,7 @@
                 "original-greek": "Text loaded from SBLGNT (original Greek). See credits at /credits",
                 "original-hebrew": "Text loaded from WLC (original Hebrew). See credits at /credits"
             },
-            "translationFallback": "Couldn't load the original-language text. Using the translation as fallback ({{reason}}). Syntactic analysis will be approximate.",
+            "translationFallback": "Couldn't load the original-language text. Using the translation as a substitute ({{reason}}). Syntactic analysis will be approximate.",
             "panoramaFailed": "Couldn't generate the panorama. Try again.",
             "macroDone": "Macrostructure ready.",
             "macroFailed": "Couldn't generate the macrostructure. Try again.",

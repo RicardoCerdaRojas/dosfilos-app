@@ -87,7 +87,7 @@
         "metaPagesTitleEstimated": "Páginas estimadas (aprox.)",
         "actions": {
             "preview": "Ver documento",
-            "edit": "Editar metadata",
+            "edit": "Editar datos del libro",
             "process": "Procesar",
             "reprocess": "Reprocesar",
             "retryPremium": "Reintentar con Premium",
@@ -124,7 +124,7 @@
         "gemini": "Estándar",
         "geminiHint": "Procesado en modo estándar — texto narrativo, ensayos y sermones",
         "pdfparse": "Básico",
-        "pdfparseHint": "Procesado con extractor básico (fallback) — calidad reducida; considera reprocesar"
+        "pdfparseHint": "Procesado con extractor básico — calidad reducida; considera reprocesar"
     },
     "stores": {
         "exegesis": "Exégesis",
@@ -199,7 +199,7 @@
     },
     "phaseModal": {
         "title": "Fases Preferidas",
-        "description": "Selecciona en qué fases del sermón este documento será prioritario para RAG",
+        "description": "Selecciona en qué fases del sermón este documento será prioritario al consultar tu biblioteca",
         "byAuthor": "{{title}} por {{author}}",
         "phases": {
             "exegesisLabel": "Exégesis",

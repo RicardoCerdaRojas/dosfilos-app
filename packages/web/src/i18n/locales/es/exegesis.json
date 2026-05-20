@@ -199,7 +199,7 @@
                     "bodyRequiredHint": "Cuando el lector general lo necesita. Si está apagado, transliteración solo aparece en notas al pie."
                 },
                 "additionalRules": {
-                    "intro": "Reglas que no encajan en las secciones estructuradas. Una oración por entrada. El orquestador las inyecta al prompt como reglas adicionales.",
+                    "intro": "Reglas que no encajan en las secciones estructuradas. Una oración por entrada. El asistente las aplica como reglas adicionales al redactar.",
                     "empty": "No hay reglas adicionales por ahora.",
                     "placeholder": "Ej. \"Usar comas seriadas en listas de tres elementos.\"",
                     "add": "Agregar regla",
@@ -858,11 +858,11 @@
                         }
                     },
                     "bullet1Title": "Fragmentos, no libros",
-                    "bullet1Body": "Hasta 30 chunks por fuente, rankeados por similitud al pasaje + brief.",
+                    "bullet1Body": "Hasta 30 fragmentos por fuente, ordenados por relevancia al pasaje y al brief.",
                     "bullet2Title": "Tú revisas",
-                    "bullet2Body": "Editar, borrar o aceptar cada fragmento antes que entre al prompt.",
+                    "bullet2Body": "Editar, borrar o aceptar cada fragmento antes que el asistente lo use.",
                     "bullet3Title": "Verificable",
-                    "bullet3Body": "Cada fragmento conserva su anchor (\"p. 47\") y un link al PDF original.",
+                    "bullet3Body": "Cada fragmento conserva la página de origen y un link al PDF original.",
                     "primaryCta": "Extraer de mi biblioteca",
                     "secondaryCta": "o subir un archivo nuevo"
                 },
@@ -1286,10 +1286,10 @@
             "download": "Descargar .md",
             "recompose": "Recomponer",
             "tokensUsed": "{{tokens}} tokens · modelo {{model}}",
-            "formatterApplied": "Guía de estilo aplicada (capa 1: prompt, capa 2: formatter determinístico).",
-            "formatterSkipped": "Sin manifest de guía de estilo extraído. Solo aplicada la capa 1 (prompt). Extrae el manifest desde la pestaña \"Guía de estilo\" para activar la capa 2.",
-            "formatterError": "Hubo un error aplicando el formatter determinístico. La composición LLM (capa 1) sigue válida.",
-            "savedToast": "Composición guardada en el paper (assembledMarkdown).",
+            "formatterApplied": "Guía de estilo aplicada (paso 1: instrucciones al asistente, paso 2: reformateo automático).",
+            "formatterSkipped": "Aún no extrajiste la guía de estilo en formato estructurado. Solo se aplicó el paso 1 (instrucciones al asistente). Ve a la pestaña \"Guía de estilo\" y extrae la guía para activar el paso 2.",
+            "formatterError": "Hubo un error al reformatear automáticamente. La composición del asistente sigue siendo válida.",
+            "savedToast": "Composición guardada en el paper.",
             "persistWarning": "La composición se generó pero no se pudo guardar en el paper. Copiá o descargá el markdown antes de cerrar.",
             "saveToPaper": "Guardar al paper",
             "saveToPaperTooltip": "Guarda esta composición como assembledMarkdown del paper. Puedes recomponer en cualquier momento.",
