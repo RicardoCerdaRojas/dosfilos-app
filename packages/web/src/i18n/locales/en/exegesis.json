@@ -199,7 +199,7 @@
                     "bodyRequiredHint": "When general readers need it. If off, transliteration appears in footnotes only."
                 },
                 "additionalRules": {
-                    "intro": "Rules that don't fit the structured sections. One sentence per entry. The orchestrator injects them into the prompt as additional rules.",
+                    "intro": "Rules that don't fit the structured sections. One sentence per entry. The assistant applies them as extra rules when composing.",
                     "empty": "No additional rules yet.",
                     "placeholder": "E.g. \"Use serial commas in lists of three items.\"",
                     "add": "Add rule",
@@ -858,11 +858,11 @@
                         }
                     },
                     "bullet1Title": "Fragments, not books",
-                    "bullet1Body": "Up to 30 chunks per source, ranked by similarity to the passage + brief.",
+                    "bullet1Body": "Up to 30 fragments per source, ranked by relevance to the passage and brief.",
                     "bullet2Title": "You review",
-                    "bullet2Body": "Edit, delete or accept each fragment before it enters the prompt.",
+                    "bullet2Body": "Edit, delete or accept each fragment before the assistant uses it.",
                     "bullet3Title": "Verifiable",
-                    "bullet3Body": "Every fragment keeps its anchor (\"p. 47\") and a link to the original PDF.",
+                    "bullet3Body": "Every fragment keeps its source page and a link to the original PDF.",
                     "primaryCta": "Extract from my library",
                     "secondaryCta": "or upload a new file"
                 },
@@ -1286,10 +1286,10 @@
             "download": "Download .md",
             "recompose": "Recompose",
             "tokensUsed": "{{tokens}} tokens · model {{model}}",
-            "formatterApplied": "Style guide applied (layer 1: prompt, layer 2: deterministic formatter).",
-            "formatterSkipped": "No style-guide manifest extracted. Only layer 1 (prompt) applied. Extract the manifest from the \"Style guide\" tab to activate layer 2.",
-            "formatterError": "Error applying the deterministic formatter. The LLM composition (layer 1) is still valid.",
-            "savedToast": "Composition saved on the paper (assembledMarkdown).",
+            "formatterApplied": "Style guide applied (step 1: instructions to the assistant, step 2: automatic reformat).",
+            "formatterSkipped": "You haven't extracted the style guide into structured rules yet. Only step 1 (instructions to the assistant) was applied. Go to the \"Style guide\" tab and extract the guide to activate step 2.",
+            "formatterError": "Error during the automatic reformat. The assistant's composition is still valid.",
+            "savedToast": "Composition saved on the paper.",
             "persistWarning": "Composition succeeded but could not be saved to the paper. Copy or download the markdown before closing.",
             "saveToPaper": "Save to paper",
             "saveToPaperTooltip": "Saves this composition as the paper's assembledMarkdown. You can recompose at any time.",

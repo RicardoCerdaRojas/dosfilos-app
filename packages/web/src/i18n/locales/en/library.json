@@ -87,7 +87,7 @@
         "metaPagesTitleEstimated": "Estimated pages (approx.)",
         "actions": {
             "preview": "View document",
-            "edit": "Edit metadata",
+            "edit": "Edit book details",
             "process": "Process",
             "reprocess": "Reprocess",
             "retryPremium": "Retry with Premium",
@@ -124,7 +124,7 @@
         "gemini": "Standard",
         "geminiHint": "Processed in standard mode — narrative text, essays and sermons",
         "pdfparse": "Basic",
-        "pdfparseHint": "Processed with basic fallback extractor — reduced quality; consider reprocessing"
+        "pdfparseHint": "Processed with the basic extractor — reduced quality; consider reprocessing"
     },
     "stores": {
         "exegesis": "Exegesis",
@@ -175,7 +175,7 @@
     },
     "editModal": {
         "title": "Edit Resource",
-        "description": "Edit the document metadata.",
+        "description": "Edit the document details.",
         "titleLabel": "Title",
         "titlePlaceholder": "Document title",
         "authorLabel": "Author",
@@ -199,7 +199,7 @@
     },
     "phaseModal": {
         "title": "Preferred Phases",
-        "description": "Choose the sermon phases where this document should be prioritized for RAG",
+        "description": "Choose the sermon phases where this document should be prioritized when the assistant queries your library",
         "byAuthor": "{{title}} by {{author}}",
         "phases": {
             "exegesisLabel": "Exegesis",
@@ -273,8 +273,8 @@
         "close": "Close"
     },
     "metadataBackfill": {
-        "title_one": "{{count}} resource without Bible book metadata",
-        "title_other": "{{count}} resources without Bible book metadata",
+        "title_one": "{{count}} resource missing Bible book info",
+        "title_other": "{{count}} resources missing Bible book info",
         "body": "We can infer the books from the title (BHQ → whole OT, \"2 Peter & Jude\" → 2 Peter + Jude, etc.) and fill them in automatically. We only write when the match is clear; the rest you can edit manually.",
         "cta_one": "Detect ({{count}})",
         "cta_other": "Detect ({{count}})",
