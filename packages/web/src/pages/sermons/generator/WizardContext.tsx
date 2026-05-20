@@ -67,7 +67,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     // Auto-save hook
     const { saving, lastSaved } = useAutoSave(
         sermonId,
-        { step, passage, exegesis, homiletics, draft, derivedContext },
+        { step, passage, exegesis, homiletics, draft, derivedContext, personalization: rules.personalization ?? null },
         user?.uid || ''
     );
 

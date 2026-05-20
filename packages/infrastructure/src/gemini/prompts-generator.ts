@@ -1,4 +1,4 @@
-import { GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import { GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 
 const JSON_INSTRUCTION = `IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido. No incluyas NADA de texto antes ni después del JSON (ni "Aquí está el JSON", ni bloques de código markdown como \`\`\`json). Solo el objeto JSON crudo.`;
@@ -248,9 +248,11 @@ Insights Pastorales:
 ${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).join('\n')}
 ` : '';
 
+  const personalizationBlock = formatSermonPersonalizationBlock(rules.personalization);
+
   return `
 ${BASE_SYSTEM_PROMPT}
-
+${personalizationBlock}
 FASE 3: REDACCIÓN DEL SERMÓN
 Objetivo: Redactar el contenido completo del sermón basado en el análisis previo.
 ${exegesisContext}
