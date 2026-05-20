@@ -14,6 +14,7 @@ export * from './firebase/FirebaseAnalyticsRepository'; // 📊 Analytics Reposi
 export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository
 export * from './firebase/FirebaseUserActivityRepository'; // 📊 User Activity Repository
 export * from './firebase/FirestoreAIChatRepository'; // 🎓 Multi-Agent Chat Repository
+export * from './firebase/FirestoreSermonWizardChatRepository'; // 🎙️ Sermon Wizard Chat (PR #219)
 export * from './firebase/FirestoreAIProjectRepository'; // 🎓 Multi-Agent Project Repository
 export * from './firebase/FirestoreExtractionRepository'; // 🎓 Persisted Faculty Extractions
 export * from './firebase/FirestoreUserIntegrationsRepository'; // 🎓 Per-user 3rd-party integration creds
