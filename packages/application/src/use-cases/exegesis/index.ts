@@ -142,6 +142,17 @@ export {
     type DerivedArtifact,
     type DerivedArtifactKind,
 } from './ListPaperDerivedArtifactsUseCase';
+export {
+    VerifySermonCitationsUseCase,
+    type VerifySermonCitationsInput,
+    type VerifySermonCitationsOutput,
+    type VerifiedSermonCitation,
+    type SermonCitationStatus,
+} from './VerifySermonCitationsUseCase';
+export {
+    parseSermonCitations,
+    type ParsedSermonCitation,
+} from './sermonCitationParser';
 
 // Pericope assistant (Phase 3 of the sermon-series pipeline)
 export {
