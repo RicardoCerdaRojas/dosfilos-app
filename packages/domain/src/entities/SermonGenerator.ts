@@ -81,7 +81,7 @@ export interface SermonOutline {
 export interface GenerationRules {
     theologicalBias?: string; // e.g., "Reformed", "Charismatic"
     preferredBibleVersion?: string; // e.g., "RV1960", "NVI"
-    tone?: 'inspirational' | 'educational' | 'casual' | 'formal' | 'evangelistic';
+    tone?: 'pastoral' | 'expositivo' | 'narrativo';
     targetAudience?: 'general' | 'youth' | 'children' | 'adults' | 'seniors';
     customInstructions?: string; // User-defined prompt additions
 }
