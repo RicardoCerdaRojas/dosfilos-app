@@ -1,9 +1,11 @@
 import { WorkflowPhase } from '@dosfilos/domain';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { BookOpen, Mic2, FileText, Check, LogOut } from 'lucide-react';
 import { useWizard } from './WizardContext';
 import { Button } from '@/components/ui/button';
 import { LibraryStatusBadge } from '@/components/library/LibraryStatusBadge';
+import { ExegesisQuotaBadge } from '@/components/exegesis/ExegesisQuotaBadge';
 
 interface WizardHeaderProps {
   currentStep: number;
@@ -18,6 +20,8 @@ const PHASES = [
 
 export function WizardHeader({ currentStep, onExit }: WizardHeaderProps) {
   const { setStep, exegesis, homiletics } = useWizard();
+  const navigate = useNavigate();
+  const goToBilling = () => navigate('/dashboard/settings/billing');
 
   const handleStepClick = (step: number) => {
     // Prevent navigation if previous steps are not completed
@@ -99,6 +103,7 @@ export function WizardHeader({ currentStep, onExit }: WizardHeaderProps) {
                 ? 'Preparando…'
                 : `Paso ${Math.min(currentStep, 3)} de 3`}
             </div>
+            <ExegesisQuotaBadge variant="compact" onUpgradePlan={goToBilling} />
             <LibraryStatusBadge />
             {onExit && (
               <Button 
