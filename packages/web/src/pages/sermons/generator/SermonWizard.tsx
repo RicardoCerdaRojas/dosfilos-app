@@ -9,7 +9,8 @@ import { StepDraft } from './StepDraft';
 import { SermonsInProgress } from './SermonInProgress';
 import { sermonService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import { SermonEntity } from '@dosfilos/domain';
+import { SermonEntity, type Sermon } from '@dosfilos/domain';
+import { migrateLegacyWizardProgress } from './migrateLegacyWizardProgress';
 
 function WizardContent() {
     const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, setDerivedContext, reset } = useWizard();
@@ -47,41 +48,48 @@ function WizardContent() {
                 try {
                     const sermon = await sermonService.getSermon(sermonIdParam);
                     console.log('[SermonWizard] ✅ Sermon loaded:', { id: sermon?.id, title: sermon?.title, hasProgress: !!sermon?.wizardProgress });
-                    
-                    if (sermon && sermon.wizardProgress) {
-                        console.log('[SermonWizard] Restoring wizard progress:', sermon.wizardProgress);
-                        // Resume this specific sermon
-                        setSermonId(sermon.id);
-                        
-                        const progress = sermon.wizardProgress;
-                        setPassage(progress.passage || '');
-                        if (progress.exegesis) setExegesis(progress.exegesis);
-                        if (progress.homiletics) setHomiletics(progress.homiletics);
-                        if (progress.draft) setDraft(progress.draft);
-                        // Restore paperContext so per-step banners can
-                        // surface the paper provenance.
-                        if (progress.derivedContext) setDerivedContext(progress.derivedContext);
 
-                        // If no passage, go to step 0 (passage selection)
-                        if (!progress.passage) {
-                            setStep(0);
-                        } else if (progress.currentStep !== undefined) {
-                            // Validate step is in range 0-3
-                            const validStep = Math.min(Math.max(progress.currentStep, 0), 3);
-                            console.log('[SermonWizard] URL param - Setting step:', validStep, progress.currentStep !== validStep ? `(clamped from ${progress.currentStep})` : '');
-                            setStep(validStep);
-                        } else if (progress.draft) {
-                            setStep(3);
-                        } else if (progress.homiletics) {
-                            setStep(2);
+                    if (sermon) {
+                        // Runtime migration for legacy sermons (pre PRs
+                        // #213/#214). When `sermon.content` exists but
+                        // `wizardProgress.draft` is missing, synthesize
+                        // wizardProgress on-the-fly so the wizard lands
+                        // at Step 3 with the legacy content + a
+                        // derivedContext banner (when paper/Faculty
+                        // origin is known).
+                        const progress = await applyLegacyMigrationIfNeeded(sermon);
+                        if (progress) {
+                            console.log('[SermonWizard] Restoring wizard progress:', progress);
+                            setSermonId(sermon.id);
+                            setPassage(progress.passage || '');
+                            if (progress.exegesis) setExegesis(progress.exegesis);
+                            if (progress.homiletics) setHomiletics(progress.homiletics);
+                            if (progress.draft) setDraft(progress.draft);
+                            if (progress.derivedContext) setDerivedContext(progress.derivedContext);
+
+                            // If no passage, go to step 0 (passage selection)
+                            if (!progress.passage) {
+                                setStep(0);
+                            } else if (progress.currentStep !== undefined) {
+                                // Validate step is in range 0-3
+                                const validStep = Math.min(Math.max(progress.currentStep, 0), 3);
+                                console.log('[SermonWizard] URL param - Setting step:', validStep, progress.currentStep !== validStep ? `(clamped from ${progress.currentStep})` : '');
+                                setStep(validStep);
+                            } else if (progress.draft) {
+                                setStep(3);
+                            } else if (progress.homiletics) {
+                                setStep(2);
+                            } else {
+                                setStep(1);
+                            }
+
+                            setLoading(false);
+                            return;
                         } else {
-                            setStep(1);
+                            console.warn('⚠️ SermonWizard: Sermon has neither wizardProgress nor migratable content');
                         }
-                        
-                        setLoading(false);
-                        return;
                     } else {
-                        console.warn('⚠️ SermonWizard: Sermon not found or no wizardProgress');
+                        console.warn('⚠️ SermonWizard: Sermon not found');
                     }
                 } catch (error: any) {
                     console.error('❌ SermonWizard: Error loading sermon from URL param:', error);
@@ -106,16 +114,19 @@ function WizardContent() {
         checkForInProgress();
     }, [user, location.key, searchParams]);
 
-    const handleContinue = (sermon: SermonEntity) => {
+    const handleContinue = async (sermon: SermonEntity) => {
         console.log('[SermonWizard] 🎯 handleContinue called for sermon:', { id: sermon.id, title: sermon.title || sermon.wizardProgress?.passage });
-        if (!sermon.wizardProgress) {
-            console.warn('[SermonWizard] ⚠️ No wizard progress found!');
+
+        // Apply legacy migration (same path as URL-param load) so the
+        // "Sermones en progreso" list can also resume pre-convergence
+        // sermons cleanly.
+        const progress = await applyLegacyMigrationIfNeeded(sermon);
+        if (!progress) {
+            console.warn('[SermonWizard] ⚠️ Sermon has neither wizardProgress nor migratable content');
             return;
         }
-
-        const progress = sermon.wizardProgress;
         console.log('[SermonWizard] Restoring state:', { passage: progress.passage, currentStep: progress.currentStep });
-        
+
         // Restore wizard state including sermonId
         setSermonId(sermon.id);
         setPassage(progress.passage);
@@ -138,6 +149,38 @@ function WizardContent() {
 
         setShowResumePrompt(false);
     };
+
+    /**
+     * Returns the wizardProgress to use for a loaded sermon, running
+     * the legacy-content migration when needed and persisting the
+     * migrated state to Firestore so subsequent loads skip the work.
+     *
+     * Returns `null` only when the sermon has neither an existing
+     * wizardProgress NOR migratable content — that's the truly-empty
+     * sermon edge case the caller should warn about.
+     */
+    async function applyLegacyMigrationIfNeeded(
+        sermon: Sermon,
+    ): Promise<NonNullable<Sermon['wizardProgress']> | null> {
+        const migration = migrateLegacyWizardProgress(sermon);
+        if (migration?.migrated) {
+            console.info('[SermonWizard] Migrating legacy sermon to wizardProgress', { sermonId: sermon.id });
+            try {
+                await sermonService.updateWizardProgress(sermon.id, migration.wizardProgress);
+            } catch (err) {
+                // Migration persistence is best-effort. UI continues
+                // with the in-memory migrated progress so the user
+                // sees the correct state immediately; the next save
+                // (auto-save on any wizard mutation) will retry.
+                console.warn('[SermonWizard] Failed to persist legacy migration; continuing in-memory', err);
+            }
+            return migration.wizardProgress;
+        }
+        if (migration) {
+            return migration.wizardProgress;
+        }
+        return sermon.wizardProgress ?? null;
+    }
 
     const handleDiscard = async (sermon: SermonEntity) => {
         try {
