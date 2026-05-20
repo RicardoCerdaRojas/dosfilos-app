@@ -26,6 +26,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AddSermonDialog } from '@/components/plan/AddSermonDialog';
 import { EditSermonDialog } from '@/components/plan/EditSermonDialog';
 import { ExegesisDefaultsCard } from '@/components/plan/ExegesisDefaultsCard';
@@ -484,6 +494,23 @@ function SermonRow({
     const passageLabel = item.passage
         || (planned?.syntacticUnit ? formatUnitPassage(planned.syntacticUnit) : '');
 
+    // Confirmation dialog state for "Iniciar sermón" when a paper
+    // already exists for this pericope but is not yet assembled. The
+    // pastor is about to start a blank sermon, which means the
+    // in-progress paper's exegesis won't pre-populate the wizard —
+    // they likely want to wait for the paper or continue working on
+    // it first. The dialog surfaces both options instead of silently
+    // dropping them into a blank Step 0.
+    const [showStartDraftConfirm, setShowStartDraftConfirm] = useState(false);
+    const requireConfirmBeforeStart = hasPaper && paperPhase !== 'assembled';
+    const handleStartDraftClick = () => {
+        if (requireConfirmBeforeStart) {
+            setShowStartDraftConfirm(true);
+        } else {
+            onStartDraft();
+        }
+    };
+
     return (
         <div className="group px-3 py-2.5 hover:bg-accent/40 transition-colors">
             <div className="flex items-start gap-3">
@@ -600,13 +627,39 @@ function SermonRow({
                     ) : item.status === 'planned' && (
                         <Button
                             size="sm"
-                            onClick={onStartDraft}
+                            onClick={handleStartDraftClick}
                             className="h-7 text-[11.5px]"
+                            variant={requireConfirmBeforeStart ? 'outline' : 'default'}
+                            title={requireConfirmBeforeStart ? (t('detail.table.startDraftWarning.tooltip') as string) : undefined}
                         >
                             <Sparkles className="h-3 w-3 mr-1" />
                             {t('detail.table.startDraft')}
                         </Button>
                     )}
+
+                    <AlertDialog open={showStartDraftConfirm} onOpenChange={setShowStartDraftConfirm}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>{t('detail.table.startDraftWarning.title')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('detail.table.startDraftWarning.description')}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>
+                                    {t('detail.table.startDraftWarning.continuePaper')}
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={() => {
+                                        setShowStartDraftConfirm(false);
+                                        onStartDraft();
+                                    }}
+                                >
+                                    {t('detail.table.startDraftWarning.startAnyway')}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button

@@ -233,12 +233,29 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             const response = result.response;
             const text = response.text();
             const parsed = JSON.parse(this.cleanJsonResponse(text));
+            // Normalize body: filter hallucinated authorityQuote when
+            // null/undefined so the renderer skips the block cleanly.
+            // PR #217: prompt now forbids fabricating quotes; the LLM
+            // returns null when no verified source exists.
+            const body = Array.isArray(parsed.body) ? parsed.body.map((b: any) => ({
+                ...b,
+                authorityQuote: b?.authorityQuote && typeof b.authorityQuote === 'string' && b.authorityQuote.trim().length > 0
+                    ? b.authorityQuote
+                    : null,
+            })) : [];
+            // callToAction is mandatory per PR #217 prompt rule. If the
+            // LLM returned empty, surface a clear fallback the pastor
+            // can replace — never ship an unconcluded sermon to the
+            // pulpit.
+            const callToAction = parsed.callToAction && typeof parsed.callToAction === 'string' && parsed.callToAction.trim().length > 0
+                ? parsed.callToAction
+                : '**Pasos de Acción**:\n\n1. Reflexiona esta semana cómo aplicar esta verdad a tu vida personal.\n2. Comparte el mensaje central con alguien que necesite escucharlo.\n3. Ora pidiendo al Espíritu Santo que arraigue esta verdad en tu corazón.';
             return {
                 title: parsed.title || 'Sin Título',
                 introduction: parsed.introduction || '',
-                body: Array.isArray(parsed.body) ? parsed.body : [],
+                body,
                 conclusion: parsed.conclusion || '',
-                callToAction: parsed.callToAction || '',
+                callToAction,
                 ragSources: Array.isArray(parsed.ragSources) ? parsed.ragSources : undefined
             };
         } catch (error: any) {

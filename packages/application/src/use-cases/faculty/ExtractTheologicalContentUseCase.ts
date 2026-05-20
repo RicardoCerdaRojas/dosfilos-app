@@ -203,6 +203,9 @@ Basándote en la conversación teológica anterior, extrae y redacta un BOSQUEJO
 
 REGLAS IMPORTANTES:
 - Usa únicamente lo discutido en la conversación. No inventes datos no cubiertos.
+- PROHIBIDO inventar citas atribuidas a teólogos, puritanos, reformadores u otros autores. Solo cita autores cuyos nombres Y texto exacto aparezcan en la conversación. Si la "Cita de Autoridad" no tiene fuente en la conversación, omite ese bloque o reemplázalo por una cita bíblica adicional. NO uses fórmulas como "Como dijo Owen" / "Spurgeon enseñó" / "Según Calvino" salvo que la conversación contenga el texto exacto.
+- Diversidad de ilustraciones: NO repitas la misma imagen o categoría (viaje/deporte/familia/cocina) en dos puntos consecutivos. Cada punto debe usar una categoría distinta de ilustración.
+- El "Llamado a la Acción" es OBLIGATORIO al cierre y debe contener 2-4 acciones concretas y específicas (no genéricas) que el oyente pueda comenzar esta semana.
 - Si en la conversación se discutió griego/hebreo, inclúyelo en la Exposición Bíblica.
 ${approvedOutline ? `- CRÍTICO: El título, pasaje, proposición y puntos ya fueron aprobados por el usuario. Úsalos EXACTAMENTE como aparecen en la ESTRUCTURA APROBADA de arriba. NO LOS CAMBIES.` : `- El formato de la proposición debe seguir exactamente este ejemplo:
   "En 📖 1 Pedro 2:11-17, aprenderás tres virtudes que todo creyente debe ejercitar en un mundo hostil."

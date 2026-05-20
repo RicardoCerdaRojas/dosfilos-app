@@ -382,7 +382,7 @@ Instrucciones de Contenido:
           "> \\"Porque de tal manera amó Dios al mundo...\\" (Juan 3:16)",
           "> \\"Sabemos que a los que aman a Dios...\\" (Romanos 8:28)"
         ],
-        "authorityQuote": "**Cita de Autoridad:**\\n\\n> \\"[Texto de la cita]\\"\\n> — *[Nombre del Autor], [Fuente]*",
+        "authorityQuote": null,
         "illustration": "**Ilustración:** [Título]\\n\\n[Desarrollo de la ilustración]",
         "implications": [
           "**Implicación 1:** Descripción de la primera implicación", 
@@ -418,7 +418,11 @@ REGLAS DE GENERACIÓN:
 1. Si usas información de documentos proporcionados, incluye en "ragSources" una entrada por cada documento consultado.
 2. Cada punto debe tener al menos 2 implicaciones prácticas con formato de lista.
 3. Las ilustraciones deben ser culturalmente relevantes, memorables y estar formateadas con encabezados.
-4. TODO el texto debe usar formato markdown con jerarquización clara.
+4. **Diversidad de ilustraciones**: NO uses la misma categoría (viaje/deporte/familia/cocina/transporte) en dos puntos consecutivos. Si Punto I usa transporte (avión, tren), Punto II DEBE usar otra categoría.
+5. **authorityQuote es OPCIONAL** (null por defecto). Solo inclúyelo cuando uses una cita REAL y verificable de un autor cuyo texto esté presente en los documentos proporcionados o en la conversación. PROHIBIDO inventar citas atribuidas a Owen, Spurgeon, Calvino, Van Til, Edwards, MacArthur u otros autores. Si no hay una cita verificable disponible, deja authorityQuote en null. Una cita inventada en el pulpito destruye credibilidad.
+6. **callToAction es OBLIGATORIO y no puede ser vacío**. Debe contener 1-3 acciones concretas y específicas (no genéricas) que el oyente pueda comenzar esta semana. Sin callToAction, el sermón no se considera completo.
+7. **Balance de longitud OBLIGATORIO**: introduction 200-400 palabras (10-15%), body total 1800-2800 palabras (70-80%), conclusion 250-450 palabras (10-15%). La conclusion NUNCA puede ser menor a un cuarto de la introduction.
+8. TODO el texto debe usar formato markdown con jerarquización clara.
 `;
 }
 

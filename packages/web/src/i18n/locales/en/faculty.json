@@ -135,6 +135,56 @@
             "view": "View"
         }
     },
+    "sermonOutlineModal": {
+        "phases": {
+            "previewTitle": "Review your outline",
+            "previewHint": "Edit the proposition and points before continuing.",
+            "personalizeTitle": "Your pastoral voice",
+            "personalizeHint": "Optional: stamp your style and context onto the sermon.",
+            "generatingTitle": "Generating sermon…"
+        },
+        "stepIndicator": {
+            "outline": "Outline",
+            "voice": "Your voice"
+        },
+        "fields": {
+            "title": "Title",
+            "titlePlaceholder": "Sermon title",
+            "passage": "Passage",
+            "passagePlaceholder": "e.g. 1 Peter 2:11-17",
+            "proposition": "Homiletical proposition",
+            "propositionPlaceholder": "In \"passage\", you will learn…",
+            "points": "Sermon points ({{count}})",
+            "pointsEmpty": "No points yet. Add one.",
+            "pointTitlePlaceholder": "Point title (imperative verb)",
+            "pointVersesPlaceholder": "vv. XX-XX",
+            "removePoint": "Remove point",
+            "addPoint": "Add point",
+            "tone": "Sermon tone",
+            "situationalContext": "Situational context",
+            "situationalContextPlaceholder": "e.g. This will be preached at a funeral service, or after a community crisis…",
+            "congregation": "Congregation",
+            "congregationPlaceholder": "e.g. 80 people, Reformed, mid-to-high theological level",
+            "pastoralEmphasis": "Pastoral emphasis",
+            "pastoralEmphasisPlaceholder": "What do you want the congregation to feel, understand, or do when the sermon ends?",
+            "illustrations": "Illustrations and testimonies",
+            "illustrationsPlaceholder": "Personal anecdotes, congregation stories, or testimonies you want to include…",
+            "preacherNotes": "Preacher notes",
+            "preacherNotesPlaceholder": "Loose ideas, arguments you want to develop, particular emphases…",
+            "personalizeOptional": "All fields are optional. You can generate the sermon directly."
+        },
+        "generating": {
+            "headline": "Generating the full sermon",
+            "subhead": "This will take ~20–30 seconds.\nYou'll be redirected to the editor automatically.",
+            "propositionLabel": "Proposition"
+        },
+        "actions": {
+            "cancel": "Cancel",
+            "continue": "Continue",
+            "back": "Back",
+            "generateFull": "Generate full sermon"
+        }
+    },
     "extractionsList": {
         "empty": "No resources created in this session yet. Use the Create tab to generate the first one.",
         "orphan": "session deleted",

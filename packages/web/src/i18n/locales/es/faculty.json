@@ -135,6 +135,56 @@
             "view": "Ver"
         }
     },
+    "sermonOutlineModal": {
+        "phases": {
+            "previewTitle": "Revisa tu Bosquejo",
+            "previewHint": "Edita la proposición y los puntos antes de continuar.",
+            "personalizeTitle": "Tu Voz Pastoral",
+            "personalizeHint": "Opcional: imprime tu estilo y contexto en el sermón.",
+            "generatingTitle": "Generando Sermón…"
+        },
+        "stepIndicator": {
+            "outline": "Bosquejo",
+            "voice": "Tu Voz"
+        },
+        "fields": {
+            "title": "Título",
+            "titlePlaceholder": "Título del sermón",
+            "passage": "Pasaje",
+            "passagePlaceholder": "ej: 1 Pedro 2:11-17",
+            "proposition": "Proposición Homilética",
+            "propositionPlaceholder": "En \"pasaje\", aprenderás…",
+            "points": "Puntos del Sermón ({{count}})",
+            "pointsEmpty": "No hay puntos aún. Agrega uno.",
+            "pointTitlePlaceholder": "Título del punto (verbo imperativo)",
+            "pointVersesPlaceholder": "vv. XX-XX",
+            "removePoint": "Quitar punto",
+            "addPoint": "Agregar punto",
+            "tone": "Tono del sermón",
+            "situationalContext": "Contexto situacional",
+            "situationalContextPlaceholder": "Ej: Será predicado en un culto de funeral, o después de una crisis en la comunidad…",
+            "congregation": "Congregación",
+            "congregationPlaceholder": "Ej: 80 personas, reformados, nivel teológico medio-alto",
+            "pastoralEmphasis": "Énfasis pastoral",
+            "pastoralEmphasisPlaceholder": "¿Qué quieres que la congregación sienta, entienda o haga al terminar el sermón?",
+            "illustrations": "Ilustraciones y testimonios",
+            "illustrationsPlaceholder": "Anécdotas personales, historias de la congregación, o testimonios que quieras incluir…",
+            "preacherNotes": "Notas del predicador",
+            "preacherNotesPlaceholder": "Ideas sueltas, argumentos que quieras desarrollar, énfasis particulares…",
+            "personalizeOptional": "Todos los campos son opcionales. Puedes generar el sermón directamente."
+        },
+        "generating": {
+            "headline": "Generando el sermón completo",
+            "subhead": "Esto tomará unos 20–30 segundos.\nSerás redirigido al editor automáticamente.",
+            "propositionLabel": "Proposición"
+        },
+        "actions": {
+            "cancel": "Cancelar",
+            "continue": "Continuar",
+            "back": "Volver",
+            "generateFull": "Generar sermón completo"
+        }
+    },
     "extractionsList": {
         "empty": "Aún no has creado recursos en esta sesión. Usa la pestaña Crear para generar el primero.",
         "orphan": "sesión eliminada",
