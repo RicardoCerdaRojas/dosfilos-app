@@ -6,7 +6,13 @@ import { DerivedContextBanner } from './DerivedContextBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
-import { sermonGeneratorService, sermonService, generatorChatService } from '@dosfilos/application';
+import {
+    sermonGeneratorService,
+    sermonService,
+    generatorChatService,
+    exegesisService,
+    type VerifySermonCitationsOutput,
+} from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
@@ -19,6 +25,7 @@ import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
+import { SermonCitationVerificationDialog } from '@/components/sermons/SermonCitationVerificationDialog';
 import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import {
@@ -46,6 +53,17 @@ export function StepDraft() {
     const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, reset, saving } = useWizard();
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
+    // Pre-publish citation verification state (PR #218).
+    // - `verificationDialogOpen` shows the gate dialog with verdicts
+    //   before allowing publish to proceed.
+    // - `verifying` is true while the deterministic verifier runs
+    //   (<50 ms typical) — the user sees the loading variant of the
+    //   dialog instead of a silent delay.
+    // - `verificationResult` carries the verdicts; consumed by the
+    //   dialog to render verified/fuzzy-low/not-found citations.
+    const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+    const [verifying, setVerifying] = useState(false);
+    const [verificationResult, setVerificationResult] = useState<VerifySermonCitationsOutput | null>(null);
     const {
         messages,
         setMessages,
@@ -111,12 +129,57 @@ export function StepDraft() {
         navigate('/dashboard');
     };
 
+    /**
+     * Pre-publish gate (PR #218 — sermon audit Tier 2).
+     *
+     * Runs the citation verifier against the current draft + sermon
+     * source corpus (paper or Faculty conversation). Three outcomes:
+     *   - All quotes verified → dialog shows "todo verificado", user
+     *     confirms "Publicar ahora" → calls performPublish().
+     *   - Has not-found / fuzzy-low → dialog lists offending citations,
+     *     user chooses "Editar sermón" (cancel) or "Publicar de todos
+     *     modos" (proceed with explicit consent).
+     *   - Source unavailable (no paper, no Faculty origin) → dialog
+     *     shows "unavailable" notice; user can publish or cancel.
+     *
+     * Verification is fast (<50 ms — deterministic substring + Jaccard,
+     * no LLM call per citation), so the UX overhead is negligible vs
+     * the credibility risk of unflagged fabricated quotes reaching the
+     * pulpit.
+     */
     const handlePublish = async () => {
         if (!draft || !user || !exegesis || !sermonId) {
             toast.error(t('drafting.errors.noDraft'));
             return;
         }
+        setVerificationDialogOpen(true);
+        setVerifying(true);
+        setVerificationResult(null);
+        try {
+            const result = await exegesisService.verifySermonCitations.execute({
+                ownerId: user.uid,
+                sermonId,
+            });
+            setVerificationResult(result);
+        } catch (error: any) {
+            console.error('[StepDraft] citation verification failed', error);
+            // On verifier failure, allow the user to publish anyway —
+            // verification is a safety net, not a hard gate. We show
+            // the dialog in its empty/unavailable state so the user
+            // sees the warning + confirms.
+            setVerificationResult({
+                sourceKind: null,
+                sourceCorpusLength: 0,
+                citations: [],
+            });
+        } finally {
+            setVerifying(false);
+        }
+    };
 
+    const performPublish = async () => {
+        if (!draft || !user || !exegesis || !sermonId) return;
+        setVerificationDialogOpen(false);
         setPublishing(true);
         try {
             const content = getFullContent();
@@ -479,6 +542,16 @@ export function StepDraft() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Pre-publish citation verification gate (PR #218) */}
+            <SermonCitationVerificationDialog
+                open={verificationDialogOpen}
+                onOpenChange={setVerificationDialogOpen}
+                result={verificationResult}
+                loading={verifying}
+                onProceedAnyway={performPublish}
+                onEditSermon={() => setVerificationDialogOpen(false)}
+            />
         </>
     );
 }

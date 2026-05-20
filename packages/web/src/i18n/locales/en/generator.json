@@ -26,6 +26,30 @@
             }
         }
     },
+    "citationVerification": {
+        "titleVerifying": "Verifying citations…",
+        "titleIssues": "Possibly fabricated citations",
+        "titleClean": "All citations verified",
+        "titleUnavailable": "Verification unavailable",
+        "descVerifying": "Checking that author-attributed quotes are actually present in the source material.",
+        "descIssues_one": "Found {{count}} citation that probably isn't in the source material. Fabricated pulpit citations destroy credibility — review and fix before publishing.",
+        "descIssues_other": "Found {{count}} citations that probably aren't in the source material. Fabricated pulpit citations destroy credibility — review and fix before publishing.",
+        "descClean_one": "Checked {{count}} author-attributed citation and it appears in the source material. Safe to publish.",
+        "descClean_other": "Checked {{count}} author-attributed citations and all appear in the source material. Safe to publish.",
+        "descNoCitations": "The sermon contains no author-attributed quotes. Only Scripture is cited — nothing to verify.",
+        "descUnavailable": "This sermon is not linked to an exegetical paper or Faculty session, so there's no source material to verify citations against. If your sermon cites authors, double-check them manually.",
+        "allCleanDetail_one": "{{count}} citation verified in source material.",
+        "allCleanDetail_other": "{{count}} citations verified in source material.",
+        "status": {
+            "verified": "Verified",
+            "fuzzy-low": "Partially found",
+            "not-found": "Not in source"
+        },
+        "editSermon": "Edit sermon",
+        "publishAnyway": "Publish anyway",
+        "publishNow": "Publish now",
+        "cancel": "Cancel"
+    },
     "phases": {
         "published": "Published",
         "exegesis": "Exegesis",

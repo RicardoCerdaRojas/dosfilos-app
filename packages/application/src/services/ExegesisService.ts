@@ -7,6 +7,7 @@ import {
     FirebaseSermonRepository,
     FirebaseSeriesRepository,
     FirestoreExtractionRepository,
+    FirestoreAIChatRepository,
     GeminiAcademicComposer,
     GeminiCanonicalVerseAnalyzer,
     GeminiConclusionComposer,
@@ -99,6 +100,7 @@ import {
     GenerateSermonFromPaperUseCase,
     SaveExegesisArtifactExtractionUseCase,
     ListPaperDerivedArtifactsUseCase,
+    VerifySermonCitationsUseCase,
 } from '../use-cases/exegesis';
 
 /**
@@ -231,6 +233,13 @@ class ExegesisService {
     // sermons (sourcePaperId) + extractions (externalRef → paper)
     // merged into one sorted list.
     public listPaperDerivedArtifacts: ListPaperDerivedArtifactsUseCase;
+
+    // Sermon citation verifier (PR #218 — Tier 2 of audit). Scans
+    // generated sermon for author-attributed quotes and checks each
+    // against the originating paper / Faculty conversation. Catches
+    // fabricated quotes that slipped past the PR #217 prompt-level
+    // anti-hallucination rule.
+    public verifySermonCitations: VerifySermonCitationsUseCase;
 
     constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -558,6 +567,18 @@ class ExegesisService {
             paperRepository,
             extractionRepository,
             sermonRepository,
+        );
+
+        // Sermon citation verifier. Uses the AI chat repo for Faculty-
+        // derived sermons (source = conversation messages) and the
+        // paper repo for paper-derived sermons (source = paper
+        // assembled markdown + project sources). Deterministic
+        // substring + Jaccard check — no LLM calls per quote.
+        const chatRepositoryForVerifier = new FirestoreAIChatRepository();
+        this.verifySermonCitations = new VerifySermonCitationsUseCase(
+            sermonRepository,
+            paperRepository,
+            chatRepositoryForVerifier,
         );
     }
 }
