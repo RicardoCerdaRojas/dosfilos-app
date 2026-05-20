@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { DerivedContextBanner } from './DerivedContextBanner';
+import { SermonPersonalizationPanel } from './SermonPersonalizationPanel';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
@@ -286,6 +287,10 @@ export function StepDraft() {
                     </div>
                 )}
             </Card>
+
+            <div className="mb-6">
+                <SermonPersonalizationPanel />
+            </div>
 
             <Card className="p-6 flex-1 flex flex-col justify-center">
                 <div className="text-center space-y-6">

@@ -1,4 +1,5 @@
 import { ExegeticalStudy, HomileticalAnalysis, SermonContent } from './SermonGenerator';
+import type { SermonPersonalization } from './SermonPersonalization';
 
 export interface PreachingLog {
     date: Date;
@@ -38,6 +39,20 @@ export interface Sermon {
         lastSaved: Date;
         cacheName?: string;
         selectedResourceIds?: string[];
+        /**
+         * Optional pastoral personalization captured in PromptSettings.
+         * When present, the draft prompt prepends a "Voz del Predicador"
+         * block (situational context, congregation, illustrations…) so
+         * the wizard reaches Faculty parity for occasion-specific
+         * sermons (funerals, weddings, crisis preaching).
+         *
+         * Note: `personalization.tone` is intentionally NOT surfaced in
+         * the wizard panel — narrative voice lives in `GenerationRules.tone`
+         * (pastoral/expositivo/narrativo). Personalization.tone is the
+         * Faculty-only occasion posture (doxological/confrontational/…)
+         * and stays out of the wizard form to avoid two tone selectors.
+         */
+        personalization?: SermonPersonalization;
         // Track if this draft has been published
         publishedCopyId?: string;  // ID of the most recent published copy
         lastPublishedAt?: Date;    // When it was last published

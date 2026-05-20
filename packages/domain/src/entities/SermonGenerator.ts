@@ -84,6 +84,14 @@ export interface GenerationRules {
     tone?: 'pastoral' | 'expositivo' | 'narrativo';
     targetAudience?: 'general' | 'youth' | 'children' | 'adults' | 'seniors';
     customInstructions?: string; // User-defined prompt additions
+    /**
+     * Optional pastoral personalization (situational context,
+     * congregation description, illustrations, preacher notes…).
+     * When present, the draft prompt prepends a "Voz del Predicador"
+     * block so the wizard reaches Faculty parity for occasion-specific
+     * sermons.
+     */
+    personalization?: import('./SermonPersonalization').SermonPersonalization;
 }
 
 export interface SermonContent {

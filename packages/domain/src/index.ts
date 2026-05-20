@@ -34,6 +34,7 @@ export * from './entities/AIProject';
 export * from './entities/Extraction';
 export * from './entities/WordpressIntegration';
 export * from './entities/SermonPersonalization';
+export * from './services/sermonPersonalizationFormatter';
 
 // Repositories
 export * from './repositories/ISermonRepository';

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { sermonService } from '@dosfilos/application';
-import { ExegeticalStudy, HomileticalAnalysis, Sermon, SermonContent } from '@dosfilos/domain';
+import { ExegeticalStudy, HomileticalAnalysis, Sermon, SermonContent, SermonPersonalization } from '@dosfilos/domain';
 
 type DerivedContext = NonNullable<NonNullable<Sermon['wizardProgress']>['derivedContext']>;
 
@@ -12,6 +12,7 @@ interface WizardState {
     homiletics: HomileticalAnalysis | null;
     draft: SermonContent | null;
     derivedContext?: DerivedContext | null;
+    personalization?: SermonPersonalization | null;
 }
 
 export function useAutoSave(
@@ -56,6 +57,13 @@ export function useAutoSave(
             // sermons (no paper, no Faculty origin) carry no
             // derivedContext and this branch is skipped.
             if (wizardState.derivedContext) progress.derivedContext = wizardState.derivedContext;
+            // Persist personalization when any field is populated. Skip
+            // the empty default object so we don't write an empty
+            // wizardProgress.personalization for users who never opened
+            // the pastoral context panel.
+            if (wizardState.personalization && hasAnyField(wizardState.personalization)) {
+                progress.personalization = wizardState.personalization;
+            }
 
             await sermonService.updateWizardProgress(sermonId, progress);
 
@@ -96,12 +104,24 @@ export function useAutoSave(
         const homileticsChanged = prev.homiletics !== wizardState.homiletics;
         const draftChanged = prev.draft !== wizardState.draft;
         const stepChanged = prev.step !== wizardState.step;
+        const personalizationChanged = prev.personalization !== wizardState.personalization;
 
         // Only save if there's a real change
-        if (exegesisChanged || homileticsChanged || draftChanged || stepChanged) {
+        if (exegesisChanged || homileticsChanged || draftChanged || stepChanged || personalizationChanged) {
             save();
         }
-    }, [wizardState.exegesis, wizardState.homiletics, wizardState.draft, wizardState.step, sermonId, save]);
+    }, [wizardState.exegesis, wizardState.homiletics, wizardState.draft, wizardState.step, wizardState.personalization, sermonId, save]);
 
     return { saving, lastSaved, save };
+}
+
+function hasAnyField(p: SermonPersonalization): boolean {
+    return Boolean(
+        p.tone ||
+        p.situationalContext?.trim() ||
+        p.congregationDescription?.trim() ||
+        p.pastoralEmphasis?.trim() ||
+        p.illustrations?.trim() ||
+        p.preacherNotes?.trim()
+    );
 }
