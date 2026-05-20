@@ -425,6 +425,16 @@ REGLAS DE GENERACIÓN:
 6. **callToAction es OBLIGATORIO y no puede ser vacío**. Debe contener 1-3 acciones concretas y específicas (no genéricas) que el oyente pueda comenzar esta semana. Sin callToAction, el sermón no se considera completo.
 7. **Balance de longitud OBLIGATORIO**: introduction 200-400 palabras (10-15%), body total 1800-2800 palabras (70-80%), conclusion 250-450 palabras (10-15%). La conclusion NUNCA puede ser menor a un cuarto de la introduction.
 8. TODO el texto debe usar formato markdown con jerarquización clara.
+9. **LENTE TEOLÓGICA — FCF Y CRISTOCENTRISMO (OBLIGATORIO)**:
+   Todo sermón expositivo cristiano debe predicar a Cristo desde el texto, no usar el texto como pretexto para moralismo. Sigue el marco de Bryan Chapell (Christ-Centered Preaching):
+
+   a. **FCF (Fallen Condition Focus)** — En la introducción Y al menos en el primer punto del cuerpo, identifica EXPLÍCITAMENTE la "condición caída" que el pasaje aborda: ¿qué quebrantamiento, necesidad, o incapacidad humana hace que necesitemos lo que este texto enseña? El FCF NO es "lo que el texto manda hacer" sino "por qué necesitamos esta enseñanza dada nuestra condición caída".
+       Ejemplo: en Mateo 5:1-12, el FCF no es "imitar las Bienaventuranzas" sino "somos espiritualmente pobres, hambrientos, y perseguidos — incapaces por nosotros mismos de la rectitud que Cristo declara bendita."
+
+   b. **Cristocentrismo** — La conclusión (o un punto del cuerpo cuando el texto lo demande) DEBE trazar cómo el pasaje encuentra resolución en la obra redentora de Cristo (encarnación, vida obediente, cruz, resurrección, ascensión, intercesión, o segunda venida). NO basta con "y por eso Jesús nos ayuda" — muestra cómo el evangelio cumple, completa, o restaura lo que el FCF expuso como roto.
+       Pasajes del AT: traza la conexión via tipología, promesa-cumplimiento, o trayectoria redentora. Pasajes del NT: ancla la enseñanza en la persona y obra consumada de Cristo, no solo en mandamientos.
+
+   PROHIBIDO: sermón puramente moralista ("haz X, evita Y") sin FCF explícito y sin centralidad cristológica. Eso convierte el púlpito en consejería moral, no en proclamación del evangelio.
 `;
 }
 
