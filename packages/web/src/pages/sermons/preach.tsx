@@ -3,10 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSermon } from '@/hooks/use-sermons';
 import { Button } from '@/components/ui/button';
-import { 
-  ArrowLeft, Minus, Plus, Clock, Play, Pause, RotateCcw, 
-  Settings, BookOpen, Maximize, Minimize, Eraser, Pen, GraduationCap
+import {
+  ArrowLeft, Minus, Plus, Clock, Play, Pause, RotateCcw,
+  Settings, BookOpen, Maximize, Minimize, Eraser, Pen, GraduationCap, ListOrdered
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { SermonAnnotator } from '@/components/sermons/SermonAnnotator';
 import { StudySessionPanel } from '@/components/sermons/StudySessionPanel';
 import {
@@ -37,6 +45,59 @@ const formatTime = (seconds: number) => {
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
+
+interface PreachSection {
+  title: string;
+  slug: string;
+}
+
+function extractText(children: any): string {
+  if (typeof children === 'string') return children;
+  if (Array.isArray(children)) return children.map(extractText).join('');
+  if (children && typeof children === 'object' && 'props' in children) {
+    return extractText(children.props?.children);
+  }
+  return '';
+}
+
+function slugifyHeader(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 80);
+}
+
+function extractSections(markdown: string): PreachSection[] {
+  if (!markdown) return [];
+  const lines = markdown.split('\n');
+  const sections: PreachSection[] = [];
+  const seenSlugs = new Set<string>();
+  for (const line of lines) {
+    // Only level-2 headers ("## Introducción", "## Punto I", etc.).
+    // Level-1 is the sermon title (rendered separately), level-3+ are
+    // sub-sections within a point and would clutter the nav.
+    const match = line.match(/^##\s+(.+?)\s*$/);
+    if (!match) continue;
+    const title = match[1].trim();
+    if (!title) continue;
+    let slug = slugifyHeader(title);
+    if (!slug) continue;
+    // Dedupe slugs on collision (rare — same header text twice) by
+    // appending a counter so jump-to picks the first occurrence
+    // reliably without DOM duplicate-id warnings.
+    let suffix = 1;
+    let candidate = slug;
+    while (seenSlugs.has(candidate)) {
+      candidate = `${slug}-${++suffix}`;
+    }
+    seenSlugs.add(candidate);
+    sections.push({ title, slug: candidate });
+  }
+  return sections;
+}
 
 export function PreachModePage() {
   const { t } = useTranslation('sermonDetail');
@@ -255,7 +316,7 @@ export function PreachModePage() {
       if (href.startsWith('#bible-')) {
         const ref = decodeURIComponent(href.replace('#bible-', ''));
         return (
-          <span 
+          <span
             className="text-primary font-semibold cursor-pointer hover:underline decoration-dotted underline-offset-4 inline-flex items-center gap-1"
             onClick={(e) => {
               e.preventDefault();
@@ -271,14 +332,30 @@ export function PreachModePage() {
     },
     // Custom blockquote styling
     blockquote: ({ node, ...props }: any) => (
-      <blockquote 
-        {...props} 
+      <blockquote
+        {...props}
         className="border-l-4 border-primary/30 pl-4 my-6 text-muted-foreground bg-muted/10 py-3 pr-4 rounded-r"
       />
     ),
-    // Custom heading styling
-    h2: ({ node, ...props }: any) => <h2 {...props} className="text-2xl font-bold mt-8 mb-4" />,
+    // Custom heading styling — h2 tags are jump targets for the
+    // section-nav dropdown, so each gets a deterministic slug id
+    // derived from its text content.
+    h2: ({ node, ...props }: any) => (
+      <h2 {...props} id={`preach-section-${slugifyHeader(extractText(props.children))}`} className="text-2xl font-bold mt-8 mb-4 scroll-mt-24" />
+    ),
     h3: ({ node, ...props }: any) => <h3 {...props} className="text-xl font-semibold mt-6 mb-3" />,
+  };
+
+  // Parse rendered sermon markdown for level-2 headers so the
+  // section-nav dropdown can jump straight to "Introducción", "Punto I",
+  // "Conclusión", etc. — pastor doesn't have to scroll through 4000
+  // words mid-sermon to find a section.
+  const sections = extractSections(sermon?.content ?? '');
+
+  const jumpToSection = (slug: string) => {
+    const el = document.getElementById(`preach-section-${slug}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (loading || !sermon) {
@@ -313,6 +390,33 @@ export function PreachModePage() {
         </div>
 
         <div className="flex items-center gap-3 md:gap-4">
+          {/* Section Navigation — jump between intro / points / conclusion */}
+          {sections.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" title={t('preachMode.sections', { defaultValue: 'Secciones' })}>
+                  <ListOrdered className="h-4 w-4" />
+                  <span className="ml-2 hidden md:inline">
+                    {t('preachMode.sections', { defaultValue: 'Secciones' })}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 max-h-[60vh] overflow-y-auto">
+                <DropdownMenuLabel>{t('preachMode.sectionsLabel', { defaultValue: 'Saltar a sección' })}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {sections.map((s) => (
+                  <DropdownMenuItem
+                    key={s.slug}
+                    onClick={() => jumpToSection(s.slug)}
+                    className="cursor-pointer"
+                  >
+                    {s.title}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Timer Controls */}
           <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5">
             <Clock className={cn("h-4 w-4", getTimerColor())} />
