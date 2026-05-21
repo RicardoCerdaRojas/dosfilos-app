@@ -65,6 +65,7 @@ export * from './services/IAIService';
 export * from './services/IStorageService';
 export * from './services/IExportService';
 export * from './services/ISermonGenerator';
+export * from './services/ISermonRepurposer';
 export * from './services/IPlanGenerator';
 export * from './services/IEmbeddingService';
 export * from './services/ITextExtractor';
