@@ -4,6 +4,7 @@ import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { SermonPersonalizationPanel } from './SermonPersonalizationPanel';
+import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
@@ -310,6 +311,7 @@ export function StepDraft() {
         </div>
     ) : (
         <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+            <IllustrationDuplicateBanner draft={draft} />
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
                     <div className="mb-4 flex-shrink-0 flex items-center justify-between">
