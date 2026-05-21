@@ -37,7 +37,7 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
   // line before each block boundary recovers the intended structure
   // without touching content that already has proper spacing.
   const normalized = textContent.replace(
-    /([^\n])\n(###?#?\s|\s*[-*]\s|\s*\d+\.\s)/g,
+    /([^\n])\n(###?#?\s|\s*[-*]\s|\s*\d+\.\s|>\s)/g,
     '$1\n\n$2',
   );
 
