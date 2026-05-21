@@ -13,6 +13,7 @@ import {
     sermonService,
     generatorChatService,
     exegesisService,
+    facultyService,
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
@@ -106,12 +107,16 @@ export function StepDraft() {
                   }
                 : undefined;
 
-            // T3 #16 Fase 1 — fetch source paper when the sermon was
-            // pre-populated from one so the regenerate prompt sees the
-            // full assembled paper instead of collapsing to homiletics
-            // alone. Best-effort: on fetch failure we still generate
-            // without paper context (legacy path).
-            const rulesWithContext = await augmentRulesWithPaperContext(rules, derivedContext, user?.uid);
+            // T3 #16 Fase 1+2 — preserve provenance context across
+            // regenerations. Paper context (full assembledMarkdown) for
+            // paper-derived sermons; Faculty outline for Faculty-derived;
+            // project contextNote for any sermon belonging to a project.
+            // Blocks stack: a paper-derived sermon inside a project gets
+            // both context blocks prepended. Best-effort: any failure
+            // falls back to the un-augmented rules.
+            const withPaper = await augmentRulesWithPaperContext(rules, derivedContext, user?.uid);
+            const withFaculty = augmentRulesWithFacultyContext(withPaper, derivedContext);
+            const rulesWithContext = await augmentRulesWithProjectContext(withFaculty, sermonId, user?.uid);
 
             const { draft: result } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,
@@ -605,6 +610,65 @@ async function augmentRulesWithPaperContext(
         };
     } catch (error) {
         console.warn('[StepDraft] Could not fetch paper context — generating without it', error);
+        return rules;
+    }
+}
+
+/**
+ * T3 #16 Fase 2 — attach the Faculty-approved outline to rules when
+ * the sermon was pre-populated from a Faculty session. derivedContext
+ * already carries the outline (`SermonOutlinePreviewModal` persisted
+ * it on creation) so no fetch is needed — pure formatter.
+ *
+ * Faculty's full chat transcript is intentionally NOT included; the
+ * outline + personalization (handled separately via
+ * `formatSermonPersonalizationBlock`) capture the actionable content,
+ * and 10k+ tokens of conversation noise would degrade the prompt.
+ */
+function augmentRulesWithFacultyContext(
+    rules: GenerationRules,
+    derivedContext: DerivedContext | null,
+): GenerationRules {
+    if (derivedContext?.kind !== 'faculty') return rules;
+    return {
+        ...rules,
+        facultyContext: {
+            sessionTitle: derivedContext.sessionTitle,
+            outline: derivedContext.outline,
+        },
+    };
+}
+
+/**
+ * T3 #16 Fase 2 — when the sermon belongs to a project, attach the
+ * project's name + contextNote. Stacks independently of paper/faculty
+ * context (a paper-derived sermon can also belong to a project).
+ *
+ * Fetch path: sermonId → sermon.projectId → list user projects →
+ * find by id. `FacultyService` doesn't expose a single-project getter
+ * today; the list call is cheap and rare (one per regenerate).
+ */
+async function augmentRulesWithProjectContext(
+    rules: GenerationRules,
+    sermonId: string | null,
+    userId: string | undefined,
+): Promise<GenerationRules> {
+    if (!sermonId || !userId) return rules;
+    try {
+        const sermon = await sermonService.getSermon(sermonId);
+        if (!sermon?.projectId) return rules;
+        const projects = await facultyService.getProjects.execute(userId);
+        const project = projects.find((p) => p.id === sermon.projectId);
+        if (!project?.contextNote?.trim()) return rules;
+        return {
+            ...rules,
+            projectContext: {
+                name: project.name,
+                contextNote: project.contextNote,
+            },
+        };
+    } catch (error) {
+        console.warn('[StepDraft] Could not fetch project context — generating without it', error);
         return rules;
     }
 }
