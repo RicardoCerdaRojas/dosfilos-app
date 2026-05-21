@@ -10,6 +10,7 @@ export * from './services/AIService';
 export * from './services/StorageService';
 export * from './services/ExportService';
 export * from './services/SermonGeneratorService';
+export * from './services/SermonRepurposeService';
 export * from './services/WorkflowService';
 export * from './services/ConfigService';
 export * from './services/ContentRefinementService';

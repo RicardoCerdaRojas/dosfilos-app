@@ -26,6 +26,7 @@ export * from './firebase/FirestoreUserAssignmentBriefRepository'; // ✍️ Exe
 export * from './exegesis'; // ✍️ Exegesis Module — Gemini orchestrator
 export * from './gemini/GeminiAIService';
 export * from './gemini/GeminiSermonGenerator';
+export * from './sermon-repurposer/GeminiSermonRepurposer';
 export * from './gemini/GeminiPlanGenerator';
 export * from './gemini/GeminiEmbeddingService';
 export * from './gemini/GeminiFileSearchService';

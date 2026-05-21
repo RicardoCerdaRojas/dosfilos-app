@@ -41,6 +41,7 @@ import { exportService, sermonService, seriesService } from '@dosfilos/applicati
 import { SermonSeriesEntity, PreachingLog } from '@dosfilos/domain';
 import { toast } from 'sonner';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
+import { SermonRepurposeSection } from '@/components/sermons/SermonRepurposeSection';
 import { useTranslation } from 'react-i18next';
 import { ShareSermonDialog } from './components/detail/ShareSermonDialog';
 import { LogPreachingDialog } from './components/detail/LogPreachingDialog';
@@ -478,6 +479,11 @@ export function SermonDetailPage() {
                 category={sermon.category}
                 status={sermon.status}
                 fontSize={fontSize}
+              />
+              <SermonRepurposeSection
+                sermonId={sermon.id}
+                sermonTitle={sermon.title}
+                sermonStatus={sermon.status}
               />
             </div>
           </div>
