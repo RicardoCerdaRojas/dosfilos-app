@@ -153,9 +153,20 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
   };
 
   const renderInlineMarkdown = (text: string): ReactNode => {
-    // First, parse bold text
-    const parts = parseBoldText(text);
-    
+    // Parse bold first, then italic inside the resulting string parts.
+    // Order matters: `**bold**` must match before `*italic*` so the
+    // double-asterisk pattern wins and we don't render `**bold**` as
+    // italic-bold-italic.
+    const boldParts = parseBoldText(text);
+    const parts: ReactNode[] = [];
+    boldParts.forEach((part, i) => {
+      if (typeof part === 'string') {
+        parts.push(...parseItalicText(part, `b${i}-`));
+      } else {
+        parts.push(part);
+      }
+    });
+
     // Then, if Bible links are enabled, parse Bible references within each part
     if (enableBibleLinks) {
       return parts.map((part, partIndex) => {
@@ -166,25 +177,61 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
             </Fragment>
           );
         }
-        // It's already a React element (bold text), check if it contains Bible refs
-        if (typeof (part as any).props?.children === 'string') {
+        // It's already a React element (bold or italic). Check if its
+        // children is a string and run Bible-ref parsing inside it so
+        // refs nested in emphasis still render as clickable buttons.
+        const props: any = (part as any).props ?? {};
+        if (typeof props.children === 'string') {
+          const tag = (part as any).type;
+          const className = props.className ?? '';
+          const Wrapper = tag === 'em' ? 'em' : 'strong';
           return (
-            <strong key={partIndex} className="font-semibold text-foreground">
-              {parseBibleReferences((part as any).props.children)}
-            </strong>
+            <Wrapper key={partIndex} className={className}>
+              {parseBibleReferences(props.children)}
+            </Wrapper>
           );
         }
         return part;
       });
     }
-    
+
     return parts;
+  };
+
+  const parseItalicText = (text: string, keyPrefix: string): ReactNode[] => {
+    const parts: ReactNode[] = [];
+    let currentIndex = 0;
+
+    // Single-asterisk italic. Negative lookbehind/ahead on `*` prevents
+    // matching `**bold**` fragments that survived parseBoldText
+    // (defense in depth). Body cannot contain `*` so nested emphasis
+    // collapses into the outer span — acceptable for sermon prose.
+    const italicRegex = /(?<!\*)\*([^*\n]+)\*(?!\*)/g;
+    let match;
+
+    while ((match = italicRegex.exec(text)) !== null) {
+      if (match.index > currentIndex) {
+        parts.push(text.substring(currentIndex, match.index));
+      }
+      parts.push(
+        <em key={`${keyPrefix}${match.index}`} className="italic text-foreground">
+          {match[1]}
+        </em>,
+      );
+      currentIndex = match.index + match[0].length;
+    }
+
+    if (currentIndex < text.length) {
+      parts.push(text.substring(currentIndex));
+    }
+
+    return parts.length > 0 ? parts : [text];
   };
 
   const parseBoldText = (text: string): ReactNode[] => {
     const parts: ReactNode[] = [];
     let currentIndex = 0;
-    
+
     // Regex to find **bold** text
     const boldRegex = /\*\*([^*]+)\*\*/g;
     let match;
