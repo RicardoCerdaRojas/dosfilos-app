@@ -80,6 +80,40 @@ export function SermonPersonalizationPanel() {
                 </p>
 
                 <div className="space-y-2">
+                    <Label>Nivel de rigor</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setRules({ ...rules, audienceRigor: 'beginner' })}
+                            className={`text-left rounded-md border p-2 text-sm transition-colors ${
+                                (rules.audienceRigor ?? 'beginner') === 'beginner'
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border hover:bg-muted/50'
+                            }`}
+                        >
+                            <div className="font-medium">Pastor sin seminario</div>
+                            <div className="text-xs text-muted-foreground">
+                                Lenguaje accesible, mínima terminología griego/hebreo, ilustraciones cotidianas.
+                            </div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setRules({ ...rules, audienceRigor: 'seminary' })}
+                            className={`text-left rounded-md border p-2 text-sm transition-colors ${
+                                rules.audienceRigor === 'seminary'
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border hover:bg-muted/50'
+                            }`}
+                        >
+                            <div className="font-medium">Seminarista (TMS / reformado)</div>
+                            <div className="text-xs text-muted-foreground">
+                                Morfología/sintaxis profunda, autores reformados consolidados, densidad técnica.
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="space-y-2">
                     <Label>Contexto situacional</Label>
                     <Textarea
                         value={personalization.situationalContext ?? ''}

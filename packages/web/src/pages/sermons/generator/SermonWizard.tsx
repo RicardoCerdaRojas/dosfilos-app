@@ -75,7 +75,13 @@ function WizardContent() {
                             if (progress.homiletics) setHomiletics(progress.homiletics);
                             if (progress.draft) setDraft(progress.draft);
                             if (progress.derivedContext) setDerivedContext(progress.derivedContext);
-                            if (progress.personalization) setRules({ ...rules, personalization: progress.personalization });
+                            if (progress.personalization || progress.audienceRigor) {
+                                setRules({
+                                    ...rules,
+                                    ...(progress.personalization ? { personalization: progress.personalization } : {}),
+                                    ...(progress.audienceRigor ? { audienceRigor: progress.audienceRigor } : {}),
+                                });
+                            }
 
                             // If no passage, go to step 0 (passage selection)
                             if (!progress.passage) {
@@ -151,7 +157,13 @@ function WizardContent() {
         if (progress.homiletics) setHomiletics(progress.homiletics);
         if (progress.draft) setDraft(progress.draft);
         if (progress.derivedContext) setDerivedContext(progress.derivedContext);
-        if (progress.personalization) setRules({ ...rules, personalization: progress.personalization });
+        if (progress.personalization || progress.audienceRigor) {
+            setRules({
+                ...rules,
+                ...(progress.personalization ? { personalization: progress.personalization } : {}),
+                ...(progress.audienceRigor ? { audienceRigor: progress.audienceRigor } : {}),
+            });
+        }
 
         // Restore step if available, otherwise infer from content
         // IMPORTANT: Validate step is in range 0-3 (max step is 3 for draft)

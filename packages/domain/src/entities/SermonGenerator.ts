@@ -92,6 +92,21 @@ export interface GenerationRules {
      * sermons.
      */
     personalization?: import('./SermonPersonalization').SermonPersonalization;
+    /**
+     * Audience rigor tier. Controls how technical the prompt is:
+     *   - 'beginner' (default): pastor sin formación teológica formal —
+     *     simpler vocabulary, fewer Greek/Hebrew technicalities,
+     *     accessible illustrations, less assumed knowledge of systematic
+     *     categories.
+     *   - 'seminary': pastor con formación seminarista (TMS / reformada
+     *     / similar) — deeper morphological + syntactic analysis,
+     *     explicit Reformed theological framing where applicable, denser
+     *     citations, higher tolerance for technical vocabulary.
+     *
+     * Affects prompts that build the sermon body (`buildSermonDraftPrompt`).
+     * Undefined / 'beginner' = current behavior unchanged.
+     */
+    audienceRigor?: 'beginner' | 'seminary';
 }
 
 export interface SermonContent {

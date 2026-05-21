@@ -435,7 +435,25 @@ REGLAS DE GENERACIÓN:
        Pasajes del AT: traza la conexión via tipología, promesa-cumplimiento, o trayectoria redentora. Pasajes del NT: ancla la enseñanza en la persona y obra consumada de Cristo, no solo en mandamientos.
 
    PROHIBIDO: sermón puramente moralista ("haz X, evita Y") sin FCF explícito y sin centralidad cristológica. Eso convierte el púlpito en consejería moral, no en proclamación del evangelio.
+
+10. **NIVEL DE RIGOR SEGÚN AUDIENCIA**: ${audienceRigorBlock(rules.audienceRigor)}
 `;
+}
+
+function audienceRigorBlock(tier?: 'beginner' | 'seminary'): string {
+  if (tier === 'seminary') {
+    return `Predicador con formación seminarista (TMS / reformada / similar).
+   - Profundiza en morfología y sintaxis del griego/hebreo cuando el texto lo amerite (aoristos, participios circunstanciales, géneros de la literatura, paralelismo hebreo, quiasmos).
+   - Cita autores reformados / evangélicos consolidados cuando aporten (Calvino, Owen, Edwards, Spurgeon, Berkhof, Frame, Carson, Beale, Schreiner, Vanhoozer, Keller) — solo si están en las fuentes proporcionadas o son citas verificables; NUNCA inventes.
+   - Asume conocimiento de categorías sistemáticas (justificación forense, unión con Cristo, pacto de gracia/obras, eclesiología reformada).
+   - Permite densidad técnica mayor: notas exegéticas extensas, distinciones precisas, advertencias contra herejías históricas cuando relevante.`;
+  }
+  return `Predicador sin formación teológica formal (default).
+   - Mantén el lenguaje accesible. Cuando uses un término técnico (justificación, propiciación, pacto), defínelo en una línea.
+   - Limita las menciones de griego/hebreo a 1-2 palabras clave por punto, con transliteración + significado simple. Evita morfología densa.
+   - Prefiere ilustraciones cotidianas (familia, trabajo, comunidad) sobre referencias académicas.
+   - No asumas conocimiento previo de categorías sistemáticas reformadas; explica brevemente cuando uses una.
+   - Las citas de autoridad son opcionales y deben venir solo de las fuentes proporcionadas.`;
 }
 
 export function buildChatSystemPrompt(phase: WorkflowPhase, context: any, language?: SupportedLanguage): string {
