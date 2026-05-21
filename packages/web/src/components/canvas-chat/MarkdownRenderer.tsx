@@ -29,8 +29,20 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
   
   if (!textContent) return <p className="text-muted-foreground text-sm">Sin contenido</p>;
 
+  // Normalize: templates (notably Faculty SERMON) emit block elements
+  // (`###`, `*`, `-`, `1.`) on adjacent lines without the blank line
+  // markdown spec requires between blocks. Without normalization the
+  // `\n\n` split treats everything as one paragraph and the renderer
+  // emits `* Item` literally instead of a list. Inserting a blank
+  // line before each block boundary recovers the intended structure
+  // without touching content that already has proper spacing.
+  const normalized = textContent.replace(
+    /([^\n])\n(###?#?\s|\s*[-*]\s|\s*\d+\.\s)/g,
+    '$1\n\n$2',
+  );
+
   // Split content into paragraphs
-  const paragraphs = textContent.split('\n\n').filter(p => p.trim());
+  const paragraphs = normalized.split('\n\n').filter(p => p.trim());
 
   const renderParagraph = (text: string, index: number) => {
     const trimmed = text.trim();
