@@ -65,6 +65,12 @@ export function SermonCitationVerificationDialog({
     const noCitations = !!result && result.citations.length === 0;
     const sourceUnavailable = !!result && result.sourceKind === null;
 
+    // Pre-verification state (StepDraft mounts the dialog with
+    // result=null while loading=false until "Publicar" is clicked).
+    // Without this guard the description ternary falls through to
+    // `result!.citations.length` and crashes the wizard mount.
+    if (!loading && !result) return null;
+
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent className="max-w-2xl">
