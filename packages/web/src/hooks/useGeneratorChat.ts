@@ -21,6 +21,19 @@ interface UseGeneratorChatProps {
     content: any;
     config: any;
     user: any;
+    /**
+     * Sermon id. Drives both the localStorage key and the Firestore
+     * persistence path `sermons/{sermonId}/wizard_chats/{phase}`
+     * (PR #219). Pre-PR #219 this hook used `config.id` (the
+     * WorkflowConfiguration id) as a stand-in, which the firestore.rules
+     * `get(/sermons/{sermonId})` ownership check correctly rejects with
+     * "Missing or insufficient permissions" — the WorkflowConfiguration
+     * id is not a valid sermon document id. Callers inside the wizard
+     * (StepExegesis / StepHomiletics / StepDraft) pass `sermonId` from
+     * `useWizard()`; the standalone tutor surface has no real sermon
+     * and omits this prop, falling back to a session-scoped local key.
+     */
+    sermonId?: string | null;
     onContentUpdate?: (newContent: any) => void;
     // Legacy props (kept for interface compatibility but unused)
     initialCacheName?: string | null;
@@ -32,6 +45,7 @@ export function useGeneratorChat({
     phase,
     content,
     config,
+    sermonId,
 }: UseGeneratorChatProps) {
     const { i18n } = useTranslation();
     // Chat State
@@ -40,8 +54,13 @@ export function useGeneratorChat({
 
     // Initialize Chat Service
     useEffect(() => {
-        if (config?.id) {
-            generatorChatService.initializeForSermon(config.id, phase);
+        // Prefer the real sermon id (wizard callers). Fall back to
+        // config.id only for surfaces without a sermon (e.g. standalone
+        // tutor) — those skip Firestore (rule check fails silently and
+        // the service catches it) and keep chat in localStorage only.
+        const chatKey = sermonId ?? config?.id;
+        if (chatKey) {
+            generatorChatService.initializeForSermon(chatKey, phase);
             const history = generatorChatService.getHistory();
             if (history.length > 0) {
                 setMessages(history.map((m, idx) => ({
@@ -53,7 +72,7 @@ export function useGeneratorChat({
                 })));
             }
         }
-    }, [config?.id, phase]);
+    }, [sermonId, config?.id, phase]);
 
     // Active Context - Always "Global" now
     const activeContext = useMemo<ActiveContext>(() => {

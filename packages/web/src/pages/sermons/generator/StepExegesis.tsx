@@ -44,7 +44,7 @@ export function StepExegesis() {
 function StepExegesisContent() {
     const { t, language } = useTranslation('generator');
     const activeLanguage = language === 'en' ? 'en' : 'es';
-    const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, saving } = useWizard();
+    const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, sermonId, saving } = useWizard();
     const { user } = useFirebase();
     const contentHistory = useContentHistory('exegesis', config?.id);
 
@@ -61,6 +61,7 @@ function StepExegesisContent() {
         content: exegesis,
         config,
         user,
+        sermonId,
         initialCacheName: null,
         selectedResourceIds: []
     });

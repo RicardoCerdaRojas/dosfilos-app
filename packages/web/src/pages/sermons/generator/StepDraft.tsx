@@ -79,6 +79,7 @@ export function StepDraft() {
         content: draft,
         config,
         user,
+        sermonId,
     });
 
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);

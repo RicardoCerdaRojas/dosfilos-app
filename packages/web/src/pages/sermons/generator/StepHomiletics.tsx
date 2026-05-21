@@ -45,7 +45,7 @@ enum HomileticsSubStep {
 }
 
 export function StepHomiletics() {
-    const { exegesis, rules, setHomiletics, setStep, homiletics, saving, config, selectHomileticalApproach } = useWizard();
+    const { exegesis, rules, setHomiletics, setStep, homiletics, saving, config, sermonId, selectHomileticalApproach } = useWizard();
     const { user } = useFirebase();
     const { t, language } = useTranslation('generator');
     const activeLanguage = language === 'en' ? 'en' : 'es';
@@ -74,6 +74,7 @@ export function StepHomiletics() {
         content: homiletics,
         config,
         user,
+        sermonId,
         initialCacheName: null,
         selectedResourceIds: [],
     });
