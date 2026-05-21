@@ -228,6 +228,30 @@ export function buildSermonDraftPrompt(analysis: HomileticalAnalysis, rules: Gen
   return withLanguage(language, buildSermonDraftPromptBody(analysis, rules));
 }
 
+function buildPaperContextBlock(paperContext?: GenerationRules['paperContext']): string {
+  if (!paperContext?.assembledMarkdown?.trim()) return '';
+  const briefLine = paperContext.assignmentBrief?.trim()
+    ? `\n**Brief del trabajo:** ${paperContext.assignmentBrief.trim()}`
+    : '';
+  const titleLine = paperContext.title?.trim() ? ` — *${paperContext.title.trim()}*` : '';
+  return `
+═══ CONTEXTO DE ORIGEN — PAPER EXEGÉTICO ═══
+**Pasaje del paper:** ${paperContext.passage}${titleLine}${briefLine}
+
+A continuación va el paper exegético completo del cual este sermón
+deriva. Usa su análisis exegético, sus citas reales de autoridad y su
+desarrollo teológico como FUENTE PRIMARIA para el sermón. NO inventes
+citas atribuidas — solo usa las que aparecen aquí.
+
+--- BEGIN PAPER ---
+${paperContext.assembledMarkdown}
+--- END PAPER ---
+
+═════════════════════════════════════════════
+
+`;
+}
+
 function buildSermonDraftPromptBody(analysis: HomileticalAnalysis, rules: GenerationRules): string {
   // Format exegetical study for context
   const exegesisContext = analysis.exegeticalStudy ? `
@@ -249,10 +273,11 @@ ${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).j
 ` : '';
 
   const personalizationBlock = formatSermonPersonalizationBlock(rules.personalization);
+  const paperContextBlock = buildPaperContextBlock(rules.paperContext);
 
   return `
 ${BASE_SYSTEM_PROMPT}
-${personalizationBlock}
+${paperContextBlock}${personalizationBlock}
 FASE 3: REDACCIÓN DEL SERMÓN
 Objetivo: Redactar el contenido completo del sermón basado en el análisis previo.
 ${exegesisContext}

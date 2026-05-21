@@ -107,6 +107,27 @@ export interface GenerationRules {
      * Undefined / 'beginner' = current behavior unchanged.
      */
     audienceRigor?: 'beginner' | 'seminary';
+    /**
+     * Optional provenance context (audit T3 #16 Fase 1). When the
+     * sermon was derived from a paper, the caller can pass the source
+     * material here so the draft prompt prepends a "Contexto de
+     * origen" block. Lets regenerate calls see the same source
+     * material the original pre-population saw, instead of collapsing
+     * to homiletics+rules alone.
+     *
+     * Fase 1 ships paperContext only — Faculty and project follow in
+     * Fase 2.
+     */
+    paperContext?: {
+        /** Reference of the paper's primary passage. */
+        passage: string;
+        /** Paper title for grounding the prompt. */
+        title?: string;
+        /** Full assembled markdown the paper composed (8-15k chars). */
+        assembledMarkdown: string;
+        /** Optional homiletical brief authored on the paper. */
+        assignmentBrief?: string;
+    };
 }
 
 export interface SermonContent {

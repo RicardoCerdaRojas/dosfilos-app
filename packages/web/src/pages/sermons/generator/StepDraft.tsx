@@ -28,7 +28,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonCitationVerificationDialog } from '@/components/sermons/SermonCitationVerificationDialog';
-import { WorkflowPhase, CoachingStyle } from '@dosfilos/domain';
+import { WorkflowPhase, CoachingStyle, formatPassageReference, type GenerationRules, type Sermon } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import {
     AlertDialog,
@@ -52,7 +52,7 @@ export function StepDraft() {
     const activeLanguage = language === 'en' ? 'en' : 'es';
     const navigate = useNavigate();
     const { user } = useFirebase();
-    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, reset, saving } = useWizard();
+    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, reset, saving } = useWizard();
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -106,9 +106,16 @@ export function StepDraft() {
                   }
                 : undefined;
 
+            // T3 #16 Fase 1 — fetch source paper when the sermon was
+            // pre-populated from one so the regenerate prompt sees the
+            // full assembled paper instead of collapsing to homiletics
+            // alone. Best-effort: on fetch failure we still generate
+            // without paper context (legacy path).
+            const rulesWithContext = await augmentRulesWithPaperContext(rules, derivedContext, user?.uid);
+
             const { draft: result } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,
-                rules,
+                rulesWithContext,
                 draftConfig,
                 user?.uid,
                 activeLanguage,
@@ -561,4 +568,43 @@ export function StepDraft() {
             />
         </>
     );
+}
+
+type DerivedContext = NonNullable<NonNullable<Sermon['wizardProgress']>['derivedContext']>;
+
+/**
+ * T3 #16 Fase 1 — attach paper.assembledMarkdown to GenerationRules
+ * when the sermon was pre-populated from a paper. Lets the draft prompt
+ * see the full source paper on every (re)generation instead of
+ * collapsing to homiletics+rules alone.
+ *
+ * Best-effort: any failure (paper deleted, network error, no
+ * assembledMarkdown) falls back to the un-augmented rules so the
+ * generation still succeeds — just without the bonus context.
+ */
+async function augmentRulesWithPaperContext(
+    rules: GenerationRules,
+    derivedContext: DerivedContext | null,
+    userId: string | undefined,
+): Promise<GenerationRules> {
+    if (derivedContext?.kind !== 'paper' || !userId) return rules;
+    try {
+        const paper = await exegesisService.getPaper.execute(userId, derivedContext.paperId);
+        if (!paper?.assembledMarkdown) return rules;
+        const passageLabel = typeof paper.passage === 'string'
+            ? paper.passage
+            : formatPassageReference(paper.passage, (paper as any).displayLanguage ?? 'es');
+        return {
+            ...rules,
+            paperContext: {
+                passage: passageLabel,
+                title: paper.title ?? derivedContext.paperTitle,
+                assembledMarkdown: paper.assembledMarkdown,
+                assignmentBrief: paper.assignmentBrief ?? undefined,
+            },
+        };
+    } catch (error) {
+        console.warn('[StepDraft] Could not fetch paper context — generating without it', error);
+        return rules;
+    }
 }
