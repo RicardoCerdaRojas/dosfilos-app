@@ -29,8 +29,20 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
   
   if (!textContent) return <p className="text-muted-foreground text-sm">Sin contenido</p>;
 
+  // Normalize: templates (notably Faculty SERMON) emit block elements
+  // (`###`, `*`, `-`, `1.`) on adjacent lines without the blank line
+  // markdown spec requires between blocks. Without normalization the
+  // `\n\n` split treats everything as one paragraph and the renderer
+  // emits `* Item` literally instead of a list. Inserting a blank
+  // line before each block boundary recovers the intended structure
+  // without touching content that already has proper spacing.
+  const normalized = textContent.replace(
+    /([^\n])\n(###?#?\s|\s*[-*]\s|\s*\d+\.\s|>\s)/g,
+    '$1\n\n$2',
+  );
+
   // Split content into paragraphs
-  const paragraphs = textContent.split('\n\n').filter(p => p.trim());
+  const paragraphs = normalized.split('\n\n').filter(p => p.trim());
 
   const renderParagraph = (text: string, index: number) => {
     const trimmed = text.trim();
@@ -40,22 +52,46 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
       return <hr key={index} className="my-4 border-muted" />;
     }
     
-    // Check for headings (###, ####)
+    // Check for headings (###, ####). Templates (notably the Faculty
+    // SERMON template) emit `### Heading\nBody…` without a blank line
+    // between the heading and the body that follows. Splitting on
+    // \n\n above keeps them in the same paragraph chunk, so we have to
+    // peel the first line off here — otherwise the whole multi-line
+    // block renders as one giant h3 with the body fused into the
+    // heading text.
     if (trimmed.startsWith('####')) {
-      const headingText = trimmed.replace(/^####\s*/, '');
+      const newlineIdx = trimmed.indexOf('\n');
+      const headingLine = (newlineIdx === -1 ? trimmed : trimmed.slice(0, newlineIdx)).replace(/^####\s*/, '');
+      const remainder = newlineIdx === -1 ? '' : trimmed.slice(newlineIdx + 1).trim();
       return (
-        <h4 key={index} className="font-semibold text-base mb-2 mt-3 text-foreground">
-          {renderInlineMarkdown(headingText)}
-        </h4>
+        <Fragment key={index}>
+          <h4 className="font-semibold text-base mb-2 mt-3 text-foreground">
+            {renderInlineMarkdown(headingLine)}
+          </h4>
+          {remainder && (
+            <p className="mb-3 leading-relaxed text-sm text-foreground/90">
+              {renderInlineMarkdown(remainder)}
+            </p>
+          )}
+        </Fragment>
       );
     }
-    
+
     if (trimmed.startsWith('###')) {
-      const headingText = trimmed.replace(/^###\s*/, '');
+      const newlineIdx = trimmed.indexOf('\n');
+      const headingLine = (newlineIdx === -1 ? trimmed : trimmed.slice(0, newlineIdx)).replace(/^###\s*/, '');
+      const remainder = newlineIdx === -1 ? '' : trimmed.slice(newlineIdx + 1).trim();
       return (
-        <h3 key={index} className="font-bold text-lg mb-3 mt-4 text-foreground">
-          {renderInlineMarkdown(headingText)}
-        </h3>
+        <Fragment key={index}>
+          <h3 className="font-bold text-lg mb-3 mt-4 text-foreground">
+            {renderInlineMarkdown(headingLine)}
+          </h3>
+          {remainder && (
+            <p className="mb-3 leading-relaxed text-sm text-foreground/90">
+              {renderInlineMarkdown(remainder)}
+            </p>
+          )}
+        </Fragment>
       );
     }
     
@@ -117,9 +153,20 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
   };
 
   const renderInlineMarkdown = (text: string): ReactNode => {
-    // First, parse bold text
-    const parts = parseBoldText(text);
-    
+    // Parse bold first, then italic inside the resulting string parts.
+    // Order matters: `**bold**` must match before `*italic*` so the
+    // double-asterisk pattern wins and we don't render `**bold**` as
+    // italic-bold-italic.
+    const boldParts = parseBoldText(text);
+    const parts: ReactNode[] = [];
+    boldParts.forEach((part, i) => {
+      if (typeof part === 'string') {
+        parts.push(...parseItalicText(part, `b${i}-`));
+      } else {
+        parts.push(part);
+      }
+    });
+
     // Then, if Bible links are enabled, parse Bible references within each part
     if (enableBibleLinks) {
       return parts.map((part, partIndex) => {
@@ -130,25 +177,61 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
             </Fragment>
           );
         }
-        // It's already a React element (bold text), check if it contains Bible refs
-        if (typeof (part as any).props?.children === 'string') {
+        // It's already a React element (bold or italic). Check if its
+        // children is a string and run Bible-ref parsing inside it so
+        // refs nested in emphasis still render as clickable buttons.
+        const props: any = (part as any).props ?? {};
+        if (typeof props.children === 'string') {
+          const tag = (part as any).type;
+          const className = props.className ?? '';
+          const Wrapper = tag === 'em' ? 'em' : 'strong';
           return (
-            <strong key={partIndex} className="font-semibold text-foreground">
-              {parseBibleReferences((part as any).props.children)}
-            </strong>
+            <Wrapper key={partIndex} className={className}>
+              {parseBibleReferences(props.children)}
+            </Wrapper>
           );
         }
         return part;
       });
     }
-    
+
     return parts;
+  };
+
+  const parseItalicText = (text: string, keyPrefix: string): ReactNode[] => {
+    const parts: ReactNode[] = [];
+    let currentIndex = 0;
+
+    // Single-asterisk italic. Negative lookbehind/ahead on `*` prevents
+    // matching `**bold**` fragments that survived parseBoldText
+    // (defense in depth). Body cannot contain `*` so nested emphasis
+    // collapses into the outer span — acceptable for sermon prose.
+    const italicRegex = /(?<!\*)\*([^*\n]+)\*(?!\*)/g;
+    let match;
+
+    while ((match = italicRegex.exec(text)) !== null) {
+      if (match.index > currentIndex) {
+        parts.push(text.substring(currentIndex, match.index));
+      }
+      parts.push(
+        <em key={`${keyPrefix}${match.index}`} className="italic text-foreground">
+          {match[1]}
+        </em>,
+      );
+      currentIndex = match.index + match[0].length;
+    }
+
+    if (currentIndex < text.length) {
+      parts.push(text.substring(currentIndex));
+    }
+
+    return parts.length > 0 ? parts : [text];
   };
 
   const parseBoldText = (text: string): ReactNode[] => {
     const parts: ReactNode[] = [];
     let currentIndex = 0;
-    
+
     // Regex to find **bold** text
     const boldRegex = /\*\*([^*]+)\*\*/g;
     let match;
