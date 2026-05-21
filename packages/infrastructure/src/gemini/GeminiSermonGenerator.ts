@@ -370,7 +370,7 @@ FORMATO JSON REQUERIDO:
 
             const result = await chat.sendMessage(contentToSend);
             const response = await result.response;
-            return response.text();
+            return sanitizeChatResponseText(response.text());
         } catch (error: any) {
             throw this.handleError(error);
         }
@@ -424,9 +424,12 @@ FORMATO JSON REQUERIDO:
             for await (const chunk of result.stream) {
                 const chunkText = chunk.text();
                 fullText += chunkText;
-                onChunk(fullText);
+                // Strip any leaked tool-call syntax before each
+                // incremental UI render so the user never sees the
+                // leak mid-stream either.
+                onChunk(sanitizeChatResponseText(fullText));
             }
-            return fullText;
+            return sanitizeChatResponseText(fullText);
         } catch (error: any) {
             throw this.handleError(error);
         }
@@ -798,4 +801,51 @@ REGLAS:
             throw this.handleError(error);
         }
     }
+}
+
+/**
+ * Strips Gemini tool-call syntax that occasionally leaks into the
+ * response text. When the model is given the `fileSearch` tool, it can
+ * emit a Python-style invocation (`print(file_search.query("…"))` or
+ * raw `file_search.query(...)` lines) as plain text instead of as a
+ * function-call part. The SDK then concatenates that into `.text()`
+ * and the user sees the leaked code at the top of the assistant
+ * reply.
+ *
+ * Surfaced 2026-05-21 in prod: user asked "que relación tiene Juan
+ * 1:1 con Génesis 1:1?" in the exegesis chat and the response opened
+ * with `print(file_search.query("relaci...` before the actual pastoral
+ * reply. Until the root cause (SDK / tool-registration mismatch) is
+ * fixed, this defensive scrub keeps the user surface clean.
+ *
+ * Patterns matched (only at the START of the response — trailing
+ * mentions inside legitimate prose are left alone):
+ *   - `print(file_search.query(…))` with or without surrounding code
+ *     fences and trailing newlines.
+ *   - Bare `file_search.query(…)` / `default_api.file_search.query(…)`
+ *     lines.
+ *   - Markdown code fences wrapping either of the above.
+ */
+export function sanitizeChatResponseText(text: string): string {
+    if (!text) return text;
+    let result = text;
+    // Strip a leading fenced code block when its body is just a
+    // tool-call invocation. Up to ~3 leading blocks are peeled in
+    // case the model wraps + repeats.
+    for (let i = 0; i < 3; i++) {
+        const codeFenceMatch = result.match(/^\s*```[\w-]*\s*\n([\s\S]*?)```\s*\n*/);
+        if (codeFenceMatch && /(?:default_api\.)?(?:print\s*\(\s*)?(?:default_api\.)?file_search\.(?:query|search)/i.test(codeFenceMatch[1] ?? '')) {
+            result = result.slice(codeFenceMatch[0].length);
+            continue;
+        }
+        // Bare leading `print(file_search…)` / `file_search.query(…)`
+        // line(s) — peel as long as the next line still matches.
+        const bareMatch = result.match(/^\s*(?:print\s*\(\s*)?(?:default_api\.)?file_search\.(?:query|search)\s*\([\s\S]*?\)\s*\)?\s*\n*/i);
+        if (bareMatch) {
+            result = result.slice(bareMatch[0].length);
+            continue;
+        }
+        break;
+    }
+    return result.trimStart();
 }
