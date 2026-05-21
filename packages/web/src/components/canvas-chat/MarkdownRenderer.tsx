@@ -40,22 +40,46 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
       return <hr key={index} className="my-4 border-muted" />;
     }
     
-    // Check for headings (###, ####)
+    // Check for headings (###, ####). Templates (notably the Faculty
+    // SERMON template) emit `### Heading\nBody…` without a blank line
+    // between the heading and the body that follows. Splitting on
+    // \n\n above keeps them in the same paragraph chunk, so we have to
+    // peel the first line off here — otherwise the whole multi-line
+    // block renders as one giant h3 with the body fused into the
+    // heading text.
     if (trimmed.startsWith('####')) {
-      const headingText = trimmed.replace(/^####\s*/, '');
+      const newlineIdx = trimmed.indexOf('\n');
+      const headingLine = (newlineIdx === -1 ? trimmed : trimmed.slice(0, newlineIdx)).replace(/^####\s*/, '');
+      const remainder = newlineIdx === -1 ? '' : trimmed.slice(newlineIdx + 1).trim();
       return (
-        <h4 key={index} className="font-semibold text-base mb-2 mt-3 text-foreground">
-          {renderInlineMarkdown(headingText)}
-        </h4>
+        <Fragment key={index}>
+          <h4 className="font-semibold text-base mb-2 mt-3 text-foreground">
+            {renderInlineMarkdown(headingLine)}
+          </h4>
+          {remainder && (
+            <p className="mb-3 leading-relaxed text-sm text-foreground/90">
+              {renderInlineMarkdown(remainder)}
+            </p>
+          )}
+        </Fragment>
       );
     }
-    
+
     if (trimmed.startsWith('###')) {
-      const headingText = trimmed.replace(/^###\s*/, '');
+      const newlineIdx = trimmed.indexOf('\n');
+      const headingLine = (newlineIdx === -1 ? trimmed : trimmed.slice(0, newlineIdx)).replace(/^###\s*/, '');
+      const remainder = newlineIdx === -1 ? '' : trimmed.slice(newlineIdx + 1).trim();
       return (
-        <h3 key={index} className="font-bold text-lg mb-3 mt-4 text-foreground">
-          {renderInlineMarkdown(headingText)}
-        </h3>
+        <Fragment key={index}>
+          <h3 className="font-bold text-lg mb-3 mt-4 text-foreground">
+            {renderInlineMarkdown(headingLine)}
+          </h3>
+          {remainder && (
+            <p className="mb-3 leading-relaxed text-sm text-foreground/90">
+              {renderInlineMarkdown(remainder)}
+            </p>
+          )}
+        </Fragment>
       );
     }
     
