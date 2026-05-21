@@ -606,3 +606,21 @@
 .grecaptcha-badge {
   visibility: hidden !important;
 }
+
+/* ── NProgress top loading bar ────────────────────────────────────────────
+   Drives route-transition feedback when lazy chunks load. Overrides the
+   library default (#29d cyan) with the brand primary token + adds a soft
+   glow so the bar reads as part of the app rather than a third-party
+   widget. Bar sits above all other UI (sidebar / sheets / dialogs).
+   ──────────────────────────────────────────────────────────────────────── */
+#nprogress .bar {
+  background: hsl(var(--primary)) !important;
+  height: 3px !important;
+  z-index: 9999 !important;
+}
+
+#nprogress .peg {
+  box-shadow:
+    0 0 10px hsl(var(--primary)),
+    0 0 5px hsl(var(--primary)) !important;
+}

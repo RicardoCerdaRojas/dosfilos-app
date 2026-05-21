@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { FirebaseProvider } from '@/context/firebase-context';
@@ -118,19 +120,43 @@ function RedirectToSermon({ suffix = '' }: { suffix?: string }) {
   return null;
 }
 
+// Configure NProgress once at module load. Removes the default spinner
+// (we only want the top bar) and tunes smoothing so the bar advances
+// even when a chunk takes >2s.
+NProgress.configure({
+  showSpinner: false,
+  trickleSpeed: 200,
+  minimum: 0.15,
+  easing: 'ease',
+  speed: 400,
+});
+
 /**
- * Suspense fallback rendered while a lazy chunk loads. Minimal spinner
- * — visible enough to indicate work, quiet enough to not flash on fast
- * 4G/wifi when the chunk lands in <100ms.
+ * Suspense fallback rendered while a lazy chunk loads. Drives a
+ * GitHub/Linear-style top progress bar (NProgress) and keeps a
+ * centered spinner for cases where the chunk takes long enough to
+ * blank the viewport — without it the page reads as "frozen" between
+ * route transitions.
+ *
+ * The progress bar starts on mount and finishes on unmount, so the
+ * lifecycle matches the chunk-load window exactly.
  */
 function RouteFallback() {
+  useEffect(() => {
+    NProgress.start();
+    return () => {
+      NProgress.done();
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
       <div
         role="status"
         aria-label="Cargando"
-        className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
+        className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent"
       />
+      <p className="text-sm text-muted-foreground">Cargando…</p>
     </div>
   );
 }
