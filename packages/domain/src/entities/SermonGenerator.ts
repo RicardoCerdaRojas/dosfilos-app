@@ -128,6 +128,47 @@ export interface GenerationRules {
         /** Optional homiletical brief authored on the paper. */
         assignmentBrief?: string;
     };
+    /**
+     * Faculty session context (audit T3 #16 Fase 2). When the sermon
+     * was derived from a Faculty conversation, the caller can pass the
+     * approved outline + the personalization the user attached at the
+     * preview-modal step. Lets regenerate preserve the same outline
+     * structure + pastoral framing without forcing the user back to
+     * Faculty to re-approve.
+     *
+     * Faculty's full chat transcript is intentionally NOT included —
+     * outline + personalization already capture the actionable content,
+     * and the transcript would add 10k+ tokens of conversational noise
+     * for marginal quality lift.
+     */
+    facultyContext?: {
+        /** Title of the originating Faculty session. */
+        sessionTitle: string;
+        /** Approved sermon outline. */
+        outline: {
+            title: string;
+            passage: string;
+            proposition: string;
+            points: { title: string; verses: string }[];
+        };
+    };
+    /**
+     * Project context (audit T3 #16 Fase 2). When the sermon belongs
+     * to an AIProject with a contextNote, the caller can pass the
+     * project's name + note so the draft adapts tone, depth, and
+     * applications to the project's congregational reality (already
+     * the pattern in Faculty's `ExtractTheologicalContentUseCase`).
+     *
+     * Applies independently of paperContext / facultyContext — a
+     * paper-derived sermon can also belong to a project; both blocks
+     * stack in the prompt.
+     */
+    projectContext?: {
+        /** Project name (display only). */
+        name: string;
+        /** Free-form project description / context note. */
+        contextNote: string;
+    };
 }
 
 export interface SermonContent {

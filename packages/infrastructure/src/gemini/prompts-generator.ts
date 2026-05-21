@@ -228,6 +228,49 @@ export function buildSermonDraftPrompt(analysis: HomileticalAnalysis, rules: Gen
   return withLanguage(language, buildSermonDraftPromptBody(analysis, rules));
 }
 
+function buildFacultyContextBlock(facultyContext?: GenerationRules['facultyContext']): string {
+  if (!facultyContext) return '';
+  const { sessionTitle, outline } = facultyContext;
+  const pointsList = outline.points
+    .map((p, i) => `  ${['I', 'II', 'III', 'IV', 'V'][i] ?? i + 1}. ${p.title} (${p.verses})`)
+    .join('\n');
+  return `
+═══ CONTEXTO DE ORIGEN — FACULTAD ═══
+**Sesión de origen:** ${sessionTitle}
+**Bosquejo aprobado en la facultad (OBLIGATORIO respetar):**
+- Título: ${outline.title}
+- Pasaje: ${outline.passage}
+- Proposición: ${outline.proposition}
+- Puntos:
+${pointsList}
+
+Este sermón fue iniciado desde una conversación de la Facultad. El
+usuario revisó y aprobó el bosquejo de arriba antes de pedir el sermón
+completo. NO cambies el título, pasaje, proposición ni los puntos del
+bosquejo. Si necesitas reorganizar internamente un punto, hazlo dentro
+del título del punto aprobado.
+
+═════════════════════════════════════
+
+`;
+}
+
+function buildProjectContextBlock(projectContext?: GenerationRules['projectContext']): string {
+  if (!projectContext?.contextNote?.trim()) return '';
+  return `
+═══ CONTEXTO DEL PROYECTO ═══
+**Proyecto:** ${projectContext.name}
+${projectContext.contextNote.trim()}
+
+Considera este contexto al generar el sermón. Adapta el tono, la
+profundidad y las aplicaciones a la descripción de la congregación y
+serie de predicación de arriba.
+
+═════════════════════════════
+
+`;
+}
+
 function buildPaperContextBlock(paperContext?: GenerationRules['paperContext']): string {
   if (!paperContext?.assembledMarkdown?.trim()) return '';
   const briefLine = paperContext.assignmentBrief?.trim()
@@ -274,10 +317,12 @@ ${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).j
 
   const personalizationBlock = formatSermonPersonalizationBlock(rules.personalization);
   const paperContextBlock = buildPaperContextBlock(rules.paperContext);
+  const facultyContextBlock = buildFacultyContextBlock(rules.facultyContext);
+  const projectContextBlock = buildProjectContextBlock(rules.projectContext);
 
   return `
 ${BASE_SYSTEM_PROMPT}
-${paperContextBlock}${personalizationBlock}
+${projectContextBlock}${paperContextBlock}${facultyContextBlock}${personalizationBlock}
 FASE 3: REDACCIÓN DEL SERMÓN
 Objetivo: Redactar el contenido completo del sermón basado en el análisis previo.
 ${exegesisContext}

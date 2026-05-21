@@ -77,3 +77,92 @@ describe('buildSermonDraftPrompt — paper context preservation (T3 #16 Fase 1)'
         expect(fase3Idx).toBeGreaterThan(paperIdx);
     });
 });
+
+describe('buildSermonDraftPrompt — Faculty context preservation (T3 #16 Fase 2)', () => {
+    it('omits the Faculty block when facultyContext is undefined', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).not.toContain('CONTEXTO DE ORIGEN — FACULTAD');
+        expect(prompt).not.toContain('Bosquejo aprobado en la facultad');
+    });
+
+    it('injects sessionTitle + outline (title / passage / proposition / points)', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, {
+            ...baseRules,
+            facultyContext: {
+                sessionTitle: 'Estudio sobre 1 Pedro',
+                outline: {
+                    title: 'Vivir como extranjeros',
+                    passage: '1 Pedro 2:11-17',
+                    proposition: 'En 📖 1 Pedro 2:11-17 aprenderás a vivir con santidad ante el mundo.',
+                    points: [
+                        { title: 'Reconoce tu identidad', verses: 'vv. 11-12' },
+                        { title: 'Somete tu voluntad', verses: 'vv. 13-15' },
+                        { title: 'Honra a todos', verses: 'vv. 16-17' },
+                    ],
+                },
+            },
+        });
+        expect(prompt).toContain('CONTEXTO DE ORIGEN — FACULTAD');
+        expect(prompt).toContain('Estudio sobre 1 Pedro');
+        expect(prompt).toContain('Vivir como extranjeros');
+        expect(prompt).toContain('1 Pedro 2:11-17');
+        expect(prompt).toContain('vivir con santidad ante el mundo');
+        expect(prompt).toContain('I. Reconoce tu identidad (vv. 11-12)');
+        expect(prompt).toContain('II. Somete tu voluntad (vv. 13-15)');
+        expect(prompt).toContain('III. Honra a todos (vv. 16-17)');
+        expect(prompt).toContain('NO cambies el título');
+    });
+});
+
+describe('buildSermonDraftPrompt — project context preservation (T3 #16 Fase 2)', () => {
+    it('omits the project block when projectContext is undefined', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).not.toContain('CONTEXTO DEL PROYECTO');
+    });
+
+    it('omits when contextNote is blank or whitespace', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, {
+            ...baseRules,
+            projectContext: { name: 'Serie Juan', contextNote: '   ' },
+        });
+        expect(prompt).not.toContain('CONTEXTO DEL PROYECTO');
+    });
+
+    it('injects project name + contextNote when present', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, {
+            ...baseRules,
+            projectContext: {
+                name: 'Serie Juan',
+                contextNote: 'Congregación reformada, 80 personas, nivel teológico medio-alto, énfasis pastoral en santificación.',
+            },
+        });
+        expect(prompt).toContain('CONTEXTO DEL PROYECTO');
+        expect(prompt).toContain('Serie Juan');
+        expect(prompt).toContain('Congregación reformada');
+        expect(prompt).toContain('nivel teológico medio-alto');
+        expect(prompt).toContain('Adapta el tono');
+    });
+
+    it('stacks project + paper + faculty blocks when all three are present', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, {
+            ...baseRules,
+            projectContext: { name: 'Serie Juan', contextNote: 'Reformados' },
+            paperContext: { passage: 'Juan 3:16', assembledMarkdown: '# Paper\n\ncontent' },
+            facultyContext: {
+                sessionTitle: 'Estudio',
+                outline: {
+                    title: 't', passage: 'p', proposition: 'pr',
+                    points: [{ title: 'pt', verses: 'v' }],
+                },
+            },
+        });
+        const projectIdx = prompt.indexOf('CONTEXTO DEL PROYECTO');
+        const paperIdx = prompt.indexOf('CONTEXTO DE ORIGEN — PAPER EXEGÉTICO');
+        const facultyIdx = prompt.indexOf('CONTEXTO DE ORIGEN — FACULTAD');
+        const fase3Idx = prompt.indexOf('FASE 3');
+        expect(projectIdx).toBeGreaterThan(-1);
+        expect(paperIdx).toBeGreaterThan(projectIdx);
+        expect(facultyIdx).toBeGreaterThan(paperIdx);
+        expect(fase3Idx).toBeGreaterThan(facultyIdx);
+    });
+});
