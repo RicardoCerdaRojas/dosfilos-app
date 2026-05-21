@@ -1,334 +1,128 @@
-import { cn } from '@/lib/utils';
-import { useState, Fragment, ReactNode } from 'react';
+import { useState, useMemo } from 'react';
 import { BookOpen } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { cn } from '@/lib/utils';
 import { BiblePassageViewer } from '@/components/bible/BiblePassageViewer';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
-  /** If true, Bible references will be clickable to view the passage */
+  /** If true, Bible references will be clickable to view the passage. */
   enableBibleLinks?: boolean;
 }
 
-// Comprehensive pattern to match Bible references in Spanish
+// Comprehensive pattern to match Bible references in Spanish.
 // Matches: "Juan 3:16", "Jn 3:16", "1 Juan 3:16-18", "1Jn 3.16", "Gén 1:1", etc.
-// Supports: Full names, abbreviations, with/without spaces, : or . as separator
+// Supports: full names, abbreviations, with/without spaces, : or . as separator.
 const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
 
-
 /**
- * Simple Markdown Renderer with Bible verse detection
- * Handles: headings (###), bold (**text**), paragraphs, lists, blockquotes (>), and Bible references
+ * Markdown renderer for canvas-chat surfaces.
+ *
+ * Previously a hand-rolled paragraph parser; replaced with
+ * `react-markdown` + `remark-gfm` + `rehype-raw` after four consecutive
+ * bugs in one session (heading-body fusion, list block boundaries,
+ * single-asterisk italic, blockquote block boundaries) all rooted in
+ * the custom split-on-`\n\n` strategy. The library handles all of
+ * those plus tables, strikethrough, autolinks, and any future
+ * markdown feature for free.
+ *
+ * Bible reference detection stays a project-specific pre-processing
+ * step: each detected reference is rewritten to `[📖 Ref](#bible-Ref)`
+ * so it surfaces as a markdown link, then the custom `a` component
+ * intercepts the `#bible-…` href to open the passage viewer dialog.
+ * That keeps the click handler scoped to text nodes and lets
+ * react-markdown handle the rest of the inline parsing.
  */
 export function MarkdownRenderer({ content, className, enableBibleLinks = true }: MarkdownRendererProps) {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
-  
-  // Ensure content is a string
+
   const textContent = typeof content === 'string' ? content : String(content ?? '');
-  
-  if (!textContent) return <p className="text-muted-foreground text-sm">Sin contenido</p>;
 
-  // Normalize: templates (notably Faculty SERMON) emit block elements
-  // (`###`, `*`, `-`, `1.`) on adjacent lines without the blank line
-  // markdown spec requires between blocks. Without normalization the
-  // `\n\n` split treats everything as one paragraph and the renderer
-  // emits `* Item` literally instead of a list. Inserting a blank
-  // line before each block boundary recovers the intended structure
-  // without touching content that already has proper spacing.
-  const normalized = textContent.replace(
-    /([^\n])\n(###?#?\s|\s*[-*]\s|\s*\d+\.\s|>\s)/g,
-    '$1\n\n$2',
-  );
-
-  // Split content into paragraphs
-  const paragraphs = normalized.split('\n\n').filter(p => p.trim());
-
-  const renderParagraph = (text: string, index: number) => {
-    const trimmed = text.trim();
-    
-    // Check for horizontal rule
-    if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
-      return <hr key={index} className="my-4 border-muted" />;
-    }
-    
-    // Check for headings (###, ####). Templates (notably the Faculty
-    // SERMON template) emit `### Heading\nBody…` without a blank line
-    // between the heading and the body that follows. Splitting on
-    // \n\n above keeps them in the same paragraph chunk, so we have to
-    // peel the first line off here — otherwise the whole multi-line
-    // block renders as one giant h3 with the body fused into the
-    // heading text.
-    if (trimmed.startsWith('####')) {
-      const newlineIdx = trimmed.indexOf('\n');
-      const headingLine = (newlineIdx === -1 ? trimmed : trimmed.slice(0, newlineIdx)).replace(/^####\s*/, '');
-      const remainder = newlineIdx === -1 ? '' : trimmed.slice(newlineIdx + 1).trim();
-      return (
-        <Fragment key={index}>
-          <h4 className="font-semibold text-base mb-2 mt-3 text-foreground">
-            {renderInlineMarkdown(headingLine)}
-          </h4>
-          {remainder && (
-            <p className="mb-3 leading-relaxed text-sm text-foreground/90">
-              {renderInlineMarkdown(remainder)}
-            </p>
-          )}
-        </Fragment>
-      );
-    }
-
-    if (trimmed.startsWith('###')) {
-      const newlineIdx = trimmed.indexOf('\n');
-      const headingLine = (newlineIdx === -1 ? trimmed : trimmed.slice(0, newlineIdx)).replace(/^###\s*/, '');
-      const remainder = newlineIdx === -1 ? '' : trimmed.slice(newlineIdx + 1).trim();
-      return (
-        <Fragment key={index}>
-          <h3 className="font-bold text-lg mb-3 mt-4 text-foreground">
-            {renderInlineMarkdown(headingLine)}
-          </h3>
-          {remainder && (
-            <p className="mb-3 leading-relaxed text-sm text-foreground/90">
-              {renderInlineMarkdown(remainder)}
-            </p>
-          )}
-        </Fragment>
-      );
-    }
-    
-    // Check for blockquote (lines starting with >)
-    if (trimmed.startsWith('>')) {
-      const quoteLines = text.split('\n').filter(line => line.trim().startsWith('>'));
-      const quoteText = quoteLines.map(line => line.replace(/^>\s*/, '')).join('\n');
-      return (
-        <blockquote key={index} className="border-l-4 border-primary/30 pl-4 py-2 my-3 italic text-muted-foreground bg-muted/30 rounded-r">
-          {quoteText.split('\n').map((line, i) => (
-            <p key={i} className="text-sm leading-relaxed">
-              {renderInlineMarkdown(line)}
-            </p>
-          ))}
-        </blockquote>
-      );
-    }
-
-    // Check for numbered list
-    if (/^\d+\.\s/.test(trimmed)) {
-      const items = text.split('\n').filter(line => /^\d+\.\s/.test(line.trim()));
-      return (
-        <ol key={index} className="list-decimal list-inside mb-3 space-y-1 ml-2">
-          {items.map((item, i) => {
-            const cleanItem = item.replace(/^\d+\.\s+/, '');
-            return (
-              <li key={i} className="text-sm leading-relaxed">
-                {renderInlineMarkdown(cleanItem)}
-              </li>
-            );
-          })}
-        </ol>
-      );
-    }
-    
-    // Check if it's an unordered list
-    if (text.trim().startsWith('- ') || text.trim().startsWith('* ')) {
-      const items = text.split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'));
-      return (
-        <ul key={index} className="list-disc list-inside mb-3 space-y-1 ml-2">
-          {items.map((item, i) => {
-            const cleanItem = item.replace(/^[-*]\s+/, '');
-            return (
-              <li key={i} className="text-sm leading-relaxed">
-                {renderInlineMarkdown(cleanItem)}
-              </li>
-            );
-          })}
-        </ul>
-      );
-    }
-
-    // Regular paragraph
-    return (
-      <p key={index} className="mb-3 leading-relaxed text-sm text-foreground/90">
-        {renderInlineMarkdown(text)}
-      </p>
-    );
-  };
-
-  const renderInlineMarkdown = (text: string): ReactNode => {
-    // Parse bold first, then italic inside the resulting string parts.
-    // Order matters: `**bold**` must match before `*italic*` so the
-    // double-asterisk pattern wins and we don't render `**bold**` as
-    // italic-bold-italic.
-    const boldParts = parseBoldText(text);
-    const parts: ReactNode[] = [];
-    boldParts.forEach((part, i) => {
-      if (typeof part === 'string') {
-        parts.push(...parseItalicText(part, `b${i}-`));
-      } else {
-        parts.push(part);
+  // Pre-process: convert Bible refs to markdown links so react-markdown
+  // parses them as anchors. Skips refs already inside markdown link
+  // syntax to avoid double-wrapping (idempotent across re-renders).
+  const processed = useMemo(() => {
+    if (!enableBibleLinks || !textContent) return textContent;
+    return textContent.replace(BIBLE_REF_PATTERN, (match, ref, offset, source) => {
+      const before = source.slice(Math.max(0, offset - 10), offset);
+      const after = source.slice(offset + match.length, Math.min(source.length, offset + match.length + 20));
+      if (before.includes('[📖') || after.includes('](#bible-') || before.includes('#bible-')) {
+        return match;
       }
+      const trimmed = ref.trim();
+      if (LocalBibleService.parseReference(trimmed) === null) {
+        return match;
+      }
+      const prefix = match.slice(0, match.length - ref.length);
+      return `${prefix}[📖 ${trimmed}](#bible-${encodeURIComponent(trimmed)})`;
     });
+  }, [textContent, enableBibleLinks]);
 
-    // Then, if Bible links are enabled, parse Bible references within each part
-    if (enableBibleLinks) {
-      return parts.map((part, partIndex) => {
-        if (typeof part === 'string') {
-          return (
-            <Fragment key={partIndex}>
-              {parseBibleReferences(part)}
-            </Fragment>
-          );
-        }
-        // It's already a React element (bold or italic). Check if its
-        // children is a string and run Bible-ref parsing inside it so
-        // refs nested in emphasis still render as clickable buttons.
-        const props: any = (part as any).props ?? {};
-        if (typeof props.children === 'string') {
-          const tag = (part as any).type;
-          const className = props.className ?? '';
-          const Wrapper = tag === 'em' ? 'em' : 'strong';
-          return (
-            <Wrapper key={partIndex} className={className}>
-              {parseBibleReferences(props.children)}
-            </Wrapper>
-          );
-        }
-        return part;
-      });
-    }
-
-    return parts;
-  };
-
-  const parseItalicText = (text: string, keyPrefix: string): ReactNode[] => {
-    const parts: ReactNode[] = [];
-    let currentIndex = 0;
-
-    // Single-asterisk italic. Negative lookbehind/ahead on `*` prevents
-    // matching `**bold**` fragments that survived parseBoldText
-    // (defense in depth). Body cannot contain `*` so nested emphasis
-    // collapses into the outer span — acceptable for sermon prose.
-    const italicRegex = /(?<!\*)\*([^*\n]+)\*(?!\*)/g;
-    let match;
-
-    while ((match = italicRegex.exec(text)) !== null) {
-      if (match.index > currentIndex) {
-        parts.push(text.substring(currentIndex, match.index));
-      }
-      parts.push(
-        <em key={`${keyPrefix}${match.index}`} className="italic text-foreground">
-          {match[1]}
-        </em>,
-      );
-      currentIndex = match.index + match[0].length;
-    }
-
-    if (currentIndex < text.length) {
-      parts.push(text.substring(currentIndex));
-    }
-
-    return parts.length > 0 ? parts : [text];
-  };
-
-  const parseBoldText = (text: string): ReactNode[] => {
-    const parts: ReactNode[] = [];
-    let currentIndex = 0;
-
-    // Regex to find **bold** text
-    const boldRegex = /\*\*([^*]+)\*\*/g;
-    let match;
-
-    while ((match = boldRegex.exec(text)) !== null) {
-      // Add text before the match
-      if (match.index > currentIndex) {
-        parts.push(text.substring(currentIndex, match.index));
-      }
-      
-      // Add the bold text
-      parts.push(
-        <strong key={match.index} className="font-semibold text-foreground">
-          {match[1]}
-        </strong>
-      );
-      
-      currentIndex = match.index + match[0].length;
-    }
-
-    // Add remaining text
-    if (currentIndex < text.length) {
-      parts.push(text.substring(currentIndex));
-    }
-
-    return parts.length > 0 ? parts : [text];
-  };
-
-  const parseBibleReferences = (text: string): ReactNode[] => {
-    const parts: ReactNode[] = [];
-    let lastIndex = 0;
-    
-    // Reset regex state
-    BIBLE_REF_PATTERN.lastIndex = 0;
-    
-    let match;
-    while ((match = BIBLE_REF_PATTERN.exec(text)) !== null) {
-      const fullMatch = match[1]; // The actual reference (captured group)
-      if (!fullMatch) continue;
-      
-      const startIndex = text.indexOf(fullMatch, lastIndex);
-      
-      if (startIndex === -1) continue;
-      
-      // Validate that this is a parseable reference
-      const isValid = LocalBibleService.parseReference(fullMatch.trim()) !== null;
-      
-      if (!isValid) {
-        continue;
-      }
-      
-      // Add text before the match
-      if (startIndex > lastIndex) {
-        parts.push(text.substring(lastIndex, startIndex));
-      }
-      
-      // Add the clickable reference
-      const ref = fullMatch.trim();
-      parts.push(
-        <button
-          key={`ref-${startIndex}-${ref}`}
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedReference(ref);
-          }}
-          className={cn(
-            "inline-flex items-center gap-0.5 text-primary font-medium",
-            "hover:underline decoration-dotted underline-offset-2",
-            "cursor-pointer transition-colors hover:text-primary/80",
-            "bg-primary/5 px-1 py-0.5 rounded text-sm"
-          )}
-          title={`Ver ${ref}`}
-        >
-          <BookOpen className="h-3 w-3 flex-shrink-0" />
-          <span>{ref}</span>
-        </button>
-      );
-      
-      lastIndex = startIndex + fullMatch.length;
-    }
-    
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-    
-    return parts.length > 0 ? parts : [text];
-  };
+  if (!textContent) {
+    return <p className="text-muted-foreground text-sm">Sin contenido</p>;
+  }
 
   return (
     <>
-      <div className={cn('prose prose-sm dark:prose-invert max-w-none', className)}>
-        {paragraphs.map((paragraph, index) => renderParagraph(paragraph, index))}
+      <div
+        className={cn(
+          'prose prose-sm dark:prose-invert max-w-none',
+          // Tighten paragraph spacing so successive blocks read like the
+          // legacy renderer that emitted `mb-3 leading-relaxed` per <p>.
+          '[&>p]:mb-3 [&>p]:leading-relaxed [&>p]:text-sm [&>p]:text-foreground/90',
+          '[&_h3]:font-bold [&_h3]:text-lg [&_h3]:mb-3 [&_h3]:mt-4 [&_h3]:text-foreground',
+          '[&_h4]:font-semibold [&_h4]:text-base [&_h4]:mb-2 [&_h4]:mt-3 [&_h4]:text-foreground',
+          '[&_strong]:font-semibold [&_strong]:text-foreground',
+          '[&_em]:italic [&_em]:text-foreground',
+          '[&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-3 [&_ul]:space-y-1',
+          '[&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-3 [&_ol]:space-y-1',
+          '[&_li]:text-sm [&_li]:leading-relaxed',
+          '[&_blockquote]:border-l-4 [&_blockquote]:border-primary/30 [&_blockquote]:pl-4 [&_blockquote]:py-2 [&_blockquote]:my-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:bg-muted/30 [&_blockquote]:rounded-r',
+          '[&_hr]:my-4 [&_hr]:border-muted',
+          className,
+        )}
+      >
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            a: ({ node, ...props }: any) => {
+              const href = props.href || '';
+              if (href.startsWith('#bible-')) {
+                const ref = decodeURIComponent(href.replace('#bible-', ''));
+                return (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedReference(ref);
+                    }}
+                    className={cn(
+                      'inline-flex items-center gap-0.5 text-primary font-medium',
+                      'hover:underline decoration-dotted underline-offset-2',
+                      'cursor-pointer transition-colors hover:text-primary/80',
+                      'bg-primary/5 px-1 py-0.5 rounded text-sm',
+                    )}
+                    title={`Ver ${ref}`}
+                  >
+                    <BookOpen className="h-3 w-3 flex-shrink-0" />
+                    <span>{props.children}</span>
+                  </button>
+                );
+              }
+              return <a {...props} className="text-primary underline" />;
+            },
+          }}
+        >
+          {processed}
+        </ReactMarkdown>
       </div>
-      
-      {/* Bible Passage Viewer Dialog */}
+
       {enableBibleLinks && (
         <BiblePassageViewer
           reference={selectedReference}
@@ -338,4 +132,3 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
     </>
   );
 }
-
