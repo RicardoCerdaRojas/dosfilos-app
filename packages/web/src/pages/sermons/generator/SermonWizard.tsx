@@ -38,17 +38,14 @@ function WizardContent() {
 
             // If 'new=true', skip resume prompt and start fresh wizard
             if (newSermonParam === 'true') {
-                console.log('[SermonWizard] New sermon requested, skipping resume');
                 setLoading(false);
                 setShowResumePrompt(false);
                 return;
             }
-            
+
             if (sermonIdParam) {
-                console.log('[SermonWizard] Loading sermon from URL param:', sermonIdParam);
                 try {
                     let sermon = await sermonService.getSermon(sermonIdParam);
-                    console.log('[SermonWizard] ✅ Sermon loaded:', { id: sermon?.id, title: sermon?.title, hasProgress: !!sermon?.wizardProgress });
 
                     if (sermon) {
                         // Paper-linked empty placeholder recovery
@@ -68,7 +65,6 @@ function WizardContent() {
                         // origin is known).
                         const progress = await applyLegacyMigrationIfNeeded(sermon);
                         if (progress) {
-                            console.log('[SermonWizard] Restoring wizard progress:', progress);
                             setSermonId(sermon.id);
                             setPassage(progress.passage || '');
                             if (progress.exegesis) setExegesis(progress.exegesis);
@@ -89,7 +85,6 @@ function WizardContent() {
                             } else if (progress.currentStep !== undefined) {
                                 // Validate step is in range 0-3
                                 const validStep = Math.min(Math.max(progress.currentStep, 0), 3);
-                                console.log('[SermonWizard] URL param - Setting step:', validStep, progress.currentStep !== validStep ? `(clamped from ${progress.currentStep})` : '');
                                 setStep(validStep);
                             } else if (progress.draft) {
                                 setStep(3);
@@ -131,8 +126,6 @@ function WizardContent() {
     }, [user, location.key, searchParams]);
 
     const handleContinue = async (sermon: SermonEntity) => {
-        console.log('[SermonWizard] 🎯 handleContinue called for sermon:', { id: sermon.id, title: sermon.title || sermon.wizardProgress?.passage });
-
         // Paper-linked empty placeholder recovery (PR #216) — same as
         // URL-param load so resumed sermons get the same auto-populate
         // behavior. Use the freshly-loaded sermon when generation
@@ -145,10 +138,9 @@ function WizardContent() {
         // sermons cleanly.
         const progress = await applyLegacyMigrationIfNeeded(effective as Sermon);
         if (!progress) {
-            console.warn('[SermonWizard] ⚠️ Sermon has neither wizardProgress nor migratable content');
+            console.warn('[SermonWizard] Sermon has neither wizardProgress nor migratable content');
             return;
         }
-        console.log('[SermonWizard] Restoring state:', { passage: progress.passage, currentStep: progress.currentStep });
 
         // Restore wizard state including sermonId
         setSermonId(sermon.id);
@@ -169,7 +161,6 @@ function WizardContent() {
         // IMPORTANT: Validate step is in range 0-3 (max step is 3 for draft)
         if (progress.currentStep !== undefined) {
             const validStep = Math.min(Math.max(progress.currentStep, 0), 3);
-            console.log('[SermonWizard] Setting step:', validStep, progress.currentStep !== validStep ? `(clamped from ${progress.currentStep})` : '');
             setStep(validStep);
         } else if (progress.draft) {
             setStep(3);
