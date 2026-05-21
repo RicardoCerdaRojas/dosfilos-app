@@ -6,6 +6,7 @@ import { ConfigService } from '@dosfilos/application';
 import { FirebaseConfigRepository } from '@dosfilos/infrastructure';
 import { sermonService } from '@dosfilos/application';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useEphemeralWizardState } from '@/hooks/useEphemeralWizardState';
 
 type DerivedContext = NonNullable<NonNullable<Sermon['wizardProgress']>['derivedContext']>;
 
@@ -52,7 +53,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     // already linked to the right project.
     const projectIdFromUrl = searchParams.get('projectId') ?? undefined;
     const [step, setStep] = useState(1);
-    const [passage, setPassage] = useState('');
+    const [passage, setPassageState] = useState('');
     const [rules, setRules] = useState<GenerationRules>({
         targetAudience: 'general',
         tone: 'pastoral',
@@ -63,6 +64,44 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [config, setConfig] = useState<WorkflowConfiguration | null>(null);
     const [sermonId, setSermonId] = useState<string | null>(null);
     const [derivedContext, setDerivedContext] = useState<DerivedContext | null>(null);
+
+    // Ephemeral local persistence for Step 1 — the sermon doc only gets
+    // created after exegesis is generated, so without this the passage
+    // input wipes on a tab refresh during setup.
+    const ephemeral = useEphemeralWizardState({ userId: user?.uid });
+
+    // One-shot hydrate from ephemeral snapshot: only when there's no
+    // resumed sermon (sermonId still null + passage still empty) and the
+    // user has actual saved content. Won't overwrite a sermon loaded
+    // via URL param.
+    useEffect(() => {
+        if (!ephemeral.hydrated) return;
+        if (sermonId || passage) return;
+        if (ephemeral.snapshot?.passage) {
+            setPassageState(ephemeral.snapshot.passage);
+        }
+    }, [ephemeral.hydrated, ephemeral.snapshot, sermonId, passage]);
+
+    // Wrap setPassage so every keystroke / autofill / setter call also
+    // updates the localStorage snapshot. Once the real sermon exists,
+    // autosave + Firestore take over and the ephemeral snapshot is
+    // cleared (effect below).
+    const setPassage = (next: string) => {
+        setPassageState(next);
+        if (!sermonId) {
+            ephemeral.setPassage(next);
+        }
+    };
+
+    // Discard the ephemeral snapshot the moment a real sermon doc is
+    // created — from that point Firestore is the source of truth and
+    // keeping stale localStorage around would just confuse future
+    // hydration runs.
+    useEffect(() => {
+        if (sermonId) {
+            ephemeral.clear();
+        }
+    }, [sermonId, ephemeral]);
 
     // Auto-save hook
     const { saving, lastSaved } = useAutoSave(
@@ -123,7 +162,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
     const reset = () => {
         setStep(1);
-        setPassage('');
+        setPassageState('');
+        ephemeral.clear();
         setRules({ targetAudience: 'general', tone: 'pastoral' });
         setExegesis(null);
         setHomiletics(null);
