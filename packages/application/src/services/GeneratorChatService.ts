@@ -95,12 +95,33 @@ export class GeneratorChatService {
     }
 
     /**
-     * Initialize the service for a specific sermon and phase
+     * Tracks whether the current chat key represents a real sermon
+     * document. False when the caller passed a non-sermon fallback key
+     * (e.g. WorkflowConfiguration id for the tutor surface, or a
+     * Step-1 ephemeral key) — in that case Firestore reads/writes are
+     * skipped because the rule check `get(/sermons/{key})` would
+     * deterministically fail and just produce console noise.
      */
-    initializeForSermon(sermonId: string, phase: ContentType): void {
+    private persistRemote = false;
+
+    /**
+     * Initialize the service for a specific sermon and phase.
+     *
+     * `options.persistToFirestore` defaults to `true` (real sermon case
+     * — same behavior as before). Pass `false` for non-sermon chat
+     * surfaces (tutor, Step 1 wizard pre-sermon-creation, etc.) so the
+     * service only hits localStorage and skips the Firestore round-trip
+     * that would log a permission-denied error.
+     */
+    initializeForSermon(
+        sermonId: string,
+        phase: ContentType,
+        options: { persistToFirestore?: boolean } = {},
+    ): void {
         this.currentSermonId = sermonId;
         this.currentPhase = phase;
         this.firestoreLoadedFor = null;
+        this.persistRemote = options.persistToFirestore ?? true;
 
         // Try localStorage first (sync, no I/O). Synchronous so the
         // UI can render the cached conversation immediately on mount.
@@ -115,12 +136,13 @@ export class GeneratorChatService {
 
         this.notifyListeners();
 
-        // Then, if a Firestore repo is wired, hydrate from there in
-        // the background. Cross-device case: user worked on the
+        // Then, if a Firestore repo is wired AND the caller asked for
+        // remote persistence (real sermon case), hydrate from Firestore
+        // in the background. Cross-device case: user worked on the
         // sermon on desktop, then opens it on tablet — desktop chat
         // is in Firestore but absent from tablet localStorage.
         // Compare timestamps to keep the newer snapshot.
-        if (this.wizardChatRepository) {
+        if (this.wizardChatRepository && this.persistRemote) {
             const phaseKey = phase as SermonWizardChatPhase;
             this.wizardChatRepository
                 .load(sermonId, phaseKey)
@@ -732,9 +754,10 @@ export class GeneratorChatService {
         this.sourcesPerMessage.clear();
         if (this.currentSermonId && this.currentPhase) {
             this.removeStoredHistory(this.currentSermonId, this.currentPhase);
-            // Clear Firestore copy too. Without this, the next mount
-            // would re-hydrate the conversation we just cleared.
-            if (this.wizardChatRepository) {
+            // Clear Firestore copy too — but only when the current
+            // chat key represents a real sermon. Otherwise the
+            // permission-denied rule would fire and log noise.
+            if (this.wizardChatRepository && this.persistRemote) {
                 this.wizardChatRepository
                     .clear(this.currentSermonId, this.currentPhase as SermonWizardChatPhase)
                     .catch((err) => {
@@ -837,10 +860,13 @@ export class GeneratorChatService {
             }
         }
 
-        // Dual-write to Firestore (when wired) for cross-device
-        // durability. Fire-and-forget — failure logs but does not
-        // block the user's next turn. Next successful save reconciles.
-        if (this.wizardChatRepository) {
+        // Dual-write to Firestore (when wired AND the caller asked for
+        // remote persistence). Fire-and-forget — failure logs but does
+        // not block the user's next turn. Next successful save
+        // reconciles. Skipped entirely for non-sermon chat keys
+        // (`persistRemote=false`) since the rule check would
+        // deterministically reject the write and just produce log noise.
+        if (this.wizardChatRepository && this.persistRemote) {
             const sermonId = this.currentSermonId;
             const phase = this.currentPhase as SermonWizardChatPhase;
             const history: SermonWizardChatHistory = {
