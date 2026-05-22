@@ -248,5 +248,32 @@ export interface SermonContent {
      * bibliography-only mode).
      */
     citationManifest?: CitationManifest;
+    /**
+     * Phase B telemetry: counts of valid vs. dropped citation markers
+     * + dropped `ragSources` entries from the post-generation validator
+     * pass. Persisted so engineering can audit how often the LLM
+     * drifts off the citation contract without re-running generation.
+     *
+     * `markersDropped > 0` or `droppedEntries.length > 0` means the
+     * LLM hallucinated IDs that the server stripped — the user never
+     * saw them. Surfaces below 0.5% in production are healthy; spikes
+     * suggest prompt regression or a model change worth investigating.
+     */
+    citationValidation?: CitationValidationStats;
+}
+
+/**
+ * Telemetry counts emitted by `validateCitations`. Stored on
+ * `SermonContent.citationValidation` so the in-app debug surfaces and
+ * any downstream analytics pipeline can query them after the fact.
+ *
+ * Kept here (not in services/) so the persistence layer can import
+ * the type without dragging the validator's implementation.
+ */
+export interface CitationValidationStats {
+    markersValid: number;
+    markersDropped: number;
+    droppedEntries: { reason: 'unknown-id' | 'no-id'; entry: RAGSource }[];
+    surfaces: ('introduction' | 'body' | 'conclusion' | 'callToAction')[];
 }
 
