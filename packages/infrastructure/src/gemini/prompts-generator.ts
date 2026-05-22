@@ -1,4 +1,4 @@
-import { GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock } from '@dosfilos/domain';
+import { CitationManifest, GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 
 const JSON_INSTRUCTION = `IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido. No incluyas NADA de texto antes ni después del JSON (ni "Aquí está el JSON", ni bloques de código markdown como \`\`\`json). Solo el objeto JSON crudo.`;
@@ -224,8 +224,69 @@ Formato de Salida (JSON):
 `;
 }
 
-export function buildSermonDraftPrompt(analysis: HomileticalAnalysis, rules: GenerationRules, language?: SupportedLanguage): string {
-  return withLanguage(language, buildSermonDraftPromptBody(analysis, rules));
+export function buildSermonDraftPrompt(
+  analysis: HomileticalAnalysis,
+  rules: GenerationRules,
+  language?: SupportedLanguage,
+  manifest?: CitationManifest,
+): string {
+  return withLanguage(language, buildSermonDraftPromptBody(analysis, rules, manifest));
+}
+
+/**
+ * Phase B citation contract block. Tells the LLM the EXACT set of source
+ * IDs it may cite, the marker syntax (`[S1]`), and the matching
+ * `ragSources` schema. The server post-processes with `validateCitations`
+ * to strip anything that drifts off-contract, so this prompt is
+ * authoritative — anything not listed here will be silently dropped.
+ *
+ * Returns '' when the manifest is empty so the prompt stays clean for
+ * sermons generated without retrieval context (manual flow, no library).
+ */
+function buildCitationContractBlock(manifest?: CitationManifest): string {
+  if (!manifest || manifest.entries.length === 0) return '';
+  const sourceList = manifest.entries
+    .map((e) => {
+      const author = e.author?.trim() ? ` — ${e.author}` : '';
+      const page = e.page?.trim() ? ` (p. ${e.page})` : '';
+      const excerpt = e.excerpt?.trim() ? `\n     Cita: "${e.excerpt}"` : '';
+      return `  [${e.sourceId}] ${e.title}${author}${page}${excerpt}`;
+    })
+    .join('\n');
+  return `
+═══ FUENTES DISPONIBLES PARA CITAR (CONTRATO DE CITACIÓN) ═══
+A continuación va la lista CERRADA de fuentes que puedes citar en este
+sermón. Cada fuente tiene un ID estable (S1, S2, …). Usa SIEMPRE el ID
+exacto cuando te apoyes en el contenido de la fuente.
+
+${sourceList}
+
+REGLAS DE CITACIÓN (OBLIGATORIAS — el servidor valida y descarta lo que no cumpla):
+
+1. **Marcadores en línea**: cada vez que afirmes algo apoyado en una de
+   estas fuentes, agrega el marcador \`[Sn]\` al final de la oración (o de
+   la cláusula afectada). Ejemplo: "El aoristo aquí denota una acción
+   completa en el pasado [S2]."
+2. **Multi-cita**: si una oración sintetiza dos o más fuentes, agrupa los
+   IDs separados por coma dentro de UN solo par de corchetes:
+   \`[S1, S3]\`. NO uses \`[S1][S3]\`.
+3. **IDs válidos únicamente**: SOLO puedes usar los IDs listados arriba.
+   NUNCA inventes \`[S99]\`, \`[Otro]\`, \`[Wallace]\`, etc. El servidor
+   borra cualquier marcador con ID desconocido.
+4. **\`ragSources\` debe coincidir**: por cada \`[Sn]\` que uses en la
+   prosa, incluye una entrada en \`ragSources\` con el campo
+   \`"sourceId": "Sn"\` EXACTO (mismo string del contrato). El servidor
+   descarta entradas con \`sourceId\` faltante o desconocido.
+5. **Cobertura**: úsalas SOLO cuando el contenido del sermón realmente se
+   apoye en la fuente. No es obligatorio usar todas; es obligatorio que
+   toda cita esté respaldada por una de estas fuentes.
+6. **Citas bíblicas NO usan este contrato**: las referencias bíblicas
+   siguen el formato existente (\`[📖 Juan 1:1](#bible-juan-1-1)\`),
+   nunca \`[Sn]\`.
+
+═══════════════════════════════════════════════════════════════════
+
+`;
 }
 
 function buildFacultyContextBlock(facultyContext?: GenerationRules['facultyContext']): string {
@@ -295,7 +356,7 @@ ${paperContext.assembledMarkdown}
 `;
 }
 
-function buildSermonDraftPromptBody(analysis: HomileticalAnalysis, rules: GenerationRules): string {
+function buildSermonDraftPromptBody(analysis: HomileticalAnalysis, rules: GenerationRules, manifest?: CitationManifest): string {
   // Format exegetical study for context
   const exegesisContext = analysis.exegeticalStudy ? `
 
@@ -319,10 +380,11 @@ ${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).j
   const paperContextBlock = buildPaperContextBlock(rules.paperContext);
   const facultyContextBlock = buildFacultyContextBlock(rules.facultyContext);
   const projectContextBlock = buildProjectContextBlock(rules.projectContext);
+  const citationContractBlock = buildCitationContractBlock(manifest);
 
   return `
 ${BASE_SYSTEM_PROMPT}
-${projectContextBlock}${paperContextBlock}${facultyContextBlock}${personalizationBlock}
+${projectContextBlock}${paperContextBlock}${facultyContextBlock}${personalizationBlock}${citationContractBlock}
 FASE 3: REDACCIÓN DEL SERMÓN
 Objetivo: Redactar el contenido completo del sermón basado en el análisis previo.
 ${exegesisContext}
@@ -467,6 +529,7 @@ Instrucciones de Contenido:
   "callToAction": "**Pasos de Acción**:\\n\\n1. **[Acción 1]**: Descripción\\n2. **[Acción 2]**: Descripción\\n3. **[Acción 3]**: Descripción",
   "ragSources": [
     {
+      "sourceId": "S1",
       "title": "Nombre del documento usado",
       "author": "Autor si está disponible",
       "page": "Página o sección",
@@ -487,7 +550,7 @@ Instrucciones de Contenido:
 ✓ RECUERDA: El pastor debe poder seguir el borrador FÁCILMENTE al predicar
 
 REGLAS DE GENERACIÓN:
-1. Si usas información de documentos proporcionados, incluye en "ragSources" una entrada por cada documento consultado.
+1. Si usas información de documentos proporcionados, incluye en "ragSources" una entrada por cada documento consultado — con el campo \`sourceId\` igual al ID del CONTRATO DE CITACIÓN (\`S1\`, \`S2\`, …) cuando el contrato esté presente. Si no hay contrato (sermón sin biblioteca), omite \`sourceId\`.
 2. Cada punto debe tener al menos 2 implicaciones prácticas con formato de lista.
 3. Las ilustraciones deben ser culturalmente relevantes, memorables y estar formateadas con encabezados.
 4. **Diversidad de ilustraciones**: NO uses la misma categoría (viaje/deporte/familia/cocina/transporte) en dos puntos consecutivos. Si Punto I usa transporte (avión, tren), Punto II DEBE usar otra categoría.

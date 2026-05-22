@@ -1,4 +1,4 @@
-import { ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent } from '../entities/SermonGenerator';
+import { CitationManifest, ExegeticalStudy, HomileticalAnalysis, GenerationRules, SermonContent } from '../entities/SermonGenerator';
 import { ChatMessage, WorkflowPhase } from '../entities/SermonWorkflow';
 
 import { PhaseConfiguration } from '../entities/WorkflowConfiguration';
@@ -17,7 +17,21 @@ export interface ISermonGenerator {
      */
     generateHomiletics(exegesis: ExegeticalStudy, rules: GenerationRules, config?: PhaseConfiguration, language?: SupportedLanguage): Promise<HomileticalAnalysis>;
 
-    generateSermonDraft(analysis: HomileticalAnalysis, rules: GenerationRules, config?: PhaseConfiguration, language?: SupportedLanguage): Promise<SermonContent>;
+    /**
+     * Generate the sermon draft. Phase B: when `manifest` is provided
+     * the prompt instructs the LLM to cite library sources with `[S1]`,
+     * `[S2]`, … markers and to emit `ragSources` entries tagged with the
+     * matching `sourceId`. Callers should run `validateCitations` on the
+     * returned content to strip any hallucinated markers / ragSources
+     * before persisting.
+     */
+    generateSermonDraft(
+        analysis: HomileticalAnalysis,
+        rules: GenerationRules,
+        config?: PhaseConfiguration,
+        language?: SupportedLanguage,
+        manifest?: CitationManifest,
+    ): Promise<SermonContent>;
     regenerateSermonPoint(point: any, rules: GenerationRules, context: any, language?: SupportedLanguage): Promise<any>;
 
     chat(phase: WorkflowPhase, history: ChatMessage[], context: any, language?: SupportedLanguage): Promise<string>;

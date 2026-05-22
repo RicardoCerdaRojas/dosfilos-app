@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, GenerativeModel } from '@google/generative-ai';
 import {
+    CitationManifest,
     ISermonGenerator,
     GenerationRules,
     ExegeticalStudy,
@@ -220,9 +221,10 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         rules: GenerationRules,
         _config?: any,
         language: SupportedLanguage = DEFAULT_LANGUAGE,
+        manifest?: CitationManifest,
     ): Promise<SermonContent> {
         try {
-            const prompt = buildSermonDraftPrompt(analysis, rules, language);
+            const prompt = buildSermonDraftPrompt(analysis, rules, language, manifest);
             const model = this.getModel({
                 fileSearchStoreId: _config?.fileSearchStoreId,
                 temperature: _config?.temperature,
@@ -277,7 +279,12 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 body,
                 conclusion: parsed.conclusion || '',
                 callToAction,
-                ragSources: Array.isArray(parsed.ragSources) ? parsed.ragSources : undefined
+                ragSources: Array.isArray(parsed.ragSources) ? parsed.ragSources : undefined,
+                // Mirror the manifest onto the returned draft so the
+                // application layer can hand it straight to
+                // `validateCitations` without recomputing. The validator
+                // will rebuild a survivor-only manifest from this one.
+                citationManifest: manifest,
             };
         } catch (error: any) {
             throw this.handleError(error);

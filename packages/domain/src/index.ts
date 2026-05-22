@@ -5,6 +5,7 @@ export * from './entities/ExegesisOperationCatalog';
 export * from './services/computeExegesisQuotaState';
 export * from './services/aggregateRagSources';
 export * from './services/validateCitations';
+export * from './services/buildCitationManifest';
 export * from './services/detectIllustrationDuplicates';
 export * from './entities/LlamaParseAccount';
 export * from './entities/Feature';
