@@ -6,6 +6,7 @@ import { useWizard } from './WizardContext';
 import { Button } from '@/components/ui/button';
 import { LibraryStatusBadge } from '@/components/library/LibraryStatusBadge';
 import { ExegesisQuotaBadge } from '@/components/exegesis/ExegesisQuotaBadge';
+import { WizardSourcesBadge } from '@/components/sermons/WizardSourcesBadge';
 
 interface WizardHeaderProps {
   currentStep: number;
@@ -103,6 +104,7 @@ export function WizardHeader({ currentStep, onExit }: WizardHeaderProps) {
                 ? 'Preparando…'
                 : `Paso ${Math.min(currentStep, 3)} de 3`}
             </div>
+            <WizardSourcesBadge />
             <ExegesisQuotaBadge variant="compact" onUpgradePlan={goToBilling} />
             <LibraryStatusBadge />
             {onExit && (
