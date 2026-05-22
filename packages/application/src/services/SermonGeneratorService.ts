@@ -1,4 +1,4 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, type CitationManifest } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infrastructure';
 
@@ -250,8 +250,55 @@ export class SermonGeneratorService {
             ? { ...hydratedConfig, fileSearchStoreId }
             : { ...defaultConfig, fileSearchStoreId };
 
-        const draft = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language);
-        return { draft };
+        // Phase B: build the citation manifest from the same library
+        // chunks the prompt is about to consume. The contract gets
+        // injected into the prompt; `validateCitations` strips any
+        // marker / ragSources entry the LLM emits that doesn't match.
+        const manifest = await this.buildDraftManifest(config, searchQuery);
+
+        const rawDraft = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language, manifest);
+
+        // Phase B: enforce the citation contract server-side. Strips
+        // unknown `[Sn]` markers, drops hallucinated `ragSources`
+        // entries, and renumbers survivors 1..M so prose, manifest,
+        // and bibliography stay aligned.
+        if (manifest && manifest.entries.length > 0) {
+            const validated = validateCitations(rawDraft, manifest);
+            if (validated.stats.markersDropped > 0 || validated.stats.droppedEntries.length > 0) {
+                console.warn('[generateSermonDraft] citation validator dropped content', validated.stats);
+            }
+            return { draft: validated.content };
+        }
+
+        return { draft: rawDraft };
+    }
+
+    /**
+     * Phase B: retrieve top-K chunks for the draft prompt and turn them
+     * into a `CitationManifest` the prompt embeds + the validator
+     * enforces. Returns undefined when no library is wired in (manual
+     * flow), so prompts stay clean for sermons without a manifest.
+     */
+    private async buildDraftManifest(
+        config: ExtendedPhaseConfiguration | undefined,
+        searchQuery: string,
+    ): Promise<CitationManifest | undefined> {
+        if (!this.documentProcessor) return undefined;
+        const libraryDocIds = config?.libraryDocIds;
+        if (!libraryDocIds || libraryDocIds.length === 0) return undefined;
+
+        try {
+            const results = await this.documentProcessor.searchRelevantChunks(
+                searchQuery,
+                libraryDocIds,
+                10,
+            );
+            if (results.length === 0) return undefined;
+            return buildCitationManifest(results.map((r) => r.chunk));
+        } catch (error) {
+            console.error('[generateSermonDraft] failed to build citation manifest:', error);
+            return undefined;
+        }
     }
 
     // ========== TWO-PHASE HOMILETICS GENERATION (NEW) ==========
