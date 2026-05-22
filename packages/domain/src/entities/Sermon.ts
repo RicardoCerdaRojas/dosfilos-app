@@ -1,4 +1,4 @@
-import { ExegeticalStudy, HomileticalAnalysis, RAGSource, SermonContent } from './SermonGenerator';
+import { CitationManifest, ExegeticalStudy, HomileticalAnalysis, RAGSource, SermonContent } from './SermonGenerator';
 import type { SermonPersonalization } from './SermonPersonalization';
 import { aggregateRagSourcesFlat } from '../services/aggregateRagSources';
 
@@ -150,6 +150,17 @@ export interface Sermon {
      * library, or pre-RAG legacy content).
      */
     bibliography?: RAGSource[];
+
+    /**
+     * Phase B citation manifest snapshot. Captured at generation time
+     * and persisted alongside `content` so the published view can
+     * render inline `[N]` markers as interactive popovers without
+     * re-running RAG retrieval. The manifest's `entries[idx].sourceId`
+     * lines up 1:1 with the bare ordinals the validator left in the
+     * prose. Absent on pre-Phase-B sermons — the renderer falls back
+     * to bibliography-only mode in that case.
+     */
+    citationManifest?: CitationManifest;
 }
 
 export class SermonEntity implements Sermon {
@@ -176,7 +187,8 @@ export class SermonEntity implements Sermon {
         public sourceFacultySessionId?: string,
         public projectId?: string,
         public sourcePaperId?: string,
-        public bibliography?: RAGSource[]
+        public bibliography?: RAGSource[],
+        public citationManifest?: CitationManifest
     ) {
         this.validate();
     }
@@ -231,7 +243,8 @@ export class SermonEntity implements Sermon {
             data.sourceFacultySessionId,
             data.projectId,
             data.sourcePaperId,
-            data.bibliography ?? (data as any).bibliography
+            data.bibliography ?? (data as any).bibliography,
+            data.citationManifest
         );
     }
 
@@ -260,7 +273,8 @@ export class SermonEntity implements Sermon {
             d.sourceFacultySessionId ?? this.sourceFacultySessionId,
             d.projectId ?? this.projectId,
             d.sourcePaperId ?? this.sourcePaperId,
-            data.bibliography ?? this.bibliography
+            data.bibliography ?? this.bibliography,
+            data.citationManifest ?? this.citationManifest
         );
     }
 
@@ -292,7 +306,8 @@ export class SermonEntity implements Sermon {
                 exegesisSources: this.wizardProgress?.exegesis?.ragSources,
                 homileticsSources: this.wizardProgress?.homiletics?.ragSources,
                 draftSources: this.wizardProgress?.draft?.ragSources,
-            })
+            }),
+            this.citationManifest ?? this.wizardProgress?.draft?.citationManifest
         );
     }
 
@@ -342,7 +357,8 @@ export class SermonEntity implements Sermon {
                 exegesisSources: this.wizardProgress?.exegesis?.ragSources,
                 homileticsSources: this.wizardProgress?.homiletics?.ragSources,
                 draftSources: this.wizardProgress?.draft?.ragSources,
-            })
+            }),
+            this.citationManifest ?? this.wizardProgress?.draft?.citationManifest
         );
     }
 
@@ -370,7 +386,8 @@ export class SermonEntity implements Sermon {
             this.sourceFacultySessionId,
             this.projectId,
             this.sourcePaperId,
-            this.bibliography
+            this.bibliography,
+            this.citationManifest
         );
     }
 
@@ -398,7 +415,8 @@ export class SermonEntity implements Sermon {
             this.sourceFacultySessionId,
             this.projectId,
             this.sourcePaperId,
-            this.bibliography
+            this.bibliography,
+            this.citationManifest
         );
     }
 
@@ -426,7 +444,8 @@ export class SermonEntity implements Sermon {
             this.sourceFacultySessionId,
             this.projectId,
             this.sourcePaperId,
-            this.bibliography
+            this.bibliography,
+            this.citationManifest
         );
     }
 

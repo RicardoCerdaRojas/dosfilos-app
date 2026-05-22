@@ -454,6 +454,7 @@ export function SermonDetailPage() {
                         category={sermon.category}
                         status={sermon.status}
                         fontSize={fontSize}
+                        citationManifest={sermon.citationManifest}
                       />
                   </div>
                </div>
@@ -480,8 +481,12 @@ export function SermonDetailPage() {
                 category={sermon.category}
                 status={sermon.status}
                 fontSize={fontSize}
+                citationManifest={sermon.citationManifest}
               />
-              <SermonBibliographySection bibliography={sermon.bibliography} />
+              <SermonBibliographySection
+                bibliography={sermon.bibliography}
+                manifest={sermon.citationManifest}
+              />
               <SermonRepurposeSection
                 sermonId={sermon.id}
                 sermonTitle={sermon.title}

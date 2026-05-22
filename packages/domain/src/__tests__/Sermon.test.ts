@@ -60,4 +60,61 @@ describe('SermonEntity', () => {
         // The copy is a fresh sermon (new id), not a mutation.
         expect(copy.id).not.toBe(sermon.id);
     });
+
+    it('preserves citationManifest across create / update / archive', () => {
+        const manifest = {
+            version: '1' as const,
+            entries: [
+                { sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Wallace', author: 'D.B.', page: '432', excerpt: 'aoristo…' },
+            ],
+        };
+        const sermon = SermonEntity.create({
+            userId: 'user123',
+            title: 'Test Sermon',
+            content: 'Cite [1] here.',
+            citationManifest: manifest,
+        });
+        expect(sermon.citationManifest).toEqual(manifest);
+
+        const updated = sermon.update({ title: 'Renamed Sermon' });
+        expect(updated.citationManifest).toEqual(manifest);
+
+        const archived = sermon.archive();
+        expect(archived.citationManifest).toEqual(manifest);
+    });
+
+    it('publish() pulls citationManifest from wizardProgress.draft when absent on the entity', () => {
+        const manifest = {
+            version: '1' as const,
+            entries: [
+                { sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Carson', excerpt: 'logos…' },
+            ],
+        };
+        const sermon = SermonEntity.create({
+            userId: 'user123',
+            title: 'Test Sermon',
+            content: 'Cite [1] here.',
+            status: 'draft',
+            wizardProgress: {
+                currentStep: 3,
+                passage: 'Juan 1:1',
+                lastSaved: new Date(),
+                draft: {
+                    title: 'Test Sermon',
+                    introduction: 'Intro [1].',
+                    body: [],
+                    conclusion: 'End.',
+                    citationManifest: manifest,
+                },
+            },
+        });
+        expect(sermon.citationManifest).toBeUndefined();
+
+        const published = sermon.publish();
+        expect(published.citationManifest).toEqual(manifest);
+        expect(published.status).toBe('published');
+
+        const copy = sermon.publishAsCopy();
+        expect(copy.citationManifest).toEqual(manifest);
+    });
 });
