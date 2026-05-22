@@ -1,5 +1,10 @@
 import { jsPDF } from 'jspdf';
-import { IExportService, SermonEntity } from '@dosfilos/domain';
+import {
+    IExportService,
+    SermonEntity,
+    type CitationManifest,
+    type RAGSource,
+} from '@dosfilos/domain';
 
 export class PdfExportService implements IExportService {
     async exportSermonToPdf(sermon: SermonEntity): Promise<void> {
@@ -98,19 +103,34 @@ export class PdfExportService implements IExportService {
 
             const lines = doc.splitTextToSize(text, contentWidth);
 
-            // Check if whole paragraph fits, if not check line by line? 
+            // Check if whole paragraph fits, if not check line by line?
             // Actually splitTextToSize handles wrapping, we just need to check vertical space
             const paragraphHeight = lines.length * 7;
 
             if (checkPageBreak(paragraphHeight)) {
-                // If we added a page, we are at top margin. 
-                // If it was a header, we might want to re-apply header style if we reset? 
+                // If we added a page, we are at top margin.
+                // If it was a header, we might want to re-apply header style if we reset?
                 // No, styles persist.
             }
 
             doc.text(lines, margin, yPosition);
             yPosition += paragraphHeight + 3; // Line height + paragraph spacing
         }
+
+        // Phase C.1: bibliography section. Numbered list matches the
+        // inline `[N]` markers in the prose above. Manifest is the
+        // authoritative source when present (set on Phase-B sermons);
+        // we fall back to `sermon.bibliography` for legacy sermons so
+        // the export keeps showing sources either way.
+        renderBibliography(doc, {
+            margin,
+            pageWidth,
+            pageHeight,
+            contentWidth,
+            yPosition,
+            manifest: sermon.citationManifest,
+            bibliography: sermon.bibliography,
+        });
 
         // Footer with page numbers
         const pageCount = doc.getNumberOfPages();
@@ -125,4 +145,137 @@ export class PdfExportService implements IExportService {
         const filename = `${sermon.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
         doc.save(filename);
     }
+}
+
+interface BibliographyRenderArgs {
+    margin: number;
+    pageWidth: number;
+    pageHeight: number;
+    contentWidth: number;
+    yPosition: number;
+    manifest?: CitationManifest;
+    bibliography?: RAGSource[];
+}
+
+/**
+ * Append a "Fuentes consultadas" section to the PDF. Returns nothing —
+ * mutates the jsPDF doc in place (adding pages as needed).
+ *
+ * Numbering precedence:
+ *   1. `manifest.entries` — authoritative for Phase B sermons. Numbers
+ *      match the inline `[N]` markers in the prose.
+ *   2. `bibliography` (legacy ragSources) — numbered 1..N in the same
+ *      order the sermon was published with.
+ *
+ * Silently returns when neither source has anything to render so
+ * non-RAG sermons don't get an empty section appended.
+ */
+function renderBibliography(doc: jsPDF, args: BibliographyRenderArgs): void {
+    const entries = buildBibliographyEntries(args.manifest, args.bibliography);
+    if (entries.length === 0) return;
+
+    let yPosition = args.yPosition;
+    const { margin, pageWidth, pageHeight, contentWidth } = args;
+
+    const checkPageBreak = (height: number): number => {
+        if (yPosition + height > pageHeight - margin) {
+            doc.addPage();
+            return margin;
+        }
+        return yPosition;
+    };
+
+    // Section divider + heading.
+    yPosition += 15;
+    yPosition = checkPageBreak(40);
+    doc.setDrawColor(180);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 10;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(0);
+    doc.text('Fuentes consultadas', margin, yPosition);
+    yPosition += 9;
+
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    doc.text(
+        'Recursos de la biblioteca usados para construir el sermón.',
+        margin,
+        yPosition,
+    );
+    yPosition += 8;
+
+    doc.setFont('times', 'roman');
+    doc.setFontSize(11);
+    doc.setTextColor(20);
+
+    entries.forEach((entry, idx) => {
+        const ordinal = idx + 1;
+        const author = entry.author?.trim() ? ` — ${entry.author}` : '';
+        const page = entry.page?.trim() ? ` (p. ${entry.page})` : '';
+        const usedFor = entry.usedFor?.trim() ? `   ${entry.usedFor}` : '';
+
+        const headline = `[${ordinal}] ${entry.title}${author}${page}`;
+        const headlineLines = doc.splitTextToSize(headline, contentWidth);
+        const usedForLines = usedFor
+            ? doc.splitTextToSize(usedFor, contentWidth - 6)
+            : [];
+        const blockHeight = (headlineLines.length * 6) + (usedForLines.length * 5) + 4;
+
+        yPosition = checkPageBreak(blockHeight);
+
+        doc.setFont('times', 'roman');
+        doc.setFontSize(11);
+        doc.setTextColor(20);
+        doc.text(headlineLines, margin, yPosition);
+        yPosition += headlineLines.length * 6;
+
+        if (usedForLines.length > 0) {
+            doc.setFont('times', 'italic');
+            doc.setFontSize(9);
+            doc.setTextColor(110);
+            doc.text(usedForLines, margin + 6, yPosition);
+            yPosition += usedForLines.length * 5;
+        }
+        yPosition += 3;
+    });
+}
+
+interface BibliographyEntry {
+    title: string;
+    author?: string;
+    page?: string;
+    usedFor?: string;
+}
+
+function buildBibliographyEntries(
+    manifest: CitationManifest | undefined,
+    bibliography: RAGSource[] | undefined,
+): BibliographyEntry[] {
+    if (manifest && manifest.entries.length > 0) {
+        const ragBySourceId = new Map<string, RAGSource>();
+        for (const rag of bibliography ?? []) {
+            if (rag.sourceId) ragBySourceId.set(rag.sourceId, rag);
+        }
+        return manifest.entries.map((entry) => {
+            const rag = ragBySourceId.get(entry.sourceId);
+            return {
+                title: rag?.title || entry.title,
+                author: rag?.author || entry.author,
+                page: rag?.page || entry.page,
+                usedFor: rag?.usedFor,
+            };
+        });
+    }
+    return (bibliography ?? [])
+        .filter((s) => s?.title?.trim())
+        .map((s) => ({
+            title: s.title,
+            author: s.author,
+            page: s.page,
+            usedFor: s.usedFor,
+        }));
 }

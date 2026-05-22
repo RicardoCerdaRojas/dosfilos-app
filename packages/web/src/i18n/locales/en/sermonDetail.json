@@ -18,6 +18,7 @@
         "markComplete": "Mark Complete",
         "markingComplete": "Marking...",
         "exportPdf": "Export PDF",
+        "exportDocx": "Export Word (.docx)",
         "history": "History",
         "notes": "Notes",
         "hideNotes": "Hide Notes",
