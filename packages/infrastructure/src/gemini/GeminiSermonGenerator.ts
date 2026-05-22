@@ -37,13 +37,14 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         });
     }
 
-    private getModel(options?: { fileSearchStoreId?: string; temperature?: number; modelName?: string; responseMimeType?: string }): GenerativeModel {
+    private getModel(options?: { fileSearchStoreId?: string; temperature?: number; modelName?: string; responseMimeType?: string; maxOutputTokens?: number }): GenerativeModel {
         const modelName = options?.modelName || GEMINI_CONFIG.MODEL_NAME;
         const temperature = options?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature;
 
         const generationConfig: any = {
             ...GEMINI_CONFIG.GENERATION_CONFIG,
-            temperature: temperature
+            temperature: temperature,
+            ...(options?.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
         };
 
         if (options?.responseMimeType && !options.fileSearchStoreId) {
@@ -226,13 +227,33 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 fileSearchStoreId: _config?.fileSearchStoreId,
                 temperature: _config?.temperature,
                 modelName: _config?.aiModel,
-                responseMimeType: 'application/json'
+                responseMimeType: 'application/json',
+                // A full sermon JSON (intro 200-400w + 3-5 body points
+                // 600-900w each + conclusion 250-450w + callToAction +
+                // ragSources + scriptureReferences/illustration/quote
+                // sub-fields) easily clears 12-15k tokens. The default
+                // 8192 budget truncates the JSON mid-array, the parser
+                // falls back to `body: []` + `conclusion: ''`, and the
+                // pastor sees an empty sermon. 24k gives generous
+                // headroom while staying well under Flash 2.5's 32k cap.
+                maxOutputTokens: 24576,
             });
             const content = prompt;
             const result = await model.generateContent(content);
             const response = result.response;
             const text = response.text();
             const parsed = JSON.parse(this.cleanJsonResponse(text));
+            // Warn when the model returned a structurally-incomplete
+            // sermon so we surface truncation / schema regressions in
+            // logs instead of silently shipping empty bodies.
+            if (!Array.isArray(parsed.body) || parsed.body.length === 0) {
+                console.warn('[generateSermonDraft] empty body in response — likely truncation or schema mismatch', {
+                    titleSet: !!parsed.title,
+                    introSet: !!parsed.introduction,
+                    conclusionSet: !!parsed.conclusion,
+                    rawLength: text.length,
+                });
+            }
             // Normalize body: filter hallucinated authorityQuote when
             // null/undefined so the renderer skips the block cleanly.
             // PR #217: prompt now forbids fabricating quotes; the LLM
