@@ -30,7 +30,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
 import { SermonCitationVerificationDialog } from '@/components/sermons/SermonCitationVerificationDialog';
-import { WorkflowPhase, CoachingStyle, formatPassageReference, type GenerationRules, type Sermon } from '@dosfilos/domain';
+import { WorkflowPhase, CoachingStyle, formatPassageReference, aggregateRagSourcesFlat, type GenerationRules, type Sermon } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import {
     AlertDialog,
@@ -558,7 +558,13 @@ export function StepDraft() {
                                     status="draft"
                                 />
                                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-                                    <SermonBibliographySection bibliography={draft.ragSources} />
+                                    <SermonBibliographySection
+                                        bibliography={aggregateRagSourcesFlat({
+                                            exegesisSources: exegesis?.ragSources,
+                                            homileticsSources: homiletics?.ragSources,
+                                            draftSources: draft.ragSources,
+                                        })}
+                                    />
                                 </div>
                             </>
                         )}

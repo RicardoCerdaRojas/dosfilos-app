@@ -3,6 +3,7 @@ export * from './entities/User';
 export * from './entities/CreditPack';
 export * from './entities/ExegesisOperationCatalog';
 export * from './services/computeExegesisQuotaState';
+export * from './services/aggregateRagSources';
 export * from './services/detectIllustrationDuplicates';
 export * from './entities/LlamaParseAccount';
 export * from './entities/Feature';
