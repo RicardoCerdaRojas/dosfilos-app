@@ -1,4 +1,4 @@
-import { ExegeticalStudy, HomileticalAnalysis, SermonContent } from './SermonGenerator';
+import { ExegeticalStudy, HomileticalAnalysis, RAGSource, SermonContent } from './SermonGenerator';
 import type { SermonPersonalization } from './SermonPersonalization';
 
 export interface PreachingLog {
@@ -135,6 +135,20 @@ export interface Sermon {
      * faculty enrichment can pull paper context.
      */
     sourcePaperId?: string | undefined;
+
+    /**
+     * Sources from the user's library that fed the generation prompt
+     * via RAG retrieval. Populated when the wizard's `wizardProgress
+     * .draft.ragSources` is copied into the published sermon — see
+     * `publishAsCopy()`. The sermon detail page renders a "📚 Fuentes
+     * consultadas" section so the pastor can see which library docs
+     * shaped the output (transparency + later study). v1 ships the
+     * list; v2 will add inline footnote markers (`[^1]`) that tie
+     * specific prose sections back to a source. Undefined for sermons
+     * generated without library context (standalone wizard with empty
+     * library, or pre-RAG legacy content).
+     */
+    bibliography?: RAGSource[];
 }
 
 export class SermonEntity implements Sermon {
@@ -160,7 +174,8 @@ export class SermonEntity implements Sermon {
         public sourceSermonId?: string,
         public sourceFacultySessionId?: string,
         public projectId?: string,
-        public sourcePaperId?: string
+        public sourcePaperId?: string,
+        public bibliography?: RAGSource[]
     ) {
         this.validate();
     }
@@ -214,7 +229,8 @@ export class SermonEntity implements Sermon {
             data.sourceSermonId,
             data.sourceFacultySessionId,
             data.projectId,
-            data.sourcePaperId
+            data.sourcePaperId,
+            data.bibliography ?? (data as any).bibliography
         );
     }
 
@@ -242,7 +258,8 @@ export class SermonEntity implements Sermon {
             d.sourceSermonId ?? this.sourceSermonId,
             d.sourceFacultySessionId ?? this.sourceFacultySessionId,
             d.projectId ?? this.projectId,
-            d.sourcePaperId ?? this.sourcePaperId
+            d.sourcePaperId ?? this.sourcePaperId,
+            data.bibliography ?? this.bibliography
         );
     }
 
@@ -269,7 +286,8 @@ export class SermonEntity implements Sermon {
             this.sourceSermonId,
             this.sourceFacultySessionId,
             this.projectId,
-            this.sourcePaperId
+            this.sourcePaperId,
+            this.bibliography ?? this.wizardProgress?.draft?.ragSources
         );
     }
 
@@ -314,7 +332,8 @@ export class SermonEntity implements Sermon {
             this.id, // Link back to the source draft
             this.sourceFacultySessionId,
             this.projectId,
-            this.sourcePaperId
+            this.sourcePaperId,
+            this.bibliography ?? this.wizardProgress?.draft?.ragSources
         );
     }
 
@@ -341,7 +360,8 @@ export class SermonEntity implements Sermon {
             this.sourceSermonId,
             this.sourceFacultySessionId,
             this.projectId,
-            this.sourcePaperId
+            this.sourcePaperId,
+            this.bibliography
         );
     }
 
@@ -368,7 +388,8 @@ export class SermonEntity implements Sermon {
             this.sourceSermonId,
             this.sourceFacultySessionId,
             this.projectId,
-            this.sourcePaperId
+            this.sourcePaperId,
+            this.bibliography
         );
     }
 
@@ -395,7 +416,8 @@ export class SermonEntity implements Sermon {
             this.sourceSermonId,
             this.sourceFacultySessionId,
             this.projectId,
-            this.sourcePaperId
+            this.sourcePaperId,
+            this.bibliography
         );
     }
 

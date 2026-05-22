@@ -209,6 +209,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             sourceFacultySessionId: sermon.sourceFacultySessionId ?? null,
             projectId: sermon.projectId ?? null,
             sourcePaperId: sermon.sourcePaperId ?? null,
+            bibliography: sermon.bibliography ?? null,
         };
     }
 
@@ -268,6 +269,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             sourceFacultySessionId: d.sourceFacultySessionId ?? undefined,
             projectId: d.projectId ?? undefined,
             sourcePaperId: d.sourcePaperId ?? undefined,
+            bibliography: Array.isArray(d.bibliography) ? d.bibliography : undefined,
         });
     }
 }
