@@ -14,6 +14,53 @@ export interface RAGSource {
     author?: string;    // Document author if available
     page?: string;      // Page number or section
     usedFor: string;    // Brief description of how it was used
+    /**
+     * Stable manifest ID assigned at retrieval time (e.g. "S1", "S2"),
+     * present on Phase-B and later outputs. The server-side validator
+     * uses this to match the entry against the citation manifest the
+     * LLM was given — anything without a matching id (or with one not
+     * in the manifest) is dropped as a hallucination.
+     *
+     * Absent on legacy sermons generated before Phase B. Those still
+     * render via the bibliography section but don't get inline
+     * markers tied to specific prose locations.
+     */
+    sourceId?: string;
+}
+
+/**
+ * Persisted snapshot of the citation manifest the server validated
+ * against when the sermon was generated. Travels with the sermon
+ * (`SermonContent.citationManifest` for drafts, mirrored into the
+ * published copy) so the inline-marker renderer can dereference
+ * `[N]` back to a real library chunk without re-running retrieval.
+ *
+ * Phase B v1 caps the manifest to top-K retrieved chunks (typically 10);
+ * `excerpt` is truncated to 280 chars to keep the Firestore doc small.
+ */
+export interface CitationManifest {
+    /** Schema version — increments when the manifest shape changes. */
+    version: '1';
+    entries: CitationManifestEntry[];
+}
+
+export interface CitationManifestEntry {
+    /** Stable ID the LLM cites with: "S1", "S2", … */
+    sourceId: string;
+    /** Library resource doc the chunk belongs to. */
+    resourceId: string;
+    /** Specific chunk within the resource (for back-traceability). */
+    chunkId: string;
+    /** Snapshot at generation time so the renderer doesn't re-query. */
+    title: string;
+    author?: string;
+    page?: string;
+    /**
+     * Short excerpt (≤280 chars) from the chunk text — surfaces in the
+     * inline-marker popover so the reader can sanity-check that the
+     * citation matches what the prose claims.
+     */
+    excerpt: string;
 }
 
 export interface ExegeticalStudy {
@@ -193,5 +240,13 @@ export interface SermonContent {
     conclusion: string;
     callToAction?: string;
     ragSources?: RAGSource[];  // Sources used from library
+    /**
+     * Phase B: snapshot of the citation manifest the server validated
+     * against at generation time. Drives the inline-marker renderer —
+     * each `[N]` in the prose dereferences to a `CitationManifestEntry`.
+     * Absent on pre-Phase-B sermons (renderer falls back to
+     * bibliography-only mode).
+     */
+    citationManifest?: CitationManifest;
 }
 
