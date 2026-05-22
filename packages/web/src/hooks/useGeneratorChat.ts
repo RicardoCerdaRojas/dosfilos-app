@@ -56,11 +56,17 @@ export function useGeneratorChat({
     useEffect(() => {
         // Prefer the real sermon id (wizard callers). Fall back to
         // config.id only for surfaces without a sermon (e.g. standalone
-        // tutor) — those skip Firestore (rule check fails silently and
-        // the service catches it) and keep chat in localStorage only.
+        // tutor, Step 1 of the wizard before the sermon doc gets
+        // created). In the fallback case we explicitly tell the chat
+        // service to skip Firestore — the rule check
+        // `get(/sermons/{key})` would deterministically fail for any
+        // non-sermon key and just log a permission-denied warning.
+        // localStorage still persists the conversation in those
+        // surfaces so a single-tab refresh keeps it.
         const chatKey = sermonId ?? config?.id;
+        const persistToFirestore = !!sermonId;
         if (chatKey) {
-            generatorChatService.initializeForSermon(chatKey, phase);
+            generatorChatService.initializeForSermon(chatKey, phase, { persistToFirestore });
             const history = generatorChatService.getHistory();
             if (history.length > 0) {
                 setMessages(history.map((m, idx) => ({
