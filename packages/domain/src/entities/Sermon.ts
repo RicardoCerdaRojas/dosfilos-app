@@ -1,5 +1,6 @@
 import { ExegeticalStudy, HomileticalAnalysis, RAGSource, SermonContent } from './SermonGenerator';
 import type { SermonPersonalization } from './SermonPersonalization';
+import { aggregateRagSourcesFlat } from '../services/aggregateRagSources';
 
 export interface PreachingLog {
     date: Date;
@@ -287,7 +288,11 @@ export class SermonEntity implements Sermon {
             this.sourceFacultySessionId,
             this.projectId,
             this.sourcePaperId,
-            this.bibliography ?? this.wizardProgress?.draft?.ragSources
+            this.bibliography ?? aggregateRagSourcesFlat({
+                exegesisSources: this.wizardProgress?.exegesis?.ragSources,
+                homileticsSources: this.wizardProgress?.homiletics?.ragSources,
+                draftSources: this.wizardProgress?.draft?.ragSources,
+            })
         );
     }
 
@@ -333,7 +338,11 @@ export class SermonEntity implements Sermon {
             this.sourceFacultySessionId,
             this.projectId,
             this.sourcePaperId,
-            this.bibliography ?? this.wizardProgress?.draft?.ragSources
+            this.bibliography ?? aggregateRagSourcesFlat({
+                exegesisSources: this.wizardProgress?.exegesis?.ragSources,
+                homileticsSources: this.wizardProgress?.homiletics?.ragSources,
+                draftSources: this.wizardProgress?.draft?.ragSources,
+            })
         );
     }
 
