@@ -8,7 +8,8 @@ import {
     query,
     where,
     writeBatch,
-    Timestamp
+    Timestamp,
+    VectorValue,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { DocumentChunkEntity } from '@dosfilos/domain';
@@ -146,9 +147,36 @@ export class FirebaseChunkRepository {
             data.userId as string,
             data.chunkIndex as number,
             data.text as string,
-            (data.embedding as number[]) || undefined,
+            extractEmbedding(data.embedding),
             data.metadata as { page?: number; section?: string; startChar?: number; endChar?: number },
             (data.createdAt as Timestamp)?.toDate() || new Date()
         );
     }
+}
+
+/**
+ * Normalize the `embedding` field across the two write paths that
+ * populate `document_chunks`:
+ *
+ *   1. Cloud Functions (`indexStructuredDocument`) writes
+ *      `FieldValue.vector(...)` via the admin SDK. The web SDK reads
+ *      that back as a `VectorValue` instance whose values live behind
+ *      `.toArray()` — NOT as `length`-bearing plain array. The legacy
+ *      cast `data.embedding as number[]` left it unchanged, the
+ *      downstream filter `chunk.embedding.length > 0` then dropped
+ *      every chunk silently, and RAG search returned zero results
+ *      from a perfectly-indexed library (user surfaced this 2026-05-21).
+ *
+ *   2. Older chunks (pre-vector-type migration) and any future web-SDK
+ *      writes via `toFirestore` below land as plain `number[]`. Both
+ *      shapes must keep working.
+ *
+ * Anything else collapses to `undefined` so callers can drop the
+ * chunk rather than feeding bad data into cosine similarity.
+ */
+function extractEmbedding(raw: unknown): number[] | undefined {
+    if (!raw) return undefined;
+    if (Array.isArray(raw)) return raw as number[];
+    if (raw instanceof VectorValue) return raw.toArray();
+    return undefined;
 }
