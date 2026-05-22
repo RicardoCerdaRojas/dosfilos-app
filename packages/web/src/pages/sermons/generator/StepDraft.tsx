@@ -28,6 +28,7 @@ import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
+import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
 import { SermonCitationVerificationDialog } from '@/components/sermons/SermonCitationVerificationDialog';
 import { WorkflowPhase, CoachingStyle, formatPassageReference, type GenerationRules, type Sermon } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
@@ -546,15 +547,20 @@ export function StepDraft() {
                     </VisuallyHidden>
                     <div className="flex-1 overflow-y-auto">
                         {draft && exegesis && (
-                            <SermonPreview
-                                title={draft.title}
-                                content={getFullContent()}
-                                authorName={user?.displayName || t('drafting.authorDefault')}
-                                date={new Date()}
-                                bibleReferences={[exegesis.passage]}
-                                tags={exegesis.keyWords.map((kw) => kw.original)}
-                                status="draft"
-                            />
+                            <>
+                                <SermonPreview
+                                    title={draft.title}
+                                    content={getFullContent()}
+                                    authorName={user?.displayName || t('drafting.authorDefault')}
+                                    date={new Date()}
+                                    bibleReferences={[exegesis.passage]}
+                                    tags={exegesis.keyWords.map((kw) => kw.original)}
+                                    status="draft"
+                                />
+                                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+                                    <SermonBibliographySection bibliography={draft.ragSources} />
+                                </div>
+                            </>
                         )}
                     </div>
                     <div className="p-4 border-t bg-background flex justify-end">
